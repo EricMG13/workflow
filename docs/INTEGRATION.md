@@ -391,3 +391,26 @@ implementation branch from that exact revision. C2 may fast-forward its
 to that revision; its untracked `docs/handoffs/financial-rendered-slice.md`
 does not collide with a tracked path there. No branch operation was performed
 in this integration checkout.
+
+### Extractable quarterly fixture revision
+
+Integrated LEAD's exact fixture/ledger commit
+`2dd83cacb3041914c9d1d9b1642425ae9c944a9c` from the LEAD clone by local
+fetch and cherry-pick. It changes only `cases/financial/manifest.json` and
+`docs/QUEUE.md`; the main integration commit is
+`902a29fadb98c952aef9513a15ad26087c329579`. The final reviewed hashes are:
+
+- Frozen contract `docs/CP1-MODEL-SLICE.md`:
+  `e9625c081b429513449654783d1e130d2bfb04a090e7e9bf1ce2141fd68cd69a`
+- Financial case manifest: `d2ec749d19ecfee2b0b1c0e31c37fbae95ac8995e901a3d5a8466cce54cfc860`
+- Financial source: `2e54bacd6b6e83dd62d8ec226e0abf17461157ccd45ab2bf3011256165b91872`
+- Identity source, unchanged: `74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4`
+
+This manifest hash supersedes the earlier `e5a5…` value recorded above. The
+queue records the independent Sol/high review and admitted extraction probe:
+all 75 expected rows, headers/captions, line numbers, column order, raw values
+and Decimal values matched, with no flags. The fixture-layout correction
+preserves the economic facts and scope; it changes no parser or analytical gate
+and establishes no CP1 or Model run. No tests or product code were changed or
+run here. C1 and C2 clones were not modified; use the resulting clean main HEAD
+as their source-fixture update base under LEAD's branch instructions.

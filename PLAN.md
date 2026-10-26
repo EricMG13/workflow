@@ -152,13 +152,13 @@ is admitted by closing this slice; paid/provider tests remain paused.
 
 User authorized continued C1/C2/PR MANAGER coordination on 2026-10-26.
 Contract: docs/CP1-MODEL-SLICE.md; independent cases: cases/financial/manifest.json.
-Complete all five actual CP1 stages and promotion over four historical quarters,
-then deterministic Model publication and native rendered financial/Model proof.
-No reported annual comparative or YoY qualification; preserve first-slice evidence.
+Complete all five actual CP1 stages and promotion over reported FY2025 and its
+four quarters, then deterministic Model publication and native financial/Model
+proof. No FY2024/YoY comparative qualification; preserve first-slice evidence.
 
 - [x] Discover adopted stage, QA/promotion, export/publication and rendering APIs.
 - [x] Independently review/freeze literal sources, financial oracles and shared API.
-- [ ] Integrate exact contract/data and release exclusive C1/C2 implementation leases.
+- [x] Integrate exact contract/data and release exclusive C1/C2 implementation leases.
 - [ ] C1: bounded full CP1 source/input/tool/submission/promotion/publication/audit bridge.
 - [ ] C2: authenticated actual financial/Model render with exact canonical publication.
 - [ ] Close sensitive/confidence/tournament reviews and focused causal checks.

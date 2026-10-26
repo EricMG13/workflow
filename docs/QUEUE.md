@@ -908,3 +908,107 @@ Only fixture layout/explicit source rows and pinned extraction expectations chan
 no parser/financial engine or analytical scope changed. Confidence doubt (empty
 extraction masking omittedsource data) reproduced by static parser boundary and
 closed with revised literals + exact admitted probe, not a gate bypass.
+
+C1-FIN-FOUNDATION-1 admitted23:18:25UTC, fresh no projectjob scan,
+load2.58/2.70/2.99; C1baseb9b855c, productb6c9a266eea37e8d5fbba9475db37c23eba310892f67ed0a5105a2e2a4c341ed,
+testbf2cc0bf0efcca13f13b64a9daaa42b838769d29b36f5599d57a0ef0f0d78be8
+verified. Exactly new workflow file's2foundation tests: actualmissing-source gate/
+publisherrefusal/seal/verify and preauthorization refusals. Source/test frozen until
+exit, fullreceipt; not positivefinancial/fullworkflow acceptance. Sensitive static
+review runs read-only and findings are patched only after runtime release.
+
+C1-FIN-FOUNDATION-1 completed PID34225,23:19:01..23:19:02UTC,exit0,
+2passed/0.54s; sourceb6c9... andtestbf2cc0... unchanged. Actual missing-source
+CP0/CP1begin/publisherrefusal+negativesealverify andpreauthorization denials passed.
+Initial source-freeze concern was corrected by exactrecheck: no queued hash change
+occurred, no stale check run. Slotreleased; no positivefinancial acceptance claimed.
+C1 addresses confirmed Model-head/failed-step audit completeness and prepares genuine
+full component fixture/causalcases. C2 static/sensitive/confidence/tournament work
+is ready, runtime/tournamentinvariant completion still waits exact reviewed C1API+
+completed_financial_case helper integration. C2 holds no runtime slot and copies no WIP.
+
+C1-FIN-COMPONENT-1 admitted23:23:31UTC fresh no projectjob scan,
+load2.76/2.88/3.00; exactsourcef0859b05b481609825f745bd9b793601c6715736282e3e2b5aadeca83ee5913c,
+test130072cd65b621b9dba0f9eb5d40236e652346174728fc624ad7850fcfd083fe,
+manifestd2ec749d...verified onC1baseb9. One8case pytest newworkflowfile: genuine
+component five-stage/promotion/publication/seal+portablecopy, unread/unextracted/
+omitted/swapped-quarter causalrefusals andstale state. Not actualhostactor acceptance.
+Freezecode/test/data through exit; recordPID/UTC/log/exit/beforeafterhashes; no other
+job whileheld. Confirmedreviewbugs patched andmorecausalcasespendingpositive viability.
+
+C1-FIN-COMPONENT-1 completed PID34681,23:23:42..23:23:44UTC,exit1,
+7passed/1failed1.67s; exact frozen files unchanged. Actual positive component reached
+financials validator; fixture's CFS depreciation item wrongly used IS-only canonical
+id. Adopted source row/value/citation preserved under other:depreciation-and-amortization;
+not a source/core/gate change. Independent reviewer found same concretecause. Other
+causal/source/gate tests passed. Slotreleased; positive promotion/publication unproven.
+
+Positive-only request source155e9d.../test001adb... was NOT admitted: C1 noted no
+structured StatementIdentity contributions, while frozen independentoracle already
+requires actual CFO/NCF identities (not model residuals). LEAD explicitly unfroze the
+draft with no runtime held for genuine quarterly source line identities: CFO=NI+DA+WC;
+NCF=operating+investing+financing totals. No newsource/engine/gate policy. C1 must
+repinfiles for a fresh positive-only admission after those existing prerequisites.
+
+C1-FIN-POSITIVE-1 admitted23:28:59UTC freshnojobscan/load2.93/2.69/2.84;
+exactsource155e9db3f123652b2fc75411f24728fdbb17de76c1378fd5e43a5da1d99a6e0a,
+testf524fc642d4dc4936b8e7e06e8414cb8cb6c30db8b3457579d2a32924cf8bd4d
+verified. Exactly test_full_component_promotes_and_publishes_actual_model, frozen
+code/test/casedata until exit, fullPID/time/log/exit and release. Genuine structured
+CFO/NCF identities and complete source disclosures added to fixture, preserving
+source values/noinferredzeros; no broader causal batch before viability known.
+
+C1-FIN-POSITIVE-1 completed PID35007,23:29:08..23:29:09UTC,exit1,
+financials rejected NCF targets incorrectly line_kind detail. All frozenfiles
+unchanged, slotreleased. Test-only NCF target nowtotal; all8 identities statically
+checked for existing sameperiod/distinctcomponents/subtotal-or-total targets. No
+source/core/product change. Projection fixture parser also preserves catalogue kind
+instead of accidentally replacing it with a definition's innerkind column.
+
+C1-FIN-POSITIVE-2 admitted23:30:26UTC freshnojobscan/load2.80/2.69/2.83;
+product155e9db3... unchanged, exacttest3177472ef8cad0a84f0a2a6c2c4f940a7e39b5f0d60dccdd04fa1d9640919bb9
+verified. Sameonepositivetest only; frozenfiles/fullprocessreceipt/release required.
+
+C1-FIN-POSITIVE-2 completed PID35101,23:31:12..23:32:23UTC,exit1,
+70.19s. Four stagesVALID butQA correctly Blocked39 because ledgerblocked, no promoted
+CP1 orModel. Full frozenfiles unchanged; solejobhealthy~99%CPU/~2GBRSS, not restarted.
+Retainedinventory identified four incomplete total_equity bridges AND six historical
+LTMperiodchecksBLOCK. Logs/inventory preserved; source arithmetic alone cannot imply
+complete equity movements or historical-anchor completeness.
+
+Independent trace + C1 actual path confirm two documented LTM mechanisms: rolling4Q
+metrics separate from historicaldisplay FY-or-FY+YTD-PYTD anchor. Quarter-only
+promotion feasibility was mistaken; no corefallback is called a provenbug. V4source
+explicitly adds reportedFY2025 (noFY2024), by-function COGS15/gross15/function-only
+OPEX8.75 perquarter, FY60/60/35, while revenue/EBITDA/cash/debt amounts unchanged.
+Complete quarter+FY equity declaration supports dividend-only namedmovements;
+core auto-addsNI. All26flow metrics and FYannualcontrols supplied. C1 independently
+traced FYprecedence on sameenddate and complete annualsource structures required.
+
+FIN-SOURCE-EXTRACT-PROBE-2 admitted23:42UTC freshnojobscan/load3.71/3.64/3.33;
+frozenV4manifest6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432,
+contract0bd7d5d9e5fdffb4f8b3016fb913105dbd1f2d19b8b263827de9120f0bf08250.
+One extraction-only comparison all82 authored expectedrows/header/caption/line/
+column/raw/Decimal/flags. No CP1/Model/provider call. Data frozen through exit.
+
+FIN-SOURCE-EXTRACT-PROBE-2 completedPID36439,
+23:42:19.225135..23:42:19.262362UTC,exit0; all82independent row/header/caption/
+line/column/raw/Decimal comparisons passed withnoflags; filesunchanged. Fullscript/
+log/record work/cp1-source-layout/probe-2.*. Slotreleased; nofinancialworkflow run.
+
+Independent Sol/high finalV4 review approved exact manifest
+6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432,
+contract0bd7d5d9e5fdffb4f8b3016fb913105dbd1f2d19b8b263827de9120f0bf08250,
+financialsource82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429.
+All26FLOW_METRICS explicitly sourcedQ/FY; annual/quarter equations, FYcash15/20,
+FY=Q4BS/facility, fullquartersourcecontrols andFYanchor precedence independently
+checked. Identitysource74fe2ad...unchanged. This finalV4 supersedes priorquarter-only
+source/contract expectations (including unintegratedV3disclosure draft); no core or
+permission/API change. ActualQA score/promotion/publication remainunproven.
+
+LEAD confidence review closed scope/anchor conflation by actualretained BLOCK data
+and adopted `_host_ltm` documentation, not by weakening validation. Source facts now
+explicitly support complete equitydisclosure and by-function classification. RawFY
+values are genuine synthetic sourcecolumns, not actor-generated yearly observations.
+C1/C2 must consumeexactintegratedV4 before financialtests. ExistingFY2024/YoY gaps,
+source/providernativequalification limits and single-writer constraints retained.

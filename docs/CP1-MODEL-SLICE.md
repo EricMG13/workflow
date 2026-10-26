@@ -9,21 +9,25 @@ tests remain paused. Source base: 8d578801e2285194f98062b2d022ec94f33bb34f.
 Complete all five actual CP1 stages (source_context, financials, narrative,
 readiness, quality), real promotion, canonical envelope verification, actual
 CP-MODEL publication and native rendered proof. Use cases/financial/manifest.json:
-a new synthetic pack with four reported 2025 quarters and opening PERIOD_END2024
-balances. No reported FY period or prior-year growth assertion. The old annual-only
+a new synthetic pack with reported FY2025, its four discrete quarters and opening
+PERIOD_END2024 balances. No FY2024 or prior-year growth assertion. The old annual-only
 case and source-only workflow remain immutable and independently scoped.
 
-Ruling: adopted source reconciliation requires all quarters for every reported FY
-and every flow member. This new case therefore provides quarterly historical
-analysis and a calculated twelve-month Model. Do not weaken gates, relabel a
-reported annual figure as calculated, fabricate missing source figures or claim
-reported annual comparative qualification. Model readiness must actually be ready
-on the positive case. Core publication has a distinct, narrower gate; preserve it.
+Ruling: actual retained results exposed two distinct documented LTM paths. Rolling
+quarter metrics use four-quarter frames; historical display LTM uses an anchor FY
+or prior FY + YTD - PYTD. Quarter-only source could not clear historical checks/QA.
+The revised source explicitly reports FY2025 and a by-function cost decomposition,
+with all 26 FLOW_METRICS supplied for FY and each quarter. The same-day FY anchor
+uses actual FY data; quarterly/FY comparisons remain independent. No core fallback
+or gate is changed. Keep original total operating costs 23.75 distinct from new
+canonical function-only OPEX 8.75. Do not fabricate missing values or claim FY2024/
+YoY comparative qualification. Model readiness must actually be ready on the
+positive case; core publication has a separate narrower gate, preserved unchanged.
 
 Manifest literals and source hashes are independent inputs. Monetary source values
 are USD millions; normalize and calculate with the existing Decimal core. Preserve
-explicit zero versus missing COGS/gross profit and unavailable Q1-Q3 twelve-month
-ratios. Q4 own-period margins use Q4 operands (7.5/30 EBITDA margin,
+explicit zero RCF versus unavailable Q1-Q3 twelve-month ratios and prior-year
+growth. COGS/gross profit are now genuinely sourced by-function values. Q4 own-period margins use Q4 operands (7.5/30 EBITDA margin,
 2.25/7.5 FCF/EBITDA); leverage/coverage and flow-to-debt use twelve-month
 operands. Freeze actual claim/materiality judgments before evaluating promotion;
 independently calculate the QA score from that inventory and adopted formula.
@@ -36,6 +40,11 @@ publication refusal merely because Model-readiness is blocked. Causal component
 cases also cover unread/unextracted citation or omitted extracted line, wrong/stale
 stage binding, QA-input/lineage tampering, foreign/tampered envelope/publication,
 existing destination and interrupted publication. Preserve prior evidence/state.
+
+Each quarter and FY also requires actual source-backed CFO/NCF StatementIdentity
+structures and complete total_equity BalanceMovementBridge disclosure. Core adds
+opening equity and IS net income itself; name signed dividends only, with no
+residual plug or inferred zero OCI/other movements. No bridge on opening PERIOD_END.
 
 ## Supported APIs (discovered from exact adopted source)
 
@@ -171,7 +180,7 @@ refuse the wrapper entirely rather than being relabeled as negative acceptance.
 Actual native IAB proof on immutable positive and negative outputs must check:
 - Financials/capital-structure/chart destinations from actual CP1 maps, CP1 Model
   panel, canonical model.html#CP-1 and publication #CP-MODEL, Evidence/Limitations.
-- Sourced revenue and explicit zero, missing gross profit, normalized outflow,
+- Sourced revenue and explicit zero, unavailable early-quarter ratio, normalized outflow,
   Python-calculated Q4 twelve-month EBITDA/FCF and exact metric numerator/denominator.
 - Dates/period kind/currency/units/scale/source hash/locator/quote, exact CP1 result
   passport, actual Model/CP1/pack identities and retained computation trace.

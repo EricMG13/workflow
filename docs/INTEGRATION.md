@@ -289,3 +289,37 @@ publication is claimed; rendered HTML/DOM evidence is still pending with C2.
 No tests were rerun for this docs-only commit, and no live/paid/provider calls
 were made. The cherry-pick was conflict-free; prior integration receipts and
 bootstrap TEAM registration remain intact.
+
+## C2 authenticated rendering and actual DOM proof
+
+Integrated C2's exact admitted commit
+`5fa4f491c2f5753195a45998db8dfe3f164de145` from
+`/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2`
+(`codex/rendered-slice`, parent
+`959e652c4d104b7aab05870ca41520473ba02a30`) by local fetch and cherry-pick.
+The integration commit is `761ae3873a9c09198a1d3512d5fc251fb7c9101f` on
+`codex/checkpoint`.
+
+The three admitted files are `src/deploy_workflow/rendering.py`,
+`tests/test_connected_render.py`, and `docs/handoffs/rendered-slice.md`; no
+workflow, host, tools, imported renderer/assets, bindings, registry, manifest,
+or shared contract changed. Final hashes match the handoff: rendering
+`682eeb973428fba5f69d4274d1210f60e09de144bfa407cfa7bfaae7ba917fca`, tests
+`aa84b987c49ed0ff7fb56e67da22a70be10d5a85e88bcba831ee3410c386a30f`, and
+ordered source/test set
+`9d8f82b80f31d3978ab54dfdd2d96723e50f7c76401628fd323dccb0d3942d92`.
+The cherry-pick completed without conflict.
+
+C2's handoff records 14 focused tests, mypy and Ruff passing, plus actual
+rendering of both genuine source stores and native IAB DOM observations for the
+positive and gap cases. LEAD verified artifact hashes, visible values/statuses,
+citations/limitations, default and explicit routes, and the exact source-only
+banner. The owned server exited 0 and tabs were closed; the browser runtime slot
+was released. I did not rerun tests. These results establish the finite rendered
+source-readiness slice only; broader CP1 financial work, Model publication and
+other module completion are not claimed. No live/paid/provider calls or
+publication occurred.
+
+LEAD will admit the single assembled focused source/upstream/workflow/render
+test batch after inspecting the integrated source. No assembled or broader suite
+was run for this integration.

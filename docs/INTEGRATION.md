@@ -59,9 +59,10 @@ or direct composers alone.
 
 - Bootstrap evidence was reviewed in `docs/BOOTSTRAP-REVIEW.md`; no heavy checks
   were rerun for this receipt.
-- Current `docs/TEAM.json` says sessions and working copies are not yet
-  registered. `docs/QUEUE.md` shows Task0 ready after bootstrap handoff, C1/C2
-  preparation only, PR Manager receipt ready, and no heavy job reserved.
+- The initial receipt preceded team registration. Bootstrap subsequently
+  registered all four chat IDs and independent clone paths in `docs/TEAM.json`
+  and dispatched Task0, C1/C2 preparation and this integration receipt.
+  `docs/QUEUE.md` records those handoffs; no heavy job was reserved by bootstrap.
 - No analytical module is accepted. Actual host tool execution, validated and
   settled output, downstream consumption, rendered sections and case-level
   evidence remain outstanding.

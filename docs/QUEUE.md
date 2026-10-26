@@ -6,17 +6,15 @@ preparation receipts and component fixtures do not count as owner execution.
 
 ## Current state (historical receipts follow)
 
-- Integrated and verified adapters: scoped source host plus bounded upstream lookup/
-  verification; combined111focused tests green at codebasecb71b86019774dfffb808f10d8493ae402dd5602.
-- Active C1: Task3-A producer, branchcodex/source-slice at that exactbase, exclusive
-  workflow.py/test_source_workflow.py/source-slice.md; typed receipt and actual
-  positive/gap analytical sessions pending. No source/rendered owner pass claimed.
-- C2: renderer preparationf33dbb406c3a2aa95edf4296373a95f6c62814fe complete;
-  dependent implementation waits for typed producer and actual stores/receipts.
-- PR MANAGER: clean integrated checkout; queuecontinuationea36c2d9285805232d2b28c3bc8ba8320b216011,
-  receipta5b240c41561d7b73544dc3039d73304a22c8928. No new product admission.
-- Runtime slot: free after MAIN-ADAPTERS-1; next actual RED/GREEN needs fresh LEAD
-  load/process/source-freeze check. Paid/provider/live tests remain paused.
+- Verified adapters: source host and bounded upstream tools, combined111focused green.
+- C1 reviewed producer pinned61187e75fa272a724ae00b5dbef1ff6206ea5209;31changedworkflow
+  tests/types/lint finalgreen, prior88source/workflowgreen, independentSolhigh+
+  confidence+tournamentclosed. Actualpositive/gapJSONlineparticipantjob admitted.
+- C2 renderer implemented onstableAPI;14componentcases awaitreviewedproducerintegration/
+  runtimeadmission. NativeIAB loopbackJS/DOM capability verified; actualHTMLproofpending.
+- PR MANAGER integrating exactreviewedproducer61187e75; no newproductacceptanceclaim.
+- Runtime token ACTUAL-SOURCE-1: two sequential frozeninteractivecaseprocesses, no C2
+  heavytestuntilrelease. Paid/provider/live tests remainpaused; Model/financeunrun.
 
 ## Task0 inputs and authority
 
@@ -586,3 +584,209 @@ NativeCUA currentdocumentation/observedreachability, preferIAB then justifiedChr
 no new installs/harness/providers. Runtime tests, staticserver and browser require
 fresh distinct LEAD admission; no job automatically admitted by code-writing lease.
 Confidence/noargumentrewrite/independentSolhigh review before exactcommit admission.
+
+HOST-GREEN1 completed PID22093,21:58:58..21:59:00UTC,exit0,65passed/0.94s:
+actualcore CP0->realCP1 sourcefactory,6malformedprovenance variants and58priorhostchecks.
+Exact5filead11e4a3bd183d2926fc35108eb6a3ac284e88b76bd0c5b463b8bba22dce6d31
+unchanged; priority mismatch now corrected and checked, independentfinalreview pending.
+C2-RENDER-RED1 admitted fresh22:00:38scan(no job,load2.68/2.83/2.75),
+frozenteste2bd9532ab68857d5b67bf34f81adb9b5ba438e0a5dc09fec787ae144ff2cfb0,
+rendererabsent. Completed PID22194,22:00:51.093650..51.447639,exit1,
+explicitmissingentrypoint assertion beforeproducerfixture; one expectedfailure/0.20s.
+C2 implementsnow; no server/browser/providerstarted. Slot released.
+
+FullTask3-RED2 admitted afterfresh no-projectjobscan, exactfocusedworkflowfile command,
+3file7cc509dd9a2d5577bf0e2324e5f092e7abd64a607e5514787b8e92d17b9fe5b0
+independentlymatched. Auditfailurecallbudget, invalidrepairfeedback and refusedcanonical
+metadata hypotheses get causal verification beforepatch. Roottraceconfirmed submit's
+binding/callIDs/evidence equality precedes journalwrites, so unrecordedfailedpublication
+cannot silently credit acceptedsource evidence; preserve thatguard.
+
+Task3-RED2 completed PID22293,22:02:11..22:02:13UTC,exit1,26passed/3failed/2.02s.
+Confirmed roots: failed audit publication did not increment delegated-call budget;
+invalid first CP1repair feedback inspected attempt.issues instead of retainedstepissues;
+refused raw review recorded canonicalhash contrary to frozenAPI null. C1 applies only
+these roots, preserving prejournal callIDs/evidence equality. Realpositive/gap and
+other lineage/audit/seal/provenance cases passed; still componenttests, not final
+analyticalparticipant/browserproof. No slot held after release.
+
+C2-BROWSER-CAP1 admitted afterfresh no-projectjob scan as a bounded named capability
+need for firstsourceDOM: one ignoredfixed HTML page uses JS to set native-dom-ready,
+one loopback-only OS-port Pythonstdlib server serving onlyprobe directory, current
+nativeCUAIAB preferred, justifiedChrome fallback only. Recordprobehash/PID/port/times/
+actualDOM/errors; stop ownedserver and release. No source/financialdata or success
+claim, no packageinstall/harness/provider/externalURL. ActualsourceHTML proof remains
+separate admission after immutable artifacts. No heavytest overlap is admitted.
+
+C2-BROWSER-CAP1 succeeded and released: fixedprobeSHA
+a86e69d7bcd6748014539dccceaf5b144cd61a2a5ac77e4c2a4581767e237c92;
+loopback-onlyserverPID23228/port50370,22:05:16.957310..22:05:46.095379UTC,exit0.
+CurrentnativeIAB actualAX showed native-dom-ready afterJS; noChrome/install/harness/
+externalURL/provider. Ownedtabclosed/serverstopped. Evidence C2 ignored
+artifacts/browser-capability-receipt.json. Capabilityonly, notsourceacceptance.
+
+Rendererpublicationruling: trustedsetup owns uniqueoutputdestination exclusively;
+existingdestination mustrefuse, stagedrenameunderthissinglewriterprecondition stands.
+No claimofcross-processatomicno-replace againstconcurrentoutsidecreators, no broader
+concurrencyservice/testscope. Existing source/snapshot/publicationchecks retained.
+
+C1 unrunGREEN1 withdrawn beforelaunch for one adoptedprovenancebypass regression:
+genuineCP0 steps+resultreviewtail removed while finishedcandidatepayload stillhas
+reviewtail mustnot enter oldcomponent equalitypath. Task3-RED3 admitted afterfresh
+no-projectjobscan and C2probe release, samefocusedworkflowfile; exact3file
+6f9dd9923599ba60fb58f9447d6cb22e784992a9c7878da4643cb84622c7a175.
+Expectednewomittedstepsreproduction pluspriorrootfixverification; no patchbeforeRED.
+
+Task3-RED3 completed PID23392,22:07:02..22:07:04UTC,exit1,29passed/1failed/1.83s.
+Confirmed omitted_steps legacyfallback bypass; prior3workflowroots nowgreen. C1 fixes
+only no-stepfinishedcandidate hash/input authentication and existingcore-settle result
+comparison, preserving actualcomponentfixtures. Task3-FINAL1 admittedfresh22:09:02
+(no projectjob,load4.10/3.65/3.20on10CPUs), 3file
+3a62675e66330129b0523bd31569272b20af7a9ef883112d33375e2b673966da verified.
+Sequential88source+workflowfocusedpytest,2filemypy and3fileruff; full logs/PIDs/times,
+sourcefreeze, no provider/broad suite. Actualparticipant run remains nextafterchecks/
+review; C2 independentrenderer code/staticreview progresses in parallel.
+
+Task3-FINAL1 completed pytestPID24375,22:09:46..49UTC,exit0,88passed/2.31s.
+MypyPID24380 failed14errors because skip-imports erased importedContract/Module types;
+RuffPID24385 foundonlyUP047. Narrowtoolingruling: same2ownedtargets use
+--follow-imports=silent toloadactualdependencydeclarations without gating unchangedcore
+errors; no runtimechanges/blanketignores for artificialAnyboundary. Genericstyle fixed.
+Tournament disqualifiedspeedcandidate thatconfusedcandidatepayload/rawreviewcoordinate;
+memorywinner reusesone UTF8payloadbuffer afterbind, hosthelperincumbentholds.
+Task3-FINAL2 admitted afterfreshno-projectjobscan,3file
+9ec9e960675575baf14097061648e978350511573380c616deaa2fef66624d93verified,
+88focusedtests+2filefollow-silentmypy+3fileruff, sourcefreeze/fullreceiptsrequired.
+C2rendererreadyhashes:product5df64af9405ec8bfb80ee82069cbc9dc1ccf6486dd97211fae7a58d34742a11f,
+tests9461e50b6587da9b7bede2a5846e4a7b2d19ab16c34b2ec0904ee9bef427c97a,
+source-set4c07ea55e010b08733182d1914fc30f0f96bcfd9ac8d2efbdd9386d775891f2b.
+DependencyrouteapprovedonlyafterLEADnamesexactreviewedproducerintegrationSHA:
+fetchmain andFF-onlythatSHA, preserve3owneduntrackedfiles/priorbranches; no mutableWIP
+copy/reset/rebase/force. FullrendererGREEN waits actualsourceproducer/artifacts.
+
+Task3-FINAL2 completed pytestPID24822,22:14:25..28UTC,exit0,88passed/2.30s;
+follow-silent2filemypyPID24827green22:14:28..29; RuffPID24834 onlyUP049 genericname,
+mechanicalTrenamequeued. ReferencedhistoricalCP0post-submit snapshot wasnotloaded by
+verifier (distinct from nextcall/final snapshot). Exactdeletionprobe written beforefix.
+Task3-RED4 admittedfresh22:16:30(no job,load4.46/4.22/3.66on10CPUs),3file
+456c18923c45d02de5abdf622a3cbe3833fa54ac6f3e5101dddb6c42c3a7d0baverified;
+only targetedmissingreferencetest, fullreceipt/log. No actor/provider execution yet.
+
+Task3-RED4 completed PID24980,22:16:54..55UTC,exit1,0.68s; missingexplicitafter
+snapshot accepted wasreproduced. Fixonlysharedhash/canonical loader+recordedafterstate:
+allaftersnapshots checkedforrun/pack/ticket/result, CP0postbeforeCP1begin/CP1postfinal.
+Task3-FINAL3 admittedafterfreshno-projectjobscan, exact3file
+d9fccd16d6121abe08d6847cfb402603ec4c5a388b1f89dd9ca4c4c111f93a00verified:
+31changedworkflowtests+2filefollow-silentmypy+3fileruff, no repeated58unchangedhostcases.
+Sourcefreeze/fullreceipts; finalreviewthenactualpositive/gap JSONline participantjobnext.
+
+Task3-FINAL3 completed31workflowtests/2.01s+2filefollow-silentmypy+Ruff allgreen;
+independentSolhigh exactd9fccd... approved, confidence/tournamentclosed. Reviewed4file
+producerpinned61187e75fa272a724ae00b5dbef1ff6206ea5209 atparentcb71b860, clean.
+PRintegrationadmittedexactly host.py/workflow.py/test_source_workflow.py/source-slice.md;
+actualparticipant/renderexplicitlypending, no ownercompletionfromcode alone.
+
+ACTUAL-SOURCE-1 admittedfresh22:22:33UTCscan(no projectjob,load4.89/4.26/3.83on10CPUs):
+exact2sequential interactiveJSONlineCLIcases on61187e75, positive then gap, fixedRPC
+invoke/submit_review/write_receipt only,16toolattempts/step+2steps. C1currentinternal
+participant mustinspectrealreturns/authorreviews, no unittestpayloaddriver/Modules.
+PreparedrawpackJSON hashes independentlyverified489e1b1fb5d8e8612de2a1eed84ec3808e94342a8661e494b935f60f7186f04c
+and19f89b563f33ebdfad9feedaa481653ca7946bf490f0c4886955e4d3456dc925;
+canonicalpackhashesbc15096a011a4f8d431b36489fb63e6ff1d2b6e2e607b907c12bd20d8f2ecd85
+andf5b1192fcfb401681b648ee2d3a4b83e738ba9c2fca8df821283e4b9eb4b0c61.
+AllsourceIDs/fullpagebytes/sourceSHA comparedtoliteralindependentmanifest. Newrundirs
+runs/task3-source-positive and runs/task3-source-gap absentbeforeadmission; fixedpack/
+receipt paths inC1handoff. RecordPIDs/times/actualaudits/receipts/consumeridentities,
+closeownedprocessesonEOF thenreleaseslot. Code/packsfrozen; no provider/modelchange.
+C2FFroutewaitsexactcleanPRintegrationSHA, no mutabledependencycopy/heavytestoverlap.
+
+ACTUAL-SOURCE-1 completed and released22:28:09UTC: positivePID25461,
+22:23:42..22:26:57,exit0; gapPID25632,22:26:57..22:28:09,exit0. Currentinternal
+participant inspected8positiveactualtoolbodies and authored6719/7193byte rawreviews
+throughJSONlines; gap3calls includesunavailablefinancialsource and3105byterawreview.
+LEAD independently verified publicreceiptvalidator,currentstore,transport/participant,
+actualT4/T8values andconsumer/refusal on mainreviewedcode, read-only:
+positiveC0restrictedc6e7f209aabe1dd6054e3c989a524220a29e63f5e18836992ed8885c1c97c9bc
+->CP1pendingvalidcontexte3374cae828bf077c62cb29789296cbbb65c0788cadca073d0c91364327917f4;
+gapC0restricted9a14f88e74247a9fa388cb20a47495c248da2244cf9032b7993c21b7b3819668
+->actualNotAuthorized/noCP1ticket. Finalsnaps3fda7b283bef6cb6ff753b65cebc9abf2c3f8fac1ad2372d562ccc1e2f1501a4
+and45bb2376b6bc3b3dae72a6674f0ba375311d4a34c367e471a9f48abb788a04ca.
+ReceiptrawSHAs90925e534fc895fac5bb2d9dd28e4e2d7c7d23e94dcc49378ae949a594b47e02
+andcf07e26d18ae733b60bee6c6dad389edbdec8fc7a2cf13e828729cc6be19d76a;
+actualstores/receipts in C1runs/task3-source-{positive,gap} and
+artifacts/source-slice-{positive,gap}/receipt.json. No fullCP1/Model/DOMclaim.
+Code61187producerintegratedde6ac31, receipt959e652c4d104b7aab05870ca41520473ba02a30;
+actualproofdocs0014ba10b784edc84b10db9916851fb1a21e0b07 admittedforPRintegration.
+C2 FF-only959e preservedownedfiles; no mutableWIPcopy. BareHTMLdefaultEvidence change
+preservesexplicitfragments; immutableAPI/data/banner unchanged. C2-RENDER-GREEN1
+admittedafterfreshno-projectjobscan with2file9d8f82b80f31d3978ab54dfdd2d96723e50f7c76401628fd323dccb0d3942d92,
+sequential14focusedcases+onefilefollow-silentmypy+twofileRuff/formatchecks; fullreceipts,
+sourcefreeze. Genuineactualrender/IABproofnextaftergreen/review, no provider/broadpass.
+
+C2-RENDER-GREEN1 completed source9d8f82... on959e652 withnoedits: pytestPID26337,
+22:35:08.676235..10.607292UTC,exit0,14passed/1.71s; onefilemeaningfultypesPID26338
+through22:35:11.757028,exit0; Ruff26342/format26343 through11.781893,exit0.
+Independent sensitive/default-route review closed, memorytournamentverified bysuite.
+ACTUAL-RENDER-DOM1 admittedafterfreshno-projectjobscan, frozen9d8f82...,
+newdeliveryrootabsent:2real render_source_slice calls onC1actualclosedpositive/gap
+stores+90925e/cf07receipts toC2artifacts/source-slice-delivery-1/{positive,gap}.
+ThenoneownedloopbackOS-port server,currentnativeIABactualbareEvidence+explicitroutes,
+sourceinspector/inventory, actualCP0citationpassport tuple+artifactSHA againstliteral
+case,T4/T8/status/limits/banner/CP1Modelunrun forbothcases. SeparateproofdirforAX/DOM/
+screenshots, actualhashes/PIDs/times; closeownedtabs/stopserver/release. No sourceedit,
+externalURL/provider/install/registrywork or mock/directcomposeracceptance.
+
+
+## Actual rendered proof closed — 2026-10-26 22:45:57 UTC
+
+C2 released ACTUAL-RENDER-DOM-1 after both genuine render calls and native in-app
+browser checks. Bare URLs opened Evidence; explicit CP-0 survived reload. Positive
+financial and gap missing-source inspectors, actual settled CP-0 citation tuples
+and artifact hashes, T4 readiness/T8 commands, source-only scope, limitations,
+persistent banner and CP-1/Model unrun state matched the frozen expectations.
+The positive report SHA256 is 371bbc18c8ee68fb7fc9b5151c67a90f37511e5829ad99f14be5444887180a9d;
+gap report SHA256 is 3ca8219afc608e30e405747d033397df33b1acd69610beec460b587d407e967d.
+C2 closed owned tabs 2/3 and its loopback server PID26465/port50849 at
+22:45:57.763489Z; session71594 exited0. No rerender or runtime job remains active.
+Source-set9d8f82b80f31d3978ab54dfdd2d96723e50f7c76401628fd323dccb0d3942d92
+remained frozen. Delivery and native proof are in C2 artifacts/source-slice-delivery-1
+and artifacts/source-slice-proof-1. Renderer commit/integration and one focused
+assembled check remain. Paid/provider tests remain paused.
+
+C2 committed 5fa4f491c2f5753195a45998db8dfe3f164de145, clean on base959e652.
+LEAD verified exact three-file scope and source-set9d8f82...; product682eeb97...
+and testaa84b987... match the completed focused and actual-render checks. Independent
+sensitive/confidence/tournament reviews closed in final rendered-slice handoff.
+Fresh22:48 process scan found no project heavy job (load2.41/3.21/3.55). PR MANAGER
+admitted exact commit integration only; LEAD retains the next focused-test token.
+
+Renderer integrated as761ae3873a9c09198a1d3512d5fc251fb7c9101f. LEAD verified
+integrated exact product/test bytes; ordered11file set
+f5646814b7e52c95ee258194dbe1797630cc85ba5b9d79de8f1107c190db8af1.
+Fresh22:49 scan found no project job, load3.71/3.40/3.61. After mechanical receipt,
+PR MANAGER is admitted ONE assembled main pytest of source_tools/upstream_tools/
+source_workflow/connected_render, source frozen and full PID/time/log/hash receipts.
+No other suite, provider call or source edit is admitted under this job.
+
+
+## First bounded slice accepted
+
+Final assembled focused check on clean main63351ae057437e913e3686f118ef9e05a553e87d:
+PID27581,22:50:13.386626..22:50:17.395313UTC,exit0,156passed/3.76s. Ordered11file
+set f5646814b7e52c95ee258194dbe1797630cc85ba5b9d79de8f1107c190db8af1 unchanged;
+LEAD independently recomputed it and read the full log/JSON receipt. Main remained
+clean. Render integration receipt is63351ae; product761ae38. No additional suite.
+
+LEAD confidence review investigated actual-vs-fixture execution, source/receipt/
+rendered artifact identity, pending/full financial state, native DOM citation
+proof, portable stores and self-contained HTML. Portable public validation and
+copy hashes passed. Corrected draft matrix call attribution: positive CP0=4,
+CP1source_context=4; gapCP0=3. Publication's single-writer precondition is by design;
+25canonical/alias versus26 intended-owner registry mismatch remains open. Full
+CP1/financial analysis/Model and remaining analytical owners remain unrun. No new
+product code during packaging; docs/data/generated files exempt from tournament.
+See FIRST-SLICE.md for the complete confidence and verification receipt.
+
+C1/C2 runtime leases are closed. No next-owner work, broad suite, provider call or
+production rollout is admitted. Paid/provider tests remain paused. First requested
+source-to-rendered slice is complete for the positive and gap synthetic cases.

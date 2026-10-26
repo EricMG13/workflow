@@ -57,12 +57,12 @@ Consumes: pinned PackTools/ToolRules and Task0 schema. Produces: a fixed host ca
 that exposes only the admitted step's source search/read/extraction, with actual
 invocation/result and submission binding. No general shell/Python execution interface.
 
-- [ ] Pin independent source/locator/quote facts from synthetic raw bytes before candidate output.
-- [ ] Add causal refusal/failed-render/prior-success preservation cases; reproduce before fixing.
-- [ ] Sol/high implements the smallest adapter and any confirmed evidence mutation fix.
-- [ ] Run the focused cases and import/scope checks under owned resource admission.
-- [ ] Complete confidence review, required rewrite workflow and independent sensitive review.
-- [ ] Return exact commit/files/commands/results and a demonstrable real host invocation.
+- [x] Pin independent source/locator/quote facts from synthetic raw bytes before candidate output.
+- [x] Add causal refusal/failed-render/prior-success preservation cases; reproduce before fixing.
+- [x] Sol/high implements the smallest adapter and any confirmed evidence mutation fix.
+- [x] Run the focused cases and import/scope checks under owned resource admission.
+- [x] Complete confidence review, required rewrite workflow and independent sensitive review.
+- [x] Return exact commit/files/commands/results and a demonstrable real host invocation.
 
 ## Task 2 — C2: bounded frozen lookup and verification
 
@@ -76,11 +76,14 @@ Consumes: Task0 envelope and existing live.context projections, CP5 python_check
 readiness citation checks and quote matching. Produces: exact permitted producer/
 table/field lookup and read-only verification with actual invocation/result records.
 
-- [ ] Independently pin a frozen producer value and identity; define stale/foreign/hidden-field refusals.
-- [ ] Add scoped success/refusal tests before the adapter; no raw pack permission to upstream-only roles.
-- [ ] Sol/high wraps existing typed projections/checks without another arithmetic engine.
-- [ ] Verify returned values/status/citations and fail-closed disclosure behavior.
-- [ ] Complete code review workflows and hand off its exact interface/commit to C1/LEAD.
+- [x] Independently pin a frozen producer value and identity; define stale/foreign/hidden-field refusals.
+- [x] Add scoped success/refusal tests before the adapter; no raw pack permission to upstream-only roles.
+- [x] Sol/high wraps existing typed projections/checks without another arithmetic engine.
+- [x] Verify returned values/status/citations and fail-closed disclosure behavior.
+- [x] Complete code review workflows and hand off its exact interface/commit to C1/LEAD.
+
+Task 1 and Task 2 checks above cover the bounded adapters and their exact component
+cases. Task 2 does not establish actual CP-2/CP-5 owner execution.
 
 ## Task 3 — first connected source-to-rendered slice
 
@@ -91,9 +94,9 @@ producers as applicable, then deterministic Model publication. Initial tool deli
 can be demonstrated before all downstream owners finish, but is not full completion.
 
 - [ ] Freeze coherent financial/legal raw sources and independently calculated expected output.
-- [ ] Use actual supported analyst tool invocations; retain the resulting review/submission lineage.
-- [ ] Execute real validators/composers/settlement and real downstream reads, not injected final modules.
-- [ ] Render actual selected-run values, citations/status and source/provenance links; verify visible DOM.
+- [x] Use actual supported analyst tool invocations; retain the resulting review/submission lineage (bounded Task3-A).
+- [x] Execute real validators/composers/settlement and real downstream reads, not injected final modules (CP-0 settlement and CP-1 source_context only).
+- [x] Render actual selected-run values, citations/status and source/provenance links; verify visible DOM (bounded Task3-A).
 - [ ] Close applicable matrix rows only after all required links are evidenced.
 
 ### Task3-A — first bounded source-to-rendered connection
@@ -105,11 +108,11 @@ This first slice connects actual source sessions -> evidence-gated CP-0 settleme
 and CP-0 DOM. It deliberately leaves full CP-1/Model and remaining Task3 chain open.
 Exact code-start bases/file ownership follow adapter integration in docs/QUEUE.md.
 
-- [ ] C1: actual workflow bridge and retained positive/gap analytical host sessions.
-- [ ] C2: receipt-authenticated selected-run rendering and actual browser DOM proof.
-- [ ] Independent sensitive review, both code-review workflows, focused and combined checks.
-- [ ] PR MANAGER: integrate only admitted exact commits; retain same-revision final proof.
-- [ ] Update only proven module-matrix links; retain every broader owner/stage limitation.
+- [x] C1: actual workflow bridge and retained positive/gap analytical host sessions.
+- [x] C2: receipt-authenticated selected-run rendering and actual browser DOM proof.
+- [x] Independent sensitive review, both code-review workflows, focused and combined checks.
+- [x] PR MANAGER: integrate only admitted exact commits; retain same-revision final proof.
+- [x] Update only proven module-matrix links; retain every broader owner/stage limitation.
 
 ## Task 4 — complete earnings and specialist owners in small slices
 
@@ -139,3 +142,7 @@ section / representative-case verification. No invented percentage. Historical
 passes and imported files start as reuse evidence only. Current status lives in
 MODULES.csv and QUEUE.md. The user requested a LEAD/team execution arrangement;
 keep that method and do not restart a planning/approval chain for this bootstrap.
+
+Task3-A is demonstrated for the two bounded synthetic cases. Final assembled
+focused check: 156 passed in 3.76s. See docs/FIRST-SLICE.md. No later-owner work
+is admitted by closing this slice; paid/provider tests remain paused.

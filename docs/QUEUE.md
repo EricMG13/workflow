@@ -1,7 +1,22 @@
-# Work queue — Task0 lease freeze, 26 October 2026
+# Work queue — source-to-rendered slice, 26 October 2026
 
 No analytical module is accepted. Task0 is contract/case/lease work; imported modules,
 preparation receipts and component fixtures do not count as owner execution.
+
+
+## Current state (historical receipts follow)
+
+- Integrated and verified adapters: scoped source host plus bounded upstream lookup/
+  verification; combined111focused tests green at codebasecb71b86019774dfffb808f10d8493ae402dd5602.
+- Active C1: Task3-A producer, branchcodex/source-slice at that exactbase, exclusive
+  workflow.py/test_source_workflow.py/source-slice.md; typed receipt and actual
+  positive/gap analytical sessions pending. No source/rendered owner pass claimed.
+- C2: renderer preparationf33dbb406c3a2aa95edf4296373a95f6c62814fe complete;
+  dependent implementation waits for typed producer and actual stores/receipts.
+- PR MANAGER: clean integrated checkout; queuecontinuationea36c2d9285805232d2b28c3bc8ba8320b216011,
+  receipta5b240c41561d7b73544dc3039d73304a22c8928. No new product admission.
+- Runtime slot: free after MAIN-ADAPTERS-1; next actual RED/GREEN needs fresh LEAD
+  load/process/source-freeze check. Paid/provider/live tests remain paused.
 
 ## Task0 inputs and authority
 
@@ -414,7 +429,8 @@ exact clean mainHEAD66c3a5afdcdd93e4605e0c9491456016991da0ab; seven-file bundle
 729f94279b073fe675f87d6be4828e1b6f8431884bdf899a963d9e356a21a55d.
 Command: PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 main .venv/bin/python -m pytest -q
  tests/test_source_tools.py tests/test_upstream_tools.py. One exact combined focused
-run, full log/PID/time/results, no other test suite/provider call. Completion pending.
+run, full log/PID/time/results, no other test suite/provider call. Historical admission;
+completion recorded immediately below (111passed), no longer pending.
 
 C2 docs-only renderer prep f33dbb406c3a2aa95edf4296373a95f6c62814fe is read-only
 input for later lease; not integrated product. Actual route selectors and sourcehashes
@@ -496,3 +512,77 @@ workflow changes. Later renderer lease will require a visible scope banner:
 `Source readiness only. Financial analysis and Model publication remain unrun.`
 The historical global25/26/alias mismatch is explicitly open; no registry redesign or
 full-owner coverage claim is admitted by this finite source deliverable.
+
+Task3-RED-1 admitted fresh21:49:07UTC scan(no projectcheck,load2.78/2.27/2.34):
+C1 codebasecb71b86019774dfffb808f10d8493ae402dd5602, workflow.py absent,
+exact testSHA32632234ba9c0b930d2982c9e86210b93aaea8969e56bf8636ed2eb4776017c2.
+Only tests/test_source_workflow.py focused pytest command; full log/PID/time/result.
+Actual submit_cp0_review compatibility probe may expose that source factory compares
+settled producer.inputs to current_inputs(CP0), while real CP0 adds readiness-review
+provenance. Must reproduce core-valid fixture before any narrow host amendment;
+no provenance/currentness weakening or ad-hoc constructor bypass. Other absentworkflow
+assertions are intentional RED; schema/setup errors are not proof of that defect.
+C1 typed receipt field spellings are published in source-slice.md, not yet code.
+
+## Priority ruling and disjoint lease amendments — first verified deliverable
+
+Human explicitly prioritized the narrow provenance fix, safe rendering overlap and
+continued execution through a rendered/verified first deliverable. This supersedes
+the earlier actual-stores-before-render-code gate; genuine stores remain mandatory
+for GREEN/acceptance. Paid/provider/live testing stays paused; model/effort unchanged.
+
+Task3-RED1 completed PID20336,21:49:47UTC,exit1,5failed/0.72s. Four intentional
+absent-workflow assertions and one genuine real-core compatibility failure: actual
+submit_cp0_review settles restricted CP0; actualCP1.begin succeeds; hostguard wrongly
+compares result.inputs against pack-only scheduler inputs. No fixture/schema failure.
+
+Independent Sol/high reviewer task0_oracle_review approved the bounded provenance
+rule after reading actual core, with exact positive/forged/stale expectations. Source
+permissions, public v1 envelope and required scheduler inputs remain unchanged.
+C1 lease amendment adds ONLY src/deploy_workflow/host.py selected-producer-input
+check/helper/imports needed, from fileSHA
+ a3bba6324cef4d902c327ce41536a8852cf894382487917880967764516be625.
+Core currentness/order/hash/status remain exact. For genuine CP0 review lineage:
+
+- Require exactly scheduler inputs followed by one accepted readiness-review input;
+  authenticate selected finishedCP0 attempt/result/number/currentinputs and exactly
+  valid source_readiness step/its exact inputs.
+- Hashcheck raw review and canonical ReadinessReview hash, regenerate expected trusted
+  candidate and match retained stepoutput plus finished-attempt candidate payload;
+  verify selected settled result via existing core settlement semantics. Raw/canonical
+  and candidate/settled hashes legitimately differ and must not be conflated.
+- Reject changed/missing/reordered/duplicate/unknown provenance, wrongstatus/step/
+  attempt/result, foreign/stale/tampered inputs or candidate/result mismatch before
+  disclosure, preserving prior evidence/no journalwrites. Genuine recorded CP0 review
+  with missingprovenance MUST NOT fall back to the equality component fixture path;
+  that path may remain only for existing no-step component fixtures.
+- Add causal cases in alreadyleased test_source_workflow.py; required confidence,
+  applicable noargument rewrite and independent Sol/high code review include this
+  hostdelta. No importedcore/toolwrapper/registry/permission/modelsetting change.
+
+C1 current typed API is archived immutably in docs/SOURCE-SLICE-API.md from its
+handoffae9802b45bb18aacb4a6c0e22d4a3051b4a41261b33239e98e391788d4b49279.
+C1/C2 may not change field spellings/helper signatures unilaterally. Actual producer
+and retained positive/gap stores are still pending, not invented by this freeze.
+
+**C2 rendering lease effective now**, Sol/high. Exact cleanstartingrevision
+ a5b240c41561d7b73544dc3039d73304a22c8928 from main; clonecoordinator-2,
+new localbranchcodex/rendered-slice preserving existing upstream/preparation work.
+Exclusive3trackedfiles: src/deploy_workflow/rendering.py,
+tests/test_connected_render.py,docs/handoffs/rendered-slice.md. Ignored scoped
+artifacts/runs allowed; no workflow/host/tools/importedrenderer/bindings/registry/
+sharedcases/contracts/queue edits. Consume frozen typed API and approved slice/case.
+Implement independent wrapper/tests now; producer may be lazy-imported at runtime
+until its reviewed code lands. Early RED may assert missingrenderer before dependent
+fixture setup; no mockstores or direct composers count as completion. Actual GREEN
+and browserproof wait integrated producer and genuine immutable case stores.
+
+Wrapper verifies typedreceipt/current realExecution exactlineage, uses actualview/
+existingrender/maps, keeps CP1/Model unrun, writes standaloneHTML/hash/identity receipt.
+Visiblebanner exactly: Source readiness only. Financial analysis and Model publication
+remain unrun. Actualpositive/gap DOM sourcehash/quote/locator/command/status/limitations
+verification is mandatory; historical25/26/alias mismatch remains explicitly open.
+NativeCUA currentdocumentation/observedreachability, preferIAB then justifiedChrome;
+no new installs/harness/providers. Runtime tests, staticserver and browser require
+fresh distinct LEAD admission; no job automatically admitted by code-writing lease.
+Confidence/noargumentrewrite/independentSolhigh review before exactcommit admission.

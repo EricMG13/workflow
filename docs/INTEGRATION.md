@@ -414,3 +414,26 @@ preserves the economic facts and scope; it changes no parser or analytical gate
 and establishes no CP1 or Model run. No tests or product code were changed or
 run here. C1 and C2 clones were not modified; use the resulting clean main HEAD
 as their source-fixture update base under LEAD's branch instructions.
+
+### Complete FY and quarterly financial source revision
+
+Integrated LEAD's exact source/contract commit
+`f56097b2265db5f70500daaae83a6468d7765f62` from the LEAD clone by local fetch
+and cherry-pick. It changes only `cases/financial/manifest.json`,
+`docs/CP1-MODEL-SLICE.md`, `PLAN.md`, `docs/QUEUE.md`, and `docs/TEAM.json`.
+The main integration commit is `6a4f09a41c855b035f319f2dbd7441d21b74a5c7`.
+
+Final approved hashes:
+
+- Financial manifest: `6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432`
+- CP1/Model contract: `0bd7d5d9e5fdffb4f8b3016fb913105dbd1f2d19b8b263827de9120f0bf08250`
+- Financial source: `82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429`
+
+These supersede the earlier V3/V4 fixture and contract hashes above. The
+reviewed source now contains a reported FY2025 plus four quarters, with the
+required opening and quarterly balance-sheet values; LEAD's extraction-only
+probe matched all 82 independently expected rows and source coordinates. The
+identity source is unchanged. No parser, product code, model setting, test or
+financial/provider job was changed or run for this integration. C1/C2 clones
+were left untouched; this clean main revision is the source-fixture update for
+their fast-forward under LEAD's instructions.

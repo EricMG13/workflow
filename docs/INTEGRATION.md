@@ -218,3 +218,26 @@ Integrated LEAD's exact docs-only continuation
 `74efe275e8df8fcb47f854b8b512053ca615d2ef` from `/Users/ericguei/Documents/Deploy Workflow Sessions/lead` (`codex/lead`) by local fetch and cherry-pick. It changes only `docs/QUEUE.md`, recording the completed combined adapter run and the exact C1 Task3-A producer lease. The integration commit is `ea36c2d9285805232d2b28c3bc8ba8320b216011` on `codex/checkpoint`.
 
 This queue update adds no product code and required no tests. The cherry-pick completed without conflict; the existing integration receipts and bootstrap TEAM registration remain intact. The queue's C1 Task3-A lease is based on clean code commit `cb71b86019774dfffb808f10d8493ae402dd5602`; the later queue/receipt commits are documentation-only. No paid/provider/live work is authorized or performed.
+
+## Frozen source slice API and lease-priority update
+
+Integrated LEAD's exact docs-only commit
+`fbdda49e8288a17e20298ba352fba119ad40845a` (parent
+`74efe275e8df8fcb47f854b8b512053ca615d2ef`) from the LEAD clone by local
+fetch and cherry-pick. The integration commit is
+`11ac2ec4548794a204de3c9d39de7f717e9d5889` on `codex/checkpoint`.
+
+The two admitted files are `docs/QUEUE.md` and `docs/SOURCE-SLICE-API.md`.
+The API archive SHA-256 matches the frozen value
+`15201bd0e66868f5cf058b1f92ee217b4f18974b8504fb4c3ec9c9356e8c20d4`.
+This docs-only change records the Task3 RED provenance finding, independently
+reviewed narrow host amendment, priority ruling and C2's parallel renderer
+lease. No API fields were guessed or changed; no product code or tests were
+added. The cherry-pick had no conflict and bootstrap registrations and prior
+receipts remain intact.
+
+Whitespace note: the frozen API archive has a trailing blank line at EOF, which
+`git diff --check` flagged while comparing the candidate to the prior base. I
+preserved the exact reviewed archive bytes/hash. The C1 handoff identifier
+`ae9802...` supplied in the queue is not a Git object in the C1 clone; no
+Git-object assertion is made from it.

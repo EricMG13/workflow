@@ -837,3 +837,15 @@ before this freeze commit so the prepared C1 branch can fast-forward to the comm
 integrated code-start base. C2's untracked planning handoff is outside integration
 paths and will be preserved. Exact product leases are the three files per lane in
 CP1-MODEL-SLICE.md; no shared host/source/imported-core edit is authorized.
+
+C1 found that historical prompts.quality_scope carries raw record_json/citations.
+The typed QualityInputs option is sufficient and remains the only admitted quality
+read_inputs body; quality_scope is explicitly forbidden. This is a pre-implementation
+permission clarification, not a wider grant or core edit. Final contract hash follows
+independent confirmation; source manifest and public C2 schema are unchanged.
+
+Independent Sol/high review approved the narrowed exact final contract
+ e9625c081b429513449654783d1e130d2bfb04a090e7e9bf1ce2141fd68cd69a;
+manifest remains e5a5b0cd1b0e5928344b4915fcbb0bf299f10932d7d3789f4e0a712d963580cb.
+QualityInputs and nested contracts have no citation/record_json fields. No further
+expectation/API blocker remains. This narrowing supersedes the earlier contract hash.

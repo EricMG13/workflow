@@ -189,3 +189,25 @@ narrow mypy, and Ruff passed. Those checks were performed in C1's admitted
 clone; no combined source/upstream suite was run here. Task1-A is adapter
 component evidence only; analytical settlement, downstream consumption and
 rendering remain unverified. No live/paid/provider calls or publishing occurred.
+
+## Combined source and upstream adapter check
+
+After LEAD's one-time MAIN-ADAPTERS-1 admission, ran exactly:
+
+```sh
+PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_source_tools.py tests/test_upstream_tools.py
+```
+
+The run used clean base `66c3a5afdcdd93e4605e0c9491456016991da0ab` and frozen
+seven-file bundle SHA256
+`729f94279b073fe675f87d6be4828e1b6f8431884bdf899a963d9e356a21a55d`, computed
+as sorted relative path + NUL + file bytes + NUL. PID 19186 ran from
+`2026-10-26T21:41:53.367701000Z` to `2026-10-26T21:41:54.618272000Z`, exit 0:
+111 passed in 1.08 seconds. Full output is retained at
+`artifacts/combined-adapters-1.log` (ignored local evidence). The bundle hash
+was recomputed afterward and remained identical; no tested source changed.
+No broader suite, type check, provider/live/paid call or deployment was run.
+
+The next C1 Task3-A slice should start from the clean checkpoint after this
+receipt commit. The combined test process exited successfully; its one heavy
+job slot is released.

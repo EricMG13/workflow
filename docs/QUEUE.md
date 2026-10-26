@@ -203,3 +203,141 @@ git diff --check, reviewed-source hash comparison and staged file-scope review.
 No source-wide suite or paid/provider run. No production functions changed;
 rewrite-tournament is exempt for this docs/config/generated-case-data-only commit.
 Scratch generators are untracked local work and are not part of the deliverable.
+
+## Live coordination — human-authorized continuation
+
+The human explicitly authorized sending leases to C1/C2, telling PR MANAGER to
+integrate Task0, and continued team coordination through the first source-to-rendered
+slice. This supersedes the earlier no-message boundary for these project assignments.
+On 2026-10-26 all three messages were sent through the native tool. No other service
+or person is authorized. Paid/provider/live tests remain paused.
+
+PR MANAGER integrated Task0 as c4ca5680d557fae5a9327db6d344c48b51728b75,
+receipt c8e758526502cb3c6810710a8d3623428bf5d370. LEAD verified the six-file
+integration scope and clean main checkout. Product commits are not yet admitted.
+
+Runtime token C2-RED-1: fresh load/process check 2026-10-26 21:21:23 UTC,
+10 CPUs, load 2.69/2.47/2.53, no detected running project check. C1 had no actual
+admitted job, so its first-slot reservation temporarily yielded to C2's ready
+single-test RED run. Exact working directory: coordinator-2 clone. Command:
+`PYTHONPATH=src '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_upstream_tools.py::test_factory_lookup_preserves_fixed_facts`.
+Exact frozen test hash: 0f1ec380cc24dff4233b61f49b106545aad8fea6f0fea1f06742a694a00e07ec;
+base b90c51c382b0544be5dac194eb91124470c22943; upstream.py absent, independently
+checked by LEAD. Only this job is admitted, once; expected red is explicit absent
+implementation, not fixture/setup/import failure. C2 records PID/start/finish/result
+and releases token before implementation. No other heavy job may overlap. C1 retains
+the next-slot reservation after that release.
+
+C2-RED-1 released: PID12077, 21:22:01.350640..21:22:02.787517 UTC, exit1,
+one expected absent-UpstreamTools feature failure after literal/hash/real-Execution
+fixture success; no collection/setup failure. LEAD read the local handoff and native
+completion receipt. C2 resumed implementation; no further runtime admitted.
+
+Runtime token C1-RED-1 admitted after fresh 21:22:09 UTC scan: no project check,
+load2.47/2.44/2.51. Exact C1 command:
+`PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_source_tools.py`.
+Test SHA256 independently verified:
+41aa7d62c6dd47d4123f8bb45e8c43a990931b0646e3054280f64d3b807d499d.
+Source-delta hash in C1 handoff:
+53e9256c2503c488f4dc4db2dee1489773e23173bab9418cd3e7d71afd2e280a.
+Only one run, frozen source/test; no broader checks/provider calls. Completion/PID
+receipt pending; C2's next runtime waits for release.
+
+C1-RED-1 released: PID12199, 21:22:29.771190..21:22:30.505321 UTC,
+exit1,30failed/5passed: five real imported read/search state failures, 25 explicit
+absent-host assertions; extraction preservation and literal Decimal assertions passed.
+Equivalent pytest.main timing-wrapper deviation accepted as scoped RED evidence;
+future jobs use literal command and full captured logs. No rerun for cosmetic history.
+
+C1-GREEN-1 admitted at fresh21:25:29 scan: no project job, load3.31/2.60/2.54.
+Exact command as C1-RED-1, literal -m pytest, full artifacts/source-green-1.log.
+Five-file frozen bundle independently verified SHA256
+ d55f14fde50a9d6bd5f7876e408512f4a64dac5f69b80538c10c77c09e8c420c.
+Algorithm: sorted leased source/test path UTF8+NUL+bytes+NUL. Only that job admitted;
+C2-GREEN-1 queues next, source/test frozen, static reviews read-only.
+
+C1-GREEN-1 ended21:25:47 UTC, PID13810,exit1,34passed/1failed. LEAD read full
+local log and native output. Failing future-financials factory test did not raise;
+root cause/fixture diagnosis remains C1's responsibility, no unreviewed fix assumed.
+No project process remained at21:25:55 (load2.96/2.58/2.53).
+C2-GREEN-1 admitted next, once, exact focused upstream pytest command above,
+full log, frozen source-set c61dc62e523954d28c22b349c354cbf56ecdbd7cd625f0aab4eaf881e1775252.
+LEAD verified upstream.py dd2001abbc7912efa89d384f8bb80c3ccf67456ba464f59910ccea5fd1bb5bec
+and tests4b6f850a3b43bd626953efd788aa93a42f4774d01f5626481c6ed026f378b5b8.
+If review changed source after freeze, admission is void until new hashes. No other
+heavy job may overlap. C1 may diagnose/edit only after its completed job is released.
+
+C2-GREEN-1 released: PID14078,21:26:23.889476..21:26:24.529684 UTC,
+exit0,48passed/0.48s. Full artifacts/c2-green-1.log, exact admitted literal command,
+source-set unchanged. Independent static review identified interrupted-call receipt
+error-code and stronger causal tests; final reviewed candidate/check still pending.
+No heavy slot is held. No analytical owner completion follows component passes.
+
+C2-RED-2 admitted after fresh no-project-job scan: only targeted interrupted-call
+receipt assertion, source-set1b2233797ad8774cc66f6fa836d4b6a1804d76a9dd556684a031de2ea84e2d27;
+productdd2001abbc7912efa89d384f8bb80c3ccf67456ba464f59910ccea5fd1bb5bec,
+testsaa105c50d5f64ed47226ddac8812016bf3dfe9f735caa79fbfc5ada21b41ebe6.
+The independent reviewer identified interrupted-call refused/error_code=None after
+control exception, while full first focused run was48/48. Confirm causal RED before
+fixing; preserve process-control propagation. Only this targeted job is admitted.
+
+C2-RED-2 completed PID14458,21:28:00.789714..21:28:01.192964 UTC,exit1,
+one targeted failure after KeyboardInterrupt propagation verified: retained receipt
+was refused rather than error/internal_error. C2 applies only reproduced fix plus
+causal test improvements and requests new final candidate. No runtime slot held.
+
+C1-RED-2 admitted after fresh21:28:43 UTC no-project-job scan,load2.57/2.56/2.53.
+Exact same focused source pytest command, full artifacts/source-red-2.log. Five-file
+bundle independently verified ff4c976afd400038a74c1c2f19fb303f63e628d12cf8dca48d7e38fb29ebebbc.
+Review-driven deep-JSON receipt hypothesis must reproduce before any product patch.
+C2-GREEN-2 is queued after release; no simultaneous heavy job.
+
+## Task3-A independent expectation and confidence receipt
+
+Independent Sol/high reviewer task0_oracle_review reapproved the first connected
+source slice after examining the literal statements, method obligations and missing
+financial-source failure. Exact approved SHA256:
+
+- docs/SLICE-CONTRACT.md: c1970233fd69aa5c7cf5b0a73156a7323eddcc894bd97a4cd558765c023dfb77
+- cases/connected/manifest.json: 30b383bd397ecf1c99f3f49d02674605d8ad9c6868da4b4f205124942d731df1
+
+Read-only/static review only; no candidate workflow/render code exists or was evaluated.
+Positive readiness assesses the whole selected restricted FY2025/FY2024 canonical
+foundation owner, not merely source_context permission. All absent financial notes,
+terms/maturities/covenants, segment/KPI/add-back/narrative/quarter and entity-perimeter
+disclosures are explicit bounded gaps; broader Model/legal/specialist work is not
+asserted sufficient. Their true source absences do not relabel unfinished CP1
+implementation stages as missing data. Genuine missing statements prevent CP1 and
+justify CONDITIONAL/DO NOT RUN. Both source hashes and raw financial coherence were
+independently checked. Synthetic CP0 settlement is restricted, never fully qualified.
+
+Confidence review — first-slice docs/data and coordination ledger:
+1. Least confident: positive readiness might evade whole-owner source sufficiency.
+   Reviewed cp0 method and selected requested_modules=CP1 with independent reviewer;
+   strengthened objective/missing-disclosure inventory. Approved only restricted FY
+   method, no Model/legal sufficiency. Financial-stage implementation remains open.
+2. Least confident: unread submit expectation contradicted pre-validator audit binding.
+   Concrete order showed binding precedes ToolRules. Patched expectation to permit
+   retained audit binding while forbidding validator/journal writes, valid outputs,
+   settlement or consumer promotion after evidence-rule refusal.
+3. Least confident: offline transport could become arbitrary filesystem authority.
+   Restricted write_receipt to trusted setup-selected path; no analytical path argument.
+   Actual participant calls/results and real journal workflows are required; mocks or
+   developer commands alone cannot meet the slice. Still requires runtime proof.
+4. Least confident: consumer/render proof could be constructed from unrelated artifacts.
+   Require exact actual selected snapshot/pack/CP0 result and CP1 current_inputs/output;
+   stale/forged/mixed-case renderer must refuse. Pending CP1 stays unrun in module view.
+   Separate positive/gap stores and actual browser DOM observations remain required.
+5. Least confident: task/runtime ledger could imply a check/integration not performed.
+   Verified native dispatch, Task0 integration scope/clean state, exact frozen hashes,
+   completed log/PID/result receipts and serial admission order. Product integration
+   is still held. No heavy job is treated as completed from code appearance.
+
+Fixed: the scope/binding/path contract issues. Verified fine: literal source hashes,
+coherent raw statements, independent state/readiness/consumer expectations, disjoint
+current leases and reviewed hashes. By design: partial CP1 source-context is not full
+CP1/Model completion. Open: adapter final reviews, exact integrated Task3 bases, actual
+analytical host sessions, settlements/consumer artifacts, HTML and visible DOM proof.
+Docs/data changes only; no production functions changed, rewrite workflow exempt.
+Task3 producer receipt field spellings will be fixed by C1's typed workflow handoff
+before the dependent C2 rendered lease starts; no unilateral consumer API guess.

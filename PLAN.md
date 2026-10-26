@@ -96,6 +96,21 @@ can be demonstrated before all downstream owners finish, but is not full complet
 - [ ] Render actual selected-run values, citations/status and source/provenance links; verify visible DOM.
 - [ ] Close applicable matrix rows only after all required links are evidenced.
 
+### Task3-A — first bounded source-to-rendered connection
+
+Shared interface and independent positive/missing-financial cases are frozen in
+docs/SLICE-CONTRACT.md and cases/connected/manifest.json after independent review.
+This first slice connects actual source sessions -> evidence-gated CP-0 settlement
+-> real CP-1 source-context retained consumption -> selected-run Evidence/Limitations
+and CP-0 DOM. It deliberately leaves full CP-1/Model and remaining Task3 chain open.
+Exact code-start bases/file ownership follow adapter integration in docs/QUEUE.md.
+
+- [ ] C1: actual workflow bridge and retained positive/gap analytical host sessions.
+- [ ] C2: receipt-authenticated selected-run rendering and actual browser DOM proof.
+- [ ] Independent sensitive review, both code-review workflows, focused and combined checks.
+- [ ] PR MANAGER: integrate only admitted exact commits; retain same-revision final proof.
+- [ ] Update only proven module-matrix links; retain every broader owner/stage limitation.
+
 ## Task 4 — complete earnings and specialist owners in small slices
 
 C1 queue: CP1B, CP1C, CP1D, CP2/3 typed consumption, CP3D, CP2E.

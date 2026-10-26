@@ -1,0 +1,210 @@
+{
+  "schema_version": "source-render-slice-cases/1",
+  "scope": "Task3-A: actual CP0 source readiness settlement -> actual CP1 source_context consumption -> selected-run Evidence/Limitations/CP0 DOM; not full CP1 or Model completion",
+  "raw_rule": "Each page is literal UTF-8 with LF and no terminal LF. Join financial pages with U+000C for financial source hash. Supplied page representation, no PDF/OCR claim.",
+  "run": {
+    "run_id": "slice-source-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-1"
+    ],
+    "method_version": "deploy-v-r14"
+  },
+  "sources": [
+    {
+      "source_id": "identity",
+      "name": "Issuer identity note",
+      "status": "ready",
+      "sha256": "93735759484b756f5d6eb54f7b99c6c33c2414083257358daaa498087283bdb3",
+      "extraction_status": "complete",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIssuer identity note\nNorthbridge Synthetic Group is the issuer and consolidated group.\nFiscal year end: December 31.\nPublished January 10, 2026.\nNo borrower, guarantor or restricted-group perimeter is established by this source set."
+        }
+      ]
+    },
+    {
+      "source_id": "financial",
+      "name": "Unaudited annual financial statements",
+      "status": "ready",
+      "sha256": "fc03eecff2e157030c498a66e4de3eacb26f778fff7b449924ad8d18cb0e6a9e",
+      "extraction_status": "complete",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIssuer-prepared unaudited annual financial statements\nPublished January 10, 2026.\nReporting basis: IFRS; entity perimeter: consolidated group.\nCurrency: USD; amounts in millions.\nYears ended December 31: 2025 and 2024.\nCONSOLIDATED INCOME STATEMENTS\nYear ended December 31  2025  2024\nRevenue  120  100\nOperating costs excluding depreciation  90  75\nDepreciation  5  5\nOperating profit  25  20\nNet interest expense  5  3\nProfit before tax  20  17\nIncome tax expense  4  4\nNet profit  16  13"
+        },
+        {
+          "locator": "page:2",
+          "text": "CONSOLIDATED BALANCE SHEETS\nDecember 31  2025  2024\nCash and cash equivalents  20  15\nTrade receivables  15  12\nInventories  10  8\nProperty plant and equipment  60  55\nOther assets  5  5\nTotal assets  110  95\nBorrowings  50  45\nTrade payables  20  17\nOther liabilities  10  10\nTotal liabilities  80  72\nTotal equity  30  23\nTotal liabilities and equity  110  95"
+        },
+        {
+          "locator": "page:3",
+          "text": "CONSOLIDATED CASH FLOW STATEMENTS\nYear ended December 31  2025  2024\nNet profit  16  13\nDepreciation  5  5\nWorking capital cash movement  (2)  2\nOperating cash flow  19  20\nCapital expenditure  (10)  (8)\nNet cash used in investing  (10)  (8)\nNet borrowings  5  0\nDividends paid  (9)  (7)\nNet cash used in financing  (4)  (7)\nNet change in cash  5  5\nOpening cash  15  10\nClosing cash  20  15\nCash interest paid  5  3\nCash tax paid  4  4\nAs of January 10, 2026, no subsequent events are reported.\nQuarterly, segment, facility and guarantor details are outside this source set."
+        }
+      ]
+    }
+  ],
+  "source_limit": "Synthetic unaudited statements; financial notes, debt and facility terms, maturities, covenants, segments, KPIs, add-backs, narrative drivers, quarters and borrower/guarantor/restricted-group perimeters are outside this source set.",
+  "positive_expectations": {
+    "CP-0": {
+      "source_authority": "issuer",
+      "source_fidelity": "verified for the finite supplied page representation, not audit qualification",
+      "issuer_confirmed": true,
+      "consumer_id": "CP-1",
+      "consumer_readiness": "READY_WITH_LIMITATIONS",
+      "exact_command": "Run CP-1",
+      "settled_status": "restricted",
+      "assertion_scope": "SOURCE_SUFFICIENCY_ONLY; CP_MODEL_INPUT_CONTRACT_NOT_EVALUATED",
+      "limits_must_include": [
+        "Synthetic case; not real issuer qualification",
+        "Synthetic unaudited statements; financial notes, debt and facility terms, maturities, covenants, segments, KPIs, add-backs, narrative drivers, quarters and borrower/guarantor/restricted-group perimeters are outside this source set."
+      ],
+      "source_readiness_scope": "Selected CP1 can execute its FY canonical-foundation method with missing disclosures explicitly recorded; no quarterly/Model/legal/specialist sufficiency assertion.",
+      "review_objective": "Assess the entire selected CP-1 owner for a restricted historical FY2025/FY2024 canonical financial foundation; this is not a source_context-only readiness assertion.",
+      "evidence_demand": "Located annual income statements, balance sheets, cash flows and explicit issuer, period, currency, unit and accounting basis; retain all absent disclosures as bounded gaps. Model, quarterly and legal/specialist sufficiency is not asserted."
+    },
+    "CP-1_source_context": {
+      "attempt_status": "pending",
+      "step_status": "valid",
+      "selected_CP0_hash": "actual settled CP0 result hash; not a caller-supplied replacement",
+      "output_status": "restricted",
+      "evidence_class": "unaudited_without_auditor",
+      "evidence_tier": "2b",
+      "publication_date": "2026-01-10",
+      "fiscal_year_end": "December 31",
+      "currency": "USD",
+      "unit": "MILLIONS",
+      "accounting_basis": "IFRS",
+      "entity_perimeter": "consolidated group",
+      "event_scan": "no_events_identified within the dated supplied report only",
+      "gap_roles": [
+        "borrower",
+        "guarantor_group",
+        "restricted_group"
+      ],
+      "promoted": false
+    },
+    "tools": {
+      "required_observations": [
+        "CP0 successful search and all permitted page reads",
+        "CP1 source_context successful search and all permitted page reads"
+      ],
+      "tool_names": [
+        "search_pack",
+        "read_pages"
+      ],
+      "independent_sessions": true,
+      "same_frozen_pack": true
+    },
+    "rendered_routes": {
+      "#evidence": [
+        "Issuer identity note",
+        "Unaudited annual financial statements",
+        "ready"
+      ],
+      "#CP-0": [
+        "Run CP-1",
+        "READY_WITH_LIMITATIONS",
+        "SOURCE_SUFFICIENCY_ONLY; CP_MODEL_INPUT_CONTRACT_NOT_EVALUATED"
+      ],
+      "#limitations": [
+        "Synthetic case; not real issuer qualification",
+        "Synthetic unaudited statements; financial notes, debt and facility terms, maturities, covenants, segments, KPIs, add-backs, narrative drivers, quarters and borrower/guarantor/restricted-group perimeters are outside this source set."
+      ]
+    },
+    "source_inspector": {
+      "selector": "button[data-source-id=\"financial\"]",
+      "visible_expected": [
+        "financial",
+        "page:1",
+        "page:2",
+        "page:3",
+        "Revenue  120  100",
+        "Currency: USD; amounts in millions."
+      ],
+      "expected_source_hash": "fc03eecff2e157030c498a66e4de3eacb26f778fff7b449924ad8d18cb0e6a9e"
+    },
+    "completion_limits": [
+      "CP1 financials/narrative/readiness/quality not run by this lease",
+      "CP1 module remains unrun in delivered module view; retained source_context is not a promoted module",
+      "CP-MODEL unrun/not selected; no artificial deterministic model loop"
+    ]
+  },
+  "gap_case": {
+    "run_id": "slice-source-gap",
+    "change": "financial source is missing: no hash/spans; extraction_status blocked; limitation Financial statements were not supplied. identity source unchanged and actually read.",
+    "expected_CP0_status": "restricted",
+    "issuer_confirmed": true,
+    "consumer_readiness": "CONDITIONAL",
+    "missing_source": "Annual financial statements",
+    "exact_command": "DO NOT RUN",
+    "explicit_gap": {
+      "kind": "source",
+      "severity": "material",
+      "affected_modules": [
+        "CP-1"
+      ],
+      "description": "Financial statements were not supplied.",
+      "remediation": "Supply the annual financial statements with located content."
+    },
+    "CP1_begin": "NotAuthorized; no CP1 ticket/step/submission/tool call/output",
+    "visible_routes": {
+      "#evidence": [
+        "Unaudited annual financial statements",
+        "missing",
+        "Financial statements were not supplied."
+      ],
+      "#CP-0": [
+        "CONDITIONAL",
+        "DO NOT RUN"
+      ],
+      "#limitations": [
+        "Financial statements were not supplied."
+      ]
+    },
+    "must_not_reuse": "No positive-run CP0 hash, source quote or CP1 output may be silently used as gap-case output"
+  },
+  "causal_cases": [
+    {
+      "id": "C-unread-submit",
+      "change": "omit a required successful page read but keep a payload citation to that page",
+      "expected": "ToolRules refuses before validator/journal submission; an audit submission-binding may be retained, but no validated output, settlement or consumer promotion"
+    },
+    {
+      "id": "C-wrong-binding",
+      "change": "change payload bytes, ticket, pack or invocation binding before submitting",
+      "expected": "refuse; no false retained valid output"
+    },
+    {
+      "id": "C-stale-render",
+      "change": "selected snapshot/pack/CP0 head changes after completed receipt",
+      "expected": "render wrapper refuses stale receipt, no old/new mixed artifact"
+    },
+    {
+      "id": "C-forged-output",
+      "change": "replace CP1 step output or CP0 result bytes without matching validated hash lineage",
+      "expected": "refuse; no render publication"
+    },
+    {
+      "id": "C-gap-gate",
+      "change": "use actual negative-case settled CP0 command DO NOT RUN",
+      "expected": "real Execution.begin(CP1) refuses; never bypass via direct constructor or invented Module"
+    }
+  ],
+  "retention": [
+    "exact source bytes/hashes and pack identity",
+    "actual session-bound tool receipts including unsuccessful calls",
+    "payload bytes/hash and immutable submission binding created before journal write",
+    "validated CP0 step output and settled selected result identities",
+    "actual CP1 current_inputs CP0 reference and source_context payload/output hashes",
+    "immutable final snapshot identity and selected artifacts",
+    "actual rendered HTML hash plus browser DOM observations/screenshots for positive and gap cases"
+  ],
+  "financial_literal_note": "Financial source values are coherent raw facts for this source slice; no financial computation/Model output is claimed. Later financial lease must independently review normalization and actual derived cells."
+}

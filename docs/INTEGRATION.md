@@ -99,3 +99,26 @@ checkout remains local, with no external remote; the working tree was clean
 after the integration commit. Task0 freezes contracts, cases and leases only;
 no analytical module is accepted. C1 Task1-A and C2 Task2-A are not integrated
 and require their own later LEAD admission.
+
+## Task3-A contract and slice ledger integration
+
+Integrated LEAD's exact admitted documentation/data commit
+`d055a1f4754513613e58521d4d158105816248fa` from its `codex/lead` clone by
+local fetch and cherry-pick. The resulting integration commit is
+`4e40ce955f8fa1c7df90dd8b2d669b8b48779b3b` on `codex/checkpoint`.
+
+The four admitted files are `PLAN.md`, `docs/QUEUE.md`,
+`docs/SLICE-CONTRACT.md`, and `cases/connected/manifest.json`. The independent
+Sol/high review hashes match the committed files:
+
+- `docs/SLICE-CONTRACT.md`: `c1970233fd69aa5c7cf5b0a73156a7323eddcc894bd97a4cd558765c023dfb77`
+- `cases/connected/manifest.json`: `30b383bd397ecf1c99f3f49d02674605d8ad9c6868da4b4f205124942d731df1`
+
+The queue records the detailed confidence/static review and runtime ledger.
+This change freezes the restricted first connected source slice and its
+dispatch/evidence requirements; no product code changed and no module is
+accepted. `git cherry-pick` completed without conflict, and the four-file
+scope matched LEAD's admission. No tests, heavy jobs or live/paid/provider calls
+were run for this docs/data-only integration. The prior TEAM registration and
+integration receipts remain in place. Product commits are still held pending
+their separate final review and LEAD admission.

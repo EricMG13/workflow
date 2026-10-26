@@ -849,3 +849,62 @@ Independent Sol/high review approved the narrowed exact final contract
 manifest remains e5a5b0cd1b0e5928344b4915fcbb0bf299f10932d7d3789f4e0a712d963580cb.
 QualityInputs and nested contracts have no citation/record_json fields. No further
 expectation/API blocker remains. This narrowing supersedes the earlier contract hash.
+
+
+### Task3-B implementation leases released
+
+Common integrated code-start fixed at904ab86303024d885e6530b033cf5fe231e90d21,
+clean, final contract/manifest bytes verified by LEAD. Mechanical receipt does not
+block code. C1 preparation was cherry-picked as a788285 rather than retaining c3's
+identity, so no ff-only route from original c3 is claimed: C1 preserves prepbranch
+and creates codex/cp1-financial-impl at904ab863. C2's base8d is ancestor and may ff-only
+codex/cp1-rendered there while preserving its owned untracked handoff. No reset/rebase.
+
+C1 and C2 explicitly selected gpt-6.1-sol/high through native dispatch for their
+financial/state/provenance implementation; this is selected coding-route evidence,
+not hidden provider telemetry or a product model/effort change. Exact three-file
+leases in CP1-MODEL-SLICE active. No runtime job admitted yet; short static work and
+independent reviews can overlap. Heavy check commands/hashes return to LEAD first.
+
+C2-FIN-RED-1 admitted23:12:08UTC after fresh scan: no project check/server job,
+load2.60/2.86/3.17. C2 exact testfb323e6fe5cbda9b1880d00d459d6912f973fa6e6be94a53e223a11dfac951e2
+and absent product module verified. One entrypoint baseline test only, source/test
+frozen; full PID/UTC/log/exit and tokenrelease required. C1 RED waits this release.
+
+C2-FIN-RED-1 completed PID32584,23:12:25.908980..26.105710UTC,exit1,
+1failed/0.08s as expected for missing entrypoint, test unchanged; tokenreleased.
+C1-FIN-RED-1 admitted23:12:45 fresh scan no projectjob/load2.47/2.82/3.15;
+exact test7f9e6fea8d477b6af31a32d6d40bf66b60129f079762709644e77f4ce1440133,
+productabsent, one missing-module baseline only. No actual financialfixture run;
+freeze code/test and manifest until exit, full PID/time/log/exit, release immediately.
+
+C1-FIN-RED-1 completed expected missing-module failure1/0.24s; immediate tool did
+not expose PID, so none is fabricated. Log work/cp1-fin-red-1.log; exacttestunchanged,
+no financialfixture/provider execution; slotreleased. C1 then confirmed adopted
+expected_cells skips quarterly duration scopes and _cells requires>=2numbers.
+LEAD corrected fixture layout only (same economic facts):4quarter IS/CFS columns,
+opening+4quarterBS columns with explicitzero rows. No core/parser gate changed.
+
+FIN-SOURCE-EXTRACT-PROBE-1 admitted23:14:37UTC fresh no projectjob scan,
+load4.48/3.17/3.22 on10CPUs, exactcandidate manifestd2ec749d19ecfee2b0b1c0e31c37fbae95ac8995e901a3d5a8466cce54cfc860.
+One bounded extraction-only comparison against independently authored raw row/header/
+caption/line/column/Decimal expectations on pages2/3/4. Freezefixture/parser, record
+PID/time/log/exit/hashes. Not a CP1/Model success or financialactor execution.
+
+FIN-SOURCE-EXTRACT-PROBE-1 completed PID32915,
+23:14:48.120407..23:14:48.154511UTC,exit0; exact75rows matched independent
+headers/captions/line numbers/columnorder/raw/Decimal expectations with noflags.
+Fixture/parser unchanged duringcheck; log+record in LEADwork/cp1-source-layout.
+No CP1/Model or provider execution occurred; runtime tokenreleased.
+
+Independent Sol/high finalstaticreview approved reformatted exact manifest
+ d2ec749d19ecfee2b0b1c0e31c37fbae95ac8995e901a3d5a8466cce54cfc860,
+financial source2e54bacd6b6e83dd62d8ec226e0abf17461157ccd45ab2bf3011256165b91872;
+identity74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4 unchanged.
+ISpage2=16rows/CFSpage3=29/BSpage4=30; opening+fourquarterfinancial arithmetic
+and raw signs remain coherent. This manifest hash supersedes e5a5b0; contract
+ e9625c081b429513449654783d1e130d2bfb04a090e7e9bf1ce2141fd68cd69a unchanged.
+Only fixture layout/explicit source rows and pinned extraction expectations changed;
+no parser/financial engine or analytical scope changed. Confidence doubt (empty
+extraction masking omittedsource data) reproduced by static parser boundary and
+closed with revised literals + exact admitted probe, not a gate bypass.

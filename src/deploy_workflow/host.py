@@ -6,11 +6,12 @@ from threading import Lock
 from typing import Any, cast
 from uuid import uuid4
 
-from deploy_vii.contracts import Input
-from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot, current_inputs
+from deploy_vii.contracts import Input, Module
+from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot, current_inputs, settle
 from deploy_vii.live.context import declared_sources, readable_sources
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
 from deploy_workflow.tools.source import SourceError, SourceTools
 
@@ -27,6 +28,81 @@ def _step_inputs(attempt: Attempt, preceding: tuple[Any, ...]) -> tuple[Input, .
         *attempt.inputs,
         *(Input(input_id="step:" + step.step_id, sha256=step.content_hash()) for step in preceding),
     )
+
+
+def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
+    """Recognize only CP0's authenticated final canonical-review provenance tail."""
+    expected = current_inputs(snapshot, producer.module_id)
+    if producer.module_id != "CP-0":
+        return producer.inputs == expected
+    selected = [
+        a
+        for a in snapshot.attempts
+        if a.module_id == "CP-0" and a.result_sha256 == producer.content_hash()
+    ]
+    if len(selected) != 1:
+        return False
+    attempt = selected[0]
+    if (
+        attempt.status != "finished"
+        or attempt.issues
+        or attempt.interruption is not None
+        or attempt.number != producer.attempt
+        or attempt.inputs != expected
+    ):
+        return False
+    if not attempt.steps:
+        # A removed review step must not hide provenance still held in its candidate.
+        if attempt.payload_sha256 is None or producer.inputs != expected:
+            return False
+        candidate_json = store.payload(attempt.payload_sha256)
+        candidate = Module.model_validate_json(candidate_json)
+        if candidate.inputs != expected:
+            return False
+        finished, result = settle(
+            snapshot,
+            attempt,
+            candidate_json,
+            lambda _: (),
+            pack=store.pack(snapshot),
+            load=store.head_module,
+        )
+        return finished == attempt and result == producer
+    if len(attempt.steps) != 1:
+        return False
+    step = attempt.steps[0]
+    if (
+        step.step_id != "source_readiness"
+        or step.status != "valid"
+        or step.inputs != expected
+        or step.output_sha256 is None
+        or attempt.payload_sha256 is None
+    ):
+        return False
+    review = ReadinessReview.model_validate_json(store.payload(step.payload_sha256))
+    if producer.inputs != (
+        *expected,
+        Input(input_id="readiness-review", sha256=review.content_hash()),
+    ):
+        return False
+    pack = store.pack(snapshot)
+    candidate = build_readiness(pack, review, attempt=attempt.number)
+    candidate_json = candidate.model_dump_json()
+    if (
+        step.output_sha256 != candidate.content_hash()
+        or store.step_output(step.output_sha256) != candidate_json
+        or store.payload(attempt.payload_sha256) != candidate_json
+    ):
+        return False
+    finished, result = settle(
+        snapshot,
+        attempt,
+        candidate_json,
+        lambda supplied: () if supplied == candidate else ("CP0 candidate differs",),
+        pack=pack,
+        load=store.head_module,
+    )
+    return finished == attempt and result == producer
 
 
 def _execution_state(
@@ -92,11 +168,7 @@ def _execution_state(
                 producer.as_of,
                 producer.method_version,
             ) == (run.run_id, run.issuer_id, run.as_of, run.method_version)
-            if (
-                not same_head
-                or not same_run
-                or producer.inputs != current_inputs(snapshot, producer.module_id)
-            ):
+            if not same_head or not same_run or not _producer_inputs(store, snapshot, producer):
                 raise SourceError("identity_mismatch")
         for index, step in enumerate(prior_steps):
             if step.inputs != _step_inputs(attempt, prior_steps[:index]):

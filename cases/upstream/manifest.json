@@ -1,0 +1,376 @@
+{
+  "schema_version": "task0-upstream-cases/1",
+  "case_kind": "frozen component microcase independent of source case; not a connected CP-1 settlement",
+  "run": {
+    "run_id": "task0-upstream-run",
+    "issuer_id": "synthetic-issuer",
+    "as_of": "2025-12-31",
+    "method_version": "deploy-v-r14"
+  },
+  "consumer": {
+    "module_id": "CP-5",
+    "step_id": "integrity_review",
+    "attempt": 0,
+    "ticket_id": "task0-upstream-ticket"
+  },
+  "producer": {
+    "module_id": "CP-1",
+    "status": "accepted",
+    "sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+    "hash_rule": "SHA-256 of UTF-8 artifact_json; same bytes as Module.model_dump_json()",
+    "artifact_json": "{\"schema_version\":\"module/5\",\"run_id\":\"task0-upstream-run\",\"issuer_id\":\"synthetic-issuer\",\"as_of\":\"2025-12-31\",\"method_version\":\"deploy-v-r14\",\"module_id\":\"CP-1\",\"status\":\"accepted\",\"inputs\":[],\"facts\":[{\"fact_id\":\"revenue\",\"label\":\"Revenue\",\"table_id\":\"income\",\"row_id\":\"revenue\",\"field\":\"value\",\"amount\":\"120\",\"text\":null,\"status\":\"known\",\"unit\":\"MILLIONS\",\"currency\":\"USD\",\"scale\":\"1000000\",\"decimals\":null,\"period\":\"FY2025\",\"basis\":null,\"denominator\":null,\"citations\":[{\"source_id\":\"upstream-note\",\"source_sha256\":\"d0c13ba47b0c6703c40aa521def7b28a834f99ac3f810c80103e49406c0d30cf\",\"locator\":\"line:1\",\"quote\":\"Revenue was USD 120 million in FY2025.\"}],\"calculation_id\":null,\"value_class\":null,\"source_amount\":null,\"stated_amount\":null,\"calculation_status\":null,\"formula\":null,\"limitation\":null},{\"fact_id\":\"operating_profit\",\"label\":\"Operating profit\",\"table_id\":\"income\",\"row_id\":\"operating_profit\",\"field\":\"value\",\"amount\":\"0\",\"text\":null,\"status\":\"known\",\"unit\":\"MILLIONS\",\"currency\":\"USD\",\"scale\":\"1000000\",\"decimals\":null,\"period\":\"FY2025\",\"basis\":null,\"denominator\":null,\"citations\":[{\"source_id\":\"upstream-note\",\"source_sha256\":\"d0c13ba47b0c6703c40aa521def7b28a834f99ac3f810c80103e49406c0d30cf\",\"locator\":\"line:1\",\"quote\":\"Operating profit was USD 0 million in FY2025.\"}],\"calculation_id\":null,\"value_class\":null,\"source_amount\":null,\"stated_amount\":null,\"calculation_status\":null,\"formula\":null,\"limitation\":null},{\"fact_id\":\"impairment\",\"label\":\"Impairment\",\"table_id\":\"income\",\"row_id\":\"impairment\",\"field\":\"value\",\"amount\":null,\"text\":null,\"status\":\"missing\",\"unit\":\"MILLIONS\",\"currency\":\"USD\",\"scale\":\"1000000\",\"decimals\":null,\"period\":\"FY2025\",\"basis\":null,\"denominator\":null,\"citations\":[],\"calculation_id\":null,\"value_class\":null,\"source_amount\":null,\"stated_amount\":null,\"calculation_status\":null,\"formula\":null,\"limitation\":\"Synthetic upstream fact not disclosed\"}],\"tables\":[],\"claims\":[],\"limitations\":[],\"inherited_limitations\":[],\"attempt\":0}"
+  },
+  "trusted_verification_source": {
+    "source_id": "upstream-note",
+    "locator": "line:1",
+    "raw_text": "Revenue was USD 120 million in FY2025.\nOperating profit was USD 0 million in FY2025.\nUPSTREAM_RAW_ONLY",
+    "raw_sha256": "d0c13ba47b0c6703c40aa521def7b28a834f99ac3f810c80103e49406c0d30cf",
+    "consumer_raw_permission": false,
+    "consumer_quote_permission": false
+  },
+  "grant": {
+    "producer_ids": [
+      "CP-1"
+    ],
+    "table_ids": [
+      "income"
+    ],
+    "row_ids": [
+      "revenue",
+      "operating_profit",
+      "impairment"
+    ],
+    "fields": [
+      "fact_id",
+      "label",
+      "table_id",
+      "row_id",
+      "field",
+      "amount",
+      "text",
+      "status",
+      "unit",
+      "currency",
+      "scale",
+      "period",
+      "limitation",
+      "citation_handles"
+    ],
+    "raw_source_ids": [],
+    "fact_fields": [
+      "value"
+    ],
+    "integrity_internal_inspection": "all metadata/citations of the single bound CP-1 artifact; no raw/quote disclosure"
+  },
+  "expected_values": {
+    "revenue": {
+      "amount": "120",
+      "scale": "1000000",
+      "represented_value": "120000000",
+      "unit": "MILLIONS",
+      "currency": "USD",
+      "period": "FY2025",
+      "status": "known"
+    },
+    "operating_profit": {
+      "amount": "0",
+      "represented_value": "0",
+      "status": "known"
+    },
+    "impairment": {
+      "amount": null,
+      "status": "missing",
+      "limitation": "Synthetic upstream fact not disclosed"
+    }
+  },
+  "cases": [
+    {
+      "id": "U-lookup",
+      "tool": "lookup_upstream",
+      "producer_module_id": "CP-1",
+      "table_id": "income",
+      "row_ids": [
+        "revenue",
+        "operating_profit",
+        "impairment"
+      ],
+      "expected": "expected_values; exact frozen producer hash; citation handles exclude quote text",
+      "arguments": {
+        "producer_module_id": "CP-1",
+        "producer_sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+        "table_id": "income",
+        "row_ids": [
+          "revenue",
+          "operating_profit",
+          "impairment"
+        ],
+        "fields": [
+          "fact_id",
+          "table_id",
+          "row_id",
+          "field",
+          "status",
+          "label",
+          "amount",
+          "scale",
+          "unit",
+          "currency",
+          "period",
+          "limitation",
+          "citation_handles"
+        ]
+      },
+      "status": "ok"
+    },
+    {
+      "id": "U-citations",
+      "tool": "verify_upstream",
+      "kind": "citations",
+      "fact_ids": [
+        "revenue",
+        "operating_profit"
+      ],
+      "status": "ok",
+      "expected_verdict": "valid",
+      "expected_issue_count": 0,
+      "read_only": true,
+      "arguments": {
+        "producer_module_id": "CP-1",
+        "producer_sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+        "kind": "citations",
+        "fact_ids": [
+          "revenue",
+          "operating_profit"
+        ]
+      }
+    },
+    {
+      "id": "U-bad-quote",
+      "tool": "verify_upstream",
+      "kind": "citations",
+      "fixture_mutation_before_freeze": "replace revenue citation quote with Revenue was USD 999 million in FY2025.; recompute artifact and bound hash before invoking",
+      "status": "ok",
+      "expected_verdict": "invalid",
+      "expected_issue_count": 1,
+      "body_must_not_echo_quote": true,
+      "arguments_template": {
+        "producer_module_id": "CP-1",
+        "producer_sha256": "SHA-256 of independently mutated artifact_json, frozen together with its bound input before invoking",
+        "kind": "citations",
+        "fact_ids": [
+          "revenue",
+          "operating_profit"
+        ]
+      }
+    },
+    {
+      "id": "U-identity",
+      "variants": [
+        "wrong run_id",
+        "wrong issuer_id",
+        "wrong as_of",
+        "wrong method_version",
+        "wrong producer hash",
+        "wrong bound status",
+        "foreign producer",
+        "stale selected hash",
+        "stale inputs",
+        "tampered artifact bytes"
+      ],
+      "status": "refused",
+      "body": null,
+      "state_delta": "none",
+      "baseline_arguments": {
+        "producer_module_id": "CP-1",
+        "producer_sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+        "table_id": "income",
+        "row_ids": [
+          "revenue",
+          "operating_profit",
+          "impairment"
+        ],
+        "fields": [
+          "fact_id",
+          "table_id",
+          "row_id",
+          "field",
+          "status",
+          "label",
+          "amount",
+          "scale",
+          "unit",
+          "currency",
+          "period",
+          "limitation",
+          "citation_handles"
+        ]
+      },
+      "variant_error_codes": {
+        "wrong run_id": "identity_mismatch",
+        "wrong issuer_id": "identity_mismatch",
+        "wrong as_of": "identity_mismatch",
+        "wrong method_version": "identity_mismatch",
+        "wrong producer hash": "identity_mismatch",
+        "wrong bound status": "identity_mismatch",
+        "foreign producer": "not_permitted",
+        "stale selected hash": "stale_binding",
+        "stale inputs": "stale_binding",
+        "tampered artifact bytes": "identity_mismatch"
+      }
+    },
+    {
+      "id": "U-scope",
+      "variants": [
+        "unbound producer",
+        "unknown table",
+        "hidden field citations",
+        "hidden row",
+        "raw source tool",
+        "quote field",
+        "additional arguments",
+        "empty rows",
+        "more than 20 rows",
+        "more than 16 fields",
+        "boolean row_ids"
+      ],
+      "status": "refused",
+      "body": null,
+      "must_not_disclose": [
+        "120",
+        "120000000",
+        "citation quotes",
+        "UPSTREAM_RAW_ONLY"
+      ],
+      "state_delta": "none",
+      "baseline_arguments": {
+        "producer_module_id": "CP-1",
+        "producer_sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+        "table_id": "income",
+        "row_ids": [
+          "revenue",
+          "operating_profit",
+          "impairment"
+        ],
+        "fields": [
+          "fact_id",
+          "table_id",
+          "row_id",
+          "field",
+          "status",
+          "label",
+          "amount",
+          "scale",
+          "unit",
+          "currency",
+          "period",
+          "limitation",
+          "citation_handles"
+        ]
+      },
+      "variant_error_codes": {
+        "unbound producer": "not_permitted",
+        "unknown table": "not_permitted",
+        "hidden field citations": "not_permitted",
+        "hidden row": "not_permitted",
+        "raw source tool": "not_permitted",
+        "quote field": "not_permitted",
+        "additional arguments": "bad_arguments",
+        "empty rows": "bad_arguments",
+        "more than 20 rows": "bad_arguments",
+        "more than 16 fields": "bad_arguments",
+        "boolean row_ids": "bad_arguments"
+      }
+    },
+    {
+      "id": "U-integrity",
+      "tool": "verify_upstream",
+      "kind": "integrity",
+      "fact_ids": [
+        "revenue",
+        "operating_profit",
+        "impairment"
+      ],
+      "precondition": "complete current single-producer CP5 ReviewScope; no claims; all metadata internally granted; no scope issues",
+      "status": "ok",
+      "expected_verdict": "valid",
+      "expected_issue_count": 0,
+      "refusal_variants": [
+        "ReviewScope.issues nonempty",
+        "partially granted scope",
+        "foreign/stale scope",
+        "subset of fact IDs",
+        "multi-producer scope",
+        "claim-bearing scope"
+      ],
+      "refusal_body": null,
+      "read_only": true,
+      "arguments": {
+        "producer_module_id": "CP-1",
+        "producer_sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+        "kind": "integrity",
+        "fact_ids": [
+          "revenue",
+          "operating_profit",
+          "impairment"
+        ]
+      },
+      "scope": {
+        "bound_input": {
+          "input_id": "CP-1",
+          "sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+          "status": "accepted"
+        },
+        "heads": [
+          "producer.artifact_json"
+        ],
+        "claims": [],
+        "blocked": [],
+        "inherited": [],
+        "issues": []
+      },
+      "refusal_error_codes": {
+        "ReviewScope.issues nonempty": "stale_binding",
+        "partially granted scope": "not_permitted",
+        "foreign/stale scope": "identity_mismatch if foreign; stale_binding if stale",
+        "subset of fact IDs": "not_permitted",
+        "multi-producer scope": "not_permitted",
+        "claim-bearing scope": "not_permitted"
+      }
+    }
+  ],
+  "state_invariant": "No call mutates artifact bytes/hash, selected heads, grants, inputs, evidence, submission, or settlement; record a receipt only.",
+  "body_limit_utf8_bytes": 8192,
+  "oversized_body_case": {
+    "id": "U-oversized",
+    "baseline_arguments": {
+      "producer_module_id": "CP-1",
+      "producer_sha256": "f0ac5658a87f2acb971d1b94a2f64638b40c500adc76759f09a1235f31c3b046",
+      "table_id": "income",
+      "row_ids": [
+        "revenue",
+        "operating_profit",
+        "impairment"
+      ],
+      "fields": [
+        "fact_id",
+        "table_id",
+        "row_id",
+        "field",
+        "status",
+        "label",
+        "amount",
+        "scale",
+        "unit",
+        "currency",
+        "period",
+        "limitation",
+        "citation_handles"
+      ]
+    },
+    "mutation_before_freeze": "permitted revenue label expanded to exceed the body byte limit; hash and bound input recomputed together before invoking",
+    "status": "refused",
+    "error_code": "bad_arguments",
+    "body": null
+  },
+  "identity_fixture_rule": "Pack bytes/hash and pending Execution snapshot/ticket/hash are frozen by fixture setup before adapter invocation; real factory smoke must use current_inputs and genuine selected/bound heads. Component artifact/scope here is not a settled owner run; constructor fixtures never prove factory authorization."
+}

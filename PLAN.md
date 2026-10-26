@@ -29,17 +29,26 @@ One heavy job and two disjoint implementation lanes. AGENTS.md contains full rul
 
 ## Task 0 — LEAD: freeze the first interface and cases
 
+Contract and exact disjoint implementation leases are in docs/TOOL-CONTRACT.md and
+docs/QUEUE.md. Frozen component cases are not module acceptance. C1/C2 preparation
+commits and exact code-start bases are recorded in the queue; no cross-chat dispatch
+or product execution is implied by this planning commit.
+
 Files: docs/TOOL-CONTRACT.md, cases/source/manifest.json, cases/upstream/manifest.json,
 docs/MODULES.csv, docs/QUEUE.md. C1/C2 own the eventual fixture source/test files.
 Consumes: docs/SPEC.md and pinned reuse manifest. Produces: exact source and upstream
 tool contracts plus independent positive/refusal expectations and exclusive assignments.
 
-- [ ] Inspect selected source functions and known risks; do not rediscover every old plan.
-- [ ] Freeze the first source session and upstream invocation/result/lineage envelope.
-- [ ] Define explicit identity/scope/limit/error behavior and expected positive/failure records.
-- [ ] Independent Sol/high checks sensitive expectations. Publish the concise first leases.
+- [x] Inspect selected source functions and known risks; bounded C1/C2 handoffs retained.
+- [x] Freeze the first source session and upstream invocation/result/lineage envelope.
+- [x] Define explicit identity/scope/limit/error behavior and expected positive/failure records.
+- [x] Independent Sol/high reviewed sensitive expectations and final contract hashes;
+  exact disjoint leases and review/verification receipt published in docs/QUEUE.md.
 
 ## Task 1 — C1: safe source tools through a supported host interface
+
+Task1-A unblocks CP-0/CP-1 evidence and financial sections. Exact ownership/base and
+job admission rules: docs/QUEUE.md. No product file is implemented by Task0.
 
 Files: src/deploy_workflow/tools/source.py, src/deploy_workflow/tools/__init__.py,
 src/deploy_workflow/host.py, tests/test_source_tools.py; named narrow correction to
@@ -56,6 +65,11 @@ invocation/result and submission binding. No general shell/Python execution inte
 - [ ] Return exact commit/files/commands/results and a demonstrable real host invocation.
 
 ## Task 2 — C2: bounded frozen lookup and verification
+
+Task2-A unblocks CP-2/CP-5 consumption and synthesis/QA sections. Start with the
+reviewed CP-5 canonical fact/status view, narrower CP-2 referencable view and sanitized
+citation/single-producer no-claim integrity checks; no raw-pack access. Exact base,
+files and consumer permissions: docs/QUEUE.md and docs/TOOL-CONTRACT.md.
 
 Files: src/deploy_workflow/tools/upstream.py, tests/test_upstream_tools.py.
 Consumes: Task0 envelope and existing live.context projections, CP5 python_checks,

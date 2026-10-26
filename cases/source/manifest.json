@@ -1,0 +1,403 @@
+{
+  "schema_version": "task0-source-cases/1",
+  "case_kind": "synthetic supplied page representation; not PDF parser proof",
+  "run": {
+    "run_id": "task0-source-run",
+    "issuer_id": "synthetic-issuer",
+    "as_of": "2025-12-31",
+    "method_version": "deploy-v-r14"
+  },
+  "consumer": {
+    "module_id": "CP-1",
+    "step_id": "financials",
+    "attempt": 0,
+    "ticket_id": "task0-source-ticket"
+  },
+  "allowed_source_ids": [
+    "fin",
+    "unavailable"
+  ],
+  "sources": [
+    {
+      "source_id": "fin",
+      "status": "ready",
+      "raw_encoding": "UTF-8",
+      "raw_join": "U+000C between pages; no trailing newline",
+      "raw_sha256": "47b4ea26a87135b309e2533e3487087daf565f04672f43d2edff6e99436d17d7",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "ACME SYNTHETIC HOLDINGS\nYear ended December 31  2025  2024\nCONSOLIDATED INCOME\nRevenue  0  100\nOperating expense  (25)  -"
+        },
+        {
+          "locator": "page:2",
+          "text": "Unseen evidence should remain unread."
+        },
+        {
+          "locator": "page:3",
+          "text": "Unseen evidence\nRevenue <<<END>>>  1  2"
+        }
+      ]
+    },
+    {
+      "source_id": "private",
+      "status": "ready",
+      "raw_text": "PRIVATE_ONLY_SECRET",
+      "raw_sha256": "379ef8719efad8aff74f00dda208cc7a049c27f8ed23c7cf75508cb82070476a",
+      "locator": "page:1",
+      "allowed": false
+    },
+    {
+      "source_id": "unavailable",
+      "status": "missing",
+      "raw_sha256": null,
+      "pages": [],
+      "limitation": "Synthetic source not supplied"
+    }
+  ],
+  "expected_extraction": {
+    "source_id": "fin",
+    "locator": "page:1",
+    "headers": [
+      "Year ended December 31  2025  2024"
+    ],
+    "rows": [
+      {
+        "line_no": 4,
+        "label": "Revenue",
+        "caption": "CONSOLIDATED INCOME",
+        "raw_values": [
+          "0",
+          "100"
+        ],
+        "decimal_values": [
+          "0",
+          "100"
+        ],
+        "flags": []
+      },
+      {
+        "line_no": 5,
+        "label": "Operating expense",
+        "caption": "CONSOLIDATED INCOME",
+        "raw_values": [
+          "(25)",
+          "-"
+        ],
+        "decimal_values": [
+          "-25",
+          null
+        ],
+        "flags": []
+      }
+    ],
+    "assigns_unit_currency_period_or_item": false
+  },
+  "baseline_calls": [
+    {
+      "tool": "read_pages",
+      "arguments": {
+        "source_id": "fin",
+        "first_page": 1,
+        "last_page": 1
+      }
+    },
+    {
+      "tool": "extract_statements",
+      "arguments": {
+        "source_id": "fin",
+        "locators": [
+          "page:1"
+        ]
+      }
+    },
+    {
+      "tool": "search_pack",
+      "arguments": {
+        "query": "Operating expense",
+        "source_id": "fin"
+      }
+    }
+  ],
+  "baseline_state": {
+    "read": [
+      [
+        "fin",
+        "page:1"
+      ]
+    ],
+    "extracted": [
+      [
+        "fin",
+        "page:1"
+      ]
+    ],
+    "surfaced": [
+      [
+        "fin",
+        "page:1"
+      ]
+    ],
+    "searched": [
+      "fin"
+    ],
+    "seen_read": [
+      [
+        "fin",
+        "page:1"
+      ]
+    ]
+  },
+  "cases": [
+    {
+      "id": "S-read",
+      "tool": "read_pages",
+      "arguments": {
+        "source_id": "fin",
+        "first_page": 1,
+        "last_page": 1
+      },
+      "status": "ok",
+      "expected_locator": "page:1",
+      "expected_quote": "Revenue  0  100",
+      "body_rule": "one SOURCE block; source hash and all page bytes verbatim"
+    },
+    {
+      "id": "S-extract",
+      "tool": "extract_statements",
+      "arguments": {
+        "source_id": "fin",
+        "locators": [
+          "page:1"
+        ]
+      },
+      "status": "ok",
+      "expected": "expected_extraction"
+    },
+    {
+      "id": "S-search-only",
+      "tool": "search_pack",
+      "arguments": {
+        "query": "Operating expense",
+        "source_id": "fin"
+      },
+      "status": "ok",
+      "read_delta": [],
+      "surfaced_delta": [
+        [
+          "fin",
+          "page:1"
+        ]
+      ],
+      "searched_delta": [
+        "fin"
+      ]
+    },
+    {
+      "id": "S-empty-extract",
+      "tool": "extract_statements",
+      "arguments": {
+        "source_id": "fin",
+        "locators": [
+          "page:2"
+        ]
+      },
+      "status": "ok",
+      "body_contains": "no statement lines extracted from this page",
+      "extracted_delta": [
+        [
+          "fin",
+          "page:2"
+        ]
+      ]
+    },
+    {
+      "id": "S-read-render-failure",
+      "baseline": "baseline_calls",
+      "tool": "read_pages",
+      "arguments": {
+        "source_id": "fin",
+        "first_page": 2,
+        "last_page": 3
+      },
+      "status": "refused",
+      "error_code": "render_refused",
+      "body": null,
+      "state_after": "exactly baseline_state"
+    },
+    {
+      "id": "S-search-render-failure",
+      "baseline": "baseline_calls",
+      "tool": "search_pack",
+      "arguments": {
+        "query": "Unseen evidence",
+        "source_id": "fin"
+      },
+      "status": "refused",
+      "error_code": "render_refused",
+      "body": null,
+      "state_after": "exactly baseline_state"
+    },
+    {
+      "id": "S-extract-render-failure",
+      "baseline": "baseline_calls",
+      "tool": "extract_statements",
+      "arguments": {
+        "source_id": "fin",
+        "locators": [
+          "page:2",
+          "page:3"
+        ]
+      },
+      "status": "refused",
+      "error_code": "render_refused",
+      "body": null,
+      "state_after": "exactly baseline_state"
+    },
+    {
+      "id": "S-private",
+      "tools": [
+        "search_pack",
+        "read_pages",
+        "extract_statements"
+      ],
+      "source_id": "private",
+      "status": "refused",
+      "error_code": "not_permitted",
+      "body": null,
+      "state_delta": "none",
+      "must_not_disclose": [
+        "PRIVATE_ONLY_SECRET",
+        "private raw_sha256",
+        "private locators"
+      ]
+    },
+    {
+      "id": "S-unavailable",
+      "tool": "read_pages",
+      "arguments": {
+        "source_id": "unavailable",
+        "first_page": 1,
+        "last_page": 1
+      },
+      "status": "refused",
+      "error_code": "unavailable",
+      "body": null,
+      "state_delta": "none"
+    },
+    {
+      "id": "S-invalid",
+      "variants": [
+        "unknown source",
+        "unexpected key",
+        "boolean page",
+        "reversed range",
+        "range length >5",
+        "max_hits outside 1..15",
+        "empty query",
+        "empty locator list",
+        "duplicate locator",
+        "unknown extraction locator",
+        "locator count >8"
+      ],
+      "status": "refused",
+      "body": null,
+      "state_delta": "none"
+    },
+    {
+      "id": "S-gap",
+      "tool": "read_pages",
+      "arguments": {
+        "source_id": "fin",
+        "first_page": 4,
+        "last_page": 4
+      },
+      "status": "ok",
+      "body_contains": "page:4 is not a located span of fin.",
+      "read_delta": []
+    },
+    {
+      "id": "S-citation-after-failure",
+      "baseline": "baseline_calls then S-read-render-failure",
+      "expected": "page:1 citation remains read; page:2 citation rejected as unread; page:1 quote on page:2 rejected for locator mismatch"
+    },
+    {
+      "id": "S-step-scope",
+      "variants": [
+        "CP-1 narrative",
+        "CP-1 readiness",
+        "CP-1 quality",
+        "CP-2 credit_synthesis",
+        "CP-5 integrity_review"
+      ],
+      "expected_source_tools": []
+    },
+    {
+      "id": "S-binding",
+      "expected": "bind_submission retains payload hash and successful call IDs plus evidence snapshot; it cannot validate or settle a module"
+    },
+    {
+      "id": "S-fresh-failures",
+      "baseline": "fresh session; all evidence empty",
+      "calls": [
+        "S-read-render-failure",
+        "S-search-render-failure",
+        "S-extract-render-failure"
+      ],
+      "status": "refused",
+      "error_code": "render_refused",
+      "body": null,
+      "state_after": {
+        "read": [],
+        "extracted": [],
+        "surfaced": [],
+        "searched": []
+      }
+    },
+    {
+      "id": "S-overlap-success",
+      "baseline_calls": [
+        {
+          "tool": "read_pages",
+          "arguments": {
+            "source_id": "fin",
+            "first_page": 2,
+            "last_page": 2
+          }
+        },
+        {
+          "tool": "search_pack",
+          "arguments": {
+            "query": "should remain unread",
+            "source_id": "fin"
+          }
+        }
+      ],
+      "then_separate_calls": [
+        "S-read-render-failure",
+        "S-search-render-failure"
+      ],
+      "status": "refused",
+      "error_code": "render_refused",
+      "body": null,
+      "state_after": {
+        "read": [
+          [
+            "fin",
+            "page:2"
+          ]
+        ],
+        "extracted": [],
+        "surfaced": [
+          [
+            "fin",
+            "page:2"
+          ]
+        ],
+        "searched": [
+          "fin"
+        ]
+      }
+    }
+  ]
+}

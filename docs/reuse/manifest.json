@@ -1,0 +1,1017 @@
+{
+  "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+  "source_worktree": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+  "selection_seeds": [
+    "deploy_vii.live.tools",
+    "deploy_vii.live.context",
+    "deploy_vii.cp5_integrity",
+    "deploy_vii.render",
+    "deploy_vii.cp0_workflow",
+    "deploy_vii.cp1_workflow",
+    "deploy_vii.cp_model_workflow",
+    "deploy_vii.delivery"
+  ],
+  "python_modules": 85,
+  "files": [
+    {
+      "destination": "src/deploy_vii/__init__.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/__init__.py",
+      "sha256": "254b4fec52d03e16f748389153058805c71e8b764c0dbf10d3d7f6e4e6689abc",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/audit_basis.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/audit_basis.py",
+      "sha256": "d1284a620c08378b155b9daae44ad85dcc294f8ffad7c7a53881935125101865",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/balance_movement.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/balance_movement.py",
+      "sha256": "e27189f46c9a23698ba6912b460c6f7880cf04f06587c1f876e91afc9c945e1b",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/__init__.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/__init__.py",
+      "sha256": "6b2c8cc47d32212b3b236ece8df0abbfd6774d22db767cb6f7ea483841b9a7fc",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp0.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp0.py",
+      "sha256": "c7361b92bda4ce2fcd6a8d8ce4b6ded0cd4a6e306a34a03043266a40efaa3fce",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp1.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp1.py",
+      "sha256": "d94f6a460f7bb112dd2136d62a25496433dc3085582018d12a3c4091db5ba169",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp1a.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp1a.py",
+      "sha256": "dfa4ea9a4194adcfc269c4612b6c20b022fd1894e455199bc26774e8cb09231c",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp2.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp2.py",
+      "sha256": "cff3050de05b40d6b3ac9cd3ec657008cfa4e6311b915873deec7c5b5d3fbeab",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp3.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp3.py",
+      "sha256": "b4ac94ee6c689e4f18b52b9568a3ae483b6042ea76d19dc6f0a20c3c36d572ee",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp4.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp4.py",
+      "sha256": "484448f5fbbc81995efa9e8f3e5f1b636c01bbc9d16234a5be44107b6baa7f97",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp5.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp5.py",
+      "sha256": "5ea9091ba41d911a88bdd282ef21c1f7dbc380eae06a8534b95901273bd45c20",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp6.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp6.py",
+      "sha256": "d39cac90b76a902d41824130a3ff01f3e86e3ae3646b49b0aa1ce9e886366db9",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp_model.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/cp_model.py",
+      "sha256": "4f455b8b2ea3e1a0da1491cc9b7c138f0e23809205dd5e344c8d0a5e0ac09716",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/bindings/shipped.py",
+      "sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/business_context.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/business_context.py",
+      "sha256": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/calculation_trace.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/calculation_trace.py",
+      "sha256": "71783bf0fd1404da59e825ef72365ffc2704745578c8c3d9ffff06f678ca966c",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/canonical_audit.py",
+      "sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_gaps.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/canonical_gaps.py",
+      "sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_kpis.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/canonical_kpis.py",
+      "sha256": "9ccf40e52a44ffb983c5dee09e6c0ee7321f8e12860b89e71dc3a8a2922b492e",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_tables.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/canonical_tables.py",
+      "sha256": "6c1e2a1ce158a381994d9881420e98cddc61f77c8b695299da4fc9b08e2112bd",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cash_bridge.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cash_bridge.py",
+      "sha256": "cda9bacb342bb6460e322aff078a61ab993c518604aca30ce99a6ecd1eb6207e",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/charts.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/charts.py",
+      "sha256": "9c10704c8b4707305990a501574602adefc4c5eee2d326c830c77cc281153aef",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/context_binding.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/context_binding.py",
+      "sha256": "ba5d6285985ccbe13c5d89d0192ba7a634067d926b23943a93e581ff9d469fce",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/contracts.py",
+      "sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp0_workflow.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp0_workflow.py",
+      "sha256": "3dc6cff11e54b2485c2b8dec289fbb50a5a1017b623fcd6cffd0610d5a02d52c",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp1_quality.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp1_quality.py",
+      "sha256": "7a26219602c9eae1432f0fac3b6958abed090c4bb068d035f79c34d6e39cf170",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp1_render.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp1_render.py",
+      "sha256": "dc9b80705e53bfb226e74ceaa00267a1bc419f3f42fd001281bd3a71b0e28a0d",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp1_workflow.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp1_workflow.py",
+      "sha256": "966a982d4068bd962df47228ded77f1929b79a1e51624fb7c4cfa9470e1878d3",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp2_synthesis.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp2_synthesis.py",
+      "sha256": "26ebc1e38e21b187c8a1876ae33d43525a80171a64f9aecf8c0f6d9ccf6da746",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp3_relative_value.py",
+      "sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp4_legal.py",
+      "sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp5_integrity.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp5_integrity.py",
+      "sha256": "84fbe447ab9f1c8598030cf44533072dccdd114d3d34c6c5bb0d20a8d5c3225c",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp6_committee.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp6_committee.py",
+      "sha256": "2854f2a4931102c717652e0b869ba3da07ec78a5bd70ff64d862063008d445df",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/cp_model_workflow.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/cp_model_workflow.py",
+      "sha256": "84b6378c4a3a56a6ca58b717ac4b9ad1f9c406e063979390d70009d93225591a",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/delivery.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/delivery.py",
+      "sha256": "0579a58195d8e07dc3a6f3290d3034e397096dde9046c898bed76e3b73f82ed5",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/display.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/display.py",
+      "sha256": "efdcd5d60400e47c1210442ed165e0642bcb3770aaaebf526dfcb7b750588398",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/downstream_readiness.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/downstream_readiness.py",
+      "sha256": "29c71a90df07d1eed7df2903b30211377a77588fa7f564d09389d6d47c11dbdd",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/envelope.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/envelope.py",
+      "sha256": "e45587d58cd864e393a576b1ffa2c07adcd76fce847274923c0b7264c80e2291",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/execution.py",
+      "sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/facility_fx.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/facility_fx.py",
+      "sha256": "b2679587e425f74f4e39724c266a51b4bc008405a137f8d7122cd1129aaf56bf",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/financial_adapter.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/financial_adapter.py",
+      "sha256": "15fadfe762eb923acd5cc09273b5f1ceb4ac81340fc2fd4bcb6767d70f046503",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/financial_contracts.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/financial_contracts.py",
+      "sha256": "5881b5287e8c871c078d7f64cb9c14bb191b107b556930308aa226a5d191d8a9",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/financial_model.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/financial_model.py",
+      "sha256": "eac3a4113a366268f107371cea503508f164655aac8d74b86cca850227793472",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/financial_periods.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/financial_periods.py",
+      "sha256": "f66768991bf394bdf6713e51856ecded97fe50c37bd159b844bc4c55de8475c5",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/financial_reconciliation.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/financial_reconciliation.py",
+      "sha256": "03e6ea036882a6dbcf3df689d4f81b6876244851e253f88a25d568e6da5a54fc",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/financial_validation.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/financial_validation.py",
+      "sha256": "91b5ef7d52ad8cb87c0627c5c794b1f6014ab8257bb3b7cd57ca22f8ff220c28",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/interface_view.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/interface_view.py",
+      "sha256": "6e2275eba2ed3713a3abfd3ea01aad0dadc1527d6fca23e58e325fb53182b45d",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/__init__.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/__init__.py",
+      "sha256": "e97f383f95f3913d28439509ddc024a945270f9ab7bef8fa2f8c852a878fe759",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/context.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/context.py",
+      "sha256": "71be7583fae72d5b719ba7167026d46576f5a4e7da4f4be1410417d50bd1a7aa",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/prompts.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/prompts.py",
+      "sha256": "fc291aee064f9f54c837094e5365601b1ee795259d0f81250d68960a428d87b5",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/schema.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/schema.py",
+      "sha256": "c63744196066a9046e1d3331ee5191f8dc30b2d7f08644ca816c7ae2955e56cb",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/settings.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/settings.py",
+      "sha256": "4bae24dc685cc090f0c4dc862f74ed59235ddc39c853d6baa18da355cbeba7c5",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/submission.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/submission.py",
+      "sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/live/tools.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/live/tools.py",
+      "sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/__init__.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/__init__.py",
+      "sha256": "bbd91a375dd57c02bed421d9f4265b0221d404d186080124a8285685c911439b",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/_cells.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/_cells.py",
+      "sha256": "38c2ec4493b9b53065361db748a596687c7381eaf91659bc48fd9707ce7f2549",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/dates.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/dates.py",
+      "sha256": "8dfb65355fcbbb0edf86c7c9480b9de53ad80dc060b44cdfa3774f7535629b1b",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/debt.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/debt.py",
+      "sha256": "c942ba769a48d20e23abae2e18a86ba8c88beb71d8d743f8e83f309f145134a3",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/frame.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/frame.py",
+      "sha256": "8856b63569a9165d097ce8d42f5cf32ac9334101232c6a35e4d8b87f257e71b1",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/history.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/history.py",
+      "sha256": "6f01fc30e643ea32ec2deca8cf0440766de2d7a7396153a2556be75fb187e03d",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/metrics.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/metrics.py",
+      "sha256": "f3d547ba82a6545987a6f5bbbd80cc890915d4f3714c3f99f18ae21a45cf13eb",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/periods.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/periods.py",
+      "sha256": "47484914a8b1ccb6a9d107b192a25d144f2df529e65935107c9edd44c53d2c6d",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/registers.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/registers.py",
+      "sha256": "6fc511c730fd20c83b440bb02de58dcd373eccac203b4f9659115ddc7d49d959",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model/statements.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model/statements.py",
+      "sha256": "e22fed242bf47600fc75158b4c24b678bcb26b72041b7f327cae106bd9d80d66",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model_interface.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model_interface.py",
+      "sha256": "259982a84d91226a9cb42a3c736506d592a04e0150724973197ac70057d0286c",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/model_readiness.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/model_readiness.py",
+      "sha256": "e226db1b9c130b3cca6eae5b053b95b605945094d71a49ad9dfa0db59bcedc8e",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/narrative.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/narrative.py",
+      "sha256": "f118fe08134511c01c0f30edfe3f6fd21dd8c1a27943865661875fa0f9040583",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/narrative_projection.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/narrative_projection.py",
+      "sha256": "2ea83d34b8a772873dea728b35dd6898d393a36787575256fbada0d6dc733095",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/period_reconciliation.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/period_reconciliation.py",
+      "sha256": "e3c0e5d9f0e91537e7aaeddac0aebcb426a4bdbdc11dac4b2b86716e782302c0",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/preparation.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/preparation.py",
+      "sha256": "047f35778a5c969d7713619d6335b39c33809f7f944b0bd21eb153c42d6ac212",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/prose.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/prose.py",
+      "sha256": "33f4de8945127d4e2af005949c4d560a1b3d6d20629be8c42ce86e684784a74f",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/quality.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/quality.py",
+      "sha256": "79865e93c4928b9bc95ad5f286c1c685d579039689c4f456a8620bb59ebc5ef2",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/quotes.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/quotes.py",
+      "sha256": "4c489fafe178431c8f9941c86105238e7f5c34dd6bf154140cab7e7c9a828a96",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/readiness.py",
+      "sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/register_view.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/register_view.py",
+      "sha256": "4b6a44743567669d74d4935186d45083d38a489392d47cec9126a4bc9216da46",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/registry.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/registry.py",
+      "sha256": "e351d5b917558d4988e582963063dbf8a237f5949ae8a132b9f1c4e5f559995a",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/render.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/render.py",
+      "sha256": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+      "selection_reason": "workflow/tool/render seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/report_view.py",
+      "sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/source_context.py",
+      "sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/statement_extract.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/statement_extract.py",
+      "sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/statement_history.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/statement_history.py",
+      "sha256": "8764ff7d839066dd604d9e247d3843a054e164bf351b8c1e5d2853f46b8b1744",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/statement_output.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/statement_output.py",
+      "sha256": "9aa2dbfc9ee82831293bfdb042a4144e2e654dace574b2b9075e5ab02448689f",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/statement_validation.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/statement_validation.py",
+      "sha256": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/statement_view.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/statement_view.py",
+      "sha256": "1d6fe0f78710a5ad6c931804c70a3f18e3661b01a350b44e54167b2981bdedbf",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/table_markdown.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/table_markdown.py",
+      "sha256": "6f580838cc2bd3125d2e8a3d7f13c95a58824859a994e57d341588885794c43d",
+      "selection_reason": "static local dependency of selected seed",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.css",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/app.css",
+      "sha256": "ea3a8198f9f6f4b4c9a354427460a29cc6b555047a095a916949f8775e75f1ac",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.js",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/app.js",
+      "sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/brand/provenance.json",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/brand/provenance.json",
+      "sha256": "1de771ef5a8628c8dc5f19da05ff9afedd741f948c3024616849251f53a7374c",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/brand/ssim-logo-stacked-black-trim.png",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/brand/ssim-logo-stacked-black-trim.png",
+      "sha256": "50eecd12d25638558e3b8b398bd02118569980d99b126d98cb4ec71be6d3bd32",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/OFL.txt",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/OFL.txt",
+      "sha256": "98eac4800faf2b800dfb11f82e38b779ebe473e05e343c18aeb65eabb74442ae",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatDisplay-Bold.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatDisplay-Bold.woff2",
+      "sha256": "a28973642bc0dc1404138a6b32031b5f1bbc131d1b5a92a0214d16cfe8091793",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatDisplay-SemiBold.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatDisplay-SemiBold.woff2",
+      "sha256": "5ed4d4d4aa40abda2e2aafd0083e3ee109290c3e86392778e934755a4db67332",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatMono-Medium.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatMono-Medium.woff2",
+      "sha256": "ab9f475ace2c1e5ed9ee31d964bbadd72dd84b6ab65e71445be80f1fe95c7a0d",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatMono-SemiBold.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatMono-SemiBold.woff2",
+      "sha256": "d3c80dda632cbceb3419ef8c6a54af6bf5139b50b83300f467c3c24cdc8e794c",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatText-Medium.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatText-Medium.woff2",
+      "sha256": "abfc3d5ff9e975d487ec295895efdc2e5848f804d0982bee87ce0d8f55c9a3d1",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatText-Regular.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatText-Regular.woff2",
+      "sha256": "8b6c947032e889935aeef9d3a987fe4760b5bb029af531f2511e5824602a550a",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/RedHatText-SemiBold.woff2",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/RedHatText-SemiBold.woff2",
+      "sha256": "3f3c8935bd6bf319b0b1f3d80b7247646fefa6dd77aca88347d0ab16e7c1e9aa",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/fonts/provenance.json",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/fonts/provenance.json",
+      "sha256": "a6327c8bcc3b050483bad67f2923d3ff440993a7e3fe3daa24d446d6319bc013",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/shell.html",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/shell.html",
+      "sha256": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/assets/tokens.css",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/assets/tokens.css",
+      "sha256": "b7ab135a4bb33247117b65e915eec9d7ebd48fbfb6cdc61e42dbd13ab2bfbc9b",
+      "selection_reason": "renderer resource/license",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp0.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp0.md",
+      "sha256": "68b7bf93b09625ff5ce7f7e4d0930ed27f09959da587509eba96b06ce9ef2a6f",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1a.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp1a.md",
+      "sha256": "075ade1573851dba48e763edacdbe76d3d0ff240302c5e58d7cb5671ae2e3929",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp2.md",
+      "sha256": "9ddd2ab22b5aeab99054cf82ebfb7f03ef49422678be08374566b96dc18dcbd1",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp3.md",
+      "sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp4.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp4.md",
+      "sha256": "99ec34c7a8257e15325456eb5466388eeb656fa01cf30db91e8474334bb39ff0",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp5.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp5.md",
+      "sha256": "81cf6bea9b56ad63fd9cc38c32bf4cef9b9c1e48b750f8c803cb4d8874d64d67",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp6.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methods/cp6.md",
+      "sha256": "324595e417e5bf903a27040220e87d1221f9f6d89245cb62f73b9b0ad2182c5d",
+      "selection_reason": "existing analytical step instructions",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/agent-a2b34b93ed9b7ad1a",
+      "source_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+      "source_path": "src/deploy_vii/methodology.json",
+      "sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "selection_reason": "registry metadata required by selected modules",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    }
+  ],
+  "excluded_python_modules": [
+    "deploy_vii.__main__",
+    "deploy_vii.execution_cli",
+    "deploy_vii.inputs",
+    "deploy_vii.inputs.rv_quotes",
+    "deploy_vii.live.catalog",
+    "deploy_vii.live.cli",
+    "deploy_vii.live.client",
+    "deploy_vii.live.cohort",
+    "deploy_vii.live.corpus",
+    "deploy_vii.live.credential",
+    "deploy_vii.live.credit",
+    "deploy_vii.live.draw",
+    "deploy_vii.live.ledger",
+    "deploy_vii.live.loop",
+    "deploy_vii.live.reconcile",
+    "deploy_vii.live.retention",
+    "deploy_vii.live.runner",
+    "deploy_vii.live.schema_check"
+  ],
+  "not_copied": [
+    "Git history",
+    "old AGENTS/CLAUDE instructions",
+    "provider/client/credential/ledger/runner code",
+    "development launchers",
+    "private packs and run artifacts",
+    "bulk tests and old planning tree"
+  ]
+}

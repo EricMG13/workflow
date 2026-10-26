@@ -1,0 +1,27 @@
+module,responsibility,lane,assigned_sections,tool_execution,validated_output,downstream_consumption,rendering,case_evidence
+CP-0,Source readiness,C1,all pathways,unverified,unverified,unverified,unverified,none
+CP-1,Canonical financial foundation,C1,financial sections and Model,unverified,unverified,unverified,unverified,none
+CP-1A,Business/transaction facts,C1,company and transaction sections,unverified,unverified,unverified,unverified,none
+CP-1B,Earnings delta,C1,FP02 earnings,unverified,unverified,unverified,unverified,none
+CP-1C,Peer comparison,C1,FP03 peers,unverified,unverified,unverified,unverified,none
+CP-1D,Earnings quality,C1,FP02 quality/full analysis,unverified,unverified,unverified,unverified,none
+CP-2,Credit synthesis,C1,FP01/02/03/06 synthesis,unverified,unverified,unverified,unverified,none
+CP-2A,Downside pathway,C2,FP05 downside,unverified,unverified,unverified,unverified,none
+CP-2D,Liquidity,C2,FP04 liquidity,unverified,unverified,unverified,unverified,none
+CP-2E,Macro and FX,C1,macro/FX full analysis,unverified,unverified,unverified,unverified,none
+CP-2G,Forward cases,C2,forward/scenario sections,unverified,unverified,unverified,unverified,none
+CP-2H,Ratings,C2,rating sections,unverified,unverified,unverified,unverified,none
+CP-3,Security relative value,C1,FP03 security comparison,unverified,unverified,unverified,unverified,none
+CP-3B,Portfolio fit,C1,FP03/06 fit,unverified,unverified,unverified,unverified,none
+CP-3C,Refinancing and LME,C2,FP04 refinancing,unverified,unverified,unverified,unverified,none
+CP-3D,Market implied diagnostics,C1,FP03 market,unverified,unverified,unverified,unverified,none
+CP-4,Legal and covenants,C2,FP04 legal,unverified,unverified,unverified,unverified,none
+CP-4C,Recovery and waterfall,C2,FP05 recovery,unverified,unverified,unverified,unverified,none
+CP-5,Integrity review,C1,QA/evidence/limitations,unverified,unverified,unverified,unverified,none
+CP-6,Committee challenge,C1,committee challenge/call,unverified,unverified,unverified,unverified,none
+CP-6A,Portfolio recommendation,C1,FP06 recommendation,unverified,unverified,unverified,unverified,none
+CP-8,Decision/outcome ledger,C1,what changed,unverified,unverified,unverified,unverified,none
+CP-DR,Anchored LOCAL research,C2,research/evidence,unverified,unverified,unverified,unverified,none
+CP-L10,Screening,C1,screening,unverified,unverified,unverified,unverified,none
+CP-MODEL,Deterministic model publication,C1,Model HTML/calculation JSON,deterministic exception; unverified,unverified,unverified,unverified,none
+CP-OS,Deterministic navigation,C2,run/section navigation,deterministic exception; unverified,unverified,unverified,unverified,none

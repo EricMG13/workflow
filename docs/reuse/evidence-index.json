@@ -1,0 +1,23 @@
+{
+  "historical_only": true,
+  "old_repository": "/Users/ericguei/Documents/DEPLOY VII",
+  "audit": "/Users/ericguei/Documents/DEPLOY VII/artifacts/claude-reuse-audit-2026-10-26/README.md",
+  "records": [
+    {
+      "module": "CP-0",
+      "path": "/Users/ericguei/Documents/DEPLOY VII/artifacts/model-tests/hybrid-cp0-2/hybrid-1/tool-calls.jsonl",
+      "scope": "actual search/read/submit; historical case only"
+    },
+    {
+      "module": "CP-1",
+      "path": "/Users/ericguei/Documents/DEPLOY VII/artifacts/model-tests/hybrid-cp1-6/sol-medium/financials/tool-calls.jsonl",
+      "scope": "four-stage experiment; not every current step/owner"
+    },
+    {
+      "module": "all tools",
+      "path": "/Users/ericguei/Documents/DEPLOY VII/.claude/worktrees/cp1-handoff-approach-0ef7bf/docs/development/tasks/implementation/module-tools-review.md",
+      "scope": "draft historical reasoning; preserve later direct user decisions"
+    }
+  ],
+  "paid_runs_authorized": false
+}

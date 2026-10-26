@@ -1,0 +1,153 @@
+"""Render the Model destination and Credit Snapshot blocks from an accepted CP-1 envelope.
+
+The accepted route (task 6.5): the CP-1 registers come from the verified canonical envelope,
+never from a candidate. An envelope that does not verify against its journal renders no CP-1
+block at all: CP-1 is shown blocked, with every verification issue as its limitation, so a
+page can never mix refused data into a Front Page.
+"""
+
+import hashlib
+import json
+from pathlib import Path
+
+from deploy_vii.contracts import Module, ModuleView, View
+from deploy_vii.cp1_workflow import EnvelopeRefused, read_cp1_envelope
+from deploy_vii.envelope import Envelope
+from deploy_vii.execution import Execution
+from deploy_vii.render import empty_view, render
+
+
+def _with_module(base: View, module_id: str, replacement: ModuleView) -> View:
+    if not any(item.module_id == module_id for item in base.modules):
+        raise ValueError(f"The view has no {module_id} module")
+    return View.model_validate_json(
+        base.model_copy(
+            update={
+                "modules": tuple(
+                    replacement if item.module_id == module_id else item for item in base.modules
+                )
+            }
+        ).model_dump_json()
+    )
+
+
+def _with_cp1(base: View, cp1: ModuleView) -> View:
+    return _with_module(base, "CP-1", cp1)
+
+
+def _settled(shown: ModuleView, module: Module) -> ModuleView:
+    """`shown` carrying the settled `module`'s outputs, as `Execution.view` draws a head."""
+    return shown.model_copy(
+        update={
+            "status": module.status,
+            "artifact_sha256": module.content_hash(),
+            "facts": module.facts,
+            "tables": module.tables,
+            "claims": module.claims,
+            "limitations": tuple(
+                dict.fromkeys((*module.limitations, *module.inherited_limitations))
+            ),
+        }
+    )
+
+
+def _cp1_of(base: View) -> ModuleView:
+    return next(item for item in base.modules if item.module_id == "CP-1")
+
+
+def envelope_view(base: View, envelope: Envelope) -> View:
+    """`base` with its CP-1 module replaced by the envelope's settled module.
+
+    `base` supplies every other module (the journal's accepted view, or an idle one); only an
+    accepted or restricted envelope module is shown, and only for the base view's own run.
+    """
+    module = envelope.module
+    if base.run != envelope.run:
+        raise ValueError("The envelope belongs to another run than the view")
+    if module.status not in ("accepted", "restricted"):
+        raise ValueError(f"A {module.status} envelope module is not shown")
+    return _with_cp1(base, _settled(_cp1_of(base), module))
+
+
+def refused_view(base: View, issues: tuple[str, ...]) -> View:
+    """`base` with CP-1 blocked and without output; each issue is one limitation."""
+    if not issues:
+        raise ValueError("A refusal states its issues")
+    return _with_cp1(
+        base,
+        _cp1_of(base).model_copy(
+            update={
+                "status": "blocked",
+                "artifact_sha256": None,
+                "facts": (),
+                "tables": (),
+                "claims": (),
+                "limitations": tuple(f"Canonical envelope refused: {issue}" for issue in issues),
+            }
+        ),
+    )
+
+
+def model_destination_html(store: Execution, directory: Path, model: Module) -> str:
+    """The Model destination page: the verified CP-1 envelope plus the settled CP-MODEL module.
+
+    Task 7.1a. The envelope is read back against the journal (`read_cp1_envelope`); a refusal
+    raises `EnvelopeRefused`, because a published page never shows refused CP-1 data.
+    """
+    if model.module_id != "CP-MODEL" or model.status not in ("accepted", "restricted"):
+        raise ValueError("The Model destination shows a settled CP-MODEL module")
+    # The base is idle, not the journal's view: the page is a function of the envelope and the
+    # CP-MODEL module alone, so it re-derives (`verify_cp_model_publication`) after later
+    # modules settle.
+    base = empty_view(store.read().run, candidate=False)
+    view = envelope_view(base, read_cp1_envelope(store, directory))
+    shown = next(item for item in view.modules if item.module_id == "CP-MODEL")
+    return render(_with_module(view, "CP-MODEL", _settled(shown, model)))
+
+
+def render_cp1_envelope(
+    store: Execution, directory: Path, destination: Path, *, pathway: str | None = None
+) -> dict[str, object]:
+    """Render the run's Pathway from the CP-1 envelope exported to `directory`.
+
+    Writes `accepted.html` (or `refused.html` when the envelope does not verify) and a
+    `complete.json` receipt into the new `destination`, and returns the receipt. The command
+    does not accept rendering: the head's `rendering_acceptance` is recorded as it stands, and
+    browser acceptance stays `unrun` until a browser test qualifies the page.
+    """
+    base = store.view()
+    if pathway is not None and pathway != base.run.pathway:
+        raise ValueError(
+            f"The run's Pathway is {base.run.pathway}; its scope is immutable, not {pathway}"
+        )
+    issues: tuple[str, ...] = ()
+    module_sha256: str | None = None
+    try:
+        envelope = read_cp1_envelope(store, directory)
+    except EnvelopeRefused as refused:
+        issues = refused.issues
+        view = refused_view(base, issues)
+    else:
+        view = envelope_view(base, envelope)
+        module_sha256 = envelope.module.content_hash()
+    head = next((h for h in store.read().heads if h.module_id == "CP-1"), None)
+    page = "refused.html" if issues else "accepted.html"
+    html = render(view)
+    receipt: dict[str, object] = {
+        "schema_version": "cp1-render/1",
+        "envelope": "refused" if issues else "verified",
+        "issues": list(issues),
+        "module_sha256": module_sha256,
+        "pathway": view.run.pathway,
+        "head_rendering_acceptance": (
+            None
+            if head is None or head.qualification is None
+            else head.qualification.rendering_acceptance
+        ),
+        "browser_acceptance": "unrun",
+        "files": {page: hashlib.sha256(html.encode()).hexdigest()},
+    }
+    destination.mkdir(parents=True, exist_ok=False)
+    (destination / page).write_text(html, encoding="utf-8")
+    (destination / "complete.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+    return receipt

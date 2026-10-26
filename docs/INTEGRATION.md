@@ -154,3 +154,38 @@ tests passed (PID 17950, exit 0). Those results belong to C2's admitted run;
 no combined source/upstream suite was run here. No live, paid, provider,
 publication or production activity occurred. This adapter is component evidence
 only and does not establish an accepted analytical owner or module.
+
+## C1 Task1-A source tool integration
+
+Integrated C1's exact admitted commit
+`8adbd4104918ef7ccaeee1e8d234c0e2d7ae71f9` from
+`/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1`
+(`codex/source-tools`, based on
+`46fdf57ca9c938f1139a61c071dd713740eb06a3`) by local fetch and cherry-pick.
+The resulting integration commit is
+`1668904ffb211fd8a31864e6e1f8345e03a27ada` on `codex/checkpoint`.
+
+The six admitted files are `src/deploy_workflow/host.py`,
+`src/deploy_workflow/tools/source.py`, `src/deploy_workflow/tools/__init__.py`,
+`tests/test_source_tools.py`, `src/deploy_vii/live/tools.py`, and
+`docs/handoffs/source-tools.md`. The imported-tool change is limited to
+`PackTools.read_pages` and `PackTools.search_pack`; the diff contains no other
+shared/export/imported/render edits. Final bundle hashes were verified against
+C1's handoff, including patched `live/tools.py` SHA256
+`d4071e59bde16648ab9175e529cce47a5b5e0f456da3a4692e831d0b346b1e48`.
+The source commit and original `files[].sha256` baseline remain unchanged in
+the reuse manifest. Its new top-level `post_import_patches` entry records the
+patched destination hash, original imported hash, C1 project commit and review
+handoff; `hash_interpretation` distinguishes the two.
+
+Integration confidence review: clean candidate and exact six-file admission
+were confirmed; the cherry-pick completed without conflict; all five final
+bundle hashes matched; the integrated source patch matched its recorded SHA;
+manifest JSON parsed; removing the two new provenance keys yields the exact
+prior manifest, confirming no baseline fields changed. The handoff records the
+independent Sol/high sensitive review, closed confidence review, required
+no-argument rewrite tournament, and C1-FINAL-1 results: 58 focused tests,
+narrow mypy, and Ruff passed. Those checks were performed in C1's admitted
+clone; no combined source/upstream suite was run here. Task1-A is adapter
+component evidence only; analytical settlement, downstream consumption and
+rendering remain unverified. No live/paid/provider calls or publishing occurred.

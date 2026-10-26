@@ -1013,5 +1013,16 @@
     "development launchers",
     "private packs and run artifacts",
     "bulk tests and old planning tree"
+  ],
+  "hash_interpretation": "source_commit and files[].sha256 record the original byte-preserved import baseline. Post-import changes to imported files are recorded separately in post_import_patches; their sha256 values identify the current patched destination bytes.",
+  "post_import_patches": [
+    {
+      "destination": "src/deploy_vii/live/tools.py",
+      "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "project_commit": "8adbd4104918ef7ccaeee1e8d234c0e2d7ae71f9",
+      "sha256": "d4071e59bde16648ab9175e529cce47a5b5e0f456da3a4692e831d0b346b1e48",
+      "reason": "Atomic read/search evidence publication after complete SOURCE rendering; preserve prior successes.",
+      "review": "docs/handoffs/source-tools.md"
+    }
   ]
 }

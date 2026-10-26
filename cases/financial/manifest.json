@@ -1,0 +1,307 @@
+{
+  "schema_version": "cp1-model-cases/1",
+  "scope": "Full five-stage CP1 over four reported calendar2025 quarters and opening PERIOD_END2024; actual promotion, deterministic Model publication and native rendered proof. No reported FY or YoY qualification.",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins pages for source SHA256. Supplied-page representation only.",
+  "run": {
+    "run_id": "slice-cp1-model-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-1",
+      "CP-MODEL"
+    ]
+  },
+  "sources": [
+    {
+      "source_id": "identity",
+      "name": "Issuer identity and reporting scope note",
+      "status": "ready",
+      "extraction_status": "complete",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIssuer identity and reporting scope note\nPublished January 10, 2026.\nNorthbridge Synthetic Group is the issuer and consolidated group.\nFiscal year end: December 31.\nThis invented case is test data, not evidence about a real issuer.\nNo borrower, guarantor or restricted-group perimeter is established by this source set."
+        }
+      ],
+      "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+    },
+    {
+      "source_id": "financial",
+      "name": "Unaudited quarterly statements and complete facility schedule",
+      "status": "ready",
+      "extraction_status": "complete",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nUnaudited quarterly financial statements and opening balance note\nPublished January 10, 2026.\nReporting basis: IFRS; entity perimeter: consolidated group.\nCurrency: USD; amounts in millions. Expenses are presented by nature.\nThis source reports four discrete quarters in calendar 2025, not reported annual financial periods.\nThe opening balance is December 31, 2024. The quarters are January 1-March 31 (90 days), April 1-June 30 (91 days), July 1-September 30 (92 days), and October 1-December 31 (92 days).\nCosts of sales, gross profit, and selling/general/administrative functional classifications are not disclosed; do not treat them as zero.\nNo EBITDA adjustments or add-backs occurred; this disclosure is complete.\nOne operating segment, Consolidated Operations, reports revenue of 30 in each quarter; there are no corporate or elimination segments.\nNo acquisitions, disposals, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter. Each such flow is explicitly zero.\nThere were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026.\nCash interest and cash taxes are classified in operating cash flows. Capital expenditure is entirely maintenance investment; growth capex is zero.\nOperational KPIs and unlevered free cash flow are not disclosed.\nOPENING CONSOLIDATED BALANCE SHEET\nDecember 31, 2024\nCash and cash equivalents  15\nTrade receivables  12\nInventories  8\nProperty plant and equipment  55\nOther noncurrent assets  5\nTotal assets  95\nSenior secured term debt  45\nTrade payables  17\nOther current liabilities  10\nTotal liabilities  72\nShareholders equity  23\nTotal equity  23\nTotal liabilities and equity  95\nRestricted cash, short-term investments, other current assets, goodwill, other intangibles, short-term debt, current portion of long-term debt, unsecured debt, subordinated debt, pensions, lease obligations and minority interests are each zero at opening and every quarter end.\nThere is no revolving credit facility: RCF commitment and RCF drawings are each zero at opening and every quarter end."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nQuarter Q1 2025: 2025-01-01 through 2025-03-31, 90 days\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by nature.\nCONSOLIDATED INCOME STATEMENT\nQ1 2025\nRevenue  30\nOperating costs excluding depreciation  22.5\nTotal operating expenses including depreciation  23.75\nDepreciation and amortization  1.25\nOperating profit EBIT  6.25\nReported EBITDA  7.5\nAdjusted EBITDA  7.5\nNet interest expense  1.25\nInterest income  0\nOther non-operating income  0\nProfit before tax  5\nIncome tax expense  1\nNet profit  4\nExceptionals  0\nShare based compensation  0\nOperating lease cost  0\nCONSOLIDATED CASH FLOW STATEMENT\nQ1 2025\nNet profit  4\nDepreciation and amortization  1.25\nOperating cash flow before working capital  5.25\nWorking capital cash movement  (0.5)\nOperating cash flow  4.75\nMaintenance capital expenditure  (2.5)\nGrowth capital expenditure  0\nTotal capital expenditure  (2.5)\nLevered free cash flow  2.25\nAcquisitions  0\nDisposals  0\nNet cash used in investing  (2.5)\nDebt issuance  1.25\nDebt repayment  0\nNet debt issuance  1.25\nEquity issuance  0\nEquity repurchases  0\nDividends paid  (2.25)\nOther investing and financing  0\nNet cash used in financing  (1)\nNet change in cash  1.25\nOpening cash  15.00\nClosing cash  16.25\nCash interest paid  1.25\nCash tax paid  1\nCash lease payments  0\nLease payments in financing  0\nInterest paid in financing  0\nFX effect on cash  0\nCONSOLIDATED BALANCE SHEET\n2025-03-31\nCash and cash equivalents  16.25\nTrade receivables  12.75\nInventories  8.5\nTotal current assets  37.50\nProperty plant and equipment  56.25\nOther noncurrent assets  5\nTotal assets  98.75\nSenior secured term debt  46.25\nTotal debt  46.25\nTrade payables  17.75\nOther current liabilities  10\nTotal current liabilities  27.75\nTotal liabilities  74\nShareholders equity  24.75\nTotal equity  24.75\nTotal liabilities and equity  98.75"
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nQuarter Q2 2025: 2025-04-01 through 2025-06-30, 91 days\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by nature.\nCONSOLIDATED INCOME STATEMENT\nQ2 2025\nRevenue  30\nOperating costs excluding depreciation  22.5\nTotal operating expenses including depreciation  23.75\nDepreciation and amortization  1.25\nOperating profit EBIT  6.25\nReported EBITDA  7.5\nAdjusted EBITDA  7.5\nNet interest expense  1.25\nInterest income  0\nOther non-operating income  0\nProfit before tax  5\nIncome tax expense  1\nNet profit  4\nExceptionals  0\nShare based compensation  0\nOperating lease cost  0\nCONSOLIDATED CASH FLOW STATEMENT\nQ2 2025\nNet profit  4\nDepreciation and amortization  1.25\nOperating cash flow before working capital  5.25\nWorking capital cash movement  (0.5)\nOperating cash flow  4.75\nMaintenance capital expenditure  (2.5)\nGrowth capital expenditure  0\nTotal capital expenditure  (2.5)\nLevered free cash flow  2.25\nAcquisitions  0\nDisposals  0\nNet cash used in investing  (2.5)\nDebt issuance  1.25\nDebt repayment  0\nNet debt issuance  1.25\nEquity issuance  0\nEquity repurchases  0\nDividends paid  (2.25)\nOther investing and financing  0\nNet cash used in financing  (1)\nNet change in cash  1.25\nOpening cash  16.25\nClosing cash  17.50\nCash interest paid  1.25\nCash tax paid  1\nCash lease payments  0\nLease payments in financing  0\nInterest paid in financing  0\nFX effect on cash  0\nCONSOLIDATED BALANCE SHEET\n2025-06-30\nCash and cash equivalents  17.50\nTrade receivables  13.50\nInventories  9.0\nTotal current assets  40.00\nProperty plant and equipment  57.50\nOther noncurrent assets  5\nTotal assets  102.50\nSenior secured term debt  47.50\nTotal debt  47.50\nTrade payables  18.50\nOther current liabilities  10\nTotal current liabilities  28.50\nTotal liabilities  76\nShareholders equity  26.50\nTotal equity  26.50\nTotal liabilities and equity  102.50"
+        },
+        {
+          "locator": "page:4",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nQuarter Q3 2025: 2025-07-01 through 2025-09-30, 92 days\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by nature.\nCONSOLIDATED INCOME STATEMENT\nQ3 2025\nRevenue  30\nOperating costs excluding depreciation  22.5\nTotal operating expenses including depreciation  23.75\nDepreciation and amortization  1.25\nOperating profit EBIT  6.25\nReported EBITDA  7.5\nAdjusted EBITDA  7.5\nNet interest expense  1.25\nInterest income  0\nOther non-operating income  0\nProfit before tax  5\nIncome tax expense  1\nNet profit  4\nExceptionals  0\nShare based compensation  0\nOperating lease cost  0\nCONSOLIDATED CASH FLOW STATEMENT\nQ3 2025\nNet profit  4\nDepreciation and amortization  1.25\nOperating cash flow before working capital  5.25\nWorking capital cash movement  (0.5)\nOperating cash flow  4.75\nMaintenance capital expenditure  (2.5)\nGrowth capital expenditure  0\nTotal capital expenditure  (2.5)\nLevered free cash flow  2.25\nAcquisitions  0\nDisposals  0\nNet cash used in investing  (2.5)\nDebt issuance  1.25\nDebt repayment  0\nNet debt issuance  1.25\nEquity issuance  0\nEquity repurchases  0\nDividends paid  (2.25)\nOther investing and financing  0\nNet cash used in financing  (1)\nNet change in cash  1.25\nOpening cash  17.50\nClosing cash  18.75\nCash interest paid  1.25\nCash tax paid  1\nCash lease payments  0\nLease payments in financing  0\nInterest paid in financing  0\nFX effect on cash  0\nCONSOLIDATED BALANCE SHEET\n2025-09-30\nCash and cash equivalents  18.75\nTrade receivables  14.25\nInventories  9.5\nTotal current assets  42.50\nProperty plant and equipment  58.75\nOther noncurrent assets  5\nTotal assets  106.25\nSenior secured term debt  48.75\nTotal debt  48.75\nTrade payables  19.25\nOther current liabilities  10\nTotal current liabilities  29.25\nTotal liabilities  78\nShareholders equity  28.25\nTotal equity  28.25\nTotal liabilities and equity  106.25"
+        },
+        {
+          "locator": "page:5",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nQuarter Q4 2025: 2025-10-01 through 2025-12-31, 92 days\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by nature.\nCONSOLIDATED INCOME STATEMENT\nQ4 2025\nRevenue  30\nOperating costs excluding depreciation  22.5\nTotal operating expenses including depreciation  23.75\nDepreciation and amortization  1.25\nOperating profit EBIT  6.25\nReported EBITDA  7.5\nAdjusted EBITDA  7.5\nNet interest expense  1.25\nInterest income  0\nOther non-operating income  0\nProfit before tax  5\nIncome tax expense  1\nNet profit  4\nExceptionals  0\nShare based compensation  0\nOperating lease cost  0\nCONSOLIDATED CASH FLOW STATEMENT\nQ4 2025\nNet profit  4\nDepreciation and amortization  1.25\nOperating cash flow before working capital  5.25\nWorking capital cash movement  (0.5)\nOperating cash flow  4.75\nMaintenance capital expenditure  (2.5)\nGrowth capital expenditure  0\nTotal capital expenditure  (2.5)\nLevered free cash flow  2.25\nAcquisitions  0\nDisposals  0\nNet cash used in investing  (2.5)\nDebt issuance  1.25\nDebt repayment  0\nNet debt issuance  1.25\nEquity issuance  0\nEquity repurchases  0\nDividends paid  (2.25)\nOther investing and financing  0\nNet cash used in financing  (1)\nNet change in cash  1.25\nOpening cash  18.75\nClosing cash  20.00\nCash interest paid  1.25\nCash tax paid  1\nCash lease payments  0\nLease payments in financing  0\nInterest paid in financing  0\nFX effect on cash  0\nCONSOLIDATED BALANCE SHEET\n2025-12-31\nCash and cash equivalents  20.00\nTrade receivables  15.00\nInventories  10.0\nTotal current assets  45.00\nProperty plant and equipment  60.00\nOther noncurrent assets  5\nTotal assets  110.00\nSenior secured term debt  50.00\nTotal debt  50.00\nTrade payables  20.00\nOther current liabilities  10\nTotal current liabilities  30.00\nTotal liabilities  80\nShareholders equity  30.00\nTotal equity  30.00\nTotal liabilities and equity  110.00"
+        },
+        {
+          "locator": "page:6",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nComplete facility and classification schedule\nPublished January 10, 2026. USD millions; consolidated group; IFRS carrying values.\nThere is exactly one debt facility: Northbridge Term Loan, facility_id term-loan.\nIt is a senior secured term loan, not a lease. No other debt facilities or debt adjustments exist.\nDate                 Carrying value  Principal  Drawn amount  Commitment\n2024-12-31           45              45         45            50\n2025-03-31           46.25           46.25      46.25         50\n2025-06-30           47.5            47.5       47.5          50\n2025-09-30           48.75           48.75      48.75         50\n2025-12-31           50              50         50            50\nThe carrying value equals principal and drawn amount; there are no fees, unamortized adjustments or other carrying-value adjustments.\nThe facility has floating rate type with SOFR reference rate, spread 0 basis points and floor 0 basis points. Fixed coupon is not applicable. Mandatory annual amortisation is 0; final maturity is December 31, 2029. Cash interest amounts in the quarterly statements are reported cash payments, not a forecast calculation from the terms.\nNo leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date.\nReported EBITDA equals revenue less total operating expenses including depreciation plus depreciation and amortization. Adjusted EBITDA equals reported EBITDA because there are no adjustments.\nCFO equals net profit plus depreciation and amortization plus the signed working-capital cash movement.\nNet cash change equals operating cash flow plus net investing cash flow plus net financing cash flow.\nCash movement equals closing cash less opening cash. Debt movement equals net cash debt issuance with zero noncash change."
+        }
+      ],
+      "sha256": "2f34cfa9ac3798100fbf55468e837cc502e4c01f22700dc6ec07baeb18bd6b1b"
+    }
+  ],
+  "periods": [
+    {
+      "period_id": "opening-2024",
+      "period_type": "PERIOD_END",
+      "fiscal_year": "2024",
+      "fiscal_quarter": null,
+      "start_date": null,
+      "end_date": "2024-12-31"
+    },
+    {
+      "period_id": "q1-2025",
+      "period_type": "QUARTER",
+      "fiscal_year": "2025",
+      "fiscal_quarter": 1,
+      "start_date": "2025-01-01",
+      "end_date": "2025-03-31",
+      "day_count": 90
+    },
+    {
+      "period_id": "q2-2025",
+      "period_type": "QUARTER",
+      "fiscal_year": "2025",
+      "fiscal_quarter": 2,
+      "start_date": "2025-04-01",
+      "end_date": "2025-06-30",
+      "day_count": 91
+    },
+    {
+      "period_id": "q3-2025",
+      "period_type": "QUARTER",
+      "fiscal_year": "2025",
+      "fiscal_quarter": 3,
+      "start_date": "2025-07-01",
+      "end_date": "2025-09-30",
+      "day_count": 92
+    },
+    {
+      "period_id": "q4-2025",
+      "period_type": "QUARTER",
+      "fiscal_year": "2025",
+      "fiscal_quarter": 4,
+      "start_date": "2025-10-01",
+      "end_date": "2025-12-31",
+      "day_count": 92
+    }
+  ],
+  "source_dimensions": {
+    "currency": "USD",
+    "unit": "MILLIONS",
+    "accounting_basis": "IFRS",
+    "entity_perimeter": "consolidated group",
+    "expense_presentation": "by_nature",
+    "evidence_class": "unaudited_without_auditor"
+  },
+  "quarter_observations": {
+    "revenue": "30",
+    "opex_including_da": "23.75",
+    "depreciation_amortization": "1.25",
+    "ebit": "6.25",
+    "ebitda": "7.5",
+    "adjusted_ebitda": "7.5",
+    "pretax_income": "5",
+    "income_tax_expense": "1",
+    "net_income": "4",
+    "cash_interest_paid": "1.25",
+    "cash_taxes_paid": "1",
+    "working_capital_change": "-0.5",
+    "cfo_ncfo": "4.75",
+    "capex_and_intangible_investment": "-2.5",
+    "net_debt_issue_repay": "1.25",
+    "dividends_paid": "-2.25",
+    "net_cash_change": "1.25"
+  },
+  "explicit_zero_metrics": [
+    "acquisitions_disposals",
+    "net_equity_issue_repay",
+    "other_investing_financing",
+    "cash_lease_payments",
+    "lease_payments_in_financing",
+    "interest_paid_in_financing",
+    "operating_lease_cost",
+    "rcf_commitment",
+    "rcf_drawn",
+    "unsecured_debt"
+  ],
+  "unknown_not_zero": [
+    "cogs",
+    "gross_profit",
+    "functional_sga",
+    "operational_kpis",
+    "unlevered_free_cash_flow"
+  ],
+  "quarter_derived": {
+    "ebit": "6.25",
+    "ebitda": "7.5",
+    "adjusted_ebitda": "7.5",
+    "cfo": "4.75",
+    "ffo": "5.25",
+    "fcf": "2.25",
+    "other_operating": "0"
+  },
+  "q4_ltm_derived_source_units": {
+    "revenue": "120",
+    "ebit": "25",
+    "ebitda": "30",
+    "adjusted_ebitda": "30",
+    "cfo": "19",
+    "ffo": "21",
+    "capex": "-10",
+    "fcf": "9",
+    "cash_change": "5",
+    "total_debt": "50",
+    "net_debt": "30"
+  },
+  "q4_ltm_metric_oracle": {
+    "total_leverage_reported": {
+      "numerator": "50",
+      "denominator": "30",
+      "fraction": "5/3",
+      "unit": "MULTIPLE"
+    },
+    "total_leverage_adjusted": {
+      "numerator": "50",
+      "denominator": "30",
+      "fraction": "5/3",
+      "unit": "MULTIPLE"
+    },
+    "net_leverage_reported": {
+      "numerator": "30",
+      "denominator": "30",
+      "decimal": "1",
+      "unit": "MULTIPLE"
+    },
+    "interest_coverage_reported": {
+      "numerator": "30",
+      "denominator": "5",
+      "decimal": "6",
+      "unit": "MULTIPLE"
+    },
+    "capex_adjusted_coverage": {
+      "numerator": "20",
+      "denominator": "5",
+      "decimal": "4",
+      "unit": "MULTIPLE"
+    },
+    "ffo_to_debt": {
+      "numerator": "21",
+      "denominator": "50",
+      "decimal": "0.42",
+      "unit": "PERCENT"
+    },
+    "fcf_to_debt": {
+      "numerator": "9",
+      "denominator": "50",
+      "decimal": "0.18",
+      "unit": "PERCENT"
+    }
+  },
+  "unavailable_expectations": [
+    "Q1-Q3 twelve-month leverage and interest coverage unavailable; no annualisation of quarter EBITDA",
+    "No YoY growth without prior-year comparable quarters",
+    "COGS/gross profit/gross margin stay missing; no zero inference"
+  ],
+  "reconciliation_kinds_each_quarter": [
+    "SEGMENT_REVENUE",
+    "EBITDA_BRIDGE",
+    "ADJUSTED_EBITDA_BRIDGE",
+    "CFO_IDENTITY",
+    "NCF_IDENTITY",
+    "DEBT_TOTAL_EX_LEASES",
+    "NCF_CASH_MOVEMENT"
+  ],
+  "positive_expectations": {
+    "CP0_status": "restricted",
+    "CP1_authorization": "READY_WITH_LIMITATIONS / Run CP-1",
+    "CP1_stages": [
+      "source_context",
+      "financials",
+      "narrative",
+      "readiness",
+      "quality"
+    ],
+    "source_context_status": "restricted",
+    "model_readiness": "ready",
+    "mandatory_reconciliations": "PASS",
+    "CP1_head": "restricted; exact adopted settlement with honest source/scope restrictions",
+    "QA": "Restricted, not Blocked; score determined by frozen raw claim/materiality/coverage inventory and independent formula before evaluating promotion",
+    "CP_MODEL": "actual publish_cp_model; restricted head consuming selected promoted CP1; verify_cp_model_publication empty issues",
+    "currency_scaling": "Each source-unit million is exactly1000000 USD, so derived revenue120 is120000000 USD",
+    "publication_files": [
+      "model.html",
+      "calculation.json",
+      "receipt.json"
+    ]
+  },
+  "negative_case": {
+    "run_id": "slice-cp1-model-gap",
+    "change": "financial source missing: no pages/hash, extraction blocked; limitation Quarterly financial statements were not supplied. Identity unchanged and actually read.",
+    "CP0_status": "restricted",
+    "CP1_authorization": "CONDITIONAL / DO NOT RUN",
+    "CP1_begin": "actual NotAuthorized; no CP1 ticket/output/head",
+    "Model_publication": "actually invoke core publisher: refuses no promoted CP1 before begin/write; no Model head/files",
+    "receipt_refusal": "cp1_not_authorized"
+  },
+  "required_limits": [
+    "Synthetic supplied-page test data; no real issuer/provider/PDF/OCR qualification",
+    "Four-quarter historical financial scope only; no reported annual comparative or YoY qualification",
+    "Unaudited without auditor; borrower/guarantor/restricted-group perimeters not established",
+    "Remaining analytical owners, forward projections and production rollout unqualified"
+  ],
+  "twelve_month_aggregate_ratios": {
+    "fcf_to_adjusted_ebitda": {
+      "numerator": "9",
+      "denominator": "30",
+      "decimal": "0.30",
+      "unit": "PERCENT"
+    },
+    "ebitda_margin": {
+      "numerator": "30",
+      "denominator": "120",
+      "decimal": "0.25",
+      "unit": "PERCENT"
+    }
+  },
+  "q4_display_metric_oracle": {
+    "fcf_to_adjusted_ebitda": {
+      "numerator": "2.25",
+      "denominator": "7.5",
+      "decimal": "0.30",
+      "unit": "PERCENT",
+      "scope": "own Q4 period"
+    },
+    "ebitda_margin": {
+      "numerator": "7.5",
+      "denominator": "30",
+      "decimal": "0.25",
+      "unit": "PERCENT",
+      "scope": "own Q4 period"
+    }
+  },
+  "metric_coordinate_rule": "Q4 leverage/coverage/flow-to-debt recipes use twelve-month operands; own-period margin/FCF-to-EBITDA recipes use Q4 operands. Do not use equal result values to conflate basis/operands."
+}

@@ -790,3 +790,50 @@ See FIRST-SLICE.md for the complete confidence and verification receipt.
 C1/C2 runtime leases are closed. No next-owner work, broad suite, provider call or
 production rollout is admitted. Paid/provider tests remain paused. First requested
 source-to-rendered slice is complete for the positive and gap synthetic cases.
+
+
+## Next slice authorized — full CP1 financial analysis to rendered Model
+
+User explicitly authorized continued coordination of C1, C2 and PR MANAGER through
+full CP1 financial analysis, assigned rendered output and deterministic Model
+publication. Paid/provider/live tests remain paused; production rollout and broader
+owner work are outside this slice. Current integrated base is
+8d578801e2285194f98062b2d022ec94f33bb34f. LEAD preserved its completed first-slice
+branch and fetched this clean base into new codex/cp1-lead. C1/C2 reopened with
+read-only, disjoint documentation discovery; no product edit/runtime admitted yet.
+Independent Sol/high oracle task0_oracle_review is reviewing financial expectations.
+
+Ruling: Positive acceptance requires actual Model-readiness ready with sufficient
+source evidence, in addition to five actual CP1 stages, promotion and deterministic
+publication. Existing FY-only case does not provide four complete contiguous
+quarters or a carrying-value facility schedule. Core publication's narrower gate
+may allow restricted historical display even with Model-readiness blocked; do not
+mistake that for readiness, invent a refusal expectation, or silently add a policy
+gate. A new independently frozen synthetic source will supply the required evidence.
+Actual adopted validation/promotion/publication behavior remains authoritative.
+
+
+### Task3-B expectation and API freeze
+
+Independent Sol/high task0_oracle_review approved exact manifest
+ e5a5b0cd1b0e5928344b4915fcbb0bf299f10932d7d3789f4e0a712d963580cb
+and contract ec3531ba4756afc8102dbaf201f291047b1b5e9b95d66f767b2be5305a98d050.
+Static independent source arithmetic/hash/date/BS/WC/PPE/equity/debt/CFO/NCF checks
+passed. Two pre-freeze corrections closed: Q4 own-period margin operands separated
+from twelve-month leverage/coverage operands; analytical read_inputs restricted to
+adopted source-free projections, full nested typed inputs internal only. No candidate
+output supplied the oracle. Exact QA inventory/formula check remains before promotion.
+
+LEAD confidence review: literal source sufficiency and period identity were checked
+against adopted gates (no reported FY in new case); explicit zero versus missing
+preserved; output readiness and actual publisher gate kept distinct; C1 sole-writer
+publication-before-seal and C2 raw-byte/current-state authentication avoid mixed
+snapshots; no rawquote/record_json projection leak is authorized. Model interface
+fields accepted by both coordinators. Remaining runtime and exact QA/body/DOM facts
+are unrun and must be proved, not assumed. Docs/data-only changes, no code rewritten.
+
+C1 preparation docs commit c3e09ce8df45b950fa7e87dd4531bf01939acd8e is admitted
+before this freeze commit so the prepared C1 branch can fast-forward to the common
+integrated code-start base. C2's untracked planning handoff is outside integration
+paths and will be preserved. Exact product leases are the three files per lane in
+CP1-MODEL-SLICE.md; no shared host/source/imported-core edit is authorized.

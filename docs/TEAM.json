@@ -1,55 +1,29 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "four role chats created and dispatched; no analytical module accepted",
-  "base_revision": "df26ea82249fc062a8beb8dba3d51f1caf5fdf23",
-  "sidebar_section_id": "c6cda051-7fd1-491f-b2bb-88bb5ceed83f",
-  "codex_project_registration": "not registered: supported tool has no project creation endpoint; grouped standalone chats use explicit repository paths",
+  "state": "active: next CP1 financial-to-Model slice discovery",
   "sessions": {
     "LEAD": {
-      "thread_id": "01a17a0b-efd6-7a43-a5f9-55216b7fa71c",
-      "host_id": "local",
-      "model_requested": "gpt-6.1-sol",
-      "effort_requested": "high"
+      "current_chat": true,
+      "host_id": "local"
     },
-    "COORDINATOR 1": {
+    "C1": {
       "thread_id": "01a17a0a-f4aa-7860-8f81-61fdf28f6e0d",
-      "host_id": "local",
-      "model_requested": "gpt-6.1-sol",
-      "effort_requested": "high"
+      "host_id": "local"
     },
-    "COORDINATOR 2": {
+    "C2": {
       "thread_id": "01a17a0b-1bac-7020-bae1-d99dd2fcbe23",
-      "host_id": "local",
-      "model_requested": "gpt-6.1-sol",
-      "effort_requested": "high"
+      "host_id": "local"
     },
-    "PR MANAGER": {
+    "PR_MANAGER": {
       "thread_id": "01a17a0b-53d9-7981-bf30-51ffaa2acc8d",
-      "host_id": "local",
-      "model_requested": "gpt-6-luna",
-      "effort_requested": "medium"
+      "host_id": "local"
     }
   },
   "working_copies": {
-    "LEAD": {
-      "path": "/Users/ericguei/Documents/Deploy Workflow Sessions/lead",
-      "branch": "codex/lead",
-      "starting_revision": "df26ea82249fc062a8beb8dba3d51f1caf5fdf23"
-    },
-    "COORDINATOR 1": {
-      "path": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1",
-      "branch": "codex/source-tools",
-      "starting_revision": "df26ea82249fc062a8beb8dba3d51f1caf5fdf23"
-    },
-    "COORDINATOR 2": {
-      "path": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2",
-      "branch": "codex/upstream-render",
-      "starting_revision": "df26ea82249fc062a8beb8dba3d51f1caf5fdf23"
-    },
-    "PR MANAGER": {
-      "path": "/Users/ericguei/Documents/Deploy Workflow",
-      "branch": "codex/checkpoint",
-      "starting_revision": "df26ea82249fc062a8beb8dba3d51f1caf5fdf23"
-    }
-  }
+    "LEAD": "/Users/ericguei/Documents/Deploy Workflow Sessions/lead",
+    "C1": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1",
+    "C2": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2",
+    "PR_MANAGER": "/Users/ericguei/Documents/Deploy Workflow"
+  },
+  "paid_provider_tests": "paused"
 }

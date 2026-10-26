@@ -266,3 +266,26 @@ there as well. I did not rerun these admitted checks. This integrates producer
 code only: actual analytical participant calls, retained positive/gap sessions,
 and C2 browser/render proof remain pending. No owner or module is marked
 complete; no paid/provider/live call or publication occurred.
+
+## C1 actual source-slice evidence receipt
+
+Integrated C1's exact docs-only evidence commit
+`0014ba10b784edc84b10db9916851fb1a21e0b07` (parent
+`61187e75fa272a724ae00b5dbef1ff6206ea5209`) by local fetch and cherry-pick.
+It changes only `docs/handoffs/source-slice.md`. Integration commit:
+`8af8ec1d3a57d91bf081a9dc10f5f2016a4d01c9` on `codex/checkpoint`; handoff SHA256:
+`23edf91a3957be100e5a280149f3468d38463966f8ff749434c05b3c91c1f66c`.
+
+The handoff records the two actual JSON-lines participant sessions, retained
+positive and gap execution stores and receipts, eight successful positive calls,
+the refused unavailable gap read, restricted CP0 settlements, valid pending CP1
+source_context in the positive case, and actual `NotAuthorized`/no-ticket CP1
+refusal in the gap case. LEAD independently ran the public receipt verifier and
+checked transport, participant, readiness, commands, CP1 presence/refusal, and
+artifact identities. Both processes exited successfully and the actual-run token
+was released. This remains a source-readiness slice: no CP1 Module or Model
+publication is claimed; rendered HTML/DOM evidence is still pending with C2.
+
+No tests were rerun for this docs-only commit, and no live/paid/provider calls
+were made. The cherry-pick was conflict-free; prior integration receipts and
+bootstrap TEAM registration remain intact.

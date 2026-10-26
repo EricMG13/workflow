@@ -122,3 +122,35 @@ scope matched LEAD's admission. No tests, heavy jobs or live/paid/provider calls
 were run for this docs/data-only integration. The prior TEAM registration and
 integration receipts remain in place. Product commits are still held pending
 their separate final review and LEAD admission.
+
+## C2 Task2-A upstream tool integration
+
+Integrated C2's exact admitted product commit
+`a2eb18025f16dac06c9832ba9a8531e974042335` from
+`/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2`
+(`codex/upstream-render`, based on
+`b90c51c382b0544be5dac194eb91124470c22943`) by local fetch and cherry-pick.
+The resulting integration commit is
+`3ebaf4737e6f8c581a53aca09d5aac36bc8a5a4e` on `codex/checkpoint`.
+
+The three admitted files are `src/deploy_workflow/tools/upstream.py`,
+`tests/test_upstream_tools.py`, and `docs/handoffs/upstream-tools.md`; no
+source/host/shared/export/imported/render file was changed. The final handoff
+hashes match the integrated product and tests:
+
+- `src/deploy_workflow/tools/upstream.py`:
+  `4854ec219bcd646e72b1ec367573df898bafad4d48a1f6e18285c90043b0eebe`
+- `tests/test_upstream_tools.py`:
+  `40887e513da2bf079b3032bc661d980362da4128c205f653b3bd3344a6474425`
+
+Integration confidence review: candidate status was clean and the exact commit
+scope matched LEAD's admission. Its only product import is from existing
+`deploy_vii` primitives; Task0 specifies direct leaf import from
+`deploy_workflow.tools.upstream`, so no package export edit is needed or
+included. The commit cherry-picked without conflict. Final SHA checks passed.
+The handoff records the independent Sol/high sensitive review, ten-point
+confidence review, no-argument rewrite tournament, and final focused run of 53
+tests passed (PID 17950, exit 0). Those results belong to C2's admitted run;
+no combined source/upstream suite was run here. No live, paid, provider,
+publication or production activity occurred. This adapter is component evidence
+only and does not establish an accepted analytical owner or module.

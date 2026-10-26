@@ -241,3 +241,28 @@ Whitespace note: the frozen API archive has a trailing blank line at EOF, which
 preserved the exact reviewed archive bytes/hash. The C1 handoff identifier
 `ae9802...` supplied in the queue is not a Git object in the C1 clone; no
 Git-object assertion is made from it.
+
+## C1 Task3-A source producer integration
+
+Integrated C1's exact admitted producer commit
+`61187e75fa272a724ae00b5dbef1ff6206ea5209` from
+`/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1`
+(`codex/source-slice`, parent `cb71b86019774dfffb808f10d8493ae402dd5602`) by
+local fetch and cherry-pick. The integration commit is
+`de6ac31e02ac3ea02b31c2836a794ce7ba7706dd` on `codex/checkpoint`.
+
+The four admitted files are `src/deploy_workflow/host.py`,
+`src/deploy_workflow/workflow.py`, `tests/test_source_workflow.py`, and
+`docs/handoffs/source-slice.md`. The host change is the reviewed CP0 canonical
+provenance helper/guard; no imported tool, public API document, contract,
+manifest, renderer or shared binding changed. The final host/workflow/test
+bundle hash matched C1's recorded `d9fccd16d6121abe08d6847cfb402603ec4c5a388b1f89dd9ca4c4c111f93a00` before and after integration. The cherry-pick completed without conflict and `git diff --check` passed for the admitted diff.
+
+The handoff records independent Sol/high approval for the exact final bundle,
+closed confidence review and no-argument rewrite tournament. Its final workflow
+checks report 31 tests passed, two-file mypy passed, and three-file Ruff passed;
+the earlier 88-case combined run and unchanged source-host cases are recorded
+there as well. I did not rerun these admitted checks. This integrates producer
+code only: actual analytical participant calls, retained positive/gap sessions,
+and C2 browser/render proof remain pending. No owner or module is marked
+complete; no paid/provider/live call or publication occurred.

@@ -361,8 +361,9 @@ class PackTools:
                 found.append((-exact, -sum(counts), order, position, source_id, span, first))
         found.sort(key=lambda item: item[:4])
         lines = [f"{len(found)} spans match {query!r}; showing {min(limit, len(found))}."]
+        surfaced: set[tuple[str, str]] = set()
         for rank, (exact, total, _, _, source_id, span, match) in enumerate(found[:limit], 1):
-            self.surfaced.add((source_id, span.locator))
+            surfaced.add((source_id, span.locator))
             start, end = max(0, match.start() - SNIPPET_CHARS), match.end() + SNIPPET_CHARS
             lines.append(f"hit {rank}: matches={-total} phrase_matches={-exact}")
             lines.append(
@@ -373,8 +374,10 @@ class PackTools:
                     f"locator={span.locator} | {span.text[start:end]}",
                 )
             )
+        result = "\n".join(lines)
+        self.surfaced.update(surfaced)
         self.searched.append(scope if isinstance(scope, str) else None)
-        return "\n".join(lines)
+        return result
 
     def read_pages(self, raw: Mapping[str, Any]) -> str:
         _arguments(raw, ("source_id", "first_page", "last_page"))
@@ -389,14 +392,17 @@ class PackTools:
             raise ToolError(f"source {source_id} has no page:N locators")
         digest = str(self.ready[source_id].sha256)
         parts = []
+        read: set[tuple[str, str]] = set()
         for number in range(first, last + 1):
             span = pages.get(number)
             if span is None:
                 parts.append(f"page:{number} is not a located span of {source_id}.")
                 continue
             parts.append(block("SOURCE", source_id, digest, span_line(span)))
-            self.read.add((source_id, span.locator))
-        return "\n".join(parts)
+            read.add((source_id, span.locator))
+        result = "\n".join(parts)
+        self.read.update(read)
+        return result
 
     def extract_statements(self, raw: Mapping[str, Any]) -> str:
         """The statement lines of the named pages of one declared source, as SOURCE blocks

@@ -211,3 +211,10 @@ No broader suite, type check, provider/live/paid call or deployment was run.
 The next C1 Task3-A slice should start from the clean checkpoint after this
 receipt commit. The combined test process exited successfully; its one heavy
 job slot is released.
+
+## Task3-A lease and adapter run ledger
+
+Integrated LEAD's exact docs-only continuation
+`74efe275e8df8fcb47f854b8b512053ca615d2ef` from `/Users/ericguei/Documents/Deploy Workflow Sessions/lead` (`codex/lead`) by local fetch and cherry-pick. It changes only `docs/QUEUE.md`, recording the completed combined adapter run and the exact C1 Task3-A producer lease. The integration commit is `ea36c2d9285805232d2b28c3bc8ba8320b216011` on `codex/checkpoint`.
+
+This queue update adds no product code and required no tests. The cherry-pick completed without conflict; the existing integration receipts and bootstrap TEAM registration remain intact. The queue's C1 Task3-A lease is based on clean code commit `cb71b86019774dfffb808f10d8493ae402dd5602`; the later queue/receipt commits are documentation-only. No paid/provider/live work is authorized or performed.

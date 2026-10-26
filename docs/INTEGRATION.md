@@ -382,3 +382,12 @@ These commits freeze discovery, independent cases and exclusive lanes only.
 No product code, model settings, tests or runtime work was changed or run.
 Paid/provider tests remain paused. The CP1 financial, rendering and Model
 execution slice is not complete or accepted by this preparation receipt.
+
+LEAD pinned the common implementation start to
+`904ab86303024d885e6530b033cf5fe231e90d21` after verifying the contract and
+manifest hashes. C1 will preserve `codex/cp1-financial` and create the admitted
+implementation branch from that exact revision. C2 may fast-forward its
+`codex/cp1-rendered` branch from `8d578801e2285194f98062b2d022ec94f33bb34f`
+to that revision; its untracked `docs/handoffs/financial-rendered-slice.md`
+does not collide with a tracked path there. No branch operation was performed
+in this integration checkout.

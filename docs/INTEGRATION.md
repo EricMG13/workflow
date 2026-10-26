@@ -71,3 +71,31 @@ or direct composers alone.
 - Live/paid/provider testing remains paused. Preserve the one-heavy-job and
   two-disjoint-lane limits; LEAD must admit resource use after checking actual
   processes. No heavy job was started for this review.
+
+## Task0 integration receipt
+
+Integrated LEAD's admitted Task0 commit
+`d9411401e4797e04a2e030d3741e937d2d210e32` from
+`/Users/ericguei/Documents/Deploy Workflow Sessions/lead` (`codex/lead`) by
+local fetch and cherry-pick. The resulting integration commit is
+`c4ca5680d557fae5a9327db6d344c48b51728b75` on `codex/checkpoint`.
+
+The six admitted files are `PLAN.md`, `docs/MODULES.csv`, `docs/QUEUE.md`,
+`docs/TOOL-CONTRACT.md`, `cases/source/manifest.json`, and
+`cases/upstream/manifest.json`. The queue-file conflict was resolved in favor of
+LEAD's reviewed Task0 queue, which supersedes the bootstrap queue; bootstrap
+`docs/TEAM.json` registration and this integration receipt were preserved.
+Reviewed SHA-256 values match the Task0 queue receipt:
+
+- `docs/TOOL-CONTRACT.md`: `fa6d2ef20a4d8cf4b4e9f065f96b29f1552feaa5a12195a53c3db88b489fee88`
+- `cases/source/manifest.json`: `dfb9cbaa2db94934c2d322009e7a070d0a39ed67898d92bd9fb2c1fdbf3a03c8`
+- `cases/upstream/manifest.json`: `c63e87c92d49ecf7427dbcc39925dfa04844b7c52566e745f22086eb66aacbea`
+
+Checks: candidate file scope was exactly six files; all three reviewed hashes
+matched; `git diff --cached --check` passed before committing. LEAD's queue
+records its independent Sol/high review, confidence/static validation and
+docs/data-only scope. No heavy suite or provider test was run. The integration
+checkout remains local, with no external remote; the working tree was clean
+after the integration commit. Task0 freezes contracts, cases and leases only;
+no analytical module is accepted. C1 Task1-A and C2 Task2-A are not integrated
+and require their own later LEAD admission.

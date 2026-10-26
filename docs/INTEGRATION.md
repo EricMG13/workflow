@@ -323,3 +323,27 @@ publication occurred.
 LEAD will admit the single assembled focused source/upstream/workflow/render
 test batch after inspecting the integrated source. No assembled or broader suite
 was run for this integration.
+
+## First source-to-rendered slice closure
+
+Integrated LEAD's exact docs/data commit
+`58a210a46caa89446350721ebdb8c511155fe023` (parent
+`fbdda49e8288a17e20298ba352fba119ad40845a`) from the LEAD clone by local
+fetch and cherry-pick. The resulting integration commit is
+`03feb26c0a51db99d0d3561c9f3b3bde61b6713d` on `codex/checkpoint`.
+
+The four admitted files are `PLAN.md`, `docs/MODULES.csv`, `docs/QUEUE.md`, and
+`docs/FIRST-SLICE.md`. The report SHA-256 is
+`101fd04259cb1b8bda06fe123e82f524540d1a8538cf79e099a4c2be4d8db99b`.
+The cherry-pick completed without conflict; the reviewed first-slice report,
+matrix, queue, and plan are integrated without changing product code or the
+prior integration/run receipts. No tests or renderer checks were rerun.
+
+`docs/FIRST-SLICE.md` records LEAD's independent confidence review, the
+156-test assembled result and run evidence, actual positive/gap producer
+receipts, public verifier checks, native DOM evidence, and the portable delivery
+at `/Users/ericguei/Documents/Codex/2026-10-26/deploy-workflow-lead/outputs/first-source-slice`.
+The completed scope is the bounded offline source-readiness slice; full CP-1
+financial analysis, Model publication, all 26 intended owners, remaining
+pathways and production rollout remain unqualified. Paid/provider testing stays
+paused.

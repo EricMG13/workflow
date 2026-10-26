@@ -341,3 +341,158 @@ analytical host sessions, settlements/consumer artifacts, HTML and visible DOM p
 Docs/data changes only; no production functions changed, rewrite workflow exempt.
 Task3 producer receipt field spellings will be fixed by C1's typed workflow handoff
 before the dependent C2 rendered lease starts; no unilateral consumer API guess.
+
+PR MANAGER integrated reviewed slice docs d055a1f as
+4e40ce955f8fa1c7df90dd8b2d669b8b48779b3b; receipt
+ a373cf9c8cce67e0ba418ee87b557483ea4e26d5. Four-file scope and both approved
+hashes verified by integrator; main clean. No product commits admitted yet.
+
+C1-RED-2 released PID15740,21:29:02..21:29:06 UTC,exit1,56passed/1failed.
+600-level valid JSON arguments caused deepcopy RecursionError while publishing an
+otherwise refused receipt; root confirmed. C1 replaces JSON-data deep copying with
+JSON roundtrip detachment, preserving exact arguments/isolation without new policy.
+Other new source-scope/state/evidence probes passed. No slot held.
+
+C2-GREEN-2 queued admission explicitly superseded before runtime. New independent
+finding: interruption during initialization/retention can strand writer lock. C2-RED-3
+admitted after fresh21:30:23scan load2.88/2.71/2.59,no projectcheck: only targeted
+bookkeeping-interruption test, source-set8fc7b9c5fbcf441dd1ee32e41529a1bffd66f5ef9b2765ed896fd3b00ef4e4e6.
+Product0f84c43d9d5ecba475b0189771c38ec3a8c280fd5d895e4b505d20ac660182f2;
+tests42bd294d1e2b61975660882ee52634b489c99c6a90b10ad2f16ab978d79787f1
+independently matched. C1 may prepare final candidate; no overlapping heavy test.
+
+Admission correction: C2's final source freeze concurrently added the cross-lane
+600-level JSON test. LEAD's actual hash read was40887e..., not the older42bd...
+claimed in the first one-node admission message. That older admission was revoked
+without permitting a run. Corrected C2-RED-3 admits once the final two-node command:
+bookkeeping lock cleanup and deep JSON receipt refusal. Exact tests40887e513da2bf079b3032bc661d980362da4128c205f653b3bd3344a6474425,
+product0f84c43d9d5ecba475b0189771c38ec3a8c280fd5d895e4b505d20ac660182f2,
+source-set532b44b23c14816f9d3d14b1fa3a7b042f54fea2b4f6094d83ecd08120b122f2.
+Fresh process check/hash confirmed before corrected dispatch. No second run admitted.
+
+C2-RED-3 completed once on corrected two-node snapshot: PID16759,
+21:30:59.143965..21:31:01.063748 UTC,exit1,3failed. Both injected bookkeeping
+interruptions stranded writer lock;600-level refused receipt overflowed deepcopy.
+Root fixes: outer finally covers full writer lifetime; immutable JSON receipt strings
+with detached JSON decoding; control exceptions still propagate with error/internal_error.
+C2 revised GREEN2 admitted on fresh21:31:57scan(no job,load2.34/2.67/2.59),
+source-setc293c5d070614e7de6e92c32f857fa17cb99fe4fb1be5258dc8ec2649346b508.
+Completed PID17078,21:32:29.767127..21:32:30.366575,exit0,53passed/0.44s.
+
+C1-GREEN2 admitted fresh21:32:42scan(no job,load2.63/2.66/2.59), bundleee86c08b1823c6394d0cacf6ea504c9e2f6c7b573a891185087ad49984fa4f80.
+Completed PID17786,21:33:23..21:33:24,exit0,58passed/0.89s; slot released.
+Source tournament readability winner is verified; independent final static review
+requires relevant narrow type/import checks before commit.
+
+C2 tournament winner changes only ticket-match allocation and temporary JSON-buffer
+lifetime; independent sensitive fixes preserved. Final focused run admitted after
+fresh21:33:55scan(no job,load2.35/2.57/2.56), sourced0548c04f58625351658b1bd39889506b066ee85cf1a2ff507f0c29a6eaaa1a5.
+Completed PID17950,21:34:00.231076..21:34:00.833357,exit0,53passed/0.45s;
+complete log retained, slot released; final C2 docs/commit pending.
+
+C1-STATIC-1 admitted next after fresh no-project-job scan: narrow mypy
+--follow-imports=skip on only host.py/source.py/tools/__init__.py, then ruff on those
+plus focused source test, sequentially. Frozen source; full logs and completion
+receipt required. No source-wide test/type pass or provider call is admitted.
+
+C1-STATIC1 actual findings were two no-any-return errors and52 Ruff findings.
+C1 applied only typed JSON-copy cast/equivalent literals/format/sanitizer suppression,
+independently reviewed final mechanical delta. C1-FINAL1 admitted fresh21:36:42
+(no job,load2.61/2.54/2.54), bundle83b58cb91164d214e3d035f07693fef04b1dd90a04f732c8feb47bd441a0421f.
+Completed pytestPID18444,21:37:22..23,exit0,58passed/0.84s; mypyPID18477
+21:37:23,exit0,3files; ruffPID18481 same minute,exit0,4files. Slot released.
+C1 exact six-file commit8adbd4104918ef7ccaeee1e8d234c0e2d7ae71f9 admitted after
+scope/14-line imported-method diff/hash/review checks. C2 exact3-file
+ a2eb18025f16dac06c9832ba9a8531e974042335 likewise admitted; neither is owner completion.
+Main integrated C2 as3ebaf4737e6f8c581a53aca09d5aac36bc8a5a4e, receipt0110ba9bc1834d6017e0887c3a4c3d08fde68caa;
+C1 as1668904 (full integration receipt in main), manifest/receipt66c3a5afdcdd93e4605e0c9491456016991da0ab.
+Original importedsha380c20eb... preserved; post_import_patches records reviewed
+ d4071e59... atomic-method patch under C1 exactcommit, not a false byte-preserved claim.
+
+MAIN-ADAPTERS-1 admitted after fresh21:41:13scan(no projectjob,load3.24/2.54/2.50):
+exact clean mainHEAD66c3a5afdcdd93e4605e0c9491456016991da0ab; seven-file bundle
+729f94279b073fe675f87d6be4828e1b6f8431884bdf899a963d9e356a21a55d.
+Command: PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 main .venv/bin/python -m pytest -q
+ tests/test_source_tools.py tests/test_upstream_tools.py. One exact combined focused
+run, full log/PID/time/results, no other test suite/provider call. Completion pending.
+
+C2 docs-only renderer prep f33dbb406c3a2aa95edf4296373a95f6c62814fe is read-only
+input for later lease; not integrated product. Actual route selectors and sourcehashes
+checked. Historical registry25/16aliases differs from26intended owners; source-only
+render must show honest delivery-scope banner and never claim broader ownercoverage.
+Global registry reinterpretation remains later separately scoped work. Browser uses
+current native CUA capabilities/observed reachability; no unverified legacy tool or
+localhost assumption, no new install/harness/provider. C1 typed receipt producer must
+be reviewed before dependent rendered code begins.
+
+MAIN-ADAPTERS-1 completed PID19186 on66c3a5afdcdd93e4605e0c9491456016991da0ab,
+exit0,111passed/1.08s; UTCend21:41:54.618272. Full log main artifacts/combined-adapters-1.log;
+seven-file source hash unchanged. Integration receipt committed as
+cb71b86019774dfffb808f10d8493ae402dd5602; clean codebase verified by LEAD.
+No runtime slot is held; no analytical owner completion inferred from adapter tests.
+
+## Active Task3-A producer lease — exact connected code base
+
+**Unblocks CP-0 readiness -> actual CP-1 source-context consumption -> Evidence,
+Limitations and CP-0 rendered sections.** C1 owns the producer/workflow bridge,
+selected GPT-6.1 Sol/high. Exact starting revision:
+`cb71b86019774dfffb808f10d8493ae402dd5602` from main codex/checkpoint.
+Clone `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1`;
+create local branch `codex/source-slice` at this fetched exact revision, preserving
+existing codex/source-tools and all its committed work. No reset/rebase/force.
+
+Consume the integrated reviewed docs/SLICE-CONTRACT.md SHA256
+c1970233fd69aa5c7cf5b0a73156a7323eddcc894bd97a4cd558765c023dfb77,
+cases/connected/manifest.json SHA256
+30b383bd397ecf1c99f3f49d02674605d8ad9c6868da4b4f205124942d731df1,
+plus the supported source-host v1 API. This LEAD lease commit is read-only authority.
+
+Exclusive tracked files only:
+
+- src/deploy_workflow/workflow.py: SourceWorkflow/finite trusted-setup JSON-lines
+  transport; actual SourceSession calls, ToolRules evidence gate, actual CP0/CP1
+  submission/settlement APIs, hash-bound typed source-slice receipt producer.
+- tests/test_source_workflow.py: independent literal positive/gap and unread/stale/
+  foreign/payload/forged-output cases from the frozen manifest; tests-first.
+- docs/handoffs/source-slice.md: exact public receipt field spellings/type API,
+  code/case/source revisions, actual tool/result/submission/settled/consumer identities,
+  resource/test/review receipts and retained artifact paths/hashes, remaining limits.
+
+Ignored local artifacts/runs may be written for this slice, with precise output
+paths and source/code revisions; no other tracked files, shared source/host/tools/
+registry/render bindings/contracts/manifests/queue edits. If the supported API blocks
+this named slice, return one reproduced exact conflict/proposed lease change to LEAD.
+Do not extend model/effort settings, add provider drivers, arbitrary code/shell/path
+tools, production/recovery programmes, private packs or broader owners.
+
+Use the actual analytical host participant, not canned final Modules or mock results:
+after product checks/review, perform the supported source tool calls, inspect their
+real returned bodies, and submit the evidence-grounded raw CP0 review and CP1 source
+context through the bounded host interface. Record participant/transport and exact
+actual calls/results/payloads. Developer shell transport alone or fixture-scripted
+final artifact insertion cannot qualify the slice. Internal offline host-agent use
+is permitted; no product provider/paid/live calls or artificial Model loops.
+
+The positive and genuine missing-financial cases need distinct actual Execution
+stores. Positive CP0 settles restricted; real current_inputs/Run CP1 permits actual
+CP1 source_context validation, retained output restricted, attempt still pending;
+CP1 Module/Model remain unrun. Gap CP0 settles restricted with CONDITIONAL/DO NOT RUN;
+real CP1.begin refuses and creates no CP1 ticket/output. Preserve historical per-call
+and per-submission snapshot identities; final receipt names the final current snapshot,
+not a false assertion that every earlier call occurred at that final snapshot.
+Audit binding may exist for an evidence-rule refusal, but no validator/journal
+submission or accepted output may follow it.
+
+Write causal tests before implementation; reserve actual tests-first RED then focused
+GREEN via LEAD fresh process/load admission. Freeze source beneath running checks.
+Run confidence-review, no-argument rewrite-tournament on the two material changed
+functions and independent Sol/high sensitive review; return exact commit/API handoff.
+No runtime admitted merely by this code-writing lease. One heavy job/two lanes remain.
+
+C2's dependent rendering implementation lease stays pending until C1's typed receipt
+producer and actual positive/gap stores/receipts are available. C2 may read existing
+code/approved cases and its committed render-preparation handoff only. It owns no
+workflow changes. Later renderer lease will require a visible scope banner:
+`Source readiness only. Financial analysis and Model publication remain unrun.`
+The historical global25/26/alias mismatch is explicitly open; no registry redesign or
+full-owner coverage claim is admitted by this finite source deliverable.

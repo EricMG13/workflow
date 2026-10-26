@@ -1,5 +1,116 @@
 # Task3-A producer — active tests-first handoff
 
+## Producer outcome — actual positive and gap sessions retained
+
+Implementation commit: `61187e75fa272a724ae00b5dbef1ff6206ea5209` on
+`codex/source-slice`, based on `cb71b86019774dfffb808f10d8493ae402dd5602`.
+LEAD integrated this implementation in main as `959e652c4d104b7aab05870ca41520473ba02a30`.
+The four changed files are workflow.py, test_source_workflow.py, this handoff, and the
+explicitly amended host.py guard. No other source, contract, renderer or model settings changed.
+
+The implementation and actual runs used the frozen three-file bundle
+`d9fccd16d6121abe08d6847cfb402603ec4c5a388b1f89dd9ca4c4c111f93a00`.
+Prior combined 88 tests passed; the final changed-workflow run passed all 31 cases,
+with two-file mypy and three-file Ruff green. Required confidence review, no-argument
+rewrite tournament and independent Sol/high implementation review are closed.
+Earlier pending/admission notes below are historical and superseded by these outcomes.
+
+The current internal offline analytical participant inspected the returned SOURCE bodies
+and authored its reviews through the bounded JSON-lines surface. It did not invoke the
+unit fixture payload functions, inject final Modules, supply validator callbacks, run a
+provider, or change analytical model/effort settings. Developer command execution was
+only trusted setup and transport; the retained actual source calls, authored reviews,
+real core validation/settlement and CP1 consumption are the producer evidence.
+No CP1 Module or Model publication is claimed. C2 owns the remaining rendered/DOM proof.
+
+### Retained stores and receipts (read-only consumer inputs)
+
+- positive: execution `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/runs/task3-source-positive`; receipt `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/artifacts/source-slice-positive/receipt.json`.
+  Receipt SHA-256 `90925e534fc895fac5bb2d9dd28e4e2d7c7d23e94dcc49378ae949a594b47e02`; final snapshot `3fda7b283bef6cb6ff753b65cebc9abf2c3f8fac1ad2372d562ccc1e2f1501a4`.
+- gap: execution `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/runs/task3-source-gap`; receipt `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/artifacts/source-slice-gap/receipt.json`.
+  Receipt SHA-256 `cf07e26d18ae733b60bee6c6dad389edbdec8fc7a2cf13e828729cc6be19d76a`; final snapshot `45bb2376b6bc3b3dae72a6674f0ba375311d4a34c367e471a9f48abb788a04ca`.
+
+Actual source/case facts and expected outcomes are frozen in the connected manifest
+`30b383bd397ecf1c99f3f49d02674605d8ad9c6868da4b4f205124942d731df1`.
+Canonical positive pack: `bc15096a011a4f8d431b36489fb63e6ff1d2b6e2e607b907c12bd20d8f2ecd85`;
+gap pack: `f5b1192fcfb401681b648ee2d3a4b83e738ba9c2fca8df821283e4b9eb4b0c61`.
+These differ from the raw setup JSON hashes, as expected after contract defaults and
+canonical serialization. The setup script is data-only:
+`artifacts/source-slice-setup/prepare.py`, SHA-256
+`9fa8980386ca79d521548f32452d06a6dbe73ec3434ac76423f211071aeec516`.
+
+### Actual participant and process record
+
+ACTUAL-SOURCE-1 was admitted once by LEAD; both case processes ran sequentially on the
+same immutable implementation and setup files. Positive PID25461 started at
+2026-10-26 22:23:42 UTC and exited0 on EOF by22:26:57 UTC. Gap PID25632 started then
+and exited0 on EOF by22:28:09 UTC. Token released at22:28:09 UTC; both processes stopped.
+The positive process used terminal session66217, gap41658. Owned PTY canonical/echo
+mode was temporarily disabled to prevent long JSON reviews being truncated, then
+restored before EOF. This changed transport buffering only, not code, tool permissions,
+raw payload bytes, source facts or product model settings.
+
+Positive: CP0 performed scoped identity search/read and financial event search plus
+all three financial page reads. The participant observed issuer/group identity,
+publication/fiscal year, explicit IFRS/USD/millions/consolidated metadata, all three
+annual statements and the report's dated event sentence. It authored a6719-byte
+ReadinessReview covering the entire selected FY canonical-foundation method, with
+all missing notes/terms/perimeters and broader-work restrictions explicit. Actual
+submit_cp0_review settled restricted. A new CP1 session independently repeated those
+four supported calls under the selected restricted CP0 input. Its7193-byte authored
+SourceContextReview mapped two FY durations and two period-end scopes, classified
+financial evidence as unaudited_without_auditor/tier2b, confined no-events to the dated
+report, and left borrower/guarantor/restricted roles unresolved. Actual submit_cp1_step
+retained valid restricted source_context; CP1 remained pending, with no Module head.
+Eight successful calls were made, four per step; no extraction/financial stage ran.
+
+Gap: the participant independently searched/read the gap-case identity source and
+attempted the financial read. The latter returned refused/unavailable with null body
+and no financial page credit. It then authored a3105-byte CONDITIONAL readiness review,
+using only the actually read identity quote (same unchanged source identity, independently
+read in this case), naming the missing annual statements and a material source gap.
+No positive financial quote, positive CP0 hash or CP1 output was reused. Core CP0 settled
+restricted with exact DO NOT RUN; actual Execution.begin(CP1) raised NotAuthorized
+without creating a CP1 ticket. Three calls were retained, including the unavailable read.
+
+Each store's source-slice-audit retains the exact ToolCall JSON, authored raw payload
+bytes and immutable submission binding before journal transition. Execution retains
+validated candidate outputs, selected settled results and all historical snapshots.
+The receipt seal authenticates the complete final receipt against that same store.
+
+Exports beside each receipt: `tool-calls.jsonl`, `cp-0-review.json`, positive-only
+`cp-1-review.json`, `requests.jsonl`, and `evidence-manifest.json`. Request exports were
+reconstructed from exact retained arguments and original authored payload bytes after
+the runs; they were not a replay driver. Exact original audit bytes remain in the store.
+A flat coordinate summary is `artifacts/source-slice-summary.json` in this clone.
+
+### Actual immutable coordinates
+
+| Case / artifact | Raw payload SHA-256 | Canonical review SHA-256 | Validated step-output SHA-256 | Selected settled result SHA-256 |
+| --- | --- | --- | --- | --- |
+| positive CP0 | `63e8a353064e9c9038ad726b8568bbb21b4ea133174ddb066fbe5aab4b8a6183` | `95f64c6bc56c4126b090c0dfd5066f825223e1636568f67a6040596b7a419683` | `ec56ed97553208d110852a61281bbcf82a8e273bfad69639fa5c46098b4c96cd` | `c6e7f209aabe1dd6054e3c989a524220a29e63f5e18836992ed8885c1c97c9bc` |
+| positive CP1 source_context | `034549236837332822133bdde9977764d1d9cc2af53dfb17d56f821539ccc4d5` | `95a6cc89a0ff8182acd006f8bf204fabe161f754574bd508e2543d8799131ec3` | `e3374cae828bf077c62cb29789296cbbb65c0788cadca073d0c91364327917f4` | none — pending, not promoted |
+| gap CP0 | `997d87099abeab25febcb9b19c9191f8e8180130a9405923e630b268649e6670` | `19247c2e3d261a36cc7206c970d86e414fc4f7b98a75d505fd61715ff76a9292` | `e0b7c7dd379212f1a4f2ea722a5d0767668d82d736df188e5f3560375d67bf32` | `9a14f88e74247a9fa388cb20a47495c248da2244cf9032b7993c21b7b3819668` |
+
+Positive CP1 ticket: `45dedb96-2443-4dda-a83d-a7a2beceeffd`. Its actual current inputs
+bind the positive pack and selected CP0 result/status restricted. Gap has no CP1 ticket.
+Both final snapshots contain only a CP0 head. Tool-call snapshots are the earlier
+step-session snapshots; the positive CP0 post-settlement snapshot precedes CP1.begin,
+and CP1's post-submit snapshot is final. No earlier call is relabeled as final-epoch use.
+
+### Remaining scope
+
+C2 must consume these exact immutable stores/receipts, publish actual standalone HTML,
+and verify visible Evidence/CP0/Limitations/source-inspector DOM. That evidence is still
+pending in this producer handoff; source/financial/model owner completion is not inferred
+from component checks or the partial CP1 step. Source readiness is the only delivered
+analytical slice here. CP1 financials/narrative/readiness/quality, CP1 Module promotion,
+Model and other analytical owners remain unrun by this lease. No PDF/OCR, paid/provider,
+production deployment or durable recovery qualification is asserted.
+
+---
+
+
 Exact base cb71b86019774dfffb808f10d8493ae402dd5602, branch codex/source-slice.
 Task3 lease authority74efe275e8df8fcb47f854b8b512053ca615d2ef in LEAD clone.
 Contract c1970233fd69aa5c7cf5b0a73156a7323eddcc894bd97a4cd558765c023dfb77;

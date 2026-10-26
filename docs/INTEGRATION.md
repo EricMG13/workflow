@@ -347,3 +347,38 @@ The completed scope is the bounded offline source-readiness slice; full CP-1
 financial analysis, Model publication, all 26 intended owners, remaining
 pathways and production rollout remain unqualified. Paid/provider testing stays
 paused.
+
+## CP1 financial-to-Model slice preparation
+
+Integrated the three admitted documentation commits in order:
+
+1. C1 preparation `c3e09ce8df45b950fa7e87dd4531bf01939acd8e`, adding only
+   `docs/handoffs/cp1-model.md`; main cherry-pick `a788285e2a0218289951ebb0348da6bf583a3961`.
+2. LEAD slice freeze `0aec8593834785081e02010335f3277dbe10323b`, changing
+   `PLAN.md`, `docs/TEAM.json`, `docs/QUEUE.md`, adding
+   `docs/CP1-MODEL-SLICE.md` and `cases/financial/manifest.json`; main
+   cherry-pick `69996d34f5b4a5026865c8c8904b15ba137112e9`.
+3. LEAD scope narrowing `50ed6bace6e1a9a0731d1c716ca574db05127bf9`,
+   changing only `docs/CP1-MODEL-SLICE.md` and `docs/QUEUE.md`; main
+   cherry-pick `904ab86303024d885e6530b033cf5fe231e90d21`.
+
+The final independent contract and financial manifest hashes match their
+admitted values:
+
+- `docs/CP1-MODEL-SLICE.md`: `e9625c081b429513449654783d1e130d2bfb04a090e7e9bf1ce2141fd68cd69a`
+- `cases/financial/manifest.json`: `e5a5b0cd1b0e5928344b4915fcbb0bf299f10932d7d3789f4e0a712d963580cb`
+
+To preserve the original C1 branch ancestry for a safe fast-forward, merged
+C1's original preparation commit into main after verifying the merge tree was
+identical to the integrated tree. That no-content-change merge commit is
+`aaee571b46b98b6f6d8bd22034bf64f60077f32f`. C1's `codex/cp1-financial` tip
+(`c3e09ce8…`) and C2's `codex/cp1-rendered` base (`8d578801…`) are both
+ancestors of the resulting main history. C2's sole untracked handoff,
+`docs/handoffs/financial-rendered-slice.md`, does not collide with a tracked
+main path, so its local fast-forward can preserve that file. No branch was
+changed here.
+
+These commits freeze discovery, independent cases and exclusive lanes only.
+No product code, model settings, tests or runtime work was changed or run.
+Paid/provider tests remain paused. The CP1 financial, rendering and Model
+execution slice is not complete or accepted by this preparation receipt.

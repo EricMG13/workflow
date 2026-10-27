@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: A1 core and A3 FP02 components accepted; C1 A2 confirmed currentness fix/final verification; B1 actual owner and A4 completeCP5 contracts preparing; whole PLAN incomplete; paid/provider/live paused",
+  "state": "active: A1/A2/A3 components integrated and focused integration evidence closed; B1/A4 first-case transport-size corrections before owner leases; whole PLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,9 +34,9 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "A2 exact6files: original5 plus submission.py narrowly admitted under addendum atcleanpusheddfbb4c9; writes only, causal final_currentRED before racefix, eachheavyjob separately admitted",
+    "C1": "A2 exact6file266440a accepted126focusedchecks and integratedc5c6a691; preservework; A4completeCP5implementation awaits corrected reviewed lease/oracle/base",
     "C2": "A3 exact4filecommit0d6c714 accepted90focusedchecks; PM integration admitted; next authenticated earnings delivery waits exact B1/A4 interfaces; static preparation only",
-    "C3": "A1 exact3filecommitc8d4c93 accepted71focusedchecks plus genuineFULLCP1componentprobe; PM integration admitted; B1 owner/foundation lease preparing, no owner writes yet",
+    "C3": "A1 core accepted and integrated; B1firstpositive lookup group size correction before reviewed owner/foundation admission; static reading only",
     "PR_MANAGER": "integration only"
   }
 }

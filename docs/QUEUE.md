@@ -2200,3 +2200,38 @@ final_currentraceguardsstillcausallyconfirmed; narrowv2trailingreadfixinreview.
 NextB1owner/A4completeCP5contracts are staticpreparationonly andmustfreezeexact
 APIs/receipts/casesbeforewrites. C2preparedactualdeliveryrefusalswithoutfilesor
 runtime; Modelpublicationfirstearningssetempty. FullPLAN/23actualmatrixrowsopen.
+
+
+## A1/A2/A3 component integration evidence closed; actual owner still open
+
+PM clean pushed c5c6a691b4ebb2cef70b17f18822d498cf48de72 includes exact admitted
+C1266440a patch and imported-file provenance preservingoriginalhashes. All6pins
+equalactual126PASSbytes; finalconfidence/sensitive/two-passnoargtournament closed.
+Rootrecords C1work/cp1b-access-a2/HANDOFF.md + handoff.json preserved.
+
+ROOT combined regression record is explicitly TWO disjoint cohorts, not a single
+fullygreencommand. PID92293 at09:58:59.988359..10:01:52.906296UTC exited2 from
+intentionalSIGINT after218passed172.37s; codeinspection found selectedfinancial_render
+module fixture reconstructs fullhistoricalCP1/publisher beyondthiscomponentcheck.
+ExactlivePID/command verified beforeinterruption; no timeout/hang inferred and no
+productfailure observed. Completed first5modules plusavailabilitytest retained.
+Remaining4fastmodules only ran PID92611 at10:02:08.256978..10:02:11.635601UTC,
+exit0,221passed3.14s. Thus439disjointcompletedcases onsame141frozenpins; runtime/
+HEAD/source/test/case/cleanstate unchanged. Fullhistoricalfinancial_rendercases
+and fullfinancial_workflowsuite are NOT newlyqualified. No testsrepeatjustified.
+Alllogs/intent/rawrecords/summary inLEADwork/cp1b-preparation:
+assembled-components-record.json/log, assembled-components-interrupt-intent.json,
+assembled-fast-remainder-record.json/log, combined-component-verification.json.
+Main/heavyslot released10:02:11UTC; paid/provider/live remainpaused.
+
+B1/A4 are still PRE-CODE contracts, not admissions. Independreview caught two
+valid-first-case transport defects: B1fixed16attribute lookup of actual15coordinate
+periodrow exceeds8192bytes; A4indivisibleCP1BbasisJSON alone exceeds8192bytes with
+actual21qualifiedcompanions. PriorB1PASS explicitlysuperseded beforeanycommit.
+Authors must minimally splitlookupattributes/pageabletypedlineage while retaining
+all19attributes/12lineages/44facts, exact sourcevalues/identities/coverage and8192cap.
+No declaringthevalidfirstcase unsupported, capincrease, sourcegapalias, numerical
+re-audit ornewreviewchain. Sameindependentreviewercloses correctedexactpairs and
+staticpositivebody/budgetproof beforePMintegration/LEADcodeadmission.
+C3/C1 no newowner/CP5writes yet; C2staticlegalcallerproposal40fe1eca prepared
+withoutcode/imports/tests. AllactualCP1B/CP5/FP02matrixlinks remainunverified.

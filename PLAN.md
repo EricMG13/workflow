@@ -234,7 +234,7 @@ and authentic FP02 output/native proof must follow before module closure.
 
 - [x] Independently freeze/review exact A2/A3 schemas, guards, values and ownership.
 - [x] Integrate exact leases and admit disjoint C1/C2 writes at the named base.
-- [ ] C1/C2 implement, verify causal cases and required confidence/tournament/reviews.
+- [x] C1/C2 implement, verify causal cases and required confidence/tournament/reviews.
 - [ ] Assemble actual owner/access/consumer/render chain; no component-only module claim.
 
 A2 registration dependency: the independently reviewed pre-fix addendum
@@ -251,3 +251,11 @@ headroom3x/75%; missing incorporated EBITDA definition means Not calculable.
 USD90m arithmetic distance is not legal debt permission/capacity. False Same
 definition must refuse semantic acceptance; current core does not automatically
 detect it. This closes source preparation only: actual CP4/CP5/FP04 remain open.
+
+A1/A2/A3 components are integrated at c5c6a691b4ebb2cef70b17f18822d498cf48de72.
+Relevant integration evidence has439 completed fast cases across two disjoint
+cohorts on identical141 source/test/case pins; first command intentionally
+interrupted the full historical financial-render fixture after218 passed, then
+remaining four fast modules passed221. No broad financial-render/workflow or
+actual owner/CP5/native claim follows. B1/A4 first-case transport-size defects
+are being corrected before their contract/admission; byte caps/coverage stay fixed.

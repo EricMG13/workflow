@@ -2674,3 +2674,29 @@ Log `7669e48ea6b3782f375ada119723ceb2129822a6edc92bce45306f1a7da2a7b0`.
 All frozen pins/runtime and expected module absence unchanged. No B1/A4 import
 or producer execution; entrypoint absence only, not output/authentication proof.
 Source freeze/heavy slot released; C2 two-file implementation resumed.
+
+
+## Claude Code handover (2026-10-27)
+
+Codex usage ran out; its five threads are retired. The user named this Claude
+session LEAD and asked it to start one Claude session per remaining role. Routing
+and the lighter run rule are in AGENTS.md (Model routing; heavy-job lock and
+per-lane `work/<lane>/ledger.md` line replace per-run LEAD admission records).
+Leases, owned files, oracles and every evidence rule below are unchanged.
+
+Lane state read by LEAD at handover (latest retained logs in each clone's `work/`):
+
+- C3 B1 (`coordinator-3`, `codex/cp1b-owner-b1`): causal RED-1 exit1, 3 setup errors
+  from the test helper passing nested prose-part arrays where public readiness
+  schemas take Prose strings. Source is deliberately the pre-P2/P3 version for causal
+  reproduction; drafted fixes and tournament winner B are preserved in
+  `work/cp1b-owner-b1/` and are unapplied. Next: fix helper only, rerun causal RED.
+- C1 A4 (`coordinator-1`, `codex/cp5-integrity-a4`): GREEN-1 164 passed / 8 failed
+  (protected-payload authority cases). Full host runtime still needs accepted B1.
+- C1 L2 (`coordinator-1-source-host`, `codex/cp4-source-host`): RED-2 1 failed
+  (blocked repair degradation), 84 deselected; implementation in progress.
+- C2 D1 (`coordinator-2`, `codex/cp1b-delivery-d1`): pure GREEN-1 28 passed /
+  1 failed (13-field wire, no terminal LF). Full runtime needs accepted B1/A4 and
+  the genuine three-case handoff; no stubs.
+- LEAD clone holds an uncommitted, unreviewed `cases/legal/owner-expected.json`
+  draft; it confers nothing until frozen and independently reviewed.

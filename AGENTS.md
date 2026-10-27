@@ -17,14 +17,18 @@ are intermediate evidence. CP-MODEL and CP-OS are deterministic exceptions.
 
 ## Model routing
 
-- GPT-6.1 Sol/high implements financial semantics, provenance/permissions,
-  state, persistence, recovery and consequential parser behavior; it also defines
-  and independently reviews financial/stateful expected results.
-- GPT-6 Luna/medium handles fully specified mechanical changes and PR mechanics.
-  A small financial/stateful fix is still Sol/high. Split mixed work or use Sol/high.
-- Coordination retains its selected model. A coordinator implementing directly
-  must use the applicable route or delegate. Record selected model/effort and
-  actual route evidence; do not silently substitute or claim hidden telemetry.
+Claude Code took over from Codex on 2026-10-27 (user decision). The former
+GPT-6.1 Sol/high route maps to `mx-feature`, GPT-6 Luna/medium to `mx-scaffold`;
+historical records keep their original route names.
+
+- `mx-feature` implements financial semantics, provenance/permissions, state,
+  persistence, recovery and consequential parser behavior, and fixes in them.
+- `mx-scaffold` handles fully specified mechanical changes and PR mechanics.
+- Two Sonnet fix rounds per task; the third and later go to a fresh `mx-escalate`.
+- `mx-precise` reviews each task and independently reviews financial/stateful
+  expected results; `mx-adversary` also reviews diffs touching financial,
+  ordering/concurrency or security code. Opus/architect agents never write code.
+- Coordinator sessions plan and dispatch; they do not write product code.
 - User instructions require confidence-review after any code change, before
   declaring completion or committing. Enumerate doubts, trace causes, refute
   suspects, patch confirmed defects and report remaining limits.
@@ -38,7 +42,7 @@ One task owns one named behavior/invariant, a starting commit, exclusive files,
 independent success/failure expectations and a concrete handoff. Define expected
 values, units, periods, citations, statuses and downstream effects before evaluating
 candidate output. Do not derive an oracle from the renderer or code under test.
-An independent Sol/high review checks sensitive expectations. Reuse existing
+An independent `mx-precise` review checks sensitive expectations. Reuse existing
 reviews rather than add approval chains. Stop inventing policy at unclear semantics:
 name the exact requirement and have LEAD resolve it from the adopted source.
 
@@ -57,10 +61,15 @@ name the exact requirement and have LEAD resolve it from the adopted source.
   and effort choices remain distinct from coding-agent routes.
 - Use at most one heavy local job. Active implementation has no numerical lane
   cap, by the user's2026-10-27 instruction. Every lane still needs an exact exclusive
-  lease, disjoint files/interfaces and LEAD admission in docs/QUEUE.md after actual
-  resource/process checks. Do not
+  lease and disjoint files/interfaces. Since the 2026-10-27 Claude handover a test
+  run needs no per-run LEAD admission record: take the global heavy-job lock
+  (`mkdir /tmp/deploy-workflow-heavy-job.lock`; wait while it exists, never delete
+  another lane's lock), run, `rmdir` it, then append one line to the lane's
+  `work/<lane>/ledger.md`: UTC time, run name, command, exit code, pass/fail counts,
+  `agent=<name> fix-rounds=<n> gates-first-pass=<y|n>`. LEAD still admits new leases
+  and commits for integration in docs/QUEUE.md. Do not
   freeze a run's source while another writer edits it, restart quiet tests, or kill
-  unrelated processes. Short static checks may overlap when safe.
+  unrelated processes. Static checks (ruff, mypy) need no lock.
 
 ## Ownership and reuse
 

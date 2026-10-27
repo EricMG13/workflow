@@ -1121,6 +1121,26 @@ _EARNINGS_UPDATE: Mapping[str, _Spec] = MappingProxyType(
         "metric-strip": _Spec("Metric strip", "MODEL", "chart", ("CP-1",)),
     }
 )
+_COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
+    {
+        "covenant-tests-headroom": _Spec(
+            "Covenant tests and headroom", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
+        ),
+        "capacity": _Spec(
+            "Capacity and baskets", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
+        ),
+        "red-flags": _Spec("Red flags", "CP-4", "dense", ("CP-4",), route_label="Full analysis"),
+        "lender-protection-score": _Spec(
+            "Lender protection score", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
+        ),
+        "ebitda-definition": _Spec(
+            "EBITDA definition", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
+        ),
+        "documents-structure": _Spec(
+            "Documents and structure", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
+        ),
+    }
+)
 _NO_PRODUCER = "No module produces this block yet."
 _UNBOUND_OWNER = "Unbound"
 _PERIOD_CLASSES = (
@@ -1157,7 +1177,7 @@ def _strip_note(block_id: str) -> str:
 
 
 def _spec_of(block_id: str) -> _Spec:
-    for composition in (_CREDIT_SNAPSHOT, _EARNINGS_UPDATE):
+    for composition in (_CREDIT_SNAPSHOT, _EARNINGS_UPDATE, _COVENANT_REFINANCING):
         if block_id in composition:
             return composition[block_id]
     # Blocks only another Pathway lists are not produced yet: they keep the idle view's wording.
@@ -1913,6 +1933,101 @@ def _validate_cp1b_layout(module: ModuleView) -> None:
                 raise ValueError("CP1B zero prior requires missing growth/ZERO_DENOMINATOR")
 
 
+def _cp4_fact_shape(fact: Fact) -> None:
+    """Check supplied native values without judging legal or financial truth."""
+    if not fact.scale.is_finite() or fact.scale <= 0:
+        raise ValueError("CP4 facts require a finite positive scale")
+    if fact.unit in {"MULTIPLE", "PERCENT", "decimal_fraction", "pp"} and (
+        fact.scale != 1 or fact.currency is not None
+    ):
+        raise ValueError("CP4 dimensionless figures require scale one and no currency")
+    if fact.status != "known":
+        valid = (
+            fact.amount is None
+            and fact.text is None
+            and bool(fact.limitation and fact.limitation.strip())
+        )
+    elif fact.amount is not None:
+        valid = (
+            fact.text is None
+            and fact.amount.is_finite()
+            and bool(fact.unit and fact.unit.strip())
+            and bool(fact.period and fact.period.strip())
+        )
+        if fact.table_id == "T4.9":
+            if fact.field == "headroom" and fact.unit not in {"MULTIPLE", "pp"}:
+                raise ValueError("CP4 headroom has an incompatible native unit")
+            if fact.field == "headroom_share" and fact.unit != "PERCENT":
+                raise ValueError("CP4 headroom share requires a percentage fraction")
+    else:
+        valid = bool(fact.text and fact.text.strip())
+    if not valid:
+        raise ValueError("CP4 fact has an invalid known or nonknown value shape")
+
+
+def _validate_cp4_layout(module: ModuleView) -> None:
+    """Validate canonical CP4 placement before any table fallback or payload carryover."""
+    from deploy_vii.bindings import SHOWN_STATUSES
+
+    checked = ModuleView.model_validate(module.model_dump())
+    if checked.status not in SHOWN_STATUSES:
+        if checked.facts or checked.tables or checked.claims:
+            raise ValueError("Nonshown CP4 cannot carry prior output into Full analysis")
+        return
+
+    # Local: cp4_legal itself imports figure_unit from this module.
+    from deploy_vii.cp4_legal import REGISTERS, REQUIRED_TABLES, UNKEYED
+
+    if tuple(t.table_id for t in checked.tables) != REQUIRED_TABLES:
+        raise ValueError("CP4 requires its exact ordered 31 declared tables")
+    if any(f.table_id not in REGISTERS for f in checked.facts):
+        raise ValueError("CP4 facts cannot belong to undeclared tables")
+    facts = {f.fact_id: f for f in checked.facts}
+    for table in checked.tables:
+        table_id = table.table_id
+        register = REGISTERS[table_id]
+        columns = register.columns if table_id in UNKEYED else register.columns[1:]
+        if (
+            table.title != register.title
+            or tuple((c.field, c.label) for c in table.columns) != columns
+            or table.interface_id is not None
+        ):
+            raise ValueError("CP4 table title, columns or interface differs from canonical layout")
+        if not table.rows or any(
+            not row.label.strip() or row.row_kind != "row" for row in table.rows
+        ):
+            raise ValueError("CP4 requires nonempty labelled ordinary rows")
+        empty_copy = table_id == "T4F.2" and len(table.rows) == 1 and table.rows[0].row_id == "none"
+        populated_copy = table_id == "T4F.2" and not empty_copy
+        expected_header = None if table_id in UNKEYED else register.columns[0][1]
+        if populated_copy:
+            expected_header = "CP-1 figure"
+        if table.row_header != expected_header:
+            raise ValueError("CP4 table has an invalid row header")
+        fields = tuple(c.field for c in table.columns)
+        for position, row in enumerate(table.rows, 1):
+            for field, fact_id in zip(fields, row.fact_ids, strict=True):
+                fact = facts[fact_id]
+                if populated_copy:
+                    if (
+                        row.row_id != f"ref{position:02d}"
+                        or fact.status != "known"
+                        or fact.amount is None
+                    ):
+                        raise ValueError(
+                            "CP4 referenced copies require ordered numeric source rows"
+                        )
+                elif fact_id != f"{table_id}.{row.row_id}.{field}":
+                    raise ValueError("CP4 fact identity differs from its canonical coordinate")
+                if empty_copy and (fact.status, fact.unit, fact.period) != (
+                    "not_applicable",
+                    None,
+                    None,
+                ):
+                    raise ValueError("CP4 empty reference row must remain a reasoned absence")
+                _cp4_fact_shape(fact)
+
+
 def build(view: View, pathway: Pathway, maps: Iterable["BindingMap"]) -> ReportView:
     """The Front Page of ``pathway`` from a view and its binding maps.
 
@@ -1929,6 +2044,8 @@ def build(view: View, pathway: Pathway, maps: Iterable["BindingMap"]) -> ReportV
     if pathway.id != view.run.pathway:
         raise ValueError("The Pathway differs from the run's Pathway")
     for module in view.modules:
+        if module.module_id == "CP-4":
+            _validate_cp4_layout(module)
         if module.module_id == "CP-1B" and (
             module.status in SHOWN_STATUSES or module.facts or module.tables or module.claims
         ):

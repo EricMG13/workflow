@@ -1211,3 +1211,23 @@ classifies this as native-reference grammar correction; financial values,
 counts, IDs, citations, limits, wire formats, caps and APIs remain unchanged.
 Prior contract, review and oracle history is preserved. No source, tests, or jobs
 were run for this docs/case-only integration.
+
+### CP4 authenticated legal source-host component freeze
+
+Integrated LEAD's exact six-file docs/case patch
+`d97915a694dceb84da9dd29aa9024c139297dd89` (parent
+`a53e63ff7cebc81c09ad2356e83798c5b79d1f0a`): status updates in `PLAN.md`,
+`docs/QUEUE.md`, and `docs/TEAM.json`, plus `docs/CP4-SOURCE-HOST-LEASE.md`,
+`cases/legal/source-host-expected.json`, and
+`docs/reviews/cp4-source-host-contract.md`. Lease/oracle/review hashes are
+`e62e4e68c3c3dcfdd6257699a813554e133f9daf448f16e1361d0c57f9e29e59`,
+`7d359fd531beb049595909b8d2c39d1e0aed3cf0bc5af1af08d6e86abafcdeff`, and
+`2b5adcff495a3dfb2c4be6380d70d6394534f14fddce12e50f227bfe4083a4be`. All
+149 previous tracked source/test/case files remain byte-identical; the new
+reviewed oracle brings the total to 150 and parses as JSON. The source-host
+contract records 11 success and 26 refusal cases across two fixtures. The
+native-reference grammar supplement at `f3b9b371d0a24528f63474fc3c70a245ed196dbf`
+remains part of the integrated history. No product code/runtime changes or
+tests/jobs were included. Future C1 source-host code is not yet admitted; actual
+legal owner/CP5/native acceptance remains open. Delivery author files were not
+included. Paid/provider work remains paused.

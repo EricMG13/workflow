@@ -1027,7 +1027,7 @@ def main():
     manifest = {
         "schema_version": "snapshot-s1-cases/1",
         "scope": "S1 credit-snapshot slice inputs: CP-0 to CP-1 to CP-MODEL to CP-1A to CP-2 over the frozen financial sources plus one new literal business source",
-        "status": "DRAFT for independent review; not adopted, not executed",
+        "status": "Adopted by LEAD 2026-10-28 after independent mx-precise review (docs/reviews/s1-snapshot-oracle.md); not yet executed",
         "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
         "financial_baseline": {
             "path": "cases/financial/manifest.json", "manifest_sha256": FIN_SHA,

@@ -1231,3 +1231,22 @@ remains part of the integrated history. No product code/runtime changes or
 tests/jobs were included. Future C1 source-host code is not yet admitted; actual
 legal owner/CP5/native acceptance remains open. Delivery author files were not
 included. Paid/provider work remains paused.
+
+### CP1B authenticated earnings report delivery contract freeze
+
+Integrated LEAD's exact six-file docs/case patch
+`bca65a6c0bb6a2c94311bbd0bf974e3231c70ccc` (parent
+`d97915a694dceb84da9dd29aa9024c139297dd89`): status updates in `PLAN.md`,
+`docs/QUEUE.md`, `docs/TEAM.json`, plus the delivery lease, oracle and review.
+Lease/oracle/review SHA-256 values are
+`5b384706eb7f5f4f32193bcb118a6eb617f058256bea6d97ec18aab63f10fd6b`,
+`e1cc9305dc9eca4ad5c7170d7ba83fe3125d4b673339bc10efab665b129baeb4`, and
+`4694cba593bb6eb453a51c77051a2299f7c9e1afed0b160ad84ae279ed9a51b0`.
+All 150 previous tracked source/test/case files remain byte-identical; the new
+oracle brings the total to 151 and parses as JSON. The contract scopes the
+public receipt/verifier to read-only HTML rederivation and currentness, with a
+single trusted publisher destination rule and post-rename failure forensics; it
+does not admit Model publication or broader owner/CP5/native completion. C2's
+new writes await a clean exact-base admission. C1's retained RED2 is a fixture
+setup failure, not feature evidence. No tests or jobs were run during this
+integration; paid/provider work remains paused.

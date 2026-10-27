@@ -1142,3 +1142,341 @@ def test_a2_shared_live_offline_submit_refuses_before_callback_and_journal(tmp_p
         submit_model_payload(store, attempt.ticket_id, "earnings_delta", "invalid private payload",
                              on_normalised=lambda value: called.append(value))
     assert not called and store.read().content_hash() == before
+
+
+# A2P additive projection components; no actual B1 participation is implied.
+P_FIELDS = sorted([*A2_FIELDS, "denominator", "value_class", "calculation_status"])
+
+
+def _projection_session(tmp_path, *, producer=None):
+    producer = producer or _projection_producer15()
+    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={
+        "citations": (*f.citations, *f.citations) if len(f.citations) == 1 else f.citations})
+        for f in producer.facts)})
+    store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
+    grants = _a2_grants(producer)
+    grants["producers"][0]["projected_fields"] = P_FIELDS.copy()
+    session = _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+    return store, attempt, producer, grants, session
+
+
+def _projection_args(session, **changes):
+    h = session.access_manifest
+    return {"producer_module_id": "CP-1", "producer_sha256": h["producer"]["sha256"],
+            "manifest_sha256": h["manifest_sha256"], "cursor": None, "limit": 20, **changes}
+
+
+def _expected_projection_catalog(producer):
+    facts = sorted(producer.facts, key=lambda f: (f.table_id, f.row_id, f.field, f.fact_id))
+    return [{k: ([{"source_id": c.source_id, "source_sha256": c.source_sha256,
+                  "locator": c.locator} for c in f.citations] if k == "citation_handles"
+                 else f.model_dump(mode="json")[k]) for k in P_FIELDS} for f in facts]
+
+
+def test_projection_complete_catalog_all19_order_status_and_duplicate_handles(tmp_path):
+    _, _, producer, _, session = _projection_session(tmp_path, producer=_a2_producer())
+    expected = _expected_projection_catalog(producer)
+    seen, cursor = [], None
+    while True:
+        result = session.invoke("read_access_projection", _projection_args(session, cursor=cursor))
+        assert result["status"] == "ok"
+        body = result["body"]
+        assert set(body) == {"producer", "projection", "grant_sha256", "manifest_sha256",
+                             "coordinate_count", "offset", "entries", "next_cursor", "complete"}
+        assert body["offset"] == len(seen) and body["coordinate_count"] == len(expected)
+        assert body["projection"] == "granted_fact_projection"
+        assert len(_a2_canonical(body)) <= 8192 and 1 <= len(body["entries"]) <= 20
+        assert all(list(f) == P_FIELDS for f in body["entries"])
+        seen.extend(body["entries"])
+        assert result["source_evidence"] == dict(read=[], extracted=[], surfaced=[], searched=[])
+        if body["complete"]:
+            assert body["next_cursor"] is None
+            break
+        cursor = body["next_cursor"]
+        assert cursor.startswith("projection-cursor:")
+    assert seen == expected
+    assert any(f["status"] == "missing" and f["amount"] is None and f["limitation"] for f in seen)
+    assert any(f["status"] == "known" and f["amount"] == "0" for f in seen)
+    assert all(len(f["citation_handles"]) == 2 and f["citation_handles"][0] == f["citation_handles"][1] for f in seen)
+    assert "quote\"" not in json.dumps(seen)
+
+
+def test_projection_maximal_utf8_escaped_prefix_includes_own_terminal_wrapper(tmp_path):
+    producer = _a2_producer(page25=True)
+    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={
+        "label": '€"\\\n' * 80}) for f in producer.facts)})
+    _, _, producer, _, session = _projection_session(tmp_path, producer=producer)
+    catalog = _expected_projection_catalog(producer)
+    cursor, offset = None, 0
+    while offset < len(catalog):
+        response = session.invoke("read_access_projection", _projection_args(session, cursor=cursor))
+        assert response["status"] == "ok"
+        body = response["body"]
+        fitting = []
+        for count in range(1, min(20, len(catalog) - offset) + 1):
+            candidate = {**body, "entries": catalog[offset:offset + count],
+                         "complete": offset + count == len(catalog),
+                         "next_cursor": None if offset + count == len(catalog) else "projection-cursor:" + "0" * 64}
+            if len(_a2_canonical(candidate)) <= 8192: fitting.append(count)
+        assert len(body["entries"]) == max(fitting) < 20
+        assert body["entries"] == catalog[offset:offset + max(fitting)]
+        offset += len(body["entries"])
+        cursor = body["next_cursor"]
+        assert body["complete"] is (offset == len(catalog))
+
+
+def test_projection_replay_cross_namespace_and_detached_authority(tmp_path):
+    store, attempt, producer, grants, session = _projection_session(tmp_path)
+    manifest_token = _a2_page(session, limit=1)["body"]["next_cursor"]
+    _assert_refused(session.invoke("read_access_projection", _projection_args(session, cursor=manifest_token)), "stale_binding")
+    first = session.invoke("read_access_projection", _projection_args(session, limit=1))
+    token = first["body"]["next_cursor"]
+    _assert_refused(_a2_page(session, cursor=token), "bad_arguments")
+    args = _projection_args(session, cursor=token, limit=2)
+    second = session.invoke("read_access_projection", args)
+    replay = session.invoke("read_access_projection", args)
+    assert _a2_canonical(second["body"]) == _a2_canonical(replay["body"])
+    assert second["call_id"] != replay["call_id"] and second["sequence"] < replay["sequence"]
+    other = _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+    _assert_refused(other.invoke("read_access_projection", _projection_args(other, cursor=token)), "stale_binding")
+    grants["producers"][0]["coordinates"].clear()
+    first["body"]["entries"].clear()
+    assert session.invoke("read_access_projection", _projection_args(session, limit=1))["body"]["entries"] == _expected_projection_catalog(producer)[:1]
+    assert second["body"]["offset"] == 1 and len(second["body"]["entries"]) == 2
+    assert session._cursors and session._projection_cursors
+    assert not set(session._cursors) & set(session._projection_cursors)
+
+
+@pytest.mark.parametrize("changes,code", [
+    ({"limit": True}, "bad_arguments"), ({"limit": 0}, "bad_arguments"),
+    ({"limit": 21}, "bad_arguments"), ({"fields": ["amount"]}, "bad_arguments"),
+    ({"coordinates": []}, "bad_arguments"), ({"manifest_sha256": "bad"}, "bad_arguments"),
+    ({"manifest_sha256": "f" * 64}, "identity_mismatch"),
+    ({"producer_sha256": "f" * 64}, "identity_mismatch"),
+    ({"cursor": "projection-cursor:" + "a" * 64}, "stale_binding"),
+    ({"cursor": "projection-cursor:no"}, "bad_arguments"),
+])
+def test_projection_exact_arguments_refuse_atomically(tmp_path, changes, code):
+    session = _projection_session(tmp_path)[4]
+    _assert_refused(session.invoke("read_access_projection", _projection_args(session, **changes)), code)
+
+
+def test_projection_v1_and_cp5_never_gain_new_capability(tmp_path):
+    for consumer in ("CP-2", "CP-5"):
+        store, attempt, step, producer = _execution(tmp_path / consumer, consumer=consumer)
+        grants = copy.deepcopy(GRANTS)
+        if consumer == "CP-2": grants["row_ids"] = ["revenue", "operating_profit"]
+        session = _session(store, attempt, step, grants)
+        _assert_refused(session.invoke("read_access_projection", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(), manifest_sha256="0" * 64, cursor=None, limit=20)), "not_permitted")
+
+
+def test_projection_indivisible_record_refuses_without_cursor_or_lock_loss(tmp_path):
+    producer = _a2_producer(page25=True)
+    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={"label": "€" * 4000}) for f in producer.facts)})
+    session = _projection_session(tmp_path, producer=producer)[4]
+    earlier = _a2_page(session, limit=1)
+    _assert_refused(session.invoke("read_access_projection", _projection_args(session)), "bad_arguments")
+    assert session._projection_cursors == {} and session.receipts[0] == earlier
+    assert _a2_page(session)["status"] == "ok"
+
+
+@pytest.mark.parametrize("variant,code", [("snapshot", "stale_binding"), ("blob", "identity_mismatch")])
+def test_projection_final_currentness_prevents_provisional_cursor(tmp_path, monkeypatch, variant, code):
+    store, _, producer, _, session = _projection_session(tmp_path)
+    args = _projection_args(session)
+    original = session._projection_page
+    def project_then_change(supplied, current):
+        result = original(supplied, current)
+        if variant == "blob": (store.directory / "blobs" / producer.content_hash()).write_text("private tamper")
+        else:
+            snapshot = store.read()
+            store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
+        return result
+    monkeypatch.setattr(session, "_projection_page", project_then_change)
+    _assert_refused(session.invoke("read_access_projection", args), code)
+    assert session._projection_cursors == {}
+
+
+@pytest.mark.parametrize("seam", ["serialize", "append"])
+def test_projection_one_shot_retention_failure_retains_only_safe_error(tmp_path, monkeypatch, seam):
+    from deploy_workflow.tools import upstream
+    session = _projection_session(tmp_path)[4]
+    earlier = session.invoke("read_access_projection", _projection_args(session, limit=1))
+    previous_tokens = session._projection_cursors.copy()
+    if seam == "serialize":
+        original = upstream.json.dumps
+        failed = False
+        def fail_once(value, *args, **kwargs):
+            nonlocal failed
+            if isinstance(value, dict) and value.get("tool") == "read_access_projection" and not failed:
+                failed = True
+                raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+            return original(value, *args, **kwargs)
+        monkeypatch.setattr(upstream.json, "dumps", fail_once)
+    else:
+        class FailOnce(list):
+            failed = False
+            def append(self, value):
+                if not self.failed:
+                    self.failed = True
+                    raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+                super().append(value)
+        monkeypatch.setattr(session, "_receipts", FailOnce(session._receipts))
+    failed = session.invoke("read_access_projection", _projection_args(session, limit=2))
+    assert failed["status"] == "error" and failed["error_code"] == "internal_error" and failed["body"] is None
+    assert "PRIVATE_RETENTION" not in json.dumps(failed)
+    assert session._projection_cursors == previous_tokens and session.receipts[0] == earlier
+    assert session.receipts[-1] == failed
+    assert session.invoke("read_access_projection", _projection_args(session, limit=2))["status"] == "ok"
+
+
+def test_projection_permanent_retention_failure_is_visible_and_no_cursor(tmp_path, monkeypatch):
+    session = _projection_session(tmp_path)[4]
+    args = _projection_args(session)
+    class NeverRetain(list):
+        def append(self, value): raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+    with monkeypatch.context() as patch:
+        patch.setattr(session, "_receipts", NeverRetain())
+        with pytest.raises(ValueError, match="^internal_error$"):
+            session.invoke("read_access_projection", args)
+        assert session._projection_cursors == {} and session.receipts == ()
+    assert session.invoke("read_access_projection", args)["status"] == "ok"
+
+
+def _projection_producer15():
+    """Literal permission fixture: two15-field period rows, not actual issuer evidence."""
+    producer = _a2_producer(page25=True)
+    facts = [f for f in producer.facts if f.field != "basis_note"]
+    for pid in ("q3-2025", "q4-2025"):
+        sample = next(f for f in facts if f.table_id == "T4.14" and f.row_id == pid)
+        for key, text in dict(day_count="92", audit_status="UNAUDITED", source_id="upstream-note",
+                              source_locator="line:1", component_period_ids=None).items():
+            facts.append(sample.model_copy(update=dict(fact_id=f"period-{pid}-{key}", field=key,
+                label=key, text=text, status="not_applicable" if text is None else "known",
+                limitation="No component periods" if text is None else None)))
+    return producer.model_copy(update={"facts": tuple(facts)})
+
+
+def test_projection_literal15_fact_rows_preserve_distinct_and_duplicate_handles(tmp_path):
+    producer = _projection_producer15()
+    target = producer.facts[0]
+    distinct = target.citations[0].model_copy(update={"locator": "line:2"})
+    producer = producer.model_copy(update={"facts": (target.model_copy(update={
+        "citations": (*target.citations, distinct)}), *producer.facts[1:])})
+    _, _, producer, _, session = _projection_session(tmp_path, producer=producer)
+    expected = _expected_projection_catalog(producer)
+    seen, cursor = [], None
+    while True:
+        result = session.invoke("read_access_projection", _projection_args(session, cursor=cursor))
+        assert result["status"] == "ok"
+        seen.extend(result["body"]["entries"])
+        if result["body"]["complete"]: break
+        cursor = result["body"]["next_cursor"]
+    assert seen == expected
+    for pid in ("q3-2025", "q4-2025"):
+        assert sum(f["table_id"] == "T4.14" and f["row_id"] == pid for f in seen) == 15
+    handles = next(f["citation_handles"] for f in seen if f["fact_id"] == target.fact_id)
+    assert len(handles) == 2 and handles[0] != handles[1]
+
+
+def test_projection_snapshot_change_during_receipt_encoding_cannot_publish_success(tmp_path, monkeypatch):
+    from deploy_workflow.tools import upstream
+    store, _, _, _, session = _projection_session(tmp_path)
+    args = _projection_args(session)
+    original = upstream.json.dumps
+    changed = False
+    def encode_then_change(value, *positional, **kwargs):
+        nonlocal changed
+        encoded = original(value, *positional, **kwargs)
+        if isinstance(value, dict) and value.get("tool") == "read_access_projection" and not changed:
+            changed = True
+            snapshot = store.read()
+            store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
+        return encoded
+    monkeypatch.setattr(upstream.json, "dumps", encode_then_change)
+    failed = session.invoke("read_access_projection", args)
+    _assert_refused(failed, "stale_binding")
+    assert session._projection_cursors == {} and session.receipts[-1] == failed
+
+
+@pytest.mark.parametrize("seam", ["projection", "retention"])
+def test_projection_control_interrupt_releases_writer_without_usable_cursor(tmp_path, monkeypatch, seam):
+    session = _projection_session(tmp_path)[4]
+    args = _projection_args(session)
+    with monkeypatch.context() as patch:
+        if seam == "projection":
+            def interrupt(*args): raise KeyboardInterrupt()
+            patch.setattr(session, "_projection_page", interrupt)
+        else:
+            class Interrupt(list):
+                def append(self, value): raise KeyboardInterrupt()
+            patch.setattr(session, "_receipts", Interrupt())
+        with pytest.raises(KeyboardInterrupt):
+            session.invoke("read_access_projection", args)
+        assert session._projection_cursors == {}
+    assert session.invoke("read_access_projection", args)["status"] == "ok"
+
+
+def test_projection_postappend_failure_hides_provisional_receipt_before_unlock(tmp_path, monkeypatch):
+    """Observe immediately on unlock; retain an unrelated reentrant refusal too."""
+    session = _projection_session(tmp_path)[4]
+    args = _projection_args(session, limit=2)
+    earlier = session.invoke("read_access_projection", _projection_args(session, limit=1))
+    before_tokens = session._projection_cursors.copy()
+    observed, unrelated = [], []
+    lock = session._receipt_lock
+    class FailOnceAfterAppend(list):
+        failed = False
+        def append(self, value):
+            super().append(value)
+            if not self.failed:
+                self.failed = True
+                raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+    class ObserveUnlock:
+        def __enter__(self):
+            lock.acquire()
+            return self
+        def __exit__(self, kind, value, traceback):
+            lock.release()
+            if kind is RuntimeError:
+                observed.extend(session.receipts)
+                unrelated.append(session.invoke("read_access_projection", args))
+            return False
+    monkeypatch.setattr(session, "_receipts", FailOnceAfterAppend(session._receipts))
+    monkeypatch.setattr(session, "_receipt_lock", ObserveUnlock())
+    failed = session.invoke("read_access_projection", args)
+    assert failed["status"] == "error" and failed["body"] is None
+    assert observed == [earlier]  # No provisional success was visible when the lock released.
+    _assert_refused(unrelated[0], "not_permitted")
+    assert session.receipts == (earlier, failed, unrelated[0])
+    assert session._projection_cursors == before_tokens
+
+
+@pytest.mark.parametrize("seam", ["uuid", "binding-copy"])
+def test_projection_receipt_initialization_failure_is_sanitized_without_fake_id(tmp_path, monkeypatch, seam):
+    from deploy_workflow.tools import upstream
+    session = _projection_session(tmp_path)[4]
+    args = _projection_args(session)
+    fired = False
+    if seam == "uuid":
+        original = upstream.uuid4
+        def fail_once():
+            nonlocal fired
+            if not fired:
+                fired = True
+                raise OSError("PRIVATE_INIT_SENTINEL")
+            return original()
+        monkeypatch.setattr(upstream, "uuid4", fail_once)
+    else:
+        original = upstream.copy.deepcopy
+        def fail_once(value, *positional, **kwargs):
+            nonlocal fired
+            if value is session._binding and not fired:
+                fired = True
+                raise OSError("PRIVATE_INIT_SENTINEL")
+            return original(value, *positional, **kwargs)
+        monkeypatch.setattr(upstream.copy, "deepcopy", fail_once)
+    with pytest.raises(ValueError, match="^internal_error$"):
+        session.invoke("read_access_projection", args)
+    assert fired and session.receipts == () and session._projection_cursors == {}
+    assert session.invoke("read_access_projection", args)["status"] == "ok"

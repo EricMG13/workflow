@@ -156,6 +156,18 @@ def _coordinate(fact: Fact) -> tuple[str, str, str, str]:
     return (fact.fact_id, fact.table_id, fact.row_id, fact.field)
 
 
+def _project_fields(fact: Fact, fields: list[str]) -> dict[str, Any]:
+    data = fact.model_dump(mode="json", include=set(fields) - {"citation_handles"})
+    return {
+        key: (
+            [{"source_id": c.source_id, "source_sha256": c.source_sha256, "locator": c.locator}
+             for c in fact.citations]
+            if key == "citation_handles" else data[key]
+        )
+        for key in fields
+    }
+
+
 def _historical_fields(producer: Module) -> tuple[set[tuple[str, str, str, str]], set[str]]:
     """Resolve identities, not dates, labels, values or a second financial model."""
     index: dict[str, dict[str, Fact]] = {}
@@ -443,6 +455,7 @@ class UpstreamTools:
         self._coordinates = tuple(tuple(c[k] for k in _COORD_KEYS) for c in coordinates)
         self._nonce = uuid4().hex
         self._cursors: dict[str, int] = {}
+        self._projection_cursors: dict[str, int] = {}
         periods = [c for c in coordinates if c["table_id"] == "T4.14"]
         header = {
             "schema_version": "cp1b-access-manifest/1",
@@ -523,6 +536,89 @@ class UpstreamTools:
             page_entries.pop()
         raise _Refusal("bad_arguments")
 
+    def _projection_page(
+        self, args: dict[str, Any], producer: Module
+    ) -> tuple[dict[str, Any], tuple[str, int] | None]:
+        assert self._manifest is not None
+        digest, cursor, limit = args["manifest_sha256"], args["cursor"], args["limit"]
+        if (type(digest) is not str or re.fullmatch("[0-9a-f]{64}", digest) is None
+                or type(limit) is not int or not 1 <= limit <= 20):
+            raise _Refusal("bad_arguments")
+        if digest != self._manifest["manifest_sha256"]:
+            raise _Refusal("identity_mismatch")
+        offset = 0
+        if cursor is not None:
+            if (type(cursor) is not str
+                    or re.fullmatch("(?:projection|access)-cursor:[0-9a-f]{64}", cursor) is None):
+                raise _Refusal("bad_arguments")
+            if cursor not in self._projection_cursors:
+                raise _Refusal("stale_binding")
+            offset = self._projection_cursors[cursor]
+        wanted = set(self._coordinates[offset:offset + limit])
+        facts: dict[tuple[str, str, str, str], Fact] = {}
+        for fact in producer.facts:
+            if self._granted.admits(fact):
+                key = _coordinate(fact)
+                if key in wanted:
+                    facts[key] = fact
+        fields = sorted(self._granted.fields)
+        total = len(self._coordinates)
+        entries: list[dict[str, Any]] = []
+        body: dict[str, Any] = {
+            "producer": dict(self._manifest["producer"]),
+            "projection": "granted_fact_projection",
+            "grant_sha256": self._manifest["grant_sha256"], "manifest_sha256": digest,
+            "coordinate_count": total, "offset": offset, "entries": entries,
+            "next_cursor": None, "complete": False,
+        }
+        best_end: int | None = None
+        best_token: str | None = None
+        for end in range(offset + 1, min(offset + limit, total) + 1):
+            entries.append(_project_fields(facts[self._coordinates[end - 1]], fields))
+            token = None if end == total else "projection-cursor:" + _digest({
+                "domain": "projection", "nonce": self._nonce, "binding": self._binding,
+                "grant_sha256": self._manifest["grant_sha256"],
+                "manifest_sha256": digest, "offset": end})
+            body["next_cursor"] = token
+            body["complete"] = end == total
+            if len(_canonical(body)) <= 8192:
+                best_end, best_token = end, token
+        if best_end is None:
+            raise _Refusal("bad_arguments")
+        del entries[best_end - offset:]
+        body["next_cursor"] = best_token
+        body["complete"] = best_end == total
+        return body, None if best_token is None else (best_token, best_end)
+
+    def _retain_projection(self, receipt: dict[str, Any]) -> None:
+        """A failed new-tool finalization cannot publish a successful body/cursor."""
+        def append_owned(encoded: str) -> None:
+            with self._receipt_lock:
+                try:
+                    self._receipts.append(encoded)
+                except BaseException:
+                    # The encoded call ID/sequence identifies only this provisional record.
+                    for index in range(len(self._receipts) - 1, -1, -1):
+                        if self._receipts[index] == encoded:
+                            del self._receipts[index]
+                    raise
+
+        try:
+            encoded = json.dumps(receipt, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+            if receipt["status"] == "ok":
+                self._current()
+            append_owned(encoded)
+            return
+        except _Refusal as refusal:
+            receipt.update(status="refused", error_code=str(refusal), body=None)
+        except Exception:
+            receipt.update(status="error", error_code="internal_error", body=None)
+        try:
+            encoded = json.dumps(receipt, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+            append_owned(encoded)
+        except Exception:
+            raise ValueError("internal_error") from None
+
     def _current(self) -> tuple[PreparedPack, dict[str, Module]]:
         if self._store.read().content_hash() != self._snapshot_sha256:
             raise _Refusal("stale_binding")
@@ -586,31 +682,14 @@ class UpstreamTools:
         if not set(rows) <= available.keys():
             raise _Refusal("not_permitted")
 
-        def project(fact: Fact) -> dict[str, Any]:
-            data = fact.model_dump(mode="json", include=set(fields) - {"citation_handles"})
-            return {
-                key: (
-                    [
-                        {
-                            "source_id": c.source_id,
-                            "source_sha256": c.source_sha256,
-                            "locator": c.locator,
-                        }
-                        for c in fact.citations
-                    ]
-                    if key == "citation_handles"
-                    else data[key]
-                )
-                for key in fields
-            }
-
         return {
             **({"projection": "granted_fact_projection",
                 "grant_sha256": self._manifest["grant_sha256"],
                 "manifest_sha256": self._manifest["manifest_sha256"]} if self._manifest else {}),
             "table_id": table,
             "rows": [
-                {"row_id": row, "facts": [project(fact) for fact in available[row]]} for row in rows
+                {"row_id": row, "facts": [_project_fields(fact, fields) for fact in available[row]]}
+                for row in rows
             ],
         }
 
@@ -691,25 +770,32 @@ class UpstreamTools:
             with self._receipt_lock:
                 self._sequence += 1
                 sequence = self._sequence
-            receipt: dict[str, Any] = {
-                "schema_version": "tool-receipt/1",
-                "call_id": str(uuid4()),
-                "sequence": sequence,
-                "binding": copy.deepcopy(self._binding),
-                "tool": tool_name,
-                "arguments": supplied,
-                "status": "refused",
-                "body": None,
-                "error_code": None,
-                "source_evidence": {"read": [], "extracted": [], "surfaced": [], "searched": []},
-            }
+            try:
+                receipt: dict[str, Any] = {
+                    "schema_version": "tool-receipt/1",
+                    "call_id": str(uuid4()),
+                    "sequence": sequence,
+                    "binding": copy.deepcopy(self._binding),
+                    "tool": tool_name,
+                    "arguments": supplied,
+                    "status": "refused",
+                    "body": None,
+                    "error_code": None,
+                    "source_evidence": {"read": [], "extracted": [], "surfaced": [], "searched": []},
+                }
+            except Exception:
+                if tool_name == "read_access_projection":
+                    raise ValueError("internal_error") from None
+                raise
             staged_cursor = None
+            cursor_store: dict[str, int] | None = None
             try:
                 if not acquired:
                     raise _Refusal("not_permitted")
                 expected = {"lookup_upstream": _LOOKUP_KEYS, "verify_upstream": _VERIFY_KEYS}
                 if self._manifest is not None:
                     expected["read_access_manifest"] = _PAGE_KEYS
+                    expected["read_access_projection"] = _PAGE_KEYS
                 if tool_name not in expected:
                     raise _Refusal("not_permitted")
                 if type(supplied) is not dict or set(supplied) != expected[tool_name]:
@@ -718,6 +804,10 @@ class UpstreamTools:
                 producer = self._producer(supplied, modules)
                 if tool_name == "read_access_manifest":
                     data, staged_cursor = self._manifest_page(supplied)
+                    cursor_store = self._cursors
+                elif tool_name == "read_access_projection":
+                    data, staged_cursor = self._projection_page(supplied, producer)
+                    cursor_store = self._projection_cursors
                 elif tool_name == "lookup_upstream":
                     data = self._lookup(supplied, producer)
                 else:
@@ -747,15 +837,19 @@ class UpstreamTools:
                 receipt.update(status="error", error_code="internal_error")
                 raise
             finally:
-                with self._receipt_lock:
-                    self._receipts.append(
-                        json.dumps(
-                            receipt, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+                if tool_name == "read_access_projection":
+                    self._retain_projection(receipt)
+                else:
+                    with self._receipt_lock:
+                        self._receipts.append(
+                            json.dumps(
+                                receipt, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+                            )
                         )
-                    )
                 if receipt["status"] == "ok" and staged_cursor is not None:
+                    assert cursor_store is not None
                     token, offset = staged_cursor
-                    self._cursors[token] = offset
+                    cursor_store[token] = offset
             return receipt
         finally:
             if acquired:

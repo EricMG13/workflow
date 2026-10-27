@@ -1125,3 +1125,17 @@ report-view patch lineage while retaining its imported hash and previous local
 patch hash. This remains a component preview: actual legal owner, CP5, native
 delivery, and the other FP04 owners are unverified. No tests/jobs were run during
 integration; paid/provider work remains paused.
+
+### CP4/FP04 component verification and current owner admissions
+
+Integrated LEAD's exact three-file status commit
+`8bad001bc01e897105b840978798e5884cdeeaf6` (parent
+`796fe70b2a61cd532f8ab14c003f83309388f990`): `PLAN.md`, `docs/QUEUE.md`,
+and `docs/TEAM.json`. It records accepted C2 component commit
+`4e84ffc2657d295259f2577486b1a1c7bac9610a` at verified base
+`5dcbad23b81fb1c0f51538796900d775a4350c06`, closes only Task4-L1 component
+verification, and records the earlier C3 bootstrap/raw-transport admission at
+`7adb6167502a71fcb83991f04e67c714d691de59`. Full plan, actual B1/A4/legal/native
+acceptance and the six pathways remain open. C1's probe remains separately
+running; no runtime or test job was started for this docs-only patch. Paid and
+provider work remains paused.

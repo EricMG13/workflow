@@ -915,3 +915,18 @@ The recorded full-input root probe and independent review close the component
 contract; this remains a pure core only. No test, engine, or provider job was
 rerun during integration. Actual owner/CP5 consumption, rendering, and overall
 CP1B acceptance remain open. Paid/provider/live work remains paused.
+
+### Task3 legal source cases and expectations freeze
+
+Integrated LEAD's exact docs/case patch `0677e61e97e3e0e7d68d52d3a47be895c4ce265d`
+(parent `eff5ce3454258db09e27f4228a4e0b3cc8a97eb8`). It changes
+`PLAN.md` (`a29863b81da8a1d05bc864dad532176f1236bf2e09590504578df3c5404a4867`),
+`docs/QUEUE.md` (`504a1dadd91140175198a0927f11610b6d3f3c4166e8173bb1f280c51abfef1f`),
+and adds `cases/legal/manifest.json`
+(`d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168`),
+`docs/LEGAL-SOURCE-CONTRACT.md`
+(`80f21f1e73063655e799496c3484a51576ff5e9649f03383b341ed7ff2aa453a`), and
+`docs/reviews/legal-source-contract.md`
+(`f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a`). The
+manifest parses as JSON. This closes only the Task3 source-freeze checkbox;
+legal ownership, CP5/FP04, code/runtime and other completion remain open.

@@ -516,3 +516,20 @@ stdout, timing/exit metadata, and both manifests are retained in
 `docs/handoffs/pm-assembled-1/`. No other tests, providers, or production work
 were run. This verifies the admitted integration gap; the held C1 financial
 runtime still requires its independent review and QA/promotion admission.
+
+### C1 actual CP1/Model producer handoff integration
+
+Integrated LEAD-admitted C1 documentation commit
+`dfb6a5b2562bb73620a75dd61dc4c5211bc0420a` by local fetch and
+cherry-pick. Its parent is `07ede0f7c92380b61452dc536cee635dbfcf8610`;
+that branch base is not an ancestor of current main, so the exact admitted
+change was applied as a one-file documentation cherry-pick. It changes only
+`docs/handoffs/cp1-model.md`; the admitted file SHA-256 is
+`42db3a0e8e5c891e820b5d431bac9dfed250896d96e96255e36febe53f020a59`.
+LEAD reports the source commit's diff check and scope check passed. This
+receipt does not rerun tests or producer work. The handoff records actual
+bounded CP1/Model producer evidence and the genuine quarter-selector gap and
+repair while retaining the qualification boundaries for portable rendering,
+native proof, specialist owners, forecasts and provider scope. C1's untracked
+runtime evidence was left untouched. The documentation cherry-pick is
+`de5034bd16d332e6b2b50308d0a7a14ac19c1d82` before this receipt commit.

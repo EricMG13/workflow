@@ -1076,6 +1076,15 @@
       "sha256": "a6b8919e5f10b9dfd541d469a930fd153c3074bbd64ff35f755aed3c9d5a2799",
       "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas.",
       "review": "docs/reviews/cp1b-access-registration-contract.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b",
+      "project_commit": "4e84ffc2657d295259f2577486b1a1c7bac9610a",
+      "sha256": "19705fb05aa84a92f6d321a1afc68de7d3dd6cdd99399ac96e0e7c055fb50073",
+      "reason": "Add the admitted typed CP4/FP04 report projection while preserving the imported baseline and earlier CP1/CP1B local patch history.",
+      "review": "docs/reviews/cp4-fp04-contract.md"
     }
   ]
 }

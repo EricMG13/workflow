@@ -1108,3 +1108,20 @@ contract freeze only: no code, tests, runtime, or provider jobs were included.
 C3 setup/raw-transport implementation still requires safe WIP-preserving update
 and a supplement admission; C1 pager awaits genuine probe/final commit. Paid and
 provider work remains paused.
+
+### C2 CP4/FP04 typed legal report component
+
+Integrated C2's exact two-file commit
+`4e84ffc2657d295259f2577486b1a1c7bac9610a` (source parent
+`25027f69937fbbab9f58eb8572bc9ed014b20647`):
+`src/deploy_vii/report_view.py`
+(`19705fb05aa84a92f6d321a1afc68de7d3dd6cdd99399ac96e0e7c055fb50073`) and
+new `tests/test_legal_render.py`
+(`ab1ee8a5d8992bf64786df2bc5b1e187b69722aeb8a0b8c0bd371faa3be84960`). The
+recorded focused run for this exact commit was 76 passed; it was not rerun here.
+The confidence review, rewrite tournament and independent Sol/high review were
+checked against the same commit. `docs/reuse/manifest.json` now appends this
+report-view patch lineage while retaining its imported hash and previous local
+patch hash. This remains a component preview: actual legal owner, CP5, native
+delivery, and the other FP04 owners are unverified. No tests/jobs were run during
+integration; paid/provider work remains paused.

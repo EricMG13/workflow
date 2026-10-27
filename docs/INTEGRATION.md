@@ -572,3 +572,24 @@ confidence/rewrite review, engine, provider or production run was repeated for
 this docs-only integration. The closure documents bound the actual producer
 and rendering evidence while preserving open boundaries for broader owners,
 pathways, issuer and provider qualification.
+
+### Task3-C chart-series contract and lease integration
+
+Integrated LEAD-admitted commit
+`854c9285a31aae7f40dfe878f4dee3c8b8cf8fa7` by fetch and cherry-pick;
+its integration commit is `44cc41dbd0aba5d4dd6803fa0e889996645202dd`.
+The exact seven paths are `PLAN.md`, `cases/charts/expected.json`,
+`docs/CP1-CHART-SLICE.md`, `docs/QUEUE.md`, `docs/TEAM.json`,
+`docs/reviews/cp1-chart-contract.md`, and
+`docs/reviews/cp1-chart-expectations.md`. Pinned hashes match LEAD's admission:
+contract `e6e3f4a1853dbdcd142ab9afcfdadeabae5452d48a354c8db00a873359457936`,
+independent oracle `2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276`,
+and independent contract review
+`33ea3771ce732c1b1885441dbf6894ddab8e1bc6cc528a46634e85b981bf0360`.
+`git diff --check` passed. The prior planning base bytes match exactly
+(`PLAN.md` SHA-256 `ce7454c68233a6aa720be473b9c9d2dcdc5cb6a8231547a5b0eccd696dee8511`);
+the financial manifest also matches across the integration, and product,
+financial source, renderer, and existing render tests are unchanged. No tests or
+heavy jobs were run. This integration freezes the new chart-series contract,
+source oracle, and disjoint leases only; implementation and validation remain
+unstarted pending each lane's exact admissions and resource rules.

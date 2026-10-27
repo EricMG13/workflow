@@ -4,6 +4,8 @@ import copy
 import hashlib
 import importlib
 import json
+import re
+import uuid
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -273,7 +275,16 @@ def test_verification_reuses_checks_without_disclosure_or_writes(tmp_path, kind)
     (tmp_path / f"factory-{kind}-receipt.json").write_text(json.dumps(result, indent=2))
 
 
-def test_bad_quote_is_invalid_verification_not_permission_or_raw_text(tmp_path):
+@pytest.mark.parametrize("pinned_ids", [False, True])
+def test_bad_quote_is_invalid_verification_not_permission_or_raw_text(
+    tmp_path, monkeypatch, pinned_ids
+):
+    if pinned_ids:
+        # Deterministic stand-in for the random uuid4 ids (call_id, nonce, ticket_id)
+        # that can legitimately contain "999"; test data only.
+        fixed = uuid.UUID("99999999-9999-4999-8999-999999999999")
+        monkeypatch.setattr("deploy_workflow.tools.upstream.uuid4", lambda: fixed)
+        monkeypatch.setattr("deploy_vii.execution.uuid4", lambda: fixed)
     raw = json.loads(ARTIFACT_JSON)
     raw["facts"][0]["citations"][0]["quote"] = "Revenue was USD 999 million in FY2025."
     producer = Module.model_validate_json(json.dumps(raw))
@@ -283,7 +294,11 @@ def test_bad_quote_is_invalid_verification_not_permission_or_raw_text(tmp_path):
     assert result["body"]["verdict"] == "invalid"
     assert result["body"]["issue_count"] == 1
     assert result["body"]["issues"] == [{"code": "fact_citation", "fact_ids": ["revenue"]}]
-    assert "999" not in json.dumps(result) and "quote" not in json.dumps(result["body"])
+    dumped = json.dumps(result)
+    # Strip identifier tokens (uuids, hex digests) so random ids cannot mimic a leak.
+    content = re.sub(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9a-f]{8,}", "", dumped)
+    assert "999" not in content and "quote" not in json.dumps(result["body"])
+    assert "USD 999 million" not in dumped
 
 
 @pytest.mark.parametrize(

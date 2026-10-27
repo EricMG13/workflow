@@ -2741,3 +2741,32 @@ handover to subagents:
 - G1 implementation and S1 oracle preparation were interrupted before writing files.
 Throughput note: genuine-promotion fixtures take 11–26 minutes per test under the one
 heavy-job lock; a shared cached fixture is the next infrastructure candidate.
+
+User instruction (2026-10-27): after the in-flight batch (B1, A4, G1, L2, D1 review)
+completes, LEAD runs lane subagent tasks one at a time.
+
+LEAD ruling on D1 adversarial review (2026-10-27): fix before the pure-milestone
+commit, as the next serial task (round 2 of 2 for the wire defect family):
+- F1 (MEDIUM): store-overlap guard by file identity (`samefile`/(st_dev, st_ino)) over
+  the resolved parent and ancestors; RED test with a case-variant spelling first.
+- F2: `mode="after"` validator for exact `files` keys/order; `from_wire` is the only
+  documented parse API.
+- F3: the supplied producer receipt must equal A4's canonical dump under
+  `object_pairs_hook=list` (only whitespace/escape spelling may differ).
+- F4: return the caller's destination spelling.
+- F6: finite `parse_float`; RecursionError becomes ValueError at the single parse point.
+- F7: require `receipt.run` to equal the frozen Run for the case.
+Deferred: F5 (lease makes no concurrent-external-writer claim); F8 actual-store
+controls are written with the full-runtime milestone once A4/B1 integrate.
+
+A4 fix round 1 (2026-10-27T19:42Z): defects A–H implemented by mx-feature. LEAD ran
+the gate: RED against the GREEN-2 source, 27 failed/184 passed, every failure on its
+briefed defect; GREEN, 211 passed in 7.3s. The pyproject `pythonpath = ["src", "."]`
+overrides `PYTHONPATH`, so a RED run against a source copy needs
+`-o "pythonpath=<copy> ."`. Seven partial-absence shapes refuse `not_permitted` pending
+a LEAD ruling (`coordinator-1/work/cp5-integrity-a4/fix-1-report.md`). Next: scoped
+mx-precise and mx-adversary re-review in the serial queue.
+
+LEAD rule (2026-10-27): A4 waited two hours behind the heavy-job lock for a 7-second
+run. A test file whose last ledgered full run took under 60 s is light and runs
+without the lock (AGENTS.md).

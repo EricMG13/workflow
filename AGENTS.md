@@ -65,7 +65,9 @@ name the exact requirement and have LEAD resolve it from the adopted source.
   run needs no per-run LEAD admission record: run it only as
   `mkdir /tmp/deploy-workflow-heavy-job.lock && { <run>; rc=$?; rmdir /tmp/deploy-workflow-heavy-job.lock; exit $rc; }`
   so the lock is removed only by the run that created it; if `mkdir` fails, wait
-  with Monitor until the lock is gone and retry. Then append one line to the lane's
+  with Monitor until the lock is gone and retry. A test file whose last ledgered
+  full run took under 60 s is light and runs without the lock; a light run that
+  passes 60 s is heavy from then on. Then append one line to the lane's
   `work/<lane>/ledger.md`: UTC time, run name, command, exit code, pass/fail counts,
   `agent=<name> fix-rounds=<n> gates-first-pass=<y|n>`. LEAD still admits new leases
   and commits for integration in docs/QUEUE.md. Do not

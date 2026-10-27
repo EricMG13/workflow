@@ -493,3 +493,26 @@ The renderer's independent source and artifact-hash checks were mechanically
 verified again here. C1/C2 clones were not modified by this integration. Main
 is at `e675dcfafb027516bd385aea9e81755b293dfe70` before this receipt is
 committed.
+
+### PM-ASSEMBLED-1 assembled-main gap verification
+
+LEAD admitted one exact assembled-main verification command after confirming no
+heavy process was running. The pre-run process scan showed C1 PID 42201 at
+0.0% CPU (idle before QA and held before promotion); no pytest or other
+financial/model execution was active. On clean main at
+`63eaea5fb49f5abb2dccd37ac8ec5cd6632581fa`, ran exactly:
+
+```
+PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_source_tools.py tests/test_upstream_tools.py tests/test_source_workflow.py tests/test_connected_render.py 'tests/test_financial_render.py::test_authentic_financial_delivery_preserves_state_and_raw_publication[True]'
+```
+
+Result: **157 passed in 3.47s**, exit code 0, from 2026-10-27T01:18:15Z to
+2026-10-27T01:18:19Z UTC. This is the actual count; it equals the admitted
+156 plus the one genuine integration gap. The narrowly selected lazy fixture
+built only that gap. The frozen tracked `src`, `tests`, and `cases` hash
+manifest matched before and after (manifest hash
+`8d2371ce804b7da22db910e6ae8185466cc0f8bd0a74fefc7776a4f3700aeb79`). Full
+stdout, timing/exit metadata, and both manifests are retained in
+`docs/handoffs/pm-assembled-1/`. No other tests, providers, or production work
+were run. This verifies the admitted integration gap; the held C1 financial
+runtime still requires its independent review and QA/promotion admission.

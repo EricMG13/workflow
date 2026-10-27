@@ -2792,3 +2792,25 @@ Reviews (2026-10-27T20:30Z), saved in each lane's `work/` folder:
   B1 receipt.
 - User waived the global 800-line PR cap for lane integrations (G1 1,564 lines, A4 1,767); recorded in AGENTS.md.
 - D1 N1 fixed (RED 2 failed, GREEN 49 passed); LEAD checked the diff and reran the light subset. D1 pure milestone committed on `codex/cp1b-delivery-d1` (73c94a4), not yet admitted: its 13 actual-case tests assert on LEAD's real three-case handoff (no skip by design) and fail until A4 and B1 integrate, so integration waits for the full-runtime milestone.
+
+A4 mx-adversary re-review 2 (2026-10-27T23:00Z, `coordinator-1/work/cp5-integrity-a4/review-adversary-2.md`):
+no HIGH, four LOW confirmed. Findings 2 (verify trusts a re-read scope with issues or
+missing heads) and 3 (malformed grant shape gives `internal_error`, lease says
+`bad_arguments`) go to fix round 3 on mx-escalate (`fix-3-brief.md`). Finding 4(a): LEAD
+accepts `stale_binding` for a scope change inside the factory after currentness was
+proved. Required IntegrityWorkflow checks (deferred from the transport): bind the
+bundle's requested pair to the authenticated B1 receipt (precise-2 finding 3), and
+require that the projected CP-1B head is exactly the head B1's verifier authenticated
+(adversary-2 finding 1; A1 register validity is proved only there).
+mx-escalate failed again (Fable 5.1 requires usage credits, HTTP 429). LEAD ruling, as
+for D1 wire and D1 N1: adversary-2 findings 2 and 3 are new defects from a new review,
+not failed earlier fixes, so they get their own one-round mx-feature budget. If that
+round fails they are deferred to the IntegrityWorkflow milestone and recorded there.
+
+A4 admission (2026-10-27T23:40Z): LEAD admits `codex/cp5-integrity-a4` commits 07de531 (v2
+integrity upstream transport, `tools/upstream.py` additive to v1) and 9ad5672 (flaky v1
+bad-quote leak test fixed test-first; checkpoint currently carries this flake) for
+integration. Evidence: 219 passed; mx-precise x2, mx-adversary x2 (no HIGH); rewrite
+tournament on `_lineage_expectation`: incumbent holds (`work/cp5-integrity-a4/rewrite-tournament-1.md`).
+`integrity_workflow.py` stays untracked for the IntegrityWorkflow task, which carries the two
+deferred required checks.

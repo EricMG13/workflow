@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: corrected projection/B1 contracts independently frozen; C1/C3 disjoint writes await exact integration/admission; A4 transport correction and C2 FP04 prep ongoing; whole PLAN incomplete; paid/provider/live paused",
+  "state": "active: C1 additive projection and C3 actual-owner B1 implementation admitted disjointly at4e2bce9; A4 corrected contract review and C2 FP04 component preparation ongoing; whole PLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,9 +34,9 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "A2 accepted; next exact two-file projection addendum dd2fc2ce/c36dc871 frozen; await PM base and LEAD write admission",
-    "C2": "A3 exact4filecommit0d6c714 accepted90focusedchecks; PM integration admitted; next authenticated earnings delivery waits exact B1/A4 interfaces; static preparation only",
-    "C3": "A1 accepted; B1 corrected owner e66aa2df/c8af02d3 and descriptor60ed9578 frozen; await PM base and LEAD write admission; runtime GREEN requires accepted pager",
+    "C1": "C1-CP1B-PROJECTION-A2P-IMPLEMENTATION-1 at4e2bce9: upstream.py/test_upstream_tools.py only, workcp1b-projection-a2p; writes/static only, heavy checks separately admitted",
+    "C2": "A3 component accepted/integrated; STATICONLY FP04 two-file component-contract/oracle proposals prepared inownedwork; no newproductlease",
+    "C3": "C3-CP1B-OWNER-B1-IMPLEMENTATION-1 at4e2bce9: newearnings_workflow.py/newtest_earnings_workflow.py/newcp1b-owner handoff; workcp1b-owner-b1; writes/static only, GREEN requires accepted projection integration",
     "PR_MANAGER": "integration only"
   }
 }

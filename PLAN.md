@@ -275,7 +275,7 @@ accepted projection integration in C3 clone without stubs or mutable WIP copies.
 
 - [x] Correct first-case body-size defects with bounded coordinate pages; preserve all19 fields/duplicate handles and8192-byte cap.
 - [x] Independently freeze exact source/cases/public owner-prefix API, provenance/coverage/recovery and current descendant verification.
-- [ ] Integrate exact freezes and admit disjoint C1 projection/C3 B1 implementation.
+- [x] Integrate exact freezes and admit disjoint C1 projection/C3 B1 implementation.
 - [ ] Verify causal implementation cases and required code reviews on exact final bytes.
 - [ ] Execute fresh positive/no-YoY/source-refusal actual owner chains with retained permitted calls, all five CP1 stages, QA/promotion, CP1B settlement and public owner receipt.
 - [ ] Complete separately leased whole CP5 consumption/final seal and authenticated FP02/native proof before closing the module.

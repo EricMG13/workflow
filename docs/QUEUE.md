@@ -2262,3 +2262,38 @@ earlierbranches/work. Disjointimplementation mayparallel; B1GREEN/actualneeds
 acceptedpagercode integratedfirst, no fake stubs/WIP imports. Alljobsseparately
 admitted/sourcefrozen throughactualexit. A4bodydecompositioncorrection remains
 separateprecodework, no A4passorcodeadmission. Actualmodule/CP5/renderlinksopen.
+
+
+## C1 projection / C3 B1 — disjoint implementation WRITES ADMITTED
+
+Exactcleanpushedbase4e2bce9df0e010f0795c392e8254db12fce5fcfe. Rootactualpreflight
+2026-10-27T10:20:14.797666+00:00 clearheavyprocessscan;load2.586/2.477/2.278;
+runtime7c72112b and144source/test/casepins equal;141earlierbytes unchanged.
+Projectiondd2fc2ce/c36dc871, B1e66aa2df/c8af02d3, descriptor60ed9578 andsame
+independentreviewf5602baa rehashedagainstintegratedfiles. Beforeinventory144 in
+LEADwork/cp1b-preparation/projection-owner-source-before.json; fulladmission
+projection-owner-implementation-admission.json.
+
+C1-CP1B-PROJECTION-A2P-IMPLEMENTATION-1: freshcodex/cp1b-projection-a2p atbase;
+ONLYupstream.py/test_upstream_tools.py; logs/reviews/handoffwork/cp1b-projection-a2p,
+noextra trackedhandoff. PreserveA2branch/work. C3-CP1B-OWNER-B1-IMPLEMENTATION-1:
+freshcodex/cp1b-owner-b1 atbase; ONLYNEWearnings_workflow.py/NEWtest_earnings_workflow.py/
+NEWdocs/handoffs/cp1b-owner.md; work/cp1b-owner-b1. PreserveA1branch/work. Verify
+all144/pinsbeforewrites; notalone/do notrevertothers. Financial/statefulcode
+Sol/high, explicitrouteevidence only; confidence/noargtournament/independentcode
+reviewbeforecommit. PMaloneintegratesacceptedexactcommits.
+
+InitialadmissionWRITES/staticONLY. Everypytest/engine/actualcase/browserjobneeds
+exactargv/source/runtime/case/process/loadadmission, freezeitsclonethroughrealexit,
+retainPID/UTC/full-log/beforeafterhashes. Oneheavyjobglobal, no numericalwritingcap.
+C1/C3maywriteparallelunderfrozenAPI; C3GREEN/actualcasesneedACCEPTEDprojectioncode
+integratedintoclonefirstwithoutstubs/permissivegrants/monkeypatchintegration/WIPcopy.
+NoA4futureimports orsharedA1/math/Execution/host/financialworkflowedits.
+
+C1identifiedordinaryreceipt-finalizationfailureseam inexistinginvoke.finally.
+Newprojectionpathscopedhandling mustexposeno successfulbody/newtokenunlessretained;
+oneshotfailuremayretainsanitizederror/internal_error/null. Ifevenerrorretention
+ispermanentlyimpossible, propagatevisiblefailurewithnocursor/body ratherthan
+pretendretainedsuccess; preserveold3toolsemantics. Explicitinjection/lockrecovery
+casesrequired. Thisclarifiesfailurehandling, notnewauthority orsuccessfulreadcredit.
+Paid/provider/live staypaused. ActualCP1B/CP5/FP02matrixlinks stillopen.

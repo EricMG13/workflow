@@ -729,3 +729,30 @@ Confidence review of the documentation patch:
 no tests were rerun for this documentation integration. LEAD's final review also
 reports its 678-entry package/hash and README-link checks; package indexing is a
 separate mechanical closure step.
+
+### C3 registration and uncapped implementation policy
+
+Integrated LEAD-admitted commit
+`84cb02015cf5b93ab7299745dce9de8100a6b049` by cherry-picking its exact
+seven-document patch from parent `c3ee6e425b5744412c8d7bba666b40d355a02e71`;
+that parent/history was not merged. The integrated paths and SHA-256 values are:
+
+- `AGENTS.md`: `fd196b4e090d532f163309ecdf9f96fa302d5fe749c47f0e955c184a3e7374c2`
+- `PLAN.md`: `521b48067eb0f59d610cc8c3498153c26b43972eabdba7755326754158b22431`
+- `docs/SPEC.md`: `be36952f00e6500cbf435371a12f0bc7a4f1cb55be08c22e442ab1954c69ab55`
+- `docs/QUEUE.md`: `070e6f95cb9bcb6e66c306bce96b1bedfd0132ab0e3afdcbbd6ace0cc2c82854`
+- `docs/TEAM.json`: `d43a9315c72de6af43769d1023c2a2a206989bc766d52a3de48f339ba50419b1`
+- `docs/MODULES.csv`: `f85512bb3a6c95b77f1b1afd5021dcbd208269fc61221f955fae566911804086`
+- `docs/roles/COORDINATOR-3.md`: `50bc505857941ea3a6fa94a5034164420bd3c7239e5f7315a4b20ee7c71a1394`
+
+The policy records the user's uncapped-active-implementation authorization;
+exclusive reviewed leases, one-heavy-job admission, source freezing, model and
+evidence rules, and paid/provider/live pause remain. C3 is registered at the
+admitted thread/clone/base for CP1B preparation only; product implementation
+still requires a committed reviewed lease and separate resource admission.
+The module matrix remains 26 rows; I verified its five evidence/status columns
+are byte-identical across every row, with no evidence-status change. The tracked
+131-file `src`, `tests`, `cases` inventory matches the closed Task3 assembled
+run. The frozen 680-file package and index are untouched. LEAD's nine-check
+document confidence review and `git diff --check` are carried; no tests or
+runtime jobs were performed for this documentation integration.

@@ -872,3 +872,20 @@ It authorizes only their leased writes; C3 A1 remains disjoint. No source, tests
 cases, runtime, or package files were changed. Tests require separate fresh
 admission; logs stay in owned workdirs. The overall plan remains open, and
 paid/provider/live work remains paused.
+
+### CP1B A2 offline/shared-live registration addendum
+
+Integrated LEAD's exact six-file docs/case/status patch
+`c7471f126f5a75f01df8fd918434460aab5d8cc5` (parent
+`9a20866ad3c190d4243e125db68ccba07797d407`) at clean base
+`9f7f9a6992c7cfdbacabcd673cadeea16178e21e`. It adds
+`docs/CP1B-ACCESS-REGISTRATION-ADDENDUM.md` (SHA-256
+`cd4cc04302fc26dd28d9238e2e2e1da61c1aab969e0bbca965ab01c7e2b7624f`),
+its companion oracle `cases/earnings/access-registration-expected.json`
+(`32d4bb0d938a678fba5dc9b6bacd9c123c183534262c0a4f893843bdf0680d95`),
+and independent review `docs/reviews/cp1b-access-registration-contract.md`
+(`9f95366415f715dd9d1978a7062d70cbf98950ee8fc6cb9e18e4937225540fc1`),
+with `PLAN.md`, `docs/QUEUE.md`, and `docs/TEAM.json` status updates. The oracle
+parses as JSON. This is a static contract freeze only; no source, tests, engine,
+provider, runtime, or package work was performed. Candidate implementation
+commits are not included; paid/provider/live testing remains paused.

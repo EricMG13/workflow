@@ -1285,3 +1285,18 @@ appends the upstream module's new hash to `local_patch_lineage`, keeping the
 earlier records. This is transport only: no owner, full CP-5 runtime, native or
 authentication claim follows. D1 `73c94a4` stays held; paid/provider work remains
 paused.
+
+### LEAD S1 credit-snapshot oracle freeze integration
+
+Integrated LEAD's admitted commit `a4f966f` (parent
+`e71c06465213d63a3d26480995ff480bb2eb00d3`) as `6e9305c`, byte-identical to the
+source: `cases/snapshot/{expected,manifest,submissions}.json`,
+`cases/snapshot/builder/{build_s1_oracle.py,s1_data.py}`,
+`docs/reviews/s1-snapshot-oracle.md` and `docs/QUEUE.md`; no `work/` paths.
+`python3 -I cases/snapshot/builder/build_s1_oracle.py` from the integrated root
+exited 0 and reproduced the three JSON files byte for byte (SHA-256
+`d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa`,
+`9db0367f974a84cbb5cf5c0e4700d14711faf2f18cfac58eb46447beb22061b1`,
+`bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c`); its
+`__pycache__` was removed and no other change remained. This is an oracle freeze
+only: no product code, tests or runtime jobs; paid/provider work remains paused.

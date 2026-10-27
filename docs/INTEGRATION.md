@@ -790,3 +790,22 @@ The source/test/case byte inventory from closed Task3-C remains identical across
 its original 131 files; the sole new case file makes the current tracked count
 132. No tests, implementation, runtime or fresh financial audit were performed
 for this documentation/case integration. The Task3 package remains frozen.
+
+### C3 CP1B A1 implementation admission status
+
+Integrated LEAD-admitted documentation commit
+`9c4994e71e0f0f61d956627c32e2346311a6fb37` by cherry-picking its exact four
+files only: `PLAN.md`, `docs/TEAM.json`, `docs/MODULES.csv`, and `docs/QUEUE.md`.
+Their integrated SHA-256 values are:
+
+- `PLAN.md`: `a93a9fc69e01e126c88d45b0085f7db699d9ae1ffe413e5106230f082ead0cf3`
+- `docs/TEAM.json`: `99d3524b4d265736f55a04d50740e413d04c2969e0f5ec9ccc71b97239fb7854`
+- `docs/MODULES.csv`: `69e8b6fd78fa9e702f9061663d641404cd51e9a0491b435fb398970ff4cb1659`
+- `docs/QUEUE.md`: `c24008e219189e79b8a6fe81e47d50e83dd276d5b8168a900ba765d18a0b520c`
+
+C3's write-only A1 implementation admission is recorded at frozen base
+`f1b3c5c880a616a422ddf87136f56c87f20ccb10`, with ownership limited to the
+three leased files. Heavy tests require a separate fresh admission. The CP1B
+actual-tool/output/consumer/render matrix fields remain unverified. The exact
+patch changes no source, test, case, package or runtime bytes; paid/provider/live
+remain paused. No tests or runtime work were run for this status integration.

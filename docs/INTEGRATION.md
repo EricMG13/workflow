@@ -1266,3 +1266,22 @@ These are scoped diagnostics, not broader qualification. All 151 tracked
 source/test/case files remained byte-identical in this status integration. Full
 PLAN, 26 steps, six pathways, actual owner, CP5 and native acceptance remain
 open. No tests or runtime jobs were run; paid/provider work remains paused.
+
+### C1 A4 CP-5 v2 integrity upstream transport integration
+
+Integrated LEAD's admission `e71c064` (`docs/QUEUE.md` only, parent
+`d68a2d8ffeedfc7ade067749434cd53b2cd1e31b`), then C1 A4's exact two-file lane
+commits `07de531` and `9ad5672c6592d2578fb1b9d28146ff6509152b99` (lane base
+`f3b9b37`) from `codex/cp5-integrity-a4`: `src/deploy_workflow/tools/upstream.py`
+(`5191a770b5aaa6d5b39c51701e4adc1eb930dea49246c6474edbe776e0341f12`) and
+`tests/test_upstream_tools.py`
+(`b95bc0a2816a16fdfe775023af773e232af8872c762e6cb280e6b76f5239b665`). Both files
+are byte-identical to the lane tip. The lane's untracked
+`src/deploy_workflow/integrity_workflow.py` and its `work/` files were not
+included. Focused run on the integrated tree:
+`PYTHONPATH=src .venv/bin/python -m pytest tests/test_upstream_tools.py`, exit 0,
+219 passed in 7.90 s (light run, no heavy-job lock). `docs/reuse/manifest.json`
+appends the upstream module's new hash to `local_patch_lineage`, keeping the
+earlier records. This is transport only: no owner, full CP-5 runtime, native or
+authentication claim follows. D1 `73c94a4` stays held; paid/provider work remains
+paused.

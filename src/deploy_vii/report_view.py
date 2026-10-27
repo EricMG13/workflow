@@ -1443,6 +1443,146 @@ def _na_strip(block_id: str, owner: str, scale: str | None) -> tuple[Figure, ...
     return tuple(figures)
 
 
+def _chart_fact_cell(fact: Fact, unit_class: UnitClass, refs: tuple[str, ...]) -> Cell:
+    """A chart reads the canonical source-native number, never a display-rounded value."""
+    if unit_class == "multiple":
+        supported = fact.unit == "MULTIPLE" and fact.scale == 1
+    elif unit_class == "amount":
+        supported = (
+            fact.unit in {"MILLIONS", "currency"}
+            and fact.currency == "USD"
+            and fact.scale == 1000000
+        )
+    else:
+        supported = False
+    if not supported or (fact.status == "known" and fact.amount is None):
+        raise ValueError("CP1 chart point has unsupported numeric dimensions")
+    cell = _cell(fact, refs)
+    if cell.unit_class != unit_class or not (cell.ref_id or cell.gap_ref):
+        raise ValueError("CP1 chart point has no compatible canonical passport")
+    return cell
+
+
+_CP1_CHART_LABELS = MappingProxyType(
+    {
+        "total_leverage_reported": "Total leverage (reported)",
+        "net_leverage_reported": "Net leverage (reported)",
+        "interest_coverage_reported": "Interest cover (reported)",
+        "cash_closing": "Cash",
+        "undrawn_rcf": "Undrawn RCF",
+        "liquidity": "Total liquidity",
+    }
+)
+
+
+def _cp1_strip(
+    block_id: str,
+    module: ModuleView,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+) -> tuple[Figure, ...]:
+    """Render the typed producer's coordinates against this selected CP1 and its index."""
+    if module.module_id != "CP-1" or module.status not in {"accepted", "restricted"}:
+        return ()
+    from deploy_workflow.financial_series import cp1_chart_series
+
+    supplied = cp1_chart_series(module)
+    if tuple(item.fig_id for item in supplied) != tuple(
+        fig_id for fig_id, _, _ in _STRIP_FIGURES["model-chart-strip"]
+    ):
+        raise ValueError("CP1 chart producer must supply S.1 through S.4 in order")
+    facts = {fact.fact_id: fact for fact in module.facts}
+    wanted = {fig_id for fig_id, _, _ in _STRIP_FIGURES[block_id]}
+
+    def current(fact_id: str) -> tuple[Fact, tuple[str, ...]]:
+        if fact_id not in facts:
+            raise ValueError("CP1 chart references an unknown selected fact")
+        return facts[fact_id], refs.get((module.module_id, fact_id), ())
+
+    figures = []
+    for spec in supplied:
+        if spec.fig_id not in wanted:
+            continue
+        expected_kind = "grouped" if spec.fig_id == "S.4" else "line"
+        expected_class = "multiple" if spec.fig_id in {"S.1", "S.2"} else "amount"
+        expected_unit = {"x"} if expected_class == "multiple" else {"US$m", "US$ m"}
+        if (
+            spec.kind != expected_kind
+            or spec.unit_class != expected_class
+            or spec.unit not in expected_unit
+            or len(set(spec.series)) != len(spec.series)
+            or (not spec.points and not spec.reason)
+        ):
+            raise ValueError("CP1 chart metadata is inconsistent")
+        captions = {
+            name: _CP1_CHART_LABELS.get(name, name) if spec.fig_id != "S.4" else name
+            for name in spec.series
+        }
+        if len(set(captions.values())) != len(captions):
+            raise ValueError("CP1 chart series captions must be distinct")
+        marks, rows = [], []
+        for index, point in enumerate(spec.points):
+            if point.series not in captions:
+                raise ValueError("CP1 chart point names an undeclared raw series")
+            fact, fact_refs = current(point.fact_id)
+            cell = _chart_fact_cell(fact, spec.unit_class, fact_refs)
+            caption = captions[point.series]
+            labels = [f"{caption} · {point.category}"]
+            for companion_id in point.companion_fact_ids:
+                companion, companion_refs = current(companion_id)
+                companion_cell = _cell(companion, companion_refs)
+                companion_ref = companion_cell.gap_ref or companion_cell.ref_id
+                label = f"{companion.label}: {companion_cell.text}"
+                labels.append(label + (f" [{companion_ref}]" if companion_ref else ""))
+            marks.append(
+                ChartMark(
+                    series=caption,
+                    label=point.category,
+                    text=cell.text,
+                    ref_id=cell.gap_ref or cell.ref_id,
+                    value=fact.amount if fact.status == "known" else None,
+                )
+            )
+            rows.append(
+                Row(row_id=f"{spec.fig_id}.point.{index}", label=" · ".join(labels), cells=(cell,))
+            )
+        plottable = any(mark.value is not None for mark in marks)
+        if plottable and spec.reason:
+            raise ValueError("CP1 unavailable chart metadata carries numeric points")
+        reason = spec.reason
+        if marks and not plottable:
+            limitations = [facts[point.fact_id].limitation for point in spec.points]
+            reasons = [text for text in (reason, *limitations) if text]
+            reason = "; ".join(dict.fromkeys(reasons))
+        twin = Block(
+            block_id=f"{block_id}-{spec.fig_id.replace('.', '').lower()}-twin",
+            title=f"{spec.title} table",
+            owner="MODEL",
+            state="populated" if rows else "absent",
+            kind="dense",
+            scale=spec.unit,
+            columns=("Value",),
+            rows=tuple(rows),
+            note=reason,
+        )
+        figures.append(
+            Figure(
+                fig_id=spec.fig_id,
+                title=spec.title,
+                placement="above",
+                chart=ChartSpec(
+                    kind=spec.kind,
+                    series=tuple(captions.values()),
+                    table_twin=twin,
+                    marks=tuple(marks),
+                    unit=spec.unit,
+                    unit_class=spec.unit_class,
+                    reason=reason,
+                ),
+            )
+        )
+    return tuple(figures)
+
+
 def _block(
     block_id: str,
     pathway: Pathway,
@@ -1504,7 +1644,13 @@ def _block(
                 if item is not primary
             )
             groups, base, absent = _columns_structure(primary, kind=kind, reasons=reasons)
-            degraded = spec.kind == "chart"  # no producer supplies S.1 to S.4 series yet
+            figures = _cp1_strip(block_id, modules["CP-1"], refs) if spec.kind == "chart" else ()
+            degraded = spec.kind == "chart" and not figures
+            chart_note = "; ".join(
+                f"{figure.fig_id}: {figure.chart.reason}"
+                for figure in figures
+                if figure.chart.reason
+            )
             return Block(
                 **{**shape, "summary": _summary((), primary.rows) if spec.collapsed else None},
                 kind=kind,
@@ -1518,8 +1664,8 @@ def _block(
                 groups=groups,
                 base_column=base,
                 absent_columns=absent,
-                figures=_na_strip(block_id, spec.owner, primary.scale) if degraded else (),
-                note=_strip_note(block_id) if degraded else None,
+                figures=_na_strip(block_id, spec.owner, primary.scale) if degraded else figures,
+                note=_strip_note(block_id) if degraded else chart_note or None,
             )
     blocked_because = {
         code: module.limitations[0]

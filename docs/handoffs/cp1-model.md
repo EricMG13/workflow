@@ -8,9 +8,12 @@ based on `4cc75da077c49e173f4599211b22d63a6ed6d188`.
 The imported financial core, source host and original source-only workflow are
 unchanged. PR MANAGER alone integrates the LEAD-admitted commit.
 
-The producer implementation and its 20 component cases passed. This does not
-qualify the actual analytical actor, renderer or native browser. Those remain the
-next admitted runs. The C2 helper below is ready for use after integration.
+The producer implementation and its 20 component cases passed. Actual offline
+participation now also completed the positive source-to-CP1/Model flow and genuine
+missing-source refusal, with sealed receipts and clean EOF exits. The final runtime
+ledger below records those exact cases, their independent QA and the earlier
+preserved failed-readiness run. Portable C2 rendering and native browser proof are
+separate consumer evidence. The C2 helper remains component evidence only.
 Paid/provider/live work remains paused; no product model/effort setting changed.
 LEAD explicitly selected Sol/high for this lease. Separate sensitive/tournament
 reviewers were configured as `gpt-6.1-sol` / `high`; this records dispatch and
@@ -67,7 +70,7 @@ submit_review has raw JSON string `payload`; other operations have no arguments.
 The five operations are invoke, read_inputs, submit_review, publish_model and
 write_receipt. No message grants filesystem/Execution constructors, final Module
 submission, arbitrary code, or new paths. Transport permits 128 messages, at most
-4*1024*1024 characters per line, and rejects non-finite JSON. Raw review UTF8 is
+4*1024*1024 characters per input line, and rejects non-finite JSON. Raw review UTF8 is
 bounded to 4*1024*1024 bytes. Calls/reads/submissions each permit 16 per ticket/stage;
 core stage/module repair budgets remain unchanged; publisher permits two calls.
 
@@ -253,8 +256,10 @@ Least confident about, ranked and investigated through real code/callers:
    freezes raw claims/materiality/lineage and a Fraction-based expectation from the
    adopted formula before submitting quality. Actual retained score/status matches;
    lineage upgrades fail promotion. No analyst-supplied score/status or invented
-   promotion threshold. Verdict: component verified; actual actor QA still requires
-   its separate frozen inventory and LEAD review before promotion.
+   promotion threshold. Verdict: component verified; actual actor QA subsequently
+   used a separately frozen complete inventory and independent pre-promotion review, then matched
+   every predicted confidence field. The actual runtime ledger below closes that
+   case-specific point without asserting general analytical qualification.
 7. **Currentness, portability and operation ordering.** Traced nonblocking instance
    lock, exact snapshot checks, activation/repair order, trusted paths, final seal
    and read-only verifier. Actual stale/foreign/portable/file-tamper tests pass.
@@ -272,9 +277,11 @@ portable verification and failure refusal, with actual 20-case evidence above.
 By design: trusted exclusive local writer/new destinations; no cross-process atomic
 no-replace claim; supplied-page synthetic data without OCR/PDF/provider/production
 qualification; implementation qualification only; no CLI resume feature claimed.
-Still open: actual analyst participation and independently reviewed raw QA, C2
-render consumption and native browser evidence. These are scheduled slice phases,
-not silently counted by component tests.
+Subsequently closed for the actual positive-2/gap cases: analyst participation,
+independently reviewed raw QA, real promotion/publication, final verification/seal
+and clean process exit; see the runtime ledger below. Still outside this C1 record:
+C2 portable render consumption and native browser evidence. Those require actual
+consumer receipts and are not silently counted by component or producer tests.
 
 Independent `financial_sensitive_review` closed the scoped final delta: partial
 hash-read failures now permit quarantine/audit; forged-head tests coherently rebind
@@ -601,3 +608,171 @@ def _publication_history(store: Execution, receipt: FinancialSliceReceipt) -> No
         ):
             raise WorkflowError("identity_mismatch")
 ```
+
+## Actual offline participation — final producer ledger
+
+Actual participant evidence is under C1's local
+`work/actual-financial-v4/`; it is not a test-helper replay and is not included as
+source code in this documentation commit. Trusted setup selected the pack/store/
+Model/receipt paths. A persistent operator piped finite JSON lines to the unchanged
+CLI and retained each exact request, response, stdout, start/exit record and raw
+review. The actor inspected actual source/extraction/projected-input bodies and
+authored its reviews. No test imports, component payload replay, direct final
+Module construction, provider call or product-setting change occurred.
+
+### Completed positive producer case: positive-2
+
+Directory: `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-financial-v4/positive-2`.
+The actual final store is `store/`, producer receipt `receipt.json`, canonical Model
+publication `model/`. Only this positive-2 directory is the successful actual
+positive; the earlier `positive/` is a preserved failed-readiness case.
+
+PID45650 started `2026-10-27T01:30:10.994Z`; actual EOF exited0 at
+`2026-10-27T01:47:22.308Z`. Exact command/argv/cwd/code/pack hashes are retained in
+`transport/start.json` (Python from the main repository's pinned venv):
+
+```text
+/usr/bin/env PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -u -m deploy_workflow.financial_workflow \
+  --directory '/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-financial-v4/positive-2/store' \
+  --pack '/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-financial-v4/positive-2/pack.json' \
+  --model-directory '/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-financial-v4/positive-2/model' \
+  --receipt '/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-financial-v4/positive-2/receipt.json' \
+  --participant C1-offline-analyst-corrected-selection
+```
+
+This run made 23 real requests/responses: 12 source calls, three source-free input
+reads, six valid stage submissions, one actual publication and one final receipt
+request. CP0, source context, financials, narrative, readiness and quality all
+validated. Fresh source searches/reads and actual three-page extraction covered all
+82 printed rows. The actor re-used its own prior judgments only after checking
+fresh actual bodies, evidence IDs and new bindings; it never substituted a component
+fixture or a prior journal result.
+
+The sole financial correction relative to the earlier valid authored financial
+review was `quarter_ids: null`. **These optional selector IDs are quarter
+construction IDs, not source period IDs.** The public core's supported None default
+selects its available QUARTER constructions, excluding FY and PERIOD_END. Before
+quality submission, public read-only `Execution.read`/`step_output` monitoring
+verified both actual Model-readiness rows as `ready`, all 94 mandatory checks PASS,
+no missing metrics/conflicts/findings, and exactly the four constructions whose
+`own_period_id` values are q1-2025 through q4-2025 with the frozen dates/day counts.
+No readiness gate or calculation engine changed.
+
+`prequality-model-readiness-verification.json` SHA256:
+`9e8aa31e8b43c5993d81b8708ed1afcf7f008b313512d6a5fc0c13efaad661fe`.
+
+Fresh full authentic QualityInputs (20,011,846 bytes), actual read binding, all
+42,516 coverage fields, all ceilings/inherited findings, complete raw judgments and
+claim/evidence provenance were frozen at `2026-10-27T01:34:24.140Z`, BEFORE quality
+submission. All seven consequential findings remained material, including the
+missing-information finding. Computed evidence stayed Calculated; located source
+records Directly Sourced; gaps/missing values Insufficient Information; analyst
+EBITDA-definition comparisons were conservatively Analyst Inference. No ceiling
+was upgraded, limitation waived, score/status supplied, or desired score targeted.
+
+| Actual positive-2 artifact | SHA256 |
+| --- | --- |
+| Pack raw bytes | 374fdaa4fcdf939267958f65421c2af47ab1e5ee9e5a47c0cdf6e271a101e60c |
+| Canonical prepared-pack identity | 75a96bc2109cc1e8e2ada38fbc064bf32b0e13cd6367c51536b103bed6fce9cb |
+| raw-financials.json | 10f1498a7a2b843ed0621958df2777f87d344d138ca286e232b34e50c0e2f0da |
+| raw-narrative.json | a6a0ce7e7b0343e602807a1129782b74976cd1e10e8f0906628d278365bc3deb |
+| raw-readiness.json | ca6d31e718b4814e1bd40f347592fb0e1bdab3a73b25f70bfc5a975f66480c5c |
+| quality-inputs.json raw/content hash | 27526e1146301ae29b414932c5032000af1907afde1adc7010c65011ffb1210a |
+| QualityInputs canonical-register artifact | db592320cbc798cd13c46dd5c10f7fdc81ced742013f14606781137576a53d8f |
+| raw-quality.json | c3a08c6305df0d95ebc107c2acd4377dd906444201a8ecaaf1d4b158166652e2 |
+| quality-claim-provenance.json | 0b301419e9277c90e7cfd12d5816e02f84a4af8d58119d42953b28f027acd35e |
+| quality-freeze.json | 087341b564fd546bd2910795960d17e46615e023f488e7cb22ba0952d91f77b3 |
+| Independent pre-promotion expectation | e1696cfa52a978a3a1de1548f5332f623f52da1d5f3366088e60a77fa95d775f |
+| actual-vs-independent-qa.json | 896b8578c4a1ece943fabe59bb5d9b1a91d116940415682c6e02b93a69f1288a |
+| Final producer receipt raw/content hash | bbbee0075581797e9cb916fe79b939b6c9ef03d521405da1afc3d0946cf8ce61 |
+| Final exact snapshot | 17a4027d4a5c45143ae14b04a5966d12b533f1c512fb738eeca243de39b319ef |
+| transport/stdout.jsonl | cdc88e6372f1d57de56fa5eb201d71066ff8bacf563d3f5cb0814506449467d4 |
+| actual-run-result.json | aa54bcc01d52335fc8436db80c4a12057cfb3899d2ef79dfbf7a5ad4e674240f |
+
+Independent Sol/high semantic/materiality/lineage and Fraction review approved this
+fresh binding, not the earlier failed case's binding. Its durable expectation was
+saved before actual promotion. The actual retained QualityReport matched EVERY
+confidence field: E=520/7, C=1012450/10629, M=7/10, penalty0,
+raw=3075554/53145; seven material claims; 40,498/42,516 fields present; score58,
+Restricted, Low, nearest-integer ties-to-even. The adopted status cap59 was not
+binding. There is no score60 promotion gate. A public read-only settlement monitor
+also verified the stored payload differed from the frozen raw QA only by the
+supported current-input-hash prefill. Actual Model readiness was rechecked READY
+before the publisher was invoked.
+
+Actual CP1 ticket `ea15c6e8-5d7b-444e-a3cf-5507e4a2eb00`, restricted settled result
+`87af2b93ae1e2a30df57fe0997c1e89f75bee07932501c7074d51155e59f846f`.
+Actual Model ticket `973365ee-2401-4d4a-bc31-51af3343db07`, restricted result
+`c6a8d3d0f909342fe4de15ffae183ca9dd9852f94ab21788c12f91f9274e5bbe`, bound to that
+exact CP1 result. The actual core publisher and publication verifier succeeded.
+Canonical raw files:
+
+| Model file | SHA256 |
+| --- | --- |
+| model.html | 6be1d2ec79ccb1b6bdbf233c2334bcb10c9c82d289581e491d2cfff9616a8dfc |
+| calculation.json | 89b1bf3b48d214ab2b600d7f3ead534f6f2aaa2d8ab44f2cf36214ca99a13d8c |
+| receipt.json | 265e6c2dc70f060ca5209564a4fe6aca78ad37a8cfd48ba3b6ac01413a8cc8d4 |
+
+The final producer receipt was sealed only AFTER actual publication and full
+workflow verification. Source/test/manifest/pack bytes stayed frozen. The owned
+CLI then closed on EOF, exit0, and C1 released the heavy slot. C1 performs no further
+Execution writes; C2 consumes portable copies read-only under its own admission.
+
+### Actual missing-source gap case
+
+Directory: `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-financial-v4/gap`.
+PID42836, `2026-10-27T00:46:53.917Z` to EOF/exit0 at `00:47:31.530Z`.
+Actual identity read/search succeeded; actual financial-source read refused
+`unavailable`. Its separately authored CP0 review settled restricted with the
+conditional financial dependency. Actual CP1 begin raised NotAuthorized. The actual
+publisher refused `CP-1 has no accepted or restricted head` before Model begin or
+files. The genuine negative receipt then verified/sealed; CP1/Model fields are None,
+fixed refusal `cp1_not_authorized`, and no Model directory exists.
+
+- Canonical pack: `ccc256569d1d644eea7d1982ae6cc09140275bcb3bc734048e07a4673dca2a8d`.
+- Final snapshot: `4696cdafc9c31f34f723849955891ff61cdb789a61046397a9731d4e44d6b441`.
+- Producer receipt raw/content SHA256:
+  `929fd192bdd933e6fe1fdbcf11dcd06e0e194f8e7046ee7905df89acb4963896`.
+- Raw readiness review: `ee96a3b2bba5248ac661e6d9f0ade9f792917597f7b5cfe5404fd9cb405a63da`.
+- Exact six-request/response stdout:
+  `e03570d6b05a4fcb93fa33ea602135d8b623046b98fec5300f8de02a0d1f623b`.
+
+This uses its own pack, review, bindings, output and receipt, not the positive case.
+It does not assert that blocked Model readiness alone causes publication refusal.
+
+### Preserved actual failure and root-cause corrections
+
+The original `positive/` directory is preserved read-only, including actual source
+calls, raw reviews, invalid/refused submissions, independent QA, journals and
+monitoring notes. PID42201 ran from `2026-10-27T00:39:44.867Z` to explicit EOF/exit0
+at `01:30:00.756Z`. Process exit0 does NOT qualify that analytical case as positive.
+
+Its source-context absence claim first refused because the identity source had not
+been searched in that epoch. A genuine identity search returned zero events, then
+the SAME authored context payload validated. Its first financial review violated
+the adopted one-assessment-per-observation ownership rule by including reported
+EBITDA observations in both reported/adjusted assessments. The correction removed
+only the second assessment's overlapping IDs, retaining all facts/quotes and both
+judgments, and repeated all required source calls/extraction in the new repair
+epoch. The actual invalid-to-valid core repair remains in the journal.
+
+That original run later promoted restricted with its exactly predicted QA58, but
+trusted monitoring caught genuine Model-readiness BLOCKED before publication:
+source period IDs had been supplied to the optional construction-ID selector.
+No publisher or final positive receipt was called. No core code, final Module,
+private phase or settled journal was changed to hide the failure. LEAD admitted
+the distinct positive-2 run with supported None selection, fresh actual calls and
+fresh pre-promotion QA review. Original and corrective cases are never mixed.
+
+A first read-only monitor also mistakenly looked for ticket_id on Head; it was
+corrected to the public Attempt/result_sha256 join after tracing the schema. The
+subsequent readiness assertion exposed the genuine selector error; it was not
+waived as a casing issue. No monitor mutated Execution. These operator/data errors
+are recorded separately from product defects and component checks.
+
+The only follow-up tracked change is this handoff documentation. Product/test bytes
+remain the exact final20-case-reviewed implementation; no additional imported-suite,
+provider run or product rewrite was introduced. Core qualification fields remain
+implementation-only with analytical/render/native unrun. Actual-case evidence is
+scoped to this frozen synthetic historical slice and does not qualify specialist
+owners, forecasts, original-document fidelity, audit assurance or real issuers.

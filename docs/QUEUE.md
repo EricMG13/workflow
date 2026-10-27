@@ -1549,3 +1549,35 @@ gap/controlrecovery/canonicalbyte/UIcount94vs77/chartfallback/cleanup factsagree
 closedrecords. Finalhandoffconfidence15checksALLTRUE+gitdiffcheck. LEADadmitsPMexact
 single-docintegration/receipt only, no tests or codechanges. FinalMD/proofreview copied
 outputchecks/c2. Nativecontent/22positive+14gapchecks nowclosed withhonestlimitations.
+
+
+## Task3-C — CP1 chart series; planning freeze2026-10-27
+
+User authorization: continue C1/C2/PR MANAGER through actual S.1-S.4 in rendered
+report and canonical Model; paid/provider/live PAUSED. Main clean5a4d3c36 confirmed
+by LEAD and PM; LEAD clone clean3a2ca061 before newdocs. Fresh process scan06:04UTC
+found no projectheavyjob/server; only own read-only grep. Heavy slot FREE; no job
+admission yet. C1/C2 read-only discovery complete; C1producer newfinancial_series.py,
+C2consumer report_view.py are disjoint. Exact contract docs/CP1-CHART-SLICE.md and
+pre-implementation oracle cases/charts/expected.json. Independent Sol/high source
+review hash91da569ccec9606d328d218c800b0565449449d1e3414739bd0c5089ef367248;
+oracle2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276.
+No candidate code used to define expectation. Contract finalindependentreview pending;
+product leases/heavyjobs not yet released. All prior evidence and sourcebytes frozen.
+
+Shared consumer accepts FinancialFigureSeries/FinancialSeriesPoint field names as
+incontract; no additionalfieldblocker. Source-native USD MILLIONS numericgeometry,
+ratioMULTIPLE; samecurrentCP1fact/companion IDs and realpassportrefs. No duplication
+ofcalculationfacts. RealS1/S2earlyNULL, S3RCF0, onecurrent2029maturity50. Freshpublic
+CP1chain/publication chosen because settledinput cannotrepublish; nojournalediting
+or newrevision/forkAPI. Existing explicituser/PLANteam method authorizes execution
+without newapprovalround; next exactPMcontractcommit admission follows review.
+
+Contract final independent Sol/high PASS: exactcontract e6e3f4a1853dbdcd142ab9afcfdadeabae5452d48a354c8db00a873359457936,
+unchangedoracle2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276,
+receipt docs/reviews/cp1-chart-contract.md SHA33ea3771ce732c1b1885441dbf6894ddab8e1bc6cc528a46634e85b981bf0360.
+No material issue/additionalgate. LEAD documentconfidence checks sourcehash/oracle,
+oldmainplanningbyteidentity, exactfieldagreement/disjointleases, source-nativeunits,
+sourcequarterjoin/NULLvs0/maturityscope andfreshpublicpublication invariants PASS.
+Only docs/caseexpectedmetadata changed; rewrite-tournament exempt. PM exactcontract
+integration admission follows thiscommit. No productwrites/heavyjobs yet.

@@ -1,0 +1,315 @@
+{
+  "schema_version": "independent-cp1-chart-expectations/1",
+  "review_phase": "pre-implementation; independent of candidate renderer output",
+  "source_authority": {
+    "manifest_path": "cases/financial/manifest.json",
+    "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "financial_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "identity_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "source_hash_rule": "UTF-8 LF pages joined by U+000C; no terminal LF per page",
+    "source_dimensions": {
+      "currency": "USD",
+      "unit": "MILLIONS",
+      "scale": "1000000",
+      "accounting_basis": "IFRS",
+      "entity_perimeter": "consolidated group",
+      "evidence_class": "unaudited_without_auditor"
+    },
+    "source_published": "2026-01-10",
+    "financial_snapshot_date": "2025-12-31"
+  },
+  "source_locators": {
+    "reported_ebitda": "financial/page:2 lines4,15",
+    "cash_interest_paid": "financial/page:3 lines4,30",
+    "cash": "financial/page:4 lines4,5",
+    "total_debt": "financial/page:4 lines4,13",
+    "rcf_commitment_and_drawn": "financial/page:4 lines4,33,34; page:1 line18",
+    "facility_identity_and_completeness": "financial/page:5 lines4,5",
+    "current_facility_balance": "financial/page:5 lines6,11,14",
+    "maturity_and_amortisation": "financial/page:5 line13",
+    "identity_scope": "identity/page:1 lines4,5,7"
+  },
+  "arithmetic": {
+    "precision": 38,
+    "rounding": "ROUND_HALF_EVEN",
+    "quantize_before_formula": false,
+    "numeric_encoding": "Decimal strings, null for unavailable; display rounding is separate",
+    "total_leverage_reported": "total_debt / trailing_four_quarters.reported_ebitda",
+    "net_leverage_reported": "(total_debt - cash_closing) / trailing_four_quarters.reported_ebitda",
+    "interest_coverage_reported": "trailing_four_quarters.reported_ebitda / (-trailing_four_quarters.cash_interest)",
+    "undrawn_rcf": "rcf_commitment - rcf_drawn",
+    "liquidity": "cash_closing + undrawn_rcf"
+  },
+  "chart_series": {
+    "S.1": {
+      "title": "Leverage",
+      "unit": "MULTIPLE",
+      "series": [
+        "total_leverage_reported",
+        "net_leverage_reported"
+      ]
+    },
+    "S.2": {
+      "title": "Interest cover",
+      "unit": "MULTIPLE",
+      "series": [
+        "interest_coverage_reported"
+      ]
+    },
+    "S.3": {
+      "title": "Liquidity",
+      "currency": "USD",
+      "unit": "MILLIONS",
+      "series": [
+        "cash_closing",
+        "undrawn_rcf",
+        "liquidity"
+      ],
+      "total_series_rule": "Liquidity total is supported by adopted cash+undrawn formula; do not stack total together with its components."
+    },
+    "S.4": {
+      "title": "Maturity wall",
+      "currency": "USD",
+      "unit": "MILLIONS",
+      "basis": "one complete current debt snapshot classified by contractual maturity; not a forecast"
+    }
+  },
+  "quarters": [
+    {
+      "period_id": "q1-2025",
+      "period_type": "QUARTER",
+      "quarter_end": "2025-03-31",
+      "own_period_days": 90,
+      "cash_millions": "16.25",
+      "cash_usd": "16250000.00",
+      "total_debt_millions": "46.25",
+      "net_debt_millions": "30",
+      "rcf_commitment_millions": "0",
+      "rcf_drawn_millions": "0",
+      "undrawn_rcf_millions": "0",
+      "liquidity_millions": "16.25",
+      "total_leverage_reported": {
+        "amount": null,
+        "exact_fraction": null,
+        "state": "unavailable"
+      },
+      "net_leverage_reported": {
+        "amount": null,
+        "state": "unavailable"
+      },
+      "interest_coverage_reported": {
+        "amount": null,
+        "state": "unavailable"
+      },
+      "trailing_gap": "A complete preceding twelve-month quarterly series is not supplied; do not use later FY2025 values or annualize the own quarter."
+    },
+    {
+      "period_id": "q2-2025",
+      "period_type": "QUARTER",
+      "quarter_end": "2025-06-30",
+      "own_period_days": 91,
+      "cash_millions": "17.50",
+      "cash_usd": "17500000.00",
+      "total_debt_millions": "47.50",
+      "net_debt_millions": "30",
+      "rcf_commitment_millions": "0",
+      "rcf_drawn_millions": "0",
+      "undrawn_rcf_millions": "0",
+      "liquidity_millions": "17.50",
+      "total_leverage_reported": {
+        "amount": null,
+        "exact_fraction": null,
+        "state": "unavailable"
+      },
+      "net_leverage_reported": {
+        "amount": null,
+        "state": "unavailable"
+      },
+      "interest_coverage_reported": {
+        "amount": null,
+        "state": "unavailable"
+      },
+      "trailing_gap": "A complete preceding twelve-month quarterly series is not supplied; do not use later FY2025 values or annualize the own quarter."
+    },
+    {
+      "period_id": "q3-2025",
+      "period_type": "QUARTER",
+      "quarter_end": "2025-09-30",
+      "own_period_days": 92,
+      "cash_millions": "18.75",
+      "cash_usd": "18750000.00",
+      "total_debt_millions": "48.75",
+      "net_debt_millions": "30",
+      "rcf_commitment_millions": "0",
+      "rcf_drawn_millions": "0",
+      "undrawn_rcf_millions": "0",
+      "liquidity_millions": "18.75",
+      "total_leverage_reported": {
+        "amount": null,
+        "exact_fraction": null,
+        "state": "unavailable"
+      },
+      "net_leverage_reported": {
+        "amount": null,
+        "state": "unavailable"
+      },
+      "interest_coverage_reported": {
+        "amount": null,
+        "state": "unavailable"
+      },
+      "trailing_gap": "A complete preceding twelve-month quarterly series is not supplied; do not use later FY2025 values or annualize the own quarter."
+    },
+    {
+      "period_id": "q4-2025",
+      "period_type": "QUARTER",
+      "quarter_end": "2025-12-31",
+      "own_period_days": 92,
+      "cash_millions": "20.00",
+      "cash_usd": "20000000.00",
+      "total_debt_millions": "50.00",
+      "net_debt_millions": "30",
+      "rcf_commitment_millions": "0",
+      "rcf_drawn_millions": "0",
+      "undrawn_rcf_millions": "0",
+      "liquidity_millions": "20.00",
+      "total_leverage_reported": {
+        "amount": "1.6666666666666666666666666666666666667",
+        "exact_fraction": "5/3",
+        "state": "calculated"
+      },
+      "net_leverage_reported": {
+        "amount": "1",
+        "state": "calculated"
+      },
+      "interest_coverage_reported": {
+        "amount": "6",
+        "state": "calculated"
+      },
+      "trailing_gap": null
+    }
+  ],
+  "q4_trailing_basis": {
+    "scope": "trailing_four_quarters",
+    "start_date": "2025-01-01",
+    "end_date": "2025-12-31",
+    "days": 365,
+    "source_period_ids": [
+      "q1-2025",
+      "q2-2025",
+      "q3-2025",
+      "q4-2025"
+    ],
+    "construction_identity": "Use actual selected QUARTER construction IDs, not source-period IDs as construction IDs.",
+    "reported_ebitda_millions": "30",
+    "normalized_cash_interest_millions": "-5",
+    "positive_interest_denominator_millions": "5",
+    "total_debt_millions": "50",
+    "cash_millions": "20",
+    "net_debt_millions": "30"
+  },
+  "fy_and_q4_identity": {
+    "reported_fy_period_id": "fy-2025",
+    "reported_fy_start_date": "2025-01-01",
+    "reported_fy_end_date": "2025-12-31",
+    "reported_fy_days": 365,
+    "q4_own_start_date": "2025-10-01",
+    "q4_own_end_date": "2025-12-31",
+    "q4_own_days": 92,
+    "rule": "Historical FY, historical Q4/display basis and rolling four-quarter basis remain distinct even when end date, column_key or numeric result agrees. No duplicate chronological point or duplicate maturity exposure from FY+Q4."
+  },
+  "current_maturity_wall": [
+    {
+      "facility_id": "term-loan",
+      "facility_name": "Northbridge Term Loan",
+      "facility_type": "senior secured term loan",
+      "lease_classification": "NOT_LEASE",
+      "as_of": "2025-12-31",
+      "maturity_date": "2029-12-31",
+      "maturity_year": 2029,
+      "outstanding_millions": "50",
+      "outstanding_usd": "50000000",
+      "principal_millions": "50",
+      "drawn_amount_millions": "50",
+      "commitment_millions": "50",
+      "annual_amortisation_millions": "0",
+      "currency": "USD",
+      "unit": "MILLIONS",
+      "rule": "Current outstanding exposure assigned to contractual final maturity; not a projection of balance at2029."
+    }
+  ],
+  "lineage_and_rendering": {
+    "numeric_marks": "Reference selected authentic source/computation/metric records; monetary amounts retain currency/scale and basis identity.",
+    "missing_marks": "value=null and explanatory G# reference; never zero.",
+    "table_twin": "Exact same final cell texts and mark order as ChartSpec; display.format_value governs spelling.",
+    "canonical_model": "Report and canonical Model must consume the same selected current run and agree on serialized series values/units/bases/references; chart integration is an implementation obligation, not a source gap."
+  },
+  "adversarial_cases": [
+    {
+      "case": "missing_earlier_quarters",
+      "expected": "Q1-Q3 leverage and interest cover stay null with gap references; no interpolation, zero, forward FY use or quarterly annualization."
+    },
+    {
+      "case": "nonpositive_or_missing_denominator",
+      "expected": "Zero/negative EBITDA or a nonpositive cash-interest denominator refuses a numeric ratio under adopted metric rules; missing input stays unavailable. No infinity or zero substitute."
+    },
+    {
+      "case": "rcf_missing_vs_zero",
+      "expected": "Explicit RCF commitment0 and drawn0 produce numeric undrawn0. Missing either required input cannot be replaced by zero."
+    },
+    {
+      "case": "term_commitment_headroom",
+      "expected": "Never treat term-loan commitment less drawn as undrawn RCF. Q1 liquidity remains16.25, not20."
+    },
+    {
+      "case": "duplicate_fy_q4_facility",
+      "expected": "Current maturity balance is50, never100; FY and Q4 are distinct period identities sharing one closing facility snapshot."
+    },
+    {
+      "case": "maturity_missing_or_incomplete",
+      "expected": "Missing contractual maturity or incomplete facility population must remain a disclosed gap; never invent a date or claim a complete maturity wall."
+    },
+    {
+      "case": "foreign_currency_or_scale",
+      "expected": "Reject or explicitly disclose unsupported currency/scale mismatch; USD50million is USD50000000, notUSD50 or USD50000000000000."
+    },
+    {
+      "case": "basis_or_reference_tamper",
+      "expected": "Wrong/foreign/missing source, computation, metric operand or construction reference must fail the applicable validation; same-valued FY and Q4 ratios do not establish equivalent lineage."
+    },
+    {
+      "case": "stale_selection_or_serialized_series",
+      "expected": "Refuse current-result qualification for stale/foreign producer bindings or tampered serialized chart values; canonical Model and rendered report must agree with the same selected run."
+    },
+    {
+      "case": "missing_financial_source",
+      "expected": "Existing genuine gap case remains CONDITIONAL/DO NOT RUN; actual CP1 admission and publisher refuse, with no CP1/Model head or Model files. No chart zero-fill."
+    },
+    {
+      "case": "zero_maturity_bins_and_forecast",
+      "expected": "Minimal expected wall contains only2029 maturity50; no forecast balances or unsourced zero-filled years. Any additional empty bins require an explicit snapshot-completeness interpretation and clear nonforecast labeling."
+    },
+    {
+      "case": "status_inflation",
+      "expected": "Chart availability cannot upgrade restricted CP0/CP1/Model or QA58/Restricted/Low, establish another analytical owner, or remove original limitations."
+    }
+  ],
+  "scope_limits": [
+    "Synthetic supplied pages only; no real issuer, PDF/OCR or live/paid/provider qualification.",
+    "Reported FY2025 plus four quarters and opening2024 balance only; no prior-year income/growth or future debt projection.",
+    "No borrower/guarantor/restricted-group perimeter established; no additional owner qualification.",
+    "Existing source limitations, restricted states and independent QA semantics persist."
+  ],
+  "route_evidence": {
+    "assignment": "LEAD explicitly assigned this existing independent reviewer to Sol/high under AGENTS.md financial/state routing.",
+    "review_method": "Read-only source literals and adopted chart/financial contracts inspected before candidate code; independent Decimal arithmetic only.",
+    "telemetry_limit": "No hidden runtime model telemetry claim.",
+    "excluded_activity": [
+      "candidate-output-derived oracle",
+      "product/source/case edits",
+      "tests",
+      "core validator executions",
+      "heavy jobs",
+      "providers"
+    ]
+  }
+}

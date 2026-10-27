@@ -769,3 +769,24 @@ or authorization. LEAD will freeze the narrow A1 pure earnings leaf/test scope
 and case; actual owner, CP5 and rendering dependencies remain separate later
 acceptance steps. No tests, product code, runtime, or provider work occurred in
 this integration. Paid/provider/live remain paused.
+
+### C3 Task4-A1 CP1B core lease and independent case freeze
+
+Integrated LEAD-admitted commit
+`fdd2e326d1b641d44890377c134966adf1f00bda` by cherry-picking its exact six
+paths only; its parent `84cb02015cf5b93ab7299745dce9de8100a6b049` and history
+were not merged. The paths are `PLAN.md`, `docs/QUEUE.md`, `docs/TEAM.json`,
+new `docs/CP1B-CORE-LEASE.md`, new `docs/reviews/cp1b-core-contract.md`, and
+new `cases/earnings/expected.json`. Pinned hashes verified:
+
+- Contract: `b32b91f8fdf562d101e3c37cd14336a640f1baeac6d4ced93111fc6bc21d767d`
+- Independent oracle: `041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599`
+- Sol/high review: `526ce2f5e6d0b6104d1c116e2782236b8c2f3c246955a8a8802cf9a31391b3b0`
+
+The frozen A1 lease grants C3 exactly `src/deploy_workflow/earnings.py`,
+`tests/test_earnings.py`, and `docs/handoffs/cp1b-earnings-core.md`. It grants
+no shared registry, workflow, access, CP5, binding, renderer or Model edits.
+The source/test/case byte inventory from closed Task3-C remains identical across
+its original 131 files; the sole new case file makes the current tracked count
+132. No tests, implementation, runtime or fresh financial audit were performed
+for this documentation/case integration. The Task3 package remains frozen.

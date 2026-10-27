@@ -2145,3 +2145,15 @@ stored CP1 blob6d41c0a0, not a new owner, authorized tool session or settled CP5
 Test-only probe is exempt from rewrite tournament; confidence review checked its
 complete ModuleView/no input slicing, independent immutable oracle, exact blob
 hash and read-only boundaries. Actual owner/access/consumer/render remain open.
+
+
+C1-CP1B-A2-REGISTRATION-ADDENDUM-1 WRITES ADMITTED at exact clean pushed main
+dfbb4c9fec84e51c0cc9b8c1262dd1e07daebd9d, root09:42:53.562568UTC; no matching
+heavy jobs, load2.574/2.645/2.509. Three freeze pins rehashed equal. Preserve C1
+uncommitted five-file/work changes through safe fast-forward from85785c9, verify
+source/test bytes before/after. Sixthfile live/submission.py now narrowly admitted
+for exact addendum capability/totality/offline lookup fix. No other shared source
+edit; no heavy test/engine run bundled. Original GREEN1 import failure retained;
+separate final_current causalRED precedes that racepatch. Runtime admission still
+requires fresh exact argv/pins/process/load and source frozen through actual exit.
+Record: LEAD work/cp1b-preparation/a2-registration-addendum-admission.json.

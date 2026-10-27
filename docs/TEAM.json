@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: C1 projection and C3 B1 disjoint implementation; A4 corrected complete CP5 contract frozen with code admission pending; C2 FP04 component freeze preparation; full PLAN incomplete; paid/provider/live paused",
+  "state": "active disjoint writes: C1projection, C3earningsownerB1, C2FP04bindingcomponent; A4frozenfutureconsumer; B1bootstrap/rawtransportclarification inreview; fullPLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -35,7 +35,7 @@
   "one_heavy_job_limit": 1,
   "active_lanes": {
     "C1": "C1-CP1B-PROJECTION-A2P-IMPLEMENTATION-1 at4e2bce9: upstream.py/test_upstream_tools.py only, workcp1b-projection-a2p; writes/static only, heavy checks separately admitted",
-    "C2": "FP04 exact two-file component lease a13cacb7/oracle5200b47e/review1bcfcfe7 frozen; await exact PM integration and LEAD write admission; no actuallegalowner/CP5/native acceptance",
+    "C2": "C2-CP4-FP04-L1-IMPLEMENTATION-1 at25027f6: report_view.py/newtest_legal_render.py only; work/legal-fp04-component; writes/static only, eachheavytestseparatelyadmitted",
     "C3": "C3-CP1B-OWNER-B1-IMPLEMENTATION-1 at4e2bce9: newearnings_workflow.py/newtest_earnings_workflow.py/newcp1b-owner handoff; workcp1b-owner-b1; writes/static only, GREEN requires accepted projection integration",
     "PR_MANAGER": "integration only"
   }

@@ -2348,3 +2348,39 @@ PublicbuildAPIunchanged; futureC2ONLYreport_view.py/newtest_legal_render.py, no
 map/assets/core/source/receipt/wrapper changes. PMexactintegrationthenfreshbase/
 resourcewriteadmission required. NooverlapC1upstream/C3newownerfiles.
 Actuallegalowner/CP5/FP04native andother5ownerblocks remainopen. Paidsstaypaused.
+
+
+## C2-CP4-FP04-L1-IMPLEMENTATION-1 — WRITES ADMITTED
+
+Exactcleanpushedbase25027f69937fbbab9f58eb8572bc9ed014b20647. Root2026-10-27
+10:42:29.500932UTC freshclearheavyprocessscan/load2.772/2.289/2.240;runtime
+7c72112b, all146baselinefiles/frozenleasea13cacb7/oracle5200b47e/review1bcfcfe7
+andCP4core/map/report_viewbytesverified. Before146inventory/admissionrecords in
+LEADwork/legal-preparation/fp04-source-before.json/fp04-implementation-admission.json.
+Freshcodex/cp4-fp04-bindings atEXACTbase, preserveA3branch/work; C2ONLYreport_view.py
+andNEWtests/test_legal_render.py. Logs/reviews/handoffONLYwork/legal-fp04-component,
+noextra trackedhandoff/maps/assets/core/source/receipts. Verifybeforewrites.
+
+Rowpolicyclarification: rowIDs UNIQUE; displaylabels NONBLANK but MAYREPEAT.
+Detailedlease/canonicalsourcecopybehavior governsambiguousoraclemetadata phrase
+'uniqueIDs/labels'; doNOTreject legitimate repeatedlabels. Add preservationcase,
+no legal/sourcevalue/truthchange or newfinancialaudit. Candidatefixtures explicit
+componentpreviews, notsettlement; nonshownpopulatedCP4refusesFullanalysiscarryover.
+
+Writes/staticONLY, no heavytest/engine/browser/provider bundled. Requestexact
+focusedargvtests/test_legal_render.py withcurrentpins/resources andfreezecloneto
+actualexit; meaningfulmissingfeatureREDthenimplementation; codeconfidence/noarg
+tournament/independentSolhighreviewbeforecommit. No numericalimplementationcap;
+disjointfromC1upstream/C3NEWownerfiles. AllactualCP4/CP5/native/other5FP04owners
+stillopen. Paid/provider/livepaused.
+
+C1projectionCAUSALRED2PID97317 10:40:08.358199..10:40:10.538609UTC exit1,135pass/
+3fail1.98s: postappendprovisionalokvisibleonunlock anduuid/bindingcopyprivateerror
+leaksconfirmed. Allpinsunchanged; exactnewprojection-onlyfixes admitted, old3tool
+semantics/BaseExceptionpreserved. Logd7563f0a, recordC1work/cp1b-projection-a2p.
+OriginalGREENrequest neverlaunched/supersededbeforePopen; notclaimedasrun.
+C3B1RED1PID96442 10:33:47.921132..10:33:48.184993UTC exit1,1namedfeatureabsence/
+73deselected0.13s aftersuccessfulcollection; all144+test/runtimeunchanged.
+No ownerbehaviorproof; C3nontransportimplementationresumed. Bootstrapidentity
+authorityandrawTextIObytepolicy exposedconcreteschemaambiguities; sameB1review
+clarificationinprogress, no source/math/receipt-topfield expansion.

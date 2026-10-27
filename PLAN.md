@@ -320,7 +320,7 @@ analysis/Evidence/Limitations, native units and honest unknown capacity/definiti
 gaps. Seeded candidate previews are component evidence, not owner settlement.
 
 - [x] Independently freeze all31 schema/binding metadata, six specs and literal positive/gap presentation/refusal expectations.
-- [ ] Integrate exact freeze and admit C2's disjoint two-file implementation.
+- [x] Integrate exact freeze and admit C2's disjoint two-file implementation.
 - [ ] Verify focused component cases and required confidence/tournament/independent code reviews.
 
 Actual CP4 source/current-CP1 auth/tools/owner receipt, complete selected CP5,

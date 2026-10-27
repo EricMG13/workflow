@@ -823,3 +823,16 @@ integrity bridge grant no access or product-write permission. Each requires
 independent expectations, a frozen schema/lease and separate admission before
 implementation. C1 remains docs-only. No tests, source, runtime, or package edits
 were made for this integration; paid/provider/live remain paused.
+
+### C2 CP1B FP02 rendering preparation handoff
+
+Integrated C2's exact one-file proposal commit
+`0259861308f19a788ee097283fd107a878286294` from base
+`d04c19cb237c4125dcb3765cb0745479913a4430`. Only
+`docs/handoffs/cp1b-fp02-preparation.md` was added; its SHA-256 is
+`c70bea51d4d6258b5be25cfd3cd54b0a8849c1099f3c191cf6e3dd53887098c5`. The
+proposal grants no product write, render permission or lease. A3 binding and
+specification proposals remain subject to separate Sol/high review and LEAD's
+exact contract/lease admission; no assets or runtime wrapper are authorized here.
+No tests, package edits or runtime jobs occurred. C3 A1 and C1's A2 preparations
+remain in their distinct ownership lanes; paid/provider/live remain paused.

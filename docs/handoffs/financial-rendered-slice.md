@@ -1,11 +1,14 @@
-# Task3-B financial rendering — verified component implementation
+# Task3-B financial rendering — component and bounded actual-case proof
 
-Status: C2's three-file implementation is ready for exact local integration.
+Status: C2's three-file implementation is integrated at common d4fb848, and the
+separately admitted actual positive/gap portable renders and native browser proof
+are complete. The final update changes this owned handoff document only.
 All22 focused component cases and renderer mypy pass. The initial Ruff I/F run
 found one mechanical test import-order issue; that exact fix is AST-equivalent
 apart from the three cached imports' order, and scoped I/F plus format now pass.
-Actual analytical participant execution and native DOM qualification remain separate
-LEAD-admitted work. No actual rendered-delivery acceptance is claimed by this commit.
+The actual evidence below is bounded to the historical synthetic CP1/Model slice;
+it does not grant blanket analytical, native, chart-series or production qualification.
+Paid/provider tests remain paused. No product/test/source bytes changed for proof.
 
 ## Exact lease, dependency and frozen inputs
 
@@ -158,7 +161,138 @@ This distinguishes original22-case tested bytes from the final mechanical test f
 
 Set hash concatenates relative path UTF8+NUL+bytes+NUL, renderer then test.
 
-## Confidence review — final consumer and tests
+## Separately admitted actual portable renders and native proof
+
+These are genuine C1 bounded participant runs, independent of the component helper.
+C1 alone performed source access, all six valid stage submissions, actual promotion,
+Model publication and final producer receipt seal. C2 consumed the LEAD-created
+portable copies read-only. Only corrected **positive-2** was consumed: the earlier
+positive selector failure remains retained and was never presented as acceptance.
+The corrected run selected the four source-linked QUARTER constructions, reached
+actual Model readiness before QA, passed all94 mandatory input checks, and matched
+the fresh independent QA expectation **58 / Restricted / Low**. Its CLI PID45650
+closed on EOF with exit0 at2026-10-27T01:47:22.308Z before C2 admission.
+
+Portable package root:
+`/Users/ericguei/Documents/Codex/2026-10-26/deploy-workflow-lead/outputs/cp1-model-slice`.
+Positive inputs are `evidence/positive/{store,receipt.json,model}`; gap inputs are
+`evidence/gap/{store,receipt.json}` with no Model directory. LEAD verified all156
+positive and40 gap input files byte-for-byte, without symlinks. C2 recorded its own
+complete before/after inventories. Outputs are exclusive new `positive/` and `gap/`
+leaves. No Execution, producer receipt, source, or canonical publication was edited.
+
+| Actual identity | Positive-2 | Missing-source gap |
+| --- | --- | --- |
+| Producer receipt raw SHA-256 | bbbee0075581797e9cb916fe79b939b6c9ef03d521405da1afc3d0946cf8ce61 | 929fd192bdd933e6fe1fdbcf11dcd06e0e194f8e7046ee7905df89acb4963896 |
+| Pack SHA-256 | 75a96bc2109cc1e8e2ada38fbc064bf32b0e13cd6367c51536b103bed6fce9cb | ccc256569d1d644eea7d1982ae6cc09140275bcb3bc734048e07a4673dca2a8d |
+| Final snapshot SHA-256 | 17a4027d4a5c45143ae14b04a5966d12b533f1c512fb738eeca243de39b319ef | 4696cdafc9c31f34f723849955891ff61cdb789a61046397a9731d4e44d6b441 |
+| Selected CP0 result | f08dbf0d771244aabea370c829523141bd790c4854657d21979cc42334cba30b | f5385793cd243ae5e9e1b8ab132ad06654848ce7f98610456798ff980347495c |
+| Selected CP1 result | 87af2b93ae1e2a30df57fe0997c1e89f75bee07932501c7074d51155e59f846f | unrun; actual begin refused |
+| Selected Model result | c6a8d3d0f909342fe4de15ffae183ca9dd9852f94ab21788c12f91f9274e5bbe | unrun; actual publisher refused |
+
+**C2-ACTUAL-POSITIVE-RENDER-1**: one unchanged `render_financial_slice` call with
+all three real public authentications; PID46685,2026-10-27T01:50:08.990672Z through
+01:55:18.253842Z, actual exit0. All156 inputs and the source/test/case inventory
+were unchanged. Exactly10 output files; canonical three-file publication copied
+byte-for-byte, and the co-located calculation equals its canonical counterpart.
+The full command, script hash, PID/UTC, input inventories, metadata and output hashes
+are `artifacts/actual-positive-render-1/{run.py,run.log,record.json}` in C2's clone.
+No extra verifier, pytest, helper, Model builder or provider job ran.
+
+**C2-ACTUAL-GAP-RENDER-1**: one unchanged call with `model_directory=None`;
+PID45823,2026-10-27T01:33:24.812629Z through01:33:24.913871Z, exit0. All40 inputs
+unchanged. Exactly `report.html`, `financial-slice.json`, `render-receipt.json`;
+no `model/`, `cp1/` or calculation JSON. Evidence is
+`artifacts/actual-gap-render-1/{run.py,run.log,record.json}`.
+
+| Actual output | SHA-256 |
+| --- | --- |
+| Positive report.html | 4dbdfc091d02174d12ea9d0941b43d0294d6a4ab53d58bd3b441ec36981daf95 |
+| Positive render-receipt.json | 2b10f68d6287d118ca7e816e753409837eb1ad7e1716f6a3f70c2d1f493f1bd2 |
+| Canonical model/model.html | 6be1d2ec79ccb1b6bdbf233c2334bcb10c9c82d289581e491d2cfff9616a8dfc |
+| Both calculation.json copies | 89b1bf3b48d214ab2b600d7f3ead534f6f2aaa2d8ab44f2cf36214ca99a13d8c |
+| Canonical model/receipt.json | 265e6c2dc70f060ca5209564a4fe6aca78ad37a8cfd48ba3b6ac01413a8cc8d4 |
+| Gap report.html | 51a0f1fbe6b47574b5ef04992647b72775079167bb432b88f37fd12b7523eb3e |
+| Gap render-receipt.json | 510633ff962bb2963859e0711b522e52a4e7ced1dff53038a97dcca1cf13ab0a |
+
+**C2-ACTUAL-POSITIVE-DOM-1 / C2-ACTUAL-POSITIVE-NATIVE-RECOVERY-1** used the
+unchanged positive leaf on owned127.0.0.1:54227 serverPID47199 and only owned
+native IAB tab5. The ~63MB HTML exceeds the full-page AX bridge frame limit.
+Codex native-app computer-use access was safety-denied; that route was closed.
+Purpose-built navigation moved the same owned tab to the small calculation JSON,
+allowing a normal browser handle to bind. All subsequent work used supported
+native browser screenshots, actual UI clicks, public role locators and bounded
+read-only DOM. No OS automation, private API, page injection, alternate report,
+or replacement screenshot was used. Full-page AX success is not claimed.
+
+Actual positive observations:
+
+- Bare report shows the Front Page, issuer/as-of/synthetic/method identity and
+  historical-financial-only scope. Actual financial/capital tables and chart
+  destination/KPI table fallback come from CP1 maps. Chart plots remain `n/a`:
+  the shipped core says no S.1-S.4 producer series exists yet. No plotted-series
+  qualification or new chart code is claimed.
+- CP1 QA shows Restricted, confidence58(Low). Model readiness shows `ready` for
+  the retained historical quarter scope. All77 displayed reconciliation rows
+  show PASS; this UI count is distinct from C1's94 mandatory gate checks.
+- Period register shows opening PERIOD_END, four dated QUARTERs and FY2025 in
+  USD/MILLIONS. Separate reported FY, constructed display-LTM and rolling-Q4
+  bases remain inspectable. Native clicked JSON retains the four rolling quarter
+  construction IDs/365days, calculated EBITDA30 and FCF9, plus computation refs.
+- Clicked Q4 Revenue passport shows source30, currencyUSD, scale1000000,
+  2025-10-01..2025-12-31, full financial source SHA
+  `82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429`,
+  `page:2`, exact quote `Revenue  30  30  30  30  120`, and full current CP1
+  artifact `87af2b93ae1e2a30df57fe0997c1e89f75bee07932501c7074d51155e59f846f`.
+- Six exact Q4 operand passports show50/30 leverage,7.5/30 own EBITDA margin,
+  and2.25/7.5 own FCF margin, all bound to that CP1 result. Source outflow is
+  -2.5 with the located parenthesized capex quote. RCF commitment is known0;
+  early leverage is missing/Not Calculable with its four-quarter reason, while
+  prior-year growth is Not Available/not applicable, never fabricated zero.
+- Actual report calculation link was clicked and opened the same-origin JSON
+  in the same owned tab. Canonical `model/model.html#CP-1` and `#CP-MODEL`
+  function; provenance exposes full CP1/pack/calculation hashes. Canonical Model
+  HTML has no injected delivery banner. Its relative calculation link was also
+  clicked. Twenty-two bounded DOM text reads reconstruct the exact2,108,966bytes
+  with raw SHA89b1bf3b..., equal to both frozen canonical/report calculation files.
+- Initial large AX JSON text adds two layout spaces at1MiB boundaries; an initial
+  single DOM response hit the tool's200000-character string cap. Those failed
+  comparisons remain retained. The successful bounded DOM witness is byte-exact;
+  neither initial mismatch is misrepresented as a raw-body success.
+- Evidence and Limitations show unaudited supplied pages, missing prior-year
+  comparisons and the actual restrictions. Remaining analytical owners and
+  forward projections stay unqualified. This is a bounded synthetic case.
+
+Native positive proof index: C2
+`artifacts/actual-positive-dom-1/browser-proof.json`, SHA
+`95514c82a5b7d287d947f2b740578a36cf55cc8c5010918a643b59df54c391e8`:
+22 checks true and54 indexed artifacts. Owned tab5 closed and inventory confirms
+absence, no child tabs created. Server exited0 at2026-10-27T02:17:44.603743Z;
+all10 served file hashes before/after identical. Compute/browser resources released.
+
+**C2-ACTUAL-GAP-DOM-1** used only immutable gap leaf on owned serverPID45924/
+127.0.0.1:53970 and native IAB tab4. Full native AX and screenshots show actual
+default scope/identity, financial missing/Not supplied/blocked, CP0 CONDITIONAL /
+DO NOT RUN, honest Limitations, CP1 and Model Not run, no calculation/publication
+link or Model directory. Actual authority passport shows full identity source SHA
+`74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4`, `page:1`,
+quote `Northbridge Synthetic Group is the issuer and consolidated group.`, and
+full actual CP0 result f5385793.... Explicit CP0 route survives reload.
+Index `artifacts/actual-gap-dom-1/browser-proof.json`, SHA
+`627904890c7be514f8a91eeb0f5a0ad509c521678010e01dc65f3a175f4f2c08`:
+14 checks true/24 indexed artifacts. Owned tab4/server closed; server exit0 at
+2026-10-27T01:39:22.585498Z and all3 leaf hashes unchanged.
+
+Final proof confidence review investigated wrong-run/component substitution,
+misleading byte equality, native recovery boundaries, qualification/count/precision
+overclaims, input immutability and cleanup. Actual records close those points;
+the full-page AX/chart-series/broader qualification limits remain explicit.
+Evidence: `artifacts/actual-positive-render-1/confidence-review.md` and
+`artifacts/actual-positive-dom-1/confidence-review.md`. No confirmed product issue.
+No-argument rewrite tournament is skipped for this final doc/test-proof-only work;
+no product function changed. Existing component tournament closure below remains valid.
+
+## Confidence review — component consumer and tests
 
 Least confident about (ranked), investigated to the real boundary:
 
@@ -186,7 +320,8 @@ Least confident about (ranked), investigated to the real boundary:
 6. Canonical Model might be changed or relative calculation link broken.
    All canonical3file bytes copied unchanged, root/nested calculation identical,
    report-only scope copy. Both source-only corruption and destination-copy-only
-   corruption refuse. Verdict: component verified; native click/DOM still pending.
+   corruption refuse. Verdict: component verified; the separately admitted actual
+   native click/DOM closure is recorded above.
 7. Failure cleanup could expose partial files/overwrite existing delivery.
    Complete adjacent staging/final byte equality; existing destination preservation
    and all late-failure cases pass. Verdict: fine within adopted exclusive setup
@@ -204,8 +339,9 @@ renderer defect from sensitive/confidence reviews or full runtime cases.
 Verified fine: authority/currentness/state/canonical copy/causal refusal/caller types
 and raw identities with evidence above. By-design: unique trusted destination writer,
 implementation-only qualification, no local arithmetic or analytical permission.
-Still open: actual host-actor stores/raw-QA acceptance and native rendered proof;
-those are separately admitted LEAD work and do not follow from component tests.
+At the component baseline, actual actor/raw-QA/native proof remained open. Those
+bounded actual cases are now closed by the separate evidence above, not inferred
+from component tests. Broader qualification and populated chart series remain open.
 
 Independent read-only Sol/high render_sensitive_review checked initial product
 4260bdd1… and Memory-only delta57e3574…/test-oracle shapes at amended frozen base.

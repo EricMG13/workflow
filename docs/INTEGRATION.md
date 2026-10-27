@@ -1076,3 +1076,16 @@ byte-identical; the new case brings the total to 146. CP4 core
 rechecked unchanged. This admits a future C2 report-view/test component only;
 actual CP4/CP5/native acceptance remains unverified. No tests/jobs were run.
 C1/C3 work remains on its fixed base; paid/provider work remains paused.
+
+### CP4/FP04 binding implementation admission and retained failures
+
+Integrated LEAD's exact three-file status patch
+`bb944fb92831506d21bdd7e4683dc272a2eee7de` (parent
+`8747e4e497383e1a5dd8e5c16129c535123a5961`): `PLAN.md`, `docs/QUEUE.md`,
+and `docs/TEAM.json`. It admits C2's report-view and new legal-render test
+writes at fixed base `25027f69937fbbab9f58eb8572bc9ed014b20647` only. The
+unique-row-ID and nonblank-label clarifications are recorded; financial values
+are unchanged. C1's three causal failures and C3's feature-absence RED remain
+open. The B1 setup/raw-transport addendum and A4 code are not included or
+admitted here. No source, case, test, or runtime job was included; lane starting
+revisions remain unchanged and paid/provider work remains paused.

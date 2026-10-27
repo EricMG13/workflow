@@ -613,3 +613,26 @@ acceptance. Fresh actual publication and C2's downstream SVG/table/passport and
 native proof remain required. No other source was changed. The C1 integration
 cherry-pick is `aadbd6d2d833eabe2389d08f8beda27eea430540` before this receipt
 commit.
+
+### C2 shared CP1 chart renderer integration
+
+Integrated LEAD-admitted C2 commit
+`3e5b537a22ae95638273503326a3ede7739f31fb` by fetch and cherry-pick from
+its exact main parent `3831b1827dbe2e7d2b51d391a734f5ecf077706f`. It changes
+only `src/deploy_vii/report_view.py`, new `tests/test_cp1_chart_render.py`,
+and `docs/handoffs/cp1-chart-rendering.md`. Integrated hashes match the
+admitted pins: renderer
+`571ee44cbac0a39c3dd77871e13f7f9cc414c4e6700e9e887a70a64b74b7c4cc`, test
+`ebc353e5dae6154259ea6aa33838fe8e52750b4523da7a7f778582bb04506b63`, and
+handoff `73bbdaa6a1095a51849dc602c70fed137571401eb96f7915c3b5f931a950804f`.
+
+Updated `docs/reuse/manifest.json` to retain the original imported
+`report_view.py` hash `c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98`
+and record the post-import patch hash, originating C2 commit and handoff. JSON
+parsing and the manifest entry were mechanically checked. The C2 handoff's
+exact focused 27-test result, ten actual historical-shape checks, static
+checks, sensitive review, confidence review and tournament receipt are carried
+from its exact pinned commit; they were not rerun here. This component evidence
+does not establish the fresh CP1 publication or actual native chart proof in
+both outputs; those remain required acceptance evidence. No other imported core
+file was changed. The C2 cherry-pick is `25ddb67` before this receipt commit.

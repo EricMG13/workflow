@@ -1023,6 +1023,14 @@
       "sha256": "d4071e59bde16648ab9175e529cce47a5b5e0f456da3a4692e831d0b346b1e48",
       "reason": "Atomic read/search evidence publication after complete SOURCE rendering; preserve prior successes.",
       "review": "docs/handoffs/source-tools.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "project_commit": "3e5b537a22ae95638273503326a3ede7739f31fb",
+      "sha256": "571ee44cbac0a39c3dd77871e13f7f9cc414c4e6700e9e887a70a64b74b7c4cc",
+      "reason": "Render the leased source-backed CP1 S.1-S.4 series in report and canonical Model destinations through the shared report-view builder.",
+      "review": "docs/handoffs/cp1-chart-rendering.md"
     }
   ]
 }

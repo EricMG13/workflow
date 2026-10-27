@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: Task3CP1 chart/report/Model verified; C1 projection138focused+2genuine-metadata component cases integrated, assembled132compatibilityPASS; C1A4writes admitted atcf5115bea; C3B1 session supplement/pager safe updates admitted; C2authenticated FP02 delivery preparation; fullPLAN incomplete; paid/provider/live paused; C3 early111componentPASS only; B1/A4 native reference errata integrated/admitted atf3b9b37; CP4 source-host freeze reviewed, future isolated C1 lease pending",
+  "state": "active: Task3CP1 chart/report/Model verified; C1 projection138focused+2genuine-metadata component cases integrated, assembled132compatibilityPASS; C1A4writes admitted atcf5115bea; C3B1 session supplement/pager safe updates admitted; C2authenticated FP02 delivery contract reviewed, exact write admission pending; fullPLAN incomplete; paid/provider/live paused; C3 early111componentPASS only; B1/A4 native reference errata integrated/admitted atf3b9b37; CP4 source-host freeze reviewed, future isolated C1 lease pending",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -35,7 +35,7 @@
   "one_heavy_job_limit": 1,
   "active_lanes": {
     "C1": "C1-CP5-INTEGRITY-A4-IMPLEMENTATION-1 with native-reference supplement safe update to f3b9b37: same4files ONLY; fullruntime needs acceptedB1; separate source-host component not yet admitted",
-    "C2": "FP04 exact2filecommit4e84ffc integrated at5dcbad23; source-only authenticated FP02 delivery preparation in work, no new product writes/runtime",
+    "C2": "FP04 accepted/integrated; authenticated FP02 delivery two-NEW-file lease reviewed awaiting exact integration/base admission; fullruntime requires acceptedB1/A4; work proposals/native checklist preserved",
     "C3": "C3 B1 existing3files only; bootstrap/raw/session/native-reference supplements and accepted pager admitted through f3b9b37; early111componentPASS only; fullowner/actual/recovery still required",
     "PR_MANAGER": "integration only"
   }

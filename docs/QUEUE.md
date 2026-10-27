@@ -2586,3 +2586,42 @@ runtime/process/load checks. Existing four C1 and three C3 files only, brief
 coordinated safe updates preserve all WIP hashes; then native reference/pin/fixture
 fixes within existing implementation leases. Each runtime separately admitted.
 Original A4 RED1 remains unlaunched/PIDnull. No old component evidence relabelled.
+
+
+## Authenticated FP02 delivery independently frozen
+
+Lease5b384706eb7f5f4f32193bcb118a6eb617f058256bea6d97ec18aab63f10fd6b;
+oraclee1cc9305dc9eca4ad5c7170d7ba83fe3125d4b673339bc10efab665b129baeb4;
+independent same A4/final-consumer review4694cba593bb6eb453a51c77051a2299f7c9e1afed0b160ad84ae279ed9a51b0
+published docs/reviews/cp1b-delivery-contract.md. Future C2 ONLY new
+earnings_rendering.py/test_earnings_rendering.py. Actual A4 EarningsSliceReceipt/
+verify_earnings_slice_receipt is sole producer auth; no stub/alternate replay/old
+financial+Model wrapper. Exact three files: report.html, byte-exact supplied final
+earnings-slice.json, canonical render-receipt.json with strict13fields/raw-vs-typed
+hashes/currenthead qualification objects unchanged. Public readonly delivered
+verifier rederives exact current HTML/banner and metadata; self-rehashed forged
+HTML refuses. Trusted exact single-publisher destination/parent lease through
+staging/reverification/rename, lexists refusal including emptydir/dangling symlink;
+no concurrent-external-writer/no-replace claim, no new lock infrastructure. Cleanup
+only own unpublished stage; post-rename failure preserves forensic output/no success.
+
+Three exact B1 owner cases/current a37 + A490871/grammaraddenda pins, inherited
+A3 numeric tables and actual CP1 S.1–S.3 charts/full source/passports/limits retained.
+First selected CP1B+CP5 closure CP0/CP1/CP1B/CP5/publication_files={}; no Model
+files/download/fake publication. Genuine source refusal requires actual CP5 begin
+refusal, not invalid/pending/partialCP5. Root read complete contract and independent
+review/pipeline/strictwire20controls and verified exact source pins,3case identities,
+37numericcells each copied from A3/13wirefields/no added arithmetic. Pre-code only;
+future exact base/resource write admission and all runtime/actual/native proof
+remain required. Writes can be disjoint while B1/A4 finish, full runtime consumes
+only accepted actual implementations; no mutable WIP imports. Paid/provider paused.
+
+A4 corrected-fixture RED2 central PID7420,11:25:15.609455–11:25:18.636469UTC,
+exit1,138passed23failed2.81s; all154distinct source/test/case/contract/runtime pins
+unchanged, log700ac7d8bfdb70513ee37d12329885acdec688d582fc94cce36ba250514f2921.
+All23 new failures are fixture construction: strict Python Module(**datum) rejects
+list facts/claims. This is SETUP failure, not feature/adapter-bug proof. Original
+RED1 never launched. C1 may faithfully parse literal fixture via strict JSON-mode
+model validation in its owned test only, then request exact RED3; product source
+remains ac7 until meaningful feature-absence baseline. No Contract/oracle weakening.
+Sourcefreeze/heavyslot released after real EOF/exit. C3 full owner checks continue.

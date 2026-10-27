@@ -391,3 +391,16 @@ and authentic blocked repair degradation must preserve existing permissions.
 No source extraction for CP4 and no verifier writes/locks. Eleven success and26
 refusal cases plus both adopted legal sources are frozen. Exact isolated write
 admission follows integration; this alone closes no actual legal owner or CP5.
+
+
+Authenticated FP02 delivery is independently frozen in docs/CP1B-DELIVERY-LEASE.md
+and cases/earnings/delivery-expected.json, reviewed in
+docs/reviews/cp1b-delivery-contract.md. Future C2 owns only new earnings_rendering.py
+and test_earnings_rendering.py. Actual A4 final Receipt/public verifier is sole
+producer authority; exact report.html/final earnings-slice.json/render-receipt.json,
+read-only HTML/metadata rederivation, repeated currentness and trusted sole-publisher
+output lease. Reuse direct actual CP1 S.1–S.3 charts and all CP1B/CP5/full analysis/
+source/gap context. Model is not selected and no publication/download is invented.
+Disjoint leaf implementation may begin after exact freeze integration/admission;
+full runtime requires accepted B1/A4 public implementations. Three actual fresh
+cases and native proof remain unverified, with broader PLAN still active.

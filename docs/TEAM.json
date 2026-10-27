@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: Task4-A C3 CP1B expectation/lease preparation; Task3-C closed; paid/provider/live paused",
+  "state": "active: Task4-A1 reviewed CP1B core lease pending exact implementation admission; C1 access/C2 render preparation; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,9 +34,9 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "idle: Task3-C producer closed; frozen evidence",
-    "C2": "idle: Task3-C delivery/native closed; frozen evidence",
-    "C3": "preparation: Task4-A CP1B; implementation requires reviewed committed lease/admission",
+    "C1": "preparation only: docs/handoffs/cp1b-access-registration.md",
+    "C2": "preparation only: docs/handoffs/cp1b-fp02-preparation.md",
+    "C3": "A1 frozen/reviewed: only earnings.py, test_earnings.py, cp1b-earnings-core.md; awaiting integrated-base/resource admission",
     "PR_MANAGER": "integration only"
   }
 }

@@ -1,0 +1,321 @@
+{
+  "schema_version": "cp1b-core-oracle/1",
+  "scope": "Component-only A1; bounded flat sequential case, not actual CP1B owner/checkpoint acceptance",
+  "source_manifest": "../financial/manifest.json",
+  "source_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "financial_source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+  "identity_source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+  "source_authority": "Literal supplied pages; C3 independent Sol/high preparation review. Current Module/JSON inspected only for coordinate/API shape, not numeric oracle.",
+  "positive": {
+    "case_id": "E-QOQ-FLAT",
+    "prior_period_id": "q3-2025",
+    "current_period_id": "q4-2025",
+    "days_each": 92,
+    "points": [
+      {
+        "measure_id": "revenue",
+        "prior_value": "30",
+        "current_value": "30",
+        "delta": "0",
+        "growth": "0",
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "known",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "ebitda",
+        "prior_value": "7.5",
+        "current_value": "7.5",
+        "delta": "0",
+        "growth": "0",
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "known",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "adjusted_ebitda",
+        "prior_value": "7.5",
+        "current_value": "7.5",
+        "delta": "0",
+        "growth": "0",
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "known",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "ebitda_margin",
+        "prior_value": "0.25",
+        "current_value": "0.25",
+        "delta": "0",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "PERCENT",
+        "currency": null,
+        "scale": "1",
+        "delta_unit": "PERCENTAGE_POINTS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "cfo_reported",
+        "prior_value": "4.75",
+        "current_value": "4.75",
+        "delta": "0",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "capex",
+        "prior_value": "-2.5",
+        "current_value": "-2.5",
+        "delta": "0",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "fcf",
+        "prior_value": "2.25",
+        "current_value": "2.25",
+        "delta": "0",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "cash_closing",
+        "prior_value": "18.75",
+        "current_value": "20",
+        "delta": "1.25",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "total_debt",
+        "prior_value": "48.75",
+        "current_value": "50",
+        "delta": "1.25",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "net_debt",
+        "prior_value": "30",
+        "current_value": "30",
+        "delta": "0",
+        "growth": null,
+        "prior_status": "known",
+        "current_status": "known",
+        "delta_status": "known",
+        "growth_status": "not_applicable",
+        "unit": "MILLIONS",
+        "currency": "USD",
+        "scale": "1000000",
+        "delta_unit": "MILLIONS",
+        "reason_contains": null
+      },
+      {
+        "measure_id": "total_leverage_reported",
+        "prior_value": null,
+        "current_value": "1.6666666666666666666666666666666666667",
+        "delta": null,
+        "growth": null,
+        "prior_status": "missing",
+        "current_status": "known",
+        "delta_status": "missing",
+        "growth_status": "not_applicable",
+        "unit": "MULTIPLE",
+        "currency": null,
+        "scale": "1",
+        "delta_unit": "MULTIPLE",
+        "reason_contains": "Four complete contiguous quarters"
+      },
+      {
+        "measure_id": "net_leverage_reported",
+        "prior_value": null,
+        "current_value": "1",
+        "delta": null,
+        "growth": null,
+        "prior_status": "missing",
+        "current_status": "known",
+        "delta_status": "missing",
+        "growth_status": "not_applicable",
+        "unit": "MULTIPLE",
+        "currency": null,
+        "scale": "1",
+        "delta_unit": "MULTIPLE",
+        "reason_contains": "Four complete contiguous quarters"
+      }
+    ],
+    "source_locators": {
+      "flow": "financial page:2 lines4-5,15-16; page:3 lines4,9,12-13",
+      "balance": "financial page:4 lines4-5,13",
+      "definitions": "financial page:1 line10; page:5 line15"
+    }
+  },
+  "gap": {
+    "case_id": "E-NO-YOY",
+    "prior_period_id": "fy-2024",
+    "current_period_id": "fy-2025",
+    "reason": "COMPARATIVE_NOT_SUPPLIED",
+    "all_prior_values": null,
+    "all_delta_values": null,
+    "all_applicable_growth_values": null,
+    "prior_and_delta_status": "missing",
+    "current_revenue": "120",
+    "current_ebitda": "30",
+    "source_locator": "financial page:1 line6",
+    "opening_2024_not_income_comparative": true
+  },
+  "refusals": [
+    {
+      "case_id": "E-INCOMPATIBLE",
+      "prior_period_id": "fy-2025",
+      "current_period_id": "q4-2025",
+      "error": "incompatible_periods"
+    },
+    {
+      "case_id": "E-SAME",
+      "prior_period_id": "q4-2025",
+      "current_period_id": "q4-2025",
+      "error": "incompatible_periods"
+    },
+    {
+      "case_id": "E-REVERSE",
+      "prior_period_id": "q4-2025",
+      "current_period_id": "q3-2025",
+      "error": "incompatible_periods"
+    },
+    {
+      "case_id": "E-WRONG-VIEW",
+      "mutation": "non-CP1 or non accepted/restricted view or absent artifact hash",
+      "error": "invalid_source_view"
+    },
+    {
+      "case_id": "E-DIMENSIONS",
+      "mutation": "selected metric unit/currency/scale/basis mismatch",
+      "error": "incompatible_dimensions"
+    },
+    {
+      "case_id": "E-DUPLICATE",
+      "mutation": "duplicate selected metric/period/coordinate identity",
+      "error": "ambiguous_coordinate"
+    },
+    {
+      "case_id": "E-INCOMPLETE",
+      "mutation": "present period but absent selected metric/basis coordinate",
+      "error": "incomplete_register"
+    },
+    {
+      "case_id": "E-NONFINITE",
+      "mutation": "selected known numeric NaN/Infinity or malformed nonknown value",
+      "error": "invalid_fact"
+    }
+  ],
+  "component_guards": [
+    {
+      "case_id": "G-ZERO-PRIOR",
+      "scope": "Handwritten artificial component input, not source-derived issuer case",
+      "measure": "revenue",
+      "prior": "0",
+      "current": "30",
+      "delta": "30",
+      "delta_status": "known",
+      "growth": null,
+      "growth_status": "missing",
+      "reason": "ZERO_DENOMINATOR"
+    },
+    {
+      "case_id": "G-PERCENT-POINTS",
+      "scope": "Handwritten artificial unit guard, not real nonzero-earnings qualification",
+      "measure": "ebitda_margin",
+      "prior": "0.20",
+      "current": "0.25",
+      "delta": "5",
+      "delta_unit": "PERCENTAGE_POINTS",
+      "growth": null,
+      "growth_status": "not_applicable"
+    },
+    {
+      "case_id": "G-CALLER-CONTEXT",
+      "scope": "Handwritten arithmetic-context guard, not source/issuer qualification",
+      "measure": "revenue",
+      "prior": "6",
+      "current": "7",
+      "delta": "1",
+      "growth": "0.16666666666666666666666666666666666667",
+      "growth_status": "known",
+      "caller_precision": 9,
+      "caller_rounding": "ROUND_DOWN",
+      "caller_Inexact_trap": true,
+      "required_local_precision": 38,
+      "required_local_rounding": "ROUND_HALF_EVEN",
+      "caller_context_restored": true
+    }
+  ],
+  "limits": [
+    "No actual owner/permission/journal/CP5/render acceptance in A1",
+    "No causal driver/guidance inference from flat values",
+    "No year-on-year or nonzero actual earnings bridge qualification",
+    "Keep source/perimeter/unaudited/provider/production limitations"
+  ],
+  "comparison_rule": "Compare Decimal values numerically, preserving original fact identities/values; representation quantum is not a financial mismatch."
+}

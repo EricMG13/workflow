@@ -203,15 +203,18 @@ remain mandatory. Historical Task3 records describe the policy at their run time
 C3 preparation clone: /Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-3.
 Starting revision:0a7bee5387f5fbe3eb18f20001944fbacaeaa407. Branch:codex/earnings-modules.
 CP1B is metadata-only in the imported closure; existing CP1 or chart proof does not
-qualify a new earnings owner. C3 first supplies source-grounded success/refusal/gap
-expectations, minimum dependency/API/files, actual consumer/FP02 render targets and
-a pinned Claude reuse comparison. LEAD freezes the exact contract and case after
-independent Sol/high review, then admits the disjoint implementation lane promptly.
+qualify a new earnings owner. C3 supplied independently reviewed source-grounded expectations and a pinned
+reuse comparison in docs/handoffs/earnings-preparation.md. First implementation
+slice A1 is the pure paired-period core: docs/CP1B-CORE-LEASE.md and
+cases/earnings/expected.json. Actual owner/access, complete CP5 consumption and
+FP02 rendering remain separately leased dependencies; core tests do not close CP1B.
+C1 prepares registration/access; C2 prepares binding/render interfaces. LEAD freezes
+the exact cases/API after independent Sol/high review, then admits C3 promptly.
 C1/C2 Task3-C evidence is closed and immutable. Their next implementation work
 requires its own lease; neither has an active product-writing lease at this transition.
 
 - [x] Verify the human's added-coordinator and uncapped implementation authorization.
 - [x] Register C3 ownership and preserve all resource/model/evidence/pause rules.
-- [ ] Freeze reviewed CP1B success/refusal/gap cases, exact dependency/API/files/base.
+- [x] Freeze reviewed A1 core cases/API/files/base; retain later shared dependencies separately.
 - [ ] Commit/integrate the lease and admit C3 implementation after a fresh resource check.
 - [ ] Actual owner output, consumer and rendered proof; component checks alone do not close CP1B.

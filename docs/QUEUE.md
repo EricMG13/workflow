@@ -1977,3 +1977,50 @@ No product-writing or heavy/test/engine admission yet. C1/C2 are idle with compl
 Task3-C work, PM integrates only exact admitted commits. CP1B implementation will
 start promptly once its reviewed exact lease/cases are committed and resource
 admission is recorded; it need not wait for unrelated owners.
+
+
+## Task4-A1 core lease freeze — pre-admission
+
+C3 prep07cf6dee33006d629cee3aab2702cbc590eb5030 integrated by PM at clean main
+d04c19cb237c4125dcb3765cb0745479913a4430. C3 independent Sol/high review supports
+flat Q3→Q4 equal92-day quarters; no source mandate requires a nonzero case for
+this first bounded core. LEAD explicitly adopts flat-only scope, with no nonzero
+actual earnings or full module/checkpoint claim. Prior FY growth and Q3 leverage
+change remain missing; FY→Q4/same/reverse comparisons refuse in the bounded API.
+
+C3 A1 exclusive proposed implementation files: src/deploy_workflow/earnings.py,
+tests/test_earnings.py, docs/handoffs/cp1b-earnings-core.md. Exact immutable API,
+point/period/basis/dimension/status/Decimal/refusal and check argv are frozen in
+docs/CP1B-CORE-LEASE.md and cases/earnings/expected.json, undergoing independent
+Sol/high boundary review BEFORE candidate code. Existing C3 numeric/source review
+is reused; the added zero-denominator/percentage-point guards are artificial
+component expectations, not new source or broader issuer qualification.
+
+C1 currently owns only NEW docs/handoffs/cp1b-access-registration.md preparation:
+future CP1B registration, narrow CP1B->CP1 grants and complete actual CP5 selected
+scope with current producer-qualified references/no quote leakage. C2 currently
+owns only NEW docs/handoffs/cp1b-fp02-preparation.md: future CP1B-owned T1B.1/2/3
+bindings and authentic selected-run FP02 render/passport proof. No shared source
+file is currently leased to either. C3 actual owner bridge/receipts are a later
+separate lease. Actual CP5 settlement and render links remain mandatory before
+CP1B completion; lookup/mock never substitutes. All work remains disjoint.
+
+No A1 source/test execution admitted yet. After contract review/commit/PM integration,
+LEAD records exact checkout base plus fresh process/load scan and immediately
+dispatches C3 writes. Heavy focused tests require their own fresh per-job admission.
+No numerical implementation cap; one heavy job and paid/provider/live pause remain.
+
+
+A1 independent Sol/high boundary review PASS, exact review
+526ce2f5e6d0b6104d1c116e2782236b8c2f3c246955a8a8802cf9a31391b3b0.
+Frozen leaseb32b91f8fdf562d101e3c37cd14336a640f1baeac6d4ced93111fc6bc21d767d;
+oracle041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599.
+Only material clarification: fresh local Decimal Context38/ROUND_HALF_EVEN, no
+caller trap/rounding inheritance or display pre-rounding, restore caller context;
+artificial6→7 growth guard independently verified. C3's source/value review reused.
+No candidate code/tests/engine/provider ran. Review copied docs/reviews/cp1b-core-contract.md.
+LEAD confidence review closed boundaries, source authority, twelve-row oracle,
+exact disjoint files and component-vs-actual acceptance. PM may integrate only the
+frozen lease/case/status patch;132 expected tracked source/test/case files =131
+unchanged existing entries + one new independent cases/earnings/expected.json.
+C3 remains no-write until exact integrated base and fresh resource admission below.

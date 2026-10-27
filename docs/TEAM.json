@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: C3 Task4-A1 CP1B pure core implementation admitted; C1 access/C2 render preparation; Task3-C closed; paid/provider/live paused",
+  "state": "active: C3 A1 core implementation; reviewed A2 access/A3 binding leases pending exact C1/C2 admission; whole PLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,8 +34,8 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "preparation only: docs/handoffs/cp1b-access-registration.md",
-    "C2": "preparation only: docs/handoffs/cp1b-fp02-preparation.md",
+    "C1": "A2 reviewed/frozen registration/currentCP1 access, awaiting integrated-base write admission",
+    "C2": "A3 reviewed/frozen FP02 binding/specs, awaiting integrated-base write admission",
     "C3": "implementation admitted C3-CP1B-CORE-A1-IMPLEMENTATION-1 atf1b3c5c: earnings.py/test_earnings.py/new core handoff only; heavy tests separately admitted",
     "PR_MANAGER": "integration only"
   }

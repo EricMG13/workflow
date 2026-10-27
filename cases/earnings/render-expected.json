@@ -1,0 +1,1975 @@
+{
+  "schema_version": "cp1b-render-oracle/1",
+  "scope": "A3 binding/report specifications and synthetic seeded component previews only; no actual owner/receipt/CP5/native/selected-run acceptance",
+  "independence": "Frozen from adopted A1 and prior independently reviewed source oracles before C2 implementation; no candidate output or renderer used",
+  "core_oracle_sha256": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+  "core_contract_sha256": "b32b91f8fdf562d101e3c37cd14336a640f1baeac6d4ced93111fc6bc21d767d",
+  "source_manifest": "../financial/manifest.json",
+  "source_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "financial_source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+  "identity_source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+  "fixture": {
+    "case_kind": "synthetic",
+    "pathway": "earnings_update",
+    "mode": "candidate",
+    "cp1b_status": "candidate",
+    "actual_settlement": false,
+    "actual_cp5": false,
+    "hash_policy": "Explicit fixture IDs/hashes only; never label seeded modules as settled owner evidence",
+    "requested_modules": "Explicit per seeded fixture; no preset means owner execution; no fake CP5 or Model publications"
+  },
+  "layout": {
+    "module_id": "CP-1B",
+    "table_order": [
+      "T1B.1",
+      "T1B.2",
+      "T1B.3"
+    ],
+    "fact_id_template": "cp1b:{table_id}:{row_id}:{field}",
+    "total_cells": 44,
+    "interface_id": null,
+    "all_row_kind": "row",
+    "all_decimals": null,
+    "tables": [
+      {
+        "table_id": "T1B.1",
+        "title": "Paired earnings results",
+        "row_header": "Measure",
+        "fields": [
+          "prior",
+          "current",
+          "delta",
+          "growth"
+        ],
+        "rows": [
+          {
+            "row_id": "revenue",
+            "label": "Revenue (US$ m)"
+          },
+          {
+            "row_id": "ebitda",
+            "label": "Reported EBITDA (US$ m)"
+          },
+          {
+            "row_id": "adjusted_ebitda",
+            "label": "Adjusted EBITDA (US$ m)"
+          },
+          {
+            "row_id": "ebitda_margin",
+            "label": "EBITDA margin (%; change pp)"
+          },
+          {
+            "row_id": "cfo_reported",
+            "label": "Reported CFO (US$ m)"
+          },
+          {
+            "row_id": "capex",
+            "label": "Signed capex (US$ m)"
+          },
+          {
+            "row_id": "fcf",
+            "label": "Levered FCF (US$ m)"
+          }
+        ]
+      },
+      {
+        "table_id": "T1B.2",
+        "title": "Balance changes",
+        "row_header": "Measure",
+        "fields": [
+          "prior",
+          "current",
+          "delta"
+        ],
+        "rows": [
+          {
+            "row_id": "cash_closing",
+            "label": "Closing cash (US$ m)"
+          },
+          {
+            "row_id": "total_debt",
+            "label": "Total debt (US$ m)"
+          },
+          {
+            "row_id": "net_debt",
+            "label": "Net debt (US$ m)"
+          }
+        ]
+      },
+      {
+        "table_id": "T1B.3",
+        "title": "Evidence and analytical gaps",
+        "row_header": "Assessment",
+        "fields": [
+          "assessment"
+        ],
+        "rows": [
+          {
+            "row_id": "variance.summary",
+            "label": "Numerical comparison"
+          },
+          {
+            "row_id": "drivers",
+            "label": "Driver evidence"
+          },
+          {
+            "row_id": "guidance",
+            "label": "Guidance evidence"
+          },
+          {
+            "row_id": "comparative.prior-year",
+            "label": "Prior-year comparison"
+          },
+          {
+            "row_id": "comparative.trailing-leverage",
+            "label": "Leverage comparison"
+          },
+          {
+            "row_id": "evidence.inputs",
+            "label": "Selected input evidence"
+          },
+          {
+            "row_id": "scope.limitations",
+            "label": "Scope limitations"
+          }
+        ]
+      }
+    ]
+  },
+  "specifications": [
+    {
+      "block_id": "headline-results",
+      "title": "Headline results",
+      "kind": "dense",
+      "owner": "CP-1B",
+      "producers": [
+        "CP-1B"
+      ],
+      "full_analysis_route": "CP-1B",
+      "route_label": "Full analysis",
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false
+    },
+    {
+      "block_id": "variance-drivers",
+      "title": "Variance drivers",
+      "kind": "prose",
+      "owner": "CP-1B",
+      "producers": [
+        "CP-1B"
+      ],
+      "full_analysis_route": "CP-1B",
+      "route_label": "Full analysis",
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false
+    },
+    {
+      "block_id": "kpi-changes",
+      "title": "KPI changes",
+      "kind": "dense",
+      "owner": "CP-1B",
+      "producers": [
+        "CP-1B"
+      ],
+      "full_analysis_route": "CP-1B",
+      "route_label": "Full analysis",
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false
+    },
+    {
+      "block_id": "guidance-signals",
+      "title": "Guidance signals",
+      "kind": "prose",
+      "owner": "CP-1B",
+      "producers": [
+        "CP-1B"
+      ],
+      "full_analysis_route": "CP-1B",
+      "route_label": "Full analysis",
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false
+    }
+  ],
+  "bindings": [
+    {
+      "table_id": "T1B.1",
+      "row_id": null,
+      "block_id": "headline-results",
+      "cell_slot": "cp1b-paired-earnings",
+      "label": "Paired earnings results",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.2",
+      "row_id": null,
+      "block_id": "kpi-changes",
+      "cell_slot": "cp1b-balance-changes",
+      "label": "Balance changes",
+      "unit_class": "amount",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "variance.summary",
+      "block_id": "variance-drivers",
+      "cell_slot": "cp1b-variance-summary",
+      "label": "Numerical comparison",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "drivers",
+      "block_id": "variance-drivers",
+      "cell_slot": "cp1b-drivers",
+      "label": "Driver evidence",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "guidance",
+      "block_id": "guidance-signals",
+      "cell_slot": "cp1b-guidance",
+      "label": "Guidance evidence",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "comparative.prior-year",
+      "block_id": "limitations",
+      "cell_slot": "cp1b-prior-year-gap",
+      "label": "Prior-year comparison",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "comparative.trailing-leverage",
+      "block_id": "limitations",
+      "cell_slot": "cp1b-trailing-leverage-gap",
+      "label": "Leverage comparison",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "evidence.inputs",
+      "block_id": "evidence",
+      "cell_slot": "cp1b-input-evidence",
+      "label": "Selected input evidence",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    },
+    {
+      "table_id": "T1B.3",
+      "row_id": "scope.limitations",
+      "block_id": "limitations",
+      "cell_slot": "cp1b-scope-limitations",
+      "label": "Scope limitations",
+      "unit_class": "text",
+      "module_id": "CP-1B",
+      "fact_id": null
+    }
+  ],
+  "positive": {
+    "case_id": "E-QOQ-FLAT",
+    "prior_period_id": "q3-2025",
+    "current_period_id": "q4-2025",
+    "column_labels": {
+      "prior": "Prior q3-2025 (1 Jul–30 Sep 2025)",
+      "current": "Current q4-2025 (1 Oct–31 Dec 2025)",
+      "delta": "Change (native unit; margin pp)",
+      "growth": "Growth (%)",
+      "assessment": "Assessment"
+    },
+    "table_limitation_required_semantics": [
+      "Whole-million monetary display; exact canonical values remain in facts/passports",
+      "Quarter earnings use own-period values; leverage uses its selected trailing basis"
+    ],
+    "tables": [
+      {
+        "table_id": "T1B.1",
+        "rows": [
+          {
+            "row_id": "revenue",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:revenue:prior",
+                "field": "prior",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:revenue:current",
+                "field": "current",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:revenue:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:revenue:growth",
+                "field": "growth",
+                "value": "0",
+                "status": "known",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0.0%",
+                "display_pattern": null,
+                "reason_contains": null
+              }
+            ]
+          },
+          {
+            "row_id": "ebitda",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:prior",
+                "field": "prior",
+                "value": "7.5",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "8",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:current",
+                "field": "current",
+                "value": "7.5",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "8",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:growth",
+                "field": "growth",
+                "value": "0",
+                "status": "known",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0.0%",
+                "display_pattern": null,
+                "reason_contains": null
+              }
+            ]
+          },
+          {
+            "row_id": "adjusted_ebitda",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:prior",
+                "field": "prior",
+                "value": "7.5",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "8",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:current",
+                "field": "current",
+                "value": "7.5",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "8",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:growth",
+                "field": "growth",
+                "value": "0",
+                "status": "known",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0.0%",
+                "display_pattern": null,
+                "reason_contains": null
+              }
+            ]
+          },
+          {
+            "row_id": "ebitda_margin",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:prior",
+                "field": "prior",
+                "value": "0.25",
+                "status": "known",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "25.0%",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:current",
+                "field": "current",
+                "value": "0.25",
+                "status": "known",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "25.0%",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "pp",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0 pp",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "row_id": "cfo_reported",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:prior",
+                "field": "prior",
+                "value": "4.75",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "5",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:current",
+                "field": "current",
+                "value": "4.75",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "5",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "row_id": "capex",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:capex:prior",
+                "field": "prior",
+                "value": "-2.5",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "(3)",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:capex:current",
+                "field": "current",
+                "value": "-2.5",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "(3)",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:capex:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:capex:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "row_id": "fcf",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:fcf:prior",
+                "field": "prior",
+                "value": "2.25",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "2",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:fcf:current",
+                "field": "current",
+                "value": "2.25",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "2",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:fcf:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:fcf:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "table_id": "T1B.2",
+        "rows": [
+          {
+            "row_id": "cash_closing",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.2:cash_closing:prior",
+                "field": "prior",
+                "value": "18.75",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "19",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:cash_closing:current",
+                "field": "current",
+                "value": "20",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "20",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:cash_closing:delta",
+                "field": "delta",
+                "value": "1.25",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "1",
+                "display_pattern": null,
+                "reason_contains": null
+              }
+            ]
+          },
+          {
+            "row_id": "total_debt",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.2:total_debt:prior",
+                "field": "prior",
+                "value": "48.75",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "49",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:total_debt:current",
+                "field": "current",
+                "value": "50",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "50",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:total_debt:delta",
+                "field": "delta",
+                "value": "1.25",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "1",
+                "display_pattern": null,
+                "reason_contains": null
+              }
+            ]
+          },
+          {
+            "row_id": "net_debt",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.2:net_debt:prior",
+                "field": "prior",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:net_debt:current",
+                "field": "current",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q4-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:net_debt:delta",
+                "field": "delta",
+                "value": "0",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "q3-2025->q4-2025",
+                "display": "0",
+                "display_pattern": null,
+                "reason_contains": null
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assessments": [
+      {
+        "row_id": "variance.summary",
+        "fact_id": "cp1b:T1B.3:variance.summary:assessment",
+        "field": "assessment",
+        "status": "known",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "nonempty canonical evidence-bound text; semantic requirements below, no fixed prose wording",
+        "limitation_required": false,
+        "reason_contains": null,
+        "required_semantics": [
+          "flat",
+          "q3-2025",
+          "q4-2025",
+          "no causal-driver inference"
+        ]
+      },
+      {
+        "row_id": "drivers",
+        "fact_id": "cp1b:T1B.3:drivers:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "DRIVER_EVIDENCE_NOT_SUPPLIED",
+        "required_semantics": [
+          "No price/volume/FX or other causal driver evidence supplied"
+        ]
+      },
+      {
+        "row_id": "guidance",
+        "fact_id": "cp1b:T1B.3:guidance:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "GUIDANCE_NOT_SUPPLIED",
+        "required_semantics": [
+          "No management guidance evidence supplied"
+        ]
+      },
+      {
+        "row_id": "comparative.prior-year",
+        "fact_id": "cp1b:T1B.3:comparative.prior-year:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+        "required_semantics": [
+          "No FY2024 annual income statement or prior-year quarterly series supplied"
+        ]
+      },
+      {
+        "row_id": "comparative.trailing-leverage",
+        "fact_id": "cp1b:T1B.3:comparative.trailing-leverage:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "Four complete contiguous quarters",
+        "required_semantics": [
+          "current total leverage remains known",
+          "current net leverage remains known",
+          "no invented leverage delta"
+        ]
+      },
+      {
+        "row_id": "evidence.inputs",
+        "fact_id": "cp1b:T1B.3:evidence.inputs:assessment",
+        "field": "assessment",
+        "status": "known",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "nonempty canonical evidence-bound text; semantic requirements below, no fixed prose wording",
+        "limitation_required": false,
+        "reason_contains": null,
+        "required_semantics": [
+          "component fixture",
+          "selected CP1 artifact hash",
+          "prior/current requested IDs",
+          "all twelve core points",
+          "actual available primary and companion fact IDs",
+          "actual selected basis IDs",
+          "actual source hashes/locators/quotes",
+          "retain selected nonknown prior leverage fact IDs and limitations; missing value does not erase an existing fact ID"
+        ]
+      },
+      {
+        "row_id": "scope.limitations",
+        "fact_id": "cp1b:T1B.3:scope.limitations:assessment",
+        "field": "assessment",
+        "status": "known",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "nonempty canonical evidence-bound text; semantic requirements below, no fixed prose wording",
+        "limitation_required": false,
+        "reason_contains": null,
+        "required_semantics": [
+          "component preview",
+          "unaudited",
+          "consolidated IFRS",
+          "USD millions",
+          "no actual owner or CP5 acceptance",
+          "no broader nonzero earnings qualification"
+        ]
+      }
+    ]
+  },
+  "gap": {
+    "case_id": "E-NO-YOY",
+    "prior_period_id": "fy-2024",
+    "current_period_id": "fy-2025",
+    "column_labels": {
+      "prior": "Requested fy-2024 (not supplied)",
+      "current": "Current fy-2025 (1 Jan–31 Dec 2025)",
+      "delta": "Change (native unit; margin pp)",
+      "growth": "Growth (%)",
+      "assessment": "Assessment"
+    },
+    "prior_descriptor_only": true,
+    "invented_prior_dates_allowed": false,
+    "selected_prior_basis_id": null,
+    "table_limitation_required_semantics": [
+      "Missing selected FY2024 comparison basis; current FY2025 values remain known",
+      "Opening-2024 balance data exists; this is not a claim that balance data is unavailable",
+      "Opening-2024 is not silently aliased to requested FY2024 income basis",
+      "Whole-million monetary display; exact canonical values remain in facts/passports"
+    ],
+    "tables": [
+      {
+        "table_id": "T1B.1",
+        "rows": [
+          {
+            "row_id": "revenue",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:revenue:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:revenue:current",
+                "field": "current",
+                "value": "120",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "120",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:revenue:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:revenue:growth",
+                "field": "growth",
+                "value": null,
+                "status": "missing",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              }
+            ]
+          },
+          {
+            "row_id": "ebitda",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:current",
+                "field": "current",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda:growth",
+                "field": "growth",
+                "value": null,
+                "status": "missing",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              }
+            ]
+          },
+          {
+            "row_id": "adjusted_ebitda",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:current",
+                "field": "current",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:adjusted_ebitda:growth",
+                "field": "growth",
+                "value": null,
+                "status": "missing",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              }
+            ]
+          },
+          {
+            "row_id": "ebitda_margin",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:current",
+                "field": "current",
+                "value": "0.25",
+                "status": "known",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "25.0%",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "pp",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:ebitda_margin:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "row_id": "cfo_reported",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:current",
+                "field": "current",
+                "value": "19",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "19",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:cfo_reported:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "row_id": "capex",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:capex:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:capex:current",
+                "field": "current",
+                "value": "-10",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "(10)",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:capex:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:capex:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "row_id": "fcf",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.1:fcf:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:fcf:current",
+                "field": "current",
+                "value": "9",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "9",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.1:fcf:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              },
+              {
+                "fact_id": "cp1b:T1B.1:fcf:growth",
+                "field": "growth",
+                "value": null,
+                "status": "not_applicable",
+                "unit": "PERCENT",
+                "currency": null,
+                "scale": "1",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]* n\\.m\\.$",
+                "reason_contains": "GROWTH_NOT_APPLICABLE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "table_id": "T1B.2",
+        "rows": [
+          {
+            "row_id": "cash_closing",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.2:cash_closing:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.2:cash_closing:current",
+                "field": "current",
+                "value": "20",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "20",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:cash_closing:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              }
+            ]
+          },
+          {
+            "row_id": "total_debt",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.2:total_debt:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.2:total_debt:current",
+                "field": "current",
+                "value": "50",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "50",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:total_debt:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              }
+            ]
+          },
+          {
+            "row_id": "net_debt",
+            "cells": [
+              {
+                "fact_id": "cp1b:T1B.2:net_debt:prior",
+                "field": "prior",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+                "operand_reference": null,
+                "source_period_exists": false,
+                "period_semantics": "Requested descriptor only; no FY2024 dates, basis or source fact invented"
+              },
+              {
+                "fact_id": "cp1b:T1B.2:net_debt:current",
+                "field": "current",
+                "value": "30",
+                "status": "known",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2025",
+                "display": "30",
+                "display_pattern": null,
+                "reason_contains": null
+              },
+              {
+                "fact_id": "cp1b:T1B.2:net_debt:delta",
+                "field": "delta",
+                "value": null,
+                "status": "missing",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "scale": "1000000",
+                "decimals": null,
+                "period": "fy-2024->fy-2025",
+                "display": null,
+                "display_pattern": "^∅ G[1-9][0-9]*$",
+                "reason_contains": "COMPARATIVE_NOT_SUPPLIED"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assessments": [
+      {
+        "row_id": "variance.summary",
+        "fact_id": "cp1b:T1B.3:variance.summary:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+        "required_semantics": [
+          "Requested fy-2024->fy-2025 comparison unavailable",
+          "Current FY2025 values retained",
+          "No flat-quarter or earnings-deterioration inference"
+        ]
+      },
+      {
+        "row_id": "drivers",
+        "fact_id": "cp1b:T1B.3:drivers:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "DRIVER_EVIDENCE_NOT_SUPPLIED",
+        "required_semantics": [
+          "No price/volume/FX or other causal driver evidence supplied"
+        ]
+      },
+      {
+        "row_id": "guidance",
+        "fact_id": "cp1b:T1B.3:guidance:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "GUIDANCE_NOT_SUPPLIED",
+        "required_semantics": [
+          "No management guidance evidence supplied"
+        ]
+      },
+      {
+        "row_id": "comparative.prior-year",
+        "fact_id": "cp1b:T1B.3:comparative.prior-year:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+        "required_semantics": [
+          "No FY2024 annual income statement or prior-year quarterly series supplied"
+        ]
+      },
+      {
+        "row_id": "comparative.trailing-leverage",
+        "fact_id": "cp1b:T1B.3:comparative.trailing-leverage:assessment",
+        "field": "assessment",
+        "status": "missing",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "null",
+        "limitation_required": true,
+        "reason_contains": "COMPARATIVE_NOT_SUPPLIED",
+        "required_semantics": [
+          "current total leverage remains known",
+          "current net leverage remains known",
+          "no invented leverage delta"
+        ]
+      },
+      {
+        "row_id": "evidence.inputs",
+        "fact_id": "cp1b:T1B.3:evidence.inputs:assessment",
+        "field": "assessment",
+        "status": "known",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "nonempty canonical evidence-bound text; semantic requirements below, no fixed prose wording",
+        "limitation_required": false,
+        "reason_contains": null,
+        "required_semantics": [
+          "component fixture",
+          "selected CP1 artifact hash",
+          "prior/current requested IDs",
+          "all twelve core points",
+          "actual available primary and companion fact IDs",
+          "actual selected basis IDs",
+          "actual source hashes/locators/quotes",
+          "absent requested prior operand reference null; no fabricated prior source dates/basis"
+        ]
+      },
+      {
+        "row_id": "scope.limitations",
+        "fact_id": "cp1b:T1B.3:scope.limitations:assessment",
+        "field": "assessment",
+        "status": "known",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "text_policy": "nonempty canonical evidence-bound text; semantic requirements below, no fixed prose wording",
+        "limitation_required": false,
+        "reason_contains": null,
+        "required_semantics": [
+          "component preview",
+          "unaudited",
+          "consolidated IFRS",
+          "USD millions",
+          "no actual owner or CP5 acceptance",
+          "no broader nonzero earnings qualification"
+        ]
+      }
+    ],
+    "current_balance_assertions": {
+      "cash_closing": {
+        "value": "20",
+        "status": "known"
+      },
+      "total_debt": {
+        "value": "50",
+        "status": "known"
+      },
+      "net_debt": {
+        "value": "30",
+        "status": "known"
+      }
+    }
+  },
+  "presentation_guards": [
+    {
+      "case_id": "G-ZERO-PRIOR-ALL-GROWTH-ROWS",
+      "scope": "Artificial seeded component presentation; not source/owner qualification",
+      "each_measure": [
+        "revenue",
+        "ebitda",
+        "adjusted_ebitda"
+      ],
+      "prior_value": "0",
+      "prior_status": "known",
+      "current_value": "30",
+      "delta_value": "30",
+      "delta_status": "known",
+      "growth_value": null,
+      "growth_status": "missing",
+      "reason": "ZERO_DENOMINATOR",
+      "display_pattern": "^∅ G[1-9][0-9]*$",
+      "must_not_be": [
+        "not_applicable",
+        "known-zero",
+        "infinity"
+      ]
+    },
+    {
+      "case_id": "G-PERCENT-POINTS",
+      "scope": "Artificial seeded presentation; producer already supplied result",
+      "measure_id": "ebitda_margin",
+      "core_delta_unit": "PERCENTAGE_POINTS",
+      "fact_unit": "pp",
+      "value": "5",
+      "display": "5 pp",
+      "scale": "1",
+      "currency": null,
+      "no_render_arithmetic": true
+    }
+  ],
+  "rejection_guards": [
+    {
+      "case_id": "R-TABLE-SET",
+      "mutation": "missing, duplicate, extra or reordered table",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-COLUMN-SET",
+      "mutation": "missing, duplicate, extra or reordered column field",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-ROW-SET",
+      "mutation": "missing, duplicate, extra or reordered row",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-FACT-SET",
+      "mutation": "missing, duplicate, extra fact or undeclared fact table",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-COORDINATE",
+      "mutation": "wrong fact-ID template, table/row/field mapping or swapped cell pointer",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-INTERFACE",
+      "mutation": "non-null borrowed interface_id",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-LABEL",
+      "mutation": "wrong row label/header/title/row_kind",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-UNIT",
+      "mutation": "wrong role unit, including percent vs pp, currency or scale",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-DECIMALS",
+      "mutation": "non-null decimals overrides whole-million contract",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-ASSESSMENT",
+      "mutation": "numeric assessment, known empty text or nonknown settled text",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-VALUE-SHAPE",
+      "mutation": "nonfinite known amount, missing numeric amount or nonknown numeric value",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-GROWTH-APPLICABILITY",
+      "mutation": "known/missing growth on a nongrowth row instead of reasoned not_applicable",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    },
+    {
+      "case_id": "R-BINDING",
+      "mutation": "unbound fact, duplicate map/slot or doubly composed binding",
+      "expected": "ValueError before layout consumption; no fallback/partial populated report"
+    }
+  ],
+  "upstream_only_refusals": {
+    "cases": [
+      "E-INCOMPATIBLE",
+      "E-SAME",
+      "E-REVERSE",
+      "stale/foreign/unselected input",
+      "nongranted field",
+      "forged operands/citations"
+    ],
+    "rule": "Producer/access/receipt must refuse; no A3 authentication claim or synthetic financial answer. Core error rules remain A1."
+  },
+  "evidence_surface": {
+    "rail": "Existing source inventory and source passports; exact financial/identity source hashes/readiness/locators/content/limitations",
+    "cp1b_record": "T1B.3/evidence.inputs in CP1B Full analysis; rail binding is coverage, not a visible CP1B Evidence table",
+    "fact_passports": [
+      "field coordinates",
+      "period",
+      "unit",
+      "currency",
+      "scale",
+      "basis",
+      "status",
+      "source/stated values when applicable",
+      "formula/calculation",
+      "source citations",
+      "CP1B ModuleView artifact hash"
+    ],
+    "lineage": "Actual machine-readable encoding/verification later C3 owner receipt contract; A3 preserves supplied canonical references only",
+    "hardcoded_report_refs_allowed": false
+  },
+  "limitations_surface": {
+    "rail": "All adopted Module.limitations strings; do not claim T1B.3 rail table visibility",
+    "required_semantics": [
+      "unaudited consolidated IFRS USD millions",
+      "missing FY2024 income comparisons",
+      "missing Q3 trailing comparison for positive/requested FY2024 comparison for gap",
+      "missing causal drivers",
+      "missing guidance and operational KPIs",
+      "bounded flat-quarter comparison/no broader nonzero earnings qualification",
+      "component preview/no actual owner or CP5 acceptance for seeded fixtures"
+    ]
+  },
+  "isolation": [
+    "CP1 metric-strip still its three existing figures/current CP1 source",
+    "CP1 EBITDA-adjustments and T4 coordinates unchanged",
+    "No assets/general slot/chart/preset/other-pathway changes",
+    "No fake calculated-download or copied Model publication"
+  ],
+  "focused_check_argv": "PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_earnings_render.py",
+  "execution_policy": "NOT RUN by contract reviewer; later source-only component check after exact integrated-base/resource admission. No providers/engines/native claim.",
+  "later_actual_acceptance_requires": [
+    "Exact C3 owner receipt/verifier lease and authentic selected current run/head/input evidence",
+    "C1 complete selected CP5 scope and actual settled evidence-referencing consumption",
+    "Separate C2 earnings_rendering.py lease and current verified selected-run export",
+    "Fresh admitted native proof of FP02, Full analysis, Evidence/Limitations and unchanged files"
+  ],
+  "comparison_rule": "Exact ordered identities/units/status/periods; Decimal numeric equality for canonical numbers, independent literal display strings for table spellings. Never derive this oracle from renderer/candidate output.",
+  "display_quantum_policy": "Literal display strings pin seeded fixture Decimals as written. Actual pp exact-text presentation may retain equivalent Decimal trailing zeros (0.00 pp/5.00 pp); no quantization or source-value rewrite is authorized. Numerical value and pp suffix must remain exact."
+}

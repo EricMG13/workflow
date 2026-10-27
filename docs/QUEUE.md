@@ -2045,3 +2045,56 @@ no shared source edits or additional product leases. PM integrates only exact
 accepted commits. CP1B matrix stays unverified for actual tools/output/consumer/
 render; A1 core is not module/checkpoint acceptance. No numerical lane cap;
 one-heavy limit and all paid/provider/live tests paused.
+
+
+C3-CP1B-A1-RED-1 admitted 2026-10-27T08:55:00.503179+00:00 after fresh clear process scan, 8:55  up 1 day,  2:31, 1 user, load averages: 2.38 2.33 2.32.
+Exactly one pinned pytest tests/test_earnings.py inC3; test98c706de and132baseline
+unchanged, earnings.py absent. Expected absent-implementation collection failure
+is baseline RED only, not causal arithmetic verification. Freeze allC3source/tests/
+cases through EOF/exit; retainPID/UTC/full-log/hashes then release slot and resume
+implementation. No concurrent heavy test/engine/render/server; GREEN needs fresh
+separate admission. Paid/provider/live remain paused.
+
+
+Task4-A3 binding/spec contract independently frozen before C2 code: lease
+b0de1be5a0ae64dff442b5c6652e7a5d8f6d57328d49cc808f37ca5990a6143d; oracle
+7b45f939d2d771611e9b11633f348e7c1174cb7ea0b3eb36eeb20661dc4192c4; review
+72c18c584d6663d43d7dabb506c25aab7f443bc303c1eff2275d107f969662fe. Source/A1
+numeric review reused; exact44cells/ninebindings/fourFP02specs; no renderer
+arithmetic/assets/slot rewrite/runtimewrapper/registry/access edits. C2 eventual
+files: bindings/cp1b.py NEW, bindings/shipped.py, report_view.py,
+tests/test_earnings_render.py NEW. Independent structural review and rootconfidence
+closed known-zero/missing/pp/rounding/evidence-rail/full-analysis/presentation scopes.
+Actual owner/completeCP5/current-run/render/native remain later prerequisites.
+A2 metadata dependency will be checked before component runtime; exact codebase
+and resource admission follow PM integration. No C2 source/test job admitted yet.
+
+Whole PLAN audit: maincatalog has25records including retiredCP-MEMO, and still
+canonicalizes CP-3B as CP-3 and CP-6A as CP-6. SPEC requires26distinct intended
+owners excluding retiredmemo; these aliases require separately reviewed Task5
+identity/owner changes, not extra counts for legacy aliases.23matrix rows still
+lack actual owner/consumer/render links. Task3 legal-source chain, specialist
+owners and six-pathway assembled proof/runguide remain open; goal stays active.
+Previousgoalturn classified progress (Task3C closure/A1 admission), not fullplan
+completion. Existing QUEUE/individual handoffs remain the team execution ledger.
+
+
+C3 A1 RED actual closure: PID77852,08:55:15.292646..08:55:16.343577UTC,exit1;
+68 explicit missing-feature failures after successful collection, not arithmetic
+causal proof. All132 baseline+test hashes unchanged; source absent. Original log
+9ea320715e5a598e3aa6ff65edfcb20354bbafe4ea4ebf2001a814a4bccf2dce retained by C3
+work/cp1b-core-a1/red-1.log and full actual recordred-1.json. Heavy slot released;
+C3 implementation resumed. A2/A3 writes/test jobs still await exact admission.
+
+Task4-A2 independently frozen: lease da0471d83746dc67bf40e9b3e14aa7984994abfa812820265174bd8cb6964142;
+oracle a8210ba05e81c3cba04634bfe82e3e7aa11525892407b41d379ebf0298413d0c;
+review a6beab43a00ac4331314721b49d5626bb984df84a367b55592eed8822b137119.
+Exactly5 C1files, noCP5v2/live/submission/owner/render writes. Current-CP1B/CP1
+v2 tuple grants/allperiodmetadata, boundedmanifest bootstrap/page tools, safe
+citation handles/atomic refusals, oldCP2/CP5v1 meanings preserved. C1codeadmission
+follows integratedlease; focusedchecks require separate fresh job/source admission.
+Source financial/A1 numericoracles unchanged; productauthorindependent reviewPASS.
+
+C2proposal0259861 integrateddoconly atmain091a36d. It remains a proposal; A3
+lease/oracle/review nowresolve exact44cells/ninebindings/fourFP02specs and missing
+zero-denominator growth. Actual module/receipt/CP5/render acceptance stillopen.

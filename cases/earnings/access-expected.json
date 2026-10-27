@@ -1,0 +1,469 @@
+{
+  "schema_version": "cp1b-access-oracle/1",
+  "scope": "Task4-A2 registration/current-CP1 access component guards only; no actual owner/CP5/render acceptance",
+  "source_base": "2463dcb6776404e0bafe6c9b30a25c699db288d4",
+  "c1_preparation_commit": "08fd113",
+  "financial_oracle_reused": {
+    "path": "cases/earnings/expected.json",
+    "sha256": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+    "source_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "new_financial_values": false
+  },
+  "registration": {
+    "module_id": "CP-1B",
+    "cell": "cp1b",
+    "steps": [
+      "earnings_delta"
+    ],
+    "settling": "earnings_delta",
+    "repairable": [],
+    "prefilled": {},
+    "projections": {},
+    "pack_sources": [],
+    "pack_reads": [],
+    "extract_tools": [],
+    "one_shot": [],
+    "part_submits": [],
+    "methodology_table_ids": [
+      "T1B.1",
+      "T1B.2",
+      "T1B.3"
+    ],
+    "required_unchanged": [
+      "CP-0",
+      "CP-1"
+    ],
+    "optional_unchanged": [],
+    "other_chains_and_metadata_unchanged": true,
+    "live_dispatcher_implemented": false
+  },
+  "versioning": {
+    "v1_consumers": [
+      "CP-2",
+      "CP-5"
+    ],
+    "v1_unchanged": true,
+    "v2_consumers": {
+      "CP-1B": "earnings_delta"
+    },
+    "v2_grant_schema_version": "cp1b-upstream-grant/2",
+    "manifest_schema_version": "cp1b-access-manifest/1",
+    "tools_v2": [
+      "lookup_upstream",
+      "verify_upstream",
+      "read_access_manifest"
+    ],
+    "verify_kind_v2": [
+      "citations"
+    ],
+    "cp5_v2_authorized": false
+  },
+  "grant": {
+    "exact_top_keys": [
+      "schema_version",
+      "consumer_module_id",
+      "step_id",
+      "producers",
+      "raw_source_ids"
+    ],
+    "producer_count": 1,
+    "producer_module_id": "CP-1",
+    "exact_producer_keys": [
+      "module_id",
+      "sha256",
+      "coordinates",
+      "projected_fields"
+    ],
+    "coordinate_keys": [
+      "fact_id",
+      "table_id",
+      "row_id",
+      "field"
+    ],
+    "qualification": "producer module+exact current hash+entire tuple; never Cartesian/pooled",
+    "mandatory_projected_fields": [
+      "fact_id",
+      "label",
+      "table_id",
+      "row_id",
+      "field",
+      "amount",
+      "text",
+      "status",
+      "unit",
+      "currency",
+      "scale",
+      "period",
+      "basis",
+      "limitation",
+      "calculation_id",
+      "citation_handles"
+    ],
+    "optional_projected_fields": [
+      "denominator",
+      "value_class",
+      "calculation_status"
+    ],
+    "raw_source_ids": [],
+    "claim_grants": false,
+    "max_coordinates": 100000,
+    "tables": [
+      "T4.14",
+      "T4.10"
+    ],
+    "t4_14": "All actual facts/rows; nonempty; no omitted coordinate",
+    "t4_10_measures": [
+      "revenue",
+      "ebitda",
+      "adjusted_ebitda",
+      "ebitda_margin",
+      "cfo_reported",
+      "capex",
+      "fcf",
+      "cash_closing",
+      "total_debt",
+      "net_debt",
+      "total_leverage_reported",
+      "net_leverage_reported"
+    ],
+    "t4_10_basis": "Only selected reported QUARTER/FY historical value columns and required metric identity companions; no rolling/trend/analyst-note",
+    "normalization": "Validate duplicates before sorting; coordinates sort(table_id,row_id,field,fact_id), projected_fields lexical",
+    "digest_json": "UTF-8 json.dumps(ensure_ascii=False,sort_keys=True,separators=(comma,colon),allow_nan=False)",
+    "t4_10_identity_fields": {
+      "measure_id": "field_1 known text (Metric Name)",
+      "category": "field_0 known text (KPI Category)",
+      "value_coordinate": "exact historical ModelBasis ID as field; no guessed metric_id field"
+    }
+  },
+  "bootstrap": {
+    "property": "session.access_manifest",
+    "detached": true,
+    "values_or_quotes": false,
+    "keys": [
+      "schema_version",
+      "consumer",
+      "producer",
+      "snapshot_sha256",
+      "ticket_id",
+      "attempt",
+      "grant_sha256",
+      "manifest_sha256",
+      "period_index",
+      "coordinate_count",
+      "projected_fields",
+      "max_page_entries",
+      "max_body_bytes"
+    ],
+    "period_index_keys": [
+      "table_id",
+      "authorized_complete",
+      "row_count",
+      "coordinate_count"
+    ],
+    "authorized_complete": "Authorization coverage of full actual T4.14, not proof of traversal/value reads",
+    "manifest_digest_payload": {
+      "header": "entire header except manifest_sha256",
+      "coordinates": "entire normalized sorted grant coordinate list"
+    }
+  },
+  "pagination": {
+    "tool": "read_access_manifest",
+    "exact_argument_keys": [
+      "producer_module_id",
+      "producer_sha256",
+      "manifest_sha256",
+      "cursor",
+      "limit"
+    ],
+    "body_keys": [
+      "producer",
+      "grant_sha256",
+      "manifest_sha256",
+      "coordinate_count",
+      "offset",
+      "entries",
+      "next_cursor",
+      "complete"
+    ],
+    "entry_keys": [
+      "fact_id",
+      "table_id",
+      "row_id",
+      "field"
+    ],
+    "max_entries": 20,
+    "max_compact_utf8_body_bytes": 8192,
+    "first_cursor": null,
+    "cursor_format": "access-cursor:<64 lowercase hex>",
+    "cursor_scope": "session/attempt/snapshot/producer/grant/manifest/offset",
+    "algorithm": "Largest nonempty contiguous prefix <=limit fitting8192 inclusive of all page metadata; no entry/string truncation; refuse if none fits",
+    "issued_current_replay": "Same issued token and same arguments -> same page, new receipt; different valid limit may return a bounded prefix from same offset. Validate contiguous actual offsets.",
+    "complete": "This page ends at total and next_cursor=null; host additionally verifies contiguous traversal and period-value reads",
+    "short_id_25_entry_case": [
+      {
+        "offset": 0,
+        "entries": 20,
+        "complete": false,
+        "next_cursor": "issued bound nonnull token"
+      },
+      {
+        "offset": 20,
+        "entries": 5,
+        "complete": true,
+        "next_cursor": null
+      }
+    ]
+  },
+  "lookup": {
+    "exact_argument_keys": [
+      "producer_module_id",
+      "producer_sha256",
+      "table_id",
+      "row_ids",
+      "fields"
+    ],
+    "max_rows": 20,
+    "max_fields": 16,
+    "required_call_fields": [
+      "fact_id",
+      "table_id",
+      "row_id",
+      "field",
+      "status"
+    ],
+    "projection_marker": "granted_fact_projection",
+    "body_additions": [
+      "grant_sha256",
+      "manifest_sha256",
+      "projection"
+    ],
+    "fact_order": [
+      "field",
+      "fact_id"
+    ],
+    "zero_vs_missing": "Return actual known0 versus null/nonknown+limitation; retain text period metadata",
+    "citation_handle_keys": [
+      "source_id",
+      "source_sha256",
+      "locator"
+    ],
+    "partial_module_view_forbidden": true
+  },
+  "verification": {
+    "exact_argument_keys": [
+      "producer_module_id",
+      "producer_sha256",
+      "kind",
+      "fact_ids"
+    ],
+    "max_fact_ids": 20,
+    "kind": "citations",
+    "invalid_citation_body": {
+      "kind": "citations",
+      "verdict": "invalid",
+      "issue_count": "actual safe issue count",
+      "issues": [
+        {
+          "code": "fact_citation",
+          "fact_ids": [
+            "actual granted fact ID"
+          ]
+        }
+      ]
+    },
+    "raw_issue_detail_allowed": false,
+    "core_arithmetic_added": false
+  },
+  "component_fixtures": [
+    {
+      "id": "F-STATUS-TUPLES",
+      "qualification": "Handwritten permission fixture; its zero revenue is not actual issuer/source evidence",
+      "period_index": "Complete actual fixture T4.14 facts; q1/q2/q3/q4-2025,fy-2025,opening-2024 descriptors may reuse A1 labels; no FY2024 income",
+      "facts": [
+        {
+          "symbol": "R3",
+          "measure": "revenue",
+          "period_id": "q3-2025",
+          "amount": "0",
+          "status": "known",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000"
+        },
+        {
+          "symbol": "R4",
+          "measure": "revenue",
+          "period_id": "q4-2025",
+          "amount": "30",
+          "status": "known",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000"
+        },
+        {
+          "symbol": "L3",
+          "measure": "total_leverage_reported",
+          "period_id": "q3-2025",
+          "amount": null,
+          "status": "missing",
+          "limitation": "Four complete contiguous quarters spanning364-371days are required"
+        },
+        {
+          "symbol": "L4",
+          "measure": "total_leverage_reported",
+          "period_id": "q4-2025",
+          "amount": "1.6666666666666666666666666666666666667",
+          "status": "known",
+          "unit": "MULTIPLE",
+          "currency": null,
+          "scale": "1"
+        }
+      ],
+      "grant_subset_case": "All period-index facts plus diagonal R3/L4 and their mandatory row identity companions; R4/L3 remain nongranted siblings",
+      "expected": "Lookup revenue row yields R3 not R4; leverage row yields L4 not L3. Verification of R4/L3 refuses, no Cartesian authorization. A separate grant includes L3 to prove null/missing/limitation is retained."
+    },
+    {
+      "id": "F-PAGE25",
+      "qualification": "Component-only valid short-ID25-coordinate manifest, with full actual fixture T4.14 included",
+      "expected_pages": "20+5 with bound cursor; complete only on final page; concatenated entries equal exact frozen grant",
+      "unicode_variant": "Byte-heavy valid identifiers may reduce entry count; still contiguous/no truncation/no widened limit"
+    },
+    {
+      "id": "F-PRIVATE",
+      "qualification": "Component-only sentinel",
+      "private_quote": "UPSTREAM_PRIVATE_QUOTE_SENTINEL",
+      "nongranted_sibling": "UPSTREAM_NONGRANTED_SENTINEL",
+      "foreign_producer_same_fact_id": "UPSTREAM_FOREIGN_SENTINEL",
+      "expected": "No sentinel/quote field/other-producer fact leaks through success, error or refusal; citation verification only safe IDs/categories"
+    },
+    {
+      "id": "F-DYNAMIC-BINDING",
+      "qualification": "Fixture hashes/ticket/snapshot/grant/manifest/cursors generated and frozen during component setup before invocation; not old issuer execution evidence",
+      "expected": "Every output producer qualifier equals exact authenticated current fixture H; body is explicit projection, never a full ModuleView/H assertion"
+    }
+  ],
+  "refusals": [
+    {
+      "case_id": "A2-WRONG-CONSUMER",
+      "trigger": "v1 CP1B or v2 CP2/CP5; wrong step/tool",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-EXTRA-PRODUCER",
+      "trigger": "grant or call names CP1A/CP1B/CP5/CP0 instead of sole bound CP1",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-FOREIGN-DIGEST",
+      "trigger": "well-formed wrong current producer or manifest digest",
+      "expected": "identity_mismatch"
+    },
+    {
+      "case_id": "A2-FOREIGN-IDENTITY",
+      "trigger": "retained producer differs run/issuer/as_of/method/hash/status",
+      "expected": "identity_mismatch"
+    },
+    {
+      "case_id": "A2-TAMPERED-BLOB",
+      "trigger": "current hash-named blob fails byte/hash/shape authentication",
+      "expected": "identity_mismatch"
+    },
+    {
+      "case_id": "A2-STALE",
+      "trigger": "snapshot/head/input/step/attempt changes after session creation",
+      "expected": "stale_binding"
+    },
+    {
+      "case_id": "A2-PERIOD-INDEX-OMITTED",
+      "trigger": "one actual T4.14 fact omitted, even if every period_id is granted",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-NO-PERIOD-INDEX",
+      "trigger": "producer has no nonempty canonical T4.14 index",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-MANDATORY-ATTR-OMITTED",
+      "trigger": "grant lacks text/amount/limitation or another mandatory projection field",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-CARTESIAN-SIBLING",
+      "trigger": "row and coordinate field independently appear elsewhere in grant but full tuple is absent",
+      "expected": "not_permitted for explicit fact verification; lookup returns only granted siblings"
+    },
+    {
+      "case_id": "A2-RAW-QUOTE",
+      "trigger": "raw source tool/quote/citations/record_json/path/hidden diagnostics requested",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-INTEGRITY",
+      "trigger": "CP1B verify kind integrity or CP5 whole-scope tool",
+      "expected": "not_permitted"
+    },
+    {
+      "case_id": "A2-MALFORMED-ARGS",
+      "trigger": "duplicate/empty IDs, missing/extra args, hash/cursor malformed, limit bool/0/21",
+      "expected": "bad_arguments"
+    },
+    {
+      "case_id": "A2-FOREIGN-CURSOR",
+      "trigger": "well-formed token not issued for this session/binding",
+      "expected": "stale_binding"
+    },
+    {
+      "case_id": "A2-BODY-LIMIT",
+      "trigger": "UTF-8 BODY exceeds8192, including byte-heavy Unicode",
+      "expected": "bad_arguments; null body; no partial/truncation"
+    },
+    {
+      "case_id": "A2-UNEXPECTED",
+      "trigger": "unexpected projection/verification failure",
+      "expected": "status error, internal_error, null body"
+    },
+    {
+      "case_id": "A2-REENTRANT",
+      "trigger": "concurrent/reentrant invoke",
+      "expected": "not_permitted; earlier receipts preserved"
+    }
+  ],
+  "state_guards": [
+    "Revalidate bytes/identity/authorization before projection and immediately before metadata/body/cursor commit",
+    "Snapshot change during lookup/manifest/citation checking returns null stale_binding and commits no provisional cursor",
+    "Ended/interrupted/superseded old ticket or retained-step/step-repair/payload ticket cannot issue new tools; fresh executable repair attempt follows existing journal rules with actual attempt number",
+    "Caller grant mutation/detached manifest or receipt mutation cannot widen authority",
+    "Known bad citation returns invalid, not permission refusal or clean valid",
+    "Earlier successful receipts remain immutable after later refusal; sequence order retained; locks released on exceptions",
+    "All successful/refused/error operations have empty read/extracted/surfaced/searched source_evidence"
+  ],
+  "comparative_absence": "Requires complete authorized T4.14 manifest traversal AND actual period-value reads, not not_permitted/body-limit/missing coordinate; opening PERIOD_END2024 is not FY2024 income; A2 itself emits no earnings gap verdict",
+  "begin_guards": {
+    "missing_or_blocked_required_CP1": "Existing CP1B required-edge begin refuses; no fabricated output",
+    "CP0_not_authorizing_CP1B": "Existing journal/source-readiness begin refuses; A2 registration does not bypass"
+  },
+  "tests": {
+    "cwd": "C1 clone at exact later admitted integrated contract base",
+    "env": {
+      "PYTHONPATH": "src",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "argv": [
+      "/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_cp1b_registration.py",
+      "tests/test_upstream_tools.py"
+    ],
+    "not_run_during_freeze": true,
+    "heavy_job_requires_separate_admission": true
+  },
+  "remaining_dependencies": [
+    "C3 authenticated full-input owner/workflow+actual settlement and fresh upstream lineage",
+    "C1 separate A4 complete selected CP5 scope and actual settled integrity review",
+    "C2 separate FP02 binding/render/native evidence"
+  ],
+  "route": "LEAD explicitly assigned existing independent Sol/high financial/state reviewer; assignment evidence only, no hidden telemetry claim."
+}

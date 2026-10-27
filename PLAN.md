@@ -218,3 +218,21 @@ requires its own lease; neither has an active product-writing lease at this tran
 - [x] Freeze reviewed A1 core cases/API/files/base; retain later shared dependencies separately.
 - [x] Commit/integrate the lease and admit C3 implementation after a fresh resource check.
 - [ ] Actual owner output, consumer and rendered proof; component checks alone do not close CP1B.
+
+
+### Task4-A2/A3 — registration/access and FP02 binding components
+
+A2 contract/oracle: docs/CP1B-ACCESS-LEASE.md and cases/earnings/access-expected.json.
+C1 only: CP1B registry chain, CP1B methodology table IDs, versioned current-CP1
+upstream access, focused registration/upstream tests. CP2/CP5 v1 remain unchanged;
+whole CP5 scope/actual participation is a later separate lease.
+A3 contract/oracle: docs/CP1B-RENDER-LEASE.md and cases/earnings/render-expected.json.
+C2 only: CP1B binding map, shipped registration, FP02 specs/layout guard and focused
+binding tests. No assets, financial arithmetic or actual renderer wrapper in A3.
+C3 A1 earnings core remains disjoint. Actual CP1B owner, complete current CP5 review
+and authentic FP02 output/native proof must follow before module closure.
+
+- [x] Independently freeze/review exact A2/A3 schemas, guards, values and ownership.
+- [ ] Integrate exact leases and admit disjoint C1/C2 writes at the named base.
+- [ ] C1/C2 implement, verify causal cases and required confidence/tournament/reviews.
+- [ ] Assemble actual owner/access/consumer/render chain; no component-only module claim.

@@ -690,3 +690,455 @@ def test_deep_json_arguments_return_and_retain_complete_refusal(tmp_path):
     assert json.dumps(result["arguments"]) == json.dumps(arguments)
     assert json.dumps(session.receipts[0]["arguments"]) == json.dumps(arguments)
     assert session.invoke("lookup_upstream", _arguments(producer))["status"] == "ok"
+
+
+# A2 fixtures are handwritten permission components, not settled analytical evidence.
+A2_FIELDS = ["fact_id", "label", "table_id", "row_id", "field", "amount", "text", "status",
+             "unit", "currency", "scale", "period", "basis", "limitation", "calculation_id",
+             "citation_handles"]
+
+
+def _a2_basis(period_id, kind="Q"):
+    parts = ("historical", f"{kind}:{period_id}")
+    return "model-basis:" + hashlib.sha256("".join(f"{len(p)}:{p}" for p in parts).encode()).hexdigest()
+
+
+def _a2_producer(*, page25=False, long_ids=False):
+    producer = Module.model_validate_json(ARTIFACT_JSON)
+    facts = []
+    periods = ("q3-2025", "q4-2025") if page25 else (
+        "q1-2025", "q2-2025", "q3-2025", "q4-2025", "fy-2025", "opening-2024")
+    suffix = "x" * 153 if long_ids else ""
+
+    def add(table, row, field, value, period):
+        numeric = isinstance(value, Decimal)
+        facts.append(Fact(
+            fact_id=f"f{len(facts):03}" + suffix, label=field, table_id=table,
+            row_id=row + suffix, field=field, amount=value if numeric else None,
+            text=None if numeric or value is None else value,
+            status="missing" if value is None else "known", period=period,
+            limitation="Four complete contiguous quarters required" if value is None else None,
+            unit="MULTIPLE" if row == "total_leverage_reported" else "MILLIONS" if numeric else None,
+            currency="USD" if numeric and row != "total_leverage_reported" else None,
+            scale=Decimal(1000000) if numeric and row != "total_leverage_reported" else Decimal(1),
+            citations=producer.facts[0].citations,
+        ))
+    for pid in periods:
+        kind = "QUARTER" if pid.startswith("q") else "FY" if pid.startswith("fy") else "PERIOD_END"
+        values = dict(period_id=pid, period_type=kind, fiscal_year="2025",
+                      fiscal_quarter="3" if pid.startswith("q3") else "4", start_date="2025-07-01",
+                      end_date="2025-09-30", currency="USD", unit="MILLIONS",
+                      accounting_basis="IFRS", entity_perimeter="consolidated group")
+        for key, value in values.items():
+            add("T4.14", pid, key, value, pid)
+    if page25:
+        add("T4.14", periods[0], "basis_note", "Reported", periods[0])
+    for row in (("revenue",) if page25 else ("revenue", "total_leverage_reported")):
+        add("T4.10", row, "field_0", "Earnings", "dashboard")
+        add("T4.10", row, "field_1", row, "dashboard")
+        for pid in ("q3-2025", "q4-2025"):
+            value = (Decimal(0) if pid.startswith("q3") else Decimal(30)) if row == "revenue" else (
+                None if pid.startswith("q3") else Decimal("1.6666666666666666666666666666666666667"))
+            add("T4.10", row, _a2_basis(pid), value, pid)
+    return producer.model_copy(update={"facts": tuple(facts)})
+
+
+def _a2_grants(producer, *, diagonal=False):
+    coords = [dict(fact_id=f.fact_id, table_id=f.table_id, row_id=f.row_id, field=f.field)
+              for f in producer.facts if not diagonal or f.table_id == "T4.14"
+              or f.field in {"field_0", "field_1"}
+              or (f.row_id == "revenue" and f.field == _a2_basis("q3-2025"))
+              or (f.row_id == "total_leverage_reported" and f.field == _a2_basis("q4-2025"))]
+    return dict(schema_version="cp1b-upstream-grant/2", consumer_module_id="CP-1B",
+                step_id="earnings_delta", raw_source_ids=[], producers=[dict(
+                    module_id="CP-1", sha256=producer.content_hash(), coordinates=coords,
+                    projected_fields=A2_FIELDS.copy())])
+
+
+def _a2_session(tmp_path, *, producer=None, diagonal=False):
+    producer = producer or _a2_producer()
+    store, attempt, _, producer = _execution(tmp_path, producer=producer, consumer="CP-1B")
+    grants = _a2_grants(producer, diagonal=diagonal)
+    session = _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+    return store, attempt, producer, grants, session
+
+
+def _a2_lookup(producer, row="revenue", **changes):
+    return dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(),
+                table_id="T4.10", row_ids=[row], fields=A2_FIELDS.copy(), **changes)
+
+
+def _a2_page(session, *, cursor=None, limit=20, **changes):
+    header = session.access_manifest
+    args = dict(producer_module_id="CP-1", producer_sha256=header["producer"]["sha256"],
+                manifest_sha256=header["manifest_sha256"], cursor=cursor, limit=limit)
+    args.update(changes)
+    return session.invoke("read_access_manifest", args)
+
+
+def _a2_canonical(value):
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+
+
+def test_a2_status_projection_tuple_grants_and_citation_handles(tmp_path):
+    _, _, producer, grants, session = _a2_session(tmp_path, diagonal=True)
+    first = session.invoke("lookup_upstream", _a2_lookup(producer))
+    assert first["status"] == "ok"
+    body = first["body"]
+    assert body["projection"] == "granted_fact_projection"
+    values = [f for f in body["rows"][0]["facts"] if f["amount"] is not None]
+    assert [(f["amount"], f["status"]) for f in values] == [("0", "known")]
+    assert [f["field"] for f in body["rows"][0]["facts"]] == sorted(f["field"] for f in body["rows"][0]["facts"])
+    assert set(values[0]["citation_handles"][0]) == {"source_id", "source_sha256", "locator"}
+    hidden = next(f.fact_id for f in producer.facts if f.row_id == "revenue" and f.field == _a2_basis("q4-2025"))
+    _assert_refused(session.invoke("verify_upstream", _verify(producer, "citations", [hidden])), "not_permitted")
+    allowed = {c["fact_id"] for c in grants["producers"][0]["coordinates"]}
+    assert hidden not in allowed
+    assert all(not any(v in json.dumps(receipt) for v in ("UPSTREAM_RAW_ONLY", "quote\"")) for receipt in session.receipts)
+    other = _a2_session(tmp_path / "all")[4]
+    missing = other.invoke("lookup_upstream", _a2_lookup(producer, "total_leverage_reported"))
+    gap = next(f for f in missing["body"]["rows"][0]["facts"] if f["status"] == "missing")
+    assert gap["amount"] is None and "Four complete" in gap["limitation"]
+    metadata = other.invoke("lookup_upstream", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(),
+        table_id="T4.14", row_ids=["opening-2024"], fields=A2_FIELDS.copy()))
+    assert any(f["text"] == "PERIOD_END" for f in metadata["body"]["rows"][0]["facts"])
+
+
+def test_a2_manifest_exact_hashes_pagination_replay_and_detachment(tmp_path):
+    _, _, producer, grants, session = _a2_session(tmp_path, producer=_a2_producer(page25=True))
+    header = session.access_manifest
+    assert header["coordinate_count"] == 25 and header["period_index"]["authorized_complete"] is True
+    normalized = copy.deepcopy(grants)
+    pg = normalized["producers"][0]
+    pg["projected_fields"].sort()
+    pg["coordinates"].sort(key=lambda c: tuple(c[k] for k in ("table_id", "row_id", "field", "fact_id")))
+    assert header["grant_sha256"] == hashlib.sha256(_a2_canonical(normalized)).hexdigest()
+    without_m = {k: v for k, v in header.items() if k != "manifest_sha256"}
+    assert header["manifest_sha256"] == hashlib.sha256(_a2_canonical(dict(header=without_m, coordinates=pg["coordinates"]))).hexdigest()
+    page1 = _a2_page(session)["body"]
+    assert page1["offset"] == 0 and len(page1["entries"]) == 20 and not page1["complete"]
+    token = page1["next_cursor"]
+    page2 = _a2_page(session, cursor=token)["body"]
+    assert page2["offset"] == 20 and len(page2["entries"]) == 5 and page2["complete"]
+    assert page2["next_cursor"] is None
+    assert page1["entries"] + page2["entries"] == pg["coordinates"]
+    assert _a2_page(session, cursor=token)["body"] == page2
+    assert len(_a2_page(session, cursor=token, limit=1)["body"]["entries"]) == 1
+    header["projected_fields"].append("quote")
+    grants["producers"][0]["coordinates"].clear()
+    page1["entries"].clear()
+    assert len(_a2_page(session)["body"]["entries"]) == 20
+    assert "quote" not in session.access_manifest["projected_fields"]
+    assert producer.content_hash() == session.access_manifest["producer"]["sha256"]
+
+
+@pytest.mark.parametrize("variant,code", [
+    ("omit-index", "not_permitted"), ("missing-index", "not_permitted"),
+    ("omit-field", "not_permitted"), ("extra-table", "not_permitted"),
+    ("wrong-tuple", "not_permitted"), ("rolling", "not_permitted"),
+    ("duplicate", "bad_arguments"), ("duplicate-id", "bad_arguments"),
+    ("duplicate-placement", "bad_arguments"),
+    ("extra-key", "bad_arguments"), ("quote-field", "not_permitted"),
+    ("extra-producer", "not_permitted"), ("wrong-digest", "identity_mismatch"),
+])
+def test_a2_factory_grant_guards(tmp_path, variant, code):
+    producer = _a2_producer()
+    if variant == "missing-index":
+        producer = producer.model_copy(update={"facts": tuple(f for f in producer.facts if f.table_id != "T4.14")})
+    store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
+    grants = _a2_grants(producer)
+    pg = grants["producers"][0]
+    if variant == "omit-index": pg["coordinates"].pop(1)
+    elif variant == "omit-field": pg["projected_fields"].remove("text")
+    elif variant == "extra-table": pg["coordinates"][0]["table_id"] = "T4.1"
+    elif variant == "wrong-tuple": pg["coordinates"][0]["row_id"] = "ungranted-row"
+    elif variant == "rolling": pg["coordinates"][-1]["field"] = "rolling:value"
+    elif variant == "duplicate": pg["coordinates"].append(pg["coordinates"][0].copy())
+    elif variant == "duplicate-id": pg["coordinates"][1]["fact_id"] = pg["coordinates"][0]["fact_id"]
+    elif variant == "duplicate-placement": pg["coordinates"][0]["row_id"] = "q4-2025"
+    elif variant == "extra-key": grants["unexpected"] = True
+    elif variant == "quote-field": pg["projected_fields"].append("quote")
+    elif variant == "extra-producer": grants["producers"].append(dict(pg, module_id="CP-1B"))
+    elif variant == "wrong-digest": pg["sha256"] = "e" * 64
+    with pytest.raises(ValueError, match=f"^{code}$"):
+        _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+
+
+@pytest.mark.parametrize("change,code", [
+    ({"cursor": "bad"}, "bad_arguments"), ({"cursor": "access-cursor:" + "a" * 64}, "stale_binding"),
+    ({"limit": True}, "bad_arguments"), ({"limit": 0}, "bad_arguments"),
+    ({"limit": 21}, "bad_arguments"), ({"manifest_sha256": "e" * 64}, "identity_mismatch"),
+    ({"manifest_sha256": "bad"}, "bad_arguments"), ({"producer_module_id": "CP-0"}, "not_permitted"),
+    ({"extra": 1}, "bad_arguments"),
+])
+def test_a2_manifest_refusals(tmp_path, change, code):
+    session = _a2_session(tmp_path)[4]
+    _assert_refused(_a2_page(session, **change), code)
+    assert _a2_page(session)["status"] == "ok"
+
+
+def test_a2_versions_are_exclusive_and_no_integrity_or_source_tools(tmp_path):
+    store, attempt, _, producer = _execution(tmp_path, producer=_a2_producer(), consumer="CP-1B")
+    with pytest.raises(ValueError, match="not_permitted"):
+        _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=GRANTS)
+    _, _, producer, _, session = _a2_session(tmp_path / "v2")
+    _assert_refused(session.invoke("verify_upstream", _verify(producer, "integrity")), "not_permitted")
+    for name in ("read_integrity_scope", "verify_integrity_scope", "read_pages", "search_pack"):
+        _assert_refused(session.invoke(name, {}), "not_permitted")
+    for consumer in ("CP-2", "CP-5"):
+        st, at, step, pr = _execution(tmp_path / consumer, consumer=consumer)
+        with pytest.raises(ValueError, match="not_permitted"):
+            _tools().from_execution(st, at.ticket_id, step, grants=_a2_grants(pr))
+    st, at, step, _ = _execution(tmp_path / "v1")
+    v1 = _session(st, at, step)
+    with pytest.raises(ValueError, match="not_permitted"):
+        _ = v1.access_manifest
+    _assert_refused(v1.invoke("read_access_manifest", {}), "not_permitted")
+
+
+def test_a2_bytes_and_invalid_citations_are_sanitized(tmp_path):
+    producer = _a2_producer()
+    target = next(f for f in producer.facts if f.row_id == "revenue" and f.amount is not None)
+    bad = target.model_copy(update={"citations": (target.citations[0].model_copy(update={"quote": "UPSTREAM_PRIVATE_QUOTE_SENTINEL"}),)})
+    producer = producer.model_copy(update={"facts": tuple(bad if f == target else f for f in producer.facts)})
+    _, _, producer, _, session = _a2_session(tmp_path, producer=producer)
+    result = session.invoke("verify_upstream", _verify(producer, "citations", [bad.fact_id]))
+    assert result["status"] == "ok" and result["body"]["verdict"] == "invalid"
+    assert result["body"]["issues"] == [{"code": "fact_citation", "fact_ids": [bad.fact_id]}]
+    assert "UPSTREAM_PRIVATE" not in json.dumps(result)
+    giant = bad.model_copy(update={"label": "€" * 3000})
+    producer = producer.model_copy(update={"facts": tuple(giant if f == bad else f for f in producer.facts)})
+    s2 = _a2_session(tmp_path / "giant", producer=producer)[4]
+    _assert_refused(s2.invoke("lookup_upstream", _a2_lookup(producer)), "bad_arguments")
+
+
+def test_a2_long_coordinate_pages_obey_bytes_and_traverse_every_entry(tmp_path):
+    _, _, _, _, session = _a2_session(tmp_path, producer=_a2_producer(page25=True, long_ids=True))
+    offset, cursor, entries = 0, None, []
+    while True:
+        result = _a2_page(session, cursor=cursor)
+        assert result["status"] == "ok"
+        body = result["body"]
+        assert len(_a2_canonical(body)) <= 8192
+        if offset == 0:
+            assert len(body["entries"]) < 20  # Twenty legal long-ID entries exceed8192 bytes.
+        assert body["offset"] == offset and 1 <= len(body["entries"]) <= 20
+        entries.extend(body["entries"])
+        offset += len(body["entries"])
+        cursor = body["next_cursor"]
+        if body["complete"]:
+            assert cursor is None
+            break
+    assert offset == session.access_manifest["coordinate_count"] == len(entries)
+
+
+@pytest.mark.parametrize("operation", ["lookup", "page", "property", "verify"])
+def test_a2_changed_snapshot_revokes_all_access(tmp_path, operation):
+    store, _, producer, _, session = _a2_session(tmp_path)
+    header = session.access_manifest
+    store._write(store.read().model_copy(update={"parent": store.read().content_hash()}))
+    if operation == "property":
+        with pytest.raises(ValueError, match="stale_binding"):
+            _ = session.access_manifest
+    elif operation == "lookup":
+        _assert_refused(session.invoke("lookup_upstream", _a2_lookup(producer)), "stale_binding")
+    elif operation == "verify":
+        _assert_refused(session.invoke("verify_upstream", _verify(producer, "citations", [producer.facts[0].fact_id])), "stale_binding")
+    else:
+        _assert_refused(session.invoke("read_access_manifest", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(),
+            manifest_sha256=header["manifest_sha256"], cursor=None, limit=20)), "stale_binding")
+
+
+def test_a2_fresh_executable_repair_uses_actual_attempt_number(tmp_path):
+    store, attempt, producer, grants, old = _a2_session(tmp_path)
+    store.interrupt(attempt.ticket_id, "Retained deliberate component interruption")
+    repaired = store.begin("CP-1B")
+    assert repaired.number == 1
+    session = _tools().from_execution(store, repaired.ticket_id, "earnings_delta", grants=grants)
+    assert session.access_manifest["attempt"] == 1
+    assert session.invoke("lookup_upstream", _a2_lookup(producer))["binding"]["attempt"] == 1
+    with pytest.raises(ValueError, match="stale_binding"):
+        _ = old.access_manifest
+
+
+@pytest.mark.parametrize("variant", ["absent", "blocked", "unauthorized"])
+def test_a2_real_begin_keeps_required_edges_and_cp0_gate(tmp_path, variant):
+    store, _, _, _, _ = _a2_session(tmp_path)
+    snapshot = store.read()
+    heads = list(snapshot.heads)
+    if variant == "absent": heads = [h for h in heads if h.module_id != "CP-1"]
+    elif variant == "blocked": heads = [h.model_copy(update={"status": "blocked"}) if h.module_id == "CP-1" else h for h in heads]
+    else: heads = [h.model_copy(update={"commands": ()}) if h.module_id == "CP-0" else h for h in heads]
+    store._write(snapshot.model_copy(update={"attempts": (), "heads": tuple(heads)}))
+    with pytest.raises(ValueError):
+        store.begin("CP-1B")
+
+
+@pytest.mark.parametrize("attribute,value", [("run_id", "other-run"), ("issuer_id", "other-issuer"), ("as_of", date(2024, 12, 31))])
+def test_a2_foreign_bound_module_cannot_disclose(tmp_path, attribute, value):
+    producer = _a2_producer().model_copy(update={attribute: value})
+    store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
+    with pytest.raises(ValueError, match="identity_mismatch"):
+        _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=_a2_grants(producer))
+
+
+def test_a2_tampered_current_blob_and_duplicate_current_identity_refuse(tmp_path):
+    store, _, producer, _, session = _a2_session(tmp_path)
+    (store.directory / "blobs" / producer.content_hash()).write_text("UPSTREAM_PRIVATE_QUOTE_SENTINEL")
+    _assert_refused(session.invoke("lookup_upstream", _a2_lookup(producer)), "identity_mismatch")
+    producer = _a2_producer()
+    grants = _a2_grants(producer)
+    producer = producer.model_copy(update={"facts": (*producer.facts, producer.facts[0])})
+    grants["producers"][0]["sha256"] = producer.content_hash()
+    store, attempt, _, _ = _execution(tmp_path / "duplicate", producer=producer, consumer="CP-1B")
+    with pytest.raises(ValueError, match="identity_mismatch"):
+        _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+
+
+def test_a2_cursor_is_session_bound_and_commit_is_staged(tmp_path, monkeypatch):
+    store, attempt, _, grants, session = _a2_session(tmp_path)
+    token = _a2_page(session)["body"]["next_cursor"]
+    other = _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+    _assert_refused(_a2_page(other, cursor=token), "stale_binding")
+    header = other.access_manifest
+    args = dict(producer_module_id="CP-1", producer_sha256=header["producer"]["sha256"],
+                manifest_sha256=header["manifest_sha256"], cursor=None, limit=20)
+    original = other._manifest_page
+    def page_then_change(supplied):
+        page = original(supplied)
+        snapshot = store.read()
+        store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
+        return page
+    monkeypatch.setattr(other, "_manifest_page", page_then_change)
+    _assert_refused(other.invoke("read_access_manifest", args), "stale_binding")
+    assert other._cursors == {} and other.receipts[-1]["body"] is None
+
+
+@pytest.mark.parametrize("operation", ["lookup", "verify", "page", "property"])
+def test_a2_mid_projection_changes_never_expose_provisional_data(tmp_path, monkeypatch, operation):
+    from deploy_workflow.tools import upstream
+    store, _, producer, _, session = _a2_session(tmp_path)
+    header = session.access_manifest
+    def change():
+        snapshot = store.read()
+        store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
+    if operation == "property":
+        original = upstream._canonical
+        def encode_then_change(value):
+            encoded = original(value)
+            if isinstance(value, dict) and value.get("schema_version") == "cp1b-access-manifest/1": change()
+            return encoded
+        monkeypatch.setattr(upstream, "_canonical", encode_then_change)
+        with pytest.raises(ValueError, match="stale_binding"):
+            _ = session.access_manifest
+        return
+    method = "_lookup" if operation == "lookup" else "_verify" if operation == "verify" else "_manifest_page"
+    original = getattr(session, method)
+    def build_then_change(*args):
+        result = original(*args)
+        change()
+        return result
+    monkeypatch.setattr(session, method, build_then_change)
+    if operation == "lookup": tool, args = "lookup_upstream", _a2_lookup(producer)
+    elif operation == "verify": tool, args = "verify_upstream", _verify(producer, "citations", [producer.facts[0].fact_id])
+    else: tool, args = "read_access_manifest", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(), manifest_sha256=header["manifest_sha256"], cursor=None, limit=20)
+    _assert_refused(session.invoke(tool, args), "stale_binding")
+    assert session._cursors == {}
+
+
+def test_a2_reentrant_property_and_invocation_are_atomic(tmp_path, monkeypatch):
+    _, _, producer, _, session = _a2_session(tmp_path)
+    original = session._lookup
+    nested = []
+    def reenter(*args):
+        with pytest.raises(ValueError, match="not_permitted"):
+            _ = session.access_manifest
+        nested.append(session.invoke("lookup_upstream", _a2_lookup(producer)))
+        return original(*args)
+    monkeypatch.setattr(session, "_lookup", reenter)
+    assert session.invoke("lookup_upstream", _a2_lookup(producer))["status"] == "ok"
+    _assert_refused(nested[0], "not_permitted")
+    assert [r["sequence"] for r in session.receipts] == [1, 2]
+
+
+def test_a2_manifest_failure_recovers_without_cursor_or_private_diagnostics(tmp_path, monkeypatch):
+    session = _a2_session(tmp_path)[4]
+    with monkeypatch.context() as patch:
+        def fails(args): raise RuntimeError("UPSTREAM_PRIVATE_QUOTE_SENTINEL")
+        patch.setattr(session, "_manifest_page", fails)
+        result = _a2_page(session)
+        assert result["status"] == "error" and result["error_code"] == "internal_error"
+        assert result["body"] is None and "UPSTREAM_PRIVATE" not in json.dumps(result)
+        assert session._cursors == {}
+    assert _a2_page(session)["status"] == "ok"
+
+
+@pytest.mark.parametrize("operation", ["property", "constructor"])
+def test_a2_final_authenticated_module_read_rechecks_live_snapshot(tmp_path, monkeypatch, operation):
+    store, attempt, _, grants, session = _a2_session(tmp_path)
+    original = store.head_module
+    reads = 0
+    def authenticate_then_change(head):
+        nonlocal reads
+        result = original(head)
+        if head.module_id == "CP-1":
+            reads += 1
+            if reads == 2:
+                snapshot = store.read()
+                store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
+        return result
+    monkeypatch.setattr(store, "head_module", authenticate_then_change)
+    with pytest.raises(ValueError, match="^stale_binding$"):
+        if operation == "property":
+            _ = session.access_manifest
+        else:
+            _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+    assert reads == 2
+
+
+@pytest.mark.parametrize("status", ["missing", "conflicting", "not_applicable"])
+def test_a2_all_nonknown_statuses_remain_visible(tmp_path, status):
+    producer = _a2_producer()
+    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={"status": status})
+        if f.status == "missing" else f for f in producer.facts)})
+    session = _a2_session(tmp_path, producer=producer)[4]
+    result = session.invoke("lookup_upstream", _a2_lookup(producer, "total_leverage_reported"))
+    assert result["status"] == "ok"
+    gaps = [f for f in result["body"]["rows"][0]["facts"] if f["status"] != "known"]
+    assert len(gaps) == 1 and gaps[0]["status"] == status and gaps[0]["amount"] is None
+    assert gaps[0]["limitation"]
+
+
+@pytest.mark.parametrize("variant", ["other-table", "trend", "rolling", "unknown-basis", "unknown-metric", "missing-companion"])
+def test_a2_existing_actual_facts_outside_universe_stay_hidden(tmp_path, variant):
+    producer = _a2_producer()
+    target = next(f for f in producer.facts if f.table_id == "T4.10" and f.amount is not None)
+    if variant == "other-table":
+        extra = target.model_copy(update={"fact_id": "extra", "table_id": "T4.1"})
+    elif variant in {"trend", "rolling", "unknown-basis"}:
+        field = "field_2" if variant == "trend" else "model-basis:" + "d" * 64 if variant == "unknown-basis" else "rolling:value"
+        extra = target.model_copy(update={"fact_id": "extra", "field": field})
+    elif variant == "unknown-metric":
+        producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={"text": "operating_profit"})
+            if f.row_id == "revenue" and f.field == "field_1" else f for f in producer.facts)})
+        extra = None
+    else: extra = None
+    if extra is not None: producer = producer.model_copy(update={"facts": (*producer.facts, extra)})
+    grants = _a2_grants(producer)
+    if variant == "missing-companion":
+        grants["producers"][0]["coordinates"] = [c for c in grants["producers"][0]["coordinates"]
+            if not (c["table_id"] == "T4.10" and c["row_id"] == "revenue" and c["field"] == "field_0")]
+    store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
+    with pytest.raises(ValueError, match="^not_permitted$"):
+        _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
+
+
+def test_a2_shared_live_offline_submit_refuses_before_callback_and_journal(tmp_path):
+    from deploy_vii.live.submission import submit_model_payload
+    store, attempt, _, _, _ = _a2_session(tmp_path)
+    before = store.read().content_hash()
+    called = []
+    with pytest.raises(ValueError, match="offline-only"):
+        submit_model_payload(store, attempt.ticket_id, "earnings_delta", "invalid private payload",
+                             on_normalised=lambda value: called.append(value))
+    assert not called and store.read().content_hash() == before

@@ -140,7 +140,7 @@ SUBMIT_ONLY: ToolSet = "submit-only"
 
 @dataclass(frozen=True)
 class StepChain:
-    """One module's live steps: the one place a module's step facts are kept.
+    """One module's registered journal steps and explicit shared-live capability.
 
     `steps` is the journal order. The last step settles the module (`settling`: its acceptance
     is the module's), so it is never repaired within the attempt. `cell` names the module's
@@ -175,6 +175,7 @@ class StepChain:
     pack_reads: frozenset[str] = frozenset()
     extract_tools: frozenset[str] = frozenset()
     part_submits: frozenset[str] = frozenset()
+    shared_live: bool = True
 
     @property
     def settling(self) -> str:
@@ -194,6 +195,8 @@ class StepChain:
         )
 
     def __post_init__(self) -> None:
+        if type(self.shared_live) is not bool:
+            raise ValueError("shared_live must be a bool")
         name = f"step chain {self.module_id}"
         if not self.steps:
             raise ValueError(f"{name} has no steps")
@@ -342,6 +345,8 @@ STEP_CHAINS = checked_chains(
             # sends it in parts and Python assembles the stored submission.
             part_submits=frozenset({"financials"}),
         ),
+        # Task4-A2: registration only; upstream-only owner bridge is separately leased.
+        StepChain(module_id="CP-1B", cell="cp1b", steps=("earnings_delta",), shared_live=False),
         # Task 7.2: CP-1A's one step; Python composes the registers as its output.
         StepChain(
             module_id="CP-1A",
@@ -383,6 +388,13 @@ def step_chain(module_id: str, chains: Sequence[StepChain] = STEP_CHAINS) -> Ste
 def step_modules(chains: Sequence[StepChain] = STEP_CHAINS) -> dict[str, str]:
     """Every live step id and its module, in registry and then chain order."""
     return {step_id: chain.module_id for chain in chains for step_id in chain.steps}
+
+
+def shared_live_step_modules(
+    chains: Sequence[StepChain] = STEP_CHAINS,
+) -> dict[str, str]:
+    """Registered steps eligible for shared-live schemas; journal maps remain inclusive."""
+    return {step: chain.module_id for chain in chains if chain.shared_live for step in chain.steps}
 
 
 def settling_steps(chains: Sequence[StepChain] = STEP_CHAINS) -> frozenset[str]:

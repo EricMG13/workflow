@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
 from collections.abc import Mapping
@@ -19,7 +20,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues
 from deploy_vii.registry import dependencies, step_chain
 
-_VIEWS = {"CP-2": "credit_synthesis", "CP-5": "integrity_review"}
+_VIEWS = {"CP-2": "credit_synthesis", "CP-5": "integrity_review", "CP-1B": "earnings_delta"}
 _KEYS = frozenset(
     {
         "fact_id",
@@ -63,8 +64,11 @@ class _Grants:
     fields: frozenset[str]
     coordinates: frozenset[str]
     integrity: bool
+    exact: frozenset[tuple[str, str, str, str]] | None = None
 
     def admits(self, fact: Fact) -> bool:
+        if self.exact is not None:
+            return _coordinate(fact) in self.exact
         return (
             fact.table_id in self.tables
             and fact.row_id in self.rows
@@ -87,7 +91,7 @@ def _strings(value: object, maximum: int) -> list[str]:
 def _view(module_id: str, producer: Module) -> tuple[Fact, ...]:
     # CP5's canonical/status view is explicitly adopted by Task0, separately from
     # integrity_projection (which would omit clean facts not named by any claim).
-    return producer.facts if module_id == "CP-5" else referencable(producer.facts)
+    return producer.facts if module_id in {"CP-5", "CP-1B"} else referencable(producer.facts)
 
 
 def _grants(value: Mapping[str, Any], module_id: str, producer: Module) -> _Grants:
@@ -128,6 +132,162 @@ def _grants(value: Mapping[str, Any], module_id: str, producer: Module) -> _Gran
     )
 
 
+_V2_SCHEMA = "cp1b-upstream-grant/2"
+_V2_REQUIRED = _KEYS - {"denominator", "value_class", "calculation_status"}
+_COORD_KEYS = ("fact_id", "table_id", "row_id", "field")
+_PAGE_KEYS = {"producer_module_id", "producer_sha256", "manifest_sha256", "cursor", "limit"}
+_MEASURES = frozenset({
+    "revenue", "ebitda", "adjusted_ebitda", "ebitda_margin", "cfo_reported", "capex",
+    "fcf", "cash_closing", "total_debt", "net_debt", "total_leverage_reported",
+    "net_leverage_reported",
+})
+
+
+def _canonical(value: Any) -> bytes:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+                      allow_nan=False).encode("utf-8")
+
+
+def _digest(value: Any) -> str:
+    return hashlib.sha256(_canonical(value)).hexdigest()
+
+
+def _coordinate(fact: Fact) -> tuple[str, str, str, str]:
+    return (fact.fact_id, fact.table_id, fact.row_id, fact.field)
+
+
+def _historical_fields(producer: Module) -> tuple[set[tuple[str, str, str, str]], set[str]]:
+    """Resolve identities, not dates, labels, values or a second financial model."""
+    index: dict[str, dict[str, Fact]] = {}
+    for fact in producer.facts:
+        if fact.table_id == "T4.14":
+            index.setdefault(fact.row_id, {})[fact.field] = fact
+    if not index:
+        raise _Refusal("not_permitted")
+    identities: set[str] = set()
+    fields: set[str] = set()
+    for row in index.values():
+        if not {"period_id", "period_type"} <= row.keys():
+            raise _Refusal("not_permitted")
+        identity, kind = row["period_id"], row["period_type"]
+        if any(f.status != "known" or not f.text or f.amount is not None
+               for f in (identity, kind)):
+            raise _Refusal("not_permitted")
+        pid = identity.text
+        assert pid is not None  # The known-text guard above also rejects empty identities.
+        if pid in identities or any(f.period != pid for f in row.values()):
+            raise _Refusal("identity_mismatch")
+        identities.add(pid)
+        if kind.text in {"QUARTER", "FY"}:
+            column = ("Q:" if kind.text == "QUARTER" else "FY:") + pid
+            raw = "".join(f"{len(p)}:{p}" for p in ("historical", column))
+            fields.add("model-basis:" + hashlib.sha256(raw.encode()).hexdigest())
+    return {_coordinate(f) for row in index.values() for f in row.values()}, fields
+
+
+def _v2_grants(value: Mapping[str, Any], producer: Module) -> tuple[_Grants, dict[str, Any]]:
+    """Validate a detached exact-tuple grant before normalizing or disclosing it."""
+    try:
+        grant = json.loads(_canonical(value))
+    except (ValueError, TypeError, RecursionError):
+        raise _Refusal("bad_arguments") from None
+    if type(grant) is not dict or set(grant) != {
+        "schema_version", "consumer_module_id", "step_id", "producers", "raw_source_ids"
+    }:
+        raise _Refusal("bad_arguments")
+    if (grant["schema_version"] != _V2_SCHEMA or grant["consumer_module_id"] != "CP-1B"
+            or grant["step_id"] != "earnings_delta" or grant["raw_source_ids"] != []):
+        raise _Refusal("not_permitted")
+    entries = grant["producers"]
+    if type(entries) is not list or not entries:
+        raise _Refusal("bad_arguments")
+    if len(entries) != 1:
+        raise _Refusal("not_permitted")
+    entry = entries[0]
+    if type(entry) is not dict or set(entry) != {
+        "module_id", "sha256", "coordinates", "projected_fields"
+    }:
+        raise _Refusal("bad_arguments")
+    if entry["module_id"] != "CP-1":
+        raise _Refusal("not_permitted")
+    if type(entry["sha256"]) is not str or re.fullmatch("[0-9a-f]{64}", entry["sha256"]) is None:
+        raise _Refusal("bad_arguments")
+    if producer.content_hash() != entry["sha256"]:
+        raise _Refusal("identity_mismatch")
+    if producer.status not in {"accepted", "restricted"}:
+        raise _Refusal("not_permitted")
+    fields = frozenset(_strings(entry["projected_fields"], len(_KEYS)))
+    if not _V2_REQUIRED <= fields or not fields <= _KEYS:
+        raise _Refusal("not_permitted")
+    coords = entry["coordinates"]
+    if type(coords) is not list or not 1 <= len(coords) <= 100_000:
+        raise _Refusal("bad_arguments")
+    selected: set[tuple[str, str, str, str]] = set()
+    ids: set[str] = set()
+    placements: set[tuple[str, str, str]] = set()
+    coordinate_keys = set(_COORD_KEYS)
+    for coord in coords:
+        if (type(coord) is not dict or coord.keys() != coordinate_keys
+                or any(type(coord[k]) is not str or not coord[k] for k in _COORD_KEYS)):
+            raise _Refusal("bad_arguments")
+        key = tuple(coord[k] for k in _COORD_KEYS)
+        placement = key[1:]
+        if key in selected or key[0] in ids or placement in placements:
+            raise _Refusal("bad_arguments")
+        selected.add(key)
+        ids.add(key[0])
+        placements.add(placement)
+    actual: set[tuple[str, str, str, str]] = set()
+    actual_ids: set[str] = set()
+    actual_placements: set[tuple[str, str, str]] = set()
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in producer.facts:
+        coordinate = _coordinate(fact)
+        actual.add(coordinate)
+        actual_ids.add(coordinate[0])
+        actual_placements.add(coordinate[1:])
+        if fact.table_id == "T4.10":
+            rows.setdefault(fact.row_id, {})[fact.field] = fact
+    fact_count = len(producer.facts)
+    if (len(actual) != fact_count or len(actual_ids) != fact_count
+            or len(actual_placements) != fact_count):
+        raise _Refusal("identity_mismatch")
+    index, historical = _historical_fields(producer)
+    if not index <= selected or not selected <= actual:
+        raise _Refusal("not_permitted")
+    names: dict[str, int] = {}
+    for row in rows.values():
+        metric = row.get("field_1")
+        if metric is not None and metric.status == "known" and metric.text in _MEASURES:
+            names[metric.text] = names.get(metric.text, 0) + 1
+    selected_values = selected - index
+    selected_rows = {key[2] for key in selected_values}
+    by_row: dict[str, set[tuple[str, str, str, str]]] = {}
+    for key in selected_values:
+        by_row.setdefault(key[2], set()).add(key)
+    allowed_fields = historical | {"field_0", "field_1"}
+    for rid in selected_rows:
+        row = rows.get(rid, {})
+        name = row.get("field_1")
+        category = row.get("field_0")
+        if (name is None or category is None or name.status != "known"
+                or name.text not in _MEASURES or category.status != "known" or not category.text):
+            raise _Refusal("not_permitted")
+        if names[name.text] != 1:
+            raise _Refusal("identity_mismatch")
+        own = by_row[rid]
+        if (any(key[1] != "T4.10" or key[3] not in allowed_fields for key in own)
+                or not {_coordinate(name), _coordinate(category)} <= own
+                or not any(key[3] in historical for key in own)):
+            raise _Refusal("not_permitted")
+    entry["coordinates"] = sorted(coords, key=lambda c: (
+        c["table_id"], c["row_id"], c["field"], c["fact_id"]))
+    entry["projected_fields"] = sorted(fields)
+    return _Grants(frozenset({"CP-1"}), frozenset(k[1] for k in selected),
+                   frozenset(k[2] for k in selected), fields,
+                   frozenset(k[3] for k in selected), False, frozenset(selected)), grant
+
+
 def _context(
     store: Execution, ticket_id: str, step_id: str
 ) -> tuple[ExecutionSnapshot, Attempt, PreparedPack, dict[str, Module]]:
@@ -149,7 +309,16 @@ def _context(
         or attempt.payload_sha256 is not None
     ):
         raise _Refusal("stale_binding")
+    if attempt.module_id == "CP-1B":
+        current_attempts = [a for a in snapshot.attempts if a.module_id == "CP-1B"]
+        if (attempt.interruption is not None or attempt.issues or attempt.result_sha256 is not None
+                or current_attempts[-1] != attempt):
+            raise _Refusal("stale_binding")
     pack = store.pack(snapshot)
+    if attempt.module_id == "CP-1B" and (
+        pack.run != snapshot.run or pack.content_hash() != snapshot.pack_sha256
+    ):
+        raise _Refusal("identity_mismatch")
     current = current_inputs(snapshot, attempt.module_id)
     if current != attempt.inputs:
         old = {item.input_id: item for item in attempt.inputs}
@@ -209,7 +378,15 @@ class UpstreamTools:
     ) -> None:
         try:
             snapshot, attempt, pack, modules = _context(store, ticket_id, step_id)
-            granted = _grants(grants, attempt.module_id, modules["CP-1"])
+            normalized = None
+            if attempt.module_id == "CP-1B":
+                if not isinstance(grants, Mapping) or grants.get("schema_version") != _V2_SCHEMA:
+                    raise _Refusal("not_permitted")
+                granted, normalized = _v2_grants(grants, modules["CP-1"])
+            else:
+                if isinstance(grants, Mapping) and "schema_version" in grants:
+                    raise _Refusal("not_permitted")
+                granted = _grants(grants, attempt.module_id, modules["CP-1"])
             if store.read().content_hash() != snapshot.content_hash():
                 raise _Refusal("stale_binding")
         except _Refusal:
@@ -238,6 +415,15 @@ class UpstreamTools:
         self._lock = Lock()
         self._receipt_lock = Lock()
         self._receipts: list[str] = []
+        self._manifest: dict[str, Any] | None = None
+        if normalized is not None:
+            try:
+                self._make_manifest(normalized, modules["CP-1"])
+                self._current()
+            except _Refusal:
+                raise
+            except Exception:
+                raise ValueError("internal_error") from None
 
     @classmethod
     def from_execution(
@@ -251,6 +437,91 @@ class UpstreamTools:
         with self._receipt_lock:
             decoded = [json.loads(receipt) for receipt in self._receipts]
             return tuple(sorted(decoded, key=lambda receipt: receipt["sequence"]))
+
+    def _make_manifest(self, normalized: dict[str, Any], producer: Module) -> None:
+        coordinates = normalized["producers"][0]["coordinates"]
+        self._coordinates = tuple(tuple(c[k] for k in _COORD_KEYS) for c in coordinates)
+        self._nonce = uuid4().hex
+        self._cursors: dict[str, int] = {}
+        periods = [c for c in coordinates if c["table_id"] == "T4.14"]
+        header = {
+            "schema_version": "cp1b-access-manifest/1",
+            "consumer": {"module_id": "CP-1B", "step_id": "earnings_delta"},
+            "producer": {"module_id": "CP-1", "sha256": producer.content_hash(),
+                         "status": producer.status},
+            "snapshot_sha256": self._snapshot_sha256,
+            "ticket_id": self._attempt.ticket_id, "attempt": self._attempt.number,
+            "grant_sha256": _digest(normalized),
+            "period_index": {"table_id": "T4.14", "authorized_complete": True,
+                             "row_count": len({c["row_id"] for c in periods}),
+                             "coordinate_count": len(periods)},
+            "coordinate_count": len(coordinates),
+            "projected_fields": sorted(self._granted.fields),
+            "max_page_entries": 20, "max_body_bytes": 8192,
+        }
+        self._manifest = {**header, "manifest_sha256": _digest({
+            "header": header, "coordinates": coordinates})}
+        if len(_canonical(self._manifest)) > 8192:
+            raise _Refusal("bad_arguments")
+
+    @property
+    def access_manifest(self) -> dict[str, Any]:
+        """Detached bootstrap; completeness describes grants, never observed reads."""
+        if self._manifest is None:
+            raise _Refusal("not_permitted")
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            raise _Refusal("not_permitted")
+        try:
+            self._current()
+            result: dict[str, Any] = json.loads(_canonical(self._manifest))
+            self._current()
+            return result
+        except _Refusal:
+            raise
+        except Exception:
+            raise ValueError("internal_error") from None
+        finally:
+            self._lock.release()
+
+    def _manifest_page(
+        self, args: dict[str, Any]
+    ) -> tuple[dict[str, Any], tuple[str, int] | None]:
+        assert self._manifest is not None
+        digest, cursor, limit = args["manifest_sha256"], args["cursor"], args["limit"]
+        if (type(digest) is not str or re.fullmatch("[0-9a-f]{64}", digest) is None
+                or type(limit) is not int or not 1 <= limit <= 20):
+            raise _Refusal("bad_arguments")
+        if digest != self._manifest["manifest_sha256"]:
+            raise _Refusal("identity_mismatch")
+        offset = 0
+        if cursor is not None:
+            if type(cursor) is not str or re.fullmatch("access-cursor:[0-9a-f]{64}", cursor) is None:
+                raise _Refusal("bad_arguments")
+            if cursor not in self._cursors:
+                raise _Refusal("stale_binding")
+            offset = self._cursors[cursor]
+        total = len(self._coordinates)
+        maximum = min(offset + limit, total)
+        page_entries = [dict(zip(_COORD_KEYS, c, strict=True))
+                        for c in self._coordinates[offset:maximum]]
+        body = {
+            "producer": dict(self._manifest["producer"]),
+            "grant_sha256": self._manifest["grant_sha256"], "manifest_sha256": digest,
+            "coordinate_count": total, "offset": offset,
+            "entries": page_entries,
+            "next_cursor": None, "complete": False,
+        }
+        for end in range(maximum, offset, -1):
+            token = None if end == total else "access-cursor:" + _digest({
+                "nonce": self._nonce, "binding": self._binding,
+                "manifest_sha256": digest, "offset": end})
+            body["next_cursor"] = token
+            body["complete"] = end == total
+            if len(_canonical(body)) <= 8192:
+                return body, None if token is None else (token, end)
+            page_entries.pop()
+        raise _Refusal("bad_arguments")
 
     def _current(self) -> tuple[PreparedPack, dict[str, Module]]:
         if self._store.read().content_hash() != self._snapshot_sha256:
@@ -266,6 +537,8 @@ class UpstreamTools:
         except (ValueError, OSError, KeyError, TypeError):
             raise _Refusal("identity_mismatch") from None
         if snapshot.content_hash() != self._snapshot_sha256 or attempt != self._attempt:
+            raise _Refusal("stale_binding")
+        if self._manifest is not None and self._store.read().content_hash() != self._snapshot_sha256:
             raise _Refusal("stale_binding")
         return pack, modules
 
@@ -287,9 +560,10 @@ class UpstreamTools:
         return producer
 
     def _facts(self, producer: Module) -> tuple[Fact, ...]:
-        return tuple(
+        facts = tuple(
             fact for fact in _view(self._attempt.module_id, producer) if self._granted.admits(fact)
         )
+        return tuple(sorted(facts, key=lambda f: (f.field, f.fact_id))) if self._manifest else facts
 
     def _lookup(self, args: dict[str, Any], producer: Module) -> dict[str, Any]:
         rows = _strings(args["row_ids"], 20)
@@ -331,6 +605,9 @@ class UpstreamTools:
             }
 
         return {
+            **({"projection": "granted_fact_projection",
+                "grant_sha256": self._manifest["grant_sha256"],
+                "manifest_sha256": self._manifest["manifest_sha256"]} if self._manifest else {}),
             "table_id": table,
             "rows": [
                 {"row_id": row, "facts": [project(fact) for fact in available[row]]} for row in rows
@@ -340,6 +617,8 @@ class UpstreamTools:
     def _verify(self, args: dict[str, Any], producer: Module, pack: PreparedPack) -> dict[str, Any]:
         ids = _strings(args["fact_ids"], 20)
         kind = args["kind"]
+        if self._manifest is not None and kind == "integrity":
+            raise _Refusal("not_permitted")
         if kind not in ("citations", "integrity"):
             raise _Refusal("bad_arguments")
         permitted = {fact.fact_id: fact for fact in self._facts(producer)}
@@ -389,6 +668,8 @@ class UpstreamTools:
                     {"code": finding.kind, "fact_ids": [ref for ref in ids if ref in affected]}
                 )
         return {
+            **({"grant_sha256": self._manifest["grant_sha256"],
+                "manifest_sha256": self._manifest["manifest_sha256"]} if self._manifest else {}),
             "kind": kind,
             "verdict": "invalid" if issues else "valid",
             "issue_count": len(issues),
@@ -422,21 +703,25 @@ class UpstreamTools:
                 "error_code": None,
                 "source_evidence": {"read": [], "extracted": [], "surfaced": [], "searched": []},
             }
+            staged_cursor = None
             try:
                 if not acquired:
                     raise _Refusal("not_permitted")
                 expected = {"lookup_upstream": _LOOKUP_KEYS, "verify_upstream": _VERIFY_KEYS}
+                if self._manifest is not None:
+                    expected["read_access_manifest"] = _PAGE_KEYS
                 if tool_name not in expected:
                     raise _Refusal("not_permitted")
                 if type(supplied) is not dict or set(supplied) != expected[tool_name]:
                     raise _Refusal("bad_arguments")
                 pack, modules = self._current()
                 producer = self._producer(supplied, modules)
-                data = (
-                    self._lookup(supplied, producer)
-                    if tool_name == "lookup_upstream"
-                    else self._verify(supplied, producer, pack)
-                )
+                if tool_name == "read_access_manifest":
+                    data, staged_cursor = self._manifest_page(supplied)
+                elif tool_name == "lookup_upstream":
+                    data = self._lookup(supplied, producer)
+                else:
+                    data = self._verify(supplied, producer, pack)
                 body = {
                     "producer": {
                         "module_id": producer.module_id,
@@ -468,6 +753,9 @@ class UpstreamTools:
                             receipt, ensure_ascii=False, allow_nan=False, separators=(",", ":")
                         )
                     )
+                if receipt["status"] == "ok" and staged_cursor is not None:
+                    token, offset = staged_cursor
+                    self._cursors[token] = offset
             return receipt
         finally:
             if acquired:

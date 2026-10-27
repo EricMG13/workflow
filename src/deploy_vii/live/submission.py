@@ -126,6 +126,7 @@ from deploy_vii.registry import (
     pack_tool_steps,
     part_submit_steps,
     prefilled_kinds,
+    shared_live_step_modules,
     step_chain,
     step_modules,
 )
@@ -211,16 +212,28 @@ class StepDef:
     schema: type[BaseModel]  # the model-facing shape: prompt schema, response_format, parse
 
 
+class _StepDefinitions(dict[str, StepDef]):
+    """No schema sentinel: indexing registered offline capability refuses explicitly."""
+
+    def __missing__(self, step_id: str) -> StepDef:
+        if step_id in step_modules() and step_id not in shared_live_step_modules():
+            raise ValueError(f"Step {step_id} is offline-only; no shared-live schema")
+        raise KeyError(step_id)
+
+
 def step_definitions(schemas: Mapping[str, type[BaseModel]]) -> dict[str, StepDef]:
-    """Every registry step (`registry.step_modules`, its order and module) with its schema from
-    `schemas`; a registry step without a schema, or a schema for no registry step, raises
-    ValueError (task 8.0a)."""
-    modules = step_modules()
+    """Exactly the eligible shared-live steps, with strict schema totality and order.
+
+    Journal-only steps remain registered but cannot acquire a fabricated live schema.
+    """
+    modules = shared_live_step_modules()
     if extra := sorted(set(schemas) - set(modules)):
         raise ValueError(f"a schema for {', '.join(extra)}, which is no live step")
     if missing := [step_id for step_id in modules if step_id not in schemas]:
         raise ValueError(f"no model-facing schema for {', '.join(missing)}")
-    return {step_id: StepDef(module_id, schemas[step_id]) for step_id, module_id in modules.items()}
+    return _StepDefinitions(
+        {step_id: StepDef(module_id, schemas[step_id]) for step_id, module_id in modules.items()}
+    )
 
 
 STEPS: Mapping[str, StepDef] = step_definitions(

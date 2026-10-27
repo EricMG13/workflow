@@ -1,0 +1,2518 @@
+{
+  "schema_version": "snapshot-s1-submissions/1",
+  "note": "Literal analyst submissions for the business_context and credit_synthesis steps. {{FIG:name}} marks a CP-1 figure reference to be replaced mechanically by {<actual CP-1 fact_id>|<unit_token>} after the CP-1 head is inspected; unreplaced it is malformed run text and fails closed. figures lists each name's CP-1 coordinate, oracle ratio and unit token.",
+  "figures": {
+    "total_leverage_reported": {
+      "cp1_coordinate": "T4.10 total_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+      "oracle_ratio": "50/30",
+      "unit_token": "x",
+      "spelled": "1.67x"
+    },
+    "net_leverage_reported": {
+      "cp1_coordinate": "T4.10 net_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+      "oracle_ratio": "30/30",
+      "unit_token": "x",
+      "spelled": "1.00x"
+    },
+    "interest_coverage_reported": {
+      "cp1_coordinate": "T4.10 interest_coverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+      "oracle_ratio": "30/5",
+      "unit_token": "x",
+      "spelled": "6.00x"
+    },
+    "fcf_to_debt": {
+      "cp1_coordinate": "T4.10 fcf_to_debt, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+      "oracle_ratio": "9/50",
+      "unit_token": "%",
+      "spelled": "18.0%"
+    }
+  },
+  "positive": {
+    "readiness_review": {
+      "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+      "objective": "Historical financial foundation, business context and credit synthesis",
+      "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+      "issuer_confirmed": true,
+      "sources": [
+        {
+          "source_id": "identity",
+          "document_family": "Identity note",
+          "authority": "issuer",
+          "entity": "Northbridge Synthetic Group",
+          "period": "January 2026",
+          "version_relationship": "Accompanying identity note",
+          "fidelity": "verified",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "limitations": []
+        },
+        {
+          "source_id": "financial",
+          "document_family": "Quarterly financial statements",
+          "authority": "issuer",
+          "entity": "Northbridge Synthetic Group",
+          "period": "Four quarters in 2025",
+          "version_relationship": "Unaudited quarterly source",
+          "fidelity": "verified",
+          "citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "source_id": "business",
+          "document_family": "Business and ownership note",
+          "authority": "issuer",
+          "entity": "Northbridge Synthetic Group",
+          "period": "January 2026",
+          "version_relationship": "Issuer-authored note accompanying the statements",
+          "fidelity": "verified",
+          "citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "limitations": []
+        }
+      ],
+      "consumers": [
+        {
+          "module_id": "CP-1",
+          "readiness": "READY_WITH_LIMITATIONS",
+          "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+          "source_ids": [
+            "identity",
+            "financial"
+          ],
+          "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "missing_source": null,
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "module_id": "CP-1A",
+          "readiness": "READY_WITH_LIMITATIONS",
+          "evidence_demand": "Located business, operating, ownership and transaction facts with quotes",
+          "source_ids": [
+            "identity",
+            "financial",
+            "business"
+          ],
+          "rationale": "The business, ownership and transaction fact pack can be built from the located note with explicit source limitations.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            },
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "missing_source": null,
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "module_id": "CP-2",
+          "readiness": "READY_WITH_LIMITATIONS",
+          "evidence_demand": "Settled CP-1 figures and CP-1A registers",
+          "source_ids": [
+            "identity",
+            "financial",
+            "business"
+          ],
+          "rationale": "The synthesis can run on settled upstream registers with inherited limitations.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            },
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "missing_source": null,
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        }
+      ],
+      "gaps": [],
+      "analysis": [
+        {
+          "claim_id": "source-assessment",
+          "text": "Located statements and the business note support historical, business and ownership analysis with limitations.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            },
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+        }
+      ]
+    },
+    "cp1_source_context": {
+      "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+      "entities": [
+        {
+          "entity_id": "issuer",
+          "name": "Northbridge Synthetic Group",
+          "entity_type": "group",
+          "roles": [
+            "issuer"
+          ],
+          "fiscal_year_end": "December 31",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "identity",
+          "classification": "nonfinancial",
+          "document_type": "Identity note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Identity only",
+          "analytical_use": "Issuer identity",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "event_scan": "unassessed",
+          "event_scan_explanation": "Identity is not event evidence"
+        },
+        {
+          "source_id": "financial",
+          "classification": "financial",
+          "document_type": "Quarterly statements",
+          "published_on": "2026-01-10",
+          "evidence_class": "unaudited_without_auditor",
+          "evidence_rationale": "No auditor report",
+          "analytical_use": "Historical financial analysis",
+          "citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "scopes": [
+            {
+              "scope_id": "opening-2024",
+              "entity_id": "issuer",
+              "period_label": "opening-2024",
+              "period_kind": "period_end",
+              "start_date": null,
+              "end_date": "2024-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q1-2025",
+              "entity_id": "issuer",
+              "period_label": "q1-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-03-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q2-2025",
+              "entity_id": "issuer",
+              "period_label": "q2-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-04-01",
+              "end_date": "2025-06-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q3-2025",
+              "entity_id": "issuer",
+              "period_label": "q3-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-07-01",
+              "end_date": "2025-09-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q4-2025",
+              "entity_id": "issuer",
+              "period_label": "q4-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-10-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "fy-2025",
+              "entity_id": "issuer",
+              "period_label": "fy-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "source_id": "business",
+          "classification": "nonfinancial",
+          "document_type": "Business and ownership note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Issuer-authored note without auditor or filing status",
+          "analytical_use": "Business, operating, ownership and transaction context for CP-1A",
+          "citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:3",
+              "quote": "No acquisition, disposal, new financing, refinancing or change of ownership occurred in 2025, and none is announced or pending as of January 10, 2026."
+            }
+          ]
+        }
+      ],
+      "limitations": [
+        "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+    },
+    "business_context": {
+      "sources": [
+        {
+          "source_id": "identity",
+          "source_class": "issuer",
+          "quality": "High",
+          "period": "January 10, 2026",
+          "entity_covered": "Northbridge Synthetic Group, consolidated group",
+          "data_supplied": "Issuer identity, fiscal year end and perimeter statement",
+          "use": "Confirms the issuer identity and that no borrower, guarantor or restricted-group perimeter is established",
+          "citations": [
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "No borrower, guarantor or restricted-group perimeter is established by this source set."
+            }
+          ],
+          "limitation": "Synthetic test data, not evidence about a real issuer"
+        },
+        {
+          "source_id": "financial",
+          "source_class": "issuer",
+          "quality": "High",
+          "period": "FY2025",
+          "entity_covered": "Northbridge Synthetic Group, consolidated group",
+          "data_supplied": "Quarterly and annual statements, the facility schedule and statements of what did not occur",
+          "use": "Documents the single operating segment, the single debt facility, distributions and the absence of acquisitions and adjustments",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "One operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2025"
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+            }
+          ],
+          "limitation": "Unaudited; borrower, guarantor and restricted-group perimeters are not established"
+        },
+        {
+          "source_id": "business",
+          "source_class": "issuer",
+          "quality": "Medium",
+          "period": "January 10, 2026",
+          "entity_covered": "Northbridge Synthetic Group",
+          "data_supplied": "Business description, customers, operating model, ownership, financing and history",
+          "use": "Supplies the business, ownership and transaction facts and carries management characterisations",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "It designs, manufactures and sells fastening and sealing components for industrial equipment."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The issuer is wholly owned by Harbour Ridge Holdings Limited, a synthetic holding company."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+            }
+          ],
+          "limitation": "Issuer-authored note with management statements; customer concentration and ultimate owners are not disclosed"
+        }
+      ],
+      "company": [
+        {
+          "aspect": "business_description",
+          "text": "Designs, manufactures and sells fastening and sealing components for industrial equipment, supplied to industrial distributors and original-equipment manufacturers",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "It designs, manufactures and sells fastening and sealing components for industrial equipment."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Customers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "aspect": "country",
+          "text": "United States",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "All operations and all reported revenue are in the United States."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "aspect": "sector",
+          "text": "Industrial products manufacturing",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "business_lines": [
+        {
+          "name": "Consolidated Operations (single reported operating segment)",
+          "revenue_mix": "All reported revenue is reported in this one operating segment",
+          "period": "FY2025",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "One operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2025"
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "name": "Fastening and sealing components (product lines)",
+          "revenue_mix": "Split between product lines not disclosed",
+          "period": "FY2025",
+          "category": "Insufficient Information",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "The split of revenue between fastening and sealing components, and between distributors and original-equipment manufacturers, is not disclosed."
+            }
+          ],
+          "limitation": "The source states that the product-line and customer-type revenue split is not disclosed, so product-line mix cannot be assessed"
+        }
+      ],
+      "owners": [
+        {
+          "owner": "Harbour Ridge Holdings Limited (sole shareholder)",
+          "control": "Wholly owns the issuer; board composition and control rights beyond ownership are not disclosed",
+          "economic_interest": "The whole equity of the issuer as stated; the holding company is held by private investors who are not identified",
+          "credit_relevance": "Dividend decisions rest with a single shareholder whose own owners are not identified",
+          "evidence_quality": "High",
+          "credit_mechanic": "A single holding-company shareholder receives the dividends, so cash leaves the group at the shareholder's discretion and the ultimate owners cannot be assessed for support willingness",
+          "credit_implication": "Shareholder distributions are a leakage channel competing with debt service; the lack of ultimate-owner disclosure limits the assessment of equity support and monitoring posture",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The issuer is wholly owned by Harbour Ridge Holdings Limited, a synthetic holding company."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The identity and percentage holdings of those investors are not disclosed."
+            }
+          ],
+          "limitation": "Ultimate owners and percentage holdings are not disclosed; no percentage is inferred"
+        }
+      ],
+      "operating_drivers": [
+        {
+          "driver": "Pricing",
+          "measure": "List prices are reviewed once a year; management states that raw-material cost increases are passed to customers with a lag of one to two quarters",
+          "period": "FY2025",
+          "status": "Partially disclosed",
+          "credit_relevance": "A pass-through lag exposes margin to temporary squeezes when input costs rise",
+          "category": "Management Language",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Management states that raw-material cost increases are passed to customers with a lag of one to two quarters."
+            }
+          ],
+          "limitation": "Pass-through is a management statement; its realised effect on margin is not disclosed"
+        },
+        {
+          "driver": "Volume drivers",
+          "measure": "Distributor restocking cycles and original-equipment production schedules",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Volumes follow customer inventory and production cycles, which moves revenue with the cycle",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Volumes follow distributor restocking cycles and original-equipment production schedules."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Cost structure",
+          "measure": "Cost of sales consists mainly of steel, elastomer and manufacturing labour",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Commodity and labour inputs drive margin resilience",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Cost of sales consists mainly of steel, elastomer and manufacturing labour."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Capital spending",
+          "measure": "Maintenance of existing plants; no growth capital programme",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Capital spending is discretionary-light, which supports cash conversion",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Capital expenditure maintains existing plants; no growth capital programme is under way."
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Capital expenditure is entirely maintenance investment; growth capex is zero."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Working capital",
+          "measure": "Trade receivables, inventories and trade payables",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Receivables and inventory absorb cash when volumes grow",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Working capital consists of trade receivables, inventories and trade payables."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Customer concentration",
+          "measure": null,
+          "period": "FY2025",
+          "status": "Not disclosed",
+          "credit_relevance": "Concentration cannot be assessed, so loss of a major customer cannot be sized",
+          "category": "Insufficient Information",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "The share of revenue from the largest customer is not disclosed."
+            }
+          ],
+          "limitation": "The share of revenue from the largest customer is not disclosed; concentration risk cannot be assessed"
+        },
+        {
+          "driver": "Aftermarket franchise (management characterisation)",
+          "measure": "Management describes the group as a leading supplier with a resilient aftermarket franchise",
+          "period": "FY2025",
+          "status": "Partially disclosed",
+          "credit_relevance": "Resilience is asserted by management and is not evidenced by retention or share data",
+          "category": "Management Language",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Management describes the group as a leading supplier with a resilient aftermarket franchise."
+            }
+          ],
+          "limitation": "No customer retention, market share or aftermarket revenue data is supplied"
+        }
+      ],
+      "transactions": [
+        {
+          "transaction": "Northbridge Term Loan: the only borrowing of the group, a senior secured term loan with final maturity on December 31, 2029; no new financing, acquisition, disposal or change of ownership is announced or pending",
+          "status": "Completed",
+          "credit_relevance": "The sole debt instrument concentrates refinancing exposure at one maturity date, and no new transaction is in front of the committee",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "No acquisition, disposal, new financing, refinancing or change of ownership occurred in 2025, and none is announced or pending as of January 10, 2026."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "events": [
+        {
+          "date_window": "2011",
+          "event": "Business founded as a family-owned manufacturer",
+          "credit_relevance": "Establishes an operating history of more than a decade",
+          "status": "Completed",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "The business was founded in 2011 as a family-owned manufacturer."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "date_window": "2019",
+          "event": "Harbour Ridge Holdings Limited acquired the group",
+          "credit_relevance": "The current ownership structure dates from this acquisition; its terms and financing are not disclosed",
+          "status": "Completed",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "Harbour Ridge Holdings Limited acquired the group in 2019."
+            }
+          ],
+          "limitation": "Acquisition terms and financing are not disclosed"
+        },
+        {
+          "date_window": "FY2025",
+          "event": "Dividend paid to Harbour Ridge Holdings Limited in each quarter",
+          "credit_relevance": "A recurring cash distribution to the sole shareholder",
+          "status": "Completed",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The issuer paid a dividend to Harbour Ridge Holdings Limited in each quarter of 2025 under a shareholder distribution policy approved by the board."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "date_window": "December 31, 2029",
+          "event": "Final maturity of the Northbridge Term Loan",
+          "credit_relevance": "The single maturity date for all debt is a refinancing event",
+          "status": "Pending",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "Mandatory annual amortisation is 0; final maturity is December 31, 2029."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "governance_and_sponsor": [
+        {
+          "kind": "behaviour_flag",
+          "topic": "Quarterly dividends to the sole shareholder",
+          "documented_fact": "A dividend was paid to the sole shareholder in each quarter of FY2025 under a board-approved distribution policy; no dividend recapitalisation, shareholder loan or other related-party payment is reported",
+          "direction": "Mixed",
+          "behaviour_type": "distribution",
+          "amount_funding_source": "Amounts are in the cash flow statement of the financial source; the funding source is not stated",
+          "legal_capacity_link": "Distribution capacity under the Northbridge Term Loan is not in this source set; legal capacity, willingness and feasibility are not assessed together here",
+          "dimension": "Shareholder extraction risk",
+          "risk_mechanic": "Recurring distributions remove cash that could service or repay debt, and the funding source of the distributions is not stated",
+          "credit_implication": "Distributions compete with debt service and deleveraging; extraction cannot be concluded or excluded from this source set",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The issuer paid a dividend to Harbour Ridge Holdings Limited in each quarter of 2025 under a shareholder distribution policy approved by the board."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "No dividend recapitalisation, shareholder loan or related-party payment other than these dividends is reported."
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:3",
+              "quote": "Dividends paid (2.25) (2.25) (2.25) (2.25) (9.00)"
+            }
+          ],
+          "limitation": "The funding source of the dividends is not stated"
+        },
+        {
+          "kind": "governance_topic",
+          "topic": "Acquisition and disposal activity",
+          "documented_fact": "No acquisition or disposal occurred in any quarter of FY2025 or in the full year, and none is announced or pending",
+          "direction": "Neutral",
+          "behaviour_type": null,
+          "amount_funding_source": null,
+          "legal_capacity_link": null,
+          "dimension": "Acquisition appetite",
+          "risk_mechanic": "No acquisition spending draws on cash or debt capacity, so integration and acquisition-funding risk is absent in the period",
+          "credit_implication": "No acquisition-driven change in leverage follows from the documented position; appetite beyond FY2025 is not inferred from one year",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases"
+            },
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "No acquisition, disposal, new financing, refinancing or change of ownership occurred in 2025, and none is announced or pending as of January 10, 2026."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "governance_topic",
+          "topic": "Financial reporting and disclosure",
+          "documented_fact": "Quarterly and annual statements and a complete facility schedule are supplied, but the statements are unaudited, operating KPIs are not disclosed and no borrower, guarantor or restricted-group perimeter is established",
+          "direction": "Mixed",
+          "behaviour_type": null,
+          "amount_funding_source": null,
+          "legal_capacity_link": null,
+          "dimension": "Disclosure transparency",
+          "risk_mechanic": "Unaudited statements and absent KPIs limit independent verification of reported earnings and cash conversion",
+          "credit_implication": "Monitoring relies on unaudited issuer figures; assurance and perimeter gaps lower confidence in covenant and leverage readings",
+          "evidence_quality": "Medium",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Unaudited quarterly and reported FY2025 financial statements"
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Operational KPIs and source-reported unlevered free cash flow are not disclosed."
+            },
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "No borrower, guarantor or restricted-group perimeter is established by this source set."
+            }
+          ],
+          "limitation": "No audit report or perimeter definition is supplied"
+        },
+        {
+          "kind": "governance_topic",
+          "topic": "Debt structure and leverage tolerance",
+          "documented_fact": "The group has one senior secured term loan and no revolving facility, lease or other debt",
+          "direction": "Neutral",
+          "behaviour_type": null,
+          "amount_funding_source": null,
+          "legal_capacity_link": null,
+          "dimension": "Leverage tolerance",
+          "risk_mechanic": "A single secured instrument with no revolver leaves no committed liquidity backstop beyond cash and concentrates refinancing at one maturity",
+          "credit_implication": "Liquidity depends on cash and operating cash flow; refinancing risk is concentrated at the single final maturity",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "There is no revolving credit facility: RCF commitment and RCF drawings are each zero at opening and every quarter/FY end."
+            }
+          ],
+          "limitation": "No leverage policy, covenant certificate or security terms are in the source set"
+        }
+      ],
+      "capital_allocation": [
+        {
+          "item": "Shareholder distributions",
+          "fact": "Dividends were paid in every quarter of FY2025 and no equity was issued or repurchased",
+          "direction": "Mixed",
+          "risk_mechanic": "Distributions reduce cash available for debt service and no equity contribution offsets them",
+          "credit_implication": "Cash leakage to the shareholder competes with deleveraging; the funding source is not documented",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:3",
+              "quote": "Dividends paid (2.25) (2.25) (2.25) (2.25) (9.00)"
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases"
+            }
+          ],
+          "limitation": "The funding source of the dividends is not stated"
+        },
+        {
+          "item": "Capital expenditure",
+          "fact": "Capital expenditure is entirely maintenance investment and growth capital expenditure is zero",
+          "direction": "Neutral",
+          "risk_mechanic": "Maintenance-only spending keeps cash conversion high but defers any growth investment",
+          "credit_implication": "Free cash flow is not constrained by an investment programme; growth depends on existing capacity",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Capital expenditure is entirely maintenance investment; growth capex is zero."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "acquisitions": [],
+      "disclosure_items": [
+        {
+          "item": "Debt schedule",
+          "available": "Yes",
+          "detail": "A complete facility schedule with balances at each reporting date is supplied",
+          "credit_relevance": "Needed to track debt and maturity",
+          "severity": "Minor",
+          "follow_up": "None required",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+            }
+          ]
+        },
+        {
+          "item": "Maturity schedule",
+          "available": "Yes",
+          "detail": "Final maturity and mandatory amortisation of the single facility are stated",
+          "credit_relevance": "Needed to size refinancing exposure",
+          "severity": "Minor",
+          "follow_up": "None required",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "Mandatory annual amortisation is 0; final maturity is December 31, 2029."
+            }
+          ]
+        },
+        {
+          "item": "Covenant certificate",
+          "available": "No",
+          "detail": "No covenant certificate or covenant terms are in the CP-1A source set",
+          "credit_relevance": "Headroom to financial covenants cannot be monitored",
+          "severity": "Material",
+          "follow_up": "Obtain the covenant certificate and the executed covenant terms",
+          "citations": []
+        },
+        {
+          "item": "Add-back bridge",
+          "available": "Yes",
+          "detail": "The source states that no EBITDA adjustments or add-backs occurred and that the disclosure is complete",
+          "credit_relevance": "Reported and adjusted EBITDA are the same, so no add-back risk arises",
+          "severity": "Minor",
+          "follow_up": "None required",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "No EBITDA adjustments or add-backs occurred in any quarter or FY2025; this disclosure is complete."
+            }
+          ]
+        },
+        {
+          "item": "Security package and guarantees",
+          "available": "No",
+          "detail": "The business note states that it does not describe the security package, guarantees or covenants",
+          "credit_relevance": "Recovery prospects and creditor control cannot be assessed without them",
+          "severity": "Material",
+          "follow_up": "Obtain the security and guarantee terms",
+          "citations": []
+        }
+      ],
+      "credit_translations": [
+        {
+          "theme": "Revenue Durability",
+          "evidence": "Revenue comes from distributors serving maintenance demand and from original-equipment manufacturers on annual supply agreements; the revenue split and customer concentration are not disclosed",
+          "risk_mechanic": "Maintenance demand is recurring but annual supply agreements reset each year, so revenue visibility is limited to the contract year",
+          "credit_implication": "Debt service capacity rests on annual contract renewals; undisclosed concentration limits confidence in any durability view",
+          "confidence": "Medium",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Customers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements."
+            }
+          ],
+          "limitation": "Customer concentration and the revenue split are not disclosed"
+        },
+        {
+          "theme": "Margin/CF Risk",
+          "evidence": "Management states that raw-material cost increases are passed to customers with a lag",
+          "risk_mechanic": "The lag exposes margin to a temporary squeeze when steel and elastomer costs rise",
+          "credit_implication": "Cash conversion and debt service cover can weaken for the length of the lag; the pass-through is a management statement not tested in the source set",
+          "confidence": "Low",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Management states that raw-material cost increases are passed to customers with a lag of one to two quarters."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Cost of sales consists mainly of steel, elastomer and manufacturing labour."
+            }
+          ],
+          "limitation": "Realised pass-through is not evidenced"
+        },
+        {
+          "theme": "Concentration Risk",
+          "evidence": "No customer concentration disclosure is supplied",
+          "risk_mechanic": "Loss of a major customer could remove a large share of revenue, but the share is unknown",
+          "credit_implication": "Concentration risk is unassessed and is treated as neither adverse nor benign",
+          "confidence": "Insufficient Information",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "The share of revenue from the largest customer is not disclosed."
+            }
+          ],
+          "limitation": "The share of revenue from the largest customer is not disclosed"
+        },
+        {
+          "theme": "Sponsor Alignment",
+          "evidence": "The sole shareholder is a holding company held by undisclosed private investors and receives a dividend every quarter; no financial sponsor is identified",
+          "risk_mechanic": "Without identified ultimate owners, support willingness cannot be inferred, and distributions are the only documented owner behaviour",
+          "credit_implication": "Equity support is not assumed in the credit view, and distributions are monitored against debt service",
+          "confidence": "Medium",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The issuer is wholly owned by Harbour Ridge Holdings Limited, a synthetic holding company."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The issuer paid a dividend to Harbour Ridge Holdings Limited in each quarter of 2025 under a shareholder distribution policy approved by the board."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "The source set identifies no financial sponsor."
+            }
+          ],
+          "limitation": "Ultimate owners and the terms of the distribution policy are not disclosed"
+        },
+        {
+          "theme": "Key Uncertainties",
+          "evidence": "No covenant certificate, security package, guarantee terms, audit report or customer concentration disclosure is in the source set",
+          "risk_mechanic": "Unverified creditor protections and unaudited figures leave covenant headroom and recovery prospects untested",
+          "credit_implication": "The monitoring posture should treat the credit view as provisional until these items are obtained",
+          "confidence": "Medium",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Unaudited quarterly and reported FY2025 financial statements"
+            },
+            {
+              "source_id": "business",
+              "locator": "page:3",
+              "quote": "This note does not describe the security package, guarantees or covenants of the Northbridge Term Loan."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "conflicts": [],
+      "gaps": [
+        {
+          "gap": "No covenant certificate or covenant terms in the CP-1A source set",
+          "why_it_matters": "Headroom to financial covenants cannot be monitored",
+          "affected_analysis": "Key uncertainties translation and the financial risk view of the credit synthesis",
+          "severity": "Material",
+          "action": "Obtain the covenant certificate and the executed covenant terms"
+        },
+        {
+          "gap": "Customer concentration and product-line revenue split not disclosed",
+          "why_it_matters": "Revenue durability and concentration risk cannot be confirmed",
+          "affected_analysis": "Revenue durability and concentration translations",
+          "severity": "Material",
+          "action": "Request the largest-customer share and revenue by product line"
+        },
+        {
+          "gap": "Owners of the holding company and distribution policy terms not disclosed",
+          "why_it_matters": "Support willingness and distribution capacity cannot be assessed",
+          "affected_analysis": "Sponsor alignment translation and the governance score",
+          "severity": "Material",
+          "action": "Request the ownership chain and the distribution policy"
+        }
+      ],
+      "consumers": [
+        {
+          "module_id": "CP-2",
+          "status": "READY",
+          "handoff_item": "Business, ownership and operating registers and the governance score for the credit synthesis",
+          "why_it_matters": "Business risk in the synthesis rests on these rows",
+          "gap": "No blocking gap; material gaps are listed in the gaps ledger",
+          "required_action": "Cite CP-1A rows for business risk and restate material gaps in the synthesis gaps ledger",
+          "citations": [],
+          "flag_topics": [
+            "Quarterly dividends to the sole shareholder"
+          ]
+        },
+        {
+          "module_id": "CP-MODEL",
+          "status": "READY_WITH_LIMITATIONS",
+          "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
+          "why_it_matters": "The Model snapshot shows these fields with their source",
+          "gap": "Owners behind the holding company are not disclosed",
+          "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "All operations and all reported revenue are in the United States."
+            }
+          ],
+          "flag_topics": []
+        }
+      ]
+    },
+    "credit_synthesis": {
+      "assessment": {
+        "rationale": "The fundamental credit view is moderate and provisional: total leverage is {{FIG:total_leverage_reported}} and net leverage {{FIG:net_leverage_reported}} on reported EBITDA for the twelve months to FY2025, and interest cover is {{FIG:interest_coverage_reported}}, but a single maturity, undisclosed customer concentration, unaudited statements and absent covenant terms keep confidence below High.",
+        "category": "Analyst Interpretation",
+        "confidence": "Medium",
+        "cp1a_refs": [
+          "revenue_business_mix.r01",
+          "credit_translation.r05"
+        ],
+        "limitation": "Unaudited statements, no covenant terms, undisclosed customer concentration and an undisclosed ownership chain"
+      },
+      "thesis": {
+        "text": "Northbridge Synthetic Group is a low-leverage, cash-generative industrial manufacturer whose credit strength rests on unaudited figures and a single maturity, so the view is a provisional stable thesis pending covenant terms and customer disclosure.",
+        "category": "Analyst Interpretation",
+        "cp1a_refs": [
+          "credit_translation.r01",
+          "credit_translation.r05"
+        ],
+        "limitation": null
+      },
+      "strengths": [
+        {
+          "label": "Low reported leverage",
+          "text": "Total leverage is {{FIG:total_leverage_reported}} and net leverage is {{FIG:net_leverage_reported}} on reported EBITDA for the twelve months to FY2025.",
+          "category": "Documentary Fact",
+          "cp1a_refs": [],
+          "limitation": null
+        },
+        {
+          "label": "Cash generation and cover",
+          "text": "Interest cover is {{FIG:interest_coverage_reported}} and free cash flow is {{FIG:fcf_to_debt}} of debt, with capital expenditure entirely for maintenance.",
+          "category": "Documentary Fact",
+          "cp1a_refs": [
+            "operating_model.r04"
+          ],
+          "limitation": null
+        },
+        {
+          "label": "No acquisition pressure",
+          "text": "No acquisition or disposal occurred in the period, so there is no integration or acquisition-funding pressure on cash flow.",
+          "category": "Documentary Fact",
+          "cp1a_refs": [
+            "T2D.3.r01"
+          ],
+          "limitation": null
+        }
+      ],
+      "weaknesses": [
+        {
+          "label": "Single maturity and no revolver",
+          "text": "All debt is one senior secured term loan with no revolving facility, so liquidity rests on cash and operating cash flow and refinancing is concentrated at one date.",
+          "category": "Analyst Interpretation",
+          "cp1a_refs": [
+            "transaction_summary.r01",
+            "T2D.3.r03"
+          ],
+          "limitation": null
+        },
+        {
+          "label": "Customer concentration unassessed",
+          "text": "Customer concentration and the revenue split are not disclosed, so revenue durability cannot be confirmed.",
+          "category": "Insufficient Information",
+          "cp1a_refs": [
+            "operating_model.r06",
+            "revenue_business_mix.r02"
+          ],
+          "limitation": "The largest-customer share and the product-line split are not disclosed, so their effect on revenue durability is unknown"
+        },
+        {
+          "label": "Distributions and unaudited reporting",
+          "text": "Dividends are paid to the sole shareholder every quarter, the funding source is not documented and the statements are unaudited, which weakens confidence in cash available for debt service.",
+          "category": "Analyst Interpretation",
+          "cp1a_refs": [
+            "T2D.4.r01",
+            "T2D.3.r02"
+          ],
+          "limitation": null
+        }
+      ],
+      "key_findings": [
+        {
+          "text": "Leverage is low: total {{FIG:total_leverage_reported}} and net {{FIG:net_leverage_reported}} on reported EBITDA for the twelve months to FY2025, with interest cover of {{FIG:interest_coverage_reported}}.",
+          "cp1a_refs": []
+        },
+        {
+          "text": "All debt is a single senior secured term loan maturing on December 31, 2029 with no revolver, which concentrates refinancing risk at one date.",
+          "cp1a_refs": [
+            "transaction_summary.r01"
+          ]
+        },
+        {
+          "text": "Quarterly dividends to the sole shareholder continue while their funding source and the owners behind the holding company are undisclosed.",
+          "cp1a_refs": [
+            "T2D.4.r01",
+            "ownership_register.r01"
+          ]
+        },
+        {
+          "text": "Customer concentration, covenant terms and an audit report are missing, so the credit view stays provisional.",
+          "cp1a_refs": [
+            "gaps_ledger.r01",
+            "gaps_ledger.r02"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "risk": "Refinancing concentration",
+          "mechanic": "One term loan matures on a single date with no revolver, so market access at that date decides whether the debt can be refinanced",
+          "implication": "Refinancing risk rises as the maturity nears if leverage or earnings weaken, so monitoring should track the maturity profile",
+          "severity": "Material",
+          "cp1a_refs": [
+            "transaction_summary.r01",
+            "events_timeline.r04"
+          ]
+        },
+        {
+          "risk": "Shareholder distributions",
+          "mechanic": "Quarterly dividends remove cash that could service or repay debt, and their funding source is undisclosed",
+          "implication": "Distribution capacity under the debt documents is the key unknown for the monitoring posture",
+          "severity": "Material",
+          "cp1a_refs": [
+            "T2D.4.r01",
+            "T2D.5.r01"
+          ]
+        },
+        {
+          "risk": "Unverified earnings quality",
+          "mechanic": "Unaudited statements and absent KPIs limit verification of earnings and cash conversion",
+          "implication": "Leverage and cover readings carry reporting risk until an audit report or KPIs are obtained",
+          "severity": "Minor",
+          "cp1a_refs": [
+            "T2D.3.r02"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Covenant certificate and covenant terms",
+          "why_it_matters": "Headroom to financial covenants cannot be monitored",
+          "affected_analysis": "Financial risk and liquidity view",
+          "severity": "Material",
+          "action": "Obtain the certificate and the executed terms",
+          "cp1a_refs": [
+            "gaps_ledger.r01"
+          ]
+        },
+        {
+          "gap": "Customer concentration and revenue split",
+          "why_it_matters": "Revenue durability cannot be confirmed",
+          "affected_analysis": "Business risk assessment",
+          "severity": "Material",
+          "action": "Obtain the largest-customer share and revenue by product line",
+          "cp1a_refs": [
+            "gaps_ledger.r02"
+          ]
+        },
+        {
+          "gap": "Ownership chain and distribution policy terms",
+          "why_it_matters": "Support willingness and distribution capacity cannot be assessed",
+          "affected_analysis": "Sponsor alignment in the assessment",
+          "severity": "Material",
+          "action": "Obtain the ownership chain and the policy",
+          "cp1a_refs": [
+            "gaps_ledger.r03"
+          ]
+        }
+      ]
+    }
+  },
+  "gap": {
+    "readiness_review": {
+      "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+      "objective": "Historical financial foundation, business context and credit synthesis",
+      "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+      "issuer_confirmed": true,
+      "sources": [
+        {
+          "source_id": "identity",
+          "document_family": "Identity note",
+          "authority": "issuer",
+          "entity": "Northbridge Synthetic Group",
+          "period": "January 2026",
+          "version_relationship": "Accompanying identity note",
+          "fidelity": "verified",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "limitations": []
+        },
+        {
+          "source_id": "financial",
+          "document_family": "Quarterly financial statements",
+          "authority": "issuer",
+          "entity": "Northbridge Synthetic Group",
+          "period": "Four quarters in 2025",
+          "version_relationship": "Unaudited quarterly source",
+          "fidelity": "verified",
+          "citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "source_id": "business",
+          "document_family": "Business note",
+          "authority": "issuer",
+          "entity": "Northbridge Synthetic Group",
+          "period": "January 2026",
+          "version_relationship": "Issuer-authored note accompanying the statements",
+          "fidelity": "verified",
+          "citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "limitations": [
+            "Business note supplies no ownership or transaction content"
+          ]
+        }
+      ],
+      "consumers": [
+        {
+          "module_id": "CP-1",
+          "readiness": "READY_WITH_LIMITATIONS",
+          "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+          "source_ids": [
+            "identity",
+            "financial"
+          ],
+          "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "missing_source": null,
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "module_id": "CP-1A",
+          "readiness": "READY_WITH_LIMITATIONS",
+          "evidence_demand": "Located business, operating, ownership and transaction facts with quotes",
+          "source_ids": [
+            "identity",
+            "financial",
+            "business"
+          ],
+          "rationale": "The business and operating fact pack can be built from the located note; ownership and transaction rows will be unsettled.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            },
+            {
+              "source_id": "business",
+              "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "missing_source": null,
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+            "Business note supplies no ownership or transaction content"
+          ]
+        },
+        {
+          "module_id": "CP-2",
+          "readiness": "READY_WITH_LIMITATIONS",
+          "evidence_demand": "Settled CP-1 figures and CP-1A registers",
+          "source_ids": [
+            "identity",
+            "financial",
+            "business"
+          ],
+          "rationale": "The synthesis can run on settled upstream registers with inherited limitations.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            },
+            {
+              "source_id": "business",
+              "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "missing_source": null,
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+            "Business note supplies no ownership or transaction content"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap_id": "missing-ownership-transaction",
+          "kind": "scope",
+          "severity": "material",
+          "description": "Ownership and transaction content is absent from the business note, so CP-1A ownership and transaction rows are unsettled",
+          "affected_modules": [
+            "CP-1A",
+            "CP-2"
+          ],
+          "remediation": "Supply the ownership and transaction documents",
+          "citations": []
+        }
+      ],
+      "analysis": [
+        {
+          "claim_id": "source-assessment",
+          "text": "Identity, financial and business operating sources are located; ownership and transaction content is absent.",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            },
+            {
+              "source_id": "business",
+              "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+        }
+      ]
+    },
+    "cp1_source_context": {
+      "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+      "entities": [
+        {
+          "entity_id": "issuer",
+          "name": "Northbridge Synthetic Group",
+          "entity_type": "group",
+          "roles": [
+            "issuer"
+          ],
+          "fiscal_year_end": "December 31",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "identity",
+          "classification": "nonfinancial",
+          "document_type": "Identity note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Identity only",
+          "analytical_use": "Issuer identity",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "event_scan": "unassessed",
+          "event_scan_explanation": "Identity is not event evidence"
+        },
+        {
+          "source_id": "financial",
+          "classification": "financial",
+          "document_type": "Quarterly statements",
+          "published_on": "2026-01-10",
+          "evidence_class": "unaudited_without_auditor",
+          "evidence_rationale": "No auditor report",
+          "analytical_use": "Historical financial analysis",
+          "citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "scopes": [
+            {
+              "scope_id": "opening-2024",
+              "entity_id": "issuer",
+              "period_label": "opening-2024",
+              "period_kind": "period_end",
+              "start_date": null,
+              "end_date": "2024-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q1-2025",
+              "entity_id": "issuer",
+              "period_label": "q1-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-03-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q2-2025",
+              "entity_id": "issuer",
+              "period_label": "q2-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-04-01",
+              "end_date": "2025-06-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q3-2025",
+              "entity_id": "issuer",
+              "period_label": "q3-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-07-01",
+              "end_date": "2025-09-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q4-2025",
+              "entity_id": "issuer",
+              "period_label": "q4-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-10-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "fy-2025",
+              "entity_id": "issuer",
+              "period_label": "fy-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "source_id": "business",
+          "classification": "nonfinancial",
+          "document_type": "Business note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Issuer-authored note without auditor or filing status",
+          "analytical_use": "Business, operating, ownership and transaction context for CP-1A",
+          "citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "event_scan": "unassessed",
+          "event_scan_explanation": "The note contains no disclosure about subsequent events",
+          "limitations": [
+            "Business note supplies no ownership or transaction content"
+          ]
+        }
+      ],
+      "limitations": [
+        "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+    },
+    "business_context": {
+      "sources": [
+        {
+          "source_id": "identity",
+          "source_class": "issuer",
+          "quality": "High",
+          "period": "January 10, 2026",
+          "entity_covered": "Northbridge Synthetic Group, consolidated group",
+          "data_supplied": "Issuer identity, fiscal year end and perimeter statement",
+          "use": "Confirms the issuer identity and that no borrower, guarantor or restricted-group perimeter is established",
+          "citations": [
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            },
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "No borrower, guarantor or restricted-group perimeter is established by this source set."
+            }
+          ],
+          "limitation": "Synthetic test data, not evidence about a real issuer"
+        },
+        {
+          "source_id": "financial",
+          "source_class": "issuer",
+          "quality": "High",
+          "period": "FY2025",
+          "entity_covered": "Northbridge Synthetic Group, consolidated group",
+          "data_supplied": "Quarterly and annual statements, the facility schedule and statements of what did not occur",
+          "use": "Documents the single operating segment, the single debt facility, distributions and the absence of acquisitions and adjustments",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "One operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2025"
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+            }
+          ],
+          "limitation": "Unaudited; borrower, guarantor and restricted-group perimeters are not established"
+        },
+        {
+          "source_id": "business",
+          "source_class": "issuer",
+          "quality": "Medium",
+          "period": "January 10, 2026",
+          "entity_covered": "Northbridge Synthetic Group",
+          "data_supplied": "Business description, customers and operating model; no ownership, transaction or history content",
+          "use": "Supplies business and operating facts; ownership and transaction rows stay unsettled",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "It designs, manufactures and sells fastening and sealing components for industrial equipment."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Management states that raw-material cost increases are passed to customers with a lag of one to two quarters."
+            }
+          ],
+          "limitation": "Issuer-authored note with management statements; it supplies no ownership or transaction content"
+        }
+      ],
+      "company": [
+        {
+          "aspect": "business_description",
+          "text": "Designs, manufactures and sells fastening and sealing components for industrial equipment, supplied to industrial distributors and original-equipment manufacturers",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "It designs, manufactures and sells fastening and sealing components for industrial equipment."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Customers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "aspect": "country",
+          "text": "United States",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "All operations and all reported revenue are in the United States."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "aspect": "sector",
+          "text": "Industrial products manufacturing",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "business_lines": [
+        {
+          "name": "Consolidated Operations (single reported operating segment)",
+          "revenue_mix": "All reported revenue is reported in this one operating segment",
+          "period": "FY2025",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "One operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2025"
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "name": "Fastening and sealing components (product lines)",
+          "revenue_mix": "Split between product lines not disclosed",
+          "period": "FY2025",
+          "category": "Insufficient Information",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "The split of revenue between fastening and sealing components, and between distributors and original-equipment manufacturers, is not disclosed."
+            }
+          ],
+          "limitation": "The source states that the product-line and customer-type revenue split is not disclosed, so product-line mix cannot be assessed"
+        }
+      ],
+      "owners": [
+        {
+          "owner": "Ownership not established",
+          "control": "Not established",
+          "economic_interest": "Not established",
+          "credit_relevance": "Control and support willingness cannot be assessed without ownership evidence",
+          "evidence_quality": "Insufficient",
+          "credit_mechanic": "Distributions, support and control cannot be traced to an owner",
+          "credit_implication": "Sponsor alignment is unassessed and is not treated as adverse",
+          "category": "Insufficient Information",
+          "citations": [],
+          "limitation": "The business note supplies no ownership content"
+        }
+      ],
+      "operating_drivers": [
+        {
+          "driver": "Pricing",
+          "measure": "List prices are reviewed once a year; management states that raw-material cost increases are passed to customers with a lag of one to two quarters",
+          "period": "FY2025",
+          "status": "Partially disclosed",
+          "credit_relevance": "A pass-through lag exposes margin to temporary squeezes when input costs rise",
+          "category": "Management Language",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Management states that raw-material cost increases are passed to customers with a lag of one to two quarters."
+            }
+          ],
+          "limitation": "Pass-through is a management statement; its realised effect on margin is not disclosed"
+        },
+        {
+          "driver": "Volume drivers",
+          "measure": "Distributor restocking cycles and original-equipment production schedules",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Volumes follow customer inventory and production cycles, which moves revenue with the cycle",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Volumes follow distributor restocking cycles and original-equipment production schedules."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Cost structure",
+          "measure": "Cost of sales consists mainly of steel, elastomer and manufacturing labour",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Commodity and labour inputs drive margin resilience",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Cost of sales consists mainly of steel, elastomer and manufacturing labour."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Capital spending",
+          "measure": "Maintenance of existing plants; no growth capital programme",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Capital spending is discretionary-light, which supports cash conversion",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Capital expenditure maintains existing plants; no growth capital programme is under way."
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Capital expenditure is entirely maintenance investment; growth capex is zero."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Working capital",
+          "measure": "Trade receivables, inventories and trade payables",
+          "period": "FY2025",
+          "status": "Disclosed",
+          "credit_relevance": "Receivables and inventory absorb cash when volumes grow",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Working capital consists of trade receivables, inventories and trade payables."
+            }
+          ],
+          "limitation": null
+        },
+        {
+          "driver": "Customer concentration",
+          "measure": null,
+          "period": "FY2025",
+          "status": "Not disclosed",
+          "credit_relevance": "Concentration cannot be assessed, so loss of a major customer cannot be sized",
+          "category": "Insufficient Information",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "The share of revenue from the largest customer is not disclosed."
+            }
+          ],
+          "limitation": "The share of revenue from the largest customer is not disclosed; concentration risk cannot be assessed"
+        },
+        {
+          "driver": "Aftermarket franchise (management characterisation)",
+          "measure": "Management describes the group as a leading supplier with a resilient aftermarket franchise",
+          "period": "FY2025",
+          "status": "Partially disclosed",
+          "credit_relevance": "Resilience is asserted by management and is not evidenced by retention or share data",
+          "category": "Management Language",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Management describes the group as a leading supplier with a resilient aftermarket franchise."
+            }
+          ],
+          "limitation": "No customer retention, market share or aftermarket revenue data is supplied"
+        }
+      ],
+      "transactions": [
+        {
+          "transaction": "Transaction context not established: the business note supplies no transaction content",
+          "status": "Insufficient Information",
+          "credit_relevance": "Debt raised, use of proceeds, parties and sponsor involvement cannot be assessed",
+          "category": "Insufficient Information",
+          "citations": [],
+          "limitation": "The business note supplies no transaction content"
+        }
+      ],
+      "events": [],
+      "governance_and_sponsor": [
+        {
+          "kind": "behaviour_flag",
+          "topic": "Quarterly dividends to the sole shareholder",
+          "documented_fact": "A dividend was paid in each quarter of FY2025; the recipient and the distribution policy are not documented",
+          "direction": "Mixed",
+          "behaviour_type": "distribution",
+          "amount_funding_source": "Amounts are in the cash flow statement of the financial source; the funding source is not stated",
+          "legal_capacity_link": "Distribution capacity under the Northbridge Term Loan is not in this source set; legal capacity, willingness and feasibility are not assessed together here",
+          "dimension": "Shareholder extraction risk",
+          "risk_mechanic": "Recurring distributions remove cash that could service or repay debt, and the funding source of the distributions is not stated",
+          "credit_implication": "Distributions compete with debt service and deleveraging; extraction cannot be concluded or excluded from this source set",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:3",
+              "quote": "Dividends paid (2.25) (2.25) (2.25) (2.25) (9.00)"
+            }
+          ],
+          "limitation": "The recipient, the policy and the funding source of the dividends are not documented"
+        },
+        {
+          "kind": "governance_topic",
+          "topic": "Acquisition and disposal activity",
+          "documented_fact": "No acquisition or disposal occurred in any quarter of FY2025 or in the full year",
+          "direction": "Neutral",
+          "behaviour_type": null,
+          "amount_funding_source": null,
+          "legal_capacity_link": null,
+          "dimension": "Acquisition appetite",
+          "risk_mechanic": "No acquisition spending draws on cash or debt capacity, so integration and acquisition-funding risk is absent in the period",
+          "credit_implication": "No acquisition-driven change in leverage follows from the documented position; appetite beyond FY2025 is not inferred from one year",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases"
+            }
+          ],
+          "limitation": "Whether any acquisition or disposal is announced or pending is not documented because the business source is missing"
+        },
+        {
+          "kind": "governance_topic",
+          "topic": "Financial reporting and disclosure",
+          "documented_fact": "Quarterly and annual statements and a complete facility schedule are supplied, but the statements are unaudited, operating KPIs are not disclosed and no borrower, guarantor or restricted-group perimeter is established",
+          "direction": "Mixed",
+          "behaviour_type": null,
+          "amount_funding_source": null,
+          "legal_capacity_link": null,
+          "dimension": "Disclosure transparency",
+          "risk_mechanic": "Unaudited statements and absent KPIs limit independent verification of reported earnings and cash conversion",
+          "credit_implication": "Monitoring relies on unaudited issuer figures; assurance and perimeter gaps lower confidence in covenant and leverage readings",
+          "evidence_quality": "Medium",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Unaudited quarterly and reported FY2025 financial statements"
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Operational KPIs and source-reported unlevered free cash flow are not disclosed."
+            },
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "No borrower, guarantor or restricted-group perimeter is established by this source set."
+            }
+          ],
+          "limitation": "No audit report or perimeter definition is supplied"
+        },
+        {
+          "kind": "governance_topic",
+          "topic": "Debt structure and leverage tolerance",
+          "documented_fact": "The group has one senior secured term loan and no revolving facility, lease or other debt",
+          "direction": "Neutral",
+          "behaviour_type": null,
+          "amount_funding_source": null,
+          "legal_capacity_link": null,
+          "dimension": "Leverage tolerance",
+          "risk_mechanic": "A single secured instrument with no revolver leaves no committed liquidity backstop beyond cash and concentrates refinancing at one maturity",
+          "credit_implication": "Liquidity depends on cash and operating cash flow; refinancing risk is concentrated at the single final maturity",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "There is no revolving credit facility: RCF commitment and RCF drawings are each zero at opening and every quarter/FY end."
+            }
+          ],
+          "limitation": "No leverage policy, covenant certificate or security terms are in the source set"
+        }
+      ],
+      "capital_allocation": [
+        {
+          "item": "Shareholder distributions",
+          "fact": "Dividends were paid in every quarter of FY2025 and no equity was issued or repurchased",
+          "direction": "Mixed",
+          "risk_mechanic": "Distributions reduce cash available for debt service and no equity contribution offsets them",
+          "credit_implication": "Cash leakage to the shareholder competes with deleveraging; the funding source is not documented",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:3",
+              "quote": "Dividends paid (2.25) (2.25) (2.25) (2.25) (9.00)"
+            },
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases"
+            }
+          ],
+          "limitation": "The funding source of the dividends is not stated"
+        },
+        {
+          "item": "Capital expenditure",
+          "fact": "Capital expenditure is entirely maintenance investment and growth capital expenditure is zero",
+          "direction": "Neutral",
+          "risk_mechanic": "Maintenance-only spending keeps cash conversion high but defers any growth investment",
+          "credit_implication": "Free cash flow is not constrained by an investment programme; growth depends on existing capacity",
+          "evidence_quality": "High",
+          "category": "Documentary Fact",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Capital expenditure is entirely maintenance investment; growth capex is zero."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "acquisitions": [],
+      "disclosure_items": [
+        {
+          "item": "Ownership and transaction disclosure",
+          "available": "No",
+          "detail": "The business note supplies no ownership or transaction content",
+          "credit_relevance": "Owner behaviour, support willingness and transaction context cannot be assessed",
+          "severity": "Critical",
+          "follow_up": "Obtain the ownership and transaction documents and rerun CP-1A",
+          "citations": []
+        },
+        {
+          "item": "Debt schedule",
+          "available": "Yes",
+          "detail": "A complete facility schedule with balances at each reporting date is supplied",
+          "credit_relevance": "Needed to track debt and maturity",
+          "severity": "Minor",
+          "follow_up": "None required",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:5",
+              "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+            }
+          ]
+        },
+        {
+          "item": "Covenant certificate",
+          "available": "No",
+          "detail": "No covenant certificate or covenant terms are in the CP-1A source set",
+          "credit_relevance": "Headroom to financial covenants cannot be monitored",
+          "severity": "Material",
+          "follow_up": "Obtain the covenant certificate and the executed covenant terms",
+          "citations": []
+        }
+      ],
+      "credit_translations": [
+        {
+          "theme": "Revenue Durability",
+          "evidence": "Revenue comes from distributors serving maintenance demand and from original-equipment manufacturers on annual supply agreements; the revenue split and customer concentration are not disclosed",
+          "risk_mechanic": "Maintenance demand is recurring but annual supply agreements reset each year, so revenue visibility is limited to the contract year",
+          "credit_implication": "Debt service capacity rests on annual contract renewals; undisclosed concentration limits confidence in any durability view",
+          "confidence": "Medium",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "Customers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements."
+            }
+          ],
+          "limitation": "Customer concentration and the revenue split are not disclosed"
+        },
+        {
+          "theme": "Margin/CF Risk",
+          "evidence": "Management states that raw-material cost increases are passed to customers with a lag",
+          "risk_mechanic": "The lag exposes margin to a temporary squeeze when steel and elastomer costs rise",
+          "credit_implication": "Cash conversion and debt service cover can weaken for the length of the lag; the pass-through is a management statement not tested in the source set",
+          "confidence": "Low",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Management states that raw-material cost increases are passed to customers with a lag of one to two quarters."
+            },
+            {
+              "source_id": "business",
+              "locator": "page:2",
+              "quote": "Cost of sales consists mainly of steel, elastomer and manufacturing labour."
+            }
+          ],
+          "limitation": "Realised pass-through is not evidenced"
+        },
+        {
+          "theme": "Concentration Risk",
+          "evidence": "No customer concentration disclosure is supplied",
+          "risk_mechanic": "Loss of a major customer could remove a large share of revenue, but the share is unknown",
+          "credit_implication": "Concentration risk is unassessed and is treated as neither adverse nor benign",
+          "confidence": "Insufficient Information",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "The share of revenue from the largest customer is not disclosed."
+            }
+          ],
+          "limitation": "The share of revenue from the largest customer is not disclosed"
+        },
+        {
+          "theme": "Sponsor Alignment",
+          "evidence": "No ownership evidence is supplied, so the owners and their behaviour are not documented",
+          "risk_mechanic": "Without identified owners, support willingness and distribution behaviour cannot be traced",
+          "credit_implication": "Sponsor alignment is unassessed and is treated as neither adverse nor benign",
+          "confidence": "Insufficient Information",
+          "countervailing_conflict_ids": [],
+          "citations": [],
+          "limitation": "The business note supplies no ownership content"
+        },
+        {
+          "theme": "Key Uncertainties",
+          "evidence": "No ownership, transaction, covenant, security or audit disclosure is in the source set",
+          "risk_mechanic": "Unverified owner behaviour, creditor protections and unaudited figures leave support, covenant headroom and recovery prospects untested",
+          "credit_implication": "The monitoring posture should treat the credit view as provisional until these items are obtained",
+          "confidence": "Medium",
+          "countervailing_conflict_ids": [],
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "Unaudited quarterly and reported FY2025 financial statements"
+            },
+            {
+              "source_id": "identity",
+              "locator": "page:1",
+              "quote": "No borrower, guarantor or restricted-group perimeter is established by this source set."
+            }
+          ],
+          "limitation": null
+        }
+      ],
+      "conflicts": [],
+      "gaps": [
+        {
+          "gap": "Ownership and transaction content not supplied in the business note",
+          "why_it_matters": "Owner behaviour, support willingness and transaction context cannot be assessed",
+          "affected_analysis": "Ownership register, transaction summary, sponsor alignment and the governance score",
+          "severity": "Critical",
+          "action": "Supply the ownership and transaction documents and rerun CP-1A"
+        },
+        {
+          "gap": "No covenant certificate or covenant terms in the CP-1A source set",
+          "why_it_matters": "Headroom to financial covenants cannot be monitored",
+          "affected_analysis": "Key uncertainties translation and the financial risk view of the credit synthesis",
+          "severity": "Material",
+          "action": "Obtain the covenant certificate and the executed covenant terms"
+        }
+      ],
+      "consumers": [
+        {
+          "module_id": "CP-2",
+          "status": "READY_WITH_LIMITATIONS",
+          "handoff_item": "Business, operating and governance rows; ownership and transaction rows are unsettled",
+          "why_it_matters": "Business risk in the synthesis can rest on the located rows but not on ownership or transaction facts",
+          "gap": "Ownership and transaction content is missing from the business note",
+          "required_action": "Work from located rows and CP-1 figures, state the limit and restate the Critical gap",
+          "citations": [
+            {
+              "source_id": "financial",
+              "locator": "page:1",
+              "quote": "One operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2025"
+            }
+          ],
+          "flag_topics": [
+            "Quarterly dividends to the sole shareholder"
+          ]
+        },
+        {
+          "module_id": "CP-MODEL",
+          "status": "CONDITIONAL",
+          "handoff_item": "Issuer name, country, sector and business description are located; shareholders and transaction summary are gaps",
+          "why_it_matters": "The Model snapshot shows located fields with their source and the others as gaps",
+          "gap": "Ownership and transaction content is missing from the business note",
+          "required_action": "Show the unlocated fields as gaps and do not infer them",
+          "citations": [
+            {
+              "source_id": "business",
+              "locator": "page:1",
+              "quote": "All operations and all reported revenue are in the United States."
+            }
+          ],
+          "flag_topics": []
+        }
+      ]
+    },
+    "credit_synthesis": {
+      "assessment": {
+        "rationale": "The credit view combines CP-1 figures with located business and operating facts: total leverage is {{FIG:total_leverage_reported}} and net leverage {{FIG:net_leverage_reported}} for the twelve months to FY2025, but ownership and transaction context was not supplied, so confidence is Low.",
+        "category": "Analyst Interpretation",
+        "confidence": "Low",
+        "cp1a_refs": [
+          "revenue_business_mix.r01"
+        ],
+        "limitation": "Ownership and transaction content missing; sponsor alignment and transaction context are unassessed"
+      },
+      "thesis": {
+        "text": "Financial leverage is low and the operating model is simple, but without ownership and transaction evidence the thesis is incomplete and cannot support a view of owner behaviour.",
+        "category": "Analyst Interpretation",
+        "cp1a_refs": [
+          "credit_translation.r05"
+        ],
+        "limitation": null
+      },
+      "strengths": [
+        {
+          "label": "Low reported leverage",
+          "text": "Total leverage is {{FIG:total_leverage_reported}} and net leverage is {{FIG:net_leverage_reported}} on reported EBITDA for the twelve months to FY2025.",
+          "category": "Documentary Fact",
+          "cp1a_refs": [],
+          "limitation": null
+        }
+      ],
+      "weaknesses": [
+        {
+          "label": "Ownership and transactions unassessed",
+          "text": "No ownership or transaction content was supplied, so owner behaviour and transaction context cannot be assessed.",
+          "category": "Insufficient Information",
+          "cp1a_refs": [
+            "gaps_ledger.r01"
+          ],
+          "limitation": "The business note supplies no ownership or transaction content"
+        }
+      ],
+      "key_findings": [
+        {
+          "text": "Leverage is low on the supplied statements: total {{FIG:total_leverage_reported}} and net {{FIG:net_leverage_reported}} for the twelve months to FY2025.",
+          "cp1a_refs": []
+        },
+        {
+          "text": "The business note supplies no ownership or transaction content, so the credit view cannot cover owner behaviour or transaction context.",
+          "cp1a_refs": [
+            "gaps_ledger.r01"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "risk": "Unassessed owner behaviour",
+          "mechanic": "Without ownership evidence, support willingness and distribution behaviour cannot be traced",
+          "implication": "The monitoring posture should treat the view as incomplete until the ownership documents are obtained",
+          "severity": "Material",
+          "cp1a_refs": [
+            "gaps_ledger.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Ownership and transaction content not supplied, with no ownership and transaction disclosure",
+          "why_it_matters": "Owner behaviour, support willingness and transaction context cannot be assessed",
+          "affected_analysis": "Sponsor alignment and transaction context in the assessment",
+          "severity": "Critical",
+          "action": "Supply the ownership and transaction documents, rerun CP-1A and then CP-2",
+          "cp1a_refs": [
+            "gaps_ledger.r01",
+            "T2D.7.r01"
+          ]
+        },
+        {
+          "gap": "CP-1A judges CP-2 ready with limitations",
+          "why_it_matters": "The synthesis inherits the missing ownership and transaction evidence",
+          "affected_analysis": "Confidence of the credit assessment",
+          "severity": "Material",
+          "action": "Keep confidence below High until CP-1A is rerun with the ownership and transaction documents",
+          "cp1a_refs": [
+            "downstream_readiness.r01"
+          ]
+        }
+      ]
+    }
+  },
+  "cp1_submission": "CP-1 runs with this literal source_context submission per case (positive.cp1_source_context, gap.cp1_source_context: identity, financial and business each assessed once) and the financial case's literal financials, narrative, readiness and quality submissions of tests/test_financial_workflow.py, unchanged except for the bound pack; those later stages are not restated here"
+}

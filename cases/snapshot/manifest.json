@@ -1,0 +1,174 @@
+{
+  "schema_version": "snapshot-s1-cases/1",
+  "scope": "S1 credit-snapshot slice inputs: CP-0 to CP-1 to CP-MODEL to CP-1A to CP-2 over the frozen financial sources plus one new literal business source",
+  "status": "DRAFT for independent review; not adopted, not executed",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+  "financial_baseline": {
+    "path": "cases/financial/manifest.json",
+    "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "sources": [
+      {
+        "source_id": "identity",
+        "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "reuse": "Every page text and locator stays byte-identical; copied by reference, never edited"
+      },
+      {
+        "source_id": "financial",
+        "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "reuse": "Every page text and locator stays byte-identical; copied by reference, never edited"
+      }
+    ],
+    "oracle_pointers": [
+      "q4_ltm_metric_oracle.total_leverage_reported",
+      "q4_ltm_metric_oracle.net_leverage_reported",
+      "q4_ltm_metric_oracle.interest_coverage_reported",
+      "q4_ltm_metric_oracle.fcf_to_debt"
+    ]
+  },
+  "business_source": {
+    "common": {
+      "source_id": "business",
+      "name": "Business and ownership note",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction"
+    },
+    "positive": {
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nBusiness and ownership note\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer.\nNorthbridge Synthetic Group is an industrial products manufacturer. It designs, manufactures and sells fastening and sealing components for industrial equipment.\nCustomers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements.\nAll operations and all reported revenue are in the United States.\nManagement describes the group as a leading supplier with a resilient aftermarket franchise.\nRevenue is reported as one operating segment, Consolidated Operations. The split of revenue between fastening and sealing components, and between distributors and original-equipment manufacturers, is not disclosed.\nThe share of revenue from the largest customer is not disclosed."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nOperating model and ownership\nList prices are reviewed once a year. Management states that raw-material cost increases are passed to customers with a lag of one to two quarters.\nVolumes follow distributor restocking cycles and original-equipment production schedules.\nCost of sales consists mainly of steel, elastomer and manufacturing labour.\nCapital expenditure maintains existing plants; no growth capital programme is under way.\nWorking capital consists of trade receivables, inventories and trade payables.\nThe issuer is wholly owned by Harbour Ridge Holdings Limited, a synthetic holding company.\nHarbour Ridge Holdings Limited is held by private investors. The identity and percentage holdings of those investors are not disclosed.\nThe issuer paid a dividend to Harbour Ridge Holdings Limited in each quarter of 2025 under a shareholder distribution policy approved by the board.\nNo dividend recapitalisation, shareholder loan or related-party payment other than these dividends is reported.\nThe source set identifies no financial sponsor."
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nFinancing, transactions and history\nThe only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029.\nNo acquisition, disposal, new financing, refinancing or change of ownership occurred in 2025, and none is announced or pending as of January 10, 2026.\nThis note does not describe the security package, guarantees or covenants of the Northbridge Term Loan.\nThe business was founded in 2011 as a family-owned manufacturer. Harbour Ridge Holdings Limited acquired the group in 2019.\nNo credit rating from a rating agency has been assigned."
+        }
+      ],
+      "sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+      "pack_limitation": null
+    },
+    "gap": {
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nBusiness and ownership note\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer.\nNorthbridge Synthetic Group is an industrial products manufacturer. It designs, manufactures and sells fastening and sealing components for industrial equipment.\nCustomers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements.\nAll operations and all reported revenue are in the United States.\nManagement describes the group as a leading supplier with a resilient aftermarket franchise.\nRevenue is reported as one operating segment, Consolidated Operations. The split of revenue between fastening and sealing components, and between distributors and original-equipment manufacturers, is not disclosed.\nThe share of revenue from the largest customer is not disclosed."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nOperating model\nList prices are reviewed once a year. Management states that raw-material cost increases are passed to customers with a lag of one to two quarters.\nVolumes follow distributor restocking cycles and original-equipment production schedules.\nCost of sales consists mainly of steel, elastomer and manufacturing labour.\nCapital expenditure maintains existing plants; no growth capital programme is under way.\nWorking capital consists of trade receivables, inventories and trade payables."
+        }
+      ],
+      "sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "pack_limitation": "Business note supplies no ownership or transaction content",
+      "derivation": "page:1 byte-identical to the positive page:1; page:2 keeps only the operating-model lines of the positive page:2; the positive page:2 ownership lines and all of page:3 (financing, transactions, history) are absent"
+    },
+    "consistency_with_frozen_financials": [
+      "One operating segment Consolidated Operations (financial page:1); the note adds product lines without a revenue split",
+      "Dividends paid in each quarter of 2025 (financial page:3 shows 2.25 per quarter, 9.00 for FY2025)",
+      "Maintenance-only capital expenditure, no growth programme (financial page:1)",
+      "No acquisition, disposal, financing or ownership change in 2025 and none pending at 2026-01-10 (financial page:1: no subsequent events through January 10, 2026)",
+      "One senior secured term loan, final maturity December 31, 2029, no revolver (financial pages 1 and 5)",
+      "No figure in the note restates a financial number; the only numbers are years, a date and counts in words"
+    ]
+  },
+  "financial_pack_limitation": {
+    "source_id": "financial",
+    "text": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+    "basis": "established pack construction, tests/test_financial_workflow.py:22, 48-52; applied to both cases (LEAD ruling on finding 4)"
+  },
+  "cases": [
+    {
+      "case_id": "snapshot-positive",
+      "run": {
+        "run_id": "slice-snapshot-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-1",
+          "CP-MODEL",
+          "CP-1A",
+          "CP-2"
+        ]
+      },
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "limitation": null
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+        },
+        {
+          "source_id": "business",
+          "name": "Business and ownership note",
+          "status": "ready",
+          "limitation": null
+        }
+      ],
+      "business_source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+      "submissions": "cases/snapshot/submissions.json#positive"
+    },
+    {
+      "case_id": "snapshot-gap-business-without-ownership-transaction",
+      "run": {
+        "run_id": "slice-snapshot-gap",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-1",
+          "CP-MODEL",
+          "CP-1A",
+          "CP-2"
+        ]
+      },
+      "change": "business source present with page:1 unchanged, page:2 reduced to operating-model lines, no page:3: no ownership, dividend, transaction or history content; pack limitation as listed; identity and financial unchanged",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "limitation": null
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+        },
+        {
+          "source_id": "business",
+          "name": "Business and ownership note",
+          "status": "ready",
+          "limitation": "Business note supplies no ownership or transaction content"
+        }
+      ],
+      "business_source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "submissions": "cases/snapshot/submissions.json#gap",
+      "not_in_s1": "A wholly missing module source (CP-0 CONDITIONAL / DO NOT RUN, no ticket) is covered by cases/financial negative_case and is not repeated here"
+    }
+  ],
+  "consumers_of_cp1a_for_this_plan": [
+    "CP-2",
+    "CP-MODEL"
+  ],
+  "consumers_note": "Registry order. Adding CP-5 to requested_modules adds CP-5 between CP-2 and CP-MODEL and changes the T2D.10 and downstream_readiness rows; see open questions."
+}

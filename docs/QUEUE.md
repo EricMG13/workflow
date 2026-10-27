@@ -2814,3 +2814,10 @@ integration. Evidence: 219 passed; mx-precise x2, mx-adversary x2 (no HIGH); rew
 tournament on `_lineage_expectation`: incumbent holds (`work/cp5-integrity-a4/rewrite-tournament-1.md`).
 `integrity_workflow.py` stays untracked for the IntegrityWorkflow task, which carries the two
 deferred required checks.
+
+S1 oracle frozen (2026-10-28): `cases/snapshot/{expected,manifest,submissions}.json` with
+builder `cases/snapshot/builder/` (stdlib only; `python3 -I cases/snapshot/builder/build_s1_oracle.py`
+reproduces them byte for byte). sha256: expected d1aa1af9…9baa, manifest 9db0367f…61b1,
+submissions bff9ed18…b35c. Independent mx-precise reviews 1–3 (APPROVE at 3) ran the product
+validators and composers on the oracle's literal inputs. Derivation and LEAD rulings:
+`docs/reviews/s1-snapshot-oracle.md`. Next: S1a and G2 leases (drafts in progress).

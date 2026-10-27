@@ -62,9 +62,10 @@ name the exact requirement and have LEAD resolve it from the adopted source.
 - Use at most one heavy local job. Active implementation has no numerical lane
   cap, by the user's2026-10-27 instruction. Every lane still needs an exact exclusive
   lease and disjoint files/interfaces. Since the 2026-10-27 Claude handover a test
-  run needs no per-run LEAD admission record: take the global heavy-job lock
-  (`mkdir /tmp/deploy-workflow-heavy-job.lock`; wait while it exists, never delete
-  another lane's lock), run, `rmdir` it, then append one line to the lane's
+  run needs no per-run LEAD admission record: run it only as
+  `mkdir /tmp/deploy-workflow-heavy-job.lock && { <run>; rc=$?; rmdir /tmp/deploy-workflow-heavy-job.lock; exit $rc; }`
+  so the lock is removed only by the run that created it; if `mkdir` fails, wait
+  with Monitor until the lock is gone and retry. Then append one line to the lane's
   `work/<lane>/ledger.md`: UTC time, run name, command, exit code, pass/fail counts,
   `agent=<name> fix-rounds=<n> gates-first-pass=<y|n>`. LEAD still admits new leases
   and commits for integration in docs/QUEUE.md. Do not

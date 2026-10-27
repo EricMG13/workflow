@@ -593,3 +593,23 @@ financial source, renderer, and existing render tests are unchanged. No tests or
 heavy jobs were run. This integration freezes the new chart-series contract,
 source oracle, and disjoint leases only; implementation and validation remain
 unstarted pending each lane's exact admissions and resource rules.
+
+### C1 chart-series producer integration
+
+Integrated LEAD-admitted C1 commit
+`21860a3510dadc24bcf1709de0d30d0f41588f15` by fetch and cherry-pick from
+its exact main parent `adcd5671e18b98f28595d7db8003ff0df646d802`. It contains
+only three new files: `src/deploy_workflow/financial_series.py`,
+`tests/test_financial_series.py`, and `docs/handoffs/cp1-series.md`. Their
+integrated SHA-256 values match LEAD's pins:
+`9f4d0df14cb14e8dd3e8c3d0c7ed20afa9beadff2ced229a38047478e18caa8c`,
+`7dfeacfa8fbe704990bc357cdfd7e11bf7fee57fadcd2c451075d7750acc46e6`, and
+`f1381f53a42bc1f0d70ef65573483eab2f42fa97190100a2c120bde45fd04d61`.
+The exact commit's focused 21-test result, four causal guards, independent
+Sol/high review and no-argument rewrite tournament are carried from its
+handoff; none was rerun during integration. The 25-point real-shape probe is
+also historical component evidence, not new analytical or publication
+acceptance. Fresh actual publication and C2's downstream SVG/table/passport and
+native proof remain required. No other source was changed. The C1 integration
+cherry-pick is `aadbd6d2d833eabe2389d08f8beda27eea430540` before this receipt
+commit.

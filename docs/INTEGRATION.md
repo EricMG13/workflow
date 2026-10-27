@@ -1015,3 +1015,16 @@ reviewed cases bring the total to 144. The six frozen A1/A2/A3 source pins were
 rechecked. This is a static contract freeze only: no code, tests, runtime,
 provider job, or actual-owner acceptance was added. A4 remains unadmitted and
 paid/provider work remains paused.
+
+### Disjoint projection-pager and owner implementation admissions
+
+Integrated LEAD's exact three-file status patch
+`50c8da0655ff9f1c112c3b3982d41263347c5161` (parent
+`f75af2b97cb0a6707f267aeb51e88319204c0f4d`): `PLAN.md`, `docs/QUEUE.md`,
+and `docs/TEAM.json`. It records disjoint write admissions for C1's bounded
+projection pager and C3's three new owner files at the fixed base
+`4e2bce9df0e010f0795c392e8254db12fce5fcfe`; this documentation update does not
+move that work base. These are initial write admissions only, subject to
+per-job runtime admission. C3 GREEN depends on accepted pager integration. No
+product/case files, tests, or jobs were included. A4 remains unadmitted and
+paid/provider work remains paused.

@@ -2705,3 +2705,21 @@ Escalation notice (2026-10-27): Fable 5.1 has no usage credits (HTTP 429), so
 `mx-escalate` and `mx-architect` cannot run. Until restored, a task reaching its
 third fix round stops, retains its failed-round reports in `work/`, and returns to
 LEAD; LEAD architecture work uses read-only `mx-autonomous` (Opus) reports instead.
+
+LEAD decision (D1 wire, 2026-10-27): C2's strict-parse failure is a product defect
+(pydantic strict + `mode="before"` model validators re-validate JSON in python mode,
+so canonical `model_dump_json()` output cannot be re-parsed). Approved fix: one strict
+raw-JSON entrypoint (`_strict_json`, recursive exact-key check, `model_validate_json`)
+used by producer, verifier and tests; refusal variants and oracle unchanged. Separate
+defect from the fixture rounds, so it starts a new two-round budget. No other lane
+uses the pattern (grep over all clones).
+
+## G1 generic owner workflow admission (2026-10-27)
+
+Contract `docs/OWNER-WORKFLOW-LEASE.md` revision 3, frozen after independent
+`mx-precise` review and scoped re-review (H1–H4, M1–M8, L1–L4, R1–R4 applied);
+design study `docs/reviews/owner-harness-architecture.md`. Lane C1-G1 (new Claude
+session) in new clone `/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1-owner`,
+branch `claude/owner-workflow-g1` from the `codex/checkpoint` commit that integrates
+this record. ONLY new `src/deploy_workflow/owner_workflow.py` and
+`tests/test_owner_workflow.py`. Disjoint from B1, A4, L2 and D1.

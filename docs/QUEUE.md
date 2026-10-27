@@ -2700,3 +2700,8 @@ Lane state read by LEAD at handover (latest retained logs in each clone's `work/
   the genuine three-case handoff; no stubs.
 - LEAD clone holds an uncommitted, unreviewed `cases/legal/owner-expected.json`
   draft; it confers nothing until frozen and independently reviewed.
+
+Escalation notice (2026-10-27): Fable 5.1 has no usage credits (HTTP 429), so
+`mx-escalate` and `mx-architect` cannot run. Until restored, a task reaching its
+third fix round stops, retains its failed-round reports in `work/`, and returns to
+LEAD; LEAD architecture work uses read-only `mx-autonomous` (Opus) reports instead.

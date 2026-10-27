@@ -2775,3 +2775,19 @@ User instruction (2026-10-27T19:50Z): raise the cap to 4 concurrent subagent tas
 LEAD runs B1 plus three lock-free tasks: G1 mx-precise review, D1 fix round 2
 (`coordinator-2/work/cp1b-delivery-d1/fix-2-brief.md`; adversary review saved as
 `review-adversary-1.md` there) and A4 mx-precise re-review.
+
+Reviews (2026-10-27T20:30Z), saved in each lane's `work/` folder:
+- D1 `review-precise-2.md`: APPROVE of fix round 2 (F1–F4, F6, F7 fixed; F5, F8 deferred).
+  New LOW N1 (F3 accepts number re-spellings such as `1.50` for `1.5`) is a gap in LEAD's
+  F3 ruling, so it gets its own one-round budget (`fix-n1`), not a third round.
+- G1 `review-precise-1.md`: CHANGES REQUIRED. M1 (publish skips quarantine on errors
+  other than ValueError/OSError) plus L1–L3 go to fix round 1 (`fix-1-brief.md`).
+  Deviations 1, 2, 3 and 5 are accepted as fail-closed narrowings of the lease.
+- A4 `review-precise-2.md`: CHANGES REQUIRED. Finding 1 (factory maps tampered bytes to
+  `internal_error`, lease says `identity_mismatch`), finding 2 (consistently swapped
+  prior/current pair accepted) and finding 4 (weak paging test) go to fix round 2 of 2.
+  LEAD rulings: the seven partial-absence shapes stay refused `not_permitted`, as the
+  reviewer ruled from A1 and the leases. Finding 3 (bundle self-asserts its requested
+  pair) is a required check for IntegrityWorkflow: bind the pair to the authenticated
+  B1 receipt.
+- Open for the user: G1 adds 1,564 lines and A4 1,767, above the global 800-line PR cap.

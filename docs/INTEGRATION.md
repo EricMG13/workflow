@@ -1139,3 +1139,21 @@ verification, and records the earlier C3 bootstrap/raw-transport admission at
 acceptance and the six pathways remain open. C1's probe remains separately
 running; no runtime or test job was started for this docs-only patch. Paid and
 provider work remains paused.
+
+### CP1B refused-submission owner-session binding contract
+
+Integrated LEAD's exact six-file docs/case patch
+`6ff04cae31f9fdebd6a998c568a613428fca5285` (parent
+`8bad001bc01e897105b840978798e5884cdeeaf6`): `PLAN.md`, `docs/QUEUE.md`,
+`docs/TEAM.json`, `docs/CP1B-SESSION-BINDING-ADDENDUM.md`,
+`cases/earnings/session-binding-expected.json`, and
+`docs/reviews/cp1b-session-binding-contract.md`. The addendum/review/oracle
+pins are `edc60f4efde31ebcc5013833984e5a832f8e45faeeb2611bc4382bc97e030614`,
+`503979e0aa5c8814f4776e9a6bf05c6d84ea19444fa875f2dfb5809672425fa0`, and
+`7c2e03125b0b48a914b311d84178894b7487250fe0d4934c7549fca8c777afd4`. All
+148 pre-existing tracked source/test/case files remain byte-identical; the new
+oracle brings the total to 149 and parses as JSON. The contract specifies
+host-filled typed owner-session binding and credits a refused intent only from
+that selected session's captured read/call prefix; later reads cannot retro-credit
+it. Original B1, raw-transport and A4 public contracts are unchanged. This is a
+docs/case freeze only: no product, tests, runtime or provider jobs were included.

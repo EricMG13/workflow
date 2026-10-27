@@ -7,9 +7,10 @@ remains open. Historical receipts below retain their original scope and policy.
 ## Current state (historical receipts follow)
 
 - Task3-C is closed with immutable portable report/Model/native evidence; PLAN lists its exact scope.
-- C3 A1 core has 71 focused checks and a read-only genuine complete-CP1 probe passed; final code review/commit pending. This does not establish an actual CP1B owner.
-- C1 A2 access implementation exposed a real eager live-schema import dependency. The independently reviewed registration capability addendum below must be integrated before its sixth-file fix.
-- C2 A3 binding implementation has 84 passing/4 failing test expectations under investigation; no actual CP1B/CP5/FP02 acceptance.
+- A1 earnings core, A2 registration/access and A3 FP02 binding components are accepted and integrated. Actual CP1B/CP5/FP02 acceptance remains open.
+- C1 additive coordinate projection has 138 focused checks passed; its separately admitted genuine-metadata component probe is running with source frozen. Citation verification and actual owner use are outside that probe.
+- C3 is implementing the actual B1 owner. The bootstrap/raw supplement is integrated and admitted at7adb6167; its three WIP files survived the safe update unchanged. An active-session association clarification is being frozen within the same independent review.
+- C2 FP04 binding component commit4e84ffc is accepted and integrated/pushed at5dcbad23:76 focused checks passed, confidence/no-argument tournament/independent review closed. Actual legal owner, CP5 and native evidence remain open.
 - PM integrates exact admitted patches only. One heavy local job; uncapped disjoint implementation. All paid/provider/live tests paused.
 
 ## Task0 inputs and authority
@@ -25,7 +26,8 @@ remains open. Historical receipts below retain their original scope and policy.
   USD120/zero/missing component fixture, not an assembled analytical run.
 - PR MANAGER receipt `a51b9b88227f6a38db54044f3082f4a9c9bd452e`,
   main `/Users/ericguei/Documents/Deploy Workflow`, `codex/checkpoint`.
-  No external remote or PR is configured. TEAM.json is bootstrap-owned; not edited here.
+  Historical bootstrap had no remote. Current authorized source remote is
+  https://github.com/EricMG13/workflow.git; no PR has been created.
 - Frozen API/cases: TOOL-CONTRACT.md and cases/source/manifest.json,
   cases/upstream/manifest.json in this LEAD commit. Implementers read these files from
   the exact Task0 commit returned in LEAD's completion receipt, without modifying them.
@@ -2415,3 +2417,39 @@ componentprobe; unitGREEN2PID98249 10:48:00.089584..10:48:02.339914UTC exit0,
 C2FP04RED1PID97957 10:45:53.453338..10:45:53.914153UTC exit1,1specfallback
 assertion/68deselected0.30s, fixture/collectiongood/all147+pinsunchanged; implementation
 resumedwithin2files. Paid/provider/live staypaused.
+
+
+## FP04 component accepted; B1 bootstrap supplement admitted
+
+LEAD verified exact C2 commit4e84ffc2657d295259f2577486b1a1c7bac9610a,
+parent25027f69937fbbab9f58eb8572bc9ed014b20647, only report_view.py/new
+test_legal_render.py. Final product19705fb0/testab1ee8a5. Central GREEN1 PID1055
+10:56:20.971966–10:56:21.692010UTC exit0,76passed0.55s; full log SHA
+cbd520422793a4e246bb123f2b33cccfe1198c4570feaa2657874eed99899b16. All149
+source/test/case/authority pins and runtime unchanged; root independently rechecked
+current bytes and commit scope. Full product diff, confidence closure, no-argument
+tournament A and same fresh independent Sol/high review fef039b0 read. PM alone
+integrates and appends local report_view lineage without replacing reuse baseline.
+No additional runtime admitted. Synthetic component evidence only: actual legal
+source/CP1 auth, owner, semantic acceptance, CP5, final receipt, delivery/native and
+other five FP04 owner blocks remain open.
+
+C3-CP1B-B1-BOOTSTRAP-RAW-SUPPLEMENT-1 was admitted10:51:38.029884UTC at
+integrated7adb6167502a71fcb83991f04e67c714d691de59 after147baseline/authority/runtime
+pins and fresh process/load check. Three owned WIP files were hash-preserved through
+C3 safe fast-forward; supplement-update.json retains actual evidence. This admission
+adds only frozen OwnerSetup/raw policy4a6ddd6d/7fba44bc/a8b7d34d within original
+three files. Other B1 work continues. Active-session early-refusal association is
+under same-review clarification; no new top-level receipt or raw-policy change.
+
+C1 genuine-metadata component transport probe is centrally admitted/running as
+PID1345 since10:59:38.856722UTC on frozenac7ac2e1/a647782f/script171a2bf7. Exact
+request/argv and before pins are in work/cp1b-projection-a2p/lead-genuine-probe-1-record.json
+in the C1 clone. It uses full retained Fact metadata in a new explicitly synthetic
+component store, not a copied analytical run. Citation verification is NOT RUN.
+No owner/authentication/settlement claim follows; retain until real EOF/exit.
+Paid/provider/live remain paused; one global heavy job, disjoint writes uncapped.
+
+PM integration receipt: clean checkpoint5dcbad23b81fb1c0f51538796900d775a4350c06
+verified equal origin/codex/checkpoint. C2 exact2filepatch plus minimal INTEGRATION
+receipt and appended report_view reuse lineage, no extra runtime or product edits.

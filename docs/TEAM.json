@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: C1pager138focusedPASS awaiting genuine-inputcomponentprobe/finalcommit; C3B1implementation with corrected bootstrap/raw supplement frozen awaiting exact integration; C2FP04implementation; fullPLAN incomplete; paid/provider/live paused",
+  "state": "active: CP1 chart/report/Model slice verified; C1 projection138focusedPASS and genuine-metadata component probe running; C3B1 implementation with admitted bootstrap/raw supplement; C2FP04 component76PASS accepted/integrated at5dcbad23; fullPLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -35,8 +35,8 @@
   "one_heavy_job_limit": 1,
   "active_lanes": {
     "C1": "C1-CP1B-PROJECTION-A2P-IMPLEMENTATION-1 at4e2bce9: upstream.py/test_upstream_tools.py only, workcp1b-projection-a2p; writes/static only, heavy checks separately admitted",
-    "C2": "C2-CP4-FP04-L1-IMPLEMENTATION-1 at25027f6: report_view.py/newtest_legal_render.py only; work/legal-fp04-component; writes/static only, eachheavytestseparatelyadmitted",
-    "C3": "C3-CP1B-OWNER-B1-IMPLEMENTATION-1 at4e2bce9: newearnings_workflow.py/newtest_earnings_workflow.py/newcp1b-owner handoff; workcp1b-owner-b1; writes/static only, GREEN requires accepted projection integration",
+    "C2": "FP04 exact2filecommit4e84ffc integrated at5dcbad23; source-only authenticated FP02 delivery preparation in work, no new product writes/runtime",
+    "C3": "C3-CP1B-OWNER-B1-IMPLEMENTATION-1 plus BOOTSTRAP-RAW-SUPPLEMENT-1 at7adb6167: three owned files only; WIP-preserving update complete, GREEN requires accepted projection integration",
     "PR_MANAGER": "integration only"
   }
 }

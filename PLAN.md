@@ -269,7 +269,7 @@ cases/earnings/owner-expected.json and exact fresh cases/earnings/manifest.json.
 Review docs/reviews/cp1b-owner-contract.md supersedes earlier transport assumptions.
 C1 will own ONLY upstream.py/tests/test_upstream_tools.py; C3 ONLY new
 earnings_workflow.py/tests/test_earnings_workflow.py/docs/handoffs/cp1b-owner.md.
-Write admissions follow exact PM integration/fresh resource checks; no code yet.
+Exact disjoint write admissions are recorded in docs/QUEUE.md; implementation is active.
 Disjoint writes may overlap on frozen API; B1 GREEN/actual execution requires
 accepted projection integration in C3 clone without stubs or mutable WIP copies.
 
@@ -280,8 +280,8 @@ accepted projection integration in C3 clone without stubs or mutable WIP copies.
 - [ ] Execute fresh positive/no-YoY/source-refusal actual owner chains with retained permitted calls, all five CP1 stages, QA/promotion, CP1B settlement and public owner receipt.
 - [ ] Complete separately leased whole CP5 consumption/final seal and authenticated FP02/native proof before closing the module.
 
-A4 complete CP5 contract is still being corrected for indivisible lineage JSON;
-its pending review does not gate B1 public owner-prefix implementation. No Model
+A4 complete CP5 contract is corrected, independently frozen and integrated; C1
+implementation follows accepted projection integration. No Model
 publication in this first earnings selection; previous actual CP1/Model evidence
 remains immutable and broader PLAN/26-module/six-pathway requirements stay open.
 
@@ -321,7 +321,11 @@ gaps. Seeded candidate previews are component evidence, not owner settlement.
 
 - [x] Independently freeze all31 schema/binding metadata, six specs and literal positive/gap presentation/refusal expectations.
 - [x] Integrate exact freeze and admit C2's disjoint two-file implementation.
-- [ ] Verify focused component cases and required confidence/tournament/independent code reviews.
+- [x] Verify focused component cases and required confidence/tournament/independent code reviews.
+
+Accepted component commit4e84ffc has76 focused cases passed on exact final bytes;
+PM integrated/pushed it at5dcbad23 with appended reuse lineage. This check does not
+qualify an actual legal chain.
 
 Actual CP4 source/current-CP1 auth/tools/owner receipt, complete selected CP5,
 final legal delivery/native proof and the other five FP04 responsibilities remain

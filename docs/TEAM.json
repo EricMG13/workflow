@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: C3 A1 core implementation; reviewed A2 access/A3 binding leases pending exact C1/C2 admission; whole PLAN incomplete; paid/provider/live paused",
+  "state": "active: C1 A2 registration/access, C2 A3 FP02 bindings, C3 A1 earnings core implementation; whole PLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,8 +34,8 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "A2 reviewed/frozen registration/currentCP1 access, awaiting integrated-base write admission",
-    "C2": "A3 reviewed/frozen FP02 binding/specs, awaiting integrated-base write admission",
+    "C1": "implementation admitted C1-CP1B-A2-IMPLEMENTATION-1 at85785c9; exact5registry/metadata/upstream/testfiles, heavy checks separately admitted",
+    "C2": "implementation admitted C2-CP1B-A3-IMPLEMENTATION-1 at85785c9; exact4binding/spec/testfiles, heavy checks separately admitted",
     "C3": "implementation admitted C3-CP1B-CORE-A1-IMPLEMENTATION-1 atf1b3c5c: earnings.py/test_earnings.py/new core handoff only; heavy tests separately admitted",
     "PR_MANAGER": "integration only"
   }

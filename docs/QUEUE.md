@@ -2098,3 +2098,23 @@ Source financial/A1 numericoracles unchanged; productauthorindependent reviewPAS
 C2proposal0259861 integrateddoconly atmain091a36d. It remains a proposal; A3
 lease/oracle/review nowresolve exact44cells/ninebindings/fourFP02specs and missing
 zero-denominator growth. Actual module/receipt/CP5/render acceptance stillopen.
+
+
+## C1 A2 / C2 A3 — implementation ADMITTED
+
+2026-10-27T09:10:17.797008+00:00 fresh process scan clear; 9:10  up 1 day,  2:46, 1 user, load averages: 1.28 1.93 2.19.
+Exact clean pushed base 85785c9fa5370d3227309462346060f0e4fe4352; all132earlier source/test/case
+entries byteequal plus2new reviewedoracles=134. Sixcontract/oracle/review pins
+independently rehashed. C1-CP1B-A2-IMPLEMENTATION-1: exact5files inACCESSlease;
+C2-CP1B-A3-IMPLEMENTATION-1: exact4files inRENDERlease; no overlapwithC3A1files.
+Create freshbranches at exactbase, preserveprep branches/work. Beforewritesverify
+134baseline work/cp1b-preparation/a2-a3-source-before.json and exactfrozenpins.
+No heavy test/job bundled: request each focusedargv with currentsource/test/case/
+runtime/process/load preflight, freeze that source through actualexit. Zeroheavy
+slots now; C3REDPID77852terminated/slotreleased andC3writesresumed.
+A3independentreviewer confirms seeded build/layout checks need noA2metadata
+whitelist or monkeypatch; trueowner/currentsettlement checks awaitA2/C3bridge.
+Logs/reviews only C1work/cp1b-access-a2 or C2work/cp1b-render-a3; no extra tracked
+files beyondleases. Codeconfidence/tournament/sensitive reviews requiredbefore
+commit; PMhandlespostimportpatchmanifest. Actualowner/wholeCP5/renderlinks still
+open. Oneheavyjob/uncappeddisjointimplementation/paid-providerpause unchanged.

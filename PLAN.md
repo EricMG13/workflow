@@ -233,6 +233,6 @@ C3 A1 earnings core remains disjoint. Actual CP1B owner, complete current CP5 re
 and authentic FP02 output/native proof must follow before module closure.
 
 - [x] Independently freeze/review exact A2/A3 schemas, guards, values and ownership.
-- [ ] Integrate exact leases and admit disjoint C1/C2 writes at the named base.
+- [x] Integrate exact leases and admit disjoint C1/C2 writes at the named base.
 - [ ] C1/C2 implement, verify causal cases and required confidence/tournament/reviews.
 - [ ] Assemble actual owner/access/consumer/render chain; no component-only module claim.

@@ -216,5 +216,5 @@ requires its own lease; neither has an active product-writing lease at this tran
 - [x] Verify the human's added-coordinator and uncapped implementation authorization.
 - [x] Register C3 ownership and preserve all resource/model/evidence/pause rules.
 - [x] Freeze reviewed A1 core cases/API/files/base; retain later shared dependencies separately.
-- [ ] Commit/integrate the lease and admit C3 implementation after a fresh resource check.
+- [x] Commit/integrate the lease and admit C3 implementation after a fresh resource check.
 - [ ] Actual owner output, consumer and rendered proof; component checks alone do not close CP1B.

@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: Task4-A1 reviewed CP1B core lease pending exact implementation admission; C1 access/C2 render preparation; paid/provider/live paused",
+  "state": "active: C3 Task4-A1 CP1B pure core implementation admitted; C1 access/C2 render preparation; Task3-C closed; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -36,7 +36,7 @@
   "active_lanes": {
     "C1": "preparation only: docs/handoffs/cp1b-access-registration.md",
     "C2": "preparation only: docs/handoffs/cp1b-fp02-preparation.md",
-    "C3": "A1 frozen/reviewed: only earnings.py, test_earnings.py, cp1b-earnings-core.md; awaiting integrated-base/resource admission",
+    "C3": "implementation admitted C3-CP1B-CORE-A1-IMPLEMENTATION-1 atf1b3c5c: earnings.py/test_earnings.py/new core handoff only; heavy tests separately admitted",
     "PR_MANAGER": "integration only"
   }
 }

@@ -2024,3 +2024,24 @@ exact disjoint files and component-vs-actual acceptance. PM may integrate only t
 frozen lease/case/status patch;132 expected tracked source/test/case files =131
 unchanged existing entries + one new independent cases/earnings/expected.json.
 C3 remains no-write until exact integrated base and fresh resource admission below.
+
+
+## C3-CP1B-CORE-A1-IMPLEMENTATION-1 — ADMITTED
+
+2026-10-27T08:44:41.752116+00:00 fresh root process scan found no engine/test/render/server job.
+8:44  up 1 day,  2:21, 1 user, load averages: 2.21 2.16 2.32
+Exact clean pushed checkout base f1b3c5c880a616a422ddf87136f56c87f20ccb10. Contractfdd2e326 reviewed/integrated;
+all131 earlier source/test/case bytes unchanged plus the new reviewed oracle=132.
+C3 may create fresh codex/cp1b-core-a1 at that base and write ONLY earnings.py,
+test_earnings.py and docs/handoffs/cp1b-earnings-core.md as named in the lease.
+Preserve preparation branch/work. Verify leaseb32b91f8/oracle041e2e05/review526ce2f5
+and132-file baseline BEFORE writes. Initial admission is writes only; zero heavy
+slots in use, no test/engine/browser/provider admission. Exact focused pytest
+argv is in contract and outputs/task4-cp1b-start/admission.json; request its own
+fresh source/runtime/case/process/load admission when ready. Static lightweight
+checks may run safely. Code confidence/tournament/sensitive review required.
+C1/C2 active lanes remain their exact docs-only access/render preparation leases;
+no shared source edits or additional product leases. PM integrates only exact
+accepted commits. CP1B matrix stays unverified for actual tools/output/consumer/
+render; A1 core is not module/checkpoint acceptance. No numerical lane cap;
+one-heavy limit and all paid/provider/live tests paused.

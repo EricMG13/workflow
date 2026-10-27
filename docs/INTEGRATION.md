@@ -676,3 +676,17 @@ EOF/exit-0 runs and all 131 unchanged tracked source/test/case files. LEAD's
 were run during this integration. The handoff does not claim C2 receipt-authenticated
 rendering or native chart proof. C2's separate active render job and its frozen
 clone were not touched.
+
+### C2 actual CP1 chart delivery and native proof handoff
+
+Integrated LEAD-admitted C2 documentation commit
+`cfeeda4a62f2af7b69a0fec5ab3fc1531f5463dd` by cherry-picking its exact
+one-file patch. Its parent `8f9ebe357a32f494bade6b128863a2fc88fbfa66` was not
+merged; all existing main docs and source remain in the current history. The
+only added path is `docs/handoffs/cp1-chart-delivery.md`, SHA-256
+`e0c8c3a4ae988c5be68082b78f8c6450113e3d1746396df4627f354a95832c08`.
+LEAD's review records corrected QA attribution, sampled browser/DOM/clicked-JSON
+proof, 21 final evidence checks, and closure of owned native resources with
+source/input/output/runtime inventories unchanged. No tests or runtime were
+run during integration. The bounded delivery evidence is now available to
+LEAD's separate final acceptance and matrix update.

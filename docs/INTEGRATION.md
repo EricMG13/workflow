@@ -1059,3 +1059,20 @@ contract/oracle pins were rechecked unchanged. This freeze grants no product
 code or runtime work: C1's active projection lease remains scoped, A4 requires
 accepted pager integration, and future FP04 work is not admitted. No tests or
 jobs were run; paid/provider work remains paused.
+
+### CP4/FP04 typed covenant report binding contract freeze
+
+Integrated LEAD's exact six-file docs/case commit
+`8747e4e497383e1a5dd8e5c16129c535123a5961` (parent
+`c1dc25e13a67e40ee0a5b373b09156f6d08c9e63`): `PLAN.md`, `docs/QUEUE.md`,
+`docs/TEAM.json`, `docs/CP4-FP04-BINDING-LEASE.md`,
+`cases/legal/render-expected.json`, and `docs/reviews/cp4-fp04-contract.md`.
+The lease/oracle/review hashes are `a13cacb71a9e403b8fdc504db6ad4bd7ade7821d87e41f6b1c9cf433900b03fc`,
+`5200b47e9986bc715da9f1d2a342ca40a4d3d2d77c3afdc1179fde35f28edb4d`, and
+`1bcfcfe76db023f0f3a0813d92c0fa122216578f8e8ad6471d3a572b7bdffe2a`. The
+oracle parses as JSON. All 145 prior tracked source/test/case files remain
+byte-identical; the new case brings the total to 146. CP4 core
+`src/deploy_vii/cp4_legal.py`, its binding map, and shipped bindings were
+rechecked unchanged. This admits a future C2 report-view/test component only;
+actual CP4/CP5/native acceptance remains unverified. No tests/jobs were run.
+C1/C3 work remains on its fixed base; paid/provider work remains paused.

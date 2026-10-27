@@ -1,33 +1,38 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "Claude Code handover 2026-10-27: Codex threads retired; Claude LEAD plus one Claude session per lane; active: bounded CP1 chart/report/Model slice remains verified; C1 A4 implementation plus isolated legal source-host L2; C2 authenticated FP02 D1 delivery; C3 actual B1 owner/recovery; components and pre-code contracts do not close full PLAN; paid/provider/live paused",
+  "state": "2026-10-27 17:30Z: user closed lane sessions; only LEAD and PR MANAGER remain as sessions. Lanes run as LEAD-dispatched subagents (mx-feature implements, mx-precise/mx-adversary review) in the same clones. active: bounded CP1 chart/report/Model slice remains verified; C1 A4 implementation plus isolated legal source-host L2; C2 authenticated FP02 D1 delivery; C3 actual B1 owner/recovery; components and pre-code contracts do not close full PLAN; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "claude_session": "this LEAD session (worktree claude/codex-project-context-a11b1b)",
       "host_id": "local"
     },
     "C1": {
-      "claude_session": "local_39ce5477-2567-4c4e-ad61-55c5b1814e0c",
-      "name": "c1-a4-integrity",
+      "run_as": "LEAD-dispatched subagents",
+      "archived_session": "local_39ce5477-2567-4c4e-ad61-55c5b1814e0c",
       "host_id": "local"
     },
     "C1_SOURCE_HOST": {
-      "claude_session": "local_e3ee7eb8-6739-47e5-9b86-52a65870a7c3",
-      "name": "c1-l2-source-host",
+      "run_as": "LEAD-dispatched subagents",
+      "archived_session": "local_e3ee7eb8-6739-47e5-9b86-52a65870a7c3",
       "host_id": "local"
     },
     "C2": {
-      "claude_session": "local_62665708-cec7-424d-bf18-41225045d05f",
-      "name": "c2-d1-delivery",
+      "run_as": "LEAD-dispatched subagents",
+      "archived_session": "local_62665708-cec7-424d-bf18-41225045d05f",
       "host_id": "local"
     },
     "C3": {
-      "claude_session": "local_fa538cd2-f0ca-494f-bb2c-39cc2904bc49",
-      "name": "c3-b1-owner",
+      "run_as": "LEAD-dispatched subagents",
+      "archived_session": "local_fa538cd2-f0ca-494f-bb2c-39cc2904bc49",
       "host_id": "local"
     },
     "PR_MANAGER": {
-      "claude_session": "pending",
+      "claude_session": "local_3145b349-8b0c-49f4-a28e-9f67df2a2432",
+      "name": "pr-manager",
+      "host_id": "local"
+    },
+    "C1_OWNER_G1": {
+      "run_as": "LEAD-dispatched subagents",
       "host_id": "local"
     }
   },
@@ -37,7 +42,8 @@
     "C2": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2",
     "PR_MANAGER": "/Users/ericguei/Documents/Deploy Workflow",
     "C3": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-3",
-    "C1_SOURCE_HOST": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1-source-host"
+    "C1_SOURCE_HOST": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1-source-host",
+    "C1_OWNER_G1": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1-owner"
   },
   "paid_provider_tests": "paused",
   "implementation_lane_cap": null,

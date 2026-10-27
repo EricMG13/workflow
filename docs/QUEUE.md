@@ -2723,3 +2723,21 @@ session) in new clone `/Users/ericguei/Documents/Deploy Workflow Sessions/coordi
 branch `claude/owner-workflow-g1` from the `codex/checkpoint` commit that integrates
 this record. ONLY new `src/deploy_workflow/owner_workflow.py` and
 `tests/test_owner_workflow.py`. Disjoint from B1, A4, L2 and D1.
+
+## Lanes move to subagents (2026-10-27 17:30Z)
+
+A shared session limit stopped every lane session at ~13:35Z. By user instruction the
+four lane sessions are archived; only LEAD and PR MANAGER remain as sessions. Each lane
+continues in its same clone, branch and lease as LEAD-dispatched subagents. State at
+handover to subagents:
+- B1: causal RED-3 exit1, 3 failed in 26m29s (P2 recovery and missing/corrupt blob
+  categories reproduced as intended); drafted P2/P3 fixes still unapplied.
+- A4: GREEN-2 172 passed; precise/adversary reviews found defects A–H; fix round 1
+  (`work/cp5-integrity-a4/fix-1-brief.md`) was interrupted mid-edit, no report.
+- L2: Codex draft baseline 72 passed/28 failed; T1 single genuine-promotion test passes
+  but takes 11 minutes; the earlier "hang" was this slowness plus no per-test timeout.
+- D1: approved strict-entrypoint fix applied (13:10Z), mx-precise APPROVE, mx-adversary
+  pending, post-fix test run not yet executed.
+- G1 implementation and S1 oracle preparation were interrupted before writing files.
+Throughput note: genuine-promotion fixtures take 11–26 minutes per test under the one
+heavy-job lock; a shared cached fixture is the next infrastructure candidate.

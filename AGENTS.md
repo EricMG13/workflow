@@ -42,7 +42,8 @@ One task owns one named behavior/invariant, a starting commit, exclusive files,
 independent success/failure expectations and a concrete handoff. Define expected
 values, units, periods, citations, statuses and downstream effects before evaluating
 candidate output. Do not derive an oracle from the renderer or code under test.
-An independent `mx-precise` review checks sensitive expectations. Reuse existing
+An independent `mx-precise` review checks sensitive expectations. The global 800-line
+PR cap does not apply to lane integrations (user, 2026-10-27). Reuse existing
 reviews rather than add approval chains. Stop inventing policy at unclear semantics:
 name the exact requirement and have LEAD resolve it from the adopted source.
 

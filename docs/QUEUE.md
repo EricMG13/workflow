@@ -2790,4 +2790,5 @@ Reviews (2026-10-27T20:30Z), saved in each lane's `work/` folder:
   reviewer ruled from A1 and the leases. Finding 3 (bundle self-asserts its requested
   pair) is a required check for IntegrityWorkflow: bind the pair to the authenticated
   B1 receipt.
-- Open for the user: G1 adds 1,564 lines and A4 1,767, above the global 800-line PR cap.
+- User waived the global 800-line PR cap for lane integrations (G1 1,564 lines, A4 1,767); recorded in AGENTS.md.
+- D1 N1 fixed (RED 2 failed, GREEN 49 passed); LEAD checked the diff and reran the light subset. D1 pure milestone committed on its lane branch.

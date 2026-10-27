@@ -1089,3 +1089,22 @@ are unchanged. C1's three causal failures and C3's feature-absence RED remain
 open. The B1 setup/raw-transport addendum and A4 code are not included or
 admitted here. No source, case, test, or runtime job was included; lane starting
 revisions remain unchanged and paid/provider work remains paused.
+
+### CP1B earnings bootstrap authority and raw transport policy freeze
+
+Integrated LEAD's exact six-file docs/case patch
+`796fe70b2a61cd532f8ab14c003f83309388f990` (parent
+`bb944fb92831506d21bdd7e4683dc272a2eee7de`): `PLAN.md`, `docs/QUEUE.md`,
+`docs/TEAM.json`, `docs/CP1B-RAW-TRANSPORT-ADDENDUM.md`,
+`cases/earnings/transport-expected.json`, and
+`docs/reviews/cp1b-raw-transport-contract.md`. The addendum/review/oracle
+SHA-256 values are `4a6ddd6d348d2bd4e9a0b64532db8a4415018786cdafb4be788c74e2c088866d`,
+`a8b7d34d956d16db59bcbd8aa3244abdfa78469fb50c8f52a31f33d59cc200f9`, and
+`7fba44bc1cf2d2dd8b26ed941c28b04371ce29f1875f070f48dc6d12b7efa8d6`.
+All 146 previously tracked source/test/case files remain byte-identical; this
+new oracle brings the total to 147 and parses as JSON. The B1 owner lease,
+owner oracle and descriptor pins were rechecked unchanged. This is a static
+contract freeze only: no code, tests, runtime, or provider jobs were included.
+C3 setup/raw-transport implementation still requires safe WIP-preserving update
+and a supplement admission; C1 pager awaits genuine probe/final commit. Paid and
+provider work remains paused.

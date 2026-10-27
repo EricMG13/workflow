@@ -861,3 +861,14 @@ do not admit product implementation or runtime work beyond their explicit
 scope. C3 A1 remains disjoint. No tests, implementation, runtime, or financial
 audits were run. The package remains untouched and paid/provider/live work
 remains paused.
+
+### CP1B A2/A3 implementation admission
+
+Integrated LEAD's exact three-file docs patch `9a20866ad3c190d4243e125db68ccba07797d407`
+(parent `73498e28d85d4376578d61c00b7834ccb8bba91b`): `PLAN.md`,
+`docs/TEAM.json`, and `docs/QUEUE.md`. This records the scoped A2 access and
+A3 binding implementation admissions at base `85785c9fa5370d3227309462346060f0e4fe4352`.
+It authorizes only their leased writes; C3 A1 remains disjoint. No source, tests,
+cases, runtime, or package files were changed. Tests require separate fresh
+admission; logs stay in owned workdirs. The overall plan remains open, and
+paid/provider/live work remains paused.

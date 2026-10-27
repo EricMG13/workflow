@@ -889,3 +889,14 @@ with `PLAN.md`, `docs/QUEUE.md`, and `docs/TEAM.json` status updates. The oracle
 parses as JSON. This is a static contract freeze only; no source, tests, engine,
 provider, runtime, or package work was performed. Candidate implementation
 commits are not included; paid/provider/live testing remains paused.
+
+### CP1B narrow offline capability implementation admission
+
+Integrated LEAD's exact two-file docs patch
+`eff5ce3454258db09e27f4228a4e0b3cc8a97eb8` (parent
+`c7471f126f5a75f01df8fd918434460aab5d8cc5`) at the clean pushed base
+`dfbb4c9fec84e51c0cc9b8c1262dd1e07daebd9d`. It updates only
+`docs/QUEUE.md` and `docs/TEAM.json` to admit C1's narrow sixth-file offline
+capability fix under the existing frozen contract. The original five-file C1
+work remains intact. No product code, tests, or heavy jobs were included; paid
+and provider work remains paused.

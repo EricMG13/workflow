@@ -756,3 +756,16 @@ are byte-identical across every row, with no evidence-status change. The tracked
 run. The frozen 680-file package and index are untouched. LEAD's nine-check
 document confidence review and `git diff --check` are carried; no tests or
 runtime jobs were performed for this documentation integration.
+
+### C3 CP1B earnings preparation handoff
+
+Integrated C3's exact doc-only commit
+`07cf6dee33006d629cee3aab2702cbc590eb5030` by cherry-picking only its new
+`docs/handoffs/earnings-preparation.md` (SHA-256
+`246edc7d2dfb65a8d3eaa9737be7727147295fb5241caab8b7d4bea1ad444955`). Its
+parent/history was not merged. The handoff is a preparation proposal only:
+proposed APIs, dependencies and shared scopes are not an implementation lease
+or authorization. LEAD will freeze the narrow A1 pure earnings leaf/test scope
+and case; actual owner, CP5 and rendering dependencies remain separate later
+acceptance steps. No tests, product code, runtime, or provider work occurred in
+this integration. Paid/provider/live remain paused.

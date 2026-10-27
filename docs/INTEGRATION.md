@@ -1042,3 +1042,20 @@ local DR/minimal-version, attachment and safety requirements. This is initial
 current-scope documentation only; Task5 completion remains open. It does not
 move the fixed C1/C3 write base `4e2bce9df0e010f0795c392e8254db12fce5fcfe`.
 No code, tests or jobs were included; paid/provider work remains paused.
+
+### CP5 integrity transport and final earnings seal contract freeze
+
+Integrated LEAD's exact six-file docs/case patch
+`c1dc25e13a67e40ee0a5b373b09156f6d08c9e63` (parent
+`ab714085f28709d915aa7a4859c3c0ffc7e32deb`): status updates in `PLAN.md`,
+`docs/QUEUE.md`, and `docs/TEAM.json`, plus `docs/CP5-INTEGRITY-LEASE.md`,
+`cases/integrity/expected.json`, and `docs/reviews/cp5-integrity-contract.md`.
+The lease/oracle/review pins are respectively `cf562507e8bb5322eb67e7c3338afa52867ff59b7807f95d9dcf30359b589ade`,
+`a23517e8bcd3b344496ca982e735e4882065a4b27345f5a0e770e922ba25bd8f`, and
+`ba27cc9db6d2aeb4cf28c8643a1a15a14b4b7dc3bd15ce95e3dd4ae8933b392d`. All
+144 pre-existing tracked source/test/case files remain byte-identical; the new
+reviewed oracle brings the total to 145 and parses as JSON. B1 and projection
+contract/oracle pins were rechecked unchanged. This freeze grants no product
+code or runtime work: C1's active projection lease remains scoped, A4 requires
+accepted pager integration, and future FP04 work is not admitted. No tests or
+jobs were run; paid/provider work remains paused.

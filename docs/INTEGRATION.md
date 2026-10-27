@@ -658,3 +658,21 @@ Project compute was released after exit. No source/test/case edits occurred
 within the run. This assembled regression/component check does not replace the
 fresh actual CP1/publication chain or the required native chart proof in both
 report and Model outputs. Paid/provider/live work remains paused.
+
+### C1 actual chart-slice producer and publication handoff
+
+Integrated LEAD-admitted C1 doc-only commit
+`83cbf9221e118135d3b61bea2d423c91c05a0439` by cherry-picking that commit
+alone. Its parent `bc79eb9d164ea537d4159fcf279d82f0c19f3699` is an unadmitted
+draft and was not imported. The sole added path is
+`docs/handoffs/cp1-chart-actual.md`, SHA-256
+`ac451eaeccbfb7ad6a952f162df30ed35f8b3af7192f5bf187ac05e5ff8358ec`.
+
+The handoff records fresh positive CP1/Model publication and strict seal,
+independently bound QA `59 / Restricted / Low`, and a separate genuine
+missing-financial-source refusal with no Model output. It records both natural
+EOF/exit-0 runs and all 131 unchanged tracked source/test/case files. LEAD's
+14 document-confidence checks and diff check are carried; no tests or runtime
+were run during this integration. The handoff does not claim C2 receipt-authenticated
+rendering or native chart proof. C2's separate active render job and its frozen
+clone were not touched.

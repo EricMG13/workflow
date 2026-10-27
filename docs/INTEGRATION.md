@@ -809,3 +809,17 @@ three leased files. Heavy tests require a separate fresh admission. The CP1B
 actual-tool/output/consumer/render matrix fields remain unverified. The exact
 patch changes no source, test, case, package or runtime bytes; paid/provider/live
 remain paused. No tests or runtime work were run for this status integration.
+
+### C1 CP1B access and CP5 preparation handoff
+
+Integrated C1's exact doc-only commit
+`08fd113bf692349ada852aa397beee6478a4e4ee` by cherry-picking only its new
+`docs/handoffs/cp1b-access-registration.md`, SHA-256
+`c2138c9615ad123c3df25e72c106074cbb56e817e603abfd8ca93504df8bf48c`. Its
+base was `d04c19cb237c4125dcb3765cb0745479913a4430`; no other history or files
+were imported. This handoff is a proposal for LEAD review only: proposed
+producer-qualified grants, full period indexing, current CP5 scope and the real
+integrity bridge grant no access or product-write permission. Each requires
+independent expectations, a frozen schema/lease and separate admission before
+implementation. C1 remains docs-only. No tests, source, runtime, or package edits
+were made for this integration; paid/provider/live remain paused.

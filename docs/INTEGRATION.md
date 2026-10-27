@@ -463,3 +463,33 @@ identity source is unchanged. No parser, product code, model setting, test or
 financial/provider job was changed or run for this integration. C1/C2 clones
 were left untouched; this clean main revision is the source-fixture update for
 their fast-forward under LEAD's instructions.
+
+### C2 rendered financial slice integration
+
+Integrated LEAD-admitted C2 commit
+`e675dcfafb027516bd385aea9e81755b293dfe70` by local fetch and fast-forward
+from its exact parent `2946639147e340ff34be749a589b2c886eb4cbbd`. The commit
+changes only:
+
+- `src/deploy_workflow/financial_rendering.py`
+- `tests/test_financial_render.py`
+- `docs/handoffs/financial-rendered-slice.md`
+
+The renderer hash is
+`d511935ca9724de3ed734da87498f786742f2e63ca4a62a68408f9d136b089a8`; the
+final test file hash is
+`99059144b35d4c8d8cccee1ba4c4b6761ab06f9c45eb566c156ac063a4085b13`. The
+handoff hash is
+`6b045fcce7eadfa67b45460c4752d1a5184e626ccc93e20540bdb1042570fbbe`.
+LEAD's exact-commit review receipt records 22 focused tests passing, strict
+renderer mypy passing, confidence review and independent Sol/high review, and
+the no-argument rewrite tournament. These checks are carried from the
+admitted clone; no tests were rerun during integration.
+
+The handoff retains the qualification limits: C1's actual financial runtime,
+actual QA/promotion/Model execution and native render proof remain pending.
+This integration does not accept the full financial or Model execution slice.
+The renderer's independent source and artifact-hash checks were mechanically
+verified again here. C1/C2 clones were not modified by this integration. Main
+is at `e675dcfafb027516bd385aea9e81755b293dfe70` before this receipt is
+committed.

@@ -177,13 +177,13 @@ independent pre-implementation oracle: cases/charts/expected.json and
  docs/reviews/cp1-chart-expectations.md. Previous evidence remains immutable.
 
 - [x] Map shared chart fallback/Model publication seam and independently freeze source expectations.
-- [ ] Integrate reviewed exact contract and release disjoint C1 producer/C2 consumer leases.
-- [ ] C1: typed canonical fact-coordinate S.1-S.4 projection with focused causal checks.
-- [ ] C2: shared report/Model real SVGs, exact table twins and existing passport interactions.
-- [ ] Close confidence/independent-sensitive/no-argument-tournament reviews; integrate exact bytes.
-- [ ] Fresh actual offline full CP1/QA/promotion/publication and genuine missing-source refusal.
-- [ ] Actual authenticated delivery and native chart/table/passport/calculation-link proof in both outputs.
-- [ ] Relevant assembled check, new portable package/index and bounded matrix closure.
+- [x] Integrate reviewed exact contract and release disjoint C1 producer/C2 consumer leases.
+- [x] C1: typed canonical fact-coordinate S.1-S.4 projection with focused causal checks.
+- [x] C2: shared report/Model real SVGs, exact table twins and existing passport interactions.
+- [x] Close confidence/independent-sensitive/no-argument-tournament reviews; integrate exact bytes.
+- [x] Fresh actual offline full CP1/QA/promotion/publication and genuine missing-source refusal.
+- [x] Actual authenticated delivery and native chart/table/passport/calculation-link proof in both outputs.
+- [x] Relevant assembled check, new portable package/index and bounded matrix closure.
 
 Fresh actual run uses existing public APIs; no journal fork/revision or second financial
 engine. At most one heavy job/two disjoint lanes; paid/provider/live tests stay paused.

@@ -1581,3 +1581,367 @@ oldmainplanningbyteidentity, exactfieldagreement/disjointleases, source-nativeun
 sourcequarterjoin/NULLvs0/maturityscope andfreshpublicpublication invariants PASS.
 Only docs/caseexpectedmetadata changed; rewrite-tournament exempt. PM exactcontract
 integration admission follows thiscommit. No productwrites/heavyjobs yet.
+
+C1-SERIES-1 and C2-CHART-1 IMPLEMENTATION LEASES RELEASED at integratedcleanbase
+adcd5671e18b98f28595d7db8003ff0df646d802. Exact3files each/contracte6e3f4a;
+independentreview33ea3771/oracle2ca2606c. Actualappdispatch sets BOTH GPT-6.1Sol/high,
+not hidden telemetry. Preserve priorbranches/work; freshcleanbranch at exactbase.
+Two disjoint code lanes active; all tests/core/heavyjobs request exact admission first,
+staticown-file checks okayfrozen. Heavy slotFREE; do not run concurrenttestbatches.
+Freshfullpublicchain chosen; previousCP1package528hashes verifiedunchanged beforecode.
+Paid/provider/livePAUSED. PMintegratedcontract; nextsourcecommitsneedexactreviewadmission.
+
+C1-SERIES-RED-1 admitted06:16:37UTC afterfreshps no test/core/serverjobs;
+load3.12/2.76/2.39. Command PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src .venv/bin/python
+-m pytest -q tests/test_financial_series.py inC1clone. TinyModuleView-only/<3s;
+testSHA7c3d7531719221a64889ff2adf8d1df05f7ae1058a3aae47e5381b3ac351e11c,
+producerabsent/basecodeunchanged. SlotreservedC1ONLY throughactualexitreceipt;
+freezeowninputs; logPID/UTC/exit+causalmissingproducerfailure. NoGREENyet.
+
+C1-SERIES-RED-1 launcherFAILED beforechild(noC1 .venv/bin/python); noPID/pytestresult,
+emptylogretained, notREDcausalproof. Slotunoccupied. C1-SERIES-RED-1R correctedadmission:
+samecwd/env/-mpytestfile but exactruntime /Users/ericguei/Documents/Deploy Workflow/.venv/bin/python.
+Freshpsnojob/executable+unchangedtest7c3dverified. Read-onlysharedmatchingruntime
+allowedREADME, nosync/mutation. SlotC1onlyuntilactualexit. ProviderPAUSED.
+
+C1-SERIES-RED-1R COMPLETE/PASS causalexpectedRED: PID55560,
+06:17:47.685359Z..06:17:47.988880Z, exit2/onecollectionerror intendedmissing
+financial_series module. Test7c3d beforeafteridentical; fullC1work/cp1-series/red-1r
+JSON/log independentlyread. SlotRELEASED; C1writesproducer, noGREENadmittedyet.
+C2-CHART-RED-1 admitted06:17:51UTC freshpsnojobs: exactmainvenv -mpytest-q
+ tests/test_cp1_chart_render.py::test_shared_consumer_replaces_na_with_four_real_figures
+inC2cwd/PYTHONPATHsrc/PYTHONDONTWRITEBYTECODE1. Puretinycomponent<3s. Test5cbf61e6,
+report_viewbaselinec934d501 independentlyhashchecked; freezeinputs untilactualexit,
+retainPID/UTC/log. SlotreservedC2only; expected4na-vsrealfiguresassertionfailure.
+
+C2-CHART-RED-1 CLOSED PID55656 06:18:07.360230Z..06:18:07.626743Z exit4,
+testimporterror(SHIPPED_MAPS leafexport), notcausalRED; bytesunchanged/logretained.
+C2-CHART-RED-2 readmitted sameexactone-node/mainruntime/cwd/env aftertest-onlyimport
+correction. ActualtestSHA2aaf36b2b3dc2d0b33ea80e55b8910f32528d4c91b88c587ccde39ed17918b33,
+report_viewc934unchanged, freshpsnojobs. Discardreportederroneousplaceholderprefix.
+Freezeinputs/slotC2only/retainactualPIDUTCexitlog; noGREEN/sourcechangeuntilcausalRED.
+
+C2-CHART-RED-2 CLOSED PID55747 06:19:34.478773Z..06:19:34.864217Z exit4,
+secondtestimporterror(pathwaysactualexportreport_view), notcausalRED; allrecordsretained.
+CorrectedC2test48238c94/baselinec934frozenawaitsnextslot; importsASTcheckedagainstactual.
+C1-SERIES-GREEN-1 ADMITTED06:20:27UTC freshpsnojob: samepinnedmainruntime/cwd/env
+-mpytest-q tests/test_financial_series.py (<3s/tinyModuleView/noengine). Source2f795f00,
+teste0093046 independentlyverified/frozen, testfixturecorrectionremovesorphanfacility
+frommissingquartercase; initialREDrecordretained. SlotC1onlyuntilactualexit; logPIDUTC
+exit/beforeafterhashes. StaticRuffI/F+strictmypyreportedpass; notactualGREENyet.
+
+C1-SERIES-GREEN-1 CLOSED PID56703 06:21:39.092927Z..449579Z exit1,
+17fixtureconstructionfailures(numericFactunitrequired) BEFOREproducerexecution;
+no semanticpass, source/testbeforeafterunchanged. Rootreadactualrecord/log.
+SlotFREE; C1correctsfixtureonlythenrequestnewhashadmission.
+C2-CHART-RED-3 ADMITTED06:22:00UTC afterfreshpsnojob andsourcec934/test48238c94
+hashcheck. Sameexactone-node/mainruntime/cwd/env. SlotC2only/freezeinputsuntilactualexit;
+allpriorimportfailuresretainednotbehaviorproof. Expected4nafallbackassertion.
+
+C2-CHART-RED-3 actualCAUSALFAIL/PASS expectedRED: PID57184
+06:23:41.064297Z..06:23:41.515079Z exit1/1failed0.28s: actual4na figuresvs
+expectedline,line,line,grouped. Rootreadrecord/log; 48238/c934beforeafteridentical.
+SlotRELEASED; C2implementationnow. C1-SERIES-GREEN-2 admitted06:24:12UTC after
+freshpsnojobs, source2f795f00/testa1547947 independentlyverified. Sameexactmainruntime
+-mpytest-q tests/test_financial_series.py/C1cwd/env,<3s. Freezeinputsuntilactualexit,
+slotC1only; retainPIDUTCexitlog. C1tournament/read-onlyreviewmayoverlap.
+
+C1-SERIES-GREEN-2 PASS17/0.14s PID57498 06:24:28.884366Z..29.157809Z exit0,
+2f795f00/a1547947 beforeafteridentical. Slotreleased; confidence/tournamentstillopen.
+C1reviewscombinedmissingquarter+missingmetric andmalformedmetadata concretely,
+no speculativepatch/reviewpassclaim. Historicalreal-shapecompatibilityprobe planned
+read-onlyraw87af/ModuleView/pureproducer, separatecomponentnotfreshanalyticalacceptance.
+C2consumerdisplayruling: canonicalkeysretainedforidentity; humanfinancecaptions
+Total leverage(reported), Net leverage(reported), Interest cover(reported), Cash,
+Undrawn RCF, Total liquidity. KeepChartSpec/Markseriesconsistent/factreferencesexact;
+consumerdisplaymetadataonly/no sourceoracle/API/arithmeticchange.
+
+C1-SERIES-ADVERSE-RED-1 admitted afterfreshpsnojob andhashcheck: source2f795f00,
+newtest3ef37f99491d259c66c8e084355cc7d2efeef87fd2ed162d4f8e543ca4494c39.
+Sameexacttinyfocusedpytest/mainruntime/C1cwd/env. Threeconcretesuspects:
+missingquarter+missingmetric; nonknownmaturitywithdatetext; FORECASTascurrentwall.
+Expected17pass/3fail; actualresultmustestablishbeforeguardpatch. SlotC1only/frozen
+source/testuntilactualexit/PIDUTC/fullrecords. C2writesconsumer, no testslotadmitted.
+
+C1-ADVERSE-RED actualPID58566 06:27:18.383128Z..679796Z exit1:3expected
+DIDNOTRAISEfailures+17pass0.17s, source2f/test3efunchanged. Confirmedguardsimplemented:
+_rows malformednonknownpayload refusal; _periods historicalQUARTER/FY/PERIOD_END;
+mandatorymetricpresence beforecoveragefallback. Source0b1345e6/test3ef37f99 frozen.
+C1-ADVERSE-GREEN + C1-REAL-SHAPE-1 SEQUENTIAL admission06:28:39UTC freshpsclear:
+firstsamefocusedpytest, ONLYifPASS then mainruntime work/cp1-series/real-shape-probe.py
+(envsame/C1cwd, scriptc59a6533 independentlyread/hashchecked). Probeonlyraw87afModule
+parse->ModuleView->pureprojection andliteraloraclecompare25points/9gaps/4RCF0/one50m2029;
+noExecution/engine/oldpublication. Both<3s; source/test/script frozenacrossboth.
+RetainseparatePIDUTCexitlogs/hashproof; slotC1only untilbothclosed. C2GREENpending.
+
+C1ADVERSE-GREEN20PASS0.16s PID59045 06:29:14.252011Z..562860Z exit0;
+REAL-SHAPE25points/9null/4RCFzerosPASS PID59046 06:29:14.563683Z..15.371955Z exit0,
+0b/3ef/c59inputshashesunchanged, actual87afblobunchanged. Historicalcomponentonly.
+C1same-rootresidualreview: malformedfacilitypayloadwithnoT4.14periodscangetgapfirst;
+newcausalcheck/guardwithinleasepending, no sourcepassclaimyet. SlotRELEASED.
+C2-CHART-GREEN-1 ADMITTED06:29:35UTC freshpsclear: exactmainruntime-mpytest-q
+ tests/test_cp1_chart_render.py/C2cwd/env (<5s,24tinytypedseamcases).
+Source20aa4985/test0825d4eb independentlyverified/frozen; no actualproducerengine
+calls. SlotC2onlyuntilactualexit, retainPIDUTCexitlogs/beforeafterhashes. RealMULTIPLE
+facts currencyNone caveat delivered; iffixturechangesrequestnewhashbeforerun.
+
+C2GREEN1 CLOSED PID59176 06:30:38.137950Z..39.139298Z exit1:
+23PASS/1candidateViewfixturevalidationerror0.82s beforeconsumer; bytes20aa/0825unchanged.
+NotfullGREEN. C2sensitivefindingsrawseriescaptioncollision/allgapreason pendingcausal
+checks+singlefixpass; candidatepreviewfixtureandratioCurrencyNone correctionplanned.
+C1-EMPTY-PERIOD-CYCLE ADMITTED06:31:24UTC freshpsclear/source0b1345/test7dfeacfa/probec59
+independentlyverified. ReservedC1slotforsequentialtinycycle: exactfocusedpytestRED21
+expected20pass1fail; ONLYaftercausalrepro moveexistingT4.18_rowsvalidationbeforeempty
+periodgate, logexactsourcepatch+newSHA, freezeandrerunsame21-testGREEN, ONLYifPASS
+rerunsamepurehistoricalreal-shapeprobe. Noadditionalimplementation/testscope; separate
+PIDUTCexit/hash/logperchild, freezeowninputsduringeach. Sourceeditsonlybetweenchild
+processes; notduringchecks. Bothcommands<3s andnoengine. C2nojobuntilC1closescyle.
+
+C1EMPTY-PERIOD-CYCLE CLOSED REDPID59275 06:32:11.386305Z..704062Z exit1,
+1expectedDIDNOTRAISE+20pass0.17s; singleT4.18_rowsvalidationmovedbeforeperiodgate.
+Finalsourcefbd7daaead3165618aa1723f8bc266d3bd90fe22c4f054ba65ba03a868a983ec.
+GREENPID59276 06:32:11.705164Z..991866Z exit0,21PASS0.15s; PROBEPID59277
+06:32:11.992564Z..12.755318Z exit0/25points9null4zero/oldblobunchanged.
+Test7dfeacfa/probec59 unchanged, perchildsourcehashesfrozen. Reviews/tournamentclosing.
+C2-CHART-REVIEW-CYCLE ADMITTED06:33:17UTC freshpsclear/source20aa4985/test25452fcb
+independentlyverified. First exacttwo-nodered4requested; expected3causalfailures.
+Onlyafterrepro applytwoexactsensitivefixes: canonicalrawseriesmembershipBEFOREcaption
+mapping; all-gapreasonfromactualcanonicalfactlimitations (allowprovidedcanonicalreason
+withall-gappoints), no invented financialexplanation. Recordpatch/newSHA; freezeeachchild.
+Then samepinnedruntime -mpytest-q tests/test_cp1_chart_render.py (full27cases) GREEN.
+Onlythesetinycommands/fixesauthorized; slotC2onlyuntilactualexit; retainPIDUTCexit/full
+logs/hashbeforeafterperchild. Noactualproducer/engine/providercall. C1nojobuntilrelease.
+
+C2REVIEW-CYCLE CLOSED: RED4PID59607 06:34:33.921127Z..34.451902Z exit1,
+3causalfailures(alias/allgapmissing/providedreason), input20aa/25452unchanged.
+GREEN2PID59639 06:34:57.566521Z..58.847011Z exit1:26PASS/1regexexpectationmismatch
+(actualcorrectrawseriesrefusalmessagechanged), source571ee44c/test25452unchanged.
+Rootindependentlyreadbothrecords/logs; slotreleased. Mechanicaltestmessagecorrection
+pending, no newsemanticdefect established. C1tournamentwinnerB appliedafterbackup,
+source9f4d0df14cb14e8dd3e8c3d0c7ed20afa9beadff2ced229a38047478e18caa8c,
+test7dfeacfa/probec59unchanged. C1-TOURNAMENT-VERIFY admitted06:35:06UTC freshpsclear:
+exacttiny21-testpytest thenONLYifPASS unchangedpurehistoricalprobe. SeparatePIDUTC
+exitlogs/perchildfrozenhashproof; slotC1only. CallerstaticRuffI/F/mypy/diffPASSreported;
+actualwinningvariantverificationpending. Noengine/provider.
+
+C2threadsystemError: selectedmodelcapacityaftercurrentchanges/records, nofileloss.
+LEADresumedexistingC2withSAMEexplicitgpt-6.1-sol/high, no substitutions/newlease.
+CurrentGREEN3pending product571ee44c/testebc353e5 mechanicalmessagefix; prior26PASS
+and3sensitivecasesvalid. C1tournamentverifyholdsslot; C2read-onlyreview/tournamentonly.
+
+C1TOURNAMENTVERIFY CLOSED/PASS winningB PID59781 06:35:51.660864Z..951079Z,
+21PASS0.15s; finalpureprobePID59782 06:35:51.951800Z..52.722900Z exit0,
+25points9null4zero/one50m2029, 9f4/7df/c59beforeafteridentical/old87afunchanged.
+FinalindependentSol/highBdiffclosureandconfidence7categories/4causalguardsclosed.
+Rootreadcompletehandoff+winningfunctions/evidence/limits; actualC1commitreviewfollows.
+C2GREEN3 ADMITTED06:37:01UTC freshpsclear/product571ee44c/testebc353e5 independently
+verified; exactsame27-casefile/mainruntime/C2cwd/env/<3s. Mechanicaltestregexfixonly;
+sourceunchanged, all3sensitivecasesalreadyPASS. SlotC2onlyuntilactualexit/log/hashproof.
+C2capacityinterruptionresumedonSAMESol/high, no route substitution.
+
+PM integrated EXACTC1commit21860a3510dadc24bcf1709de0d30d0f41588f15+receipt;
+mainclean3831b1827dbe2e7d2b51d391a734f5ecf077706f. Product9f4/test7d/docf138pins
+verified/rootcompletehandoffread; no PMtestsourcechanges. C2authorizedsafeffdependency
+withuncommittedownfilespreserved; no runningcheck. Scopedstatictyping/probeprepallowed.
+C2GREEN3 PASS27/0.67s PID60225 06:37:52.944664Z..53.791839Z exit0,
+571ee44c/ebc353e5beforeafteridentical, slotreleased. Sensitive2findings+3causalnodesclosed;
+noargtournamentread-onlyclosing. Actualproducercombinedbuildprobe/finalwinnerverifypending.
+
+C2dependencyFF3831b182 completed safely/own571/ebcunchanged; actualC1producer9f4.
+Scopedmypy/RuffI/F/formatPASS. Noargtournamentincumbentholds afterdistinctroles/blind
+identicalsnapshotbracket; no productrewrite. C2-CHART-FINAL-1 ADMITTED06:42:32UTC
+freshpsclear andsource571/testebc/producer9f4/probe3745c09d independentlyverified.
+Sequentialsame27-casepytest, ONLYifPASS exactmainruntime work/cp1-chart-consumer/
+real_shape_probe.py (samecwd/env). Fullscriptread: immutableactual87af rawModule
+44,253,016bytes->componentView->actualsharedbuild/index,4realfigs/25points9gaps4zeros/
+exactQ4ratios/cash/one50m2029/twins/passports; noExecution/engine/oldpublication/HTML.
+Earlier11MBestimate wasapproximate; actualsize44,253,016 usedhere. Expect<20s,
+slotC2only; createNEWownedproofdirsfirst, freezeallinputsacrosschildren/separatePIDUTC
+exitlogs/beforeafterhashproof. Historicalcomponentonly, nofreshanalytical/UIclaim.
+
+C2FINAL-1 BOTHactualexit0, slotRELEASED: pytestPID61038
+06:43:25.778478Z..26.413393Z27PASS0.46s; sharedprobePID61039
+06:43:26.413724Z..29.752933Z/realbuilddone28.711744Z,4realfigures25points9gaps4RCF0/
+exact5over3,1,6/cash/currentone50m2029/twins/passportsALLPASS. Source571/testebc/
+producer9f4/script3745beforeafteridentical; old87afblobunchanged. FigureJSON
+0218b8125ddc3b947285fe1a419400215d447dafa261f5b70809c7810eca3896.
+Rootreadactualrecords/logs/full149insert3deleteconsumerdiff/testscope; no out-oflease
+code or duplicatearithmetic. Human6captions, sourceunitvalues/gaprefs/companionIDs,
+allgapcanonicalreason/rawkeyguardverified. C2finalhandoff/commitawaited; nofreshrun
+orUIacceptanceclaimfromthishistoricalprobe. Modelpublicationmuststillbefreshactual.
+C1freshlaunchplanreceived: exactexistingCLI/newwork/actual-cp1-charts-1 positive/gap,
+source-onlyrawpackcopies374fdaa4/0b14ac95, budget128messages/16calls/step/4MiBrequest,
+positive~17min/gap~38s, independentfreshQAfreezeBEFOREpromotion, EOFseparatechilds.
+No launchuntilbothfinalsourcecommitsintegrated+assembledcheck/resourceadmission.
+
+C2exactcommit3e5b537a22ae95638273503326a3ede7739f31fb parent3831b182 reviewed;
+3leasedfiles source571/testebc/handoff73bbdaa6 pinsverified/cleantracked.
+PMexactintegration+post_import_patches metadataADMITTED06:49UTC afterrootpsclear,
+load3.05/3.03/2.98. ConditionalPM-CHART-ASSEMBLED-1 exact6filepytest204expected
+(156old+21series+27render), mainpinnedvenv/env; PMfreshps/load/fullsrc-tests-cases
+inventorybeforeafter+PIDUTCexit/log required, noextrafiles/provider/22-suite.
+SlotPMexclusiveuntilactualexit; C1freshCLIstartupstillnotadmitted. Rootnewoutput
+cp1-chart-slice createdforclosedcomponentchecks/oraclesONLY; actualacceptancepending.
+C1/C2closedproofsbytecopied/hashverified, previous528+96packagesimmutable.
+
+PMcombinedmainclean8f9ebe357a32f494bade6b128863a2fc88fbfa66; testedrevision6cdf64a3f7a464603265992beb8176dacbab3f9e.
+PM-CHART-ASSEMBLED-1 PID61833 06:49:30Z..34Z exit0/204PASS3.72s,
+131src/tests/casesbeforeafteridentical SHA98d4ec5b862ad997064e8b255351dd7376e67c4222d64c51acd83d9769a6d360.
+RootindependentlycomparedcurrentALL131pins tobeforemap:EXACTmatch. Rawrecord
+HASH_INVENTORIES_MATCH=0 iscomparisonexitstatus0(success), notJSONfalse/mismatch.
+Importedreportviewpatchmanifestcorrectlyrecordsbaselinec934/current571/C2sourcecommit.
+C1-ACTUAL-CHART-POSITIVE-1 ADMITTED06:51:13UTC freshpsnoprojectjobs/server;
+load2.08/2.72/2.86,RAM64GiB,swaps0. Source9f4/report571/manifest6b3 frozen.
+C1fetchcombined8f9freshbranch/newexclusivework/actual-cp1-charts-1/positive only;
+source-onlypackraw374f/canonical75a, exactexistingCLIlaunchplanfinite128messages/
+16calls-step/4MiBrequest. Soleheavy/writeowner throughEOF, actualPIDUTCargv/allraw
+requestsresponses/hashinventory retained. ActualQualityInputs+newrawjudgments MUST
+freeze/independentreview BEFOREqualitysubmit/promotion; CLIidleatthatpoint, no source
+edits/restart/replayhelper/finalModule. Gaplaterafterpositiveexit/separateadmission.
+Paid/provider/livePAUSED. Freshanalytic/publisher/nativechartacceptancepending.
+
+ACTUALPOSITIVE STARTED PID62817 06:55:01.198Z onC1freshcodex/cp1-chart-actual
+HEAD8f9ebe3/131pins/source-beforeJSON959258bbeb061bf8875aef4b360c31ddcb4e14c8d56bed0ddda382d3ddb4bd1d.
+RootindependentlycomparedJSONmap toPMbeforeinventory:ALL131equal. Newsource-onlypack
+374f hashintact. ActualCP0identity/scope/unauditedsourcecallsrecorded/participantauthors
+fromreturnedbodies. SoleC1heavy/writePIDheld, noqualitypromotionbeforeindependentfreeze.
+C2freshproofbranchat8f9(noff/reset/old3e5branchpreserved) trackedclean/codepinsunchanged;
+planpreparedread-only, render/tests/browser/serverNOTstarted. Rootcopied178tracked
+implementationrepo8f9files byteexact intonewpackagechecks/implementation-repository,
+excludingGit/runtime/work andfutureacceptanceclosure docs. CurrentactualacceptanceOPEN.
+
+ActualpositiveCP0firstreviewrequest4 INVALID: required evidence-grounded analytical
+read-throughclaim omitted. Raw/storedvalidationoutcome retained; no source/codebug
+or successfulsettlementclaim. SamePID62817/publicworkflow boundedrepair withinadmission:
+renewedsourceepochactualidentity/scope/unauditedreads5-7, CP0sourcebudget6/16,total8/128.
+Authornewcitedclaimfromfreshreturnedbodies; retainbothsubmissions/allcallidentities.
+No sourceedit/restart/replayhelper. SoleC1slot continues; actualfreshQApausemandatory.
+
+FRESH PREPROMOTION QA independentSol/highPASS exactticketadd1aab7-c10f-4dcb-ab84-4a73789b0c1f,
+snapshot7333dea5/input9dfb3d0b/artifact75d5172e/rawQAdddc1c43/inventory5ed902a1.
+Rootreadfullreview andindependentlyrehashedALL11frozenactualfilesunchanged, copied
+expectationfab38c609a231f4dbb92ee86b1ca42aaf1d652169c26eb53841a2c13f78a7f04 +
+review688a62dbe425b82140d74c3afabc021191f9564b870287ec7b1cef8114623752 intooutputoraclesBEFOREgrade.
+ExpectedE80,C1014425/10647,M7/10,P0,raw458413/7605≈60.277843524;
+unchangedRestrictedcap59 BINDS ->score59/Restricted/Low. Sevenmaterial/19refs,
+full42588fieldsdenominator/40577present/noexclusions;38selectedsourcequotessupported,
+sourceDSdefinitionsnotassuranceupgrade/normalizationCalc/gapsInsuff. No old58reuse.
+ActualtechnicalReady+WorkbookReady,4selectedQUARTERconstructs/94mandatoryPASS,
+no blockfindings/missing/conflicts; distinct77UIrows. No sourcefreequote/citations/
+record_jsonexposure. IndependentstdarithmeticONLY,nocandidategrader/engine/provider.
+C1SAMEPID62817 RESUMED: submitexactfrozenQA, compareEVERYactualConfidencefield/
+binding/dispositionBEFOREpublisher; mismatch/BlockedSTOP. Exactmatch+currentReady
+thenactualpublicModelpublisher/newcanonicalhashes/strictseal/EOFexit/sourceinventory.
+No sourcewrites/restart/oldstoreedit/nextowner. GaprequiresseparatepostEOFadmission.
+
+ACTUALqualityVALID/promotedCP1restricted; actualALL13Confidencefields EXACTofresh
+fab38expectation59RestrictedLow (earlierC1narration14wascounttypo; mapalwaysall13).
+PreQAregisterartifact75d !=postQAModulecandidate37f87e07 !=settledhead6d41c0a0:
+C1extraMONITORv1wronglycomparedartifacttocandidate, stoppedBEFOREpublisher; retained
+qa-comparison.json SHA6b5d4f76d7ef1b4412a53d70d04f97c9e20025c7e3175853e26356b533550210.
+Rootcausecode: cp1_quality.py242 artifact=CanonicalTables.content_hash;
+cp1_workflow.py445handoff.registers=thatsame75d;448candidate=journalboundModulehash;
+M4settlementchangesstatus/ownsynthetic/inheritedlimits producingresult6d41c0a0.
+IndependentSol/highactualidentityreviewPASS source/binding/QA/ready94/currentSnapshot
+5d0791291427ceaf65e315f3f9437c0a35d64ca6d4455e4711f753483f5a5032 confirmed,
+addendum9da5200e242d1336b72313ef45c264db100b31f7cd5828a53814bf433ac4a692 copiedoutput.
+CorrectedSEPARATEv2 monitor0d10f2492ce19f25d4c1b886439b3a3c061bb7eea18e1c93c193fcd73fd6113b
+ALL13andcorrectregisterbindingTRUE. No code/state/input/expectedgradeedits orwaiver.
+C1RESUMEDsamePID62817 actualpublicpublisher->strictseal->EOF; doNOTresubmitsettledQA.
+SoleC1slotcontinuesthroughEOF; source131frozen; noModelfilesexistedatthehold.
+
+POSITIVE STRICTSEALED/EOFCLOSED PID62817 06:55:01.198Z..07:41:00.569Z exit0,
+no signal/bufferbytes. Raw/contentreceiptf4b17b0a092e770150ec4a806c74d3aff47b22804c9b22ae6b73e0c6aa4f1c51,
+finalsnapshot8b0589817fc53cb0f14c89bff1b0bb5e0a39de085f1423b86d84e0d74123f2b8.
+CP1ticketadd1aab7/result6d41c0a0restricted; Modelticketd0f9038a-bb5d-4c71-a2ca-1918bada427b,
+resultd2420600276137c1810927f0ddd761c5e9a63420bd5452774721b1a911e5880frestricted.
+CanonicalHTMLaf820b7ec0b342f39be07ea0660192da7b8fb88f8928f7b108fbcea4592fc4ce/63018346bytes;
+calc739c32eeb0a4e5ed7c34a418e46633ae3f34b52fd6ff564730ce4b6fdb19938d/2128882bytes;
+pubreceipte9209d38908451402607df6b45dad56ef78858c4bafe84af577e97b670c397ae/766bytes.
+27actualrequests=15source/3projectedreads/7reviews(includes1invalidCP0)/pub/seal;
+stdout2e7eb8c9b6678b7e2d99a2a9960c6f7e0540d4c923dfe9b17e98a0948267a45b.
+All131sourceafteridenticalbefore959258bb/sourcecode8f9; rootreadactualcompletionrecord/
+receipt/pins andfreshpsno62817. PositiveleafnowFROZENreadonly; no C1furtherwrites.
+IndependentstaticactualModel+canonical4chart auditongoing (notnativeproof/corejob).
+C1-ACTUAL-CHART-GAP-1 ADMITTED07:42:35UTC freshpsnojobs/load1.77/1.96/2.16:
+newexclusivework/actual-cp1-charts-1/gap/sameCLI+pinnedruntime+source8f9+131pins,
+rawsourcegap0b14ac95/canonicalccc25656,participantC1-offline-chart-gap-analyst.
+Actualavailableidentity/unavailablefinancialread/newCP0claim/ConditionalDoNotRun,
+realCP1NotAuthorized+actualpublisherrefusalBEFOREattempt/files; seal/EOF/fullcapture.
+SoleGAPheavy/writechilduntilEOF; positive/oldstores/packagesimmutable; no newQA/code/
+source/provider. C2renderhasNOTstarted; waits gapclosure/newportableproofadmission.
+
+GAP STRICTSEALED/EOFCLOSED PID64326 07:45:48.895Z..07:49:52.706Z exit0/noSignal/
+stdoutremainder. FirstCP0raw4d9b invalidunusablefinancialinconsumer.usedSourceIDs;
+renewedepoch3sourcecalls/newrawcorrectsUSEDsource toidentity, keepsmissing_sourcefinancial,
+financialassessmentblocked/Conditional/DoNotRun/citedreadthrough; repairVALID, realCP1
+NotAuthorized/noattempt/head. ActualcorepublisherrefusalBEFOREModelattempt/files,
+sourceSnapshotbeforeafteridentical/noModeldirectory. Bothraw/outcomeskept/no codereset.
+Finalgapreceiptabc42d9835f0ff7834674b80ab4aba8ad86b5bb5fceb25c6e9ac9bd5f81d0ed3,
+snapshot3408c3601c1c66ca37c8d13aaae06e81792e45c4d640c5ab06aebb97c44f0004,
+CP0headabc4cd3c9eed1a25c641a576382d9aeab0ec25857ae993af12d2d7d1edb9ab60,
+canonicalpackccc256569d1d644eea7d1982ae6cc09140275bcb3bc734048e07a4673dca2a8d.
+10requests=6source(4identityok/2financialunavailable)/2reviews/pubrefusal/seal;
+stdout465370395f1fd0fedd3edeb732f9250ccddb016cf8980b676d44c454117f2904.
+All131aftergap==before959258bb; noC1child. GapleafFROZEN; rootcopy73files byteequal
+intooutputs/evidence/gap; receipt/refusal/nodirectorychecked, parentsetup/sourceaftercopied.
+PublishedModelindependentstaticPASS130sourceaccounts/280money/9Q4recipes/880valuerefs/
+3409citationinstances/91quotes/25marks9gaps4RCF0one50m2029/twins/SVGcurrentrefsexact;
+review1da86d874a7058cb34a0567024efe0724d10c1b6ca007d1de01c63cecbeb7ab5,
+resultbb299639f70599d39f02f695ab46cde5c9c600090a2302175e10e2a20690f6a6,
+pointproofe939ad764987b5ed96bcdaab5922f76258e34529da59937761a8e19e8a556adb.
+Adopteddisplaywholemillions16/18/19/20; exact16.25/17.5/18.75/20innumericdata/passports.
+C2-ACTUAL-CHART-POSITIVE-RENDER-1 ADMITTED07:52:08UTC freshpsnojobs/server,
+load2.83/2.49/2.27. ONEunchangedpublicwrapperpositive commandfromexactC2preflight
+fec58bd4/source8f9/131pins/wrapperd511/consumer571/producer9f4/mainvenv. Soleheavy
+slotC2untilactualexit; input203filesreceiptf4b/Modelaf820-739c-e920 frozen; newpositive
+outputleafabsent. Allauthpasses/fullPIDUTCexitlogs/input-source-runtimebeforeafter/
+canonicalbyteequality/outputhashesrequired. No concurrentgap/test/browser/server/source
+edits/restarts. SerialgapwrapperNoneandnativejobsneedlaterexactadmission. ProviderPAUSED.
+
+
+## Task3-C actual delivery and native admission — 2026-10-27
+
+C2 positive authenticated render closed: PID65156,07:53:19.425732–07:58:50.284023 UTC,
+exit0. Ten outputs, all canonical Model publication bytes preserved; all131 source,
+203 portable inputs and runtime before/after hashes unchanged. Report SHA256
+9d4cf37aae5c6295fd8ad0d2439cecd69f9b6b50924dec9cf52a39dd3397faf1.
+
+C2 gap authenticated render admitted after fresh root process scan found no jobs:
+exact pinned-runtime public wrapper, actual model_directory=None, C2 cwd/source8f9,
+73 immutable gap inputs, new output leaf. PID67409,08:01:00.349934–08:01:00.890244 UTC,
+exit0. Exactly three outputs; refusal/current receipt, no Model or calculation file.
+All source/input/runtime hashes and the ten frozen positive outputs unchanged.
+Root independently checked all13 delivered hashes and copied both full records/logs.
+
+C2-ACTUAL-CHART-NATIVE-1 admitted after a fresh clear process scan. One owned
+127.0.0.1 port0 Python http.server with read-only package directory; supported
+browser-only CUA, tiny same-origin directory binding before large report/Model.
+Actual four chart/table toggles in both outputs, mark/keyboard passports, current
+financial/source/maturity/period evidence, QA59/Restricted/Low, clicked calculation
+JSON in both outputs and genuine-gap refusal required. Bounded visible DOM and
+screenshots; no full-page AX claim, Codex app route, hidden state or bypass.
+Evidence writes only C2 artifacts/cp1-chart-native-1; no test/engine/rerender/source
+writes. Close only owned tabs/server and compare131 source/276 inputs/13 outputs.
+
+PR MANAGER integrated only C1 new actual-handoff patch83cbf922, excluding its
+unadmitted parentbc79 and prior handoff edits. Main cleanb789507. No retest or code
+change. C2 NEW doc-only delivery handoff lease: docs/handoffs/cp1-chart-delivery.md.
+LEAD retains exclusive PLAN/MODULES/QUEUE/TEAM and acceptance closure. Paid/provider/
+live tests stay paused. Native acceptance remains pending until observed.
+
+
+C2 native proof closed 2026-10-27: owned server PID67570,08:03:38.550681–08:13:04.465067
+UTC, intentional SIGTERM−15; parent exit0. Owned tabs6/7/8 closed and absent. Root
+process scan clear. All131 source/276 portable inputs/13 outputs/runtime unchanged.
+Both report and canonical: four SVGs/25 points/nine gaps/four RCF zeros/one50m2029;
+all four toggles each with8/4/12/1 rows; actual mark clicks, ArrowRight/Enter gap
+passport, full exact cash/ratio/source/maturity facts. Both real calculation-link
+clicks:22 bounded visible-DOM chunks,2128882bytes, exact739c canonical hash. Gap
+front/CP1/Model state not run; no charts/download. Root inspected representative
+report/canonical/source/ratio/gap screenshots and exact clicked-JSON records.
+Report[S8]/Model[S7] companion alias resolves by actual clicks to same source hash/
+page1/quarter-date quote; exact-false record retained, semantic identity closed.
+No full-page AX or native Codex app bypass; no rerender/tests/source edits/providers.
+C2 final NEW doc-only delivery handoff and LEAD bounded docs integration follow;
+no product code or additional test admission. Paid/provider/live stay paused.

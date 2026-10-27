@@ -2384,3 +2384,34 @@ C3B1RED1PID96442 10:33:47.921132..10:33:48.184993UTC exit1,1namedfeatureabsence/
 No ownerbehaviorproof; C3nontransportimplementationresumed. Bootstrapidentity
 authorityandrawTextIObytepolicy exposedconcreteschemaambiguities; sameB1review
 clarificationinprogress, no source/math/receipt-topfield expansion.
+
+
+## B1 bootstrap/raw supplement frozen — source/receipt boundaries preserved
+
+Addendum4a6ddd6d348d2bd4e9a0b64532db8a4415018786cdafb4be788c74e2c088866d;
+policyoracle7fba44bc1cf2d2dd8b26ed941c28b04371ce29f1875f070f48dc6d12b7efa8d6;
+sameB1reviewa8b7d34d956d16db59bcbd8aa3244abdfa78469fb50c8f52a31f33d59cc200f9
+published docs/reviews/cp1b-raw-transport-contract.md. OriginalB1e66aa2df/c8af02d3
+anddescriptor60ed9578/source/financialbytesunchanged. C3sourcedoubtsconfirmed:
+no earlyparticipant/mode authority beforeterminalreceipt; genericTextIOnormalizes
+CRLF/cannotcaptureinvalidUTF8. ExactboundedfixaddsOwnerSetup+AuditEntry.kindsetup
+(singleimmutabletypedfilebeforeCP0), policy_sha256=7fba44bc...; no topReceipt/
+OwnerPinsfields/A4APIchange. OpenverifiesuniqueSetup/S0ancestry/pins/policy/identity/
+mode beforeanyaction; onlyfirstbootstrapBeginRecordhasprecisejournalrederivation.
+
+Freshbuffer-backedTextIOWrapper runtimeprecondition, binarybuffersONLY; strictUTF8,
+exactLF/CRLF, rawpayload+TransportMessage beforedispatch, invalidframesnopermission
+credit, MAX_LINE+1 boundedforensicoverflowcapture/stopWITHOUTdrain orfull-lineclaim,
+partialEOFrefuse/stop, emptyEOFnoclose. rawframeauditsread_bytes; outputbinaryUTF8LF,
+I/O/retentionfailuresvisible withoriginalrecovery/no fabricatedrollback/success.
+Samepeerreconstructed17bytefixtures/2controlsequences/Unicodeoutput usingstdlib
+only; rootreadfullcontract/review/pins andcoherence. No productimport/testjob.
+
+PMexactintegrationthenC3safeupdatewith3WIPfilehashesstableandnewbaseline; raw/setup
+implementation admittedonlyafterrootnamesintegratedsupplement. OtherB1workalready
+admittedcontinues. C1sourcekeepfinalac7ac2e1/testa647 frozenforpendinggenuine-input
+componentprobe; unitGREEN2PID98249 10:48:00.089584..10:48:02.339914UTC exit0,
+138pass2.07s/allpinsunchanged. Probe/commitintegrationpending, actualowneropen.
+C2FP04RED1PID97957 10:45:53.453338..10:45:53.914153UTC exit1,1specfallback
+assertion/68deselected0.30s, fixture/collectiongood/all147+pinsunchanged; implementation
+resumedwithin2files. Paid/provider/live staypaused.

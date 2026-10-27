@@ -1,0 +1,851 @@
+{
+  "schema_version": "cp1b-raw-transport-oracle/1",
+  "scope": "Same B1 state/transport review continuation; immutable early setup authority and raw byte framing/audit clarification only; no new financial answers/product acceptance",
+  "authority": "LEAD explicit rulings preserve public TextIO/owner-prefix signatures and source/owner oracles; add strict OwnerSetup and AuditEntry setup kind only; buffer-only binary framing",
+  "original_pins": {
+    "owner_lease_sha256": "e66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071",
+    "owner_oracle_sha256": "c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d",
+    "descriptor_sha256": "60ed95782648064db7806bb7f0714fe030f9563424df50e17500803a2edfb7ec"
+  },
+  "max_line_raw_bytes_including_LF": 4194304,
+  "single_read_limit_raw_bytes": 4194305,
+  "max_messages_unchanged": 2048,
+  "accepted_setup": {
+    "reader": "fresh unused io.TextIOWrapper with open readable binary .buffer",
+    "writer": "fresh unused io.TextIOWrapper with open writable binary .buffer",
+    "buffer_only": true,
+    "wrapper_text_encoding_errors_newline": "Irrelevant because wrapper text read/write methods are never used",
+    "freshness": "Trusted setup precondition; no claim that decoder history can be inferred from public TextIO state",
+    "setup_refusals": "StringIO/nonbuffer/non-TextIOWrapper/closed or wrong-direction streams -> bad_arguments before consumption/product or audit mutation"
+  },
+  "framing": {
+    "complete_frame": "ends LF and raw byte length <=MAX_LINE, including LF and optional preceding CR",
+    "decode": "bytes.decode UTF8 strict, then JSON finite/shape checks; raw bytes are never reconstructed from text",
+    "retention": "exact consumed bytes under payload SHA plus TransportMessage(index,operation,request_sha256) before product dispatch",
+    "recognized_operation": "Existing exact operation keys and valid argument types; malformed/nonUTF8/extra keys -> invalid; unknown operation -> invalid/not_permitted",
+    "empty_eof": "No TransportMessage, no refusal frame, no successful close",
+    "partial_eof": "Retain exact nonempty observed bytes, invalid/bad_arguments, emit refusal if output succeeds, stop",
+    "oversize": "Exactly MAX_LINE+1 consumed bytes; retain exact prefix, invalid/transport_limit, emit refusal if output succeeds and stop WITHOUT draining unread suffix; no whole-line-retention claim",
+    "invalid_complete_frame": "Retain invalid and refuse; may continue to next raw frame within durable budget",
+    "budget": "If durable MAX_MESSAGES already consumed, existing transport_limit before another input read/record; do not append message2049 or reset on reopen",
+    "read_bound_scope": "At most MAX_LINE+1 bytes returned/consumed by the binary buffer call; internal buffered prefetch is unread input, not handled frames."
+  },
+  "fixtures": [
+    {
+      "case_id": "T-LF",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d0a"
+        }
+      ],
+      "input": {
+        "length": 15,
+        "sha256": "2ca992b3dfde8b2b08ec632b147040f293c99b711bdf2b51b1b197df8e180159"
+      },
+      "first_read": {
+        "length": 15,
+        "sha256": "2ca992b3dfde8b2b08ec632b147040f293c99b711bdf2b51b1b197df8e180159"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "state",
+        "dispatch_allowed": true,
+        "error_code": null,
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "2ca992b3dfde8b2b08ec632b147040f293c99b711bdf2b51b1b197df8e180159",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-CRLF",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d0d0a"
+        }
+      ],
+      "input": {
+        "length": 16,
+        "sha256": "d2954952de3fb2abe7501d7bb386ab277076c462d1f272b7625e47c9e04ec251"
+      },
+      "first_read": {
+        "length": 16,
+        "sha256": "d2954952de3fb2abe7501d7bb386ab277076c462d1f272b7625e47c9e04ec251"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "state",
+        "dispatch_allowed": true,
+        "error_code": null,
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "d2954952de3fb2abe7501d7bb386ab277076c462d1f272b7625e47c9e04ec251",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-UTF8",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227375626d69745f726576696577222c227061796c6f6164223a22c3a9e99baa227d0d0a"
+        }
+      ],
+      "input": {
+        "length": 42,
+        "sha256": "d06a03ce02b5109f2008ba446bbbcd84a478ea88e2db180926f3812a75852ea7"
+      },
+      "first_read": {
+        "length": 42,
+        "sha256": "d06a03ce02b5109f2008ba446bbbcd84a478ea88e2db180926f3812a75852ea7"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "submit_review",
+        "dispatch_allowed": true,
+        "error_code": null,
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "d06a03ce02b5109f2008ba446bbbcd84a478ea88e2db180926f3812a75852ea7",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-INVALID-UTF8",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227375626d69745f726576696577222c227061796c6f6164223a22ff227d0a"
+        }
+      ],
+      "input": {
+        "length": 37,
+        "sha256": "15d332ce351136dbb545bc3b1a9288482e272b7a5b5713dd9c270f3babb3509d"
+      },
+      "first_read": {
+        "length": 37,
+        "sha256": "15d332ce351136dbb545bc3b1a9288482e272b7a5b5713dd9c270f3babb3509d"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "15d332ce351136dbb545bc3b1a9288482e272b7a5b5713dd9c270f3babb3509d",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-MALFORMED-JSON",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a0a"
+        }
+      ],
+      "input": {
+        "length": 7,
+        "sha256": "32bf3f12d328634a071eba9d83cc1af4a9504b83efc3e677c5be6a1c77b3c1f1"
+      },
+      "first_read": {
+        "length": 7,
+        "sha256": "32bf3f12d328634a071eba9d83cc1af4a9504b83efc3e677c5be6a1c77b3c1f1"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "32bf3f12d328634a071eba9d83cc1af4a9504b83efc3e677c5be6a1c77b3c1f1",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-EXTRA-ARG",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465222c226578747261223a747275657d0a"
+        }
+      ],
+      "input": {
+        "length": 28,
+        "sha256": "8aaff8ba16fa095cb3298c895e82fc8b854f00969da11cf33448553dac9205f4"
+      },
+      "first_read": {
+        "length": 28,
+        "sha256": "8aaff8ba16fa095cb3298c895e82fc8b854f00969da11cf33448553dac9205f4"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "8aaff8ba16fa095cb3298c895e82fc8b854f00969da11cf33448553dac9205f4",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-UNKNOWN-OP",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227368656c6c227d0a"
+        }
+      ],
+      "input": {
+        "length": 15,
+        "sha256": "1559ea38ffc0f2cee3664a801327e82b9f13e1c700ea6a2864b97d2e35d76796"
+      },
+      "first_read": {
+        "length": 15,
+        "sha256": "1559ea38ffc0f2cee3664a801327e82b9f13e1c700ea6a2864b97d2e35d76796"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "not_permitted",
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "1559ea38ffc0f2cee3664a801327e82b9f13e1c700ea6a2864b97d2e35d76796",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-NONFINITE-JSON",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a22696e766f6b65222c22746f6f6c223a2278222c22617267756d656e7473223a7b226e223a4e614e7d7d0a"
+        }
+      ],
+      "input": {
+        "length": 49,
+        "sha256": "6a71b487c9428e63a29b8ef7c6caaa622a3ac79032796ce659e528a97fef1fd8"
+      },
+      "first_read": {
+        "length": 49,
+        "sha256": "6a71b487c9428e63a29b8ef7c6caaa622a3ac79032796ce659e528a97fef1fd8"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "6a71b487c9428e63a29b8ef7c6caaa622a3ac79032796ce659e528a97fef1fd8",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-BLANK",
+      "input_chunks": [
+        {
+          "hex": "0d0a"
+        }
+      ],
+      "input": {
+        "length": 2,
+        "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+      },
+      "first_read": {
+        "length": 2,
+        "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-EMPTY-EOF",
+      "input_chunks": [],
+      "input": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "first_read": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 0,
+        "operation": null,
+        "dispatch_allowed": false,
+        "error_code": null,
+        "stop_after_frame": true,
+        "successful_close": false,
+        "retained_payload": null,
+        "raw_request_sha256": null,
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-PARTIAL-EOF",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d"
+        }
+      ],
+      "input": {
+        "length": 14,
+        "sha256": "1f1325e399752c90d8a396f72be6d6a96c444c1c125249a8db03412be7b1a2fd"
+      },
+      "first_read": {
+        "length": 14,
+        "sha256": "1f1325e399752c90d8a396f72be6d6a96c444c1c125249a8db03412be7b1a2fd"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": true,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "1f1325e399752c90d8a396f72be6d6a96c444c1c125249a8db03412be7b1a2fd",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-BARE-CR-EOF",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d0d"
+        }
+      ],
+      "input": {
+        "length": 15,
+        "sha256": "726c8e41bf439589a3c7b015a0a311f2cbde7d03a628900cfc66fee19b750a37"
+      },
+      "first_read": {
+        "length": 15,
+        "sha256": "726c8e41bf439589a3c7b015a0a311f2cbde7d03a628900cfc66fee19b750a37"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "bad_arguments",
+        "stop_after_frame": true,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "726c8e41bf439589a3c7b015a0a311f2cbde7d03a628900cfc66fee19b750a37",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-EXACT-LIMIT-LF",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d"
+        },
+        {
+          "repeat_hex": "20",
+          "count": 4194289
+        },
+        {
+          "hex": "0a"
+        }
+      ],
+      "input": {
+        "length": 4194304,
+        "sha256": "00a230748a97e755490a690cc856dc42bcbfb10bf2e8009334188a29920dc612"
+      },
+      "first_read": {
+        "length": 4194304,
+        "sha256": "00a230748a97e755490a690cc856dc42bcbfb10bf2e8009334188a29920dc612"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "state",
+        "dispatch_allowed": true,
+        "error_code": null,
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "00a230748a97e755490a690cc856dc42bcbfb10bf2e8009334188a29920dc612",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-EXACT-LIMIT-CRLF",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d"
+        },
+        {
+          "repeat_hex": "20",
+          "count": 4194288
+        },
+        {
+          "hex": "0d0a"
+        }
+      ],
+      "input": {
+        "length": 4194304,
+        "sha256": "f0a052acdd4e39d24f2f148d1865d52557837a3197f865d404261e24e06a81cc"
+      },
+      "first_read": {
+        "length": 4194304,
+        "sha256": "f0a052acdd4e39d24f2f148d1865d52557837a3197f865d404261e24e06a81cc"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "state",
+        "dispatch_allowed": true,
+        "error_code": null,
+        "stop_after_frame": false,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "f0a052acdd4e39d24f2f148d1865d52557837a3197f865d404261e24e06a81cc",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-OVERSIZE-TERMINATED",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d"
+        },
+        {
+          "repeat_hex": "20",
+          "count": 4194290
+        },
+        {
+          "hex": "0a"
+        }
+      ],
+      "input": {
+        "length": 4194305,
+        "sha256": "902f44f475af6aed9ef0118d9d7ccb8e7687a05c695cf2248a5567015d193bae"
+      },
+      "first_read": {
+        "length": 4194305,
+        "sha256": "902f44f475af6aed9ef0118d9d7ccb8e7687a05c695cf2248a5567015d193bae"
+      },
+      "remaining_unread": {
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "transport_limit",
+        "stop_after_frame": true,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "902f44f475af6aed9ef0118d9d7ccb8e7687a05c695cf2248a5567015d193bae",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-OVERSIZE-NO-DRAIN",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465227d"
+        },
+        {
+          "repeat_hex": "20",
+          "count": 4194291
+        },
+        {
+          "hex": "554e524541442d5355464649580a7b226f70223a227374617465227d0a"
+        }
+      ],
+      "input": {
+        "length": 4194334,
+        "sha256": "ce5a78478ec81e1b2e2c8048f713dc14fdd617dbe132356738edcb5b9fe54e60"
+      },
+      "first_read": {
+        "length": 4194305,
+        "sha256": "665c18642f3525a20a8578ab2fcbabfc86c8c4067d7307c77aa0a00c91646050"
+      },
+      "remaining_unread": {
+        "length": 29,
+        "sha256": "0439fb086c01ed2f69f744fc062292e83dd32511407008bd2e2f483e241e7af6"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "transport_limit",
+        "stop_after_frame": true,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "665c18642f3525a20a8578ab2fcbabfc86c8c4067d7307c77aa0a00c91646050",
+        "whole_oversized_line_retention_claim": false
+      }
+    },
+    {
+      "case_id": "T-OVERSIZE-UTF8-BYTES",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227375626d69745f726576696577222c227061796c6f6164223a22"
+        },
+        {
+          "repeat_hex": "c3a9",
+          "count": 2097152
+        },
+        {
+          "hex": "227d0a7b226f70223a227374617465227d0a"
+        }
+      ],
+      "input": {
+        "length": 4194355,
+        "sha256": "cb8ceec983487a53aa447fb7ed74ed5221022b20fc7e8f5489463287f1e705c8"
+      },
+      "first_read": {
+        "length": 4194305,
+        "sha256": "e5ba5a5f42a936f6b4423fb5e8ddc1c1468d0255a683118888da7ea1a77887b8"
+      },
+      "remaining_unread": {
+        "length": 50,
+        "sha256": "a2167383cefb0bfbf97497f7ab8b080d628ed3757f20db19f2e7ef10cc5912ec"
+      },
+      "expected": {
+        "transport_message_count": 1,
+        "operation": "invalid",
+        "dispatch_allowed": false,
+        "error_code": "transport_limit",
+        "stop_after_frame": true,
+        "successful_close": false,
+        "retained_payload": "exact first_read bytes",
+        "raw_request_sha256": "e5ba5a5f42a936f6b4423fb5e8ddc1c1468d0255a683118888da7ea1a77887b8",
+        "whole_oversized_line_retention_claim": false
+      }
+    }
+  ],
+  "sequences": [
+    {
+      "case_id": "T-INVALID-THEN-CONTROL",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227374617465222c226578747261223a317d0d0a7b226f70223a227374617465227d0a"
+        }
+      ],
+      "frames": [
+        {
+          "bytes": {
+            "length": 26,
+            "sha256": "bc4227356b3e783ecf238a2277f433f310552fedb620f25b6ea3062d84d9a2aa"
+          },
+          "operation": "invalid",
+          "error_code": "bad_arguments",
+          "dispatch_allowed": false
+        },
+        {
+          "bytes": {
+            "length": 15,
+            "sha256": "2ca992b3dfde8b2b08ec632b147040f293c99b711bdf2b51b1b197df8e180159"
+          },
+          "operation": "state",
+          "error_code": null,
+          "dispatch_allowed": true
+        }
+      ],
+      "messages": 2,
+      "dispatches": 1,
+      "eof_message": false
+    },
+    {
+      "case_id": "T-NONUTF8-THEN-CONTROL",
+      "input_chunks": [
+        {
+          "hex": "7b226f70223a227375626d69745f726576696577222c227061796c6f6164223a22ff227d0a7b226f70223a227374617465227d0d0a"
+        }
+      ],
+      "frames": [
+        {
+          "bytes": {
+            "length": 37,
+            "sha256": "15d332ce351136dbb545bc3b1a9288482e272b7a5b5713dd9c270f3babb3509d"
+          },
+          "operation": "invalid",
+          "error_code": "bad_arguments",
+          "dispatch_allowed": false
+        },
+        {
+          "bytes": {
+            "length": 16,
+            "sha256": "d2954952de3fb2abe7501d7bb386ab277076c462d1f272b7625e47c9e04ec251"
+          },
+          "operation": "state",
+          "error_code": null,
+          "dispatch_allowed": true
+        }
+      ],
+      "messages": 2,
+      "dispatches": 1,
+      "eof_message": false
+    }
+  ],
+  "output": {
+    "method": "writer.buffer.write(strict UTF8 JSON bytes plus LF), then writer.buffer.flush; no text write/encoding/newline translation",
+    "example": {
+      "status": "refused",
+      "error_code": "bad_arguments"
+    },
+    "exact_hex": "7b22737461747573223a2272656675736564222c226572726f725f636f6465223a226261645f617267756d656e7473227d0a",
+    "bytes": {
+      "length": 50,
+      "sha256": "311fe4d35e361c145aae03c84725602ad001e28c0ff7a02d0885cd87fae2cafe"
+    },
+    "partial_write_or_flush_failure": "Visible unexpected I/O failure; never report successful complete response; actual prior product transition stays audited and recovers under original intents",
+    "example_serialization": "Reference compact sample only; no new JSON key-order/insignificant-whitespace requirement beyond existing reply object shapes. Actual output uses strict UTF8 bytes plus LF via the binary buffer.",
+    "unicode_encoder_fixture": {
+      "scope": "Transport encoder-only known JSON value, not an actual product result/analytical proof",
+      "value": {
+        "status": "ok",
+        "result": {
+          "body": "é雪"
+        }
+      },
+      "exact_hex": "7b22737461747573223a226f6b222c22726573756c74223a7b22626f6479223a22c3a9e99baa227d7d0a",
+      "length": 42,
+      "sha256": "ccef0ed580285eb4f62d3987a7e4e7aedebbe3aacd892aee0c5418af75b32341",
+      "wrapper_encoding": "ascii",
+      "wrapper_newline": "CRLF",
+      "buffer_output_is_strict_utf8_plus_LF": true
+    }
+  },
+  "failure_cases": [
+    {
+      "case_id": "T-STRINGIO-SETUP",
+      "trigger": "reader or writer is io.StringIO",
+      "expected": "bad_arguments before read/audit/product mutation"
+    },
+    {
+      "case_id": "T-CLOSED-SETUP",
+      "trigger": "closed buffer or reader not readable/writer not writable",
+      "expected": "bad_arguments before consumption/mutation"
+    },
+    {
+      "case_id": "T-READ-IO-FAIL",
+      "trigger": "underlying readline raises after setup",
+      "expected": "propagate unexpected I/O; no fabricated frame, hash, TransportMessage or dispatch"
+    },
+    {
+      "case_id": "T-PAYLOAD-RETAIN-FAIL",
+      "trigger": "raw payload retention fails",
+      "expected": "visible failure, no dispatch/response success, preserve earlier bytes/records"
+    },
+    {
+      "case_id": "T-METADATA-RETAIN-FAIL",
+      "trigger": "TransportMessage retention fails after raw payload written",
+      "expected": "visible failure, no dispatch; existing audit/inventory recovery refuses or uniquely recovers, never deletes orphan evidence or creates successful action"
+    },
+    {
+      "case_id": "T-WRITE-IO-FAIL",
+      "trigger": "binary reply write short/None/raises or flush fails after dispatch",
+      "expected": "visible failure, no successful complete reply; retain exact input and actual action intent/outcome; no blind duplicate dispatch/rollback claim"
+    },
+    {
+      "case_id": "T-MESSAGE-LIMIT",
+      "trigger": "durable2048 messages already held on reopen",
+      "expected": "transport_limit before another raw read/record; no count reset/no successful close"
+    },
+    {
+      "case_id": "T-CLOSE-CONTROL",
+      "trigger": "complete valid close frame after real terminal outcome",
+      "expected": "raw+TransportMessage retained before existing write_receipt/OwnerClose; output digest-only OwnerClose; no full receipt disclosure"
+    },
+    {
+      "case_id": "T-EOF-NOT-CLOSE",
+      "trigger": "EOF before terminal outcome, or partial/oversized frame after terminal but without valid close",
+      "expected": "never synthesize close/receipt/seal; preserve audit for existing recovery"
+    }
+  ],
+  "audit_and_recovery": {
+    "TransportMessage_schema_unchanged": true,
+    "OwnerPins_schema_unchanged": true,
+    "raw_transport_payload_load": "read_bytes and B(raw); invalid UTF8 is legal forensic payload, not a journal JSON string",
+    "replay": "Reclassify raw frame bytes under the framing rule and match exact metadata/hash/order; transport hash proves capture, not a method/analytical pass",
+    "postdispatch_failure": "Use original B1 submission intents/outcomes and snapshot recovery, preserve actual transitions, never claim rollback or rerun merely to deliver a lost reply",
+    "freshness_on_reopen": "Fresh unused wrappers each dispatcher invocation; preserve existing durable counters/history; no auto replay/drain of old raw stream",
+    "portable_evidence_limit": "Existing receipt has no dispatcher-invocation/stream freshness/unread suffix/reply-ack field; do not claim those facts from frame hashes. Runtime stop/no-drain is checked directly; later explicit invocation uses fresh wrappers and durable counters.",
+    "setup_required": true
+  },
+  "stdlib_observation": {
+    "universal_newline_text_read_normalizes_CRLF": true,
+    "buffer_read_preserves_CRLF": true,
+    "strict_UTF8_raw_frame_decode_available": true,
+    "writer_buffer_ignores_wrapper_newline": true,
+    "scope": "Only io.BytesIO/TextIOWrapper, JSON/hash byte checks; no product imports/engines/tests/providers/browser"
+  },
+  "not_verified": "Product setup/bootstrap/transport/audit/recovery/error implementation, actual owner or CP5 execution, focused test suite or native rendering.",
+  "owner_setup": {
+    "type": "OwnerSetup in deploy_workflow.earnings_workflow, strict frozen Contract, extras forbidden",
+    "schema_version": "cp1b-owner-setup/1",
+    "ordered_fields": {
+      "schema_version": "Literal cp1b-owner-setup/1 default",
+      "run": "Run",
+      "pack_sha256": "Hash",
+      "initial_snapshot_sha256": "Hash",
+      "case_id": "OwnerCaseId",
+      "pins": "OwnerPins",
+      "participant": "Text",
+      "transport": "Transport",
+      "policy_sha256": "Hash"
+    },
+    "policy_sha256_rule": "SHA256 of authoritative frozen raw cases/earnings/transport-expected.json bytes. Authoritative final hash is published externally in the review/admission, never embedded as this oracle own hash. Existing trusted case/oracle resolution/admitted code pins it; actor cannot choose it.",
+    "persistence": "Exactly one canonical model_dump_json UTF8 record, earnings-owner-audit/setup/<T(OwnerSetup)>; T is existing Contract.content_hash domain, raw bytes must equal canonical bytes; immutable/write-once; final audit_inventory includes AuditEntry(kind=setup,sha256=T).",
+    "new_AuditEntry_kind": "setup",
+    "create_order": [
+      "validate trusted arguments/frozen case/policy pins",
+      "Execution.create produces genuine S0",
+      "verify S0 parent=None,heads=[],attempts=[],same Run/pack",
+      "persist exactly one OwnerSetup BEFORE any CP0 begin",
+      "actual Execution.begin(CP-0)",
+      "persist actual first BeginRecord before analytical activity"
+    ],
+    "open_order": [
+      "authenticate exactly one setup canonical file/name/hash",
+      "validate strict fields/current case/OwnerPins and authoritative policy hash",
+      "authenticate genuine initial S0 and unchanged same-Run/pack ancestry to current store",
+      "compare caller participant/transport with setup before any workflow operation/call/begin",
+      "resume existing authenticated state; only matching current S0 may actually begin CP0"
+    ],
+    "mismatch_code": "identity_mismatch for missing/extra/tampered/mismatched setup or identity/mode/policy/pins/initial ancestry",
+    "bootstrap_only_recovery": "After setup persisted, crash at actual first CP0 begin before BeginRecord may rederive ONLY first BeginRecord from exact genuine S0->S1 transition; same Run/pack, direct parent,one pending CP0 attempt0, exact current_inputs, actual ticket and no retained steps/payload/result/issues/other heads/analytic credit. Never call begin twice.",
+    "missing_setup_partial_create": "Fail closed/preserve forensics; open never manufactures missing setup or migrates an untrusted store",
+    "receipt_compatibility": "No new top-level EarningsOwnerReceipt or OwnerPins fields; exact one setup entry adds to existing audit_inventory. A4 imports actual owner receipt/verifier, no A4 wire field/type boundary change.",
+    "all_transports": "Applies equally to python-api and bounded-json-lines/1; transport identity cannot reset on reopen."
+  },
+  "setup_cases": [
+    {
+      "case_id": "S-CREATE-ORDER",
+      "trigger": "valid fresh creation",
+      "expected": "genuine S0 -> durable canonical unique setup -> actual CP0 begin -> first actual BeginRecord; no activity before authority persisted"
+    },
+    {
+      "case_id": "S-MISSING-PARTIAL-CREATE",
+      "trigger": "S0 exists but setup missing after write interruption",
+      "expected": "open identity_mismatch, no begin/call or manufactured setup; forensic store preserved"
+    },
+    {
+      "case_id": "S-SETUP-WRITE-FAIL",
+      "trigger": "setup persistence fails before CP0 begin",
+      "expected": "visible failure; no CP0 ticket/analytical action; later missing/partial setup fails closed"
+    },
+    {
+      "case_id": "S-MATCHING-S0-OPEN",
+      "trigger": "exact setup exists, current pointer genuine S0, matching caller identity/mode",
+      "expected": "actual begin CP0 once, retain genuine first BeginRecord; no fake source call"
+    },
+    {
+      "case_id": "S-BOOTSTRAP-BEGIN-CRASH",
+      "trigger": "setup authentic; actual S0->S1 CP0 begin persisted, first BeginRecord absent",
+      "expected": "authenticate exact direct one-pending-CP0 transition; rederive first BeginRecord from actual IDs/hashes; no second begin or analytic credit"
+    },
+    {
+      "case_id": "S-PARTICIPANT",
+      "trigger": "open caller participant differs",
+      "expected": "identity_mismatch before calls/projections/begin/mutation"
+    },
+    {
+      "case_id": "S-TRANSPORT",
+      "trigger": "open switches python-api versus bounded-json-lines/1",
+      "expected": "identity_mismatch before calls/begin/counter reset"
+    },
+    {
+      "case_id": "S-PINS-POLICY",
+      "trigger": "wrong/missing policy bytes or authoritative hash/OwnerPins/case/run/pack",
+      "expected": "identity_mismatch, no operation or new setup"
+    },
+    {
+      "case_id": "S-TAMPER",
+      "trigger": "setup filename/bytes/noncanonical serialization altered, extra setup entry, extra keys, malformed fields",
+      "expected": "identity_mismatch before activity; preserve forensic bytes"
+    },
+    {
+      "case_id": "S-ANCESTRY",
+      "trigger": "initial pointer not parentNone/empty state, foreign Run/pack or initial state not genuine current ancestor",
+      "expected": "identity_mismatch; never infer authority from current heads alone"
+    },
+    {
+      "case_id": "S-NONBOOTSTRAP-RECOVERY",
+      "trigger": "missing begin log after some different/multiple/analytical transition",
+      "expected": "no bootstrap exception; existing strict recovery verifies or refuses, never invent calls/output"
+    },
+    {
+      "case_id": "S-FINAL-INVENTORY",
+      "trigger": "final owner receipt or A4 consuming owner verifier",
+      "expected": "exact setup entry required and crosschecked against unchanged receipt participant/transport/pins/run/pack and initial ancestry; no A4 schema edit"
+    }
+  ]
+}

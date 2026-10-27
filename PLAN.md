@@ -328,3 +328,17 @@ final legal delivery/native proof and the other five FP04 responsibilities remai
 separate full-PLAN obligations. No legal/financial engine or semantic truth rule
 is changed by this component. False definition equivalence still needs actual
 source-to-submission semantic refusal; this renderer does not invent a parser.
+
+
+B1 bootstrap/raw transport supplement: docs/CP1B-RAW-TRANSPORT-ADDENDUM.md and
+cases/earnings/transport-expected.json, same review in
+docs/reviews/cp1b-raw-transport-contract.md. Original B1/source/numeric pins stay
+immutable. One OwnerSetup record in the existing audit inventory binds initial
+Run/pack/case/pins/participant/mode and the supplemental policy before CP0 begins;
+open authenticates it before accepting calls. No new top-level receipt/OwnerPins
+field or general infrastructure. Generic TextIO is restricted to fresh standard
+buffer-backed wrappers; binary buffers preserve exact consumed bytes. Invalid
+UTF8/partial EOF/oversize prefixes are retained/refused honestly with bounded
+stop/no-drain behavior. Source/schema/nontransport owner work continues; C3 raw/
+setup code and tests consume exact integrated supplement after safe update.
+These cases remain part of unclosed B1 implementation/recovery/actual proof.

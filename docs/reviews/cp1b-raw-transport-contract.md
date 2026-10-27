@@ -1,0 +1,39 @@
+# Same B1 review — immutable bootstrap and raw transport clarification
+
+PASS for the exact bounded pre-code addendum/oracle below. No confirmed missing public seam or material contradiction remains after tracing the explicit LEAD rulings against existing B1/A4 types. This is the same assigned Sol/high state/transport review continuation; it is not a new financial audit, implementation admission, runtime pass or approval chain.
+
+## Exact final artifacts and unchanged authority
+
+| Artifact | SHA-256 |
+| --- | --- |
+| docs/CP1B-RAW-TRANSPORT-ADDENDUM.md | `4a6ddd6d348d2bd4e9a0b64532db8a4415018786cdafb4be788c74e2c088866d` |
+| cases/earnings/transport-expected.json | `7fba44bc1cf2d2dd8b26ed941c28b04371ce29f1875f070f48dc6d12b7efa8d6` |
+
+The second hash above is the authoritative frozen policy_sha256 for the new OwnerSetup; publish/use it through the existing code/admission pins. It is intentionally NOT embedded in its own oracle. The original B1 leasee66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071, owner oraclec8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d, descriptor60ed95782648064db7806bb7f0714fe030f9563424df50e17500803a2edfb7ec and financial manifest6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432 were rehashed unchanged after writing. No financial/source literal or top-level EarningsOwnerReceipt/OwnerPins field changes. Source work began from LEADc1dc25e13a67e40ee0a5b373b09156f6d08c9e63; applicable AGENTS.md was read.
+
+Requested author/reviewer route is GPT-6.1 Sol/high, explicitly assigned by LEAD; route evidence is that assignment and this bounded source inspection, not hidden telemetry. Only the three assigned new addendum/oracle/review files were written; original contracts/oracles, product/tests/PLAN/QUEUE and other reviewers' files were untouched.
+
+## Bootstrap authority coherence
+
+- Static ExecutionSnapshot/create source defines genuine S0 with parentNone, empty heads/attempts and same Run/pack. Existing begin(CP0) produces a direct child with one actual pending attempt0 and exact prepared-pack input; CP0 has no upstream readiness gate. Therefore persisting strict OwnerSetup after create but BEFORE begin has a real available state, not an invented snapshot/factory bypass.
+- New exact OwnerSetup fields/serialization order are schema_version,run,pack_sha256,initial_snapshot_sha256,case_id,pins,participant,transport,policy_sha256. Existing immutable Contract/hash domain and write-once audit pattern suffice. Exactly one earnings-owner-audit/setup/<T> canonical file and one AuditEntry kind setup provide early identity/mode authority without new receipt/OwnerPins fields, private sidecar or future OwnerSession.
+- Open must authenticate unique canonical setup, pins/policy and initial same-Run/pack ancestry, then match caller participant/transport BEFORE any call/begin/disclosure/counter reset. Missing/extra/tampered/mismatched setup fails identity_mismatch; a partial create without setup is forensic failure, never an automatic authority migration.
+- Matching still-S0 open may call real CP0 begin. Only the first unlogged bootstrap BeginRecord may be reconstructed from exact genuine direct S0→S1, real ticket/inputs/attempt, no heads/retained step/payload/result/issues/analytical activity. No second begin, source-read credit or generalized recovery is invented. Later states use original strict intents/recovery or refuse.
+- Setup applies to both Python and JSON-lines identity. Raw stream rules apply only to JSON-lines. The unique setup entry fits existing audit budget and is crosschecked by the public owner verifier against unchanged top-level run/pack/case/pins/participant/transport. A4 imports that actual typed receipt/verifier and sees an existing-owner inventory kind, with no new A4 wire field/public boundary. No cyclic dependency or change to final ownership.
+
+## Raw framing and forensic bounds
+
+- Public serve_json_lines TextIO signature is preserved, while accepted dispatcher streams are fresh trusted buffer-backed TextIOWrapper objects. StringIO/nonbuffer/closed/wrong-direction setup refuses bad_arguments relative to dispatcher entry, before any new read/audit/product action; existing workflow creation is not rolled back. Freshness is an explicit trusted precondition, not an impossible claim about decoder history.
+- The binary buffer alone reads at most4194305 returned bytes. Complete LF/CRLF frames of at most4194304 bytes INCLUDE terminators. Raw exact bytes, including invalidUTF8, go to payloads and TransportMessage before product dispatch. Parsing/classification may precede metadata construction but no action may precede durable raw+metadata. No text reconstruction/normalization or old UTF8-only loader for forensic frames.
+- Empty EOF creates no message/close. Partial nonempty EOF is exactly captured invalid/refused and stops. Oversize consumes/captures exactly the bounded prefix, invalid/transport_limit, then terminates without draining/processing unread suffix or later control. This one-byte forensic overflow capture is not an admitted message-limit increase or a claim the whole oversized line was retained.
+- Fixed operations/key sets and reply schemas remain unchanged. Strict UTF8 reply plus LF goes through writer.buffer, so text newline/encoding cannot change it. Known malformed/extra/nonfinite/UTF8 failures are invalid/bad_arguments; unknown operation is invalid/not_permitted. Complete invalid input may continue within durable budget; partial/oversize stops. EOF never synthesizes receipt/OwnerClose.
+- Input retention failure cannot dispatch. If an actual action occurred before reply I/O failed, preserve it and its existing intent/outcome; no rollback, fake successful response or blind duplicate dispatch. Audit orphans/incomplete writes remain visible; original recovery uniquely validates/reconstructs or refuses, not silently deletes for success. Message2049 is not read/recorded and reopen cannot reset2048 budget.
+- Existing receipt stores no stream-invocation IDs/freshness proof/unread external suffix/output-delivery acknowledgments. The addendum correctly limits portable verification to actual raw capture/classification/budgets/workflow lineage; runtime stop/no-drain and binary I/O behavior need direct component checks. No absent evidence is advertised as durable delivery or stronger authority.
+
+## Independent bounded checks actually performed
+
+Only standard-library BytesIO/TextIOWrapper, JSON/hash/byte comparisons ran. Reconstructed all17 standalone raw byte fixtures and both ordered invalid→valid control sequences. Exact full input, first consumed bytes and unread suffix lengths/SHA256 match the frozen oracle. Independently classified bounded framing/strictUTF8/finite JSON/operation shapes and matched all expected operation/refusal/stop values. Verified exact-limit LF/CRLF acceptance, MAX+1 terminated/prefix/UTF8 overflow, unchanged suffix position, empty/partial/bare-CR EOF and LF/CRLF distinct hashes. Universal-newline text readline changes CRLF; direct binary buffer does not. StrictUTF8 nonASCII reply bytes and singleLF survive an ASCII/CRLF-configured text wrapper when its buffer is used directly.
+
+These are source-only observations/reference framing checks, not product tests or proofs that C3's implementation obeys persistence/error ordering. Setup/I/O/retention/close/recovery causal cases are exact future expectations, not executed product scenarios. All policy/object/receipt bounds stay unchanged. No product import, engine/validator, test suite, provider, browser or heavy job ran. Applicable confidence-review/rewrite-tournament remain for later code changes under the same existing admission/review chain.
+
+Not verified: Product setup/bootstrap/raw dispatcher implementation, actual durable retention/error/recovery behavior, focused tests, owner/CP5 execution, reply-delivery acknowledgment or rendered/native output.

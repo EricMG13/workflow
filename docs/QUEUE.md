@@ -2770,3 +2770,8 @@ mx-precise and mx-adversary re-review in the serial queue.
 LEAD rule (2026-10-27): A4 waited two hours behind the heavy-job lock for a 7-second
 run. A test file whose last ledgered full run took under 60 s is light and runs
 without the lock (AGENTS.md).
+
+User instruction (2026-10-27T19:50Z): raise the cap to 4 concurrent subagent tasks.
+LEAD runs B1 plus three lock-free tasks: G1 mx-precise review, D1 fix round 2
+(`coordinator-2/work/cp1b-delivery-d1/fix-2-brief.md`; adversary review saved as
+`review-adversary-1.md` there) and A4 mx-precise re-review.

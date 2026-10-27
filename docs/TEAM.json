@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: Task3CP1 chart/report/Model verified; C1 projection138focused+2genuine-metadata component cases integrated, assembled132compatibilityPASS; C1A4writes admitted atcf5115bea; C3B1 session supplement/pager safe updates admitted; C2authenticated FP02 delivery contract reviewed, exact write admission pending; fullPLAN incomplete; paid/provider/live paused; C3 early111componentPASS only; B1/A4 native reference errata integrated/admitted atf3b9b37; CP4 source-host freeze reviewed, future isolated C1 lease pending",
+  "state": "active: bounded CP1 chart/report/Model slice remains verified; C1 A4 implementation plus isolated legal source-host L2; C2 authenticated FP02 D1 delivery; C3 actual B1 owner/recovery; components and pre-code contracts do not close full PLAN; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -28,15 +28,17 @@
     "C1": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1",
     "C2": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2",
     "PR_MANAGER": "/Users/ericguei/Documents/Deploy Workflow",
-    "C3": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-3"
+    "C3": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-3",
+    "C1_SOURCE_HOST": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1-source-host"
   },
   "paid_provider_tests": "paused",
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "C1-CP5-INTEGRITY-A4-IMPLEMENTATION-1 with native-reference supplement safe update to f3b9b37: same4files ONLY; fullruntime needs acceptedB1; separate source-host component not yet admitted",
-    "C2": "FP04 accepted/integrated; authenticated FP02 delivery two-NEW-file lease reviewed awaiting exact integration/base admission; fullruntime requires acceptedB1/A4; work proposals/native checklist preserved",
+    "C1": "A4 existing4files in coordinator-1/codex/cp5-integrity-a4, native-reference supplement atf3b9b37; RED3 reached18missingfeature/precedence plus1blockedfixture failure; fullhost runtime requires acceptedB1",
+    "C2": "C2-CP1B-DELIVERY-D1-IMPLEMENTATION-1: codex/cp1b-delivery-d1 at6c0ee065; ONLY NEWearnings_rendering.py/test_earnings_rendering.py; entrypointRED1 verified, fullruntime needs acceptedB1/A4 and genuine3case handoff",
     "C3": "C3 B1 existing3files only; bootstrap/raw/session/native-reference supplements and accepted pager admitted through f3b9b37; early111componentPASS only; fullowner/actual/recovery still required",
-    "PR_MANAGER": "integration only"
+    "PR_MANAGER": "integration only",
+    "C1_SOURCE_HOST": "C1-CP4-SOURCE-HOST-L2-IMPLEMENTATION-1: isolated coordinator-1-source-host/codex/cp4-source-host at6c0ee065; ONLYhost.py/test_source_tools.py, writes/static, eachruntime separately admitted"
   }
 }

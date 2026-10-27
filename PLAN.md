@@ -384,23 +384,23 @@ schema/bootstrap/source/raw guards, not actual owner/17session/descendant proof.
 
 CP4 source-host pre-code component is independently frozen in
 docs/CP4-SOURCE-HOST-LEASE.md and cases/legal/source-host-expected.json, reviewed
-in docs/reviews/cp4-source-host-contract.md. Future C1 scope is only host.py and
-test_source_tools.py. Current executed/filed legal search/read, genuine full
+in docs/reviews/cp4-source-host-contract.md. C1 active L2 scope is only host.py and
+test_source_tools.py, in its isolated coordinator-1-source-host checkout. Current executed/filed legal search/read, genuine full
 CP1 promotion provenance (four ordered tail inputs/five stages/QA/envelope/settlement)
 and authentic blocked repair degradation must preserve existing permissions.
 No source extraction for CP4 and no verifier writes/locks. Eleven success and26
-refusal cases plus both adopted legal sources are frozen. Exact isolated write
-admission follows integration; this alone closes no actual legal owner or CP5.
+refusal cases plus both adopted legal sources are frozen. L2 write admission at6c0ee065 is recorded in QUEUE; this alone closes no actual
+legal owner or CP5.
 
 
 Authenticated FP02 delivery is independently frozen in docs/CP1B-DELIVERY-LEASE.md
 and cases/earnings/delivery-expected.json, reviewed in
-docs/reviews/cp1b-delivery-contract.md. Future C2 owns only new earnings_rendering.py
+docs/reviews/cp1b-delivery-contract.md. C2 active D1 lease at6c0ee065 owns only new earnings_rendering.py
 and test_earnings_rendering.py. Actual A4 final Receipt/public verifier is sole
 producer authority; exact report.html/final earnings-slice.json/render-receipt.json,
 read-only HTML/metadata rederivation, repeated currentness and trusted sole-publisher
 output lease. Reuse direct actual CP1 S.1–S.3 charts and all CP1B/CP5/full analysis/
 source/gap context. Model is not selected and no publication/download is invented.
-Disjoint leaf implementation may begin after exact freeze integration/admission;
+Disjoint leaf implementation is admitted and active;
 full runtime requires accepted B1/A4 public implementations. Three actual fresh
 cases and native proof remain unverified, with broader PLAN still active.

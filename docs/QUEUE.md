@@ -10,7 +10,7 @@ remains open. Historical receipts below retain their original scope and policy.
 - A1 earnings core, A2 registration/access and A3 FP02 binding components are accepted and integrated. Actual CP1B/CP5/FP02 acceptance remains open.
 - C1 coordinate projection commit063d380 is accepted/integrated atcf5115bea:138 focused checks and both genuine-metadata component cases passed. Citation verification and actual owner use are outside that probe. C1 A4 writes are separately admitted.
 - C3 is implementing the actual B1 owner. The bootstrap/raw supplement is integrated and admitted at7adb6167; its three WIP files survived the safe update unchanged. The active-session association supplement is integrated/admitted atde9cd03. Accepted pager update tocf5115bea is admitted with three WIP files preserved.
-- C2 FP04 binding component commit4e84ffc is accepted and integrated/pushed at5dcbad23:76 focused checks passed, confidence/no-argument tournament/independent review closed. Actual legal owner, CP5 and native evidence remain open.
+- C2 FP04 component4e84ffc is accepted/integrated,76 focused checks passed. C2 now implements authenticated FP02 delivery in two new files; C1 has a separate isolated legal source-host lane. Actual B1/CP5/legal/native acceptance remains open.
 - PM integrates exact admitted patches only. One heavy local job; uncapped disjoint implementation. All paid/provider/live tests paused.
 
 ## Task0 inputs and authority
@@ -2625,3 +2625,52 @@ RED1 never launched. C1 may faithfully parse literal fixture via strict JSON-mod
 model validation in its owned test only, then request exact RED3; product source
 remains ac7 until meaningful feature-absence baseline. No Contract/oracle weakening.
 Sourcefreeze/heavyslot released after real EOF/exit. C3 full owner checks continue.
+
+
+## Disjoint source-host and FP02 implementation admissions
+
+At 2026-10-27 11:29:42.879277 UTC, LEAD admitted two independent write/static
+leases at exact clean/pushed `6c0ee065d6ca099feef4d7d736d0ae39b59cd2cb` after
+151 source/test/case pins, both contract/oracle/review triples, runtime and fresh
+process/load checks. No heavy job was active. Evidence:
+`work/legal-preparation/source-host-and-delivery-implementation-admission.json`.
+
+C1-CP4-SOURCE-HOST-L2-IMPLEMENTATION-1 uses a NEW isolated local clone:
+`/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1-source-host`,
+branch `codex/cp4-source-host`. LEAD created it from committed PM checkpoint
+with no hardlinks, checked the exact base/clean tree/all151pins. It has local
+PM origin, no push authority. C1 assigned a separate Sol/high worker; ONLY
+`host.py` and `tests/test_source_tools.py` may change. All work/reviews/handoff
+stay under that clone's `work/cp4-source-host`. Original C1 A4 checkout/branch/
+WIP and frozen test runs are independent and unchanged. No new user chat.
+
+C2-CP1B-DELIVERY-D1-IMPLEMENTATION-1 uses original C2 clone and NEW branch
+`codex/cp1b-delivery-d1` at that exact base, preserving FP04/A3 branches/work.
+C2 independently verified all151baseline and delivery pins before writes. ONLY
+NEW `earnings_rendering.py` and NEW `tests/test_earnings_rendering.py`; all work
+is under `work/cp1b-delivery-d1`. Full runtime requires accepted actual B1/A4
+public implementations and root's genuine three-case input handoff. No stubs,
+mutable WIP imports, mock authority or skipped cases counted as success.
+
+Both lanes retain exact per-job admission, one global heavy job, required code
+confidence/tournament and sensitive review. PM alone integrates. Paid/provider/
+live tests remain paused. Actual source/owner/CP5/render/native links stay open.
+
+A4 RED3 central PID8050, 11:30:05.512686–11:30:08.375036 UTC, exit1:
+142 passed/19 failed in2.68s, all154 distinct pins/runtime unchanged. Log
+`27fb6962de63de01e5c350e73b13077fc57d2e7513720b985c5f511e496149f5`.
+Eighteen failures reach missing CP5-v2/error precedence; ONE blocked fixture
+still lacks mandatory Module limitations. This is meaningful feature-absence
+proof for18 cases, with one remaining setup failure preserved explicitly.
+Four new incomplete-grant refusals pass under blanket old-version denial and
+do not establish correct grant coverage. Old138prefix remains passing. C1 may
+supply an explicit fixture-only blocked limitation under existing Contract,
+then implement/request GREEN; no full RED repeat needed solely for that setup.
+No oracle weakening or count relaxation. Source freeze/heavy slot released.
+
+C2 D1 RED1 central PID8519, 11:32:08.909654–11:32:09.136400 UTC, exit1:
+one explicit missing delivery-entrypoint assertion, collection succeeded,0.09s.
+Log `7669e48ea6b3782f375ada119723ceb2129822a6edc92bce45306f1a7da2a7b0`.
+All frozen pins/runtime and expected module absence unchanged. No B1/A4 import
+or producer execution; entrypoint absence only, not output/authentication proof.
+Source freeze/heavy slot released; C2 two-file implementation resumed.

@@ -1028,3 +1028,17 @@ move that work base. These are initial write admissions only, subject to
 per-job runtime admission. C3 GREEN depends on accepted pager integration. No
 product/case files, tests, or jobs were included. A4 remains unadmitted and
 paid/provider work remains paused.
+
+### Current offline run guide and production backlog
+
+Integrated LEAD's exact docs-only commit
+`ab714085f28709d915aa7a4859c3c0ffc7e32deb` (parent
+`50c8da0655ff9f1c112c3b3982d41263347c5161`): updated `README.md` and added
+`docs/RUN-GUIDE.md` and `docs/PRODUCTION-BACKLOG.md`. The guide reflects the
+current offline scope, precise financial CLI flags/protocol, read-only
+verification and delivery distinctions, the 439-pass two-cohort record and its
+heavy-fixture caveat, and remaining work. The backlog retains the named owner,
+local DR/minimal-version, attachment and safety requirements. This is initial
+current-scope documentation only; Task5 completion remains open. It does not
+move the fixed C1/C3 write base `4e2bce9df0e010f0795c392e8254db12fce5fcfe`.
+No code, tests or jobs were included; paid/provider work remains paused.

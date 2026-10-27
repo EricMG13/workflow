@@ -1189,3 +1189,25 @@ admission follows its preserved WIP-safe update. This does not claim full B1/A4,
 legal/native, six-pathway or 26-step completion. No source, case, test, reuse
 manifest, or runtime files changed for this status update; paid/provider work
 remains paused.
+
+### Native financial reference grammar corrections for B1 and CP5 cases
+
+Integrated LEAD's exact nine-file docs/case commit
+`a53e63ff7cebc81c09ad2356e83798c5b79d1f0a` (parent
+`5d041beca5ba30b8eafb596a67bd23424be36242`): status updates in `PLAN.md`,
+`docs/QUEUE.md`, `docs/TEAM.json`; claim-reference and fixture-reference
+addenda/reviews; and corrections to the two existing oracles
+`cases/earnings/owner-expected.json`
+(`a37dc25f8f756364ae88726cdec3f2de1bbf4c20892ca910d22e9646186efd9d`) and
+`cases/integrity/expected.json`
+(`90871a0027bf5fd616ef09495e92399735f22a2dafad76d2488134a892733c13`). The
+independent review pins are `docs/reviews/cp1b-claim-reference-contract.md`
+(`8d48c5060b813df59cad38fc3eee6447934e5d2bcb5438ba647e754ea87ac2ed`) and
+`docs/reviews/cp5-fixture-reference-contract.md`
+(`c03b10ac1f97f9099c1f7be442df67a0d26de25bc517b18482889572b9b22e41`). Of
+the 149 tracked source/test/case files, only those two oracle files changed; the
+other 147 remain byte-identical. Both updated oracles parse as JSON. The review
+classifies this as native-reference grammar correction; financial values,
+counts, IDs, citations, limits, wire formats, caps and APIs remain unchanged.
+Prior contract, review and oracle history is preserved. No source, tests, or jobs
+were run for this docs/case-only integration.

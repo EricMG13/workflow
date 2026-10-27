@@ -1086,5 +1086,19 @@
       "reason": "Add the admitted typed CP4/FP04 report projection while preserving the imported baseline and earlier CP1/CP1B local patch history.",
       "review": "docs/reviews/cp4-fp04-contract.md"
     }
+  ],
+  "local_patch_lineage": [
+    {
+      "destination": "src/deploy_workflow/tools/upstream.py",
+      "baseline_commit": "3ebaf4737e6f8c581a53aca09d5aac36bc8a5a4e",
+      "baseline_sha256": "4854ec219bcd646e72b1ec367573df898bafad4d48a1f6e18285c90043b0eebe",
+      "prior_project_commit": "07a41d6",
+      "prior_project_sha256": "7d2b71955ad2d0a59c89822d9d37db659cc7d96a4155fbe78f35381ddcf907cc",
+      "project_commit": "063d380e028d9f618af08b6a20b4b4f291b24dd4",
+      "sha256": "ac7ac2e121faf7a3adda6eab385b8f194d29549979c334b276199b624e0332f7",
+      "companion_test": "tests/test_upstream_tools.py",
+      "companion_test_sha256": "a647782f2e23241e843a526d0c558d278aeccac971683835f9cc560b2706bd3b",
+      "reason": "Complete paged projection transport for the CP1B access contract; preserves baseline and earlier A2 project bytes."
+    }
   ]
 }

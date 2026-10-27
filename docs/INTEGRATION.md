@@ -1157,3 +1157,21 @@ host-filled typed owner-session binding and credits a refused intent only from
 that selected session's captured read/call prefix; later reads cannot retro-credit
 it. Original B1, raw-transport and A4 public contracts are unchanged. This is a
 docs/case freeze only: no product, tests, runtime or provider jobs were included.
+
+### C1 CP1B bounded projection pager integration
+
+Integrated C1's exact two-file commit
+`063d380e028d9f618af08b6a20b4b4f291b24dd4` (implementation base
+`4e2bce9df0e010f0795c392e8254db12fce5fcfe`):
+`src/deploy_workflow/tools/upstream.py`
+(`ac7ac2e121faf7a3adda6eab385b8f194d29549979c334b276199b624e0332f7`) and
+`tests/test_upstream_tools.py`
+(`a647782f2e23241e843a526d0c558d278aeccac971683835f9cc560b2706bd3b`). The
+recorded central focused result was 138 passed; the separately recorded genuine
+fact-metadata probe preserved all 138 coordinates, 19 fields and duplicate
+handles, with maximum body sizes 7,835/8,096 bytes. Citation verification was
+not run, so this establishes no owner/authentication claim. Neither job was
+rerun during integration. `docs/reuse/manifest.json` appends the upstream module's
+baseline, prior A2 project hash and new hash in `local_patch_lineage`, preserving
+existing imported-file and prior patch records. No further product changes were
+included; paid/provider work remains paused.

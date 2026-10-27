@@ -35,7 +35,7 @@
   "one_heavy_job_limit": 1,
   "active_lanes": {
     "C1": "C1-CP1B-PROJECTION-A2P-IMPLEMENTATION-1 at4e2bce9: upstream.py/test_upstream_tools.py only, workcp1b-projection-a2p; writes/static only, heavy checks separately admitted",
-    "C2": "A3 component accepted/integrated; STATICONLY FP04 two-file component-contract/oracle proposals prepared inownedwork; no newproductlease",
+    "C2": "FP04 exact two-file component lease a13cacb7/oracle5200b47e/review1bcfcfe7 frozen; await exact PM integration and LEAD write admission; no actuallegalowner/CP5/native acceptance",
     "C3": "C3-CP1B-OWNER-B1-IMPLEMENTATION-1 at4e2bce9: newearnings_workflow.py/newtest_earnings_workflow.py/newcp1b-owner handoff; workcp1b-owner-b1; writes/static only, GREEN requires accepted projection integration",
     "PR_MANAGER": "integration only"
   }

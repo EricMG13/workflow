@@ -2327,3 +2327,24 @@ C1projectionRED1PID95634 10:27:14.420521..10:27:16.687743UTC exit1:112pass/20
 featureabsencefail2.08s; originalprefix+144baseline+authority/runtimeunchanged.
 Notpaging/racebugproofwhilefeatureabsent. Log4b762fff; sourcefreeze/heavyslot
 released, C1twofileimplementationresumed. Paid/provider/live staypaused.
+
+
+## CP4/FP04 component independently frozen — C2 no writes yet
+
+Leasea13cacb71a9e403b8fdc504db6ad4bd7ade7821d87e41f6b1c9cf433900b03fc;
+oracle5200b47e9986bc715da9f1d2a342ca40a4d3d2d77c3afdc1179fde35f28edb4d;
+independentreview1bcfcfe76db023f0f3a0813d92c0fa122216578f8e8ad6471d3a572b7bdffe2a
+published docs/reviews/cp4-fp04-contract.md. Reusedlegalnumeric/source review
+f6b81658 and immutablemanifestd6a8ec15/contract80f21f1e; no newmathaudit.
+31existingmaps/shippedonce,7frontbindings/6sections+19Evidence+5Limits;
+13success/32refusalchecks,102/106seededFactcounts NOTproductioninvariants.
+
+Rootconfidence checked candidateisdeliberatelyshowncomponentstatus (notsettlement),
+nonshownoutput-bearingCP4refusalstopsblocked/staleFullanalysiscarryover, exact
+sourcecopyIDs/header/labels andemptyvariant, variableproductionrows/precision,
+formulanocalculationID/nofakeK, native1.00x/3.00x/75.0% literals, sourceknownzero
+notinsertedintounknowncapacity, all31coverage/railsnotfalselyvisibletables.
+PublicbuildAPIunchanged; futureC2ONLYreport_view.py/newtest_legal_render.py, no
+map/assets/core/source/receipt/wrapper changes. PMexactintegrationthenfreshbase/
+resourcewriteadmission required. NooverlapC1upstream/C3newownerfiles.
+Actuallegalowner/CP5/FP04native andother5ownerblocks remainopen. Paidsstaypaused.

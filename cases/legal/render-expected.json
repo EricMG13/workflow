@@ -1,0 +1,3523 @@
+{
+  "schema_version": "cp4-fp04-render-oracle/1",
+  "status": "FROZEN pre-implementation seeded component render expectations only; no actual owner/tool/CP5/selected-run/native qualification",
+  "base": "4e2bce9df0e010f0795c392e8254db12fce5fcfe",
+  "authority_sha256": {
+    "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+    "docs/LEGAL-SOURCE-CONTRACT.md": "80f21f1e73063655e799496c3484a51576ff5e9649f03383b341ed7ff2aa453a",
+    "docs/reviews/legal-source-contract.md": "f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a"
+  },
+  "future_exclusive_code_files": [
+    "src/deploy_vii/report_view.py",
+    "tests/test_legal_render.py"
+  ],
+  "additional_binding_file_needed": false,
+  "proof_of_existing_map_closure": {
+    "register_count": 31,
+    "bindings_count": 31,
+    "unique_table_sets_equal": true,
+    "unique_slots": 31,
+    "front_bindings": 7,
+    "front_blocks": 6,
+    "evidence_bindings": 19,
+    "limitations_bindings": 5,
+    "shipped_CP4_occurrences": 1,
+    "method": "static AST literal metadata and source trace only; no imports/validate_bindings executed"
+  },
+  "source_sha256": {
+    "src/deploy_vii/cp4_legal.py": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+    "src/deploy_vii/bindings/cp4.py": "484448f5fbbc81995efa9e8f3e5f1b636c01bbc9d16234a5be44107b6baa7f97",
+    "src/deploy_vii/bindings/shipped.py": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+    "src/deploy_vii/report_view.py": "21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b",
+    "src/deploy_vii/contracts.py": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+    "src/deploy_vii/display.py": "efdcd5d60400e47c1210442ed165e0642bcb3770aaaebf526dfcb7b750588398"
+  },
+  "pathway": {
+    "id": "covenant_refinancing",
+    "explicit_requested_modules": [
+      "CP-4",
+      "CP-5"
+    ],
+    "block_order": [
+      "covenant-tests-headroom",
+      "liquidity-runway",
+      "maturity-wall",
+      "funding-gap",
+      "red-flags",
+      "lender-protection-score",
+      "refinancing-paths",
+      "capacity",
+      "lme-creditor-exposure",
+      "ebitda-definition",
+      "documents-structure"
+    ],
+    "other_blocks_keep_existing_state_and_spec": true
+  },
+  "specifications": [
+    {
+      "block_id": "covenant-tests-headroom",
+      "title": "Covenant tests and headroom",
+      "owner": "CP-4",
+      "kind": "dense",
+      "producers": [
+        "CP-4"
+      ],
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false,
+      "route_label": "Full analysis",
+      "full_analysis_route": "CP-4",
+      "tables": [
+        "T4.9"
+      ]
+    },
+    {
+      "block_id": "capacity",
+      "title": "Capacity and baskets",
+      "owner": "CP-4",
+      "kind": "dense",
+      "producers": [
+        "CP-4"
+      ],
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false,
+      "route_label": "Full analysis",
+      "full_analysis_route": "CP-4",
+      "tables": [
+        "T4.10"
+      ]
+    },
+    {
+      "block_id": "red-flags",
+      "title": "Red flags",
+      "owner": "CP-4",
+      "kind": "dense",
+      "producers": [
+        "CP-4"
+      ],
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false,
+      "route_label": "Full analysis",
+      "full_analysis_route": "CP-4",
+      "tables": [
+        "T4.11"
+      ]
+    },
+    {
+      "block_id": "lender-protection-score",
+      "title": "Lender protection score",
+      "owner": "CP-4",
+      "kind": "dense",
+      "producers": [
+        "CP-4"
+      ],
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false,
+      "route_label": "Full analysis",
+      "full_analysis_route": "CP-4",
+      "tables": [
+        "T4.13"
+      ]
+    },
+    {
+      "block_id": "ebitda-definition",
+      "title": "EBITDA definition",
+      "owner": "CP-4",
+      "kind": "dense",
+      "producers": [
+        "CP-4"
+      ],
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false,
+      "route_label": "Full analysis",
+      "full_analysis_route": "CP-4",
+      "tables": [
+        "T4C.6"
+      ]
+    },
+    {
+      "block_id": "documents-structure",
+      "title": "Documents and structure",
+      "owner": "CP-4",
+      "kind": "dense",
+      "producers": [
+        "CP-4"
+      ],
+      "collapsed": false,
+      "width": "full",
+      "numbered": false,
+      "pinned": false,
+      "dated": false,
+      "route_label": "Full analysis",
+      "full_analysis_route": "CP-4",
+      "tables": [
+        "T4.2",
+        "T4C.12"
+      ]
+    }
+  ],
+  "schemas": [
+    {
+      "table_id": "T4.2",
+      "title": "Document register",
+      "register_columns": [
+        {
+          "field": "source_id",
+          "label": "Source ID"
+        },
+        {
+          "field": "document_family",
+          "label": "Document family"
+        },
+        {
+          "field": "authority",
+          "label": "Authority"
+        },
+        {
+          "field": "governing_entity",
+          "label": "Governing entity"
+        },
+        {
+          "field": "date_amendment",
+          "label": "Date / amendment"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "columns": [
+        {
+          "field": "document_family",
+          "label": "Document family"
+        },
+        {
+          "field": "authority",
+          "label": "Authority"
+        },
+        {
+          "field": "governing_entity",
+          "label": "Governing entity"
+        },
+        {
+          "field": "date_amendment",
+          "label": "Date / amendment"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "row_header": "Source ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        666,
+        671
+      ]
+    },
+    {
+      "table_id": "T4.3",
+      "title": "Covenant register",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "kind",
+          "label": "Kind"
+        },
+        {
+          "field": "clause",
+          "label": "Clause"
+        },
+        {
+          "field": "governing_document",
+          "label": "Governing document"
+        },
+        {
+          "field": "period_scope",
+          "label": "Period scope"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "columns": [
+        {
+          "field": "kind",
+          "label": "Kind"
+        },
+        {
+          "field": "clause",
+          "label": "Clause"
+        },
+        {
+          "field": "governing_document",
+          "label": "Governing document"
+        },
+        {
+          "field": "period_scope",
+          "label": "Period scope"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        672,
+        677
+      ]
+    },
+    {
+      "table_id": "T4.9",
+      "title": "Covenant tests and headroom",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "test_formula",
+          "label": "Test formula"
+        },
+        {
+          "field": "threshold",
+          "label": "Threshold"
+        },
+        {
+          "field": "comparison",
+          "label": "Comparison"
+        },
+        {
+          "field": "cp_1_metric",
+          "label": "CP-1 metric"
+        },
+        {
+          "field": "current",
+          "label": "Current"
+        },
+        {
+          "field": "headroom",
+          "label": "Headroom"
+        },
+        {
+          "field": "headroom_share",
+          "label": "Headroom share"
+        },
+        {
+          "field": "test_on_cp_1_metric",
+          "label": "Test on CP-1 metric"
+        }
+      ],
+      "columns": [
+        {
+          "field": "test_formula",
+          "label": "Test formula"
+        },
+        {
+          "field": "threshold",
+          "label": "Threshold"
+        },
+        {
+          "field": "comparison",
+          "label": "Comparison"
+        },
+        {
+          "field": "cp_1_metric",
+          "label": "CP-1 metric"
+        },
+        {
+          "field": "current",
+          "label": "Current"
+        },
+        {
+          "field": "headroom",
+          "label": "Headroom"
+        },
+        {
+          "field": "headroom_share",
+          "label": "Headroom share"
+        },
+        {
+          "field": "test_on_cp_1_metric",
+          "label": "Test on CP-1 metric"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        678,
+        683
+      ]
+    },
+    {
+      "table_id": "T4.10",
+      "title": "Capacity and baskets",
+      "register_columns": [
+        {
+          "field": "basket",
+          "label": "Basket"
+        },
+        {
+          "field": "permits",
+          "label": "Permits"
+        },
+        {
+          "field": "conditions",
+          "label": "Conditions"
+        },
+        {
+          "field": "capacity_amount",
+          "label": "Capacity amount"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "columns": [
+        {
+          "field": "permits",
+          "label": "Permits"
+        },
+        {
+          "field": "conditions",
+          "label": "Conditions"
+        },
+        {
+          "field": "capacity_amount",
+          "label": "Capacity amount"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "row_header": "Basket",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        684,
+        688
+      ]
+    },
+    {
+      "table_id": "T4.11",
+      "title": "Red flags",
+      "register_columns": [
+        {
+          "field": "flag",
+          "label": "Flag"
+        },
+        {
+          "field": "severity",
+          "label": "Severity"
+        },
+        {
+          "field": "mechanic",
+          "label": "Mechanic"
+        },
+        {
+          "field": "implication",
+          "label": "Implication"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "severity",
+          "label": "Severity"
+        },
+        {
+          "field": "mechanic",
+          "label": "Mechanic"
+        },
+        {
+          "field": "implication",
+          "label": "Implication"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Flag",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        689,
+        689
+      ]
+    },
+    {
+      "table_id": "T4.12",
+      "title": "CP-4 gaps ledger",
+      "register_columns": [
+        {
+          "field": "gap_id",
+          "label": "Gap ID"
+        },
+        {
+          "field": "gap",
+          "label": "Gap"
+        },
+        {
+          "field": "why_it_matters",
+          "label": "Why it matters"
+        },
+        {
+          "field": "severity",
+          "label": "Severity"
+        },
+        {
+          "field": "action",
+          "label": "Action"
+        }
+      ],
+      "columns": [
+        {
+          "field": "gap",
+          "label": "Gap"
+        },
+        {
+          "field": "why_it_matters",
+          "label": "Why it matters"
+        },
+        {
+          "field": "severity",
+          "label": "Severity"
+        },
+        {
+          "field": "action",
+          "label": "Action"
+        }
+      ],
+      "row_header": "Gap ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        690,
+        690
+      ]
+    },
+    {
+      "table_id": "T4.13",
+      "title": "Lender protection score",
+      "register_columns": [
+        {
+          "field": "rating",
+          "label": "Rating"
+        },
+        {
+          "field": "rationale",
+          "label": "Rationale"
+        },
+        {
+          "field": "basis",
+          "label": "Basis"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "columns": [
+        {
+          "field": "rating",
+          "label": "Rating"
+        },
+        {
+          "field": "rationale",
+          "label": "Rationale"
+        },
+        {
+          "field": "basis",
+          "label": "Basis"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "row_header": null,
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        691,
+        693
+      ]
+    },
+    {
+      "table_id": "T4C.2",
+      "title": "Maintenance covenants",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "test_formula",
+          "label": "Test formula"
+        },
+        {
+          "field": "threshold",
+          "label": "Threshold"
+        },
+        {
+          "field": "period_scope",
+          "label": "Period scope"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        }
+      ],
+      "columns": [
+        {
+          "field": "test_formula",
+          "label": "Test formula"
+        },
+        {
+          "field": "threshold",
+          "label": "Threshold"
+        },
+        {
+          "field": "period_scope",
+          "label": "Period scope"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        694,
+        698
+      ]
+    },
+    {
+      "table_id": "T4C.3",
+      "title": "Incurrence covenants",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "test_formula",
+          "label": "Test formula"
+        },
+        {
+          "field": "threshold",
+          "label": "Threshold"
+        },
+        {
+          "field": "period_scope",
+          "label": "Period scope"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        }
+      ],
+      "columns": [
+        {
+          "field": "test_formula",
+          "label": "Test formula"
+        },
+        {
+          "field": "threshold",
+          "label": "Threshold"
+        },
+        {
+          "field": "period_scope",
+          "label": "Period scope"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        699,
+        703
+      ]
+    },
+    {
+      "table_id": "T4C.4",
+      "title": "Negative covenants",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "clause",
+          "label": "Clause"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "clause",
+          "label": "Clause"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        704,
+        704
+      ]
+    },
+    {
+      "table_id": "T4C.5",
+      "title": "Other covenants",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "clause",
+          "label": "Clause"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "clause",
+          "label": "Clause"
+        },
+        {
+          "field": "facilities",
+          "label": "Facilities"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        705,
+        705
+      ]
+    },
+    {
+      "table_id": "T4C.6",
+      "title": "Covenant definitions",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "definition",
+          "label": "Definition"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "definition",
+          "label": "Definition"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        706,
+        706
+      ]
+    },
+    {
+      "table_id": "T4C.7",
+      "title": "Threshold check",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "threshold_text",
+          "label": "Threshold text"
+        },
+        {
+          "field": "unit",
+          "label": "Unit"
+        },
+        {
+          "field": "stated_value",
+          "label": "Stated value"
+        },
+        {
+          "field": "parsed_value",
+          "label": "Parsed value"
+        },
+        {
+          "field": "comparison",
+          "label": "Comparison"
+        }
+      ],
+      "columns": [
+        {
+          "field": "threshold_text",
+          "label": "Threshold text"
+        },
+        {
+          "field": "unit",
+          "label": "Unit"
+        },
+        {
+          "field": "stated_value",
+          "label": "Stated value"
+        },
+        {
+          "field": "parsed_value",
+          "label": "Parsed value"
+        },
+        {
+          "field": "comparison",
+          "label": "Comparison"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        707,
+        711
+      ]
+    },
+    {
+      "table_id": "T4C.8",
+      "title": "CP-1 metric binding",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "cp_1_metric",
+          "label": "CP-1 metric"
+        },
+        {
+          "field": "metric_period",
+          "label": "Metric period"
+        },
+        {
+          "field": "definition_basis",
+          "label": "Definition basis"
+        },
+        {
+          "field": "unit",
+          "label": "Unit"
+        }
+      ],
+      "columns": [
+        {
+          "field": "cp_1_metric",
+          "label": "CP-1 metric"
+        },
+        {
+          "field": "metric_period",
+          "label": "Metric period"
+        },
+        {
+          "field": "definition_basis",
+          "label": "Definition basis"
+        },
+        {
+          "field": "unit",
+          "label": "Unit"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        712,
+        716
+      ]
+    },
+    {
+      "table_id": "T4C.9",
+      "title": "Headroom calculability",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "calculable",
+          "label": "Calculable"
+        },
+        {
+          "field": "reason",
+          "label": "Reason"
+        }
+      ],
+      "columns": [
+        {
+          "field": "calculable",
+          "label": "Calculable"
+        },
+        {
+          "field": "reason",
+          "label": "Reason"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        717,
+        717
+      ]
+    },
+    {
+      "table_id": "T4C.11",
+      "title": "Covenant-to-facility map",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "facility_id",
+          "label": "Facility ID"
+        },
+        {
+          "field": "facility",
+          "label": "Facility"
+        }
+      ],
+      "columns": [
+        {
+          "field": "facility_id",
+          "label": "Facility ID"
+        },
+        {
+          "field": "facility",
+          "label": "Facility"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        718,
+        718
+      ]
+    },
+    {
+      "table_id": "T4C.12",
+      "title": "Facility coverage",
+      "register_columns": [
+        {
+          "field": "facility_id",
+          "label": "Facility ID"
+        },
+        {
+          "field": "facility",
+          "label": "Facility"
+        },
+        {
+          "field": "covenants",
+          "label": "Covenants"
+        },
+        {
+          "field": "status",
+          "label": "Status"
+        }
+      ],
+      "columns": [
+        {
+          "field": "facility",
+          "label": "Facility"
+        },
+        {
+          "field": "covenants",
+          "label": "Covenants"
+        },
+        {
+          "field": "status",
+          "label": "Status"
+        }
+      ],
+      "row_header": "Facility ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        719,
+        719
+      ]
+    },
+    {
+      "table_id": "T4D.1",
+      "title": "Pack legal source eligibility",
+      "register_columns": [
+        {
+          "field": "source_id",
+          "label": "Source ID"
+        },
+        {
+          "field": "cp_0_authority",
+          "label": "CP-0 authority"
+        },
+        {
+          "field": "eligible_for_cp_4_citation",
+          "label": "Eligible for CP-4 citation"
+        },
+        {
+          "field": "cited_by_cp_4",
+          "label": "Cited by CP-4"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "columns": [
+        {
+          "field": "cp_0_authority",
+          "label": "CP-0 authority"
+        },
+        {
+          "field": "eligible_for_cp_4_citation",
+          "label": "Eligible for CP-4 citation"
+        },
+        {
+          "field": "cited_by_cp_4",
+          "label": "Cited by CP-4"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "row_header": "Source ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        720,
+        724
+      ]
+    },
+    {
+      "table_id": "T4D.2",
+      "title": "Governing entities",
+      "register_columns": [
+        {
+          "field": "source_id",
+          "label": "Source ID"
+        },
+        {
+          "field": "governing_entity",
+          "label": "Governing entity"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "governing_entity",
+          "label": "Governing entity"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Source ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        725,
+        725
+      ]
+    },
+    {
+      "table_id": "T4D.3",
+      "title": "Dates and amendments",
+      "register_columns": [
+        {
+          "field": "source_id",
+          "label": "Source ID"
+        },
+        {
+          "field": "date_amendment",
+          "label": "Date / amendment"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "date_amendment",
+          "label": "Date / amendment"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Source ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        726,
+        726
+      ]
+    },
+    {
+      "table_id": "T4D.4",
+      "title": "Document quotations",
+      "register_columns": [
+        {
+          "field": "quotation",
+          "label": "Quotation"
+        },
+        {
+          "field": "source",
+          "label": "Source"
+        },
+        {
+          "field": "locator",
+          "label": "Locator"
+        },
+        {
+          "field": "quote",
+          "label": "Quote"
+        }
+      ],
+      "columns": [
+        {
+          "field": "source",
+          "label": "Source"
+        },
+        {
+          "field": "locator",
+          "label": "Locator"
+        },
+        {
+          "field": "quote",
+          "label": "Quote"
+        }
+      ],
+      "row_header": "Quotation",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        727,
+        727
+      ]
+    },
+    {
+      "table_id": "T4D.5",
+      "title": "Document limitations",
+      "register_columns": [
+        {
+          "field": "source_id",
+          "label": "Source ID"
+        },
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "columns": [
+        {
+          "field": "limitation",
+          "label": "Limitation"
+        }
+      ],
+      "row_header": "Source ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        728,
+        728
+      ]
+    },
+    {
+      "table_id": "T4D.6",
+      "title": "Capacity conditions",
+      "register_columns": [
+        {
+          "field": "basket",
+          "label": "Basket"
+        },
+        {
+          "field": "conditions",
+          "label": "Conditions"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "conditions",
+          "label": "Conditions"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Basket",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        729,
+        729
+      ]
+    },
+    {
+      "table_id": "T4D.7",
+      "title": "Red flag implications",
+      "register_columns": [
+        {
+          "field": "flag",
+          "label": "Flag"
+        },
+        {
+          "field": "implication",
+          "label": "Implication"
+        },
+        {
+          "field": "severity",
+          "label": "Severity"
+        }
+      ],
+      "columns": [
+        {
+          "field": "implication",
+          "label": "Implication"
+        },
+        {
+          "field": "severity",
+          "label": "Severity"
+        }
+      ],
+      "row_header": "Flag",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        730,
+        730
+      ]
+    },
+    {
+      "table_id": "T4D.8",
+      "title": "Covenants by governing document",
+      "register_columns": [
+        {
+          "field": "source_id",
+          "label": "Source ID"
+        },
+        {
+          "field": "covenants",
+          "label": "Covenants"
+        }
+      ],
+      "columns": [
+        {
+          "field": "covenants",
+          "label": "Covenants"
+        }
+      ],
+      "row_header": "Source ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        731,
+        731
+      ]
+    },
+    {
+      "table_id": "T4F.1",
+      "title": "CP-4 input status",
+      "register_columns": [
+        {
+          "field": "input",
+          "label": "Input"
+        },
+        {
+          "field": "status",
+          "label": "Status"
+        },
+        {
+          "field": "sha_256",
+          "label": "SHA-256"
+        },
+        {
+          "field": "note",
+          "label": "Note"
+        }
+      ],
+      "columns": [
+        {
+          "field": "status",
+          "label": "Status"
+        },
+        {
+          "field": "sha_256",
+          "label": "SHA-256"
+        },
+        {
+          "field": "note",
+          "label": "Note"
+        }
+      ],
+      "row_header": "Input",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        732,
+        732
+      ]
+    },
+    {
+      "table_id": "T4F.2",
+      "title": "CP-1 figures referenced",
+      "register_columns": [
+        {
+          "field": "value",
+          "label": "Value"
+        }
+      ],
+      "columns": [
+        {
+          "field": "value",
+          "label": "Value"
+        }
+      ],
+      "row_header": null,
+      "interface_id": null,
+      "fact_id_template": "normal populated copies retain supplied fixture CP1 fact_id; empty none row uses {table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        733,
+        733
+      ]
+    },
+    {
+      "table_id": "T4F.3",
+      "title": "Headroom calculation trace",
+      "register_columns": [
+        {
+          "field": "covenant",
+          "label": "Covenant"
+        },
+        {
+          "field": "formula",
+          "label": "Formula"
+        },
+        {
+          "field": "threshold_operand",
+          "label": "Threshold operand"
+        },
+        {
+          "field": "metric_operand",
+          "label": "Metric operand"
+        },
+        {
+          "field": "result",
+          "label": "Result"
+        }
+      ],
+      "columns": [
+        {
+          "field": "formula",
+          "label": "Formula"
+        },
+        {
+          "field": "threshold_operand",
+          "label": "Threshold operand"
+        },
+        {
+          "field": "metric_operand",
+          "label": "Metric operand"
+        },
+        {
+          "field": "result",
+          "label": "Result"
+        }
+      ],
+      "row_header": "Covenant",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        734,
+        738
+      ]
+    },
+    {
+      "table_id": "T4F.4",
+      "title": "Protection score basis",
+      "register_columns": [
+        {
+          "field": "rating",
+          "label": "Rating"
+        },
+        {
+          "field": "basis",
+          "label": "Basis"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "columns": [
+        {
+          "field": "basis",
+          "label": "Basis"
+        },
+        {
+          "field": "source_trace",
+          "label": "Source trace"
+        }
+      ],
+      "row_header": "Rating",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        739,
+        739
+      ]
+    },
+    {
+      "table_id": "T4F.5",
+      "title": "Inherited CP-1 gaps",
+      "register_columns": [
+        {
+          "field": "gap_id",
+          "label": "Gap ID"
+        },
+        {
+          "field": "gap",
+          "label": "Gap"
+        }
+      ],
+      "columns": [
+        {
+          "field": "gap",
+          "label": "Gap"
+        }
+      ],
+      "row_header": "Gap ID",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        740,
+        740
+      ]
+    },
+    {
+      "table_id": "T4F.6",
+      "title": "CP-4 source trace",
+      "register_columns": [
+        {
+          "field": "row",
+          "label": "Row"
+        },
+        {
+          "field": "source",
+          "label": "Source"
+        },
+        {
+          "field": "locator",
+          "label": "Locator"
+        },
+        {
+          "field": "quote",
+          "label": "Quote"
+        }
+      ],
+      "columns": [
+        {
+          "field": "source",
+          "label": "Source"
+        },
+        {
+          "field": "locator",
+          "label": "Locator"
+        },
+        {
+          "field": "quote",
+          "label": "Quote"
+        }
+      ],
+      "row_header": "Row",
+      "interface_id": null,
+      "fact_id_template": "{table_id}.{row_id}.{field}",
+      "row_kind": "row",
+      "row_count": "variable; at least one canonical row, including producer none placeholder",
+      "source_lines": [
+        741,
+        741
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.9",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "covenant-tests-headroom",
+      "cell_slot": "cp4-t4-9",
+      "label": "Covenant tests and headroom",
+      "unit_class": "multiple"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.10",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "capacity",
+      "cell_slot": "cp4-t4-10",
+      "label": "Capacity and baskets",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.11",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "red-flags",
+      "cell_slot": "cp4-t4-11",
+      "label": "Red flags",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.13",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "lender-protection-score",
+      "cell_slot": "cp4-t4-13",
+      "label": "Lender protection score",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.6",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "ebitda-definition",
+      "cell_slot": "cp4-t4c-6",
+      "label": "Covenant definitions",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.2",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "documents-structure",
+      "cell_slot": "cp4-t4-2",
+      "label": "Document register",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.12",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "documents-structure",
+      "cell_slot": "cp4-t4c-12",
+      "label": "Facility coverage",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.3",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4-3",
+      "label": "Covenant register",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.2",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-2",
+      "label": "Maintenance covenants",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.3",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-3",
+      "label": "Incurrence covenants",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.4",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-4",
+      "label": "Negative covenants",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.5",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-5",
+      "label": "Other covenants",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.7",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-7",
+      "label": "Threshold check",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.8",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-8",
+      "label": "CP-1 metric binding",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.11",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4c-11",
+      "label": "Covenant-to-facility map",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.1",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-1",
+      "label": "Pack legal source eligibility",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.2",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-2",
+      "label": "Governing entities",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.3",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-3",
+      "label": "Dates and amendments",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.4",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-4",
+      "label": "Document quotations",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.6",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-6",
+      "label": "Capacity conditions",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.7",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-7",
+      "label": "Red flag implications",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.8",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4d-8",
+      "label": "Covenants by governing document",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4F.2",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4f-2",
+      "label": "CP-1 figures referenced in CP-4",
+      "unit_class": "amount"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4F.3",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4f-3",
+      "label": "Headroom calculation trace",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4F.4",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4f-4",
+      "label": "Protection score basis",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4F.6",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "evidence",
+      "cell_slot": "cp4-t4f-6",
+      "label": "CP-4 source trace",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4.12",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "limitations",
+      "cell_slot": "cp4-t4-12",
+      "label": "CP-4 gaps ledger",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4C.9",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "limitations",
+      "cell_slot": "cp4-t4c-9",
+      "label": "Headroom calculability",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4D.5",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "limitations",
+      "cell_slot": "cp4-t4d-5",
+      "label": "Document limitations",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4F.1",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "limitations",
+      "cell_slot": "cp4-t4f-1",
+      "label": "CP-4 input status",
+      "unit_class": "text"
+    },
+    {
+      "module_id": "CP-4",
+      "table_id": "T4F.5",
+      "row_id": null,
+      "fact_id": null,
+      "block_id": "limitations",
+      "cell_slot": "cp4-t4f-5",
+      "label": "Inherited CP-1 gaps",
+      "unit_class": "text"
+    }
+  ],
+  "fixture": {
+    "scope": "explicitly synthetic seeded CP4 component preview; no owner/tool/settlement/CP5/render/native acceptance",
+    "case_kind": "synthetic",
+    "CP4_status": "candidate",
+    "artifact_sha256_seed": "Per-case exact descriptor in cases[].fixture_artifact.seed; no real settled artifact is asserted",
+    "fixture_cp1_sha256_seed": "FP04 synthetic CP1 input descriptor, no settled head",
+    "other_modules": {
+      "CP-0": "unrun",
+      "CP-1": "unrun",
+      "CP-5": "unrun",
+      "CP-MODEL": "not_in_pathway",
+      "CP-1D": "not_in_pathway"
+    },
+    "no_fake_CP0_CP1_CP5_modules": true,
+    "row_count_not_product_invariant": true,
+    "table_interface_id": null,
+    "T4F.2_row_header_override_for_populated_copies": "CP-1 figure",
+    "fact_defaults": {
+      "amount": null,
+      "text": null,
+      "status": "known",
+      "unit": null,
+      "currency": null,
+      "scale": "1",
+      "decimals": null,
+      "period": null,
+      "basis": null,
+      "denominator": null,
+      "calculation_id": null,
+      "value_class": null,
+      "source_amount": null,
+      "stated_amount": null,
+      "calculation_status": null,
+      "formula": null,
+      "limitation": null
+    },
+    "fact_materialization": "Supply exact declared fact_id/table_id/row_id/field/label; apply fact_defaults then cell fields; resolve citation_group to the selected case literal Citation tuple. shared_rows has all31 tables, quote templates and fixture hash already concretized here. Structured case overrides replace only named fields; gap append row is explicit. T4F.2 preserves supplied original fixture CP1 fact ID/header; normal cells use schema fact-ID template. Do not invoke a CP4 composer/validator or renderer to produce the oracle. Fixture source/stated/value-class fields are labelled component sentinels, not actual complete core provenance history or a claim raw statements report the derived1 ratio.",
+    "shared_rows": [
+      {
+        "table_id": "T4.2",
+        "row_id": "r01",
+        "label": "legal-covenants",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "document_family",
+            "text": "Credit agreement"
+          },
+          {
+            "field": "authority",
+            "text": "executed"
+          },
+          {
+            "field": "governing_entity",
+            "text": "Northbridge Synthetic Group; agreement-specific borrower; IFRS consolidated Group"
+          },
+          {
+            "field": "date_amendment",
+            "text": "Executed December 30, 2025; effective December 31, 2025; current through January 10, 2026"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:1"
+          },
+          {
+            "field": "limitation",
+            "text": "Selected current provisions only; omitted protections; no separate guarantor or restricted-group perimeter"
+          }
+        ]
+      },
+      {
+        "table_id": "T4.3",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "kind",
+            "text": "maintenance"
+          },
+          {
+            "field": "clause",
+            "text": "Clause 3.1"
+          },
+          {
+            "field": "governing_document",
+            "text": "legal-covenants"
+          },
+          {
+            "field": "period_scope",
+            "text": "Calendar quarter end; closing net debt and trailing EBITDA"
+          },
+          {
+            "field": "facilities",
+            "text": "term-loan"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:2"
+          },
+          {
+            "field": "limitation",
+            "text": "Selected current agreement only"
+          }
+        ]
+      },
+      {
+        "table_id": "T4.9",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "test_formula",
+            "text": "Closing net debt divided by trailing EBITDA"
+          },
+          {
+            "field": "threshold",
+            "text": "4.00x"
+          },
+          {
+            "field": "comparison",
+            "text": "Not more than"
+          },
+          {
+            "field": "cp_1_metric",
+            "text": "Reported net leverage; fixture supplied comparator"
+          },
+          {
+            "field": "current",
+            "amount": "1",
+            "unit": "MULTIPLE",
+            "period": "trailing-2025 fixture descriptor",
+            "basis": "IFRS consolidated; reported EBITDA; fixture supplied basis",
+            "value_class": "source",
+            "source_amount": "1",
+            "stated_amount": "1",
+            "citation_group": "financial_metric",
+            "label": "Reported net leverage"
+          },
+          {
+            "field": "headroom",
+            "amount": "3",
+            "unit": "MULTIPLE",
+            "period": "trailing-2025 fixture descriptor",
+            "basis": "IFRS consolidated; reported EBITDA; fixture supplied basis",
+            "value_class": "calculated",
+            "formula": "4.00 (threshold) - fixture-cp1:net-leverage:trailing2025",
+            "calculation_id": null,
+            "citation_group": "legal_and_financial"
+          },
+          {
+            "field": "headroom_share",
+            "amount": "0.75",
+            "unit": "PERCENT",
+            "period": "trailing-2025 fixture descriptor",
+            "basis": "IFRS consolidated; reported EBITDA; fixture supplied basis",
+            "value_class": "calculated",
+            "formula": "headroom / |threshold|",
+            "calculation_id": null,
+            "citation_group": "legal_and_financial"
+          },
+          {
+            "field": "test_on_cp_1_metric",
+            "text": "Within threshold on the CP-1 metric"
+          }
+        ]
+      },
+      {
+        "table_id": "T4.10",
+        "row_id": "r01",
+        "label": "Debt permission",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "permits",
+            "text": "Existing drawings under the term loan"
+          },
+          {
+            "field": "conditions",
+            "text": "Every lender must consent before additional debt or a commitment increase; fully drawn facility"
+          },
+          {
+            "field": "capacity_amount",
+            "status": "missing",
+            "amount": null,
+            "text": null,
+            "limitation": "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8; unknown capacity is not zero",
+            "citation_group": "none"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:3"
+          },
+          {
+            "field": "limitation",
+            "text": "No automatic additional debt basket or funding commitment"
+          }
+        ]
+      },
+      {
+        "table_id": "T4.11",
+        "row_id": "r01",
+        "label": "Asset-sale sweep absent",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "severity",
+            "text": "Material"
+          },
+          {
+            "field": "mechanic",
+            "text": "No mandatory asset-sale debt-prepayment sweep in selected terms"
+          },
+          {
+            "field": "implication",
+            "text": "Fair market value condition does not establish creditor debt reduction or any actual disposal"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:3"
+          }
+        ]
+      },
+      {
+        "table_id": "T4.12",
+        "row_id": "r01",
+        "label": "CP-4-GAP-001",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "gap",
+            "text": "Omitted security enforcement, guarantees, defaults, cure rights, voting and other protections"
+          },
+          {
+            "field": "why_it_matters",
+            "text": "Overall lender protections cannot be established"
+          },
+          {
+            "field": "severity",
+            "text": "Material"
+          },
+          {
+            "field": "action",
+            "text": "Obtain the omitted provisions"
+          }
+        ]
+      },
+      {
+        "table_id": "T4.13",
+        "row_id": "rating",
+        "label": "Lender protection score 1",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "rating",
+            "text": "Insufficient Information"
+          },
+          {
+            "field": "rationale",
+            "text": "Selected provisions do not establish the overall protection package"
+          },
+          {
+            "field": "basis",
+            "text": "Current selected agreement and explicit omitted-protection scope"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants pages:1,3"
+          },
+          {
+            "field": "limitation",
+            "text": "Selected provisions only; financials unaudited and consolidated"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.2",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "test_formula",
+            "text": "Closing net debt divided by trailing EBITDA"
+          },
+          {
+            "field": "threshold",
+            "text": "4.00x"
+          },
+          {
+            "field": "period_scope",
+            "text": "Calendar quarter end starting December 31, 2025"
+          },
+          {
+            "field": "facilities",
+            "text": "term-loan"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.3",
+        "row_id": "none",
+        "label": "None",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "test_formula",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (incurrence covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "threshold",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (incurrence covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "period_scope",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (incurrence covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "facilities",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (incurrence covenants)",
+            "citation_group": "none"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.4",
+        "row_id": "none",
+        "label": "None",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "clause",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (negative covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "facilities",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (negative covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "source_trace",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (negative covenants)",
+            "citation_group": "none"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.5",
+        "row_id": "none",
+        "label": "None",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "clause",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (other covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "facilities",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (other covenants)",
+            "citation_group": "none"
+          },
+          {
+            "field": "source_trace",
+            "status": "not_applicable",
+            "amount": null,
+            "text": null,
+            "limitation": "None in the CP-4 submission (other covenants)",
+            "citation_group": "none"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.6",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "definition",
+            "text": "Debt carrying value excludes both lease types; all closing cash eligible; Covenant EBITDA equals reported trailing EBITDA without adjustments"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:2"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.7",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "threshold_text",
+            "text": "4.00x"
+          },
+          {
+            "field": "unit",
+            "text": "multiple"
+          },
+          {
+            "field": "stated_value",
+            "text": "4.00"
+          },
+          {
+            "field": "parsed_value",
+            "text": "4.00"
+          },
+          {
+            "field": "comparison",
+            "text": "Not more than"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.8",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "cp_1_metric",
+            "text": "fixture-cp1:net-leverage:trailing2025"
+          },
+          {
+            "field": "metric_period",
+            "text": "trailing-2025 fixture descriptor"
+          },
+          {
+            "field": "definition_basis",
+            "text": "Same definition"
+          },
+          {
+            "field": "unit",
+            "text": "MULTIPLE"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.9",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "calculable",
+            "text": "Yes"
+          },
+          {
+            "field": "reason",
+            "text": "Threshold, metric and definition basis are all present"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.11",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "facility_id",
+            "text": "term-loan"
+          },
+          {
+            "field": "facility",
+            "text": "Northbridge Term Loan"
+          }
+        ]
+      },
+      {
+        "table_id": "T4C.12",
+        "row_id": "r01",
+        "label": "term-loan",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "facility",
+            "text": "Northbridge Term Loan"
+          },
+          {
+            "field": "covenants",
+            "text": "Maintenance leverage test"
+          },
+          {
+            "field": "status",
+            "text": "Named by a covenant"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.1",
+        "row_id": "r01",
+        "label": "legal-covenants",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "cp_0_authority",
+            "text": "executed"
+          },
+          {
+            "field": "eligible_for_cp_4_citation",
+            "text": "Yes"
+          },
+          {
+            "field": "cited_by_cp_4",
+            "text": "Yes"
+          },
+          {
+            "field": "limitation",
+            "text": "Selected operative provisions only"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.2",
+        "row_id": "r01",
+        "label": "legal-covenants",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "governing_entity",
+            "text": "Agreement-specific borrower is Northbridge Synthetic Group; IFRS consolidated Group"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:1"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.3",
+        "row_id": "r01",
+        "label": "legal-covenants",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "date_amendment",
+            "text": "Executed December 30, 2025; effective December 31, 2025; no later amendment/waiver through January 10, 2026"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:1"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.4",
+        "row_id": "r01",
+        "label": "Quotation 1",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "source",
+            "text": "legal-covenants"
+          },
+          {
+            "field": "locator",
+            "text": "page:1"
+          },
+          {
+            "field": "quote",
+            "citation_group": "legal_authority",
+            "text": "Execution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026. All earlier versions of these selected terms are superseded."
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.5",
+        "row_id": "r01",
+        "label": "legal-covenants",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "limitation",
+            "text": "Selected provisions only; obtain omitted protections; missing guarantor/restricted-group perimeter"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.6",
+        "row_id": "r01",
+        "label": "Debt permission",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "conditions",
+            "text": "Every lender prior written consent required for additional debt or increased commitment"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants page:3"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.7",
+        "row_id": "r01",
+        "label": "Asset-sale sweep absent",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "implication",
+            "text": "No mandatory debt prepayment follows from these selected terms; no disposal is established"
+          },
+          {
+            "field": "severity",
+            "text": "Material"
+          }
+        ]
+      },
+      {
+        "table_id": "T4D.8",
+        "row_id": "r01",
+        "label": "legal-covenants",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "covenants",
+            "text": "Maintenance leverage test"
+          }
+        ]
+      },
+      {
+        "table_id": "T4F.1",
+        "row_id": "cp-1",
+        "label": "CP-1",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "status",
+            "text": "restricted"
+          },
+          {
+            "field": "sha_256",
+            "text": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa"
+          },
+          {
+            "field": "note",
+            "text": "Fixture-only offered figure catalogue; no actual CP1 execution"
+          }
+        ]
+      },
+      {
+        "table_id": "T4F.2",
+        "row_id": "ref01",
+        "label": "Reported net leverage · trailing-2025 fixture descriptor",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "value",
+            "fact_id": "fixture-cp1:net-leverage:trailing2025",
+            "amount": "1",
+            "unit": "MULTIPLE",
+            "period": "trailing-2025 fixture descriptor",
+            "basis": "IFRS consolidated; reported EBITDA; fixture supplied basis",
+            "value_class": "source",
+            "source_amount": "1",
+            "stated_amount": "1",
+            "citation_group": "financial_metric",
+            "label": "Reported net leverage"
+          }
+        ]
+      },
+      {
+        "table_id": "T4F.3",
+        "row_id": "r01",
+        "label": "Maintenance leverage test",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "formula",
+            "text": "threshold minus metric"
+          },
+          {
+            "field": "threshold_operand",
+            "text": "4.00"
+          },
+          {
+            "field": "metric_operand",
+            "text": "fixture-cp1:net-leverage:trailing2025"
+          },
+          {
+            "field": "result",
+            "text": "3"
+          }
+        ]
+      },
+      {
+        "table_id": "T4F.4",
+        "row_id": "rating",
+        "label": "Insufficient Information",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "basis",
+            "text": "Selected current provisions only; omitted protections prevent an overall rating"
+          },
+          {
+            "field": "source_trace",
+            "text": "fixture legal-covenants pages:1,3"
+          }
+        ]
+      },
+      {
+        "table_id": "T4F.5",
+        "row_id": "r01",
+        "label": "CP-1-GAP-001",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "gap",
+            "text": "Unaudited consolidated financials; no separate guarantor/restricted-group financial perimeter"
+          }
+        ]
+      },
+      {
+        "table_id": "T4F.6",
+        "row_id": "r01",
+        "label": "covenants[0]",
+        "row_kind": "row",
+        "cells": [
+          {
+            "field": "source",
+            "text": "legal-covenants"
+          },
+          {
+            "field": "locator",
+            "text": "page:2"
+          },
+          {
+            "field": "quote",
+            "citation_group": "legal_threshold",
+            "text": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          }
+        ]
+      }
+    ],
+    "citation_groups": {
+      "legal-current-matching-definition": {
+        "legal_authority": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:1",
+            "quote": "Execution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026. All earlier versions of these selected terms are superseded."
+          }
+        ],
+        "legal_threshold": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:2",
+            "quote": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          }
+        ],
+        "legal_definition": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:2",
+            "quote": "Clause 2.3. Covenant EBITDA means the Group's reported EBITDA: revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization, over the trailing twelve months ending on the test date. No adjustments, add-backs, synergies, run-rate savings, pro-forma changes or exclusions are permitted. For December 31, 2025 the period is January 1 through December 31, 2025, identical to reported FY2025 and the four discrete calendar 2025 quarters. The underlying statements remain unaudited; this definition supplies no audit assurance."
+          }
+        ],
+        "legal_permissions": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:3",
+            "quote": "Clause 4.1. Existing drawings under Northbridge Term Loan are permitted. Additional debt or an increase in that facility's commitment requires prior written consent of every lender. The maintenance leverage limit by itself is not a debt-incurrence permission or an available funding commitment. No additional automatic debt basket is provided by these selected terms."
+          }
+        ],
+        "legal_scope": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:3",
+            "quote": "Source limitation. These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package. Financial statements remain unaudited and consolidated; no borrower-only financial statements, guarantor perimeter or restricted-group financial information are supplied."
+          }
+        ],
+        "none": [],
+        "financial_metric": [
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:2",
+            "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Cash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00"
+          }
+        ],
+        "legal_and_financial": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:2",
+            "quote": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:2",
+            "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Cash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00"
+          }
+        ],
+        "default": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "locator": "page:2",
+            "quote": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          }
+        ]
+      },
+      "legal-current-missing-ebitda-definition": {
+        "legal_authority": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:1",
+            "quote": "Execution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026. All earlier versions of these selected terms are superseded."
+          }
+        ],
+        "legal_threshold": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:2",
+            "quote": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          }
+        ],
+        "legal_definition": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:2",
+            "quote": "Clause 2.3. Covenant EBITDA has the meaning assigned in incorporated Schedule A. Schedule A is not supplied with this copy. No supplied clause states its add-backs, exclusions or relationship to reported EBITDA. The financial statements' reported EBITDA definition does not supply the missing contractual definition."
+          }
+        ],
+        "legal_permissions": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:3",
+            "quote": "Clause 4.1. Existing drawings under Northbridge Term Loan are permitted. Additional debt or an increase in that facility's commitment requires prior written consent of every lender. The maintenance leverage limit by itself is not a debt-incurrence permission or an available funding commitment. No additional automatic debt basket is provided by these selected terms."
+          }
+        ],
+        "legal_scope": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:3",
+            "quote": "Source limitation. These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package. Financial statements remain unaudited and consolidated; no borrower-only financial statements, guarantor perimeter or restricted-group financial information are supplied."
+          }
+        ],
+        "none": [],
+        "financial_metric": [
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:2",
+            "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Cash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00"
+          }
+        ],
+        "legal_and_financial": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:2",
+            "quote": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:2",
+            "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00"
+          },
+          {
+            "source_id": "financial",
+            "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "locator": "page:4",
+            "quote": "Cash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00"
+          }
+        ],
+        "default": [
+          {
+            "source_id": "legal-covenants",
+            "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+            "locator": "page:2",
+            "quote": "Clause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          }
+        ]
+      }
+    },
+    "module_limitations": [
+      "Synthetic seeded component preview; no actual owner, legal semantic acceptance, CP5 or native proof",
+      "Selected current legal provisions only; omitted security enforcement, guarantees, defaults, cure rights, voting and other protections",
+      "Financial statements unaudited and consolidated; no separate guarantor/restricted-group financial perimeter",
+      "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8; unknown capacity is not zero"
+    ],
+    "preserve_all_canonical_fact_fields": true,
+    "preserve_resolved_source_gap_passports": true,
+    "invent_calculation_ids": false,
+    "html_expectations": {
+      "CP4_status_glyph": "candidate",
+      "CP4_status_word": "Candidate",
+      "raw_module_status_key_present": false,
+      "analytical_qualification": "unrun",
+      "native_host_qualification": "unrun",
+      "module_status_serialization_note": "Existing render replaces raw module status with glyph/word; assert source ModuleView status separately"
+    },
+    "decimal_expectation_rule": "Compare adopted numerical values with exact Decimal equality; compare roundtrip serialized representation/quantum to the explicitly supplied fixture, never infer production quantization from these case literals.",
+    "fixture_cp1_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa",
+    "copied_fact_label_rule": "Preserve supplied numeric/copied source Fact.label; do not force equality to TableColumn.label",
+    "seeded_counts_not_production_invariants": {
+      "positive_rows": 31,
+      "positive_cells": 102,
+      "gap_rows": 32,
+      "gap_cells": 106,
+      "production_row_and_fact_count_fixed": false
+    },
+    "source_copy_fixture": {
+      "source_fact_id": "fixture-cp1:net-leverage:trailing2025",
+      "source_fact_label": "Reported net leverage",
+      "not_a_settled_CP1_Module": true,
+      "T4F.2_placement_changes_only": [
+        "table_id",
+        "row_id",
+        "field"
+      ],
+      "T4.9_current_changes": [
+        "fact_id",
+        "table_id",
+        "row_id",
+        "field"
+      ],
+      "all_other_fields_preserved_from_supplied_fixture_source": true
+    }
+  },
+  "cases": [
+    {
+      "case_id": "legal-current-matching-definition",
+      "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+      "overrides": [],
+      "canonical_expectations": {
+        "metric_amount": "1",
+        "threshold_text": "4.00x",
+        "headroom_amount": "3",
+        "headroom_share_amount": "0.75",
+        "definition_basis": "Same definition",
+        "verdict": "Within threshold on the CP-1 metric",
+        "calculable": "Yes",
+        "protection_rating": "Insufficient Information",
+        "capacity_status": "missing",
+        "capacity_amount": null
+      },
+      "display_expectations": {
+        "metric": "1.00x",
+        "headroom": "3.00x",
+        "headroom_share": "75.0%",
+        "capacity": "^∅ G[1-9][0-9]*$"
+      },
+      "fixture_run_id": "fp04-component-positive",
+      "fixture_artifact": {
+        "seed": "FP04 seeded CP4 component fixture, no owner execution:legal-current-matching-definition",
+        "sha256": "888698b075d80892d04ef2346df9705141b05ca9bece8b8760c30469de7ff2a8",
+        "scope": "Fixture descriptor only; not actual settled Module digest"
+      },
+      "fixture_input_descriptor_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa"
+    },
+    {
+      "case_id": "legal-current-missing-ebitda-definition",
+      "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+      "overrides": [
+        {
+          "table_id": "T4.9",
+          "field": "headroom",
+          "replace": {
+            "amount": null,
+            "text": null,
+            "status": "missing",
+            "unit": null,
+            "period": null,
+            "basis": null,
+            "value_class": null,
+            "formula": null,
+            "calculation_id": null,
+            "limitation": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable",
+            "citation_group": "none"
+          }
+        },
+        {
+          "table_id": "T4.9",
+          "field": "headroom_share",
+          "replace": {
+            "amount": null,
+            "text": null,
+            "status": "missing",
+            "unit": null,
+            "period": null,
+            "basis": null,
+            "value_class": null,
+            "formula": null,
+            "calculation_id": null,
+            "limitation": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable",
+            "citation_group": "none"
+          }
+        },
+        {
+          "table_id": "T4.9",
+          "field": "test_on_cp_1_metric",
+          "replace": {
+            "text": "Not calculable"
+          }
+        },
+        {
+          "table_id": "T4C.6",
+          "field": "definition",
+          "replace": {
+            "text": "Covenant EBITDA refers to missing incorporated Schedule A; add-backs/exclusions and relationship to reported EBITDA are not supplied",
+            "citation_group": "legal_definition"
+          }
+        },
+        {
+          "table_id": "T4C.8",
+          "field": "definition_basis",
+          "replace": {
+            "text": "Not determinable"
+          }
+        },
+        {
+          "table_id": "T4C.9",
+          "field": "calculable",
+          "replace": {
+            "text": "No"
+          }
+        },
+        {
+          "table_id": "T4C.9",
+          "field": "reason",
+          "replace": {
+            "text": "Whether the covenant definition is the CP-1 metric's is not determinable"
+          }
+        },
+        {
+          "table_id": "T4F.3",
+          "field": "result",
+          "replace": {
+            "text": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable"
+          }
+        }
+      ],
+      "append_gap_row": {
+        "table_id": "T4.12",
+        "row_id": "r02",
+        "label": "CP-4-GAP-002",
+        "cells": {
+          "gap": "Missing incorporated Schedule A defining Covenant EBITDA, including add-backs/exclusions and the relationship to reported EBITDA.",
+          "why_it_matters": "Contractual EBITDA equivalence and legal headroom cannot be established",
+          "severity": "Material",
+          "action": "Obtain incorporated Schedule A"
+        }
+      },
+      "additional_module_limitation": "Headroom not calculable for Maintenance leverage test: Whether the covenant definition is the CP-1 metric's is not determinable",
+      "canonical_expectations": {
+        "metric_amount": "1",
+        "threshold_text": "4.00x",
+        "headroom_amount": null,
+        "headroom_share_amount": null,
+        "definition_basis": "Not determinable",
+        "verdict": "Not calculable",
+        "calculable": "No",
+        "reason": "Whether the covenant definition is the CP-1 metric's is not determinable",
+        "protection_rating": "Insufficient Information",
+        "capacity_status": "missing",
+        "capacity_amount": null
+      },
+      "display_expectations": {
+        "metric": "1.00x",
+        "headroom": "^∅ G[1-9][0-9]*$",
+        "headroom_share": "^∅ G[1-9][0-9]*$",
+        "verdict": "Not calculable",
+        "capacity": "^∅ G[1-9][0-9]*$"
+      },
+      "fixture_run_id": "fp04-component-definition-gap",
+      "fixture_artifact": {
+        "seed": "FP04 seeded CP4 component fixture, no owner execution:legal-current-missing-ebitda-definition",
+        "sha256": "f058238d321228687e841dd8d0875ebdd048cf701197dab09e0779ed8bf6b3db",
+        "scope": "Fixture descriptor only; not actual settled Module digest"
+      },
+      "fixture_input_descriptor_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa"
+    }
+  ],
+  "zero_vs_unknown": {
+    "unused_commitment_source_context_only": {
+      "amount": "0",
+      "unit": "MILLIONS",
+      "currency": "USD",
+      "scale": "1000000",
+      "meaning": "Known fully-drawn unused commitment, independent frozen source context; no dedicated CP4 numeric output field exists",
+      "must_not_map_to": "T4.10 capacity_amount"
+    },
+    "artificial_known_zero_presentation_case": {
+      "coordinate": "T4.9:r01:headroom",
+      "amount": "0",
+      "unit": "MULTIPLE",
+      "expected_display": "0.00x",
+      "state": "known",
+      "gap_ref": null,
+      "scope": "artificial display-only variation; not unused commitment or actual legal outcome"
+    },
+    "prohibit_capacity_permission_amount": "90"
+  },
+  "guard_contract": {
+    "required": true,
+    "scope": "CP4 only before generic slot consumption for shown/output-bearing module; signatures/canonical validators unchanged",
+    "exact_ordered_tables_from_schemas": true,
+    "exact_columns_titles_headers_interface": true,
+    "T4F.2_populated_copy_header": "CP-1 figure",
+    "T4F.2_empty_header": null,
+    "row_count_or_case_financial_values_hardcoded": false,
+    "normal_fact_identity": "{table_id}.{row_id}.{field}; T4F.2 original supplied copy fact ID allowed",
+    "validate_native_numeric_dimensions": "MULTIPLE/scale1, PERCENT/scale1, pp/scale1 for applicable headroom; copied source fields preserve their supplied supported native dimensions; gap Cells may legitimately have unit/period None",
+    "nonfinite_known_numeric_refused": true,
+    "known_zero_accepted": true,
+    "nonknown_values_none_and_nonblank_reason": true,
+    "assessment_text_not_globally_fixed": true,
+    "validate_semantic_definition_equivalence": false,
+    "private_helper": "_validate_cp4_layout(module:ModuleView)->None",
+    "metadata_import": "Cycle-safe local import existing cp4_legal REGISTERS/REQUIRED_TABLES/UNKEYED only; no top-level cycle or legal composer/parser/validator invocation",
+    "nonshown_output_bearing": "ValueError; empty blocked/stale/unrun/not_in_pathway fixture has no inherited populated Full-analysis/front content",
+    "shown_empty": "ValueError before fallback",
+    "row_policy": "Variable nonempty canonical rows, unique IDs/labels, row_kind row; preserve supplied row order. No fixed case row IDs/count/labels; Fact tuple order independent of pointers.",
+    "T4F.2_populated_policy": "One Value field/header CP-1 figure, ref01..refNN rows, original supplied CP1 fact IDs, all source Fact fields preserved apart from placement; no fixture prefix/global cross-module uniqueness rule",
+    "T4F.2_empty_policy": {
+      "row_id": "none",
+      "row_label": "CP-1 figures referenced 1",
+      "fact_id": "T4F.2.none.value",
+      "field": "value",
+      "label": "Value",
+      "row_header": null,
+      "status": "not_applicable",
+      "amount": null,
+      "text": null,
+      "unit": null,
+      "period": null,
+      "limitation": "No CP-1 figure is referenced",
+      "scope": "Structural empty-reference layout variant, not an assertion that a real selected-metric case can omit its reference copy"
+    },
+    "numeric_policy": {
+      "dimensionless_units": [
+        "MULTIPLE",
+        "PERCENT",
+        "decimal_fraction",
+        "pp"
+      ],
+      "dimensionless_scale": "1",
+      "dimensionless_currency": null,
+      "headroom_known_units": [
+        "MULTIPLE",
+        "pp"
+      ],
+      "headroom_share_known_unit": "PERCENT",
+      "current_and_copied_units": "Preserve actual supplied supported unit/currency/finite positive scale/period/precision, not global MULTIPLE",
+      "gap_unit_period_may_be_null": true,
+      "decimals": "Preserve None or canonical0..6; no global precision override",
+      "fact_label": "Preserve actual supplied labels, not forced column label"
+    }
+  },
+  "actual_interface_and_native": "Deferred to separately frozen legal owner/final receipt/delivery lease; no wrapper or actor tool use claimed here",
+  "focused_argv": [
+    "/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_legal_render.py"
+  ],
+  "focused_env": {
+    "PYTHONPATH": "src",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "execution_status": "NOT RUN; source-only static freeze. Later exact integrated-base/resource admission required.",
+  "paid_provider_live": "paused",
+  "success_checks": [
+    {
+      "id": "FP04-S01",
+      "check": "exact31schemas31bindings31unique-slots/CP4-map-once",
+      "expected": "zero binding issues;31existing table maps,7frontbindings/6sections+19Evidence+5Limitations; CP4 shipped once; no map source edit"
+    },
+    {
+      "id": "FP04-S02",
+      "check": "both complete positive/gap seeded fixtures",
+      "expected": "six dense ownerCP4 populated blocks; exact specs/headings/rows/fields/routes; Synthetic tag"
+    },
+    {
+      "id": "FP04-S03",
+      "check": "documents tabs",
+      "expected": "T4.2 primary Document register, T4C.12 Facility coverage second; full columns and row headers"
+    },
+    {
+      "id": "FP04-S04",
+      "check": "positive numeric and gap fields",
+      "expected": "case-specific canonical/display expectations; no arithmetic/replacement in renderer"
+    },
+    {
+      "id": "FP04-S05",
+      "check": "known-zero presentation vs capacity gap",
+      "expected": "artificial headroom0.00x known/no gap; unknown capacity remains missing; no invented unused-commitment cell"
+    },
+    {
+      "id": "FP04-S06",
+      "check": "Full analysis and index",
+      "expected": "all31table payloads/all Fact fields preserved; resolved source/gap passports exact; no invented calculation ID/K requirement"
+    },
+    {
+      "id": "FP04-S07",
+      "check": "variable rows and row placeholders",
+      "expected": "valid multiple/none rows and populated/empty T4F.2 variants accepted without fixed case row/fact count"
+    },
+    {
+      "id": "FP04-S08",
+      "check": "reverse fact tuple order",
+      "expected": "same canonical table projection and resolved provenance; allocated G/S numbers may differ"
+    },
+    {
+      "id": "FP04-S09",
+      "check": "lifecycle shown/nonshown",
+      "expected": "candidate/restricted/accepted presentation only; unrun empty, blocked, stale have no inherited populated rows/routes"
+    },
+    {
+      "id": "FP04-S10",
+      "check": "cross-module/pathway isolation",
+      "expected": "other5FP04blocks/specs/ownerstates, CP1credit/earningscharts, other maps unchanged; CP5/Model fixture outputs remain empty"
+    },
+    {
+      "id": "FP04-S11",
+      "check": "core HTML source/module context",
+      "expected": "exact copied source hashes/spans/citations/Module.limitations and fixture artifact identity; status glyph/word; qualificationsunrun"
+    },
+    {
+      "id": "FP04-S12",
+      "check": "empty/nonempty copied table shape",
+      "expected": "T4F.2 populated original fixture ID with headerCP-1 figure; empty none with normal generated ID/headerNone"
+    },
+    {
+      "id": "FP04-S13",
+      "check": "original source copy reference/label/precision isolation",
+      "expected": "T4F.2 original same fact ID can coexist across producer-qualified modules without global uniqueness rejection; preserve source labels/precision/canonical fields and owning artifact passport. Artificial isolated fixtures only; no fake actual CP1 head."
+    }
+  ],
+  "refusal_checks": [
+    {
+      "id": "FP04-R01",
+      "variant": "table-missing",
+      "mutation": "remove T4C.7",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R02",
+      "variant": "table-extra",
+      "mutation": "append undeclared T4.extra",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R03",
+      "variant": "table-duplicate",
+      "mutation": "repeat T4.2",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R04",
+      "variant": "table-order",
+      "mutation": "swap T4.2/T4.3",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R05",
+      "variant": "title",
+      "mutation": "change T4.9 title",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R06",
+      "variant": "row-header",
+      "mutation": "change T4.9 row_header",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R07",
+      "variant": "interface",
+      "mutation": "give T4.9 a foreign interface identity",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R08",
+      "variant": "column-missing",
+      "mutation": "remove T4.9 headroom_share",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R09",
+      "variant": "column-extra",
+      "mutation": "append foreign field toT4.9",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R10",
+      "variant": "column-duplicate",
+      "mutation": "repeat T4.9 headroom field",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R11",
+      "variant": "column-order",
+      "mutation": "swap T4.9 current/headroom",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R12",
+      "variant": "column-label",
+      "mutation": "change T4.9 Headroom share heading",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R13",
+      "variant": "row-duplicate",
+      "mutation": "repeat T4.9 r01",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R14",
+      "variant": "row-kind",
+      "mutation": "mark T4.9 r01 total",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R15",
+      "variant": "row-pointer",
+      "mutation": "swap T4.9 current/headroom fact pointers",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R16",
+      "variant": "pointer-unknown",
+      "mutation": "point T4.9 current to missing ID",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R17",
+      "variant": "pointer-double",
+      "mutation": "point two cells at same fact",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R18",
+      "variant": "fact-missing",
+      "mutation": "remove bound T4.9 headroom fact",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R19",
+      "variant": "fact-duplicate",
+      "mutation": "repeat a fact ID",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R20",
+      "variant": "fact-extra",
+      "mutation": "append undeclared fact/table",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R21",
+      "variant": "fact-coordinate",
+      "mutation": "change headroom field to foreign",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R22",
+      "variant": "fact-normal-identity",
+      "mutation": "replace normal CP4 fact ID with foreign identity",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R23",
+      "variant": "numeric-nonfinite",
+      "mutation": "known headroom NaN or Infinity",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R24",
+      "variant": "numeric-shape",
+      "mutation": "known headroom no value or amount+text",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R25",
+      "variant": "gap-shape",
+      "mutation": "missing headroom with amount/text",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R26",
+      "variant": "gap-reason",
+      "mutation": "missing headroom with blank reason",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R27",
+      "variant": "native-dimension",
+      "mutation": "known MULTIPLE/PERCENT/pp with invalid scale/currency",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R28",
+      "variant": "binding-missing",
+      "mutation": "remove T4C.7 binding from supplied test maps",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R29",
+      "variant": "binding-duplicate",
+      "mutation": "duplicate CP4 map or slot",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R30",
+      "variant": "binding-double",
+      "mutation": "bind T4.9 to front and evidence simultaneously",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R31",
+      "variant": "shown-empty",
+      "mutation": "candidate CP4 with no tables/facts",
+      "expected": "ValueError before generic fallback/partial front projection; use model_copy only to exercise build boundary"
+    },
+    {
+      "id": "FP04-R32",
+      "variant": "nonshown-output-carry",
+      "mutation": "blocked/stale/rejected CP4 still carries prior fixture facts/tables/claims",
+      "expected": "ValueError at CP4 boundary; actual Execution.view omits these outputs, no misleading Full analysis carryover"
+    }
+  ],
+  "out_of_scope_semantic_adversary": {
+    "case": "definition-gap plus false Same definition and legal headroom",
+    "expected_later_owner_acceptance": "REFUSE_SEMANTIC_ACCEPTANCE",
+    "not_asserted_here": "renderer/current CP4 validator automatically rejects legal definition equivalence",
+    "no_product_case_switch": true
+  },
+  "original_proposal": {
+    "path": "coordinator-2/work/legal-preparation/fp04-binding-expected-proposal.json",
+    "sha256": "440f60888b8c13a297639fcae1c811d0b2fa5a9c24b1d9c994f67d42f06ae18d",
+    "contract_proposal_sha256": "433d422a667e385791ee1c1230b5fd2ac2c340193f3deb7535f374fbb2dd3c01",
+    "preserved_unchanged": true
+  },
+  "public_api": {
+    "unchanged": "report_view.build(view:View,pathway:Pathway,maps:Iterable[BindingMap])->ReportView",
+    "private_guard": "_validate_cp4_layout(module:ModuleView)->None",
+    "new_mapping": "_COVENANT_REFINANCING MappingProxyType with six specs in this oracle",
+    "source_read_or_engine_call_allowed_in_guard": false
+  },
+  "other_front_sections": {
+    "ids": [
+      "liquidity-runway",
+      "maturity-wall",
+      "funding-gap",
+      "refinancing-paths",
+      "lme-creditor-exposure"
+    ],
+    "preserve_existing_fallback": true,
+    "owner": "Unbound",
+    "producers": [],
+    "kind": "prose",
+    "full_analysis_route": null,
+    "note": "No module produces this block yet.",
+    "responsibility_context_only": "Broader CP2D/CP3C/CP4C work remains pending; no new producer/spec or CP4 content here"
+  },
+  "source_copy_boundary": "Source inventory is copied literal supplied context in a synthetic seeded fixture; source/passport lexical match is not source-tool/owner semantic acceptance",
+  "independent_display_literals": {
+    "method": "stdlib Decimal quantize/ROUND_HALF_UP only, no product formatter/renderer/import",
+    "1_MULTIPLE": "1.00x",
+    "3_MULTIPLE": "3.00x",
+    "0.75_PERCENT_fraction": "75.0%",
+    "0_MULTIPLE": "0.00x",
+    "canonical_numeric_values_unchanged": true
+  },
+  "cases_not_engine_refusals": {
+    "definition_gap_false_same_definition": "Later REFUSE_SEMANTIC_ACCEPTANCE only; no renderer/current-core automatic legal definition equivalence refusal asserted",
+    "wrong_source_or_period_or_owner": "Requires future authenticated owner/receipt; structural schema preservation alone proves none"
+  },
+  "remaining_actual_caller_gaps": [
+    "Supported CP4 source epoch/current-genuine-CP1 authentication and bounded upstream grant still require their own precise owner lease",
+    "Actual legal source-tool/read/search evidence, raw submission/validation/settlement and public legal owner-prefix receipt absent here",
+    "Complete selected CP1+CP4 CP5 tool/claim review and final slice composition need a legal-owner-compatible public receipt, not an earnings receipt relabel",
+    "Authenticated legal selected-run rendering/native proof and remaining CP2D/CP3C/CP4C sections stay open"
+  ],
+  "static_checks": {
+    "literal_citation_records_checked": 26,
+    "all_hashes_and_quotes_match_selected_supplied_pages": true,
+    "no_product_imports": true,
+    "no_legal_financial_engine_run": true
+  }
+}

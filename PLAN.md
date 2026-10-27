@@ -308,3 +308,23 @@ The first-case static transport proof is65 tools/70 messages,maxpage8088,
 manifest3459 bytes; this is not runtime or analytical qualification. Protected
 raw source/diagnostic text stays denied. Every evaluated claim and all actual
 mechanical/analyst finding categories remain subject to unchanged core rules.
+
+
+## Task4-L1 — CP4/FP04 typed binding component
+
+Pre-code lease/oracle: docs/CP4-FP04-BINDING-LEASE.md and
+cases/legal/render-expected.json; independent review docs/reviews/cp4-fp04-contract.md.
+C2 future files ONLY report_view.py and new tests/test_legal_render.py. Existing31
+CP4 bindings remain unchanged/shipped once; six typed FP04 sections preserve full
+analysis/Evidence/Limitations, native units and honest unknown capacity/definition
+gaps. Seeded candidate previews are component evidence, not owner settlement.
+
+- [x] Independently freeze all31 schema/binding metadata, six specs and literal positive/gap presentation/refusal expectations.
+- [ ] Integrate exact freeze and admit C2's disjoint two-file implementation.
+- [ ] Verify focused component cases and required confidence/tournament/independent code reviews.
+
+Actual CP4 source/current-CP1 auth/tools/owner receipt, complete selected CP5,
+final legal delivery/native proof and the other five FP04 responsibilities remain
+separate full-PLAN obligations. No legal/financial engine or semantic truth rule
+is changed by this component. False definition equivalence still needs actual
+source-to-submission semantic refusal; this renderer does not invent a parser.

@@ -900,3 +900,18 @@ Integrated LEAD's exact two-file docs patch
 capability fix under the existing frozen contract. The original five-file C1
 work remains intact. No product code, tests, or heavy jobs were included; paid
 and provider work remains paused.
+
+### C3 CP1B paired-period earnings core (A1)
+
+Integrated C3's exact admitted commit
+`c8d4c93ba515b842d4e19713cfbec2a7e71df997` (source parent
+`f1b3c5c880a616a422ddf87136f56c87f20ccb10`) as a patch only. It adds
+`src/deploy_workflow/earnings.py` (SHA-256
+`73fa14c1a5ab42be29fd54ce7d9507a0f986e6f7486cec2f5f4bfd4789750896`),
+`tests/test_earnings.py` (`c8a2de1b0ba66abe8e2b409f854cbd349ad2ee40e8bb69a1180ec2de75d5d310`),
+and `docs/handoffs/cp1b-earnings-core.md`
+(`6d045ad559945da6b3818183314b3a6dbee29a2fdabd8758868c8eae1c28b1b9`).
+The recorded full-input root probe and independent review close the component
+contract; this remains a pure core only. No test, engine, or provider job was
+rerun during integration. Actual owner/CP5 consumption, rendering, and overall
+CP1B acceptance remain open. Paid/provider/live work remains paused.

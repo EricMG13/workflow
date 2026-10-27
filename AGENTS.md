@@ -3,7 +3,9 @@
 ## Goal and authority
 
 The user authorized this separate project, selective reuse of relevant Claude code,
-and four sessions: LEAD, COORDINATOR 1, COORDINATOR 2 and PR MANAGER. This repository
+and initially four sessions: LEAD, COORDINATOR 1, COORDINATOR 2 and PR MANAGER.
+On2026-10-27 the user added COORDINATOR 3 for Task4 earnings modules and explicitly
+authorized uncapped active implementation. This repository
 is independent of DEPLOY VII. Old sessions, plans, hooks, provider defaults and
 release gates are references, not inherited authority. Never edit the old project
 or depend on its mutable staged work. Read README.md, docs/SPEC.md and PLAN.md.
@@ -53,8 +55,10 @@ name the exact requirement and have LEAD resolve it from the adopted source.
 - Live/paid/provider testing remains paused. Local implementation and offline
   checks are permitted; no credential discovery or provider calls. Product model
   and effort choices remain distinct from coding-agent routes.
-- Use at most one heavy local job and two disjoint implementation lanes. LEAD
-  records admission in docs/QUEUE.md after actual resource/process checks. Do not
+- Use at most one heavy local job. Active implementation has no numerical lane
+  cap, by the user's2026-10-27 instruction. Every lane still needs an exact exclusive
+  lease, disjoint files/interfaces and LEAD admission in docs/QUEUE.md after actual
+  resource/process checks. Do not
   freeze a run's source while another writer edits it, restart quiet tests, or kill
   unrelated processes. Short static checks may overlap when safe.
 
@@ -62,7 +66,9 @@ name the exact requirement and have LEAD resolve it from the adopted source.
 
 LEAD owns PLAN.md, docs/MODULES.csv, docs/QUEUE.md and shared interface decisions.
 C1 owns source tools and module/financial execution; C2 owns frozen lookup/verification
-and rendering under exclusive leases. PR MANAGER alone integrates approved commits.
+and rendering under exclusive leases. C3 owns the Task4 earnings workstream,
+starting with CP1B under a separately reviewed exact lease. PR MANAGER alone
+integrates approved commits.
 Use docs/roles/*.md and docs/TEAM.json for exact sessions, lanes and starting tasks.
 
 src/deploy_vii is a byte-preserved import of only the selected Claude workflow,

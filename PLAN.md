@@ -17,7 +17,8 @@ connected slices. A single module matrix and queue govern work.
 24 analytical owners plus deterministic CP-MODEL/CP-OS; six pathways; Python arithmetic;
 scoped source/upstream access; independent oracles; no review-file-only completion.
 Sol/high for financial/stateful code; Luna/medium mechanics. Paid testing paused.
-One heavy job and two disjoint implementation lanes. AGENTS.md contains full rules.
+One heavy job; uncapped active implementation under exact disjoint leases.
+User authorization dated2026-10-27; AGENTS.md contains full resource/evidence rules.
 
 ## Review focus
 
@@ -116,7 +117,8 @@ Exact code-start bases/file ownership follow adapter integration in docs/QUEUE.m
 
 ## Task 4 — complete earnings and specialist owners in small slices
 
-C1 queue: CP1B, CP1C, CP1D, CP2/3 typed consumption, CP3D, CP2E.
+C1 queue: CP2/3 typed consumption, CP3D, CP2E.
+C3 queue: CP1B earnings delta first; later CP1C/CP1D require separate exact leases.
 C2 queue: CP2D→CP3C; CP2A→CP2G→CP2H; CP4 versioned duties→CP4C.
 Each owner receives a separate exact file/interface/case lease before code.
 
@@ -166,7 +168,7 @@ proof. No FY2024/YoY comparative qualification; preserve first-slice evidence.
 - [x] Verify real financial and Model browser output/citations/calculation link.
 - [x] Integrate exact commits, final focused assembled check and portable evidence.
 
-Paid/provider/live tests remain paused. One heavy local job/two disjoint lanes.
+Paid/provider/live tests remain paused. One heavy local job; disjoint exclusive leases with no numerical implementation-lane cap.
 
 
 ## Task3-C — actual CP1 chart series in report and Model
@@ -186,4 +188,30 @@ independent pre-implementation oracle: cases/charts/expected.json and
 - [x] Relevant assembled check, new portable package/index and bounded matrix closure.
 
 Fresh actual run uses existing public APIs; no journal fork/revision or second financial
-engine. At most one heavy job/two disjoint lanes; paid/provider/live tests stay paused.
+engine. At most one heavy job; uncapped implementation with disjoint exclusive leases.
+Paid/provider/live tests stay paused.
+
+
+## Task4-A — C3 CP1B earnings delta
+
+Human authorization2026-10-27: add C3 and “Uncap active implementation”. The former
+numerical two-lane limit is revoked; no replacement cap is introduced. The one-
+heavy-job limit, per-job process/load admission, frozen source beneath checks,
+model routing, exclusive leases and independent sensitive expected-result review
+remain mandatory. Historical Task3 records describe the policy at their run time.
+
+C3 preparation clone: /Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-3.
+Starting revision:0a7bee5387f5fbe3eb18f20001944fbacaeaa407. Branch:codex/earnings-modules.
+CP1B is metadata-only in the imported closure; existing CP1 or chart proof does not
+qualify a new earnings owner. C3 first supplies source-grounded success/refusal/gap
+expectations, minimum dependency/API/files, actual consumer/FP02 render targets and
+a pinned Claude reuse comparison. LEAD freezes the exact contract and case after
+independent Sol/high review, then admits the disjoint implementation lane promptly.
+C1/C2 Task3-C evidence is closed and immutable. Their next implementation work
+requires its own lease; neither has an active product-writing lease at this transition.
+
+- [x] Verify the human's added-coordinator and uncapped implementation authorization.
+- [x] Register C3 ownership and preserve all resource/model/evidence/pause rules.
+- [ ] Freeze reviewed CP1B success/refusal/gap cases, exact dependency/API/files/base.
+- [ ] Commit/integrate the lease and admit C3 implementation after a fresh resource check.
+- [ ] Actual owner output, consumer and rendered proof; component checks alone do not close CP1B.

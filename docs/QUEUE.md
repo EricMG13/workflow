@@ -1945,3 +1945,35 @@ page1/quarter-date quote; exact-false record retained, semantic identity closed.
 No full-page AX or native Codex app bypass; no rerender/tests/source edits/providers.
 C2 final NEW doc-only delivery handoff and LEAD bounded docs integration follow;
 no product code or additional test admission. Paid/provider/live stay paused.
+
+
+## User authorization: uncapped implementation and C3 — 2026-10-27
+
+LEAD read the human messages in Review active sessions, thread
+01a178f5-34f3-7211-a510-398c447ae1fe: “Proceed” message
+01a17c75-0227-71c2-abf8-fcf72811d23e and “Uncap active implementation” message
+01a17c75-a7f9-7d23-82c9-6762ab28f20f, following the proposal to add C3 for Task4.
+This trusted human authorization overrides the prior two-lane maximum. Active
+implementation is not numerically capped. Historical queue/contract records keep
+their contemporaneous limits; they impose no current numerical cap.
+
+Retained: one heavy local job; actual process/load admission for each heavy check;
+no source edits beneath running checks; disjoint exclusive leases; Sol/high for
+financial/stateful work and independent sensitive expectations; all provenance,
+actual-owner/consumer/render evidence rules; paid/provider/live tests paused.
+
+Task3-C closed on clean pushed mainfd3b1ff94adec21c8d1f90867064246d618fae57.
+Portable package680 indexed files verified, SHA index
+8ca6d4fd60bfa0c8891c9742dca0e7461c10ce5815fccd11bf314e193ffbe452. Package and
+all actual case/render/native leaves remain frozen; later Task4 work is separate.
+
+C3 registered: thread01a17c75-98ab-7661-8764-7c7f87622e14; own clone coordinator-3;
+branchcodex/earnings-modules at0a7bee5387f5fbe3eb18f20001944fbacaeaa407. Exact current
+lease is docs/handoffs/earnings-preparation.md only: independent literal cases,
+source/period/unit/citation/status expectations, minimum files/API/dependencies,
+consumer/FP02 target and pinned Claude reuse comparison. C3 already started its
+independent Sol/high expectation review; LEAD reuses it rather than duplicating.
+No product-writing or heavy/test/engine admission yet. C1/C2 are idle with completed
+Task3-C work, PM integrates only exact admitted commits. CP1B implementation will
+start promptly once its reviewed exact lease/cases are committed and resource
+admission is recorded; it need not wait for unrelated owners.

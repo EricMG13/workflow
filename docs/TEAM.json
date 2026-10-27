@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "complete: Task3-C bounded actual CP1 S.1-S.4 charts in rendered report and canonical Model; paid/provider/live paused",
+  "state": "active: Task4-A C3 CP1B expectation/lease preparation; Task3-C closed; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -17,13 +17,26 @@
     "PR_MANAGER": {
       "thread_id": "01a17a0b-53d9-7981-bf30-51ffaa2acc8d",
       "host_id": "local"
+    },
+    "C3": {
+      "thread_id": "01a17c75-98ab-7661-8764-7c7f87622e14",
+      "host_id": "local"
     }
   },
   "working_copies": {
     "LEAD": "/Users/ericguei/Documents/Deploy Workflow Sessions/lead",
     "C1": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1",
     "C2": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2",
-    "PR_MANAGER": "/Users/ericguei/Documents/Deploy Workflow"
+    "PR_MANAGER": "/Users/ericguei/Documents/Deploy Workflow",
+    "C3": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-3"
   },
-  "paid_provider_tests": "paused"
+  "paid_provider_tests": "paused",
+  "implementation_lane_cap": null,
+  "one_heavy_job_limit": 1,
+  "active_lanes": {
+    "C1": "idle: Task3-C producer closed; frozen evidence",
+    "C2": "idle: Task3-C delivery/native closed; frozen evidence",
+    "C3": "preparation: Task4-A CP1B; implementation requires reviewed committed lease/admission",
+    "PR_MANAGER": "integration only"
+  }
 }

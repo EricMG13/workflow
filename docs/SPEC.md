@@ -3,7 +3,7 @@
 ## User-approved scope
 
 Create a new, simple project using only relevant Claude code. Establish LEAD,
-two coordinators and PR MANAGER. Complete the intended analytical modules using
+three coordinators and PR MANAGER (C3 added by the user on2026-10-27). Complete the intended analytical modules using
 actual tools, actual downstream consumption and assigned rendered deliverables.
 The design follows the user's explicit proceed instruction and established scope.
 
@@ -40,7 +40,8 @@ credentials, old runtime environment or active staged WIP is imported.
 Financial/stateful coding and sensitive oracles: GPT-6.1 Sol/high. Fully specified
 mechanics: GPT-6 Luna/medium. Small exclusive tasks; independent expected results
 first. Preserve all scoped permissions and Python-owned Decimal arithmetic.
-Live/paid/provider testing stays paused. One heavy local job, two disjoint lanes.
+Live/paid/provider testing stays paused. One heavy local job; active implementation has no numerical lane cap following
+the user's2026-10-27 override. Exact exclusive leases and disjoint ownership remain.
 Confidence review follows code changes; non-trivial changed functions also receive
 the user's rewrite-tournament workflow. The bootstrap adds no provider or publication
 authority. Internal offline host-agent tool use can qualify with actual invocation

@@ -2235,3 +2235,30 @@ re-audit ornewreviewchain. Sameindependentreviewercloses correctedexactpairs and
 staticpositivebody/budgetproof beforePMintegration/LEADcodeadmission.
 C3/C1 no newowner/CP5writes yet; C2staticlegalcallerproposal40fe1eca prepared
 withoutcode/imports/tests. AllactualCP1B/CP5/FP02matrixlinks remainunverified.
+
+
+## Corrected projection/B1 contracts frozen — no code admission yet
+
+Same independent review f5602baaa9f1fcb0114b23bf2a3c773d649aab598fb82ad1c5671ecc1c1fcdc3
+closes exact projectiondd2fc2ce/c36dc871 and ownere66aa2df/c8af02d3 plus
+descriptor60ed9578. Publishedreview docs/reviews/cp1b-owner-contract.md. Original
+A2lease/oracle and financial/core/render bytes rehashed unchanged. Rootconfidence
+checked genuinebody/producerheaders, fulltupleordering not _facts order, all19/
+duplicatepreservation, streamseparation/atomicretention, actualcompletecoverage,
+truthfulcomponent-vs-ownerlimits and immutableownerprefix/CP5descendant boundary.
+
+NewCP1B-v2read_access_projection usesexactexistinggrant+alltrustedfields, bounded
+completecoordinatepages,8192wholeBODY/max20, separatedissuedprojectiontokens.
+Old3tools/v1/CP5permissions unchanged. B1mandatorycomplete manifest+projection
+traversals precedeabsence orreview; no fixedwhole-rowattributegroup assumption.
+Independentgenuineblobstaticproof: positive138coords7manifest+16projection+7verify
+=30calls,maxpage7835;gap126coords7+14+7=28,maxpage8096;maxsingle1747/1745.
+Conservative414/378calls<1024. No sourcevalue/math/oracleaudit change.
+
+PendingPMexactfreezeintegration thenLEADfreshwriteadmissions: C1ONLYupstream.py
+andtest_upstream_tools.py; C3ONLYnewearnings_workflow.py/newtest_earnings_workflow.py/
+newdocs/handoffs/cp1b-owner.md. Sourceclonesstartatnamedintegratedbase, preserve
+earlierbranches/work. Disjointimplementation mayparallel; B1GREEN/actualneeds
+acceptedpagercode integratedfirst, no fake stubs/WIP imports. Alljobsseparately
+admitted/sourcefrozen throughactualexit. A4bodydecompositioncorrection remains
+separateprecodework, no A4passorcodeadmission. Actualmodule/CP5/renderlinksopen.

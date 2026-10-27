@@ -259,3 +259,28 @@ interrupted the full historical financial-render fixture after218 passed, then
 remaining four fast modules passed221. No broad financial-render/workflow or
 actual owner/CP5/native claim follows. B1/A4 first-case transport-size defects
 are being corrected before their contract/admission; byte caps/coverage stay fixed.
+
+
+## Task4-B1 — actual earnings owner and additive bounded projection
+
+Independently reviewed pre-code freezes: docs/CP1B-ACCESS-PROJECTION-ADDENDUM.md
+and cases/earnings/access-projection-expected.json; docs/CP1B-OWNER-LEASE.md,
+cases/earnings/owner-expected.json and exact fresh cases/earnings/manifest.json.
+Review docs/reviews/cp1b-owner-contract.md supersedes earlier transport assumptions.
+C1 will own ONLY upstream.py/tests/test_upstream_tools.py; C3 ONLY new
+earnings_workflow.py/tests/test_earnings_workflow.py/docs/handoffs/cp1b-owner.md.
+Write admissions follow exact PM integration/fresh resource checks; no code yet.
+Disjoint writes may overlap on frozen API; B1 GREEN/actual execution requires
+accepted projection integration in C3 clone without stubs or mutable WIP copies.
+
+- [x] Correct first-case body-size defects with bounded coordinate pages; preserve all19 fields/duplicate handles and8192-byte cap.
+- [x] Independently freeze exact source/cases/public owner-prefix API, provenance/coverage/recovery and current descendant verification.
+- [ ] Integrate exact freezes and admit disjoint C1 projection/C3 B1 implementation.
+- [ ] Verify causal implementation cases and required code reviews on exact final bytes.
+- [ ] Execute fresh positive/no-YoY/source-refusal actual owner chains with retained permitted calls, all five CP1 stages, QA/promotion, CP1B settlement and public owner receipt.
+- [ ] Complete separately leased whole CP5 consumption/final seal and authenticated FP02/native proof before closing the module.
+
+A4 complete CP5 contract is still being corrected for indivisible lineage JSON;
+its pending review does not gate B1 public owner-prefix implementation. No Model
+publication in this first earnings selection; previous actual CP1/Model evidence
+remains immutable and broader PLAN/26-module/six-pathway requirements stay open.

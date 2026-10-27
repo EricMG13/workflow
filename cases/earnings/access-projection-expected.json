@@ -1,0 +1,548 @@
+{
+  "schema_version": "cp1b-access-projection-oracle/1",
+  "scope": "Static source-only additive projection transport expectations; not actual new-run grant/owner/settlement evidence",
+  "authority": {
+    "access_lease_sha256": "da0471d83746dc67bf40e9b3e14aa7984994abfa812820265174bd8cb6964142",
+    "access_expected_sha256": "a8210ba05e81c3cba04634bfe82e3e7aa11525892407b41d379ebf0298413d0c",
+    "core_expected_sha256": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+    "render_expected_sha256": "7b45f939d2d771611e9b11633f348e7c1174cb7ea0b3eb36eeb20661dc4192c4"
+  },
+  "source_fixture": {
+    "artifact_sha256": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "path_as_evidence_only": "/Users/ericguei/Documents/Codex/2026-10-26/deploy-workflow-lead/outputs/cp1-chart-slice/evidence/positive/store/blobs/6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "role": "Genuine reviewed full CP1 artifact used ONLY for static coordinate/projection byte sizing. No product import or renderer/engine invocation. New B1 requires its own fresh current CP1.",
+    "source_facts_unchanged": true,
+    "size_sentinel_policy": "G/M and opaque token suffix are64ASCIIhex width-only zeroes. Byte count does not depend on actual digest hex text. They are never runtime authority."
+  },
+  "tool": "read_access_projection",
+  "consumer_module_id": "CP-1B",
+  "step_id": "earnings_delta",
+  "grant_schema": "cp1b-upstream-grant/2",
+  "no_new_authority_or_schema_version": true,
+  "request_keys": [
+    "producer_module_id",
+    "producer_sha256",
+    "manifest_sha256",
+    "cursor",
+    "limit"
+  ],
+  "body_keys": [
+    "producer",
+    "projection",
+    "grant_sha256",
+    "manifest_sha256",
+    "coordinate_count",
+    "offset",
+    "entries",
+    "next_cursor",
+    "complete"
+  ],
+  "projection": "granted_fact_projection",
+  "entry_fields": "Exactly all grant.projected_fields, lexical order; no actor field filter",
+  "all19_field_catalog": [
+    "amount",
+    "basis",
+    "calculation_id",
+    "calculation_status",
+    "citation_handles",
+    "currency",
+    "denominator",
+    "fact_id",
+    "field",
+    "label",
+    "limitation",
+    "period",
+    "row_id",
+    "scale",
+    "status",
+    "table_id",
+    "text",
+    "unit",
+    "value_class"
+  ],
+  "coordinate_order": [
+    "table_id",
+    "row_id",
+    "field",
+    "fact_id"
+  ],
+  "limits": {
+    "max_compact_utf8_body_bytes": 8192,
+    "max_entries": 20,
+    "limit_min": 1,
+    "reject_bool": true,
+    "largest_nonempty_contiguous_prefix": true,
+    "indivisible_record": "bad_arguments/null body/no committed cursor",
+    "evaluate_all_candidate_prefixes_including_terminal_wrapper": true
+  },
+  "canonical_size_encoding": {
+    "ensure_ascii": false,
+    "separators": [
+      ",",
+      ":"
+    ],
+    "allow_nan": false,
+    "counts_full_wrapper_and_escaping": true,
+    "outer_receipt_excluded_only": true
+  },
+  "citation_handles": {
+    "fields": [
+      "source_id",
+      "source_sha256",
+      "locator"
+    ],
+    "preserve_order": true,
+    "preserve_duplicates": true,
+    "dedup_to_fit_forbidden": true,
+    "quote_fields_forbidden": true
+  },
+  "cursor": {
+    "prefix": "projection-cursor:",
+    "suffix": "64lowerhex",
+    "separate_manifest_store": true,
+    "binds": [
+      "session",
+      "ticket",
+      "attempt",
+      "snapshot",
+      "producer",
+      "grant",
+      "manifest",
+      "next_offset"
+    ],
+    "issued_only": true,
+    "same_cursor_limit_same_body_new_receipt": true,
+    "complete_iff_end": true,
+    "final_next_cursor": null,
+    "first_cursor": null,
+    "foreign_manifest_session_cursor": "stale_binding",
+    "malformed_cursor": "bad_arguments",
+    "historical_verification": "Recompute catalog/page bodies/maximal prefix/currentness plus recorded same-session issued-token graph; never fake a private nonce restore",
+    "projection_token_to_original_manifest_tool": "bad_arguments; preserve original access-cursor grammar",
+    "manifest_token_to_projection_tool": "stale_binding"
+  },
+  "atomicity": {
+    "checks_before_and_after": [
+      "executable pending ticket",
+      "snapshot",
+      "inputs/statuses",
+      "pack",
+      "producer full bytes/run/issuer/as_of/method/head",
+      "copied grant authority"
+    ],
+    "receipt_retained_before_new_cursor_observable": true,
+    "failed_retention_no_usable_cursor": true,
+    "no_provisional_body_on_failure": true,
+    "earlier_receipts_immutable": true,
+    "single_writer_lock_released": true,
+    "source_evidence": {
+      "read": [],
+      "extracted": [],
+      "surfaced": [],
+      "searched": []
+    },
+    "staged_cursor_commit": "Stream-qualified: manifest only old manifest store; projection only new projection store; after retained success/currentness. No unconditional finally insert into old _cursors."
+  },
+  "historical_blocker": {
+    "period_rows": 6,
+    "facts_per_period_row": 15,
+    "citation_handles_per_period_fact": 2,
+    "old_mandatory_identity_plus_handles_q3_body_bytes": 8267,
+    "old_mandatory_identity_plus_handles_max_body_bytes": 8280,
+    "old_three_group_repartition_alone_can_fit": false,
+    "old_body_limit": 8192,
+    "old_B1_pair_superseded": {
+      "lease": "4140943f773a42964051dae34166948b52c3631aee381300fb4ec1155c15d0c0",
+      "oracle": "5a86d095d630eeed947be46ecbd7fa33076e0437b4216b6e0c5fd10841970b6b"
+    }
+  },
+  "genuine_static_cases": {
+    "E-QOQ-FLAT": {
+      "period_rows": 6,
+      "period_coordinates": 90,
+      "period_citation_handles_per_fact": 2,
+      "metric_rows": 12,
+      "metric_coordinates": 48,
+      "coordinate_count": 138,
+      "projected_field_count": 19,
+      "projection_catalog_sha256": "d14299743c6e0c39a1675cd49b189595664d1c926b50571e401bbcc1be049bf9",
+      "coordinate_catalog_sha256": "ba7c624d49c97cb69517716eced5ad834c8ee457edfcf99b49df5c141e64323e",
+      "max_single_projection_body_bytes": 1747,
+      "manifest_pages": [
+        {
+          "offset": 0,
+          "count": 20,
+          "body_bytes": 5566,
+          "complete": false
+        },
+        {
+          "offset": 20,
+          "count": 20,
+          "body_bytes": 5567,
+          "complete": false
+        },
+        {
+          "offset": 40,
+          "count": 20,
+          "body_bytes": 5212,
+          "complete": false
+        },
+        {
+          "offset": 60,
+          "count": 20,
+          "body_bytes": 4964,
+          "complete": false
+        },
+        {
+          "offset": 80,
+          "count": 20,
+          "body_bytes": 4969,
+          "complete": false
+        },
+        {
+          "offset": 100,
+          "count": 20,
+          "body_bytes": 4963,
+          "complete": false
+        },
+        {
+          "offset": 120,
+          "count": 18,
+          "body_bytes": 4432,
+          "complete": true
+        }
+      ],
+      "projection_pages": [
+        {
+          "offset": 0,
+          "count": 10,
+          "body_bytes": 7307,
+          "complete": false
+        },
+        {
+          "offset": 10,
+          "count": 9,
+          "body_bytes": 7625,
+          "complete": false
+        },
+        {
+          "offset": 19,
+          "count": 10,
+          "body_bytes": 7835,
+          "complete": false
+        },
+        {
+          "offset": 29,
+          "count": 9,
+          "body_bytes": 7006,
+          "complete": false
+        },
+        {
+          "offset": 38,
+          "count": 9,
+          "body_bytes": 7808,
+          "complete": false
+        },
+        {
+          "offset": 47,
+          "count": 9,
+          "body_bytes": 7742,
+          "complete": false
+        },
+        {
+          "offset": 56,
+          "count": 9,
+          "body_bytes": 7547,
+          "complete": false
+        },
+        {
+          "offset": 65,
+          "count": 9,
+          "body_bytes": 7528,
+          "complete": false
+        },
+        {
+          "offset": 74,
+          "count": 9,
+          "body_bytes": 7519,
+          "complete": false
+        },
+        {
+          "offset": 83,
+          "count": 9,
+          "body_bytes": 7499,
+          "complete": false
+        },
+        {
+          "offset": 92,
+          "count": 9,
+          "body_bytes": 7533,
+          "complete": false
+        },
+        {
+          "offset": 101,
+          "count": 9,
+          "body_bytes": 7480,
+          "complete": false
+        },
+        {
+          "offset": 110,
+          "count": 9,
+          "body_bytes": 7529,
+          "complete": false
+        },
+        {
+          "offset": 119,
+          "count": 9,
+          "body_bytes": 7521,
+          "complete": false
+        },
+        {
+          "offset": 128,
+          "count": 9,
+          "body_bytes": 7535,
+          "complete": false
+        },
+        {
+          "offset": 137,
+          "count": 1,
+          "body_bytes": 1183,
+          "complete": true
+        }
+      ],
+      "manifest_calls": 7,
+      "projection_calls": 16,
+      "citation_verification_calls_max20": 7,
+      "citation_verification_success_body_bytes": 363,
+      "planned_required_owner_calls": 30,
+      "conservative_one_record_per_page_and_one_fact_per_verification_calls": 414,
+      "owner_call_cap": 1024,
+      "projection_max_page_bytes": 7835,
+      "all_maximal_pages_fit": true,
+      "duplicate_handles_unchanged": true
+    },
+    "E-NO-YOY": {
+      "period_rows": 6,
+      "period_coordinates": 90,
+      "period_citation_handles_per_fact": 2,
+      "metric_rows": 12,
+      "metric_coordinates": 36,
+      "coordinate_count": 126,
+      "projected_field_count": 19,
+      "projection_catalog_sha256": "d9e3910160af50cf5898dc38916f03369717ae579bb6261b3a112038c83b833f",
+      "coordinate_catalog_sha256": "5456878261c57a6e2658e7caf30bfdd0790f81c2da14ad1e8d6076ebfb0f7596",
+      "max_single_projection_body_bytes": 1745,
+      "manifest_pages": [
+        {
+          "offset": 0,
+          "count": 20,
+          "body_bytes": 5290,
+          "complete": false
+        },
+        {
+          "offset": 20,
+          "count": 20,
+          "body_bytes": 5319,
+          "complete": false
+        },
+        {
+          "offset": 40,
+          "count": 20,
+          "body_bytes": 4966,
+          "complete": false
+        },
+        {
+          "offset": 60,
+          "count": 20,
+          "body_bytes": 4961,
+          "complete": false
+        },
+        {
+          "offset": 80,
+          "count": 20,
+          "body_bytes": 4968,
+          "complete": false
+        },
+        {
+          "offset": 100,
+          "count": 20,
+          "body_bytes": 4967,
+          "complete": false
+        },
+        {
+          "offset": 120,
+          "count": 6,
+          "body_bytes": 1722,
+          "complete": true
+        }
+      ],
+      "projection_pages": [
+        {
+          "offset": 0,
+          "count": 11,
+          "body_bytes": 7729,
+          "complete": false
+        },
+        {
+          "offset": 11,
+          "count": 10,
+          "body_bytes": 7828,
+          "complete": false
+        },
+        {
+          "offset": 21,
+          "count": 11,
+          "body_bytes": 8074,
+          "complete": false
+        },
+        {
+          "offset": 32,
+          "count": 10,
+          "body_bytes": 8096,
+          "complete": false
+        },
+        {
+          "offset": 42,
+          "count": 9,
+          "body_bytes": 7607,
+          "complete": false
+        },
+        {
+          "offset": 51,
+          "count": 9,
+          "body_bytes": 7543,
+          "complete": false
+        },
+        {
+          "offset": 60,
+          "count": 9,
+          "body_bytes": 7534,
+          "complete": false
+        },
+        {
+          "offset": 69,
+          "count": 9,
+          "body_bytes": 7474,
+          "complete": false
+        },
+        {
+          "offset": 78,
+          "count": 9,
+          "body_bytes": 7518,
+          "complete": false
+        },
+        {
+          "offset": 87,
+          "count": 9,
+          "body_bytes": 7489,
+          "complete": false
+        },
+        {
+          "offset": 96,
+          "count": 9,
+          "body_bytes": 7543,
+          "complete": false
+        },
+        {
+          "offset": 105,
+          "count": 9,
+          "body_bytes": 7535,
+          "complete": false
+        },
+        {
+          "offset": 114,
+          "count": 9,
+          "body_bytes": 7511,
+          "complete": false
+        },
+        {
+          "offset": 123,
+          "count": 3,
+          "body_bytes": 2741,
+          "complete": true
+        }
+      ],
+      "manifest_calls": 7,
+      "projection_calls": 14,
+      "citation_verification_calls_max20": 7,
+      "citation_verification_success_body_bytes": 363,
+      "planned_required_owner_calls": 28,
+      "conservative_one_record_per_page_and_one_fact_per_verification_calls": 378,
+      "owner_call_cap": 1024,
+      "projection_max_page_bytes": 8096,
+      "all_maximal_pages_fit": true,
+      "duplicate_handles_unchanged": true
+    }
+  },
+  "B1_required_reads": [
+    "actual bootstrap header read",
+    "complete read_access_manifest traversal0..TOTAL",
+    "complete read_access_projection traversal0..TOTAL with all granted fields/values",
+    "actual citations verify_upstream covering all granted fact IDs"
+  ],
+  "B1_fixed_lookup_attribute_groups": null,
+  "optional_lookup_unchanged": true,
+  "B1_full19_attribute_and_value_coverage_preserved": true,
+  "refusals": [
+    {
+      "case_id": "P-WRONG-CONSUMER",
+      "trigger": "CP2/CP5/v1/other step invokes new tool",
+      "error": "not_permitted"
+    },
+    {
+      "case_id": "P-ARGUMENTS",
+      "trigger": "extra/missing key, actor fields/filter, bad hash/cursor/limit or bool",
+      "error": "bad_arguments"
+    },
+    {
+      "case_id": "P-WRONG-DIGEST",
+      "trigger": "well-shaped wrong producer/manifest digest",
+      "error": "identity_mismatch"
+    },
+    {
+      "case_id": "P-FOREIGN-CURSOR",
+      "trigger": "foreign session/manifest namespace/old binding token",
+      "error": "stale_binding"
+    },
+    {
+      "case_id": "P-INDIVISIBLE",
+      "trigger": "one full projection+wrapper exceeds8192",
+      "error": "bad_arguments"
+    },
+    {
+      "case_id": "P-RACE",
+      "trigger": "snapshot/input/head/status/full bytes change mid-page",
+      "error": "stale_binding or existing identity_mismatch; null body/no new cursor"
+    },
+    {
+      "case_id": "P-RETENTION",
+      "trigger": "response serialize/retain failure",
+      "error": "error/internal_error/null, no usable provisional cursor"
+    },
+    {
+      "case_id": "P-MUTATION",
+      "trigger": "caller mutates grants or returned body",
+      "error": "immutable authority/earlier receipts unaffected"
+    }
+  ],
+  "positive_guards": [
+    "Mixed-table page preserves normalized complete coordinates",
+    "All19 original safe fields including explicit null/status/scale/period",
+    "Known zero remains0 and missing remainsnull/reasoned",
+    "Duplicate identical handles retained, distinct handles also preserved",
+    "20entry and8192byte ceilings both enforced including UTF8/escaping and cursor overhead",
+    "Same issued token+limit replay same body/new actual receipt",
+    "Initial null restarts0; no empty advancing page; terminal null iff complete",
+    "Full independent source/gap case counts fit1024 without cap increase"
+  ],
+  "old_tools_unchanged": [
+    "read_access_manifest",
+    "lookup_upstream",
+    "verify_upstream"
+  ],
+  "CP5_new_tool_permission": false,
+  "focused_check_argv": "PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_upstream_tools.py",
+  "execution_limit": "NOT RUN here. No product imports/tests/engines/providers; source JSON byte sizing only. Actual new-run B1 remains separately admitted.",
+  "coordinate_iteration": "Iterate normalized manifest coordinates (table_id,row_id,field,fact_id) and resolve complete tuples; never existing _facts global(field,fact_id) order",
+  "static_prefix_rescan": "All1..20 candidate prefixes including exact terminal wrapper reserialized on genuine source JSON; manifest/projection page plans unchanged in both cases."
+}

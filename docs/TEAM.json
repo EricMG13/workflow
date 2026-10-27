@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: A1/A2/A3 components integrated and focused integration evidence closed; B1/A4 first-case transport-size corrections before owner leases; whole PLAN incomplete; paid/provider/live paused",
+  "state": "active: corrected projection/B1 contracts independently frozen; C1/C3 disjoint writes await exact integration/admission; A4 transport correction and C2 FP04 prep ongoing; whole PLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,9 +34,9 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "A2 exact6file266440a accepted126focusedchecks and integratedc5c6a691; preservework; A4completeCP5implementation awaits corrected reviewed lease/oracle/base",
+    "C1": "A2 accepted; next exact two-file projection addendum dd2fc2ce/c36dc871 frozen; await PM base and LEAD write admission",
     "C2": "A3 exact4filecommit0d6c714 accepted90focusedchecks; PM integration admitted; next authenticated earnings delivery waits exact B1/A4 interfaces; static preparation only",
-    "C3": "A1 core accepted and integrated; B1firstpositive lookup group size correction before reviewed owner/foundation admission; static reading only",
+    "C3": "A1 accepted; B1 corrected owner e66aa2df/c8af02d3 and descriptor60ed9578 frozen; await PM base and LEAD write admission; runtime GREEN requires accepted pager",
     "PR_MANAGER": "integration only"
   }
 }

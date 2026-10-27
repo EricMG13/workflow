@@ -1,0 +1,1115 @@
+{
+  "schema_version": "cp1b-owner-oracle/1",
+  "scope": "Pre-implementation B1 source/owner/state expected results; actual module/CP5/render acceptance still requires admitted real retained execution",
+  "authority": "Reuse independently reviewed A1/A2/A3 and original financial literals; no financial re-audit or candidate-derived numbers",
+  "pins": {
+    "source_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "financial_source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "identity_source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "core_expected_sha256": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+    "access_expected_sha256": "a8210ba05e81c3cba04634bfe82e3e7aa11525892407b41d379ebf0298413d0c",
+    "render_expected_sha256": "7b45f939d2d771611e9b11633f348e7c1174cb7ea0b3eb36eeb20661dc4192c4"
+  },
+  "manifest": {
+    "schema_version": "cp1b-owner-cases/1",
+    "source_manifest": "../financial/manifest.json",
+    "source_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "core_expected": "expected.json",
+    "access_expected": "access-expected.json",
+    "render_expected": "render-expected.json",
+    "owner_expected": "owner-expected.json",
+    "cases": [
+      {
+        "case_id": "E-QOQ-FLAT",
+        "run": {
+          "run_id": "slice-cp1b-flat-v1",
+          "issuer_id": "northbridge-synthetic",
+          "issuer_name": "Northbridge Synthetic Group",
+          "as_of": "2026-01-10",
+          "method_version": "deploy-v-r14",
+          "case_kind": "synthetic",
+          "pathway": "earnings_update",
+          "requested_modules": [
+            "CP-1B",
+            "CP-5"
+          ]
+        },
+        "prior_period_id": "q3-2025",
+        "current_period_id": "q4-2025",
+        "source_state": "supplied"
+      },
+      {
+        "case_id": "E-NO-YOY",
+        "run": {
+          "run_id": "slice-cp1b-no-yoy-v1",
+          "issuer_id": "northbridge-synthetic",
+          "issuer_name": "Northbridge Synthetic Group",
+          "as_of": "2026-01-10",
+          "method_version": "deploy-v-r14",
+          "case_kind": "synthetic",
+          "pathway": "earnings_update",
+          "requested_modules": [
+            "CP-1B",
+            "CP-5"
+          ]
+        },
+        "prior_period_id": "fy-2024",
+        "current_period_id": "fy-2025",
+        "source_state": "supplied"
+      },
+      {
+        "case_id": "E-REQUIRED-CP1-MISSING",
+        "run": {
+          "run_id": "slice-cp1b-missing-source-v1",
+          "issuer_id": "northbridge-synthetic",
+          "issuer_name": "Northbridge Synthetic Group",
+          "as_of": "2026-01-10",
+          "method_version": "deploy-v-r14",
+          "case_kind": "synthetic",
+          "pathway": "earnings_update",
+          "requested_modules": [
+            "CP-1B",
+            "CP-5"
+          ]
+        },
+        "prior_period_id": "q3-2025",
+        "current_period_id": "q4-2025",
+        "source_state": "financial_missing"
+      }
+    ]
+  },
+  "source_construction": {
+    "source_order": [
+      "identity",
+      "financial"
+    ],
+    "pages": "Original literal source manifest pages only; each becomes Span(locator,text), no terminal LF; U+000C joins pages for SHA256",
+    "common": {
+      "media_type": null,
+      "extractor": "supplied-representation",
+      "coverage": []
+    },
+    "supplied": {
+      "status": "ready",
+      "extraction_status": "complete",
+      "identity_limitation": null,
+      "financial_limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    },
+    "financial_missing": {
+      "source_id": "financial",
+      "status": "missing",
+      "sha256": null,
+      "spans": [],
+      "coverage": [],
+      "extraction_status": "blocked",
+      "limitation": "Quarterly financial statements were not supplied."
+    }
+  },
+  "public_api": {
+    "class": "EarningsWorkflow",
+    "create": "create(directory:Path,pack:PreparedPack,*,case_manifest:Path,case_id:OwnerCaseId,participant:str=\"trusted-python\",transport:Transport=\"python-api\") -> EarningsWorkflow",
+    "open": "open(directory:Path,*,case_manifest:Path,participant:str,transport:Transport) -> EarningsWorkflow",
+    "state": "state(self) -> WorkflowState",
+    "invoke": "invoke(self,tool_name:str,arguments:dict[str,JsonValue]) -> dict[str,JsonValue]",
+    "read_inputs": "read_inputs(self) -> InputRead|OwnerAccessRead",
+    "submit_review": "submit_review(self,payload:str) -> ReviewOutcome",
+    "write_receipt": "write_receipt(self,destination:Path) -> EarningsOwnerReceipt",
+    "submit_earnings_delta": "submit_earnings_delta(store:Execution,ticket_id:str,payload:str) -> Attempt",
+    "verify_owner": "verify_earnings_owner_receipt(store:Execution,receipt:EarningsOwnerReceipt) -> None",
+    "serve_json_lines": "serve_json_lines(workflow:EarningsWorkflow,reader:TextIO,writer:TextIO,*,destination:Path) -> None"
+  },
+  "budgets": {
+    "max_line_utf8_bytes": 4194304,
+    "json_lines_messages_per_workflow": 2048,
+    "owner_calls_per_ticket_all_sessions": 1024,
+    "owner_sessions_per_ticket": 16,
+    "owner_access_reads_per_session": 16,
+    "foundation_calls_per_ticket_step": 16,
+    "foundation_input_reads_per_ticket_step": 16,
+    "submissions_per_ticket_step": 16,
+    "max_audit_records": 16384,
+    "max_receipt_bytes": 67108864,
+    "owner_body_bytes": 8192,
+    "owner_page_entries": 20,
+    "lookup_rows": 20,
+    "lookup_attributes": 16,
+    "citation_fact_ids": 20,
+    "on_exhaustion": "transport_limit; never comparative absence; no widening"
+  },
+  "protocol": {
+    "operations": {
+      "state": [
+        "op"
+      ],
+      "invoke": [
+        "op",
+        "tool",
+        "arguments"
+      ],
+      "read_inputs": [
+        "op"
+      ],
+      "submit_review": [
+        "op",
+        "payload"
+      ],
+      "close": [
+        "op"
+      ]
+    },
+    "success_keys": [
+      "status",
+      "result"
+    ],
+    "transport_refusal_keys": [
+      "status",
+      "error_code"
+    ],
+    "no_actor_path_or_grant": true,
+    "eof_before_terminal": "resumable, no successful close",
+    "close_result": {
+      "schema_version": "cp1b-owner-close/1",
+      "fields": [
+        "schema_version",
+        "outcome",
+        "owner_receipt_sha256",
+        "owner_snapshot_sha256"
+      ],
+      "full_trusted_receipt_to_actor_allowed": false
+    }
+  },
+  "foundation": {
+    "selected_request_order": [
+      "CP-1B",
+      "CP-5"
+    ],
+    "selected_closure": [
+      "CP-0",
+      "CP-1",
+      "CP-1B",
+      "CP-5"
+    ],
+    "executed_before_owner_receipt": [
+      "CP-0",
+      "CP-1",
+      "CP-1B"
+    ],
+    "cp0_consumers": [
+      "CP-1",
+      "CP-1B",
+      "CP-5"
+    ],
+    "cp1_stage_order": [
+      "source_context",
+      "financials",
+      "narrative",
+      "readiness",
+      "quality"
+    ],
+    "source_epochs": {
+      "source_readiness": {
+        "required_successful_reads": [
+          [
+            "identity",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:1"
+          ]
+        ]
+      },
+      "source_context": {
+        "required_successful_reads": [
+          [
+            "identity",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:1"
+          ]
+        ]
+      },
+      "financials": {
+        "required_successful_reads": [
+          [
+            "financial",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:2"
+          ],
+          [
+            "financial",
+            "page:3"
+          ],
+          [
+            "financial",
+            "page:4"
+          ],
+          [
+            "financial",
+            "page:5"
+          ]
+        ],
+        "required_extractions": [
+          [
+            "financial",
+            "page:2"
+          ],
+          [
+            "financial",
+            "page:3"
+          ],
+          [
+            "financial",
+            "page:4"
+          ]
+        ],
+        "all_extracted_rows_and_actual_period_columns_covered": true
+      }
+    },
+    "input_read_required_before": [
+      "narrative",
+      "readiness",
+      "quality"
+    ],
+    "reuse_public_core": true,
+    "old_factory_or_receipt_relabel_allowed": false,
+    "cp1_promotion": "Actual existing PROMOTED qualification, five valid retained stages, recomputed CP1Handoff/register/quality/candidate/settled identities",
+    "publication_files": [],
+    "source_epochs_applies_to": [
+      "E-QOQ-FLAT",
+      "E-NO-YOY"
+    ],
+    "negative_source_epoch": {
+      "phase": "source_readiness",
+      "required_successful_reads": [
+        [
+          "identity",
+          "page:1"
+        ]
+      ],
+      "required_refused_read": {
+        "tool": "read_pages",
+        "source_id": "financial",
+        "locator": "page:1",
+        "error_code": "unavailable",
+        "body": null
+      },
+      "no_missing_read_credit": true,
+      "cp0_consumers": [
+        "CP-1",
+        "CP-1B",
+        "CP-5"
+      ],
+      "financial_consumers_readiness": "CONDITIONAL or BLOCKED under valid core review; CP1 command must be DO NOT RUN"
+    }
+  },
+  "grant": {
+    "schema_version": "cp1b-upstream-grant/2",
+    "producer_module_id": "CP-1",
+    "raw_source_ids": [],
+    "coordinates": "Complete actual T4.14 plus T4.10 field_0,field_1 and selected own historical prior/current basis values for twelve ordered measures; absent prior contributes no invented coordinate",
+    "projected_fields": [
+      "amount",
+      "basis",
+      "calculation_id",
+      "calculation_status",
+      "citation_handles",
+      "currency",
+      "denominator",
+      "fact_id",
+      "field",
+      "label",
+      "limitation",
+      "period",
+      "row_id",
+      "scale",
+      "status",
+      "table_id",
+      "text",
+      "unit",
+      "value_class"
+    ],
+    "attribute_groups": null,
+    "coverage": "One chosen current session with actual bootstrap, complete manifest0..TOTAL traversal AND complete read_access_projection0..TOTAL traversal of every granted coordinate/all19 exact attributes; all granted fact IDs citations-verified valid. Optional lookup remains unchanged and cannot substitute.",
+    "source_evidence": {
+      "read": [],
+      "extracted": [],
+      "surfaced": [],
+      "searched": []
+    }
+  },
+  "review": {
+    "schema_version": "cp1b-review/1",
+    "fields": [
+      "schema_version",
+      "prior_period_id",
+      "current_period_id",
+      "selections",
+      "comparison_assessment",
+      "driver_assessment",
+      "guidance_assessment"
+    ],
+    "selection_fields": [
+      "measure_id",
+      "prior_fact_id",
+      "current_fact_id",
+      "companion_fact_ids"
+    ],
+    "measure_order": [
+      "revenue",
+      "ebitda",
+      "adjusted_ebitda",
+      "ebitda_margin",
+      "cfo_reported",
+      "capex",
+      "fcf",
+      "cash_closing",
+      "total_debt",
+      "net_debt",
+      "total_leverage_reported",
+      "net_leverage_reported"
+    ],
+    "comparison_assessment_by_case": {
+      "E-QOQ-FLAT": "flat_sequential",
+      "E-NO-YOY": "comparative_not_supplied"
+    },
+    "driver_assessment": "not_supplied",
+    "guidance_assessment": "not_supplied",
+    "forbidden_fields": [
+      "amount",
+      "value",
+      "delta",
+      "growth",
+      "hash",
+      "status",
+      "formula",
+      "citations",
+      "quote",
+      "module"
+    ],
+    "extra_keys_forbidden": true,
+    "shape_vs_semantic_failure": {
+      "malformed_or_extra_key": "Retained refused audit, bad_arguments, no envelope/journal step; ticket remains pending",
+      "insufficient_participation": "Retained refused audit, participation_incomplete, no journal step",
+      "well_shaped_wrong_selection_assessment_or_pair": "Retained envelope enters StepValidation and core journal invalid/rejected/blocked repair semantics; no valid candidate"
+    },
+    "refused_binding": "stored payload hash equals raw payload hash before envelope; canonical/participation hashes nullable only when genuinely unavailable; no step/output/candidate/result"
+  },
+  "candidate": {
+    "module_id": "CP-1B",
+    "status": "candidate",
+    "fact_count": 44,
+    "table_order": [
+      "T1B.1",
+      "T1B.2",
+      "T1B.3"
+    ],
+    "claim_count": 1,
+    "own_input_tail": [
+      {
+        "input_id": "earnings-review",
+        "sha256_rule": "canonical EarningsDeltaReview.content_hash()",
+        "status": "accepted"
+      },
+      {
+        "input_id": "earnings-participation",
+        "sha256_rule": "EarningsParticipation.content_hash()",
+        "status": "accepted"
+      }
+    ],
+    "scheduler_input_prefix": "exact Attempt.inputs, not a subset or changed order",
+    "no_extra_tail": true,
+    "settled_status": "restricted",
+    "qualification": null,
+    "core_report_limitations": "Preserve unchanged in typed stage; never blindly treat the core component/no-owner statement as whole-run status",
+    "actual_module_limitations": "Exactly case-specific seven strings below plus existing settle synthetic/inherited behavior",
+    "self_hash_in_payload_allowed": false
+  },
+  "values": {
+    "E-QOQ-FLAT": {
+      "core_points": "Exact twelve core expected.positive.points at pinned hash; no new numeric oracle",
+      "render_cells": "Exact A3 positive tables/periods/units/statuses, Decimal numeric equality; display is later C2 concern",
+      "selected_periods_distinct": true
+    },
+    "E-NO-YOY": {
+      "core_prior_basis_id": null,
+      "prior_operand_ids_all": null,
+      "all_prior_and_delta_values": null,
+      "applicable_growth_values": null,
+      "prior_delta_applicable_growth_status": "missing",
+      "reason": "COMPARATIVE_NOT_SUPPLIED",
+      "current_values": "Exact pinned A3 gap tables; current balance20/50/30 known",
+      "opening_2024_is_existing_balance_data": true,
+      "no_invented_prior_dates": true
+    }
+  },
+  "lineage": {
+    "count": 12,
+    "measure_order": [
+      "revenue",
+      "ebitda",
+      "adjusted_ebitda",
+      "ebitda_margin",
+      "cfo_reported",
+      "capex",
+      "fcf",
+      "cash_closing",
+      "total_debt",
+      "net_debt",
+      "total_leverage_reported",
+      "net_leverage_reported"
+    ],
+    "fact_reference_fields": [
+      "producer_module_id",
+      "producer_sha256",
+      "fact_id",
+      "table_id",
+      "row_id",
+      "field"
+    ],
+    "operand_reference_fields": [
+      "fact",
+      "period_id",
+      "basis_id",
+      "source_period",
+      "source_basis",
+      "fact_sha256",
+      "citation_handles"
+    ],
+    "lineage_fields": [
+      "measure_id",
+      "prior",
+      "current",
+      "companions"
+    ],
+    "citation_handle_fields": [
+      "source_id",
+      "source_sha256",
+      "locator"
+    ],
+    "no_embedded_citation_quote": true,
+    "companion_order": "Exact A1 point.companion_fact_ids; missing-valued existing facts keep their actual IDs",
+    "all_references_authenticate_full_CP1": "Same run/pack/current head/status/inputs and full genuine bytes; never partial facts carrying full producer hash",
+    "evidence_inputs_keys": [
+      "producer_module_id",
+      "producer_sha256",
+      "prior_period_id",
+      "current_period_id",
+      "prior_basis_id",
+      "current_basis_id",
+      "operands"
+    ],
+    "canonical_json": "sort_keys=True,ensure_ascii=False,separators=(comma,colon),allow_nan=False",
+    "no_copied_numeric_answers": true
+  },
+  "calculated_facts": {
+    "id_template": "cp1b-calc:{prior_period_id}:{current_period_id}:{measure_id}:{field}",
+    "delta_formula": "current - prior",
+    "margin_delta_formula": "100 * (current - prior)",
+    "growth_formula": "(current - prior) / prior",
+    "basis": "canonical compact OperandLineage JSON; references only",
+    "citation_order": "prior then current original Citation tuples, complete-identity dedup first occurrence",
+    "core_percentage_points_to_fact_pp": "presentation unit mapping only; numeric value/scale unchanged",
+    "nongrowth_growth_limitation": "GROWTH_NOT_APPLICABLE",
+    "no_calculation_for_nongrowth_not_applicable": true
+  },
+  "assessments": {
+    "E-QOQ-FLAT": [
+      {
+        "row_id": "variance.summary",
+        "field": "assessment",
+        "status": "known",
+        "text": "The selected q3-2025 to q4-2025 own-quarter earnings comparison is flat; no causal-driver inference is supported.",
+        "limitation": null,
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "drivers",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "DRIVER_EVIDENCE_NOT_SUPPLIED: no price, volume, FX or other causal-driver evidence is supplied by the selected authorized CP1 inputs.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "none"
+      },
+      {
+        "row_id": "guidance",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "GUIDANCE_NOT_SUPPLIED: no management-guidance evidence is supplied by the selected authorized CP1 inputs.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "none"
+      },
+      {
+        "row_id": "comparative.prior-year",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "COMPARATIVE_NOT_SUPPLIED: no FY2024 annual income statement or prior-year quarterly series is supplied.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "comparative.trailing-leverage",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "Four complete contiguous quarters are unavailable for Q3 trailing leverage; current Q4 standalone leverage remains valid.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "evidence.inputs",
+        "field": "assessment",
+        "status": "known",
+        "text": "canonical_lineage_json",
+        "limitation": null,
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "normalized",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "scope.limitations",
+        "field": "assessment",
+        "status": "known",
+        "text": "Unaudited consolidated IFRS financials in USD millions; borrower, guarantor and restricted-group perimeters are not established.\nNo causal-driver evidence is supplied by the selected authorized CP1 inputs.\nNo management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.\nNo FY2024 annual income statement or prior-year quarterly series is supplied.\nBounded flat sequential earnings comparison only; no broader nonzero earnings qualification.\nOwner checkpoint only; complete CP5 consumption and selected-run/native rendering are not accepted by this receipt.\nQ3 trailing leverage comparison is unavailable; current Q4 standalone leverage remains valid.",
+        "limitation": null,
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "normalized",
+        "citations_policy": "none"
+      }
+    ],
+    "E-NO-YOY": [
+      {
+        "row_id": "variance.summary",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "COMPARATIVE_NOT_SUPPLIED: requested FY2024 comparison basis is absent; current FY2025 values remain known.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "drivers",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "DRIVER_EVIDENCE_NOT_SUPPLIED: no price, volume, FX or other causal-driver evidence is supplied by the selected authorized CP1 inputs.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "none"
+      },
+      {
+        "row_id": "guidance",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "GUIDANCE_NOT_SUPPLIED: no management-guidance evidence is supplied by the selected authorized CP1 inputs.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "none"
+      },
+      {
+        "row_id": "comparative.prior-year",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "COMPARATIVE_NOT_SUPPLIED: no FY2024 annual income statement or prior-year quarterly series is supplied.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "comparative.trailing-leverage",
+        "field": "assessment",
+        "status": "missing",
+        "text": null,
+        "limitation": "COMPARATIVE_NOT_SUPPLIED: requested FY2024 leverage comparison basis is absent; current FY2025 leverage remains valid.",
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "analyst_judgment",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "evidence.inputs",
+        "field": "assessment",
+        "status": "known",
+        "text": "canonical_lineage_json",
+        "limitation": null,
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "normalized",
+        "citations_policy": "original first-occurrence union of available selected primary and companion CP1 citations; no invented quote"
+      },
+      {
+        "row_id": "scope.limitations",
+        "field": "assessment",
+        "status": "known",
+        "text": "Unaudited consolidated IFRS financials in USD millions; borrower, guarantor and restricted-group perimeters are not established.\nNo causal-driver evidence is supplied by the selected authorized CP1 inputs.\nNo management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.\nNo FY2024 annual income statement or prior-year quarterly series is supplied.\nNo year-on-year earnings comparison or broader nonzero earnings qualification.\nOwner checkpoint only; complete CP5 consumption and selected-run/native rendering are not accepted by this receipt.\nRequested FY2024 comparison basis is absent; current FY2025 values remain known. Opening-2024 balance data is not a substituted income comparator.",
+        "limitation": null,
+        "amount": null,
+        "unit": null,
+        "currency": null,
+        "scale": "1",
+        "decimals": null,
+        "calculation_id": null,
+        "formula": null,
+        "value_class": "normalized",
+        "citations_policy": "none"
+      }
+    ]
+  },
+  "claim": {
+    "claim_id": "cp1b-comparison",
+    "texts": {
+      "E-QOQ-FLAT": "Flat sequential earnings comparison: [cp1b:T1B.1:revenue:delta] [cp1b:T1B.1:ebitda:delta] [cp1b:T1B.1:adjusted_ebitda:delta]. Current balance observations: [cp1b:T1B.2:cash_closing:current] [cp1b:T1B.2:total_debt:current] [cp1b:T1B.2:net_debt:current].",
+      "E-NO-YOY": "Current earnings observations: [cp1b:T1B.1:revenue:current] [cp1b:T1B.1:ebitda:current]. Requested prior income comparison is unavailable [cp1b:T1B.1:revenue:prior] [cp1b:T1B.1:revenue:delta] [cp1b:T1B.1:revenue:growth]."
+    },
+    "limitations": {
+      "E-QOQ-FLAT": "Flat sequential earnings only; causal drivers, management guidance and prior-year income are not supplied. The prior trailing-leverage comparison is unavailable.",
+      "E-NO-YOY": "COMPARATIVE_NOT_SUPPLIED: requested FY2024 income and comparison basis are absent; current FY2025 values remain known. Opening-2024 balance data is not an income comparator."
+    },
+    "citations": "Original first-occurrence union from own referenced Fact.citations only",
+    "valid_own_fact_chips_only": true,
+    "expected_cp5_review_refs": {
+      "E-QOQ-FLAT": [
+        "cp1b:T1B.1:revenue:delta",
+        "cp1b:T1B.1:ebitda:delta",
+        "cp1b:T1B.1:adjusted_ebitda:delta",
+        "cp1b:T1B.2:cash_closing:current",
+        "cp1b:T1B.2:total_debt:current",
+        "cp1b:T1B.2:net_debt:current"
+      ],
+      "E-NO-YOY": [
+        "cp1b:T1B.1:revenue:current",
+        "cp1b:T1B.1:ebitda:current",
+        "cp1b:T1B.1:revenue:prior",
+        "cp1b:T1B.1:revenue:delta",
+        "cp1b:T1B.1:revenue:growth"
+      ]
+    }
+  },
+  "own_limitations": {
+    "E-QOQ-FLAT": [
+      "Unaudited consolidated IFRS financials in USD millions; borrower, guarantor and restricted-group perimeters are not established.",
+      "No causal-driver evidence is supplied by the selected authorized CP1 inputs.",
+      "No management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.",
+      "No FY2024 annual income statement or prior-year quarterly series is supplied.",
+      "Bounded flat sequential earnings comparison only; no broader nonzero earnings qualification.",
+      "Owner checkpoint only; complete CP5 consumption and selected-run/native rendering are not accepted by this receipt.",
+      "Q3 trailing leverage comparison is unavailable; current Q4 standalone leverage remains valid."
+    ],
+    "E-NO-YOY": [
+      "Unaudited consolidated IFRS financials in USD millions; borrower, guarantor and restricted-group perimeters are not established.",
+      "No causal-driver evidence is supplied by the selected authorized CP1 inputs.",
+      "No management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.",
+      "No FY2024 annual income statement or prior-year quarterly series is supplied.",
+      "No year-on-year earnings comparison or broader nonzero earnings qualification.",
+      "Owner checkpoint only; complete CP5 consumption and selected-run/native rendering are not accepted by this receipt.",
+      "Requested FY2024 comparison basis is absent; current FY2025 values remain known. Opening-2024 balance data is not a substituted income comparator."
+    ]
+  },
+  "receipt": {
+    "type": "EarningsOwnerReceipt",
+    "schema_version": "cp1b-owner-receipt/1",
+    "fields": [
+      "schema_version",
+      "run",
+      "pack_sha256",
+      "owner_snapshot_sha256",
+      "case_id",
+      "pins",
+      "participant",
+      "transport",
+      "outcome",
+      "cp0",
+      "cp1",
+      "cp1b",
+      "cp1b_stage_sha256",
+      "transport_messages",
+      "begins",
+      "foundation_calls",
+      "foundation_input_reads",
+      "owner_sessions",
+      "owner_access_reads",
+      "owner_calls",
+      "submission_intents",
+      "submission_outcomes",
+      "audit_inventory",
+      "publication_files"
+    ],
+    "owner_settled": {
+      "head_set": [
+        "CP-0",
+        "CP-1",
+        "CP-1B"
+      ],
+      "no_pending_attempt": true,
+      "cp1b_stage_required": true,
+      "claim_count": 1,
+      "fact_count": 44,
+      "cp1b_status": "restricted",
+      "cp1b_qualification": null,
+      "cp5_selected_unrun": true
+    },
+    "cp1_not_authorized": {
+      "head_set": [
+        "CP-0"
+      ],
+      "cp0_status": "restricted",
+      "actual_cp1_begin_error": "NotAuthorized",
+      "cp1_ticket": null,
+      "cp1": null,
+      "cp1b": null,
+      "cp1b_stage_sha256": null,
+      "owner_collections_empty": true,
+      "cp5_ticket": null,
+      "publication_files": []
+    },
+    "hash_rule": "Contract.content_hash over canonical model_dump_json bytes; raw payload SHA256 separate; actual hashes only, no seeded settled proof",
+    "participation_page_fields": "Preserve period_lookup_call_ids and metric_lookup_call_ids names/types. They reference actual successful projection pages supplying respective table; may overlap on a mixed page; union equals complete projection traversal."
+  },
+  "audit": {
+    "namespace": "earnings-owner-audit",
+    "kinds": [
+      "transport-messages",
+      "begins",
+      "foundation-calls",
+      "foundation-reads",
+      "owner-sessions",
+      "owner-reads",
+      "owner-calls",
+      "bindings",
+      "intents",
+      "outcomes",
+      "participations",
+      "stages",
+      "payloads"
+    ],
+    "transport_messages": "JSON-lines actual raw request admission records; empty for python-api",
+    "canonical_receipt_file": "owner-receipt.json",
+    "last_seal_file": "owner-receipt.sha256",
+    "seal_bytes": "ASCII receipt.content_hash without terminal LF",
+    "inventory_order": [
+      "kind",
+      "sha256"
+    ],
+    "exact_inventory": true,
+    "write_once": true,
+    "persist_before_return": true,
+    "intents_before_journal_mutation": true
+  },
+  "recovery": {
+    "source_epoch": "Historical deterministic replay; only reconstructed UUID may be replaced by original call_id; compare actual body/status/evidence",
+    "owner_before_retained_step": "With no unresolved intent: new session/null cursors/new complete manifest AND projection traversals preserving counters/history. Unresolved intent freezes its evidence/envelope and permits exact resume only, even before journal step exists.",
+    "owner_after_retained_step": "No new A2 calls; resume exact raw review/envelope from durable intent, rederive before finish once",
+    "completed_mutation_unwritten_outcome": "Reconstruct unique outcome from pre-intent/authentic journal; do not finish twice",
+    "cursor_historical_verification": "Recompute authentic manifest and full safe projected catalog, page maximal-prefix bodies/counts/coverage and recorded session-specific issued-token graph in separate access-cursor/projection-cursor streams; no private nonce restore or naive new-session replay."
+  },
+  "prefix_descendants": {
+    "same_run_pack_and_prefix_heads_unchanged": true,
+    "prefix_attempts_unchanged": true,
+    "only_new_attempt_module": "CP-5",
+    "only_new_head_module": "CP-5",
+    "permitted_phases": [
+      "begin_pending",
+      "retained_pending_step",
+      "rejected_attempt_zero",
+      "repair_begin_pending",
+      "blocked_repair",
+      "valid_settled"
+    ],
+    "verify_with_existing_core": [
+      "current_inputs",
+      "review_scope",
+      "validate_integrity",
+      "integrity_review",
+      "cp5_module",
+      "settle"
+    ],
+    "no_integrity_workflow_import": true,
+    "no_actual_CP5_tool_acceptance_claim": true,
+    "negative_all_mutations_refuse": true,
+    "final_slice_owner": "C1 IntegritySliceReceipt/EarningsSliceReceipt/final seal, separate from B1 immutable owner checkpoint",
+    "negative_refusal_probe": "C1 may actually begin CP5 and retain refusal in separate C1 audit, only if snapshot unchanged/no ticket/head/output; B1 negative prefix remains immutable/current anchor."
+  },
+  "causal_cases": [
+    {
+      "case_id": "B-SOURCE-NEGATIVE",
+      "trigger": "actual identity read, financial missing/refused read, valid limited CP0 and actual begin CP1",
+      "expected": "cp1_not_authorized; CP0 only; no CP1B/CP5/Model artifacts"
+    },
+    {
+      "case_id": "B-STALE",
+      "trigger": "snapshot/current input/head changes after session binding",
+      "expected": "stale_binding; null new disclosure; no submission/partial candidate"
+    },
+    {
+      "case_id": "B-FOREIGN",
+      "trigger": "wrong full producer run/issuer/as_of/method/hash/status/bytes",
+      "expected": "identity_mismatch before lookup/submission"
+    },
+    {
+      "case_id": "B-GRANT",
+      "trigger": "missing T4.14 coordinate/extra nongranted coordinate/source quote/producer",
+      "expected": "not_permitted; no partial disclosure or gap"
+    },
+    {
+      "case_id": "B-UNREAD",
+      "trigger": "permission-complete manifest but omitted page/index coordinate/attribute",
+      "expected": "participation_incomplete; no valid journal step"
+    },
+    {
+      "case_id": "B-CURSOR",
+      "trigger": "foreign/old session cursor or unfinished traversal",
+      "expected": "refusal/participation_incomplete; no absent-prior inference"
+    },
+    {
+      "case_id": "B-BODY-BUDGET",
+      "trigger": "indivisible page/row or exhausted call/message budget",
+      "expected": "transport_limit; no truncation or missing-value substitute"
+    },
+    {
+      "case_id": "B-FALSE-GAP",
+      "trigger": "absent selected coordinate inside existing period or unread prior index",
+      "expected": "refuse; never COMPARATIVE_NOT_SUPPLIED"
+    },
+    {
+      "case_id": "B-REVIEW-NUMBERS",
+      "trigger": "numeric answer/hash/formula/status/raw quote/Module/extra key",
+      "expected": "bad_arguments or invalid typed review; no accepted candidate"
+    },
+    {
+      "case_id": "B-WRONG-SELECTION",
+      "trigger": "wrong/missing/duplicate/reordered measure or operand IDs",
+      "expected": "validation_failed; no accepted candidate"
+    },
+    {
+      "case_id": "B-PAIR",
+      "trigger": "same/reverse/incompatible pair",
+      "expected": "A1 incompatible_periods; no partial Module"
+    },
+    {
+      "case_id": "B-INVALID-CITATION",
+      "trigger": "actual citation verification invalid",
+      "expected": "participation_incomplete; no valid evidence-supported step"
+    },
+    {
+      "case_id": "B-CORE-ORACLE",
+      "trigger": "known0 vs missing/ZERO_DENOMINATOR and5pp component inputs",
+      "expected": "preserve A1 statuses/units; artificial guards are not issuer qualification"
+    },
+    {
+      "case_id": "B-AUDIT-TAMPER",
+      "trigger": "missing/extra/tampered call, body, payload, step, candidate, result or seal",
+      "expected": "identity_mismatch; no receipt qualification"
+    },
+    {
+      "case_id": "B-REOPEN",
+      "trigger": "reopen unchanged real pending source/owner session",
+      "expected": "durable records/counters retained; correct replay/new session policy"
+    },
+    {
+      "case_id": "B-CRASH-STEP",
+      "trigger": "validator exception after retained payload or valid step",
+      "expected": "pending retained exact bytes; identical resume finishes once"
+    },
+    {
+      "case_id": "B-CHANGE-PAYLOAD",
+      "trigger": "different raw review/envelope after retention",
+      "expected": "refuse without replacing retained bytes"
+    },
+    {
+      "case_id": "B-LOST-OUTCOME",
+      "trigger": "process interruption after settlement before outcome audit write",
+      "expected": "reconstruct unique authentic outcome; no duplicate finish/head"
+    },
+    {
+      "case_id": "B-PREFIX-CONSUMER",
+      "trigger": "CP5 begin/pending/invalid/repair/settled authentic descendant",
+      "expected": "owner verifier accepts unchanged prefix; no CP5 participation pass implied"
+    },
+    {
+      "case_id": "B-PREFIX-MUTATION",
+      "trigger": "changed CP0/CP1/CP1B head/input/status/attempt or unselected producer",
+      "expected": "identity_mismatch/stale_binding; owner receipt cannot authenticate new state"
+    },
+    {
+      "case_id": "B-NEGATIVE-DESCENDANT",
+      "trigger": "append fake prerequisite heads to negative receipt",
+      "expected": "refuse every descendant mutation"
+    },
+    {
+      "case_id": "B-SOURCE-EPOCH",
+      "trigger": "reuse CP0/context reads or skip extracted statement row/FY column",
+      "expected": "participation_incomplete; full financials evidence required"
+    },
+    {
+      "case_id": "B-QUOTE-LEAK",
+      "trigger": "attempt CP1B source tool or outward citation quote/full raw producer",
+      "expected": "not_permitted; empty source_evidence; no diagnostic quote prefix"
+    },
+    {
+      "case_id": "B-CANDIDATE-TAIL",
+      "trigger": "extra own input or self/stage hash in candidate",
+      "expected": "validation_failed/identity_mismatch; exact two provenance tails only"
+    }
+  ],
+  "focused_check_argv": "PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_earnings_workflow.py",
+  "activity_limit": "Static freeze only; no product imports/tests/engines/providers. Later component checks never count as actual owner or CP5/native acceptance.",
+  "phase_transitions": {
+    "valid": [
+      "source_readiness->source_context after real CP1 begin",
+      "source_context->financials",
+      "financials->narrative",
+      "narrative->readiness",
+      "readiness->quality",
+      "quality->earnings_delta after real CP1B begin",
+      "earnings_delta->complete/owner_settled"
+    ],
+    "real_cp1_begin_denial": "complete/cp1_not_authorized",
+    "pre_envelope_refusal": "same pending ticket/phase, raw retained audit only",
+    "pending_repairable_invalid": "same step/attempt with retained repair history",
+    "finished_invalid_attempt_zero": "real same-module attempt1 begin, restart first step/new epochs",
+    "finished_invalid_attempt_one": "failed, no accepted owner receipt",
+    "pending_exception": "resume identical retained bytes before advance"
+  },
+  "projection_addendum": {
+    "lease": "CP1B-ACCESS-PROJECTION-ADDENDUM.md",
+    "lease_sha256": "dd2fc2cedacdfed37852ed827b81b03b18367c9062892ca95c78b4561b4a68d9",
+    "oracle": "access-projection-expected.json",
+    "oracle_sha256": "c36dc87159e132440d7f3d9d909b1969c81758c4edf9806f6a42a4ca1795add2",
+    "tool": "read_access_projection",
+    "scope": "CP1B-v2 only; CP5/v1 denied; existing tools unchanged; duplicate handles preserved"
+  },
+  "B1_transport_proof": {
+    "genuine_source_artifact_sha256": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "cases": {
+      "E-QOQ-FLAT": {
+        "coordinates": 138,
+        "manifest_calls": 7,
+        "projection_calls": 16,
+        "citations_calls": 7,
+        "required_owner_tool_calls": 30,
+        "max_projection_body_bytes": 7835,
+        "max_single_projection_body_bytes": 1747,
+        "conservative_single_coordinate_page_and_fact_verify_calls": 414
+      },
+      "E-NO-YOY": {
+        "coordinates": 126,
+        "manifest_calls": 7,
+        "projection_calls": 14,
+        "citations_calls": 7,
+        "required_owner_tool_calls": 28,
+        "max_projection_body_bytes": 8096,
+        "max_single_projection_body_bytes": 1745,
+        "conservative_single_coordinate_page_and_fact_verify_calls": 378
+      }
+    },
+    "body_ceiling": 8192,
+    "owner_call_cap": 1024,
+    "all_actual_duplicate_handles_and_wrappers_preserved": true,
+    "size_markers_not_runtime_authority": true
+  },
+  "implementation_order": {
+    "write_admission": "After PM integrates accepted A1/A2/A3 and exact reviewed projection/B1 contracts+oracles+descriptor, C3 NEW B1 files may be written parallel with C1 projection two files under disjoint exact leases",
+    "B1_green_and_actual_owner_prerequisite": "Accepted projection code safely integrated into C3 clone first; no WIP copy/stub/monkeypatch counts as integration",
+    "new_type_import_required": false,
+    "runtime_jobs_separately_admitted": true,
+    "no_numerical_lane_cap": true
+  },
+  "history": {
+    "superseded_B1_lease_sha256": "4140943f773a42964051dae34166948b52c3631aee381300fb4ec1155c15d0c0",
+    "superseded_B1_oracle_sha256": "5a86d095d630eeed947be46ecbd7fa33076e0437b4216b6e0c5fd10841970b6b",
+    "reason": "Confirmed genuine15fact whole-row identity-five+citation_handles BODY exceeds8192 even before other attrs; additive coordinate projection pages fix root cause without dedup/value/cap/API-authority changes."
+  }
+}

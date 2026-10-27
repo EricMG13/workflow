@@ -1,0 +1,68 @@
+{
+  "schema_version": "cp1b-owner-cases/1",
+  "source_manifest": "../financial/manifest.json",
+  "source_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "core_expected": "expected.json",
+  "access_expected": "access-expected.json",
+  "render_expected": "render-expected.json",
+  "owner_expected": "owner-expected.json",
+  "cases": [
+    {
+      "case_id": "E-QOQ-FLAT",
+      "run": {
+        "run_id": "slice-cp1b-flat-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "earnings_update",
+        "requested_modules": [
+          "CP-1B",
+          "CP-5"
+        ]
+      },
+      "prior_period_id": "q3-2025",
+      "current_period_id": "q4-2025",
+      "source_state": "supplied"
+    },
+    {
+      "case_id": "E-NO-YOY",
+      "run": {
+        "run_id": "slice-cp1b-no-yoy-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "earnings_update",
+        "requested_modules": [
+          "CP-1B",
+          "CP-5"
+        ]
+      },
+      "prior_period_id": "fy-2024",
+      "current_period_id": "fy-2025",
+      "source_state": "supplied"
+    },
+    {
+      "case_id": "E-REQUIRED-CP1-MISSING",
+      "run": {
+        "run_id": "slice-cp1b-missing-source-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "earnings_update",
+        "requested_modules": [
+          "CP-1B",
+          "CP-5"
+        ]
+      },
+      "prior_period_id": "q3-2025",
+      "current_period_id": "q4-2025",
+      "source_state": "financial_missing"
+    }
+  ]
+}

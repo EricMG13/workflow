@@ -551,3 +551,24 @@ proof artifacts, gap proof and clean shutdown, with explicit limits around
 large-page accessibility, native app control, chart qualification and broader
 owners/provider scope. The cherry-pick is
 `7d6886c` before this receipt commit.
+
+### LEAD bounded producer slice closure documents
+
+Integrated LEAD's admitted documentation commit
+`3a2ca0612789ad1eb6964a94b017de4765113935` by local fetch and cherry-pick.
+The exact five paths are `PLAN.md`, new `docs/CP1-MODEL-ACCEPTANCE.md`,
+`docs/MODULES.csv`, `docs/QUEUE.md`, and `docs/TEAM.json`; no source, test,
+case or contract path is present in the commit. The integration cherry-pick is
+`14a113c3cbbdde9133c8a982ed733b45f8b1e188` before this receipt commit.
+
+The tracked `src`, `tests`, and `cases` manifest fingerprint remains
+`8d2371ce804b7da22db910e6ae8185466cc0f8bd0a74fefc7776a4f3700aeb79`.
+The renderer, financial render test, and workflow hashes remain respectively
+`d511935ca9724de3ed734da87498f786742f2e63ca4a62a68408f9d136b089a8`,
+`99059144b35d4c8d8cccee1ba4c4b6761ab06f9c45eb566c156ac063a4085b13`, and
+`4f513165d4229c853dd7723cb3b9bbdb838b614cbb11a9ae5f818635a947da56`.
+The LEAD commit passed its stated metadata and diff checks; no tests,
+confidence/rewrite review, engine, provider or production run was repeated for
+this docs-only integration. The closure documents bound the actual producer
+and rendering evidence while preserving open boundaries for broader owners,
+pathways, issuer and provider qualification.

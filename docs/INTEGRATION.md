@@ -1250,3 +1250,19 @@ does not admit Model publication or broader owner/CP5/native completion. C2's
 new writes await a clean exact-base admission. C1's retained RED2 is a fixture
 setup failure, not feature evidence. No tests or jobs were run during this
 integration; paid/provider work remains paused.
+
+### Parallel legal source-host and earnings delivery admissions
+
+Integrated LEAD's exact three-file status patch
+`0dce336fa205a99d8476957a7e9e37d1e06028d1` (parent
+`bca65a6c0bb6a2c94311bbd0bf974e3231c70ccc`): `PLAN.md`, `docs/QUEUE.md`,
+and `docs/TEAM.json`. It records C1's source-host L2 work in the isolated
+`coordinator-1-source-host` clone and C2's D1 two-new-file admission at fixed
+base `6c0ee065d6ca099feef4d7d736d0ae39b59cd2cb`; root confirms 151 pins and no
+push authority for that isolated clone. C1 A4 remains in its original checkout.
+The status records A4 RED3 as 142 passed, 18 feature/precedence failures and one
+blocked fixture failure; C2 D1 retains its meaningful entrypoint-assertion RED.
+These are scoped diagnostics, not broader qualification. All 151 tracked
+source/test/case files remained byte-identical in this status integration. Full
+PLAN, 26 steps, six pathways, actual owner, CP5 and native acceptance remain
+open. No tests or runtime jobs were run; paid/provider work remains paused.

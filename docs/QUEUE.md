@@ -2183,3 +2183,20 @@ C1 A2 causalRED2 PID88985,09:46:12.284571..09:46:14.945203UTC,exit1;122pass3fail
 imports/v1 restored, property+constructor final_currentraceconfirmed, wrongtuple
 errorcodeprecedencealsofails. Allpinsunchanged; rootadmitted narrowconfirmedracefix,
 thirdfailuremustbetracedagainstfrozenoracle withoutguardrelaxation. Noheavyjobsleft.
+
+
+A3 exactcomponentcode0d6c714569afdd63e50115c61a268d2530d7df13 accepted and sentPM:
+newbindings/cp1b.py188e8461; shipped4ef3f9ff; report_view21dc5c34; tests45fcc92c.
+Rootindependentlyverifiedexact4files/parent85785c9/hashes/whitespace and read
+confidence86581c5b/tournament967ba118/sensitivef7909cab8/handoff51cbd58e.
+Central90-pass resultabove verifiesfinalbytes. Duplicateinventorymappinswere
+corrected beforePopen; supersededpreflightisnotaproductfailure. No addedtests.
+C1 wrong-tupleRED2 failure traced to combinedinvalidfixture: modifiedcoordinate
+also duplicated an existing selectedplacement. Incumbentandtournament both
+correctly rejectduplicatesbeforeauthorization perfrozenlease52/60/124. Original
+mutationretainedasduplicate-placement bad_arguments; isolateduniqueunauthorized
+fulltuple stillrequiresnot_permitted. No product/oraclerelaxation. Twoindependent
+final_currentraceguardsstillcausallyconfirmed; narrowv2trailingreadfixinreview.
+NextB1owner/A4completeCP5contracts are staticpreparationonly andmustfreezeexact
+APIs/receipts/casesbeforewrites. C2preparedactualdeliveryrefusalswithoutfilesor
+runtime; Modelpublicationfirstearningssetempty. FullPLAN/23actualmatrixrowsopen.

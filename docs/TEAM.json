@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: C1 A2 registration/access, C2 A3 FP02 bindings, C3 A1 earnings core implementation; whole PLAN incomplete; paid/provider/live paused",
+  "state": "active: A1 core and A3 FP02 components accepted; C1 A2 confirmed currentness fix/final verification; B1 actual owner and A4 completeCP5 contracts preparing; whole PLAN incomplete; paid/provider/live paused",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -35,8 +35,8 @@
   "one_heavy_job_limit": 1,
   "active_lanes": {
     "C1": "A2 exact6files: original5 plus submission.py narrowly admitted under addendum atcleanpusheddfbb4c9; writes only, causal final_currentRED before racefix, eachheavyjob separately admitted",
-    "C2": "implementation admitted C2-CP1B-A3-IMPLEMENTATION-1 at85785c9; exact4binding/spec/testfiles, heavy checks separately admitted",
-    "C3": "A1 exact3files atf1b3c5c;71focused checks and genuine FULL CP1 component probe passed; required final code reviews/commit pending; actual owner unverified",
+    "C2": "A3 exact4filecommit0d6c714 accepted90focusedchecks; PM integration admitted; next authenticated earnings delivery waits exact B1/A4 interfaces; static preparation only",
+    "C3": "A1 exact3filecommitc8d4c93 accepted71focusedchecks plus genuineFULLCP1componentprobe; PM integration admitted; B1 owner/foundation lease preparing, no owner writes yet",
     "PR_MANAGER": "integration only"
   }
 }

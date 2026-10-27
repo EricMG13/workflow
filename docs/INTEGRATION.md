@@ -533,3 +533,21 @@ repair while retaining the qualification boundaries for portable rendering,
 native proof, specialist owners, forecasts and provider scope. C1's untracked
 runtime evidence was left untouched. The documentation cherry-pick is
 `de5034bd16d332e6b2b50308d0a7a14ac19c1d82` before this receipt commit.
+
+### C2 final rendering and native proof handoff
+
+Integrated LEAD-admitted C2 documentation commit
+`08248d5988bb9c70c237b6c10f678b5b3636a046` by local fetch and
+cherry-pick. Its parent is `d4fb8481826bff9d1ad9c9e2c5aa8b8d872199bc`;
+that parent is not an ancestor of current main, so the admitted one-file docs
+delta was applied without importing unrelated branch history. The sole path
+is `docs/handoffs/financial-rendered-slice.md`, whose integrated SHA-256
+`52e5145c3e67ccd73e15b31f8457aafe1b16e2e03e81c1174ba6156db0982509`
+matches LEAD's value. The tracked `src`, `tests`, and `cases` manifest
+fingerprint remains `8d2371ce804b7da22db910e6ae8185466cc0f8bd0a74fefc7776a4f3700aeb79`,
+unchanged from assembled-main verification. No tests were run for this
+change. The handoff records C2's actual positive render, native checks and
+proof artifacts, gap proof and clean shutdown, with explicit limits around
+large-page accessibility, native app control, chart qualification and broader
+owners/provider scope. The cherry-pick is
+`7d6886c` before this receipt commit.

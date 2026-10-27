@@ -94,7 +94,7 @@ Shared API changes require LEAD's exclusive handoff. Use actual CP0→CP1→CP4�
 producers as applicable, then deterministic Model publication. Initial tool delivery
 can be demonstrated before all downstream owners finish, but is not full completion.
 
-- [ ] Freeze coherent financial/legal raw sources and independently calculated expected output.
+- [x] Freeze coherent financial/legal raw sources and independently calculated expected output.
 - [x] Use actual supported analyst tool invocations; retain the resulting review/submission lineage (bounded Task3-A).
 - [x] Execute real validators/composers/settlement and real downstream reads, not injected final modules (CP-0 settlement and CP-1 source_context only).
 - [x] Render actual selected-run values, citations/status and source/provenance links; verify visible DOM (bounded Task3-A).
@@ -243,3 +243,11 @@ A2 registration dependency: the independently reviewed pre-fix addendum
 steps from shared-live capability. C1's narrow sixth-file extension requires exact
 PM integration and subsequent LEAD admission; no shared-live CP1B implementation
 or provider testing follows. The original A2 oracle remains unchanged.
+
+Task3 source/oracle freeze now includes cases/legal/manifest.json and
+docs/LEGAL-SOURCE-CONTRACT.md, independently reviewed literal positive/gap legal
+pages preserving the earlier financial bytes. Positive threshold4x/current1x/
+headroom3x/75%; missing incorporated EBITDA definition means Not calculable.
+USD90m arithmetic distance is not legal debt permission/capacity. False Same
+definition must refuse semantic acceptance; current core does not automatically
+detect it. This closes source preparation only: actual CP4/CP5/FP04 remain open.

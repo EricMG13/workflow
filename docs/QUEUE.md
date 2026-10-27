@@ -2157,3 +2157,29 @@ edit; no heavy test/engine run bundled. Original GREEN1 import failure retained;
 separate final_current causalRED precedes that racepatch. Runtime admission still
 requires fresh exact argv/pins/process/load and source frozen through actual exit.
 Record: LEAD work/cp1b-preparation/a2-registration-addendum-admission.json.
+
+
+Task3 legal source/oracle freeze adopted: cases/legal/manifest.json
+d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168;
+docs/LEGAL-SOURCE-CONTRACT.md80f21f1e73063655e799496c3484a51576ff5e9649f03383b341ed7ff2aa453a;
+independent review docs/reviews/legal-source-contract.md
+f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a.
+LEAD independently compared exact legal source/expected/baseline/CP0objects with
+reviewed draft; financial source/oracles unchanged. Supplied3page/U+000Crepresentation
+honest; one actual offered reported comparator plus Not determinable is needed
+for exact gapreason. MissingScheduleA cannot support Same definition; this is
+semantic acceptance refusal, not a claimed automatic coreparser. No capacity
+permission from ratioheadroom; existingloanfullydrawn/0unused differsunknownbasket.
+No productcode/tests/import/engine/provider/native job or ownerlease. OnlyTask3
+sourcefreezecheckbox closes; actualCP4current-CP1auth/host/CP5/FP04/specialistsopen.
+
+C3 A1 accepted boundedcore commitc8d4c93ba515b842d4e19713cfbec2a7e71df997,
+exact3newfiles; rootconfirmed source73fa/testsc8a2 are mechanicalASTequivalent
+to71-pass7df8/f6ce and genuineFULLCP1probe. Independent sensitive/confidence/
+noargtournament closed. PM exactintegrationadmitted; no actualCP1Bmatrixclosure.
+C2 A3 finalGREEN2 PID88964,09:46:00.172098..09:46:00.822507UTC,exit0,90pass0.47s;
+136source/test/case+authority/runtimeunchanged; recordsinC2work. Finalcodecommitpending.
+C1 A2 causalRED2 PID88985,09:46:12.284571..09:46:14.945203UTC,exit1;122pass3fail:
+imports/v1 restored, property+constructor final_currentraceconfirmed, wrongtuple
+errorcodeprecedencealsofails. Allpinsunchanged; rootadmitted narrowconfirmedracefix,
+thirdfailuremustbetracedagainstfrozenoracle withoutguardrelaxation. Noheavyjobsleft.

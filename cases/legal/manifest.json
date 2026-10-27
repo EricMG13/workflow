@@ -1,0 +1,453 @@
+{
+  "schema_version": "cp4-legal-source-cases/1",
+  "status": "SOURCE_AND_INDEPENDENT_EXPECTATIONS_FROZEN_NO_IMPLEMENTATION_LEASE",
+  "prepared_at": "2026-10-27",
+  "inspected_repository": "/Users/ericguei/Documents/Deploy Workflow",
+  "inspected_revision": "9f7f9a6992c7cfdbacabcd673cadeea16178e21e",
+  "route": {
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "evidence": "Parent assigned sensitive independent source/oracle preparation; no hidden execution telemetry asserted."
+  },
+  "run_template": {
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "covenant_refinancing",
+    "requested_modules": [
+      "CP-4",
+      "CP-5"
+    ],
+    "expected_dependency_closure": [
+      "CP-0",
+      "CP-1",
+      "CP-4",
+      "CP-5"
+    ]
+  },
+  "raw_rule": "Literal UTF-8 LF; no terminal LF per page; U+000C joins ordered page text; SHA256 over those bytes. No numeric oracle is parsed from candidate output.",
+  "financial_baseline": {
+    "path": "cases/financial/manifest.json",
+    "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "sources": [
+      {
+        "source_id": "identity",
+        "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "reuse": "Every existing page text and locator must remain byte-identical."
+      },
+      {
+        "source_id": "financial",
+        "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "reuse": "Every existing page text and locator must remain byte-identical."
+      }
+    ],
+    "oracle_pointers": [
+      "q4_ltm_derived_source_units",
+      "q4_ltm_metric_oracle.net_leverage_reported"
+    ],
+    "no_new_financial_engine": true,
+    "dimensions": {
+      "currency": "USD",
+      "unit": "MILLIONS",
+      "accounting_basis": "IFRS",
+      "entity_perimeter": "consolidated group",
+      "expense_presentation": "by_function",
+      "evidence_class": "unaudited_without_auditor"
+    },
+    "source_numbers": {
+      "debt_USDm": "50",
+      "cash_USDm": "20",
+      "restricted_cash_USDm": "0",
+      "reported_TTM_EBITDA_USDm": "30",
+      "net_debt_USDm": "30",
+      "test_date": "2025-12-31",
+      "TTM_start": "2025-01-01",
+      "TTM_end": "2025-12-31",
+      "contractual_maturity": "2029-12-31",
+      "facility_id": "term-loan"
+    },
+    "canonical_debt_basis": "carrying_value_excluding_both_lease_types"
+  },
+  "cases": [
+    {
+      "case_id": "legal-current-matching-definition",
+      "run_id": "slice-legal-current-positive",
+      "source_set_rule": "Exact baseline identity and financial plus this legal source; fresh run/pack/CP0/CP1, no imported final modules.",
+      "legal_source": {
+        "source_id": "legal-covenants",
+        "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+        "status": "ready",
+        "media_type": "text/plain",
+        "extractor": "supplied-representation",
+        "extraction_status": "complete",
+        "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction. Completeness refers to retained supplied pages, not a complete agreement.",
+        "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+        "pages": [
+          {
+            "locator": "page:1",
+            "text": "NORTHBRIDGE SYNTHETIC GROUP\nSynthetic executed Northbridge Term Loan covenant terms, current restatement\nThis invented agreement is test data, not evidence about a real issuer or legal advice.\nExecution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026. All earlier versions of these selected terms are superseded.\nClause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note. This separate legal supplement establishes that Borrower only for this agreement; the two-source financial set did not establish a legal borrower, guarantor or restricted-group perimeter.\nClause 1.2. Group means exactly the IFRS consolidated group used in the unaudited quarterly and reported FY2025 financial statements published January 10, 2026. Group is the perimeter for this agreement's debt, cash, EBITDA and leverage test. No separate guarantor or restricted-group perimeter is established by the supplied agreement.\nClause 1.3. The agreement governs Northbridge Term Loan, facility_id term-loan, the sole senior secured term loan in the complete facility schedule. Its commitment is USD 50 million; it is fully drawn at December 31, 2025. Final contractual maturity remains December 31, 2029, and mandatory annual amortisation remains zero. This restatement does not increase the commitment or change that maturity.\nClause 1.4. The supplied pages contain the operative leverage test, selected definitions, debt permission and asset-sale condition only. Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
+          },
+          {
+            "locator": "page:2",
+            "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: definitions and maintenance test\nClause 2.1. Covenant Debt means the Group's total debt at IFRS carrying value excluding both finance and operating lease obligations, with no other exclusions or pro-forma adjustments. For the test date all debt is the sole senior secured term loan; no other debt, lease debt or debt adjustment exists.\nClause 2.2. Eligible Cash means the Group's reported cash and cash equivalents that are unrestricted and freely available to service Group debt. At December 31, 2025 all reported cash and cash equivalents are eligible, restricted cash is zero, and there are no short-term investments or other cash-like deductions. Covenant Net Debt means Covenant Debt less Eligible Cash; negative net debt, if any, is not floored at zero.\nClause 2.3. Covenant EBITDA means the Group's reported EBITDA: revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization, over the trailing twelve months ending on the test date. No adjustments, add-backs, synergies, run-rate savings, pro-forma changes or exclusions are permitted. For December 31, 2025 the period is January 1 through December 31, 2025, identical to reported FY2025 and the four discrete calendar 2025 quarters. The underlying statements remain unaudited; this definition supplies no audit assurance.\nClause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          },
+          {
+            "locator": "page:3",
+            "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: selected permissions and source limitations\nClause 4.1. Existing drawings under Northbridge Term Loan are permitted. Additional debt or an increase in that facility's commitment requires prior written consent of every lender. The maintenance leverage limit by itself is not a debt-incurrence permission or an available funding commitment. No additional automatic debt basket is provided by these selected terms.\nClause 5.1. Asset sales must be for fair market value. The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided. This provision does not establish that any asset sale occurred.\nSource limitation. These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package. Financial statements remain unaudited and consolidated; no borrower-only financial statements, guarantor perimeter or restricted-group financial information are supplied."
+          }
+        ],
+        "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec"
+      },
+      "definition_basis": "Same definition",
+      "metric_selection": "Bound current CP1 T4.10 net_leverage_reported for trailing twelve months ending 2025-12-31, MULTIPLE, reported EBITDA, IFRS consolidated group; use its actual fact_id after current input inspection. Refuse absent/duplicate/wrong-period identity.",
+      "expected": {
+        "eligible_cash_USDm": "20",
+        "net_debt_USDm": "30",
+        "metric_amount": "1",
+        "metric_unit": "MULTIPLE",
+        "threshold_text": "4.00x",
+        "threshold_unit": "multiple",
+        "threshold_value": "4.00",
+        "comparison": "<=",
+        "headroom_amount": "3",
+        "headroom_unit": "MULTIPLE",
+        "headroom_share_amount": "0.75",
+        "headroom_share_unit": "PERCENT",
+        "headroom_share_display_percent": "75",
+        "within": true,
+        "verdict": "Within threshold on the CP-1 metric",
+        "calculable": "Yes",
+        "overall_protection_rating": "Insufficient Information",
+        "capacity_amount_status": "unsettled",
+        "capacity_amount": null,
+        "capacity_reason": "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8; unknown capacity is not zero",
+        "settled_cp4_status": "restricted_expected_from_own_source_scope_and_capacity_limitations; actual journal result must be retained",
+        "independent_cross_check_only": {
+          "ratio_limit_net_debt_USDm": "120",
+          "arithmetic_net_debt_cushion_USDm": "90",
+          "formula": "4 * 30 - (50 - 20) = 90",
+          "must_not_be_presented_as": "CP4 computed debt basket capacity, legal incurrence permission, extra commitment, guaranteed borrowing availability, or settlement output"
+        }
+      }
+    },
+    {
+      "case_id": "legal-current-missing-ebitda-definition",
+      "run_id": "slice-legal-current-definition-gap",
+      "source_set_rule": "Same baseline identity and financial; only this alternative legal source, never both legal versions in one pack.",
+      "legal_source": {
+        "source_id": "legal-covenants",
+        "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+        "status": "ready",
+        "media_type": "text/plain",
+        "extractor": "supplied-representation",
+        "extraction_status": "complete",
+        "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction. Completeness refers to retained supplied pages, not a complete agreement.",
+        "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+        "pages": [
+          {
+            "locator": "page:1",
+            "text": "NORTHBRIDGE SYNTHETIC GROUP\nSynthetic executed Northbridge Term Loan covenant terms, current restatement\nThis invented agreement is test data, not evidence about a real issuer or legal advice.\nExecution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026. All earlier versions of these selected terms are superseded.\nClause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note. This separate legal supplement establishes that Borrower only for this agreement; the two-source financial set did not establish a legal borrower, guarantor or restricted-group perimeter.\nClause 1.2. Group means exactly the IFRS consolidated group used in the unaudited quarterly and reported FY2025 financial statements published January 10, 2026. Group is the perimeter for this agreement's debt, cash, EBITDA and leverage test. No separate guarantor or restricted-group perimeter is established by the supplied agreement.\nClause 1.3. The agreement governs Northbridge Term Loan, facility_id term-loan, the sole senior secured term loan in the complete facility schedule. Its commitment is USD 50 million; it is fully drawn at December 31, 2025. Final contractual maturity remains December 31, 2029, and mandatory annual amortisation remains zero. This restatement does not increase the commitment or change that maturity.\nClause 1.4. The supplied pages contain the operative leverage test, selected definitions, debt permission and asset-sale condition only. Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
+          },
+          {
+            "locator": "page:2",
+            "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: definitions and maintenance test; missing incorporated schedule\nClause 2.1. Covenant Debt means the Group's total debt at IFRS carrying value excluding both finance and operating lease obligations, with no other exclusions or pro-forma adjustments. For the test date all debt is the sole senior secured term loan; no other debt, lease debt or debt adjustment exists.\nClause 2.2. Eligible Cash means the Group's reported cash and cash equivalents that are unrestricted and freely available to service Group debt. At December 31, 2025 all reported cash and cash equivalents are eligible, restricted cash is zero, and there are no short-term investments or other cash-like deductions. Covenant Net Debt means Covenant Debt less Eligible Cash; negative net debt, if any, is not floored at zero.\nClause 2.3. Covenant EBITDA has the meaning assigned in incorporated Schedule A. Schedule A is not supplied with this copy. No supplied clause states its add-backs, exclusions or relationship to reported EBITDA. The financial statements' reported EBITDA definition does not supply the missing contractual definition.\nClause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+          },
+          {
+            "locator": "page:3",
+            "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: selected permissions and source limitations\nClause 4.1. Existing drawings under Northbridge Term Loan are permitted. Additional debt or an increase in that facility's commitment requires prior written consent of every lender. The maintenance leverage limit by itself is not a debt-incurrence permission or an available funding commitment. No additional automatic debt basket is provided by these selected terms.\nClause 5.1. Asset sales must be for fair market value. The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided. This provision does not establish that any asset sale occurred.\nSource limitation. These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package. Financial statements remain unaudited and consolidated; no borrower-only financial statements, guarantor perimeter or restricted-group financial information are supplied."
+          }
+        ],
+        "sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c"
+      },
+      "definition_basis": "Not determinable",
+      "metric_selection": "Name the same single unambiguously selected current offered reported net-leverage comparator with metric_basis Not determinable to exercise the exact frozen definition-undetermined reason. Retain its actual coordinates/period/basis; refuse absent/ambiguous selection. A null metric_ref takes a different core reason and does not prove this definition-specific oracle.",
+      "expected": {
+        "threshold_text": "4.00x",
+        "threshold_unit": "multiple",
+        "threshold_value": "4.00",
+        "comparison": "<=",
+        "metric_amount_if_named": "1",
+        "headroom_amount": null,
+        "headroom_share_amount": null,
+        "headroom_status": "Not calculable",
+        "verdict": "Not calculable",
+        "calculable": "No",
+        "reason": "Whether the covenant definition is the CP-1 metric's is not determinable",
+        "required_gap": "Missing incorporated Schedule A defining Covenant EBITDA, including add-backs/exclusions and the relationship to reported EBITDA.",
+        "overall_protection_rating": "Insufficient Information",
+        "settled_cp4_status": "restricted_expected_from_own_gaps_and_not_calculable_limitation; actual journal result must be retained",
+        "prohibited_inferences": [
+          "within threshold",
+          "outside threshold",
+          "zero headroom",
+          "3x legal headroom",
+          "75% legal headroom",
+          "USD90m legal debt capacity",
+          "reported EBITDA substituted for missing Covenant EBITDA definition"
+        ]
+      }
+    }
+  ],
+  "cp0_expected": {
+    "assess_every_prepared_source_once": true,
+    "assess_live_consumers_once": [
+      "CP-1",
+      "CP-4",
+      "CP-5"
+    ],
+    "financial_authority": "issuer",
+    "legal_authority": "executed",
+    "legal_version_relationship": "Current effective restatement from 2025-12-31, executed 2025-12-30; no later amendment/waiver through as_of; selected operative terms only.",
+    "positive_cp4_readiness": "READY_WITH_LIMITATIONS",
+    "gap_cp4_readiness": "READY_WITH_LIMITATIONS for interpretation/gap reporting; numeric maintenance assessment unavailable, missing Schedule A named. Use CONDITIONAL only if LEAD intentionally chooses to prevent execution; that alternative cannot demonstrate CP4 gap composition.",
+    "cp1_readiness": "READY_WITH_LIMITATIONS; existing unaudited financial/perimeter gaps retained accurately",
+    "cp5_readiness": "READY_WITH_LIMITATIONS for reviewing settled CP1 and CP4 outputs; no raw-source tool permission",
+    "preparedScope_is": "A descriptive contract requirement, not a current Python API field; current types are PreparedPack, SourceAssessment, ConsumerReadiness, SourceContextReview."
+  },
+  "proposed_permissions": {
+    "cp0": "search/read all three exact prepared source IDs; no extract",
+    "cp1_source_context": "search/read exact sources declared by current source map; separate financial consolidated and legal borrower scopes",
+    "cp1_financials": "extract financial page:2/page:3/page:4; read financial page:1/page:5 definitions, facility and completeness; do not treat legal document as financial statement",
+    "cp1_later_stages": "Existing adopted source-free projections; no widened raw source scope",
+    "cp4_raw": "Only ready exact legal-covenants source CP0 classes executed; search/read pages1-3, no financial raw source, no extract_statements",
+    "cp4_upstream": "Read-only current CP0 authority and current CP1 offered referencable T4.10/T4.17 facts plus T4.18 facility id/name, exact selected hash/status and inherited gaps; no full CP1 dump",
+    "cp5": "New separately reviewed complete selected CP1+CP4 scope required; all claims exactly once, all mechanical checks internally; upstream references, statuses, facts and permitted claim support evidence only, no raw-pack search/read/extract. V1 only supports single CP1/no-claim and cannot qualify this slice."
+  },
+  "consumer_contract": {
+    "CP5_evaluated": [
+      "CP-1",
+      "CP-4"
+    ],
+    "CP5_not_evaluated": [
+      "CP-0"
+    ],
+    "CP5_expected": "Actual full selected claim support/contradiction judgments; Python citation/value/stale/gap checks; retain inherited legal/unaudited limitations. Do not predeclare zero findings or accepted settled status. Honest reported gap is not automatically an unsupported-claim finding.",
+    "FP04_CP4_blocks": {
+      "covenant-tests-headroom": [
+        "T4.9"
+      ],
+      "capacity": [
+        "T4.10"
+      ],
+      "red-flags": [
+        "T4.11"
+      ],
+      "lender-protection-score": [
+        "T4.13"
+      ],
+      "ebitda-definition": [
+        "T4C.6"
+      ],
+      "documents-structure": [
+        "T4.2",
+        "T4C.12"
+      ]
+    },
+    "separate_owners_uncompleted": [
+      "CP-2D",
+      "CP-3C",
+      "CP-4C",
+      "full covenant_refinancing pathway"
+    ],
+    "CP5_rails": "Evidence and Limitations only, actual settled module and selected consumer linkage."
+  },
+  "current_api": {
+    "CP4_context": [
+      "cp4_upstream(pack, cp0, cp1)",
+      "upstream_of(store, attempt)",
+      "context_block(pack, upstream)"
+    ],
+    "CP4_submission": "submit_cp4_step(store, ticket_id, legal_covenants, payload_json)",
+    "CP4_validate_compose": [
+      "validate_covenant_interpretation(pack, submission, upstream, inputs)",
+      "covenant_interpretation(pack, submission, upstream, inputs)",
+      "cp4_module(report, inputs, attempt_number) internal candidate construction only"
+    ],
+    "CP5": [
+      "review_scope(store, attempt)",
+      "python_checks(scope)",
+      "context_block(scope, facts=projection) internal only; current full shape includes quotes and must not be exposed wholesale",
+      "submit_cp5_step(store, ticket_id, integrity_review, payload_json)"
+    ]
+  },
+  "confirmed_wrapper_gaps": [
+    "host._SOURCE_STEPS excludes CP4 legal_covenants",
+    "host._producer_inputs rejects non-CP0 provenance tails, including real CP1 source-context publication/provenance tails; CP4 admission must authenticate genuine current CP1 before source disclosure",
+    "No public legal workflow with CP4 source ToolRules/submission-binding/settled receipt replay",
+    "No explicitly leased bounded CP4 current-upstream projection factory",
+    "Existing UpstreamTools v1 CP5 only grants CP1, and integrity rejects claims/multi-producer scope",
+    "FP04 spec_of only knows CREDIT_SNAPSHOT/EARNINGS_UPDATE, leaving CP4 shipped map blocks Unbound/prose; owner-aware typed rendering and authenticated legal receipt absent"
+  ],
+  "semantic_review_gap": "Existing core _covenant_issues and _test trust model metric_basis; missing definition falsely labelled Same definition can compute a pass. No automatic legal-definition verifier is claimed. Require source-to-submission independent review or a separately leased exact deterministic case check before acceptance. Current-source selection/effectiveness judgment likewise is not proven just by quote validity.",
+  "immutable_inspection": {
+    "old_reuse_commit": "6441553936086c834be885e2f3d7cd7f0959aa5c",
+    "policy": "Read adopted imported files and pinned reuse manifest; no mutable old worktree access or wholesale import",
+    "files": {
+      "src/deploy_vii/cp4_legal.py": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "src/deploy_vii/methods/cp4.md": "99ec34c7a8257e15325456eb5466388eeb656fa01cf30db91e8474334bb39ff0",
+      "src/deploy_vii/readiness.py": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "src/deploy_vii/registry.py": "e351d5b917558d4988e582963063dbf8a237f5949ae8a132b9f1c4e5f559995a",
+      "src/deploy_vii/methodology.json": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "src/deploy_vii/bindings/cp4.py": "484448f5fbbc81995efa9e8f3e5f1b636c01bbc9d16234a5be44107b6baa7f97",
+      "src/deploy_vii/report_view.py": "571ee44cbac0a39c3dd77871e13f7f9cc414c4e6700e9e887a70a64b74b7c4cc",
+      "src/deploy_vii/cp5_integrity.py": "84fbe447ab9f1c8598030cf44533072dccdd114d3d34c6c5bb0d20a8d5c3225c",
+      "src/deploy_workflow/host.py": "6d0e22605321d55cd3d4f7abd2aa20e8655b33d74ba5721aa246e5a183116333",
+      "src/deploy_workflow/tools/upstream.py": "4854ec219bcd646e72b1ec367573df898bafad4d48a1f6e18285c90043b0eebe",
+      "src/deploy_workflow/financial_workflow.py": "4f513165d4229c853dd7723cb3b9bbdb838b614cbb11a9ae5f818635a947da56",
+      "src/deploy_vii/canonical_kpis.py": "9ccf40e52a44ffb983c5dee09e6c0ee7321f8e12860b89e71dc3a8a2922b492e"
+    }
+  },
+  "required_future_artifacts": [
+    "Reviewed frozen legal manifest/oracle under cases/legal (LEAD only adoption)",
+    "Fresh positive and gap PreparedPack JSON plus exact source representation bytes/hash/locators",
+    "Actual CP0/CP1 input reads, tool results, raw reviews, all stages/QA/promotion and producer hashes",
+    "Actual CP4 current source/upstream sessions, calls, raw submission binding, ToolRules evidence, validate/compose/settle records",
+    "Actual complete selected CP5 calls/scope, claim review and mechanical verification, submission and settlement",
+    "Authenticated selected-run legal render receipt, report HTML, calculator/passport source links, native DOM proof for both cases",
+    "Exclusive C1 host/access lease, C2 legal workflow/FP04 lease and separate CP5 complete-scope lease after current CP1B ownership releases shared files"
+  ],
+  "independent_review_required": [
+    "Sol/high current source/oracle review before any candidate implementation is assessed; confirm source bytes, identities, arithmetic, legal-definition distinction and exact comparison text",
+    "Independent sensitive review of host CP1 provenance/authentication, multi-producer CP5 authority and stale/refusal behavior",
+    "Confidence-review after code changes; rewrite-tournament changed nontrivial functions; later implementation owners run workflows",
+    "Independent native proof after actual offline owner participation; no developer shell invocation counted as analyst tool use"
+  ],
+  "not_verified": "No actual CP0/CP1/CP4/CP5 run for these packs, tool participation, settled owner/consumer evidence, tests/engines/providers/browser, FP04 rendered/native proof, CP2D/CP3C/CP4C or full pathway completion. Independent review adopts source/oracle semantics only; final adoption bytes need LEAD/PM check.",
+  "adoption": {
+    "date": "2026-10-27",
+    "author_starting_revision": "c7471f126f5a75f01df8fd918434460aab5d8cc5",
+    "contract": "docs/LEGAL-SOURCE-CONTRACT.md",
+    "authority_scope": "Freeze only the coherent Task3 financial/legal sources and independent expected results; no owner/tool/render/consumer acceptance or implementation admission.",
+    "source_drafts": {
+      "manifest_sha256": "0125c1baf8bb133b846a7ca3bbedd1cf581c069b0c834497b0620a27a0d65e9d",
+      "proposal_sha256": "5c2951eaf41ed04d1e60e9a74f75e6db8d07b2d6cd010e5a4f68f39a6cb132f7"
+    },
+    "independent_source_oracle_review": {
+      "receipt": "work/legal-preparation/independent-review.md",
+      "sha256": "f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a",
+      "verdict": "PASS for source/oracle freeze only",
+      "route": "Independent Sol/high financial/state reviewer; exact reviewed drafts recorded above; no hidden model telemetry."
+    },
+    "preservation": "All legal page literals, financial baseline/oracle pointers, source hashes, run/case identities and expected result literals are copied unchanged from the independently reviewed draft. Historical inspected_revision/immutable_inspection are draft provenance, not claims about future implementation revisions.",
+    "metric_selection_clarification": "The draft allowed an optional reported comparator; independent review requires the future lease to pin one explicit actual offered metric. This adoption names it for the exact definition-undetermined branch. No source string, numeric expected result or definition judgment is changed.",
+    "current_api_static_inspection": {
+      "src/deploy_workflow/host.py": "6d0e22605321d55cd3d4f7abd2aa20e8655b33d74ba5721aa246e5a183116333",
+      "src/deploy_workflow/tools/upstream.py": "4854ec219bcd646e72b1ec367573df898bafad4d48a1f6e18285c90043b0eebe",
+      "src/deploy_vii/report_view.py": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "src/deploy_vii/cp4_legal.py": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "src/deploy_vii/canonical_kpis.py": "9ccf40e52a44ffb983c5dee09e6c0ee7321f8e12860b89e71dc3a8a2922b492e"
+    }
+  },
+  "semantic_acceptance": {
+    "boundary": "Source-to-submission semantic acceptance for checkpoint qualification, distinct from current engine validation or journal settlement.",
+    "requires_matching_definition_evidence": "The positive Same definition judgment must be supported by current legal clauses2.1/2.2/2.3 and the actual current offered reported-EBITDA net-leverage metric, including basis, period and perimeter. Numeric equality is insufficient.",
+    "missing_definition_case": {
+      "case_id": "legal-current-missing-ebitda-definition",
+      "mandatory_basis": "Not determinable",
+      "actual_offered_comparator": "Use one explicitly selected current reported net-leverage fact with matching trailing2025 identity to exercise the definition-undetermined branch; runtime fact ID/coordinate must be retained, never guessed.",
+      "if_no_unambiguous_offered_metric": "Refuse metric selection rather than choose an equal FY/LTM/Q4 alias. A null metric_ref would take a different core reason and is not the frozen definition-specific oracle.",
+      "adversarial_input": "Same gap source set, but incorrectly assert metric_basis=Same definition and use the offered comparator.",
+      "acceptance_result": "REFUSE_SEMANTIC_ACCEPTANCE",
+      "refusal_reason": "Missing incorporated Schedule A does not establish Covenant EBITDA equivalence; no legal pass or headroom may qualify.",
+      "current_engine_limit": "The present core trusts metric_basis and may compute a pass for this false label. No automatic engine rejection, parser or code guard is claimed.",
+      "required_future_evidence": "Retain a source-to-submission independent semantic review that rejects the adversarial result for qualification before CP4 is accepted as complete. A later implementation lease may instead specify and independently review a precise guard; this source freeze grants no such code change."
+    },
+    "current_version_period_and_scope": "Independently verify operative version, metric period/basis/perimeter and facility identity before acceptance; quote/threshold validity alone does not prove them."
+  },
+  "literal_financial_expected_unchanged": true,
+  "financial_oracle_reuse": {
+    "q4_ltm_derived_source_units": {
+      "revenue": "120",
+      "ebit": "25",
+      "ebitda": "30",
+      "adjusted_ebitda": "30",
+      "cfo": "19",
+      "ffo": "21",
+      "capex": "-10",
+      "fcf": "9",
+      "cash_change": "5",
+      "total_debt": "50",
+      "net_debt": "30",
+      "cogs": "-60",
+      "gross_profit": "60",
+      "opex_including_da": "-35"
+    },
+    "q4_ltm_metric_oracle": {
+      "total_leverage_reported": {
+        "numerator": "50",
+        "denominator": "30",
+        "fraction": "5/3",
+        "unit": "MULTIPLE"
+      },
+      "total_leverage_adjusted": {
+        "numerator": "50",
+        "denominator": "30",
+        "fraction": "5/3",
+        "unit": "MULTIPLE"
+      },
+      "net_leverage_reported": {
+        "numerator": "30",
+        "denominator": "30",
+        "decimal": "1",
+        "unit": "MULTIPLE"
+      },
+      "interest_coverage_reported": {
+        "numerator": "30",
+        "denominator": "5",
+        "decimal": "6",
+        "unit": "MULTIPLE"
+      },
+      "capex_adjusted_coverage": {
+        "numerator": "20",
+        "denominator": "5",
+        "decimal": "4",
+        "unit": "MULTIPLE"
+      },
+      "ffo_to_debt": {
+        "numerator": "21",
+        "denominator": "50",
+        "decimal": "0.42",
+        "unit": "PERCENT"
+      },
+      "fcf_to_debt": {
+        "numerator": "9",
+        "denominator": "50",
+        "decimal": "0.18",
+        "unit": "PERCENT"
+      }
+    }
+  },
+  "unused_commitment_oracle": {
+    "test_date": "2025-12-31",
+    "facility_id": "term-loan",
+    "unit": "USD millions",
+    "commitment": "50",
+    "drawn": "50",
+    "unused": "0",
+    "formula": "50 - 50 = 0",
+    "source": "financial page:5; legal-covenants page:1 Clause1.3",
+    "permission_limit": "Neither zero undrawn funds nor USD90m arithmetic ratio distance establishes a new debt permission. Unanimous prior lender consent is required; no automatic additional debt basket."
+  },
+  "source_permission_path": {
+    "actual_existing_core": [
+      "registry StepChain CP-4/legal_covenants has pack_sources capability",
+      "live.context.declared_sources/readable_sources use cp4_legal.upstream_of(...).legal_sources",
+      "cp4_upstream admits only ready prepared sources CP0 T3 classes executed or filed",
+      "PackTools(pack, sources=explicit_current_legal_ids) supports bounded search_pack/read_pages",
+      "ToolRules legal_covenants applies source-scope absence and cited-page evidence checks",
+      "submit_cp4_step retains/validates/composes/settles only actual pending current journal attempt"
+    ],
+    "public_boundary": "Current deploy_workflow.host SourceSession.from_execution refuses legal_covenants because CP4 is not in _SOURCE_STEPS. No working public CP4 source path is claimed. A separate exact lease must add authenticated admission and retained evidence through this existing core path.",
+    "raw_source_ids": [
+      "legal-covenants"
+    ],
+    "prohibited_raw_sources": [
+      "identity",
+      "financial"
+    ],
+    "no_extract_statements": true,
+    "no_cp5_raw_sources": true
+  }
+}

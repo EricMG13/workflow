@@ -751,15 +751,15 @@
   "claim": {
     "claim_id": "cp1b-comparison",
     "texts": {
-      "E-QOQ-FLAT": "Flat sequential earnings comparison: [cp1b:T1B.1:revenue:delta] [cp1b:T1B.1:ebitda:delta] [cp1b:T1B.1:adjusted_ebitda:delta]. Current balance observations: [cp1b:T1B.2:cash_closing:current] [cp1b:T1B.2:total_debt:current] [cp1b:T1B.2:net_debt:current].",
-      "E-NO-YOY": "Current earnings observations: [cp1b:T1B.1:revenue:current] [cp1b:T1B.1:ebitda:current]. Requested prior income comparison is unavailable [cp1b:T1B.1:revenue:prior] [cp1b:T1B.1:revenue:delta] [cp1b:T1B.1:revenue:growth]."
+      "E-QOQ-FLAT": "Flat sequential earnings comparison: {cp1b:T1B.1:revenue:delta|MILLIONS} {cp1b:T1B.1:ebitda:delta|MILLIONS} {cp1b:T1B.1:adjusted_ebitda:delta|MILLIONS}. Current balance observations: {cp1b:T1B.2:cash_closing:current|MILLIONS} {cp1b:T1B.2:total_debt:current|MILLIONS} {cp1b:T1B.2:net_debt:current|MILLIONS}.",
+      "E-NO-YOY": "Current earnings observations: {cp1b:T1B.1:revenue:current|MILLIONS} {cp1b:T1B.1:ebitda:current|MILLIONS}. Requested prior income comparison is unavailable [cp1b:T1B.1:revenue:prior] [cp1b:T1B.1:revenue:delta] [cp1b:T1B.1:revenue:growth]."
     },
     "limitations": {
       "E-QOQ-FLAT": "Flat sequential earnings only; causal drivers, management guidance and prior-year income are not supplied. The prior trailing-leverage comparison is unavailable.",
       "E-NO-YOY": "COMPARATIVE_NOT_SUPPLIED: requested FY2024 income and comparison basis are absent; current FY2025 values remain known. Opening-2024 balance data is not an income comparator."
     },
     "citations": "Original first-occurrence union from own referenced Fact.citations only",
-    "valid_own_fact_chips_only": true,
+    "valid_own_fact_references_only": true,
     "expected_cp5_review_refs": {
       "E-QOQ-FLAT": [
         "cp1b:T1B.1:revenue:delta",

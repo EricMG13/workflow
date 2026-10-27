@@ -2513,3 +2513,45 @@ owned WIP file hashes and verifying unowned baseline before resuming. Existing
 B1 three-file writes continue disjoint from C1 A4 and C2 preparation. No new
 runtime automatically admitted. Actual owner/recovery/CP5/FP02/native remains
 unverified; full26/six-pathway PLAN active. Paid/provider/live remain paused.
+
+
+## Native-reference fixture corrections; early B1 component proof
+
+Independent A4 review found known numeric zero claims used text chips, rejected
+by existing prose._fact_issues. Root confirmed Execution.candidate_issues also
+unconditionally rejects B1's frozen numeric-chip comparison claim. No core waiver
+or intentionally invalid owner is allowed. Preserve original ownerc8af02d3 and
+integritya23517e8 raw oracles byte-for-byte in work; old leasee66/cf56 and old
+reviews remain unchanged historical authorities except these named overrides.
+
+Current B1 addendum3341de531ec2d20ebac3c30bb3a753c2fc00e60b2fdaa95ef065e6c774160bcf;
+owner oraclea37dc25f8f756364ae88726cdec3f2de1bbf4c20892ca910d22e9646186efd9d;
+same independent review8d48c5060b813df59cad38fc3eee6447934e5d2bcb5438ba647e754ea87ac2ed
+published docs/reviews/cp1b-claim-reference-contract.md. Exactly two literal claim
+strings: six positive/two known gap refs become same-ID native MILLIONS figures;
+three nonknown gap refs remain chips. Chips-only oracle key becomes references-only
+true. All fact/ref IDs, values, units, citations/limits,44/12/oneclaim and APIs unchanged.
+
+Current A4 addendum92c2851b4bfc01354929e374c45f58d9292db98ec935f88f0bbb35b841367173;
+oracle90871a0027bf5fd616ef09495e92399735f22a2dafad76d2488134a892733c13;
+same-reviewc03b10ac1f97f9099c1f7be442df67a0d26de25bc517b18482889572b9b22e41
+published docs/reviews/cp5-fixture-reference-contract.md. Six literal setup leaves
+correct known figures/missing chips and explicit blocked/empty review scopes; two
+owner pin leaves and claim digest/terminal page match new B1 text. All11 mutation
+counts/categories independently source-traced unchanged. Full15catalog/1..20prefix
+stdlib proof rederived: claim page977→1031 only, largest8088/manifest3459/65tools/
+70messages unchanged. Root independently verified exact10 A4 scalar deltas, original
+archive hashes, current pins/JSON/diff, and figure_unit AST equality from referenced
+LEAD source to accepted main. No product imports/engine/test/provider in freeze.
+A4 RED1 original request remains NOT_LAUNCHED/PIDnull, superseded before execution;
+updated test fixture/pins require exact integrated admission. C1/C3 other writes
+continue; owner claim code updates only after safe integrated update/admission.
+
+C3 EARLY-COMPONENT-1 actual central PID5520,11:17:05.226471–11:17:06.485775UTC,
+exit0,111passed1.06s. All151 source/test/case/owned+runtime pins unchanged, log
+4e86e36504d0c8434a0ad30122f5d9d811a24d27018ef4a012fb4bcbc8755f55. Declared
+scope API/30schemas/factory/source-replay/setup/bootstrap/rawframing/retention/
+newsessionfield+whole-read-hash guards only, original clonedcasepins. No full
+financial fixture/17actualsession sequences/owner settlement/receipt/CP5descendant/
+recovery/native/B1 closure. Sourcefreeze/heavyslot released at realEOF/exit; no
+rerun absent source changes/new concern. Paid/provider/live remain paused.

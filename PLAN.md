@@ -366,3 +366,17 @@ page7835/8096 bytes. Probe citation verification was NOT RUN and synthetic new
 component heads confer no actual owner qualification. A subsequent assembled
 CP1-chart/FP02/registration compatibility check passed132 cases on all149 unchanged
 source/test/case files. Actual B1/recovery/owner receipt and A4/FP02 remain open.
+
+
+B1/A4 native reference grammar correction: docs/CP1B-CLAIM-REFERENCE-ADDENDUM.md
+and docs/CP5-FIXTURE-REFERENCE-ADDENDUM.md override only invalid numeric-chip
+syntax and exact causal fixture setup. Active owner oracle a37dc25f and integrity
+oracle90871a00 replace historical c8/a235 for fresh cases. Independent reviews
+are docs/reviews/cp1b-claim-reference-contract.md and cp5-fixture-reference-contract.md.
+Known monetary references use existing native MILLIONS figures; nonknown refs
+remain gap chips. No financial values/counts/wire/API/caps change. Static first
+case claim terminal page grows977→1031 bytes; max8088/65tools/70messages unchanged.
+Actual settlement must exercise the adopted prose/candidate guard; source-only
+correction is not a passing owner or clean CP5. Unlaunched A4 RED stays PIDnull
+until corrected pins/tests are admitted. C3 early111PASS covers only declared
+schema/bootstrap/source/raw guards, not actual owner/17session/descendant proof.

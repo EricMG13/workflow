@@ -13,7 +13,7 @@
     "execution_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3"
   },
   "owner_contract_sha256": "e66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071",
-  "owner_oracle_sha256": "c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d",
+  "owner_oracle_sha256": "a37dc25f8f756364ae88726cdec3f2de1bbf4c20892ca910d22e9646186efd9d",
   "first_actual": {
     "pathway": "earnings_update",
     "requested_modules": [
@@ -957,7 +957,7 @@
         "claims": [
           {
             "claim_id": "summary",
-            "text": "Revenue observation [fin.rev].",
+            "text": "Revenue observation {fin.rev|MILLIONS}.",
             "limitation": null,
             "citations": [
               {
@@ -1002,7 +1002,7 @@
         "claims": [
           {
             "claim_id": "summary",
-            "text": "Delta observation [earn.delta].",
+            "text": "Delta observation {earn.delta|MILLIONS}.",
             "limitation": null,
             "citations": [
               {
@@ -1131,7 +1131,7 @@
       },
       {
         "id": "unsettled_unlimited",
-        "mutation": "Only fin.rev becomes amount=null/status=missing/limitation=Not supplied; summary limitation remains null",
+        "mutation": "Only fin.rev becomes amount=null/status=missing/limitation=Not supplied; CP1 summary.text='Revenue observation [fin.rev].'; summary.limitation remains null",
         "expected_counts": {
           "blocked_upstream": 0,
           "empty_evaluated_set": 0,
@@ -1148,7 +1148,7 @@
       },
       {
         "id": "unsettled_limited",
-        "mutation": "Previous missing fin.rev plus summary.limitation=Observation is unavailable within this scope.",
+        "mutation": "Previous missing fin.rev with CP1 summary.text='Revenue observation [fin.rev].'; summary.limitation=Observation is unavailable within this scope.",
         "expected_counts": {
           "blocked_upstream": 0,
           "empty_evaluated_set": 0,
@@ -1184,7 +1184,7 @@
       },
       {
         "id": "blocked",
-        "mutation": "Component ReviewScope includes current CP1B input/head status blocked, classified blocked, CP1 remains evaluated",
+        "mutation": "Component ReviewScope includes current CP1B input/head status blocked, classified blocked, CP1 remains evaluated; raw_review.claim_reviews contains only the unchanged CP-1 summary review (omit non-evaluated CP1B review)",
         "expected_counts": {
           "blocked_upstream": 1,
           "empty_evaluated_set": 0,
@@ -1201,7 +1201,7 @@
       },
       {
         "id": "empty",
-        "mutation": "Component ReviewScope evaluated heads empty, blocked empty",
+        "mutation": "Component ReviewScope evaluated heads empty, blocked empty; raw_review.claim_reviews=[], contradictions=[], gaps=[] (no evaluated claims)",
         "expected_counts": {
           "blocked_upstream": 0,
           "empty_evaluated_set": 1,
@@ -1340,7 +1340,7 @@
     "reference_cp1_sha256_before": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
     "reference_cp1_sha256_after": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
     "owner_contract_sha256": "e66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071",
-    "owner_oracle_sha256": "c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d",
+    "owner_oracle_sha256": "a37dc25f8f756364ae88726cdec3f2de1bbf4c20892ca910d22e9646186efd9d",
     "case_id": "E-QOQ-FLAT",
     "cp1_claims": 7,
     "cp1_claim_named_facts": 19,
@@ -1393,11 +1393,11 @@
         ],
         "body_bytes": [
           7960,
-          977
+          1031
         ],
         "max_body_bytes": 7960,
         "max_indivisible_body_bytes": 1545,
-        "ordered_entries_sha256": "67396429a142851a745090d65f90a89424a86382866e9b01af1ae267ee23f304"
+        "ordered_entries_sha256": "5b4b95fc79cfe552df2c66452b7d147bf780b1da62f64e175adb2b666de77428"
       },
       "claim_citations": {
         "entries": 32,

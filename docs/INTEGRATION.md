@@ -836,3 +836,28 @@ specification proposals remain subject to separate Sol/high review and LEAD's
 exact contract/lease admission; no assets or runtime wrapper are authorized here.
 No tests, package edits or runtime jobs occurred. C3 A1 and C1's A2 preparations
 remain in their distinct ownership lanes; paid/provider/live remain paused.
+
+### C1 CP1B access and C2 FP02 render lease/oracle freeze
+
+Integrated LEAD's exact commit
+`73498e28d85d4376578d61c00b7834ccb8bba91b` (parent
+`9c4994e71e0f0f61d956627c32e2346311a6fb37`) by cherry-picking its nine-file
+patch only. SHA-256 pins:
+
+- `PLAN.md`: `541ccde91d63a1d1355631a1058ffb1671025f02c4b6994143e8a0855b41faaf`
+- `cases/earnings/access-expected.json`: `a8210ba05e81c3cba04634bfe82e3e7aa11525892407b41d379ebf0298413d0c`
+- `cases/earnings/render-expected.json`: `7b45f939d2d771611e9b11633f348e7c1174cb7ea0b3eb36eeb20661dc4192c4`
+- `docs/CP1B-ACCESS-LEASE.md`: `da0471d83746dc67bf40e9b3e14aa7984994abfa812820265174bd8cb6964142`
+- `docs/CP1B-RENDER-LEASE.md`: `b0de1be5a0ae64dff442b5c6652e7a5d8f6d57328d49cc808f37ca5990a6143d`
+- `docs/QUEUE.md`: `76f574712b6d051e61eafe3d55749d77ccd28704ae246d481fa1b74feb98eb00`
+- `docs/TEAM.json`: `1eaf1227066edbf3b2575ff72e1d8105ad3ace8fd0648f3fde36808fdee55b5e`
+- `docs/reviews/cp1b-access-contract.md`: `a6beab43a00ac4331314721b49d5626bb984df84a367b55592eed8822b137119`
+- `docs/reviews/cp1b-render-contract.md`: `72c18c584d6663d43d7dabb506c25aab7f443bc303c1eff2275d107f969662fe`
+
+Both oracle files parse as JSON. All 132 pre-existing source/test/case files
+remain byte-identical; the two new oracle files bring the inventory to 134.
+These leases freeze the A2 access and A3 render contract/oracle boundaries; they
+do not admit product implementation or runtime work beyond their explicit
+scope. C3 A1 remains disjoint. No tests, implementation, runtime, or financial
+audits were run. The package remains untouched and paid/provider/live work
+remains paused.

@@ -994,3 +994,24 @@ financial-render/workflow cases are not qualified by these cohorts. Actual owner
 links remain open. No source or case files changed; B1/A4 contracts and oracles
 were not admitted or integrated. No tests/jobs were run for this docs-only patch;
 paid/provider work remains paused.
+
+### CP1B bounded access projection and actual-owner lease freeze
+
+Integrated LEAD's exact nine-file commit
+`f75af2b97cb0a6707f267aeb51e88319204c0f4d` (parent
+`654f1c1fd555f61f2185d33836cbf6f0bc90a1ed`): `PLAN.md`, `docs/TEAM.json`,
+`docs/QUEUE.md`, the two CP1B addenda/lease docs, their independent review, and
+three case/descriptor JSON files. The review pin is
+`docs/reviews/cp1b-owner-contract.md`
+(`f5602baaa9f1fcb0114b23bf2a3c773d649aab598fb82ad1c5671ecc1c1fcdc3`); new
+case pins are `cases/earnings/access-projection-expected.json`
+(`c36dc87159e132440d7f3d9d909b1969c81758c4edf9806f6a42a4ca1795add2`),
+`cases/earnings/owner-expected.json`
+(`c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d`), and
+`cases/earnings/manifest.json`
+(`60ed95782648064db7806bb7f0714fe030f9563424df50e17500803a2edfb7ec`). All
+141 previously tracked source/test/case files remain byte-identical; these three
+reviewed cases bring the total to 144. The six frozen A1/A2/A3 source pins were
+rechecked. This is a static contract freeze only: no code, tests, runtime,
+provider job, or actual-owner acceptance was added. A4 remains unadmitted and
+paid/provider work remains paused.

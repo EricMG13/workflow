@@ -159,11 +159,11 @@ proof. No FY2024/YoY comparative qualification; preserve first-slice evidence.
 - [x] Discover adopted stage, QA/promotion, export/publication and rendering APIs.
 - [x] Independently review/freeze literal sources, financial oracles and shared API.
 - [x] Integrate exact contract/data and release exclusive C1/C2 implementation leases.
-- [ ] C1: bounded full CP1 source/input/tool/submission/promotion/publication/audit bridge.
-- [ ] C2: authenticated actual financial/Model render with exact canonical publication.
-- [ ] Close sensitive/confidence/tournament reviews and focused causal checks.
-- [ ] Execute actual internal offline positive/gap cases with retained raw lineage.
-- [ ] Verify real financial and Model browser output/citations/calculation link.
-- [ ] Integrate exact commits, final focused assembled check and portable evidence.
+- [x] C1: bounded full CP1 source/input/tool/submission/promotion/publication/audit bridge.
+- [x] C2: authenticated actual financial/Model render with exact canonical publication.
+- [x] Close sensitive/confidence/tournament reviews and focused causal checks.
+- [x] Execute actual internal offline positive/gap cases with retained raw lineage.
+- [x] Verify real financial and Model browser output/citations/calculation link.
+- [x] Integrate exact commits, final focused assembled check and portable evidence.
 
 Paid/provider/live tests remain paused. One heavy local job/two disjoint lanes.

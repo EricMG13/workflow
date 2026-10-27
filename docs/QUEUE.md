@@ -1012,3 +1012,540 @@ explicitly support complete equitydisclosure and by-function classification. Raw
 values are genuine synthetic sourcecolumns, not actor-generated yearly observations.
 C1/C2 must consumeexactintegratedV4 before financialtests. ExistingFY2024/YoY gaps,
 source/providernativequalification limits and single-writer constraints retained.
+
+V4 integrated sourcebase4cc75da077c49e173f4599211b22d63a6ed6d188, clean;
+onlydocs/cases sinceb9. C1/C2 ff-only routes preserveownedfiles. No more source/API
+approval wait. Actual quarter-only feasibility is not counted as acceptance.
+
+C1-FIN-POSITIVE-3 admitted23:47:09UTC freshnojobscan/load3.74/3.57/3.39;
+C1exactbase4cc, product4d0f9f606df35465662b4cfc8f4196e3d27f19a276d403dd679cc42ef5bf8a01,
+testaca694ff9188a20e0cf77216cd1926247df65b20561ea8d1a66de7871f7d72f8,
+manifest6b3eeffe... verified. Sameonepositivecomponenttest only. FYheaders/82rows/
+14literal citations statically checked, allQ+FYsourceidentities/bridges supplied.
+Scopedtypes/Ruff pass; mapper noargtournament candidateMemory applied withbackup,
+actualcorrectnessinvariant pendingthisrun. Freezeallsource/test/data through exit;
+recordPID/UTC/exit/fulllog/hashes/release; no restarts or concurrentheavyjob.
+
+C1-FIN-POSITIVE-3 completedPID37379,23:47:40..23:47:41UTC,exit1,0.78s,
+frozenfiles unchanged. Concrete adapter classifierbug: prose 'No FY2024 annual
+income statement...' falsely marked sourcepage1 asrequiredstatementpage. Actual
+statementpages2/3/4 fullyextracted; nofinancial journalwrite. Existingtest causally
+reproduced falseclassification; fix anchors actualstandalonecaption lines. No source/
+core/gate weakening or acceptance ofemptyactualstatement extraction. Slotreleased.
+
+C1-FIN-POSITIVE-4 admitted23:48:42UTC freshnojobscan/load3.56/3.43/3.34;
+exactproductd6ca6de80279028b80e5c32b00428081bcebbf3c29bd7536b9f59dd53d7746a2,
+unchangedtestaca694ff...verified. Sameonepositivetest only on4cc/V4case. Standalone
+caption rootfix; finalcausalpair requested forprosementionvsrealemptycaption. No
+otherjob/sourceedit/restart/provider; freezeall until exit/fullreceipt/release.
+
+C1-POSITIVE-4 live read-only snapshot progress: PID37578 healthy~98%CPU at82s;
+all5CP1stagesVALID, CP1finished/restricted head and actualCP-MODELfinished/restricted
+head. Finalreceipt/portablecopy verification remainsrunning; not yet a completed
+case or actualhostactor acceptance. Frozenfiles unchanged, soleheavyjob, no restart.
+
+C1-FIN-POSITIVE-4 PASS: PID37578,23:49:13..23:56:04UTC,exit0,
+1passed410.66s. Exactd6ca6de8.../aca694ff.../V4case unchanged. Fullcomponent all5CP1
+stages, frozen QA formula assertion, actualrestrictedCP1+CP-MODEL heads, actual
+publication, internalseal/publicverify/portablecopyverify andModelreadinessREADY
+passed. Full log C1work/cp1-fin-positive-4.log. Healthy CPUjobnotrestarted; slotreleased.
+This qualifiescomponentviability only; actualofflinehostparticipant andnativeDOM
+acceptance stillpending. C1finalcausal/review/tournament/focusedchecks mustclosebefore
+exactproductintegration; C2 ready for reviewedAPI/helperroute, noheavyjobheldnow.
+
+Postpositive4 finalscopedreview identified one remaining namedfailure-path bug:
+partialoutput hashread OSError could escape before quarantine/audit. C1 patches
+best-efforthash collection andunreadablepartialwritecausalcase, plus coherentforged
+headrebinding soheadtestisolatesactualmetadata guard instead of earlierancestry.
+No newsource/core/policy scope. Final20casebatchrequestforthcoming; noheavyjobheld.
+Actualactor prepromotion QA pause explicitly confirmed byC1; independentSol/high
+reviewer has pinned exactFraction scoring (partialsource7/10, lineageweights10/9/5/
+4/3/0, openfindingpenalties40/15/3, precedencecaps39/59, ties-even rounding).
+
+C1-FIN-FINAL-1 admitted2026-10-27T00:07:00UTC freshnojobscan/load3.06/3.11/3.50;
+exactproduct4f513165d4229c853dd7723cb3b9bbdb838b614cbb11a9ae5f818635a947da56,
+test771af9a706f0883008b327e12e3e47ed17e90a8b6a8544ca7d18b784acd4621b,
+base4cc/V4manifest6b3eeffe... verified. Exactly20newworkflowcases inclnamedsource/
+state/audit/QA/publication/repair/quarantine/caption/finiteargumentguards. Immutable
+genuinePOS4seed/currentpublicverify+isolatedcopies andonefreshpromotedprefix; no
+fakeModules/verifier bypass or actualactoracceptanceclaim. Bothnoargtournament
+winners appliedwithbackup; finalruntime/spotinvariant nowpendingthisbatch. Freeze
+allcode/test/case through exit, fullPID/UTC/log/exit/beforeafterhashes and release.
+No concurrentheavyjob/provider/restart. Productintegration waits green+reviewclosure.
+
+C1-FIN-FINAL-1 actualPID39717 started2026-10-27T00:07:40UTC; exactfrozenfiles,
+healthy~100%CPU andfinite3-4GBRSS, no restart. Finaltwofixes confirmed by reused
+independentreview; no residualwithinthat scope. Jobstillactive, no concurrentheavyjob.
+LEAD shortreadonly JSONcrosscheck of immutablePOS4Model againstindependentV4:
+FYrevenue120/EBITDA30/FCF9/debt50/COGS-60/gross60 USDmillions andnineQ4metrics
+with exactoperands/38digitmath pass; sixearlyquarterlev/coveragenulls preserved.
+ModelReport unitsremainMILLIONS (meaning120millionUSD), notraw120millionamount;
+metrickeys carrymetric:prefix, basis.scope distinguishesrollingfromhistorical.
+This is componentdata format/oracleverification only, not actualactor acceptance.
+
+Finalassembled-checkruling: newC1/C2modules are disjoint additions, byte-identical
+integration is mechanically verified, C2clone alreadyintegratesC1API andfullpositive
+C1/C2focusedchecks+actualactor/DOM remainrequired. Finalmain neednotrebuildexpensive
+positivepipelinesagainwithoutnewsourcechange; chooseexistingactualgap/renderrefusal
+integrationnode + old156regressions asonefocusedassembledcheck. This exercises
+C1->C2actualnewAPI/imports/failurestate onmain whilepositivebehavior/evidence stays
+boundtoexacttestedsourcebytes. C2modulefixture may lazilyinitializeoneimmutable seed
+perpositive/gap key; full22 stillbuildsbothonceandcopyisolation/actualverifier retained.
+No productionchange or validation shortcut. Recordexactfinalselectedcommand/results.
+
+C1-FIN-FINAL-1 PASS + tokenreleased: originalPID39717,
+2026-10-27T00:07:40Z..00:18:46Z,exit0,20passed665.23s. Product4f513165...,
+test771af9a7..., manifest6b3eeffe... unchanged before/after. Full log C1work/
+cp1-fin-final-1.log. No edits/restarts/provider calls. Sensitivefinaldelta review,
+Ruff/types/callerclosure passed; bothmandatorytournamentruntimeinvariants covered.
+C1finalizesonlyownedhandoffandexact3filecommit; product/tests frozenunchanged.
+Actualhostactorstillpending with rawQAindependentcheckpoint beforepromotion.
+C2full22+scopedstaticbatch queued next afterexactC1integration/ffroute; sourcepack
+andCLIsetup-only data work mayoverlapstatics but noactualactor/runtimeuntilslotfree.
+
+2026-10-27T00:24UTC LEAD admits C1 exact commit07ede0f7c92380b61452dc536cee635dbfcf8610
+(parent4cc75da...), exactly financial_workflow.py/test_financial_workflow.py/cp1-model.md.
+Verified product4f513165.../test771af9a7... match frozen20pass bytes. PM alone integrates,
+no tests in this mechanical slot. Scope reviews/tournaments closed; strict mypy and
+Ruff I/F pass. Six broader Ruff advisories remain explicitly documented, no full
+Ruff claim: alias/branch-simplification/noqa/unused-test-value plus loop callback
+B023. LEAD traced immediate calls within the same iteration, no escaping closure;
+no consequential bug or repository full-lint gate established. No cosmetic churn.
+C2 next heavy22casebatch follows clean main integration and ff-only API update.
+C1 actual pack/CLI setup DATA ONLY permitted; actual runtime waits C2 release.
+Paid/provider/live tests remain paused.
+
+C1 integrated e474e314... plus receipt2946639147e340ff34be749a589b2c886eb4cbbd,
+main clean and product/test byte hashes verified. C2 ff-only to exact294663 preserves
+3owned files; LEAD observed base/status/hash directly2026-10-27T00:25UTC.
+C2-FIN-GREEN-1 admitted after fresh no-heavy-process/load check. Frozenrenderer
+SHA d511935ca9724de3ed734da87498f786742f2e63ca4a62a68408f9d136b089a8,
+test3177aecd779a3a12c5c507a60feaf18499129f7991cc79ff55410ac100019289,
+orderedsetaf110de1fb13595507f80098d4f0a89c8c56efb3ff78ab2a433add440eb1e4c5.
+Exactly full22 financial-render tests then narrow mypy, Ruff I/F and formatcheck.
+Sequential singleheavybatch; freeze C1/C2 source/tests andV4data through actualexit.
+Record PID/start/end/log/exit/beforeafterhashes/release; noquietrestart. Actualactor
+stillwaits. No paid/provider/live tests or extra positivepipelines admitted.
+
+C2-FIN-GREEN-1 actualpytestPID41246, start2026-10-27T00:25:50.345973Z,
+outerexec71310. Phase logs artifacts/financial-render-green-1-{pytest,mypy,ruff,format}.log;
+liveJSONrecord includes fullbeforeinventory ofsrc/tests/cases/contract/pyproject.
+LEAD actualPIDcheck00:27:49UTC:96.7%CPU,~1.6GBRSS,elapsed1:59, soleheavyjob.
+Noquietrestart. Actualinternalanalystplan prepared DATAONLY; frozenactualpackrawSHAs
+positive374fdaa4fcdf939267958f65421c2af47ab1e5ee9e5a47c0cdf6e271a101e60c,
+gap0b14ac95b3719e2777cd6db7c197a5040ece0dedfc8b6db89e8b84deff477f8e.
+LEAD checked actualrunidentities/sourcehashes/missinggap and honestunauditedlimitation.
+Actualpackhash mustcome fromrealbinding; no componentreceipt or payload replay.
+IndependentSol/high reviewer retains V4/materiality/formula and awaitsrawactualQA.
+
+2026-10-27T00:39UTC bounded scheduling refinement: originalC2PID41246 remains sole
+heavyCPU job (~100%,~2.5GBRSS); nootheranalyticalruntime. LEAD traced reviewed create/
+current/source-epoch code and actual82rowextractprobe to separate lightweight source
+participation from heavy financial composition/revalidation. C1-ACTUAL-SOURCE-1 is
+admitted ONLY fresh positive CLI setup, actual CP0 sourcecalls/review, CP1source_context
+calls/review, financials actualreads/extraction and authored rawreview DATA. Stop BEFORE
+financials submit_review or any later projection, promotion/publication/seal/gap.
+C1 maykeep idle finiteCLI open awaiting full-slot admission. Source/context compose
+has no fullfinancialmetrics; extraction actualprobe0.04s. This replaces earlier wait-
+for-all-runtime rule with explicit light/heavy separation, retaining oneheavyjob/two
+lanes and frozen code/tests/source/pack. Distinct runtimework writes onlyC1store.
+Record PID/start/transcript/bindings/hashes; no helperpayload/privateModule/provider.
+If unexpected sustainedCPU work, stop issuing furthercalls and report; do not kill
+healthy owned or unrelated jobs. Full financial runtime stillrequires separate fresh
+LEAD admission after C2 release, and independent rawQA pause beforepromotion.
+
+C1-ACTUAL-SOURCE-1 actualPID42201,start2026-10-27T00:39:44.867Z, participant
+C1-offline-analyst; retained finiteJSONlines exactrequests/responses under C1work/
+actual-financial-v4/positive/transport. Positivepack374fdaa4... and code4f513165...
+frozen. LEADactualps00:39:54: C1CLI0.0%CPU/~65MBRSS vs soleheavyC2PID41246at100%.
+Only admitted light sourcework/drafting; financials composition/promotion stillheld.
+
+IndependentSol/high actualdraftsanity closed before financialsubmission: SHA90d0b901...
+matched;440statementamounts match frozenliteralcolumns;719quotes exactsource/hash/
+locator; USD/MILLIONS/IFRS/consolidated scopes and FYvsQ4 balance identities correct.
+Function-only OPEX retained distincttotalcosts;10CFO/NCFidentities/5equitybridges
+correctwithout duplicatedNI.13invocationresponses match immutableauditreceipts.
+Actualcontextrefusal->identitysearchzeroresults->identicalrawresubmission retained.
+Staticonly, no corevalidators/tests/edits, no QA or promotion inference. Fullactual
+composition and independentauthenticQA remainpending; C1stillidlebeforefinancials.
+
+2026-10-27T00:46UTC C1-ACTUAL-GAP-1 light-only admitted whilepositiveCLIidle;
+C2original22casejob soleheavy. LEAD traced negative receipt/publication branches:
+noCP1financial pipeline or Model build, only CP0 validation/replayedcalls and actual
+absent-promoted-basis publisher refusal. RunfreshgapCLI in distinctfrozen gapstore,
+actualidentitysearch/read, honestCP0missingfinancialreview -> CP1.beginrefusal ->
+actualpublish_modelrefusalbeforeattempt/files -> sealnegative receipt and EOF.
+No positiveoperations or financialcalc/projection permitted. Retainactualtranscript/
+rawreviews/hashes/refusals/heads/exit and release; positivePID42201 staysidlebefore
+financialsubmission. This supersedes gap-after-positive scheduling only; same
+single C1 writer issues operations serially to disjointstores, never concurrent
+storewrite. Frozen inputs/code unchanged; providerpause retained. Unexpected
+sustainedCPU mustpause furthercalls/report, no healthyrestart/kill.
+
+C1-ACTUAL-GAP-1 PASS/EOF/released PID42836,2026-10-27T00:46:53.917Z..
+00:47:31.530Z,exit0. Actualidentityread/search + unavailablefinancialread refusal;
+rawCP0reviewee96a3b2... validated restrictedCP0; actualCP1.beginNotAuthorized and
+actualpublisher 'CP-1 has no accepted or restricted head' refusal BEFOREModelattempt/
+files. Realnegative receiptsealed/internalverify; canonicalpackccc25656..., snapshot
+4696cdaf..., rawreceipt929fd192bdd933e6fe1fdbcf11dcd06e0e194f8e7046ee7905df89acb4963896.
+CP1/modelnull, refusalcp1_not_authorized, noModeldir. Sixactualrequest/responses in
+C1work/actual-financial-v4/gap/transport, fullactual-run-result.json and processrelease.
+PositivePID42201 remainsidlepre-financials. No inputs/codechanges/provider/heavywork.
+C2originalfull22+scopedbatch remains soleheavyjob; actualpositive QA/promote/render
+and finalportablecopy authentication stillpending. No negative-onlyslicecompletion.
+
+C2-FIN-GREEN-1 pytestPASS22/2673.07s, originalPID41246,
+2026-10-27T00:25:50.345973Z..01:10:23.725120Z,exit0. MypyPID43865exit0,
+RuffI/F43868exit1: ONE test-local importorderingI001 atline81; format43869exit0.
+Whole4commandbatch ended01:10:23.976266Z; inventoryBEFORE=AFTER/allfrozenfiles.
+Releasedcompute. Pytestlog6f74761d8e8d1beee6d5070b9e98c4f80ef5ba68d97fde69faf66e0a4f3c082c.
+Root readactualdiagnostic; minimaltest-only import reorder allowed with before/after
+AST-equivalence + I/F/formatchecks, confidence note; no extra45minpytestrequired for
+non-semantic importorder. Rendererprodsource remains frozen; any realfunctional
+change needs scopedreview/admission. C2handoff/commit stillpendingexactlintclosure.
+
+C1-ACTUAL-FINANCIAL-1 admitted2026-10-27T01:10:39UTC freshactualnoheavyprocessscan,
+load3.84/3.52/3.47; originalpositivePID42201idle0CPU. Code4f513165.../test771af9a7...,
+actualrawpack374fdaa4..., rawfinancialdraft90d0b901..., V4manifest6b3eeffe...verified.
+Continue SAME actualCLI, financials submit through actualnarrative/readiness inputs/
+rawreviews then authenticQualityInputs+completeauthoredQA inventory. STOP BEFORE
+qualitysubmit/promotion for independentreview; no publisher/seal yet. FreezeallC1
+source/tests/pack plus currentbinding/reviews through actualphaseexit/pause. Oneheavy
+jobonly, preservependingresponse rather than resend/restartquietwork; providerpause.
+
+C1actualfinancialsrequest17 INVALID: authored raw90d0draft reusedreportedEBITDA
+observationIDs in both reported andadjusted definitionassessments; adoptedcoreunique-
+assessment ownership guard refused. Not a productbug or sourceamountissue. All440
+amounts/citations unchanged. Specificauthored-data repair admitted: reportedIDs only
+reportedassessment, adjustedIDs onlyadjustedassessment; preserveoriginal/rawinvalid
+record and diff/newhash; actualnewrepair epoch must reread/reextractsource within
+remainingcall/repair budgets. SamePID42201, no code/source/packchange/restart/helper.
+Bounded independentsource sanity didnotclaim schema/corevalidation. Actualcorrected
+financials validation andauthenticQA checkpoint stillpending.
+
+ActualfinancialsrepairVALIDrequest23 samePID42201: rawrepairSHA
+4ace57a8f8b1888777e84cfab5a34a4ce9d35addf4519ac3e5c0e1388d60058f,
+only seconddefinitionassessment removed5overlappingreportedEBITDAIDs; nofacts changed.
+Actualfreshrepairread/search/extractrequests18..22 newbinding, raw17invalidretained.
+Storedpayloadb683955e..., snapshotbaad406e...; actualsourcechecks77PASS,
+periodchecks68PASS/noBLOCK, honestWARNinventoryretained. Actualnarrativeinputread24
+fullinputhashd6646279101df4f51d7989cc798d30df6ed3e2d418713bc24ccf9ff304ee1c22;
+598449chars actualsource-freeprojection. Narrative/readiness/rawQAauthoring ongoing,
+no promotion/publication yet. C2import-onlystaticclosurePASS, productd511unchanged;
+exactcommit/handoffstillpending, no extra pytestscheduled.
+
+C2finalstaticclosurePASS: onlycachedtestimportI001reorder, exactdiff/normalizedAST
+proof retained. Finaltest99059144b35d4c8d8cccee1ba4c4b6761ab06f9c45eb566c156ac063a4085b13,
+productd511unchanged, orderedset239e353b6c3c17d0ef0857cdd114cf2b6327539252fdf200629acacfb87aa54a.
+Confidence/independentSolhigh/noargMemorytournament closedactual22caseand5/3/copy
+invariants; no furtherpytestforimportsort. Exact3filecommite675dcfafb027516bd385aea9e81755b293dfe70,
+parent2946639, clean. LEADadmitsPMmechanicalintegrationonly; no testsduring C1heavy.
+Actualhost/DOM stillpending, componentseednotactualacceptance.
+
+C2exacte675integrated byff +mechanicalreceipt63eaea5fb49f5abb2dccd37ac8ec5cd6632581fa,
+mainclean/source4f513165+rendererd511935c+finaltest99059144verifieddirectly. No PMtests
+run/admittedyet; choose157assembledslot when C1actualQApause is idle. C2mayff-only63e
+metadataandprepareactualportablepathplan; noactualrender/browseruntilfreshadmission.
+ActualC1narrative andreadiness VALID; readinessrequestedonlyCP-MODEL/noanalytical-
+consumerassessmentrows, Python ownsactualModelready result. AuthenticQAinventory/raw
+judgments beingprepared; no qualitysubmission/promotion/publication yet.
+
+C1actualPRE-QA pause reached:28requests/responses,noqualitysubmission/promotion/
+publisher/sealedpositive. FullauthenticQualityInputs read28 is20,011,803bytes,
+contenthashb2a5606994557039987a2320f6f596edd59c3c9753a2bd356cf6b42e06b820c5,
+artifact9a165368..., snapshotba59570b...; frozenrawQA
+c3a08c6305df0d95ebc107c2acd4377dd906444201a8ecaaf1d4b158166652e2,
+claimprovenancec8c03343.../freeze3a723517...chmod444. Actualgatepartial/statusrestricted,
+42516coverage/40498present,7claims allmaterial claimed; no scoreinferred. Independent
+Sol/high semantic/materiality/lineage+exactFractionreview dispatchedagainstfullraw
+packet BEFOREpromotion, hash-boundexpectation/review toLEADwork. C1remainsidle.
+
+PM-ASSEMBLED-1 admitted2026-10-27T01:17:50UTC freshps noheavy, C1PID42201idle0CPU/
+~1.4GBRSS; load1.45/2.43/3.02. Cleanmain63eaea5, codehash4f513165/d511935c,
+finaltest99059144 verified. Exactly oldsource/upstream/sourceworkflow/connectedrender
+156tests + quotedactualgap financial-render node[True], onepytestcommand expected157.
+No fullpositive rerun afterbyteidenticalintegration; positive22proof+actualactor/DOM
+stillrequired. Freezeallmaincode/tests/cases, PID/UTC/log/exit/beforeafterhashes/release.
+No provider; C1 qualitycontinuation waits independentreview AND this slotrelease.
+
+PM-ASSEMBLED-1 PASS157/3.47s exit0 onassembledmain63e; tracked src/tests/cases
+before/afterhashinventoriesidentical. Docsreceiptcommitd4fb8481826bff9d1ad9c9e2c5aa8b8d872199bc,
+mainclean; compute released. This includesactualnewgapAPI andfinalsortedimports;
+no unchangedpositive pipeline rerun. C1stillidlefrozenpre-QA, independentreviewpending,
+quality/promotion/publication/render/browser notyetaccepted. Paid/providerpaused.
+
+IndependentactualPRE-PROMOTION QA GO for EXACT rawc3a08c.../bindingba59570b...,
+created2026-10-27T01:22:03.550904Z BEFOREanypromotionoutput. Expectationsaved
+work/cp1-model-delivery/actual-v4-qa-independent-expectation.json
+SHA651b42add960c59b2fbdc3d09bf99fc1461b81f591d8e6fa663a273005fececd,
+semanticreviewMD99f9cf762d7c272e63097d8b0f8f8a7011128f6b44dc2bd4cf09fd97a093d5e4.
+Checkedall7materialclaims/20references/ceilings,42516coverage40498present, no waivers/
+pruning/newdefect; actualQualityInputs source-freeclosedshape/no101citationquotes.
+E520/7,C1012450/10629,M7/10,P0 =>raw3075554/53145 =57.870994449...,
+cap59notbinding =>58/Restricted/Low. No score60 gate. No candidate/corevalidator used.
+
+C1-ACTUAL-PUBLISH-1 admitted2026-10-27T01:22:15UTC freshactualps noheavy,
+PID42201idle0CPU, load3.76/2.99/3.07; code4f513165/test771af9a7/rawpack374fdaa4/
+rawQAc3a08c/freeze3a7235 verifiedunchanged. PM157pass slotreleased. SAMECLI submit
+EXACTrawQA onlyallowedinputs-hashprefill; compareactualconfidence withprecomputed
+expectation. Ifmatch/valid/promotedRestricted andactualModelreadinessREADY, invoke
+actualpublisher -> sealreceiptAFTERpublication -> EOFexit/release. Stopreportany
+mismatch/Blocked/notReady or pubfailure, no score-drivenjudgmentedits or sourcechange.
+Preserveallhistory andPID/UTC/commands/requests/responses/finalheads/filehashes.
+Oneheavyjob; noC2renderuntilrelease/providerpaused.
+
+C1quality29VALID/promotedrestricted and actualconfidence EXACTprecomputed58/
+Restricted/Low, but actualModelreadinessGENUINELYBLOCKED. Rootpublicreadonlycheck:
+Workbook.statusblocked, ModelReadiness.statusblocked, selectedquarters[], quarter_selection
+andquarter_countBLOCK; no missingmetrics/conflicts/contextblockers. No publishercall/
+Modelhead/files. AuthoredFinancialSubmission.quarter_ids used SOURCEperiodIDs q1-2025
+instead of CONSTRUCTIONIDs. Root+C1traced adopted FinancialSubmission defaultNone and
+model_readiness.py101..130: None selects actualQUARTERconstructionkeys, FY/PEexcluded.
+No corebug/gatewaiver. Originalactualrunretained withvalidQA butblockedModel; no success
+claim. MonitorHead.ticket_idfieldmistake corrected byAttempt.resultSHAjoin, failed
+read-onlymonitorassertions retained; no Executionmutationfrommonitor.
+
+C1-ACTUAL-READY-2 admitted2026-10-27T01:28:07UTC freshnoheavyps/load2.95/2.77/2.91;
+oldPID42201idle0CPU. FIRSTsavefailedpositiveactualresult/readonlycomparison/rootcause,
+closeownedCLI onEOF/no publisher/no fakefinalreceipt; retainalloldstore/transcript.
+THENfresh exclusive work/actual-financial-v4/positive-2/store/model/receipt CLI with
+SAME frozenpack/source/code (no reset/overwrite/privaterewind). CorrectONLY supported
+quarter_idsNone inauthoredfinancialreview (proposal10f1498a...); fresh actualsource/
+extraction and actual projected inputs; ownpreviousjudgments maybereused ONLYafter
+checking actualnewresponses/freshbindings, never component/testpayloads. Confirm
+actualfourquarter readinessREADY atreadiness BEFOREquality. FreezefreshauthenticQA
+andnewrawreview/binding/contenthash forindependentreview BEFOREpromotion; old58GO
+belongsoldbindingonly, cannotbe reusedasprediction. StopanynotReady/mismatch. No
+code/source/packchange, no gatewaiver/provider. Oneheavyjob, allactualfailuresretained.
+
+OldpositivePID42201 EOFexit0 2026-10-27T01:30:00.756Z; wholefailedselectionrun retained
+readonly444/555, failed-positive-result.json explicitactual58matched/Modelblocked/
+noModelhead/files/calls/no falsefinalreceipt. Correctedfreshpositive-2PID45650 started
+01:30:10.994Z on samecode/rawpack, ownparticipantC1-offline-analyst-corrected-selection.
+Sourceepochs fresh; independentlycheckedNoneproposalonlyselector10f1498a, addendum
+6d1dd49d...; oldexpectationbindingnotreused. ReadinessmustREADYbeforefreshQA.
+
+C2-ACTUAL-GAP-RENDER-1 light-onlyadmitted2026-10-27T01:31:36UTC. Rootactualps C1
+P45650idle0CPU/~68MB; noheavyotherjob, load3.01/3.01/2.98. C1holds soleheavycapacity
+forcorrectedcase. Actualgap path ischeapCP0-only3passauthentication (assembled157
+includingthisexactgapnode3.47s); nofinancialrecomposition/Modelbuild. Toallowdisjoint
+C2progress, rootcreated NEWoutputs/cp1-model-slice fromstagedcheckedproofs andcopied
+actualEOFclosedgap40files byteforebyte/no symlinks; receipt929fd192..., packccc25656,
+snapshot4696cdaf..., noModeldir. Rootchecks/gap-copy-proof.json pins everycopybyte.
+C2mayrenderONLYthisportablegapstore/receipt, model_directoryNone, NEWoutputs/gap,
+unchangedprod d511/finaltest990/main d4fb. RetainExecutionbeforeafterfullhashes,
+actualPID/UTC/log/exit/renderhash/release. No positive/componentsource/render or
+browser/serveryet. C1financialwork remainssoleheavy, allinputs/code frozen.
+Nativegapproofwillserve ONLYimmutablegapleaf afterseparateadmission so ongoing
+positivecopy/packagework cannotmutate servedroot. No providers; notfullacceptance.
+
+C1-ACTUAL-READY-2 actualREADYverified BEFOREquality: freshCP0/context/financial15/
+narrative17/readiness19VALID,12genuinesourcecalls+82rowextract/read bodycheckedbefore
+ownjudgmentreuse. FinancialrawNone10f1498a..., stored46b6663d... . Trustedpublic
+Execution.read/step_output -> Workbookready AND ModelReadinessready, nofindings/
+missingmetrics/conflicts/actions; exact4QUARTERconstructions ownperiodq1..q4-2025,
+daycounts90/91/92/92, FY/PEexcluded. Proofpositive-2/prequality-model-readiness-
+verification.json. P45650, ticketea15c6e8-5d7b-444e-a3cf-5507e4a2eb00, snapshot
+acc8343546e4057db52ebe07012e9aa4e6ae0304bafbaea9cdaaa46780ea72f2.
+Freshqualityread20 issuedAFTERReadyproof; frozenpacket/newindepreview pending before
+promotion, no oldscoreassumption. Samecode/source/rawpack/providerpause unchanged.
+
+C2-ACTUAL-GAP-RENDER-1 PASS actualPID45823,01:33:24.812629Z..01:33:24.913871Z,
+exit0, copiedactualgap3passpublicauthentication; all40inputfilesunchanged.
+outputs/cp1-model-slice/gap/report.html raw51a0f1fbe6b47574b5ef04992647b72775079167bb432b88f37fd12b7523eb3e,
+receipt929fd192..., renderreceipt510633ff... exactly3files/noModeldir.
+FullC2artifacts/actual-gap-render-1 run.py/run.log/record.json. Lightprocessreleased.
+
+C2-ACTUAL-GAP-DOM-1 light-onlyadmitted01:34:23UTC freshps nootherbrowser/server/job,
+C1P45650idle0CPU/~1.36GB atfreshQAfrozenpreparation (holds heavycapacity). Rootverified
+3gapfilehashes unchanged. Oneown127.0.0.1port0serverONLYimmutableoutput/gapLEAF and
+oneownedhiddennativeIABtab; actualdefault/CP0/source/limits/CP1/ModelrefusalUI proof,
+fullsourcepassport/citation/CP0artifact/runidentity/absenceModel. Screenshots/AX/logs
+outsideoutputs inC2artifacts so servedleafnevermutates. No HTML edits/mocks/component
+seeds/externalURLs/Chrome/provider. Closeownedtab/server andrecord actualprocess/
+tabcleanup plusleafhashbeforeafter. Positivebrowser/render stillrequiresfreshadmission.
+
+FreshREADY2 independentGO BEFOREquality onnewbindingacc83435/ticketea15c6e8,
+QualityInputs27526e11.../artifactdb592320.../frozenc3a08craw and087341bfreeze.
+All7materialclaims20refs/fulls42516coverage40498present independentlychecked;
+sourcefree/ceilings preserved/nolimitationwaivers. Actualretainedreadinessbothready,
+exact4intendedquarters, all94mandatorychecksPASS. FreshFractioncomputation E520/7,
+C1012450/10629,M7/10,P0 raw3075554/53145 =>58/Restricted/Low,cap59nonbinding,
+notinferredfromoldscore. Newexpectationactual-ready2-qa-independent-expectation.json
+SHAe1696cfa52a978a3a1de1548f5332f623f52da1d5f3366088e60a77fa95d775f;
+reviewMDd9af6229af47230e01f5f51b693c7d5b923a274adcd551038f60475dc69887dc.
+
+C1-ACTUAL-PUBLISH-2 admitted01:38:44UTC freshps noheavy,C1P45650idle0CPU,
+onlylightC2ownedgapserver45924idle0CPU; load3.08/2.89/2.90. Rootverifiedcode4f/
+test771/rawpack374f/rawQAc3a/freeze087/Readyproof9e8 unchanged. SameCLI submitexact
+freshfrozenQA viafiniteAPI, compareALLactualconfidence withNEWbindingexpectation,
+checkactualbothModelready+4quarterconstructionIDs source-linked, thenactualpublisher
+canonical3files -> finalreceiptAFTERpublication -> EOF/exit/release. Stopanydiscrepancy
+or notReady; no score-drivenjudgmentedits/privateModule/phase/sourcechange. All
+oldfailurehistory preserved; no provider. C2positiveheavy/render stillwaitsrelease.
+
+C2-ACTUAL-GAP-DOM-1 PASS14namednativechecks/24indexedartifacts, actualmissing/blocked
+source +CP0CONDITIONAL/exactDONOTRUN, fullidentitySHA74fe2ad.../page:1/exactquote/
+CP0artifactf5385793..., explicitCP0route/reload/limits andCP1/ModelNotRun/noJSONlink.
+Actualvisibleissuer/asof/synthetic/method; literalrunID authenticatedreceipt-only,
+notfalselyclaimedvisible. Browserproof627904890c7be514f8a91eeb0f5a0ad509c521678010e01dc65f3a175f4f2c08.
+OwnedIABtab4CLOSED, ownedserver45924/session40561exit0/CLOSED01:39:22.585498Z;
+3gapleafhashes unchanged. Rootcopiedactualrender/browserproofsbyteexact intooutput
+checks/actual-gap-render andbrowser-proof/gap. Gapcompletebutpositivepublication/
+render/nativeproofstillpending; nofullslicecompletionclaim/provider.
+
+Correctedactualquality21VALID/promotedrestricted: CP1result
+87af2b93ae1e2a30df57fe0997c1e89f75bee07932501c7074d51155e59f846f,
+snapshot5e7d2d07011831908fff5d94203075025b0bec7b97a1eeb4830353d067acea3c.
+TrustedpublicmonitorallactualconfidencefieldsEXACTNEWindependentexpectatione1696cfa,
+rawQAc3a unchanged/storedonlysupported275inputshashprefill. BothactualModelready,
+4constructionIDs mappedsourceperiods; comparison896b8578c4a1ece943fabe59bb5d9b1a91d116940415682c6e02b93a69f1288a
+writtenBEFOREpublisher withnoModelhead/dir. ActualModelpublication22 thenSUCCEEDED,
+settledCP-MODELbindsactualpromotedCP1 andexactcanonical3files model.html/calculation.json/
+receipt.json. FinalproducerreceiptrequestedAFTERpublication, fullactualinternal
+lineageverify/sealing ongoing; noEOF/release orpositive-renderacceptance yet.
+
+C1-ACTUAL-PUBLISH-2 COMPLETE/RELEASED P45650,01:30:10.994Z..01:47:22.308Z,
+EOFexit0/psabsent. Qualifyingpositive-2:23actualrequest/responses,12sourcecalls,
+3source-freeinputreads,6VALIDsubmissions,1realModelpublication, finalproducerseal
+AFTERpublication/internalfulllineageverify. No testhelper/Moduleinjection/provider.
+Producerraw/contentreceiptbbbee0075581797e9cb916fe79b939b6c9ef03d521405da1afc3d0946cf8ce61,
+actualrunresultaa54bcc0..., stdoutcdc88e63... . Pack75a96bc2..., finalsnapshot
+17a4027d4a5c45143ae14b04a5966d12b533f1c512fb738eeca243de39b319ef.
+CP1ea15c6e8/result87af2b93...restricted; Model973365ee/resultc6a8d3d0...restricted.
+CanonicalHTML6be1d2ec.../calc89b1bf3b.../receipt265e6c2d... . C1no furtherExecutionwrites,
+onlyownhandoffdocs next. Oldfailedselectionrun241332522bytes/179files retainedcopy;
+neverqualifiespositive. Gapfullyrendered/nativepassed/closed separately.
+
+IndependentactualModelJSONoraclePASS84monetary/9Q4operand+basis/6earlyquarterNULL/
+1208citations/880computationreferences;3canonicalrawfilehashbeforeafterunchanged.
+JSON98fcbd84badd4e1cf4396348c3add0539b49ce3c6db87c17cffe1d9a7e8d3360,
+MD4321ab6691d338074f4c55f7dd9b3a17e9cd6c0ee1ab11b89b1dc2b5a611d6fc,
+boundactualCP1/Model/finalsnapshot, no corevalidator/Executionwrites/browserclaim.
+
+Rootcopiedqualifyingpositive-2 to outputs/cp1-model-slice/evidence/positive:
+156files/324176582bytes, no symlinks, everyrawsource=copyhash/filecountidentical;
+checks/positive-copy-proof.json. CanonicalModelexact3files validated, producerfields
+12calls/3reads/6submissions/1publication/currentpack/snapshot/heads matchpinnedvalues.
+
+C2-ACTUAL-POSITIVE-RENDER-1 admitted01:48:49UTC freshps noheavy/no remainingCLI/
+server, load2.10/2.41/2.69. Unchangedcodeonmaind4fb (C1source4f/C2rendererd511/
+C2test990), actualportablepositive store+receipt+model -> NEWoutput/positive. ONE
+actualunchanged3passrender call only; no redundantpublicverify/test/helper/component
+seed. Freezeallcopied156inputs/code/test/case throughrealexit; retainPID/UTC/log/
+command/inputbeforeafter/canonicalcopiesequality/outputhashes/release. Nativepositive
+browser separatelyadmittedafterexit. Paid/providerpaused; nofullacceptanceuntilDOM.
+
+C2actualpositive3passrender originalPID46685/start01:50:08.990672Z/session32787,
+actualsource/test/case/copy156pinchecks passedbeforeONEwrappercall. Healthy100%CPU/
+~2.3GB at3m35, no restart/failure; singleheavy remainshelduntilrealexit. No browser/
+server/provider. Rootmechanicalreceiptgrouping confirmsqualifying12sourcecalls:
+CP0readiness3, CP1source_context4, financials5; oneeachsource-free narrative/readiness/
+qualityread;6validsubmissionsincludingCP0. Nativegapdone14checks/cleanupclosed.
+
+C1finalproducerhandoff doc-only dfb6a5b2562bb73620a75dd61dc4c5211bc0420a reviewed:
+onlydocs/handoffs/cp1-model.md updatedactualledger/selectorNone semantic/retainedfailures/
+scopedproducerqualification. Alreadyintegratedde5034b +receipta834d630357dda012d3725876ab12c7fcbd83d75,
+mainclean. Rootacceptsexactintegration, verifiesd4..a834diffONLYthatMD+INTEGRATION,
+no code/testchange; no tests repeated. FinalMDhash42db3a0e8e5c891e820b5d431bac9dfed250896d96e96255e36febe53f020a59,
+bytecopiedoutputchecks/c1/handoff-final.md; source4f/rendererd511 unchanged.
+
+C2-ACTUAL-POSITIVE-RENDER-1 PASS/released originalPID46685/session32787,
+01:50:08.990672Z..01:55:18.253842Z,exit0, ONEunchangedwrapper/all3authpasses.
+All156portableinputs andsource/test/caseinventoriesunchanged. Exactly10outputs,
+canonicalModel3bytes+co-locatedcalcidentical89b1. Report4dbdfc091d02174d12ea9d0941b43d0294d6a4ab53d58bd3b441ec36981daf95,
+renderreceipt2b10f68d6287d118ca7e816e753409837eb1ad7e1716f6a3f70c2d1f493f1bd2,
+producerreceiptbbbee unchanged. FullC2actual-positive-render-1/record.json/log.
+Root independentlyhashchecked7principaloutputs againstpins, no semantic/codechanges.
+
+C2-ACTUAL-POSITIVE-DOM-1 native/light admitted01:57:23UTC freshps nojob/server,
+load1.54/2.38/2.62. ServeONLYimmutablepositiveLEAF viaowned127.0.0.1port0server,
+oneprimaryhiddenIABtab (+recordedownedchild if actualsameorigincalclinkopensone).
+ActualFinancials/Model/capitalstructure/chart/QA58RestrictedLow/Ready/Evidence/
+Limitations/citationpassport+CP1artifact andcanonical#CP-1/#CP-MODEL/calclinkproof.
+AllPNG/AX/HTTP/hash/cleanup outsideoutputs underC2artifacts/actual-positive-dom-1;
+no HTML/outputinjection/changes. Closeonlyownprimary/childtabs/server andretainall10
+outputhashbeforeafter. Rootmaywriteotherpackageleaves/metadata outsidepositive;
+servedleaf frozen. No newtests/corevalidators/providers ornextowner/production.
+
+PositiveDOMtoolingblocker: immutableactualreport62,757,916bytes/canonicalHTML62,714,144;
+nativebrowser create/gettabautomaticobservation exceedednativepipeframe beforehandle.
+Ownedtab5/providerbrowser-use:87ebc5d2-d99a-45c4-a91c-c262bd6ae7cc existsatownedserver
+127.0.0.1:54227(report), PID47199. No UIacceptanceclaim/outputchange. Rootreadcomputer-
+use+builtinbrowser skills andadmittednarrowvisibleownedCodexappUI recovery; toolDENIED
+cua.getApp('Codex'): 'Computer Use is not allowed to use the app com.openai.codex for
+safety reasons.' Nativeapp routeCLOSED/no OS/terminal/controlbypass. This is recorded
+honestly, not userapprovalinferencenor site permissionwaiver.
+
+Supportedbrowser-onlyrecovery remainsadmitted: purposebuiltpanelnavownedtabtosmaller
+sameorigincalcJSON/tinydirectory, bindpublicbrowserhandle there, then documentednav
+backtolargeHTML usingboundedvisibleDOM/screenshots ratherthanfullpayloadobservation.
+OnlypublicdocumentedCua APIs, no privateCDP/Playwright/appstate/HTMLinjection; record
+allownedtabs/cleanup andactualmethod. Sameactualbytes/source/model/testshashesunchanged.
+No successclaim ifbrowserUIcannotbeobserved; nativeappdenialsnotworkaroundtarget.
+
+Browser-onlyrecovery SUCCEEDED, no nativeCodexapp-control bypass: purposebuilt
+open_in_codex navigatedSAMEownedtab5 to2MBcalculationJSON; normalcua.getTab thenbound
+publichandle. ActualJSONnativeAX2,109,242chars+PNGcaptured. Boundnormalbrowser.goto
+backtoUNMODIFIED63MBreport andgetScreenshot succeeded. Full-pageAXstillframe-limit;
+C2continueshonestnativebrowserUI/screenshots/normalUIactions andJSONAX/byteproof,
+onlydocumentedboundedDOMreadsifavailable. No fakefullDOMPASS, no modifiedHTML or
+privateAPI/CVDP/OSautomation. Normalbrowserlinks allowedafterfullknownsameoriginURL;
+Codexappdeniedroute staysCLOSED. Actualmethods+limitations+ownedcleanup toberecorded.
+
+Recoverednormalbrowserhandle also supportsBOUNDEDactualvisibleDOMreads, notonly
+screenshots. C2clickedactualreportcalculationlink throughnormalbrowserAPI andverified
+same-originJSONopened. FullpageAXsnapshotstaysframe-limited butdirectboundedDOM/native
+screenshots/directlinkinteractiongivegenuineUI evidence. Financialviews/passports/
+Ready/QA/limits/cleanup ongoing; allpositive10sourcefilesfrozenunchanged/noDOMinjection.
+
+PositiveactualnativebrowserboundedDOM/screenshotchecks confirmfullQ4revenuepassport
+(source30USD/scale1000000/Q4dates/full82dsourcehash/page2/quote/full87afCP1artifact),
+QA58RestrictedLow/currentCP1+Model/pack, readyrow andopening+4QUARTER+FY USD/MILLIONS,
+distinctFY/displayLTM. Exactvisibleoperandpassports50/30,7.5/30,2.25/7.5; knownRCF0,
+capex-2.5, earlyratio/priorgrowthmissing verified. ActualclickedcalculationJSONbounded
+DOMrawSHA equalscanonical89b1; canonicalCP1/Modelroutesloadwithrestrictions. Native
+finalindex/resourcecleanupstillpending; no fullpageAXclaim/no HTML changes/provider.
+
+C2positiveactualbrowserproof materiallycomplete: boundednativeDOM+screenshots,
+actualreportcalcLINKCLICK+canonicalCP1linkclick, clickedJSON22bounded100kchunks raw
+2,108,966bytes hashEXACT89b1 (initialfullAXjoinspaces andfirstsingleDOM200kcap retained,
+notnormalizedaway). Canonicalmodel#CP-1/#CP-MODELfunctionalactualUI/noinjectedbanner,
+fullcurrentCP1/pack/calcprovenance. Fullrevenuepassport +6exactQ4operandpassports,
+capex-2.5, RCFknown0, earlyNotCalculable/YoYNotAvailable. UI77reconciliationrowsALLPASS
+isDISTINCTfromsealed94mandatoryModelgatewitness; doNOTconflatecounts.
+Ownedtab5closednormalbrowserAPI/listTabsabsent/nochildtabs; ownedserver47199/session
+66988closedexit0; all10outputhashbeforeafteridentical. Finalindex/closedUTCpending.
+
+Chartscope ruling fromPRIMARYadoptedcode: bindings/cp1.py andreport_view.py1143/1507
+explicitlydeclare no S.1–S.4producer yet; destinationhonestlyshows 'Charts need S.1–S.4
+series; KPI register shown as a table'/n-aplots. Frozencontract askschartDESTINATIONS
+fromactualmaps, canonicalHTMLbytepreservation. Actualfinancial/capitalKPI tables and
+Modeldataqualifyboundedrenderedoutputs; NOplottedseriesqualification claimed. Do not
+inventcharts/changecore/HTML tohide knownfallback. FutureS-series remainsopen and
+finalacceptance/README/matrixmuststateit. UserfullCP1analysis+Modelpublication
+scopeactual complete; broaderchart/provider/pathway qualificationnotimplied.
+
+FINALPOSITIVE NATIVE PASS:22namedchecksALLTRUE,54indexedartifacts(+index), browserproof
+95514c82a5b7d287d947f2b740578a36cf55cc8c5010918a643b59df54c391e8. Exactactualclicked
+DOMJSON2,108,966bytes/89b1, all6Q4operandpassports,current87af/75a9/full82d source,
+zero/null/signedoutflow/historicalFY+quarters/readiness/QA/limits/canonicalroutes.
+NormalnativebrowserboundedDOM+screenshots+actualclicks; no fullpageAXsuccess claimed.
+Ownedtab5ONLYclosed/nochildren; server47199/session66988exit0closed02:17:44.603743Z;
+all10outputsbytehashbeforeafterIDENTICAL. Rootcopied55prooffilesbyteexact tooutput
+browser-proof/positive and sampled3nativePNGs (financialtable/fullsourcepassport/
+canonicalModelmanifest) confirmingFY/quarter/LTM,USDmillions,fullsource+CP1hash and
+Modelbindings/limits. Allownanalytical/render/serverprocessesabsent inrootpscheck.
+
+LEAD owns new docs/CP1-MODEL-ACCEPTANCE.md finalboundedcaseacceptancereceipt plus
+existing PLAN.md/MODULES.csv/TEAM.json/QUEUE.md closure updates. No product/test/case/
+contract change; remainingchartseries/broaderowner/providerqualification staysopen.
+Finalconfidence review and packageindex/integration metadata aremechanicalclosure,
+not another engine/test/native run. C2finalhandoffdoc-onlycommittobereviewed/integrated.
+
+C2finaldoc-only08248d5988bb9c70c237b6c10f678b5b3636a046 reviewedfullsingleMDdelta,
+SHA52e5145c3e67ccd73e15b31f8457aafe1b16e2e03e81c1174ba6156db0982509; allactualpositive/
+gap/controlrecovery/canonicalbyte/UIcount94vs77/chartfallback/cleanup factsagreewith
+closedrecords. Finalhandoffconfidence15checksALLTRUE+gitdiffcheck. LEADadmitsPMexact
+single-docintegration/receipt only, no tests or codechanges. FinalMD/proofreview copied
+outputchecks/c2. Nativecontent/22positive+14gapchecks nowclosed withhonestlimitations.

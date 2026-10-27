@@ -1049,6 +1049,33 @@
       "sha256": "21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b",
       "reason": "Add the leased CP1B fact-shape, layout coverage and report projection while preserving the imported source and prior local patch hashes.",
       "review": "docs/reviews/cp1b-render-contract.md"
+    },
+    {
+      "destination": "src/deploy_vii/registry.py",
+      "imported_sha256": "e351d5b917558d4988e582963063dbf8a237f5949ae8a132b9f1c4e5f559995a",
+      "prior_project_sha256": "e351d5b917558d4988e582963063dbf8a237f5949ae8a132b9f1c4e5f559995a",
+      "project_commit": "266440a5fb050ccdaadca8ab0c4183ec15b4efc5",
+      "sha256": "adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc",
+      "reason": "Register CP1B with an explicit offline/live capability split under the reviewed A2 lease.",
+      "review": "docs/reviews/cp1b-access-registration-contract.md"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "project_commit": "266440a5fb050ccdaadca8ab0c4183ec15b4efc5",
+      "sha256": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+      "reason": "Declare the CP1B earnings delta method as an offline step without enabling shared-live execution.",
+      "review": "docs/reviews/cp1b-access-registration-contract.md"
+    },
+    {
+      "destination": "src/deploy_vii/live/submission.py",
+      "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
+      "prior_project_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
+      "project_commit": "266440a5fb050ccdaadca8ab0c4183ec15b4efc5",
+      "sha256": "a6b8919e5f10b9dfd541d469a930fd153c3074bbd64ff35f755aed3c9d5a2799",
+      "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas.",
+      "review": "docs/reviews/cp1b-access-registration-contract.md"
     }
   ]
 }

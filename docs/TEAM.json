@@ -1,6 +1,6 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: Task3CP1 chart/report/Model verified; C1 projection138focused+2genuine-metadata component cases integrated, assembled132compatibilityPASS; C1A4writes admitted atcf5115bea; C3B1 session supplement/pager safe updates admitted; C2authenticated FP02 delivery preparation; fullPLAN incomplete; paid/provider/live paused; C3 early111componentPASS only; B1/A4 native reference errata reviewed, awaiting exact integration/admission",
+  "state": "active: Task3CP1 chart/report/Model verified; C1 projection138focused+2genuine-metadata component cases integrated, assembled132compatibilityPASS; C1A4writes admitted atcf5115bea; C3B1 session supplement/pager safe updates admitted; C2authenticated FP02 delivery preparation; fullPLAN incomplete; paid/provider/live paused; C3 early111componentPASS only; B1/A4 native reference errata integrated/admitted atf3b9b37; CP4 source-host freeze reviewed, future isolated C1 lease pending",
   "sessions": {
     "LEAD": {
       "current_chat": true,
@@ -34,9 +34,9 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "C1-CP5-INTEGRITY-A4-IMPLEMENTATION-1 atcf5115bea: upstream.py/test_upstream_tools.py + NEWintegrity_workflow.py/test_integrity_workflow.py ONLY; work/cp5-integrity-a4; writes/static only, fullruntime needs acceptedB1 implementation",
+    "C1": "C1-CP5-INTEGRITY-A4-IMPLEMENTATION-1 with native-reference supplement safe update to f3b9b37: same4files ONLY; fullruntime needs acceptedB1; separate source-host component not yet admitted",
     "C2": "FP04 exact2filecommit4e84ffc integrated at5dcbad23; source-only authenticated FP02 delivery preparation in work, no new product writes/runtime",
-    "C3": "C3-CP1B-OWNER-B1-IMPLEMENTATION-1 plus bootstrap/raw and session-binding supplements; accepted pager safe update tocf5115bea admitted preserving3ownedWIP files; same3files only, writes/static, eachruntime separately admitted",
+    "C3": "C3 B1 existing3files only; bootstrap/raw/session/native-reference supplements and accepted pager admitted through f3b9b37; early111componentPASS only; fullowner/actual/recovery still required",
     "PR_MANAGER": "integration only"
   }
 }

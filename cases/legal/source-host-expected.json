@@ -1,0 +1,633 @@
+{
+  "schema_version": "cp4-source-host-oracle/1",
+  "scope": "Pre-code source-host component acceptance/state/permission expectations only; no actual owner/CP5/native proof",
+  "authority": {
+    "legal_manifest_sha256": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+    "legal_source_contract_sha256": "80f21f1e73063655e799496c3484a51576ff5e9649f03383b341ed7ff2aa453a",
+    "independent_source_review_sha256": "f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a",
+    "C2_proposal_sha256": "40fe1eca48ee343926d79d078b0472ca99947d8e73487f34a65a24a975932783",
+    "source_authority_main": "d1812f24de901271d3f9e44ea58cfb52dd24e117",
+    "source_pins": {
+      "src/deploy_workflow/host.py": "6d0e22605321d55cd3d4f7abd2aa20e8655b33d74ba5721aa246e5a183116333",
+      "src/deploy_workflow/tools/source.py": "acc6806efdadbd6b737fa61e1039fd4b8d5c04cf36d01dcec969ecf8dcda1be0",
+      "src/deploy_vii/cp1_workflow.py": "966a982d4068bd962df47228ded77f1929b79a1e51624fb7c4cfa9470e1878d3",
+      "src/deploy_vii/canonical_tables.py": "6c1e2a1ce158a381994d9881420e98cddc61f77c8b695299da4fc9b08e2112bd",
+      "src/deploy_vii/model_interface.py": "259982a84d91226a9cb42a3c736506d592a04e0150724973197ac70057d0286c",
+      "src/deploy_vii/envelope.py": "e45587d58cd864e393a576b1ffa2c07adcd76fce847274923c0b7264c80e2291",
+      "src/deploy_vii/execution.py": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "src/deploy_vii/live/context.py": "71be7583fae72d5b719ba7167026d46576f5a4e7da4f4be1410417d50bd1a7aa",
+      "src/deploy_vii/cp4_legal.py": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "tests/test_source_tools.py": "51fa2caf7688c8f7a2e1695ea7e80c005d69b0d7aef4e9235b1c5c74b2e70e24"
+    }
+  },
+  "future_exclusive_files": [
+    "src/deploy_workflow/host.py",
+    "tests/test_source_tools.py"
+  ],
+  "exact_two_files_sufficient": true,
+  "public_api_unchanged": {
+    "factory": "SourceSession.from_execution(store:Execution,ticket_id:str,step_id:str)->SourceSession",
+    "invoke": "SourceSession.invoke(tool_name:str,arguments:dict[str,Any])->dict[str,Any]",
+    "bind": "SourceSession.bind_submission(payload:str)->dict[str,Any]",
+    "constructor": "fixtures only, not production authority"
+  },
+  "source_steps": {
+    "CP-0": [
+      "source_readiness"
+    ],
+    "CP-1": [
+      "source_context",
+      "financials"
+    ],
+    "CP-4": [
+      "legal_covenants"
+    ]
+  },
+  "CP4_grant": {
+    "factory": "registry pack-source capability before declared_sources/readable_sources",
+    "selector": "cp4_legal.upstream_of(store,attempt).legal_sources",
+    "legal_authorities": [
+      "executed",
+      "filed"
+    ],
+    "source_status": "ready",
+    "order": "pack order",
+    "explicit_scope_only": true,
+    "empty_scope_factory_error": "not_permitted",
+    "hardcoded_case_source_id_or_hash_in_product": false,
+    "tools": [
+      "search_pack",
+      "read_pages"
+    ],
+    "forbidden": [
+      "extract_statements",
+      "raw identity",
+      "raw financial",
+      "arbitrary file/code/shell/provider",
+      "full Module/upstream dump"
+    ],
+    "actor_grant_or_path_argument": false
+  },
+  "tool_limits": {
+    "search_max_hits": [
+      1,
+      15
+    ],
+    "search_default_max_hits": 10,
+    "search_snippet_characters_each_side": 300,
+    "read_max_pages": 5,
+    "CP4_extraction": false,
+    "existing_source_body_limits_unchanged": true
+  },
+  "cases": [
+    {
+      "case_id": "legal-current-matching-definition",
+      "run_id": "slice-legal-current-positive",
+      "pathway": "covenant_refinancing",
+      "requested_modules": [
+        "CP-4",
+        "CP-5"
+      ],
+      "source_ids_in_pack": [
+        "identity",
+        "financial",
+        "legal-covenants"
+      ],
+      "legal_source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+      "raw_source_pointer": "cases/legal/manifest.json/cases[0]/legal_source",
+      "required_CP0_authority": "executed",
+      "legal_scope": [
+        "legal-covenants"
+      ],
+      "source_ready": true,
+      "extraction_allowed": false,
+      "read": {
+        "tool": "read_pages",
+        "arguments": {
+          "source_id": "legal-covenants",
+          "first_page": 1,
+          "last_page": 3
+        },
+        "status": "ok",
+        "body_type": "str",
+        "expected_read_pairs": [
+          [
+            "legal-covenants",
+            "page:1"
+          ],
+          [
+            "legal-covenants",
+            "page:2"
+          ],
+          [
+            "legal-covenants",
+            "page:3"
+          ]
+        ],
+        "body_rule": "Exact selected supplied page content/locators/source hash through unchanged SOURCE renderer; never the alternative legal source hash or raw identity/financial content"
+      },
+      "search": {
+        "tool": "search_pack",
+        "arguments": {
+          "query": "Schedule A",
+          "source_id": null,
+          "max_hits": 15
+        },
+        "status": "ok",
+        "literal_matching_page_locators": [],
+        "scope_semantics": "null is only admitted legal scope, not all pack sources",
+        "full_read_credit": false,
+        "queried_scope_in_evidence": null
+      },
+      "does_not_prove": [
+        "actual owner/source epoch submission acceptance",
+        "legal definition equivalence",
+        "headroom calculation",
+        "CP5 consumer/native completion"
+      ]
+    },
+    {
+      "case_id": "legal-current-missing-ebitda-definition",
+      "run_id": "slice-legal-current-definition-gap",
+      "pathway": "covenant_refinancing",
+      "requested_modules": [
+        "CP-4",
+        "CP-5"
+      ],
+      "source_ids_in_pack": [
+        "identity",
+        "financial",
+        "legal-covenants"
+      ],
+      "legal_source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+      "raw_source_pointer": "cases/legal/manifest.json/cases[1]/legal_source",
+      "required_CP0_authority": "executed",
+      "legal_scope": [
+        "legal-covenants"
+      ],
+      "source_ready": true,
+      "extraction_allowed": false,
+      "read": {
+        "tool": "read_pages",
+        "arguments": {
+          "source_id": "legal-covenants",
+          "first_page": 1,
+          "last_page": 3
+        },
+        "status": "ok",
+        "body_type": "str",
+        "expected_read_pairs": [
+          [
+            "legal-covenants",
+            "page:1"
+          ],
+          [
+            "legal-covenants",
+            "page:2"
+          ],
+          [
+            "legal-covenants",
+            "page:3"
+          ]
+        ],
+        "body_rule": "Exact selected supplied page content/locators/source hash through unchanged SOURCE renderer; never the alternative legal source hash or raw identity/financial content"
+      },
+      "search": {
+        "tool": "search_pack",
+        "arguments": {
+          "query": "Schedule A",
+          "source_id": null,
+          "max_hits": 15
+        },
+        "status": "ok",
+        "literal_matching_page_locators": [
+          "page:2"
+        ],
+        "scope_semantics": "null is only admitted legal scope, not all pack sources",
+        "full_read_credit": false,
+        "queried_scope_in_evidence": null
+      },
+      "does_not_prove": [
+        "actual owner/source epoch submission acceptance",
+        "legal definition equivalence",
+        "headroom calculation",
+        "CP5 consumer/native completion"
+      ]
+    }
+  ],
+  "first_financial_proof_reuse": {
+    "model_contract": "docs/CP1-MODEL-SLICE.md",
+    "model_contract_sha256": "0bd7d5d9e5fdffb4f8b3016fb913105dbd1f2d19b8b263827de9120f0bf08250",
+    "chart_acceptance": "docs/CP1-CHART-ACCEPTANCE.md",
+    "chart_acceptance_sha256": "e27ccf664debd0f80d1b02480a7a961670daf16a24f9ae20a1d6b957cb853674",
+    "historical_CP1_artifact_sha256": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "scope": "Reuse accepted public source/financial/promotion/envelope mechanics and immutable financial source expectations. NEVER relabel/import historical module or receipt into fresh legal run."
+  },
+  "CP1_authentication": {
+    "accepted_or_restricted": {
+      "matching_finished_attempt_exactly_once": true,
+      "no_issues_or_interruption": true,
+      "step_order": [
+        "source_context",
+        "financials",
+        "narrative",
+        "readiness",
+        "quality"
+      ],
+      "all_steps_valid": true,
+      "all_payload_output_input_bytes_rederived": true,
+      "valid_stage_APIs": [
+        "validate_cp1_stage",
+        "cp1_registers"
+      ],
+      "expected_input_rule": "Exact ordered (*Attempt.inputs,*cp1_registers(...).module.inputs), no extras/subset/stripping",
+      "canonical_tail_order": [
+        "pack",
+        "financial-review",
+        "downstream-report",
+        "statement-history"
+      ],
+      "canonical_tail_status": "accepted",
+      "canonical_tail_hashes": "Authenticated pack, raw FinancialReview, recomputed downstream report and history; use actual public registers not caller strings",
+      "qualification": "Exact existing PROMOTED",
+      "quality_handoff_APIs": [
+        "QualityReview",
+        "CP1Handoff",
+        "cp1_quality_inputs",
+        "assess_quality",
+        "promote_cp1"
+      ],
+      "candidate_and_settled_result_distinct": true,
+      "candidate_exact_equality_and_settlement_rederived": true,
+      "envelope_APIs": [
+        "deploy_vii.envelope.Envelope",
+        "write_envelope",
+        "envelope_issues",
+        "read_envelope"
+      ],
+      "envelope_string_roundtrip_handoff_hashes_verified": true,
+      "head_equality": "Exact head_of(verified_result,PROMOTED), including inputs/commands/notes/qualification"
+    },
+    "blocked": {
+      "adopted_edge": "CP1->CP4 restricted; legal-only interpretation remains permitted",
+      "matching_actual_finished_repair_number": 1,
+      "previous_rejected_attempt_number": 0,
+      "repair_and_scheduler_inputs_verified": true,
+      "retained_invalid_step_payload_output_issues_recomputed": true,
+      "core_empty_candidate_exact": true,
+      "pure_rejected_blocked_settlement_verified": true,
+      "expected_facts": [],
+      "expected_tables": [],
+      "expected_claims": [],
+      "expected_inputs": "Exact scheduler inputs, no promoted four-tail",
+      "offered_CP1_figures": [],
+      "offered_CP1_facilities": {},
+      "headroom_offered": false,
+      "inherited_limits_preserved": true,
+      "fake_blocked_or_interrupt_only_without_invalid_core_provenance": "identity_mismatch",
+      "invalid_issue_normalization": "Exactly existing bounded_issues used by Execution.submit_step; pure settle derives final attempt/result issues/status separately",
+      "head_equality": "Exact head_of(blocked_result), qualification None"
+    },
+    "reject_accepted_exact_input_stub_without_promotion": true,
+    "no_old_receipt_or_partial_ModuleView_authentication": true,
+    "CP0_behavior_unchanged": true
+  },
+  "read_only_probe": {
+    "location": "private local host helper only",
+    "public_CP1_calls": true,
+    "finish": "Capture/rederive expected CP1 candidate/validator/qualification/pure settle only",
+    "submit_step_if_used": "Evaluate only expected public retained invalid validator callback against reconstructed immutable inputs; no append/write",
+    "forbidden": [
+      "writer lock",
+      "_write",
+      "real begin/finish/submit mutation",
+      "interrupt",
+      "replace_pack",
+      "temporary/export files",
+      "new blob/audit/publication/current pointer",
+      "shadow injected journal",
+      "private financial_workflow verifier import"
+    ],
+    "proof": "Record filesystem/current/blob/snapshot inventories and writer-entry spy before/after factory/invoke/bind in future component checks; no side effect permitted"
+  },
+  "factory_precedence": [
+    {
+      "order": 1,
+      "condition": "invalid/unreadable snapshot",
+      "error": "identity_mismatch"
+    },
+    {
+      "order": 2,
+      "condition": "absent/duplicate/ended/nonexecutable ticket or wrong/unadmitted/non-pack step",
+      "error": "not_permitted"
+    },
+    {
+      "order": 3,
+      "condition": "multiple pending/global input mismatch/duplicate input ID/CP0 current authorization mismatch",
+      "error": "identity_mismatch"
+    },
+    {
+      "order": 4,
+      "condition": "pack/head/full producer identity/status/hash/provenance mismatch",
+      "error": "identity_mismatch"
+    },
+    {
+      "order": 5,
+      "condition": "invalid retained source step/repair ancestry/bytes",
+      "error": "identity_mismatch or existing earlier not_permitted next-step rule"
+    },
+    {
+      "order": 6,
+      "condition": "authenticated CP4 legal source scope empty",
+      "error": "not_permitted"
+    },
+    {
+      "order": 7,
+      "condition": "snapshot changes by final recheck",
+      "error": "stale_binding"
+    }
+  ],
+  "invoke_precedence": {
+    "invalid_JSON_nan_recursive_before_lock_currentness": "refused/bad_arguments",
+    "reentrant_valid_arguments": "refused/not_permitted",
+    "valid_args_but_stale_snapshot_before_dispatch": "refused/stale_binding",
+    "disallowed_tool_or_source": "refused/not_permitted",
+    "malformed_tool_arguments": "refused/bad_arguments",
+    "admitted_unavailable_source": "refused/unavailable under existing source behavior",
+    "source_render_reserved_delimiter": "refused/render_refused",
+    "corrupt_named_blob_or_identity": "refused/identity_mismatch",
+    "unexpected_local_error": "error/internal_error/null; never success/empty",
+    "process_control": "propagate/release/no provisional success; no durability claim"
+  },
+  "receipt": {
+    "schema_version": "tool-receipt/1",
+    "exact_keys": [
+      "schema_version",
+      "call_id",
+      "sequence",
+      "binding",
+      "tool",
+      "arguments",
+      "status",
+      "body",
+      "error_code",
+      "source_evidence"
+    ],
+    "binding_keys": [
+      "run_id",
+      "issuer_id",
+      "as_of",
+      "method_version",
+      "pack_sha256",
+      "snapshot_sha256",
+      "module_id",
+      "step_id",
+      "ticket_id",
+      "attempt",
+      "inputs"
+    ],
+    "body_on_success": "str",
+    "body_on_refused_or_error": null,
+    "evidence_keys": [
+      "read",
+      "extracted",
+      "surfaced",
+      "searched"
+    ],
+    "CP4_extracted_always": [],
+    "successful_scope_search_null_means_only_granted": true,
+    "copy_detached": true,
+    "earlier_receipts_preserved": true
+  },
+  "submission_binding": {
+    "schema_version": "submission-binding/1",
+    "exact_keys": [
+      "schema_version",
+      "binding",
+      "payload_sha256",
+      "successful_call_ids",
+      "call_ids",
+      "source_evidence"
+    ],
+    "payload_hash": "Exact supplied UTF8 bytes, no normalized/legal JSON substitute",
+    "all_ids_order": "Actual session sequence",
+    "post_hash_currentness_recheck": true,
+    "does_not_validate_legal_payload_or_semantics_or_settle": true,
+    "non_utf8_or_nonstring_error": "bad_arguments",
+    "stale_or_reentrant_no_binding_created": true
+  },
+  "coverage": {
+    "reads": "Only successfully RETURNED admitted spans in this epoch",
+    "search": "Surfaced/searched only, not full page read",
+    "failed_or_stale_render": "No provisional evidence; preserve earlier success",
+    "missing_read_span": "Preserve existing successful missing-span message, no span credit",
+    "citation_helper": "Existing unread_citation_issues/ToolRules over actual Seen; unread legal cite fails caller check",
+    "absence_helper": "Existing absence_issues requires actual admitted search when applicable; no scope widening",
+    "host_bind_is_not_rule_pass": true,
+    "later_owner_complete_case": "All3 supplied legal pages and scoped searches plus independent semantic acceptance/submission lineage; outside this host lease"
+  },
+  "recovery": {
+    "new_session_same_pending_ticket": "Fresh session IDs/calls/evidence; no import of earlier session reads",
+    "existing_session_after_snapshot_head_status_pack_attempt_change": "stale_binding; never follow new input",
+    "retained_CP4_settling_step_or_payload": "No new source session/tools; public submitter/later workflow resumes exact payload",
+    "number1_real_repair": "Fresh actual ticket/attempt identity and source epoch allowed",
+    "durable_call_journal_or_crash_recovery_added": false
+  },
+  "success_cases": [
+    {
+      "id": "SH-S01",
+      "trigger": "Both adopted executed legal variants/full genuine current CP0+promoted CP1",
+      "expected": "Factory/read1..3 succeed; exact legal source only"
+    },
+    {
+      "id": "SH-S02",
+      "trigger": "Filed current legal authority machine fixture",
+      "expected": "Eligible only under authentic current CP0; synthetic capability test, no actual source semantic acceptance"
+    },
+    {
+      "id": "SH-S03",
+      "trigger": "Genuine authentic blocked CP1 repair path",
+      "expected": "Legal raw read/search allowed; no offered figures/facilities/headroom, inherited limits"
+    },
+    {
+      "id": "SH-S04",
+      "trigger": "Unscoped/null-source search",
+      "expected": "Only legal scope searched; surfaced/search evidence, no read"
+    },
+    {
+      "id": "SH-S05",
+      "trigger": "Genuine four-tail CP1 candidate/envelope/settlement auth",
+      "expected": "Exact bytes/current inputs/QA/handoff/qualification; zero verifier writes/locks"
+    },
+    {
+      "id": "SH-S06",
+      "trigger": "Returned receipt/binding mutation",
+      "expected": "No internal authority/evidence/history changes"
+    },
+    {
+      "id": "SH-S07",
+      "trigger": "Failure after prior successful legal read",
+      "expected": "Earlier read remains, failed new evidence not credited"
+    },
+    {
+      "id": "SH-S08",
+      "trigger": "Source cited-page/absence helper checks",
+      "expected": "Unreturned cite/unsearched absence fails later ToolRules; exact returned read/search supports only current scope"
+    },
+    {
+      "id": "SH-S09",
+      "trigger": "Fresh same-ticket session or actual number1 consumer repair",
+      "expected": "No borrowed old reads; actual identity retained"
+    },
+    {
+      "id": "SH-S10",
+      "trigger": "All old source-tool/CP0/CP1 cases",
+      "expected": "Unchanged behavior including financials extraction only"
+    },
+    {
+      "id": "SH-S11",
+      "trigger": "Facade filesystem/counter inventory",
+      "expected": "No new files/blobs/current changes/writer locks during factory/invoke/bind"
+    }
+  ],
+  "refusal_cases": [
+    {
+      "id": "SH-R01",
+      "trigger": "CP4wrong step/future retainedstep/finished/interrupted ticket",
+      "expected": "not_permitted"
+    },
+    {
+      "id": "SH-R02",
+      "trigger": "Source-free CP1/B1/CP2/CP5 or any unadmitted owner",
+      "expected": "not_permitted before source scope fallback"
+    },
+    {
+      "id": "SH-R03",
+      "trigger": "No CP0 RunCP4 under forged pending ticket",
+      "expected": "identity_mismatch; genuine begin is prior NotAuthorized/no ticket"
+    },
+    {
+      "id": "SH-R04",
+      "trigger": "CP0issuer/draft/unknown or nonready legal source; no eligible scope",
+      "expected": "not_permitted; no empty-scope search credit"
+    },
+    {
+      "id": "SH-R05",
+      "trigger": "Raw identity/financial/private ID or nonexistent source",
+      "expected": "not_permitted without source existence/text leakage"
+    },
+    {
+      "id": "SH-R06",
+      "trigger": "extract_statements or arbitrary tool from CP4",
+      "expected": "not_permitted"
+    },
+    {
+      "id": "SH-R07",
+      "trigger": "NonJSON/NaN/recursive/malformedarguments/boolpages/outofbounds",
+      "expected": "bad_arguments; no new evidence"
+    },
+    {
+      "id": "SH-R08",
+      "trigger": "Accepted/restricted CP1 direct-finish exact-input stub/no promotion",
+      "expected": "identity_mismatch"
+    },
+    {
+      "id": "SH-R09",
+      "trigger": "Missing/extra/reordered/forged canonical CP1 provenance tail",
+      "expected": "identity_mismatch; never strip/allow arbitrary extras"
+    },
+    {
+      "id": "SH-R10",
+      "trigger": "Correct four-tail but altered fact/table/claim/limits/candidate",
+      "expected": "identity_mismatch via exact rederivation"
+    },
+    {
+      "id": "SH-R11",
+      "trigger": "Missing/invalid QA/quality binding/handoff/register/envelope hashes",
+      "expected": "identity_mismatch"
+    },
+    {
+      "id": "SH-R12",
+      "trigger": "Missing/corrupt/foreign raw retained step/output/blob/Run/status/head",
+      "expected": "identity_mismatch"
+    },
+    {
+      "id": "SH-R13",
+      "trigger": "Fake blocked CP1/financial facts in blocked/no invalid provenance",
+      "expected": "identity_mismatch"
+    },
+    {
+      "id": "SH-R14",
+      "trigger": "Wrong repair ancestry/oldCP1inputs/foreign attempt",
+      "expected": "identity_mismatch"
+    },
+    {
+      "id": "SH-R15",
+      "trigger": "Legitimate snapshot/head/status/source-authority change after construction",
+      "expected": "stale_binding for old session"
+    },
+    {
+      "id": "SH-R16",
+      "trigger": "Tampered content under old hash filename",
+      "expected": "identity_mismatch; no cached auth bypass"
+    },
+    {
+      "id": "SH-R17",
+      "trigger": "Snapshot/head/pack change during source rendering",
+      "expected": "stale_binding or earlier hash identity failure; no provisional result/evidence"
+    },
+    {
+      "id": "SH-R18",
+      "trigger": "SOURCE delimiter/PromptError after staging",
+      "expected": "render_refused/null and prior successes preserved"
+    },
+    {
+      "id": "SH-R19",
+      "trigger": "Reentrant invocation/binding",
+      "expected": "not_permitted retained invocation; no source widening/no submission binding"
+    },
+    {
+      "id": "SH-R20",
+      "trigger": "Snapshot change during payload hashing",
+      "expected": "stale_binding after hash; no binding created"
+    },
+    {
+      "id": "SH-R21",
+      "trigger": "Nonstring/nonUTF8 payload",
+      "expected": "bad_arguments; no binding"
+    },
+    {
+      "id": "SH-R22",
+      "trigger": "Unexpected verification/program error or forced facade writer path",
+      "expected": "Visible refusal/error, never authTrue or valid empty output; zero writer sideeffects"
+    },
+    {
+      "id": "SH-R23",
+      "trigger": "Alternative legal case bytes substituted under current source/hash",
+      "expected": "identity_mismatch or stale_binding; no silent variant switch"
+    },
+    {
+      "id": "SH-R24",
+      "trigger": "Historical Task3 CP1/receipt relabel into new legal Run",
+      "expected": "identity_mismatch; no actual source/owner proof"
+    },
+    {
+      "id": "SH-R25",
+      "trigger": "Unreturned quote/searchsnippet used as fullread or nosearch absence",
+      "expected": "Caller ToolRules reject; bind itself remains only truthful evidence hash"
+    },
+    {
+      "id": "SH-R26",
+      "trigger": "Old source session reused after retained legal settling step",
+      "expected": "stale_binding/current factory not_permitted; no new reads"
+    }
+  ],
+  "focused_check_argv": "PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 '/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python' -m pytest -q tests/test_source_tools.py",
+  "execution_status": "NOT RUN; no product import/tests/engine/provider/runtime job in freeze",
+  "remaining_caller_gaps": [
+    "bounded current CP4 upstream offered-fact/facility/grant transport",
+    "actual legal source participation/submission/independent semantic acceptance/settlement and durable public legal owner receipt",
+    "complete selected CP1+CP4 CP5 consumption/final composition",
+    "authenticated selected-run legal render/native proof"
+  ]
+}

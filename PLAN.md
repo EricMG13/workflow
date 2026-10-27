@@ -380,3 +380,14 @@ Actual settlement must exercise the adopted prose/candidate guard; source-only
 correction is not a passing owner or clean CP5. Unlaunched A4 RED stays PIDnull
 until corrected pins/tests are admitted. C3 early111PASS covers only declared
 schema/bootstrap/source/raw guards, not actual owner/17session/descendant proof.
+
+
+CP4 source-host pre-code component is independently frozen in
+docs/CP4-SOURCE-HOST-LEASE.md and cases/legal/source-host-expected.json, reviewed
+in docs/reviews/cp4-source-host-contract.md. Future C1 scope is only host.py and
+test_source_tools.py. Current executed/filed legal search/read, genuine full
+CP1 promotion provenance (four ordered tail inputs/five stages/QA/envelope/settlement)
+and authentic blocked repair degradation must preserve existing permissions.
+No source extraction for CP4 and no verifier writes/locks. Eleven success and26
+refusal cases plus both adopted legal sources are frozen. Exact isolated write
+admission follows integration; this alone closes no actual legal owner or CP5.

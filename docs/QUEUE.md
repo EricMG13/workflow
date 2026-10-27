@@ -2555,3 +2555,34 @@ newsessionfield+whole-read-hash guards only, original clonedcasepins. No full
 financial fixture/17actualsession sequences/owner settlement/receipt/CP5descendant/
 recovery/native/B1 closure. Sourcefreeze/heavyslot released at realEOF/exit; no
 rerun absent source changes/new concern. Paid/provider/live remain paused.
+
+
+## CP4 legal source-host component independently frozen
+
+Leasee62e4e68c3c3dcfdd6257699a813554e133f9daf448f16e1361d0c57f9e29e59;
+oracle7d359fd531beb049595909b8d2c39d1e0aed3cf0bc5af1af08d6e86abafcdeff;
+independent same legal-source review2b5adcff495a3dfb2c4be6380d70d6394534f14fddce12e50f227bfe4083a4be
+published docs/reviews/cp4-source-host-contract.md. Future C1 exactly host.py/
+test_source_tools.py; no shared source/core/financial/envelope/state/renderer edits.
+Unchanged SourceSession public API, current CP0 executed/filed legal-only explicit
+scope, search/read only, financials-only extraction preserved. Genuine promoted
+CP1 auth rederives five retained stages, all four canonical tail inputs, QA/
+handoff/pure string envelope/public promotion/settlement/full current head using
+zero-write facade; no stub/hash-only/arbitrary-tail/old-run acceptance. Authentic
+blocked repair path preserves adopted restricted edge with no financial facts/
+facilities/headroom disclosure. No new math, parser, Model publication or QA gate.
+
+Root read full contract/review and checked oracle37controls/two source cases,
+all ten current accepted source/test pins, four-tail order/JSON/diff and exact
+pair hashes. Source-only freeze, no product import/test/engine/provider/job.
+Actual host implementation and zero-write checks are unverified; future exact
+write/runtime admissions required. Independent 11success/26refusal expectations
+do not close actual legal source/semantic owner/current-upstream/receipt/CP5/
+selected-run/native proof. Paid/provider/live remain paused.
+
+C1-A4-C3-B1-NATIVE-REFERENCE-SUPPLEMENT-1 admitted11:23:20.949418UTC at exact
+clean/pushed f3b9b371d0a24528f63474fc3c70a245ed196dbf after149baseline/newpins/
+runtime/process/load checks. Existing four C1 and three C3 files only, brief
+coordinated safe updates preserve all WIP hashes; then native reference/pin/fixture
+fixes within existing implementation leases. Each runtime separately admitted.
+Original A4 RED1 remains unlaunched/PIDnull. No old component evidence relabelled.

@@ -1,0 +1,113 @@
+{
+  "schema_version": "cp1b-access-registration-expectation/1",
+  "scope": "A2 component-only; no actual analytical/shared-live CP1B acceptance",
+  "original_lease_sha256": "da0471d83746dc67bf40e9b3e14aa7984994abfa812820265174bd8cb6964142",
+  "original_access_oracle_sha256": "a8210ba05e81c3cba04634bfe82e3e7aa11525892407b41d379ebf0298413d0c",
+  "pre_fix": {
+    "checkout_commit": "85785c9fa5370d3227309462346060f0e4fe4352",
+    "registry_sha256": "09b4c43e5124e2d9b39c22d8c56d297515eeea2203f5c1d1c3d7e690dca8ad79",
+    "upstream_sha256": "57766eeedaf293e47e7416c7cc8cb51217a3fa50ed8f041917015c0774bfc7ca",
+    "submission_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a"
+  },
+  "api": {
+    "StepChain.shared_live": "strict bool, default True, appended after existing fields",
+    "shared_live_step_modules": "(chains: Sequence[StepChain] = STEP_CHAINS) -> dict[str, str]",
+    "step_definitions": "existing signature; guarded dict subclass; strict eligible exact set"
+  },
+  "cp1b": {
+    "module_id": "CP-1B",
+    "steps": [
+      "earnings_delta"
+    ],
+    "shared_live": false,
+    "live_schema_present": false,
+    "journal_registered": true,
+    "optional_sets_maps_empty": true,
+    "planned_route": [
+      "source_readiness",
+      "source_context",
+      "financials",
+      "narrative",
+      "readiness",
+      "quality",
+      "earnings_delta"
+    ]
+  },
+  "existing_live_step_order": [
+    "source_readiness",
+    "source_context",
+    "financials",
+    "narrative",
+    "readiness",
+    "quality",
+    "business_context",
+    "credit_synthesis",
+    "legal_covenants",
+    "relative_value",
+    "integrity_review",
+    "committee_challenge"
+  ],
+  "cases": [
+    {
+      "id": "REG-DEFAULT",
+      "expect": "All prior chains shared_live=True; schema identities/module/order unchanged; positional constructors preserved."
+    },
+    {
+      "id": "REG-BOOL",
+      "expect": "True/False valid; None/0/1/string/list/dict reject ValueError as non-bool."
+    },
+    {
+      "id": "REG-INCLUSIVE",
+      "expect": "step_modules/settling/planned route retain earnings_delta; no dependency/permission bypass."
+    },
+    {
+      "id": "REG-ELIGIBLE",
+      "expect": "shared_live_step_modules excludes earnings_delta only, preserving existing order."
+    },
+    {
+      "id": "IMPORT",
+      "expect": "Fresh-process public deploy_workflow.tools.source and deploy_workflow.tools.upstream imports succeed in either order without provider/engine calls."
+    },
+    {
+      "id": "NO-FAKE-SCHEMA",
+      "expect": "earnings_delta absent from STEPS keys/iteration; no fake schema/sentinel/composer/dispatcher."
+    },
+    {
+      "id": "MISSING-GENUINE",
+      "expect": "Remove financials from otherwise exact eligible schemas: ValueError no model-facing schema for financials."
+    },
+    {
+      "id": "UNKNOWN-SCHEMA",
+      "expect": "Add unknown_step schema: ValueError for noneligible schema."
+    },
+    {
+      "id": "OFFLINE-SCHEMA",
+      "expect": "Add earnings_delta schema: ValueError for offline/noneligible schema; never silently skip it."
+    },
+    {
+      "id": "OFFLINE-REQUEST",
+      "expect": "STEPS[earnings_delta], submit_model_payload(... earnings_delta ...), submit_spec(earnings_delta), tool_specs(earnings_delta) with default/submit-only/pack kind all raise ValueError containing offline-only before normalization/callback/journal/provider; prior state unchanged."
+    },
+    {
+      "id": "UNKNOWN-REQUEST",
+      "expect": "STEPS[unknown_step] retains KeyError, never inferred registration or permission."
+    },
+    {
+      "id": "OFFLINE-ACCESS",
+      "expect": "Valid CP1B offline v2 granted current-CP1 access remains supported; raw/quote/v1-CP1B/stale/foreign/nongranted cases retain original refusals."
+    },
+    {
+      "id": "V1",
+      "expect": "All original CP2/CP5 v1 tests and existing live schema identities remain unchanged."
+    },
+    {
+      "id": "NO-SETTINGS-ENABLEMENT",
+      "expect": "Optional known effort key does not supply schema or enable offline capability; no settings/provider change."
+    }
+  ],
+  "limits": [
+    "No numerical/source oracle changed",
+    "No product execution by independent reviewer",
+    "No CP5 v2/actual owner/FP02 acceptance"
+  ]
+}

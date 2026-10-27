@@ -236,3 +236,10 @@ and authentic FP02 output/native proof must follow before module closure.
 - [x] Integrate exact leases and admit disjoint C1/C2 writes at the named base.
 - [ ] C1/C2 implement, verify causal cases and required confidence/tournament/reviews.
 - [ ] Assemble actual owner/access/consumer/render chain; no component-only module claim.
+
+A2 registration dependency: the independently reviewed pre-fix addendum
+`docs/CP1B-ACCESS-REGISTRATION-ADDENDUM.md` and companion
+`cases/earnings/access-registration-expected.json` distinguish registered offline
+steps from shared-live capability. C1's narrow sixth-file extension requires exact
+PM integration and subsequent LEAD admission; no shared-live CP1B implementation
+or provider testing follows. The original A2 oracle remains unchanged.

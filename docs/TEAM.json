@@ -34,9 +34,9 @@
   "implementation_lane_cap": null,
   "one_heavy_job_limit": 1,
   "active_lanes": {
-    "C1": "implementation admitted C1-CP1B-A2-IMPLEMENTATION-1 at85785c9; exact5registry/metadata/upstream/testfiles, heavy checks separately admitted",
+    "C1": "A2 original five files admitted at85785c9; independent offline/shared-live addendum frozen; sixth submission.py file awaits PM integration and exact LEAD admission; race fix requires causal RED",
     "C2": "implementation admitted C2-CP1B-A3-IMPLEMENTATION-1 at85785c9; exact4binding/spec/testfiles, heavy checks separately admitted",
-    "C3": "implementation admitted C3-CP1B-CORE-A1-IMPLEMENTATION-1 atf1b3c5c: earnings.py/test_earnings.py/new core handoff only; heavy tests separately admitted",
+    "C3": "A1 exact3files atf1b3c5c;71focused checks and genuine FULL CP1 component probe passed; required final code reviews/commit pending; actual owner unverified",
     "PR_MANAGER": "integration only"
   }
 }

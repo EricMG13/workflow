@@ -1,20 +1,16 @@
 # Work queue — source-to-rendered slice, 26 October 2026
 
-No analytical module is accepted. Task0 is contract/case/lease work; imported modules,
-preparation receipts and component fixtures do not count as owner execution.
-
+Current bounded acceptance is CP0 readiness/source context, full CP1/Model and actual
+CP1 chart series in report/Model (Task3-A/B/C); broader module/pathway completion
+remains open. Historical receipts below retain their original scope and policy.
 
 ## Current state (historical receipts follow)
 
-- Verified adapters: source host and bounded upstream tools, combined111focused green.
-- C1 reviewed producer pinned61187e75fa272a724ae00b5dbef1ff6206ea5209;31changedworkflow
-  tests/types/lint finalgreen, prior88source/workflowgreen, independentSolhigh+
-  confidence+tournamentclosed. Actualpositive/gapJSONlineparticipantjob admitted.
-- C2 renderer implemented onstableAPI;14componentcases awaitreviewedproducerintegration/
-  runtimeadmission. NativeIAB loopbackJS/DOM capability verified; actualHTMLproofpending.
-- PR MANAGER integrating exactreviewedproducer61187e75; no newproductacceptanceclaim.
-- Runtime token ACTUAL-SOURCE-1: two sequential frozeninteractivecaseprocesses, no C2
-  heavytestuntilrelease. Paid/provider/live tests remainpaused; Model/financeunrun.
+- Task3-C is closed with immutable portable report/Model/native evidence; PLAN lists its exact scope.
+- C3 A1 core has 71 focused checks and a read-only genuine complete-CP1 probe passed; final code review/commit pending. This does not establish an actual CP1B owner.
+- C1 A2 access implementation exposed a real eager live-schema import dependency. The independently reviewed registration capability addendum below must be integrated before its sixth-file fix.
+- C2 A3 binding implementation has 84 passing/4 failing test expectations under investigation; no actual CP1B/CP5/FP02 acceptance.
+- PM integrates exact admitted patches only. One heavy local job; uncapped disjoint implementation. All paid/provider/live tests paused.
 
 ## Task0 inputs and authority
 
@@ -2118,3 +2114,34 @@ Logs/reviews only C1work/cp1b-access-a2 or C2work/cp1b-render-a3; no extra track
 files beyondleases. Codeconfidence/tournament/sensitive reviews requiredbefore
 commit; PMhandlespostimportpatchmanifest. Actualowner/wholeCP5/renderlinks still
 open. Oneheavyjob/uncappeddisjointimplementation/paid-providerpause unchanged.
+
+
+## A2 registration capability addendum — frozen before fix
+
+Original A2 lease/oracle remain immutable. docs/CP1B-ACCESS-REGISTRATION-ADDENDUM.md
+(cd4cc04302fc26dd28d9238e2e2e1da61c1aab969e0bbca965ab01c7e2b7624f),
+cases/earnings/access-registration-expected.json
+(32d4bb0d938a678fba5dc9b6bacd9c123c183534262c0a4f893843bdf0680d95) and independent
+review docs/reviews/cp1b-access-registration-contract.md
+(9f95366415f715dd9d1978a7062d70cbf98950ee8fc6cb9e18e4937225540fc1) define
+explicit shared_live capability, inclusive journal registration, strict eligible
+schema totality and a capability-derived offline-only schema lookup refusal.
+Sixth C1 file live/submission.py is narrowly added only AFTER PM integrates this
+freeze and LEAD names its exact admission base. No fake CP1B schema, dispatcher,
+provider, settings, execution or owner edit. Preserve all original A2 permissions.
+Observed C1 GREEN1 PID83700 exit1 import failure is retained causal evidence;
+final_current race requires its own isolated causal RED after imports work.
+LEAD confidence: traced inclusive registry -> eager source/tools -> live schema
+totality; dictionary lookup callers need the explicit refusal hook; existing
+eligible schema identity/order and missing-schema failure remain mandatory.
+No product code changed here. New runtime and final code review remain required.
+
+C3 genuine FULL CP1 component probe PID85986,09:37:56.534023..09:37:57.888119UTC,
+exit0; source7df8dd4a unchanged;12points/132oraclefieldchecks,12gap points,
+currentFY120/30/20/50/30known, distinct FY/Q4 basis, no fabricated prior operand,
+input/blob/callerContext unchanged. GREEN2 PID85829:71passed. Records/scripts
+in LEAD work/cp1b-preparation. These prove core compatibility with the genuine
+stored CP1 blob6d41c0a0, not a new owner, authorized tool session or settled CP5.
+Test-only probe is exempt from rewrite tournament; confidence review checked its
+complete ModuleView/no input slicing, independent immutable oracle, exact blob
+hash and read-only boundaries. Actual owner/access/consumer/render remain open.

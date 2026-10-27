@@ -980,3 +980,17 @@ rerun during integration. The confidence review, two-pass rewrite tournament and
 independent sensitive review were checked for this exact patch. No combined
 regression was started. Actual owner/CP5/render acceptance remains open; paid and
 provider work remains paused.
+
+### CP1B component checks closure and owner-transport status
+
+Integrated LEAD's exact three-file status patch
+`654f1c1fd555f61f2185d33836cbf6f0bc90a1ed` (parent
+`07a62326bc2195617f9edd036bfc573a4fcbeee7`): `PLAN.md`, `docs/TEAM.json`,
+and `docs/QUEUE.md`. It closes the A1/A3 component checks and records the
+combined regression accurately: 218 passes before an intentional SIGINT, then
+221 disjoint fast-module passes in a second cohort, on the same frozen source.
+The interrupted historical financial-render fixture and the remaining heavy
+financial-render/workflow cases are not qualified by these cohorts. Actual owner
+links remain open. No source or case files changed; B1/A4 contracts and oracles
+were not admitted or integrated. No tests/jobs were run for this docs-only patch;
+paid/provider work remains paused.

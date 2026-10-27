@@ -1103,6 +1103,18 @@ _CREDIT_SNAPSHOT: Mapping[str, _Spec] = MappingProxyType(
 # Model-owned blocks the Earnings Update composition adds for CP-1's registers.
 _EARNINGS_UPDATE: Mapping[str, _Spec] = MappingProxyType(
     {
+        "headline-results": _Spec(
+            "Headline results", "CP-1B", "dense", ("CP-1B",), route_label="Full analysis"
+        ),
+        "variance-drivers": _Spec(
+            "Variance drivers", "CP-1B", "prose", ("CP-1B",), route_label="Full analysis"
+        ),
+        "kpi-changes": _Spec(
+            "KPI changes", "CP-1B", "dense", ("CP-1B",), route_label="Full analysis"
+        ),
+        "guidance-signals": _Spec(
+            "Guidance signals", "CP-1B", "prose", ("CP-1B",), route_label="Full analysis"
+        ),
         "ebitda-adjustments": _Spec(
             "EBITDA adjustments", "MODEL", "dense", ("CP-1",), route_label="Open in Model"
         ),
@@ -1782,6 +1794,125 @@ def _unplaced(view: View, pathway: Pathway, maps: tuple["BindingMap", ...]) -> t
     )
 
 
+def _cp1b_fact_shape(fact: Fact) -> None:
+    """Validate role dimensions and value shape without computing financial truth."""
+    if fact.decimals is not None:
+        raise ValueError("CP1B layout does not permit a precision override")
+    assessment = fact.table_id == "T1B.3"
+    dimensions: tuple[str | None, str | None, Decimal]
+    if assessment:
+        dimensions = (None, None, Decimal(1))
+    elif fact.field == "growth" or (fact.row_id == "ebitda_margin" and fact.field != "delta"):
+        dimensions = ("PERCENT", None, Decimal(1))
+    elif fact.row_id == "ebitda_margin":
+        dimensions = ("pp", None, Decimal(1))
+    else:
+        dimensions = ("MILLIONS", "USD", Decimal(1000000))
+    if (fact.unit, fact.currency, fact.scale) != dimensions:
+        raise ValueError("CP1B layout has incompatible native dimensions")
+    if fact.status != "known":
+        valid = (
+            fact.amount is None
+            and fact.text is None
+            and bool(fact.limitation and fact.limitation.strip())
+        )
+    elif assessment:
+        valid = fact.amount is None and bool(fact.text and fact.text.strip())
+    else:
+        valid = fact.text is None and fact.amount is not None and fact.amount.is_finite()
+    if not valid:
+        raise ValueError("CP1B layout has an invalid numeric or assessment value")
+    if not assessment and not (fact.period and fact.period.strip()):
+        raise ValueError("CP1B numeric coordinates require a period descriptor")
+
+
+def _validate_cp1b_layout(module: ModuleView) -> None:
+    """Refuse malformed CP1B layouts before generic table/prose consumption.
+
+    Period headings describe supplied coordinates; dates, values, grants and
+    operand authenticity remain the producer and selected-run verifier's job.
+    """
+    from deploy_vii.bindings.cp1b import _CP1B_LAYOUTS
+
+    # Reuses canonical Fact/ReportTable validation even for model_copy callers.
+    checked = ModuleView.model_validate(module.model_dump())
+    if tuple(t.table_id for t in checked.tables) != tuple(t.table_id for t in _CP1B_LAYOUTS):
+        raise ValueError("CP1B layout requires exactly its three ordered tables")
+    facts = {fact.fact_id: fact for fact in checked.facts}
+    expected_ids = {
+        f"cp1b:{layout.table_id}:{row_id}:{field}"
+        for layout in _CP1B_LAYOUTS
+        for row_id, _ in layout.rows
+        for field in layout.fields
+    }
+    if facts.keys() != expected_ids:
+        raise ValueError("CP1B layout requires exact canonical fact coverage")
+    fixed_headings = {
+        "delta": "Change (native unit; margin pp)",
+        "growth": "Growth (%)",
+        "assessment": "Assessment",
+    }
+    paired_headings: tuple[str, str] | None = None
+    for table, layout in zip(checked.tables, _CP1B_LAYOUTS, strict=True):
+        if (table.title, table.row_header, table.interface_id) != (
+            layout.title,
+            layout.row_header,
+            None,
+        ):
+            raise ValueError("CP1B layout has an invalid table title, header or interface")
+        if tuple(c.field for c in table.columns) != layout.fields:
+            raise ValueError("CP1B layout has invalid ordered fields")
+        if tuple((r.row_id, r.label, r.row_kind) for r in table.rows) != tuple(
+            (row_id, label, "row") for row_id, label in layout.rows
+        ):
+            raise ValueError("CP1B layout has invalid ordered rows or labels")
+        for column in table.columns:
+            if column.field in fixed_headings and column.label != fixed_headings[column.field]:
+                raise ValueError("CP1B layout has invalid column headings")
+        if table.table_id != "T1B.3":
+            headings = (table.columns[0].label, table.columns[1].label)
+            if paired_headings is not None and headings != paired_headings:
+                raise ValueError("CP1B paired tables must share the same period headings")
+            paired_headings = headings
+            for role, heading in zip(("prior", "current"), headings, strict=True):
+                period = facts[f"cp1b:{table.table_id}:{layout.rows[0][0]}:{role}"].period
+                requested = role == "prior" and heading.startswith("Requested ")
+                prefix = "Requested" if requested else "Prior" if role == "prior" else "Current"
+                start = f"{prefix} {period} ("
+                if (
+                    not heading.startswith(start)
+                    or not heading.endswith(")")
+                    or not heading[len(start) : -1].strip()
+                ):
+                    raise ValueError("CP1B layout has an invalid supplied period heading")
+                if requested and heading[len(start) : -1] != "not supplied":
+                    raise ValueError("CP1B requested period heading must disclose absence")
+        for row in table.rows:
+            identifiers = tuple(
+                f"cp1b:{table.table_id}:{row.row_id}:{field}" for field in layout.fields
+            )
+            if row.fact_ids != identifiers:
+                raise ValueError("CP1B layout cell pointers differ from canonical coordinates")
+            for fact_id in identifiers:
+                _cp1b_fact_shape(facts[fact_id])
+    for row_id, _ in _CP1B_LAYOUTS[0].rows:
+        growth = facts[f"cp1b:T1B.1:{row_id}:growth"]
+        if row_id not in {"revenue", "ebitda", "adjusted_ebitda"}:
+            if growth.status != "not_applicable":
+                raise ValueError("CP1B nongrowth rows require reasoned not_applicable")
+        else:
+            prior = facts[f"cp1b:T1B.1:{row_id}:prior"]
+            if (
+                prior.status == "known"
+                and prior.amount == 0
+                and (
+                    growth.status != "missing"
+                    or "ZERO_DENOMINATOR" not in (growth.limitation or "")
+                )
+            ):
+                raise ValueError("CP1B zero prior requires missing growth/ZERO_DENOMINATOR")
+
+
 def build(view: View, pathway: Pathway, maps: Iterable["BindingMap"]) -> ReportView:
     """The Front Page of ``pathway`` from a view and its binding maps.
 
@@ -1792,11 +1923,16 @@ def build(view: View, pathway: Pathway, maps: Iterable["BindingMap"]) -> ReportV
     its honest state.
     """
     # Function-local: ``bindings`` imports this module's contracts at import time.
-    from deploy_vii.bindings import RAIL_DESTINATIONS, validate_bindings
+    from deploy_vii.bindings import RAIL_DESTINATIONS, SHOWN_STATUSES, validate_bindings
 
     maps = tuple(maps)
     if pathway.id != view.run.pathway:
         raise ValueError("The Pathway differs from the run's Pathway")
+    for module in view.modules:
+        if module.module_id == "CP-1B" and (
+            module.status in SHOWN_STATUSES or module.facts or module.tables or module.claims
+        ):
+            _validate_cp1b_layout(module)
     if issues := validate_bindings(view, maps):
         more = f" (and {len(issues) - 3} more)" if len(issues) > 3 else ""
         raise ValueError("Bindings do not cover the view: " + "; ".join(issues[:3]) + more)

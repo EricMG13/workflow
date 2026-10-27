@@ -9,7 +9,7 @@ remains open. Historical receipts below retain their original scope and policy.
 - Task3-C is closed with immutable portable report/Model/native evidence; PLAN lists its exact scope.
 - A1 earnings core, A2 registration/access and A3 FP02 binding components are accepted and integrated. Actual CP1B/CP5/FP02 acceptance remains open.
 - C1 additive coordinate projection has 138 focused checks passed; its separately admitted genuine-metadata component probe is running with source frozen. Citation verification and actual owner use are outside that probe.
-- C3 is implementing the actual B1 owner. The bootstrap/raw supplement is integrated and admitted at7adb6167; its three WIP files survived the safe update unchanged. An active-session association clarification is being frozen within the same independent review.
+- C3 is implementing the actual B1 owner. The bootstrap/raw supplement is integrated and admitted at7adb6167; its three WIP files survived the safe update unchanged. The active-session association supplement is independently frozen within the same review, awaiting exact integration/admission.
 - C2 FP04 binding component commit4e84ffc is accepted and integrated/pushed at5dcbad23:76 focused checks passed, confidence/no-argument tournament/independent review closed. Actual legal owner, CP5 and native evidence remain open.
 - PM integrates exact admitted patches only. One heavy local job; uncapped disjoint implementation. All paid/provider/live tests paused.
 
@@ -2453,3 +2453,23 @@ Paid/provider/live remain paused; one global heavy job, disjoint writes uncapped
 PM integration receipt: clean checkpoint5dcbad23b81fb1c0f51538796900d775a4350c06
 verified equal origin/codex/checkpoint. C2 exact2filepatch plus minimal INTEGRATION
 receipt and appended report_view reuse lineage, no extra runtime or product edits.
+
+
+## B1 active-session association supplement independently frozen
+
+Contractedc60f4efde31ebcc5013833984e5a832f8e45faeeb2611bc4382bc97e030614;
+oracle7c2e03125b0b48a914b311d84178894b7487250fe0d4934c7549fca8c777afd4;
+same-review503979e0aa5c8814f4776e9a6bf05c6d84ea19444fa875f2dfb5809672425fa0
+published docs/reviews/cp1b-session-binding-contract.md. One required host-filled
+BoundSubmission.owner_session_id immediately after participation_sha256: null
+for foundation, actual persisted current ID for owner even before reads/refused.
+Full typed OwnerAccessRead hashes include session ID; equal manifest body hashes
+never alias later reads into an earlier captured prefix. Credit only the selected
+session's captured call/read members. Unresolved intent retains its original
+session/prefix before any reopen; retained step resumes exactly once.
+
+Root read complete contract/oracle/review and independently rechecked hashes,
+field order,17 named causal expectations and unchanged B1/raw/source pins. No
+wall-clock proof or product/runtime pass inferred. No Actor/topReceipt/OwnerPins/
+OwnerSetup/raw7fba/A4 public API changes. PM exact integration precedes C3 safe
+update/admission inside its existing three files; other implementation continues.

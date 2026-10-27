@@ -346,3 +346,13 @@ UTF8/partial EOF/oversize prefixes are retained/refused honestly with bounded
 stop/no-drain behavior. Source/schema/nontransport owner work continues; C3 raw/
 setup code and tests consume exact integrated supplement after safe update.
 These cases remain part of unclosed B1 implementation/recovery/actual proof.
+
+
+B1 early-refusal session association supplement: docs/CP1B-SESSION-BINDING-ADDENDUM.md
+and cases/earnings/session-binding-expected.json, same independent review in
+docs/reviews/cp1b-session-binding-contract.md. Every owner BoundSubmission captures
+its actual current persisted session even when participation is incomplete; only
+whole typed selected-session read/call records in its captured prefix earn credit.
+Later completion/reopen cannot upgrade an earlier refusal. One nested host field,
+no actor/top receipt/raw-policy/A4 API change. Product/recovery/tamper checks remain
+part of unclosed B1 implementation; safe integrated update/admission follows.

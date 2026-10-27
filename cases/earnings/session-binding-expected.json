@@ -1,0 +1,179 @@
+{
+  "schema_version": "cp1b-session-binding-oracle/1",
+  "scope": "Same B1 state-review continuation; one host-filled BoundSubmission field and selected-session/as-of-prefix association only",
+  "authority": "Explicit LEAD ruling; independent of future C3 implementation; no new financial audit or approval chain",
+  "unchanged_pins": {
+    "owner_lease": "e66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071",
+    "owner_expected": "c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d",
+    "raw_transport_policy": "7fba44bc1cf2d2dd8b26ed941c28b04371ce29f1875f070f48dc6d12b7efa8d6",
+    "financial_manifest": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
+  },
+  "schema_change": {
+    "record": "BoundSubmission",
+    "schema_version_unchanged": "cp1b-bound-submission/1",
+    "field": "owner_session_id",
+    "type": "Identifier|None",
+    "required": true,
+    "host_filled": true,
+    "insert_after": "participation_sha256",
+    "field_order": [
+      "schema_version",
+      "binding",
+      "raw_payload_sha256",
+      "stored_payload_sha256",
+      "canonical_review_sha256",
+      "call_ids",
+      "successful_call_ids",
+      "source_evidence",
+      "input_read_hashes",
+      "participation_sha256",
+      "owner_session_id",
+      "normalization_paths",
+      "prefilled_paths",
+      "prefilled_kinds"
+    ],
+    "foundation": "MUST null",
+    "earnings_delta": "MUST current actual persisted OwnerSession.session_id, even if no read/call/complete participation",
+    "no_owner_session": "No qualified owner binding/submission; preserve actual failure/refuse, no future/fake ID",
+    "actor_EarningsDeltaReview_changed": false,
+    "top_receipt_pins_setup_raw_policy_changed": false,
+    "A4_public_boundary_changed": false
+  },
+  "association": {
+    "session_lookup": "Exactly one authenticated OwnerSession by explicit ID; binding/ticket/attempt/current historical producer/normalized grant G and manifest M checked",
+    "read_hash_domain": "Whole typed OwnerAccessRead.content_hash including session_id/sequence/binding/body; never body/header-only digest",
+    "credit_rule": "ONLY actual reads/calls that are BOTH members of captured BoundSubmission prefix AND carry owner_session_id; later final records never add credit",
+    "full_prefix_forensics": "Keep original exact cross-session prefix/all-successes accounting; filter only credit, not retained history",
+    "participation_when_present": "Exact EarningsParticipation.session_id must equal owner_session_id, binding/G/M match, selected whole read hash and all coverage IDs captured and selected",
+    "participation_when_absent": "Pointer still mandatory; recorded refusal evaluated against selected captured prefix only",
+    "temporal_limit": "Pointer is host-filled hash-bound association, not independent wall-clock proof; do not infer current intent epoch from latest final session index"
+  },
+  "symbolic_fixture_policy": "S1/S2/S3, C1/C2 and R1/R2 below are state-graph labels, NOT real runtime IDs/hashes, tool outputs or completion flags. Later tests materialize actual session/record prefixes under original source/access oracles. No symbolic record qualifies analytical acceptance.",
+  "primary_sequence": {
+    "same_across_sessions": [
+      "OwnerBinding",
+      "ticket",
+      "attempt",
+      "grant_sha256",
+      "manifest_sha256",
+      "access_manifest_json body may be byte-identical"
+    ],
+    "events": [
+      "Persist actual S1; actual bootstrap R1 and complete manifest/projection/citation calls C1",
+      "Reopen before retained step, no unresolved intent: persist fresh actual S2",
+      "I1 submission BEFORE any S2 bootstrap/call; capture full existing C1/R1 forensic prefix and owner_session_id=S2",
+      "Resolve I1 as refused participation_incomplete, unchanged journal snapshot; participation_sha256=None; no envelope/step/candidate/result",
+      "In same still-active S2 process: actually read R2 and complete new C2 traversals/citation checks",
+      "I2 submission captures full C1+C2 and R1+R2; owner_session_id=S2 and participation.session_id=S2",
+      "Existing valid review/core/settlement may then complete; final verifier must preserve earlier I1 refusal without later credit"
+    ],
+    "I1": {
+      "owner_session_id": "S2",
+      "captured_calls": "C1 only",
+      "captured_reads": "R1 only",
+      "selected_credit_calls": [],
+      "selected_credit_reads": [],
+      "participation_sha256": null,
+      "disposition": "refused",
+      "issue": "participation_incomplete",
+      "journal_mutation": false,
+      "step_output_candidate_result": null
+    },
+    "I2": {
+      "owner_session_id": "S2",
+      "captured_calls": "C1+C2 exact prefix",
+      "captured_reads": "R1+R2 exact prefix",
+      "coverage_credit": "C2/R2 only; C1/R1 retained forensics",
+      "participation_session_id": "S2",
+      "qualification": "Only after actual complete selected coverage and existing review/core validation; no automatic valid flag"
+    }
+  },
+  "causal_cases": [
+    {
+      "case_id": "SB-FOUNDATION-NULL",
+      "trigger": "CP0/CP1 BoundSubmission",
+      "expected": "owner_session_id required None; nonnull invalid"
+    },
+    {
+      "case_id": "SB-EMPTY-CURRENT-SESSION",
+      "trigger": "S1 complete, fresh S2 has no read/call; raw review refused",
+      "expected": "owner_session_id=S2 even participation None; S1 gives no selected credit"
+    },
+    {
+      "case_id": "SB-LATER-COMPLETION",
+      "trigger": "S2 later reads/completes and I2 settles",
+      "expected": "I1 remains refused under captured prefix; I2 may qualify only its new selected actual prefix"
+    },
+    {
+      "case_id": "SB-MALFORMED-REVIEW",
+      "trigger": "current actual S2 exists but actor payload malformed/extra key",
+      "expected": "raw-shape refusal still host-binds S2; no journal step or fake participation"
+    },
+    {
+      "case_id": "SB-ACTOR-INJECTION",
+      "trigger": "actor review supplies owner_session_id",
+      "expected": "existing extra-key bad_arguments; actor cannot select session"
+    },
+    {
+      "case_id": "SB-NO-SESSION",
+      "trigger": "owner session factory/persistence never succeeded",
+      "expected": "not_permitted/capability failure before qualified owner binding; preserve actual failure; no fake or null-owner record"
+    },
+    {
+      "case_id": "SB-UNRESOLVED-INTENT",
+      "trigger": "crash after I1 intent persisted before outcome",
+      "expected": "open freezes exact S2/prefix/raw intent; no S3/new reads before exact refusal/outcome resolution"
+    },
+    {
+      "case_id": "SB-RESOLVED-REOPEN",
+      "trigger": "I1 refused/resolved then another open before step retention",
+      "expected": "actual S3 and fresh full reads; new intent pointer S3, no S1/S2 cursor/read transfer"
+    },
+    {
+      "case_id": "SB-RETAINED-STEP",
+      "trigger": "valid S2 envelope/step retained then crash",
+      "expected": "same S2/proof/payload resume only; no new session, changed pointer or duplicate finish"
+    },
+    {
+      "case_id": "SB-POINTER-ABSENT",
+      "trigger": "persisted owner binding omits field or has null",
+      "expected": "strict/identity_mismatch rejection, no legacy inference"
+    },
+    {
+      "case_id": "SB-POINTER-MISMATCH",
+      "trigger": "pointer unknown/foreign binding or duplicate session ID",
+      "expected": "identity_mismatch; cannot pick first/latest/equal hash session"
+    },
+    {
+      "case_id": "SB-PARTICIPATION-MISMATCH",
+      "trigger": "BoundSubmission S2, EarningsParticipation S1",
+      "expected": "identity_mismatch even if binding/G/M/values equal"
+    },
+    {
+      "case_id": "SB-BODY-DIGEST-ALIAS",
+      "trigger": "S1/R1 and later S2/R2 have same manifest body hash but different whole read hashes",
+      "expected": "R1 cannot stand for R2; only captured whole record hash/session qualifies"
+    },
+    {
+      "case_id": "SB-PREFIX-TAMPER",
+      "trigger": "append later C2/R2 to I1 captured prefix or pool S1 coverage with S2",
+      "expected": "hash/inventory/prefix or selected coverage verification refuses; no retroactive valid outcome"
+    },
+    {
+      "case_id": "SB-POINTER-TAMPER",
+      "trigger": "change pointer or selected OwnerSession record after intent capture",
+      "expected": "immutable record/hash/seal/association check fails; no resealing or rerun to repair history"
+    },
+    {
+      "case_id": "SB-GRANT-MANIFEST",
+      "trigger": "selected session grant/header or current input identity differs",
+      "expected": "existing identity_mismatch/stale_binding refusal, never source comparative gap"
+    },
+    {
+      "case_id": "SB-FINAL-IMPORT",
+      "trigger": "A4 consumes typed owner receipt/verifier",
+      "expected": "new nested field verified by actual B1; no A4 schema/public API change"
+    }
+  ],
+  "not_verified": "Product implementation/tests, actual sessions/refusals/recovery/tamper checks, owner/CP5 qualification or rendering."
+}

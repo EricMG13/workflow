@@ -2791,4 +2791,4 @@ Reviews (2026-10-27T20:30Z), saved in each lane's `work/` folder:
   pair) is a required check for IntegrityWorkflow: bind the pair to the authenticated
   B1 receipt.
 - User waived the global 800-line PR cap for lane integrations (G1 1,564 lines, A4 1,767); recorded in AGENTS.md.
-- D1 N1 fixed (RED 2 failed, GREEN 49 passed); LEAD checked the diff and reran the light subset. D1 pure milestone committed on its lane branch.
+- D1 N1 fixed (RED 2 failed, GREEN 49 passed); LEAD checked the diff and reran the light subset. D1 pure milestone committed on `codex/cp1b-delivery-d1` (73c94a4), not yet admitted: its 13 actual-case tests assert on LEAD's real three-case handoff (no skip by design) and fail until A4 and B1 integrate, so integration waits for the full-runtime milestone.

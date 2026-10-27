@@ -1031,6 +1031,24 @@
       "sha256": "571ee44cbac0a39c3dd77871e13f7f9cc414c4e6700e9e887a70a64b74b7c4cc",
       "reason": "Render the leased source-backed CP1 S.1-S.4 series in report and canonical Model destinations through the shared report-view builder.",
       "review": "docs/handoffs/cp1-chart-rendering.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "project_commit": "0d6c714569afdd63e50115c61a268d2530d7df13",
+      "sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "reason": "Register the separately leased CP1B A3 report binding map after CP1 while retaining imported binding source provenance.",
+      "review": "docs/reviews/cp1b-render-contract.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "571ee44cbac0a39c3dd77871e13f7f9cc414c4e6700e9e887a70a64b74b7c4cc",
+      "project_commit": "0d6c714569afdd63e50115c61a268d2530d7df13",
+      "sha256": "21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b",
+      "reason": "Add the leased CP1B fact-shape, layout coverage and report projection while preserving the imported source and prior local patch hashes.",
+      "review": "docs/reviews/cp1b-render-contract.md"
     }
   ]
 }

@@ -930,3 +930,21 @@ and adds `cases/legal/manifest.json`
 (`f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a`). The
 manifest parses as JSON. This closes only the Task3 source-freeze checkbox;
 legal ownership, CP5/FP04, code/runtime and other completion remain open.
+
+### C2 CP1B FP02 bindings and report specification (A3)
+
+Integrated C2's exact four-file commit
+`0d6c714569afdd63e50115c61a268d2530d7df13` (source parent
+`85785c9fa5370d3227309462346060f0e4fe4352`) as a patch only:
+`src/deploy_vii/bindings/cp1b.py` (`188e84616a69640500e007c87daa7d84a80d3912e528bb91222a2793a4c32e36`),
+`src/deploy_vii/bindings/shipped.py` (`4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec`),
+`src/deploy_vii/report_view.py` (`21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b`), and
+`tests/test_earnings_render.py` (`45fcc92ccd1b423ea2c91bc65ca2db3931524a7f9f2d2dfc515f8ce33a8eadcb`).
+The two existing reused source entries retain their imported SHA-256 values in
+`docs/reuse/manifest.json`; appended `post_import_patches` entries record both
+prior project hashes, this patch commit and the resulting hashes. The origin's
+recorded focused component check was 90 passed; it was not rerun here. The
+recorded confidence review, rewrite tournament and independent Sol/high review
+were checked against this exact commit. No new assembled suite, engine or
+provider job was run. This remains a rendering component; actual owner/CP5 and
+native acceptance are open, and paid/provider/live work remains paused.

@@ -948,3 +948,14 @@ recorded confidence review, rewrite tournament and independent Sol/high review
 were checked against this exact commit. No new assembled suite, engine or
 provider job was run. This remains a rendering component; actual owner/CP5 and
 native acceptance are open, and paid/provider/live work remains paused.
+
+### Accepted component status and remaining owner chain
+
+Integrated LEAD's exact status-only commit
+`07a62326bc2195617f9edd036bfc573a4fcbeee7` (parent
+`0677e61e97e3e0e7d68d52d3a47be895c4ce265d`), changing only
+`docs/TEAM.json`, `docs/MODULES.csv`, and `docs/QUEUE.md`. A1 and A3 component
+acceptance is recorded; actual CP1B owner acceptance and its four-part matrix
+remain unverified. C1's causal race fix/error-fixture trace remains pending;
+B1/A4 are static contract preparation only. No runtime or assembled tests were
+started. Paid/provider work remains paused.

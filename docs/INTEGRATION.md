@@ -636,3 +636,25 @@ from its exact pinned commit; they were not rerun here. This component evidence
 does not establish the fresh CP1 publication or actual native chart proof in
 both outputs; those remain required acceptance evidence. No other imported core
 file was changed. The C2 cherry-pick is `25ddb67` before this receipt commit.
+
+### PM-CHART-ASSEMBLED-1
+
+After a fresh LEAD process/load and exact-pin check on clean revision
+`6cdf64a3f7a464603265992beb8176dacbab3f9e`, ran the one admitted command:
+
+```
+PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q tests/test_source_tools.py tests/test_upstream_tools.py tests/test_source_workflow.py tests/test_connected_render.py tests/test_financial_series.py tests/test_cp1_chart_render.py
+```
+
+Result: **204 passed in 3.72s**, exit code 0; this is the actual count and
+matches 156 established regression nodes plus 21 C1 and 27 C2 focused component
+nodes. The run did not select or replay the 22-test financial-render suite. PID,
+UTC interval, full pytest output, preflight and complete tracked `src`, `tests`,
+`cases` SHA-256 inventories are retained in
+`docs/handoffs/pm-chart-assembled-1/`. Before/after inventories match exactly;
+both manifest files have SHA-256
+`98d4ec5b862ad997064e8b255351dd7376e67c4222d64c51acd83d9769a6d360`.
+Project compute was released after exit. No source/test/case edits occurred
+within the run. This assembled regression/component check does not replace the
+fresh actual CP1/publication chain or the required native chart proof in both
+report and Model outputs. Paid/provider/live work remains paused.

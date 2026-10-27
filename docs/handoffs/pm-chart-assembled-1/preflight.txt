@@ -1,0 +1,18 @@
+Fresh LEAD admission resource/pin check
+Check UTC: 2026-10-27T06:49:19Z
+Clean source revision: 6cdf64a3f7a464603265992beb8176dacbab3f9e
+Branch: codex/checkpoint (tracking origin/codex/checkpoint before test)
+Load averages: 2.67 2.95 2.95
+Process scan: no project pytest, financial_workflow, CP1, or Model job. Only
+idle macOS modelcatalogd (PID 544, 0.0% CPU) and modelmanagerd (PID 607,
+0.0% CPU) matched the broad model search.
+Pinned hashes verified before run:
+financial_series.py 9f4d0df14cb14e8dd3e8c3d0c7ed20afa9beadff2ced229a38047478e18caa8c
+report_view.py 571ee44cbac0a39c3dd77871e13f7f9cc414c4e6700e9e887a70a64b74b7c4cc
+test_financial_series.py 7dfeacfa8fbe704990bc357cdfd7e11bf7fee57fadcd2c451075d7750acc46e6
+test_cp1_chart_render.py ebc353e5dae6154259ea6aa33838fe8e52750b4523da7a7f778582bb04506b63
+financial_workflow.py 4f513165d4229c853dd7723cb3b9bbdb838b614cbb11a9ae5f818635a947da56
+financial_rendering.py d511935ca9724de3ed734da87498f786742f2e63ca4a62a68408f9d136b089a8
+test_financial_render.py 99059144b35d4c8d8cccee1ba4c4b6761ab06f9c45eb566c156ac063a4085b13
+financial manifest 6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432
+chart oracle 2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276

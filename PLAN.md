@@ -294,12 +294,13 @@ indivisible-lineage defect in docs/reviews/cp5-integrity-contract.md. Raw canoni
 Fact payloads remain trusted unchanged; bounded typed commitments and mandatory
 lineage/citation catalogs preserve complete actual evidence within8192-byte bodies.
 B1 public immutable-prefix types are fixed; A4 owns the separate final slice seal.
-C1 future files are upstream.py/test_upstream_tools.py plus new
-integrity_workflow.py/test_integrity_workflow.py. No overlapping A4 writes while
-its current projection lease is active; later exact base/admission required.
+Active C1 A4 lease atcf5115bea38a0a953519b2be5755c0209329c6a4 owns only
+upstream.py/test_upstream_tools.py plus new integrity_workflow.py/test_integrity_workflow.py.
+Projection is accepted/integrated; full A4 host runtime requires accepted B1
+implementation integrated through its public types/verifier, without stubs/WIP copies.
 
 - [x] Independently freeze dynamic complete scope, every-claim review, all finding kinds, bounded safe lineage, durable refusal/recovery and final receipt APIs.
-- [ ] Integrate the exact freeze and admit C1 after its projection work is accepted; stage tests against accepted B1 public implementation without stubs/WIP copies.
+- [x] Integrate the exact freeze and admit C1 after its projection work is accepted; stage tests against accepted B1 public implementation without stubs/WIP copies.
 - [ ] Verify component success/causal failures and required code reviews on exact final bytes.
 - [ ] Run actual permitted complete CP5 reads/checks/raw judgments/submission/settlement over the fresh owner chain; retain limited/source-refusal cases honestly.
 - [ ] Seal and verify final current earnings receipt for C2's authenticated export/native proof.
@@ -356,3 +357,12 @@ whole typed selected-session read/call records in its captured prefix earn credi
 Later completion/reopen cannot upgrade an earlier refusal. One nested host field,
 no actor/top receipt/raw-policy/A4 API change. Product/recovery/tamper checks remain
 part of unclosed B1 implementation; safe integrated update/admission follows.
+
+
+Projection component commit063d380 is accepted/integrated atcf5115bea:138 focused
+checks passed and the separately admitted full-genuine-Fact-metadata component
+probe preserved138/126 coordinates,all19 fields/duplicate handles with largest
+page7835/8096 bytes. Probe citation verification was NOT RUN and synthetic new
+component heads confer no actual owner qualification. A subsequent assembled
+CP1-chart/FP02/registration compatibility check passed132 cases on all149 unchanged
+source/test/case files. Actual B1/recovery/owner receipt and A4/FP02 remain open.

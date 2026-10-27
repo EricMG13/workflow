@@ -8,8 +8,8 @@ remains open. Historical receipts below retain their original scope and policy.
 
 - Task3-C is closed with immutable portable report/Model/native evidence; PLAN lists its exact scope.
 - A1 earnings core, A2 registration/access and A3 FP02 binding components are accepted and integrated. Actual CP1B/CP5/FP02 acceptance remains open.
-- C1 additive coordinate projection has 138 focused checks passed; its separately admitted genuine-metadata component probe is running with source frozen. Citation verification and actual owner use are outside that probe.
-- C3 is implementing the actual B1 owner. The bootstrap/raw supplement is integrated and admitted at7adb6167; its three WIP files survived the safe update unchanged. The active-session association supplement is independently frozen within the same review, awaiting exact integration/admission.
+- C1 coordinate projection commit063d380 is accepted/integrated atcf5115bea:138 focused checks and both genuine-metadata component cases passed. Citation verification and actual owner use are outside that probe. C1 A4 writes are separately admitted.
+- C3 is implementing the actual B1 owner. The bootstrap/raw supplement is integrated and admitted at7adb6167; its three WIP files survived the safe update unchanged. The active-session association supplement is integrated/admitted atde9cd03. Accepted pager update tocf5115bea is admitted with three WIP files preserved.
 - C2 FP04 binding component commit4e84ffc is accepted and integrated/pushed at5dcbad23:76 focused checks passed, confidence/no-argument tournament/independent review closed. Actual legal owner, CP5 and native evidence remain open.
 - PM integrates exact admitted patches only. One heavy local job; uncapped disjoint implementation. All paid/provider/live tests paused.
 
@@ -2473,3 +2473,43 @@ field order,17 named causal expectations and unchanged B1/raw/source pins. No
 wall-clock proof or product/runtime pass inferred. No Actor/topReceipt/OwnerPins/
 OwnerSetup/raw7fba/A4 public API changes. PM exact integration precedes C3 safe
 update/admission inside its existing three files; other implementation continues.
+
+
+## Projection accepted; disjoint A4 implementation and B1 dependency update admitted
+
+Exact C1 commit063d380e028d9f618af08b6a20b4b4f291b24dd4, parent4e2bce9,
+onlyupstream.py/test_upstream_tools.py accepted by root after full product diff,
+confidence closure, no-argument tournament B and final independent Sol/high
+scoped review. Finalac7ac2e1/a647782f matches GREEN2 PID98249/138PASS and genuine
+COMPONENT probe PID1345,10:59:38.856722–11:01:51.991719UTC,exit0.138/126coordinates,
+all19 fields/duplicate handles,largestBODY7835/8096,25/23 actual calls. All148
+pins/runtime/input blob unchanged; log1604131a5ca47e61eab60aedc6227ae4e957a8142e617a61cef06fde55b8c1df.
+New synthetic component runs/heads retain genuine full Fact metadata; citation
+verification NOT RUN, no actual source/authentication/owner/CP5/native claim.
+PM integrated/pushed clean cf5115bea38a0a953519b2be5755c0209329c6a4 and appended
+upstream reuse lineage while preserving imported baseline and all prior patches.
+
+Central assembled compatibility check atcf5115bea: pytest -q
+tests/test_cp1_chart_render.py tests/test_earnings_render.py tests/test_cp1b_registration.py;
+PID3225,11:06:35.874105–11:06:37.817088UTC,exit0,132passed1.76s,all149source/test/case
+and runtime pins unchanged. Logef8c7e51d04f2323945a230e6200133d9fb33de05a136e96d6a546358287f173.
+Main source freeze/heavy slot released after actual EOF/exit; no full owner or
+historical heavy financial fixture qualification inferred.
+
+C1-CP5-INTEGRITY-A4-IMPLEMENTATION-1 admitted11:07:05.399206UTC atcf5115bea,
+new preserved branch codex/cp5-integrity-a4, only upstream.py/test_upstream_tools.py
+plus NEW integrity_workflow.py/test_integrity_workflow.py. All reviews/handoffs in
+work/cp5-integrity-a4. Root exact149baseline/contract/runtime/process/load checks
+retained in work/cp1b-preparation/a4-and-owner-pager-admission.json. Writes/static
+only, no runtime admission. Actual frozen B1 public receipt/verifier; no stubs/WIP
+copies or UpstreamTools→earnings_workflow import cycle. Full host/actual tests wait
+accepted B1 implementation; isolated upstream checks may request exact admission.
+C1 preserves old branch/work, safely creates new branch from accepted base.
+
+C3-CP1B-B1-SESSION-BINDING-SUPPLEMENT-1 admitted11:04:11.530774UTC atde9cd03
+with149baseline/edc60f4e/7c2e0312/503979e0/runtime/process/load verified. Root now
+admits C3's accepted pager safe fast-forward tocf5115bea, preserving all three
+owned WIP file hashes and verifying unowned baseline before resuming. Existing
+B1 three-file writes continue disjoint from C1 A4 and C2 preparation. No new
+runtime automatically admitted. Actual owner/recovery/CP5/FP02/native remains
+unverified; full26/six-pathway PLAN active. Paid/provider/live remain paused.

@@ -1,30 +1,38 @@
 {
   "project": "/Users/ericguei/Documents/Deploy Workflow",
-  "state": "active: bounded CP1 chart/report/Model slice remains verified; C1 A4 implementation plus isolated legal source-host L2; C2 authenticated FP02 D1 delivery; C3 actual B1 owner/recovery; components and pre-code contracts do not close full PLAN; paid/provider/live paused",
+  "state": "Claude Code handover 2026-10-27: Codex threads retired; Claude LEAD plus one Claude session per lane; active: bounded CP1 chart/report/Model slice remains verified; C1 A4 implementation plus isolated legal source-host L2; C2 authenticated FP02 D1 delivery; C3 actual B1 owner/recovery; components and pre-code contracts do not close full PLAN; paid/provider/live paused",
   "sessions": {
     "LEAD": {
-      "current_chat": true,
+      "claude_session": "this LEAD session (worktree claude/codex-project-context-a11b1b)",
       "host_id": "local"
     },
     "C1": {
-      "thread_id": "01a17a0a-f4aa-7860-8f81-61fdf28f6e0d",
+      "claude_session": "local_39ce5477-2567-4c4e-ad61-55c5b1814e0c",
+      "name": "c1-a4-integrity",
+      "host_id": "local"
+    },
+    "C1_SOURCE_HOST": {
+      "claude_session": "local_e3ee7eb8-6739-47e5-9b86-52a65870a7c3",
+      "name": "c1-l2-source-host",
       "host_id": "local"
     },
     "C2": {
-      "thread_id": "01a17a0b-1bac-7020-bae1-d99dd2fcbe23",
-      "host_id": "local"
-    },
-    "PR_MANAGER": {
-      "thread_id": "01a17a0b-53d9-7981-bf30-51ffaa2acc8d",
+      "claude_session": "local_62665708-cec7-424d-bf18-41225045d05f",
+      "name": "c2-d1-delivery",
       "host_id": "local"
     },
     "C3": {
-      "thread_id": "01a17c75-98ab-7661-8764-7c7f87622e14",
+      "claude_session": "local_fa538cd2-f0ca-494f-bb2c-39cc2904bc49",
+      "name": "c3-b1-owner",
+      "host_id": "local"
+    },
+    "PR_MANAGER": {
+      "claude_session": "pending",
       "host_id": "local"
     }
   },
   "working_copies": {
-    "LEAD": "/Users/ericguei/Documents/Deploy Workflow Sessions/lead",
+    "LEAD": "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/codex-project-context-a11b1b",
     "C1": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1",
     "C2": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-2",
     "PR_MANAGER": "/Users/ericguei/Documents/Deploy Workflow",
@@ -40,5 +48,12 @@
     "C3": "C3 B1 existing3files only; bootstrap/raw/session/native-reference supplements and accepted pager admitted through f3b9b37; early111componentPASS only; fullowner/actual/recovery still required",
     "PR_MANAGER": "integration only",
     "C1_SOURCE_HOST": "C1-CP4-SOURCE-HOST-L2-IMPLEMENTATION-1: isolated coordinator-1-source-host/codex/cp4-source-host at6c0ee065; ONLYhost.py/test_source_tools.py, writes/static, eachruntime separately admitted"
-  }
+  },
+  "retired_codex_threads": {
+    "C1": "01a17a0a-f4aa-7860-8f81-61fdf28f6e0d",
+    "C2": "01a17a0b-1bac-7020-bae1-d99dd2fcbe23",
+    "PR_MANAGER": "01a17a0b-53d9-7981-bf30-51ffaa2acc8d",
+    "C3": "01a17c75-98ab-7661-8764-7c7f87622e14"
+  },
+  "heavy_job_lock": "/tmp/deploy-workflow-heavy-job.lock"
 }

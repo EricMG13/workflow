@@ -690,3 +690,42 @@ proof, 21 final evidence checks, and closure of owned native resources with
 source/input/output/runtime inventories unchanged. No tests or runtime were
 run during integration. The bounded delivery evidence is now available to
 LEAD's separate final acceptance and matrix update.
+
+### LEAD final CP1 chart acceptance and matrix closure
+
+Integrated LEAD-admitted documentation commit
+`c3ee6e425b5744412c8d7bba666b40d355a02e71` by cherry-picking its exact patch;
+its older parent/history was not merged. The five paths are `PLAN.md`, new
+`docs/CP1-CHART-ACCEPTANCE.md`, `docs/MODULES.csv`, `docs/QUEUE.md`, and
+`docs/TEAM.json`. Their integrated SHA-256 values are respectively
+`2192025ded9a4c8bac390c4f55e1023c1a2f88f98bc928b997f668bd2daacee5`,
+`e27ccf664debd0f80d1b02480a7a961670daf16a24f9ae20a1d6b957cb853674`,
+`7f17b9839e628384dbcdcec759864fbb2539eb00798590fd240081dc4374b4b3`,
+`2139d0314d2b506720a977d789ee3a187c19e0b82f6dc2e93d020253a2198ddd`, and
+`17bb2896321740cf1bfabf583506c3c698c62e281bd8e19f6fff32bd68dc81d2`.
+The exact five-file cherry-pick is `0a7bee5387f5fbe3eb18f20001944fbacaeaa407`
+before this receipt commit.
+
+Confidence review of the documentation patch:
+
+- The LEAD branch's tree predates the integrated producer/renderer code, so a
+  whole-tree comparison would misleadingly show those files missing. Traced the
+  exact commit's changed paths and cherry-picked only its five admitted docs;
+  the current main's source/test/case inventory still matches the retained
+  assembled-run inventory exactly (131 files). The producer, renderer and
+  component-test pins in the acceptance document match the integrated bytes.
+- The updated CP-1 and CP-MODEL rows are the only matrix rows changed; all 26
+  rows remain. Their fresh readiness, QA, downstream-render and evidence values
+  were compared with the integrated C1 actual and C2 delivery handoffs. In
+  particular, QA 59 / Restricted / Low belongs to the fresh chart execution;
+  the earlier QA58 remains historical, and the 94 readiness checks remain
+  distinct from the 77 rendered reconciliation rows.
+- The acceptance boundary agrees with both handoffs: positive and genuine-gap
+  delivery/native evidence are recorded, while broader owners, pathways,
+  comparative history, issuers, legal perimeter, forecasts and provider/live
+  qualification remain open. TEAM records paid/provider/live tests as paused.
+
+`git diff --check` passed. No source, test, case, asset or runtime changed, and
+no tests were rerun for this documentation integration. LEAD's final review also
+reports its 678-entry package/hash and README-link checks; package indexing is a
+separate mechanical closure step.

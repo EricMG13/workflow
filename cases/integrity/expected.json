@@ -1,0 +1,1682 @@
+{
+  "schema_version": "cp5-integrity-oracle/1",
+  "status": "author-frozen corrected bounded-lineage contract; same independent reviewer closure pending, no code admission",
+  "route": "LEAD-assigned independent GPT-6.1 Sol/high; no hidden telemetry assertion",
+  "scope": "A4 source-free complete-scope transport and actual offline CP5 bridge/final receipt; financial oracles reused",
+  "reuse": {
+    "proposal_sha256": "6254cc071f9b6988f88ba93a17aca4f5557fc2860b3ab541f7031554fb9c6f9f",
+    "financial_manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "earnings_oracle_sha256": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+    "a2_lease_sha256": "da0471d83746dc67bf40e9b3e14aa7984994abfa812820265174bd8cb6964142",
+    "a2_oracle_sha256": "a8210ba05e81c3cba04634bfe82e3e7aa11525892407b41d379ebf0298413d0c",
+    "cp5_core_sha256": "84fbe447ab9f1c8598030cf44533072dccdd114d3d34c6c5bb0d20a8d5c3225c",
+    "execution_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3"
+  },
+  "owner_contract_sha256": "e66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071",
+  "owner_oracle_sha256": "c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d",
+  "first_actual": {
+    "pathway": "earnings_update",
+    "requested_modules": [
+      "CP-1B",
+      "CP-5"
+    ],
+    "selected_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1B",
+      "CP-5"
+    ],
+    "publication_files": {},
+    "evaluated_producers": [
+      "CP-1",
+      "CP-1B"
+    ],
+    "bound_gate": "CP-0 plus prepared-pack; exact actual ordered current_inputs is authoritative",
+    "numeric_expectations": "unchanged A1/A3/financial source oracles; no new financial answers"
+  },
+  "strict_shapes": {
+    "all_keys_required": true,
+    "extra_keys_forbidden": true,
+    "nullable_only_when_explicit": true,
+    "array_order": "canonical unless request-order stated",
+    "types": "DSL below is normative; literal scalar alternatives are enums, array[...] repeated typed records",
+    "core_types": "existing Run/Contract/Identifier/Hash/Input and IntegritySubmission remain their adopted strict schemas"
+  },
+  "limits": {
+    "request_line_bytes": 4194304,
+    "tool_operations_per_attempt": 1024,
+    "messages_per_attempt": 2048,
+    "body_bytes": 8192,
+    "page_entries": 20,
+    "lookup_rows": 20,
+    "lookup_fields": 16,
+    "verify_fact_ids": 20,
+    "grant_coordinate_total": 100000
+  },
+  "required_sections": [
+    "producers",
+    "claims",
+    "claim_citations",
+    "required_evidence",
+    "findings",
+    "identity_groups",
+    "unsettled",
+    "limitations",
+    "lineage_bundles",
+    "lineage_headers",
+    "lineage_operands",
+    "lineage_companions",
+    "lineage_citations",
+    "lineage_owner_facts",
+    "fact_citations"
+  ],
+  "optional_sections": [
+    "fact_index"
+  ],
+  "section_record_types": {
+    "producers": "ProducerRecord",
+    "claims": "ClaimRecord",
+    "claim_citations": "ClaimCitationRecord",
+    "required_evidence": "EvidenceRecord",
+    "findings": "SafeFinding",
+    "identity_groups": "IdentityGroupRecord",
+    "unsettled": "UnsettledRecord",
+    "limitations": "LimitationRecord",
+    "fact_index": "FactIndexRecord",
+    "lineage_bundles": "LineageBundleRecord",
+    "lineage_headers": "LineageHeaderRecord",
+    "lineage_operands": "LineageOperandRecord",
+    "lineage_companions": "LineageCompanionRecord",
+    "lineage_citations": "LineageCitationRecord",
+    "lineage_owner_facts": "LineageOwnerFactRecord",
+    "fact_citations": "FactCitationRecord"
+  },
+  "wire_types": {
+    "Hash": "64 lowercase hexadecimal characters",
+    "Identifier": "existing deploy_vii.contracts.Identifier: 1..160 ASCII identifier characters",
+    "Count": "JSON integer >=0, never bool",
+    "DecimalString": "finite exact decimal string; preserve upstream zero/null/unit/scale; no float conversion",
+    "Input": {
+      "input_id": "Identifier",
+      "sha256": "Hash",
+      "status": "accepted|restricted|blocked"
+    },
+    "ProducerRef": {
+      "module_id": "Identifier",
+      "sha256": "Hash",
+      "status": "accepted|restricted|blocked"
+    },
+    "Coordinate": {
+      "fact_id": "Identifier",
+      "table_id": "Identifier",
+      "row_id": "Identifier",
+      "field": "Identifier"
+    },
+    "QualifiedRef": {
+      "producer_module_id": "Identifier",
+      "producer_sha256": "Hash",
+      "kind": "fact|claim|claim_citation",
+      "ref": "nonempty string; fact/claim Identifier or core-generated claim_id#cN"
+    },
+    "CitationHandle": {
+      "source_id": "Identifier",
+      "source_sha256": "Hash",
+      "locator": "nonempty string"
+    },
+    "Binding": {
+      "run_id": "Identifier",
+      "issuer_id": "Identifier",
+      "as_of": "ISO date",
+      "method_version": "deploy-v-r14",
+      "pack_sha256": "Hash",
+      "snapshot_sha256": "Hash",
+      "module_id": "CP-5",
+      "step_id": "integrity_review",
+      "ticket_id": "Identifier",
+      "attempt": "0|1",
+      "inputs": "ordered array[Input]"
+    },
+    "GrantProducer": {
+      "module_id": "Identifier",
+      "sha256": "Hash",
+      "status": "accepted|restricted|blocked",
+      "role": "evaluated|blocked",
+      "fact_coordinates": "array[Coordinate]",
+      "claim_ids": "array[Identifier]",
+      "claim_citation_refs": "array[nonempty string]",
+      "projected_fact_fields": "array[FactAttribute]"
+    },
+    "Grant": {
+      "schema_version": "cp5-upstream-grant/2",
+      "consumer_module_id": "CP-5",
+      "step_id": "integrity_review",
+      "bound_inputs": "ordered array[Input]",
+      "producers": "array[GrantProducer]",
+      "raw_source_ids": "empty array",
+      "internal_scope_inspection": "complete_bound_scope_for_existing_python_checks_only"
+    },
+    "SectionCommitment": {
+      "section": "Section",
+      "count": "Count",
+      "sha256": "Hash"
+    },
+    "Limits": {
+      "body_bytes": "8192",
+      "page_entries": "20",
+      "lookup_rows": "20",
+      "lookup_fields": "16",
+      "verify_fact_ids": "20",
+      "request_line_bytes": "4194304",
+      "tool_operations_per_attempt": "1024",
+      "messages_per_attempt": "2048"
+    },
+    "Manifest": {
+      "schema_version": "cp5-integrity-manifest/1",
+      "binding": "Binding",
+      "session_id": "Identifier",
+      "grant_sha256": "Hash",
+      "scope_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "producer_count": "Count",
+      "evaluated_count": "Count",
+      "blocked_count": "Count",
+      "fact_count": "Count",
+      "claim_count": "Count",
+      "claim_citation_count": "Count",
+      "sections": "ordered array[SectionCommitment] for every Section",
+      "limits": "Limits"
+    },
+    "ProducerRecord": {
+      "producer": "ProducerRef",
+      "role": "evaluated|blocked",
+      "fact_count": "Count",
+      "claim_count": "Count",
+      "claim_citation_count": "Count"
+    },
+    "ClaimRecord": {
+      "producer": "ProducerRef",
+      "claim_id": "Identifier",
+      "text": "deliberately granted canonical Claim.text",
+      "limitation": "canonical Claim.limitation string|null",
+      "citation_count": "Count",
+      "touching_kinds": "array[PythonKind] sorted by core KINDS"
+    },
+    "ClaimCitationRecord": {
+      "producer": "ProducerRef",
+      "claim_id": "Identifier",
+      "ref": "core claim_id#cN",
+      "citation": "CitationHandle",
+      "flagged": "bool"
+    },
+    "SafeFact": {
+      "fact_id": "Identifier",
+      "label": "canonical analytical string",
+      "table_id": "Identifier",
+      "row_id": "Identifier",
+      "field": "Identifier",
+      "amount": "DecimalString|null",
+      "text": "canonical ordinary safe analytical string|PayloadCommitment(kind=cp1b_evidence_bundle)|null; protected raw text is never shortened/relabelled",
+      "status": "known|missing|conflicting|not_applicable",
+      "unit": "string|null",
+      "currency": "string|null",
+      "scale": "DecimalString",
+      "period": "string|null",
+      "basis": "canonical ordinary safe analytical string|PayloadCommitment(kind=cp1b_operand_lineage)|null; protected raw basis is never shortened/relabelled",
+      "denominator": "string|null",
+      "limitation": "canonical analytical string|null",
+      "calculation_id": "Identifier|null",
+      "value_class": "string|null",
+      "calculation_status": "string|null",
+      "citation_handles": "CitationSetRef for required-evidence/lineage-owner facts; otherwise array[CitationHandle] if bounded optional lookup; all original ordinals retained",
+      "fact_sha256": "Hash=T(full authentic raw Fact), not hash of this outward projection"
+    },
+    "EvidenceRecord": {
+      "producer": "ProducerRef",
+      "fact": "SafeFact",
+      "reasons": "nonempty array[claim_reference|flagged_fact|identity_member|unsettled_fact|lineage_primary|lineage_companion]",
+      "claim_ids": "array[Identifier] within that producer"
+    },
+    "SafeFinding": {
+      "finding_id": "Identifier: stable scope/kind/canonical-ordinal identity",
+      "ordinal": "Count",
+      "code": "PythonKind",
+      "producers": "array[ProducerRef]",
+      "claim_refs": "array[QualifiedRef(kind=claim)]",
+      "fact_refs": "array[QualifiedRef(kind=fact)]",
+      "citation_refs": "array[QualifiedRef(kind=claim_citation)]",
+      "identity_group_id": "Identifier|null",
+      "limited": "bool|null"
+    },
+    "IdentityGroupRecord": {
+      "group_id": "Identifier",
+      "basis": "fact_id|coordinate",
+      "members": "array[QualifiedRef(kind=fact)]",
+      "differing": "array[value|unit|currency|period|table_id|row_id|field]"
+    },
+    "UnsettledRecord": {
+      "producer": "ProducerRef",
+      "claim_id": "Identifier",
+      "fact_refs": "array[QualifiedRef(kind=fact)]",
+      "limited": "bool"
+    },
+    "LimitationRecord": {
+      "producer": "ProducerRef|null for unattributed inherited limitation",
+      "origin": "upstream_module|inherited|blocked_gate",
+      "ordinal": "Count within origin/producer",
+      "text_sha256": "Hash",
+      "label": "Upstream restriction retained"
+    },
+    "FactIndexRecord": {
+      "producer": "ProducerRef",
+      "coordinate": "Coordinate",
+      "fact_sha256": "Hash=T(full authentic raw Fact)"
+    },
+    "ReadScopeArguments": {
+      "scope_sha256": "Hash",
+      "section": "Section",
+      "cursor": "integrity-cursor:<64 lowercase hex>|null",
+      "limit": "integer1..20, never bool"
+    },
+    "ScopePage": {
+      "scope_sha256": "Hash",
+      "grant_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "section": "Section",
+      "total": "Count",
+      "offset": "Count",
+      "entries": "array[record type selected by section]",
+      "next_cursor": "integrity-cursor:<64 lowercase hex>|null",
+      "complete": "bool"
+    },
+    "VerifyScopeArguments": {
+      "scope_sha256": "Hash"
+    },
+    "PythonCounts": "object with exactly all eight PythonKind keys, each Count (zeros explicit)",
+    "VerifyScopeBody": {
+      "scope_sha256": "Hash",
+      "grant_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "evaluated_count": "Count",
+      "blocked_count": "Count",
+      "fact_count": "Count",
+      "claim_count": "Count",
+      "claim_citation_count": "Count",
+      "mechanical_verdict": "clean|findings",
+      "category_counts": "PythonCounts",
+      "findings_sha256": "Hash of findings section"
+    },
+    "LookupArguments": {
+      "producer_module_id": "Identifier",
+      "producer_sha256": "Hash",
+      "table_id": "Identifier",
+      "row_ids": "1..20 distinct Identifier",
+      "fields": "1..16 distinct FactAttribute, including identity five"
+    },
+    "LookupBody": {
+      "producer": "ProducerRef",
+      "projection": "safe_scope_fact_projection",
+      "scope_sha256": "Hash",
+      "grant_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "table_id": "Identifier",
+      "rows": "ordered array[{row_id:Identifier,facts:array[exact requested SafeFact attributes PLUS mandatory fact_sha256 provenance]}]; never a canonical raw Fact"
+    },
+    "CitationVerifyArguments": {
+      "producer_module_id": "Identifier",
+      "producer_sha256": "Hash",
+      "kind": "citations",
+      "fact_ids": "1..20 distinct Identifier"
+    },
+    "CitationVerifyBody": {
+      "producer": "ProducerRef",
+      "scope_sha256": "Hash",
+      "grant_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "kind": "citations",
+      "verdict": "valid|invalid",
+      "issue_count": "Count",
+      "issues": "array[{code:fact_citation,fact_ids:array[granted Identifier]}]"
+    },
+    "SourceEvidence": {
+      "read": "empty array",
+      "extracted": "empty array",
+      "surfaced": "empty array",
+      "searched": "empty array"
+    },
+    "ToolReceipt": {
+      "schema_version": "tool-receipt/1",
+      "call_id": "Identifier",
+      "sequence": "positive integer",
+      "binding": "Binding",
+      "tool": "string",
+      "arguments": "JSON object (exact actual request)",
+      "status": "ok|refused|error",
+      "body": "JSON object of the named body type, compact UTF-8 serialization <=8192bytes|null; preserve existing upstream v1 envelope",
+      "error_code": "bad_arguments|not_permitted|identity_mismatch|stale_binding|internal_error|null",
+      "source_evidence": "SourceEvidence"
+    },
+    "InputRead": {
+      "binding": "Binding",
+      "sequence": "positive integer",
+      "operation": "read_inputs",
+      "inputs_sha256": "Hash of exact body bytes",
+      "body": "compact Manifest JSON string <=8192 UTF-8 bytes"
+    },
+    "ClaimReview": {
+      "claim_ref": "string",
+      "producer_module": "string",
+      "support": "supported|partly_supported|unsupported",
+      "rationale": "string (existing labels-only validation)",
+      "upstream_refs": "array[string] core local fact or claim-citation refs"
+    },
+    "ClaimRef": {
+      "producer_module": "string",
+      "claim_ref": "string"
+    },
+    "Contradiction": {
+      "claim_refs": "array[ClaimRef], unique claims, at least two distinct producers",
+      "nature": "string",
+      "rationale": "string",
+      "severity": "Critical|Material|Minor"
+    },
+    "IntegrityGap": {
+      "gap": "string",
+      "why_it_matters": "string",
+      "affected_modules": "array[string] only bound modules",
+      "severity": "Critical|Material|Minor",
+      "action": "string"
+    },
+    "IntegritySubmission": {
+      "claim_reviews": "array[ClaimReview], every evaluated claim exactly once",
+      "contradictions": "array[Contradiction]",
+      "gaps": "array[IntegrityGap]"
+    },
+    "ArtifactRef": {
+      "kind": "nonempty fixed audit-kind label",
+      "sha256": "Hash",
+      "bytes": "Count",
+      "path": "normalized relative POSIX path within same store audit namespace, no symlink/absolute/dot traversal"
+    },
+    "SessionRecord": {
+      "session_id": "Identifier",
+      "binding": "Binding",
+      "grant_sha256": "Hash",
+      "scope_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "manifest_artifact": "ArtifactRef",
+      "grant_artifact": "ArtifactRef",
+      "scope_descriptor_artifact": "ArtifactRef"
+    },
+    "Traversal": {
+      "section": "required Section",
+      "count": "Count",
+      "page_call_ids": "ordered array[Identifier] proving contiguous offsets and terminal complete page"
+    },
+    "SubmissionBinding": {
+      "schema_version": "cp5-integrity-submission-binding/1",
+      "binding": "Binding",
+      "session_id": "Identifier",
+      "scope_sha256": "Hash",
+      "grant_sha256": "Hash",
+      "manifest_sha256": "Hash",
+      "raw_payload_sha256": "Hash",
+      "call_ids": "ordered array[Identifier] all actual calls of this session",
+      "successful_call_ids": "ordered array[Identifier] subset",
+      "input_read_sha256": "Hash",
+      "traversals": "array[Traversal] every required Section once",
+      "whole_scope_verify_call_id": "Identifier"
+    },
+    "SubmissionRecord": {
+      "sequence": "positive integer",
+      "binding_sha256": "Hash|null: null ONLY for refusal/error before a complete authorized SubmissionBinding exists; no invented traversal/verify IDs",
+      "raw_payload_sha256": "Hash",
+      "canonical_review_sha256": "Hash|null",
+      "disposition": "valid|invalid|refused|error",
+      "issue_count": "Count",
+      "issue_codes": "array[invalid_review|bad_arguments|not_permitted|identity_mismatch|stale_binding|internal_error]",
+      "snapshot_before_sha256": "Hash",
+      "snapshot_after_sha256": "Hash",
+      "step_sha256": "Hash|null",
+      "report_sha256": "Hash|null",
+      "candidate_sha256": "Hash|null",
+      "result_sha256": "Hash|null",
+      "report_status": "accepted|restricted|null",
+      "result_status": "accepted|restricted|blocked|rejected|null",
+      "raw_intent_sha256": "Hash of durable RawReviewIntent, required even for early refusal"
+    },
+    "BeginRecord": {
+      "snapshot_before_sha256": "Hash",
+      "snapshot_after_sha256": "Hash",
+      "operation": "begin_cp5",
+      "status": "begun|refused",
+      "ticket_id": "Identifier|null",
+      "attempt": "0|1|null",
+      "inputs": "array[Input] or empty when refused",
+      "error_code": "not_permitted|identity_mismatch|stale_binding|internal_error|null"
+    },
+    "HeadRecord": {
+      "ticket_id": "Identifier",
+      "attempt": "0|1",
+      "inputs": "ordered array[Input] exact actual attempt.inputs (own canonical provenance tails are separately rederived)",
+      "result_sha256": "Hash",
+      "status": "accepted|restricted|blocked",
+      "qualification": "Qualification"
+    },
+    "IntegritySliceReceipt": {
+      "schema_version": "cp5-integrity-slice-receipt/1",
+      "run": "existing Run",
+      "pack_sha256": "Hash",
+      "owner_receipt_sha256": "Hash=EarningsOwnerReceipt.content_hash()",
+      "owner_snapshot_sha256": "Hash",
+      "snapshot_sha256": "Hash of receipt checkpoint",
+      "participant": "nonempty string",
+      "transport": "python-api|bounded-json-lines/1",
+      "outcome": "cp5_settled|cp5_refused|cp5_invalid|cp5_pending",
+      "cp5": "HeadRecord|null",
+      "begins": "array[BeginRecord]",
+      "sessions": "array[SessionRecord]",
+      "input_reads": "array[InputRead]",
+      "calls": "array[ToolReceipt]",
+      "submission_bindings": "array[SubmissionBinding]",
+      "submissions": "array[SubmissionRecord]",
+      "audit_inventory": "array[ArtifactRef] complete immutable records excluding receipt/seal themselves",
+      "publication_files": "empty object",
+      "messages": "ordered array[OperationMessage] through checkpoint write intent; final composite write intent belongs to earnings-slice-audit",
+      "final_findings": "array[SafeFinalFinding] of actual valid report; empty for no valid report",
+      "final_finding_counts": "AllFindingCounts|null when no valid report",
+      "raw_review_intents": "ordered array[RawReviewIntent], including every participation-refused proposal"
+    },
+    "EarningsSliceReceipt": {
+      "schema_version": "earnings-slice-receipt/1",
+      "run": "existing Run",
+      "pack_sha256": "Hash",
+      "snapshot_sha256": "Hash of exact final current snapshot",
+      "owner": "imported EarningsOwnerReceipt",
+      "owner_receipt_sha256": "Hash=owner.content_hash()",
+      "integrity": "IntegritySliceReceipt",
+      "integrity_receipt_sha256": "Hash=integrity.content_hash()",
+      "outcome": "complete|cp1_not_authorized",
+      "selected_modules": "ordered array[Identifier] exact actual dependency plan",
+      "heads": "ordered array[{module_id:Identifier,head:HeadRecord}] exact final selected settled heads",
+      "publication_files": "empty object"
+    },
+    "ReceiptReply": {
+      "status": "sealed|refused|error",
+      "receipt_sha256": "Hash|null",
+      "snapshot_sha256": "Hash",
+      "error_code": "bad_arguments|not_permitted|identity_mismatch|stale_binding|internal_error|null"
+    },
+    "SubmitReply": {
+      "status": "valid|invalid|refused|error",
+      "record_sha256": "Hash",
+      "canonical_review_sha256": "Hash|null",
+      "report_sha256": "Hash|null",
+      "result_sha256": "Hash|null",
+      "report_status": "accepted|restricted|null",
+      "result_status": "accepted|restricted|blocked|rejected|null",
+      "issue_count": "Count",
+      "issue_codes": "array[fixed safe codes]"
+    },
+    "ProtocolRead": {
+      "operation": "read_inputs"
+    },
+    "ProtocolInvoke": {
+      "operation": "invoke",
+      "tool": "string",
+      "arguments": "JSON object"
+    },
+    "ProtocolSubmit": {
+      "operation": "submit_review",
+      "payload": "string, exact raw JSON text retained"
+    },
+    "ProtocolWrite": {
+      "operation": "write_receipt"
+    },
+    "ProtocolFinal": {
+      "operation": "write_slice_receipt"
+    },
+    "Section": "producers|claims|claim_citations|required_evidence|findings|identity_groups|unsettled|limitations|lineage_bundles|lineage_headers|lineage_operands|lineage_companions|lineage_citations|lineage_owner_facts|fact_citations|fact_index",
+    "PythonKind": "blocked_upstream|empty_evaluated_set|claim_citation|fact_citation|scale_unit|claim_figure|unsettled_fact|figure_identity",
+    "FactAttribute": "fact_id|label|table_id|row_id|field|amount|text|status|unit|currency|scale|period|basis|denominator|limitation|calculation_id|value_class|calculation_status|citation_handles",
+    "Qualification": "existing execution.Qualification object|null, never a string",
+    "LineageFactReference": {
+      "producer_module_id": "CP-1",
+      "producer_sha256": "Hash",
+      "fact_id": "Identifier",
+      "table_id": "Identifier",
+      "row_id": "Identifier",
+      "field": "Identifier"
+    },
+    "LineageOperandReference": {
+      "fact": "LineageFactReference",
+      "period_id": "Identifier",
+      "basis_id": "Identifier",
+      "source_period": "canonical actual fact.period string",
+      "source_basis": "canonical actual fact.basis string",
+      "fact_sha256": "Hash=actual full Fact.content_hash()",
+      "citation_handles": "array[CitationHandle] exact actual selected Fact handle tuples"
+    },
+    "LineageOperand": {
+      "measure_id": "one of frozen twelve A1 measure identifiers in exact order",
+      "prior": "LineageOperandReference|null only genuine absent prior",
+      "current": "LineageOperandReference",
+      "companions": "array[LineageFactReference]"
+    },
+    "EvidenceInputsText": {
+      "producer_module_id": "CP-1",
+      "producer_sha256": "Hash current bound CP1",
+      "prior_period_id": "Identifier",
+      "current_period_id": "Identifier",
+      "prior_basis_id": "Identifier|null",
+      "current_basis_id": "Identifier",
+      "operands": "exact twelve LineageOperand records in B1/A1 order; canonical compact JSON string as Fact.text"
+    },
+    "OperationMessage": {
+      "schema_version": "cp5-operation-message/1",
+      "ordinal": "positive integer, durable per attempt/workflow-negative sequence",
+      "session_id": "Identifier|null for setup/negative",
+      "operation": "setup|read_inputs|invoke|submit_review|write_receipt|write_slice_receipt|invalid",
+      "request_sha256": "Hash of exact raw bounded JSON-line bytes or canonical equivalent Python API request",
+      "request_truncated": "bool; only true for explicit oversized invalid request prefix"
+    },
+    "AnalystKind": "unsupported_claim|partly_supported_claim|contradiction",
+    "SafeFinalFinding": {
+      "finding_id": "Identifier: stable scope/kind/canonical-ordinal identity",
+      "ordinal": "Count",
+      "code": "PythonKind|AnalystKind",
+      "producers": "array[ProducerRef]",
+      "claim_refs": "array[QualifiedRef(kind=claim)]",
+      "fact_refs": "array[QualifiedRef(kind=fact)]",
+      "citation_refs": "array[QualifiedRef(kind=claim_citation)]",
+      "identity_group_id": "Identifier|null",
+      "limited": "bool|null",
+      "origin": "python|analyst"
+    },
+    "AllFindingCounts": "object with exactly all eight PythonKind plus all three AnalystKind keys, each Count (zeros explicit)",
+    "PayloadCommitment": {
+      "schema_version": "cp5-protected-payload/1",
+      "kind": "cp1b_operand_lineage|cp1b_evidence_bundle",
+      "raw_sha256": "Hash of exact original UTF-8 attribute string",
+      "raw_bytes": "Count of exact original UTF-8 attribute string",
+      "handle": "lineage:<64hex>|lineage-bundle:<64hex>",
+      "projection": "bounded_lineage_catalog/1"
+    },
+    "CitationSetRef": {
+      "projection": "fact_citation_catalog/1",
+      "handle": "fact-citations:<64hex>",
+      "count": "Count preserving every original Citation ordinal (including duplicate handles)",
+      "sha256": "Hash=K(exact ordered CitationHandle array)"
+    },
+    "LineageBundleRecord": {
+      "bundle_id": "lineage-bundle:<64hex>",
+      "owner": "ProducerRef for actual CP1B",
+      "owner_fact": "QualifiedRef(kind=fact) evidence.inputs identity",
+      "raw_sha256": "Hash of exact canonical B1 evidence.inputs text",
+      "raw_bytes": "Count",
+      "source_producer": "ProducerRef for bound full CP1",
+      "prior_period_id": "Identifier",
+      "current_period_id": "Identifier",
+      "prior_basis_id": "Identifier|null",
+      "current_basis_id": "Identifier",
+      "lineage_count": "12 for authentic B1 first case",
+      "lineages_sha256": "Hash=K(ordered lineage-header IDs)",
+      "owner_fact_count": "44 for authentic B1",
+      "owner_facts_sha256": "Hash of lineage_owner_facts section for this owner"
+    },
+    "LineageHeaderRecord": {
+      "lineage_id": "lineage:<64hex>",
+      "bundle_id": "lineage-bundle:<64hex>",
+      "ordinal": "Count in exact A1/B1 twelve-point order",
+      "measure_id": "Identifier",
+      "raw_sha256": "Hash of exact canonical full single OperandLineage JSON",
+      "raw_bytes": "Count",
+      "prior_operand_id": "lineage-operand:<64hex>|null only genuinely absent prior",
+      "current_operand_id": "lineage-operand:<64hex>",
+      "companion_count": "Count (21 genuine sequential first case)",
+      "companions_sha256": "Hash=K(ordered complete CompanionRecord array for this lineage)"
+    },
+    "LineageOperandRecord": {
+      "operand_id": "lineage-operand:<64hex>",
+      "lineage_id": "lineage:<64hex>",
+      "role": "prior|current",
+      "fact": "LineageFactReference",
+      "period_id": "Identifier",
+      "basis_id": "Identifier",
+      "source_period": "actual canonical Fact.period string",
+      "source_basis_sha256": "Hash=B(original actual Fact.basis UTF-8)",
+      "source_basis_bytes": "Count; full raw basis retained internally, no invented abbreviated string",
+      "fact_sha256": "Hash=T(full authentic CP1 Fact)",
+      "citation_count": "Count including duplicate handles",
+      "citations_sha256": "Hash=K(ordered complete LineageCitationRecord array for this operand)"
+    },
+    "LineageCompanionRecord": {
+      "lineage_id": "lineage:<64hex>",
+      "ordinal": "Count in exact original companion order; duplicates not discarded",
+      "fact": "LineageFactReference"
+    },
+    "LineageCitationRecord": {
+      "lineage_id": "lineage:<64hex>",
+      "operand_id": "lineage-operand:<64hex>",
+      "ordinal": "Count in exact original citation order; duplicate handles retained",
+      "citation": "CitationHandle"
+    },
+    "LineageOwnerFactRecord": {
+      "owner": "ProducerRef for CP1B",
+      "coordinate": "Coordinate",
+      "fact_sha256": "Hash=T(full raw Fact)",
+      "citation_set": "CitationSetRef",
+      "basis_commitment": "PayloadCommitment|null when not protected",
+      "text_commitment": "PayloadCommitment|null when not protected"
+    },
+    "FactCitationRecord": {
+      "owner_fact": "QualifiedRef(kind=fact)",
+      "ordinal": "Count in exact raw Citation tuple order",
+      "citation": "CitationHandle"
+    },
+    "RawReviewIntent": {
+      "schema_version": "cp5-raw-review-intent/1",
+      "sequence": "positive integer",
+      "session_id": "Identifier|null if setup refused",
+      "binding": "Binding|null if no authorized executable ticket",
+      "snapshot_before_sha256": "Hash",
+      "scope_sha256": "Hash|null",
+      "grant_sha256": "Hash|null",
+      "manifest_sha256": "Hash|null",
+      "raw_payload_sha256": "Hash of exact raw supplied review text",
+      "complete_binding_sha256": "Hash|null; absent participation remains null, never fabricated"
+    }
+  },
+  "mechanical_kinds": [
+    "blocked_upstream",
+    "empty_evaluated_set",
+    "claim_citation",
+    "fact_citation",
+    "scale_unit",
+    "claim_figure",
+    "unsettled_fact",
+    "figure_identity"
+  ],
+  "analyst_kinds": [
+    "unsupported_claim",
+    "partly_supported_claim",
+    "contradiction"
+  ],
+  "cases": [
+    {
+      "id": "I-COMPLETE",
+      "expect": "Complete current CP1+CP1B grant; all required catalogs read contiguously; whole-scope verification; exactly-once qualified claim review; existing validate/compose/settle; immutable receipt and final verifier accept authentic current state."
+    },
+    {
+      "id": "I-DYNAMIC",
+      "expect": "Select an additional current analyst or Model in a component store: its bound producer/claims/facts are mandatory; no fixed two-producer assumption. First actual owner path remains CP1B+CP5 only."
+    },
+    {
+      "id": "I-OMITTED-PRODUCER",
+      "expect": "Grant missing selected analyst fails not_permitted before any values/manifest."
+    },
+    {
+      "id": "I-OMITTED-CLAIM",
+      "expect": "Omit actual claim/citation/fact coordinate from complete grant: not_permitted, never partial clean scope."
+    },
+    {
+      "id": "I-BLOCKED",
+      "expect": "Blocked analyst/gate is authenticated, counted and not evaluated; blocked_upstream category survives sanitized; do not imply its outputs passed."
+    },
+    {
+      "id": "I-EMPTY",
+      "expect": "Component empty evaluated set yields empty_evaluated_set; no clean verdict or invented producer."
+    },
+    {
+      "id": "I-CLAIM-CITATION",
+      "expect": "Bad actual claim citation yields claim_citation record and qualified failing refs; quote/private prefix sentinel absent from every public response."
+    },
+    {
+      "id": "I-FACT-CITATION",
+      "expect": "Bad fact citation yields fact_citation on exact producer/hash/fact; no private detail."
+    },
+    {
+      "id": "I-SCALE",
+      "expect": "Numeric MILLIONS/scale1 mismatch yields scale_unit; no replacing amount or inferred conversion."
+    },
+    {
+      "id": "I-CLAIM-FIGURE",
+      "expect": "Unresolved figure/chip in actual claim yields claim_figure; unresolved free text not echoed as diagnostic."
+    },
+    {
+      "id": "I-UNSETTLED",
+      "expect": "Claim touching missing/conflicting fact without limitation yields unsettled_fact; same properly limited claim remains in unsettled catalog with limited=true without forced new own finding."
+    },
+    {
+      "id": "I-IDENTITY",
+      "expect": "Same local fact ID with differing value/placement, or same numeric coordinate across producers, yields existing identity group/finding; equal copies preserve existing cp1_references exception only."
+    },
+    {
+      "id": "I-ANALYST-UNSUPPORTED",
+      "expect": "Valid unsupported claim review produces unsupported_claim own finding and restricted report."
+    },
+    {
+      "id": "I-ANALYST-PARTLY",
+      "expect": "Valid partly_supported review with actual refs produces partly_supported_claim and restricted report."
+    },
+    {
+      "id": "I-ANALYST-CONTRADICTION",
+      "expect": "Valid unique claim references across >=2 producers yield contradiction finding and restricted report; same-producer or unresolved members core-invalid."
+    },
+    {
+      "id": "I-SUPPORTED-FLAG",
+      "expect": "Supported over any touching claim/ref mark is core-invalid; changing rationale cannot waive mechanical finding."
+    },
+    {
+      "id": "I-REVIEW-COMPLETE",
+      "expect": "Missing, duplicate, foreign or blocked-producer claim review is core-invalid; every evaluated claim exactly once without materiality/exclusion flags."
+    },
+    {
+      "id": "I-LOCAL-REFS",
+      "expect": "Same local IDs in CP1/CP1B never pool authority; producer/hash-qualified page refs bind core local-reference grammar to exact current producer. Foreign ref core-invalid or not_permitted before disclosure."
+    },
+    {
+      "id": "I-STATUS",
+      "expect": "Clean limited upstream -> report accepted if no own findings/gaps; inherited/synthetic settlement can still restricted. Own finding or gap -> report restricted. No new QA/score60 gate."
+    },
+    {
+      "id": "I-RAW-DENIAL",
+      "expect": "Raw source/search/read/extract tools, Citation.quote, full citations, context_block, record_json/wrappers, extra attributes/scope grants refuse not_permitted; all source_evidence arrays empty."
+    },
+    {
+      "id": "I-INHERITED-SAFE",
+      "expect": "Every inherited/module limitation retains count/ordinal/origin/status/hash plus generic label; generated diagnostic prefix never echoed or converted into own defect."
+    },
+    {
+      "id": "I-PAGES",
+      "expect": "Short 25-entry section ->20 then5 with matching total/offset/terminal; long Unicode may need smaller contiguous pages, each body<=8192 bytes."
+    },
+    {
+      "id": "I-EMPTY-SECTION",
+      "expect": "Empty section read once: offset0/entries[]/complete=true/next_cursor=null; no advancing empty page for nonempty section."
+    },
+    {
+      "id": "I-BODY",
+      "expect": "Indivisible entry/header>8192 or lookup/citation result overflow -> bad_arguments/null body, no truncation/cursor/evidence; transport unsupported never source absence."
+    },
+    {
+      "id": "I-CURSOR",
+      "expect": "Malformed token ->bad_arguments; well-formed foreign/old/unissued/session/section token ->stale_binding. Same issued current token+args replays same bounded page with new receipt; different valid limit keeps same starting offset."
+    },
+    {
+      "id": "I-PARTICIPATION",
+      "expect": "Unread/skipped/duplicate-with-gap page, missing required catalog/whole-scope verification or inconsistent digest -> submission refused before submit_cp5_step; raw intent may remain but no accepted output/settlement."
+    },
+    {
+      "id": "I-OPTIONAL-INDEX",
+      "expect": "All clean unrelated fact_index pages are optional; checks still run whole full authenticated scope; all claims/flagged/group/unsettled/named facts remain required."
+    },
+    {
+      "id": "I-IDENTITY-REFUSAL",
+      "expect": "Well-formed wrong current hash/run/issuer/as_of/method/status or tampered bytes ->identity_mismatch before disclosure; stale head/snapshot/executable ticket ->stale_binding."
+    },
+    {
+      "id": "I-RACE",
+      "expect": "Mutate snapshot OR bound producer/pack bytes during response construction: final pre-return check refuses atomically; no provisional body/cursor committed; earlier receipts unchanged; lock recovers."
+    },
+    {
+      "id": "I-BUDGET",
+      "expect": "Request line>4194304bytes ->bad_arguments; operation1025 or message2049 ->not_permitted and cannot complete participation. No silent limit increase or budget-as-source-gap."
+    },
+    {
+      "id": "I-UNKNOWN-CATEGORY",
+      "expect": "Unknown or structurally unresolvable trusted finding ->internal_error/null body; never omit it or return clean."
+    },
+    {
+      "id": "I-AUDIT",
+      "expect": "Missing/extra/tampered/reordered request/response/body/session/intent/step/report/candidate/result or receipt seal fails read-only verification; no verification writes/mutating submit."
+    },
+    {
+      "id": "I-ANCESTOR",
+      "expect": "Owner anchor is immutable ancestor of final snapshot; same run/pack and unchanged CP0/CP1/CP1B heads; no owner receipt reseal, old-run relabel or fake injected heads."
+    },
+    {
+      "id": "I-RESUME",
+      "expect": "Crash after valid retained step: exact raw intent/payload plus authentic prior participation may resume core finish once; changed payload refuses. Fresh repair uses new ticket/session/full traversal, cannot borrow old calls."
+    },
+    {
+      "id": "I-GAP",
+      "expect": "Genuine missing financial source follows actual CP0/CP1 refusal; B1 cp1_not_authorized prefix may attempt actual CP5.begin and record refusal with no invented CP5 ticket/result. Honest valid no-YoY owner may be reviewed normally and is not forced rejected."
+    },
+    {
+      "id": "I-FINAL",
+      "expect": "Final complete receipt requires actual settled CP5 and no pending attempt, exact current heads/descendant/audit seals. Negative final allowed only B1 cp1_not_authorized + actual CP5 begin refusal/no CP5 result. Owner-only/invalid/pending CP5 cannot qualify complete."
+    },
+    {
+      "id": "I-PUBLICATION",
+      "expect": "First actual earnings path has publication_files={} and no Model output. Dynamic Model scope component case does not claim the B1 pathway supports Model publication."
+    },
+    {
+      "id": "I-V1-A2",
+      "expect": "All old CP2/CP5-v1 and frozen A2 CP1B-v2 interfaces/cases/refusals unchanged; shared-live capability addendum not bypassed."
+    },
+    {
+      "id": "I-QUALITATIVE-MINIMUM",
+      "expect": "Required catalog traversal is minimum, not support ceiling. Untokenized qualitative claims may need additional actual qualified fact_index/lookup evidence; otherwise honest unsupported/gap. Mechanical clean alone never means semantically supported. CP4 T4F.2 copying a CP1 ID at changed placement remains existing figure_identity, with no cp1_references exception invented."
+    },
+    {
+      "id": "I-B1-BOUNDED-LINEAGE",
+      "expect": "Genuine first-case21companions and full12-lineage text never enter indivisible SafeFact strings. Exact raw attribute/Facts stay unchanged/hash-bound; outward commitments resolve mandatory lineage headers/operands/21-per-point companions/citation ordinals/all44 owner fact identities within8192 BODY/20entries. Complete all section traversals. No cap increase, shortened false basis, discarded duplicate or legitimate first-case refusal."
+    },
+    {
+      "id": "I-LINEAGE-COMPLETENESS",
+      "expect": "Missing/duplicated/reordered/tampered header,operand,companion,citation,owner fact or fact-citation ordinal/digest refuses participation/verification. Same refs across points remain distinct ordered records. All12points and44identities preserved, including nonknown prior/leverage."
+    },
+    {
+      "id": "I-EARLY-SUBMIT-REFUSAL",
+      "expect": "Before complete scope reads/whole-verify, retain RawReviewIntent and SubmissionRecord.raw_intent_sha256; binding_sha256=null, no fake Traversal/call ID, no journal step/candidate/result, unchanged snapshot. SubmitReply.record_sha256 is hash of that real refusal record."
+    }
+  ],
+  "qualification_limits": [
+    "No product implementation or execution tested by oracle author",
+    "No source math re-audit",
+    "Component constructed scopes are not actual analytical participation",
+    "No financial wrapper weakening or shared Execution/live/core edits",
+    "No provider/live test authority"
+  ],
+  "safe_json_projection": {
+    "cp1b_evidence_coordinate": {
+      "module_id": "CP-1B",
+      "table_id": "T1B.3",
+      "row_id": "evidence.inputs",
+      "field": "assessment",
+      "fact_id": "cp1b:T1B.3:evidence.inputs:assessment"
+    },
+    "evidence_text": "strictly validate entire original B1 handles-only twelve-lineage JSON and all actual CP1 refs/hashes/coordinates/handles internally; outward text is explicit PayloadCommitment and lineage_bundle handle; never indivisible full JSON",
+    "derived_basis": "strictly validate full single B1 OperandLineage internally; outward basis is explicit PayloadCommitment and shared lineage handle",
+    "forbidden_nested_keys": [
+      "quote",
+      "citations",
+      "record_json",
+      "source_spans",
+      "context_block"
+    ],
+    "failure": "not_permitted/null body atomically, including required catalog construction; never silently drop record/ref or null a known text",
+    "cycle_rule": "tools/upstream.py must not import earnings_workflow; narrow structural safe projector follows frozen B1 wire schema; IntegrityWorkflow separately uses actual B1 public verifier/stage authentication",
+    "raw_invariant": "No raw Fact/basis/text/hash/core/source/44-layout/12-point value changed; safe projection is explicitly not canonical raw Fact",
+    "mandatory_catalogs": [
+      "lineage_bundles",
+      "lineage_headers",
+      "lineage_operands",
+      "lineage_companions",
+      "lineage_citations",
+      "lineage_owner_facts",
+      "fact_citations"
+    ],
+    "required_evidence_expansion": "Add every lineage primary and companion CP1 fact to required_evidence in addition to original named/flagged/identity/unsettled union. Deduplicate that evidence Fact set only; companion/citation catalogs preserve original repeated ordinals. All44 CP1B identities are mandatory lineage_owner_facts."
+  },
+  "receipt_invariants": [
+    "cp5_settled requires valid integrity_review, exact core candidate/settlement and actual accepted/restricted promoted CP5 head; blocked repair is cp5_invalid, never complete final",
+    "raw ToolReceipt body is JSON object, bounded by compact serialized UTF-8 bytes",
+    "Integrity checkpoint receipt and seal are content-addressed per checkpoint; old forensic seals never overwritten; final selected EarningsSliceReceipt seal is write-once and current",
+    "unresolved durable submission intent freezes exact session/envelope: no fresh session/call rewrite before resolving exact raw payload outcome",
+    "Early participation-refused proposals always retain RawReviewIntent/SubmissionRecord with nullable complete binding; no fabricated traversal or whole-verify IDs"
+  ],
+  "literal_component_fixture": {
+    "qualification": "Handwritten transport/core-category component fixture ONLY; never actual owner/foundation evidence or replacement financial literals",
+    "source": {
+      "source_id": "component-statement",
+      "locator": "page:1",
+      "text": "Component revenue zero.\nComponent delta zero.\n",
+      "sha256": "0759b15b0c2dadac1185ac7f00b4b9390d1855c4377ee905ce85e5257fb8588a"
+    },
+    "producers": [
+      {
+        "module_id": "CP-1",
+        "status": "accepted",
+        "facts": [
+          {
+            "fact_id": "fin.rev",
+            "label": "Component revenue",
+            "table_id": "T4.10",
+            "row_id": "revenue",
+            "field": "value",
+            "amount": "0",
+            "text": null,
+            "status": "known",
+            "unit": "MILLIONS",
+            "currency": "USD",
+            "scale": "1000000",
+            "period": "Q4 2025",
+            "basis": "component-only historical",
+            "limitation": null,
+            "citations": [
+              {
+                "source_id": "component-statement",
+                "source_sha256": "0759b15b0c2dadac1185ac7f00b4b9390d1855c4377ee905ce85e5257fb8588a",
+                "locator": "page:1",
+                "quote": "Component revenue zero."
+              }
+            ]
+          }
+        ],
+        "claims": [
+          {
+            "claim_id": "summary",
+            "text": "Revenue observation [fin.rev].",
+            "limitation": null,
+            "citations": [
+              {
+                "source_id": "component-statement",
+                "source_sha256": "0759b15b0c2dadac1185ac7f00b4b9390d1855c4377ee905ce85e5257fb8588a",
+                "locator": "page:1",
+                "quote": "Component revenue zero."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "module_id": "CP-1B",
+        "status": "accepted",
+        "facts": [
+          {
+            "fact_id": "earn.delta",
+            "label": "Component delta",
+            "table_id": "T1B.1",
+            "row_id": "revenue",
+            "field": "delta",
+            "amount": "0",
+            "text": null,
+            "status": "known",
+            "unit": "MILLIONS",
+            "currency": "USD",
+            "scale": "1000000",
+            "period": "Q4 2025",
+            "basis": "component-only historical",
+            "limitation": null,
+            "citations": [
+              {
+                "source_id": "component-statement",
+                "source_sha256": "0759b15b0c2dadac1185ac7f00b4b9390d1855c4377ee905ce85e5257fb8588a",
+                "locator": "page:1",
+                "quote": "Component delta zero."
+              }
+            ]
+          }
+        ],
+        "claims": [
+          {
+            "claim_id": "summary",
+            "text": "Delta observation [earn.delta].",
+            "limitation": null,
+            "citations": [
+              {
+                "source_id": "component-statement",
+                "source_sha256": "0759b15b0c2dadac1185ac7f00b4b9390d1855c4377ee905ce85e5257fb8588a",
+                "locator": "page:1",
+                "quote": "Component delta zero."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "dynamic_identities": "pack/run/tickets/fullproducer hashes created and pinned at fixture setup; never precommitted real ticket literals",
+    "raw_review": {
+      "claim_reviews": [
+        {
+          "producer_module": "CP-1",
+          "claim_ref": "summary",
+          "support": "supported",
+          "rationale": "The cited observation supports the statement.",
+          "upstream_refs": [
+            "fin.rev"
+          ]
+        },
+        {
+          "producer_module": "CP-1B",
+          "claim_ref": "summary",
+          "support": "supported",
+          "rationale": "The cited observation supports the statement.",
+          "upstream_refs": [
+            "earn.delta"
+          ]
+        }
+      ],
+      "contradictions": [],
+      "gaps": []
+    },
+    "expected": {
+      "evaluated_producers": 2,
+      "claims": 2,
+      "claim_citations": 2,
+      "facts": 2,
+      "required_evidence": 2,
+      "identity_groups": 0,
+      "unsettled": 0,
+      "mechanical_counts": {
+        "blocked_upstream": 0,
+        "empty_evaluated_set": 0,
+        "claim_citation": 0,
+        "fact_citation": 0,
+        "scale_unit": 0,
+        "claim_figure": 0,
+        "unsettled_fact": 0,
+        "figure_identity": 0
+      },
+      "mechanical_verdict": "clean",
+      "core_report_status": "accepted",
+      "synthetic_settled_status": "restricted",
+      "same_local_claim_id_pooling_allowed": false,
+      "zero_is_present": true
+    },
+    "causal_mutations": [
+      {
+        "id": "bad_fact_quote",
+        "mutation": "Only fin.rev citation.quote becomes PRIVATE_QUOTE_SENTINEL, absent from literal page",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 1,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "supported_review": "invalid",
+        "public_sentinel_occurrences": 0
+      },
+      {
+        "id": "bad_claim_quote",
+        "mutation": "Only CP1 summary citation.quote becomes PRIVATE_QUOTE_SENTINEL",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 1,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "supported_review": "invalid",
+        "public_sentinel_occurrences": 0
+      },
+      {
+        "id": "bad_scale",
+        "mutation": "Only fin.rev.scale=1 while unit=MILLIONS and amount=0",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 1,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "supported_review": "invalid",
+        "amount_stays": "0"
+      },
+      {
+        "id": "unresolved_claim",
+        "mutation": "Only CP1 summary.text becomes Revenue observation [unknown.fact].",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 1,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "supported_review": "invalid"
+      },
+      {
+        "id": "unsettled_unlimited",
+        "mutation": "Only fin.rev becomes amount=null/status=missing/limitation=Not supplied; summary limitation remains null",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 1,
+          "figure_identity": 0
+        },
+        "unsettled_count": 1,
+        "limited": false,
+        "supported_review": "invalid"
+      },
+      {
+        "id": "unsettled_limited",
+        "mutation": "Previous missing fin.rev plus summary.limitation=Observation is unavailable within this scope.",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "unsettled_count": 1,
+        "limited": true,
+        "zero_must_not_substitute_null": true
+      },
+      {
+        "id": "identity_twice",
+        "mutation": "Keep earn.delta and append to CP1B a new fin.rev equal to CP1 fin.rev except amount=1; same table,row,field,period and valid citations",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 2
+        },
+        "identity_groups": 2,
+        "differing": [
+          "value"
+        ],
+        "supported_original_claim": "invalid because CP1 fin.rev ref flagged"
+      },
+      {
+        "id": "blocked",
+        "mutation": "Component ReviewScope includes current CP1B input/head status blocked, classified blocked, CP1 remains evaluated",
+        "expected_counts": {
+          "blocked_upstream": 1,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "evaluated_claims": 1,
+        "blocked_claims_evaluated": 0,
+        "core_report_status": "restricted"
+      },
+      {
+        "id": "empty",
+        "mutation": "Component ReviewScope evaluated heads empty, blocked empty",
+        "expected_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 1,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "core_report_status": "restricted"
+      },
+      {
+        "id": "unsupported",
+        "mutation": "Only CP1B summary review support=unsupported/upstream_refs=[]",
+        "mechanical_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "analyst_counts": {
+          "unsupported_claim": 1,
+          "partly_supported_claim": 0,
+          "contradiction": 0
+        },
+        "core_report_status": "restricted"
+      },
+      {
+        "id": "partly_supported",
+        "mutation": "Only CP1B summary review support=partly_supported, existing earn.delta reference retained",
+        "mechanical_counts": {
+          "blocked_upstream": 0,
+          "empty_evaluated_set": 0,
+          "claim_citation": 0,
+          "fact_citation": 0,
+          "scale_unit": 0,
+          "claim_figure": 0,
+          "unsettled_fact": 0,
+          "figure_identity": 0
+        },
+        "analyst_counts": {
+          "unsupported_claim": 0,
+          "partly_supported_claim": 1,
+          "contradiction": 0
+        },
+        "core_report_status": "restricted"
+      }
+    ],
+    "contradiction_fixture": {
+      "qualification": "Separate literal opposed-disclosure component case, not financial source inference",
+      "sources": [
+        {
+          "source_id": "component-policy-a",
+          "locator": "page:1",
+          "text": "Policy permits distributions.\n"
+        },
+        {
+          "source_id": "component-policy-b",
+          "locator": "page:1",
+          "text": "Policy prohibits distributions.\n"
+        }
+      ],
+      "claims": [
+        {
+          "producer_module": "CP-1",
+          "claim_id": "policy",
+          "text": "Policy permits distributions.",
+          "citation_source": "component-policy-a",
+          "citation_quote": "Policy permits distributions."
+        },
+        {
+          "producer_module": "CP-1B",
+          "claim_id": "policy",
+          "text": "Policy prohibits distributions.",
+          "citation_source": "component-policy-b",
+          "citation_quote": "Policy prohibits distributions."
+        }
+      ],
+      "reviews": "Both supported with their own policy#c1 citation refs and labels-only rationale",
+      "contradiction": {
+        "claim_refs": [
+          {
+            "producer_module": "CP-1",
+            "claim_ref": "policy"
+          },
+          {
+            "producer_module": "CP-1B",
+            "claim_ref": "policy"
+          }
+        ],
+        "nature": "Opposing policy disclosures",
+        "rationale": "The supplied policy assertions conflict.",
+        "severity": "Material"
+      },
+      "expected_mechanical_counts": {
+        "blocked_upstream": 0,
+        "empty_evaluated_set": 0,
+        "claim_citation": 0,
+        "fact_citation": 0,
+        "scale_unit": 0,
+        "claim_figure": 0,
+        "unsettled_fact": 0,
+        "figure_identity": 0
+      },
+      "expected_analyst_counts": {
+        "unsupported_claim": 0,
+        "partly_supported_claim": 0,
+        "contradiction": 1
+      },
+      "expected_report_status": "restricted",
+      "negative": "same-producer/duplicate/unresolved claim members remain core-invalid"
+    }
+  },
+  "budget_semantics": "Every workflow setup/reopen/public actor operation counts once as an OperationMessage across restarts, whether Python API or JSON-lines; invoke additionally counts toward1024. No double count through dispatcher. Public pure verifiers are trusted read-only operations, not analyst messages. Reserve final seal message before admitting actual traversal. Malformed/oversized requests retain bounded invalid metadata/prefix, never pretend full request capture.",
+  "history": {
+    "superseded_contract_sha256": "b8781df69aef1a4af3aa3e767529594fe143c661c8b5b219cc9766a0b4110429",
+    "superseded_oracle_sha256": "8732152eca870efb5f3c4387a2bd989cc0eed7e28f7c988b7123371c45877d41",
+    "superseded_review_sha256": "b710b81c1494ab20ef793372452f6e26d99df6c6180df21abfd2eca6f3e1c123",
+    "original_bytes_archive": "work/cp1b-preparation/integrity-freeze-review.md, inactive base64 archive",
+    "reason": "Mandatory first-case raw single lineage basis exceeds8192 bytes; all protected JSON now represented by explicit raw commitments plus bounded mandatory catalogs; old PASS withdrawn"
+  },
+  "owner_access_projection": {
+    "contract_sha256": "dd2fc2cedacdfed37852ed827b81b03b18367c9062892ca95c78b4561b4a68d9",
+    "oracle_sha256": "c36dc87159e132440d7f3d9d909b1969c81758c4edf9806f6a42a4ca1795add2",
+    "cp5_new_cp1b_projection_tool_permitted": false
+  },
+  "static_first_case_transport_proof": {
+    "kind": "independent-stdlib-static-transport-envelope/1",
+    "qualification": "Transport bytes/counts only; genuine retained historical full CP1 IDs/metadata/citations and frozen B1/A3 literal amounts. Not actual fresh B1 execution or a new financial oracle. B1 full Fact hashes use 64hex proof placeholders after protected projection, not asserted raw candidate hashes.",
+    "reference_cp1_file": "/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1/work/actual-cp1-charts-1/positive/store/blobs/6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "reference_cp1_sha256_before": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "reference_cp1_sha256_after": "6d41c0a0b6782e4eace1f93d7b028f89041480b3d69721d6b69cfda4afcea8be",
+    "owner_contract_sha256": "e66aa2df765ff76c2fe9644ba2f5c003dc65572ad6060246538265171bc54071",
+    "owner_oracle_sha256": "c8af02d3760f0ac24a8ecd2e2e6d2f3be38f260c706d200995b12c0f3d37456d",
+    "case_id": "E-QOQ-FLAT",
+    "cp1_claims": 7,
+    "cp1_claim_named_facts": 19,
+    "lineage_point_count": 12,
+    "lineage_companion_count_each": [
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21
+    ],
+    "total_lineage_companions": 252,
+    "total_lineage_operands": 24,
+    "total_lineage_citations": 35,
+    "unique_lineage_cp1_facts": 56,
+    "cp1_required_evidence_count": 75,
+    "cp1b_required_evidence_count": 6,
+    "cp1b_fact_identity_count": 44,
+    "full_raw_lineage_min_bytes": 8839,
+    "full_raw_lineage_max_bytes": 9605,
+    "full_raw_bundle_bytes": 107944,
+    "b1_metadata_padding": "B1 labels160chars, numeric limitations512chars, other nonprotected known assessment text512chars bound fixed first-case metadata. Raw amounts are fixed oracle strings; full real source IDs/row IDs/fields/citation ordinals and full64hex handles/cursors/36char ticket retain escaping overhead.",
+    "sections": {
+      "producers": {
+        "entries": 2,
+        "pages": 1,
+        "page_entries": [
+          2
+        ],
+        "body_bytes": [
+          761
+        ],
+        "max_body_bytes": 761,
+        "max_indivisible_body_bytes": 632,
+        "ordered_entries_sha256": "b1494c558eca8e402a50848932c38cfb7d5190a400f9184337d2becb00322879"
+      },
+      "claims": {
+        "entries": 8,
+        "pages": 2,
+        "page_entries": [
+          7,
+          1
+        ],
+        "body_bytes": [
+          7960,
+          977
+        ],
+        "max_body_bytes": 7960,
+        "max_indivisible_body_bytes": 1545,
+        "ordered_entries_sha256": "67396429a142851a745090d65f90a89424a86382866e9b01af1ae267ee23f304"
+      },
+      "claim_citations": {
+        "entries": 32,
+        "pages": 2,
+        "page_entries": [
+          20,
+          12
+        ],
+        "body_bytes": [
+          7377,
+          4549
+        ],
+        "max_body_bytes": 7377,
+        "max_indivisible_body_bytes": 786,
+        "ordered_entries_sha256": "e5811c17d80fc96f1defcc0aa02909d6f555a0e071938b4b779b957d91306f1c"
+      },
+      "required_evidence": {
+        "entries": 81,
+        "pages": 14,
+        "page_entries": [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          5,
+          4
+        ],
+        "body_bytes": [
+          7933,
+          7666,
+          7357,
+          7486,
+          7655,
+          7843,
+          7604,
+          7697,
+          7775,
+          7975,
+          7434,
+          7424,
+          7576,
+          6929
+        ],
+        "max_body_bytes": 7975,
+        "max_indivisible_body_bytes": 2328,
+        "ordered_entries_sha256": "05427a1dd46ebd62198e5438f78359fe87bfd92948cae5cfd754589ca332dc96"
+      },
+      "findings": {
+        "entries": 0,
+        "pages": 1,
+        "page_entries": [
+          0
+        ],
+        "body_bytes": [
+          340
+        ],
+        "max_body_bytes": 340,
+        "max_indivisible_body_bytes": 0,
+        "ordered_entries_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "identity_groups": {
+        "entries": 0,
+        "pages": 1,
+        "page_entries": [
+          0
+        ],
+        "body_bytes": [
+          347
+        ],
+        "max_body_bytes": 347,
+        "max_indivisible_body_bytes": 0,
+        "ordered_entries_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "unsettled": {
+        "entries": 0,
+        "pages": 1,
+        "page_entries": [
+          0
+        ],
+        "body_bytes": [
+          341
+        ],
+        "max_body_bytes": 341,
+        "max_indivisible_body_bytes": 0,
+        "ordered_entries_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "limitations": {
+        "entries": 56,
+        "pages": 3,
+        "page_entries": [
+          20,
+          20,
+          16
+        ],
+        "body_bytes": [
+          6203,
+          6224,
+          4984
+        ],
+        "max_body_bytes": 6224,
+        "max_indivisible_body_bytes": 717,
+        "ordered_entries_sha256": "4b61d76435743f59bbd117ea455cdf5d3abb7ea25598ec323080fbd6c19f5240"
+      },
+      "lineage_bundles": {
+        "entries": 1,
+        "pages": 1,
+        "page_entries": [
+          1
+        ],
+        "body_bytes": [
+          1461
+        ],
+        "max_body_bytes": 1461,
+        "max_indivisible_body_bytes": 1461,
+        "ordered_entries_sha256": "9d64626d94a1dcd10389a4fd995c07cb4aff8ef7875d46d3d3e013f43f355fc8"
+      },
+      "lineage_headers": {
+        "entries": 12,
+        "pages": 1,
+        "page_entries": [
+          12
+        ],
+        "body_bytes": [
+          7960
+        ],
+        "max_body_bytes": 7960,
+        "max_indivisible_body_bytes": 1075,
+        "ordered_entries_sha256": "86c76f2aeed318b61e5a84929ce451ca5ddecb8aae17b56c4af95498d26c2503"
+      },
+      "lineage_operands": {
+        "entries": 24,
+        "pages": 4,
+        "page_entries": [
+          7,
+          7,
+          7,
+          3
+        ],
+        "body_bytes": [
+          7938,
+          7940,
+          7939,
+          3569
+        ],
+        "max_body_bytes": 7940,
+        "max_indivisible_body_bytes": 1503,
+        "ordered_entries_sha256": "711ee2ff1e31520452073e4c4a13ce3bdf4f64fb1c43d535a1a7735a4b631651"
+      },
+      "lineage_companions": {
+        "entries": 252,
+        "pages": 15,
+        "page_entries": [
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          14
+        ],
+        "body_bytes": [
+          8027,
+          8029,
+          8021,
+          8046,
+          8031,
+          8030,
+          8033,
+          8026,
+          8041,
+          8031,
+          8027,
+          8043,
+          8028,
+          8032,
+          6619
+        ],
+        "max_body_bytes": 8046,
+        "max_indivisible_body_bytes": 886,
+        "ordered_entries_sha256": "2644f54e5f5540834b4349efb78a0731d72ba9742c8a9c7f0386283f2c522ab8"
+      },
+      "lineage_citations": {
+        "entries": 35,
+        "pages": 2,
+        "page_entries": [
+          20,
+          15
+        ],
+        "body_bytes": [
+          7169,
+          5405
+        ],
+        "max_body_bytes": 7169,
+        "max_indivisible_body_bytes": 767,
+        "ordered_entries_sha256": "11929982e38ecd621bf8db828f821269bd44e9eb463e869a940b8cae6776dafd"
+      },
+      "lineage_owner_facts": {
+        "entries": 44,
+        "pages": 5,
+        "page_entries": [
+          10,
+          9,
+          10,
+          11,
+          4
+        ],
+        "body_bytes": [
+          7609,
+          7387,
+          7848,
+          7982,
+          3194
+        ],
+        "max_body_bytes": 7982,
+        "max_indivisible_body_bytes": 1357,
+        "ordered_entries_sha256": "919b359ed4e0bd412f168cdb7f777235e45eb7eb434184f2f02832dce8f0406d"
+      },
+      "fact_citations": {
+        "entries": 213,
+        "pages": 11,
+        "page_entries": [
+          20,
+          20,
+          20,
+          20,
+          20,
+          20,
+          20,
+          20,
+          20,
+          20,
+          13
+        ],
+        "body_bytes": [
+          8087,
+          8088,
+          8086,
+          8088,
+          8088,
+          7713,
+          7117,
+          6973,
+          7185,
+          7473,
+          4825
+        ],
+        "max_body_bytes": 8088,
+        "max_indivisible_body_bytes": 812,
+        "ordered_entries_sha256": "5667824da6eed571ac5662d78c6675d9e430741635a784eebab5fa46413206a2"
+      }
+    },
+    "manifest_body_bytes": 3459,
+    "required_page_calls": 64,
+    "whole_scope_verify_calls": 1,
+    "minimum_tool_calls": 65,
+    "planned_message_count_with_setup_read_submission_two_seals": 70,
+    "tool_cap": 1024,
+    "message_cap": 2048,
+    "max_page_bytes": 8088,
+    "body_cap": 8192,
+    "all_pages_fit": true,
+    "all_indivisible_records_fit": true,
+    "no_product_imports_or_execution": true,
+    "proof_authority": "Independent stdlib-only structural envelope reconstruction; source-first financial values remain original A1/A3 oracles. Page-record hashes are proof-envelope hashes, not real future actor artifacts."
+  }
+}

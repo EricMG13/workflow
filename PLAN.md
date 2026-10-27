@@ -284,3 +284,27 @@ A4 complete CP5 contract is still being corrected for indivisible lineage JSON;
 its pending review does not gate B1 public owner-prefix implementation. No Model
 publication in this first earnings selection; previous actual CP1/Model evidence
 remains immutable and broader PLAN/26-module/six-pathway requirements stay open.
+
+
+## Task4-A4 — complete selected CP5 consumption and final earnings seal
+
+Frozen contract/oracle: docs/CP5-INTEGRITY-LEASE.md and
+cases/integrity/expected.json; same independent review closes the genuine
+indivisible-lineage defect in docs/reviews/cp5-integrity-contract.md. Raw canonical
+Fact payloads remain trusted unchanged; bounded typed commitments and mandatory
+lineage/citation catalogs preserve complete actual evidence within8192-byte bodies.
+B1 public immutable-prefix types are fixed; A4 owns the separate final slice seal.
+C1 future files are upstream.py/test_upstream_tools.py plus new
+integrity_workflow.py/test_integrity_workflow.py. No overlapping A4 writes while
+its current projection lease is active; later exact base/admission required.
+
+- [x] Independently freeze dynamic complete scope, every-claim review, all finding kinds, bounded safe lineage, durable refusal/recovery and final receipt APIs.
+- [ ] Integrate the exact freeze and admit C1 after its projection work is accepted; stage tests against accepted B1 public implementation without stubs/WIP copies.
+- [ ] Verify component success/causal failures and required code reviews on exact final bytes.
+- [ ] Run actual permitted complete CP5 reads/checks/raw judgments/submission/settlement over the fresh owner chain; retain limited/source-refusal cases honestly.
+- [ ] Seal and verify final current earnings receipt for C2's authenticated export/native proof.
+
+The first-case static transport proof is65 tools/70 messages,maxpage8088,
+manifest3459 bytes; this is not runtime or analytical qualification. Protected
+raw source/diagnostic text stays denied. Every evaluated claim and all actual
+mechanical/analyst finding categories remain subject to unchanged core rules.

@@ -2297,3 +2297,33 @@ ispermanentlyimpossible, propagatevisiblefailurewithnocursor/body ratherthan
 pretendretainedsuccess; preserveold3toolsemantics. Explicitinjection/lockrecovery
 casesrequired. Thisclarifiesfailurehandling, notnewauthority orsuccessfulreadcredit.
 Paid/provider/live staypaused. ActualCP1B/CP5/FP02matrixlinks stillopen.
+
+
+## Corrected A4 contract independently frozen — NO A4 code admission
+
+Contractcf562507e8bb5322eb67e7c3338afa52867ff59b7807f95d9dcf30359b589ade;
+oraclea23517e8bcd3b344496ca982e735e4882065a4b27345f5a0e770e922ba25bd8f;
+sameindependentreviewba27cc9db6d2aeb4cf28c8643a1a15a14b4b7dc3bd15ce95e3dd4ae8933b392d
+published docs/reviews/cp5-integrity-contract.md. CorrectB1pins unchanged.
+RawprotectedFactbasis/text/hash remaincanonical internally; explicittypedpayload
+commitments/handles plus7additionalmandatorypagedcatalogs preserve12headers/24
+operands/252companions/35operandcitations/44ownerIDs,213factcitationordinals,
+required75CP1+6ownfacts in genuine-shape structuralproof. All15requiredcatalog
+digests/maximalprefixes independentlyrescanned; manifest3459,maxBODY8088,
+64pages+1wholeverify=65tools/70messages within8192/1024/2048. Widthsentinels are
+sizeproof notactual futureproducer/acceptance. No handle/citationdedup orwaiver.
+Earlyrawreviewintent/nullablecompletebinding refusal avoids fabricatedcoverage IDs.
+Dynamicfullscope/everyclaim/core8+3kinds/sourcequotedenial/ancestor->finalseal and
+actualnegativeCP5begin refusal all retained; noCP1Bpagertoolpermission toCP5.
+Originalfailedpair/history retainedinauthorwork; samepeerreviewclosescorrection.
+
+Rootconfidence checked exactpins/JSON/publicB1prefixAPI, protectedpayloadexplicit
+representation, fullmandatorylineagetraversal, status/hashdistinctions, earlyrefusal
+and finalcurrentsealing. Staticonly, no productcode/runtime/providerjob. A4future
+C1writes4filesONLYaftercurrenttwofileprojectioncommitaccepted/integratedandnew
+exactbase/leaseadmission; B1publiccode mustbeacceptedbeforefullruntimeverification,
+no stubs orWIPcopy. C2finaldeliveryleasewillconsumethisexactpublicfinalverifier.
+C1projectionRED1PID95634 10:27:14.420521..10:27:16.687743UTC exit1:112pass/20
+featureabsencefail2.08s; originalprefix+144baseline+authority/runtimeunchanged.
+Notpaging/racebugproofwhilefeatureabsent. Log4b762fff; sourcefreeze/heavyslot
+released, C1twofileimplementationresumed. Paid/provider/live staypaused.

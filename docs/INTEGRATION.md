@@ -324,6 +324,32 @@ LEAD will admit the single assembled focused source/upstream/workflow/render
 test batch after inspecting the integrated source. No assembled or broader suite
 was run for this integration.
 
+### C1 bounded CP1 financial/Model implementation
+
+Integrated C1's exact admitted commit
+`07ede0f7c92380b61452dc536cee635dbfcf8610` from
+`/Users/ericguei/Documents/Deploy Workflow Sessions/coordinator-1`
+(`codex/cp1-financial-impl`, parent
+`4cc75da077c49e173f4599211b22d63a6ed6d188`) by local fetch and cherry-pick.
+The integration commit is `e474e314e53d50770b452f16ece91290f68f5c2f`.
+Its exact three files are `src/deploy_workflow/financial_workflow.py`,
+`tests/test_financial_workflow.py`, and `docs/handoffs/cp1-model.md`.
+
+Verified final file hashes:
+
+- Product: `4f513165d4229c853dd7723cb3b9bbdb838b614cbb11a9ae5f818635a947da56`
+- Tests: `771af9a706f0883008b327e12e3e47ed17e90a8b6a8544ca7d18b784acd4621b`
+- Handoff: `1d136e5f695d012e3424286f23422157ba8de5aedf8545da31a921a727f09f9d`
+
+The handoff records 20 focused tests passing in 665.23 seconds, closed
+confidence review, both required rewrite tournaments, independent Sol/high
+review, strict mypy and scoped Ruff I/F checks. Six optional broader-Ruff style
+advisories are documented; no full broader-Ruff pass is claimed. I did not rerun
+tests. Actual analyst participation/raw-QA review, C2 render consumption and
+native browser proof remain pending, so this component implementation is not
+owner/slice completion. C1's ignored local `work/` evidence was left untouched.
+No paid/provider calls occurred.
+
 ## First source-to-rendered slice closure
 
 Integrated LEAD's exact docs/data commit

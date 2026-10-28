@@ -345,3 +345,4 @@
 - 19:52 CP-DR fix1 APPROVED; merge held until shared defect-class test lands (round 3).
 - 19:53 CP-3D fix1 APPROVED. Riding Lows (methods derived-rule note per round 3, head-tamper test, exact own-limitations) to implementer; merge held for shared defect test. CP-4 review dispatched.
 - 19:54 CP-3D riding Lows 0c47bc4 (methods citation rule, head-tamper test, exact own limitations; 1321 passed). CP-4 review dispatched.
+- 19:56 CP-2D review: REQUEST CHANGES (H1 frozen CP-4 FP04 render oracle pins the 3 blocks Unbound vs CP-2D lease D7 -> LEAD; M1 non-USD facility raises; M2 one-way alias; M3 acceptance tests; M4 weak money tests). Fix round 1 (M1-M4, Lows), H1 held. Merge gate adds the fast render suites.

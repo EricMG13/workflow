@@ -37,7 +37,7 @@ CASE = ROOT / "cases" / "cp2g-owner"
 EXPECTED: dict[str, Any] = json.loads((CASE / "expected.json").read_text(encoding="utf-8"))
 SUBMISSIONS: dict[str, Any] = json.loads((CASE / "submissions.json").read_text(encoding="utf-8"))
 PINS = {  # the builder's D3 pins (lease Prerequisites 3)
-    "cases/cp2a-owner/expected.json": "457508a0643af8ca6e31bfec6103ae2a0ca9f009dfcc3bf57d29b001e88668b5",
+    "cases/cp2a-owner/expected.json": "ad5531da7cff4eca8e9c8e9a23cef6526a982537597e6830610877bec994ff89",
     "cases/cp1d-owner/expected.json": "6015b443603b16f9af8c5417e6fa69f7468fa243f37b64575f745aac6549bd8c",
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
 }

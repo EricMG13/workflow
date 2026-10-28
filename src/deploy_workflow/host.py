@@ -45,8 +45,8 @@ from deploy_workflow.tools.source import SourceError, SourceTools
 
 # The steps that may open a source session, per module. CP-0, CP-1, CP-1A, CP-3 and CP-4 have a
 # live step contract and keep the registry's scope (`declared_sources`/`readable_sources`; CP-3:
-# the CP-0 `third_party` sources, docs/CP3-OWNER-LEASE.md:65). CP-1D, CP-3D and CP-DR are
-# owner-only (G1-X §1): CP-1D, CP-1C, CP-2E, CP-2H, CP-3D, CP-4C, CP-8 and CP-DR. Their scope is
+# the CP-0 `third_party` sources, docs/CP3-OWNER-LEASE.md:65). Eight modules are owner-only
+# (G1-X §1): CP-1D, CP-1C, CP-2E, CP-2H, CP-3D, CP-4C, CP-8 and CP-DR. Their scope is
 # `_OWNER_SCOPES`, their step order their G1-X core's.
 _SOURCE_STEPS = {
     "CP-0": ("source_readiness",),

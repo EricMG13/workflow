@@ -1627,6 +1627,33 @@ def blank_field(*keys: str | int, case: str = "positive") -> Adapter:
     return adapter
 
 
+def blank_exit_trigger_absence(key: str) -> Adapter:
+    """The frozen positive submission quotes ``thesis.exit_trigger``, so ``blank_field`` cannot
+    reach its absence. This gives the field an absence, with the quote it carried, and sets
+    the absence's ``key``."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        lit: dict[str, Any] = copy.deepcopy(SUBMISSIONS["positive"])
+        trigger = lit["thesis"]["exit_trigger"]
+        absence = {
+            "quote": trigger["quote"],
+            "reason": "The Prior Case record states that no exit threshold was recorded",
+            "follow_up": "Obtain the exit threshold from the committee minutes",
+        }
+        absence[key] = value
+        lit["thesis"]["exit_trigger"] = {"absence": absence}
+        return validator_issues(lit)
+
+    return adapter
+
+
+def test_r11_the_exit_trigger_absence_adapter_is_valid_with_text() -> None:
+    """Control for the adapter: with text in the field, no empty-text issue is raised."""
+    for key in ("reason", "follow_up"):
+        issues = blank_exit_trigger_absence(key)("", "", "Not recorded in the case")
+        assert f"thesis.exit_trigger.absence.{key}: text is empty" not in issues
+
+
 _ABSENT = (("decision", "posture"), ("decision", "size")) + tuple(
     ("thesis", f) for f in ("expected_spread_return", "expected_rating_path", "expected_hold")
 )
@@ -1658,6 +1685,10 @@ BLANK_FIELDS: dict[str, Adapter] = {
     "lessons[0].lesson": blank_field("lessons", 0, "lesson"),
     **{f"extra_gaps[0].{key}": blank_field("extra_gaps", 0, key) for key in _GAP_FIELDS},
     "synthesis.text": blank_field("synthesis", "text"),
+    **{
+        f"thesis.exit_trigger.absence.{key}": blank_exit_trigger_absence(key)
+        for key in ("reason", "follow_up")
+    },
 }
 
 
@@ -1685,6 +1716,8 @@ def test_r11_b1_every_occurrence_of_the_quote_on_the_page_is_read() -> None:
     assert not cp8_module._on_page("1.75", "1.75x", page)  # the second occurrence cuts 41.75
     assert not cp8_module._on_page("1.75", "1.75x", "Sized above 41.75x.")
     assert not cp8_module._on_page("1.75", "1.75x", "no such figure")  # the quote is not there
+    # an occurrence that overlaps the one before it is read too: its figure is signed
+    assert not cp8_module._on_page("1.25", "1.25 -1.2", "1.25 -1.25 -1.2")
 
 
 def test_r11_b1_a_wrapped_page_is_read_both_ways() -> None:

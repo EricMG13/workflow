@@ -990,7 +990,8 @@ SOURCE_BREACHES: dict[str, tuple[list[tuple[int, str, str]], str]] = {
         "Trigger terms not found",
     ),
     "threshold_form": ([(2, "Above  2.75x", "Above  2.75 times")], "Trigger terms not found"),
-    "threshold_unit": ([(2, "Below  10.0%", "Below  10.0x")], "Trigger terms not found"),
+    # grammar-valid (`N.NNx`) with the wrong unit for a percent metric: the unit check refuses it
+    "threshold_unit": ([(2, "Below  10.0%", "Below  10.00x")], "Trigger terms not found"),
     "term_twice": (
         [
             (
@@ -1226,7 +1227,10 @@ THRESHOLD_FORMS = {
     "percent_no_point": (FCF_TERM, "Below  10%"),
     "percent_two_places": (FCF_TERM, "Below  10.05%"),
     "percent_many_places": (FCF_TERM, "Below  1.23456789012345678901234567891%"),
+    "multiple_no_integer": (TL_TERM, "Above  .75x"),
+    "percent_no_integer": (FCF_TERM, "Below  .5%"),
     "minus": (TL_TERM, "Above  -2.75x"),
+    "percent_minus": (FCF_TERM, "Below  -10.0%"),
     "plus": (TL_TERM, "Above  +2.75x"),
     "comma": (TL_TERM, "Above  2,75x"),
     "fullwidth": (TL_TERM, "Above  ２.７５x"),

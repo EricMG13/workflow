@@ -338,7 +338,7 @@ def test_fixed_rows_name_each_leased_step() -> None:
         "CP-8": ("decision_ledger",),
     }
     # CP-3 is a live-contract module: its scope stays the registry's (CP-3 lease :65); the
-    # three others are owner-only and take the fixed host scope.
+    # eight others are owner-only and take the fixed host scope.
     assert "relative_value" in step_chain("CP-3").pack_sources
     for module in ("CP-3D", "CP-DR", "CP-1D", "CP-1C", "CP-2E", "CP-2H", "CP-4C", "CP-8"):
         with pytest.raises(ValueError, match="has no live step contract"):
@@ -356,10 +356,16 @@ def test_fixed_rows_name_each_leased_step() -> None:
 
 
 def _source(source_id: str, *, ready: bool = True, unreadable: bool = False) -> Source:
-    """A pack source for the scope functions only (no run reads it)."""
+    """A pack source for the scope functions only (no run reads it). An `unreadable` one still
+    carries a sha256 and a page span, so a tool that admitted it would return its bytes."""
     if unreadable:
         return Source(
-            source_id=source_id, name=source_id, status="unreadable", limitation="unreadable"
+            source_id=source_id,
+            name=source_id,
+            status="unreadable",
+            sha256="1" * 64,
+            spans=(Span(locator="page:1", text=f"SECRET {source_id}"),),
+            limitation="unreadable",
         )
     if not ready:
         return Source(source_id=source_id, name=source_id, status="missing", limitation="absent")
@@ -443,41 +449,60 @@ def _row_session_checks(
     assert host._OWNER_SCOPES[(module, step)](partial_pack) == (leased[-1],)
 
 
+# Each H1b row's leased sources, from its lease.
+_LEASED_ROWS: dict[tuple[str, str], tuple[str, ...]] = {
+    ("CP-1C", "peer_benchmark"): ("identity", "financial", "peers"),
+    ("CP-2E", "macro_fx"): ("financial",),
+    ("CP-2H", "rating_triggers"): ("identity", "financial", "ratings"),
+    ("CP-4C", "restructuring_fulcrum"): ("financial", "legal-covenants"),
+    ("CP-8", "decision_ledger"): ("prior_case", "update", "market_update"),
+}
+# One universe for every row: every id a row names (the five modules' cases name no other, CP-8's
+# `board_minutes` aside), plus `business`, `board_minutes`, `market` and `bridge`.
+_UNIVERSE = tuple(
+    dict.fromkeys(
+        (
+            *(s for leased in _LEASED_ROWS.values() for s in leased),
+            "business",
+            "board_minutes",
+            "market",
+            "bridge",
+        )
+    )
+)
+
+
+def _leased_row_checks(module: str, step: str) -> None:
+    """The row's checks with every universe id outside its lease as `outside`, so widening the
+    row by any one of them is caught."""
+    leased = _LEASED_ROWS[(module, step)]
+    _row_session_checks(module, step, leased, tuple(s for s in _UNIVERSE if s not in leased))
+
+
 def test_cp1c_peer_benchmark_scope() -> None:
     """CP-1C lease :31: identity, financial and, when held, peers."""
-    _row_session_checks(
-        "CP-1C", "peer_benchmark", ("identity", "financial", "peers"), ("market", "ratings")
-    )
+    _leased_row_checks("CP-1C", "peer_benchmark")
 
 
 def test_cp2e_macro_fx_scope() -> None:
     """CP-2E lease :40: the financial source only, never identity."""
-    _row_session_checks("CP-2E", "macro_fx", ("financial",), ("identity", "peers"))
+    _leased_row_checks("CP-2E", "macro_fx")
 
 
 def test_cp2h_rating_triggers_scope() -> None:
     """CP-2H lease :36: identity, financial and ratings."""
-    _row_session_checks(
-        "CP-2H", "rating_triggers", ("identity", "financial", "ratings"), ("peers", "market")
-    )
+    _leased_row_checks("CP-2H", "rating_triggers")
 
 
 def test_cp4c_restructuring_fulcrum_scope() -> None:
     """CP-4C lease :46, :85: financial and legal-covenants, never identity."""
-    _row_session_checks(
-        "CP-4C", "restructuring_fulcrum", ("financial", "legal-covenants"), ("identity", "market")
-    )
+    _leased_row_checks("CP-4C", "restructuring_fulcrum")
 
 
 def test_cp8_decision_ledger_scope() -> None:
     """CP-8 lease :35: prior_case, update and market_update; the cases' `board_minutes` and
     identity are outside it."""
-    _row_session_checks(
-        "CP-8",
-        "decision_ledger",
-        ("prior_case", "update", "market_update"),
-        ("board_minutes", "identity"),
-    )
+    _leased_row_checks("CP-8", "decision_ledger")
 
 
 # --- 2. real sessions over the fixed scope ------------------------------------------------------
@@ -1079,3 +1104,6 @@ def test_cpdr_held_unreadable_source_answers_unavailable() -> None:
         with pytest.raises(SourceError) as caught:
             tools.stage(name, arguments)
         assert caught.value.code == "unavailable", name
+    # `late` carries a sha256 and a span: an unscoped search never surfaces its bytes
+    body, _ = tools.stage("search_pack", {"query": "SECRET", "source_id": None})
+    assert "SECRET late" not in body

@@ -1143,6 +1143,21 @@ def test_class_blank_text(
     assert dc.blank_failure(c, _set_text(keys, prep), expected) is None
 
 
+@pytest.mark.parametrize("value", ["", "  "], ids=["empty", "spaces"])
+def test_class_blank_limitation_off_insufficient_information(value: str) -> None:
+    """A blank limitation on an Analyst Interpretation assessment gets the empty-text frame too;
+    whitespace also breaks the "only for Insufficient Information" rule, `""` does not."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    assert raw["assessments"][0]["category"] != "Insufficient Information"
+    raw["assessments"][0]["limitation"] = value
+    only = "assessments[0]: limitation is required for Insufficient Information and only for it"
+    assert _issues_with(raw) == (
+        ("assessments[0].limitation: empty text",)
+        if value == ""
+        else ("assessments[0].limitation: empty text", only)
+    )
+
+
 # --- round 11 B1 and B3 beyond the shared cases: every quote occurrence in every reading --------
 @pytest.mark.parametrize(
     ("page", "quote", "accepted"),
@@ -1156,6 +1171,12 @@ def test_class_blank_text(
             False,
         ),
         ("Earnings abroad of the first-priority unit were 25 percent.", None, True),
+        # Only the wrapped page's joined reading holds the joined quote, and there it is whole.
+        (
+            "Earnings abroad of the first-\npriority unit were 25 percent.",
+            "Earnings abroad of the first-priority unit were 25",
+            True,
+        ),
         # The quote occurs twice; the second occurrence is cut from 255.
         ("Share 25 percent. Share 255 percent.", "Share 25", False),
         ("Share 25 percent. Share 25 percent.", "Share 25", True),
@@ -1167,6 +1188,7 @@ def test_class_blank_text(
         "joined-page-minus",
         "wrapped-quote-cut",
         "wrapped-quote-twin",
+        "wrapped-page-joined-twin",
         "second-occurrence-cut",
         "second-occurrence-twin",
         "overlapping-occurrence-cut",

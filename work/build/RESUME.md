@@ -18,8 +18,8 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | Work | Base | Agent | Next |
 |---|---|---|---|
 | CP-2H first mx-adversary review | cc1d0fb | impl a52b5ec0919986ddb | fix round if needed, merge |
-| CP-4C first mx-adversary review (money) | bdde577 | impl a2c15c441717ec41c | fix round + round 10 ASCII cell grammar, merge |
-| CP-5 fix 1, tests only (cp5/fix1-brief.md) | 4e2d687 | a490ed6228f4da606 (worktree cp5-stage1) | mx-precise re-review, merge with CP-3 and CP-8 |
+| CP-4C fix 1 (cp4c/fix1-brief.md; decisions cp4c/questions.md) | bdde577 | a2c15c441717ec41c | mx-adversary re-review, merge |
+| CP-5 fix 1 mx-precise re-review | 81e8c0b (worktree cp5-stage1) | impl a490ed6228f4da606 | merge with CP-3 and CP-8 |
 | H1 fix round 2 (h1/fix2-brief.md) | lane | a69f811059171c714 | mx-adversary by finding id, merge; then H1b |
 | CP-3C fix 1 mx-adversary re-review | 8a45037 | impl aa5a4817fa00cd287 | merge |
 | CP-2E fix 1 mx-precise re-review | a1b50c8 | impl a219254fe68cc1c2d | merge |

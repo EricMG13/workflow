@@ -1,5 +1,5 @@
 """CP-2D (Liquidity) owner core: the Stage 1 calculation (docs/CP2D-OWNER-LEASE.md, Method,
-as amended by docs/rulings/2026-10-28-stage1.md section CP-2D, rounds 2 and 3).
+as amended by docs/rulings/2026-10-28-stage1.md, CP-2D sections of rounds 2 to 6f).
 
 Pure functions over typed inputs. Python owns every figure: sources and uses (T2E.1), the
 liquidity position (T2E.2), the run-rate cash runway (T2E.3), the maturity wall (T2E.4) and
@@ -73,7 +73,13 @@ class LiquidityBridgeSubmission(Contract):
 
 @dataclass(frozen=True)
 class Facility:
-    """One CP-1 T4.18 facility row at the balance date (QUARTER period over its FY alias)."""
+    """One CP-1 T4.18 facility row at the balance date (QUARTER period over its FY alias).
+
+    Ruling A5 (round 6): ``currency`` and ``name`` are the row's own ``currency`` and
+    ``facility_name`` text facts, taken from the same row (by ``facility_id``) as the bound
+    principal. They are never read through ``financial_series._maturity_figure``, which raises on
+    a non-USD row and would make the 2D5 path unreachable. The Stage 2 reader builds this.
+    """
 
     facility_id: str
     name: str
@@ -249,9 +255,10 @@ def add_months(start: date, months: int) -> date:
 
 
 def months_between(start: date, end: date) -> int:
-    """Whole calendar months; one less when the later day-of-month is earlier."""
+    """Ruling A1 (round 6): the largest n with ``add_months(start, n) <= end``, so months below
+    the horizon mean inside it and months above it mean outside."""
     months = (end.year - start.year) * 12 + (end.month - start.month)
-    return months - 1 if end.day < start.day else months
+    return months - 1 if add_months(start, months) > end else months
 
 
 # --- facilities (rulings 2D5, 2D6, 2D-c) ------------------------------------------------------
@@ -523,8 +530,11 @@ def compose_bridge(
             if not isinstance(end_cash, Gap):
                 resources = Gap(revolver_reason)
         to_debt = _ratio(available, _op(o, "total_debt_bs"))
-        if isinstance(available, Gap) and available.reason in (REV_AVAILABLE, DRAWINGS_AVAILABLE):
+        # Round 6f (e): with drawings undisclosed the ratio carries the L1 undrawn string.
+        if isinstance(available, Gap) and available.reason == REV_AVAILABLE:
             to_debt = Gap(REV_RATIO)
+        if isinstance(available, Gap) and available.reason == DRAWINGS_AVAILABLE:
+            to_debt = Gap(DRAWINGS_UNDRAWN)
         if minimum_cash is None:
             cash_only: Num = Gap(NOT_ASSESSED)
             headroom: Num = Gap(NOT_ASSESSED)
@@ -1131,6 +1141,12 @@ MAT_FX = (
     "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
     "every facility in USD, and one is not; no FX conversion is applied."
 )
+# Round 6f (d): an unstated currency does not prove "one is not" in USD; MAT_FX needs a stated
+# foreign currency.
+MAT_CURRENCY = (
+    "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
+    "every facility with its currency stated, and one is not; no FX conversion is applied."
+)
 # Ruling D-2 forms 3 (with L5) and 4.
 GAP_FACILITY = (
     "The funding gap is not calculated: [T2E.5.r07] needs every facility {need}, and one is not."
@@ -1230,8 +1246,9 @@ def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimTex
             f"Available liquidity at {d0} is {c.slot('T2E.2.r07')} (cash {c.slot('T2E.2.r01')} "
             f"plus undrawn committed revolver {c.slot('T2E.2.r05')})."
         )
-    if _currency_facility(b) is not None:
-        maturities = MAT_FX
+    foreign = _currency_facility(b)
+    if foreign is not None:
+        maturities = MAT_CURRENCY if foreign.currency is None else MAT_FX
     else:
         maturities = (
             f"The cash outflow from debt maturing inside the horizon is {c.slot('T2E.3.r07')} "

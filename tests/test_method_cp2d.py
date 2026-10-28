@@ -8,6 +8,7 @@ real ids come from the promoted CP-1 head in Stage 2.
 
 import json
 import re
+from calendar import monthrange
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
@@ -15,6 +16,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from deploy_vii import prose
 from deploy_workflow.owners import cp2d
@@ -1172,3 +1175,78 @@ def test_l3_difference_is_not_rounded_to_the_default_context() -> None:
         "Sources and uses differ from reported closing cash by "
         "(0.123456789012345678901234567890123) US$ m."
     ) in result.own_limitations
+
+
+# --- round 6 (A1) and round 6f -----------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "maturity,months",
+    [
+        ("2027-06-30", 18),  # Dec 31 to a 30-day month end: add_months(D0, 18) = 2027-06-30
+        ("2028-06-30", 30),  # the ruling's example
+        ("2027-06-29", 17),
+        ("2027-12-31", 24),  # the frozen maturities keep their values
+        ("2028-07-31", 31),
+        ("2029-12-31", 48),
+        ("2030-12-31", 60),
+    ],
+)
+def test_a1_months_is_the_largest_n_on_or_before_maturity(maturity: str, months: int) -> None:
+    loan = replace(LOAN, maturity_date=date.fromisoformat(maturity))
+    b = _compose(replace(_base_operands(), facilities=(loan,)), 24, "10")
+    assert b.wall[0].months_to_maturity == months
+
+
+def test_a1_months_and_inside_horizon_agree_at_a_month_end() -> None:
+    loan = replace(LOAN, maturity_date=date(2027, 6, 30))
+    for horizon, inside in ((17, False), (18, True)):
+        b = _compose(replace(_base_operands(), facilities=(loan,)), horizon, "10")
+        assert (b.wall[0].months_to_maturity, b.wall[0].inside_horizon) == (18, inside)
+
+
+def _clamped(year: int, month: int, day: int) -> date:
+    return date(year, month, min(day, monthrange(year, month)[1]))
+
+
+# Month ends (28 to 31) are where calendar months and day counts disagree, so most draws land there.
+_DATES = st.builds(
+    _clamped, st.integers(2000, 2040), st.integers(1, 12), st.sampled_from([1, 15, 28, 29, 30, 31])
+)
+
+
+@settings(max_examples=500, deadline=None)
+@given(d0=_DATES, maturity=_DATES, horizon=st.integers(1, 60))
+def test_a1_property_months_bound_the_horizon_test(d0: date, maturity: date, horizon: int) -> None:
+    months = cp2d.months_between(d0, maturity)
+    assert cp2d.add_months(d0, months) <= maturity < cp2d.add_months(d0, months + 1)
+    inside = maturity <= cp2d.add_months(d0, horizon)
+    if months < horizon:
+        assert inside
+    if months > horizon:
+        assert not inside
+
+
+def test_6f_d_unstated_currency_takes_the_currency_frame_on_mat01() -> None:
+    result = cp2d.compute(_with_loan(replace(LOAN, currency=None)))
+    assert _claim(result, "CP-2D-MAT-01").template == (
+        "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] "
+        "needs every facility with its currency stated, and one is not; no FX conversion is "
+        "applied."
+    )
+
+
+def test_6f_d_stated_foreign_currency_keeps_mat_fx() -> None:
+    result = cp2d.compute(_with_loan(replace(LOAN, currency="EUR")))
+    assert _claim(result, "CP-2D-MAT-01").template == (
+        "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] "
+        "needs every facility in USD, and one is not; no FX conversion is applied."
+    )
+
+
+def test_6f_e_drawings_case_carries_only_the_l1_strings() -> None:
+    inputs = _inputs("positive")
+    result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, rcf_drawn=None)))
+    cells = _cells(result)
+    assert cells["T2E.2.r09"].reason == "Undrawn revolver not calculable: drawings undisclosed"
+    assert cells["T2E.5.r03"].reason == "Not calculable: revolver drawings undisclosed"

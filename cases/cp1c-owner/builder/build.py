@@ -63,6 +63,7 @@ TABLES = {
     "T1C.5": "Outlier register",
     "T1C.6": "Definition alignment and tie-out",
     "T1C.7": "Gaps ledger",
+    "T1C.8": "Peer universe totals",
 }
 ENTRY = {m["module_id"]: m for m in METH}
 OWNERS = {}
@@ -108,7 +109,7 @@ assert ISS["revenue"] == D(o["revenue"]) and ISS["ebitda"] == D(o["adjusted_ebit
 assert ISS["ffo"] == D(o["ffo"])
 LTM_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
 LTM_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
-# period of every fact derived over the peers (T1C.1 counts, T1C.4, T1C.5): the issuer is on LTM Q4 25, each peer on its own
+# period of every fact derived over the peers (T1C.8 counts, T1C.4, T1C.5): the issuer is on LTM Q4 25, each peer on its own
 # twelve months (a peer period end can differ, e.g. p04); the peer's own period stays on its T1C.2 and T1C.3 cells
 MIXED_PERIOD = "Mixed: issuer LTM Q4 25, each peer's own twelve months"
 
@@ -460,7 +461,7 @@ TOOL_REFUSALS = [
 
 BLOCKS = {
     "peer-positioning": {"title": "Peer positioning", "owner": "CP-1C", "kind": "dense", "producers": ["CP-1C"],
-                         "tabs": [["T1C.1", "Peer universe"], ["T1C.3", "Normalised metrics"], ["T1C.4", "Peer statistics"], ["T1C.5", "Outlier register"]]},
+                         "tabs": [["T1C.1", "Peer universe"], ["T1C.8", "Peer universe totals"], ["T1C.3", "Normalised metrics"], ["T1C.4", "Peer statistics"], ["T1C.5", "Outlier register"]]},
 }
 EVIDENCE_TABLES = ["T1C.2", "T1C.6"]
 LIMITATION_TABLES = ["T1C.7"]
@@ -551,17 +552,17 @@ def build_case(name):
     n_inc = sum(1 for p in pr if p["included"])
     if sheet:
         for f_, l_, v_ in (("sheet", "Peers in the source", n_sheet), ("included", "Peers included", n_inc), ("excluded", "Peers excluded", n_sheet - n_inc)):
-            num("T1C.1", "total", f_, l_, D(v_), "amount", "count of peer rows" if f_ == "sheet" else "count by universe flag",
+            num("T1C.8", "total", f_, l_, D(v_), "amount", "count of peer rows" if f_ == "sheet" else "count by universe flag",
                 () if f_ == "sheet" else tuple(f"T1C.1.{p['row']}.included" for p in pr), unit="peers", period=MIXED_PERIOD)
-        reg("T1C.1", "total", "Total", ["sheet", "included", "excluded"])
+        reg("T1C.8", "total", "Total", ["sheet", "included", "excluded"])
     else:
         for f_, l_ in (("period_end", "Period end"), ("reporting_basis", "Reporting basis"), ("segments", "Operating segments"),
                        ("fiscal_year_end", "Fiscal year end"), ("comparability", "Comparability"), ("included", "Universe"), ("evidence", "Evidence")):
             gapf("T1C.1", "none", f_, l_, "amount", MISSING_PEER, unit=None, period=None)
         reg("T1C.1", "none", "No peer source", ["period_end", "reporting_basis", "segments", "fiscal_year_end", "comparability", "included", "evidence"])
         for f_, l_ in (("sheet", "Peers in the source"), ("included", "Peers included"), ("excluded", "Peers excluded")):
-            gapf("T1C.1", "total", f_, l_, "amount", MISSING_PEER, unit="peers", period=None)
-        reg("T1C.1", "total", "Total", ["sheet", "included", "excluded"])
+            gapf("T1C.8", "total", f_, l_, "amount", MISSING_PEER, unit="peers", period=None)
+        reg("T1C.8", "total", "Total", ["sheet", "included", "excluded"])
 
     # ---- T1C.2 peer source figures (issuer line, then peers)
     ent = [dict(issuer_row, row="issuer", included=None)] if sheet else []
@@ -804,8 +805,8 @@ def build_case(name):
     for p in pr:
         claims.append({"claim_id": f"T1C.1.{p['row']}", "text": p["a"]["rationale"], "limitation": p["a"]["limitation"], "evidence": p["a"]["evidence"]})
     claims.append({"claim_id": "T1C.1.universe", "limitation": None,
-                   "text": (f"The peer source lists {ref('T1C.1.total.sheet', 'peers')} and {ref('T1C.1.total.included', 'peers')} are included in the universe."
-                            if sheet else f"No peer source is in the pack, so no universe is formed {ref('T1C.1.total.sheet', 'peers')}.")})
+                   "text": (f"The peer source lists {ref('T1C.8.total.sheet', 'peers')} and {ref('T1C.8.total.included', 'peers')} are included in the universe."
+                            if sheet else f"No peer source is in the pack, so no universe is formed {ref('T1C.8.total.sheet', 'peers')}.")})
     for k, lab, uc, direction, nm, dn in METRICS:
         tk = TOKEN[uc]
         t = (f"{lab} of the issuer is {ref(f'T1C.3.issuer.{k}', tk)} against a peer median of {ref(f'T1C.4.{k}.median', tk)} "
@@ -816,6 +817,12 @@ def build_case(name):
     o = sub["overall"]
     claims.append({"claim_id": "T1C.1.assessment", "text": o["rationale"], "limitation": o["limitation"], "evidence": o["evidence"]})
     tables = [{"table_id": t, "title": title, "rows": rows[t]} for t, title in TABLES.items()]
+    # table shape (contracts.validate_tables): one fact per column in every row; every canonical fact of a table sits in exactly one row
+    for t in TABLES:
+        cols = [tuple(i.rsplit(".", 1)[1] for i in r["fact_ids"]) for r in rows[t]]
+        assert rows[t] and all(c == cols[0] for c in cols), (t, "row does not match the columns")
+        listed = [i for r in rows[t] for i in r["fact_ids"]]
+        assert len(listed) == len(set(listed)) and set(listed) == {x["fact_id"] for x in facts if x["table_id"] == t}, (t, "cells differ from canonical facts")
 
     def sx(v):
         return None if v is None else norm(v)
@@ -1103,9 +1110,9 @@ def main():
         "policy_constants": {"minimum_included_peers": MIN_PEERS, "outlier_rule": "strictly more than one half of the peer median (relative deviation)", "inclusion": "Comparable and Partly comparable are included; Not comparable is excluded",
                              "position": "1 + number of entities strictly better than the issuer; ties share the position; direction per metric",
                              "difference": "multiples: issuer minus median, unit MULTIPLE ('x'); percent metrics: percentage points, unit pp, the unit and formula follow CP-4 (cp4_legal.py:970-972); the amount is (issuer - median) in the 38-digit context, then .scaleb(2), not CP-4's amount * 100 (which would give '1.00 pp' and a 28-digit cell); shown is exact text, compared as a string; spelled by report_view.fact_spelling as exact text + ' pp' (unit_class none); the same rule applies to every percent-minus-percent difference, including T1C.6.<percent metric>.difference",
-                             "period_of_derived_facts": MIXED_PERIOD + " (T1C.1 counts, T1C.4, T1C.5); each peer's own period stays on its T1C.2 and T1C.3 cells", "status": "LEAD to confirm (open questions 2-4)"},
+                             "period_of_derived_facts": MIXED_PERIOD + " (T1C.8 counts, T1C.4, T1C.5); each peer's own period stays on its T1C.2 and T1C.3 cells", "status": "LEAD to confirm (open questions 2-4)"},
         "d8_table_ids": {**D8,
-                         "register": "Proposal, applied nowhere in this preparation (LEAD ruling 8): T1C.1-T1C.7 replace CP-1C's table_ids in the serialised methodology.json change (CP-L10 D4, CP-1C D8), in which METH_SHA (builder pin) is re-pinned. T4.7 (the only unshared id) is dropped with them: nothing produces or reads it",
+                         "register": "Proposal, applied nowhere in this preparation (LEAD ruling 8): T1C.1-T1C.8 replace CP-1C's table_ids in the serialised methodology.json change (CP-L10 D4, CP-1C D8), in which METH_SHA (builder pin) is re-pinned. T4.7 (the only unshared id) is dropped with them: nothing produces or reads it",
                          "repo_grep": "T1C. occurs nowhere under src, tests, docs or cases before this preparation; table_ids is read only by registry.Responsibility and tests/test_cp1b_registration.py (CP-1B ids)",
                          "module_tables_besides": []},
         "execution": {
@@ -1125,7 +1132,7 @@ def main():
             },
             "consumption": {
                 "status": "open: no consumer core reads CP-1C; CP-1C is not complete until CP-3 (or another named consumer) reads it under its own lease amendment (PLAN.md:7-8); consumers may read the position but never re-rank (LEAD ruling 5)",
-                "consumer_facts": ["T1C.4.<metric>.median", "T1C.4.<metric>.difference", "T1C.4.<metric>.position", "T1C.4.<metric>.outlier_count", "T1C.1.total.included"],
+                "consumer_facts": ["T1C.4.<metric>.median", "T1C.4.<metric>.difference", "T1C.4.<metric>.position", "T1C.4.<metric>.outlier_count", "T1C.8.total.included"],
                 "proof": "a consumer's attempt inputs bind Input('CP-1C', head.result_sha256, status) and a consumer fact or claim derives from those T1C.4 facts, read through the CP-1C head",
                 "edges": "methodology.json lists CP-1C optional for CP-2, CP-3 and CP-5 only (registry.edge_rule restricted); cp3_relative_value.READ_OPTIONAL = CP-1A, CP-4; methods/cp3.md, cp6.md and cp2.md name CP-1C as the owner of peer ranking and forbid it in their own text; CP-5 counts only after a lease extends its integrity scope",
             },

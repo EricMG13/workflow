@@ -17,6 +17,7 @@ import copy
 import hashlib
 import json
 import re
+import string
 from dataclasses import replace
 from decimal import Decimal
 from fractions import Fraction
@@ -25,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, ZWSP, Adapter, BlankCase, blank_failure
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -1623,3 +1625,155 @@ def test_n2_identical_duplicate_lines_are_one_cited_row() -> None:
 def test_n2_a_signed_plus_or_bare_fraction_cell_has_no_number(cell: str) -> None:
     row = f"Deferred items  1  1  1  1  {cell}  1"
     assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row)) == (NO_NUMBER,)
+
+
+# --- round 11 "Blank text is one defect class", end review R3 M2, round 12 B10 -------------------
+# (docs/rulings/2026-10-28-stage1.md; shared library tests/defect_classes.py). Every analyst text
+# field refuses blank text (whitespace and Unicode `Cf` characters alone) with the module's frame
+# `<path>: empty text`, the `plain` fields (limitations and gap rows) included. These fields are
+# plain `str` with no schema `min_length`, so `""` gets the same frame.
+def _text_paths(n: int, *fields: str) -> list[tuple[str | int, ...]]:
+    return [(i, field) for i in range(n) for field in fields]
+
+
+BLANK_KEYS: tuple[tuple[str | int, ...], ...] = (
+    *(("claims", *k) for k in _text_paths(3, "name", "rationale", "limitation")),
+    *(("valuation", *k) for k in _text_paths(3, "label", "rationale", "limitation")),
+    *(("fulcrum", *k) for k in _text_paths(3, "rationale", "limitation")),
+    *(("plan", *k) for k in _text_paths(3, "rationale", "limitation")),
+    ("assessment", "rationale"),
+    ("assessment", "limitation"),
+    *(("gaps", 0, f) for f in ("gap", "why_it_matters", "affected_analysis", "action")),
+)
+
+
+def _key_path(keys: tuple[str | int, ...]) -> str:
+    return "".join(f"[{k}]" if isinstance(k, int) else f".{k}" for k in keys).lstrip(".")
+
+
+BLANK_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = tuple(
+    (_key_path(k), k) for k in BLANK_KEYS
+)
+
+
+@cache
+def _bound_positive() -> str:
+    return json.dumps(_bind_all(_payload("positive")))
+
+
+def _blank_adapter(keys: tuple[str | int, ...]) -> Adapter:
+    """Places the value in one analyst text field of the bound frozen positive payload. Page and
+    quote are unused: CP-4C reads no name or text from an analyst quote."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        payload = json.loads(_bound_positive())
+        cur: Any = payload
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return _payload_issues(payload)
+
+    return adapter
+
+
+def test_blank_fields_are_every_analyst_text_field() -> None:
+    """The class test sets exactly the fields the validator reads as text, in its order."""
+    read = [path for path, _, _ in cp4c._text_fields(_inputs("positive").submission)]
+    assert read == [path for path, _ in BLANK_FIELDS]
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(blank: BlankCase, field: tuple[str, tuple[str | int, ...]]) -> None:
+    path, keys = field
+    failure = blank_failure(blank, _blank_adapter(keys), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+def test_empty_string_gets_the_empty_text_frame(field: tuple[str, tuple[str | int, ...]]) -> None:
+    """No schema refusal stands for `""` here (plain `str`), so it takes the frame alone."""
+    path, keys = field
+    assert _blank_adapter(keys)("", "", "") == (EMPTY_TEXT.format(path=path),)
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_the_only_issue(
+    blank: BlankCase, field: tuple[str, tuple[str | int, ...]]
+) -> None:
+    """A blank field gets its frame and nothing else (no guard or prose issue beside it)."""
+    path, keys = field
+    assert _blank_adapter(keys)("", "", blank.value) == (EMPTY_TEXT.format(path=path),)
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("twin", ["Stated by the desk.", f"Stated{ZWSP}."])
+def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...]], twin: str) -> None:
+    """The twin: the same field holding text (a format character inside it too) is accepted."""
+    _, keys = field
+    assert _blank_adapter(keys)("", "", twin) == ()
+
+
+# --- round 12 B7: reference syntax in a claim name or valuation label ----------------------------
+RESERVED = "{}[]"
+REFERENCE_SYNTAX = "{path}: reference syntax is not allowed"
+NAME_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = (
+    ("claims[1].name", ("claims", 1, "name")),
+    ("valuation[0].label", ("valuation", 0, "label")),
+)
+
+
+@pytest.mark.parametrize("field", NAME_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("char", list(RESERVED))
+@pytest.mark.parametrize("at", ["{c}Trade", "Trade {c} claims", "Trade{c}"])
+def test_b7_reserved_character_is_reference_syntax(
+    field: tuple[str, tuple[str | int, ...]], char: str, at: str
+) -> None:
+    path, keys = field
+    issues = _blank_adapter(keys)("", "", at.format(c=char))
+    assert issues == (REFERENCE_SYNTAX.format(path=path),)
+
+
+@pytest.mark.parametrize("field", NAME_FIELDS, ids=lambda f: f[0])
+def test_b7_comes_after_the_bare_figure_issues(field: tuple[str, tuple[str | int, ...]]) -> None:
+    path, keys = field
+    issues = _blank_adapter(keys)("", "", "Class 2 {x}")
+    assert issues == (f"{path}: Bare figure: 2", REFERENCE_SYNTAX.format(path=path))
+
+
+@pytest.mark.parametrize("field", NAME_FIELDS, ids=lambda f: f[0])
+def test_b7_empty_and_one_line_come_first(field: tuple[str, tuple[str | int, ...]]) -> None:
+    path, keys = field
+    adapter = _blank_adapter(keys)
+    assert adapter("", "", "{\n}") == (f"{path}: one line only",)
+    assert adapter("", "", f"{ZWSP} ") == (EMPTY_TEXT.format(path=path),)
+
+
+@pytest.mark.parametrize("key,i,field", [("claims", 1, "name"), ("valuation", 0, "label")])
+@pytest.mark.parametrize(
+    "name",
+    [
+        *(f"{p}Trade" for p in string.punctuation),
+        *(f"Trade {p} claims" for p in string.punctuation),
+        *(f"Trade{p}" for p in string.punctuation),
+        "A | B",
+        "Loan (2027 notes)",
+    ],
+)
+def test_b7_every_name_the_validator_accepts_composes(
+    key: str, i: int, field: str, name: str
+) -> None:
+    """Refused exactly when it holds a reserved character; otherwise it composes (`|` too)."""
+    payload = json.loads(_bound_positive())
+    payload[key][i][field] = name
+    issues = _payload_issues(payload)
+    if any(c in RESERVED for c in name):
+        assert issues == (REFERENCE_SYNTAX.format(path=f"{key}[{i}].{field}"),)
+        return
+    if issues:  # another pinned name check (a bare figure) refuses it
+        assert all(": Bare figure: " in issue for issue in issues), issues
+        return
+    claims = _compute_with(_context("positive"), payload).claims
+    spelt = name.lower() if key == "valuation" else name
+    assert any(spelt in c.text for c in claims)

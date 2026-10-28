@@ -325,3 +325,4 @@
 - 19:28 CP-1D owner fix review: REQUEST CHANGES (M1 numerics without digit value; L1 Cf/Mn/Me adjacency; L2 case mutants). Fix round 1 to mx-feature.
 - 19:29 LEAD clarification (addendum 4): letter after a run is whole (2.5m, 25bps read); fixer redirected. Asked LEAD: letter-before refusal (held fail-closed), ordinals (2nd reads 2 pending).
 - 19:30 Addendum 5 cherry-picked (01f114f): identifier runs refused, ordinal runs refused, unit suffixes readable; fixer told.
+- 19:36 CP-3 built (fc380d6); R3 create refuses not_permitted (CP-MODEL deterministic planned before CP-3) — asked LEAD. CP-4 sent back to finish brief parts (driver, D3, adapter/bindings tests).

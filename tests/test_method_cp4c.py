@@ -39,12 +39,12 @@ CASE = ROOT / "cases" / "cp4c-owner"
 # The lease header pins (docs/CP4C-OWNER-LEASE.md, re-pinned for the CP-1D 1D1 cascade) and the
 # upstream oracle files the builder pins and this test reads.
 PINS = {
-    "cases/cp4c-owner/manifest.json": "9d81d280f45d24997ea0d025e4487279054f0b8cd4bab86c41527803e94a7cdc",
-    "cases/cp4c-owner/submissions.json": "03b1b2aabdd38dcb3b584ed9d62e74ddf50f5ec7daf9ed5ed0c8cb0e8e4eb5e8",
+    "cases/cp4c-owner/manifest.json": "9cf100831af87c3972656a858588b50a3b77ac30422bd17664b82e1740592a93",
+    "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "61ddb316372469ce74920147423000a2f4ee846fc9c9f94a9f58f990d9ad9fcc",
-    "cases/cp4c-owner/builder/build.py": "2ca1c56a9b741e782f0c77269bd5d55331c33a1ed75e92115a3819aa8017382f",
+    "cases/cp4c-owner/builder/build.py": "806252b5d3913ad4cfcedcd024f0c89cace83958ec96c989212202b30e30762f",
     "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
-    "cases/cp2a-owner/expected.json": "457508a0643af8ca6e31bfec6103ae2a0ca9f009dfcc3bf57d29b001e88668b5",
+    "cases/cp2a-owner/expected.json": "ad5531da7cff4eca8e9c8e9a23cef6526a982537597e6830610877bec994ff89",
     "cases/cp4-owner/expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",

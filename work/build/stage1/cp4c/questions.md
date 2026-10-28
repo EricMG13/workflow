@@ -6,6 +6,9 @@
 - **Q3 (review L2).** A known CP-1 EBITDA with no amount is an upstream contract break. It raises a `ValueError` invariant, as CP-1 total debt (:537) and CP-2G EBITDA (:593) already do.
 - **Q4 (round 10, Stage 1 defect).** The quoted cell must fully match the ASCII grammar `-?[0-9]+(\.[0-9]+)?` before `Decimal`; otherwise it gets the #11 text. Comma figures (`1,234.00`) are refused (review I1). The wording stays as pinned.
 - **Q5 (fix 1, confirmed by the controller).** A quote that starts two different page lines names no single cited row, so it gets the #11 text. Identical duplicate lines count as one line. This follows from Q1 and adds no wording.
+- **Q6 (fix 1 re-review N3, plus a pre-existing truncated-figure case).** A quote must cover whole cells: its two-space cells form a prefix of the cited line's cells, each one equal. `Pr` against `PP&E …` is refused, and so is a quote that cuts the last figure. Both take the #11 text.
+- **Q7 (pre-existing: bare CR or U+2028 inside a line).** The cited line must be one physical line. Otherwise it takes the #11 text.
+- **Info, no action.** A grammar cell of about 10^6 digits raises `decimal.Overflow` out of `_exact`. It fails closed, and no real pack has one.
 
 ## For LEAD (one batch)
 - **B1.** Builder sync for Q1 and Q2: `row_cells` / the two-space split in build.py:158-171. No frozen value moves.

@@ -1166,17 +1166,22 @@ def _crossings(
     return crossings, unreached
 
 
-def _gaps(out: _Composer, sub: DownsideSubmission, limits: list[str]) -> None:
+def _gaps(
+    out: _Composer, sub: DownsideSubmission, limits: list[str], bound: Mapping[str, Fact]
+) -> None:
     for n, g in enumerate(sub.gaps, 1):
         r = f"g{n:02d}"
         out.text("T2B.9", r, "id", "Gap id", f"CP-2A-GAP-{n:03d}", False)
-        out.text("T2B.9", r, "gap", "Gap", g.gap, True)
-        out.text("T2B.9", r, "why_it_matters", "Why it matters", g.why_it_matters, True)
-        out.text("T2B.9", r, "affected_analysis", "Affected analysis", g.affected_analysis, True)
+        gap = _spelled(g.gap, bound)
+        out.text("T2B.9", r, "gap", "Gap", gap, True)
+        why = _spelled(g.why_it_matters, bound)
+        out.text("T2B.9", r, "why_it_matters", "Why it matters", why, True)
+        affected = _spelled(g.affected_analysis, bound)
+        out.text("T2B.9", r, "affected_analysis", "Affected analysis", affected, True)
         out.text("T2B.9", r, "severity", "Severity", g.severity, False)
-        out.text("T2B.9", r, "action", "Action", g.action, True)
+        out.text("T2B.9", r, "action", "Action", _spelled(g.action, bound), True)
         out.register("T2B.9", r, f"Gap {n}", GAP_FIELDS)
-        limits.append(f"Gap ({g.severity}): {g.gap}")
+        limits.append(f"Gap ({g.severity}): {gap}")
     if not sub.gaps:
         for field in GAP_FIELDS:
             out.facts.append(
@@ -1235,12 +1240,11 @@ def _references(
     return copies, table
 
 
-def _spelled(text: str | None, bound: Mapping[str, Fact]) -> str | None:
-    """Round 5 limitation refs: a stored limitation spells each `{ref|unit}` as rendered (the
-    shown value plus unit, `business_context.spelled`), never as raw braces. A validated
-    limitation holds only figure references to known CP-1 facts."""
-    if text is None:
-        return None
+def _spelled(text: str, bound: Mapping[str, Fact]) -> str:
+    """Round 5 limitation refs, round 9 choice 5: stored text (a limitation, a T2B.9 gap
+    text, a `Gap (…)` own line) spells each `{ref|unit}` as rendered (the shown value plus
+    unit, `business_context.spelled`), never as raw braces. Validated text holds only figure
+    references to known CP-1 facts, so the raise is an invariant."""
     parts = []
     for run in prose.tokenize(text):
         if run.kind == "text":
@@ -1248,7 +1252,7 @@ def _spelled(text: str | None, bound: Mapping[str, Fact]) -> str | None:
         elif run.figure and run.text in bound:
             parts.append(spelled(bound[run.text]))
         else:
-            raise ValueError(f"Limitation reference {run.text} does not name a known CP-1 figure")
+            raise ValueError(f"Stored text reference {run.text} does not name a known CP-1 figure")
     return "".join(parts)
 
 
@@ -1286,7 +1290,7 @@ def _claims(
             claim_id=f"T2B.1.{run.row}",
             text=sc.rationale,
             citations=(),
-            limitation=_spelled(sc.limitation, bound),
+            limitation=None if sc.limitation is None else _spelled(sc.limitation, bound),
         )
         for run, sc in zip(runs, sub.scenarios, strict=True)
     ]
@@ -1303,7 +1307,7 @@ def _claims(
     if ranked:
         claims.append(Claim(claim_id="T2B.7.first", text=_first_claim(out, ranked), citations=()))
     a = sub.assessment
-    limitation = _spelled(a.limitation, bound)
+    limitation = None if a.limitation is None else _spelled(a.limitation, bound)
     claims.append(
         Claim(claim_id="T2B.1.assessment", text=a.rationale, citations=(), limitation=limitation)
     )
@@ -1383,7 +1387,7 @@ def compute(inputs: Inputs) -> Result:
     _ranking(out, ranked)
     crossings, unreached = _crossings(out, runs[1:], stressed, points)
     limits = _limitations(sub, base, stressed, points, unreached)
-    _gaps(out, sub, limits)
+    _gaps(out, sub, limits, bound)
     claims = _claims(out, sub, runs[1:], ranked, bound)
     if not ranked:
         limits.append(NO_FIRST_BREAK)

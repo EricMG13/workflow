@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -1028,10 +1029,11 @@ def test_source_breaches_refuse_alone(breach: str) -> None:
 
 
 def test_term_block_ends_at_the_first_short_line() -> None:
-    """The pinned parse rule: a block ends at the first line without the full field count, so a
-    breach after it is not read (gap page:1 relies on it)."""
+    """The pinned parse rule: a block ends at the first line of zero or one field; later lines of
+    zero or one field are notes, not rows (gap page:1 relies on it). A later row-shaped line
+    breaches the block (round 12 B8, `B8_BREACHES`)."""
     pages = _edited(
-        "positive", [(2, "Below  0.50x", "Below  0.50x\nEnd of terms.\nZeta  Watch  X  Over  1x")]
+        "positive", [(2, "Below  0.50x", "Below  0.50x\nEnd of terms.\n  \nSee page:1.")]
     )
     assert len(cp2h.parse_ratings(pages).triggers) == 5
 
@@ -1401,11 +1403,112 @@ def test_block_row_breach_refuses(breach: str) -> None:
 
 
 def test_one_field_line_ends_a_block() -> None:
-    """Round 11 B2: a line of zero or one field ends the block (gap page:1's withdrawal note)."""
-    pages = _edited("positive", [(1, "\n12  BB-  Ba3", "\n\n12  BB-  Ba3")])
-    with pytest.raises(cp2h.SourceIssue, match="^Rating not on the scale: Brook Credit Ba3$"):
-        cp2h.parse_ratings(pages)  # the blank line ends the scale before Ba3's position
+    """Round 11 B2: a line of zero or one field ends the block (gap page:1's withdrawal note).
+    A row after that line breaches the block (round 12 B8, `scale_blank_line`)."""
     assert len(cp2h.parse_ratings(_pages("gap")).register) == 2
+
+
+# --- round 12 B8: nothing row-shaped after a block end -------------------------------------------
+
+REGISTER = cp2h.REGISTER_HEADER
+SCALE = cp2h.SCALE_HEADER
+LAST_TERM = "Brook Credit  Upgrade  Net debt to EBITDA  Below  0.50x"
+B8_BREACHES: dict[str, tuple[list[tuple[int, str, str]], str]] = {
+    # "The lane today": each composed with fewer triggers before B8
+    "terms_blank_line": ([(2, FCF_ROW, "\n" + FCF_ROW)], "Trigger terms not found"),
+    "terms_whitespace_line": ([(2, FCF_ROW, "  \n" + FCF_ROW)], "Trigger terms not found"),
+    "terms_single_tab_row": (
+        [(2, FCF_ROW, "\t".join(FCF_ROW.split("  ")))],
+        "Trigger terms not found",
+    ),
+    "terms_single_space_row": (
+        [(2, FCF_ROW, " ".join(FCF_ROW.split("  ")))],
+        "Trigger terms not found",
+    ),
+    "terms_second_header": (
+        [
+            (
+                2,
+                LAST_TERM,
+                f"{LAST_TERM}\n\n{TERMS}\nBrook Credit  Downgrade  Total debt to EBITDA  Above  3.00x",
+            )
+        ],
+        "Trigger terms not found",
+    ),
+    "terms_note_then_row": (
+        [(2, LAST_TERM, f"{LAST_TERM}\nEnd of terms.\nZeta  Watch  X  Over  1x")],
+        "Trigger terms not found",
+    ),
+    # any later line on the page, not only the next; two fields are already row-shaped
+    "terms_row_lines_after_the_end": (
+        [(2, LAST_TERM, f"{LAST_TERM}\n\nEnd of terms.\n\nZeta  Watch  X  Over  1x")],
+        "Trigger terms not found",
+    ),
+    "terms_two_fields_after_the_end": (
+        [(2, LAST_TERM, f"{LAST_TERM}\nEnd of terms.\nSee  page:1")],
+        "Trigger terms not found",
+    ),
+    # each block's own text
+    "scale_blank_line": ([(1, "\n12  BB-  Ba3", "\n\n12  BB-  Ba3")], "Rating scale not found"),
+    "register_blank_line": (
+        [(0, "\n" + BROOK_ROW, "\n\n" + BROOK_ROW)],
+        "Rating register not found",
+    ),
+    # a header followed at once by an end line, then rows: breached at the rows step, not empty
+    # at the header step (an empty terms block would give its text before the scale rows)
+    "terms_header_then_end_line": (
+        [(2, TERMS + "\n", TERMS + "\n\n"), (1, "11  BB  Ba2", "11  BB")],
+        "Rating scale not found",
+    ),
+    "register_header_then_end_line": (
+        [(0, REGISTER + "\n", REGISTER + "\n\n"), (1, "11  BB  Ba2", "11  BB")],
+        "Rating scale not found",
+    ),
+    "scale_header_then_end_line": (
+        [(1, SCALE + "\n", SCALE + "\n\n"), (2, TERMS + "\n", "Terms follow.\n")],
+        "Trigger terms not found",
+    ),
+    # item 8 order: scale rows, register rows, terms rows
+    "scale_b8_before_register_b8": (
+        [(1, "\n12  BB-  Ba3", "\n\n12  BB-  Ba3"), (0, "\n" + BROOK_ROW, "\n\n" + BROOK_ROW)],
+        "Rating scale not found",
+    ),
+    "register_b8_before_terms_b8": (
+        [(0, "\n" + BROOK_ROW, "\n\n" + BROOK_ROW), (2, FCF_ROW, "\n" + FCF_ROW)],
+        "Rating register not found",
+    ),
+}
+
+
+@pytest.mark.parametrize("breach", B8_BREACHES)
+def test_row_after_a_block_end_breaches(breach: str) -> None:
+    """Round 12 B8: after a block ends at a line of zero or one field, a later line of two or
+    more fields on that page breaches the block: its pinned text alone, at its rows step, in
+    item 8's order. No published term is dropped silently."""
+    edits, issue = B8_BREACHES[breach]
+    pages = _edited("positive", edits)
+    with pytest.raises(cp2h.SourceIssue, match=f"^{re.escape(issue)}$"):
+        cp2h.parse_ratings(pages)
+    assert cp2h.validate(_over(inputs("positive"), pages)) == (issue,)
+
+
+def test_header_then_end_line_alone_reads_as_no_header() -> None:
+    """Round 12 B8: a header followed by an end line and nothing row-shaped stays `empty`, so it
+    gives the block's text at the header step, as round 7 item 3 (before the scale rows)."""
+    pages = _edited("positive", [(1, "11  BB  Ba2", "11  BB")])
+    pages[2] = pages[2].split(TERMS)[0] + TERMS + "\n\nNone are published."
+    with pytest.raises(cp2h.SourceIssue, match="^Trigger terms not found$"):
+        cp2h.parse_ratings(pages)
+
+
+def test_malformed_last_row_is_the_known_limit() -> None:
+    """Accepted known limit (round 12 B8, "Known limit"): a malformed LAST row (single tabs or
+    single spaces) cannot be told from a one-field note under the pinned `\\s{2,}` grammar, so it
+    still ends the block and is dropped (4 of 5 terms). Closing it would move `parse_rule`; the
+    limit is recorded in `methods/cp2h.md` (Stage 2 note)."""
+    for sep in ("\t", " "):
+        pages = _edited("positive", [(2, LAST_TERM, sep.join(LAST_TERM.split("  ")))])
+        assert len(cp2h.parse_ratings(pages).triggers) == 4, repr(sep)
 
 
 def test_blank_limitation_is_refused() -> None:
@@ -1418,6 +1521,69 @@ def test_blank_limitation_is_refused() -> None:
         "views[0].limitation: empty text",
         "overall.limitation: empty text",
     )
+
+
+# --- round 12 B10: the shared blank-text class over every analyst text field -------------------
+
+# (issue path, payload keys): every analyst text field of the submission. `agency` is a register
+# key, not text: any value off the register is refused as `not an agency in the rating register`.
+BLANK_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = (
+    *(
+        (f"views[{i}].{name}", ("views", i, name))
+        for i in (0, 1)
+        for name in ("rationale", "limitation")
+    ),
+    ("overall.rationale", ("overall", "rationale")),
+    ("overall.limitation", ("overall", "limitation")),
+    *(
+        (f"gaps[0].{name}", ("gaps", 0, name))
+        for name in ("gap", "why_it_matters", "affected_analysis", "action")
+    ),
+)
+
+
+def _blank_adapter(keys: tuple[str | int, ...]) -> Adapter:
+    """(page, quote, value) -> the positive case's issues with `value` in the field at `keys`
+    (the fields sit beside no quote, so page and quote are unused)."""
+
+    def adapter(page: str, quote: str, value: str) -> Sequence[str]:
+        payload = copy.deepcopy(raw_payload("positive"))
+        node: Any = payload
+        for key in keys[:-1]:
+            node = node[key]
+        node[keys[-1]] = value
+        return cp2h.validate(inputs("positive", payload))
+
+    return adapter
+
+
+def test_blank_fields_cover_every_analyst_text_field() -> None:
+    models = (("views", cp2h.AgencyView), ("overall", cp2h.Overall), ("gaps", cp2h.SynthesisGap))
+    text = {
+        (where, name)
+        for where, model in models
+        for name, info in model.model_fields.items()
+        if info.annotation in (str, str | None) and name != "agency"
+    }
+    assert {(keys[0], keys[-1]) for _, keys in BLANK_FIELDS} == text
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(blank: BlankCase, field: tuple[str, tuple[str | int, ...]]) -> None:
+    """Round 11 blank class and round 12 B10: whitespace and Unicode `Cf` text alike get CP-2H's
+    pinned frame `<path>: empty text` at the field's existing blank check."""
+    path, keys = field
+    failure = blank_failure(blank, _blank_adapter(keys), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...]]) -> None:
+    """The twin: a field holding a word next to a format character is not blank (`a\\u200b`)."""
+    path, keys = field
+    issues = _blank_adapter(keys)("", "", "Read from the agency source.\u200b")
+    assert EMPTY_TEXT.format(path=path) not in issues, issues
 
 
 def test_upstream_statuses_are_the_bound_inputs() -> None:

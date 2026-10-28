@@ -51,6 +51,7 @@ from deploy_vii.contracts import (
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-2H"
 STEP_ID = "rating_triggers"
@@ -220,7 +221,9 @@ def _fields(line: str) -> list[str]:
 @dataclass(frozen=True)
 class _Rows:
     rows: list[tuple[str, list[str]]]
-    breached: bool  # a line of two or more fields that is not the block's width
+    # a line of two or more fields that is not the block's width (round 11 B2), or one after the
+    # block's end (round 12 B8)
+    breached: bool
 
     @property
     def empty(self) -> bool:
@@ -231,15 +234,18 @@ class _Rows:
 def _block(text: str, header: str, width: int) -> _Rows | None:
     """The lines of exactly `width` fields after the header line, up to a line of zero or one
     field (or the page end); a line of two or more fields of another count breaches the block
-    (round 11 B2). None without the header."""
+    (round 11 B2), and so does any later line of two or more fields on the page once the block
+    has ended (round 12 B8), even right after the header. None without the header."""
     lines = text.split("\n")
     if header not in lines:
         return None
     rows: list[tuple[str, list[str]]] = []
-    for line in lines[lines.index(header) + 1 :]:
+    rest = lines[lines.index(header) + 1 :]
+    for n, line in enumerate(rest):
         fields = _fields(line)
         if len(fields) != width:
-            return _Rows(rows, breached=len(fields) > 1)
+            after = any(len(_fields(later)) > 1 for later in rest[n + 1 :])
+            return _Rows(rows, breached=len(fields) > 1 or after)
         rows.append((line, fields))
     return _Rows(rows, breached=False)
 
@@ -363,7 +369,7 @@ def _terms(rows: list[tuple[str, list[str]]]) -> tuple[TriggerTerm, ...]:
 
 
 def _rows(block: _Rows, breach: str) -> list[tuple[str, list[str]]]:
-    """A block's rows at its rows step; a breached block is invalid (round 11 B2)."""
+    """A block's rows at its rows step; a breached block is invalid (round 11 B2, round 12 B8)."""
     if block.breached:
         raise SourceIssue(breach)
     return block.rows
@@ -1470,7 +1476,7 @@ def phrase_issues(path: str, text: str) -> tuple[str, ...]:
 
 def _prose(path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str]) -> list[str]:
     """A rationale or gap field: run text against the bound facts, then the phrase guard."""
-    if not text.strip():
+    if is_blank(text):
         return [f"{path}: empty text"]
     return [
         *(f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)),
@@ -1483,7 +1489,7 @@ def _limitation(path: str, text: str | None, names: Sequence[str]) -> list[str]:
     it, so a figure or reference is refused; then the phrase guard (round 7 (d), CP-2A A3)."""
     if text is None:
         return []
-    if not text.strip():  # round 11 B3: a blank limitation is not a limitation
+    if is_blank(text):  # round 11 B3, round 12 B10: a blank limitation is not a limitation
         return [f"{path}: empty text"]
     return [
         *(f"{path}: {issue}" for issue in prose.check(text, refs=(), gaps=(), names=names)),

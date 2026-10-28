@@ -73,7 +73,12 @@ def test_registrations_are_appended_after_the_existing_rows() -> None:
     appended(owner._VIEWS, ["credit_synthesis"], STEP)
     assert "CP-4" in owner._PRECHECKS
     appended(owner._QUALIFICATION, ["CP-1", "CP-1A", "CP-2", "CP-MODEL"], "CP-4")
-    appended(owner.OWNER_SPECS, ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"], "CP-4")
+    # CP-1D's row sits before CP-MODEL until its builder moves it: compare the base rows only.
+    appended(
+        [r for r in owner.OWNER_SPECS if r != "CP-1D"],
+        ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"],
+        "CP-4",
+    )
 
 
 def test_owner_spec_equals_the_lease_literal() -> None:

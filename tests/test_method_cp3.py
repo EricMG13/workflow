@@ -55,10 +55,10 @@ PLACEHOLDER_RE = re.compile(r"<label and period of FIG:([a-z_]+)>")
 # The LEAD freeze of the CP-3 half (docs/CP3-OWNER-LEASE.md, header): expected and submissions
 # from the freeze line; builder and manifest from the serialised methodology re-pin line.
 PINNED = {
-    "manifest.json": "e3cb221737a3930278924eb16ad67208d9967cad455043565a79b24dcfae25c6",
-    "submissions.json": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
-    "expected.json": "3c6ff67f22e7c1d0cf843050610cb3fe67c01814d6851360fcd6e385ec04d0a0",
-    "builder/build.py": "6dac614feb4fbd1a9a0fa7aa6b6c59ec5234f1b25c1829e3f555a2cba3bbcf7a",
+    "manifest.json": "525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10",
+    "submissions.json": "eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b",
+    "expected.json": "8ca60c96ac443282ac49a0ded495b751cf3b5457b9491f419a26ca59c0b3c310",
+    "builder/build.py": "67db98157b66a0861696cf25482a7aba63576025c9e25b9ada976d344ae6d952",
 }
 
 

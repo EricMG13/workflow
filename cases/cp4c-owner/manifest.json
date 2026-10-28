@@ -1,0 +1,399 @@
+{
+ "schema_version": "cp4c-owner-cases/1",
+ "scope": "CP-4C Restructuring fulcrum: CP-0, CP-1, CP-2A, CP-4, CP-2G (required) over the identity, financial and legal-covenants frozen sources; CP-3C (optional) is not read",
+ "status": "DRAFT revision 2 (fix round 1 on review-precise-1) by the cp4c-owner preparation task, 2026-10-28; scoped re-review review-precise-2 (two Low text fixes applied); not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+  "cases/cp2a-owner/submissions.json": "191180c2596c38fad13a9b190c6b0fb0103de21ff43b08d175c0f4cf38003a81",
+  "cases/cp2a-owner/expected.json": "457508a0643af8ca6e31bfec6103ae2a0ca9f009dfcc3bf57d29b001e88668b5",
+  "cases/cp2g-owner/manifest.json": "05ac9f842daa5769b9e76930ad7c0875fe586f0ca2a744e4edf53c6e3579b70b",
+  "cases/cp2g-owner/submissions.json": "aaa8ea0eeb563064cc944c69ec0e7b3dbc54032243fa72d07d6a735be49da86f",
+  "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
+  "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
+  "cases/cp4-owner/expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
+  "cases/cp3c-owner/manifest.json": "d5ca731c45891613a2982b0e538162127fa8f290017f6da43161c6f4fe616f53",
+  "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+  "src/deploy_vii/business_context.py": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7"
+ },
+ "sources": {
+  "identity": {
+   "path": "cases/financial/manifest.json",
+   "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+  },
+  "financial": {
+   "path": "cases/financial/manifest.json",
+   "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+   "scope_pages": "page:4 (balance sheet rows) read; page:5 not cited"
+  },
+  "legal-covenants": {
+   "positive": {
+    "path": "cases/legal/manifest.json",
+    "case": "legal-current-matching-definition",
+    "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec"
+   },
+   "gap": {
+    "path": "cases/legal/manifest.json",
+    "case": "legal-current-missing-ebitda-definition",
+    "sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c"
+   }
+  }
+ },
+ "no_new_source": "No synthetic source is added: the claim classes are the frozen balance-sheet rows (financial page:4) and the frozen sole senior secured term loan (CP-1 total debt, legal Clause 1.3). Trade payables 20 and other current liabilities 10 are read from the cited rows, Q4 2025-12-31 column.",
+ "edges": {
+  "decision": "D4: methodology.json as is. CP-4C required CP-0, CP-1, CP-2G, CP-4, CP-2A, each edge rule block; optional CP-3C, rule restricted; no edge_rules entry.",
+  "required": [
+   "CP-0",
+   "CP-1",
+   "CP-2G",
+   "CP-4",
+   "CP-2A"
+  ],
+  "optional": [
+   "CP-3C"
+  ],
+  "plans": {
+   "CP-4C": [
+    "CP-0",
+    "CP-1",
+    "CP-2A",
+    "CP-4",
+    "CP-2G",
+    "CP-4C"
+   ],
+   "CP-4C+CP-3C": [
+    "CP-0",
+    "CP-1",
+    "CP-1A",
+    "CP-2",
+    "CP-2A",
+    "CP-4",
+    "CP-2D",
+    "CP-2G",
+    "CP-3C",
+    "CP-4C"
+   ]
+  },
+  "optional_edge_unread": "CP-3C is not requested: it brings CP-1A, CP-2 and CP-2D (a business source and a second CP-1 promotion path), has no distressed_restructuring entry in contracts.PATHWAY_MODULES, and its frozen oracle runs in covenant_refinancing. An unread optional edge is absent from attempt.inputs, the view and the trace.",
+  "input_order": "positive and gap: ['prepared-pack', 'CP-0', 'CP-1', 'CP-2A', 'CP-4', 'CP-2G']"
+ },
+ "cases": {
+  "positive": {
+   "run": {
+    "run_id": "cp4c-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-4C"
+    ]
+   },
+   "pack": "identity + financial + legal-covenants (matching definition)",
+   "execution": "closed run: CP-0, CP-1, CP-2A (frozen CP-2A positive literal), CP-4 (frozen CP-4 positive literals), CP-2G (frozen CP-2G gap literal: CP-1D not requested, minimum liquidity not assessed), CP-4C"
+  },
+  "gap": {
+   "run": {
+    "run_id": "cp4c-owner-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-4C"
+    ]
+   },
+   "pack": "identity + financial + legal-covenants (missing Schedule A)",
+   "execution": "same plan; CP-4 settles its gap literal; CP-4C: administrative claims not stated, stress multiple not assessed"
+  },
+  "refused": {
+   "run": {
+    "run_id": "cp4c-owner-refused",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-4C"
+    ]
+   },
+   "pack": "financial source missing",
+   "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); no later attempt"
+  },
+  "blocked": {
+   "run": {
+    "run_id": "cp4c-owner-blocked",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-4C"
+    ]
+   },
+   "pack": "as positive",
+   "execution": "closed run to CP-2G (clone before CP-4C), then CP-4C attempt 0 invalid (rejected) and attempt 1 invalid (blocked)"
+  },
+  "cp2g_blocked": {
+   "run": {
+    "run_id": "cp4c-owner-cp2g-blocked",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-4C"
+    ]
+   },
+   "pack": "as positive",
+   "execution": "closed run to CP-4, then CP-2G settles blocked (CP-2G refusals r01 then v13); CP-4C begin raises ValueError('Required upstream is unrun, stale or blocked')"
+  },
+  "fixture_ev_zero": {
+   "run": null,
+   "execution": "composer only: CP-2G fixture_total_loss facts (downside EBITDA a known 0): enterprise value a known 0, every creditor recovery a known 0"
+  },
+  "fixture_ebitda_missing": {
+   "run": null,
+   "execution": "composer only: CP-2G T2H.4.d26.ebitda set to status missing (synthetic upstream variant): downside and stress EV missing"
+  },
+  "fixture_debt_missing": {
+   "run": null,
+   "execution": "composer only: CP-1 total_debt set to status missing: the secured claim and every recovery are missing"
+  }
+ },
+ "fact_selection_rule": {
+  "cp1": {
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "predicate": "label == 'LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 <metric>'; exactly one match",
+   "metrics": [
+    "total_debt",
+    "ebitda"
+   ],
+   "observed_value_class": {
+    "total_debt": "source",
+    "ebitda": "calculated"
+   },
+   "source": "cases/cp2g-owner/manifest.json fact_selection_rule (observed on the S1 promoted head)"
+  },
+  "cp1_t418": {
+   "table_id": "T4.18",
+   "facility_id": "term-loan",
+   "fields": [
+    "secured_status",
+    "seniority",
+    "facility_name"
+   ],
+   "observed": {
+    "term-loan.secured_status": "SECURED",
+    "term-loan.seniority": "SENIOR",
+    "term-loan.facility_name": "Northbridge Term Loan"
+   },
+   "source": "cases/cp3c-owner/manifest.json fact_bindings (observed on a promoted head)",
+   "rule": "the QUARTER period at the latest period end wins over its FY alias; unlisted fact ids are bound at run time"
+  },
+  "cp2g": "T2H.4.{b|d}{26|27|28}.ebitda and T2H.7.b01.{base|down}_first, literal ids read from cases/cp2g-owner/expected.json cases.gap (pinned) and from the settled CP-2G head at run time",
+  "cp2a": "T2B.1.<row>.{name,ebitda_decline,interest_increase} where <row> is named by the cp2a: entry in the derives_from of T2H.4.d26.ebitda (CP-2G lineage); literal ids read from cases/cp2a-owner/expected.json cases.positive",
+  "cp4": "T4C.11.r01.{facility_id,facility}, T4.10.r02.{permits,conditions}, T4.13.rating.rating; literal ids read from cases/cp4-owner/expected.json {positive|gap}.CP-4"
+ },
+ "run_time_bindings": {
+  "figure_placeholders": "{{FIG:name|token}} -> {<fact_id>|<token>}: cp1 names by fact_selection_rule, cp2g names to the literal ids; the uncited analyst cells (multiples, ranks, CP-2A shock sizes) are never FIG names",
+  "fact_id_marker": "{{FACT_ID:name}} in an expected issue -> the fact id bound to FIG name",
+  "cp0_consumer_rows": "positive and gap: CP-1, CP-2A, CP-4 (cases/cp4-owner submissions readiness_review), CP-2G, CP-4C (submissions.json cases.<case>.cp0_readiness_review); T8 commands Run CP-1, Run CP-2A, Run CP-4, Run CP-2G, Run CP-4C",
+  "cp1_readiness": "submissions.json cases.<case>.cp1_readiness (consumers CP-2A, CP-2G, CP-4C); markers bound as in the CP-2A and CP-2G manifests",
+  "pack_hash": "PreparedPack.content_hash() of the run's pack",
+  "ticket_and_call_ids": "structural only"
+ },
+ "figures": {
+  "total_debt_ltm": {
+   "source": "cp1",
+   "metric": "total_debt",
+   "unit_token": "US$ m"
+  },
+  "ebitda_ltm": {
+   "source": "cp1",
+   "metric": "ebitda",
+   "unit_token": "US$ m"
+  },
+  "ebitda_base_fy26": {
+   "source": "cp2g",
+   "fact_id": "T2H.4.b26.ebitda",
+   "unit_token": "US$ m"
+  },
+  "ebitda_down_fy26": {
+   "source": "cp2g",
+   "fact_id": "T2H.4.d26.ebitda",
+   "unit_token": "US$ m"
+  }
+ },
+ "tool_use": {
+  "CP-4C": "sourced owner-only step: SourceSession over the fixed host-side scope financial + legal-covenants (no identity, no extract_statements); one ok read_inputs (exact view context_block, a D2 exception frozen by this lease) before the submit; every cited page:N read first (UNREAD_PAGE rule); search_pack before the submit as complete participation",
+  "view_tree_draft": {
+   "note": "a proposal; the implementer commits cases/cp4c-owner/cp4c-view-tree.json from a product-settled head; no quote, citations or record_json key at any depth",
+   "keys": {
+    "upstream": "[{module_id, status}] CP-0, CP-1, CP-2A, CP-4, CP-2G",
+    "claims_offered": "{secured: {ref, shown, secured_status, seniority, facility_id, facility}, statement_rows: [{label, columns}] page:4 liability rows with their column headers}",
+    "ebitda_offered": "[{case: base|down, year, ref, shown, status, limitation|null}] the six CP-2G T2H.4 EBITDA facts",
+    "cp2a": "{scenario_row, name, ebitda_decline: {shown}, interest_increase: {shown}}",
+    "cp4": "{facility, lender_protection, additional_debt_conditions}",
+    "bounds": "{multiple: {max 99.99, places 2, may_be_not_assessed}, ranks: 1..9, treatments: [...]}",
+    "cp1_facts": "[{ref, label, period, unit, shown}]",
+    "cp2g_facts": "[{ref, label, period, unit, shown}]",
+    "inherited_limitations": "[str]"
+   }
+  },
+  "calls_positive": [
+   {
+    "module": "CP-4C",
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "module": "CP-4C",
+    "tool": "search_pack",
+    "arguments": {
+     "query": "Trade payables",
+     "source_id": "financial"
+    },
+    "expect_header": "1 spans match 'Trade payables'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "module": "CP-4C",
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 4,
+     "last_page": 4
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "module": "CP-4C",
+    "tool": "search_pack",
+    "arguments": {
+     "query": "senior secured",
+     "source_id": "legal-covenants"
+    },
+    "expect_header": "2 spans match 'senior secured'; showing 2.",
+    "expect_matching_spans": [
+     {
+      "source_id": "legal-covenants",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "legal-covenants",
+      "locator": "page:2"
+     }
+    ]
+   },
+   {
+    "module": "CP-4C",
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "legal-covenants",
+     "first_page": 1,
+     "last_page": 1
+    },
+    "expect_spans": [
+     {
+      "source_id": "legal-covenants",
+      "locator": "page:1"
+     }
+    ]
+   }
+  ],
+  "calls_gap": [
+   {
+    "module": "CP-4C",
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "module": "CP-4C",
+    "tool": "search_pack",
+    "arguments": {
+     "query": "Trade payables",
+     "source_id": "financial"
+    },
+    "expect_header": "1 spans match 'Trade payables'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "module": "CP-4C",
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 4,
+     "last_page": 4
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "module": "CP-4C",
+    "tool": "search_pack",
+    "arguments": {
+     "query": "senior secured",
+     "source_id": "legal-covenants"
+    },
+    "expect_header": "2 spans match 'senior secured'; showing 2.",
+    "expect_matching_spans": [
+     {
+      "source_id": "legal-covenants",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "legal-covenants",
+      "locator": "page:2"
+     }
+    ]
+   },
+   {
+    "module": "CP-4C",
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "legal-covenants",
+     "first_page": 1,
+     "last_page": 1
+    },
+    "expect_spans": [
+     {
+      "source_id": "legal-covenants",
+      "locator": "page:1"
+     }
+    ]
+   }
+  ]
+ }
+}

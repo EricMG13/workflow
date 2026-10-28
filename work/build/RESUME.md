@@ -4,7 +4,7 @@ Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 10
 
 ## Merged into the lane
 - **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3.
-- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8).
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed).
 - **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
 - **LEAD docs:** 8483de4 (E6), 3674158 (round 6 oracle batch), rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
@@ -17,16 +17,14 @@ Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 10
 ## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Cap 10.
 | Work | Base | Agent | Next |
 |---|---|---|---|
-| H1 fix 1 re-review (mx-precise) | 278f0aa | see ledger (impl a69f811059171c714) | F1 waits for LEAD round 10; merge after both |
 | G1-X fix 2 (remove `_fill` TypeError mapping; lane + 31aeee0) | lane | a1095e3383256490c (worktree g1x-fill) | scoped mx-adversary review |
 | CP-2G re-review of fix 1 + 2 (mx-adversary) | 5002b6d | see ledger (impl a4377a7580e8e70db) | round 9, then merge; budget spent |
-| CP-8 round 9 (fix 1 + 6h approved at cba7f82) | cba7f82 | a3cc9818386e8861a | scoped review of round 9; merges with CP-3 and CP-5 |
 | CP-2H first mx-adversary review | cc1d0fb | see ledger (impl a52b5ec0919986ddb) | fix round if needed, merge |
 | CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-4C first mx-adversary review (money) | bdde577 | see ledger (impl a2c15c441717ec41c) | fix round if needed, merge |
 | CP-5 Stage 1 build | lane + 2682310 | a490ed6228f4da606 (worktree cp5-stage1) | first mx-adversary review; merges with CP-3 and CP-8 |
 
-Built, waiting to merge: CP-3 re-pin 6c6ea02 (worktree cp3-stage1), pin-only diff checked; merges with CP-5 and CP-8.
+Built, waiting to merge with CP-5 (all carry 2682310): CP-3 re-pin 6c6ea02 (worktree cp3-stage1, pin-only diff checked); CP-8 fa55df5 (approved through round 9).
 
 ## Built, waiting on LEAD round 9
 CP-2D 6f (e) and D-1; CP-2A choice 5; CP-8 items 1–5; CP-2G L1–L3 and Info. Also with LEAD: H1 F1, I1, I2, open points 1 and 6; signs never read (CP-1D `_AMOUNT`, CP-3D `_token_once`).

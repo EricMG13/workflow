@@ -209,3 +209,4 @@
 - 2026-10-28 class rounds: Step 0 stopped on 864ffe3 (my ledger commit after dispatch); all five told to proceed at 864ffe3 (controller error, no code difference)
 - 2026-10-28 CP-1C class round ad3825e: blank 40/40 fixed (`<path>: empty text` fallback in the `_prohibited_fields` loop), B1/B3 n/a (no quote reader), 4/4 mutants killed, gates 0. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-feature
 - 2026-10-28 CP-2D class round dispatched (Opus, worktree agent-a69f2394899aee6d5): blank + round 11 pre-D0 rule
+- 2026-10-28 CP-1C class review (mx-feature): APPROVE, Info only (p_all_cases_fields.py 0: 136 blank combinations across positive/gap/no_peers; mutants 4/4). Merged (05d3bbe); fast tests 2360 passed, 2 skipped, 1 xfailed

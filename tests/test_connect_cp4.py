@@ -5,13 +5,14 @@ Every expected value comes from `cases/cp4-owner/expected.json` through the Stag
 builders. Nothing here runs a store run: those are deferred (`work/build/deferred-runs.md`).
 """
 
+import copy
 import dataclasses
 import hashlib
 import importlib
 import inspect
 import json
 import typing
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import replace
 from decimal import Decimal
 from types import SimpleNamespace
@@ -634,3 +635,103 @@ def test_driver_figure_predicate_refuses_two_candidates() -> None:
         s1a.figure_fact([metric, twin], drivers.METRIC)
     with pytest.raises(RuntimeError):
         s1a.figure_fact([], drivers.METRIC)
+
+
+# --- precheck: only a schema failure falls through (fix round 1, L1) ---------------------------
+
+
+def test_precheck_lets_any_other_failure_propagate(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A crashing gate must not read as "no issue": only `ValidationError` is the journal's to
+    refuse, so any other exception from the schema parse reaches the caller."""
+
+    def crash(text: str) -> None:
+        raise RuntimeError("schema parse crashed")
+
+    case = "gap_false_same_definition"
+    pack = stage1.make_pack(case)
+    text = stage1.make_submission(case, pack, stage1.make_upstream("gap")).model_dump_json()
+    store: Any = _Store(pack)
+    monkeypatch.setattr(
+        cp4_legal.CovenantInterpretationSubmission, "model_validate_json", staticmethod(crash)
+    )
+    with pytest.raises(RuntimeError, match="schema parse crashed"):
+        cp4.precheck(store, SimpleNamespace(), text)
+
+
+# --- the model-text class (round 3 ruling 2; fix round 1, L2) ----------------------------------
+
+# Until the shared `tests/defect_classes.py` helpers merge, CP-4 carries its own copy of the class:
+# unbalanced or empty references in every free-text field must be journaled by the validator, and
+# nothing may raise on the way to the module (it would raise after the binding write).
+HOSTILE_TEXT = ("Rates matter [a lot", "{low", "{}")
+STRUCTURAL = frozenset(
+    {
+        "source_id",
+        "locator",
+        "kind",
+        "comparison",
+        "threshold_unit",
+        "metric_basis",
+        "rating",
+        "severity",
+        "metric_ref",
+        "document_id",
+        "threshold_value",
+    }
+)
+
+
+def _string_paths(node: Any, prefix: tuple[Any, ...] = ()) -> Iterator[tuple[Any, ...]]:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield from _string_paths(value, (*prefix, key))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield from _string_paths(value, (*prefix, index))
+    elif isinstance(node, str):
+        yield prefix
+
+
+def _with_text(document: dict[str, Any], path: tuple[Any, ...], value: str) -> dict[str, Any]:
+    edited = copy.deepcopy(document)
+    cursor: Any = edited
+    for step in path[:-1]:
+        cursor = cursor[step]
+    cursor[path[-1]] = value
+    return edited
+
+
+def test_hostile_model_text_is_journaled_and_never_raises() -> None:
+    case = "positive"
+    pack = stage1.make_pack(case)
+    upstream = stage1.make_upstream(case)
+    inputs = stage1.make_inputs(case, pack)
+    base = stage1.make_submission(case, pack, upstream).model_dump(mode="json")
+    cases = [
+        (path, value)
+        for path in _string_paths(base)
+        if path[-1] not in STRUCTURAL
+        for value in HOSTILE_TEXT
+    ]
+    assert len(cases) == 144
+    unjournaled: list[str] = []
+    malformed: set[str] = set()
+    for path, value in cases:
+        text = json.dumps(_with_text(base, path, value))
+        try:
+            submission = cp4_legal.CovenantInterpretationSubmission.model_validate_json(text)
+        except ValueError:  # a shape error: the validator journals it (`shape_issues`)
+            continue
+        issues = cp4_legal.validate_covenant_interpretation(pack, submission, upstream, inputs)
+        if not issues:  # accepted: composing it must still not raise
+            cp4_legal.cp4_module(
+                cp4_legal.covenant_interpretation(pack, submission, upstream, inputs), inputs, 0
+            )
+            unjournaled.append(".".join(map(str, path)))
+            continue
+        if any("Malformed run text" in line for line in issues):
+            malformed.add(str(path[-1]))
+            assert all(value not in line for line in issues), (path, value)
+    assert unjournaled == []
+    # the run-text prose fields are the ones the type check journals
+    assert {"rationale", "flag", "implication", "mechanic"} <= malformed

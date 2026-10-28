@@ -155,11 +155,18 @@ def drive_cp4(
     return workflow.submit_review(bind_metric(text, metric_ref(workflow._store, body)))
 
 
-def cp4_closed(case: str, root: Path) -> tuple[Path, Path, None]:
-    """One closed CP-4 run of `case` under `root`: (store, sealed receipt, no publication). The
-    false-same case is refused by the semantic gate, then settles the gap pack's literal on the
-    same ticket (lease A3)."""
-    workflow, _pack = promoted(case, root)
+def fail_attempt(workflow: OwnerWorkflow, case: str) -> dict[str, Any]:
+    """One CP-4 attempt invalid on the read rule alone: the scoped search and the one
+    `read_inputs`, but no `read_pages`, so the cited pages are unread when the literal is
+    submitted. The validator passes and the step is journaled invalid (lease A4)."""
+    s1a.search(workflow, "legal-covenants", SEARCH[case])
+    body: dict[str, Any] = json.loads(workflow.read_inputs()["body"])
+    return drive_cp4(workflow, case, body)
+
+
+def settle(workflow: OwnerWorkflow, case: str, root: Path) -> tuple[Path, Path, None]:
+    """From CP-4 begun and untouched to the sealed receipt. The false-same case is refused by the
+    semantic gate, then settles the gap pack's literal on the same ticket (lease A3)."""
     body = drive_reads(workflow, case)
     if case in CORRECTED:
         refused = drive_cp4(workflow, case, body)
@@ -170,3 +177,17 @@ def cp4_closed(case: str, root: Path) -> tuple[Path, Path, None]:
         raise RuntimeError(f"CP-4 not valid: {outcome['issues']}")
     workflow.write_receipt(root / "owner-receipt.json")
     return root / "store", root / "owner-receipt.json", None
+
+
+def cp4_closed(
+    case: str, root: Path, *, template: tuple[OwnerWorkflow, PreparedPack] | None = None
+) -> tuple[Path, Path, None]:
+    """One closed CP-4 run of `case` under `root`: (store, sealed receipt, no publication).
+    With a `template` (a promoted state, never advanced) the run is a fork of it, so a caller that
+    needs several runs promotes CP-1 once per pack; the false-same case forks the gap pack's
+    template (lease: it clones the gap head)."""
+    if template is None:
+        workflow, _pack = promoted(case, root)
+    else:
+        workflow = s1a.clone_workflow(template[0], root)
+    return settle(workflow, case, root)

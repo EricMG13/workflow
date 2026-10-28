@@ -5,11 +5,11 @@ adapter owns finite capabilities, immutable participation evidence and the recei
 It generalises `financial_workflow` (which stays the reference and is imported, never
 edited): the walk follows `registry.plan`, each module's steps come from a declared
 `OwnerSpec`, and paths are supplied by trusted setup, never by a message.
-G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 (their probes and the CP-2
-read view live in `deploy_workflow.owners`). G1-X (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves
+G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 and Stage 2 adds CP-4 (their
+probes and views live in `deploy_workflow.owners`). G1-X (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves
 owner cores: an owner-only module (no live step contract) is entered through its registered
 core (`_CORES`), any module may register a precheck gate (`_PRECHECKS`), and every module with
-a `_VIEWS` entry may be read through `module_context`. No durable resume exists (an
+a `_VIEWS` entry may be read through `module_context` or `step_context`. No durable resume exists (an
 interrupted run is refused and a new run starts).
 """
 

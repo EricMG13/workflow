@@ -1901,7 +1901,7 @@ def test_unplanned_module_head_refuses(
     valid_run: tuple[Path, OwnerRunReceipt], tmp_path: Path, module_id: str
 ) -> None:
     """HIGH 2 (fix 4): an appended final snapshot adds a finished attempt and an accepted head of
-    a module outside the plan (CP-4; CP-2 and CP-MODEL with the qualification `head_of` expects),
+    a module outside the plan (CP-4, CP-2 and CP-MODEL, each with the qualification `head_of` expects),
     with no begin, submission or publication; the receipt heads are re-derived and resealed."""
     store, receipt = _fork_blocked(valid_run, tmp_path)
     assert module_id not in receipt.plan

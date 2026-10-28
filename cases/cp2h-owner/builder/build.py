@@ -35,7 +35,7 @@ D = Decimal
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-    "cases/cp2g-owner/manifest.json": "b0c8c4bcdf3c0e00e33c41cc124d8ca86c47db14c82077c7d40504cc2bf6eee7",
+    "cases/cp2g-owner/manifest.json": "ccf17834ec2800153d1b0648ddeac6add0debc64682e525cb6dd548162795daa",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
     "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
     "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
@@ -188,26 +188,36 @@ def parse_source(pages):
     (position then one symbol per agency), page 3 the trigger terms after `Agency  Direction  Metric  Comparison  Threshold`.
     Fields split on two or more spaces. A missing header is an invalid attempt (returned alone)."""
     def block(page_text, header, width):
+        """Rows after the header: a line with `width` fields is a row; a line with zero or one field ends the block;
+        a line with two or more fields and any other count makes the block invalid (round 11 B2). Returns
+        (rows, invalid); rows is None when the header is absent."""
         lines = page_text.split("\n")
         if header not in lines:
-            return None
+            return None, False
         rows = []
         for line in lines[lines.index(header) + 1:]:
             f = fields_of(line)
-            if len(f) != width:
+            if len(f) == width:
+                rows.append((line, f))
+            elif len(f) <= 1:
                 break
-            rows.append((line, f))
-        return rows
+            else:
+                return rows, True
+        return rows, False
 
-    reg = block(pages[0], REG_HEADER, 5)
-    if not reg:
+    reg, reg_bad = block(pages[0], REG_HEADER, 5)
+    scale, scale_bad = block(pages[1], SCALE_HEADER, 3)
+    terms, terms_bad = block(pages[2], TRIG_HEADER, 5)
+    # item 8 step 1: the headers, and a block ended at once by a line of one field or fewer, as built
+    if reg is None or (not reg and not reg_bad):
         raise ValueError("Rating register not found")
-    scale = block(pages[1], SCALE_HEADER, 3)
-    if not scale:
+    if scale is None or (not scale and not scale_bad):
         raise ValueError("Rating scale not found")
-    terms = block(pages[2], TRIG_HEADER, 5)
     if terms is None:
         raise ValueError("Trigger terms not found")
+    # B2 then follows item 8's row steps: scale rows, register rows (with `Rating not on the scale`), terms rows
+    if scale_bad:
+        raise ValueError("Rating scale not found")
     agencies = fields_of(SCALE_HEADER)[1:]
     positions = {a: {} for a in agencies}
     for line, (pos, *syms) in scale:
@@ -223,6 +233,10 @@ def parse_source(pages):
                 raise ValueError(f"Rating not on the scale: {agency} {rating}")
             pos = positions[agency][rating]
         register.append({"line": line, "agency": agency, "instrument": instrument, "rating": rating, "outlook": outlook, "date": date, "position": pos})
+    if reg_bad:
+        raise ValueError("Rating register not found")
+    if terms_bad:
+        raise ValueError("Trigger terms not found")
     triggers = []
     for line, (agency, direction, metric, comparison, threshold) in terms:
         assert direction in ("Downgrade", "Upgrade") and comparison in ("Above", "Below"), line
@@ -232,9 +246,13 @@ def parse_source(pages):
         if threshold == "Not stated":
             value = None
         else:
-            m = re.fullmatch(r"(\d+(?:\.\d+)?)(x|%)", threshold)
-            assert m and (m.group(2) == "x") == (uc == "multiple"), line
-            value = D(m.group(1)) if uc == "multiple" else D(m.group(1)).scaleb(-2)
+            m = re.fullmatch(r"(?:([0-9]+\.[0-9]{2})x|([0-9]+\.[0-9])%)", threshold)  # round 11 B1: N.NNx or N.N%
+            assert m and (m.group(1) is not None) == (uc == "multiple"), line
+            if uc == "multiple":
+                value = D(m.group(1))
+            else:  # exact exponent shift, no context rounding
+                _t = D(m.group(2)).as_tuple()
+                value = D((_t.sign, _t.digits, _t.exponent - 2))
         triggers.append({"line": line, "agency": agency, "direction": direction, "metric": metric, "comparison": comparison,
                          "threshold_text": threshold, "threshold": value})
     return {"register": register, "triggers": triggers}
@@ -483,7 +501,8 @@ def build_case(name):
     for row, module, status, basis, read, lim in (
         ("u_cp1", "CP-1", "restricted", f"Base period {LTM_PERIOD}", "T4.10 reported leverage, coverage and free cash flow to debt",
          "Inherits CP-1's own limitations."),
-        ("u_cp2g", "CP-2G", head["status"], f"Forecast {FY[0]}-{FY[-1]} on the base period {LTM_PERIOD}", "T2H.6 credit metrics for the FY2025 actual, base case and downside case",
+        ("u_cp2g", "CP-2G", head["status"] if spec["execution"] == "run" else "restricted",  # B7: the bound Input status; composer-only cases use an explicit restricted stand-in
+          f"Forecast {FY[0]}-{FY[-1]} on the base period {LTM_PERIOD}", "T2H.6 credit metrics for the FY2025 actual, base case and downside case",
          "Forecast on analyst-assumed drivers."),
         ("u_cp1d", "CP-1D", "not part of this run", "Not applicable", "Nothing read", "CP-1D (earnings quality) is an optional input that this version never reads.")):
         for f, l, v in (("module", "Module", module), ("status", "Status", status), ("basis", "Basis", basis), ("read", "Read", read), ("limitation", "Limitation", lim)):
@@ -1083,7 +1102,7 @@ def main():
                 "The issuer is described only by the frozen name; the agencies are fictional (the source says so)",
                 "The issuer ratings in this source coexist with CP-3D's unrated instrument: CP-3D's \"No rating agency has assigned a rating to the instrument\" concerns the quoted bond, while these are issuer ratings of the group; neither statement contradicts the other",
                 "Asserted by the builder: page:2 Reported EBITDA FY 30.0; page:3 Cash interest paid FY 5.00 and Levered free cash flow FY 9.00; page:4 Total debt FY 50.00 and Cash and cash equivalents FY 20.00; identity page:1 'Fiscal year end: December 31.'; the recomputed FY2025 ratios (50/30, (50-20)/30, 30/5, 9/50) equal the CP-2G gap T2H.6.a25 facts; no threshold of a non-boundary source equals a FY2025 metric"],
-            "parse_rule": "page:1 register after the header 'Agency  Instrument  Rating  Outlook  Date' (consecutive five-field lines), page:2 scale after 'Position  Alder Ratings  Brook Credit', page:3 terms after 'Agency  Direction  Metric  Comparison  Threshold'; fields split on two or more spaces; threshold 'N.NNx' (multiple), 'N.N%' (percent, stored as a fraction) or 'Not stated'; a missing header is an invalid attempt returned alone (s01, s02); a rating of Withdrawn or Not rated has no position (not_applicable), any other rating must be on the scale or the source is invalid ('Rating not on the scale: <agency> <rating>')"},
+            "parse_rule": "page:1 register after the header 'Agency  Instrument  Rating  Outlook  Date' (consecutive five-field lines), page:2 scale after 'Position  Alder Ratings  Brook Credit', page:3 terms after 'Agency  Direction  Metric  Comparison  Threshold'; fields split on two or more spaces; threshold 'N.NNx' (multiple), 'N.N%' (percent, stored as a fraction) or 'Not stated'; a line of two or more fields with another field count makes the source invalid; after a block ends at a line of zero or one field, a later line of two or more fields on that page makes the source invalid; a missing header is an invalid attempt returned alone (s01, s02); a rating of Withdrawn or Not rated has no position (not_applicable), any other rating must be on the scale or the source is invalid ('Rating not on the scale: <agency> <rating>')"},
         "edges": {
             "decision": "D4: methodology.json as is. CP-2H required CP-0, CP-1, CP-2G (rule block); optional CP-1D (rule restricted); no edge_rules entry. CP-2A is not an edge of CP-2H: it is in the plan only because CP-2G requires it.",
             "required": MOD["CP-2H"]["required"], "optional": MOD["CP-2H"]["optional"],

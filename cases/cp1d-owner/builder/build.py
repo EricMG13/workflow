@@ -522,6 +522,8 @@ def build_case(name, sub=None):
                      "Excluded: insufficient evidence")
         if rec == "Recurring":
             frac = D(0)
+            if path == "judgment":  # 1D2: the rule decides, so an analyst fraction is not used and is not a limitation
+                path = "rule"
         claimed = item["amount"]
         accepted = D(0) if frac == 0 else basis_amt if path == "source" else claimed * frac
         if frac != 0:
@@ -553,9 +555,13 @@ def build_case(name, sub=None):
         if i["path"] == "source":
             bc = [{"source_id": "bridge", "locator": a["accepted_basis"]["locator"], "quote": a["accepted_basis"]["quote"]}]
             num("T1D.2", r, "basis", "Source-supported amount", i["basis"], "amount", "Amount in the cited quote", (), "source", bc)
-            num("T1D.2", r, "applied_fraction", "Share accepted", i["frac"], "percent", "Source-supported amount / proposed amount",
-                (f"T1D.2.{r}.basis", f"T1D.1.{r}.claimed"))
-            num("T1D.2", r, "accepted", "Accepted amount", i["accepted"], "amount", "Source-supported amount", (f"T1D.2.{r}.basis",))
+            if a["recurrence"] == "Recurring":  # 1D2: the rule formula, nothing derived from the cited amount
+                num("T1D.2", r, "applied_fraction", "Share accepted", i["frac"], "percent", "Rule: Supported 100%; otherwise 0; Recurring 0")
+                num("T1D.2", r, "accepted", "Accepted amount", i["accepted"], "amount", "Zero by rule (share accepted is 0)", (f"T1D.2.{r}.applied_fraction",))
+            else:
+                num("T1D.2", r, "applied_fraction", "Share accepted", i["frac"], "percent", "Source-supported amount / proposed amount",
+                    (f"T1D.2.{r}.basis", f"T1D.1.{r}.claimed"))
+                num("T1D.2", r, "accepted", "Accepted amount", i["accepted"], "amount", "Source-supported amount", (f"T1D.2.{r}.basis",))
         else:
             gapf("T1D.2", r, "basis", "Source-supported amount", "amount", "No source amount is cited: the share follows the achievability rule or the analyst fraction", "not_applicable")
             if i["path"] == "judgment":
@@ -643,23 +649,29 @@ def build_case(name, sub=None):
         assert rec == cp1v
         reg("T1D.4", row, label, ["reported", "recomputed", "difference", "result"])
     # T1D.5 share
-    def share(row, label, n, d_, formula, der, na_reason=None, miss=None):
+    ZERO_DEN = "Not meaningful: {} is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"  # round 4 (i): the T1D.3 row label, verbatim
+
+    def share(row, label, n, d_, formula, der, na_reason=None, miss=None, den_label=None):
         if na_reason:
             gapf("T1D.5", row, "value", label, "percent", na_reason, "not_applicable")
         elif n is None or d_ is None:
             gapf("T1D.5", row, "value", label, "percent", miss)
+        elif d_ <= 0:
+            gapf("T1D.5", row, "value", label, "percent", ZERO_DEN.format(den_label), "not_applicable")
         else:
             num("T1D.5", row, "value", label, div(n, d_), "percent", formula, der)
         reg("T1D.5", row, label, ["value"])
     share("management", "Proposed add-backs / management EBITDA", claimed, mgmt, "Proposed add-backs / management financing-case EBITDA",
-          ("T1D.3.claimed.value", "T1D.3.mgmt.value"), None if bridge else na, "Not calculable: a proposed amount is not stated")
+          ("T1D.3.claimed.value", "T1D.3.mgmt.value"), None if bridge else na, "Not calculable: a proposed amount is not stated",
+          "Management financing-case EBITDA")
     share("supported", "Accepted add-backs / supported EBITDA", accepted, supported, "Accepted add-backs / supported adjusted EBITDA",
-          ("T1D.3.accepted.value", "T1D.3.supported.value"))
+          ("T1D.3.accepted.value", "T1D.3.supported.value"), den_label="Supported adjusted EBITDA")
     acc_na = None if bridge else na
     if bridge and claimed == 0:
         acc_na = "No add-backs claimed"
     share("acceptance", "Accepted / proposed add-backs", accepted, claimed, "Accepted add-backs / proposed add-backs",
-          ("T1D.3.accepted.value", "T1D.3.claimed.value"), acc_na, "Not calculable: a proposed amount is not stated")
+          ("T1D.3.accepted.value", "T1D.3.claimed.value"), acc_na, "Not calculable: a proposed amount is not stated",
+          "Proposed add-backs (management)")
     # T1D.6
     basis = (("statements", "Statements (CP-1)", start), ("management", "Management financing case", mgmt), ("supported", "Supported", supported))
     for row, label, e in basis:
@@ -675,6 +687,9 @@ def build_case(name, sub=None):
                                     ("net_leverage", "Net leverage", ndebt, "multiple", "Net debt / EBITDA")):
             if e is None:
                 gapf("T1D.6", row, f_, l_, uc, why, st)
+            elif e <= 0:
+                gapf("T1D.6", row, f_, l_, uc, ZERO_DEN.format({"statements": "Adjusted EBITDA, statements (CP-1)", "management": "Management financing-case EBITDA",
+                                                                 "supported": "Supported adjusted EBITDA"}[row]), "not_applicable")
             else:
                 dv = ("cp1:cfo_ltm" if f_ == "cfo_to_ebitda" else "cp1:total_debt_ltm" if f_ == "total_leverage" else "cp1:net_debt_ltm", f"T1D.6.{row}.ebitda")
                 num("T1D.6", row, f_, l_, div(n_, e), uc, fm, dv)
@@ -701,6 +716,9 @@ def build_case(name, sub=None):
     for i in it:
         if i["amount"] is None:
             limits.append(f"Proposed amount is not stated for {i['label']}: every figure that needs it is Not calculable.")
+    for i in it:  # 1D2 follow-up (j): per item in bridge order, after the unstated-amount lines, before the analyst-fraction line
+        if i["path"] == "source" and i["a"]["recurrence"] == "Recurring":
+            limits.append(f"Recurring add-back excluded although a source amount is cited: {i['label']}.")
     if any(i["path"] == "judgment" for i in it):
         limits.append("Accepted fractions given without a source amount are analyst assumptions without a source calculation.")
     if any(i["accepted"] > 0 and i["type"] == "Saving" for i in it):
@@ -1004,7 +1022,7 @@ def main():
                     "6 basis amount not above 0 and below the proposed amount: 'Accepted basis must be above 0 and below the proposed amount: <label>'"],
                 "covers": ["r03", "r04", "r05", "r16", "r17", "r18", "r19"]},
             "recurrence": "Saving requires Not applicable; Cost requires Non-recurring, Recurring or Not assessable; Not assessable only with Insufficient evidence (Cost, Not assessable, Insufficient evidence is valid: the gap legal-fees row)",
-            "partly_supported": "exactly one of accepted_basis or accepted_fraction; neither on another achievability; accepted_basis quote holds exactly one amount (a digit run with an optional decimal part) above 0 and below the proposed amount; Python computes the share as that amount over the proposed amount (one division, 38 digits half-even) and the accepted amount equals the cited amount; accepted_fraction is an analyst_judgment with two decimals in (0,1)",
+            "partly_supported": "exactly one of accepted_basis or accepted_fraction; neither on another achievability; accepted_basis quote holds exactly one amount (a signed decimal numeral read on the normalised quote: a minus counts when it starts the quote or follows a character that is neither a letter nor a digit, directly before the first digit or one space before it (any whitespace, a line break included), an accounting-parenthesised numeral (with or without one space inside each parenthesis) reads as negative, and a figure at a quote edge counts only if the page does not continue it; rulings rounds 10 and 11) above 0 and below the proposed amount; Python computes the share as that amount over the proposed amount (one division, 38 digits half-even) and the accepted amount equals the cited amount; accepted_fraction is an analyst_judgment with two decimals in (0,1)",
             "confidence": "High is refused whenever a bridge source is present (the evidence is management-supplied); with no bridge the rule does not apply",
             "no_bridge": "no bridge source: any assessment is refused with 'Assessment given without a bridge in the pack: <label>' (no 'Unknown add-back' issues); overall.evidence must be non-empty ('the statements' add-back disclosure')",
             "r15_ruling": "confirmed rule (LEAD 2026-10-28): when the pack has no bridge, overall.evidence (a located citation) is required so that tool use is never vacuous; any located citation satisfies it",

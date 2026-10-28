@@ -1,5 +1,7 @@
 # CP-4 (legal and covenants) owner run lease - FROZEN by LEAD 2026-10-28 (draft rev 2 by cp4-owner preparation; oracle sha256 pinned below)
 
+Pin consumers: `cases/cp4c-owner/builder/build.py` pins `expected.json`, `submissions.json`. Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
+
 Amended by LEAD 2026-10-28 (amendment 1, ruling 4-1 in `docs/rulings/2026-10-28-stage1.md`): the T4.9 current and T4F.2 basis description reads `bound from the CP-1 fact (IFRS · consolidated group)`, the engine's copied `predicate_facts.basis_observed` value (builder :801, :816). Only those four `expected.json` strings changed (:827, :2800, :4083, :6089); submissions and manifest are byte-identical; the `entity` string `Northbridge Synthetic Group (IFRS consolidated group)` (builder :1109) is a different field and is unchanged. Three rebuilds (in place and two scratch copies, `python3 -I`) identical. Pins now: expected 154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0, builder 71cf075839362058f6be70140995bfb363a19228151842414200f4d961755446 (submissions f2ef2e30…, manifest 2c12bf68… unchanged); the expected pin a60ab627… at :259 and :290 below is superseded.
 
 Rev 1 implemented the LEAD rulings on review-precise-1 (H1, H2, M1, M2, L1-L6, Q1-Q6). Rev 2 implements the LEAD rulings on review-precise-2 (F1-F5). Pre-code. Follows `docs/S1A-OWNER-RUN-LEASE.md` (rev 1 with amendments) and

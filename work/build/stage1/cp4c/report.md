@@ -63,3 +63,13 @@ Not verified:
 - the reviews were run inline by the implementer.
 
 agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+
+## Addendum: round 6 re-pin (supersedes the branch and pins above)
+- **Commits:** 3dbbdaa (2ae589b) → 8c57467 (build) → 49332e3 (8483de4) → 81f6cfe (3674158) → **`0284eca`**. The last commit, `test(cp4c): re-pin to the round 6 oracle batch`, changes pin strings only.
+- **New pins:**
+  - manifest 9cf10083…
+  - submissions 1f76a1d1…
+  - builder 806252b5…
+  - CP-2A expected ad5531da…, which also moved in 3674158
+- **Results:** 130 passed, gates exit 0, and `cp4c.py` is unchanged.
+- **Merge order:** this branch carries the CP-2A and CP-2E oracle changes, so it can merge into the lane only after the CP-2A and CP-2E follow-ups.

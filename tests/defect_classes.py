@@ -752,8 +752,9 @@ def model_text_failures(
     `verbatim` is the module's explicit set of path patterns (`"*"` for a list index) whose value
     is stored as plain text and is never built as `RunText` or `Claim.text` downstream; the module
     records each path's sink beside the set. Only on those paths is a `valid` outcome allowed (the
-    step is then done, so no wedge check). Every other path must journal an issue. A pattern that
-    names no path of the payload is a failure, so the set cannot rot.
+    step is then done, so no wedge check), and a pattern none of whose paths accepts any hostile
+    value is a failure (the entry is wrong or the field has tightened). Every other path must
+    journal an issue. A pattern that names no path of the payload is a failure, so the set cannot rot.
 
     `fresh()` returns a run whose `submit_review` does whatever the module needs before a submit
     (reads), since a refused attempt re-activates the step. A raise, from the hostile submit or the
@@ -767,6 +768,7 @@ def model_text_failures(
         for pattern in sorted(verbatim, key=str)
         if not any(path_matches(pattern, path) for path in paths)
     )
+    taken: set[tuple[str | int, ...]] = set()  # verbatim patterns that accepted some value
     for path in paths:
         allowed = any(path_matches(pattern, path) for pattern in verbatim)
         for value in values:
@@ -777,10 +779,16 @@ def model_text_failures(
             if outcome["status"] == "valid":
                 if not allowed:
                     failures.append(f"{label}: accepted")
+                taken.update(p for p in verbatim if path_matches(p, path))
                 continue  # taken verbatim and the step is done: nothing to wedge
             if not outcome["issues"]:
                 failures.append(f"{label}: {outcome['status']} with no issue")
             followed = run.submit_review(positive)["status"]  # a raise propagates
             if followed != "valid":
                 failures.append(f"{label}: wedged, valid payload was {followed}")
+    failures.extend(
+        f"{'.'.join(map(str, pattern))}: listed verbatim but refused every value"
+        for pattern in sorted(verbatim, key=str)
+        if pattern not in taken and any(path_matches(pattern, path) for path in paths)
+    )
     return failures

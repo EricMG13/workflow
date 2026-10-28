@@ -520,6 +520,17 @@ def test_a_validator_that_accepts_only_the_verbatim_path_passes() -> None:
     assert _failures("strict_summary", build=False, verbatim=frozenset({NOTE})) == []
 
 
+def test_a_verbatim_path_that_refuses_every_value_is_a_failure() -> None:
+    wrong = frozenset({NOTE, ("summary",)})  # the fake journals an issue on every summary
+    failures = _failures("strict_summary", build=False, verbatim=wrong)
+    assert failures == ["summary: listed verbatim but refused every value"]
+
+
+def test_a_verbatim_pattern_needs_only_one_accepted_value_on_one_path() -> None:
+    # parts.1.note is absent, parts.0.note accepts: the pattern as a whole is used
+    assert _failures("strict_summary", build=False, verbatim=frozenset({NOTE})) == []
+
+
 def test_a_verbatim_path_is_required_to_be_listed() -> None:
     failures = _failures("strict_summary", build=False)
     assert any("parts.0.note='{}': accepted" in f for f in failures)

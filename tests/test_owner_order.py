@@ -169,6 +169,25 @@ def test_module_after_cp_model_that_feeds_it_refuses(
     _refuses(tmp_path, _pack("CP-1", "CP-MODEL", "CP-1A", "CP-2", CP3))
 
 
+def test_consumer_is_refused_behind_an_unrelated_module_after_cp_model(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """Two modules follow CP-MODEL: CP-3D needs only CP-0 and is fine; CP-3 requires CP-MODEL
+    and is refused whichever module precedes it (not just the first one after CP-MODEL)."""
+    order = ("CP-0", "CP-1", "CP-MODEL", g1x.MODULE, CP3)
+    graph: Graph = {
+        "CP-0": set(),
+        "CP-1": {"CP-0"},
+        "CP-MODEL": {"CP-1"},
+        g1x.MODULE: {"CP-0"},
+        CP3: {"CP-0", "CP-MODEL"},
+    }
+    _world(cp3.monkeypatch, order, graph)
+    _refuses(tmp_path, _pack("CP-1", "CP-MODEL", g1x.MODULE, CP3))
+    graph[CP3] = {"CP-0"}  # unrelated: both are admitted, in plan order
+    assert _check(tmp_path, _pack("CP-1", "CP-MODEL", g1x.MODULE, CP3)) == order
+
+
 def test_two_deterministic_modules_refuse(cp3: SimpleNamespace, tmp_path: Path) -> None:
     second = replace(owner.OWNER_SPECS["CP-MODEL"], module_id="CP-MODEL-2")
     cp3.monkeypatch.setattr(
@@ -318,7 +337,9 @@ def test_later_module_runs_beside_a_refused_publication_and_receipt_verifies(
     assert workflow.publish()["status"] == "refused"
     assert len(workflow._publications) == 1
     receipt = workflow.write_receipt(tmp_path / "receipt.json")
-    owner.verify_owner_run_receipt(owner.Execution(tmp_path / "store"), receipt)
+    store = owner.Execution(tmp_path / "store")
+    owner.verify_owner_run_receipt(store, receipt)
+    assert receipt.publications[-1].snapshot_after_sha256 == store.read().content_hash()
     begun = [b.module_id for b in receipt.begins]  # CP-1 begins twice: attempt 0 and 1
     assert (begun[0], begun[-1]) == ("CP-0", g1x.MODULE)
     assert begun.count(g1x.MODULE) == 1
@@ -352,7 +373,7 @@ def test_publication_is_last_in_the_receipt_chain_and_verifies(
     )
     review = json.loads(runs.literal("positive", "readiness_review", pack))
     row = next(c for c in review["consumers"] if c["module_id"] == "CP-1")
-    review["consumers"] = [*review["consumers"], {**row, "module_id": g1x.MODULE}]
+    review["consumers"] = [row, {**row, "module_id": g1x.MODULE}]  # only selected modules
     runs.drive_cp0(workflow, pack, "positive", text=json.dumps(review))
     runs.drive_cp1(workflow, pack, "positive")
     assert workflow._phase == "analytical"

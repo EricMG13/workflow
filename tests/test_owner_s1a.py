@@ -307,9 +307,8 @@ def _selection(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
 
 def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) -> None:
     pack = runs.make_pack("positive")
-    # Refused by Stage 2 round 2's rule (rulings 2026-10-28): CP-5 follows CP-MODEL in the plan and
-    # consumes it through the registry fan-in (CP-5 -> CP-MODEL), so an analytical module after the
-    # deterministic one is not admitted. DC-5 (CP-5 consuming CP-MODEL) stays open on the CP-MODEL row.
+    # On this branch CP-5 has no OWNER_SPECS row; once registered, round 2's rule refuses it
+    # through the CP-5 -> CP-MODEL fan-in (DC-5 open on the CP-MODEL row).
     with pytest.raises(WorkflowError) as selected:
         OwnerWorkflow.create(
             tmp_path / "store",

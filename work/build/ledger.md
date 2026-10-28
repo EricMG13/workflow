@@ -314,3 +314,4 @@
 - 2026-10-28 CP-3D r13 fix1 re-review APPROVE (mx-precise); merged CP-3D 543376c, CP-8 0de521a, CP-2E ccdeeeb into the lane (5fe8118): fast set 6140 passed 2 skipped. CP-4C r13 review APPROVE (mx-adversary), 2 Lows to backlog; merged 805315e
 - 2026-10-28 LEAD: Q9 re-pins (CP-2D/CP-3C deltas, CP-3D amortisation_nonzero, CP-1D recipe) release at Stage 2 close; is_blank Cc lands via codex/checkpoint (LEAD backlog). Q1/Q6/Q10/Q11 calls stand provisionally; rulings on Q1-Q8, Q10, Q11 being drafted; CP-4 waits Q3/Q4
 - 2026-10-28 Stage 2.0 G1-X guards done: 3d25683 (served sources == _OWNER_SCOPES; STEP_IDS tuple of str). agent=mx-feature fix-rounds=0 gates-first-pass=n. Review: mx-precise
+- 2026-10-28 Stage 2 CP-3D dispatched (mx-feature, worktree s2-cp3d at e5e63af); G1-X guards review dispatched (mx-precise)

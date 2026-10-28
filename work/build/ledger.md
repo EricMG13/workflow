@@ -274,3 +274,6 @@
 - 2026-10-28 Round 13 brief written (work/build/stage1/round13-brief.md); worktrees r13-{cp1d,cp3d,cp2d,cp3c,cpl10} cut at claude/round12 d2cb626; implementers mx-feature (user)
 - 2026-10-28 CP-2H r12 review APPROVE (mx-precise): Low B8 "any later line" unpinned (cp2h-r12-review/review_mutants.sh after_last_line_only) rides with next CP-2H change; Info per-page rule, probe import path. Merged add5fa8 into claude/round12
 - 2026-10-28 Round 13 dispatched (mx-feature): CP-1D, CP-3D, CP-2D, CP-3C, CP-L10; CP-2E r12 fix round 1 (mx-feature, test only)
+- 2026-10-28 Lane merged codex/checkpoint 2344b17 (0d-c, b10-engines, rounds 12-13). Fast set + engine tests: 1 failed 3704 passed 2 skipped; FAILED test_method_cp3c.py::test_oracle_files_match_the_lease_pins (cp3c manifest frozen_inputs pins src/deploy_vii/business_context.py, changed by b10-engines cffdf9f) -> LEAD (cases/ is LEAD's)
+- 2026-10-28 CP-2E r12 fix1 done: cfd6e3e (test only, M1 pinned; mutants_review 8/8 killed). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped (Medium fix)
+- 2026-10-28 CP-L10 r13 done: d688c6b (change exact in _EXACT; reviewer pair + bound pairs). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-feature

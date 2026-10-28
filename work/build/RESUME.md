@@ -18,7 +18,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 |---|---|---|---|
 | CP-2H fix 1 + 1b mx-adversary re-review | f843772 | impl a52b5ec0919986ddb | merge |
 | CP-4C round 11 (cp4c/round11-brief.md) | lane | a2c15c441717ec41c | mx-adversary by ruling id, merge |
-| H1b, five leased rows + H1 fix 2 Lows (h1/h1b-brief.md) | ebc8294 (worktree h1b) | mx-feature, see ledger | mx-adversary review, merge |
+| H1b mx-adversary review | 0717fad (worktree h1b) | impl mx-feature ab8d695f66c635633 | merge |
 | CP-3C fix 1 + 1b mx-adversary re-review | b9972fd | impl aa5a4817fa00cd287 | merge |
 | Shared defect-class library + inventory (stage1/defect-classes-brief.md) | lane | see ledger (worktree defect-classes) | per-module fix rounds from the inventory |
 

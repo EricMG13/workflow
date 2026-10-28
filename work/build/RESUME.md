@@ -21,7 +21,6 @@ Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 10
 | G1-X fix 2 (remove `_fill` TypeError mapping; lane + 31aeee0) | lane | a1095e3383256490c (worktree g1x-fill) | scoped mx-adversary review |
 | CP-2G fix round 2 (round 8 A-3 citations), last in budget | dcfcbc0 | a4377a7580e8e70db | one Opus re-review of fix 1 + 2; merge |
 | CP-8 review of fix 1 + 6h (mx-precise) | cba7f82 | see ledger (impl a3cc9818386e8861a) | one Opus review of fix 1 + 6h; merges with CP-3 and CP-5 |
-| CP-3D quote fix + 6h review (mx-precise) | 0b0835f | af8f24fd47bcf9028 (worktree cp3d-stage1) | merge |
 | CP-2H round 7 | 5d91e7b | a52b5ec0919986ddb | first mx-adversary review, a killed mutant per refusal (29) |
 | CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-4C round 8 Part A (money: A-1) | 0284eca | a2c15c441717ec41c | first mx-adversary review (property test, mutants) |
@@ -33,7 +32,7 @@ Built, waiting to merge: CP-3 re-pin 6c6ea02 (worktree cp3-stage1), pin-only dif
 CP-2D 6f (e) and D-1; CP-2A choice 5; CP-8 items 1–5; CP-2G L1–L3 and Info. Also with LEAD: H1 F1, I1, I2, open points 1 and 6; signs never read (CP-1D `_AMOUNT`, CP-3D `_token_once`).
 
 ## Queued
-- Riding Lows: CP-2E negative-floor raise test (6i review); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
+- Riding Lows: CP-3D name wrap-join (quote-6h-review Low 1); CP-2E negative-floor raise test (6i review); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
 - Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
 - Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 

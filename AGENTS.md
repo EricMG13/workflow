@@ -24,29 +24,10 @@ historical records keep their original route names.
 - `mx-feature` implements financial semantics, provenance/permissions, state,
   persistence, recovery and consequential parser behavior, and fixes in them.
 - `mx-scaffold` handles fully specified mechanical changes and PR mechanics.
-- Two Sonnet fix rounds per task. For a third, `mx-autonomous` writes a root-cause
-  fix plan and a fresh `mx-feature` executes it; no Fable (user, 2026-10-28). There
-  is no fourth: LEAD takes the open findings to the user. Only rounds that fix a
-  High or Medium finding count (global §1 stop rule). Findings from any review of
-  the same task share its two-round budget; a later review's findings never start a
-  new one (user, 2026-10-28).
 - `mx-precise` reviews each task and independently reviews financial/stateful
   expected results; `mx-adversary` also reviews diffs touching financial,
-  ordering/concurrency or security code, and re-reviews only fixes of its own
-  High or Medium findings. Opus/architect agents never write code.
-- A re-review brief lists the finding IDs it checks, and the review checks only
-  those. Anything else it notices goes under "Out of scope", never changes the
-  verdict, and LEAD takes it to the user. When only Low or Info findings remain,
-  the verdict is PASS with notes (user, 2026-10-28).
-- When a second round hits the same defect class (for example crash residue
-  between writes, a forgery path through a verifier, refusal mapping), stop
-  patching sites. `mx-autonomous` writes one plan for the whole class (one atomic
-  commit point, verify by replaying the producer's rules), and the lease states the
-  threat model's bounds (which crash points, which forger) that reviews hold to
-  (user, 2026-10-28).
-- A fix round leaves a brief, a report and a commit. Do not save copies of the
-  source or tests per round; the commit holds them. LEAD moves closed entries
-  from docs/QUEUE.md to docs/QUEUE-ARCHIVE.md (user, 2026-10-28).
+  ordering/concurrency or security code. Fix rounds, re-reviews and stage routing
+  follow "How work moves" below.
 - Coordinator sessions plan and dispatch; they do not write product code.
 - User instructions require confidence-review after any code change, before
   declaring completion or committing. Enumerate doubts, trace causes, refute
@@ -67,65 +48,41 @@ reviews rather than add approval chains. Stop inventing policy at unclear semant
 name the exact requirement and have LEAD resolve it from the adopted source.
 LEAD's rulings are applied to a draft before its first independent review.
 
-Module builds (user, 2026-10-28):
-- An oracle or lease preparer runs the product's table, claim and render
-  validators and a scratch double rebuild before handback, and reports their exit
-  codes. Reviews after the first check only the diff. LEAD accepts the reviewer's
-  rebuild exit code and does not rebuild again itself.
-- Each module keeps one questions file (`work/<lane>/<module>/questions.md`). A
-  module's first task lists its open semantic questions there (signs, bases,
-  fail-closed cases). No build is dispatched until LEAD has ruled on all of them
-  in one batch, frozen the oracle and marked the lease closed. Later questions go
-  to the same file; Modules sends LEAD one message pointing at the files at most
-  every 20 minutes, which also keeps both sessions under the app's message cap.
-- LEAD rules only on questions that cross modules or change an oracle. The
-  Modules controller decides questions that affect one module only, from its
-  lease, and records each decision in the lane ledger.
-- Module tests pin oracle and method files through one shared manifest of hashes,
-  so an oracle change is one re-pin commit, not an agent round per module. LEAD
-  releases oracle and lease changes at fixed points (once per stage), in
-  dependency order with product-wording changes first, and each lease lists its
-  pin consumers. Modules merges `codex/checkpoint` at each point instead of
-  cherry-picking or holding individual LEAD commits.
-- A defect class found in one module (for example the CP-8 soft hyphen) becomes a
-  shared test every module runs, not a per-module hunt.
+## How work moves (user, 2026-10-28)
 
-Dispatch (user, 2026-10-28):
-- An implementer's first step enters a worktree cut from the lane tip and checks
-  that `git rev-parse HEAD` equals the tip; stop on mismatch. Before launching a
-  cohort, dispatch one agent and confirm it starts on the right commit.
-- At most six Opus agents run at once across a session. Checks of a diff that
-  only applies LEAD's ruling text go to `mx-feature`, not an Opus reviewer.
+Five ideas. The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
 
-Module stage routing (user, 2026-10-28; plan
-`docs/superpowers/plans/2026-10-28-verified-module-builds.md`). Stage 1 keeps its
-current routing until it closes.
-- Stage 2 (connections): one `mx-feature` (Sonnet) implementer per module and its
-  fix rounds. `mx-adversary` reviews the store adapter and the consumption proof;
-  `mx-precise` reviews the rest. The end-of-stage review is Opus
-  (`mx-precise`/`mx-autonomous`).
-- Stage 3 (pathways): `mx-feature` builds G2, CP-OS and chart wiring; `mx-precise`
-  reviews. Fable (`mx-architect`) may do the one end-of-stage check that every
-  pathway renders its assigned blocks.
-- Stage 4 (orchestration): Fable (`mx-architect`) writes one class-level plan
-  (verify by replaying the producer's rules, with the threat model's bounds) and
-  does the end-of-stage review; it writes no code. `mx-feature` implements;
-  `mx-adversary` attacks. If Fable is unavailable (credits), `mx-autonomous`
-  stands in.
-- These Fable uses are the only exception to the stop on Fable (user,
-  2026-10-28); LEAD's lane still dispatches none.
+1. **Questions before building.** Each module lists its open questions in
+   `work/<lane>/<module>/questions.md`. LEAD rules on them in one batch, freezes
+   the oracle and closes the lease before any build starts. Modules decides
+   questions that touch one module only and records them in its ledger, and points
+   LEAD at the files at most every 20 minutes. Preparers run the product's
+   validators and a double rebuild before handback.
+2. **Reviews check what was fixed.** A re-review checks only the finding IDs in its
+   brief; anything else goes under "Out of scope". Only High or Medium findings
+   cause a fix round; Lows wait for the next stage. A task gets two fix rounds,
+   shared across all its reviews. A third is an `mx-autonomous` plan carried out by
+   a fresh `mx-feature`; after that LEAD takes the findings to the user.
+3. **Fix the class, not the instance.** When a second round hits the same kind of
+   defect, `mx-autonomous` plans one fix for the whole class and the lease states
+   its bounds. A class found in one module becomes a shared test for all modules.
+4. **A closed stage stays closed.** Stage 1 closed at `codex/checkpoint` e89b2a2.
+   Only a High or Medium defect reopens a closed module; everything else goes to
+   `work/build/stage<next>-backlog.md`, applied once at the start of the next stage.
+   LEAD originates no module tasks, and releases oracle and lease changes (pinned
+   through one shared manifest) only when a stage closes; Modules then merges
+   `codex/checkpoint`.
+5. **Sonnet builds, Opus reviews.** `mx-feature` implements Stages 2–4 (Stage 1 used
+   Opus implementers). `mx-precise` reviews; `mx-adversary` also reviews financial,
+   ordering, security, store-adapter and consumption-proof code; diffs that only
+   apply ruling text go to `mx-feature`. Other Opus agents never write code, and at
+   most six run at once. Fable (`mx-architect`) is used only for the Stage 3 render
+   check and the Stage 4 class-level plan and review, never for code; `mx-autonomous`
+   stands in if Fable has no credits. LEAD's lane dispatches no Fable.
 
-Stage closure (user, 2026-10-28):
-- Stage 1 is closed at `codex/checkpoint` e89b2a2. Rounds 12 and 13 already
-  dispatched finish, and are re-reviewed only for a High or Medium finding.
-- Only a High or Medium defect reopens a module in a closed stage. Everything
-  else (Lows, wording, new defect classes, LEAD hardening follow-ups such as 0d
-  and B10, re-pins) goes to `work/build/stage2-backlog.md`, which each module
-  applies once, as the first task of its next stage.
-- LEAD does not originate module tasks. It answers the questions files and
-  releases oracle and lease changes only when a stage closes.
-- Modules starts Stage 2 now. The same rule closes each later stage when its
-  end-of-stage review passes.
+Housekeeping: an implementer first checks its worktree HEAD equals the lane tip
+(smoke-test one agent before a cohort). A fix round leaves a brief, a report and a
+commit, no source copies. LEAD moves closed QUEUE.md entries to QUEUE-ARCHIVE.md.
 
 ## Tool and data rules
 

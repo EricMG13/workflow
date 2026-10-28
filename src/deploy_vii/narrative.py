@@ -45,7 +45,7 @@ def _prose(value: str) -> str:
     numbers and gaps enter CP-1 prose only as evidence parts, so any run reference fails too.
     """
     issues = prose.check(value, refs=(), gaps=())
-    if not value.strip() or issues:
+    if prose.is_blank(value) or issues:
         raise ValueError(
             "Narrative prose must be nonblank and use evidence references for numbers"
             + "".join(f"; {issue}" for issue in issues)

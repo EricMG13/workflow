@@ -1156,6 +1156,78 @@
       "sha256": "ab6dba880e09507b6dd8c03d0895bcbd04ca8c9a98f2999475ee4220756434e0",
       "reason": "0d-c added clipped and listed_issues: a rule or pre-fill issue line is cut as bounded_issues would show it, built without joining more than 601 characters, at most 20 lines per rule.",
       "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/prose.py",
+      "imported_sha256": "33f4de8945127d4e2af005949c4d560a1b3d6d20629be8c42ce86e684784a74f",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "99c638b6185f34e6bdf82e530f0536b13483e14489325b16816402dfd029edd6",
+      "reason": "Round 12 B10: add prose.is_blank, the one blank-text predicate (whitespace or Unicode Cf).",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp2_synthesis.py",
+      "imported_sha256": "26ebc1e38e21b187c8a1876ae33d43525a80171a64f9aecf8c0f6d9ccf6da746",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "ac8856fddb71e7ddef9715febeffdeaa88ff9aa34526dd299ecb1cbc92d4d04e",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "5811d454e61ca5aabc6fdef8680c382b836f714680b336d4a8b11619e9e8208b",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "5b005aaf8d496051958fd1c17943a2e226a7ab05f62cad63af8f58a2bad73312",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp5_integrity.py",
+      "imported_sha256": "84fbe447ab9f1c8598030cf44533072dccdd114d3d34c6c5bb0d20a8d5c3225c",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "eb3a766f5ed1ff5bb856c64d0e5a477855d421ded57b91279d365c1fa03ea901",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp6_committee.py",
+      "imported_sha256": "2854f2a4931102c717652e0b869ba3da07ec78a5bd70ff64d862063008d445df",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "e97d5074292aa29dc93651dedce0dbc734e38d0373a34f769e0cfef65e2196ac",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/business_context.py",
+      "imported_sha256": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check and in _populated.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/narrative.py",
+      "imported_sha256": "f118fe08134511c01c0f30edfe3f6fd21dd8c1a27943865661875fa0f9040583",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "d766f0fae83bb40a5cf20b91bbce279c61137177752d9e3bf455544739972ebf",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
+      "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/quality.py",
+      "imported_sha256": "79865e93c4928b9bc95ad5f286c1c685d579039689c4f456a8620bb59ebc5ef2",
+      "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+      "sha256": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
+      "reason": "Round 12 B10: blank QA explanation (model text) is whitespace or Unicode Cf (prose.is_blank).",
+      "review": "work/lead/b10-engines/"
     }
   ],
   "local_patch_lineage": [

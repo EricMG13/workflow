@@ -713,3 +713,176 @@ def test_x1_nothing_that_validates_raises(label: str, raw: dict[str, Any], level
             assert cells[ref].status == "known", (label, claim.claim_id, ref)
         for ref in re.findall(r"\[([^\[\]]+)\]", claim.text):
             assert cells[ref].amount is None, (label, claim.claim_id, ref)  # chip names no figure
+
+
+# --- LEAD rulings round 6b (docs/rulings/2026-10-28-stage1.md: C1-C3) --------------------------
+
+_SINGLE_BOTH = (
+    "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
+)
+
+
+@pytest.mark.parametrize(
+    ("dropped", "expected"),
+    (  # ruling 6b C1
+        ((), _SINGLE_BOTH),
+        (
+            ("offer",),
+            (
+                "Single dealer quotation with only the bid observed; trading activity in the period "
+                "to the quotation date is not read"
+            ),
+        ),
+        (
+            ("bid",),
+            (
+                "Single dealer quotation with only the offer observed; trading activity in the period "
+                "to the quotation date is not read"
+            ),
+        ),
+        (("bid", "offer"), None),
+    ),
+    ids=("bid+offer", "bid only", "offer only", "talk only"),
+)
+def test_c1_single_dealer_limitation_follows_the_observations(
+    dropped: tuple[str, ...], expected: str | None
+) -> None:
+    sub, ctx = _submission(_without(dropped)), _context("positive")
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    own = cp3d.market_implied_result(submission=sub, context=ctx).own_limitations
+    single = [x for x in own if x.startswith("Single dealer quotation")]
+    assert single == ([] if expected is None else [expected])
+    if expected is None:
+        assert "Indicative dealer talk is shown but is not used in any calculation" in own
+
+
+_C2_PAGE = (
+    "Published January 10, 2026.\nDealer quotation on January 9, 2026: bid 98.50 and offer "
+    "99.25, expressed as a percentage of par.\nFacility margin is 1250 basis points.\n"
+    "The SOFR reference rate is 1234.5 percent.\nA later sheet shows bid 98.123456 and offer 250.50."
+)
+
+
+def _c2_context() -> cp3d.MarketContext:
+    base = _with_page(_context("positive"), "financial", "page:9", _C2_PAGE)
+    return _with_page(base, "market", "page:9", _C2_PAGE)
+
+
+def _c2_quote(source_id: str, line: int) -> dict[str, str]:
+    return {"source_id": source_id, "locator": "page:9", "quote": _C2_PAGE.split("\n")[line]}
+
+
+def test_c2_margin_token_that_occurs_gets_the_shape_issue() -> None:
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["terms"]["margin"] = {
+        "quote": _c2_quote("financial", 2),
+        "bps_text": "1250",
+        "absence": None,
+    }
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_c2_context())
+    assert list(issues) == [  # ruling 6b C2
+        "margin: bps_text 1250 must have at most three integer digits and four decimal places"
+    ]
+
+
+def test_c2_reference_rate_token_that_occurs_gets_the_shape_issue() -> None:
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["terms"]["reference_rate"]["absence"] = None
+    raw["terms"]["reference_rate"]["level"] = {
+        "quote": _c2_quote("financial", 3),
+        "percent_text": "1234.5",
+    }
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_c2_context())
+    assert list(issues) == [  # ruling 6b C2
+        (
+            "reference_rate: level percent_text 1234.5 must have at most three integer digits and "
+            "four decimal places"
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("kind", "level", "issue"),
+    (  # ruling 6b C2: the level keeps its pinned bound issue; decimals get their own
+        (
+            "bid",
+            "98.123456",
+            "observations[0]: level_text 98.123456 must have at most four decimal places",
+        ),
+        ("offer", "250.50", "observations[1]: level must be above 0 and at most 200"),
+    ),
+)
+def test_c2_level_token_that_occurs_gets_the_shape_or_bound_issue(
+    kind: str, level: str, issue: str
+) -> None:
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    obs = next(o for o in raw["observations"] if o["kind"] == kind)
+    # The later sheet line states no date, so a dateless bid or offer also gets its as_of_text
+    # issue; only the first (level) issue is under test.
+    obs.update(locator="page:9", quote=_C2_PAGE.split("\n")[4], level_text=level, as_of_text=None)
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_c2_context())
+    assert issues[0] == issue
+
+
+@pytest.mark.parametrize(
+    ("edits", "issue"),
+    (  # ruling 6b C3, frame `<path>: text carries a prohibited conclusion`
+        ([["recovery.rationale", "Buy the loan at this convention"]], "recovery.rationale"),
+        (
+            [["technicals.3.limitation", "We recommend waiting for a rating"]],
+            "technicals[3].limitation",
+        ),
+        ([["instrument.name", "Cheap Northbridge Term Loan"]], "instrument.name"),
+        (
+            [
+                ["recovery", None],
+                ["recovery_absence", {"reason": "Not assessed", "follow_up": "Sell first"}],
+            ],
+            "recovery_absence.follow_up",
+        ),
+        (
+            [
+                ["recovery", None],
+                ["recovery_absence", {"reason": "An attractive level", "follow_up": "Ask"}],
+            ],
+            "recovery_absence.reason",
+        ),
+    ),
+    ids=("rationale", "limitation", "instrument", "recovery_follow_up", "recovery_reason"),
+)
+def test_c3_prohibited_conclusions_in_the_widened_fields(
+    edits: list[list[Any]], issue: str
+) -> None:
+    raw = _edited(SUBMISSIONS["positive"], edits)
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_context("positive"))
+    assert f"{issue}: text carries a prohibited conclusion" in issues
+
+
+def test_c3_market_absence_is_checked_and_comes_first() -> None:
+    raw = copy.deepcopy(SUBMISSIONS["gap_no_market"])
+    raw["market_absence"] = {"reason": "No quotation; overweight on talk", "follow_up": "Ask"}
+    raw["summary"]["text"] = "The loan is attractive."
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_context("gap_no_market"))
+    assert list(issues) == [
+        "market_absence.reason: text carries a prohibited conclusion",
+        "summary.text: text carries a prohibited conclusion",
+    ]
+
+
+def test_c3_quotes_are_never_checked() -> None:
+    page = "Published January 10, 2026.\nThe dealer would buy at around 99.75."
+    ctx = _with_page(_context("positive"), "market", "page:9", page)
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    talk = next(o for o in raw["observations"] if o["kind"] == "indicative_talk")
+    talk.update(locator="page:9", quote=page.split("\n")[1])
+    assert cp3d.submission_issues(submission=_submission(raw), context=ctx) == ()
+
+
+def test_c3_only_the_pinned_summary_refusal_hits_among_frozen_literals() -> None:
+    hits = []
+    for entry in MUTATIONS["entries"]:
+        raw = _edited(SUBMISSIONS[MUTATIONS["base"]], entry["edits"])
+        issues = cp3d.submission_issues(submission=_submission(raw), context=_context("positive"))
+        if any("prohibited conclusion" in i for i in issues):
+            hits.append(entry["id"])
+    assert hits == ["prohibited_conclusion"] == [MUTATIONS["entries"][14]["id"]]

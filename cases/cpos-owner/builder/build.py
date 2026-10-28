@@ -25,11 +25,13 @@ PINS = {
     "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
     # Text-checked only (the literal tables below are asserted to appear in them). A changed pin is the
     # prompt to re-run these checks and move the pin in the same commit; D12 registrations touch the first.
-    "src/deploy_vii/report_view.py": "19705fb05aa84a92f6d321a1afc68de7d3dd6cdd99399ac96e0e7c055fb50073",
-    "src/deploy_vii/assets/app.js": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
-    "src/deploy_vii/render.py": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+    "src/deploy_vii/report_view.py": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+    "src/deploy_vii/assets/app.js": "0f0fe30bf97384d46ebfba4d6d09bc1b179918d6c36cba03b7ef8ee149bf7706",
+    "src/deploy_vii/render.py": "7bf8d889fb8f5b74d84f0239664c801a1c0fcfbc3a40e32da6ea49f1cd8bf253",
     "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
     "src/deploy_vii/registry.py": "adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc",
+    # Pinned for the credit_snapshot preset (PATHWAY_MODULES), which 0d's module_display reads.
+    "src/deploy_vii/contracts.py": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
 }
 
 
@@ -50,6 +52,7 @@ RV = read_pinned("src/deploy_vii/report_view.py")
 APP = read_pinned("src/deploy_vii/assets/app.js")
 RENDER = read_pinned("src/deploy_vii/render.py")
 REG = read_pinned("src/deploy_vii/registry.py")
+CONTRACTS = read_pinned("src/deploy_vii/contracts.py")
 
 # --- Documented tables, transcribed (decision 0004 section 6; shell.js FAMC/FAMILY) -----------------
 # status -> (glyph key the shell draws, word). report_view._STATUS_WORDS plus _GLYPH_OF_ICON.
@@ -64,6 +67,21 @@ for status, (glyph, word) in STATUS_WORDS.items():
     icon = "not_in_pathway" if status == "not_in_pathway" else glyph
     assert f'"{status}": ("{icon}", "{word}")' in RV, status
 assert '_GLYPH_OF_ICON = {"not_in_pathway": "na"}' in RV
+# 0d(c) (b4ae187): a preset module (or required producer of the preset) that the run's requested_modules
+# override left out reads "Not run" (glyph unrun) in the navigator and the module payload; its navigator
+# row stays a footer row (in_pathway and the number follow the status, not the word).
+for text in (
+    "def module_display(view: View) -> Callable[[ModuleView], tuple[str, str]]:",
+    "preset = dependencies(PATHWAY_MODULES[view.run.pathway])",
+    'not_requested = module.status == "not_in_pathway" and module.module_id in preset',
+    'return status_display("unrun" if not_requested else module.status)',
+    '        in_pathway = module.status != "not_in_pathway"\n        if in_pathway:\n            number += 1\n'
+    "        glyph, word = display(module)",
+    "number=number if in_pathway else None,",
+):
+    assert text in RV, text
+assert "module_status = module_display(view)" in RENDER
+assert 'module_payload["status_glyph"], module_payload["status_word"] = module_status(module)' in RENDER
 
 FAMILY_COLORS = {
     "sources": "#9AA0B4", "financials": "#0017E5", "business": "#2B8FD6", "earnings": "#C4410C",
@@ -88,6 +106,15 @@ assert '_NEUTRAL_FAMILY_COLOR = "#9AA0B4"' in RV
 for text in (
     'link.href = "#" + row.module_id',                     # module row link
     "report.nav.filter(row => row.in_pathway)",            # numbered list vs footer
+    # 0d(c): the navigator footer groups outside rows by word (app.js renderNavigation).
+    "[...new Set(outside.map(row => row.word))].forEach(word => {",
+    "const group = outside.filter(row => row.word === word);",
+    'details.append(node("summary", `${word} · ${group.length}`));',
+    'const unrun = inPathway.filter(row => row.glyph === "unrun");',
+    # 0d: the skip link focuses #workbench without routing; routeOf maps #workbench to front.
+    'const route = location.hash.slice(1) || "front"; return route === "overview" || route === "workbench" ? "front" : route;',
+    'document.querySelector("a.skip")?.addEventListener("click", event => {',
+    "    event.preventDefault();\n    $(\"workbench\").focus();",
     'moduleFor = (route) => report.modules.find(item => item.module_id === route',
     '["front", "Front Page", "#front"]', '["analysis", "Analysis", "#analysis"]',
     '["model", "Model", "#CP-1"]', '["fit", "Portfolio Fit", "#FIT"]',
@@ -115,9 +142,11 @@ assert 'else "not_in_pathway" for m in modules()' in REG
 
 SHELL = read_pinned("src/deploy_vii/assets/shell.html")
 assert '<script id="report-data" type="application/json">' in SHELL
-# Recorded exception (review-precise-2 M-B): the shell's skip link targets a route nothing resolves.
+# Skip link (0d, 41a8fdb): shell.html carries it, app.js render handles its click (no routing) and routeOf maps
+# #workbench to the front route, so it resolves (it was the recorded exception shell_skip_link before 0d).
 assert '<a class="skip" href="#workbench">Skip to analysis</a>' in SHELL
-assert '|| "Unknown destination"' in APP  # app.js destOf: an unresolved route draws "Unknown destination"
+assert '<main id="workbench" class="workbench" tabindex="-1">' in SHELL
+assert '|| "Unknown destination"' in APP  # app.js render: an unresolved route still draws "Unknown destination"
 assert '.replace(\n        "<", "\\\\u003c"\n    )' in RENDER  # report-data escapes "<" as \u003c (render.py:191-193)
 assert 'route = spec.producers[0] if spec.producers else None' in RV
 assert '"full_analysis_route": route' in RV
@@ -136,6 +165,10 @@ BLOCK_ROUTES = [
     ("transaction-summary", None, None), ("portfolio-fit", None, None),
     ("committee-challenge", "CP-6", None), ("what-changed", "CP-8", None),
 ]
+_CS_PRESET = re.search(r'"credit_snapshot": \(\s*\*\(([^)]*)\),\s*\)', CONTRACTS)
+assert _CS_PRESET, "credit_snapshot preset not found in contracts.py"
+CREDIT_SNAPSHOT_PRESET = re.findall(r'"(CP-[0-9A-Z]+)"', _CS_PRESET.group(1))
+assert CREDIT_SNAPSHOT_PRESET == ["CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-2", "CP-4", "CP-3", "CP-5", "CP-6"]
 _PRESET = RV[RV.index('"credit_snapshot",\n        "Credit Snapshot"'):RV.index('"earnings_update",\n        "Earnings Update"')]
 assert re.findall(r'"([a-z-]+)",', _PRESET.split("(\n", 1)[1])[:12] == [b[0] for b in BLOCK_ROUTES]
 for _bid, _route, _label in BLOCK_ROUTES:
@@ -168,6 +201,9 @@ def scope_of(requested):
     return selected
 
 
+PRESET_CLOSURE = scope_of(CREDIT_SNAPSHOT_PRESET)  # registry.dependencies(PATHWAY_MODULES["credit_snapshot"])
+
+
 def run_of(case_id):
     return next(c for c in S1M["cases"] if c["case_id"] == case_id)["run"]
 
@@ -177,14 +213,19 @@ GAP_RUN = run_of("snapshot-gap-business-without-ownership-transaction")
 assert POS_RUN["requested_modules"] == ["CP-1", "CP-MODEL", "CP-1A", "CP-2"] == GAP_RUN["requested_modules"]
 assert S1E["execution"]["plan_order"] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
 assert scope_of(POS_RUN["requested_modules"]) == set(S1E["execution"]["plan_order"])
+assert POS_RUN["pathway"] == GAP_RUN["pathway"] == "credit_snapshot"
+assert set(S1E["execution"]["plan_order"]) <= PRESET_CLOSURE
 S1A_STATUS = S1E["execution"]["statuses_S1a"]
 for module in S1E["execution"]["plan_order"]:
     assert S1A_STATUS[module].startswith("restricted"), module
 
 
-def row_for(entry, status, number):
-    glyph, word = STATUS_WORDS[status]
-    in_pathway = status != "not_in_pathway"
+def row_for(entry, status, number, shown=None):
+    """status: the view module status. shown: the status the shell displays; it differs only for an
+    override-excluded preset module (status not_in_pathway, shown unrun; 0d(c) module_display)."""
+    shown = shown or status
+    glyph, word = STATUS_WORDS[shown]
+    in_pathway = status != "not_in_pathway"  # follows the status, never the displayed word
     module_id = entry["module_id"]
     return {
         "module_id": module_id,
@@ -197,7 +238,7 @@ def row_for(entry, status, number):
         "word": word,
         "href": "#" + module_id,
         "group": "numbered" if in_pathway else "footer",
-        "target": target_for(entry, status),
+        "target": target_for(entry, shown),
     }
 
 
@@ -223,7 +264,7 @@ def target_for(entry, status):
 
 def search_probes(rows):
     probes = []
-    for needle in ("business", "limitations", "cp-parse", "not in this pathway", "zzz"):
+    for needle in ("business", "limitations", "cp-parse", "not in this pathway", "not run", "zzz"):
         haystack = lambda r: " ".join([r["module_id"], r["title"], r["word"], *r["aliases"]]).lower()
         hits = [r["module_id"] for r in rows if needle in haystack(r)]
         probes.append({
@@ -232,6 +273,12 @@ def search_probes(rows):
             "footer_matches": [m for m in hits if not next(r for r in rows if r["module_id"] == m)["in_pathway"]],
         })
     return probes
+
+
+def footer_groups(footer):
+    words = list(dict.fromkeys(r["word"] for r in footer))
+    return [{"summary": f"{w} \u00b7 {sum(1 for r in footer if r['word'] == w)}",
+             "word": w, "module_ids": [r["module_id"] for r in footer if r["word"] == w]} for w in words]
 
 
 def build_case(run, heads, description, oracle_status):
@@ -248,7 +295,8 @@ def build_case(run, heads, description, oracle_status):
             status = "not_in_pathway"
         if status != "not_in_pathway":
             number += 1
-        rows.append(row_for(entry, status, number))
+        not_requested = status == "not_in_pathway" and module_id in PRESET_CLOSURE
+        rows.append(row_for(entry, status, number, "unrun" if not_requested else None))
     numbered = [r for r in rows if r["in_pathway"]]
     footer = [r for r in rows if not r["in_pathway"]]
     assert [r["number"] for r in numbered] == list(range(1, len(numbered) + 1))
@@ -270,7 +318,8 @@ def build_case(run, heads, description, oracle_status):
             "numbered": len(numbered),
             "footer": len(footer),
             "unrun_line": f"Not run · {len(unrun)}" if unrun else None,
-            "footer_summary": f"Not in this Pathway · {len(footer)}" if footer else None,
+            # app.js renderNavigation: one <details> per distinct word of the outside rows, in row order.
+            "footer_groups": footer_groups(footer),
         },
         "rejected_rows": 0,
         "destinations": destinations(run, has_limitations),
@@ -281,11 +330,13 @@ def build_case(run, heads, description, oracle_status):
     }
 
 
+ROUTE_OF = {"overview": "front", "workbench": "front"}  # app.js:672 routeOf, asserted present above
 FIXED_ROUTES = {"front", "analysis", "FIT", "evidence", "limitations"}
 
 
 def resolves(route, rows):
-    """app.js moduleFor / destOf: a route is a module id or alias of report.modules, or a fixed route."""
+    """app.js routeOf, then moduleFor / render: a route is a module id or alias of report.modules, or a fixed route."""
+    route = ROUTE_OF.get(route, route)
     return route in FIXED_ROUTES or any(route == r["module_id"] or route in r["aliases"] for r in rows)
 
 
@@ -322,8 +373,9 @@ def hash_links(rows, dests):
     for name, hrefs in sources.items():
         for href in hrefs:
             assert href.startswith("#") and resolves(href[1:], rows), (name, href)
-    # Recorded exception, outside the dead-link refusal: the shell skip link (shell.html) does not resolve.
-    assert not resolves("workbench", rows)
+    # The shell skip link (shell.html) resolves since 0d: the shipped handler focuses #workbench without
+    # routing (asserted present above) and routeOf maps #workbench to front, a fixed destination.
+    assert resolves("workbench", rows)
     sources["shell_skip_link"] = ["#workbench"]
     return sources
 
@@ -405,7 +457,9 @@ EXPECTED = {
         "(report_view.navigator); footer rows are not numbered. Glyph and word from the status table; colour "
         "from the family table, neutral grey when the registry module has no family. A rejected attempt has "
         "no row. Counts are exact integers. A link target is the module page '<id> · <title>'; only "
-        "accepted and restricted heads carry output, so every other row lands on an honest status page."
+        "accepted and restricted heads carry output, so every other row lands on an honest status page. "
+        "A not_in_pathway module inside the dependency closure of the Pathway preset reads 'Not run' (see rules."
+        "override_excluded_preset_modules)."
     ),
     "status_words": {k: {"glyph": v[0], "word": v[1]} for k, v in STATUS_WORDS.items()},
     "family_colors": FAMILY_COLORS,
@@ -433,18 +487,30 @@ EXPECTED = {
             "blocked head carries limitations); an unplaced binding would also light it and needs the real store."
         ),
         "hash_links_all_resolve": (
-            "Except the recorded exception shell_skip_link (rule below), every '#' href on the rendered page resolves to a page: navigator and footer rows, the six rail "
+            "Every '#' href on the rendered page resolves to a page (the shell skip link included since 0d, rule shell_skip_link): navigator and footer rows, the six rail "
             "destinations, Front Page block links (blocks[].full_analysis_route, app.js:428), the Analysis coverage "
-            "table (app.js:630) and the CP-MODEL links (app.js:604, :613). A route resolves when it is a module id "
-            "or alias in report.modules, or front, analysis, FIT, evidence, limitations (app.js moduleFor/destOf). "
+            "table (app.js:630) and the CP-MODEL links (app.js:604, :613). A route resolves when, after app.js routeOf "
+            "(overview and workbench map to front), it is a module id or alias in report.modules, or front, analysis, "
+            "FIT, evidence, limitations (app.js routeOf/moduleFor/render). "
             "cases[*].block_links and cases[*].hash_links list them per case."
         ),
         "shell_skip_link": (
-            "Recorded exception, text-checked against shell.html: every page carries <a class=\"skip\" "
-            "href=\"#workbench\">Skip to analysis</a>; '#workbench' does not resolve (Unknown destination, app.js destOf): "
-            "product defect outside CP-OS, own task. It is listed in cases[*].hash_links.shell_skip_link and excluded "
-            "from the dead-link refusal. The CP-OS rendering criterion ('visible working links') closes only after that "
-            "defect is fixed and the native DOM step passes."
+            "Resolves since 0d (41a8fdb), text-checked: every page carries <a class=\"skip\" href=\"#workbench\">Skip to "
+            "analysis</a> and <main id=\"workbench\" tabindex=\"-1\"> (shell.html); app.js attaches a click handler that calls "
+            "preventDefault and focuses #workbench without routing, and routeOf maps the hash 'workbench' to the front "
+            "route, so a page loaded at #workbench shows the Front Page. It is listed in cases[*].hash_links.shell_skip_link "
+            "and is inside the dead-link refusal like every other hash link. The CP-OS rendering criterion ('visible "
+            "working links') now rests on the native DOM step alone."
+        ),
+        "override_excluded_preset_modules": (
+            "0d(c) (b4ae187): a module with view status not_in_pathway that is in registry.dependencies of the Pathway's "
+            "preset (PATHWAY_MODULES[run.pathway], here credit_snapshot) but outside the run's requested_modules scope "
+            "reads glyph 'unrun', word 'Not run' in the navigator (report_view.module_display) and in the module payload "
+            "(render.py). Its navigator row stays a footer row (in_pathway false, no number: both follow the status). "
+            "The navigator footer groups outside rows by word, one <details> per distinct word in row order "
+            "(app.js renderNavigation): cases[*].tally.footer_groups. The module page is the unrun page: chip 'Not run', "
+            "'No validated output is available…' (the 'not part of the Pathway' message is for glyph 'na' only). "
+            "Modules outside the preset closure keep 'Not in this Pathway'."
         ),
         "hash_links_not_derivable_without_a_real_store": (
             "Which Front Page blocks are populated: only a populated block carries full_analysis_route (an honest-state "
@@ -452,8 +518,9 @@ EXPECTED = {
             "block state words, whether the Model destination shows the calculation link or the fallback text, and the "
             "unplaced list. The oracle gives the superset of links the credit_snapshot Pathway can draw; the test "
             "asserts the links actually drawn are a subset of it and every one resolves. 'Full analysis' on "
-            "relative-value, committee-challenge and what-changed leads to a CP-3, CP-6, CP-8 'not part of this "
-            "Pathway' status page: resolves and promises nothing, but the label overstates it (LEAD to note)."
+            "relative-value and committee-challenge leads to a CP-3, CP-6 'Not run' status page (in the preset, not "
+            "requested); what-changed to a CP-8 'Not in this Pathway' page: resolves and promises nothing, but the "
+            "label overstates it (LEAD to note)."
         ),
         "report_data_extraction": (
             "The page embeds <script id=\"report-data\" type=\"application/json\">DATA</script> (shell.html); DATA is "

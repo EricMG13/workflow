@@ -750,30 +750,41 @@ for name, pay in {
                              for g in bk["gaps"]]},
     }
 
-# --- rendering pin (lease M6): observed today on a pre-run view of this run, not a CP-DR behaviour ---
+# --- rendering pin (lease M6, acceptance 7): re-pinned 2026-10-28 to the landed 0d render fixes (41a8fdb, b4ae187) ---
+# Literals observed by running the committed product render on a pre-run view of this run, then checked by hand against the rule:
+# a module the requested_modules override leaves out of the run but inside registry.dependencies(PATHWAY_MODULES[pathway]) reads
+# "Not run: <codes> was not requested in this run."; a module outside those dependencies keeps "Not in this Pathway".
 RENDER = {
-    "observed_with": "report_view.build(Execution.create(pack).view(), credit_snapshot pathway, SHIPPED_MAPS); modules CP-0 and CP-DR unrun",
-    "call_withheld": "outside_pathway",
+    "observed_with": "report_view.build(Execution.create(pack).view(), credit_snapshot pathway, SHIPPED_MAPS); modules CP-0 and CP-DR unrun; "
+                     "report_view.py sha256 51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12 (after 0d 41a8fdb and 0d(c) b4ae187)",
+    "call_withheld": "not_requested",
+    "call_band": {"state": "not-requested", "words": "Not run"},
+    "navigator_words_scope": "modules outside the run's plan only; CP-0 and CP-DR follow their head status",
+    "navigator_words": {
+        "Not run": ["CP-1", "CP-1A", "CP-2", "CP-3", "CP-4", "CP-5", "CP-6", "CP-MODEL"],
+        "Not in this Pathway": ["CP-1B", "CP-1C", "CP-1D", "CP-2A", "CP-2E", "CP-2G", "CP-2H", "CP-4C", "CP-8", "CP-L10",
+                                "CP-MEMO", "CP-OS", "CP-2D", "CP-3D", "CP-3C"],
+    },
     "blocks": [
         {"block_id": b, "state": st, "note": note}
         for b, st, note in (
-            ("key-findings", "not_in_pathway", "Not in this Pathway: CP-2 is not part of Credit Snapshot."),
-            ("company-operating-model", "not_in_pathway", "Not in this Pathway: CP-1A is not part of Credit Snapshot."),
-            ("model-chart-strip", "not_in_pathway", "Not in this Pathway: CP-1 is not part of Credit Snapshot."),
-            ("capital-structure", "not_in_pathway", "Not in this Pathway: CP-1 is not part of Credit Snapshot."),
-            ("financials-credit-metrics", "not_in_pathway", "Not in this Pathway: CP-1 is not part of Credit Snapshot."),
-            ("strengths-weaknesses", "not_in_pathway", "Not in this Pathway: CP-2 · CP-6 is not part of Credit Snapshot."),
-            ("relative-value", "not_in_pathway", "Not in this Pathway: CP-3 is not part of Credit Snapshot."),
-            ("company-profile", "not_in_pathway", "Not in this Pathway: CP-1A is not part of Credit Snapshot."),
+            ("key-findings", "not_run", "Not run: CP-2 was not requested in this run."),
+            ("company-operating-model", "not_run", "Not run: CP-1A was not requested in this run."),
+            ("model-chart-strip", "not_run", "Not run: CP-1 was not requested in this run."),
+            ("capital-structure", "not_run", "Not run: CP-1 was not requested in this run."),
+            ("financials-credit-metrics", "not_run", "Not run: CP-1 was not requested in this run."),
+            ("strengths-weaknesses", "not_run", "Not run: CP-2 · CP-6 was not requested in this run."),
+            ("relative-value", "not_run", "Not run: CP-3 was not requested in this run."),
+            ("company-profile", "not_run", "Not run: CP-1A was not requested in this run."),
             ("transaction-summary", "absent", "Absent: No module produces this block yet."),
             ("portfolio-fit", "absent", "Absent: No module produces this block yet."),
-            ("committee-challenge", "not_in_pathway", "Not in this Pathway: CP-6 is not part of Credit Snapshot."),
+            ("committee-challenge", "not_run", "Not run: CP-6 was not requested in this run."),
             ("what-changed", "not_in_pathway", "Not in this Pathway: CP-8 is not part of Credit Snapshot."),
         )
     ],
-    "defect": "the 'not_in_pathway' wording is false for a slice excluded by the requested_modules override (the modules are in the preset); "
-              "a product defect recorded in docs/QUEUE.md as its own report_view task (LEAD ruling); CP-DR neither fixes nor depends on it",
-    "pin": "today's product output; the pin changes only with that task",
+    "note": "the override-slice wording defect of the first pin is fixed by 0d (docs/reviews/0d-product-defects.md); "
+            "CP-8 is outside registry.dependencies of the Credit Snapshot preset, so it keeps 'Not in this Pathway'",
+    "pin": "product output at the report_view.py sha256 above; the pin changes only with a change to that render",
 }
 assert len(RENDER["blocks"]) == 12
 

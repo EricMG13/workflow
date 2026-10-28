@@ -2086,48 +2086,82 @@
  },
  "refusal_note": "No precheck (LEAD ruling): every refusal is one journaled invalid CP-DR step on attempt 0 of its own clone of the settled CP-0 store (the 'submission_against_empty_agenda' clone is the empty-agenda CP-0 store). The attempt is consumed, the result is rejected with limitations = the issues, and step_issues is the complete tuple that _verify_submissions replays exactly (S1a R3-2). The tool-use items (cited page read, absence backed by a search) are the core's RULES(text, seen) (G1-X protocol section 2; live/tools.py unread_citation_issues and UNBACKED_ABSENCE, product sorted order), called by G1-X at submit and in the verifier with rules='journaled'; RULES is pure over text and Seen and does not know pack membership: the two out-of-pack classes are one defect with both consequences, the membership issue then the RULES issue, in that order.",
  "rendering": {
-  "observed_with": "report_view.build(Execution.create(pack).view(), credit_snapshot pathway, SHIPPED_MAPS); modules CP-0 and CP-DR unrun",
-  "call_withheld": "outside_pathway",
+  "observed_with": "report_view.build(Execution.create(pack).view(), credit_snapshot pathway, SHIPPED_MAPS); modules CP-0 and CP-DR unrun; report_view.py sha256 51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12 (after 0d 41a8fdb and 0d(c) b4ae187)",
+  "call_withheld": "not_requested",
+  "call_band": {
+   "state": "not-requested",
+   "words": "Not run"
+  },
+  "navigator_words_scope": "modules outside the run's plan only; CP-0 and CP-DR follow their head status",
+  "navigator_words": {
+   "Not run": [
+    "CP-1",
+    "CP-1A",
+    "CP-2",
+    "CP-3",
+    "CP-4",
+    "CP-5",
+    "CP-6",
+    "CP-MODEL"
+   ],
+   "Not in this Pathway": [
+    "CP-1B",
+    "CP-1C",
+    "CP-1D",
+    "CP-2A",
+    "CP-2E",
+    "CP-2G",
+    "CP-2H",
+    "CP-4C",
+    "CP-8",
+    "CP-L10",
+    "CP-MEMO",
+    "CP-OS",
+    "CP-2D",
+    "CP-3D",
+    "CP-3C"
+   ]
+  },
   "blocks": [
    {
     "block_id": "key-findings",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-2 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-2 was not requested in this run."
    },
    {
     "block_id": "company-operating-model",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-1A is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-1A was not requested in this run."
    },
    {
     "block_id": "model-chart-strip",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-1 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-1 was not requested in this run."
    },
    {
     "block_id": "capital-structure",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-1 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-1 was not requested in this run."
    },
    {
     "block_id": "financials-credit-metrics",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-1 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-1 was not requested in this run."
    },
    {
     "block_id": "strengths-weaknesses",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-2 · CP-6 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-2 · CP-6 was not requested in this run."
    },
    {
     "block_id": "relative-value",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-3 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-3 was not requested in this run."
    },
    {
     "block_id": "company-profile",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-1A is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-1A was not requested in this run."
    },
    {
     "block_id": "transaction-summary",
@@ -2141,8 +2175,8 @@
    },
    {
     "block_id": "committee-challenge",
-    "state": "not_in_pathway",
-    "note": "Not in this Pathway: CP-6 is not part of Credit Snapshot."
+    "state": "not_run",
+    "note": "Not run: CP-6 was not requested in this run."
    },
    {
     "block_id": "what-changed",
@@ -2150,8 +2184,8 @@
     "note": "Not in this Pathway: CP-8 is not part of Credit Snapshot."
    }
   ],
-  "defect": "the 'not_in_pathway' wording is false for a slice excluded by the requested_modules override (the modules are in the preset); a product defect recorded in docs/QUEUE.md as its own report_view task (LEAD ruling); CP-DR neither fixes nor depends on it",
-  "pin": "today's product output; the pin changes only with that task"
+  "note": "the override-slice wording defect of the first pin is fixed by 0d (docs/reviews/0d-product-defects.md); CP-8 is outside registry.dependencies of the Credit Snapshot preset, so it keeps 'Not in this Pathway'",
+  "pin": "product output at the report_view.py sha256 above; the pin changes only with a change to that render"
  },
  "tamper": {
   "case": "partial (closed run: CP-0 and CP-DR settled, receipt sealed)",

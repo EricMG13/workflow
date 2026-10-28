@@ -1,6 +1,6 @@
 {
  "schema_version": "cpos-owner-expected/1",
- "derivation": "Rows: registry order (methodology.json file order); status of a module = its settled head status, else 'unrun' if the module is in the run's scope (required-edge closure of requested_modules), else 'not_in_pathway' (registry.idle_statuses). Numbered 1..N in registry order over in-scope modules (report_view.navigator); footer rows are not numbered. Glyph and word from the status table; colour from the family table, neutral grey when the registry module has no family. A rejected attempt has no row. Counts are exact integers. A link target is the module page '<id> · <title>'; only accepted and restricted heads carry output, so every other row lands on an honest status page.",
+ "derivation": "Rows: registry order (methodology.json file order); status of a module = its settled head status, else 'unrun' if the module is in the run's scope (required-edge closure of requested_modules), else 'not_in_pathway' (registry.idle_statuses). Numbered 1..N in registry order over in-scope modules (report_view.navigator); footer rows are not numbered. Glyph and word from the status table; colour from the family table, neutral grey when the registry module has no family. A rejected attempt has no row. Counts are exact integers. A link target is the module page '<id> · <title>'; only accepted and restricted heads carry output, so every other row lands on an honest status page. A not_in_pathway module inside the dependency closure of the Pathway preset reads 'Not run' (see rules.override_excluded_preset_modules).",
  "status_words": {
   "accepted": {
    "glyph": "pass",
@@ -217,9 +217,10 @@
   "no_journal_head": "CP-OS has no attempt, head, ticket or journal entry; the store and receipt are unchanged",
   "binding": "proof.receipt_content_sha256 == OwnerRunReceipt.content_hash() of the verified receipt; proof.page_sha256 == sha256 of the rendered page bytes; proof.snapshot_sha256 == receipt.snapshot_sha256. Neither hash is a literal here: both are run-time values asserted by relation.",
   "rail_limits_dot": "Limitations destination reads 'with limitations' when any report module carries limitations or front.unplaced.length > 0 (app.js:680). The oracle values derive from the heads alone (a restricted or blocked head carries limitations); an unplaced binding would also light it and needs the real store.",
-  "hash_links_all_resolve": "Except the recorded exception shell_skip_link (rule below), every '#' href on the rendered page resolves to a page: navigator and footer rows, the six rail destinations, Front Page block links (blocks[].full_analysis_route, app.js:428), the Analysis coverage table (app.js:630) and the CP-MODEL links (app.js:604, :613). A route resolves when it is a module id or alias in report.modules, or front, analysis, FIT, evidence, limitations (app.js moduleFor/destOf). cases[*].block_links and cases[*].hash_links list them per case.",
-  "shell_skip_link": "Recorded exception, text-checked against shell.html: every page carries <a class=\"skip\" href=\"#workbench\">Skip to analysis</a>; '#workbench' does not resolve (Unknown destination, app.js destOf): product defect outside CP-OS, own task. It is listed in cases[*].hash_links.shell_skip_link and excluded from the dead-link refusal. The CP-OS rendering criterion ('visible working links') closes only after that defect is fixed and the native DOM step passes.",
-  "hash_links_not_derivable_without_a_real_store": "Which Front Page blocks are populated: only a populated block carries full_analysis_route (an honest-state block, report_view.py:1712, has none) and absent table-kind blocks are hidden (app.js renderFront); block state words, whether the Model destination shows the calculation link or the fallback text, and the unplaced list. The oracle gives the superset of links the credit_snapshot Pathway can draw; the test asserts the links actually drawn are a subset of it and every one resolves. 'Full analysis' on relative-value, committee-challenge and what-changed leads to a CP-3, CP-6, CP-8 'not part of this Pathway' status page: resolves and promises nothing, but the label overstates it (LEAD to note).",
+  "hash_links_all_resolve": "Every '#' href on the rendered page resolves to a page (the shell skip link included since 0d, rule shell_skip_link): navigator and footer rows, the six rail destinations, Front Page block links (blocks[].full_analysis_route, app.js:428), the Analysis coverage table (app.js:630) and the CP-MODEL links (app.js:604, :613). A route resolves when, after app.js routeOf (overview and workbench map to front), it is a module id or alias in report.modules, or front, analysis, FIT, evidence, limitations (app.js routeOf/moduleFor/render). cases[*].block_links and cases[*].hash_links list them per case.",
+  "shell_skip_link": "Resolves since 0d (41a8fdb), text-checked: every page carries <a class=\"skip\" href=\"#workbench\">Skip to analysis</a> and <main id=\"workbench\" tabindex=\"-1\"> (shell.html); app.js attaches a click handler that calls preventDefault and focuses #workbench without routing, and routeOf maps the hash 'workbench' to the front route, so a page loaded at #workbench shows the Front Page. It is listed in cases[*].hash_links.shell_skip_link and is inside the dead-link refusal like every other hash link. The CP-OS rendering criterion ('visible working links') now rests on the native DOM step alone.",
+  "override_excluded_preset_modules": "0d(c) (b4ae187): a module with view status not_in_pathway that is in registry.dependencies of the Pathway's preset (PATHWAY_MODULES[run.pathway], here credit_snapshot) but outside the run's requested_modules scope reads glyph 'unrun', word 'Not run' in the navigator (report_view.module_display) and in the module payload (render.py). Its navigator row stays a footer row (in_pathway false, no number: both follow the status). The navigator footer groups outside rows by word, one <details> per distinct word in row order (app.js renderNavigation): cases[*].tally.footer_groups. The module page is the unrun page: chip 'Not run', 'No validated output is available…' (the 'not part of the Pathway' message is for glyph 'na' only). Modules outside the preset closure keep 'Not in this Pathway'.",
+  "hash_links_not_derivable_without_a_real_store": "Which Front Page blocks are populated: only a populated block carries full_analysis_route (an honest-state block, report_view.py:1712, has none) and absent table-kind blocks are hidden (app.js renderFront); block state words, whether the Model destination shows the calculation link or the fallback text, and the unplaced list. The oracle gives the superset of links the credit_snapshot Pathway can draw; the test asserts the links actually drawn are a subset of it and every one resolves. 'Full analysis' on relative-value and committee-challenge leads to a CP-3, CP-6 'Not run' status page (in the preset, not requested); what-changed to a CP-8 'Not in this Pathway' page: resolves and promises nothing, but the label overstates it (LEAD to note).",
   "report_data_extraction": "The page embeds <script id=\"report-data\" type=\"application/json\">DATA</script> (shell.html); DATA is json.dumps(ensure_ascii=True, separators=(',',':')) with every '<' replaced by \\u003c (render.py:191-193), so the first '</script>' after the opening tag ends it and json.loads of the text between is exact. No tag, no closing tag or invalid JSON: cpos_target_missing (never a bare JSONDecodeError or AttributeError). Blocks live at report-data report.blocks[], modules at modules[], rows at nav[].",
   "target_fields_inferred": "target.has_output and target.limitations_panel are inferred here from status (accepted and restricted carry facts or claims; restricted and blocked carry limitations) because the oracle has no real View. The test asserts them against the real heads' module views (facts/claims/tables non-empty; limitations non-empty). A disagreement is returned to LEAD for a ruling, never edited in the oracle.",
   "limitation_calculation_json_link": "The calculation.json href is relative: it resolves only when the page is opened from a directory holding the receipt's model files. A page opened elsewhere shows a link that cannot open; CP-OS proves the link is drawn from the page fact and present in receipt.model.files, not that the file is beside the page."
@@ -480,15 +481,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#7A3DB8",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-3",
      "group": "footer",
      "target": {
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -503,15 +504,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#8A5300",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-4",
      "group": "footer",
      "target": {
       "page_title": "CP-4 · Legal covenant interpreter",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -543,15 +544,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-5",
      "group": "footer",
      "target": {
       "page_title": "CP-5 · Evidence trace validator",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -564,15 +565,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#000533",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-6",
      "group": "footer",
      "target": {
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -763,7 +764,40 @@
     "numbered": 5,
     "footer": 20,
     "unrun_line": null,
-    "footer_summary": "Not in this Pathway · 20"
+    "footer_groups": [
+     {
+      "summary": "Not in this Pathway · 16",
+      "word": "Not in this Pathway",
+      "module_ids": [
+       "CP-1B",
+       "CP-1C",
+       "CP-1D",
+       "CP-2A",
+       "CP-2E",
+       "CP-2G",
+       "CP-2H",
+       "CP-4C",
+       "CP-8",
+       "CP-DR",
+       "CP-L10",
+       "CP-MEMO",
+       "CP-OS",
+       "CP-2D",
+       "CP-3D",
+       "CP-3C"
+      ]
+     },
+     {
+      "summary": "Not run · 4",
+      "word": "Not run",
+      "module_ids": [
+       "CP-3",
+       "CP-4",
+       "CP-5",
+       "CP-6"
+      ]
+     }
+    ]
    },
    "rejected_rows": 0,
    "destinations": [
@@ -882,7 +916,7 @@
       "text": "Full analysis →",
       "href": "#CP-3",
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -912,7 +946,7 @@
       "text": "Full analysis →",
       "href": "#CP-6",
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -1041,11 +1075,7 @@
       "CP-2E",
       "CP-2G",
       "CP-2H",
-      "CP-3",
-      "CP-4",
       "CP-4C",
-      "CP-5",
-      "CP-6",
       "CP-8",
       "CP-DR",
       "CP-L10",
@@ -1054,6 +1084,16 @@
       "CP-2D",
       "CP-3D",
       "CP-3C"
+     ]
+    },
+    {
+     "filter": "not run",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-3",
+      "CP-4",
+      "CP-5",
+      "CP-6"
      ]
     },
     {
@@ -1318,15 +1358,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#7A3DB8",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-3",
      "group": "footer",
      "target": {
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -1341,15 +1381,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#8A5300",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-4",
      "group": "footer",
      "target": {
       "page_title": "CP-4 · Legal covenant interpreter",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -1381,15 +1421,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-5",
      "group": "footer",
      "target": {
       "page_title": "CP-5 · Evidence trace validator",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -1402,15 +1442,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#000533",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-6",
      "group": "footer",
      "target": {
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -1601,7 +1641,40 @@
     "numbered": 5,
     "footer": 20,
     "unrun_line": null,
-    "footer_summary": "Not in this Pathway · 20"
+    "footer_groups": [
+     {
+      "summary": "Not in this Pathway · 16",
+      "word": "Not in this Pathway",
+      "module_ids": [
+       "CP-1B",
+       "CP-1C",
+       "CP-1D",
+       "CP-2A",
+       "CP-2E",
+       "CP-2G",
+       "CP-2H",
+       "CP-4C",
+       "CP-8",
+       "CP-DR",
+       "CP-L10",
+       "CP-MEMO",
+       "CP-OS",
+       "CP-2D",
+       "CP-3D",
+       "CP-3C"
+      ]
+     },
+     {
+      "summary": "Not run · 4",
+      "word": "Not run",
+      "module_ids": [
+       "CP-3",
+       "CP-4",
+       "CP-5",
+       "CP-6"
+      ]
+     }
+    ]
    },
    "rejected_rows": 0,
    "destinations": [
@@ -1720,7 +1793,7 @@
       "text": "Full analysis →",
       "href": "#CP-3",
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -1750,7 +1823,7 @@
       "text": "Full analysis →",
       "href": "#CP-6",
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -1879,11 +1952,7 @@
       "CP-2E",
       "CP-2G",
       "CP-2H",
-      "CP-3",
-      "CP-4",
       "CP-4C",
-      "CP-5",
-      "CP-6",
       "CP-8",
       "CP-DR",
       "CP-L10",
@@ -1892,6 +1961,16 @@
       "CP-2D",
       "CP-3D",
       "CP-3C"
+     ]
+    },
+    {
+     "filter": "not run",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-3",
+      "CP-4",
+      "CP-5",
+      "CP-6"
      ]
     },
     {
@@ -2156,15 +2235,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#7A3DB8",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-3",
      "group": "footer",
      "target": {
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -2179,15 +2258,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#8A5300",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-4",
      "group": "footer",
      "target": {
       "page_title": "CP-4 · Legal covenant interpreter",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -2219,15 +2298,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-5",
      "group": "footer",
      "target": {
       "page_title": "CP-5 · Evidence trace validator",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -2240,15 +2319,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#000533",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-6",
      "group": "footer",
      "target": {
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -2440,7 +2519,40 @@
     "numbered": 5,
     "footer": 20,
     "unrun_line": null,
-    "footer_summary": "Not in this Pathway · 20"
+    "footer_groups": [
+     {
+      "summary": "Not in this Pathway · 16",
+      "word": "Not in this Pathway",
+      "module_ids": [
+       "CP-1B",
+       "CP-1C",
+       "CP-1D",
+       "CP-2A",
+       "CP-2E",
+       "CP-2G",
+       "CP-2H",
+       "CP-4C",
+       "CP-8",
+       "CP-DR",
+       "CP-L10",
+       "CP-MEMO",
+       "CP-OS",
+       "CP-2D",
+       "CP-3D",
+       "CP-3C"
+      ]
+     },
+     {
+      "summary": "Not run · 4",
+      "word": "Not run",
+      "module_ids": [
+       "CP-3",
+       "CP-4",
+       "CP-5",
+       "CP-6"
+      ]
+     }
+    ]
    },
    "rejected_rows": 0,
    "destinations": [
@@ -2559,7 +2671,7 @@
       "text": "Full analysis →",
       "href": "#CP-3",
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -2589,7 +2701,7 @@
       "text": "Full analysis →",
       "href": "#CP-6",
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -2717,11 +2829,7 @@
       "CP-2E",
       "CP-2G",
       "CP-2H",
-      "CP-3",
-      "CP-4",
       "CP-4C",
-      "CP-5",
-      "CP-6",
       "CP-8",
       "CP-DR",
       "CP-L10",
@@ -2730,6 +2838,16 @@
       "CP-2D",
       "CP-3D",
       "CP-3C"
+     ]
+    },
+    {
+     "filter": "not run",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-3",
+      "CP-4",
+      "CP-5",
+      "CP-6"
      ]
     },
     {
@@ -2992,15 +3110,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#7A3DB8",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-3",
      "group": "footer",
      "target": {
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -3015,15 +3133,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#8A5300",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-4",
      "group": "footer",
      "target": {
       "page_title": "CP-4 · Legal covenant interpreter",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -3055,15 +3173,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-5",
      "group": "footer",
      "target": {
       "page_title": "CP-5 · Evidence trace validator",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -3076,15 +3194,15 @@
      "number": null,
      "in_pathway": false,
      "color": "#000533",
-     "glyph": "na",
-     "word": "Not in this Pathway",
+     "glyph": "unrun",
+     "word": "Not run",
      "href": "#CP-6",
      "group": "footer",
      "target": {
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway",
+      "status_chip_word": "Not run",
       "has_output": false,
-      "empty_state": "not_part_of_pathway",
+      "empty_state": "no_validated_output",
       "limitations_panel": false
      }
     },
@@ -3275,7 +3393,40 @@
     "numbered": 5,
     "footer": 20,
     "unrun_line": "Not run · 2",
-    "footer_summary": "Not in this Pathway · 20"
+    "footer_groups": [
+     {
+      "summary": "Not in this Pathway · 16",
+      "word": "Not in this Pathway",
+      "module_ids": [
+       "CP-1B",
+       "CP-1C",
+       "CP-1D",
+       "CP-2A",
+       "CP-2E",
+       "CP-2G",
+       "CP-2H",
+       "CP-4C",
+       "CP-8",
+       "CP-DR",
+       "CP-L10",
+       "CP-MEMO",
+       "CP-OS",
+       "CP-2D",
+       "CP-3D",
+       "CP-3C"
+      ]
+     },
+     {
+      "summary": "Not run · 4",
+      "word": "Not run",
+      "module_ids": [
+       "CP-3",
+       "CP-4",
+       "CP-5",
+       "CP-6"
+      ]
+     }
+    ]
    },
    "rejected_rows": 0,
    "destinations": [
@@ -3394,7 +3545,7 @@
       "text": "Full analysis →",
       "href": "#CP-3",
       "page_title": "CP-3 · Relative value security selection",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -3424,7 +3575,7 @@
       "text": "Full analysis →",
       "href": "#CP-6",
       "page_title": "CP-6 · Ic debate challenge",
-      "status_chip_word": "Not in this Pathway"
+      "status_chip_word": "Not run"
      }
     },
     {
@@ -3551,11 +3702,7 @@
       "CP-2E",
       "CP-2G",
       "CP-2H",
-      "CP-3",
-      "CP-4",
       "CP-4C",
-      "CP-5",
-      "CP-6",
       "CP-8",
       "CP-DR",
       "CP-L10",
@@ -3564,6 +3711,19 @@
       "CP-2D",
       "CP-3D",
       "CP-3C"
+     ]
+    },
+    {
+     "filter": "not run",
+     "numbered_matches": [
+      "CP-1A",
+      "CP-2"
+     ],
+     "footer_matches": [
+      "CP-3",
+      "CP-4",
+      "CP-5",
+      "CP-6"
      ]
     },
     {

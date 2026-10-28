@@ -18,7 +18,7 @@ import hashlib
 import json
 import re
 import string
-from dataclasses import replace
+from dataclasses import fields, replace
 from decimal import Decimal
 from fractions import Fraction
 from functools import cache
@@ -251,7 +251,6 @@ def _cp2g(case: str) -> cp4c.Cp2gHead:
             case=c,
             year=y,
             fact=fact(f"T2H.4.{CASE_ROW[c]}{26 + t}.ebitda"),
-            derives_from=tuple(recs[f"T2H.4.{CASE_ROW[c]}{26 + t}.ebitda"]["derives_from"]),
         )
         for c in ("base", "down")
         for t, y in enumerate(YEARS)
@@ -261,6 +260,8 @@ def _cp2g(case: str) -> cp4c.Cp2gHead:
         ebitda=ebitda,
         base_first=fact("T2H.7.b01.base_first"),
         down_first=fact("T2H.7.b01.down_first"),
+        down_ebitda_source=fact("T2H.3.d01.source"),
+        down_interest_source=fact("T2H.3.d02.source"),
     )
 
 
@@ -271,7 +272,6 @@ def _cp2a(case: str) -> cp4c.Cp2aHead:
     c = CP2A_EXP["cases"][source]
     return cp4c.Cp2aHead(
         status=_status_word("CP-2A"),
-        base_period=c["base_period"],
         facts=tuple(_fact(f) for f in c["facts"] if f["table_id"] == "T2B.1"),
     )
 
@@ -1482,23 +1482,125 @@ def test_l4_cp2g_ebitda_of_another_period_is_an_invariant() -> None:
         _compute_with(bad, _bind_all(_payload("positive")))
 
 
-def test_l4_a_downside_year_on_another_cp2a_scenario_is_an_invariant() -> None:
-    ctx = _context("positive")
-    payload = _bind_all(_payload("positive"))
-    payload["valuation"][2]["ebitda_year"] = "FY2027"
-    d27 = next(e for e in ctx.cp2g.ebitda if e.fact.fact_id == "T2H.4.d27.ebitda")
-    other = replace(
-        d27,
-        derives_from=tuple(
-            x.replace("T2B.1.", "T2B.1.zz", 1) if x.startswith("cp2a:T2B.1.") else x
-            for x in d27.derives_from
+SOURCE_ROW_INVARIANT = "CP-4C: CP-2G T2H.3.d01 and T2H.3.d02 sources name no single CP-2A T2B.1 row"
+D01_FRAME = "CP-2A T2B.1.{row}.ebitda_decline"
+D02_FRAME = "CP-2A T2B.1.{row}.interest_increase"
+
+
+def _with_sources(ctx: cp4c.Cp4cContext, d01: str | None, d02: str | None) -> cp4c.Cp4cContext:
+    g = ctx.cp2g
+
+    def _src(f: Fact, text: str | None) -> Fact:
+        if text is None:  # a source that is missing in the settled head
+            return _refact(f, text=None, status="missing", limitation="Not stated")
+        return _refact(f, text=text)
+
+    return replace(
+        ctx,
+        cp2g=replace(
+            g,
+            down_ebitda_source=_src(g.down_ebitda_source, d01),
+            down_interest_source=_src(g.down_interest_source, d02),
         ),
     )
-    ebitda = tuple(other if e is d27 else e for e in ctx.cp2g.ebitda)
-    bad = replace(ctx, cp2g=replace(ctx.cp2g, ebitda=ebitda))
-    with pytest.raises(ValueError, match="applies another CP-2A scenario"):
-        if not _payload_issues(payload, bad):
-            _compute_with(bad, payload)
+
+
+def test_r13_m2_the_scenario_row_is_read_from_the_settled_source_texts() -> None:
+    """Item 2: the row is the one both source texts name; the CP-2G EBITDA carries no lineage."""
+    assert not hasattr(cp4c.Cp2gEbitda, "derives_from")
+    assert "derives_from" not in {f.name for f in fields(cp4c.Cp2gEbitda)}
+    ctx = _context("positive")
+    assert ctx.cp2g.down_ebitda_source.text == D01_FRAME.format(row="s03")
+    run_row = cp4c._scenario_row(ctx.cp2g)
+    assert run_row == "s03"
+    # Another row named by both texts moves the row the claims read (T2B.1.s02 exists in CP-2A).
+    other = _with_sources(ctx, D01_FRAME.format(row="s02"), D02_FRAME.format(row="s02"))
+    assert cp4c._scenario_row(other.cp2g) == "s02"
+
+
+@pytest.mark.parametrize(
+    "d01,d02",
+    [
+        (D01_FRAME.format(row="s02"), D02_FRAME.format(row="s03")),  # two rows
+        ("CP-2A T2B.1.s03.interest_increase", D02_FRAME.format(row="s03")),  # d01 names d02's field
+        (D01_FRAME.format(row="s03"), "CP-2A T2B.1.s03.ebitda_decline"),  # d02 names d01's field
+        (D01_FRAME.format(row="s03") + " ", D02_FRAME.format(row="s03")),  # not a fullmatch
+        ("x " + D01_FRAME.format(row="s03"), D02_FRAME.format(row="s03")),
+        (D01_FRAME.format(row="s03"), D02_FRAME.format(row="s03") + " "),
+        (D01_FRAME.format(row="s03"), "x " + D02_FRAME.format(row="s03")),
+        ("CP-2A T2B.1.s3.ebitda_decline", "CP-2A T2B.1.s3.interest_increase"),  # not s + 2 digits
+        ("CP-2A T2B.1.s033.ebitda_decline", "CP-2A T2B.1.s033.interest_increase"),
+        ("CP-2A T2B.1.S03.ebitda_decline", "CP-2A T2B.1.S03.interest_increase"),
+        ("cp2a:T2B.1.s03.ebitda_decline", "cp2a:T2B.1.s03.interest_increase"),  # lineage spelling
+        (D01_FRAME.format(row="s03") + "\n", D02_FRAME.format(row="s03")),
+        ("", ""),
+        (None, D02_FRAME.format(row="s03")),  # one source missing
+        (D01_FRAME.format(row="s03"), None),
+        (None, None),
+    ],
+)
+def test_r13_m2_sources_that_name_no_single_row_are_an_invariant(
+    d01: str | None, d02: str | None
+) -> None:
+    bad = _with_sources(_context("positive"), d01, d02)
+    with pytest.raises(ValueError) as caught:
+        cp4c._scenario_row(bad.cp2g)
+    assert str(caught.value) == SOURCE_ROW_INVARIANT
+    with pytest.raises(ValueError) as at_compute:  # the compute call site
+        _compute_with(bad, _bind_all(_payload("positive")))
+    assert str(at_compute.value) == SOURCE_ROW_INVARIANT
+
+
+def test_r13_m2_the_validator_site_raises_the_same_invariant() -> None:
+    bad = _with_sources(
+        _context("positive"), D01_FRAME.format(row="s02"), D02_FRAME.format(row="s03")
+    )
+    with pytest.raises(ValueError) as caught:
+        _payload_issues(_bind_all(_payload("positive")), bad)
+    assert str(caught.value) == SOURCE_ROW_INVARIANT
+
+
+# --- round 13 item 5 (R1 L2): base_period -------------------------------------------------------
+BASE_PERIOD_INVARIANT = "CP-4C: CP-2A T2B.1 facts differ in period"
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_r13_l2_base_period_is_the_one_period_of_the_row_facts(case: str) -> None:
+    """In every buildable case it equals the `base_period` key the tests read before."""
+    source = _after(
+        EXPECTED["cases"][case]["cp2a_head"]["source"], "cases/cp2a-owner/expected.json cases."
+    )
+    ctx = _context(case)
+    row = cp4c._scenario_row(ctx.cp2g)
+    assert ctx.cp2a.base_period(row) == CP2A_EXP["cases"][source]["base_period"]
+
+
+def test_r13_l2_t2b1_facts_that_differ_in_period_are_an_invariant() -> None:
+    ctx = _context("positive")
+    other = "Q3 25: 2025-07-01 to 2025-09-30"
+    facts = tuple(
+        _refact(f, period=other) if f.fact_id == "T2B.1.s03.interest_increase" else f
+        for f in ctx.cp2a.facts
+    )
+    bad = replace(ctx, cp2a=replace(ctx.cp2a, facts=facts))
+    with pytest.raises(ValueError) as caught:
+        bad.cp2a.base_period("s03")
+    assert str(caught.value) == BASE_PERIOD_INVARIANT
+    with pytest.raises(ValueError) as at_compute:  # it reaches the T4E.1 row
+        _compute_with(bad, _bind_all(_payload("positive")))
+    assert str(at_compute.value) == BASE_PERIOD_INVARIANT
+
+
+def test_r13_l2_a_period_that_differs_on_another_row_is_not_read() -> None:
+    ctx = _context("positive")
+    facts = tuple(
+        _refact(f, period="Q3 25: 2025-07-01 to 2025-09-30")
+        if f.fact_id.startswith("T2B.1.s02.") and f.period
+        else f
+        for f in ctx.cp2a.facts
+    )
+    ok = replace(ctx, cp2a=replace(ctx.cp2a, facts=facts))
+    assert ok.cp2a.base_period("s03") == ctx.cp2a.base_period("s03")
 
 
 # --- round 11 (docs/rulings/2026-10-28-stage1.md B2, B3, B6; questions.md Q5-Q7) -------------------
@@ -1715,8 +1817,32 @@ def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...]], t
     assert _blank_adapter(keys)("", "", twin) == ()
 
 
-# --- round 12 B7: reference syntax in a claim name or valuation label ----------------------------
+# --- round 13 riding Low: B7 does not reach plain fields -----------------------------------------
 RESERVED = "{}[]"
+_KINDS = {p: kind for p, _, kind in cp4c._text_fields(_inputs("positive").submission)}
+PLAIN_FIELDS = tuple(f for f in BLANK_FIELDS if _KINDS[f[0]] == "plain")
+
+
+@pytest.mark.parametrize("field", PLAIN_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("char", list(RESERVED))
+def test_b7_does_not_apply_to_plain_fields(
+    field: tuple[str, tuple[str | int, ...]], char: str
+) -> None:
+    """A plain field (a limitation, a gap text) holding `{` or `[` is accepted."""
+    _, keys = field
+    assert _blank_adapter(keys)("", "", f"Stated by the desk {char} as given.") == ()
+
+
+def test_b7_a_limitation_with_brackets_is_accepted_and_composes() -> None:
+    text = "Unit [US$ m] {as stated}."
+    payload = _bind_all(_payload("positive"))
+    payload["assessment"]["limitation"] = text
+    assert _payload_issues(payload) == ()
+    result = _compute_with(_context("positive"), payload)
+    assert any(c.limitation == text for c in result.claims)
+
+
+# --- round 12 B7: reference syntax in a claim name or valuation label ----------------------------
 REFERENCE_SYNTAX = "{path}: reference syntax is not allowed"
 NAME_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = (
     ("claims[1].name", ("claims", 1, "name")),
@@ -1777,3 +1903,55 @@ def test_b7_every_name_the_validator_accepts_composes(
     claims = _compute_with(_context("positive"), payload).claims
     spelt = name.lower() if key == "valuation" else name
     assert any(spelt in c.text for c in claims)
+
+
+# --- round 13 addendum 3: a blank support or amount quote is blank analyst text -------------------
+QUOTE_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = (
+    ("claims[0].support[0].quote", ("claims", 0, "support", 0, "quote")),
+    ("claims[1].amount_quote.quote", ("claims", 1, "amount_quote", "quote")),
+    ("claims[2].amount_quote.quote", ("claims", 2, "amount_quote", "quote")),
+)
+
+
+def test_blank_quote_fields_are_every_quote_the_payload_holds() -> None:
+    """The class test sets every Quote the positive payload holds (support and amount quotes)."""
+    payload = _bind_all(_payload("positive"))
+    held = [
+        _key_path(("claims", i, "support", j, "quote"))
+        for i, c in enumerate(payload["claims"])
+        for j, _ in enumerate(c["support"])
+    ] + [
+        f"claims[{i}].amount_quote.quote"
+        for i, c in enumerate(payload["claims"])
+        if c["amount_quote"] is not None
+    ]
+    assert sorted(held) == sorted(p for p, _ in QUOTE_FIELDS)
+
+
+@pytest.mark.parametrize("field", QUOTE_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_quote_is_the_only_issue(
+    blank: BlankCase, field: tuple[str, tuple[str | int, ...]]
+) -> None:
+    path, keys = field
+    assert blank_failure(blank, _blank_adapter(keys), EMPTY_TEXT.format(path=path)) is None
+    if blank.whitespace_only:
+        assert _blank_adapter(keys)("", "", blank.value) == (EMPTY_TEXT.format(path=path),)
+
+
+@pytest.mark.parametrize("field", QUOTE_FIELDS, ids=lambda f: f[0])
+def test_empty_quote_is_refused_by_the_validator(field: tuple[str, tuple[str | int, ...]]) -> None:
+    """`""` is an issue from the validator, never a Citation error raised in compute."""
+    path, keys = field
+    assert _blank_adapter(keys)("", "", "") == (EMPTY_TEXT.format(path=path),)
+
+
+@pytest.mark.parametrize("field", QUOTE_FIELDS, ids=lambda f: f[0])
+def test_nonblank_quote_twin_is_accepted(field: tuple[str, tuple[str | int, ...]]) -> None:
+    """The twin: the frozen quote itself (a quote found on the page) stays accepted."""
+    _, keys = field
+    payload = json.loads(_bound_positive())
+    cur: Any = payload
+    for key in keys:
+        cur = cur[key]
+    assert cur.strip() and _payload_issues(payload) == ()

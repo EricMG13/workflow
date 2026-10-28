@@ -1286,3 +1286,80 @@ def test_b3_refuses_only_the_wrap_spelling() -> None:
     """A wrapped quote still holds a hyphenated name that is not spelled with the wrap's `- `."""
     page = "The Term-SOFR loan is first-\npriority debt."
     assert _reference_rate_adapter(page, page, "Term-SOFR") == ()
+
+
+# --- round 13: item 8 (a comma joins the digit run) and the B3 exemption for rule W's minus ----
+_ITEM8_JOINS = ["1,25", "1, 25", "1,\n25"]
+
+
+@pytest.mark.parametrize("join", _ITEM8_JOINS, ids=["comma", "comma-space", "comma-break"])
+def test_round13_comma_join_before_the_figure_in_the_quote(join: str) -> None:
+    """Item 8 (R3 M4): `<digit>,` and `<digit>, ` before the figure make it part of a longer
+    number, in the quote, through the share and the labelled readers."""
+    sentence = f"Earnings abroad were {join} percent of EBITDA."
+    assert _share_adapter(sentence, sentence, "25") == (
+        _does_not_occur("fx.foreign_ebitda_share", "percent_text", "25"),
+    )
+    spread = f"The margin is spread {join} basis points over the reference rate."
+    assert _spread_adapter(spread, spread, "25") == (
+        _does_not_occur("rate_exposure.spread", "bps_text", "25"),
+    )
+
+
+@pytest.mark.parametrize("join", _ITEM8_JOINS, ids=["comma", "comma-space", "comma-break"])
+def test_round13_comma_join_before_the_figure_at_the_page_edge(join: str) -> None:
+    """Item 8, B1: the quote starts at the figure and the page continues it from the left."""
+    page = f"Earnings abroad were {join} percent of EBITDA."
+    quote = "25 percent of EBITDA."
+    assert _share_adapter(page, quote, "25") == (
+        _does_not_occur("fx.foreign_ebitda_share", "percent_text", "25"),
+    )
+    page = f"The margin is spread {join} basis points over the reference rate."
+    quote = "25 basis points over the reference rate."
+    assert _spread_adapter(page, quote, "25") == (
+        _does_not_occur("rate_exposure.spread", "bps_text", "25"),
+    )
+
+
+@pytest.mark.parametrize("join", ["25,1", "25, 1", "25,\n1"], ids=["comma", "comma-space", "break"])
+def test_round13_comma_join_after_the_figure(join: str) -> None:
+    """Item 8: the trailing guard also refuses `<figure>,<digit>` and `<figure>, <digit>`, in the
+    quote and when the page continues a quote that ends at the figure."""
+    sentence = f"Earnings abroad were {join} percent of EBITDA."
+    assert _share_adapter(sentence, sentence, "25") == (
+        _does_not_occur("fx.foreign_ebitda_share", "percent_text", "25"),
+    )
+    page = f"Earnings abroad were {join} percent of EBITDA."
+    assert _share_adapter(page, "Earnings abroad were 25", "25") == (
+        _does_not_occur("fx.foreign_ebitda_share", "percent_text", "25"),
+    )
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    ["Earnings abroad were 25, a share of EBITDA.", "Earnings abroad, up, 25 percent of EBITDA."],
+    ids=["25-comma-letter", "letter-comma-25"],
+)
+def test_round13_comma_twins_with_a_letter_stay_figures(sentence: str) -> None:
+    assert _share_adapter(sentence, sentence, "25") == ()
+
+
+@pytest.mark.parametrize(
+    ("page", "quote", "value", "accepted"),
+    [
+        ("The level is -\n1.25 percent here.", "The level is - 1.25 percent", "is - 1.25", True),
+        ("Term Loan A-\n1.25 notes.", "Term Loan A-\n1.25 notes", "- 1.25 notes", False),
+        ("In 2024-\n2025 notes.", "In 2024-\n2025 notes", "- 2025 notes", False),
+        ("Term Loan A-\n1.25 notes.", "Term Loan A-\n1.25 notes", "A- 1.25", False),
+        ("The rate a -\nb applies.", "The rate a -\nb applies", "a - b", False),
+        ("The level is -\n1.25 percent here.", "The level is -\n1.25 percent", "- 1.25", False),
+    ],
+    ids=["w-minus", "index-0-letter", "index-0-digit", "after-letter", "no-digit", "index-0-minus"],
+)
+def test_round13_b3_exempts_only_rule_w_minus_inside_the_value(
+    page: str, quote: str, value: str, accepted: bool
+) -> None:
+    """Addenda 1 and 3: a `- ` that W reads as a minus, with a character before it in the value
+    itself, is no wrap split; index 0, after a letter or digit, or before a non-digit still is."""
+    refusal = "rate_exposure.rate_basis: reference_rate does not occur in the quote"
+    assert _reference_rate_adapter(page, quote, value) == (() if accepted else (refusal,))

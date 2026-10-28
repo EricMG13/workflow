@@ -1372,6 +1372,15 @@
       "sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
       "reason": "Add the CP-1D _EARNINGS_QUALITY composition (two _Spec rows), its _spec_of entry and the two block ids in the earnings preset (D12 registration, rows only); retains CP-3D, CP-2A and CP-2D rows.",
       "review": "docs/CP1D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
+      "project_commit": "1c512aa7136a504f9e0993e8ae531d3100fb6102",
+      "sha256": "fc9c18280c862c91b3877701f67e1c41f3965f213cdf87ee089db3ced990f1bc",
+      "reason": "CP-1D review M2: the restated-leverage _Spec title equals expected.json FP02 (Cash conversion and restated leverage); one row's text only, all other rows retained.",
+      "review": "work/build/stage2/cp1d/review.md"
     }
   ],
   "local_patch_lineage": [

@@ -15,7 +15,7 @@ CP-2E, CP-DR, CP-3D, CP-4 (including the 4-1 re-pin), CP-1D (fix 1).
 | CP-1D rulings (1D1–1D10, 1D2 follow-up, 1D-x) | `claude/cp1d-stage1` | cp1d-stage1 | adversary review of the ruling diff, merge |
 | CP-2D rulings (2D1–2D9, 2D-a–d, N2/N3) | `worktree-agent-a69f2394899aee6d5` | agent-a69f2394899aee6d5 | adversary re-review (N1 settled by 2D-a), merge |
 | CP-2A rulings (A1–A8) + M4, fix-rounds=2 | `worktree-agent-a34fec3e9469279cd` | agent-a34fec3e9469279cd | adversary re-review; a third fix goes to mx-autonomous plus a fresh implementer |
-| CP-3D rulings (D1–D3, X1) | `claude/cp3d-stage1` | cp3d-stage1 | mx-precise review of the ruling diff, merge |
+| CP-3D rulings (D1–D3, X1, Low A): **done 9b871a7** (174 passed, gates 0, probes 0; nothing valid raises) | `claude/cp3d-stage1` | cp3d-stage1 | mx-precise review of the ruling diff, merge. Send LEAD: YLD-01 with a quoted level, known maturity and missing mid margin uses an unruled neutral form `The all-in yield is not calculated: [T3E.3.r05.mid] is not available.`; T3E.7 "Simple discount margin" row names the wrong cause for bid/offer/talk-only and absent maturity (builder parity) |
 
 If an agent stopped mid-task, its worktree holds the uncommitted work: inspect it with `git status` and `git diff` before re-dispatching.
 

@@ -377,3 +377,4 @@
 - 20:29 CP-2A fix2 re-review: APPROVE (fbe2d3c). agent=mx-feature fix-rounds=2 gates-first-pass=n.
 - 20:30 CP-4 fix1 d92ce29 (M1, M2, L1-L3, Info; p4 17/17, p5 0). No per-module re-review: goes to the whole-stage review.
 - 20:31 Batch brief written (work/build/stage2/batch-brief.md). Waits on the integration merge and the CP-1D review (CP-2G consumes CP-1D).
+- 20:35 Integration stopped at merge 6 (CP-3): 2 branch-local registration assertions. Ruled (a): test-side rewrite (base prefix + appended rows; dynamic spec-less ids), same rule for later merges. Integrator resumed.

@@ -1,0 +1,1679 @@
+{
+  "schema_version": "cp3c-owner-submissions/1",
+  "note": "Literal analyst input only. {{FACT:name}} tokens are replaced by offered refs at run time (manifest.fact_bindings). CP-0, CP-1, CP-1A and CP-2 literals are those of cases/snapshot/submissions.json, the CP-2D step and the CP-2D CP-0 entry are those of cases/cp2d-owner/submissions.json, unchanged.",
+  "cp0_consumer_deltas": [
+    {
+      "module_id": "CP-2D",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 cash flow, balance sheet and facility facts and the CP-2 credit view",
+      "source_ids": [
+        "identity",
+        "financial"
+      ],
+      "rationale": "The liquidity bridge can run on settled upstream facts with explicit source and scope limitations.",
+      "citations": [
+        {
+          "source_id": "identity",
+          "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "locator": "page:1",
+          "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+        },
+        {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "Currency: USD; amounts in millions."
+        },
+        {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:5",
+          "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+        }
+      ],
+      "missing_source": null,
+      "limitations": [
+        "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+    },
+    {
+      "module_id": "CP-3C",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 facility terms and cash flow facts and the CP-2D liquidity bridge",
+      "source_ids": [
+        "identity",
+        "financial"
+      ],
+      "rationale": "The refinancing assessment can run on settled upstream facts with explicit source and scope limitations.",
+      "citations": [
+        {
+          "source_id": "identity",
+          "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "locator": "page:1",
+          "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+        },
+        {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "Currency: USD; amounts in millions."
+        },
+        {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:5",
+          "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+        }
+      ],
+      "missing_source": null,
+      "limitations": [
+        "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+    }
+  ],
+  "cp3c": {
+    "positive": {
+      "repricing": {
+        "bps": 400,
+        "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+      },
+      "repricing_absence": null,
+      "paths": [
+        {
+          "kind": "repay_from_resources",
+          "feasibility": "Low",
+          "category": "Analyst Interpretation",
+          "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+          "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cp2d.run_rate}}",
+            "{{FACT:cp2d.min_cash}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "amend_and_extend",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+          "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:term-loan.secured_status}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "market_refinancing",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+          "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:cp2d.term-loan.principal}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "asset_sale_or_equity",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "No owner support or asset-sale evidence is bound to this analysis.",
+          "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+          "basis_refs": [],
+          "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+        },
+        {
+          "kind": "liability_management",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+          "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+          "basis_refs": [],
+          "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+        }
+      ]
+    },
+    "gap_minimum_cash": {
+      "repricing": {
+        "bps": 400,
+        "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+      },
+      "repricing_absence": null,
+      "paths": [
+        {
+          "kind": "repay_from_resources",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "No minimum cash level is assessed upstream, so the resources available to repay principal at maturity cannot be sized.",
+          "credit_implication": "Without a sized remainder the external refinancing need stays unquantified, which weakens the refinancing view.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}"
+          ],
+          "limitation": "The minimum cash assumption of the liquidity analysis is not assessed, so resources at maturity and the refinancing need are not calculated."
+        },
+        {
+          "kind": "amend_and_extend",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+          "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:term-loan.secured_status}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "market_refinancing",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+          "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:cp2d.term-loan.principal}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "asset_sale_or_equity",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "No owner support or asset-sale evidence is bound to this analysis.",
+          "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+          "basis_refs": [],
+          "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+        },
+        {
+          "kind": "liability_management",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+          "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+          "basis_refs": [],
+          "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+        }
+      ]
+    },
+    "gap_no_repricing": {
+      "repricing": null,
+      "repricing_absence": {
+        "reason": "No refinancing pricing evidence is bound and no margin step-up was assessed.",
+        "follow_up": "Obtain a lender indication or a market comparable before sizing the cost of a refinancing."
+      },
+      "paths": [
+        {
+          "kind": "repay_from_resources",
+          "feasibility": "Low",
+          "category": "Analyst Interpretation",
+          "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+          "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cp2d.run_rate}}",
+            "{{FACT:cp2d.min_cash}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "amend_and_extend",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+          "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:term-loan.secured_status}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "market_refinancing",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+          "credit_implication": "The cost of a new placement is the main sensitivity and is not sized in this analysis.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:cp2d.term-loan.principal}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "asset_sale_or_equity",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "No owner support or asset-sale evidence is bound to this analysis.",
+          "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+          "basis_refs": [],
+          "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+        },
+        {
+          "kind": "liability_management",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+          "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+          "basis_refs": [],
+          "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+        }
+      ]
+    }
+  },
+  "cp3c_blocked": {
+    "note": "Attempt 0 and attempt 1 are both invalid, so CP-3C settles blocked. Each attempt is a full literal payload (the same as refusal_inputs.step_up_over_limit and .step_up_negative); attempt 1 is begun with repair_of set.",
+    "attempt_0": {
+      "repricing": {
+        "bps": 1001,
+        "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+      },
+      "repricing_absence": null,
+      "paths": [
+        {
+          "kind": "repay_from_resources",
+          "feasibility": "Low",
+          "category": "Analyst Interpretation",
+          "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+          "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cp2d.run_rate}}",
+            "{{FACT:cp2d.min_cash}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "amend_and_extend",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+          "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:term-loan.secured_status}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "market_refinancing",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+          "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:cp2d.term-loan.principal}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "asset_sale_or_equity",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "No owner support or asset-sale evidence is bound to this analysis.",
+          "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+          "basis_refs": [],
+          "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+        },
+        {
+          "kind": "liability_management",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+          "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+          "basis_refs": [],
+          "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+        }
+      ]
+    },
+    "attempt_1": {
+      "repricing": {
+        "bps": -1,
+        "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+      },
+      "repricing_absence": null,
+      "paths": [
+        {
+          "kind": "repay_from_resources",
+          "feasibility": "Low",
+          "category": "Analyst Interpretation",
+          "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+          "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cp2d.run_rate}}",
+            "{{FACT:cp2d.min_cash}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "amend_and_extend",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+          "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:term-loan.secured_status}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "market_refinancing",
+          "feasibility": "Medium",
+          "category": "Analyst Interpretation",
+          "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+          "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+          "basis_refs": [
+            "{{FACT:adjusted_ebitda}}",
+            "{{FACT:cash_interest}}",
+            "{{FACT:cp2d.term-loan.principal}}"
+          ],
+          "limitation": null
+        },
+        {
+          "kind": "asset_sale_or_equity",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "No owner support or asset-sale evidence is bound to this analysis.",
+          "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+          "basis_refs": [],
+          "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+        },
+        {
+          "kind": "liability_management",
+          "feasibility": "Insufficient Information",
+          "category": "Insufficient Information",
+          "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+          "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+          "basis_refs": [],
+          "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+        }
+      ]
+    }
+  },
+  "cp1_downstream_review": {
+    "note": "Replaces the S1 readiness literal {\"consumers\": []} for this run. inputs_sha256 is prefilled at run time (step-inputs). Selectors are resolved against the promoted pack's DownstreamInputs; the evidence is the facility observation register for CP-3C (debt_schedule, maturity_profile: _EVIDENCE_GROUPS) and the EBITDA key figures for CP-2D (earnings_quality_metrics). CP-1A and CP-2 are not assessed, as in S1.",
+    "schema_version": "downstream-review/1",
+    "inputs_sha256": "<<prefilled at run time>>",
+    "requested_consumers": [
+      "CP-1A",
+      "CP-2",
+      "CP-2D",
+      "CP-3C"
+    ],
+    "consumers": [
+      {
+        "entry": "CP-2D",
+        "requirements": [
+          {
+            "requirement": "earnings_quality_metrics",
+            "status": "sufficient",
+            "evidence_ids": {
+              "select": "every catalogue record whose _evidence_tags contain kpi:ebitda or kpi:adjusted_ebitda"
+            },
+            "rationale": "The reported and adjusted EBITDA key figures carry the earnings base of the liquidity bridge.",
+            "actions": []
+          }
+        ],
+        "gaps": [
+          {
+            "gap_ids": {
+              "select": "every retained gap of DownstreamInputs.narrative.gaps, in one scope per consumer"
+            },
+            "relevance": "relevant",
+            "evidence_ids": [],
+            "rationale": "The retained gaps limit the earnings inputs of the liquidity bridge."
+          }
+        ]
+      },
+      {
+        "entry": "CP-3C",
+        "requirements": [
+          {
+            "requirement": "debt_schedule",
+            "status": "sufficient",
+            "evidence_ids": {
+              "select": "every catalogue record whose _evidence_tags contain observation:facilities"
+            },
+            "rationale": "The facility register carries the principal and maturity of each facility.",
+            "actions": []
+          },
+          {
+            "requirement": "maturity_profile",
+            "status": "sufficient",
+            "evidence_ids": {
+              "select": "every catalogue record whose _evidence_tags contain observation:facilities"
+            },
+            "rationale": "The facility register carries the principal and maturity of each facility.",
+            "actions": []
+          }
+        ],
+        "gaps": [
+          {
+            "gap_ids": {
+              "select": "every retained gap of DownstreamInputs.narrative.gaps, in one scope per consumer"
+            },
+            "relevance": "relevant",
+            "evidence_ids": [],
+            "rationale": "The retained gaps limit the refinancing inputs."
+          }
+        ]
+      }
+    ]
+  },
+  "cp2d_blocked_ref": "cases/cp2d-owner/submissions.json#cp2d_blocked (attempt_0, attempt_1), reused to settle CP-2D blocked for begin_refused_cp2d_blocked",
+  "refusal_inputs": {
+    "note": "Each entry is a full literal payload (base_case names the cp3c case it was derived from); expected issue wording is fixed in expected.json#refusals. A wrong-typed bps is a schema type error owned by G1's generic schema refusal, not a CP-3C validator class.",
+    "step_up_negative": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": -1,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "step_up_over_limit": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 1001,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "step_up_and_absence": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": {
+          "reason": "No refinancing pricing evidence is bound and no margin step-up was assessed.",
+          "follow_up": "Obtain a lender indication or a market comparable before sizing the cost of a refinancing."
+        },
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "neither_step_up_nor_absence": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": null,
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "path_missing": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "path_repeated": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "digit_in_text": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity. It is 5 per cent.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "digit_in_rationale": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure. It is 5 per cent."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "prohibited_recommendation": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up. We recommend this path.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "prohibited_recovery": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument. The expected recovery is high.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "covenant_compliance_wording": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders. The covenant test is met.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "unknown_basis_ref": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}",
+              "{{FACT:not_a_fact}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "feasibility_without_basis": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "insufficient_without_limitation": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": null
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "limitation_without_insufficient": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": "A limitation without a gap."
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "feasibility_category_mismatch": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Insufficient Information",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": "A limitation for the mismatch case."
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [],
+            "limitation": "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+          }
+        ]
+      }
+    },
+    "lme_judged_without_capacity_evidence": {
+      "base_case": "positive",
+      "payload": {
+        "repricing": {
+          "bps": 400,
+          "rationale": "A margin step-up of this size is held as an analyst assumption for a refinancing of a single secured term loan and is not a source or market figure."
+        },
+        "repricing_absence": null,
+        "paths": [
+          {
+            "kind": "repay_from_resources",
+            "feasibility": "Low",
+            "category": "Analyst Interpretation",
+            "text": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+            "credit_implication": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cp2d.run_rate}}",
+              "{{FACT:cp2d.min_cash}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "amend_and_extend",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+            "credit_implication": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:term-loan.secured_status}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "market_refinancing",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+            "credit_implication": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}",
+              "{{FACT:cash_interest}}",
+              "{{FACT:cp2d.term-loan.principal}}"
+            ],
+            "limitation": null
+          },
+          {
+            "kind": "asset_sale_or_equity",
+            "feasibility": "Insufficient Information",
+            "category": "Insufficient Information",
+            "text": "No owner support or asset-sale evidence is bound to this analysis.",
+            "credit_implication": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+            "basis_refs": [],
+            "limitation": "Business and ownership context is not read in this version, and no source describes disposable assets or owner support."
+          },
+          {
+            "kind": "liability_management",
+            "feasibility": "Medium",
+            "category": "Analyst Interpretation",
+            "text": "Document capacity for a liability-management exercise is not available to this analysis.",
+            "credit_implication": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+            "basis_refs": [
+              "{{FACT:adjusted_ebitda}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    }
+  }
+}

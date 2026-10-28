@@ -3058,3 +3058,15 @@ User (2026-10-28, to LEAD): "stop fable usage after these current tasks". The tw
 
 LEAD (2026-10-28): CP-L10 and CP-1C owner leases frozen (`docs/CPL10-OWNER-LEASE.md`, `docs/CP1C-OWNER-LEASE.md`; oracles `cases/cpl10-owner`, `cases/cp1c-owner`; methods drafts under `docs/methods-drafts/`). MODULES.csv `unblocking_task` now names the frozen lease for each frozen module (evidence columns unchanged: nothing built). The serialised methodology change (CP-L10 D4 + CP-1C D8 + every methodology-pinning builder re-pin) is now fully specified by the two leases.
 Product task (LEAD lane, later): the `pp` unit has no display class (`report_view._unit_class`); CP-1C's positive FFO difference shows 37 digits. A `pp` class (one decimal place, like percent) re-pins CP-1C and the `pp` render tests (test_legal_render.py:780-791, test_earnings_render.py:606).
+
+Residual (B1, review-adversary-fix-5 L-2, 2026-10-28): during begin recovery of a CP-1B head, `_activate`'s read-only grant and access-manifest derivation runs after the recovered BeginRecord is retained; a store whose only defect lies in bytes that derivation reads gets the genuine record, then refuses (as it would on every open). Closable by splitting `_activate` into a read-only prepare before the retain and a commit after; deferred.
+
+User (2026-10-28, to LEAD, "After fix-4"): S1a integrates once fix round 4 returns and its genuine-path probes pass; its adversary review then runs without gating G1-X, and any finding it or later reviews raise is a known gap owned by the orchestration stage (Modules plan: modules → connections → pathways → orchestration).
+
+LEAD (2026-10-28): S1a integrated into the LEAD branch at fix round 4 (record `docs/reviews/s1a-owner-run.md`), by the user's decision; review-adversary-4 runs without gating G1-X; its findings and the carried gaps listed in the record belong to the orchestration stage. G1-X (Modules Stage 2) may start from this commit.
+
+LEAD (2026-10-28): CP-2G owner lease frozen (`docs/CP2G-OWNER-LEASE.md`). CP-1C amended (T1C.1 totals row → new table T1C.8; D8 T1C.1-T1C.8; header in `docs/CP1C-OWNER-LEASE.md`). Every oracle table must now hold one fact per column (`work/lead/owner-preparation-brief.md`); a scan of every owner oracle found only CP-1C (fixed) and CP-L10 (amendment running).
+
+LEAD (2026-10-28): CP-8 (revision 4) and CP-3C (revision 3) owner leases frozen (`docs/CP8-OWNER-LEASE.md`, `docs/CP3C-OWNER-LEASE.md`). Re-pin pass additions: the CP-8 builder gains the one-fact-per-column assertion; CP-3C also re-pins whenever `business_context.py` changes.
+
+LEAD (2026-10-28): CP-L10 amendment 1 re-frozen (`docs/CPL10-OWNER-LEASE.md` header: TL10.5 totals table, full TL10.3 overall row, run-bound TL10.1 markers, r13-r19, ordered citations; L1-L4 rulings binding until the CP-L10 rebuild in the serialised methodology change). The serialised change is now unblocked: D4 + TL10.5 + CP-1C D8 (T1C.1-T1C.8), one re-pin pass. Later CP-L10 revision: lineage of the missing `change` cell.

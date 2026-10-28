@@ -1354,6 +1354,24 @@
       "sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
       "reason": "Merged registration tail: CP-L10 appended last (D12 one-line registration); all earlier rows retained.",
       "review": "docs/CPL10-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
+      "project_commit": "94d9f29e026c274935cea57e7687afe1720adc8e",
+      "sha256": "9e6ee6cd5cbc160f1d47e1be3fdcd5f7fa7eb1f68999156e9249a8139fef8ae2",
+      "reason": "Register the CP-1D binding map (D12 one-line registration, appended last after CP-L10); all earlier rows retained.",
+      "review": "docs/CP1D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
+      "project_commit": "94d9f29e026c274935cea57e7687afe1720adc8e",
+      "sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
+      "reason": "Add the CP-1D _EARNINGS_QUALITY composition (two _Spec rows), its _spec_of entry and the two block ids in the earnings preset (D12 registration, rows only); retains CP-3D, CP-2A and CP-2D rows.",
+      "review": "docs/CP1D-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

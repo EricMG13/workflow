@@ -512,6 +512,8 @@ _PRESETS: tuple[tuple[PathwayId, str, str, tuple[str, ...]], ...] = (
             "kpi-changes",
             "guidance-signals",
             "ebitda-adjustments",
+            "earnings-quality",
+            "restated-leverage",
             "metric-strip",
             "watch-items",
             "financials-credit-metrics",
@@ -1159,6 +1161,17 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         ),
     }
 )
+# Heads and owner codes of the two FP 02 blocks CP-1D owns (docs/CP1D-OWNER-LEASE.md, D7).
+_EARNINGS_QUALITY: Mapping[str, _Spec] = MappingProxyType(
+    {
+        "earnings-quality": _Spec(
+            "Earnings quality", "CP-1D", "dense", ("CP-1D",), route_label="Full analysis"
+        ),
+        "restated-leverage": _Spec(
+            "Restated leverage", "CP-1D", "dense", ("CP-1D",), route_label="Full analysis"
+        ),
+    }
+)
 _NO_PRODUCER = "No module produces this block yet."
 _UNBOUND_OWNER = "Unbound"
 _PERIOD_CLASSES = (
@@ -1195,7 +1208,12 @@ def _strip_note(block_id: str) -> str:
 
 
 def _spec_of(block_id: str) -> _Spec:
-    for composition in (_CREDIT_SNAPSHOT, _EARNINGS_UPDATE, _COVENANT_REFINANCING):
+    for composition in (
+        _CREDIT_SNAPSHOT,
+        _EARNINGS_UPDATE,
+        _COVENANT_REFINANCING,
+        _EARNINGS_QUALITY,
+    ):
         if block_id in composition:
             return composition[block_id]
     # Blocks only another Pathway lists are not produced yet: they keep the idle view's wording.

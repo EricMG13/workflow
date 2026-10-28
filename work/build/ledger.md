@@ -362,3 +362,5 @@
 - 20:18 CP-8 fix1 1a2887f (M1, M2, L1; citations bug found+fixed; S1 equivalent). Re-review.
 - 20:19 Shared defect test fix1 4871569 (M1 verbatim allowlist, L1, Infos). Re-review.
 - 20:19 CP-2A fix1 re-review: REQUEST CHANGES (M1 A2e deferred test reads 3 rows). Fix round 2 (last Sonnet round).
+- 20:21 Replied to LEAD multi-round session on figure-free narrative: MC-2 already does (b); churn is source-quote reading; recommended policy freeze + new-module rule, migration deferred.
+- 20:22 Shared defect test fix1 re-review: REQUEST CHANGES (mutant A: a wrongly allowlisted refused path passes). Fix round 2 (last Sonnet round).

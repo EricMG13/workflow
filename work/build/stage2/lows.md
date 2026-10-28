@@ -7,3 +7,5 @@
 - **CP-2A (close release, lease text).** Round 5 item 1's unit rule checks settled operands only; an unsettled operand carries no amount and no currency. Lease text "every operand fact it reads" narrows to "every settled operand". Source: cp2a/fix1-review.md M2; `<S>/cp2a-s2-review/r3_unsettled_stamp.py`.
 - **CP-2A Low (unchanged).** Public-API caller-built `Upstream` with forged facts composes (`r4`); not reachable through submit, probe or view.
 - **Shared defect test Info.** `test_a_verbatim_pattern_needs_only_one_accepted_value_on_one_path` (`test_defect_classes_selfcheck.py:529`) repeats `:519`; it never shows a second refusing path excused. End batch. Source: defect-classes/fix2-review.md.
+- **CP-8 L-a.** `test_identity_is_outside_the_host_scope` asserts only `status != "ok"`; pin `refused`/`not_permitted` (`<S>/cp8-s2-rereview/p14_run_level_refusals.py`).
+- **CP-8 L-b.** The `not_permitted`/`stale_binding` tests do not assert "neither consumes an attempt; both recorded in the receipt"; the stale test uses `interrupt`, which consumes the attempt itself. Test gap only (p14 exit 0).

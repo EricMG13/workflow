@@ -42,3 +42,9 @@ Choices beyond the rulings, for you to confirm (full text in the report, "For LE
 6. **Wall-disagreement "shows both"** is Stage 2, like CP-2D L4.
 
 Its next round batches these answers with A1, A5 and the oracle-batch re-pin, and then the first adversary review runs.
+
+---
+
+**CP-3D rounds 6e and 6g** are applied (fc8c505, 215 passed) and under scoped review. Two points for your information:
+- The leading-zero issue uses the frame's `<path>`, which is `observations[i]` for levels. Every pinned level issue uses that form; the ruling's example used `level:`.
+- Recovery `percent_text` is not quoted and is not in the 6g field list, so it gets no leading-zero check.

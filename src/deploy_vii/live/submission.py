@@ -104,7 +104,7 @@ from deploy_vii.cp4_legal import CovenantInterpretationSubmission, submit_cp4_st
 from deploy_vii.cp5_integrity import IntegritySubmission, submit_cp5_step
 from deploy_vii.cp6_committee import CommitteeSubmission, submit_cp6_step
 from deploy_vii.downstream_readiness import DownstreamInputs, DownstreamReview
-from deploy_vii.execution import Attempt, Execution, StepSubmission, StepValidation
+from deploy_vii.execution import Attempt, Execution, StepSubmission, StepValidation, clipped
 from deploy_vii.financial_contracts import FacilityObservation, FinancialBook, FinancialReview
 from deploy_vii.live.schema import (
     Marked,
@@ -607,7 +607,12 @@ class _Resolver:
         self.document = document
         self.books: dict[int, _Book | None] = {}
         self.dimensions: dict[int, Mapping[int, Dimensions]] = {}
-        self.unbound: list[tuple[str, str]] = []
+        # Insertion-ordered set of (path, issue): each issue cut as `bounded_issues` shows it,
+        # built by `clipped` so an id the caller repeats is never copied whole into a line.
+        self.unbound: dict[tuple[str, str], None] = {}
+
+    def _note(self, path: str, *parts: str) -> None:
+        self.unbound.setdefault((path, clipped(parts)), None)
 
     @cached_property
     def financial_review(self) -> str | None:
@@ -624,7 +629,7 @@ class _Resolver:
                 return None  # not an id: the shape rejection names it
             digest = self.known.sources.get(source_id)
             if digest is None:  # `readiness.citation_issues`' wording
-                self.unbound.append((item.path, f"Unavailable or changed source: {source_id}"))
+                self._note(item.path, "Unavailable or changed source: ", source_id)
             return digest
         if kind in self.known.step:
             return self.known.step[kind]
@@ -641,7 +646,7 @@ class _Resolver:
             if strings is not None and value is None:
                 # The bound scope states no such dimension: the contract's own message, kept
                 # visible (`_validate_prefilled` drops "Field required" of other unset fields).
-                self.unbound.append((item.path, f"{item.path}: Field required"))
+                self._note(item.path, item.path, ": Field required")
             return value
         if kind == "facility":
             return self._facility(item, book)
@@ -700,11 +705,10 @@ class _Resolver:
             for index, name in enumerate(DIMENSIONS)
             if len({strings[index] for _, found, _ in bound for strings in found}) > 1
         ]
-        issue = (
-            f"Bound source scopes disagree on {', '.join(differing)}: "
-            f"{book_id} {', '.join(period_id for period_id, _, _ in bound)}"
-        )
-        self.unbound.append((where, issue))
+        parts = ["Bound source scopes disagree on ", ", ".join(differing), ": ", book_id, " "]
+        for index, (period_id, _, _) in enumerate(bound):
+            parts += (", ", period_id) if index else (period_id,)
+        self._note(where, *parts)
         return filled
 
     def _bound_entity(self, where: str, book_id: str, context: SourceContextReview) -> str | None:
@@ -719,13 +723,13 @@ class _Resolver:
             r.get("entity_id") for r in rows if isinstance(r, dict) and r.get("book_id") == book_id
         ]
         if len(named) != 1:
-            self.unbound.append((where, "Bind every financial book exactly once"))
+            self._note(where, "Bind every financial book exactly once")
             return None
         (entity,) = named
         if not isinstance(entity, str):
             return None
         if entity not in {known.entity_id for known in context.entities}:
-            self.unbound.append((where, f"Unknown bound entity: {book_id} {entity}"))
+            self._note(where, "Unknown bound entity: ", book_id, " ", entity)
             return None
         return entity
 
@@ -752,12 +756,23 @@ class _Resolver:
             if source_id not in classes:
                 continue
             if classes[source_id] == "financial":
-                issue = (
-                    f"No matching entity/date/basis source scope: {book_id} {period_id} {source_id}"
+                self._note(
+                    where,
+                    "No matching entity/date/basis source scope: ",
+                    book_id,
+                    " ",
+                    period_id,
+                    " ",
+                    source_id,
                 )
             else:
-                issue = f"Financial evidence source not classified financial: {book_id} {source_id}"
-            self.unbound.append((where, issue))
+                self._note(
+                    where,
+                    "Financial evidence source not classified financial: ",
+                    book_id,
+                    " ",
+                    source_id,
+                )
 
     def _facility(self, item: Marked, book: dict[str, Any]) -> str | None:
         # `fx_conversion_issues` keys rows by (facility_id, period_id); the last one wins.
@@ -772,7 +787,7 @@ class _Resolver:
             return _parsed_hash(FacilityObservation, matches[-1])
         conversion = item.holder.get("conversion_id")
         if isinstance(conversion, str):  # `fx_conversion_issues`' wording
-            self.unbound.append((item.path, f"FX conversion {conversion}: unknown facility/period"))
+            self._note(item.path, "FX conversion ", conversion, ": unknown facility/period")
         return None
 
     def _observation(self, item: Marked, book: dict[str, Any]) -> object | None:
@@ -790,14 +805,15 @@ class _Resolver:
             return None  # the shape rejection names what does not parse
         # `audit_explanation_issues`' wording, in its order.
         if annual not in parsed.periods or any(q not in parsed.periods for q in quarters):
-            self.unbound.append((item.path, f"Unknown audit explanation period: {explanation}"))
+            self._note(item.path, "Unknown audit explanation period: ", explanation)
             return None
         wanted = [annual] if item.kind == "annual-observation" else quarters
         found = [parsed.observations.get((period, metric)) for period in wanted]
         for period, digest in zip(wanted, found, strict=True):
             if digest is None:
-                issue = f"Stale audit explanation observation: {explanation} {period}"
-                self.unbound.append((item.path, issue))
+                self._note(
+                    item.path, "Stale audit explanation observation: ", explanation, " ", period
+                )
         if not all(found):
             return None
         return found[0] if item.kind == "annual-observation" else found
@@ -866,7 +882,7 @@ def prefill(model: type[BaseModel], payload: str, known: Known, kinds: frozenset
         exact_json(document) if changed else payload,
         tuple(item.path for item in changed),
         tuple(item.kind for item in changed),
-        tuple(dict.fromkeys(resolve.unbound)),
+        tuple(resolve.unbound),
         tuple(item.path for item in marked if item.name not in item.holder),
     )
 

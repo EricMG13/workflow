@@ -646,7 +646,7 @@ def validate_covenant_interpretation(
         scope = tuple(dict.fromkeys(quote.source_id for quote in _quotes(row)))
         for name, text in _texts(row):
             where = f"{path}.{name}"
-            if not text.strip():
+            if prose.is_blank(text):
                 issues.append(f"{where}: empty text")
                 continue
             issues.extend(f"{where}: {issue}" for issue in prose.issues(text, bound, names=names))

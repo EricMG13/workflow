@@ -574,11 +574,11 @@ def _bind(pack: PreparedPack, submission: BusinessContextSubmission) -> _Bound:
 
 
 def _blank(value: str) -> bool:
-    return not value.strip()
+    return prose.is_blank(value)
 
 
 def _populated(value: str) -> bool:
-    return value.strip().casefold() not in _PLACEHOLDERS
+    return not prose.is_blank(value) and value.strip().casefold() not in _PLACEHOLDERS
 
 
 def prohibited_issues(

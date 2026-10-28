@@ -30,6 +30,10 @@ added to the journal's own issues for the submit (`live.submission.submit_model_
 - `unread_citation_issues`: every `page:N` the payload cites was returned by `read_pages`
   earlier in the step. Other locators are not pages and are not checked by this rule.
 
+Each of these two rules gives at most 20 lines of at most 600 characters (0d-c): past 20 matches,
+the first 19 and a count of the rest. Its issues are built only for the lines shown, so a
+payload cannot make the rule's text, memory or time outgrow the payload.
+
 Task 8.9 (user decision 24 Oct 2026, every live step a tool loop): a step's tool set is the
 registry's (`registry.tool_sets`). A `pack` step is offered `search_pack`, `read_pages` (over
 its declared sources only: `PackTools(sources=...)`) and its submit; a `submit-only` step is
@@ -66,6 +70,7 @@ from pydantic import ValidationError
 
 from deploy_vii.contracts import Span
 from deploy_vii.cp1_workflow import FinancialSubmission
+from deploy_vii.execution import listed_issues
 from deploy_vii.financial_contracts import FinancialBook, StatementLine
 from deploy_vii.live.prompts import block, span_line
 from deploy_vii.live.schema import payload_document, strict_schema
@@ -1012,14 +1017,28 @@ def seen_tables(
     return tuple(tables)
 
 
-def _walk(node: object, path: str = "") -> Iterator[tuple[str, dict[str, Any]]]:
+def _walk(
+    node: object, path: tuple[str, ...] = ()
+) -> Iterator[tuple[tuple[str, ...], dict[str, Any]]]:
+    """Every dict under `node` with its path as segments (no joined string per node)."""
     if isinstance(node, dict):
         yield path, node
         for name, value in node.items():
-            yield from _walk(value, f"{path}.{name}" if path else str(name))
+            yield from _walk(value, (*path, str(name)))
     elif isinstance(node, list):
         for index, value in enumerate(node):
-            yield from _walk(value, f"{path}.{index}" if path else str(index))
+            yield from _walk(value, (*path, str(index)))
+
+
+def _dotted(path: tuple[str, ...]) -> Iterator[str]:
+    """The segments joined by ".", a "." only after a non-empty prefix (so an empty key adds
+    no separator, as the joined path always did)."""
+    started = False
+    for segment in path:
+        if started:
+            yield "."
+        yield segment
+        started = started or segment != ""
 
 
 def _enums(node: object) -> Iterator[tuple[str, str]]:
@@ -1059,50 +1078,90 @@ def absence_issues(step_id: str, payload: str, seen: Seen) -> tuple[str, ...]:
     search over it. `financials`: a `missing` observation or a `not_disclosed` disclosure needs
     a search over some source. CP-1A and CP-4 (task 8.9 fix round 1): a row carrying one of the
     step's `absence_markers` needs a search over some source, as `financials` (the row does not
-    name the source the undisclosed item belongs to). Other steps make no absence claim here."""
+    name the source the undisclosed item belongs to). Other steps make no absence claim here.
+    At most 20 lines of at most 600 characters (`listed_issues`): past 20 matches, the first 19
+    and a count of the rest, so a payload cannot make the rule's text outgrow the payload."""
     document = _document(payload)
     if document is None:
         return ()
+
+    def rest(count: int) -> str:
+        return f"{UNBACKED_ABSENCE}: {count} further absence claims not listed"
+
     markers = absence_markers(step_id)
     if markers and not seen.searched:
-        return tuple(
-            f"{UNBACKED_ABSENCE}: {path}.{name} {value}; search_pack before claiming it is not "
-            "disclosed"
-            for path, node in _walk(document)
-            for name, value in markers
-            if node.get(name) == value
+        return listed_issues(
+            (
+                (path, name, value)
+                for path, node in _walk(document)
+                for name, value in markers
+                if node.get(name) == value
+            ),
+            lambda m: (
+                UNBACKED_ABSENCE,
+                ": ",
+                *_dotted(m[0]),
+                ".",
+                m[1],
+                " ",
+                m[2],
+                "; search_pack before claiming it is not disclosed",
+            ),
+            rest,
         )
-    issues: list[str] = []
     if step_id == "source_context":
-        for path, node in _walk(document.get("sources")):
-            source_id = node.get("source_id")
-            if node.get("event_scan") == "no_events_identified" and isinstance(source_id, str):
-                if not seen.searched_source(source_id):
-                    issues.append(
-                        f"{UNBACKED_ABSENCE}: sources.{path}.event_scan no_events_identified for "
-                        f"{source_id}; search_pack that source before claiming no events"
-                    )
-    elif step_id == "financials" and not seen.searched:
-        for path, node in _walk(document):
-            status = node.get("status")
-            observation = status == "missing" and "observation_id" in node
-            disclosure = status == "not_disclosed" and "explanation" in node
-            if observation or disclosure:
-                issues.append(
-                    f"{UNBACKED_ABSENCE}: {path}.status {status}; search_pack before claiming a "
-                    "value or disclosure is absent"
-                )
-    return tuple(issues)
+        return listed_issues(
+            (
+                (path, node["source_id"])
+                for path, node in _walk(document.get("sources"))
+                if node.get("event_scan") == "no_events_identified"
+                and isinstance(node.get("source_id"), str)
+                and not seen.searched_source(node["source_id"])
+            ),
+            lambda m: (
+                UNBACKED_ABSENCE,
+                ": sources.",
+                *_dotted(m[0]),
+                ".event_scan no_events_identified for ",
+                m[1],
+                "; search_pack that source before claiming no events",
+            ),
+            rest,
+        )
+    if step_id == "financials" and not seen.searched:
+        return listed_issues(
+            (
+                (path, node["status"])
+                for path, node in _walk(document)
+                if (node.get("status") == "missing" and "observation_id" in node)
+                or (node.get("status") == "not_disclosed" and "explanation" in node)
+            ),
+            lambda m: (
+                UNBACKED_ABSENCE,
+                ": ",
+                *_dotted(m[0]),
+                ".status ",
+                m[1],
+                "; search_pack before claiming a value or disclosure is absent",
+            ),
+            rest,
+        )
+    return ()
 
 
 def unread_citation_issues(payload: str, seen: Seen) -> tuple[str, ...]:
-    """Every cited `page:N` locator that `read_pages` never returned in this step."""
+    """Every cited `page:N` locator that `read_pages` never returned in this step, in sorted
+    order: at most 20 lines (`listed_issues`), the first 19 and a count of the rest past 20."""
     unread = sorted(
         (source_id, locator)
         for source_id, locator in cited_locators(payload)
         if _PAGE.fullmatch(locator) and (source_id, locator) not in seen.read
     )
-    return tuple(f"{UNREAD_PAGE}: {source_id} {locator}" for source_id, locator in unread)
+    return listed_issues(
+        unread,
+        lambda page: (UNREAD_PAGE, ": ", page[0], " ", page[1]),
+        lambda count: f"{UNREAD_PAGE}: {count} further cited pages not listed",
+    )
 
 
 def _cites_locators(step_id: str) -> bool:
@@ -1190,7 +1249,8 @@ class ToolRules:
         floor's, then the absence and cited-page rules'. Either floor needs the retained
         `source_context` review (`context`), and the coverage floor the submit's extracted
         tables (`tables`, `seen_tables`); a `financials` submit without them raises, as does a
-        submit-only step's (no rule is defined for it)."""
+        submit-only step's (no rule is defined for it). The absence and cited-page rules give at
+        most 20 lines of at most 600 characters each (0d-c), whatever the payload."""
         if tool_set(step_id) == SUBMIT_ONLY:
             raise ValueError(f"{step_id} is submit-only: it checks no tool-loop rule")
         found: list[str] = []

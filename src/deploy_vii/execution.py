@@ -12,7 +12,7 @@ import json
 import os
 import re
 import tempfile
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -375,6 +375,39 @@ MAX_INTERRUPTION_CHARS = 300
 
 def shortened(text: str, limit: int = MAX_ISSUE_CHARS) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def clipped(parts: Iterable[str], limit: int = MAX_ISSUE_CHARS) -> str:
+    """`shortened("".join(parts), limit)`, never joining more than `limit + 1` characters, so a
+    line that quotes caller content is cut before it is built whole."""
+    kept: list[str] = []
+    size = 0
+    for part in parts:
+        if size + len(part) > limit:
+            kept.append(part[: limit + 1 - size])
+            return shortened("".join(kept), limit)
+        kept.append(part)
+        size += len(part)
+    return "".join(kept)
+
+
+def listed_issues[T](
+    found: Iterable[T], render: Callable[[T], Iterable[str]], rest: Callable[[int], str]
+) -> tuple[str, ...]:
+    """At most `MAX_ISSUES` lines: every item when there are at most that many, else the first
+    `MAX_ISSUES - 1` and `rest(n)` for the n left out. Only the items shown are kept and
+    rendered (`clipped`), so the list is a fixed point of `bounded_issues` and caller content
+    is never copied once per match."""
+    shown: list[T] = []
+    total = 0
+    for item in found:
+        if total < MAX_ISSUES:
+            shown.append(item)
+        total += 1
+    if total > MAX_ISSUES:
+        keep = MAX_ISSUES - 1
+        return (*(clipped(render(item)) for item in shown[:keep]), shortened(rest(total - keep)))
+    return tuple(clipped(render(item)) for item in shown)
 
 
 def bounded_issues(issues: Sequence[str]) -> tuple[str, ...]:

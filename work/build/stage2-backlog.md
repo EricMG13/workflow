@@ -1,0 +1,36 @@
+# Stage 2 backlog (AGENTS.md "Stage closure", b570399)
+
+Stage 1 is closed at `codex/checkpoint` e89b2a2. Only a High or Medium defect reopens a Stage 1 module. Everything else lands here, and each module applies its rows once, as its first Stage 2 task. Every row names its source and probe.
+
+## Every module
+- **Guard-limit notes in `methods/<cp>.md`**, written with the Stage 2 code:
+  - rule W, the accepted cost: a spaced range and a dash bullet are refused (CP-1D, CP-3D, CP-8, CP-2E);
+  - B8 (CP-2H);
+  - item 8 comma costs: a grouped figure ≥ 1,000, a decimal comma, a comma-space list, a figure after a year, and the day of a "Month D, YYYY" date (CP-1D, CP-3D, CP-8, CP-2E).
+
+  Sources: rulings round 12, round 13 item 8, addendum 2.
+- **Blank support and citation quotes** (round 13 addendum 3). Every owner module that takes citations refuses a quote that `is_blank`, with `<path>: empty text`, at the support or citation step, before the page-occurrence check. CP-4C is done in round 13. Inventory the rest first; where the defect is present it is Medium (CP-4C review, `<S>/cp4c-r12-review/p_blank_support_quote.py`).
+- **Caller-quoting issue lines** (protocol §5, 0d-c audit `work/build/stage1/0dc/r13-report.md`). When a core gains `RULES` or `_PRECHECKS`, build those lines only through `listed_issues`/`clipped`. The audit lists the f-string sites in cp1c, cp2a, cp2g, cp2h, cp3c, cp1d and cpdr.
+- **Owner items:**
+  - 30 product `assert`s;
+  - jscpd not wired;
+  - CP-2E `fx.` paths;
+  - the cp2h test loads the cp2g expected without a hash check (Info).
+
+## Per module
+| Module | Item | Source |
+|---|---|---|
+| CP-2H | Pin B8's "any later line": a row after the end, then a trailing one-field note, gets `Trigger terms not found` | cp2h/r12-review.md Low; `<S>/cp2h-r12-review/review_mutants.sh` `after_last_line_only` |
+| CP-L10 | Exact subtraction can store `-0` or exponent form; check the render path and normalise if needed | cpl10/r13-review.md Low; `<S>/cpl10-r13-review/edge.py` |
+| CP-L10 | Missing-change lineage | Stage 2 release |
+| CP-3C | Unsourced currency when `cash_closing` is missing, including all-blank currencies; conflicting status words in the minimum-cash and T4.18 seniority dependants; the `_check_value` message keeps its `CP-1` prefix | cp3c/r13-review.md Info 1–3 (LEAD) |
+| CP-2G | Item 5 `base_period` invariant: `CP-2G: CP-2A T2B.1 facts differ in period` | round 13 R1 L2 |
+| CP-2G | `Cp2aScenario.name` from `T2B.1.<row>.name` (manifest selection and lease :61) | round 13 R1 L2 (LEAD release) |
+| CP-2E | Label decimal: `_Check.labelled` `{label}\s+{v}(?![0-9])` accepts `spread 25.5` | end-review-questions.md (LEAD, open); `<S>/cp2e-r12/p_label_decimal.py` |
+| CP-3D | Info: a signed value_text is matched on the plain reading only (`margin -\n425 bps`) | cp3d/r12-review.md Info |
+| CP-2D, CP-3C | Oracle re-pin, then remove `PERIOD_DELTA`/`GAP_VALUE_CLASS_DELTA` and the re-pin guard; 6 CP-3C periods to `q4-2025`; CP-3C manifest `fact_copy_rule` and lease :146 | round 13 R1 M1 (LEAD release) |
+| CP-3D | Re-pin `amortisation_nonzero`, then remove `STAGE2_REFUSAL_DELTA` | round 13 addendum 2 (LEAD release) |
+| CP-1D | Recipe text in `expected.json $.refusal_rules.partly_supported` and builder :1025, with the comma-space wording | round 13 item 7 (LEAD release) |
+| All | `prose.is_blank` gains Cc, default-ignorables and U+2800 in LEAD's end batch; the `owners/blank.py` re-export inherits it | round 13 addendum 3 |
+
+`<S>` = `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad`

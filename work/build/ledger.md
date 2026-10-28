@@ -267,3 +267,4 @@
 - 2026-10-28 CP-2H round 12 add5fa8: B8 breached=True (15 cases; two round 11 tests flipped where B8 supersedes them; known limit pinned as accepted), B10 at _prose and _limitation with a BLANK_CASES adapter over 10 fields; 7/7 mutants; LEAD p_cp2h_b8_b10 inverted copy 0; b2_ruled_residual 0. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-precise
 - 2026-10-28 USER: use Sonnet implementers (mx-feature) for round 13 work. Reviews unchanged (mx-precise/mx-adversary per risk; mx-feature for ruling-text diffs)
 - 2026-10-28 CP-4C r12 implementer done: babfd53 (B10 every field incl plain R3 M2, B7 reserved {}[] after Bare figure; 9/9 mutants killed; gates y). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-adversary
+- 2026-10-28 CP-4C r12 review dispatched: mx-adversary on babfd53

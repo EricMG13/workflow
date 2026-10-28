@@ -942,14 +942,23 @@ CP1_EBITDA_NOT_POSITIVE = (
             {"status": "missing", "amount": None, "calculation_id": None, "limitation": "Gone"},
             CP1_EBITDA_MISSING,
         ),
-        (
+        (  # round 11 B6: an unknown CP-1 EBITDA names its state
             {"status": "conflicting", "amount": None, "calculation_id": None, "limitation": "Two"},
-            CP1_EBITDA_MISSING,
+            f"Not calculable: EBITDA is conflicting in CP-1 for {LTM}",
+        ),
+        (
+            {
+                "status": "not_applicable",
+                "amount": None,
+                "calculation_id": None,
+                "limitation": "NA",
+            },
+            f"Not calculable: EBITDA is not applicable in CP-1 for {LTM}",
         ),
         ({"amount": D(0)}, CP1_EBITDA_NOT_POSITIVE),
         ({"amount": D(-3)}, CP1_EBITDA_NOT_POSITIVE),
     ],
-    ids=["missing", "conflicting", "zero", "negative"],
+    ids=["missing", "conflicting", "not_applicable", "zero", "negative"],
 )
 def test_a2_5_cp1_ebitda_not_a_known_positive(changes: dict[str, Any], reason: str) -> None:
     ctx = _with_cp1(_context("positive"), "ebitda", **changes)
@@ -1374,6 +1383,15 @@ def test_m1_a_quote_no_line_starts_with_is_refused() -> None:
     assert _payload_issues(_quoting("Provisions  7  8  9  10  11  12"), ctx) == (NO_NUMBER,)
 
 
+def test_m1_a_line_holding_the_quote_mid_line_is_not_a_cited_row() -> None:
+    row = "Deferred items  1  1  1  1  5.00  1"
+    ctx = _with_page4(_context("positive"), row + "\nOther " + row)
+    payload = _quoting(row)
+    assert _payload_issues(payload, ctx) == ()
+    cells = {c.fact.fact_id: c.fact for c in _compute_with(ctx, payload).cells}
+    assert cells["T4E.2.c03.claim"].amount == 5
+
+
 def test_m1_a_quote_starting_two_different_lines_is_refused() -> None:
     ctx = _with_page4(_context("positive"), "Other  9  1  1  1  1  1\nOther  9  2  2  2  2  2")
     assert _payload_issues(_quoting("Other  9"), ctx) == (NO_NUMBER,)
@@ -1477,3 +1495,81 @@ def test_l4_a_downside_year_on_another_cp2a_scenario_is_an_invariant() -> None:
     with pytest.raises(ValueError, match="applies another CP-2A scenario"):
         if not _payload_issues(payload, bad):
             _compute_with(bad, payload)
+
+
+# --- round 11 (docs/rulings/2026-10-28-stage1.md B2, B3, B6; questions.md Q5-Q7) -------------------
+def test_b2_not_applicable_total_debt_is_a_missing_claim() -> None:
+    case = "fixture_debt_missing"
+    base = _context(case)
+    debt = next(f for f in base.cp1.t410 if f.row_id == "total_debt")
+    ctx = _with_cp1(base, "total_debt", status="not_applicable")
+    result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs(case).submission))
+    old = f"total debt is missing in CP-1 for {LTM}"
+    new = f"total debt is not applicable in CP-1 for {LTM}"
+    exp = EXPECTED["cases"][case]
+    want_facts = json.loads(json.dumps(exp["facts"]).replace(old, new))
+    assert [_record(c) for c in result.cells] == want_facts
+    assert list(result.own_limitations) == json.loads(
+        json.dumps(exp["own_limitations"]).replace(old, new)
+    )
+    ref = result.references[0].rows[0].fact  # the copy keeps CP-1's state verbatim
+    assert (ref.status, ref.limitation) == ("not_applicable", debt.limitation)
+
+
+def test_b3_a_name_or_label_with_a_figure_is_a_bare_figure_issue() -> None:
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = "Class 2"
+    payload["valuation"][0]["label"] = "Base FY2026"  # the claims spell it lower-case
+    assert _payload_issues(payload) == (
+        "claims[1].name: Bare figure: 2",
+        "valuation[0].label: Bare figure: fy2026",
+    )
+
+
+def test_b3_a_name_the_validator_accepts_composes() -> None:
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = "Tranche B 2027"
+    assert _payload_issues(payload) == ()
+    claims = _compute_with(_context("positive"), payload).claims
+    assert any("Tranche B 2027" in c.text for c in claims)
+
+
+def test_q6_a_quote_must_cover_whole_cells() -> None:
+    assert _payload_issues(_quoting("Pr")) == (NO_NUMBER,)
+    cut = "Other current liabilities  10  10  10  10  1"  # cuts the last figure
+    assert _payload_issues(_quoting(cut)) == (NO_NUMBER,)
+    assert _payload_issues(_quoting("Other current liabilities  10  10")) == ()
+
+
+@pytest.mark.parametrize("tail", ["\r", " "], ids=["bare CR", "U+2028"])
+def test_q7_the_cited_line_is_one_physical_line(tail: str) -> None:
+    row = "Deferred items  1  1  1  1  5.00  1"
+    ctx = _with_page4(_context("positive"), row + tail + "x")
+    assert _payload_issues(_quoting(row), ctx) == (NO_NUMBER,)
+    # the break past the quoted cells: whole cells hold (Q6), the line is still not one line
+    assert _payload_issues(_quoting("Deferred items  1  1  1  1  5.00"), ctx) == (NO_NUMBER,)
+
+
+def test_q7_a_trailing_cr_is_stripped() -> None:
+    row = "Deferred items  1  1  1  1  5.00  1"
+    assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row + "\r")) == ()
+
+
+def test_n1_a_row_longer_than_the_header_has_no_number() -> None:
+    row = "Deferred  items  1  2  3  4  5.00  6"
+    assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row)) == (NO_NUMBER,)
+
+
+def test_n2_identical_duplicate_lines_are_one_cited_row() -> None:
+    row = "Other  9  9  9  9  9  9"
+    ctx = _with_page4(_context("positive"), row + "\n" + row)
+    payload = _quoting(row)
+    assert _payload_issues(payload, ctx) == ()
+    cells = {c.fact.fact_id: c.fact for c in _compute_with(ctx, payload).cells}
+    assert cells["T4E.2.c03.claim"].amount == 9
+
+
+@pytest.mark.parametrize("cell", ["+5.00", ".5"])
+def test_n2_a_signed_plus_or_bare_fraction_cell_has_no_number(cell: str) -> None:
+    row = f"Deferred items  1  1  1  1  {cell}  1"
+    assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row)) == (NO_NUMBER,)

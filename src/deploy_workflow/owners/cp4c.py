@@ -516,12 +516,16 @@ def _row_amount(page: str, quote: str, column: str) -> Decimal | None:
     """The amount under `column` on the cited row: the one page line that starts with the quote
     (fix 1 Q1). None, the round 8 A-2 #11 outcome, when no line or several different lines start
     with the quote, when the row's cells do not line up with the header's (Q2), or when the cell
-    is not an ASCII decimal figure (Q4)."""
-    lines = {x for x in page.split("\n") if x.startswith(quote)}
+    is not an ASCII decimal figure (Q4); also when the quote cuts a cell (Q6: its cells are a
+    prefix of the line's, each one equal) or the line is not one physical line (Q7)."""
+    lines = {x.removesuffix("\r") for x in page.split("\n") if x.startswith(quote)}
     header = _header(page)
     if len(lines) != 1 or column not in header[1:]:
         return None
-    cells = _CELLS.split(lines.pop())
+    line = lines.pop()
+    cells, quoted = _CELLS.split(line), _CELLS.split(quote)
+    if len(line.splitlines()) != 1 or cells[: len(quoted)] != quoted:
+        return None
     if len(cells) != len(header):
         return None
     cell = cells[header.index(column)]
@@ -529,15 +533,21 @@ def _row_amount(page: str, quote: str, column: str) -> Decimal | None:
 
 
 def _debt_claim(debt: Fact) -> Val:
-    """CP-1 total debt as the secured class's claim (round 8 A-2 #6)."""
-    if debt.status == "known" and debt.amount is not None:
-        return _known(debt.amount)
-    if debt.status in ("missing", "conflicting"):
-        return Val(None, f"Not calculable: total debt is {debt.status} in CP-1 for {LTM_PERIOD}")
-    raise ValueError(
-        f"CP-4C: CP-1 total debt has status {debt.status}; round 8 A-2 #6 words the missing and "
-        "conflicting states only"
-    )
+    """CP-1 total debt as the secured class's claim (round 8 A-2 #6; round 11 B2)."""
+    if debt.status != "known":
+        state = _STATE_WORD[debt.status]
+        return Val(None, f"Not calculable: total debt is {state} in CP-1 for {LTM_PERIOD}")
+    if debt.amount is None:
+        raise ValueError(f"CP-4C: CP-1 total debt {debt.fact_id} is known without an amount")
+    return _known(debt.amount)
+
+
+# an unsettled CP-1 fact's state as its reason names it (round 8 A-2 #6, round 11 B2 and B6)
+_STATE_WORD = {
+    "missing": "missing",
+    "conflicting": "conflicting",
+    "not_applicable": "not applicable",
+}
 
 
 def claim_classes(
@@ -921,6 +931,11 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
                 issues.append(f"{path}: empty text")
             elif text.splitlines() != [text]:
                 issues.append(f"{path}: one line only")
+            else:  # round 11 B3: as the claims spell it (a valuation label in lower case)
+                spelt = text.lower() if path.startswith("valuation") else text
+                issues += [
+                    f"{path}: Bare figure: {t}" for t in prose.bare_figures(spelt, names=names)
+                ]
             continue
         if kind == "run":
             if not text.strip():
@@ -1528,9 +1543,11 @@ NO_SCENARIO = "The base valuation uses no CP-2A scenario"
 
 def _cp1_ebitda(f: Fact) -> Val:
     """CP-1 EBITDA as the implied multiple's denominator: a known positive amount, else missing
-    with the round 8 A-2 #5 reason (no own line)."""
+    with the round 8 A-2 #5 reason naming its state (round 11 B6; no own line)."""
     if f.status != "known":
-        return Val(None, f"Not calculable: EBITDA is missing in CP-1 for {LTM_PERIOD}")
+        return Val(
+            None, f"Not calculable: EBITDA is {_STATE_WORD[f.status]} in CP-1 for {LTM_PERIOD}"
+        )
     if f.amount is None:  # an upstream contract break, as for total debt (fix 1 Q3)
         raise ValueError(f"CP-4C: CP-1 EBITDA {f.fact_id} is known without an amount; invariant")
     if f.amount <= 0:

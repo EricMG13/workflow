@@ -301,3 +301,4 @@
 - 2026-10-28 CP-4C r13 done: 805315e (item 2 source-row, item 5 base_period, plain-field B7 Low, blank support/amount quotes addendum 3). agent=mx-feature fix-rounds=0 gates-first-pass=n. Review: mx-adversary
 - 2026-10-28 Dispatched: CP-4C r13 review (mx-adversary); Stage 2 plan draft (Plan agent, read-only) -> work/build/stage2/plan.md when it returns
 - 2026-10-28 LEAD addendum 4 cherry-picked (94703cc): CP-1D H1/M1 one rule (count every numeral run in both readings; exactly one whole run) replaces controller (A)/(M1); (B) confirmed; sent to CP-1D fix1. CP-2D (a) Modules decides: state-word form in LIQ-01/GAP-01/FUNDING_GAP_ON_CASH_ALONE, added to CP-2D fix1 (Medium); (b)(c)(d) backlog; (e) as built. LEAD backlog lines added to stage2-backlog.md
+- 2026-10-28 CP-2E r13 done: ccdeeeb (item 8 comma joins, B3 W exemption with index-0 guard; 8/8 mutants; frozen unchanged). agent=mx-feature fix-rounds=0 gates-first-pass=n. Review: mx-precise

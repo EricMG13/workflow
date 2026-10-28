@@ -677,6 +677,99 @@ def test_runway_revolver_missing_with_burn_is_missing() -> None:
     assert b.months_to_minimum_cash is None
 
 
+_NOT_KNOWN = [
+    ("conflicting", "conflicting"),
+    ("not_applicable", "not applicable"),
+]
+
+
+def _unknown(status: cp2d.OperandStatus) -> cp2d.Operand:
+    return cp2d.Operand(status, None, None, "CP-1: limitation")
+
+
+@pytest.mark.parametrize(
+    ("field", "label"), [("rcf_commitment", "RCF commitment"), ("rcf_drawn", "RCF drawings")]
+)
+@pytest.mark.parametrize(("status", "word"), _NOT_KNOWN)
+def test_runway_names_the_revolver_operand_and_its_state(
+    field: str, label: str, status: cp2d.OperandStatus, word: str
+) -> None:
+    # round 13 R1 M3 (ruled): a conflicting or not applicable operand is not "undisclosed".
+    operands = _ro(_base_operands(), cfo=Decimal(13), **{field: _unknown(status)})
+    b = _compose(operands, 24, "10")
+    assert b.runway_state == "missing"
+    assert b.runway_reason == f"Not calculable: {label} is {word}"
+    assert b.months_to_minimum_cash is None
+    assert "undisclosed" not in (b.runway_reason or "")
+
+
+@pytest.mark.parametrize(("field"), ["rcf_commitment", "rcf_drawn"])
+@pytest.mark.parametrize("status", ["conflicting", "not_applicable"])
+def test_absent_reads_only_missing_as_undisclosed(field: str, status: cp2d.OperandStatus) -> None:
+    # R1 (Low): a conflicting or not applicable revolver copy is not an undisclosed term.
+    operands = _ro(_base_operands(), **{field: _unknown(status)})
+    assert cp2d._absent(operands, field) is False
+    assert cp2d._absent(_ro(operands, **{field: cp2d.Operand("missing", None, None, "x")}), field)
+    assert cp2d._absent(_ro(operands, **{field: None}), field)
+    b = _compose(operands, 24, "10")
+    assert isinstance(b.undrawn_revolver, cp2d.OperandGap)
+    assert b.undrawn_revolver.status == status
+
+
+@pytest.mark.parametrize("status", ["conflicting", "not_applicable"])
+def test_empty_schedule_never_reads_unknown_total_debt_as_zero(
+    status: cp2d.OperandStatus,
+) -> None:
+    # R3 (Low): only a known zero total debt turns an empty schedule into known zero totals.
+    operands = replace(_base_operands(), facilities=(), total_debt_bs=_unknown(status))
+    b = _compose(operands, 24, "10")
+    assert isinstance(b.funding_gap, cp2d.Gap)
+    assert b.funding_gap.reason == cp2d.SCHEDULE_EMPTY
+    assert isinstance(b.maturities_in_horizon, cp2d.Gap)
+
+
+@pytest.mark.parametrize("status", ["conflicting", "not_applicable", "missing"])
+def test_cp1_cross_check_never_reads_unknown_metric_as_zero(status: cp2d.OperandStatus) -> None:
+    # R4 (Low): a non-known T4.10 metric is "CP-1 reports no value", never a recomputed-vs-0 gap.
+    operands = replace(_base_operands(), cash_closing=_unknown(status))
+    b = _compose(operands, 24, "10")
+    out = dict(cp2d.check_cp1_totals(operands=operands, bridge=b))
+    assert out["cash_closing"] == cp2d.CP1_REPORTS_NO.format(label="cash_closing")
+
+
+@pytest.mark.parametrize(
+    ("field", "label"), [("rcf_commitment", "RCF commitment"), ("rcf_drawn", "RCF drawings")]
+)
+@pytest.mark.parametrize(("status", "word"), _NOT_KNOWN)
+def test_unknown_revolver_prose_uses_the_state_word_not_undisclosed(
+    field: str, label: str, status: cp2d.OperandStatus, word: str
+) -> None:
+    # LEAD addendum 4: LIQ-01, GAP-01 and the own limitation name the operand and its state.
+    inputs = _inputs("positive")
+    operands = _ro(_operands("fixture_burn"), **{field: _unknown(status)})
+    result = cp2d.compute(replace(inputs, operands=operands))
+    liq = _claim(result, "CP-2D-LIQ-01")
+    assert liq.template == (
+        f"Available liquidity at 31 Dec 2025 is not calculated: [T2E.2.r07] needs {label}, "
+        f"which is {word}; cash is {{T2E.2.r01|US$ m}}."
+    )
+    gap = _claim(result, "CP-2D-GAP-01")
+    assert gap.template == (
+        f"The funding gap is not calculated because {label} is {word}; cash-only headroom over "
+        "the assumed minimum cash is {T2E.5.r05|US$ m}."
+    )
+    assert prose.check(liq.template, refs={"T2E.2.r01"}, gaps={"T2E.2.r07"}) == ()
+    assert prose.check(gap.template, refs={"T2E.5.r05"}, gaps=()) == ()
+    limitation = (
+        f"The funding gap is not calculated because {label} is {word}; the cash-only headroom "
+        "over minimum cash is shown as a lower bound."
+    )
+    assert prose.bare_figures(limitation) == ()
+    assert limitation in result.own_limitations
+    for text in (liq.text, gap.text, *result.own_limitations):
+        assert "undisclosed" not in text
+
+
 def test_fixture_runway_reason_is_the_lease_text() -> None:
     b = _bridge("fixture_rcf_undisclosed_min_above_cash")
     assert b.runway_reason == "Not calculable: revolver undisclosed"

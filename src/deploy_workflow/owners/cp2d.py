@@ -552,6 +552,8 @@ def _runway(
         # A revolver is never negative, so cash alone clearing the minimum is enough.
         if annual >= 0 and cash - minimum_cash >= 0:
             return "not_reached", None, None
+        if isinstance(undrawn, OperandGap):  # conflicting or not applicable: name the operand
+            return "missing", undrawn.reason, None
         return "missing", revolver_reason, None
     start = cash + undrawn - minimum_cash
     if annual >= 0:
@@ -819,6 +821,12 @@ FUNDING_GAP_ON_CASH_ALONE_DRAWINGS = (
     "The funding gap is not calculated because the revolver drawings are undisclosed; the "
     "cash-only headroom over minimum cash is shown as a lower bound."
 )
+# Round 13 (LEAD addendum 4): a conflicting or not applicable revolver operand is named with its
+# state, in GAP_OPERAND's shape, never called undisclosed.
+FUNDING_GAP_ON_CASH_ALONE_STATE = (
+    "The funding gap is not calculated because {label} is {state}; the cash-only headroom over "
+    "minimum cash is shown as a lower bound."
+)
 SCHEDULE_EMPTY_LIMITATION = (
     "The T4.18 facility schedule lists no facility; maturity-wall figures are not calculated."
 )
@@ -906,13 +914,26 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
     for label, text in check_cp1_totals(operands=operands, bridge=bridge):
         out.append((f"CP-1 {label} cross-check", "Limitation", text))
     if isinstance(bridge.undrawn_revolver, Gap):
-        text = (
-            FUNDING_GAP_ON_CASH_ALONE_DRAWINGS
-            if bridge.undrawn_revolver.reason == DRAWINGS_UNDRAWN
-            else FUNDING_GAP_ON_CASH_ALONE
-        )
+        named = revolver_state(bridge.undrawn_revolver)
+        if named is not None:
+            text = FUNDING_GAP_ON_CASH_ALONE_STATE.format(label=named[0], state=named[1])
+        elif bridge.undrawn_revolver.reason == DRAWINGS_UNDRAWN:
+            text = FUNDING_GAP_ON_CASH_ALONE_DRAWINGS
+        else:
+            text = FUNDING_GAP_ON_CASH_ALONE
         out.append(("Funding gap on cash alone", "Limitation", text))
     return tuple(out)
+
+
+def revolver_state(undrawn: Num) -> tuple[str, str] | None:
+    """(label, state word) of the revolver operand that is conflicting or not applicable."""
+    if not isinstance(undrawn, OperandGap):
+        return None
+    for name in ("rcf_commitment", "rcf_drawn"):
+        label = OPERAND_LABELS[name]
+        if undrawn.reason == state_reason(label, undrawn.status):
+            return label, STATE_WORD[undrawn.status]
+    return None
 
 
 def own_limitations(*, operands: Operands, bridge: Bridge) -> tuple[str, ...]:
@@ -1366,6 +1387,14 @@ LIQ_DRAWINGS = (
     "Available liquidity at {d} is not calculated: [T2E.2.r07] needs the revolver drawings, "
     "which are undisclosed; cash is {cash}."
 )
+LIQ_STATE = (
+    "Available liquidity at {d} is not calculated: [T2E.2.r07] needs {label}, which is "
+    "{state}; cash is {cash}."
+)
+GAP_STATE = (
+    "The funding gap is not calculated because {label} is {state}; cash-only headroom over the "
+    "assumed minimum cash is {headroom}."
+)
 GAP_UNDISCLOSED = (
     "The funding gap is not calculated because the revolver is undisclosed; cash-only headroom "
     "over the assumed minimum cash is {headroom}."
@@ -1486,9 +1515,14 @@ def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimTex
     d0 = format_date(b.balance_date)
     revolver = b.undrawn_revolver
     drawings = isinstance(revolver, Gap) and revolver.reason == DRAWINGS_UNDRAWN
+    named = revolver_state(revolver)
     if isinstance(revolver, Gap) and not c.known("T2E.2.r07"):
         form = LIQ_DRAWINGS if drawings else LIQ_UNDISCLOSED
         liquidity = form.format(d=d0, cash=c.slot("T2E.2.r01"))
+        if named is not None:
+            liquidity = LIQ_STATE.format(
+                d=d0, label=named[0], state=named[1], cash=c.slot("T2E.2.r01")
+            )
     else:
         liquidity = (
             f"Available liquidity at {d0} is {c.slot('T2E.2.r07')} (cash {c.slot('T2E.2.r01')} "
@@ -1538,6 +1572,8 @@ def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimTex
         # horizon end, and with it T2E.5.r05, is known there.
         missing = _gap_missing(o, b)
         form = GAP_DRAWINGS if drawings else GAP_UNDISCLOSED
+        if named is not None:
+            form = GAP_STATE.format(label=named[0], state=named[1], headroom="{headroom}")
         template = missing or form.format(headroom=c.slot("T2E.5.r05"))
         out.append(c.claim("CP-2D-GAP-01", template, gap_cites))
     return tuple(out)

@@ -165,7 +165,7 @@
       {
         "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
         "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-        "affected_analysis": "Earnings and cash generation topics",
+        "affected_analysis": "overall",
         "severity": "Material",
         "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
       }
@@ -189,7 +189,7 @@
       "rationale": "Nothing in the two middle quarters calls for a closer look beyond a small build in cash.",
       "category": "Analyst Interpretation",
       "confidence": "Low",
-      "limitation": "Leverage and coverage cannot be compared because the financial foundation has no twelve-month basis for either quarter."
+      "limitation": null
     },
     "gaps": []
   },
@@ -229,7 +229,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -271,7 +271,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -320,7 +320,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -369,7 +369,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -404,7 +404,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -453,7 +453,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -495,7 +495,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -537,7 +537,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -579,7 +579,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -621,7 +621,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -663,7 +663,7 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-            "affected_analysis": "Earnings and cash generation topics",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }
@@ -704,7 +704,308 @@
           {
             "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
             "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r13",
+      "class": "overall confidence is Insufficient Information exactly when its category is (category Insufficient Information, confidence Medium)",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Insufficient Information",
+          "confidence": "Medium",
+          "limitation": "The comparison rests on two quarters only."
+        },
+        "gaps": [
+          {
+            "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r14",
+      "class": "Insufficient Information overall without its limitation",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Insufficient Information",
+          "confidence": "Insufficient Information",
+          "limitation": null
+        },
+        "gaps": [
+          {
+            "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r15",
+      "class": "limitation on an overall that is not Insufficient Information",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Analyst Interpretation",
+          "confidence": "Medium",
+          "limitation": "A limitation without a gap."
+        },
+        "gaps": [
+          {
+            "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r16",
+      "class": "gap names no topic of the view and not `overall`",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Analyst Interpretation",
+          "confidence": "Medium",
+          "limitation": null
+        },
+        "gaps": [
+          {
+            "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
             "affected_analysis": "Earnings and cash generation topics",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r17",
+      "class": "gap with a whitespace-only missing item (passes the product Text type; a content refusal)",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Analyst Interpretation",
+          "confidence": "Medium",
+          "limitation": null
+        },
+        "gaps": [
+          {
+            "gap": "   ",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r18",
+      "class": "gap text with a digit",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Analyst Interpretation",
+          "confidence": "Medium",
+          "limitation": null
+        },
+        "gaps": [
+          {
+            "gap": "No statements for 2024 are in the pack.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          }
+        ]
+      }
+    },
+    {
+      "id": "r19",
+      "class": "gap repeated",
+      "issue_kind": "content",
+      "payload": {
+        "comparison": {
+          "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+        },
+        "assessments": [
+          {
+            "topic_id": "cash",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
+            "credit_transmission": "A larger cash balance supports near-term liquidity but is funded by additional debt, so gross and net positions should be read together."
+          },
+          {
+            "topic_id": "total_debt",
+            "category": "Analyst Interpretation",
+            "confidence": "Medium",
+            "assessment": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
+            "credit_transmission": "Higher gross debt raises interest cost and rollover exposure even when net debt is flat."
+          }
+        ],
+        "overall": {
+          "rationale": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
+          "category": "Analyst Interpretation",
+          "confidence": "Medium",
+          "limitation": null
+        },
+        "gaps": [
+          {
+            "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
+            "severity": "Material",
+            "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
+          },
+          {
+            "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
+            "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
+            "affected_analysis": "overall",
             "severity": "Material",
             "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners."
           }

@@ -98,8 +98,6 @@ from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
 SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2"})
-# The entries of a live-contract module; an owner-only module's entry is "owner_core" (G1-X §1).
-ENTRIES = ("cp0_review", "model_payload")
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
 # G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
 # raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
@@ -123,8 +121,8 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
-# invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows; a
-# module without one cannot have an invalid step verified (refused `not_permitted`).
+# invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
+# every analytical module but CP-0 and CP-1 needs one, or create refuses it (G1-X §2).
 _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepValidation]] = {
     "CP-1A": cp1a.ENTRY_VALIDATOR,
     "CP-2": cp2.ENTRY_VALIDATOR,
@@ -555,27 +553,46 @@ def _step(specs: Mapping[str, OwnerSpec], module_id: str, step_id: str) -> StepS
 def _check_steps(module_id: str, spec: OwnerSpec) -> None:
     """The reference spec of one analytical module is one G1-X can serve (protocol §1-§3).
 
-    A live-contract module keeps its registry chain, a live entry and the chain's pack and
-    extraction tools. An owner-only module (`step_chain` raises "has no live step contract")
-    has `entry == "owner_core"` exactly and a registered core whose `STEP_IDS` (nonempty and
-    distinct, as `Execution.submit_step` requires) are its steps;
-    its step ids stay outside `live.submission.STEPS` (so `_fill` reads the core's `SCHEMAS`),
-    it offers no statement extraction, and a `journaled` step has pack sources (`RULES` judges
-    the session's `Seen`). Every step: no upstream grant, some evidence (pack sources or a read),
-    `module_context` only with a `_VIEWS` entry, and the financial `precheck` rules and CP-1
-    projection only on CP-0/CP-1, whose binding they take."""
+    The entry is the one `submit_review` and `_entry_outcome` dispatch for the module:
+    `cp0_review` for CP-0, `model_payload` for any other live-contract module, `owner_core` for
+    an owner-only one (`step_chain` raises "has no live step contract"). Every module but CP-0
+    and CP-1 has an `_ENTRY_VALIDATORS` row (§2). A live-contract module keeps its registry
+    chain and the chain's pack and extraction tools. An owner-only module has a registered,
+    complete core: `STEP_IDS` (nonempty and distinct, as `Execution.submit_step` requires) are
+    its steps, `SCHEMAS[step]` is each step's schema, `submit` is callable and so is `RULES`
+    when a step is journaled. Its step ids stay outside `live.submission.STEPS` (so `_fill`
+    reads the core's `SCHEMAS`), it offers no statement extraction, and a `journaled` step has
+    pack sources (`RULES` judges the session's `Seen`). Every step: no upstream grant, some
+    evidence (pack sources or a read), `module_context` only with a `_VIEWS` entry, and the
+    financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
+    take."""
     core = _CORES.get(module_id)
     try:
         chain: StepChain | None = step_chain(module_id)
     except ValueError:
         chain = None
+    entry = (
+        "owner_core" if chain is None else "cp0_review" if module_id == "CP-0" else "model_payload"
+    )
+    if (
+        spec.entry != entry
+        or (core is None) == (chain is None)
+        or (module_id not in _FINANCIAL_MODULES and module_id not in _ENTRY_VALIDATORS)
+    ):
+        raise WorkflowError("not_permitted")
     if chain is None:
-        if spec.entry != "owner_core" or core is None:
+        schemas = getattr(core, "SCHEMAS", {})
+        if (
+            not callable(getattr(core, "submit", None))
+            or (
+                any(s.rules == "journaled" for s in spec.steps)
+                and not callable(getattr(core, "RULES", None))
+            )
+            or any(schemas.get(s.step_id) is not s.schema for s in spec.steps)
+        ):
             raise WorkflowError("not_permitted")
-        sequence = _sequence(module_id)
+        sequence = tuple(getattr(core, "STEP_IDS", ()))
     else:
-        if spec.entry not in ENTRIES or core is not None:
-            raise WorkflowError("not_permitted")
         sequence = chain.steps
     # `Execution.submit_step` takes only a nonempty, duplicate-free sequence.
     if (
@@ -1621,10 +1638,22 @@ def _verify_submissions(
             raise WorkflowError("identity_mismatch")
         binding = submission.binding
         spec = _step(specs, binding.binding.module_id, binding.binding.step_id)
+        # R4-3, G1-X §3: as at runtime, a step whose inputs are not "none" is read on its own
+        # binding before its payload is filled or its gate runs.
+        if spec.inputs != "none" and not any(
+            r.binding == binding.binding for r in receipt.input_reads
+        ):
+            raise WorkflowError("identity_mismatch")
         historical = _hist(store, binding.binding)
-        filled, resolved, paths, kinds = _fill(
-            historical, binding.binding, _raw(store, binding.payload_sha256)
-        )
+        raw = _raw(store, binding.payload_sha256)
+        try:
+            filled, resolved, paths, kinds = _fill(historical, binding.binding, raw)
+        except TypeError:
+            # R4-4, controller ruling on M1: the recorded payload is tamperable, and a forged
+            # discriminator value that is unhashable makes `live.schema.normalise` raise
+            # `TypeError` (`_Walker.branch`; the tag-type guard there is LEAD's). Fails closed;
+            # remove this mapping once that guard lands.
+            raise WorkflowError("identity_mismatch") from None
         if (filled, resolved, paths, kinds) != (
             _raw(store, submission.stored_payload_sha256),
             submission.nulls_resolved,
@@ -1646,12 +1675,6 @@ def _verify_submissions(
         issues = _gate(historical, binding.binding, spec, filled, evidence)
         after = _snapshot(store, submission.snapshot_after_sha256)
         if after.run != receipt.run or after.pack_sha256 != receipt.pack_sha256:
-            raise WorkflowError("identity_mismatch")
-        # R4-3, G1-X §3: the runtime refuses any submit of a step whose inputs are not "none"
-        # before a read on its own binding, and checks it before the gate.
-        if spec.inputs != "none" and not any(
-            r.binding == binding.binding for r in receipt.input_reads
-        ):
             raise WorkflowError("identity_mismatch")
         try:
             canonical: str | None = spec.schema.model_validate_json(filled).content_hash()
@@ -1968,7 +1991,9 @@ def verify_owner_run_receipt(
     Exception mapping (S1a R4-4, as B1 N2): a tamper cause refuses `identity_mismatch`. Those are
     evidence that fails to parse or to hash (`ValueError`: pydantic, JSON, UTF-8, the store's
     blob and snapshot checks, the core refusals) and evidence that is missing or unreadable
-    (`OSError`); every lookup a forged record can reach is an explicit check. Programming errors
+    (`OSError`); every lookup a forged record can reach is an explicit check. One call maps a
+    `TypeError` too: `_verify_submissions` filling a recorded payload, which a forged
+    discriminator value makes `live.schema.normalise` raise (M1). Elsewhere programming errors
     (`TypeError`, `KeyError`, `StopIteration`, `AttributeError`, ...) propagate unchanged."""
     try:
         receipt = OwnerRunReceipt.model_validate_json(receipt.model_dump_json())

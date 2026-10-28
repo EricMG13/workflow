@@ -25,11 +25,11 @@ from dataclasses import replace
 from functools import partial
 from pathlib import Path
 from types import MappingProxyType, ModuleType, SimpleNamespace
-from typing import Any
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 import pytest
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
 from deploy_vii.contracts import Contract, Module, Run
 from deploy_vii.execution import (
@@ -78,9 +78,22 @@ class SourcedSubmission(Contract):
     cites: tuple[Cite, ...] = ()
 
 
+class Prose(Contract):
+    kind: Literal["prose"]
+    text: str
+
+
+class Cited(Contract):
+    kind: Literal["cited"]
+    evidence_id: str
+
+
 class ViewedSubmission(Contract):
+    """A discriminated union, as any owner core's schema may carry one (M1)."""
+
     note: str
     tags: tuple[str, ...] = ()
+    parts: tuple[Annotated[Prose | Cited, Field(discriminator="kind")], ...] = ()
 
 
 SCHEMAS: dict[str, type[SourcedSubmission] | type[ViewedSubmission]] = {
@@ -331,21 +344,22 @@ def g1x(monkeypatch: pytest.MonkeyPatch) -> Iterator[SimpleNamespace]:
 # --- run helpers ------------------------------------------------------------------------------
 
 
-def _pack() -> PreparedPack:
-    """The S1 positive pack with the fake module the only requested module (plan CP-0, CP-3D)."""
+def _pack(*requested: str) -> PreparedPack:
+    """The S1 positive pack with `requested` (default: the fake module alone, plan CP-0, CP-3D)
+    the requested modules."""
     pack = runs.make_pack("positive")
     document = json.loads(pack.run.model_dump_json())
-    document["requested_modules"] = [MODULE]
+    document["requested_modules"] = list(requested or (MODULE,))
     return PreparedPack(run=Run.model_validate_json(json.dumps(document)), sources=pack.sources)
 
 
-def _cp0_review(pack: PreparedPack) -> str:
-    """The S1 CP-0 literal (READY, "Run <module>") with its CP-1A consumer row standing for the
-    fake module, the only live consumer of this plan."""
+def _cp0_review(pack: PreparedPack, module: str = MODULE) -> str:
+    """The S1 CP-0 literal (READY, "Run <module>") with its CP-1A consumer row standing for
+    `module`, the only live consumer of this plan."""
     review = json.loads(runs.literal("positive", "readiness_review", pack))
     review["pack_sha256"] = pack.content_hash()
     consumer = next(c for c in review["consumers"] if c["module_id"] == "CP-1A")
-    review["consumers"] = [{**consumer, "module_id": MODULE}]
+    review["consumers"] = [{**consumer, "module_id": module}]
     return json.dumps(review)
 
 
@@ -430,7 +444,30 @@ def _sealed(root: Path) -> Any:
 def test_fake_module_is_owner_only_and_plans_after_cp0() -> None:
     with pytest.raises(ValueError, match="has no live step contract"):
         step_chain(MODULE)
-    assert plan([MODULE]) == ("CP-0", MODULE)
+    assert plan((MODULE,)) == ("CP-0", MODULE)
+
+
+Variant = tuple[str, Any, Callable[[pytest.MonkeyPatch], None]]
+
+
+def _unchanged(m: pytest.MonkeyPatch) -> None:
+    pass
+
+
+def _refused_at_create(root: Path, variants: dict[str, Variant]) -> None:
+    """Each variant (the module requested, the spec standing for its module's row, a registry
+    patch) is refused `not_permitted` at create and writes nothing."""
+    for label, (requested, variant, patch) in variants.items():
+        directory = root / label.replace(" ", "-")
+        directory.mkdir()
+        with pytest.MonkeyPatch.context() as m:
+            specs = MappingProxyType({**owner.OWNER_SPECS, variant.module_id: variant})
+            m.setattr(owner, "OWNER_SPECS", specs)
+            patch(m)
+            with pytest.raises(WorkflowError) as caught:
+                owner.OwnerWorkflow.create(directory / "store", _pack(requested), specs=specs)
+        assert caught.value.code == "not_permitted", label
+        assert list(directory.iterdir()) == [], label
 
 
 def test_owner_only_spec_must_be_served_by_its_core(g1x: SimpleNamespace, tmp_path: Path) -> None:
@@ -438,50 +475,118 @@ def test_owner_only_spec_must_be_served_by_its_core(g1x: SimpleNamespace, tmp_pa
     `STEP_IDS`; a live-contract module never takes the owner-core entry. Refusals write nothing."""
     spec = g1x.spec
     sourced, viewed = spec.steps
-    variants: dict[str, tuple[str, Any, Callable[[pytest.MonkeyPatch], None]]] = {
-        "live entry": (MODULE, replace(spec, entry="model_payload"), lambda m: None),
-        "no registered core": (MODULE, spec, lambda m: m.delitem(owner._CORES, MODULE)),
-        "steps differ from STEP_IDS": (MODULE, replace(spec, steps=(sourced,)), lambda m: None),
-        "module_context without a view": (MODULE, spec, lambda m: m.delitem(owner._VIEWS, VIEWED)),
-        "journaled without sources": (
-            MODULE,
-            replace(spec, steps=(replace(sourced, sources=False), viewed)),
-            lambda m: None,
-        ),
-        "extraction offered": (
-            MODULE,
-            replace(spec, steps=(replace(sourced, extract=True), viewed)),
-            lambda m: None,
-        ),
-        "financial precheck rules": (
-            MODULE,
-            replace(spec, steps=(sourced, replace(viewed, rules="precheck"))),
-            lambda m: None,
-        ),
-        "live-contract module with the owner-core entry": (
-            "CP-1A",
-            replace(owner.OWNER_SPECS["CP-1A"], entry="owner_core"),
-            lambda m: None,
-        ),
+    _refused_at_create(
+        tmp_path,
+        {
+            "live entry": (MODULE, replace(spec, entry="model_payload"), _unchanged),
+            "no registered core": (MODULE, spec, lambda m: m.delitem(owner._CORES, MODULE)),
+            "steps differ from STEP_IDS": (MODULE, replace(spec, steps=(sourced,)), _unchanged),
+            "module_context without a view": (
+                MODULE,
+                spec,
+                lambda m: m.delitem(owner._VIEWS, VIEWED),
+            ),
+            "journaled without sources": (
+                MODULE,
+                replace(spec, steps=(replace(sourced, sources=False), viewed)),
+                _unchanged,
+            ),
+            "extraction offered": (
+                MODULE,
+                replace(spec, steps=(replace(sourced, extract=True), viewed)),
+                _unchanged,
+            ),
+            "financial precheck rules": (
+                MODULE,
+                replace(spec, steps=(sourced, replace(viewed, rules="precheck"))),
+                _unchanged,
+            ),
+            "live-contract module with the owner-core entry": (
+                "CP-1A",
+                replace(owner.OWNER_SPECS["CP-1A"], entry="owner_core"),
+                _unchanged,
+            ),
+        },
+    )
+
+
+def test_entry_follows_from_the_module(g1x: SimpleNamespace, tmp_path: Path) -> None:
+    """L1: the entry is the one `submit_review` and `_entry_outcome` dispatch for the module:
+    `cp0_review` for CP-0 only, `model_payload` for every other live-contract module."""
+    _refused_at_create(
+        tmp_path,
+        {
+            "CP-1A with the CP-0 entry": (
+                "CP-1A",
+                replace(owner.OWNER_SPECS["CP-1A"], entry="cp0_review"),
+                _unchanged,
+            ),
+            "CP-0 with the model-payload entry": (
+                MODULE,
+                replace(owner.OWNER_SPECS["CP-0"], entry="model_payload"),
+                _unchanged,
+            ),
+        },
+    )
+
+
+def test_every_analytical_module_but_cp0_and_cp1_has_an_entry_validator(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """A1 (§2): an analytical module other than CP-0 and CP-1 without an `_ENTRY_VALIDATORS` row
+    is refused at create, owner-only or live-contract; the G1 and S1a plans still check."""
+    _refused_at_create(
+        tmp_path,
+        {
+            "owner-only module without a validator": (
+                MODULE,
+                g1x.spec,
+                lambda m: m.delitem(owner._ENTRY_VALIDATORS, MODULE),
+            ),
+            "live-contract module without a validator": (
+                "CP-1A",
+                owner.OWNER_SPECS["CP-1A"],
+                lambda m: m.delitem(owner._ENTRY_VALIDATORS, "CP-1A"),
+            ),
+        },
+    )
+    out, store = tmp_path / "publication", tmp_path / "store"
+    assert owner._check_specs(_pack("CP-1", "CP-MODEL"), owner.OWNER_SPECS, out, store) == (
+        "CP-0",
+        "CP-1",
+        "CP-MODEL",
+    )
+    s1a = runs.make_pack("positive")
+    assert set(owner._check_specs(s1a, owner.OWNER_SPECS, out, store)) == {
+        "CP-0",
+        "CP-1",
+        "CP-MODEL",
+        "CP-1A",
+        "CP-2",
     }
-    for label, (module_id, variant, patch) in variants.items():
-        root = tmp_path / label.replace(" ", "-")
-        root.mkdir()
-        pack = _pack()
-        if module_id != MODULE:
-            document = json.loads(pack.run.model_dump_json())
-            document["requested_modules"] = [module_id]
-            pack = PreparedPack(
-                run=Run.model_validate_json(json.dumps(document)), sources=pack.sources
-            )
-        with pytest.MonkeyPatch.context() as m:
-            specs = MappingProxyType({**owner.OWNER_SPECS, module_id: variant})
-            m.setattr(owner, "OWNER_SPECS", specs)
-            patch(m)
-            with pytest.raises(WorkflowError) as caught:
-                owner.OwnerWorkflow.create(root / "store", pack, specs=specs)
-        assert caught.value.code == "not_permitted", label
-        assert list(root.iterdir()) == [], label
+
+
+def test_owner_core_must_be_complete_at_create(g1x: SimpleNamespace, tmp_path: Path) -> None:
+    """L2 (§2): the registered core supplies `SCHEMAS` for every `STEP_IDS` step, each the
+    spec's schema, a `submit`, and `RULES` when a step is journaled."""
+    core, spec = g1x.core, g1x.spec
+    _refused_at_create(
+        tmp_path,
+        {
+            "SCHEMAS missing a step": (
+                MODULE,
+                spec,
+                lambda m: m.setattr(core, "SCHEMAS", {SOURCED: SourcedSubmission}),
+            ),
+            "SCHEMAS differs from the spec": (
+                MODULE,
+                spec,
+                lambda m: m.setattr(core, "SCHEMAS", {**SCHEMAS, VIEWED: SourcedSubmission}),
+            ),
+            "no submit": (MODULE, spec, lambda m: m.delattr(core, "submit")),
+            "no RULES for a journaled step": (MODULE, spec, lambda m: m.delattr(core, "RULES")),
+        },
+    )
 
 
 def test_owner_core_submit_walks_step_ids_and_seals(g1x: SimpleNamespace, tmp_path: Path) -> None:
@@ -606,8 +711,10 @@ def test_verifier_recomputes_rules_for_a_valid_step(g1x: SimpleNamespace, tmp_pa
     """§2 in the verifier: a core that ignored the rules journals a valid step `RULES` refuses;
     the verifier's recomputation catches it and no receipt is sealed."""
 
-    def ignores_rules(*args: Any) -> Submitted:
-        return _submit(*args[:4], None)
+    def ignores_rules(
+        store: Execution, ticket_id: str, step_id: str, payload: str, rules: Any
+    ) -> Submitted:
+        return _submit(store, ticket_id, step_id, payload, None)
 
     g1x.monkeypatch.setattr(g1x.core, "submit", ignores_rules)
     workflow = _start(tmp_path)
@@ -648,7 +755,8 @@ def test_verifier_requires_the_read_of_a_sourced_view_step(
     g1x: SimpleNamespace, tmp_path: Path
 ) -> None:
     """§3 in the verifier: a receipt whose sourced step's read is removed (audit and seal made
-    consistent with it) refuses."""
+    consistent with it) refuses, and (L4) the read is checked before the payload is filled or the
+    gate runs, as at runtime."""
     receipt = _sealed(tmp_path)
     read = next(r for r in receipt.input_reads if r.binding.step_id == SOURCED)
     forged = receipt.model_copy(
@@ -656,7 +764,22 @@ def test_verifier_requires_the_read_of_a_sourced_view_step(
     )
     _swap(tmp_path, "input-reads", read, None)
     _reseal(tmp_path, forged)
+    replayed: list[tuple[str, str]] = []
+    fill = owner._fill
+
+    def counted_fill(store: Execution, binding: Any, payload: str) -> Any:
+        if binding.module_id == MODULE:
+            replayed.append(("fill", binding.step_id))
+        return fill(store, binding, payload)
+
+    def counted_gate(store: Execution, binding: Any, stored: str) -> tuple[str, ...]:
+        replayed.append(("gate", binding.step_id))
+        return _precheck(store, binding, stored)
+
+    g1x.monkeypatch.setattr(owner, "_fill", counted_fill)
+    g1x.monkeypatch.setitem(owner._PRECHECKS, MODULE, counted_gate)
     assert _verdict(tmp_path, forged) == "identity_mismatch"
+    assert replayed == []
 
 
 # --- §4 precheck gate ---------------------------------------------------------------------------
@@ -733,6 +856,46 @@ def test_verifier_recomputes_the_gate(g1x: SimpleNamespace, tmp_path: Path) -> N
         m.setitem(owner._PRECHECKS, MODULE, lambda store, binding, stored: (GATE_ISSUE,))
         assert _verdict(root, receipt) == "identity_mismatch"
     assert _verdict(tmp_path / "run", receipt) == "accepted"
+
+
+def test_precheck_gate_serves_a_live_contract_module(tmp_path: Path) -> None:
+    """A2 (§4): `_PRECHECKS` is keyed by module, so a live-contract module (CP-1A: the real
+    `SourceSession`, journaled `ToolRules`, `submit_model_payload`) takes a gate as an owner-only
+    one does: its refusal journals nothing, the corrected resubmission journals on the same
+    ticket, and the verifier recomputes the gate."""
+    mark = "G1X-GATE-MARK"
+
+    def gate(store: Execution, binding: Any, stored: str) -> tuple[str, ...]:
+        return (GATE_ISSUE,) if mark in stored else ()
+
+    with pytest.MonkeyPatch.context() as m:
+        m.setitem(owner._PRECHECKS, "CP-1A", gate)
+        pack = _pack("CP-1A")
+        workflow = owner.OwnerWorkflow.create(tmp_path / "store", pack)
+        review = _cp0_review(pack, "CP-1A")
+        runs.read_cited(workflow, review)
+        assert workflow.submit_review(review)["status"] == "valid"
+        context = json.loads(runs.literal("positive", "business_context", pack))
+        context["consumers"] = [c for c in context["consumers"] if c["module_id"] == "CP-MODEL"]
+        store = Execution(tmp_path / "store")
+        before = store.read()
+        refused = runs.drive_cp1a(
+            workflow, pack, "positive", text=json.dumps({**context, "note": mark})
+        )
+        assert (refused["status"], refused["issues"]) == ("refused", [GATE_ISSUE])
+        assert store.read() == before
+        assert (
+            runs.drive_cp1a(workflow, pack, "positive", text=json.dumps(context))["status"]
+            == "valid"
+        )
+        (attempt,) = [a for a in store.read().attempts if a.module_id == "CP-1A"]
+        (pending,) = [a for a in before.attempts if a.module_id == "CP-1A"]
+        assert (attempt.ticket_id, attempt.number) == (pending.ticket_id, pending.number)
+        receipt = workflow.write_receipt(tmp_path / "receipt.json")
+        assert [s.disposition for s in receipt.submissions] == ["valid", "refused", "valid"]
+        assert _verdict(tmp_path, receipt) == "accepted"
+        m.delitem(owner._PRECHECKS, "CP-1A")
+        assert _verdict(tmp_path, receipt) == "identity_mismatch"
 
 
 # --- R4-4 verifier exception mapping ----------------------------------------------------------
@@ -819,3 +982,26 @@ def test_verifier_tamper_causes_map_to_identity_mismatch(
     )
     assert any(m not in owner.OWNER_SPECS for m in unspecced.plan)
     assert _verdict(tmp_path / "unspecced", unspecced) == "identity_mismatch"
+
+
+def test_verifier_maps_a_forged_payload_type_error_to_identity_mismatch(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """M1 (R4-4, controller ruling): a forged recorded payload whose discriminator value is
+    unhashable makes `normalise` raise `TypeError` (root cause `live.schema._Walker.branch`,
+    LEAD's); the verifier maps that one call, the recorded payload's fill, to tamper."""
+    receipt = _sealed(tmp_path)
+    old = receipt.submissions[-1]
+    assert old.binding.binding.step_id == VIEWED
+    raw = json.dumps({"note": "fine", "parts": [{"kind": []}]})
+    with pytest.raises(TypeError):
+        normalise(ViewedSubmission, raw)
+    digest = hashlib.sha256(raw.encode()).hexdigest()
+    owner._put(owner._audit(Execution(tmp_path / "store"), "payloads", digest), raw.encode())
+    binding = old.binding.model_copy(update={"payload_sha256": digest})
+    new = old.model_copy(update={"binding": binding})
+    forged = receipt.model_copy(update={"submissions": (*receipt.submissions[:-1], new)})
+    _swap(tmp_path, "submissions", old, new)
+    _swap(tmp_path, "bindings", old.binding, binding)
+    _reseal(tmp_path, forged)
+    assert _verdict(tmp_path, forged) == "identity_mismatch"

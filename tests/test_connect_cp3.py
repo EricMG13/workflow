@@ -7,6 +7,7 @@ registered here and the CP-3 consumption proof (D3) stays open until the CP-6 le
 no reader exists because the lease names none.
 """
 
+import csv
 import hashlib
 import json
 import tempfile
@@ -24,7 +25,7 @@ from test_method_cp3 import make_inputs, mutate
 from deploy_vii import cp3_relative_value
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Fact, ModuleView, Run, View
+from deploy_vii.contracts import Fact, Module, ModuleView, Run, View
 from deploy_vii.cp3_relative_value import (
     RelativeValueReport,
     RelativeValueSubmission,
@@ -42,7 +43,8 @@ from deploy_vii.execution import (
 from deploy_vii.live.tools import cited_locators
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import plan, step_chain
-from deploy_vii.report_view import _spec_of
+from deploy_vii.render import empty_view
+from deploy_vii.report_view import _spec_of, build, pathways
 from deploy_workflow import owner_workflow as ow
 from deploy_workflow.owner_workflow import OwnerSpec, OwnerWorkflow, StepSpec
 from deploy_workflow.owners import cp3
@@ -128,10 +130,14 @@ def test_check_steps_refuses_without_an_entry_validator(monkeypatch: pytest.Monk
 # --- a real store: Stage 1 fixture heads, the product's own CP-3 step ----------------------------
 
 
-def _begin(root: Path, case: str) -> tuple[Execution, Attempt]:
+def _begin(
+    root: Path, case: str, *, blocked: bool = False, modules: tuple[str, ...] | None = None
+) -> tuple[Execution, Attempt]:
     """A store whose CP-0, CP-1, CP-1A and CP-2 heads are the Stage 1 fixtures (built from the
     frozen oracle); CP-0 carries the T8 command that authorises CP-3. CP-3 is begun, not run."""
     pack = stage1.make_pack(case)
+    if modules is not None:
+        pack = _selection(list(modules), pack)
     cp0 = stage1.make_cp0(pack, case)
     command = Fact(
         fact_id="run-consumer",
@@ -144,7 +150,7 @@ def _begin(root: Path, case: str) -> tuple[Execution, Attempt]:
     heads = (
         cp0.model_copy(update={"facts": (*cp0.facts, command)}),
         stage1.make_cp1(pack),
-        stage1.make_cp1a(pack, case, blocked=False),
+        stage1.make_cp1a(pack, case, blocked=blocked),
         stage1.make_cp2(pack),
     )
     store = Execution.create(root / "store", pack)
@@ -154,10 +160,12 @@ def _begin(root: Path, case: str) -> tuple[Execution, Attempt]:
     return store, store.begin("CP-3")
 
 
-def _settled(root: Path, case: str, *, repaired: bool = False) -> tuple[Execution, Attempt]:
+def _settled(
+    root: Path, case: str, *, repaired: bool = False, blocked: bool = False
+) -> tuple[Execution, Attempt]:
     """CP-3 settled by the product's own step. `repaired`: attempt 0 first submits an invalid
     literal and finishes with issues, so the head settles on attempt 1 (repair_of set)."""
-    store, attempt = _begin(root, case)
+    store, attempt = _begin(root, case, blocked=blocked)
     payload = stage1._instantiate(SUBMISSIONS[case]["relative_value"])
     if repaired:
         bad = mutate(
@@ -445,8 +453,8 @@ def test_oracle_pins_match_cases_pins_json() -> None:
 # --- create-time refusals (lease :138-139): nothing is written ----------------------------------
 
 
-def _selection(modules: list[str]) -> PreparedPack:
-    pack = runs.make_pack("positive")
+def _selection(modules: list[str], base: PreparedPack | None = None) -> PreparedPack:
+    pack = runs.make_pack("positive") if base is None else base
     document = {**json.loads(pack.run.model_dump_json()), "requested_modules": modules}
     return PreparedPack(run=Run.model_validate_json(json.dumps(document)), sources=pack.sources)
 
@@ -518,3 +526,230 @@ def test_the_unmodified_spec_mapping_is_created(tmp_path: Path) -> None:
     """Control for the override test: the same mapping with the reference CP-3 row is accepted."""
     specs = {m: ow.OWNER_SPECS[m] for m in ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-3")}
     assert _create(tmp_path, CONTROL, specs=specs)._plan[-1] == "CP-3"
+
+
+# --- shared checks (the deferred run suite calls the same functions on a real run) --------------
+
+
+def table_view(module: Module) -> list[dict[str, Any]]:
+    """The oracle's table notation over a settled module (as `test_method_cp3._actual_tables`).
+    The `cp1_references` facts are bound at run time, so only their row ids and labels show."""
+    facts = {fact.fact_id: fact for fact in module.facts}
+    out = []
+    for table in module.tables:
+        rows: list[dict[str, Any]] = []
+        for row in table.rows:
+            item: dict[str, Any] = {"row_id": row.row_id, "label": row.label}
+            if table.table_id != "cp1_references":
+                item["facts"] = [stage1._cell(facts[i]) for i in row.fact_ids]
+            rows.append(item)
+        out.append(
+            {
+                "table_id": table.table_id,
+                "title": table.title,
+                "row_header": table.row_header,
+                "columns": [c.model_dump() for c in table.columns],
+                "rows": rows,
+            }
+        )
+    return out
+
+
+OPTIONAL_IDS = ("CP-3C", "CP-3D", "CP-4C", "CP-2D")
+
+
+def assert_context(
+    store: Execution, attempt: Attempt, checks: Mapping[str, Any], blocked_limitations: bool = False
+) -> None:
+    """The CP-3 CONTEXT over the bound heads equals `context_block_checks`, and none of the four
+    optional producers CP-3 never reads occurs in the body (lease :164-167)."""
+    block = cp3_relative_value.context_block(
+        store.pack(), cp3_relative_value.cp3_upstream(store, attempt)
+    )
+    assert stage1._upstream_statuses(block) == checks["upstream_statuses"]
+    optional = stage1._rows(block, "optional_upstream")
+    assert [(o["module_id"], o["status"]) for o in optional] == [
+        (o["module_id"], o["status"]) for o in checks["optional_upstream"]
+    ]
+    for got, want in zip(optional, checks["optional_upstream"], strict=True):
+        if not blocked_limitations:  # a blocked head's issue texts are bound at run time
+            assert got["limitations"] == want["limitations"]
+    assert block["confidence_caps"] == checks["confidence_caps"]
+    if "cp1_facilities" in checks:
+        assert [(f["facility_id"], f["name"]) for f in stage1._rows(block, "cp1_facilities")] == [
+            (f["facility_id"], f["name"]) for f in checks["cp1_facilities"]
+        ]
+        assert [r["ref"] for r in stage1._rows(block, "cp2_rows")] == checks["cp2_rows"]
+        assert block["market_evidence_sources"] == checks["market_evidence_sources"]
+        assert block["market_evidence_note"] == checks["market_evidence_note"]
+        authority = {s["source_id"]: s["authority"] for s in stage1._rows(block, "pack_sources")}
+        assert authority == checks["pack_source_authority"]
+    body = json.dumps(block)
+    for absent in OPTIONAL_IDS:
+        assert absent not in body, absent
+
+
+def render_block(module: Module, run: Run) -> tuple[Any, Any]:
+    """FP01 `relative-value` and the CP-3 bindings, from a settled module through `build`."""
+    module_view = ModuleView(
+        module_id="CP-3",
+        title="Relative value",
+        aliases=(),
+        status="restricted",
+        artifact_sha256=module.content_hash(),
+        facts=module.facts,
+        tables=module.tables,
+        claims=module.claims,
+        limitations=module.limitations,
+    )
+    view = empty_view(run)
+    view = view.model_copy(
+        update={"modules": tuple(module_view if m.module_id == "CP-3" else m for m in view.modules)}
+    )
+    pathway = next(p for p in pathways() if p.id == run.pathway)
+    report = build(view, pathway, SHIPPED_MAPS)
+    return next(b for b in report.blocks if b.block_id == "relative-value"), report
+
+
+def assert_render(module: Module, run: Run, expected: Mapping[str, Any]) -> None:
+    """`CP-3.render`: the FP01 block (owner, kind, state, summary, lines) and the rails."""
+    block, _ = render_block(module, run)
+    want = expected["FP01.relative-value"]
+    assert (block.title, block.owner, block.kind, block.state) == (
+        want["title"],
+        want["owner"],
+        want["kind"],
+        want["state"],
+    )
+    assert block.summary == want["summary"]
+    assert [{"text": r.text, "kind": r.kind} for line in block.lines for r in line.runs] == want[
+        "lines"
+    ]
+    entries = [e for m in SHIPPED_MAPS if m.module_id == "CP-3" for e in m.entries]
+    rails = expected["rails"]
+    assert [e.fact_coord.table_id for e in entries if e.block_id == "evidence"] == rails[
+        "evidence"
+    ]["CP-3"]
+    assert [e.fact_coord.table_id for e in entries if e.block_id == "limitations"] == rails[
+        "limitations"
+    ]["CP-3"]
+    assert list(module.limitations) == rails["limitations"]["module_limitations"]["own_settled"]
+
+
+@pytest.fixture(scope="module")
+def by_case() -> Iterator[dict[str, tuple[Execution, Attempt]]]:
+    with tempfile.TemporaryDirectory() as root:
+        yield {
+            "positive": _settled(Path(root) / "p", "positive"),
+            "gap": _settled(Path(root) / "g", "gap"),
+            "blocked": _settled(Path(root) / "b", "positive", blocked=True),
+        }
+
+
+def _module_of(store: Execution) -> Module:
+    return store.head_module(_head(store.read()))
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_settled_head_equals_the_oracle(
+    case: str, by_case: dict[str, tuple[Execution, Attempt]]
+) -> None:
+    """A head built by `settle` over the product step: tables, claims, inputs and limitations
+    equal the oracle (own = oracle list, then the synthetic limitation, deduplicated)."""
+    store, _ = by_case[case]
+    module = _module_of(store)
+    expected = EXPECTED[case]["CP-3"]
+    assert table_view(module) == stage1._expected_tables(case)
+    assert [i.input_id for i in module.inputs] == expected["module_inputs"]
+    assert list(module.limitations) == expected["settled_limitations"]
+    assert module.limitations[-1] == "Synthetic case; not real issuer qualification"
+    assert len(set(module.limitations)) == len(module.limitations)
+    assert module.status == "restricted"
+    assert [c.claim_id for c in module.claims] == [c["claim_id"] for c in expected["claims"]]
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_context_block_checks_over_a_begun_store(case: str, tmp_path: Path) -> None:
+    store, attempt = _begin(tmp_path, case)
+    assert_context(store, attempt, EXPECTED[case]["CP-3"]["context_block_checks"])
+
+
+def test_context_caps_move_with_the_cp2_status(tmp_path: Path) -> None:
+    """Not a constant: a CP-2 head that is accepted lifts the `CP-2 is restricted` cap."""
+    store, attempt = _begin(tmp_path, "positive")
+    block = cp3_relative_value.context_block(
+        store.pack(), cp3_relative_value.cp3_upstream(store, attempt)
+    )
+    assert block["confidence_caps"] == ["CP-2 is restricted"]
+    blocked_store, blocked_attempt = _begin(tmp_path / "b", "positive", blocked=True)
+    capped = cp3_relative_value.context_block(
+        blocked_store.pack(), cp3_relative_value.cp3_upstream(blocked_store, blocked_attempt)
+    )
+    assert capped["confidence_caps"] == ["CP-2 is restricted", "CP-1A is blocked"]
+
+
+def test_blocked_cp1a_variant_settles_and_is_re_derived(
+    by_case: dict[str, tuple[Execution, Attempt]], tmp_path: Path
+) -> None:
+    variant = EXPECTED["positive"]["CP-3"]["blocked_cp1a_variant"]
+    store, attempt = by_case["blocked"]
+    module = _module_of(store)
+    assert [i.input_id for i in module.inputs] == variant["module_inputs"]
+    assert {
+        i.input_id: i.status for i in attempt.inputs if i.input_id.startswith("CP-")
+    } == variant["input_statuses"]
+    assert list(module.limitations) == variant["settled_limitations"]
+    assert table_view(module) == stage1._expected_tables("positive")
+    cp1a = store.head_module(next(h for h in store.read().heads if h.module_id == "CP-1A"))
+    prefixed = [x for x in module.inherited_limitations if x.startswith("Upstream CP-1A blocked: ")]
+    assert prefixed == [f"Upstream CP-1A blocked: {x}" for x in cp1a.limitations]
+    cp3.probe(store, store.read(), attempt)  # the head is re-derived, not trusted
+    begun, begun_attempt = _begin(tmp_path, "positive", blocked=True)
+    assert_context(begun, begun_attempt, variant["context_block_checks"], blocked_limitations=True)
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_render_blocks_and_rails_equal_the_oracle(
+    case: str, by_case: dict[str, tuple[Execution, Attempt]]
+) -> None:
+    store, _ = by_case[case]
+    assert_render(_module_of(store), store.read().run, EXPECTED[case]["CP-3"]["render"])
+
+
+def test_render_follows_the_module_not_a_constant(
+    by_case: dict[str, tuple[Execution, Attempt]],
+) -> None:
+    positive = render_block(_module_of(by_case["positive"][0]), by_case["positive"][0].read().run)
+    gap = render_block(_module_of(by_case["gap"][0]), by_case["gap"][0].read().run)
+    assert positive[0].summary != gap[0].summary
+
+
+# --- aliases canonicalise (LEAD, Stage 2 round 3): no create refusal, no alias completion -------
+
+
+def test_an_alias_selection_plans_as_cp3_and_creates(tmp_path: Path) -> None:
+    aliased = ["CP-1", "CP-1A", "CP-2", "CP-3B"]
+    assert plan(tuple(aliased)) == plan(tuple(CONTROL))
+    workflow = _create(tmp_path, aliased)
+    assert workflow._plan == ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-3")
+    assert "CP-3B" not in ow.OWNER_SPECS
+    assert "CP-3B" not in ow.SUPPORTED_ANALYTICAL
+
+
+def test_an_alias_run_settles_heads_named_cp3_only(tmp_path: Path) -> None:
+    store, attempt = _begin(tmp_path, "positive", modules=("CP-1", "CP-1A", "CP-2", "CP-3B"))
+    assert attempt.module_id == "CP-3"
+    payload = stage1._instantiate(SUBMISSIONS["positive"]["relative_value"])
+    submit_cp3_step(store, attempt.ticket_id, STEP, payload)
+    snapshot = store.read()
+    assert "CP-3" in {h.module_id for h in snapshot.heads}
+    assert not [h for h in snapshot.heads if "3B" in h.module_id]
+    assert not [a for a in snapshot.attempts if "3B" in a.module_id]
+
+
+def test_modules_csv_counts_no_completion_for_the_alias() -> None:
+    rows = list(csv.DictReader((ROOT / "docs/MODULES.csv").read_text().splitlines()))
+    row = next(r for r in rows if r["module"] == "CP-3B")
+    for column in ("tool_execution", "validated_output", "downstream_consumption", "rendering"):
+        assert row[column] == "unverified", column
+    assert row["case_evidence"] == "none"

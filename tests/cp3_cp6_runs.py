@@ -12,7 +12,7 @@ Stage 5 only: the run needs a genuine CP-1 promotion (11-26 minutes per case).
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -53,8 +53,9 @@ def oracle() -> dict[str, Any]:
     }
 
 
-def make_pack(case: str) -> PreparedPack:
-    """The case's R3 pack: identity and financial as in S1, the S1 positive business note, and
+def make_pack(case: str, *, requested: Sequence[str] | None = None) -> PreparedPack:
+    """`requested` replaces the run's `requested_modules` (an alias selection such as CP-3B for
+    CP-3: the pack hash changes with it, so it is a separate run). The case's R3 pack: identity and financial as in S1, the S1 positive business note, and
     (positive only) the `market` quotation sheet, each hash-checked against the oracle."""
     data = oracle()
     manifest, financial, base = data["manifest"], data["s1"]["financial"], data["s1"]["manifest"]
@@ -96,10 +97,10 @@ def make_pack(case: str) -> PreparedPack:
                 **extra.get(source_id, {"extraction_status": "complete"}),
             )
         )
-    return PreparedPack(
-        run=Run.model_validate_json(json.dumps(entry["runs"][RUN]["run"])),
-        sources=tuple(sources),
-    )
+    run = dict(entry["runs"][RUN]["run"])
+    if requested is not None:
+        run["requested_modules"] = list(requested)
+    return PreparedPack(run=Run.model_validate_json(json.dumps(run)), sources=tuple(sources))
 
 
 def _dump(document: Any, pack: PreparedPack | None) -> str:
@@ -150,19 +151,23 @@ def cp1_bindings(store: Execution, names: list[str]) -> dict[str, tuple[str, str
     return {n: (s1.figure_fact(facts, n).fact_id, figures[n]["unit_token"]) for n in names}
 
 
-def start(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
-    pack = make_pack(case)
+def start(
+    case: str, root: Path, *, requested: Sequence[str] | None = None
+) -> tuple[OwnerWorkflow, PreparedPack]:
+    pack = make_pack(case, requested=requested)
     workflow = OwnerWorkflow.create(root / "store", pack, publication_directory=root / "model")
     return workflow, pack
 
 
-def promoted(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+def promoted(
+    case: str, root: Path, *, requested: Sequence[str] | None = None
+) -> tuple[OwnerWorkflow, PreparedPack]:
     """CP-0 and CP-1 settled, CP-1A begun and untouched. The slow part (11-26 minutes).
 
     `s1.drive_cp1` searches the business note for absence only for its `positive` case; the
     cp3-cp6 pack carries the S1 positive business note in both cases (event scan
     `no_events_identified`), so the S1 positive path is the one that applies to both."""
-    workflow, pack = start(case, root)
+    workflow, pack = start(case, root, requested=requested)
     s1.drive_cp0(workflow, pack, case, text=literal(case, "readiness_review", pack))
     s1.drive_cp1(workflow, pack, "positive", context=literal(case, "cp1_source_context", pack))
     return workflow, pack
@@ -182,10 +187,8 @@ def drive_cp3(
     return workflow.submit_review(payload)
 
 
-def reach_cp3(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
-    """From a fresh run to CP-3 active, untouched: CP-0, CP-1, CP-1A and CP-2 (figures bound)
-    settled. A refusal test clones this state, so no call of the CP-3 step has been made."""
-    workflow, pack = promoted(case, root)
+def through_cp2(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
+    """From a promoted run (CP-1A begun, untouched) to CP-3 active: CP-1A, CP-2 (figures bound)."""
     cp1a = s1.drive_cp1a(workflow, pack, case, text=literal(case, "business_context", pack))
     if cp1a["status"] != "valid":
         raise RuntimeError(f"CP-1A not valid: {cp1a['issues']}")
@@ -193,6 +196,31 @@ def reach_cp3(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
     cp2 = s1.drive_cp2(workflow, case, body, text=literal(case, "credit_synthesis"))
     if cp2["status"] != "valid":
         raise RuntimeError(f"CP-2 not valid: {cp2['issues']}")
+
+
+def blocked_through_cp2(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
+    """The A3b analogue: CP-1A fails twice on an unread `business page:3` (so its head is
+    blocked), CP-2 begins with CP-1A blocked and takes the reviewed blocked-CP-1A literal."""
+    text = literal(case, "business_context", pack)
+    for _ in range(2):
+        outcome = s1.drive_cp1a(
+            workflow, pack, case, skip_reads=[("business", "page:3")], text=text
+        )
+        if outcome["status"] != "invalid":
+            raise RuntimeError(f"CP-1A should be invalid: {outcome['status']}")
+    body = s1.read_cp2(workflow)
+    cp2 = s1.drive_cp2(workflow, case, body, text=s1.blocked_cp2_text())
+    if cp2["status"] != "valid":
+        raise RuntimeError(f"CP-2 not valid under a blocked CP-1A: {cp2['issues']}")
+
+
+def reach_cp3(
+    case: str, root: Path, *, requested: Sequence[str] | None = None
+) -> tuple[OwnerWorkflow, PreparedPack]:
+    """From a fresh run to CP-3 active, untouched: CP-0, CP-1, CP-1A and CP-2 settled. A refusal
+    test clones this state, so no call of the CP-3 step has been made."""
+    workflow, pack = promoted(case, root, requested=requested)
+    through_cp2(workflow, pack, case)
     return workflow, pack
 
 
@@ -204,8 +232,10 @@ def close(workflow: OwnerWorkflow, case: str, receipt: Path) -> None:
     s1.finish(workflow, receipt)
 
 
-def cp3_closed(case: str, root: Path) -> tuple[Path, Path, Path]:
+def cp3_closed(
+    case: str, root: Path, *, requested: Sequence[str] | None = None
+) -> tuple[Path, Path, Path]:
     """One closed R3 run of `case` under `root`: (store, sealed receipt, publication)."""
-    workflow, _ = reach_cp3(case, root)
+    workflow, _ = reach_cp3(case, root, requested=requested)
     close(workflow, case, root / "owner-receipt.json")
     return root / "store", root / "owner-receipt.json", root / "model"

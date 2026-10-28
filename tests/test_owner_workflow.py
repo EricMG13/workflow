@@ -165,6 +165,39 @@ def test_equivalence_gap(tmp_path: Path) -> None:
     owner.verify_owner_run_receipt(store, receipt, publication_directory=None)
 
 
+_GAP_EXTRAS = {
+    "deep": '{"sources":' + "[" * 200_000 + "]" * 200_000 + "}",
+    "deep3000": '{"sources":' + "[" * 3000 + "]" * 3000 + "}",
+    "surrogate": '{"schema_version":null,"zz":"\\ud800"}',
+    "surrogate_echo": '{"schema_version":null,"x":{"source_id":"\\ud800","locator":"page:1"}}',
+    "surrogate_echo_nonull": '{"x":{"source_id":"\\ud800","locator":"page:1"}}',
+}
+
+
+@pytest.mark.parametrize("label", list(_GAP_EXTRAS))
+def test_equivalence_gap_verifier_replays_unrepresentable_submits(
+    tmp_path: Path, label: str
+) -> None:
+    owner = _owner()
+    pack = fw.make_pack(gap=True)
+    workflow = owner.OwnerWorkflow.create(
+        tmp_path / "store", pack, publication_directory=tmp_path / "model"
+    )
+    fw.read_sources(workflow, gap=True)
+    assert workflow.submit_review(_GAP_EXTRAS[label])["status"] == "invalid"
+    fw.read_sources(workflow, gap=True)  # a new epoch: the precheck needs this epoch's reads
+    assert workflow.submit_review(fw.readiness(pack, gap=True))["status"] == "valid"
+    assert workflow.publish()["status"] == "refused"
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    assert [(s.binding.binding.step_id, s.disposition) for s in receipt.submissions] == [
+        ("source_readiness", "invalid"),
+        ("source_readiness", "valid"),
+    ]
+    owner.verify_owner_run_receipt(
+        Execution(tmp_path / "store"), receipt, publication_directory=None
+    )
+
+
 def _requested(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
     run = Run.model_validate_json(
         json.dumps({**json.loads(pack.run.model_dump_json()), "requested_modules": modules})

@@ -495,6 +495,9 @@ _RATE_BP = (1, 1000)
 _FX_PERCENT = (1, 50)
 
 
+_W_SIGN = re.compile(r"(?<![A-Za-z0-9])- (?=[0-9])")  # rule W's minus; normalise maps U+2212 to "-"
+
+
 def _unsigned(token: str, text: str) -> set[tuple[int, int]]:
     """The spans where ``token`` is a whole, unsigned number in ``text`` (a normalised reading).
 
@@ -506,7 +509,12 @@ def _unsigned(token: str, text: str) -> set[tuple[int, int]]:
     (``normalise`` makes any whitespace run, a line break included, one space), and each
     accounting parenthesis may hold one space inside it."""
     minus = r"(?<![A-Za-z0-9])-"
-    pattern = rf"(?<![0-9.])(?<!{minus})(?<!{minus} )" + re.escape(token) + r"(?![0-9]|\.[0-9])"
+    join = r"(?<![0-9],)(?<![0-9], )"  # round 13 item 8: `1,25` and `1, 25` continue the number
+    pattern = (
+        rf"(?<![0-9.])(?<!{minus})(?<!{minus} ){join}"
+        + re.escape(token)
+        + r"(?![0-9]|[.,][0-9]|, [0-9])"
+    )
     return {
         m.span()
         for m in re.finditer(pattern, text)
@@ -651,8 +659,16 @@ class _Check:
 
 
 def _split(rb: Mapping[str, Any]) -> bool:
-    """Round 11 B3: a wrapped quote's name spelled with the wrap's ``- `` is not on the page."""
-    return hyphen_wrapped(rb["quote"]) and "- " in normalise(rb["reference_rate"])
+    """Round 11 B3: a wrapped quote's name spelled with the wrap's ``- `` is not on the page.
+
+    Round 13 addendum 1: a ``- `` that is rule W's minus (not after a letter or digit, a digit
+    next) is no wrap split. Addendum 3: a ``- `` at index 0 cannot see the page character before
+    it, so it stays a wrap split."""
+    if not hyphen_wrapped(rb["quote"]):
+        return False
+    name = normalise(rb["reference_rate"])
+    exempt = {m.start() for m in _W_SIGN.finditer(name) if m.start() > 0}
+    return any(at not in exempt for at in _starts("- ", name))
 
 
 def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:

@@ -832,6 +832,23 @@ def test_hyphen_after_a_letter_or_digit_is_not_a_sign(line: str, issues: tuple[s
         ("a saving of 1.80 and 2.40", ["1.80", "2.40"]),
         # Round 10 review Low: the "(" side is required; ")" alone after the digits is unsigned.
         ("saving 1.80)", ["1.80"]),
+        # Rule W (round 12): a minus one whitespace character before the first digit, and one
+        # space inside each accounting parenthesis, still sign the figure; the amount string is
+        # `-<digits>`, with no space.
+        ("a saving of - 1.80", ["-1.80"]),
+        ("a saving of -\n1.80", ["-1.80"]),
+        ("a saving of − 1.80", ["-1.80"]),
+        ("-\r\n1.80 saved", ["-1.80"]),
+        ("a saving of (\n1.80)", ["-1.80"]),
+        ("a saving of (1.80 )", ["-1.80"]),
+        ("a saving of ( 1.80 )", ["-1.80"]),
+        ("( 4.30 percent)", ["4.30"]),
+        # W keeps the round 10 lookbehind: a hyphen after a letter or digit, wrapped or spaced,
+        # is not a sign. Its accepted cost: a spaced range reads its second figure as signed.
+        ("over 2024-\n2025", ["2024", "2025"]),
+        ("contract A-\n350", ["350"]),
+        ("the 95- 96 range", ["95", "96"]),
+        ("the 95 - 96 range", ["95", "-96"]),
     ],
 )
 def test_basis_amounts_read_the_printed_sign(quote: str, amounts: list[str]) -> None:
@@ -1102,6 +1119,7 @@ def test_defect_class_cases_not_applicable() -> None:
         "minus-inside-1.25",
         "sign-2024-2025",
         "sign-95-96",
+        "w-2024-2025-wrap",
     }
 
 
@@ -1134,6 +1152,14 @@ def test_defect_class_basis_quote(c: QuoteCase) -> None:
         # The same at its start edge (425 on the page): the joined quote keeps the offsets
         # from its start.
         ("The level is 425 first-priority points.", "25 first-\npriority points."),
+        # Rule W (round 12): the page's spaced minus signs 25, so the start-edge figure is cut
+        # (moved here from the counted twins, where round 11 read it as whole).
+        ("The level is - 25 percent; it was 425 before.", "25 percent;"),
+        # Rule W's spaced accounting parentheses, one space on either side or both.
+        ("The level is ( 25) percent.", "25) percent."),
+        ("The level is (25 ) percent.", "25 ) percent."),
+        ("The level is ( 25 ) percent.", "25 ) percent."),
+        ("The level is ( 25 ) percent.", "The level is ( 25"),
     ],
 )
 def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
@@ -1151,12 +1177,15 @@ def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
     ("page", "quote"),
     [
         ("The first-priority level is 25 percent.", "The first-\npriority level is 25"),
-        ("The level is - 25 percent; it was 425 before.", "25 percent;"),
         ("The level is 25 first-priority points.", "25 first-\npriority points."),
+        # Rule W keeps the lookbehind: a spaced hyphen after a digit is not a sign.
+        ("The level is 4- 25 percent.", "25 percent."),
         # Accounting parentheses need both sides: "(" before a start-edge figure whose ")" is
         # not right after it, or ")" after an end-edge figure with no "(" right before it.
         ("The level (25 percent over) holds.", "25 percent over) holds."),
+        ("The level ( 25 percent over) holds.", "25 percent over) holds."),
         ("The level is 25) percent.", "The level is 25"),
+        ("The level is 25 ) percent.", "The level is 25"),
     ],
 )
 def test_edge_figure_whole_on_the_page_is_counted(page: str, quote: str) -> None:
@@ -1186,6 +1215,16 @@ def test_edge_figure_whole_on_the_page_is_counted(page: str, quote: str) -> None
             ["-25"],
             DEFECT_BOUNDS,
         ),
+        # Rule W: a figure after "- " is signed in the quote itself, so it is not an edge
+        # figure; it reads negative and gets the bounds text.
+        (
+            "The level is - 25 percent over the rate.",
+            "- 25 percent over the",
+            ["-25"],
+            DEFECT_BOUNDS,
+        ),
+        # LEAD round 12 (CP-1D I1): a quote wrapping a minus, on a page that prints it plainly.
+        ("The level is -1.80 percent.", "The level is -\n1.80", ["-1.80"], DEFECT_BOUNDS),
     ],
 )
 def test_edge_with_a_stop_or_a_sign(

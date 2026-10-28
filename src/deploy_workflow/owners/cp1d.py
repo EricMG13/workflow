@@ -32,6 +32,7 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues
 from deploy_vii.report_view import scale_label
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-1D"
 BRIDGE_SOURCE_ID = "bridge"
@@ -341,14 +342,16 @@ _PROPOSED_TOTAL = "Total proposed adjustments"
 _MANAGEMENT_EBITDA = "Management financing-case EBITDA"
 _NOT_STATED = "Not stated"
 _AMOUNT = re.compile(r"[0-9]+(?:\.[0-9]+)?")
-# Round 10 (LEAD): a basis amount is the signed numeral the normalised quote prints. A "-"
-# directly before the first digit is a minus when it starts the quote or follows a character
-# that is neither a letter nor a digit (so `1-December`, `2024-2025`, `S-350` are unsigned);
-# "+" is ignored; a numeral in accounting parentheses, "(" directly before the first digit and
-# ")" directly after the last, reads as negative. The bridge table keeps `_AMOUNT`.
+# Round 10 (LEAD), amended by round 12 rule W: a basis amount is the signed numeral the
+# normalised quote prints. A "-" directly before the first digit, or one space before it (any
+# whitespace, a line break included, since `normalise` makes a whitespace run one space), is a
+# minus when it starts the quote or follows a character that is neither a letter nor a digit (so
+# `1-December`, `2024-2025`, `2024-\n2025`, `S-350` are unsigned); "+" is ignored; a numeral in
+# accounting parentheses, "(" or "( " before the first digit and ")" or " )" after the last,
+# reads as negative. The amount string stays `-<digits>`. The bridge table keeps `_AMOUNT`.
 _SIGNED_AMOUNT = re.compile(
-    r"\((?P<parenthesised>[0-9]+(?:\.[0-9]+)?)\)"
-    r"|(?P<sign>(?<![A-Za-z0-9])-)?(?P<digits>[0-9]+(?:\.[0-9]+)?)"
+    r"\( ?(?P<parenthesised>[0-9]+(?:\.[0-9]+)?) ?\)"
+    r"|(?P<sign>(?<![A-Za-z0-9])- ?)?(?P<digits>[0-9]+(?:\.[0-9]+)?)"
 )
 _TYPES = ("Saving", "Cost")
 # Round 4 (k): an amount is the product `financial_contracts.Number` (-1e18 < x < 1e18, 28
@@ -512,7 +515,7 @@ def _accepts(assessment: Assessment) -> bool:
 def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
     """The signed amounts in the quote as `citation_issues` matched it (`quotes.normalise`:
     U+00AD removed, so a soft hyphen inside a figure does not split it; U+2212 and the dashes
-    read as "-"), each as a decimal string (round 10, `_SIGNED_AMOUNT`).
+    read as "-"), each as a decimal string (round 10 with round 12 rule W, `_SIGNED_AMOUNT`).
 
     Round 11 B1: an amount at an edge of the normalised quote (nothing or only "-" before its
     digits, nothing or only "." after them) is not counted when an occurrence of the quote on its
@@ -535,7 +538,7 @@ def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
             and _edge_cut(citation.quote, page, (start, end), at_start=at_start, at_end=at_end)
         ):
             continue  # round 11 B1: cut from a longer or signed page figure, so not counted
-        amounts.append(f"{match['sign'] or ''}{match['digits']}")
+        amounts.append(f"{'-' if match['sign'] else ''}{match['digits']}")
     return amounts
 
 
@@ -555,7 +558,11 @@ def _readings(raw: str) -> tuple[str, ...]:
     return (plain, reading(raw, join_wraps=True).text) if hyphen_wrapped(raw) else (plain,)
 
 
-_ROUND10_MINUS = re.compile(r"(?<![A-Za-z0-9])-")
+# Round 12 rule W, matched as ending where the digits start: the round 10 minus directly before
+# them or one space before them, and an accounting "(" with at most one space inside.
+_W_MINUS = re.compile(r"(?<![A-Za-z0-9])- ?\Z")
+_OPEN_PAREN = re.compile(r"\( ?\Z")
+_CLOSE_PAREN = re.compile(r" ?\)")
 _DIGIT_OR_POINT = re.compile(r"[0-9.]")
 _CONTINUES = re.compile(r"[0-9]|\.[0-9]")
 
@@ -567,9 +574,10 @@ def _edge_cut(
     joined) in some reading of its page, the edge figure at `digits` of `normalise(quote)` is
     not the same unsigned whole figure on the page.
 
-    Start edge: the page character before the digits is a digit, ".", a minus by the round 10
-    rule, or an accounting "(" that a ")" right after the digits closes. End edge: the page text
-    after the digits is a digit, "." plus a digit, or a ")" closing a "(" right before them. A
+    Start edge: the page character before the digits is a digit or ".", or the page holds a
+    minus by rule W (round 12: directly or one space before them), or an accounting "(" or "( "
+    that a ")" or " )" right after the digits closes. End edge: the page text after the digits
+    is a digit, "." plus a digit, or a ")" or " )" closing a "(" or "( " right before them. A
     start-edge figure keeps its offsets in the joined quote and an end-edge one its offsets from
     the end, since a join only removes the spaces after a wrapped hyphen."""
     plain = normalise(quote)
@@ -579,24 +587,24 @@ def _edge_cut(
         for text in _readings(page):
             at = text.find(needle)
             while at >= 0:
-                before, after = text[at + start - 1 : at + start], text[at + end : at + end + 2]
-                if _cut(text, at + start, before, after, at_start=at_start, at_end=at_end):
+                if _cut(text, at + start, at + end, at_start=at_start, at_end=at_end):
                     return True
                 at = text.find(needle, at + 1)
     return False
 
 
-def _cut(text: str, start: int, before: str, after: str, *, at_start: bool, at_end: bool) -> bool:
-    """B1's page test at one occurrence: `before` is the reading's character before the digits
-    at `start` ("" at its start), `after` the two characters after them."""
-    if before == "(" and after[:1] == ")":
+def _cut(text: str, start: int, end: int, *, at_start: bool, at_end: bool) -> bool:
+    """B1's page test at one occurrence of the edge figure whose digits are `text[start:end]`
+    (rule W: a sign or parenthesis may sit one space from them)."""
+    lead = max(0, start - 2)  # the "- " or "( " ending at the digits; the lookbehind sees past it
+    if _OPEN_PAREN.search(text, lead, start) and _CLOSE_PAREN.match(text, end):
         return True
     if at_start and (
-        _DIGIT_OR_POINT.fullmatch(before) is not None
-        or (before == "-" and _ROUND10_MINUS.match(text, start - 1) is not None)
+        _DIGIT_OR_POINT.fullmatch(text[start - 1 : start]) is not None
+        or _W_MINUS.search(text, lead, start) is not None
     ):
         return True
-    return at_end and _CONTINUES.match(after) is not None
+    return at_end and _CONTINUES.match(text, end) is not None
 
 
 @dataclass(frozen=True)
@@ -1674,8 +1682,9 @@ _GAP_TEXTS = ("gap", "why_it_matters", "affected_analysis", "action")
 
 
 def _blank_issues(submission: EarningsQualitySubmission) -> list[str]:
-    """LEAD round 11 (blank text is one defect class): every analyst text field refuses
-    whitespace-only text. CP-1D pins no empty-text frame, so the issue is `<path>: empty text`.
+    """LEAD round 11 (blank text is one defect class): every analyst text field refuses blank
+    text, which round 12 B10 defines as `blank.is_blank` (whitespace and Unicode `Cf` characters
+    only). CP-1D pins no empty-text frame, so the issue is `<path>: empty text`.
     A `Text` field's "" is already the schema's `min_length` refusal (controller decision); a
     `limitation` of "" gets the frame. `addback` is a bridge label, not text: a blank one is
     `Unknown add-back`."""
@@ -1691,7 +1700,7 @@ def _blank_issues(submission: EarningsQualitySubmission) -> list[str]:
     ]
     for index, gap in enumerate(submission.gaps):
         texts += [(f"gaps[{index}].{name}", getattr(gap, name)) for name in _GAP_TEXTS]
-    return [f"{path}: empty text" for path, text in texts if text is not None and not text.strip()]
+    return [f"{path}: empty text" for path, text in texts if text is not None and is_blank(text)]
 
 
 def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:

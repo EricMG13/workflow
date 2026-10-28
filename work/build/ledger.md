@@ -354,3 +354,4 @@
 - 20:06 Shared defect test follow-up 8c5bf8b (no new suppressions; noqa 13). mx-precise review dispatched.
 - 20:06 CP-4 review: REQUEST CHANGES (M1 acceptance tests; M2 probe never exercised). Fix round 1.
 - 20:09 CP-2A fix1 done (ac97894; 613 passed; M2 unit rule built). Scoped re-review dispatched.
+- 20:10 CP-L10 review: REQUEST CHANGES (M1 view amount_exact text vs oracle; M2 driver KeyError/period label; M3 acceptance tests). Round 5 item 9. Fix round 1.

@@ -381,3 +381,4 @@
 - 20:40 CP-1D review: REQUEST CHANGES (M1 view shown spelling breaks deferred runs; M2 FP02 restated-leverage title vs oracle; L1-L6). Under the no-per-module rule: parked pending user decision (CP-2G consumes CP-1D).
 - 20:40 User: CP-1D folded into the batch (M1, M2, L4 fixed by first batch builder; whole-stage review checks). Lows to end batch.
 - 20:41 CP-L10 fix1 1ec5ba8 (M1-M3, L1-L4; deferred owner suite ran 10/10). To the whole-stage review; joins the batch branch.
+- 20:46 CP-2D fix1 ab7671a (H1 delta, M1-M4, L1/L2/L4; financial_render unfinished). Round 5 item 15 (stale head raise stands). To the whole-stage review. All per-module agents done; only the integrator runs.

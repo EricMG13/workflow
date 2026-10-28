@@ -335,3 +335,4 @@
 - 19:43 CP-4 completion b640f77 (driver, test_owner_cp4, adapter/bindings/spec/D3 tests); CP-5 built 258b9ab. Both queued for mx-adversary review. CP-1D Stage 2 dispatched.
 - 19:45 G1-X plan-order built (0cb0ec6); controller combo check: R3 create succeeds with real CP-3. Review queue (Opus cap): g1x-order, CP-4, CP-5.
 - 19:46 CP-DR fix round 1 done (28b2dce). Opus queue: CP-DR re-review, g1x-order, CP-4, CP-5.
+- 19:46 LEAD: CP-1D L3/I2 remedy (backlog); CP-5 selection 'still refused, consumes' confirmed; comments cite round 2 + CP-5->CP-MODEL edge, DC-5 open. 0d-d held to Stage 2 close.

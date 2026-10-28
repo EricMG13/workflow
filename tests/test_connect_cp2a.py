@@ -1033,7 +1033,7 @@ def test_the_view_shows_a_known_operand_it_does_not_let_the_analyst_cite(tmp_pat
     store, pack, facts = seed(tmp_path)
     bare = tuple(f.model_copy(update={"citations": (), "calculation_id": None}) for f in facts)
     bound = store.begin(MODULE).inputs
-    tree = cp2a.context_block(
+    tree: Any = cp2a.context_block(
         pack=pack, upstream=cp2a.Upstream(bound=bound, current=bound, cp1=bare)
     )
     first: Any = tree["base_periods"][0]

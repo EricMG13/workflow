@@ -12,6 +12,7 @@ from deploy_vii.bindings.cp3d import CP3D
 from deploy_vii.bindings.cp4 import CP4
 from deploy_vii.bindings.cp5 import CP5
 from deploy_vii.bindings.cp6 import CP6
+from deploy_vii.bindings.cp8 import CP8
 from deploy_vii.bindings.cp_model import CP_MODEL
 from deploy_vii.bindings.cpdr import CPDR
 
@@ -19,6 +20,7 @@ from deploy_vii.bindings.cpdr import CPDR
 # CP-3D (owner-only, docs/CP3D-OWNER-LEASE.md) directly after CP-3.
 # CP-DR (lease D-C) is appended last: rails only, no Front Page block.
 # Stage 2: CP-2E (rails only, no block) appends at the end.
+# CP-8 (owner core, Stage 2) is appended last.
 SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP0,
     CP1,
@@ -33,4 +35,5 @@ SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP6,
     CPDR,
     CP2E,
+    CP8,
 )

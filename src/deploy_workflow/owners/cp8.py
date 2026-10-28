@@ -28,26 +28,45 @@ from decimal import (
 )
 from typing import Literal
 
+from pydantic import ValidationError
+
 from deploy_vii.contracts import (
     Citation,
     Claim,
     Contract,
     Fact,
+    Hash,
     Identifier,
+    Input,
+    Module,
     ReportTable,
+    Run,
     Source,
     TableColumn,
     TableRow,
     Text,
 )
-from deploy_vii.cp6_committee import ACTION_BIASES, CONFIDENCES
+from deploy_vii.cp6_committee import ACTION_BIASES, CONFIDENCES, settled_call
 from deploy_vii.display import format_date
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+)
+from deploy_vii.live import schema as live_schema
+from deploy_vii.live.submission import Submitted, _with_rules
+from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.prose import bind, issues, tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
-from deploy_vii.readiness import citation_issues
+from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-8"
 STEP_ID = "decision_ledger"
@@ -587,6 +606,8 @@ class _Checker:
             return [f"{path}: must cite {only}"]
         if rule is not None and (found := rule(ref.source_id)):
             return found
+        if is_blank(ref.quote):  # round 13 addendum 3: before the page-occurrence check
+            return [f"{path}.quote: empty text"]
         citation = Citation(
             source_id=ref.source_id,
             source_sha256=source.sha256,
@@ -1322,13 +1343,15 @@ class _Cells:
         ids.append(fact_id)
 
     def citations(self, refs: Iterable[QuoteRef]) -> tuple[Citation, ...]:
-        out: dict[tuple[str, str, str], Citation] = {}
+        """A sourced fact quotes its own field. A derived fact gets one citation per page, quoting
+        the first of its own input quotes on that page, in input order (Stage 2 round 3)."""
+        out: dict[tuple[str, str], Citation] = {}
         for ref in refs:
             sha = self.sources[ref.source_id].sha256
             if sha is None:
                 raise ValueError(f"Cited source is not ready: {ref.source_id}")
             out.setdefault(
-                (ref.source_id, ref.locator, ref.quote),
+                (ref.source_id, ref.locator),
                 Citation(
                     source_id=ref.source_id, source_sha256=sha, locator=ref.locator, quote=ref.quote
                 ),
@@ -2216,3 +2239,241 @@ def decision_ledger(
         raise ValueError("A submission with validator issues does not compose: " + "; ".join(found))
     inputs = ledger_inputs(submission=submission, pack=pack)
     return _Composer(submission, inputs, derive(inputs=inputs), pack, upstream).compose()
+
+
+# --- the G1-X seams (protocol section 2) ---------------------------------------------------------------
+
+QUALIFICATION = Qualification(implementation="implemented")
+STEP_IDS = (STEP_ID,)
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: DecisionLedgerSubmission}
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"  # the tail input id of a settled head
+NOT_AN_OBJECT = "(root): the payload is not a JSON object"
+THESIS_OPTIONAL = (
+    "exit_trigger",
+    "expected_spread_return",
+    "expected_rating_path",
+    "expected_hold",
+)
+
+
+def _dict(value: object) -> Mapping[str, object]:
+    return value if isinstance(value, dict) else {}
+
+
+def _claims_absence(document: Mapping[str, object]) -> bool:
+    """Whether the payload carries an absence object a search must back (the optional decision and
+    thesis fields, or ``outcome_absence``); a field of another shape is the validator's."""
+    decision, thesis = _dict(document.get("decision")), _dict(document.get("thesis"))
+    return (
+        any(_dict(decision.get(name)).get("absence") for name in DECISION_OPTIONAL)
+        or any(_dict(thesis.get(name)).get("absence") for name in THESIS_OPTIONAL)
+        or bool(document.get("outcome_absence"))
+    )
+
+
+def RULES(text: str, seen: Seen) -> tuple[str, ...]:
+    """Tool-use evidence rules in ToolRules order: an absence claim needs a recorded search, then
+    every cited page must have been read. Pure over the payload text and ``seen``; the text is
+    read only through ``json_object``; no line quotes the caller (the unread rule is the product's
+    bounded ``unread_citation_issues``)."""
+    document = live_schema.json_object(text)
+    found: list[str] = []
+    if document is not None and _claims_absence(document) and not seen.searched:
+        found.append(UNBACKED_ABSENCE)
+    return (*found, *unread_citation_issues(text, seen))
+
+
+def _parse(text: str) -> DecisionLedgerSubmission | tuple[str, ...]:
+    """The submission, or its shape issues. Model text is parsed once through ``json_object``
+    (protocol section 5); the checked model is read from that bounded document."""
+    document = live_schema.json_object(text)
+    if document is None:
+        return (NOT_AN_OBJECT,)
+    try:
+        return DecisionLedgerSubmission.model_validate_json(live_schema.exact_json(document))
+    except ValidationError as error:
+        return shape_issues(error)
+
+
+def _bound(store: Execution, attempt: Attempt, module_id: str) -> Module:
+    item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+    if item is None:
+        raise ValueError(f"The CP-8 attempt binds no {module_id} input")
+    return store.result(item.sha256)
+
+
+def cp8_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
+    """The store adapter: the bound CP-0 head (authority per source from its T3 facts), the run's
+    as-of date and, when CP-6 is bound, its settled final bias. One adapter for ``submit``,
+    ``probe`` and the entry validator (the reader reads the settled head only and does not use it)."""
+    cp6 = None
+    if any(i.input_id == "CP-6" for i in attempt.inputs):
+        call = settled_call(_bound(store, attempt, "CP-6"))
+        cp6 = (call.action_bias, call.confidence)
+    return Upstream(
+        as_of=store.read().run.as_of,
+        authority=source_authority(_bound(store, attempt, "CP-0").facts),
+        cp6=cp6,
+    )
+
+
+class LedgerOutput(Contract):
+    """What the validated step retains: the composed result without the attempt's bindings."""
+
+    run: Run
+    submission_sha256: Hash
+    facts: tuple[Fact, ...]
+    tables: tuple[ReportTable, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[str, ...]
+
+
+def cp8_module(*, report: LedgerOutput, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-8 candidate: the report's tables and claims bound to ``inputs`` plus the tail input."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    parsed = _parse(store.payload(attempt.steps[0].payload_sha256))
+    if isinstance(parsed, tuple):
+        return StepValidation(issues=parsed)
+    upstream = cp8_upstream(store=store, attempt=attempt)
+    issues = validate_ledger(submission=parsed, upstream=upstream, pack=pack.sources)
+    if issues:
+        return StepValidation(issues=issues)
+    report = decision_ledger(pack=pack.sources, submission=parsed, upstream=upstream)
+    output = LedgerOutput(
+        run=pack.run,
+        submission_sha256=parsed.content_hash(),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+    )
+    return StepValidation(output=output.model_dump_json())
+
+
+# The validator the owner core's ``submit`` hands ``Execution.submit_step`` (R4-2 replay).
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    return cp8_module(
+        report=LedgerOutput.model_validate_json(output),
+        inputs=attempt.inputs,
+        attempt=attempt.number,
+    )
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one ``decision_ledger`` step (nulls resolved through ``SCHEMAS``, the rule
+    issues appended as the product appends them) and settle CP-8 with the Python candidate."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-8 has one step, {STEP_ID}")
+    normal, resolved = live_schema.normalise(SCHEMAS[step_id], payload)
+
+    def validate(pack: PreparedPack, current: Attempt) -> StepValidation:
+        return _validate_step(store, pack, current)
+
+    checked: Callable[[PreparedPack, Attempt], StepValidation] = validate
+    if rules is not None and rules(normal):
+        checked = _with_rules(validate, rules, normal)
+    attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, step_id, normal, checked)
+    if attempt.status == "pending":
+        outcome = _validate_step(store, store.pack(), attempt)
+        if outcome.issues or outcome.output is None or not outcome.retained_as(attempt.steps[0]):
+            raise ValueError("Retained CP-8 output differs from trusted validation")
+        candidate = _candidate(outcome.output, attempt)
+        attempt = store.finish(
+            ticket_id,
+            candidate.model_dump_json(),
+            lambda supplied: () if supplied == candidate else ("CP-8 candidate differs",),
+            qualification=QUALIFICATION,
+        )
+    return Submitted(attempt, normal, resolved, (), (), None)
+
+
+# --- the consumer reader (D3 is OPEN: this pins what a consumer reads, it does not claim consumption)
+
+
+@dataclass(frozen=True)
+class Cp8Head:
+    """What a consumer may read from a settled CP-8 head (``expected.json#consumption``)."""
+
+    head_sha256: str
+    status: str
+    overall_label: str
+    overall_process_sound: str
+    directions: Mapping[str, str | None]  # metric -> Higher / Lower / Unchanged; None: missing
+    magnitudes: Mapping[str, Decimal | None]  # leverage and cover in x, loan_mid in bp
+    window_days: Decimal | None  # None: no realized outcome
+    hit_rate: Decimal | None  # None: not calculable (hit_rate_absence says why)
+    hit_rate_absence: str | None
+    decisions_recorded: int
+    decisions_required: int
+    # The settled module's own list, as ``execution.settle`` wrote it: a synthetic run's
+    # "Synthetic case; not real issuer qualification" line is included. Not the inherited set.
+    limitations: tuple[str, ...]
+
+
+def _fact(facts: Mapping[str, Fact], fact_id: str) -> Fact:
+    if fact_id not in facts:
+        raise ValueError(f"The CP-8 head carries no {fact_id}")
+    return facts[fact_id]
+
+
+def _count(fact: Fact) -> int:
+    if fact.amount is None or fact.amount != fact.amount.to_integral_value():
+        raise ValueError(f"The CP-8 head states no whole count in {fact.fact_id}")
+    return int(fact.amount)
+
+
+def cp8_reader(store: Execution, head: Head) -> Cp8Head:
+    """Read a settled CP-8 head. A cell the head states as missing reads as None (never 0).
+    ``limitations`` is the settled own list: the oracle's own list, then, for a synthetic run,
+    "Synthetic case; not real issuer qualification" (deduplicated); never the inherited set."""
+    if head.module_id != MODULE_ID:
+        raise ValueError(f"{head.module_id} is not a CP-8 head")
+    module = store.head_module(head)
+    facts = {fact.fact_id: fact for fact in module.facts}
+    overall = _fact(facts, "T7.5.overall.label").text
+    sound = _fact(facts, "T7.5.overall.process_sound").text
+    if overall is None or sound is None:
+        raise ValueError("The CP-8 head states no overall attribution")
+    window, hit = _fact(facts, "T7.3.window.realized_value"), _fact(facts, "T7.7.hit_rate.value")
+    return Cp8Head(
+        head_sha256=head.result_sha256,
+        status=head.status,
+        overall_label=overall,
+        overall_process_sound=sound,
+        directions={m: _fact(facts, f"T7.4.{m}.direction").text for m in METRICS},
+        magnitudes={m: _fact(facts, f"T7.4.{m}.magnitude").amount for m in METRICS},
+        window_days=window.amount,
+        hit_rate=hit.amount,
+        hit_rate_absence=None if hit.status == "known" else hit.limitation,
+        decisions_recorded=_count(_fact(facts, "T7.6.gate.decisions_recorded")),
+        decisions_required=_count(_fact(facts, "T7.6.gate.decisions_required")),
+        limitations=module.limitations,
+    )

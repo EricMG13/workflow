@@ -915,3 +915,9 @@ LEAD (2026-10-28): the owner decided "Yes, fix at root".
   - A fresh `mx-feature` executes it.
   - The owner verifier-replay test (0d L1) rides with it.
   - Any part of the fix in `src/deploy_workflow` goes to Modules.
+
+LEAD (2026-10-28): 0d-b is integrated (lead/0d-b 1a1a140 + 88e1fae, merged as e04259d; mx-precise PASS, mx-adversary PASS). The owner then decided "Yes, bound it".
+- **0d-c task (owner-approved).** After the binding audit write, one payload can make rule issues grow without bound; this predates 0d-b and was reported as 0d-b adversary O1.
+  - **Cause:** `absence_issues` quotes the full key path for every matching row. Precheck refusal records (financial `StageSubmission`, owner `OwnerSubmission`, earnings `SubmissionOutcome`) store issues unbounded. Only journal steps pass through `execution.bounded_issues` (20 lines of 600 characters).
+  - **Measured:** a 128 KB payload gives 40 MB of issue text (about 315 times its size). At MAX_LINE, the result is a MemoryError or a record several GB long.
+  - **Plan:** `mx-autonomous` writes a root plan that bounds issue text where it is generated, keeps verifier replay exact, and moves no pinned refusal. A fresh `mx-feature` executes it. Any `src/deploy_workflow` part goes to Modules.

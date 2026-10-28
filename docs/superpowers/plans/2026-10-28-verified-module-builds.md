@@ -93,13 +93,13 @@ For each module:
 | CP-2A | A1–A8 | A5 replaces the v02 strict xfail; A7 removes the positive-interest refusal |
 | CP-3D | D1–D3, X1 (i)–(v) | merged; rework on branch; the five shapes get claim wording, none raises |
 | CP-DR | R1–R3 | merged; rework on branch |
-| CP-2D | 2D1–2D9 | 2D1 substring match (not word boundary); 2D9 financing total; zero debt not_applicable |
-| CP-1C | 1C1–1C6, C1–C3 | folded into the running fix 1; C2 overrides the builder; 200.04 precision unruled (provisional refusal) |
-| CP-1D | 1D1–1D10, 1D2 follow-up | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
+| CP-2D | 2D1–2D9, 2D-a–d | 2D-a: substring match only over analyst fields; 2D-b/c/d: missing operands, facility terms and cross-check mismatches settle; 2D9 financing total |
+| CP-1C | 1C1–1C6, C1–C3, 1C-x | folded into the running fix 1; C2 overrides the builder |
+| CP-1D | 1D1–1D10, 1D2 follow-up, 1D-x | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
 | CP-4 | 4-1 | b658bc1 approved and merged (056b355); re-pin to 7328203 (expected 154fc2d0…, builder 71cf0758…) dispatched |
 | CP-L10 | L10-a, L10-c | folded into the running amendment-1 fix; L10-b `methods/cpl10.md` note goes to Stage 2 |
 
-LEAD round 2 is committed at 842c911 (merged d9cada2). `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
+LEAD round 2 is committed at 842c911 (merged d9cada2), and round 3 at f5ee633 (merged 2b4b393). Stage 2 `methods/<cp>.md` notes: cp1d (1D4), cpl10 (L10-b), cp2d (2D-a stem list). CP-4 T4C.7 `stated_value` display is open in QUEUE for the CP-4 build (engine-side; owner decides). `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
 
 Then:
 - [ ] **Stage 1 review.** Fable checks every module's calculation against its lease, the input-field lists against `manifest.fact_bindings`, and that nothing reaches into a store, the host or a renderer. It fixes and commits, test-first.

@@ -146,7 +146,7 @@ _MONTHS = (
 )
 _MONTH_ALT = "|".join(_MONTHS)
 _DATE = re.compile(rf"^({_MONTH_ALT}) ([1-9]|[12][0-9]|3[01]), ((?:19|20)[0-9]{{2}})$")
-_PUBLISHED = re.compile(rf"Published ((?:{_MONTH_ALT}) [0-9]{{1,2}}, [0-9]{{4}})")
+_PUBLISHED = re.compile(rf"Published ((?:{_MONTH_ALT}) [0-9]{{1,2}}, [0-9]{{4}})\.")
 _NUMERAL = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,4})?$")
 _RECOVERY = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,2})?$")
 
@@ -162,11 +162,6 @@ def parse_date(text: str) -> date | None:
         return None
 
 
-def _long_date(d: date) -> str:
-    """`Month D, YYYY`, the form the quotes state."""
-    return f"{_MONTHS[d.month - 1]} {d.day}, {d.year}"
-
-
 def _short_date(d: date) -> str:
     return f"{d.day} {_MONTHS[d.month - 1][:3]} {d.year}"
 
@@ -178,8 +173,8 @@ def _token_once(value_text: str, quote: str) -> bool:
 
 
 def publication_dates(pages: Mapping[str, Mapping[str, str]]) -> dict[tuple[str, str], date]:
-    """Per page, the first `Published <Month D, YYYY>` date the page itself states; a page that
-    states none is absent (never defaulted)."""
+    """Per page, the first `Published <Month D, YYYY>.` date the page itself states; a page that
+    states none is absent (never defaulted). Ruling D1 (docs/rulings/2026-10-28-stage1.md)."""
     out: dict[tuple[str, str], date] = {}
     for source_id, by_locator in pages.items():
         for locator, text in by_locator.items():
@@ -854,19 +849,16 @@ class _Composer:
         return f"Quotation of {quotation.isoformat()}" if quotation else self.run_period
 
     def _published(self, ref: _Located) -> str:
-        """The publication date the cited page states; fails closed when it states none."""
-        key = (ref.source_id, ref.locator)
-        if key not in self.ctx.published:
-            raise ValueError(
-                f"No publication date on {ref.source_id} {ref.locator}: a numeric fact needs a period"
-            )
-        return self.ctx.published[key].isoformat()
+        """` published <iso date>` from the cited page's `Published` line, else the ruled
+        `, publication date not stated` (ruling D1: never fail closed)."""
+        stated = self.ctx.published.get((ref.source_id, ref.locator))
+        return f" published {stated.isoformat()}" if stated else ", publication date not stated"
 
     def talk_period(self) -> str:
-        return f"Commentary published {self._published(self.obs['indicative_talk'])}"
+        return f"Commentary{self._published(self.obs['indicative_talk'])}"
 
     def terms_period(self, ref: QuoteRef) -> str:
-        return f"Facility terms in the {ref.source_id} source published {self._published(ref)}"
+        return f"Facility terms in the {ref.source_id} source{self._published(ref)}"
 
     # shared operands ---------------------------------------------------------------------------
     def why(self, reason: str) -> str:
@@ -1332,10 +1324,6 @@ class _Composer:
 
     # T3E.7-T3E.9 ------------------------------------------------------------------------------
     def missing_inputs(self) -> Table:
-        if not self.market_absent and self.derived.mid is None:
-            raise ValueError(
-                "T3E.7: no lease wording for a partial quotation (bid or offer not observed)"
-            )
         miss: list[tuple[str, str]] = []
         if self.market_absent:
             miss.append(
@@ -1360,12 +1348,6 @@ class _Composer:
                     "Annual default intensity and cumulative default probability",
                     self.sub.recovery_absence.reason,
                 )
-            )
-        margin_cited = self.derived.margin_bp is not None and self.sub.terms.amortisation.value_text
-        if self.stored["dm_mid"] is None and not self.market_absent and margin_cited:
-            raise ValueError(
-                "T3E.7: no lease wording for a discount margin missing only for want of a final "
-                "maturity"
             )
         if self.stored["dm_mid"] is None and not self.market_absent:
             miss.append(
@@ -1488,6 +1470,131 @@ def inherited_limitations(*, own: Sequence[str], upstream: Sequence[str]) -> tup
 # --- claims ------------------------------------------------------------------------------------
 
 
+_BID, _OFFER, _TALK = "T3E.1.r01.level", "T3E.1.r02.level", "T3E.1.r03.level"
+_MID, _YEARS = "T3E.2.r01.value", "T3E.2.r06.value"
+_MARGIN, _DM, _YLD = "T3E.3.r02.mid", "T3E.3.r03.mid", "T3E.3.r05.mid"
+_LAM, _PD = "T3E.5.r01.mid", "T3E.5.r02.mid"
+_Claim = Callable[[str, str, Sequence[str]], ClaimText]
+
+
+def _lvl_claim(c: _Composer, claim: _Claim) -> ClaimText:
+    """CP-3D-LVL-01; partial quotations per ruling X1 (i)-(iii), the date per ruling D2."""
+    cid = "CP-3D-LVL-01"
+    if c.market_absent:
+        return claim(
+            cid,
+            f"No market level is available: [{_BID}] and [{_OFFER}] are not stated because the pack "
+            "holds no third-party market quotation source.",
+            [_BID, _OFFER],
+        )
+    bid, offer = c.obs.get("bid"), c.obs.get("offer")
+    if bid is not None and offer is not None:
+        return claim(
+            cid,
+            f"On {bid.as_of_text} the dealer quotation was {{{_BID}|%}} bid and {{{_OFFER}|%}} "
+            f"offer, a mid of {{{_MID}|%}} of par.",
+            [_BID, _OFFER, _MID],
+        )
+    if bid is not None:
+        return claim(
+            cid,
+            f"On {bid.as_of_text} the dealer quotation was {{{_BID}|%}} bid; no offer was submitted, "
+            f"so the mid is not calculated: [{_MID}].",
+            [_BID, _MID],
+        )
+    if offer is not None:
+        return claim(
+            cid,
+            f"On {offer.as_of_text} the dealer quotation was {{{_OFFER}|%}} offer; no bid was "
+            f"submitted, so the mid is not calculated: [{_MID}].",
+            [_OFFER, _MID],
+        )
+    return claim(
+        cid,
+        f"No dealer quotation was submitted: [{_BID}] and [{_OFFER}] are not stated; indicative "
+        f"talk of {{{_TALK}|%}} of par is shown as context only.",
+        [_BID, _OFFER, _TALK],
+    )
+
+
+def _dm_claim(c: _Composer, claim: _Claim) -> ClaimText:
+    """CP-3D-DM-01: known form whenever the mid margin is known, negative included (X1 (iv))."""
+    maturity_text = c.sub.terms.maturity.date_text
+    if c.stored["dm_mid"] is not None and maturity_text:
+        return claim(
+            "CP-3D-DM-01",
+            f"At the mid the simple discount margin over the reference rate is {{{_DM}|bp}}, from a "
+            f"contractual margin of {{{_MARGIN}|bp}} and {{{_YEARS}|years}} to final maturity on "
+            f"{maturity_text}.",
+            [_DM, _MARGIN, _YEARS],
+        )
+    return claim(
+        "CP-3D-DM-01",
+        f"The simple discount margin is not calculated: [{_DM}] is not available.",
+        [_DM],
+    )
+
+
+def _yld_claim(c: _Composer, claim: _Claim) -> ClaimText:
+    """CP-3D-YLD-01; with a quoted level and no final maturity, ruling X1 (v)."""
+    cid = "CP-3D-YLD-01"
+    if c.stored["yield_mid"] is not None:
+        return claim(
+            cid,
+            f"At the mid the all-in yield is {{{_YLD}|%}}, the reference rate level plus the simple "
+            f"discount margin of {{{_DM}|bp}}.",
+            [_YLD, _DM],
+        )
+    if c.sub.terms.reference_rate.level is None:
+        return claim(
+            cid,
+            f"The all-in yield is not calculated: [{_YLD}] needs a reference rate level that no "
+            "source in the pack states.",
+            [_YLD],
+        )
+    if c.derived.days is None:
+        return claim(
+            cid,
+            f"The all-in yield is not calculated: [{_YLD}] needs a final maturity date, which no "
+            "source in the pack states.",
+            [_YLD],
+        )
+    # A quoted level with a missing mid margin for another cause (no mid, no margin): no ruled
+    # wording; the DM-01 gap form's neutral wording, recorded for LEAD.
+    return claim(cid, f"The all-in yield is not calculated: [{_YLD}] is not available.", [_YLD])
+
+
+def _pd_claim(c: _Composer, claim: _Claim) -> ClaimText:
+    """CP-3D-PD-01; not meaningful at the mid per ruling X1 (iv)."""
+    cid, state = "CP-3D-PD-01", c.stored["pd_state_mid"]
+    if state == "known":
+        return claim(
+            cid,
+            "At the analyst recovery assumption the mid spread implies an annual default intensity "
+            f"of {{{_LAM}|bp}} and a cumulative default probability to final maturity of "
+            f"{{{_PD}|%}}; both are risk-neutral measures.",
+            [_LAM, _PD],
+        )
+    if state == "not_applicable":
+        return claim(
+            cid,
+            f"The market-implied default probability is not meaningful: [{_LAM}] and [{_PD}] need a "
+            f"positive simple discount margin, and at the mid the margin is {{{_DM}|bp}}.",
+            [_LAM, _PD, _DM],
+        )
+    needs = (
+        "simple discount margin"
+        if c.sub.recovery is not None
+        else "simple discount margin and a recovery assumption"
+    )
+    return claim(
+        cid,
+        f"The market-implied default probability is not calculated: [{_LAM}] and [{_PD}] need a "
+        f"{needs}.",
+        [_LAM, _PD],
+    )
+
+
 def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
     cells = {f.fact_id: f for t in tables for r in t.rows for f in r.facts}
 
@@ -1497,102 +1604,8 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
             cites += [x for x in cells[ref].cites if x not in cites]
         return ClaimText(claim_id, text, tuple(refs), tuple(cites))
 
-    sub, s = c.sub, c.stored
-    bid, offer, mid = "T3E.1.r01.level", "T3E.1.r02.level", "T3E.2.r01.value"
-    out: list[ClaimText] = []
-    quotation = _quotation_date(sub)
-    if c.market_absent:
-        out.append(
-            claim(
-                "CP-3D-LVL-01",
-                f"No market level is available: [{bid}] and [{offer}] are not stated because the pack holds "
-                "no third-party market quotation source.",
-                [bid, offer],
-            )
-        )
-    else:
-        if quotation is None or not all(cells[r].status == "known" for r in (bid, offer, mid)):
-            raise ValueError(
-                "CP-3D-LVL-01: no lease wording for a partial quotation (bid, offer or mid missing)"
-            )
-        out.append(
-            claim(
-                "CP-3D-LVL-01",
-                f"On {_long_date(quotation)} the dealer quotation was {{{bid}|%}} bid and {{{offer}|%}} offer, "
-                f"a mid of {{{mid}|%}} of par.",
-                [bid, offer, mid],
-            )
-        )
-    dm, margin, years = "T3E.3.r03.mid", "T3E.3.r02.mid", "T3E.2.r06.value"
-    maturity_text = sub.terms.maturity.date_text
-    if s["dm_mid"] is not None and maturity_text:
-        out.append(
-            claim(
-                "CP-3D-DM-01",
-                f"At the mid the simple discount margin over the reference rate is {{{dm}|bp}}, from a "
-                f"contractual margin of {{{margin}|bp}} and {{{years}|years}} to final maturity on "
-                f"{maturity_text}.",
-                [dm, margin, years],
-            )
-        )
-    else:
-        out.append(
-            claim(
-                "CP-3D-DM-01",
-                f"The simple discount margin is not calculated: [{dm}] is not available.",
-                [dm],
-            )
-        )
-    yld = "T3E.3.r05.mid"
-    if s["yield_mid"] is not None:
-        out.append(
-            claim(
-                "CP-3D-YLD-01",
-                f"At the mid the all-in yield is {{{yld}|%}}, the reference rate level plus the simple "
-                f"discount margin of {{{dm}|bp}}.",
-                [yld, dm],
-            )
-        )
-    else:
-        out.append(
-            claim(
-                "CP-3D-YLD-01",
-                f"The all-in yield is not calculated: [{yld}] needs a reference rate level that no source "
-                "in the pack states.",
-                [yld],
-            )
-        )
-    lam, pd = "T3E.5.r01.mid", "T3E.5.r02.mid"
-    if s["pd_state_mid"] == "known":
-        out.append(
-            claim(
-                "CP-3D-PD-01",
-                f"At the analyst recovery assumption the mid spread implies an annual default intensity of "
-                f"{{{lam}|bp}} and a cumulative default probability to final maturity of {{{pd}|%}}; both "
-                "are risk-neutral measures.",
-                [lam, pd],
-            )
-        )
-    elif s["pd_state_mid"] == "not_applicable":
-        raise ValueError(
-            "CP-3D-PD-01: no lease wording when the default measures are not meaningful "
-            "(simple discount margin not positive)"
-        )
-    else:
-        needs = (
-            "simple discount margin"
-            if sub.recovery is not None
-            else "simple discount margin and a recovery assumption"
-        )
-        out.append(
-            claim(
-                "CP-3D-PD-01",
-                f"The market-implied default probability is not calculated: [{lam}] and [{pd}] need a {needs}.",
-                [lam, pd],
-            )
-        )
-    out.append(ClaimText("CP-3D-VIEW-01", sub.summary.text, (), ()))
-    return tuple(out)
+    composed = tuple(f(c, claim) for f in (_lvl_claim, _dm_claim, _yld_claim, _pd_claim))
+    return (*composed, ClaimText("CP-3D-VIEW-01", c.sub.summary.text, (), ()))
 
 
 def market_implied_result(

@@ -1228,6 +1228,78 @@
       "sha256": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
       "reason": "Round 12 B10: blank QA explanation (model text) is whitespace or Unicode Cf (prose.is_blank).",
       "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "b22972d6d8c7f97825d70fbc6bc59de41a2f5ba5",
+      "sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
+      "reason": "Register the CP-DR rails binding map (D12 one-line registration, appended last) with the CP-DR owner core.",
+      "review": "docs/CPDR-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
+      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
+      "sha256": "8afa15fc82db7580e03c6405f43eee7adfa3344d2b2acfb7f490562084791cc1",
+      "reason": "Register the CP-3D binding map (D12 one-line registration, directly after CP-3) with the CP-3D owner core.",
+      "review": "docs/CP3D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
+      "sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
+      "reason": "Add the CP-3D relative-value mapping and one _spec_of loop entry (D12 registration, rows only).",
+      "review": "docs/CP3D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "0fa5b4aae6b2393a642d8b5e2f5c39b27d1b5872",
+      "sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
+      "reason": "Register the CP-2E rails binding map (D12 one-line registration, appended last) with the CP-2E owner core.",
+      "review": "docs/CP2E-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
+      "project_commit": "b48a3c5be974bdebbd9f0213e2d589e8ffd456ce",
+      "sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
+      "reason": "Merged registration tail: CP-2E appended after CP-DR in SHIPPED_MAPS (CP-3D, CP-DR, CP-2E rows all retained).",
+      "review": "docs/CP2E-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
+      "project_commit": "fb7819b4986b38cbf77665420ae44b1ba02ff4e1",
+      "sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
+      "reason": "Register the CP-8 binding map (D12 one-line registration, appended last after CP-2E) with the CP-8 owner core; merged tail retains CP-3D, CP-DR and CP-2E.",
+      "review": "docs/CP8-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
+      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
+      "sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "reason": "Register the CP-2A binding map (D12 one-line registration, SHIPPED_MAPS += CP2A, appended last after CP-8); merged tail retains CP-3D, CP-DR, CP-2E and CP-8.",
+      "review": "docs/CP2A-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
+      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
+      "sha256": "09ab059d832204059f454e4c9077e0c2d02493717080580a80ab44fcb080acba",
+      "reason": "Add the CP-2A _DISTRESSED composition (two _Spec rows), its _spec_of entry and the two block ids in the distressed_restructuring preset (D12 registration, rows only); retains the CP-3D _RELATIVE_VALUE composition.",
+      "review": "docs/CP2A-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

@@ -33,6 +33,7 @@ from deploy_vii.cp0_workflow import _validate_review as cp0_validate_review
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_workflow import PROMOTED, _quality_stage, validate_cp1_stage
 from deploy_vii.cp2_synthesis import PROMOTED as CP2_PROMOTED
+from deploy_vii.cp5_integrity import PROMOTED as CP5_PROMOTED
 from deploy_vii.cp_model_workflow import (
     PUBLISHED,
     CpModelRefused,
@@ -93,33 +94,58 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2
+from deploy_workflow.owners import cp1a, cp2, cp2a, cp2e, cp3, cp3d, cp5, cp8, cpdr
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
-SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2"})
+SUPPORTED_ANALYTICAL = frozenset(
+    {"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3D", "CP-DR", "CP-2E", "CP-3", "CP-5", "CP-8", "CP-2A"}
+)
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
 # G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
 # raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
 # supplies `STEP_IDS`, `SCHEMAS`, `submit` and, for steps with pack sources, `RULES`.
-_CORES: dict[str, ModuleType] = {}
+_CORES: dict[str, ModuleType] = {
+    "CP-DR": cpdr,
+    "CP-3D": cp3d,
+    "CP-2E": cp2e,
+    "CP-8": cp8,
+    "CP-2A": cp2a,
+}
 _QUALIFICATION = {
     "CP-1": PROMOTED,
     "CP-1A": CP1A_PROMOTED,
     "CP-2": CP2_PROMOTED,
     "CP-MODEL": PUBLISHED,
+    "CP-DR": cpdr.QUALIFICATION,
+    "CP-3D": cp3d.QUALIFICATION,
+    "CP-2E": cp2e.QUALIFICATION,
+    "CP-3": cp3.QUALIFICATION,
+    "CP-5": CP5_PROMOTED,
+    "CP-8": cp8.QUALIFICATION,
+    "CP-2A": cp2a.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
     "CP-1": _verify_promotion,
     "CP-1A": cp1a.probe,
     "CP-2": cp2.probe,
+    "CP-DR": cpdr.probe,
+    "CP-3D": cp3d.probe,
+    "CP-2E": cp2e.probe,
+    "CP-3": cp3.probe,
+    "CP-5": cp5.probe,
+    "CP-8": cp8.probe,
+    "CP-2A": cp2a.probe,
 }
 # The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4; G1-X §3: any
 # step with an entry here may declare `inputs="module_context"`).
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
+    "research": cpdr.view,
+    "integrity_review": cp5.view,
+    "downside_pathway": cp2a.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -127,6 +153,13 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
 _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepValidation]] = {
     "CP-1A": cp1a.ENTRY_VALIDATOR,
     "CP-2": cp2.ENTRY_VALIDATOR,
+    "CP-DR": cpdr.ENTRY_VALIDATOR,
+    "CP-3D": cp3d.ENTRY_VALIDATOR,
+    "CP-2E": cp2e.ENTRY_VALIDATOR,
+    "CP-3": cp3.ENTRY_VALIDATOR,
+    "CP-5": cp5.ENTRY_VALIDATOR,
+    "CP-8": cp8.ENTRY_VALIDATOR,
+    "CP-2A": cp2a.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -167,11 +200,17 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.business_context import BusinessContextSubmission
     from deploy_vii.cp1_workflow import FinancialSubmission
     from deploy_vii.cp2_synthesis import CreditSynthesisSubmission
+    from deploy_vii.cp3_relative_value import RelativeValueSubmission
+    from deploy_vii.cp5_integrity import IntegritySubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
     from deploy_vii.quality import QualityReview
     from deploy_vii.readiness import ReadinessReview
     from deploy_vii.source_context import SourceContextReview
+    from deploy_workflow.owners.cp2a import DownsideSubmission
+    from deploy_workflow.owners.cp2e import MacroFxSubmission
+    from deploy_workflow.owners.cp8 import DecisionLedgerSubmission
+    from deploy_workflow.owners.cpdr import ResearchSubmission
 
     def step(
         step_id: str,
@@ -246,6 +285,90 @@ def _default_specs() -> dict[str, OwnerSpec]:
             entry=None,
             kind="deterministic",
             publish=publish_cp_model,
+        ),
+        # G1-X owner-only module (docs/CPDR-OWNER-LEASE.md Public API): the agenda is its
+        # `module_context` view, the pack tools its evidence; every issue is a journaled step.
+        "CP-DR": OwnerSpec(
+            module_id="CP-DR",
+            steps=(
+                step(
+                    "research",
+                    ResearchSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3D": OwnerSpec(
+            module_id="CP-3D",
+            steps=(
+                step(
+                    "market_implied", cp3d.MarketImpliedSubmission, sources=True, rules="journaled"
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2E": OwnerSpec(
+            module_id="CP-2E",
+            steps=(
+                step(
+                    "macro_fx",
+                    MacroFxSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3": OwnerSpec(
+            module_id="CP-3",
+            steps=(
+                step(
+                    "relative_value",
+                    RelativeValueSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-5": OwnerSpec(
+            module_id="CP-5",
+            steps=(step("integrity_review", IntegritySubmission, inputs="module_context"),),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-8": OwnerSpec(
+            module_id="CP-8",
+            steps=(
+                step(
+                    "decision_ledger",
+                    DecisionLedgerSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2A": OwnerSpec(
+            module_id="CP-2A",
+            steps=(step("downside_pathway", DownsideSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
         ),
     }
 
@@ -630,6 +753,18 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
             raise WorkflowError("not_permitted")
 
 
+def _upstream(graph: Mapping[str, set[str]], module_id: str) -> set[str]:
+    """Every producer `module_id` requires, directly or through other producers."""
+    found: set[str] = set()
+    pending = [module_id]
+    while pending:
+        for producer in graph.get(pending.pop(), ()):
+            if producer not in found:
+                found.add(producer)
+                pending.append(producer)
+    return found
+
+
 def _check_specs(
     pack: PreparedPack,
     specs: Mapping[str, OwnerSpec],
@@ -642,6 +777,7 @@ def _check_specs(
     except ValueError:
         raise WorkflowError("not_permitted") from None
     seen_deterministic = False
+    graph = dependencies(pack.run.requested_modules)
     for module_id, extra in specs.items():
         if module_id not in planned and (
             module_id not in OWNER_SPECS or extra != OWNER_SPECS[module_id]
@@ -661,8 +797,14 @@ def _check_specs(
                 raise WorkflowError("not_permitted")
             seen_deterministic = True
             continue
-        if seen_deterministic or module_id not in SUPPORTED_ANALYTICAL or spec.publish:
+        if module_id not in SUPPORTED_ANALYTICAL or spec.publish:
             raise WorkflowError("not_permitted")
+        if seen_deterministic:
+            # An analytical module may follow the deterministic one only when neither consumes
+            # the other, directly or through the producer graph (rulings 2026-10-28, round 2).
+            publisher = next(m for m in planned if OWNER_SPECS[m].kind == "deterministic")
+            if publisher in _upstream(graph, module_id) or module_id in _upstream(graph, publisher):
+                raise WorkflowError("not_permitted")
         _check_steps(module_id, spec)
     if any(OWNER_SPECS[m].kind == "deterministic" for m in planned):
         out = publication_directory

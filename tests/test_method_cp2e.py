@@ -331,7 +331,7 @@ def _assert_prose_clean(result: cp2e.MacroFxResult) -> None:
         assert prose.issues(claim.text, bound) == (), (claim.claim_id, claim.text)
 
 
-_SHARE = cp2e.Sourced(value=Decimal("0.2"), cite=("financial", "page:2"))
+_SHARE = cp2e.Sourced(value=Decimal("0.2"), cite=cp2e.Cite("financial", "page:2"))
 _NO_TERMS = cp2e.Absence(reason="Not stated", follow_up="Supply it")
 
 
@@ -1347,7 +1347,7 @@ def test_round13_comma_twins_with_a_letter_stay_figures(sentence: str) -> None:
 @pytest.mark.parametrize(
     ("page", "quote", "value", "accepted"),
     [
-        ("The level is -\n1.25 percent here.", "The level is - 1.25 percent", "is - 1.25", True),
+        ("The level is -\n1.25 percent here.", "The level is -\n1.25 percent", "is - 1.25", True),
         ("Term Loan A-\n1.25 notes.", "Term Loan A-\n1.25 notes", "- 1.25 notes", False),
         ("In 2024-\n2025 notes.", "In 2024-\n2025 notes", "- 2025 notes", False),
         ("Term Loan A-\n1.25 notes.", "Term Loan A-\n1.25 notes", "A- 1.25", False),

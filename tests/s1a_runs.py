@@ -250,11 +250,14 @@ def drive_cp0(
     submit_valid(workflow, payload)
 
 
-def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
-    """CP-1 to its promotion: the S1 literal source_context, then the financial case's literal
-    financials, narrative, readiness and quality stages (the QA built from the read inputs)."""
+def drive_cp1(
+    workflow: OwnerWorkflow, pack: PreparedPack, case: str, *, context: str | None = None
+) -> None:
+    """CP-1 to its promotion: the S1 literal source_context (or `context`, a later oracle's
+    literal), then the financial case's literal financials, narrative, readiness and quality
+    stages (the QA built from the read inputs)."""
     fw = _fw()
-    context = literal(case, "cp1_source_context", pack)
+    context = literal(case, "cp1_source_context", pack) if context is None else context
     read_cited(workflow, context)
     search(workflow, "financial", "subsequent")
     if case == "positive":  # business event_scan is no_events_identified only here

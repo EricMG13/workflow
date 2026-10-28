@@ -7,7 +7,10 @@ own limitations (`market_implied_result`). `submission_issues` is the validator 
 journaled refusals that are calculation outcomes. Conventions: `docs/CP3D-OWNER-LEASE.md`
 (Method) and `cases/cp3d-owner/expected.json#arithmetic`.
 
-Connections (upstream binding, `RULES`, `submit`, `probe`) are later stages.
+The last section, "Stage 2 connections", binds the core to the owner workflow: the store
+adapter (`cp3d_upstream`), the report and module builders, the plug-in parts of
+`docs/G1X-OWNER-CORE-PROTOCOL.md` section 2 and the consumer reader. Everything above it stays
+pure.
 """
 
 import re
@@ -15,12 +18,43 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal, localcontext
-from typing import Literal, Protocol
+from functools import partial
+from typing import Literal, Protocol, Self
 
-from deploy_vii.contracts import Contract, Fact
+from pydantic import ValidationError
+
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    Module,
+    ReportTable,
+    Run,
+    TableColumn,
+    TableRow,
+)
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+)
+from deploy_vii.live.schema import json_object
+from deploy_vii.live.schema import normalise as normalise_payload
+from deploy_vii.live.submission import Submitted, _with_rules
+from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
+from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-3D"
 
@@ -255,10 +289,13 @@ def _whole_on_page(value_text: str, quote: str, page: str) -> bool:
     unsigned whole figure there, at every occurrence of each needle (`normalise(quote)`, and its
     joined reading if the quote is wrapped) in each page reading.
 
-    The start edge is nothing before the figure. The ruling's "or only a sign" changes no outcome
-    here: such a sign is quoted, so the page prints it too; a minus is already no token
-    (`_tokens`), and a `+` or an unclosed `(` is never a cut. The end edge is nothing or only `.`
-    after it (`_EDGE_AFTER`)."""
+    The start edge is nothing, a comma, or a comma and a space before the figure (`_EDGE_BEFORE`:
+    round 13 item 8, a comma at the quote edge starts a run with the page's digits, so the figure
+    is cut). The ruling's "or only a sign" changes no outcome here: such a sign is quoted, so the
+    page prints it too; a minus is already no token (`_tokens`), and a `+` or an unclosed `(` is
+    never a cut. The end edge is nothing, a full stop or a comma after it (`_EDGE_AFTER`); the
+    page then cuts it by a digit, by `.` or `,` and a digit, or by `, ` and a digit
+    (`_CUT_AFTER`)."""
     for needle in _readings(quote):
         for m in _tokens(value_text, needle):
             at_start = needle[: m.start()] in _EDGE_BEFORE
@@ -522,6 +559,9 @@ class _Issues:
         self.conclusion_free(path, text)
 
     def on_page(self, source_id: str, locator: str, quote: str, path: str) -> bool:
+        if is_blank(quote):  # round 13 addendum 3: before the page check, every citation quote
+            self.add(f"{path}: empty text")
+            return False
         pages = self.context.pages
         if source_id not in pages:
             self.add(f"{path}: source {source_id} is not in the pack")
@@ -785,6 +825,50 @@ class _Located(Protocol):
     @property
     def locator(self) -> str: ...
 
+    @property
+    def quote(self) -> str: ...
+
+
+@dataclass(frozen=True)
+class _Ref:
+    source_id: str
+    locator: str
+    quote: str
+
+
+class Cites(tuple[Cite, ...]):
+    """The pages a cell rests on, as the (source_id, locator) pairs the oracle pins (it compares
+    equal to the plain tuple), and for each page the distinct submitted quotes the cell rests on,
+    in order (`quotes`). A derived cell rests on every input quote; none is invented."""
+
+    quotes: Mapping[Cite, tuple[str, ...]]
+
+    def __new__(cls, refs: Iterable[_Located] = ()) -> Self:
+        pairs: list[Cite] = []
+        found: dict[Cite, list[str]] = {}
+        for r in refs:
+            key = (r.source_id, r.locator)
+            if key not in pairs:
+                pairs.append(key)
+            quotes = found.setdefault(key, [])
+            if r.quote not in quotes:
+                quotes.append(r.quote)
+        self = super().__new__(cls, pairs)
+        self.quotes = {k: tuple(v) for k, v in found.items()}
+        return self
+
+    @classmethod
+    def merged(cls, parts: Iterable["Cites"]) -> "Cites":
+        return cls(
+            _Ref(source_id, locator, quote)
+            for part in parts
+            for (source_id, locator), quotes in part.quotes.items()
+            for quote in quotes
+        )
+
+
+NO_CITES = Cites()
+
 
 @dataclass(frozen=True)
 class Cell:
@@ -797,7 +881,7 @@ class Cell:
     text: str | None
     shown: str
     status: CellStatus
-    cites: tuple[Cite, ...]
+    cites: Cites
     value_class: ValueClass | None
     calculation_id: str | None
     formula: str | None
@@ -825,7 +909,7 @@ class ClaimText:
     claim_id: str
     text: str
     refs: tuple[str, ...]
-    cites: tuple[Cite, ...]
+    cites: Cites
 
 
 @dataclass(frozen=True)
@@ -836,13 +920,8 @@ class MarketImpliedResult:
     own_limitations: tuple[str, ...]
 
 
-def _trace(refs: Iterable[_Located]) -> tuple[Cite, ...]:
-    out: list[Cite] = []
-    for r in refs:
-        key = (r.source_id, r.locator)
-        if key not in out:
-            out.append(key)
-    return tuple(out)
+def _trace(refs: Iterable[_Located]) -> Cites:
+    return Cites(refs)
 
 
 @dataclass(frozen=True)
@@ -850,7 +929,7 @@ class _Num:
     amount: Decimal
     unit: str
     decimals: int | None
-    cites: tuple[Cite, ...] = ()
+    cites: Cites = NO_CITES
     value_class: ValueClass = "calculated"
     calculation_id: str | None = None
     formula: str | None = None
@@ -860,7 +939,7 @@ class _Num:
 @dataclass(frozen=True)
 class _Text:
     text: str
-    cites: tuple[Cite, ...] = ()
+    cites: Cites = NO_CITES
     value_class: ValueClass | None = None
 
 
@@ -935,7 +1014,7 @@ def _cell(fact_id: str, column: str, content: _Content, default_period: str) -> 
         None,
         shown,
         content.status,
-        (),
+        NO_CITES,
         None,
         None,
         None,
@@ -1469,8 +1548,8 @@ class _Composer:
                 f"r{len(rows) + 1:02d}",
                 "Summary",
                 [
-                    _Text("Analyst Interpretation", (), "analyst_judgment"),
-                    _Text(self.sub.summary.text, (), "analyst_judgment"),
+                    _Text("Analyst Interpretation", NO_CITES, "analyst_judgment"),
+                    _Text(self.sub.summary.text, NO_CITES, "analyst_judgment"),
                 ],
             )
         )
@@ -1538,17 +1617,22 @@ class _Composer:
         return self.table("T3E.9", "Limitations", (("text", "Limitation"),), rows, "Limitation")
 
 
-def cited_pages(submission: MarketImpliedSubmission) -> tuple[Cite, ...]:
-    """Every (source_id, locator) the submission cites, in order of first appearance."""
+def cited_refs(submission: MarketImpliedSubmission) -> tuple[QuoteRef | Observation, ...]:
+    """Every quote the submission cites, in the order the lease lists them."""
     t = submission.terms
-    refs: list[_Located] = [*submission.observations, submission.instrument.quote]
+    refs: list[QuoteRef | Observation] = [*submission.observations, submission.instrument.quote]
     refs += [r for r in (t.maturity.quote, t.margin.quote, t.amortisation.quote) if r]
     refs.append(t.reference_rate.quote)
     if t.reference_rate.level is not None:
         refs.append(t.reference_rate.level.quote)
     for x in submission.technicals:
         refs += x.basis
-    return _trace(refs)
+    return tuple(refs)
+
+
+def cited_pages(submission: MarketImpliedSubmission) -> tuple[Cite, ...]:
+    """Every (source_id, locator) the submission cites, in order of first appearance."""
+    return _trace(cited_refs(submission))
 
 
 def absence_paths(submission: MarketImpliedSubmission) -> tuple[str, ...]:
@@ -1780,13 +1864,10 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
     cells = {f.fact_id: f for t in tables for r in t.rows for f in r.facts}
 
     def claim(claim_id: str, text: str, refs: Sequence[str]) -> ClaimText:
-        cites: list[Cite] = []
-        for ref in refs:
-            cites += [x for x in cells[ref].cites if x not in cites]
-        return ClaimText(claim_id, text, tuple(refs), tuple(cites))
+        return ClaimText(claim_id, text, tuple(refs), Cites.merged(cells[r].cites for r in refs))
 
     composed = tuple(f(c, claim) for f in (_lvl_claim, _dm_claim, _yld_claim, _pd_claim))
-    return (*composed, ClaimText("CP-3D-VIEW-01", c.sub.summary.text, (), ()))
+    return (*composed, ClaimText("CP-3D-VIEW-01", c.sub.summary.text, (), Cites()))
 
 
 def market_implied_result(
@@ -1808,3 +1889,374 @@ def market_implied_result(
     )
     tables = (*(b() for b in builders), c.limitations(own))
     return MarketImpliedResult(derived, tables, _claims(c, tables), own)
+
+
+# --- Stage 2 connections -----------------------------------------------------------------------
+#
+# The parts below bind the pure core to the owner workflow (`docs/G1X-OWNER-CORE-PROTOCOL.md`
+# section 2, `docs/CP3D-OWNER-LEASE.md` Public API). CP-3D is owner-only: CP-0 is its one
+# upstream (CP-2H is unbound), its one step `market_implied` has pack sources and journaled rules,
+# and it reads no view and has no precheck.
+
+STEP_ID = "market_implied"
+STEP_IDS: tuple[str, ...] = (STEP_ID,)
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: MarketImpliedSubmission}
+QUALIFICATION = Qualification(implementation="implemented")
+CP0_INPUT = "CP-0"
+# The settled head's extra input: `<step id with hyphens>-submission` (protocol section 2).
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+_INCONSISTENT = "identity_mismatch"
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What the validator and composer read of the bound CP-0 head: the Stage 1 `MarketContext`
+    (pack pages and names, the CP-0 T3 `third_party` sources, page publication dates, the run
+    as-of date) and the CP-0 limitations CP-3D inherits (head limitations, then its inherited)."""
+
+    context: MarketContext
+    inherited: tuple[str, ...]
+
+
+def _third_party(cp0: Module) -> frozenset[str]:
+    """The sources whose CP-0 T3 authority fact reads `third_party`."""
+    out: set[str] = set()
+    for fact in cp0.facts:
+        parts = fact.fact_id.split(".")
+        if (
+            len(parts) == 3
+            and (parts[0], parts[2]) == ("T3", "authority")
+            and fact.text == "third_party"
+        ):
+            out.add(parts[1])
+    return frozenset(out)
+
+
+def upstream_of(*, pack: PreparedPack, cp0: Module) -> Upstream:
+    """The pure adapter: the pack and the bound CP-0 module to the Stage 1 context object."""
+    pages = {s.source_id: {span.locator: span.text for span in s.spans} for s in pack.sources}
+    context = MarketContext(
+        pages=pages,
+        names={s.source_id: s.name for s in pack.sources},
+        third_party=_third_party(cp0),
+        published=publication_dates(pages),
+        run_as_of=pack.run.as_of,
+    )
+    return Upstream(context, tuple(dict.fromkeys((*cp0.limitations, *cp0.inherited_limitations))))
+
+
+def cp3d_upstream(
+    *, store: Execution, attempt: Attempt, pack: PreparedPack | None = None
+) -> Upstream:
+    """Read the attempt's bound CP-0 head from the store (exactly one binding) and adapt it.
+    `submit`, `probe` and the entry validator all come through here."""
+    bound = [item for item in attempt.inputs if item.input_id == CP0_INPUT]
+    if len(bound) != 1:
+        raise WorkflowError(_INCONSISTENT)
+    return upstream_of(
+        pack=store.pack() if pack is None else pack, cp0=store.result(bound[0].sha256)
+    )
+
+
+def validate_market_implied(
+    *, submission: MarketImpliedSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """The validator issues of a submission against the bound upstream (empty: valid)."""
+    return submission_issues(submission=submission, context=upstream.context)
+
+
+# --- the report and the module -----------------------------------------------------------------
+
+
+class MarketImpliedReport(Contract):
+    """The validated step output the journal retains: Python's facts, tables and claims."""
+
+    schema_version: Literal["market-implied/1"] = "market-implied/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[str, ...]
+    inherited_limitations: tuple[str, ...]
+
+
+def cite_of(pack: PreparedPack, cites: Cites, cite: Cite) -> Citation:
+    """A page-level cite as a `Citation`: the pack source hash and the first submitted quote the
+    cell rests on for that page (a derived cell rests on several; the first input quote on the
+    page is cited, none is invented). A page the cell has no quote for is refused."""
+    quotes = cites.quotes.get(cite)
+    source = next((s for s in pack.sources if s.source_id == cite[0]), None)
+    if not quotes or source is None or source.sha256 is None:
+        raise ValueError(f"no quote or source hash for the cited page {cite[0]} {cite[1]}")
+    return Citation(
+        source_id=cite[0], source_sha256=source.sha256, locator=cite[1], quote=quotes[0]
+    )
+
+
+def _fact_of(
+    cell: Cell, label: str, table_id: str, row_id: str, field: str, cites: tuple[Citation, ...]
+) -> Fact:
+    return Fact(
+        fact_id=cell.fact_id,
+        label=label,
+        table_id=table_id,
+        row_id=row_id,
+        field=field,
+        amount=cell.amount,
+        text=cell.text,
+        status=cell.status,
+        unit=cell.unit,
+        decimals=cell.decimals,
+        period=cell.period,
+        citations=cites,
+        calculation_id=cell.calculation_id,
+        value_class=cell.value_class,
+        formula=cell.formula,
+        limitation=cell.limitation,
+    )
+
+
+def _layout(table: Table, pack: PreparedPack) -> tuple[ReportTable, list[Fact]]:
+    facts: list[Fact] = []
+    rows: list[TableRow] = []
+    for row in table.rows:
+        if len(row.facts) != len(table.columns):
+            raise ValueError(f"{table.table_id}.{row.row_id}: row and columns differ")
+        for (key, column), cell in zip(table.columns, row.facts, strict=True):
+            if cell.fact_id != f"{table.table_id}.{row.row_id}.{key}" or cell.column != column:
+                raise ValueError(f"{cell.fact_id}: not the coordinate of its cell")
+            cites = tuple(cite_of(pack, cell.cites, c) for c in cell.cites)
+            facts.append(
+                _fact_of(cell, f"{row.label} · {column}", table.table_id, row.row_id, key, cites)
+            )
+        rows.append(
+            TableRow(
+                row_id=row.row_id,
+                label=row.label,
+                fact_ids=tuple(c.fact_id for c in row.facts),
+            )
+        )
+    layout = ReportTable(
+        table_id=table.table_id,
+        title=table.title,
+        columns=tuple(TableColumn(field=f, label=label) for f, label in table.columns),
+        rows=tuple(rows),
+        row_header=table.row_header,
+    )
+    return layout, facts
+
+
+def market_implied(
+    *, pack: PreparedPack, submission: MarketImpliedSubmission, upstream: Upstream
+) -> MarketImpliedReport:
+    """The report of a submission the validator accepts (`ValueError` listing the issues if not)."""
+    if issues := validate_market_implied(submission=submission, upstream=upstream):
+        raise ValueError("; ".join(issues))
+    result = market_implied_result(submission=submission, context=upstream.context)
+    tables: list[ReportTable] = []
+    facts: list[Fact] = []
+    for table in result.tables:
+        layout, table_facts = _layout(table, pack)
+        tables.append(layout)
+        facts += table_facts
+    claims = tuple(
+        Claim(
+            claim_id=c.claim_id,
+            text=c.text,
+            citations=tuple(cite_of(pack, c.cites, x) for x in c.cites),
+        )
+        for c in result.claims
+    )
+    return MarketImpliedReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=tuple(tables),
+        facts=tuple(facts),
+        claims=claims,
+        limitations=result.own_limitations,
+        inherited_limitations=inherited_limitations(
+            own=result.own_limitations, upstream=upstream.inherited
+        ),
+    )
+
+
+def cp3d_module(*, report: MarketImpliedReport, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-3D candidate: the report bound to `inputs` plus the submission input."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        inherited_limitations=report.inherited_limitations,
+        attempt=attempt,
+    )
+
+
+# --- the journal: validator, rules, submit and probe -------------------------------------------
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands `Execution.submit_step` and the verifier replays: the
+    attempt's last step, against the bound CP-0 head."""
+    try:
+        submission = MarketImpliedSubmission.model_validate_json(
+            store.payload(attempt.steps[-1].payload_sha256)
+        )
+    except ValidationError as error:
+        return StepValidation(issues=shape_issues(error))
+    upstream = cp3d_upstream(store=store, attempt=attempt, pack=pack)
+    if issues := validate_market_implied(submission=submission, upstream=upstream):
+        return StepValidation(issues=issues)
+    report = market_implied(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+# The validator CP-3D's own `submit` hands `Execution.submit_step` (R4-2 invalid-step replay).
+ENTRY_VALIDATOR = _validate_step
+
+_ABSENCE_PATHS: tuple[tuple[str, ...], ...] = (
+    ("market_absence",),
+    ("terms", "maturity", "absence"),
+    ("terms", "margin", "absence"),
+    ("terms", "amortisation", "absence"),
+    ("terms", "reference_rate", "absence"),
+)
+
+
+def _present(document: Mapping[str, object], path: tuple[str, ...]) -> bool:
+    node: object = document
+    for key in path:
+        if not isinstance(node, Mapping):
+            return False
+        node = node.get(key)
+    return node is not None
+
+
+def _rules(text: str, seen: Seen) -> tuple[str, ...]:
+    """The journaled tool-use rules (protocol section 2): `UNBACKED_ABSENCE` once when an absence
+    object (`absence_paths`; `recovery_absence` is not one) is present and no search was recorded,
+    then the unread cited pages, sorted. The payload is read only through `json_object`; text
+    that is no object has no absence to back, and the validator refuses its shape."""
+    document = json_object(text)
+    backed = bool(seen.searched)
+    unbacked = (
+        document is not None and not backed and any(_present(document, p) for p in _ABSENCE_PATHS)
+    )
+    return (*((UNBACKED_ABSENCE,) if unbacked else ()), *unread_citation_issues(text, seen))
+
+
+RULES = _rules
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = MarketImpliedReport.model_validate_json(output)
+    return cp3d_module(report=report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def _settle(store: Execution, ticket_id: str, attempt: Attempt) -> Attempt:
+    """Settle CP-3D with the Python candidate after its one valid step (as `submit_cp1a_step`)."""
+    outcome = _validate_step(store, store.pack(), attempt)
+    if outcome.issues or outcome.output is None or not outcome.retained_as(attempt.steps[0]):
+        raise ValueError("Retained CP-3D output differs from trusted validation")
+    candidate = _candidate(outcome.output, attempt)
+    return store.finish(
+        ticket_id,
+        candidate.model_dump_json(),
+        lambda supplied: () if supplied == candidate else ("CP-3D candidate differs",),
+        qualification=QUALIFICATION,
+    )
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one `market_implied` response (null resolution through `SCHEMAS`, the rule
+    issues appended as the product `_with_rules` appends them) and settle CP-3D after it."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-3D has one step, {STEP_ID}")
+    normal, resolved = normalise_payload(MarketImpliedSubmission, payload)
+    validate: Callable[[PreparedPack, Attempt], StepValidation] = partial(_validate_step, store)
+    if rules is not None and rules(normal):
+        validate = _with_rules(validate, rules, normal)
+    attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, STEP_ID, normal, validate)
+    if (
+        attempt.status == "pending"
+        and len(attempt.steps) == len(STEP_IDS)
+        and all(s.status == "valid" for s in attempt.steps)
+    ):
+        attempt = _settle(store, ticket_id, attempt)
+    return Submitted(attempt, normal, resolved, (), (), None)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Rerun the validator and settlement over the settled snapshot (`identity_mismatch` unless
+    the attempt and head rebuild exactly)."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+# --- the consumer reader (D3 stays OPEN) -------------------------------------------------------
+
+READ_DM_MID, READ_LAMBDA_MID = "T3E.3.r03.mid", "T3E.5.r01.mid"
+READ_PD_MID, READ_RECOVERY = "T3E.5.r02.mid", "T3E.4.r01.value"
+
+
+@dataclass(frozen=True)
+class Reading:
+    """One fact as a consumer sees it: its id, its status and its exact amount (None when the
+    fact is not known; a missing figure is never 0)."""
+
+    fact_id: str
+    status: str
+    amount: Decimal | None
+
+
+@dataclass(frozen=True)
+class Cp3dHead:
+    """What `expected.json#consumption.reader_pinned_for_cp3c` pins CP-3C to read."""
+
+    head_sha256: str
+    status: str
+    discount_margin_mid: Reading
+    intensity_mid: Reading
+    probability_mid: Reading
+    recovery: Reading
+    own_limitations: tuple[str, ...]
+
+
+def _reading(facts: Mapping[str, Fact], fact_id: str) -> Reading:
+    fact = facts.get(fact_id)
+    if fact is None:
+        raise WorkflowError(_INCONSISTENT)
+    return Reading(fact_id, fact.status, fact.amount)
+
+
+def cp3d_reader(store: Execution, head: Head) -> Cp3dHead:
+    """The consumer reader: the head's hash and status, the mid discount margin, default
+    intensity and cumulative probability, the recovery assumption (or its absence) and the own
+    limitations. No consumer core reads it yet, so no consumption is claimed (lease D3)."""
+    if head.module_id != MODULE_ID:
+        raise WorkflowError(_INCONSISTENT)
+    module = store.head_module(head)
+    facts = {f.fact_id: f for f in module.facts}
+    return Cp3dHead(
+        head_sha256=head.result_sha256,
+        status=head.status,
+        discount_margin_mid=_reading(facts, READ_DM_MID),
+        intensity_mid=_reading(facts, READ_LAMBDA_MID),
+        probability_mid=_reading(facts, READ_PD_MID),
+        recovery=_reading(facts, READ_RECOVERY),
+        own_limitations=module.limitations,
+    )

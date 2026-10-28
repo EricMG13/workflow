@@ -9,11 +9,12 @@ stood in for by the CP-2D stable id (the manifest's ref) or ``cp1:<name>`` (CP-1
 bound in Stage 2); an unknown name binds to a ref the view never offers.
 """
 
+import calendar
 import hashlib
 import json
 import re
 from dataclasses import replace
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -33,13 +34,13 @@ CP2D_EXPECTED: dict[str, Any] = json.loads(
 )
 BINDINGS: dict[str, Any] = MANIFEST["fact_bindings"]
 
-# docs/CP3C-OWNER-LEASE.md header (rev 3, re-pinned by LEAD 2026-10-28 for methodology.json:
-# builder and manifest only) and manifest.json#frozen_inputs.
+# docs/CP3C-OWNER-LEASE.md header (rev 3; LEAD re-pins 2026-10-28 for methodology.json and the
+# round 6 oracle batch, builder and manifest only) and manifest.json#frozen_inputs.
 PINS = {
-    "cases/cp3c-owner/manifest.json": "d5ca731c45891613a2982b0e538162127fa8f290017f6da43161c6f4fe616f53",
+    "cases/cp3c-owner/manifest.json": "7a0056a1145f9a92efd11f18fd6512e8c86e508b25176d457f0fe07394ad8a5a",
     "cases/cp3c-owner/submissions.json": "8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c",
     "cases/cp3c-owner/expected.json": "50ef4a7f9199e1da4a73fc75eaaf6bc8215bef12cec26067d2d44aead0952e5f",
-    "cases/cp3c-owner/builder/build.py": "b461d897370cac9885df1bb9b2572ae2bc6411ed7f417a7194db58efacccd46a",
+    "cases/cp3c-owner/builder/build.py": "b2cdb63c560abdfdd4387f5d337fb7462c93218b4c24f48c6c4142deaf00bf56",
 }
 PACK_CASES = ("positive", "gap_minimum_cash", "gap_no_repricing")
 FIXTURES = tuple(k for k in EXPECTED["cases"] if k.startswith("fixture_"))
@@ -917,6 +918,8 @@ def test_unruled_claim_slots_take_the_chip_form() -> None:
 
 
 def test_c6_a_facility_in_another_currency_uses_the_2d5_wording() -> None:
+    """Ruling A5: the currency is the T4.18 row's own text fact, so 2D5 is reached while the
+    CP-2D wall principal is missing (a read through _maturity_figure would raise first)."""
     fx = "Not calculable: facility term-loan is in EUR, not USD; no FX conversion is applied"
     row = _positive_row()
     wall = (replace(row, principal=_gone(row.principal, fx)),)
@@ -1118,3 +1121,54 @@ def test_amortisation_comes_before_the_principal_in_formula_order() -> None:
     )
     gaps = _own_gaps(result)
     assert (gaps["T3D.1.r01.c5"], gaps["T3D.1.r01.c6"]) == (("missing", AMORT), ("missing", fx))
+
+
+# --- LEAD rulings round 6 (docs/rulings/2026-10-28-stage1.md "# Round 6", A1 and A5) ---------
+
+
+def _plus_months(start: date, n: int) -> date:
+    """The test's own calendar month step, the day clamped to the end of the month."""
+    years, index = divmod(start.month - 1 + n, 12)
+    year, month = start.year + years, index + 1
+    return date(year, month, min(start.day, calendar.monthrange(year, month)[1]))
+
+
+def test_a1_months_are_the_largest_n_with_d0_plus_n_on_or_before_the_maturity() -> None:
+    """Dec 31 to Jun 30 is 30 months; this supersedes CP-3C lease note :218 (29)."""
+    position = cp3c.wall_position(
+        balance_date=date(2025, 12, 31), maturity=date(2028, 6, 30), horizon_months=30
+    )
+    assert position == (30, True)
+
+
+def test_a1_wall_position_over_every_day_of_four_years() -> None:
+    """A1 property scope: D0 + months <= maturity < D0 + months + 1; months < H is inside and
+    months > H is outside; inside is maturity <= D0 + H (lease :34)."""
+    for d0 in (date(2025, 12, 31), date(2025, 1, 31), date(2024, 2, 29), date(2025, 6, 15)):
+        for offset in range(4 * 366):
+            maturity = d0 + timedelta(days=offset)
+            for horizon in (1, 12, 24, 59):
+                months, inside = cp3c.wall_position(
+                    balance_date=d0, maturity=maturity, horizon_months=horizon
+                )
+                assert _plus_months(d0, months) <= maturity < _plus_months(d0, months + 1)
+                assert inside == (maturity <= _plus_months(d0, horizon))
+                assert not (months < horizon and not inside) and not (months > horizon and inside)
+
+
+def test_a1_amortisation_runs_for_the_largest_n_months() -> None:
+    """A maturity on 2028-06-30 amortises 12 a year for 30 months (not 29), and CP-2D's 30
+    months agree with the recomputed position."""
+    row = _positive_row()
+    wall = replace(
+        row,
+        maturity_date=replace(row.maturity_date, text="2028-06-30"),
+        months=replace(row.months, amount=Decimal(30)),
+    )
+    terms = replace(
+        _positive_terms(), annual_amortisation=_cp1_amount("term-loan.annual_amortisation", "12")
+    )
+    result = cp3c.compute(_positive_with(terms, wall=(wall,)))
+    (m,) = result.refinancing.maturities
+    assert (m.facility.months, m.facility.wall_differs) == (30, False)
+    assert m.amortisation_before_maturity == 30 and m.principal_payable == 20

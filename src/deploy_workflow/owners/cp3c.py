@@ -286,7 +286,9 @@ class FacilityTerms:
     """The CP-1 T4.18 terms of one facility (QUARTER period over its FY alias)."""
 
     facility_id: str
-    currency: str  # the currency unit of the T4.18 principal fact (ruling C-7)
+    # The T4.18 row's own `currency` text fact, read by facility_id from the row the principal
+    # comes from, never through financial_series._maturity_figure (ruling A5, amending C-7).
+    currency: str
     facility_name: Cp1Fact
     secured_status: Cp1Fact
     seniority: Cp1Fact
@@ -501,10 +503,11 @@ def _add_months(start: date, months: int) -> date:
 
 
 def wall_position(*, balance_date: date, maturity: date, horizon_months: int) -> tuple[int, bool]:
-    """CP-2D's whole-month rule: (months from D0, inside the horizon). One month fewer when the
-    maturity's day of month is earlier than D0's; inside when on or before D0 + horizon."""
+    """CP-2D's whole-month rule (ruling A1): (months from D0, inside the horizon). Months is the
+    largest n with D0 + n months on or before the maturity (31 Dec to 30 Jun is 6); inside when
+    the maturity is on or before D0 + horizon."""
     months = (maturity.year - balance_date.year) * 12 + (maturity.month - balance_date.month)
-    if maturity.day < balance_date.day:
+    if _add_months(balance_date, months) > maturity:
         months -= 1
     return months, maturity <= _add_months(balance_date, horizon_months)
 
@@ -720,7 +723,7 @@ def _facility(
 ) -> FacilityOperand:
     fid = row.facility_id
     principal: Num
-    if terms.currency != currency:  # ruling C-6 with 2D5's reason; the currency per C-7
+    if terms.currency != currency:  # ruling C-6 with 2D5's reason; the currency per A5
         principal = Gap(FX_REASON.format(fid=fid, ccy=terms.currency, base=currency))
     else:
         amount = _cp2d_amount(row.principal)

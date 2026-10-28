@@ -21,7 +21,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | CP-4C first mx-adversary review (money) | bdde577 | impl a2c15c441717ec41c | fix round + round 10 ASCII cell grammar, merge |
 | CP-5 fix 1, tests only (cp5/fix1-brief.md) | 4e2d687 | a490ed6228f4da606 (worktree cp5-stage1) | mx-precise re-review, merge with CP-3 and CP-8 |
 | CP-2G round 9 (brief cp2g/round9-brief.md); fixes 1+2 APPROVED | 5002b6d | a4377a7580e8e70db | scoped mx-feature review, merge |
-| CP-3C fix 1 (brief cp3c/fix1-brief.md) | adf826a | aa5a4817fa00cd287 | mx-adversary re-review by finding id, merge |
+| CP-3C fix 1 mx-adversary re-review | 8a45037 | impl aa5a4817fa00cd287 | merge |
 | CP-8 round 10 mx-feature review | dae85ed | impl a3cc9818386e8861a | merge with CP-3 and CP-5 |
 | CP-2E fix 1 (cp2e/fix1-brief.md) | c050f57 | a219254fe68cc1c2d | mx-precise re-review, merge |
 

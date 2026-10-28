@@ -3016,3 +3016,8 @@ seen)`; G1-X routes `rules="journaled"` to it at submit and verify. CP-3D review
 (FP03 ownership follows the design reference: CP-3D owns market-against-fundamentals; 70% loan
 recovery convention). CP-OS re-review 2: final proof check gets its own prefix `cpos_proof`; the
 shell skip link `#workbench` routes to "Unknown destination" (product defect, own task).
+
+CP-OS frozen (2026-10-28): review-precise-3 FREEZE; LEAD scratch rebuild matched;
+`docs/CPOS-OWNER-LEASE.md` (L-1..L-3 wording applied; rendering closes after the native DOM step and
+the shell skip-link defect fix). L2 speedup fix round 1 done (exact-`Execution` substitution only; cache
+limit 4; caches reset per test); scoped adversary re-review running.

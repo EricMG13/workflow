@@ -1,0 +1,44 @@
+{
+ "schema_version": "cpos-owner-cases/1",
+ "scope": "CP-OS Report navigation over verified S1a owner-run receipts (positive, gap, blocked CP-1A, refused CP-1A). No source pack of its own: the runs, packs and receipts are those of docs/S1A-OWNER-RUN-LEASE.md.",
+ "status": "DRAFT by owner-preparation task cpos-owner, 2026-10-28; not executed",
+ "pins": {
+  "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+  "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+  "src/deploy_vii/report_view.py": "19705fb05aa84a92f6d321a1afc68de7d3dd6cdd99399ac96e0e7c055fb50073",
+  "src/deploy_vii/assets/app.js": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+  "src/deploy_vii/render.py": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+  "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
+  "src/deploy_vii/registry.py": "adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc"
+ },
+ "reuse": {
+  "runs": "cases/snapshot/manifest.json cases[*].run, bytes unchanged",
+  "statuses": "cases/snapshot/expected.json execution.statuses_S1a",
+  "registry": "src/deploy_vii/methodology.json, data only"
+ },
+ "source_bytes": "none added; no synthetic source is needed (navigation reads status and registry, not content)",
+ "cases": [
+  {
+   "case_id": "s1a_positive",
+   "run_id": "slice-snapshot-positive",
+   "receipt_from": "receipt of the closed S1a positive run (acceptance A1) and its publication directory"
+  },
+  {
+   "case_id": "s1a_gap",
+   "run_id": "slice-snapshot-gap",
+   "receipt_from": "receipt of the closed S1a gap run (A2)"
+  },
+  {
+   "case_id": "s1a_blocked_cp1a",
+   "run_id": "slice-snapshot-positive",
+   "receipt_from": "receipt of the A3b clone of the positive run"
+  },
+  {
+   "case_id": "s1a_refused_cp1a",
+   "run_id": "slice-snapshot-positive",
+   "receipt_from": "receipt of the A3c clone of the positive run"
+  }
+ ]
+}

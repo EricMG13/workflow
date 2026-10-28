@@ -1,0 +1,3578 @@
+{
+ "schema_version": "cpos-owner-expected/1",
+ "derivation": "Rows: registry order (methodology.json file order); status of a module = its settled head status, else 'unrun' if the module is in the run's scope (required-edge closure of requested_modules), else 'not_in_pathway' (registry.idle_statuses). Numbered 1..N in registry order over in-scope modules (report_view.navigator); footer rows are not numbered. Glyph and word from the status table; colour from the family table, neutral grey when the registry module has no family. A rejected attempt has no row. Counts are exact integers. A link target is the module page '<id> · <title>'; only accepted and restricted heads carry output, so every other row lands on an honest status page.",
+ "status_words": {
+  "accepted": {
+   "glyph": "pass",
+   "word": "Pass"
+  },
+  "restricted": {
+   "glyph": "lim",
+   "word": "With limitations"
+  },
+  "blocked": {
+   "glyph": "blocked",
+   "word": "Blocked"
+  },
+  "unrun": {
+   "glyph": "unrun",
+   "word": "Not run"
+  },
+  "not_in_pathway": {
+   "glyph": "na",
+   "word": "Not in this Pathway"
+  }
+ },
+ "family_colors": {
+  "sources": "#9AA0B4",
+  "financials": "#0017E5",
+  "business": "#2B8FD6",
+  "earnings": "#C4410C",
+  "synthesis": "#000533",
+  "liquidity": "#0E7A46",
+  "covenants": "#8A5300",
+  "market": "#7A3DB8",
+  "recovery": "#B3261E",
+  "evidence": "#9AA0B4",
+  "portfolio": "#000533"
+ },
+ "module_family": {
+  "CP-0": "sources",
+  "CP-1": "financials",
+  "CP-1A": "business",
+  "CP-1B": "earnings",
+  "CP-1C": "market",
+  "CP-1D": "earnings",
+  "CP-2": "synthesis",
+  "CP-2A": "synthesis",
+  "CP-2D": "liquidity",
+  "CP-2E": "synthesis",
+  "CP-2G": "liquidity",
+  "CP-2H": "market",
+  "CP-3": "market",
+  "CP-3C": "liquidity",
+  "CP-3D": "market",
+  "CP-4": "covenants",
+  "CP-4C": "recovery",
+  "CP-5": "evidence",
+  "CP-6": "portfolio"
+ },
+ "neutral_color": "#9AA0B4",
+ "registry": [
+  {
+   "module_id": "CP-0",
+   "title": "Source readiness",
+   "aliases": [
+    "CP-PARSE"
+   ]
+  },
+  {
+   "module_id": "CP-1",
+   "title": "Canonical data foundation",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-1A",
+   "title": "Business transaction fact pack",
+   "aliases": [
+    "CP-2C"
+   ]
+  },
+  {
+   "module_id": "CP-1B",
+   "title": "Earnings delta",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-1C",
+   "title": "Peer benchmark",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-1D",
+   "title": "Earnings quality",
+   "aliases": [
+    "CP-1E"
+   ]
+  },
+  {
+   "module_id": "CP-2",
+   "title": "Fundamental credit synthesizer",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-2A",
+   "title": "Downside pathway",
+   "aliases": [
+    "CP-2B"
+   ]
+  },
+  {
+   "module_id": "CP-2E",
+   "title": "Macro fx hedging sensitivity",
+   "aliases": [
+    "CP-2F"
+   ]
+  },
+  {
+   "module_id": "CP-2G",
+   "title": "Forward credit model",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-2H",
+   "title": "Ratings migration trigger",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-3",
+   "title": "Relative value security selection",
+   "aliases": [
+    "CP-3A",
+    "CP-3B"
+   ]
+  },
+  {
+   "module_id": "CP-4",
+   "title": "Legal covenant interpreter",
+   "aliases": [
+    "CP-4A",
+    "CP-4B",
+    "CP-4D"
+   ]
+  },
+  {
+   "module_id": "CP-4C",
+   "title": "Restructuring fulcrum",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-5",
+   "title": "Evidence trace validator",
+   "aliases": [
+    "CP-5A"
+   ]
+  },
+  {
+   "module_id": "CP-6",
+   "title": "Ic debate challenge",
+   "aliases": [
+    "CP-6A"
+   ]
+  },
+  {
+   "module_id": "CP-8",
+   "title": "Decision ledger post mortem",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-DR",
+   "title": "Deep research",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-L10",
+   "title": "Financial change screen",
+   "aliases": [
+    "CP-L20",
+    "CP-L23",
+    "CP-L30",
+    "CP-L40"
+   ]
+  },
+  {
+   "module_id": "CP-MEMO",
+   "title": "Credit research report",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-MODEL",
+   "title": "Model (HTML destination and calculation JSON)",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-OS",
+   "title": "Report navigation",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-2D",
+   "title": "Liquidity cash flow bridge",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-3D",
+   "title": "Market implied risk",
+   "aliases": []
+  },
+  {
+   "module_id": "CP-3C",
+   "title": "Refinancing lme risk",
+   "aliases": []
+  }
+ ],
+ "rules": {
+  "never_link_to_missing_content": "Every href in the navigator and rail resolves to a page the shell draws: module routes through report.modules (all registry modules except rejected attempts), the five fixed destinations, and calculation.json only when CP-MODEL published (receipt.model.files). An unrun, blocked or not-in-pathway module links to its status page and promises no findings: has_output false, the empty-state message shown, the status word in the chip.",
+  "verifier": "deploy_workflow.owner_workflow.verify_owner_run_receipt, called before anything is read",
+  "no_journal_head": "CP-OS has no attempt, head, ticket or journal entry; the store and receipt are unchanged",
+  "binding": "proof.receipt_content_sha256 == OwnerRunReceipt.content_hash() of the verified receipt; proof.page_sha256 == sha256 of the rendered page bytes; proof.snapshot_sha256 == receipt.snapshot_sha256. Neither hash is a literal here: both are run-time values asserted by relation.",
+  "rail_limits_dot": "Limitations destination reads 'with limitations' when any report module carries limitations or front.unplaced.length > 0 (app.js:680). The oracle values derive from the heads alone (a restricted or blocked head carries limitations); an unplaced binding would also light it and needs the real store.",
+  "hash_links_all_resolve": "Except the recorded exception shell_skip_link (rule below), every '#' href on the rendered page resolves to a page: navigator and footer rows, the six rail destinations, Front Page block links (blocks[].full_analysis_route, app.js:428), the Analysis coverage table (app.js:630) and the CP-MODEL links (app.js:604, :613). A route resolves when it is a module id or alias in report.modules, or front, analysis, FIT, evidence, limitations (app.js moduleFor/destOf). cases[*].block_links and cases[*].hash_links list them per case.",
+  "shell_skip_link": "Recorded exception, text-checked against shell.html: every page carries <a class=\"skip\" href=\"#workbench\">Skip to analysis</a>; '#workbench' does not resolve (Unknown destination, app.js destOf): product defect outside CP-OS, own task. It is listed in cases[*].hash_links.shell_skip_link and excluded from the dead-link refusal. The CP-OS rendering criterion ('visible working links') closes only after that defect is fixed and the native DOM step passes.",
+  "hash_links_not_derivable_without_a_real_store": "Which Front Page blocks are populated: only a populated block carries full_analysis_route (an honest-state block, report_view.py:1712, has none) and absent table-kind blocks are hidden (app.js renderFront); block state words, whether the Model destination shows the calculation link or the fallback text, and the unplaced list. The oracle gives the superset of links the credit_snapshot Pathway can draw; the test asserts the links actually drawn are a subset of it and every one resolves. 'Full analysis' on relative-value, committee-challenge and what-changed leads to a CP-3, CP-6, CP-8 'not part of this Pathway' status page: resolves and promises nothing, but the label overstates it (LEAD to note).",
+  "report_data_extraction": "The page embeds <script id=\"report-data\" type=\"application/json\">DATA</script> (shell.html); DATA is json.dumps(ensure_ascii=True, separators=(',',':')) with every '<' replaced by \\u003c (render.py:191-193), so the first '</script>' after the opening tag ends it and json.loads of the text between is exact. No tag, no closing tag or invalid JSON: cpos_target_missing (never a bare JSONDecodeError or AttributeError). Blocks live at report-data report.blocks[], modules at modules[], rows at nav[].",
+  "target_fields_inferred": "target.has_output and target.limitations_panel are inferred here from status (accepted and restricted carry facts or claims; restricted and blocked carry limitations) because the oracle has no real View. The test asserts them against the real heads' module views (facts/claims/tables non-empty; limitations non-empty). A disagreement is returned to LEAD for a ruling, never edited in the oracle.",
+  "limitation_calculation_json_link": "The calculation.json href is relative: it resolves only when the page is opened from a directory holding the receipt's model files. A page opened elsewhere shows a link that cannot open; CP-OS proves the link is drawn from the page fact and present in receipt.model.files, not that the file is beside the page."
+ },
+ "cases": {
+  "s1a_positive": {
+   "description": "Closed S1a positive run (CP-0, CP-1, CP-1A, CP-2 restricted; CP-MODEL published over CP-1).",
+   "oracle_status": "oracle: cases/snapshot/expected.json execution.statuses_S1a",
+   "run": {
+    "run_id": "slice-snapshot-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-1",
+     "CP-MODEL",
+     "CP-1A",
+     "CP-2"
+    ]
+   },
+   "heads": {
+    "CP-0": "restricted",
+    "CP-1": "restricted",
+    "CP-1A": "restricted",
+    "CP-2": "restricted",
+    "CP-MODEL": "restricted"
+   },
+   "rows": [
+    {
+     "module_id": "CP-0",
+     "title": "Source readiness",
+     "aliases": [
+      "CP-PARSE"
+     ],
+     "number": 1,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-0",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-0 · Source readiness",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1",
+     "title": "Canonical data foundation",
+     "aliases": [],
+     "number": 2,
+     "in_pathway": true,
+     "color": "#0017E5",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-1",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1A",
+     "title": "Business transaction fact pack",
+     "aliases": [
+      "CP-2C"
+     ],
+     "number": 3,
+     "in_pathway": true,
+     "color": "#2B8FD6",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-1A",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1B",
+     "title": "Earnings delta",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1B",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1B · Earnings delta",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1C",
+     "title": "Peer benchmark",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1C · Peer benchmark",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1D",
+     "title": "Earnings quality",
+     "aliases": [
+      "CP-1E"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1D · Earnings quality",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2",
+     "title": "Fundamental credit synthesizer",
+     "aliases": [],
+     "number": 4,
+     "in_pathway": true,
+     "color": "#000533",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-2",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-2A",
+     "title": "Downside pathway",
+     "aliases": [
+      "CP-2B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2A",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2A · Downside pathway",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2E",
+     "title": "Macro fx hedging sensitivity",
+     "aliases": [
+      "CP-2F"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2E",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2E · Macro fx hedging sensitivity",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2G",
+     "title": "Forward credit model",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2G",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2G · Forward credit model",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2H",
+     "title": "Ratings migration trigger",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2H",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2H · Ratings migration trigger",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3",
+     "title": "Relative value security selection",
+     "aliases": [
+      "CP-3A",
+      "CP-3B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4",
+     "title": "Legal covenant interpreter",
+     "aliases": [
+      "CP-4A",
+      "CP-4B",
+      "CP-4D"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#8A5300",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4 · Legal covenant interpreter",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4C",
+     "title": "Restructuring fulcrum",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#B3261E",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4C · Restructuring fulcrum",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-5",
+     "title": "Evidence trace validator",
+     "aliases": [
+      "CP-5A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-5",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-5 · Evidence trace validator",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-6",
+     "title": "Ic debate challenge",
+     "aliases": [
+      "CP-6A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-6",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-8",
+     "title": "Decision ledger post mortem",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-8",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-L10",
+     "title": "Financial change screen",
+     "aliases": [
+      "CP-L20",
+      "CP-L23",
+      "CP-L30",
+      "CP-L40"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-L10",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-L10 · Financial change screen",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MEMO",
+     "title": "Credit research report",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-MEMO",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-MEMO · Credit research report",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MODEL",
+     "title": "Model (HTML destination and calculation JSON)",
+     "aliases": [],
+     "number": 5,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-MODEL",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-MODEL · Model (HTML destination and calculation JSON)",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-OS",
+     "title": "Report navigation",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-OS",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-OS · Report navigation",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2D",
+     "title": "Liquidity cash flow bridge",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2D · Liquidity cash flow bridge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3D",
+     "title": "Market implied risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3D · Market implied risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3C",
+     "title": "Refinancing lme risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3C · Refinancing lme risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    }
+   ],
+   "tally": {
+    "label": "Analysis · 5",
+    "chips": [
+     "All",
+     "5 lim",
+     "0 pass"
+    ],
+    "numbered": 5,
+    "footer": 20,
+    "unrun_line": null,
+    "footer_summary": "Not in this Pathway · 20"
+   },
+   "rejected_rows": 0,
+   "destinations": [
+    {
+     "key": "front",
+     "label": "Front Page",
+     "href": "#front",
+     "page_title": "Northbridge Synthetic Group"
+    },
+    {
+     "key": "analysis",
+     "label": "Analysis",
+     "href": "#analysis",
+     "page_title": "Analysis"
+    },
+    {
+     "key": "model",
+     "label": "Model",
+     "href": "#CP-1",
+     "page_title": "CP-1 · Canonical data foundation"
+    },
+    {
+     "key": "fit",
+     "label": "Portfolio Fit",
+     "href": "#FIT",
+     "page_title": "Portfolio Fit",
+     "page_text": "Portfolio Fit · not run: No portfolio constraints or exposures have been evaluated."
+    },
+    {
+     "key": "evidence",
+     "label": "Evidence",
+     "href": "#evidence",
+     "page_title": "Evidence"
+    },
+    {
+     "key": "limits",
+     "label": "Limitations · with limitations",
+     "href": "#limitations",
+     "page_title": "Limitations"
+    }
+   ],
+   "external_links": {
+    "calculation.json": {
+     "rendered": true,
+     "page_fact": "CP-MODEL fact table model-destination, row calculation-json, field path",
+     "page_gates": "module.artifact_sha256, path matches ^[A-Za-z0-9._-]+$, model-provenance cp1-head and pack sha256",
+     "requires": "receipt.model.files has the key calculation.json (cp_model_workflow.CALCULATION)",
+     "href_is_relative": "resolves only beside the published model files (app.js:603)"
+    }
+   },
+   "block_links": [
+    {
+     "block_id": "key-findings",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "company-operating-model",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "model-chart-strip",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "capital-structure",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "financials-credit-metrics",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "strengths-weaknesses",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "relative-value",
+     "full_analysis_route": "CP-3",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-3",
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "company-profile",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "transaction-summary",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "portfolio-fit",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "committee-challenge",
+     "full_analysis_route": "CP-6",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-6",
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "what-changed",
+     "full_analysis_route": "CP-8",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-8",
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway"
+     }
+    }
+   ],
+   "hash_links": {
+    "navigator_and_footer_rows": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "rail_destinations": [
+     "#CP-1",
+     "#FIT",
+     "#analysis",
+     "#evidence",
+     "#front",
+     "#limitations"
+    ],
+    "front_page_block_links": [
+     "#CP-1",
+     "#CP-1A",
+     "#CP-2",
+     "#CP-3",
+     "#CP-6",
+     "#CP-8"
+    ],
+    "analysis_coverage_table": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "model_destination_links": [
+     "#CP-MODEL"
+    ],
+    "shell_skip_link": [
+     "#workbench"
+    ]
+   },
+   "search_probes": [
+    {
+     "filter": "business",
+     "numbered_matches": [
+      "CP-1A"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "limitations",
+     "numbered_matches": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2",
+      "CP-MODEL"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "cp-parse",
+     "numbered_matches": [
+      "CP-0"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "not in this pathway",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-1B",
+      "CP-1C",
+      "CP-1D",
+      "CP-2A",
+      "CP-2E",
+      "CP-2G",
+      "CP-2H",
+      "CP-3",
+      "CP-4",
+      "CP-4C",
+      "CP-5",
+      "CP-6",
+      "CP-8",
+      "CP-DR",
+      "CP-L10",
+      "CP-MEMO",
+      "CP-OS",
+      "CP-2D",
+      "CP-3D",
+      "CP-3C"
+     ]
+    },
+    {
+     "filter": "zzz",
+     "numbered_matches": [],
+     "footer_matches": []
+    }
+   ]
+  },
+  "s1a_gap": {
+   "description": "Closed S1a gap run (no ownership or transaction facts). Statuses equal the positive case: navigation shows status, never content, so a content gap changes no row.",
+   "oracle_status": "oracle: cases/snapshot/expected.json execution.statuses_S1a and gap_case_authorization",
+   "run": {
+    "run_id": "slice-snapshot-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-1",
+     "CP-MODEL",
+     "CP-1A",
+     "CP-2"
+    ]
+   },
+   "heads": {
+    "CP-0": "restricted",
+    "CP-1": "restricted",
+    "CP-1A": "restricted",
+    "CP-2": "restricted",
+    "CP-MODEL": "restricted"
+   },
+   "rows": [
+    {
+     "module_id": "CP-0",
+     "title": "Source readiness",
+     "aliases": [
+      "CP-PARSE"
+     ],
+     "number": 1,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-0",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-0 · Source readiness",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1",
+     "title": "Canonical data foundation",
+     "aliases": [],
+     "number": 2,
+     "in_pathway": true,
+     "color": "#0017E5",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-1",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1A",
+     "title": "Business transaction fact pack",
+     "aliases": [
+      "CP-2C"
+     ],
+     "number": 3,
+     "in_pathway": true,
+     "color": "#2B8FD6",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-1A",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1B",
+     "title": "Earnings delta",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1B",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1B · Earnings delta",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1C",
+     "title": "Peer benchmark",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1C · Peer benchmark",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1D",
+     "title": "Earnings quality",
+     "aliases": [
+      "CP-1E"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1D · Earnings quality",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2",
+     "title": "Fundamental credit synthesizer",
+     "aliases": [],
+     "number": 4,
+     "in_pathway": true,
+     "color": "#000533",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-2",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-2A",
+     "title": "Downside pathway",
+     "aliases": [
+      "CP-2B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2A",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2A · Downside pathway",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2E",
+     "title": "Macro fx hedging sensitivity",
+     "aliases": [
+      "CP-2F"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2E",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2E · Macro fx hedging sensitivity",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2G",
+     "title": "Forward credit model",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2G",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2G · Forward credit model",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2H",
+     "title": "Ratings migration trigger",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2H",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2H · Ratings migration trigger",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3",
+     "title": "Relative value security selection",
+     "aliases": [
+      "CP-3A",
+      "CP-3B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4",
+     "title": "Legal covenant interpreter",
+     "aliases": [
+      "CP-4A",
+      "CP-4B",
+      "CP-4D"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#8A5300",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4 · Legal covenant interpreter",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4C",
+     "title": "Restructuring fulcrum",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#B3261E",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4C · Restructuring fulcrum",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-5",
+     "title": "Evidence trace validator",
+     "aliases": [
+      "CP-5A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-5",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-5 · Evidence trace validator",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-6",
+     "title": "Ic debate challenge",
+     "aliases": [
+      "CP-6A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-6",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-8",
+     "title": "Decision ledger post mortem",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-8",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-L10",
+     "title": "Financial change screen",
+     "aliases": [
+      "CP-L20",
+      "CP-L23",
+      "CP-L30",
+      "CP-L40"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-L10",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-L10 · Financial change screen",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MEMO",
+     "title": "Credit research report",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-MEMO",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-MEMO · Credit research report",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MODEL",
+     "title": "Model (HTML destination and calculation JSON)",
+     "aliases": [],
+     "number": 5,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-MODEL",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-MODEL · Model (HTML destination and calculation JSON)",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-OS",
+     "title": "Report navigation",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-OS",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-OS · Report navigation",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2D",
+     "title": "Liquidity cash flow bridge",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2D · Liquidity cash flow bridge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3D",
+     "title": "Market implied risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3D · Market implied risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3C",
+     "title": "Refinancing lme risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3C · Refinancing lme risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    }
+   ],
+   "tally": {
+    "label": "Analysis · 5",
+    "chips": [
+     "All",
+     "5 lim",
+     "0 pass"
+    ],
+    "numbered": 5,
+    "footer": 20,
+    "unrun_line": null,
+    "footer_summary": "Not in this Pathway · 20"
+   },
+   "rejected_rows": 0,
+   "destinations": [
+    {
+     "key": "front",
+     "label": "Front Page",
+     "href": "#front",
+     "page_title": "Northbridge Synthetic Group"
+    },
+    {
+     "key": "analysis",
+     "label": "Analysis",
+     "href": "#analysis",
+     "page_title": "Analysis"
+    },
+    {
+     "key": "model",
+     "label": "Model",
+     "href": "#CP-1",
+     "page_title": "CP-1 · Canonical data foundation"
+    },
+    {
+     "key": "fit",
+     "label": "Portfolio Fit",
+     "href": "#FIT",
+     "page_title": "Portfolio Fit",
+     "page_text": "Portfolio Fit · not run: No portfolio constraints or exposures have been evaluated."
+    },
+    {
+     "key": "evidence",
+     "label": "Evidence",
+     "href": "#evidence",
+     "page_title": "Evidence"
+    },
+    {
+     "key": "limits",
+     "label": "Limitations · with limitations",
+     "href": "#limitations",
+     "page_title": "Limitations"
+    }
+   ],
+   "external_links": {
+    "calculation.json": {
+     "rendered": true,
+     "page_fact": "CP-MODEL fact table model-destination, row calculation-json, field path",
+     "page_gates": "module.artifact_sha256, path matches ^[A-Za-z0-9._-]+$, model-provenance cp1-head and pack sha256",
+     "requires": "receipt.model.files has the key calculation.json (cp_model_workflow.CALCULATION)",
+     "href_is_relative": "resolves only beside the published model files (app.js:603)"
+    }
+   },
+   "block_links": [
+    {
+     "block_id": "key-findings",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "company-operating-model",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "model-chart-strip",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "capital-structure",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "financials-credit-metrics",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "strengths-weaknesses",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "relative-value",
+     "full_analysis_route": "CP-3",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-3",
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "company-profile",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "transaction-summary",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "portfolio-fit",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "committee-challenge",
+     "full_analysis_route": "CP-6",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-6",
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "what-changed",
+     "full_analysis_route": "CP-8",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-8",
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway"
+     }
+    }
+   ],
+   "hash_links": {
+    "navigator_and_footer_rows": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "rail_destinations": [
+     "#CP-1",
+     "#FIT",
+     "#analysis",
+     "#evidence",
+     "#front",
+     "#limitations"
+    ],
+    "front_page_block_links": [
+     "#CP-1",
+     "#CP-1A",
+     "#CP-2",
+     "#CP-3",
+     "#CP-6",
+     "#CP-8"
+    ],
+    "analysis_coverage_table": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "model_destination_links": [
+     "#CP-MODEL"
+    ],
+    "shell_skip_link": [
+     "#workbench"
+    ]
+   },
+   "search_probes": [
+    {
+     "filter": "business",
+     "numbered_matches": [
+      "CP-1A"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "limitations",
+     "numbered_matches": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2",
+      "CP-MODEL"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "cp-parse",
+     "numbered_matches": [
+      "CP-0"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "not in this pathway",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-1B",
+      "CP-1C",
+      "CP-1D",
+      "CP-2A",
+      "CP-2E",
+      "CP-2G",
+      "CP-2H",
+      "CP-3",
+      "CP-4",
+      "CP-4C",
+      "CP-5",
+      "CP-6",
+      "CP-8",
+      "CP-DR",
+      "CP-L10",
+      "CP-MEMO",
+      "CP-OS",
+      "CP-2D",
+      "CP-3D",
+      "CP-3C"
+     ]
+    },
+    {
+     "filter": "zzz",
+     "numbered_matches": [],
+     "footer_matches": []
+    }
+   ]
+  },
+  "s1a_blocked_cp1a": {
+   "description": "S1a acceptance A3b receipt: CP-1A attempts 0 and 1 invalid, CP-1A head blocked; CP-2 begins over the blocked CP-1A (restricted edge) and settles restricted; CP-MODEL publishes.",
+   "oracle_status": "derived from docs/S1A-OWNER-RUN-LEASE.md rev 1 H1 and execution.current_inputs (restricted edge binds a blocked head); CP-2 status restricted is not pinned by the S1 oracle",
+   "run": {
+    "run_id": "slice-snapshot-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-1",
+     "CP-MODEL",
+     "CP-1A",
+     "CP-2"
+    ]
+   },
+   "heads": {
+    "CP-0": "restricted",
+    "CP-1": "restricted",
+    "CP-1A": "blocked",
+    "CP-2": "restricted",
+    "CP-MODEL": "restricted"
+   },
+   "rows": [
+    {
+     "module_id": "CP-0",
+     "title": "Source readiness",
+     "aliases": [
+      "CP-PARSE"
+     ],
+     "number": 1,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-0",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-0 · Source readiness",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1",
+     "title": "Canonical data foundation",
+     "aliases": [],
+     "number": 2,
+     "in_pathway": true,
+     "color": "#0017E5",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-1",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1A",
+     "title": "Business transaction fact pack",
+     "aliases": [
+      "CP-2C"
+     ],
+     "number": 3,
+     "in_pathway": true,
+     "color": "#2B8FD6",
+     "glyph": "blocked",
+     "word": "Blocked",
+     "href": "#CP-1A",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "Blocked",
+      "has_output": false,
+      "empty_state": "no_validated_output",
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1B",
+     "title": "Earnings delta",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1B",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1B · Earnings delta",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1C",
+     "title": "Peer benchmark",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1C · Peer benchmark",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1D",
+     "title": "Earnings quality",
+     "aliases": [
+      "CP-1E"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1D · Earnings quality",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2",
+     "title": "Fundamental credit synthesizer",
+     "aliases": [],
+     "number": 4,
+     "in_pathway": true,
+     "color": "#000533",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-2",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-2A",
+     "title": "Downside pathway",
+     "aliases": [
+      "CP-2B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2A",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2A · Downside pathway",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2E",
+     "title": "Macro fx hedging sensitivity",
+     "aliases": [
+      "CP-2F"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2E",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2E · Macro fx hedging sensitivity",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2G",
+     "title": "Forward credit model",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2G",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2G · Forward credit model",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2H",
+     "title": "Ratings migration trigger",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2H",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2H · Ratings migration trigger",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3",
+     "title": "Relative value security selection",
+     "aliases": [
+      "CP-3A",
+      "CP-3B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4",
+     "title": "Legal covenant interpreter",
+     "aliases": [
+      "CP-4A",
+      "CP-4B",
+      "CP-4D"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#8A5300",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4 · Legal covenant interpreter",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4C",
+     "title": "Restructuring fulcrum",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#B3261E",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4C · Restructuring fulcrum",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-5",
+     "title": "Evidence trace validator",
+     "aliases": [
+      "CP-5A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-5",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-5 · Evidence trace validator",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-6",
+     "title": "Ic debate challenge",
+     "aliases": [
+      "CP-6A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-6",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-8",
+     "title": "Decision ledger post mortem",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-8",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-L10",
+     "title": "Financial change screen",
+     "aliases": [
+      "CP-L20",
+      "CP-L23",
+      "CP-L30",
+      "CP-L40"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-L10",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-L10 · Financial change screen",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MEMO",
+     "title": "Credit research report",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-MEMO",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-MEMO · Credit research report",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MODEL",
+     "title": "Model (HTML destination and calculation JSON)",
+     "aliases": [],
+     "number": 5,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-MODEL",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-MODEL · Model (HTML destination and calculation JSON)",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-OS",
+     "title": "Report navigation",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-OS",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-OS · Report navigation",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2D",
+     "title": "Liquidity cash flow bridge",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2D · Liquidity cash flow bridge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3D",
+     "title": "Market implied risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3D · Market implied risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3C",
+     "title": "Refinancing lme risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3C · Refinancing lme risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    }
+   ],
+   "tally": {
+    "label": "Analysis · 5",
+    "chips": [
+     "All",
+     "4 lim",
+     "0 pass",
+     "1 blocked"
+    ],
+    "numbered": 5,
+    "footer": 20,
+    "unrun_line": null,
+    "footer_summary": "Not in this Pathway · 20"
+   },
+   "rejected_rows": 0,
+   "destinations": [
+    {
+     "key": "front",
+     "label": "Front Page",
+     "href": "#front",
+     "page_title": "Northbridge Synthetic Group"
+    },
+    {
+     "key": "analysis",
+     "label": "Analysis",
+     "href": "#analysis",
+     "page_title": "Analysis"
+    },
+    {
+     "key": "model",
+     "label": "Model",
+     "href": "#CP-1",
+     "page_title": "CP-1 · Canonical data foundation"
+    },
+    {
+     "key": "fit",
+     "label": "Portfolio Fit",
+     "href": "#FIT",
+     "page_title": "Portfolio Fit",
+     "page_text": "Portfolio Fit · not run: No portfolio constraints or exposures have been evaluated."
+    },
+    {
+     "key": "evidence",
+     "label": "Evidence",
+     "href": "#evidence",
+     "page_title": "Evidence"
+    },
+    {
+     "key": "limits",
+     "label": "Limitations · with limitations",
+     "href": "#limitations",
+     "page_title": "Limitations"
+    }
+   ],
+   "external_links": {
+    "calculation.json": {
+     "rendered": true,
+     "page_fact": "CP-MODEL fact table model-destination, row calculation-json, field path",
+     "page_gates": "module.artifact_sha256, path matches ^[A-Za-z0-9._-]+$, model-provenance cp1-head and pack sha256",
+     "requires": "receipt.model.files has the key calculation.json (cp_model_workflow.CALCULATION)",
+     "href_is_relative": "resolves only beside the published model files (app.js:603)"
+    }
+   },
+   "block_links": [
+    {
+     "block_id": "key-findings",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "company-operating-model",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "Blocked"
+     }
+    },
+    {
+     "block_id": "model-chart-strip",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "capital-structure",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "financials-credit-metrics",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "strengths-weaknesses",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "relative-value",
+     "full_analysis_route": "CP-3",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-3",
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "company-profile",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "Blocked"
+     }
+    },
+    {
+     "block_id": "transaction-summary",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "portfolio-fit",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "committee-challenge",
+     "full_analysis_route": "CP-6",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-6",
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "what-changed",
+     "full_analysis_route": "CP-8",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-8",
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway"
+     }
+    }
+   ],
+   "hash_links": {
+    "navigator_and_footer_rows": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "rail_destinations": [
+     "#CP-1",
+     "#FIT",
+     "#analysis",
+     "#evidence",
+     "#front",
+     "#limitations"
+    ],
+    "front_page_block_links": [
+     "#CP-1",
+     "#CP-1A",
+     "#CP-2",
+     "#CP-3",
+     "#CP-6",
+     "#CP-8"
+    ],
+    "analysis_coverage_table": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "model_destination_links": [
+     "#CP-MODEL"
+    ],
+    "shell_skip_link": [
+     "#workbench"
+    ]
+   },
+   "search_probes": [
+    {
+     "filter": "business",
+     "numbered_matches": [
+      "CP-1A"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "limitations",
+     "numbered_matches": [
+      "CP-0",
+      "CP-1",
+      "CP-2",
+      "CP-MODEL"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "cp-parse",
+     "numbered_matches": [
+      "CP-0"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "not in this pathway",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-1B",
+      "CP-1C",
+      "CP-1D",
+      "CP-2A",
+      "CP-2E",
+      "CP-2G",
+      "CP-2H",
+      "CP-3",
+      "CP-4",
+      "CP-4C",
+      "CP-5",
+      "CP-6",
+      "CP-8",
+      "CP-DR",
+      "CP-L10",
+      "CP-MEMO",
+      "CP-OS",
+      "CP-2D",
+      "CP-3D",
+      "CP-3C"
+     ]
+    },
+    {
+     "filter": "zzz",
+     "numbered_matches": [],
+     "footer_matches": []
+    }
+   ]
+  },
+  "s1a_refused_cp1a": {
+   "description": "S1a acceptance A3c receipt: CP-0 does not command CP-1A, so CP-1A is refused at begin (no head) and the walk stops (S1a Q3 b); CP-2 never begins; CP-MODEL publishes.",
+   "oracle_status": "derived from docs/S1A-OWNER-RUN-LEASE.md rev 3 R3-1 and Q3(b); CP-2 unrun rests on the stop-after-refusal rule and on execution.current_inputs refusing an unrun required upstream",
+   "run": {
+    "run_id": "slice-snapshot-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-1",
+     "CP-MODEL",
+     "CP-1A",
+     "CP-2"
+    ]
+   },
+   "heads": {
+    "CP-0": "restricted",
+    "CP-1": "restricted",
+    "CP-MODEL": "restricted"
+   },
+   "rows": [
+    {
+     "module_id": "CP-0",
+     "title": "Source readiness",
+     "aliases": [
+      "CP-PARSE"
+     ],
+     "number": 1,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-0",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-0 · Source readiness",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1",
+     "title": "Canonical data foundation",
+     "aliases": [],
+     "number": 2,
+     "in_pathway": true,
+     "color": "#0017E5",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-1",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-1A",
+     "title": "Business transaction fact pack",
+     "aliases": [
+      "CP-2C"
+     ],
+     "number": 3,
+     "in_pathway": true,
+     "color": "#2B8FD6",
+     "glyph": "unrun",
+     "word": "Not run",
+     "href": "#CP-1A",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "Not run",
+      "has_output": false,
+      "empty_state": "no_validated_output",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1B",
+     "title": "Earnings delta",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1B",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1B · Earnings delta",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1C",
+     "title": "Peer benchmark",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1C · Peer benchmark",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-1D",
+     "title": "Earnings quality",
+     "aliases": [
+      "CP-1E"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#C4410C",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-1D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-1D · Earnings quality",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2",
+     "title": "Fundamental credit synthesizer",
+     "aliases": [],
+     "number": 4,
+     "in_pathway": true,
+     "color": "#000533",
+     "glyph": "unrun",
+     "word": "Not run",
+     "href": "#CP-2",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "Not run",
+      "has_output": false,
+      "empty_state": "no_validated_output",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2A",
+     "title": "Downside pathway",
+     "aliases": [
+      "CP-2B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2A",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2A · Downside pathway",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2E",
+     "title": "Macro fx hedging sensitivity",
+     "aliases": [
+      "CP-2F"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2E",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2E · Macro fx hedging sensitivity",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2G",
+     "title": "Forward credit model",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2G",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2G · Forward credit model",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2H",
+     "title": "Ratings migration trigger",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2H",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2H · Ratings migration trigger",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3",
+     "title": "Relative value security selection",
+     "aliases": [
+      "CP-3A",
+      "CP-3B"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4",
+     "title": "Legal covenant interpreter",
+     "aliases": [
+      "CP-4A",
+      "CP-4B",
+      "CP-4D"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#8A5300",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4 · Legal covenant interpreter",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-4C",
+     "title": "Restructuring fulcrum",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#B3261E",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-4C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-4C · Restructuring fulcrum",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-5",
+     "title": "Evidence trace validator",
+     "aliases": [
+      "CP-5A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-5",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-5 · Evidence trace validator",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-6",
+     "title": "Ic debate challenge",
+     "aliases": [
+      "CP-6A"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#000533",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-6",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-8",
+     "title": "Decision ledger post mortem",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-8",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-L10",
+     "title": "Financial change screen",
+     "aliases": [
+      "CP-L20",
+      "CP-L23",
+      "CP-L30",
+      "CP-L40"
+     ],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-L10",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-L10 · Financial change screen",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MEMO",
+     "title": "Credit research report",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-MEMO",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-MEMO · Credit research report",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-MODEL",
+     "title": "Model (HTML destination and calculation JSON)",
+     "aliases": [],
+     "number": 5,
+     "in_pathway": true,
+     "color": "#9AA0B4",
+     "glyph": "lim",
+     "word": "With limitations",
+     "href": "#CP-MODEL",
+     "group": "numbered",
+     "target": {
+      "page_title": "CP-MODEL · Model (HTML destination and calculation JSON)",
+      "status_chip_word": "With limitations",
+      "has_output": true,
+      "empty_state": null,
+      "limitations_panel": true
+     }
+    },
+    {
+     "module_id": "CP-OS",
+     "title": "Report navigation",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-OS",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-OS · Report navigation",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-2D",
+     "title": "Liquidity cash flow bridge",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-2D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-2D · Liquidity cash flow bridge",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3D",
+     "title": "Market implied risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#7A3DB8",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3D",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3D · Market implied risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-3C",
+     "title": "Refinancing lme risk",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#0E7A46",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-3C",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-3C · Refinancing lme risk",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    }
+   ],
+   "tally": {
+    "label": "Analysis · 5",
+    "chips": [
+     "All",
+     "3 lim",
+     "0 pass"
+    ],
+    "numbered": 5,
+    "footer": 20,
+    "unrun_line": "Not run · 2",
+    "footer_summary": "Not in this Pathway · 20"
+   },
+   "rejected_rows": 0,
+   "destinations": [
+    {
+     "key": "front",
+     "label": "Front Page",
+     "href": "#front",
+     "page_title": "Northbridge Synthetic Group"
+    },
+    {
+     "key": "analysis",
+     "label": "Analysis",
+     "href": "#analysis",
+     "page_title": "Analysis"
+    },
+    {
+     "key": "model",
+     "label": "Model",
+     "href": "#CP-1",
+     "page_title": "CP-1 · Canonical data foundation"
+    },
+    {
+     "key": "fit",
+     "label": "Portfolio Fit",
+     "href": "#FIT",
+     "page_title": "Portfolio Fit",
+     "page_text": "Portfolio Fit · not run: No portfolio constraints or exposures have been evaluated."
+    },
+    {
+     "key": "evidence",
+     "label": "Evidence",
+     "href": "#evidence",
+     "page_title": "Evidence"
+    },
+    {
+     "key": "limits",
+     "label": "Limitations · with limitations",
+     "href": "#limitations",
+     "page_title": "Limitations"
+    }
+   ],
+   "external_links": {
+    "calculation.json": {
+     "rendered": true,
+     "page_fact": "CP-MODEL fact table model-destination, row calculation-json, field path",
+     "page_gates": "module.artifact_sha256, path matches ^[A-Za-z0-9._-]+$, model-provenance cp1-head and pack sha256",
+     "requires": "receipt.model.files has the key calculation.json (cp_model_workflow.CALCULATION)",
+     "href_is_relative": "resolves only beside the published model files (app.js:603)"
+    }
+   },
+   "block_links": [
+    {
+     "block_id": "key-findings",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "Not run"
+     }
+    },
+    {
+     "block_id": "company-operating-model",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "Not run"
+     }
+    },
+    {
+     "block_id": "model-chart-strip",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "capital-structure",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "financials-credit-metrics",
+     "full_analysis_route": "CP-1",
+     "link": {
+      "text": "Open in Model →",
+      "href": "#CP-1",
+      "page_title": "CP-1 · Canonical data foundation",
+      "status_chip_word": "With limitations"
+     }
+    },
+    {
+     "block_id": "strengths-weaknesses",
+     "full_analysis_route": "CP-2",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-2",
+      "page_title": "CP-2 · Fundamental credit synthesizer",
+      "status_chip_word": "Not run"
+     }
+    },
+    {
+     "block_id": "relative-value",
+     "full_analysis_route": "CP-3",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-3",
+      "page_title": "CP-3 · Relative value security selection",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "company-profile",
+     "full_analysis_route": "CP-1A",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-1A",
+      "page_title": "CP-1A · Business transaction fact pack",
+      "status_chip_word": "Not run"
+     }
+    },
+    {
+     "block_id": "transaction-summary",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "portfolio-fit",
+     "full_analysis_route": null,
+     "link": null
+    },
+    {
+     "block_id": "committee-challenge",
+     "full_analysis_route": "CP-6",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-6",
+      "page_title": "CP-6 · Ic debate challenge",
+      "status_chip_word": "Not in this Pathway"
+     }
+    },
+    {
+     "block_id": "what-changed",
+     "full_analysis_route": "CP-8",
+     "link": {
+      "text": "Full analysis →",
+      "href": "#CP-8",
+      "page_title": "CP-8 · Decision ledger post mortem",
+      "status_chip_word": "Not in this Pathway"
+     }
+    }
+   ],
+   "hash_links": {
+    "navigator_and_footer_rows": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "rail_destinations": [
+     "#CP-1",
+     "#FIT",
+     "#analysis",
+     "#evidence",
+     "#front",
+     "#limitations"
+    ],
+    "front_page_block_links": [
+     "#CP-1",
+     "#CP-1A",
+     "#CP-2",
+     "#CP-3",
+     "#CP-6",
+     "#CP-8"
+    ],
+    "analysis_coverage_table": [
+     "#CP-0",
+     "#CP-1",
+     "#CP-1A",
+     "#CP-1B",
+     "#CP-1C",
+     "#CP-1D",
+     "#CP-2",
+     "#CP-2A",
+     "#CP-2D",
+     "#CP-2E",
+     "#CP-2G",
+     "#CP-2H",
+     "#CP-3",
+     "#CP-3C",
+     "#CP-3D",
+     "#CP-4",
+     "#CP-4C",
+     "#CP-5",
+     "#CP-6",
+     "#CP-8",
+     "#CP-DR",
+     "#CP-L10",
+     "#CP-MEMO",
+     "#CP-MODEL",
+     "#CP-OS"
+    ],
+    "model_destination_links": [
+     "#CP-MODEL"
+    ],
+    "shell_skip_link": [
+     "#workbench"
+    ]
+   },
+   "search_probes": [
+    {
+     "filter": "business",
+     "numbered_matches": [
+      "CP-1A"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "limitations",
+     "numbered_matches": [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "cp-parse",
+     "numbered_matches": [
+      "CP-0"
+     ],
+     "footer_matches": []
+    },
+    {
+     "filter": "not in this pathway",
+     "numbered_matches": [],
+     "footer_matches": [
+      "CP-1B",
+      "CP-1C",
+      "CP-1D",
+      "CP-2A",
+      "CP-2E",
+      "CP-2G",
+      "CP-2H",
+      "CP-3",
+      "CP-4",
+      "CP-4C",
+      "CP-5",
+      "CP-6",
+      "CP-8",
+      "CP-DR",
+      "CP-L10",
+      "CP-MEMO",
+      "CP-OS",
+      "CP-2D",
+      "CP-3D",
+      "CP-3C"
+     ]
+    },
+    {
+     "filter": "zzz",
+     "numbered_matches": [],
+     "footer_matches": []
+    }
+   ]
+  }
+ },
+ "dom_expectation": "Native DOM acceptance (separate from component tests; closes rendering): open the page from a directory holding the receipt's model files (calculation.json beside it); click each numbered row and each footer row: h1 == target.page_title and the status chip word; the six rail destinations show their page_title; each Front Page block link in cases[*].block_links that is drawn lands on its page_title; the calculation.json link opens the file."
+}

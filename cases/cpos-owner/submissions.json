@@ -1,0 +1,109 @@
+{
+ "schema_version": "cpos-owner-submissions/1",
+ "note": "CP-OS takes no analyst submission and no source. Nothing here is a submit payload: these are the input recipes of the refusal tests, each applied to a clone of the named closed run.",
+ "receipts": {
+  "s1a_positive": "receipt of the closed S1a positive run (acceptance A1) and its publication directory",
+  "s1a_gap": "receipt of the closed S1a gap run (A2)",
+  "s1a_blocked_cp1a": "receipt of the A3b clone of the positive run",
+  "s1a_refused_cp1a": "receipt of the A3c clone of the positive run"
+ },
+ "verifier_refusals": [
+  {
+   "id": "seal_edit",
+   "on": "s1a_positive",
+   "recipe": "receipt copy with only 'participant' changed to a different string; store and audit unchanged",
+   "targets": "owner_workflow._verify sealed check: audit/receipt.sha256 != receipt.content_hash()",
+   "raises": "WorkflowError",
+   "code": "identity_mismatch"
+  },
+  {
+   "id": "head_status_forged",
+   "on": "s1a_positive",
+   "recipe": "receipt copy with the CP-1A SettledHead status 'restricted' -> 'accepted', and audit/receipt.sha256 rewritten to the forged receipt's content hash so the seal agrees",
+   "targets": "owner_workflow._verify head check: _settled(store, module) not in receipt.heads",
+   "raises": "WorkflowError",
+   "code": "identity_mismatch"
+  },
+  {
+   "id": "foreign_store",
+   "on": "s1a_positive receipt, s1a_gap store",
+   "recipe": "present the positive receipt with the gap run's store",
+   "targets": "owner_workflow._verify first check: run, pack and snapshot hash differ",
+   "raises": "WorkflowError",
+   "code": "stale_binding"
+  }
+ ],
+ "cpos_refusals": [
+  {
+   "id": "proof_of_other_receipt",
+   "on": "s1a_positive page and proof, s1a_gap receipt and store",
+   "recipe": "verify_navigation with a proof built for the positive receipt against the gap receipt (both verify). Differs in run, pack, snapshot, heads and receipt hash at once, on purpose; receipt_hash_only isolates the hash",
+   "raises": "ValueError",
+   "prefix": "cpos_binding"
+  },
+  {
+   "id": "dangling_target",
+   "on": "s1a_positive",
+   "recipe": "page with the CP-2 entry removed from report-data modules (nav untouched), page_sha256 in the proof rewritten to the forged page's hash",
+   "raises": "ValueError",
+   "prefix": "cpos_target_missing"
+  },
+  {
+   "id": "forged_row",
+   "on": "s1a_positive",
+   "recipe": "page whose report-data nav CP-1A row reads glyph 'pass', word 'Pass' (modules untouched), page_sha256 rewritten consistently",
+   "raises": "ValueError",
+   "prefix": "cpos_rows"
+  },
+  {
+   "id": "page_bytes_edited",
+   "on": "s1a_positive",
+   "recipe": "page with a trailing newline appended (rows and targets intact), page_sha256 rewritten",
+   "raises": "ValueError",
+   "prefix": "cpos_page"
+  },
+  {
+   "id": "receipt_hash_only",
+   "on": "s1a_positive",
+   "recipe": "the valid s1a_positive proof with only proof.receipt_content_sha256 replaced by content_hash() of the seal_edit receipt copy; page, store and the verified receipt unchanged",
+   "raises": "ValueError",
+   "prefix": "cpos_binding"
+  },
+  {
+   "id": "forged_proof_row",
+   "on": "s1a_blocked_cp1a",
+   "recipe": "the valid s1a_blocked_cp1a proof with only the CP-1A NavigationRow has_output changed false -> true; page unmodified, page_sha256 genuine",
+   "raises": "ValueError",
+   "prefix": "cpos_rows"
+  },
+  {
+   "id": "forged_proof_destination",
+   "on": "s1a_positive",
+   "recipe": "the valid s1a_positive proof with only the Model destination href '#CP-1' changed to '#CP-MODEL' (a route that exists, so no dead link); page unmodified, page_sha256 genuine",
+   "raises": "ValueError",
+   "prefix": "cpos_rows"
+  },
+  {
+   "id": "forged_external_link",
+   "on": "s1a_positive",
+   "recipe": "the valid s1a_positive proof with only proof.external_links changed from ('calculation.json',) to ('evil.json',); page unmodified, page_sha256 genuine. Replayed variant: external_links = ()",
+   "raises": "ValueError",
+   "prefix": "cpos_proof"
+  },
+  {
+   "id": "unverifiable_page_hash",
+   "on": "s1a_positive",
+   "recipe": "unmodified page, proof.page_sha256 replaced by 64 zeros",
+   "raises": "ValueError",
+   "prefix": "cpos_binding"
+  }
+ ],
+ "order_of_cpos_checks": [
+  "cpos_binding",
+  "cpos_target_missing",
+  "cpos_rows",
+  "cpos_page",
+  "cpos_proof"
+ ],
+ "full_proof_equality": "After the four prefixed diagnostics, verify_navigation requires proof == derived_proof in full (every field); any remaining difference raises cpos_proof. Proof forgeries below leave the page unmodified and its page_sha256 genuine."
+}

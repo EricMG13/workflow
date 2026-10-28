@@ -323,3 +323,4 @@
 - 19:24 Stage 2 dispatched: CP-4 (Q3/Q4), CP-3 (Q2, R3 only) (mx-feature) at 2cb5a7e.
 - 19:27 CP-DR built (ca5cf5a→rebased 1e3942a, 522 passed) and CP-3D built (094b1ef→rebased d8c3512, 1263 passed); both under mx-adversary review. CP-5 queued for a free slot.
 - 19:28 CP-1D owner fix review: REQUEST CHANGES (M1 numerics without digit value; L1 Cf/Mn/Me adjacency; L2 case mutants). Fix round 1 to mx-feature.
+- 19:29 LEAD clarification (addendum 4): letter after a run is whole (2.5m, 25bps read); fixer redirected. Asked LEAD: letter-before refusal (held fail-closed), ordinals (2nd reads 2 pending).

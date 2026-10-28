@@ -62,6 +62,25 @@ def _context_with(char: str) -> cp3d.MarketContext:
     )
 
 
+# The positive literal with a quoted reference rate level, so every quote site is present.
+WITH_LEVEL = base._edited(
+    POSITIVE,
+    [
+        ["terms.reference_rate.absence", None],
+        [
+            "terms.reference_rate.level",
+            {
+                "quote": {
+                    "source_id": "financial",
+                    "locator": "page:5",
+                    "quote": "The SOFR reference rate level is 4.30 percent.",
+                },
+                "percent_text": "4.30",
+            },
+        ],
+    ],
+)
+
 # (edit path of the quote text, the issue path the validator prefixes)
 QUOTE_SITES = (
     ("observations.0.quote", "observations[0]"),
@@ -70,6 +89,7 @@ QUOTE_SITES = (
     ("terms.margin.quote.quote", "margin"),
     ("terms.amortisation.quote.quote", "amortisation"),
     ("terms.reference_rate.quote.quote", "reference_rate.quote"),
+    ("terms.reference_rate.level.quote.quote", "reference_rate.level.quote"),
     ("technicals.1.basis.0.quote", "technicals[1].basis[0]"),
 )
 
@@ -78,7 +98,7 @@ QUOTE_SITES = (
 def test_backlog_blank_quote_is_refused_as_empty_text(edit: str, path: str) -> None:
     """Round 13 addendum 3: a quote that `is_blank` gets `<path>: empty text` before the page
     check, even when the page holds that one character."""
-    raw = base._edited(POSITIVE, [[edit, ZWSP]])
+    raw = base._edited(WITH_LEVEL, [[edit, ZWSP]])
     issues = cp3d.submission_issues(submission=base._submission(raw), context=_context_with(ZWSP))
     assert f"{path}: empty text" in issues
     assert not any("quote not found" in i and i.startswith(path) for i in issues)
@@ -99,7 +119,7 @@ def test_backlog_blank_quote_site_inventory_is_complete() -> None:
         elif trail.endswith("quote") and isinstance(node, str):
             found.append(trail)
 
-    walk(copy.deepcopy(POSITIVE), "")
+    walk(copy.deepcopy(WITH_LEVEL), "")
     listed = {site for site, _ in QUOTE_SITES}
     kinds = {
         "observations.1.quote": "observations.0.quote",
@@ -462,13 +482,116 @@ def test_report_round_trips_through_its_json() -> None:
     assert report.pack_sha256 == _pack("positive").content_hash()
 
 
-def test_a_gap_cell_without_a_quote_on_its_page_fails_closed() -> None:
-    """A cite whose page no submission quote names has no citation text: never invented."""
-    submission = base._submission(POSITIVE)
-    quotes = cp3d.page_quotes(submission)
-    assert set(quotes) == set(cp3d.cited_pages(submission))
+def test_a_cell_without_a_quote_on_its_page_fails_closed() -> None:
+    """A cite whose page the cell has no submitted quote for has no citation text: never invented."""
     with pytest.raises(ValueError, match="no quote"):
-        cp3d.cite_of(_pack("positive"), {}, ("market", "page:1"))
+        cp3d.cite_of(_pack("positive"), cp3d.Cites(), ("market", "page:1"))
+
+
+def test_cites_compare_as_the_page_pairs_and_keep_each_pages_quotes_in_order() -> None:
+    refs = [
+        cp3d._Ref("market", "page:1", "a"),
+        cp3d._Ref("financial", "page:5", "b"),
+        cp3d._Ref("market", "page:1", "c"),
+        cp3d._Ref("market", "page:1", "a"),
+    ]
+    cites = cp3d.Cites(refs)
+    assert tuple(cites) == (("market", "page:1"), ("financial", "page:5"))
+    assert dict(cites.quotes) == {("market", "page:1"): ("a", "c"), ("financial", "page:5"): ("b",)}
+    merged = cp3d.Cites.merged([cp3d.Cites(refs[:1]), cp3d.Cites(refs[1:])])
+    assert dict(merged.quotes) == dict(cites.quotes)
+
+
+def _quote_of(fact: Fact) -> list[str]:
+    return [c.quote for c in fact.citations]
+
+
+def test_each_fact_cites_the_quote_that_supports_it() -> None:
+    """M1: terms facts cite their own quote, not the first quote on their page."""
+    facts = {f.fact_id: f for f in _module("positive").facts}
+    t, pos = POSITIVE["terms"], POSITIVE
+    assert _quote_of(facts["T3E.4.r02.value"]) == [t["reference_rate"]["quote"]["quote"]]
+    assert _quote_of(facts["T3E.4.r03.value"]) == [t["maturity"]["quote"]["quote"]]
+    assert _quote_of(facts["T3E.4.r04.value"]) == [t["amortisation"]["quote"]["quote"]]
+    assert _quote_of(facts["T3E.4.r05.value"]) == [pos["instrument"]["quote"]["quote"]]
+    obs = {o["kind"]: o["quote"] for o in pos["observations"]}
+    assert _quote_of(facts["T3E.1.r01.level"]) == [obs["bid"]]
+    assert _quote_of(facts["T3E.1.r02.level"]) == [obs["offer"]]
+    assert _quote_of(facts["T3E.1.r03.level"]) == [obs["indicative_talk"]]
+    assert _quote_of(facts["T3E.3.r02.mid"]) == [t["margin"]["quote"]["quote"]]
+
+
+def test_a_quoted_reference_rate_level_cites_its_own_quote() -> None:
+    level_q = "The SOFR reference rate level is 4.30 percent."
+    pack = _pack("positive")
+    sources = tuple(
+        s.model_copy(
+            update={
+                "spans": tuple(
+                    Span(
+                        locator=sp.locator,
+                        text=sp.text + "\n" + level_q if sp.locator == "page:5" else sp.text,
+                    )
+                    for sp in s.spans
+                )
+            }
+        )
+        if s.source_id == "financial"
+        else s
+        for s in pack.sources
+    )
+    pack = pack.model_copy(update={"sources": sources})
+    level = {
+        "quote": {"source_id": "financial", "locator": "page:5", "quote": level_q},
+        "percent_text": "4.30",
+    }
+    raw = base._edited(
+        POSITIVE, [["terms.reference_rate.absence", None], ["terms.reference_rate.level", level]]
+    )
+    up = cp3d.upstream_of(pack=pack, cp0=_cp0("positive"))
+    report = cp3d.market_implied(pack=pack, submission=base._submission(raw), upstream=up)
+    levels = [
+        f
+        for f in report.facts
+        if f.table_id == "T3E.3" and f.value_class == "source" and f.unit == "decimal_fraction"
+    ]
+    assert levels
+    assert all(_quote_of(f) == [level_q] for f in levels)
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_every_citation_quote_is_one_the_submission_gave_for_that_page(case: str) -> None:
+    """A derived cell cites an input quote of its own page, never one invented or foreign."""
+    submission = base._submission(base.SUBMISSIONS[case])
+    given: dict[tuple[str, str], set[str]] = {}
+    for ref in cp3d.cited_refs(submission):
+        given.setdefault((ref.source_id, ref.locator), set()).add(ref.quote)
+    module = _module(case)
+    for fact in module.facts:
+        for c in fact.citations:
+            assert c.quote in given[(c.source_id, c.locator)], fact.fact_id
+    for claim in module.claims:
+        for c in claim.citations:
+            assert c.quote in given[(c.source_id, c.locator)], claim.claim_id
+
+
+def test_technicals_cite_their_basis_quotes() -> None:
+    module = _module("positive")
+    cited = {c.quote for f in module.facts if f.table_id == "T3E.6" for c in f.citations}
+    basis = {b["quote"] for x in POSITIVE["technicals"] for b in x["basis"]}
+    assert cited == basis
+
+
+def test_a_derived_fact_cites_the_first_input_quote_on_each_page() -> None:
+    """The simple discount margin at the mid rests on bid, offer, margin, amortisation and
+    maturity quotes; one Citation per page, the first input quote on it (documented, not invented)."""
+    fact = next(f for f in _module("positive").facts if f.fact_id == "T3E.3.r03.mid")
+    obs = {o["kind"]: o["quote"] for o in POSITIVE["observations"]}
+    t = POSITIVE["terms"]
+    assert [(c.source_id, c.locator, c.quote) for c in fact.citations] == [
+        ("market", "page:1", obs["bid"]),
+        ("financial", "page:5", t["margin"]["quote"]["quote"]),
+    ]
 
 
 # --- the plug-in parts -------------------------------------------------------------------------
@@ -706,6 +829,77 @@ def test_submit_refuses_a_step_that_is_not_its_own() -> None:
 def test_precheck_and_view_are_absent_as_the_lease_says() -> None:
     assert not hasattr(cp3d, "precheck") and not hasattr(cp3d, "view")
     assert callable(cp3d.submit) and callable(cp3d.probe)
+
+
+# --- L1: rules per absence path, the reader's refusals, settle and third_party -----------------
+
+ABSENCE = {"reason": "none stated", "follow_up": "supply it"}
+ABSENCE_DOCS = {
+    "market_absence": {"market_absence": ABSENCE},
+    "maturity": {"terms": {"maturity": {"absence": ABSENCE}}},
+    "margin": {"terms": {"margin": {"absence": ABSENCE}}},
+    "amortisation": {"terms": {"amortisation": {"absence": ABSENCE}}},
+    "reference_rate": {"terms": {"reference_rate": {"absence": ABSENCE}}},
+}
+
+
+@pytest.mark.parametrize("name", ABSENCE_DOCS)
+def test_each_absence_object_alone_needs_a_recorded_search(name: str) -> None:
+    text = json.dumps(ABSENCE_DOCS[name])
+    assert cp3d.RULES(text, Seen(frozenset(), ())) == ("Absence claim without a recorded search",)
+    assert cp3d.RULES(text, Seen(frozenset(), (None,))) == ()
+
+
+def test_reader_refuses_a_head_that_lacks_a_pinned_fact_rather_than_defaulting() -> None:
+    module = _module("positive")
+    for missing in (
+        cp3d.READ_DM_MID,
+        cp3d.READ_LAMBDA_MID,
+        cp3d.READ_PD_MID,
+        cp3d.READ_RECOVERY,
+    ):
+        short = module.model_copy(
+            update={
+                "facts": tuple(f for f in module.facts if f.fact_id != missing),
+                "tables": (),
+            }
+        )
+        head = head_of(short.model_copy(update={"status": "restricted"}), cp3d.QUALIFICATION)
+        with pytest.raises(WorkflowError) as error:
+            cp3d.cp3d_reader(
+                cast(Any, _HeadStore(short.model_copy(update={"status": "restricted"}))), head
+            )
+        assert error.value.args[0] == "identity_mismatch", missing
+
+
+def test_reader_refuses_another_modules_head_even_when_the_facts_are_there() -> None:
+    module = _module("positive").model_copy(update={"status": "restricted"})
+    head = head_of(module, cp3d.QUALIFICATION).model_copy(update={"module_id": "CP-0"})
+    with pytest.raises(WorkflowError) as error:
+        cp3d.cp3d_reader(cast(Any, _HeadStore(module)), head)
+    assert error.value.args[0] == "identity_mismatch"
+
+
+def test_settle_refuses_a_step_output_that_differs_from_the_trusted_validation() -> None:
+    class Corrupt(_JournalStore):
+        def submit_step(self, *args: Any, **kwargs: Any) -> Any:
+            attempt = super().submit_step(*args, **kwargs)
+            attempt.steps[0].output_sha256 = "0" * 64
+            return attempt
+
+    store = Corrupt("positive", "")
+    with pytest.raises(ValueError, match="differs from trusted validation"):
+        cp3d.submit(cast(Any, store), "t1", STEP, json.dumps(POSITIVE), None)
+    assert store.finished == []
+
+
+def test_third_party_reads_only_the_t3_authority_fact() -> None:
+    cp0 = _cp0("positive")
+    extra = Fact(fact_id="T3.identity.family", label="x", text="third_party")
+    up = cp3d.upstream_of(
+        pack=_pack("positive"), cp0=cp0.model_copy(update={"facts": (*cp0.facts, extra)})
+    )
+    assert up.context.third_party == frozenset({"market"})
 
 
 # --- registration rows -------------------------------------------------------------------------

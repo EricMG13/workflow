@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal, localcontext
 from functools import partial
-from typing import Literal, Protocol
+from typing import Literal, Protocol, Self
 
 from pydantic import ValidationError
 
@@ -825,6 +825,50 @@ class _Located(Protocol):
     @property
     def locator(self) -> str: ...
 
+    @property
+    def quote(self) -> str: ...
+
+
+@dataclass(frozen=True)
+class _Ref:
+    source_id: str
+    locator: str
+    quote: str
+
+
+class Cites(tuple[Cite, ...]):
+    """The pages a cell rests on, as the (source_id, locator) pairs the oracle pins (it compares
+    equal to the plain tuple), and for each page the distinct submitted quotes the cell rests on,
+    in order (`quotes`). A derived cell rests on every input quote; none is invented."""
+
+    quotes: Mapping[Cite, tuple[str, ...]]
+
+    def __new__(cls, refs: Iterable[_Located] = ()) -> Self:
+        pairs: list[Cite] = []
+        found: dict[Cite, list[str]] = {}
+        for r in refs:
+            key = (r.source_id, r.locator)
+            if key not in pairs:
+                pairs.append(key)
+            quotes = found.setdefault(key, [])
+            if r.quote not in quotes:
+                quotes.append(r.quote)
+        self = super().__new__(cls, pairs)
+        self.quotes = {k: tuple(v) for k, v in found.items()}
+        return self
+
+    @classmethod
+    def merged(cls, parts: Iterable["Cites"]) -> "Cites":
+        return cls(
+            _Ref(source_id, locator, quote)
+            for part in parts
+            for (source_id, locator), quotes in part.quotes.items()
+            for quote in quotes
+        )
+
+
+NO_CITES = Cites()
+
 
 @dataclass(frozen=True)
 class Cell:
@@ -837,7 +881,7 @@ class Cell:
     text: str | None
     shown: str
     status: CellStatus
-    cites: tuple[Cite, ...]
+    cites: Cites
     value_class: ValueClass | None
     calculation_id: str | None
     formula: str | None
@@ -865,7 +909,7 @@ class ClaimText:
     claim_id: str
     text: str
     refs: tuple[str, ...]
-    cites: tuple[Cite, ...]
+    cites: Cites
 
 
 @dataclass(frozen=True)
@@ -876,13 +920,8 @@ class MarketImpliedResult:
     own_limitations: tuple[str, ...]
 
 
-def _trace(refs: Iterable[_Located]) -> tuple[Cite, ...]:
-    out: list[Cite] = []
-    for r in refs:
-        key = (r.source_id, r.locator)
-        if key not in out:
-            out.append(key)
-    return tuple(out)
+def _trace(refs: Iterable[_Located]) -> Cites:
+    return Cites(refs)
 
 
 @dataclass(frozen=True)
@@ -890,7 +929,7 @@ class _Num:
     amount: Decimal
     unit: str
     decimals: int | None
-    cites: tuple[Cite, ...] = ()
+    cites: Cites = NO_CITES
     value_class: ValueClass = "calculated"
     calculation_id: str | None = None
     formula: str | None = None
@@ -900,7 +939,7 @@ class _Num:
 @dataclass(frozen=True)
 class _Text:
     text: str
-    cites: tuple[Cite, ...] = ()
+    cites: Cites = NO_CITES
     value_class: ValueClass | None = None
 
 
@@ -975,7 +1014,7 @@ def _cell(fact_id: str, column: str, content: _Content, default_period: str) -> 
         None,
         shown,
         content.status,
-        (),
+        NO_CITES,
         None,
         None,
         None,
@@ -1509,8 +1548,8 @@ class _Composer:
                 f"r{len(rows) + 1:02d}",
                 "Summary",
                 [
-                    _Text("Analyst Interpretation", (), "analyst_judgment"),
-                    _Text(self.sub.summary.text, (), "analyst_judgment"),
+                    _Text("Analyst Interpretation", NO_CITES, "analyst_judgment"),
+                    _Text(self.sub.summary.text, NO_CITES, "analyst_judgment"),
                 ],
             )
         )
@@ -1825,13 +1864,10 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
     cells = {f.fact_id: f for t in tables for r in t.rows for f in r.facts}
 
     def claim(claim_id: str, text: str, refs: Sequence[str]) -> ClaimText:
-        cites: list[Cite] = []
-        for ref in refs:
-            cites += [x for x in cells[ref].cites if x not in cites]
-        return ClaimText(claim_id, text, tuple(refs), tuple(cites))
+        return ClaimText(claim_id, text, tuple(refs), Cites.merged(cells[r].cites for r in refs))
 
     composed = tuple(f(c, claim) for f in (_lvl_claim, _dm_claim, _yld_claim, _pd_claim))
-    return (*composed, ClaimText("CP-3D-VIEW-01", c.sub.summary.text, (), ()))
+    return (*composed, ClaimText("CP-3D-VIEW-01", c.sub.summary.text, (), Cites()))
 
 
 def market_implied_result(
@@ -1946,22 +1982,17 @@ class MarketImpliedReport(Contract):
     inherited_limitations: tuple[str, ...]
 
 
-def page_quotes(submission: MarketImpliedSubmission) -> dict[Cite, str]:
-    """The first verbatim quote the submission gives for each page it cites."""
-    out: dict[Cite, str] = {}
-    for ref in cited_refs(submission):
-        out.setdefault((ref.source_id, ref.locator), ref.quote)
-    return out
-
-
-def cite_of(pack: PreparedPack, quotes: Mapping[Cite, str], cite: Cite) -> Citation:
-    """A page-level cite as a `Citation`: the pack source hash and a quote the submission took
-    from that page. A page with no submitted quote has no citation text and is refused."""
-    quote = quotes.get(cite)
+def cite_of(pack: PreparedPack, cites: Cites, cite: Cite) -> Citation:
+    """A page-level cite as a `Citation`: the pack source hash and the first submitted quote the
+    cell rests on for that page (a derived cell rests on several; the first input quote on the
+    page is cited, none is invented). A page the cell has no quote for is refused."""
+    quotes = cites.quotes.get(cite)
     source = next((s for s in pack.sources if s.source_id == cite[0]), None)
-    if quote is None or source is None or source.sha256 is None:
+    if not quotes or source is None or source.sha256 is None:
         raise ValueError(f"no quote or source hash for the cited page {cite[0]} {cite[1]}")
-    return Citation(source_id=cite[0], source_sha256=source.sha256, locator=cite[1], quote=quote)
+    return Citation(
+        source_id=cite[0], source_sha256=source.sha256, locator=cite[1], quote=quotes[0]
+    )
 
 
 def _fact_of(
@@ -1987,9 +2018,7 @@ def _fact_of(
     )
 
 
-def _layout(
-    table: Table, quotes: Mapping[Cite, str], pack: PreparedPack
-) -> tuple[ReportTable, list[Fact]]:
+def _layout(table: Table, pack: PreparedPack) -> tuple[ReportTable, list[Fact]]:
     facts: list[Fact] = []
     rows: list[TableRow] = []
     for row in table.rows:
@@ -1998,7 +2027,7 @@ def _layout(
         for (key, column), cell in zip(table.columns, row.facts, strict=True):
             if cell.fact_id != f"{table.table_id}.{row.row_id}.{key}" or cell.column != column:
                 raise ValueError(f"{cell.fact_id}: not the coordinate of its cell")
-            cites = tuple(cite_of(pack, quotes, c) for c in cell.cites)
+            cites = tuple(cite_of(pack, cell.cites, c) for c in cell.cites)
             facts.append(
                 _fact_of(cell, f"{row.label} · {column}", table.table_id, row.row_id, key, cites)
             )
@@ -2026,18 +2055,17 @@ def market_implied(
     if issues := validate_market_implied(submission=submission, upstream=upstream):
         raise ValueError("; ".join(issues))
     result = market_implied_result(submission=submission, context=upstream.context)
-    quotes = page_quotes(submission)
     tables: list[ReportTable] = []
     facts: list[Fact] = []
     for table in result.tables:
-        layout, table_facts = _layout(table, quotes, pack)
+        layout, table_facts = _layout(table, pack)
         tables.append(layout)
         facts += table_facts
     claims = tuple(
         Claim(
             claim_id=c.claim_id,
             text=c.text,
-            citations=tuple(cite_of(pack, quotes, x) for x in c.cites),
+            citations=tuple(cite_of(pack, c.cites, x) for x in c.cites),
         )
         for c in result.claims
     )

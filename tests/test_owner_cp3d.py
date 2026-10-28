@@ -6,6 +6,7 @@ nothing is derived here. The consumption proof (D3) stays OPEN: the reader test 
 reader exposes and claims no consumer.
 """
 
+import hashlib
 import importlib
 import json
 import shutil
@@ -60,8 +61,14 @@ def test_closed_run_settles_restricted_with_the_expected_module(
     assert [(c.claim_id, c.text) for c in module.claims] == [
         (c["claim_id"], c["text"]) for c in want["claims"]
     ]
-    assert list(module.limitations) == want["own_limitations"]
-    assert list(module.inherited_limitations) == want["inherited_limitations"]
+    # The store's settlement (execution.settle, case_kind synthetic) adds its own synthetic-case
+    # limitation to the module's and takes it off the inherited list; the oracle's lists are the
+    # candidate's (a LEAD note: the oracle does not model this settlement step).
+    synthetic = "Synthetic case; not real issuer qualification"
+    assert list(module.limitations) == [*want["own_limitations"], synthetic]
+    assert list(module.inherited_limitations) == [
+        x for x in want["inherited_limitations"] if x != synthetic
+    ]
 
 
 @pytest.mark.parametrize("case", CASES)
@@ -168,7 +175,8 @@ def test_reader_over_the_settled_head_exposes_the_pinned_values(
         assert format(got.probability_mid.amount, "f") == pinned["pd_mid"]
     else:
         assert got.intensity_mid.amount is None and got.probability_mid.amount is None
-    assert list(got.own_limitations) == ORACLE["expected"]["cases"][case]["own_limitations"]
+    own = ORACLE["expected"]["cases"][case]["own_limitations"]
+    assert list(got.own_limitations)[: len(own)] == own
 
 
 def test_copy_of_a_closed_store_keeps_the_run_verifiable(
@@ -178,3 +186,63 @@ def test_copy_of_a_closed_store_keeps_the_run_verifiable(
     shutil.copytree(store.directory, tmp_path / "store")
     receipt = OwnerRunReceipt.model_validate_json(receipt_path.read_text(encoding="utf-8"))
     verify_owner_run_receipt(Execution(tmp_path / "store"), receipt)
+
+
+def test_begin_is_refused_when_cp0_settles_blocked_and_no_attempt_is_consumed(
+    tmp_path: Path,
+) -> None:
+    """Lease Acceptance 5: a blocked CP-0 refuses `begin` of CP-3D (edge `block`)."""
+    workflow, pack = runs.start("positive", tmp_path)
+    bad = json.loads(runs.cp0_literal("positive", pack))
+    bad["sources"] = []
+    for _ in range(2):
+        text = json.dumps(bad)
+        s1a.read_cited(workflow, text)
+        outcome = workflow.submit_review(text)
+        assert outcome["status"] == "invalid"
+    store = Execution(tmp_path / "store")
+    snapshot = store.read()
+    assert runs.head_of_module(store, "CP-0").status == "blocked"
+    assert [a for a in snapshot.attempts if a.module_id == "CP-3D"] == []
+    assert [r.module_id for r in workflow._refusals] == ["CP-3D"]
+    assert workflow._refusals[0].reason.startswith("Required upstream is unrun, stale or blocked")
+
+
+def test_a_snapshot_change_between_the_last_read_and_the_submit_is_stale(
+    after_cp0: Any, tmp_path: Path
+) -> None:
+    """Lease Acceptance 5: `stale_binding` (pattern of test_owner_s1a)."""
+    workflow = _fork(after_cp0, tmp_path)
+    payload = runs.literal("positive")
+    s1a.read_cited(workflow, payload)
+    Execution(tmp_path / "fork" / "store").interrupt(
+        workflow._binding.ticket_id, "external change between read and submit"
+    )
+    with pytest.raises(WorkflowError) as caught:
+        workflow.submit_review(payload)
+    assert caught.value.code == "stale_binding"
+
+
+def test_probe_refuses_a_consistently_forged_step_output(
+    closed: dict[str, tuple[Execution, Path]], tmp_path: Path
+) -> None:
+    """Lease Acceptance 6: the forgery is consistent (the forged blob is stored under its own
+    hash and the attempt names that hash), so no upstream hash check refuses it and `probe` does
+    (`identity_mismatch`). The genuine attempt passes the same call."""
+    shutil.copytree(closed["positive"][0].directory, tmp_path / "store")
+    store = Execution(tmp_path / "store")
+    snapshot = store.read()
+    head = runs.head_of_module(store, "CP-3D")
+    attempt = next(a for a in snapshot.attempts if a.result_sha256 == head.result_sha256)
+    cp3d.probe(store, snapshot, attempt)  # the genuine attempt rebuilds exactly
+    step = attempt.steps[0]
+    forged = (store.step_output(step.output_sha256 or "") + " ").encode()
+    digest = hashlib.sha256(forged).hexdigest()
+    (tmp_path / "store" / "blobs" / digest).write_bytes(forged)
+    assert store.step_output(digest) == forged.decode()  # the store itself accepts the blob
+    tampered = attempt.model_copy(
+        update={"steps": (step.model_copy(update={"output_sha256": digest}),)}
+    )
+    with pytest.raises(WorkflowError) as caught:
+        cp3d.probe(store, snapshot, tampered)
+    assert caught.value.code == "identity_mismatch"

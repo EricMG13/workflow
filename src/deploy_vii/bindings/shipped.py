@@ -5,6 +5,7 @@ from deploy_vii.bindings.cp0 import CP0
 from deploy_vii.bindings.cp1 import CP1
 from deploy_vii.bindings.cp1a import CP1A
 from deploy_vii.bindings.cp1b import CP1B
+from deploy_vii.bindings.cp1d import CP1D
 from deploy_vii.bindings.cp2 import CP2
 from deploy_vii.bindings.cp2a import CP2A
 from deploy_vii.bindings.cp2d import CP2D
@@ -27,6 +28,7 @@ from deploy_vii.bindings.cpl10 import CPL10
 # Stage 2: CP-2A appended last (CP2A lease: SHIPPED_MAPS += CP2A).
 # CP-2D directly after CP-2 (docs/CP2D-OWNER-LEASE.md).
 # CP-L10 appended last (docs/CPL10-OWNER-LEASE.md).
+# CP-1D appended last (docs/CP1D-OWNER-LEASE.md names no position).
 SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP0,
     CP1,
@@ -45,4 +47,5 @@ SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP8,
     CP2A,
     CPL10,
+    CP1D,
 )

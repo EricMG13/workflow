@@ -1276,7 +1276,8 @@ HIDDEN_RUN_LINES = [
 )
 def test_basis_quote_with_a_letter_after_the_figure_reads_it(line: str, amount: str) -> None:
     """LEAD addendum 4 clarification: a letter after the run is admitted by the round 13
-    trailing guard, so the quote holds one whole run and composes (`2nd` reads 2)."""
+    trailing guard, so the quote holds one whole run and composes (`2.5m` reads 2.5). An
+    ordinal suffix is the exception (addendum 5: `2nd` is refused; `2nds` reads)."""
     inputs = _a01_on_page1(line)
     assert f"{EXACTLY_ONE}{A01_LABEL}" not in cp1d.validation_issues(inputs)  # 25 may fail bounds
     accepted = inputs.submission.assessments[0].accepted_basis
@@ -1318,7 +1319,8 @@ def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
         ("a saving of 2 and \u00b2", False),
         ("Q2 and 2.5", False),  # a run touching a letter before it
         # LEAD addendum 4 clarification: a letter AFTER a run does not break it (the round 13
-        # trailing guard admits one), so a unit letter or an ordinal suffix is a whole run.
+        # trailing guard admits one), so a unit letter leaves a whole run. Addendum 5 (which
+        # supersedes the old ordinal reading): an ordinal suffix is counted but cannot be read.
         ("2nd", False),  # ordinal: counts, cannot be read
         ("21ST", False),
         ("3rd", False),
@@ -1330,7 +1332,7 @@ def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
         ("2.5m", True),
         ("25bps", True),
         ("2.5M", True),
-        ("The 1.5\u200bnd", True),
+        ("The 1.5\u200bnd", False),  # L3: Cf between run and suffix is skipped, so ordinal
         ("The 1.5\u0304", True),
         ("Q2", False),  # a run touching a letter before it, nothing else
         ("a saving of 2\u00bd", False),  # numeric with no digit value
@@ -1341,6 +1343,18 @@ def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
         ("The Q\u200b1.5", False),  # Cf before the run
         ("The Qu\u03011.5", False),  # Mn before the run
         ("x2.5", False),
+        # L3 (LEAD ruling): skip Cf/Mn/Me after the run, NFKC-fold the suffix window.
+        ("The 2\u207f\u1d48", False),
+        ("The 1\u02e2\u1d57", False),
+        ("The 2\uff4e\uff44", False),
+        ("The 2\u200bnd", False),
+        ("The 2\u0301nd", False),
+        ("The 2n\u200bd", False),
+        ("The 2nds", True),
+        ("The 2ndly", True),
+        # I2: Mc before the run, and a letter only the NFKC fold shows (circled q).
+        ("The \u0915\u093e1.5", False),
+        ("The \u24e01.5", False),
     ],
 )
 def test_one_whole_run_is_the_single_rule(quote: str, whole: bool) -> None:
@@ -1511,3 +1525,39 @@ def test_blank_text_is_refused_by_compute() -> None:
 def test_stage2_execution_sections() -> None:
     """cases.refused, tool_refusals, the blocked head, cp1_readiness, module_status,
     settled_limitations, execution, consumption and the CP-1B inherited lines."""
+
+
+# --- Stage 2 backlog: caller-quoting issue lines are bounded (protocol section 6, 0d-c audit) --
+
+
+def _unknown_addbacks(labels: list[str]) -> cp1d.EarningsQualityInputs:
+    payload = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    template = payload["assessments"][0]
+    payload["assessments"] = [
+        {**template, "addback": label, "accepted_basis": None, "achievability": "Not supported"}
+        for label in labels
+    ]
+    return _inputs("positive", payload)
+
+
+def test_caller_quoted_label_is_clipped_to_the_issue_limit() -> None:
+    """An add-back label the model sends is quoted in `Unknown add-back: <label>`; the line
+    stays within MAX_ISSUE_CHARS (clipped) and short labels are unchanged."""
+    from deploy_vii.execution import MAX_ISSUE_CHARS
+
+    issues = cp1d.validation_issues(_unknown_addbacks(["Z" * 50_000]))
+    unknown = [i for i in issues if i.startswith("Unknown add-back: ")]
+    assert len(unknown) == 1 and len(unknown[0]) <= MAX_ISSUE_CHARS
+    assert cp1d.validation_issues(_unknown_addbacks(["Short"]))[0] == "Unknown add-back: Short"
+
+
+def test_issue_list_is_bounded_to_the_issue_count() -> None:
+    """Hundreds of unknown add-backs give at most MAX_ISSUES lines (the last counts the rest)."""
+    from deploy_vii.execution import MAX_ISSUES
+
+    issues = cp1d.validation_issues(_unknown_addbacks([f"L{n}" for n in range(300)]))
+    assert len(issues) == MAX_ISSUES
+    assert issues[-1].endswith("further issues not listed")
+    with pytest.raises(ValueError) as raised:
+        cp1d.compute(_unknown_addbacks([f"L{n}" for n in range(300)]))
+    assert len(str(raised.value)) < 20 * 700

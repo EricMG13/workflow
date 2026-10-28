@@ -97,6 +97,7 @@ from deploy_workflow.financial_workflow import (
 from deploy_workflow.host import SourceSession
 from deploy_workflow.owners import (
     cp1a,
+    cp1d,
     cp2,
     cp2a,
     cp2d,
@@ -129,6 +130,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-2D",
         "CP-4",
         "CP-L10",
+        "CP-1D",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
@@ -143,6 +145,7 @@ _CORES: dict[str, ModuleType] = {
     "CP-2A": cp2a,
     "CP-2D": cp2d,
     "CP-L10": cpl10,
+    "CP-1D": cp1d,
 }
 _QUALIFICATION = {
     "CP-1": PROMOTED,
@@ -159,6 +162,7 @@ _QUALIFICATION = {
     "CP-2D": cp2d.QUALIFICATION,
     "CP-4": CP4_PROMOTED,
     "CP-L10": cpl10.QUALIFICATION,
+    "CP-1D": cp1d.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -175,6 +179,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-2D": cp2d.probe,
     "CP-4": cp4.probe,
     "CP-L10": cpl10.probe,
+    "CP-1D": cp1d.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -187,6 +192,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "liquidity_bridge": cp2d.view,
     "legal_covenants": cp4.view,
     "change_screen": cpl10.view,
+    "earnings_quality": cp1d.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -204,6 +210,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-2D": cp2d.ENTRY_VALIDATOR,
     "CP-4": cp4.ENTRY_VALIDATOR,
     "CP-L10": cpl10.ENTRY_VALIDATOR,
+    "CP-1D": cp1d.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -323,6 +330,21 @@ def _default_specs() -> dict[str, OwnerSpec]:
             module_id="CP-2",
             steps=(step("credit_synthesis", CreditSynthesisSubmission, inputs="module_context"),),
             entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-1D": OwnerSpec(
+            module_id="CP-1D",
+            steps=(
+                step(
+                    "earnings_quality",
+                    cp1d.EarningsQualitySubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
             kind="analytical",
             publish=None,
         ),

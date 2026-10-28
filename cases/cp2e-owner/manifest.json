@@ -1,0 +1,165 @@
+{
+ "schema_version": "cp2e-owner-cases/1",
+ "scope": "CP-2E macro, FX and hedging sensitivity owner inputs: a two-module run CP-0 then CP-2E over the frozen identity and financial sources (no new source, no CP-1 promotion)",
+ "status": "DRAFT by owner-preparation task cp2e-owner, 2026-10-28; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+  "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+ },
+ "reuse": {
+  "identity": "cases/financial/manifest.json source identity, bytes unchanged",
+  "financial": "cases/financial/manifest.json source financial, bytes unchanged (positive case)",
+  "financial_gap_variant": "pages page:1 to page:4 of the same source, bytes unchanged; page:5 (the facility schedule) dropped; source sha256 recomputed by the pack rule (gap case only)"
+ },
+ "no_new_source": "No synthetic source is added. The frozen financial source states the currency (USD), no FX cash movements, no currency translation, one floating-rate SOFR term loan (spread 0, floor 0 basis points) and the FY 2025 EBITDA, cash interest and free cash flow; it states no reference rate level, no revenue or earnings split by currency and no hedging instrument, which the oracle shows as missing, never 0",
+ "run": {
+  "requested_modules": [
+   "CP-2E"
+  ],
+  "plan_order": [
+   "CP-0",
+   "CP-2E"
+  ],
+  "live_consumers_of_cp0": [
+   "CP-2E"
+  ],
+  "pathway": "credit_snapshot",
+  "edges": {
+   "required": [
+    "CP-0"
+   ],
+   "optional": [],
+   "aliases": [
+    "CP-2F"
+   ]
+  }
+ },
+ "step_scope": {
+  "step": "macro_fx",
+  "sources": [
+   "financial"
+  ],
+  "why": "every quote is a financial-source page; the identity source adds nothing the step cites"
+ },
+ "cases": [
+  {
+   "case_id": "positive",
+   "run": {
+    "run_id": "slice-cp2e-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-2E"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "status": "ready"
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+     "status": "ready",
+     "pages": [
+      "page:1",
+      "page:2",
+      "page:3",
+      "page:4",
+      "page:5"
+     ]
+    }
+   ],
+   "submission": "submissions.json#positive"
+  },
+  {
+   "case_id": "gap_no_facility_schedule",
+   "run": {
+    "run_id": "slice-cp2e-gap-no-facility-schedule",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-2E"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "status": "ready"
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "sha256": "0179b1bf33d44dcafae236153468cab50923fc709ec157791c3d8446be93d294",
+     "status": "ready",
+     "pages": [
+      "page:1",
+      "page:2",
+      "page:3",
+      "page:4"
+     ]
+    }
+   ],
+   "submission": "submissions.json#gap_no_facility_schedule"
+  }
+ ],
+ "table_ids": {
+  "CP-2E": [
+   "T2G.1",
+   "T2G.2",
+   "T2G.3",
+   "T2G.4",
+   "T2G.5",
+   "T2G.6",
+   "T2G.7",
+   "T2G.8",
+   "T2F.1",
+   "T2F.2",
+   "T2F.3",
+   "T2F.4",
+   "T2F.5",
+   "T2F.6",
+   "T2F.7",
+   "T2F.8",
+   "T2F.9"
+  ],
+  "used": [
+   "T2F.1",
+   "T2F.2",
+   "T2F.3",
+   "T2F.4",
+   "T2F.5",
+   "T2F.6",
+   "T2F.7",
+   "T2F.8",
+   "T2F.9"
+  ],
+  "unused": [
+   "T2G.1",
+   "T2G.2",
+   "T2G.3",
+   "T2G.4",
+   "T2G.5",
+   "T2G.6",
+   "T2G.7",
+   "T2G.8"
+  ]
+ }
+}

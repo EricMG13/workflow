@@ -1,0 +1,1238 @@
+{
+ "schema_version": "cp2e-owner-submissions/1",
+ "note": "Literal analyst submissions for the CP-2E step macro_fx. Every sourced operand is a verbatim quote: a statement row is quoted as a whole page line and value_text is its last value (the FY 2025 column); a sentence operand's value_text occurs once in its own quote after its label. The analyst supplies the shock sizes and the assessments (judgment) and no computed number. The pack_sha256 placeholder in readiness_review is bound at run time.",
+ "readiness_review": {
+  "positive": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Macro, FX and hedging sensitivity of the credit",
+   "reporting_period": "Reported FY2025 flows and the December 31, 2025 balance sheet",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-2E",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located facility rate terms, the currency of the debt and the reported interest and EBITDA",
+     "source_ids": [
+      "financial"
+     ],
+     "rationale": "The rate and currency sensitivity can run on the stated facility terms and statements, with source limitations.",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:5",
+       "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "The located statements and facility schedule support a rate and currency sensitivity with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:5",
+       "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "gap_no_facility_schedule": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Macro, FX and hedging sensitivity of the credit",
+   "reporting_period": "Reported FY2025 flows and the December 31, 2025 balance sheet",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "0179b1bf33d44dcafae236153468cab50923fc709ec157791c3d8446be93d294",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-2E",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Reported interest and EBITDA; the facility schedule is not available",
+     "source_ids": [
+      "financial"
+     ],
+     "rationale": "The assessment can run on the statements and records the absence of the facility terms.",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "0179b1bf33d44dcafae236153468cab50923fc709ec157791c3d8446be93d294",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "No facility schedule in the pack, so the CP-2E rate terms and debt currency are absent"
+     ]
+    }
+   ],
+   "gaps": [
+    {
+     "gap_id": "missing-facility-schedule",
+     "kind": "source",
+     "severity": "material",
+     "description": "No facility schedule in the pack, so the CP-2E rate terms and debt currency are absent",
+     "affected_modules": [
+      "CP-2E"
+     ],
+     "remediation": "Supply the complete facility and classification schedule",
+     "citations": []
+    }
+   ],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "The located statements support only the reported flows; no facility schedule is available.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "0179b1bf33d44dcafae236153468cab50923fc709ec157791c3d8446be93d294",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  }
+ },
+ "positive": {
+  "reporting_currency": {
+   "source_id": "financial",
+   "locator": "page:1",
+   "quote": "Currency: USD; amounts in millions.",
+   "code_text": "USD"
+  },
+  "rate_exposure": {
+   "facility_balance": {
+    "source_id": "financial",
+    "locator": "page:5",
+    "quote": "FY2025 and Q4 share the same December 31, 2025 closing facility balance of 50.",
+    "value_text": "50"
+   },
+   "rate_basis": {
+    "source_id": "financial",
+    "locator": "page:5",
+    "quote": "floating rate type with SOFR reference rate",
+    "rate_type": "FLOATING",
+    "reference_rate": "SOFR"
+   },
+   "spread": {
+    "source_id": "financial",
+    "locator": "page:5",
+    "quote": "spread 0 basis points",
+    "bps_text": "0"
+   },
+   "floor": {
+    "source_id": "financial",
+    "locator": "page:5",
+    "quote": "floor 0 basis points",
+    "bps_text": "0"
+   }
+  },
+  "rate_absence": null,
+  "earnings": {
+   "ebitda": {
+    "source_id": "financial",
+    "locator": "page:2",
+    "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0",
+    "value_text": "30.0"
+   },
+   "interest": {
+    "source_id": "financial",
+    "locator": "page:3",
+    "quote": "Cash interest paid  1.25  1.25  1.25  1.25  5.00",
+    "value_text": "5.00"
+   },
+   "fcf": {
+    "source_id": "financial",
+    "locator": "page:3",
+    "quote": "Levered free cash flow  2.25  2.25  2.25  2.25  9.00",
+    "value_text": "9.00"
+   },
+   "total_debt": {
+    "source_id": "financial",
+    "locator": "page:4",
+    "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00",
+    "value_text": "50.00"
+   }
+  },
+  "fx": {
+   "fx_cash_effect": {
+    "source_id": "financial",
+    "locator": "page:3",
+    "quote": "FX effect on cash  0  0  0  0  0",
+    "value_text": "0"
+   },
+   "debt_currency": {
+    "source_id": "financial",
+    "locator": "page:5",
+    "quote": "USD millions; consolidated group; IFRS carrying values.",
+    "code_text": "USD"
+   },
+   "debt_currency_absence": null,
+   "foreign_ebitda_share": null,
+   "operating_fx_absence": {
+    "reason": "No source in the pack states the split of revenue, costs or earnings by currency",
+    "follow_up": "Supply the segment or currency disclosure of the issuer"
+   }
+  },
+  "hedge_ratio": null,
+  "hedge_absence": {
+   "reason": "No source in the pack states a hedging instrument or a hedge ratio",
+   "follow_up": "Supply the hedging policy or derivative schedule of the issuer"
+  },
+  "rate_shocks_bp": [
+   "100",
+   "200"
+  ],
+  "fx_shocks_percent": [
+   "10"
+  ],
+  "shock_rationale": "Parallel upward moves of increasing size in the reference rate; a downward move is not tested because no source states the reference rate level against its floor; the currency moves are the foreign currency strengthening against the reporting currency.",
+  "assessments": [
+   {
+    "section": "interest_rate",
+    "category": "Analyst Interpretation",
+    "text": "The term loan is the only debt and its coupon floats on the reference rate, so every upward move passes straight into cash interest; the shocks tested leave interest cover well inside what the earnings can carry.",
+    "basis": [
+     {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "floating rate type with SOFR reference rate"
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "section": "fx",
+    "category": "Analyst Interpretation",
+    "text": "The statements report no foreign-currency cash movements and no currency translation, and the only debt is stated in the reporting currency; the split of earnings by currency is not stated, so an operating currency effect cannot be sized.",
+    "basis": [
+     {
+      "source_id": "financial",
+      "locator": "page:1",
+      "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:1",
+      "quote": "no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred"
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "USD millions; consolidated group; IFRS carrying values."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "section": "hedging",
+    "category": "Insufficient Information",
+    "text": "The sources do not state whether any hedging instrument exists, so every shock effect is shown before any hedge.",
+    "basis": [],
+    "limitation": "No source in the pack states any hedging instrument or hedge ratio"
+   }
+  ],
+  "summary": {
+   "text": "The credit's measurable macro sensitivity is to the reference rate, because all of the debt floats; currency sensitivity is nil on the debt and unsized on earnings, and the hedge position is not disclosed."
+  }
+ },
+ "gap_no_facility_schedule": {
+  "reporting_currency": {
+   "source_id": "financial",
+   "locator": "page:1",
+   "quote": "Currency: USD; amounts in millions.",
+   "code_text": "USD"
+  },
+  "rate_exposure": null,
+  "rate_absence": {
+   "reason": "The pack holds no facility schedule, so the rate terms of the debt are not stated",
+   "follow_up": "Supply the complete facility and classification schedule"
+  },
+  "earnings": {
+   "ebitda": {
+    "source_id": "financial",
+    "locator": "page:2",
+    "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0",
+    "value_text": "30.0"
+   },
+   "interest": {
+    "source_id": "financial",
+    "locator": "page:3",
+    "quote": "Cash interest paid  1.25  1.25  1.25  1.25  5.00",
+    "value_text": "5.00"
+   },
+   "fcf": {
+    "source_id": "financial",
+    "locator": "page:3",
+    "quote": "Levered free cash flow  2.25  2.25  2.25  2.25  9.00",
+    "value_text": "9.00"
+   },
+   "total_debt": {
+    "source_id": "financial",
+    "locator": "page:4",
+    "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00",
+    "value_text": "50.00"
+   }
+  },
+  "fx": {
+   "fx_cash_effect": {
+    "source_id": "financial",
+    "locator": "page:3",
+    "quote": "FX effect on cash  0  0  0  0  0",
+    "value_text": "0"
+   },
+   "debt_currency": null,
+   "debt_currency_absence": {
+    "reason": "The pack holds no facility schedule, so the currency of the debt is not stated",
+    "follow_up": "Supply the complete facility and classification schedule"
+   },
+   "foreign_ebitda_share": null,
+   "operating_fx_absence": {
+    "reason": "No source in the pack states the split of revenue, costs or earnings by currency",
+    "follow_up": "Supply the segment or currency disclosure of the issuer"
+   }
+  },
+  "hedge_ratio": null,
+  "hedge_absence": {
+   "reason": "No source in the pack states a hedging instrument or a hedge ratio",
+   "follow_up": "Supply the hedging policy or derivative schedule of the issuer"
+  },
+  "rate_shocks_bp": [
+   "100",
+   "200"
+  ],
+  "fx_shocks_percent": [
+   "10"
+  ],
+  "shock_rationale": "Parallel upward moves of increasing size in the reference rate; a downward move is not tested because no source states the reference rate level against its floor; the currency moves are the foreign currency strengthening against the reporting currency.",
+  "assessments": [
+   {
+    "section": "interest_rate",
+    "category": "Insufficient Information",
+    "text": "The rate terms of the debt are not stated, so the rate sensitivity cannot be assessed from this pack.",
+    "basis": [],
+    "limitation": "The pack holds no facility schedule"
+   },
+   {
+    "section": "fx",
+    "category": "Insufficient Information",
+    "text": "The currency of the debt is not stated, so only the reported cash movements can be read.",
+    "basis": [
+     {
+      "source_id": "financial",
+      "locator": "page:1",
+      "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+     }
+    ],
+    "limitation": "The pack holds no facility schedule"
+   },
+   {
+    "section": "hedging",
+    "category": "Insufficient Information",
+    "text": "The sources do not state whether any hedging instrument exists, so every shock effect is shown before any hedge.",
+    "basis": [],
+    "limitation": "No source in the pack states any hedging instrument or hedge ratio"
+   }
+  ],
+  "summary": {
+   "text": "Without the facility schedule neither the rate sensitivity nor the currency of the debt can be assessed."
+  }
+ },
+ "refusal_mutations": {
+  "base": "positive",
+  "entries": [
+   {
+    "id": "reporting_code_not_in_quote",
+    "edits": [
+     [
+      "reporting_currency.code_text",
+      "EUR"
+     ]
+    ],
+    "issue": "reporting_currency: code_text EUR does not occur in the quote",
+    "all_issues": [
+     "reporting_currency: code_text EUR does not occur in the quote"
+    ]
+   },
+   {
+    "id": "source_outside_scope",
+    "edits": [
+     [
+      "reporting_currency.source_id",
+      "identity"
+     ]
+    ],
+    "issue": "reporting_currency: source identity is outside the CP-2E scope (financial)",
+    "all_issues": [
+     "reporting_currency: source identity is outside the CP-2E scope (financial)"
+    ]
+   },
+   {
+    "id": "rate_exposure_and_absence",
+    "edits": [
+     [
+      "rate_absence",
+      {
+       "reason": "Not stated",
+       "follow_up": "Supply it"
+      }
+     ]
+    ],
+    "issue": "rate_exposure: exactly one of rate_exposure and rate_absence is required",
+    "all_issues": [
+     "rate_exposure: exactly one of rate_exposure and rate_absence is required"
+    ]
+   },
+   {
+    "id": "balance_not_in_quote",
+    "edits": [
+     [
+      "rate_exposure.facility_balance.value_text",
+      "55"
+     ]
+    ],
+    "issue": "rate_exposure.facility_balance: value_text 55 does not occur in the quote",
+    "all_issues": [
+     "rate_exposure.facility_balance: value_text 55 does not occur in the quote"
+    ]
+   },
+   {
+    "id": "balance_not_labelled",
+    "edits": [
+     [
+      "rate_exposure.facility_balance",
+      {
+       "source_id": "financial",
+       "locator": "page:5",
+       "quote": "floor 0 basis points",
+       "value_text": "0"
+      }
+     ]
+    ],
+    "issue": "rate_exposure.facility_balance: value_text 0 is not labelled balance of in the quote",
+    "all_issues": [
+     "rate_exposure.facility_balance: value_text 0 is not labelled balance of in the quote"
+    ]
+   },
+   {
+    "id": "rate_type_contradicts_quote",
+    "edits": [
+     [
+      "rate_exposure.rate_basis.rate_type",
+      "FIXED"
+     ]
+    ],
+    "issue": "rate_exposure.rate_basis: rate_type FIXED contradicts the quote",
+    "all_issues": [
+     "rate_exposure.rate_basis: rate_type FIXED contradicts the quote"
+    ]
+   },
+   {
+    "id": "rate_type_not_stated",
+    "edits": [
+     [
+      "rate_exposure.rate_basis",
+      {
+       "source_id": "financial",
+       "locator": "page:5",
+       "quote": "SOFR reference rate, spread 0 basis points",
+       "rate_type": "FLOATING",
+       "reference_rate": "SOFR"
+      }
+     ]
+    ],
+    "issue": "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
+    "all_issues": [
+     "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate"
+    ]
+   },
+   {
+    "id": "reference_rate_not_in_quote",
+    "edits": [
+     [
+      "rate_exposure.rate_basis.reference_rate",
+      "EURIBOR"
+     ]
+    ],
+    "issue": "rate_exposure.rate_basis: reference_rate does not occur in the quote",
+    "all_issues": [
+     "rate_exposure.rate_basis: reference_rate does not occur in the quote"
+    ]
+   },
+   {
+    "id": "floor_not_in_quote",
+    "edits": [
+     [
+      "rate_exposure.floor.bps_text",
+      "25"
+     ]
+    ],
+    "issue": "rate_exposure.floor: bps_text 25 does not occur in the quote",
+    "all_issues": [
+     "rate_exposure.floor: bps_text 25 does not occur in the quote"
+    ]
+   },
+   {
+    "id": "row_not_whole_line",
+    "edits": [
+     [
+      "earnings.ebitda.quote",
+      "Reported EBITDA  7.5  7.5  7.5  7.5  30.0\nAdjusted EBITDA  7.5  7.5  7.5  7.5  30.0"
+     ]
+    ],
+    "issue": "earnings.ebitda: quote is not a whole page line",
+    "all_issues": [
+     "earnings.ebitda: quote is not a whole page line"
+    ]
+   },
+   {
+    "id": "row_wrong_label",
+    "edits": [
+     [
+      "earnings.interest",
+      {
+       "source_id": "financial",
+       "locator": "page:3",
+       "quote": "Levered free cash flow  2.25  2.25  2.25  2.25  9.00",
+       "value_text": "9.00"
+      }
+     ]
+    ],
+    "issue": "earnings.interest: the row is not Cash interest paid",
+    "all_issues": [
+     "earnings.interest: the row is not Cash interest paid"
+    ]
+   },
+   {
+    "id": "row_value_not_last",
+    "edits": [
+     [
+      "earnings.ebitda.value_text",
+      "7.5"
+     ]
+    ],
+    "issue": "earnings.ebitda: value_text 7.5 is not the last value of the row",
+    "all_issues": [
+     "earnings.ebitda: value_text 7.5 is not the last value of the row"
+    ]
+   },
+   {
+    "id": "quote_off_page",
+    "edits": [
+     [
+      "earnings.fcf.locator",
+      "page:2"
+     ]
+    ],
+    "issue": "earnings.fcf: quote not found on financial page:2",
+    "all_issues": [
+     "earnings.fcf: quote not found on financial page:2"
+    ]
+   },
+   {
+    "id": "debt_currency_and_absence",
+    "edits": [
+     [
+      "fx.debt_currency_absence",
+      {
+       "reason": "Not stated",
+       "follow_up": "Supply it"
+      }
+     ]
+    ],
+    "issue": "fx.debt_currency: exactly one of debt_currency and debt_currency_absence is required",
+    "all_issues": [
+     "fx.debt_currency: exactly one of debt_currency and debt_currency_absence is required"
+    ]
+   },
+   {
+    "id": "foreign_share_and_absence",
+    "edits": [
+     [
+      "fx.foreign_ebitda_share",
+      {
+       "source_id": "financial",
+       "locator": "page:2",
+       "quote": "Profit before tax  5  5  5  5  20",
+       "percent_text": "20"
+      }
+     ]
+    ],
+    "issue": "fx.foreign_ebitda_share: exactly one of foreign_ebitda_share and operating_fx_absence is required",
+    "all_issues": [
+     "fx.foreign_ebitda_share: exactly one of foreign_ebitda_share and operating_fx_absence is required"
+    ]
+   },
+   {
+    "id": "hedge_ratio_and_absence",
+    "edits": [
+     [
+      "hedge_ratio",
+      {
+       "percent_text": "40",
+       "rationale": "Assumed share of the floating debt that is hedged"
+      }
+     ]
+    ],
+    "issue": "hedge_ratio: exactly one of hedge_ratio and hedge_absence is required",
+    "all_issues": [
+     "hedge_ratio: exactly one of hedge_ratio and hedge_absence is required"
+    ]
+   },
+   {
+    "id": "hedge_ratio_out_of_range",
+    "edits": [
+     [
+      "hedge_ratio",
+      {
+       "percent_text": "101",
+       "rationale": "Assumed share of the floating debt that is hedged"
+      }
+     ],
+     [
+      "hedge_absence",
+      null
+     ]
+    ],
+    "issue": "hedge_ratio: percent must be at least 0 and at most 100",
+    "all_issues": [
+     "hedge_ratio: percent must be at least 0 and at most 100"
+    ]
+   },
+   {
+    "id": "rate_shock_zero",
+    "edits": [
+     [
+      "rate_shocks_bp",
+      [
+       "0",
+       "200"
+      ]
+     ]
+    ],
+    "issue": "rate_shocks_bp[0]: shock must be a whole number of basis points from 1 to 1000",
+    "all_issues": [
+     "rate_shocks_bp[0]: shock must be a whole number of basis points from 1 to 1000"
+    ]
+   },
+   {
+    "id": "rate_shocks_not_increasing",
+    "edits": [
+     [
+      "rate_shocks_bp",
+      [
+       "200",
+       "100"
+      ]
+     ]
+    ],
+    "issue": "rate_shocks_bp: shocks must be strictly increasing",
+    "all_issues": [
+     "rate_shocks_bp: shocks must be strictly increasing"
+    ]
+   },
+   {
+    "id": "too_many_rate_shocks",
+    "edits": [
+     [
+      "rate_shocks_bp",
+      [
+       "100",
+       "200",
+       "300",
+       "400"
+      ]
+     ]
+    ],
+    "issue": "rate_shocks_bp: between 1 and 3 shocks are required",
+    "all_issues": [
+     "rate_shocks_bp: between 1 and 3 shocks are required"
+    ]
+   },
+   {
+    "id": "fx_shock_too_large",
+    "edits": [
+     [
+      "fx_shocks_percent",
+      [
+       "60"
+      ]
+     ]
+    ],
+    "issue": "fx_shocks_percent[0]: shock must be a whole percent from 1 to 50",
+    "all_issues": [
+     "fx_shocks_percent[0]: shock must be a whole percent from 1 to 50"
+    ]
+   },
+   {
+    "id": "digit_in_text",
+    "edits": [
+     [
+      "assessments.0.text",
+      "The term loan is the only debt and floats on 1 reference rate."
+     ]
+    ],
+    "issue": "assessments[0].text: digits are not allowed",
+    "all_issues": [
+     "assessments[0].text: digits are not allowed"
+    ]
+   },
+   {
+    "id": "prohibited_conclusion",
+    "edits": [
+     [
+      "summary.text",
+      "The credit looks weak, so downgrade it."
+     ]
+    ],
+    "issue": "summary.text: text carries a prohibited conclusion",
+    "all_issues": [
+     "summary.text: text carries a prohibited conclusion"
+    ]
+   },
+   {
+    "id": "insufficient_without_limitation",
+    "edits": [
+     [
+      "assessments.2.limitation",
+      null
+     ]
+    ],
+    "issue": "assessments[2]: limitation is required for Insufficient Information and only for it",
+    "all_issues": [
+     "assessments[2]: limitation is required for Insufficient Information and only for it"
+    ]
+   },
+   {
+    "id": "documentary_without_basis",
+    "edits": [
+     [
+      "assessments.0.category",
+      "Documentary Fact"
+     ],
+     [
+      "assessments.0.basis",
+      []
+     ]
+    ],
+    "issue": "assessments[0]: a Documentary Fact needs at least one basis quote",
+    "all_issues": [
+     "assessments[0]: a Documentary Fact needs at least one basis quote"
+    ]
+   },
+   {
+    "id": "section_missing",
+    "edits": [
+     [
+      "assessments",
+      [
+       {
+        "section": "interest_rate",
+        "category": "Analyst Interpretation",
+        "text": "The term loan is the only debt and its coupon floats on the reference rate, so every upward move passes straight into cash interest; the shocks tested leave interest cover well inside what the earnings can carry.",
+        "basis": [
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "floating rate type with SOFR reference rate"
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date."
+         }
+        ],
+        "limitation": null
+       },
+       {
+        "section": "fx",
+        "category": "Analyst Interpretation",
+        "text": "The statements report no foreign-currency cash movements and no currency translation, and the only debt is stated in the reporting currency; the split of earnings by currency is not stated, so an operating currency effect cannot be sized.",
+        "basis": [
+         {
+          "source_id": "financial",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:1",
+          "quote": "no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred"
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "USD millions; consolidated group; IFRS carrying values."
+         }
+        ],
+        "limitation": null
+       }
+      ]
+     ]
+    ],
+    "issue": "assessments: section hedging is missing",
+    "all_issues": [
+     "assessments: section hedging is missing"
+    ]
+   },
+   {
+    "id": "section_repeated",
+    "edits": [
+     [
+      "assessments",
+      [
+       {
+        "section": "interest_rate",
+        "category": "Analyst Interpretation",
+        "text": "The term loan is the only debt and its coupon floats on the reference rate, so every upward move passes straight into cash interest; the shocks tested leave interest cover well inside what the earnings can carry.",
+        "basis": [
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "floating rate type with SOFR reference rate"
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date."
+         }
+        ],
+        "limitation": null
+       },
+       {
+        "section": "fx",
+        "category": "Analyst Interpretation",
+        "text": "The statements report no foreign-currency cash movements and no currency translation, and the only debt is stated in the reporting currency; the split of earnings by currency is not stated, so an operating currency effect cannot be sized.",
+        "basis": [
+         {
+          "source_id": "financial",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:1",
+          "quote": "no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred"
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "USD millions; consolidated group; IFRS carrying values."
+         }
+        ],
+        "limitation": null
+       },
+       {
+        "section": "hedging",
+        "category": "Insufficient Information",
+        "text": "The sources do not state whether any hedging instrument exists, so every shock effect is shown before any hedge.",
+        "basis": [],
+        "limitation": "No source in the pack states any hedging instrument or hedge ratio"
+       },
+       {
+        "section": "interest_rate",
+        "category": "Analyst Interpretation",
+        "text": "The term loan is the only debt and its coupon floats on the reference rate, so every upward move passes straight into cash interest; the shocks tested leave interest cover well inside what the earnings can carry.",
+        "basis": [
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "floating rate type with SOFR reference rate"
+         },
+         {
+          "source_id": "financial",
+          "locator": "page:5",
+          "quote": "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date."
+         }
+        ],
+        "limitation": null
+       }
+      ]
+     ]
+    ],
+    "issue": "assessments[0]: section interest_rate appears more than once",
+    "all_issues": [
+     "assessments[0]: section interest_rate appears more than once",
+     "assessments[3]: section interest_rate appears more than once"
+    ]
+   }
+  ]
+ },
+ "blocked": {
+  "attempt_0": {
+   "edits": [
+    [
+     "assessments.0.text",
+     "The term loan is the only debt and floats on 1 reference rate."
+    ]
+   ],
+   "issue": "assessments[0].text: digits are not allowed"
+  },
+  "attempt_1": {
+   "edits": [
+    [
+     "rate_exposure.floor.bps_text",
+     "25"
+    ]
+   ],
+   "issue": "rate_exposure.floor: bps_text 25 does not occur in the quote"
+  }
+ },
+ "tool_use_refusals": [
+  {
+   "id": "unread_financial_page_3",
+   "reads": [
+    [
+     "financial",
+     "page:1"
+    ],
+    [
+     "financial",
+     "page:2"
+    ],
+    [
+     "financial",
+     "page:4"
+    ],
+    [
+     "financial",
+     "page:5"
+    ]
+   ],
+   "searches": 1,
+   "issue": "Cited page not read through read_pages: financial page:3"
+  },
+  {
+   "id": "unread_financial_page_5",
+   "reads": [
+    [
+     "financial",
+     "page:1"
+    ],
+    [
+     "financial",
+     "page:2"
+    ],
+    [
+     "financial",
+     "page:3"
+    ],
+    [
+     "financial",
+     "page:4"
+    ]
+   ],
+   "searches": 1,
+   "issue": "Cited page not read through read_pages: financial page:5"
+  },
+  {
+   "id": "absence_without_search",
+   "reads": [
+    [
+     "financial",
+     "page:1"
+    ],
+    [
+     "financial",
+     "page:2"
+    ],
+    [
+     "financial",
+     "page:3"
+    ],
+    [
+     "financial",
+     "page:4"
+    ],
+    [
+     "financial",
+     "page:5"
+    ]
+   ],
+   "searches": 0,
+   "issue": "Absence claim without a recorded search"
+  }
+ ],
+ "hand_built_page_refusals": [
+  {
+   "id": "balance_exceeds_total_debt",
+   "page_locator": "page:5",
+   "page_edit": {
+    "from": "FY2025 and Q4 share the same December 31, 2025 closing facility balance of 50.",
+    "to": "FY2025 and Q4 share the same December 31, 2025 closing facility balance of 55."
+   },
+   "page_text_sha256": "f19772a10343ea8ac5380afede4c4e23573723af1367af43a378b68d52366e75",
+   "pack_source_sha256": "8f5b139f3e519fac436a9d908e01514180bdc9dd682b421040dfcac140ff12b0",
+   "payload": {
+    "reporting_currency": {
+     "source_id": "financial",
+     "locator": "page:1",
+     "quote": "Currency: USD; amounts in millions.",
+     "code_text": "USD"
+    },
+    "rate_exposure": {
+     "facility_balance": {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "FY2025 and Q4 share the same December 31, 2025 closing facility balance of 55.",
+      "value_text": "55"
+     },
+     "rate_basis": {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "floating rate type with SOFR reference rate",
+      "rate_type": "FLOATING",
+      "reference_rate": "SOFR"
+     },
+     "spread": {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "spread 0 basis points",
+      "bps_text": "0"
+     },
+     "floor": {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "floor 0 basis points",
+      "bps_text": "0"
+     }
+    },
+    "rate_absence": null,
+    "earnings": {
+     "ebitda": {
+      "source_id": "financial",
+      "locator": "page:2",
+      "quote": "Reported EBITDA  7.5  7.5  7.5  7.5  30.0",
+      "value_text": "30.0"
+     },
+     "interest": {
+      "source_id": "financial",
+      "locator": "page:3",
+      "quote": "Cash interest paid  1.25  1.25  1.25  1.25  5.00",
+      "value_text": "5.00"
+     },
+     "fcf": {
+      "source_id": "financial",
+      "locator": "page:3",
+      "quote": "Levered free cash flow  2.25  2.25  2.25  2.25  9.00",
+      "value_text": "9.00"
+     },
+     "total_debt": {
+      "source_id": "financial",
+      "locator": "page:4",
+      "quote": "Total debt  45  46.25  47.50  48.75  50.00  50.00",
+      "value_text": "50.00"
+     }
+    },
+    "fx": {
+     "fx_cash_effect": {
+      "source_id": "financial",
+      "locator": "page:3",
+      "quote": "FX effect on cash  0  0  0  0  0",
+      "value_text": "0"
+     },
+     "debt_currency": {
+      "source_id": "financial",
+      "locator": "page:5",
+      "quote": "USD millions; consolidated group; IFRS carrying values.",
+      "code_text": "USD"
+     },
+     "debt_currency_absence": null,
+     "foreign_ebitda_share": null,
+     "operating_fx_absence": {
+      "reason": "No source in the pack states the split of revenue, costs or earnings by currency",
+      "follow_up": "Supply the segment or currency disclosure of the issuer"
+     }
+    },
+    "hedge_ratio": null,
+    "hedge_absence": {
+     "reason": "No source in the pack states a hedging instrument or a hedge ratio",
+     "follow_up": "Supply the hedging policy or derivative schedule of the issuer"
+    },
+    "rate_shocks_bp": [
+     "100",
+     "200"
+    ],
+    "fx_shocks_percent": [
+     "10"
+    ],
+    "shock_rationale": "Parallel upward moves of increasing size in the reference rate; a downward move is not tested because no source states the reference rate level against its floor; the currency moves are the foreign currency strengthening against the reporting currency.",
+    "assessments": [
+     {
+      "section": "interest_rate",
+      "category": "Analyst Interpretation",
+      "text": "The term loan is the only debt and its coupon floats on the reference rate, so every upward move passes straight into cash interest; the shocks tested leave interest cover well inside what the earnings can carry.",
+      "basis": [
+       {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": "floating rate type with SOFR reference rate"
+       },
+       {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "section": "fx",
+      "category": "Analyst Interpretation",
+      "text": "The statements report no foreign-currency cash movements and no currency translation, and the only debt is stated in the reporting currency; the split of earnings by currency is not stated, so an operating currency effect cannot be sized.",
+      "basis": [
+       {
+        "source_id": "financial",
+        "locator": "page:1",
+        "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+       },
+       {
+        "source_id": "financial",
+        "locator": "page:1",
+        "quote": "no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred"
+       },
+       {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": "USD millions; consolidated group; IFRS carrying values."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "section": "hedging",
+      "category": "Insufficient Information",
+      "text": "The sources do not state whether any hedging instrument exists, so every shock effect is shown before any hedge.",
+      "basis": [],
+      "limitation": "No source in the pack states any hedging instrument or hedge ratio"
+     }
+    ],
+    "summary": {
+     "text": "The credit's measurable macro sensitivity is to the reference rate, because all of the debt floats; currency sensitivity is nil on the debt and unsized on earnings, and the hedge position is not disclosed."
+    }
+   },
+   "issue": "rate_exposure.facility_balance: value_text 55 exceeds total debt 50.00"
+  }
+ ]
+}

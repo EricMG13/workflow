@@ -2973,3 +2973,11 @@ Test env fix written (mx-scaffold, 2026-10-28): `tests/test_cp1b_registration.py
 pytest `-k import_orders` deferred. S1a fix round 1 done (R3-1..R3-5; fixture pinned in the lease,
 0616a4a2…06e3); scoped mx-precise re-review running. B1 fix-3 (mx-escalate) done; scoped mx-adversary
 re-review running. User raised the subagent cap to 10 (user settings env).
+
+CP-3 half frozen (2026-10-28): revision 3 closed the consistent-forgery tamper texts and the gap
+tool-use text; LEAD scratch rebuild matched; `docs/CP3-OWNER-LEASE.md` (CP-6 half still draft until
+S1b). S1a scoped re-review APPROVED (lease R3-1 wording amended: CP-2 is not begun after a CP-1A
+refusal); S1a mx-adversary provenance review running. CP-2D revision 3 (claims carry T2E cell
+references; horizon left out of claims) and CP-2A revision 2 under scoped re-review. CP-OS prep done
+(D6 render-time proof, no G1 change), review running. CP-DR prep done; protocol §3 amended (an
+owner-only step may combine a view with pack sources; scope from a fixed host mapping).

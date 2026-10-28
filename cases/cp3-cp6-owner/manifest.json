@@ -1,0 +1,281 @@
+{
+  "schema_version": "cp3-cp6-owner-cases/1",
+  "scope": "CP-3 relative value and CP-6 committee challenge owner inputs on top of the S1 credit-snapshot run (CP-0, CP-1, CP-1A, CP-2, CP-MODEL), plus CP-5 where CP-6 requires it",
+  "status": "DRAFT by owner-preparation task cp3-cp6-owner, 2026-10-28; CP-3 half rev 1 (revised after review-precise-r3-1, awaiting scoped re-review); CP-6 half rev 0 draft; not executed",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+  "pins": {
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+    "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+    "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+    "cases/snapshot/cp2-view-tree.json": "f739395cbcf30ae2af710d8423927a8f810c8c4b948c07c6e6583e2a3b86f446",
+    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+  },
+  "reuse": {
+    "identity": "cases/financial/manifest.json source identity, bytes unchanged",
+    "financial": "cases/financial/manifest.json source financial, bytes unchanged",
+    "business": "cases/snapshot/manifest.json business_source.positive, bytes unchanged"
+  },
+  "market_source": {
+    "source_id": "market",
+    "name": "Third-party loan market quotation sheet",
+    "status": "ready",
+    "media_type": "text/plain",
+    "extractor": "supplied-representation",
+    "extraction_status": "complete",
+    "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction",
+    "pages": [
+      {
+        "locator": "page:1",
+        "text": "SYNTHETIC LOAN MARKET DESK\nSecondary loan quotation sheet\nPublished January 10, 2026. Quotations are as of the close on January 9, 2026.\nThis invented case is test data, not evidence about a real issuer.\nInstrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029.\nDealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.\nThe quotation comes from one dealer. No trade in the instrument was reported in the 30 days to January 9, 2026."
+      },
+      {
+        "locator": "page:2",
+        "text": "SYNTHETIC LOAN MARKET DESK\nDealer commentary\nPublished January 10, 2026.\nDealers describe the indicative fair value of the Northbridge Term Loan as around 99.75. This is talk and not a quotation or a trade.\nThe commentary does not describe the security package, guarantees or covenants of the instrument.\nNo rating agency has assigned a rating to the instrument."
+      }
+    ],
+    "sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+    "pack_limitation": null,
+    "consistency_with_frozen_sources": [
+      "Instrument name, senior secured term loan and final maturity December 31, 2029 equal financial page:5 and business page:3",
+      "No other instrument is named: financial page:5 states exactly one debt facility, so CP-3 orders one instrument",
+      "As-of: quotations dated January 9, 2026, published January 10, 2026 (the run as-of date)",
+      "No rating is stated, consistent with business page:3 (no rating assigned)",
+      "No pricing, spread or yield is derived from the quotation anywhere: the contractual spread (0 basis points over SOFR) is untouched and CP-3 computes no number"
+    ],
+    "quotes": {
+      "observed": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.",
+      "indicative_talk": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75.",
+      "sheet": "Secondary loan quotation sheet"
+    }
+  },
+  "runs": {
+    "R3": {
+      "requested_modules": [
+        "CP-1",
+        "CP-MODEL",
+        "CP-1A",
+        "CP-2",
+        "CP-3"
+      ],
+      "plan_order": [
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-MODEL",
+        "CP-3"
+      ],
+      "live_consumers_of_cp0": [
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-3"
+      ],
+      "cp1a_consumers": [
+        "CP-2",
+        "CP-3",
+        "CP-MODEL"
+      ],
+      "note": "CP-3 lease run (CP-5 and CP-6 not selected)"
+    },
+    "R6": {
+      "requested_modules": [
+        "CP-1",
+        "CP-MODEL",
+        "CP-1A",
+        "CP-2",
+        "CP-3",
+        "CP-5",
+        "CP-6"
+      ],
+      "plan_order": [
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-MODEL",
+        "CP-3",
+        "CP-5",
+        "CP-6"
+      ],
+      "live_consumers_of_cp0": [
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-3",
+        "CP-5",
+        "CP-6"
+      ],
+      "cp1a_consumers": [
+        "CP-2",
+        "CP-3",
+        "CP-5",
+        "CP-6",
+        "CP-MODEL"
+      ],
+      "note": "CP-6 lease run; CP-5 is required by CP-6 (methodology.json) and CP-3 is its second consumer"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "cp3-cp6-positive",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "limitation": null
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+        },
+        {
+          "source_id": "business",
+          "name": "Business and ownership note",
+          "status": "ready",
+          "limitation": null
+        },
+        {
+          "source_id": "market",
+          "name": "Third-party loan market quotation sheet",
+          "status": "ready",
+          "limitation": null
+        }
+      ],
+      "runs": {
+        "R3": {
+          "run": {
+            "run_id": "slice-cp3-positive",
+            "issuer_id": "northbridge-synthetic",
+            "issuer_name": "Northbridge Synthetic Group",
+            "as_of": "2026-01-10",
+            "method_version": "deploy-v-r14",
+            "case_kind": "synthetic",
+            "pathway": "credit_snapshot",
+            "requested_modules": [
+              "CP-1",
+              "CP-MODEL",
+              "CP-1A",
+              "CP-2",
+              "CP-3"
+            ]
+          }
+        },
+        "R6": {
+          "run": {
+            "run_id": "slice-cp6-positive",
+            "issuer_id": "northbridge-synthetic",
+            "issuer_name": "Northbridge Synthetic Group",
+            "as_of": "2026-01-10",
+            "method_version": "deploy-v-r14",
+            "case_kind": "synthetic",
+            "pathway": "credit_snapshot",
+            "requested_modules": [
+              "CP-1",
+              "CP-MODEL",
+              "CP-1A",
+              "CP-2",
+              "CP-3",
+              "CP-5",
+              "CP-6"
+            ]
+          }
+        }
+      },
+      "change_from_s1_positive": "adds the market source (4 sources)",
+      "submissions": "cases/cp3-cp6-owner/submissions.json#positive"
+    },
+    {
+      "case_id": "cp3-cp6-gap",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "limitation": null
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+        },
+        {
+          "source_id": "business",
+          "name": "Business and ownership note",
+          "status": "ready",
+          "limitation": null
+        }
+      ],
+      "runs": {
+        "R3": {
+          "run": {
+            "run_id": "slice-cp3-gap",
+            "issuer_id": "northbridge-synthetic",
+            "issuer_name": "Northbridge Synthetic Group",
+            "as_of": "2026-01-10",
+            "method_version": "deploy-v-r14",
+            "case_kind": "synthetic",
+            "pathway": "credit_snapshot",
+            "requested_modules": [
+              "CP-1",
+              "CP-MODEL",
+              "CP-1A",
+              "CP-2",
+              "CP-3"
+            ]
+          }
+        },
+        "R6": {
+          "run": {
+            "run_id": "slice-cp6-gap",
+            "issuer_id": "northbridge-synthetic",
+            "issuer_name": "Northbridge Synthetic Group",
+            "as_of": "2026-01-10",
+            "method_version": "deploy-v-r14",
+            "case_kind": "synthetic",
+            "pathway": "credit_snapshot",
+            "requested_modules": [
+              "CP-1",
+              "CP-MODEL",
+              "CP-1A",
+              "CP-2",
+              "CP-3",
+              "CP-5",
+              "CP-6"
+            ]
+          }
+        }
+      },
+      "change_from_s1_positive": "no market source: the S1 positive three-source pack; CP-0 records the missing market source as a gap that affects CP-3 only",
+      "submissions": "cases/cp3-cp6-owner/submissions.json#gap"
+    }
+  ],
+  "table_ids": {
+    "CP-3": [
+      "T3.1",
+      "T3.3",
+      "T3.4",
+      "T3.9",
+      "T3.10",
+      "cp3.relative_value",
+      "cp1_references"
+    ],
+    "CP-6": [
+      "T6-FINAL",
+      "T6A.4",
+      "T6A.6",
+      "T6A.7",
+      "T6A.11",
+      "cp6.committee_challenge",
+      "cp6.thesis_challenge",
+      "cp6.strength_challenges",
+      "cp6.weakness_challenges",
+      "cp1_references"
+    ]
+  }
+}

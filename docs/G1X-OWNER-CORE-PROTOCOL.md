@@ -31,8 +31,10 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
 `_CORES[m].submit`.
 
 ## 3. Inputs
-- `inputs="module_context"` is accepted for any step with a `_VIEWS` entry and no pack sources
-  (S1a accepted only `MODULE_CONTEXTS` steps). The name stays.
+- `inputs="module_context"` is accepted for any step with a `_VIEWS` entry (S1a accepted only
+  `MODULE_CONTEXTS` steps). The name stays. An owner-only step may also have `sources=True` (CP-DR:
+  the view is its agenda, the pack tools its evidence; LEAD amendment 2026-10-28); its pack scope is a
+  fixed host-side mapping built by the H1 host task, never caller-supplied.
 - `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`,
   with or without a source session (CP-4 review-precise-2 F5). `read_inputs` serves
   `projection` or `module_context`.

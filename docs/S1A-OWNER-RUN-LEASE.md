@@ -321,8 +321,8 @@ CP-1 head over the S1 positive pack.
   `refusal.snapshot_sha256` with `receipt.publications[0].snapshot_before_sha256` when the receipt
   holds a publication, otherwise with the final snapshot; `_verify_publications`' chain check
   stays. Acceptance A3c: a CP-0 review whose T8 does not command CP-1A (CP-1A CONDITIONAL, a valid
-  CP-0 submission; test input, not oracle) refuses CP-1A at begin; CP-2 is refused or blocked as
-  its edge rule gives; CP-MODEL publishes; the receipt seals and verifies. Deferred (one CP-1
+  CP-0 submission; test input, not oracle) refuses CP-1A at begin; CP-2 is not begun (the walk ends
+  at the first refusal; LEAD, on S1a review-precise-2); CP-MODEL publishes; the receipt seals and verifies. Deferred (one CP-1
   promotion).
 - **R3-2 (journaled replay is exact).** `_verify_submissions` reruns the module's ruled validator
   on the historical snapshot with the attempt holding the step and requires

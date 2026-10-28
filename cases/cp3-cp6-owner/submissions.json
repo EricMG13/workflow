@@ -1,0 +1,2500 @@
+{
+  "schema_version": "cp3-cp6-owner-submissions/1",
+  "note": "Literal analyst submissions. {{FIG:name}} marks a CP-1 figure reference to be replaced mechanically by {<actual CP-1 fact_id>|<unit_token>} after the CP-1 head exists, exactly as cases/snapshot/submissions.json (same figures, same selection rule; zero or several candidates fail). Every other value is literal input. S1 files are referenced by path and sha256, never copied for edit.",
+  "figures": {
+    "total_leverage_reported": {
+      "unit_token": "x",
+      "spelled": "1.67x",
+      "cp1_coordinate": "T4.10 total_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31"
+    },
+    "net_leverage_reported": {
+      "unit_token": "x",
+      "spelled": "1.00x",
+      "cp1_coordinate": "T4.10 net_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31"
+    },
+    "interest_coverage_reported": {
+      "unit_token": "x",
+      "spelled": "6.00x",
+      "cp1_coordinate": "T4.10 interest_coverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31"
+    },
+    "fcf_to_debt": {
+      "unit_token": "%",
+      "spelled": "18.0%",
+      "cp1_coordinate": "T4.10 fcf_to_debt, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31"
+    }
+  },
+  "s1_base": {
+    "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+    "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+    "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa"
+  },
+  "positive": {
+    "readiness_review": {
+      "base": "cases/snapshot/submissions.json#positive.readiness_review",
+      "R3": {
+        "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+        "objective": "Historical financial foundation, business context and credit synthesis",
+        "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+        "issuer_confirmed": true,
+        "sources": [
+          {
+            "source_id": "identity",
+            "document_family": "Identity note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Accompanying identity note",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "financial",
+            "document_family": "Quarterly financial statements",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "Four quarters in 2025",
+            "version_relationship": "Unaudited quarterly source",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "source_id": "business",
+            "document_family": "Business and ownership note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Issuer-authored note accompanying the statements",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "market",
+            "document_family": "Loan market quotation sheet",
+            "authority": "third_party",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Standalone third-party dealer quotation sheet",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "market",
+                "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              }
+            ],
+            "limitations": []
+          }
+        ],
+        "consumers": [
+          {
+            "module_id": "CP-1",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+            "source_ids": [
+              "identity",
+              "financial"
+            ],
+            "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-1A",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located business, operating, ownership and transaction facts with quotes",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business",
+              "market"
+            ],
+            "rationale": "The business, ownership and transaction fact pack can be built from the located note with explicit source limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-2",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled CP-1 figures and CP-1A registers",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The synthesis can run on settled upstream registers with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "readiness": "READY",
+            "evidence_demand": "Located dated third-party market quotations for the issuer's instrument",
+            "source_ids": [
+              "market"
+            ],
+            "rationale": "The relative value assessment can run on the located dealer quotation and commentary.",
+            "citations": [
+              {
+                "source_id": "market",
+                "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              }
+            ],
+            "missing_source": null,
+            "limitations": []
+          }
+        ],
+        "gaps": [],
+        "analysis": [
+          {
+            "claim_id": "source-assessment",
+            "text": "Located statements and the business note support historical, business and ownership analysis with limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          }
+        ]
+      },
+      "R6": {
+        "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+        "objective": "Historical financial foundation, business context and credit synthesis",
+        "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+        "issuer_confirmed": true,
+        "sources": [
+          {
+            "source_id": "identity",
+            "document_family": "Identity note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Accompanying identity note",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "financial",
+            "document_family": "Quarterly financial statements",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "Four quarters in 2025",
+            "version_relationship": "Unaudited quarterly source",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "source_id": "business",
+            "document_family": "Business and ownership note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Issuer-authored note accompanying the statements",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "market",
+            "document_family": "Loan market quotation sheet",
+            "authority": "third_party",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Standalone third-party dealer quotation sheet",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "market",
+                "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              }
+            ],
+            "limitations": []
+          }
+        ],
+        "consumers": [
+          {
+            "module_id": "CP-1",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+            "source_ids": [
+              "identity",
+              "financial"
+            ],
+            "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-1A",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located business, operating, ownership and transaction facts with quotes",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business",
+              "market"
+            ],
+            "rationale": "The business, ownership and transaction fact pack can be built from the located note with explicit source limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-2",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled CP-1 figures and CP-1A registers",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The synthesis can run on settled upstream registers with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "readiness": "READY",
+            "evidence_demand": "Located dated third-party market quotations for the issuer's instrument",
+            "source_ids": [
+              "market"
+            ],
+            "rationale": "The relative value assessment can run on the located dealer quotation and commentary.",
+            "citations": [
+              {
+                "source_id": "market",
+                "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              }
+            ],
+            "missing_source": null,
+            "limitations": []
+          },
+          {
+            "module_id": "CP-5",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled upstream heads with their citations and limitations",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The evidence trace review can run on the settled heads with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-6",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled CP-2, CP-3 and CP-5 heads",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The committee challenge can run on the settled heads with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          }
+        ],
+        "gaps": [],
+        "analysis": [
+          {
+            "claim_id": "source-assessment",
+            "text": "Located statements and the business note support historical, business and ownership analysis with limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          }
+        ]
+      }
+    },
+    "cp1_source_context": {
+      "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+      "entities": [
+        {
+          "entity_id": "issuer",
+          "name": "Northbridge Synthetic Group",
+          "entity_type": "group",
+          "roles": [
+            "issuer"
+          ],
+          "fiscal_year_end": "December 31",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "identity",
+          "classification": "nonfinancial",
+          "document_type": "Identity note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Identity only",
+          "analytical_use": "Issuer identity",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "event_scan": "unassessed",
+          "event_scan_explanation": "Identity is not event evidence"
+        },
+        {
+          "source_id": "financial",
+          "classification": "financial",
+          "document_type": "Quarterly statements",
+          "published_on": "2026-01-10",
+          "evidence_class": "unaudited_without_auditor",
+          "evidence_rationale": "No auditor report",
+          "analytical_use": "Historical financial analysis",
+          "citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "scopes": [
+            {
+              "scope_id": "opening-2024",
+              "entity_id": "issuer",
+              "period_label": "opening-2024",
+              "period_kind": "period_end",
+              "start_date": null,
+              "end_date": "2024-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q1-2025",
+              "entity_id": "issuer",
+              "period_label": "q1-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-03-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q2-2025",
+              "entity_id": "issuer",
+              "period_label": "q2-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-04-01",
+              "end_date": "2025-06-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q3-2025",
+              "entity_id": "issuer",
+              "period_label": "q3-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-07-01",
+              "end_date": "2025-09-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q4-2025",
+              "entity_id": "issuer",
+              "period_label": "q4-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-10-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "fy-2025",
+              "entity_id": "issuer",
+              "period_label": "fy-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "source_id": "business",
+          "classification": "nonfinancial",
+          "document_type": "Business and ownership note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Issuer-authored note without auditor or filing status",
+          "analytical_use": "Business, operating, ownership and transaction context for CP-1A",
+          "citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:3",
+              "quote": "No acquisition, disposal, new financing, refinancing or change of ownership occurred in 2025, and none is announced or pending as of January 10, 2026."
+            }
+          ]
+        },
+        {
+          "source_id": "market",
+          "classification": "nonfinancial",
+          "document_type": "Loan market quotation sheet",
+          "published_on": "2026-01-10",
+          "evidence_class": "external",
+          "evidence_rationale": "Third-party dealer quotation and commentary without issuer or auditor status",
+          "analytical_use": "Market evidence for relative value in CP-3",
+          "citations": [
+            {
+              "source_id": "market",
+              "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+              "locator": "page:1",
+              "quote": "Secondary loan quotation sheet"
+            }
+          ],
+          "event_scan": "unassessed",
+          "event_scan_explanation": "A quotation sheet is not event evidence"
+        }
+      ],
+      "limitations": [
+        "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+    },
+    "business_context": {
+      "base": "cases/snapshot/submissions.json#positive.business_context",
+      "sources_append": [
+        {
+          "source_id": "market",
+          "source_class": "third_party",
+          "quality": "Medium",
+          "period": "January 9, 2026",
+          "entity_covered": "Northbridge Term Loan",
+          "data_supplied": "Dealer quotation and dealer commentary on the term loan",
+          "use": "Supplies market evidence for CP-3 and carries no issuer disclosure",
+          "citations": [
+            {
+              "source_id": "market",
+              "locator": "page:1",
+              "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+            }
+          ],
+          "limitation": "Single dealer; no traded price"
+        }
+      ],
+      "consumers": {
+        "R3": [
+          {
+            "module_id": "CP-2",
+            "status": "READY",
+            "handoff_item": "Business, ownership and operating registers and the governance score for the credit synthesis",
+            "why_it_matters": "Business risk in the synthesis rests on these rows",
+            "gap": "No blocking gap; material gaps are listed in the gaps ledger",
+            "required_action": "Cite CP-1A rows for business risk and restate material gaps in the synthesis gaps ledger",
+            "citations": [],
+            "flag_topics": [
+              "Quarterly dividends to the sole shareholder"
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "The debt facility and business risk rows for instrument selection",
+            "why_it_matters": "Instrument selection rests on the issuer's debt structure and the business risk rows",
+            "gap": "Market evidence is outside CP-1A and ownership detail is incomplete",
+            "required_action": "Cite CP-2 rows for the fundamental view and quote market sources for any market level",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:3",
+                "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+              }
+            ],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-MODEL",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
+            "why_it_matters": "The Model snapshot shows these fields with their source",
+            "gap": "Owners behind the holding company are not disclosed",
+            "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:1",
+                "quote": "All operations and all reported revenue are in the United States."
+              }
+            ],
+            "flag_topics": []
+          }
+        ],
+        "R6": [
+          {
+            "module_id": "CP-2",
+            "status": "READY",
+            "handoff_item": "Business, ownership and operating registers and the governance score for the credit synthesis",
+            "why_it_matters": "Business risk in the synthesis rests on these rows",
+            "gap": "No blocking gap; material gaps are listed in the gaps ledger",
+            "required_action": "Cite CP-1A rows for business risk and restate material gaps in the synthesis gaps ledger",
+            "citations": [],
+            "flag_topics": [
+              "Quarterly dividends to the sole shareholder"
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "The debt facility and business risk rows for instrument selection",
+            "why_it_matters": "Instrument selection rests on the issuer's debt structure and the business risk rows",
+            "gap": "Market evidence is outside CP-1A and ownership detail is incomplete",
+            "required_action": "Cite CP-2 rows for the fundamental view and quote market sources for any market level",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:3",
+                "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+              }
+            ],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-5",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "All CP-1A claims and registers for the evidence trace",
+            "why_it_matters": "The integrity review checks every claim against its citations",
+            "gap": "Undisclosed ownership and customer data are stated as gaps",
+            "required_action": "Review each CP-1A claim against its cited source spans",
+            "citations": [],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-6",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "Governance and credit translation rows for the committee challenge",
+            "why_it_matters": "The challenge tests the credit view against the governance and disclosure rows",
+            "gap": "Ownership and distribution policy terms are not disclosed",
+            "required_action": "Challenge the synthesis using the governance and disclosure rows",
+            "citations": [],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-MODEL",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
+            "why_it_matters": "The Model snapshot shows these fields with their source",
+            "gap": "Owners behind the holding company are not disclosed",
+            "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:1",
+                "quote": "All operations and all reported revenue are in the United States."
+              }
+            ],
+            "flag_topics": []
+          }
+        ]
+      },
+      "note": "Replace sources by base.sources + sources_append and consumers by the run's list; every other key is the S1 positive value"
+    },
+    "credit_synthesis": {
+      "base": "cases/snapshot/submissions.json#positive.credit_synthesis",
+      "change": "none"
+    },
+    "relative_value": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [
+              {
+                "source_id": "market",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              },
+              {
+                "source_id": "market",
+                "locator": "page:2",
+                "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+              }
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [
+        {
+          "source_id": "market",
+          "kind": "observed",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:1",
+            "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+          },
+          "as_of": "January 9, 2026",
+          "limitation": "Single dealer quotation, not a traded price"
+        },
+        {
+          "source_id": "market",
+          "kind": "indicative_talk",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:2",
+            "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+          },
+          "as_of": "January 10, 2026",
+          "limitation": "Dealer talk, not a quotation or a trade"
+        }
+      ],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [
+            {
+              "source_id": "market",
+              "locator": "page:1",
+              "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+            },
+            {
+              "source_id": "market",
+              "locator": "page:2",
+              "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+            }
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "committee_challenge": {
+      "recommendation": {
+        "action_bias": "Neutral",
+        "rationale": "The credit is sound on reported figures, with total leverage of {{FIG:total_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}}, and the single dealer quotation sits just below par, so the committee holds a Neutral bias rather than a positive or negative one.",
+        "conditions": "The Neutral bias holds while leverage and cover stay near current levels and further dealer quotations confirm the level; it would move on covenant terms with little headroom or a sharp move in the quotation.",
+        "confidence": "Medium",
+        "limitation": "One dealer quotation, no traded price, no covenant terms and unaudited statements",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.10.kf01"
+          ],
+          "cp3_refs": [
+            "T3.4.preference",
+            "T3.1.i01"
+          ],
+          "cp5_refs": []
+        }
+      },
+      "thesis_challenges": [
+        {
+          "thesis_ref": "T2.7.w01",
+          "counter_case": "The single maturity may be less of a weakness if cash keeps building, since the term loan is the only borrowing and no other claim competes for repayment.",
+          "evidence_for": "All debt is one senior secured term loan with no revolver.",
+          "evidence_against": "Free cash flow of {{FIG:fcf_to_debt}} of debt supports servicing the loan before maturity.",
+          "would_change_view": "A refinancing plan or a revolver would reduce the weakness; a drop in cash generation would raise it.",
+          "basis": {
+            "cp2_refs": [
+              "T2.7.w01"
+            ],
+            "cp3_refs": [
+              "T3.1.i01"
+            ],
+            "cp5_refs": []
+          }
+        },
+        {
+          "thesis_ref": "T2.7.thesis",
+          "counter_case": "The thesis may overstate resilience, because one maturity, no revolver and quarterly dividends leave liquidity dependent on steady cash generation.",
+          "evidence_for": "Total leverage of {{FIG:total_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} support the thesis.",
+          "evidence_against": "Dividends continue while their funding source is undisclosed and the statements are unaudited.",
+          "would_change_view": "Covenant terms with little headroom or a fall in cash generation would weaken the thesis.",
+          "basis": {
+            "cp2_refs": [
+              "T2.7.thesis",
+              "T2.11.r01"
+            ],
+            "cp3_refs": [
+              "T3.9.r01"
+            ],
+            "cp5_refs": []
+          }
+        },
+        {
+          "thesis_ref": "T2.10.kf02",
+          "counter_case": "Refinancing risk at the single maturity depends on market access, and the dealer quotation just below par suggests the market sees the loan as fairly priced rather than stressed.",
+          "evidence_for": "The term loan matures on a single date with no revolver.",
+          "evidence_against": "The only market evidence is one dealer quotation and dealer talk.",
+          "would_change_view": "A wider quotation or a failed refinancing would strengthen the finding.",
+          "basis": {
+            "cp2_refs": [
+              "T2.10.kf02"
+            ],
+            "cp3_refs": [
+              "T3.3.m01"
+            ],
+            "cp5_refs": []
+          }
+        },
+        {
+          "thesis_ref": "T2.7.s01",
+          "counter_case": "Low leverage on reported EBITDA may flatter the credit if the unaudited earnings prove weaker, since net leverage of {{FIG:net_leverage_reported}} rests on the same figures.",
+          "evidence_for": "Total leverage is {{FIG:total_leverage_reported}} and net leverage is {{FIG:net_leverage_reported}} on reported figures.",
+          "evidence_against": "No audit report confirms the earnings behind the ratios.",
+          "would_change_view": "An audit report that confirms earnings would remove this challenge.",
+          "basis": {
+            "cp2_refs": [
+              "T2.7.s01"
+            ],
+            "cp3_refs": [],
+            "cp5_refs": []
+          }
+        }
+      ],
+      "recovery_view": [
+        {
+          "subject": "Recovery in a default",
+          "view": "No recovery view is stated because no CP-4 legal or covenant evidence reached the committee through CP-5",
+          "confidence": "Insufficient Information",
+          "limitation": "CP-4 is not in this run, so no recovery evidence exists",
+          "basis": {
+            "cp2_refs": [],
+            "cp3_refs": [],
+            "cp5_refs": []
+          }
+        }
+      ],
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Any view on pricing stays provisional until more quotations or trades are available",
+          "severity": "Material",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01"
+            ],
+            "cp3_refs": [
+              "T3.9.r01"
+            ],
+            "cp5_refs": []
+          }
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "No legal or covenant analysis reached the committee",
+          "why_it_matters": "Recovery and covenant headroom cannot be assessed",
+          "affected_analysis": "Recovery view and covenant headroom",
+          "severity": "Material",
+          "action": "Run CP-4 on the legal sources"
+        }
+      ]
+    }
+  },
+  "gap": {
+    "readiness_review": {
+      "base": "cases/snapshot/submissions.json#positive.readiness_review",
+      "R3": {
+        "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+        "objective": "Historical financial foundation, business context and credit synthesis",
+        "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+        "issuer_confirmed": true,
+        "sources": [
+          {
+            "source_id": "identity",
+            "document_family": "Identity note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Accompanying identity note",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "financial",
+            "document_family": "Quarterly financial statements",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "Four quarters in 2025",
+            "version_relationship": "Unaudited quarterly source",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "source_id": "business",
+            "document_family": "Business and ownership note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Issuer-authored note accompanying the statements",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitations": []
+          }
+        ],
+        "consumers": [
+          {
+            "module_id": "CP-1",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+            "source_ids": [
+              "identity",
+              "financial"
+            ],
+            "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-1A",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located business, operating, ownership and transaction facts with quotes",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The business, ownership and transaction fact pack can be built from the located note with explicit source limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-2",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled CP-1 figures and CP-1A registers",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The synthesis can run on settled upstream registers with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled upstream registers; no third-party market quotation is available",
+            "source_ids": [
+              "financial"
+            ],
+            "rationale": "The relative value assessment can run on settled upstream registers and records the absence of market evidence.",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "No third-party market quotation source in the pack, so CP-3 market evidence is absent"
+            ]
+          }
+        ],
+        "gaps": [
+          {
+            "gap_id": "missing-market-source",
+            "kind": "source",
+            "severity": "material",
+            "description": "No third-party market quotation source in the pack, so CP-3 market evidence is absent",
+            "affected_modules": [
+              "CP-3"
+            ],
+            "remediation": "Supply a dated dealer quotation or trade record",
+            "citations": []
+          }
+        ],
+        "analysis": [
+          {
+            "claim_id": "source-assessment",
+            "text": "Located statements and the business note support historical, business and ownership analysis with limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          }
+        ]
+      },
+      "R6": {
+        "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+        "objective": "Historical financial foundation, business context and credit synthesis",
+        "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+        "issuer_confirmed": true,
+        "sources": [
+          {
+            "source_id": "identity",
+            "document_family": "Identity note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Accompanying identity note",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "financial",
+            "document_family": "Quarterly financial statements",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "Four quarters in 2025",
+            "version_relationship": "Unaudited quarterly source",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "source_id": "business",
+            "document_family": "Business and ownership note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Issuer-authored note accompanying the statements",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitations": []
+          }
+        ],
+        "consumers": [
+          {
+            "module_id": "CP-1",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+            "source_ids": [
+              "identity",
+              "financial"
+            ],
+            "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-1A",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located business, operating, ownership and transaction facts with quotes",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The business, ownership and transaction fact pack can be built from the located note with explicit source limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-2",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled CP-1 figures and CP-1A registers",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The synthesis can run on settled upstream registers with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled upstream registers; no third-party market quotation is available",
+            "source_ids": [
+              "financial"
+            ],
+            "rationale": "The relative value assessment can run on settled upstream registers and records the absence of market evidence.",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "No third-party market quotation source in the pack, so CP-3 market evidence is absent"
+            ]
+          },
+          {
+            "module_id": "CP-5",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled upstream heads with their citations and limitations",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The evidence trace review can run on the settled heads with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-6",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Settled CP-2, CP-3 and CP-5 heads",
+            "source_ids": [
+              "identity",
+              "financial",
+              "business"
+            ],
+            "rationale": "The committee challenge can run on the settled heads with inherited limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          }
+        ],
+        "gaps": [
+          {
+            "gap_id": "missing-market-source",
+            "kind": "source",
+            "severity": "material",
+            "description": "No third-party market quotation source in the pack, so CP-3 market evidence is absent",
+            "affected_modules": [
+              "CP-3"
+            ],
+            "remediation": "Supply a dated dealer quotation or trade record",
+            "citations": []
+          }
+        ],
+        "analysis": [
+          {
+            "claim_id": "source-assessment",
+            "text": "Located statements and the business note support historical, business and ownership analysis with limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              },
+              {
+                "source_id": "business",
+                "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+              }
+            ],
+            "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          }
+        ]
+      }
+    },
+    "cp1_source_context": {
+      "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+      "entities": [
+        {
+          "entity_id": "issuer",
+          "name": "Northbridge Synthetic Group",
+          "entity_type": "group",
+          "roles": [
+            "issuer"
+          ],
+          "fiscal_year_end": "December 31",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "identity",
+          "classification": "nonfinancial",
+          "document_type": "Identity note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Identity only",
+          "analytical_use": "Issuer identity",
+          "citations": [
+            {
+              "source_id": "identity",
+              "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+            }
+          ],
+          "event_scan": "unassessed",
+          "event_scan_explanation": "Identity is not event evidence"
+        },
+        {
+          "source_id": "financial",
+          "classification": "financial",
+          "document_type": "Quarterly statements",
+          "published_on": "2026-01-10",
+          "evidence_class": "unaudited_without_auditor",
+          "evidence_rationale": "No auditor report",
+          "analytical_use": "Historical financial analysis",
+          "citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "Currency: USD; amounts in millions."
+            }
+          ],
+          "scopes": [
+            {
+              "scope_id": "opening-2024",
+              "entity_id": "issuer",
+              "period_label": "opening-2024",
+              "period_kind": "period_end",
+              "start_date": null,
+              "end_date": "2024-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q1-2025",
+              "entity_id": "issuer",
+              "period_label": "q1-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-03-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q2-2025",
+              "entity_id": "issuer",
+              "period_label": "q2-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-04-01",
+              "end_date": "2025-06-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q3-2025",
+              "entity_id": "issuer",
+              "period_label": "q3-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-07-01",
+              "end_date": "2025-09-30",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "q4-2025",
+              "entity_id": "issuer",
+              "period_label": "q4-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-10-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            },
+            {
+              "scope_id": "fy-2025",
+              "entity_id": "issuer",
+              "period_label": "fy-2025",
+              "period_kind": "historical_duration",
+              "start_date": "2025-01-01",
+              "end_date": "2025-12-31",
+              "currency": "USD",
+              "unit": "MILLIONS",
+              "accounting_basis": "IFRS",
+              "entity_perimeter": "consolidated group",
+              "citations": [
+                {
+                  "source_id": "financial",
+                  "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                  "locator": "page:1",
+                  "quote": "The opening balance is December 31, 2024."
+                }
+              ]
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "financial",
+              "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+              "locator": "page:1",
+              "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+            }
+          ],
+          "limitations": [
+            "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          ]
+        },
+        {
+          "source_id": "business",
+          "classification": "nonfinancial",
+          "document_type": "Business and ownership note",
+          "published_on": "2026-01-10",
+          "evidence_class": "internal",
+          "evidence_rationale": "Issuer-authored note without auditor or filing status",
+          "analytical_use": "Business, operating, ownership and transaction context for CP-1A",
+          "citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:1",
+              "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+            }
+          ],
+          "event_scan": "no_events_identified",
+          "event_scan_explanation": "Explicit no-event disclosure through as-of",
+          "event_scan_citations": [
+            {
+              "source_id": "business",
+              "source_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+              "locator": "page:3",
+              "quote": "No acquisition, disposal, new financing, refinancing or change of ownership occurred in 2025, and none is announced or pending as of January 10, 2026."
+            }
+          ]
+        }
+      ],
+      "limitations": [
+        "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+    },
+    "business_context": {
+      "base": "cases/snapshot/submissions.json#positive.business_context",
+      "sources_append": [],
+      "consumers": {
+        "R3": [
+          {
+            "module_id": "CP-2",
+            "status": "READY",
+            "handoff_item": "Business, ownership and operating registers and the governance score for the credit synthesis",
+            "why_it_matters": "Business risk in the synthesis rests on these rows",
+            "gap": "No blocking gap; material gaps are listed in the gaps ledger",
+            "required_action": "Cite CP-1A rows for business risk and restate material gaps in the synthesis gaps ledger",
+            "citations": [],
+            "flag_topics": [
+              "Quarterly dividends to the sole shareholder"
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "The debt facility and business risk rows for instrument selection",
+            "why_it_matters": "Instrument selection rests on the issuer's debt structure and the business risk rows",
+            "gap": "Market evidence is outside CP-1A and ownership detail is incomplete",
+            "required_action": "Cite CP-2 rows for the fundamental view and quote market sources for any market level",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:3",
+                "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+              }
+            ],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-MODEL",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
+            "why_it_matters": "The Model snapshot shows these fields with their source",
+            "gap": "Owners behind the holding company are not disclosed",
+            "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:1",
+                "quote": "All operations and all reported revenue are in the United States."
+              }
+            ],
+            "flag_topics": []
+          }
+        ],
+        "R6": [
+          {
+            "module_id": "CP-2",
+            "status": "READY",
+            "handoff_item": "Business, ownership and operating registers and the governance score for the credit synthesis",
+            "why_it_matters": "Business risk in the synthesis rests on these rows",
+            "gap": "No blocking gap; material gaps are listed in the gaps ledger",
+            "required_action": "Cite CP-1A rows for business risk and restate material gaps in the synthesis gaps ledger",
+            "citations": [],
+            "flag_topics": [
+              "Quarterly dividends to the sole shareholder"
+            ]
+          },
+          {
+            "module_id": "CP-3",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "The debt facility and business risk rows for instrument selection",
+            "why_it_matters": "Instrument selection rests on the issuer's debt structure and the business risk rows",
+            "gap": "Market evidence is outside CP-1A and ownership detail is incomplete",
+            "required_action": "Cite CP-2 rows for the fundamental view and quote market sources for any market level",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:3",
+                "quote": "The only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2029."
+              }
+            ],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-5",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "All CP-1A claims and registers for the evidence trace",
+            "why_it_matters": "The integrity review checks every claim against its citations",
+            "gap": "Undisclosed ownership and customer data are stated as gaps",
+            "required_action": "Review each CP-1A claim against its cited source spans",
+            "citations": [],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-6",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "Governance and credit translation rows for the committee challenge",
+            "why_it_matters": "The challenge tests the credit view against the governance and disclosure rows",
+            "gap": "Ownership and distribution policy terms are not disclosed",
+            "required_action": "Challenge the synthesis using the governance and disclosure rows",
+            "citations": [],
+            "flag_topics": []
+          },
+          {
+            "module_id": "CP-MODEL",
+            "status": "READY_WITH_LIMITATIONS",
+            "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
+            "why_it_matters": "The Model snapshot shows these fields with their source",
+            "gap": "Owners behind the holding company are not disclosed",
+            "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
+            "citations": [
+              {
+                "source_id": "business",
+                "locator": "page:1",
+                "quote": "All operations and all reported revenue are in the United States."
+              }
+            ],
+            "flag_topics": []
+          }
+        ]
+      },
+      "note": "Replace sources by base.sources + sources_append and consumers by the run's list; every other key is the S1 positive value"
+    },
+    "credit_synthesis": {
+      "base": "cases/snapshot/submissions.json#positive.credit_synthesis",
+      "change": "none"
+    },
+    "relative_value": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "none",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": []
+          },
+          "limitation": "No market level is available for the instrument"
+        }
+      ],
+      "market_evidence": [
+        {
+          "source_id": "none",
+          "kind": "none",
+          "quote": null,
+          "as_of": "Not available",
+          "limitation": "No third-party market source in the pack"
+        }
+      ],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With no market evidence the relative value of the instrument is not assessed, although the CP-2 view is unchanged.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment"
+          ],
+          "quotes": []
+        },
+        "confidence": "Insufficient Information",
+        "limitation": "No observed or indicative market evidence reached CP-3"
+      },
+      "risks": [
+        {
+          "risk": "No market evidence",
+          "mechanic": "Without a dated quotation the market view of the loan cannot be compared with the fundamental view",
+          "implication": "Security selection cannot be supported until market evidence is supplied",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "No third-party market source in the pack",
+          "why_it_matters": "Relative value and security selection cannot be assessed",
+          "affected_analysis": "Relative value and security selection",
+          "severity": "Critical",
+          "action": "Supply a dated dealer quotation or trade record"
+        }
+      ]
+    },
+    "committee_challenge": {
+      "recommendation": {
+        "action_bias": "Insufficient Information",
+        "rationale": "The committee records no action bias because relative value rests on no market evidence, even though leverage of {{FIG:total_leverage_reported}} and cover of {{FIG:interest_coverage_reported}} support the credit.",
+        "conditions": "An action bias can be stated once a dated dealer quotation or trade record is supplied.",
+        "confidence": "Insufficient Information",
+        "limitation": "No observed or indicative market evidence reached CP-3",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment"
+          ],
+          "cp3_refs": [
+            "T3.4.preference"
+          ],
+          "cp5_refs": []
+        }
+      },
+      "thesis_challenges": [
+        {
+          "thesis_ref": "T2.7.s01",
+          "counter_case": "Low leverage on reported EBITDA may flatter the credit if the unaudited earnings prove weaker, since net leverage of {{FIG:net_leverage_reported}} rests on the same figures.",
+          "evidence_for": "Total leverage is {{FIG:total_leverage_reported}} and net leverage is {{FIG:net_leverage_reported}} on reported figures.",
+          "evidence_against": "No audit report confirms the earnings behind the ratios.",
+          "would_change_view": "An audit report that confirms earnings would remove this challenge.",
+          "basis": {
+            "cp2_refs": [
+              "T2.7.s01"
+            ],
+            "cp3_refs": [],
+            "cp5_refs": []
+          }
+        },
+        {
+          "thesis_ref": "T2.7.thesis",
+          "counter_case": "The thesis may overstate resilience, because one maturity, no revolver and quarterly dividends leave liquidity dependent on steady cash generation.",
+          "evidence_for": "Total leverage of {{FIG:total_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} support the thesis.",
+          "evidence_against": "Dividends continue while their funding source is undisclosed and the statements are unaudited.",
+          "would_change_view": "Covenant terms with little headroom or a fall in cash generation would weaken the thesis.",
+          "basis": {
+            "cp2_refs": [
+              "T2.7.thesis",
+              "T2.11.r01"
+            ],
+            "cp3_refs": [
+              "T3.9.r01"
+            ],
+            "cp5_refs": []
+          }
+        }
+      ],
+      "recovery_view": [
+        {
+          "subject": "Recovery in a default",
+          "view": "No recovery view is stated because no CP-4 legal or covenant evidence reached the committee through CP-5",
+          "confidence": "Insufficient Information",
+          "limitation": "CP-4 is not in this run, so no recovery evidence exists",
+          "basis": {
+            "cp2_refs": [],
+            "cp3_refs": [],
+            "cp5_refs": []
+          }
+        }
+      ],
+      "risks": [
+        {
+          "risk": "No market evidence",
+          "mechanic": "Without a dated quotation the committee cannot compare the market view of the loan with the fundamental view",
+          "implication": "No action bias can be supported until market evidence is supplied",
+          "severity": "Material",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01"
+            ],
+            "cp3_refs": [
+              "T3.9.r01"
+            ],
+            "cp5_refs": []
+          }
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "No legal or covenant analysis reached the committee",
+          "why_it_matters": "Recovery and covenant headroom cannot be assessed",
+          "affected_analysis": "Recovery view and covenant headroom",
+          "severity": "Material",
+          "action": "Run CP-4 on the legal sources"
+        }
+      ]
+    }
+  },
+  "refusal_mutations": {
+    "note": "Each entry edits a deep copy of the case's valid literal (paths use dots and [i]; 'append_text' extends a string; 'ROW1_ONLY' means keep only market_evidence[1])",
+    "entries": [
+      {
+        "id": "cp3-confidence-high",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "preference.confidence",
+            "High"
+          ]
+        ]
+      },
+      {
+        "id": "cp3-observed-quotes-talk",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "market_evidence[1].kind",
+            "observed"
+          ]
+        ]
+      },
+      {
+        "id": "cp3-unknown-facility",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "instruments[0].facility_id",
+            "bond-2"
+          ]
+        ]
+      },
+      {
+        "id": "cp3-ordering-missing",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "preference.ordering",
+            []
+          ]
+        ]
+      },
+      {
+        "id": "cp3-action-phrase",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "append_text",
+            "instruments[0].market_observation",
+            " Buy it."
+          ]
+        ]
+      },
+      {
+        "id": "cp3-basis-quote-not-evidence",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "instruments[0].basis.quotes",
+            [
+              {
+                "source_id": "market",
+                "locator": "page:1",
+                "quote": "Instrument: Northbridge Term Loan"
+              }
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "cp3-unknown-cp2-row",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "preference.basis.cp2_refs",
+            [
+              "T2.9.zz"
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "cp3-talk-worded-as-level",
+        "owner": "CP-3",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "market_evidence",
+            "ROW1_ONLY"
+          ],
+          [
+            "set",
+            "instruments[0].basis.quotes",
+            [
+              {
+                "source_id": "market",
+                "locator": "page:2",
+                "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+              }
+            ]
+          ],
+          [
+            "set",
+            "preference.basis.quotes",
+            [
+              {
+                "source_id": "market",
+                "locator": "page:2",
+                "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+              }
+            ]
+          ],
+          [
+            "set",
+            "instruments[0].market_observation",
+            "The loan trades at par on dealer talk."
+          ]
+        ]
+      },
+      {
+        "id": "cp3-gap-confidence-without-evidence",
+        "owner": "CP-3",
+        "case": "gap",
+        "edits": [
+          [
+            "set",
+            "preference.confidence",
+            "Medium"
+          ]
+        ]
+      },
+      {
+        "id": "cp3-gap-fabricated-market",
+        "owner": "CP-3",
+        "case": "gap",
+        "edits": [
+          [
+            "set",
+            "market_evidence",
+            [
+              {
+                "source_id": "market",
+                "kind": "observed",
+                "quote": {
+                  "source_id": "market",
+                  "locator": "page:1",
+                  "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+                },
+                "as_of": "January 9, 2026",
+                "limitation": "Single dealer quotation"
+              }
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "cp6-confidence-high",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "recommendation.confidence",
+            "High"
+          ]
+        ]
+      },
+      {
+        "id": "cp6-gap-bias-despite-no-evidence",
+        "owner": "CP-6",
+        "case": "gap",
+        "edits": [
+          [
+            "set",
+            "recommendation.action_bias",
+            "Neutral"
+          ],
+          [
+            "set",
+            "recommendation.confidence",
+            "Medium"
+          ]
+        ]
+      },
+      {
+        "id": "cp6-thesis-ref-not-challengeable",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "thesis_challenges[0].thesis_ref",
+            "T2.11.r01"
+          ]
+        ]
+      },
+      {
+        "id": "cp6-duplicate-challenge",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "thesis_challenges[0].thesis_ref",
+            "T2.7.thesis"
+          ]
+        ]
+      },
+      {
+        "id": "cp6-recovery-without-cp4",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "recovery_view[0].confidence",
+            "Medium"
+          ],
+          [
+            "set",
+            "recovery_view[0].basis.cp2_refs",
+            [
+              "T2.11.r01"
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "cp6-trade-term",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "append_text",
+            "recommendation.conditions",
+            " Set a target price."
+          ]
+        ]
+      },
+      {
+        "id": "cp6-unknown-cp3-row",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "recommendation.basis.cp3_refs",
+            [
+              "T3.9.zz"
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "cp6-bias-confidence-mismatch",
+        "owner": "CP-6",
+        "case": "positive",
+        "edits": [
+          [
+            "set",
+            "recommendation.confidence",
+            "Insufficient Information"
+          ]
+        ]
+      }
+    ]
+  },
+  "cp5_premise": {
+    "required_by": "CP-6 (methodology.json: CP-6 requires CP-5; registry.edge_rule is block)",
+    "premise": "The CP-5 head over the same run settles restricted with: zero T5B.2 rows (unsupported or partly supported), zero T5B.3 rows (contradictions), no flagged claim, no unreadable claim name, and no CP-5 row carrying CP-4 content. Its findings (T5.9) and limitations are whatever CP-5 settles; CP-6 reads them at run time.",
+    "binding": "{{CP5_FINDINGS_SUFFIX}} in the expected CP-6 limitation is '' when the CP-5 head has no CP-5-FINDING-NNN row, else '; findings ' + ', '.join(finding ids in head order) (cp6_committee.Upstream.limits)",
+    "cp5_refs_used_by_cp6_literals": "none: the literal CP-6 submissions cite no CP-5 row, so no CP-5 id is needed to write them",
+    "owner": "The CP-5 literal submission and expected head belong to the CP-5 (S1b) lease; this oracle only fixes the premise above"
+  }
+}

@@ -319,12 +319,13 @@ def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
     return out
 
 
-def _usd_millions(metric: str, fact: Fact) -> None:
-    """Lease "All amounts USD, unit MILLIONS": another CP-1 book fails closed (an invariant;
-    carrying the book's unit through would be a lease change)."""
+def _usd_millions(name: str, fact: Fact) -> None:
+    """Lease "All amounts USD, unit MILLIONS": another upstream book fails closed (an invariant;
+    carrying the book's unit through would be a lease change). `name` is `CP-1 <metric>` (M2) or
+    `CP-1D <label>` (round 11 Q12)."""
     if (fact.currency, fact.unit, fact.scale) != ("USD", "MILLIONS", Decimal(1000000)):
         raise ValueError(  # round 9 wording
-            f"CP-2G: CP-1 {metric} must be USD MILLIONS at scale 1000000, not "
+            f"CP-2G: {name} must be USD MILLIONS at scale 1000000, not "
             f"{fact.currency} {fact.unit} at scale {fact.scale}"
         )
 
@@ -357,7 +358,7 @@ class Operands:
             if fact.status != "known" or fact.amount is None:
                 vals[key] = Val(None, _operand_reason(key))
             else:
-                _usd_millions(metric, fact)
+                _usd_millions(f"CP-1 {metric}", fact)
                 vals[key] = _known(-fact.amount if key in _OUTFLOWS else fact.amount)
         return cls(**vals)
 
@@ -722,6 +723,12 @@ def _text_issues(
     return issues
 
 
+def _limitation_issues(path: str, text: str | None) -> list[str]:
+    """Round 11 blank text: a stated limitation of whitespace alone (or `""`) is empty text, in
+    the pinned frame (V08). A limitation is optional, so None is not refused."""
+    return [f"{path}: empty text"] if text is not None and not text.strip() else []
+
+
 def _is_definition(b: Cp2aBreak) -> bool:
     return b.origin == "Definition"
 
@@ -807,14 +814,17 @@ def content_issues(inputs: ForwardInputs) -> tuple[str, ...]:
                     )
                     break
         issues += _text_issues(f"base_drivers.{name}.rationale", driver.rationale, bound, names)
+        issues += _limitation_issues(f"base_drivers.{name}.limitation", driver.limitation)
     if sub.downside.scenario not in {s.row for s in ctx.cp2a.scenarios}:
         issues.append(f"downside.scenario: not a CP-2A scenario: {sub.downside.scenario}")
     issues += _text_issues("downside.rationale", sub.downside.rationale, bound, names)
+    issues += _limitation_issues("downside.limitation", sub.downside.limitation)
     issues += _break_issues(sub.break_metrics, ctx.cp2a, operands)
     issues += _text_issues(
         "minimum_liquidity.rationale", sub.minimum_liquidity.rationale, bound, names
     )
     issues += _text_issues("assessment.rationale", sub.assessment.rationale, bound, names)
+    issues += _limitation_issues("assessment.limitation", sub.assessment.limitation)
     if sub.assessment.confidence == "High":
         issues.append(HIGH_ISSUE)
     for i, gap in enumerate(sub.gaps):
@@ -1165,6 +1175,7 @@ def _supported(cp1d: tuple[Fact, Fact, Fact] | None, why: str | None) -> Val:
     f = cp1d[0]
     if not _known_fact(f):
         return Val(None, f"Not calculable: CP-1D {_t1d_label(f)} is not available")
+    _usd_millions(f"CP-1D {_t1d_label(f)}", f)  # round 11 Q12: an explicit raise, not an assert
     if f.period != LTM_PERIOD:
         return Val(None, f"Not compared: CP-1D {_t1d_label(f)} is for {f.period}, not {LTM_PERIOD}")
     return _known(_amount(f))

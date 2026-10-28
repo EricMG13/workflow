@@ -173,6 +173,28 @@ def test_quantisation_is_half_even_at_38_digits() -> None:
     assert cpl10._q38(odd) == Decimal("0." + "1" * 37 + "4")
 
 
+def test_change_is_stored_exactly_not_rounded_to_38_digits() -> None:
+    """R2 L1: CP-1 ratios carry 38 digits; their difference needs 39 and is stored whole."""
+    start = Decimal("1.6666666666666666666666666666666666667")  # 5/3 at 38 digits
+    close = Decimal("14.285714285714285714285714285714285714")  # 100/7 at 38 digits
+    screen = cpl10.screen_topic(start=start, close=close)
+    assert screen.change == Decimal("12.6190476190476190476190476190476190473")
+    assert str(screen.change) == "12.6190476190476190476190476190476190473"
+    assert screen.pct == cpl10._q38((Fraction(close) - Fraction(start)) / abs(Fraction(start)))
+
+
+def test_change_is_exact_at_the_bound_magnitudes_and_after_a_zero_base() -> None:
+    """The exact context does not trap on large amounts, and a zero base stores it exactly too."""
+    low, high = Decimal("-999999999999999999.9999999999"), Decimal("999999999999999999.9999999999")
+    assert cpl10.screen_topic(start=low, close=high).change == Decimal(
+        "1999999999999999999.9999999998"
+    )
+    big = Decimal("1" + "0" * 37 + "." + "0" * 37 + "1")  # 76 digits; exact, not E+38 form
+    assert cpl10.screen_topic(start=Decimal(0), close=big).change == big
+    kept = cpl10.screen_topic(start=Decimal(1), close=big).change
+    assert kept == Decimal("9" * 37 + "." + "0" * 37 + "1")
+
+
 # --- operands --------------------------------------------------------------------------------
 
 

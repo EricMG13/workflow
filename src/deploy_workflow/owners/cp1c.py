@@ -45,6 +45,8 @@ AMOUNT = re.compile(r"-?[0-9]+(?:\.([0-9]+))?")
 PERIOD_END = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")  # and a real calendar date (1C4)
 TABLE_NOT_FOUND = "Peer table not found"
 NO_PEER_SOURCE = "No peer source is in the pack"
+# Round 4 (b): a peers source that is not ready composes the no-peers design with this reason.
+NO_READY_PEER_SOURCE = "No ready peer source is in the pack"
 NOT_STATED_IN_SOURCE = "Not stated in the peer source"
 MIXED_PERIOD = "Mixed: issuer LTM Q4 25, each peer's own twelve months"
 PROHIBITED_KINDS = ("instrument recommendation", "recovery conclusion")
@@ -300,14 +302,14 @@ def _row(line: str, basis: Mapping[str, BasisLine]) -> PeerRow:
 
 
 def parse_peer_source(source: Source | None, *, issuer_name: str) -> PeerSheet | None:
-    """The peer table rule: None when the pack holds no peers source. Every breach (no
-    readable page:1, no header, no supported Basis clause, a line that is not 7 fields, a bad
+    """The peer table rule: None when the pack holds no peers source or one that is not ready
+    (round 4 (b): the no-peers design). Every breach (no page:1, no header, no supported Basis clause, a line that is not 7 fields, a bad
     date, a non-decimal amount, an amount with more than one decimal place, a repeated label,
     an issuer line count other than 1) raises PeerTableError('Peer table not found'), which is
     returned alone (rulings 1C4, C3, 1C-x)."""
-    if source is None:
+    if source is None or source.status != "ready":
         return None
-    text = _span(source, "page:1") if source.status == "ready" else None
+    text = _span(source, "page:1")
     lines = [] if text is None else text.split("\n")
     if source.sha256 is None or P1_HEADER not in lines:
         raise PeerTableError(TABLE_NOT_FOUND)
@@ -454,10 +456,11 @@ def _fid(ref: Ref) -> str:
 
 
 class _Composer:
-    def __init__(self, sheet: PeerSheet | None) -> None:
+    def __init__(self, sheet: PeerSheet | None, absent: str) -> None:
         self.items: list[PeerFact] = []
         self.rows: dict[str, list[TableRow]] = {table: [] for table in TABLES}
         self.sheet = sheet
+        self.absent = absent  # the reason every peer-derived cell carries without a sheet
 
     def _peer_sheet(self) -> PeerSheet:
         if self.sheet is None:  # a peer citation or source amount exists only with a sheet
@@ -673,10 +676,10 @@ def _universe(c: _Composer, peers: Sequence[_Peer], present: bool) -> None:
             c.count((TOTALS, "total", name), label, value, "peers", formula, derives)
     else:
         for name, label in UNIVERSE_FIELDS:
-            c.unsettled(("T1C.1", "none", name), label, NO_PEER_SOURCE, unit=None, period=None)
+            c.unsettled(("T1C.1", "none", name), label, c.absent, unit=None, period=None)
         c.row("T1C.1", "none", "No peer source", [name for name, _ in UNIVERSE_FIELDS])
         for name, label in TOTAL_FIELDS:
-            c.unsettled((TOTALS, "total", name), label, NO_PEER_SOURCE, unit="peers", period=None)
+            c.unsettled((TOTALS, "total", name), label, c.absent, unit="peers", period=None)
     c.row(TOTALS, "total", "Total", [name for name, _ in TOTAL_FIELDS])
 
 
@@ -686,7 +689,7 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
             c.unsettled(
                 ("T1C.2", "none", key),
                 label,
-                NO_PEER_SOURCE,
+                c.absent,
                 unit=NO_SOURCE_AMOUNT_UNIT,
                 period=None,
             )
@@ -771,7 +774,7 @@ def _normalised(
         c.row("T1C.3", p.row_id, p.data.label, [m.key for m in METRICS])
     if not present:
         for m in METRICS:
-            c.unsettled(("T1C.3", "none", m.key), m.label, NO_PEER_SOURCE, unit=m.unit, period=None)
+            c.unsettled(("T1C.3", "none", m.key), m.label, c.absent, unit=m.unit, period=None)
         c.row("T1C.3", "none", "No peer source", [m.key for m in METRICS])
     return values
 
@@ -864,7 +867,7 @@ def _statistics(
                 c.unsettled(
                     ("T1C.4", k, name),
                     STAT_LABELS[name],
-                    NO_PEER_SOURCE,
+                    c.absent,
                     unit=units[name],
                     period=None,
                 )
@@ -968,7 +971,7 @@ def _outliers(
     if not present:
         for name in FLAG_FIELDS:
             unit = None if name.endswith("_flag") else PERCENT
-            c.unsettled(("T1C.5", "none", name), name, NO_PEER_SOURCE, unit=unit, period=None)
+            c.unsettled(("T1C.5", "none", name), name, c.absent, unit=unit, period=None)
         c.row("T1C.5", "none", "No peer source", FLAG_FIELDS)
         return
     entries: list[tuple[str, str, _Peer | None]] = [("issuer", issuer, None)]
@@ -1007,10 +1010,12 @@ def _outliers(
         )
 
 
-def _issuer_line(m: Metric, sheet: PeerSheet | None) -> Unsettled | tuple[Decimal, str]:
+def _issuer_line(
+    m: Metric, sheet: PeerSheet | None, absent: str
+) -> Unsettled | tuple[Decimal, str]:
     """The issuer line's own ratio and period, or why it cannot be recomputed (1C2)."""
     if sheet is None:
-        return Unsettled("missing", NO_PEER_SOURCE)
+        return Unsettled("missing", absent)
     got = ratio(m, sheet.issuer.amounts, where="on the issuer line of the peer source")
     return got if isinstance(got, Unsettled) else (got.value, sheet.issuer.period)
 
@@ -1019,7 +1024,7 @@ def _tie_out(c: _Composer, sheet: PeerSheet | None, cp1: Mapping[str, _Cp1Cell])
     """The issuer line on the peer source recomputed and set against the copied CP-1 value."""
     for m in METRICS:
         k, cell, label = m.key, cp1[m.key], "Issuer line on the peer source"
-        line = _issuer_line(m, sheet)
+        line = _issuer_line(m, sheet, c.absent)
         if isinstance(line, Unsettled):
             period = None if sheet is None else sheet.issuer.period
             sheet_ref = ("T1C.6", k, "sheet")
@@ -1027,10 +1032,10 @@ def _tie_out(c: _Composer, sheet: PeerSheet | None, cp1: Mapping[str, _Cp1Cell])
                 sheet_ref, label, line.reason, unit=m.unit, period=period, status=line.status
             )
             c.copy(("T1C.6", k, "cp1"), "CP-1", cell.fact)
-            # ruling 1C2: one side is not available, so nothing is compared
-            reason, when = (NO_PEER_SOURCE, None) if sheet is None else (NOT_COMPARED, cell.period)
+            # ruling 1C2 / round 4 (d): one side is not available, so nothing is compared
+            reason = c.absent if sheet is None else NOT_COMPARED
             unit = m.difference_unit
-            c.unsettled(("T1C.6", k, "difference"), "Difference", reason, unit=unit, period=when)
+            c.unsettled(("T1C.6", k, "difference"), "Difference", reason, unit=unit, period=None)
             c.text(("T1C.6", k, "result"), "Result", "Not compared")
         else:
             value, period = line
@@ -1190,6 +1195,13 @@ class _Composed:
     limitations: tuple[str, ...]
     peers: tuple[_Peer, ...]
     stats: Mapping[str, _Stat | None]
+    absent: str
+
+
+def _absence(sources: Sequence[Source]) -> str:
+    """The no-peers reason: no peers source at all, or one that is not ready (round 4 (b))."""
+    source = _peer_source(sources)
+    return NO_PEER_SOURCE if source is None or source.status == "ready" else NO_READY_PEER_SOURCE
 
 
 def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
@@ -1199,7 +1211,7 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     rows = sheet.peers if sheet is not None else ()
     peers = tuple(_Peer(f"p{n:02d}", row, by_label[row.label]) for n, row in enumerate(rows, 1))
     present = sheet is not None
-    c = _Composer(sheet)
+    c = _Composer(sheet, _absence(inputs.sources))
     _universe(c, peers, present)
     _source_figures(c, sheet, peers)
     values = _normalised(c, cp1, inputs.issuer_name, peers, present)
@@ -1209,7 +1221,7 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     _gaps(c, inputs.submission.gaps)
     tables = tuple(PeerTable(t, title, tuple(c.rows[t])) for t, title in TABLES.items())
     limitations = _limitations(present, peers, stats, inputs.submission.gaps)
-    return _Composed(_with_lineage(c.items), tables, limitations, peers, stats)
+    return _Composed(_with_lineage(c.items), tables, limitations, peers, stats, c.absent)
 
 
 def _claims(composed: _Composed, submission: PeerBenchmarkSubmission) -> tuple[Claim, ...]:
@@ -1232,7 +1244,7 @@ def _claims(composed: _Composed, submission: PeerBenchmarkSubmission) -> tuple[C
         f"The peer source lists {ref(sheet, 'peers')} and {ref(included, 'peers')} are included "
         "in the universe."
         if status[sheet] == "known"
-        else f"No peer source is in the pack, so no universe is formed {ref(sheet, 'peers')}."
+        else f"{composed.absent}, so no universe is formed {ref(sheet, 'peers')}."
     )
     claims.append(Claim(claim_id="T1C.1.universe", text=universe, citations=()))
     for m in METRICS:

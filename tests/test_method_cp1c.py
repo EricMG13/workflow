@@ -11,7 +11,7 @@ import re
 from decimal import Decimal
 from functools import cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -526,17 +526,44 @@ def test_1c2_issuer_line_that_cannot_be_recomputed_is_not_compared(
     case = _with_sources("positive", edited)
     assert cp1c.calculation_issues(case) == ()
     facts = _facts(cp1c.compute(case))
+    # round 4 (d): the ruled cells, field by field
     sheet = facts[f"T1C.6.{metric}.sheet"]
-    assert (sheet.status, sheet.limitation, sheet.unit) == (status, reason, "MULTIPLE")
-    difference = facts[f"T1C.6.{metric}.difference"]
-    assert (difference.status, difference.limitation, difference.unit) == (
-        "missing",
-        "Not compared: one side is not available",
+    assert (sheet.status, sheet.limitation, sheet.unit, sheet.period, sheet.value_class) == (
+        status,
+        reason,
         "MULTIPLE",
+        "Twelve months to 2025-12-31",
+        None,
     )
+    difference = facts[f"T1C.6.{metric}.difference"]
+    assert (
+        difference.status,
+        difference.limitation,
+        difference.unit,
+        difference.period,
+        difference.value_class,
+    ) == ("missing", "Not compared: one side is not available", "MULTIPLE", None, None)
     result_fact = facts[f"T1C.6.{metric}.result"]
-    assert (result_fact.status, result_fact.text) == ("known", "Not compared")
+    assert (
+        result_fact.status,
+        result_fact.text,
+        result_fact.value_class,
+        result_fact.calculation_id,
+    ) == ("known", "Not compared", None, None)
     assert facts[f"T1C.6.{metric}.cp1"].status == "known"
+
+
+def test_1c2_percent_metric_difference_is_in_percentage_points() -> None:
+    edited = _edited("positive", 1, ISSUER_LINE, ISSUER_LINE.replace("  120.0  ", "  Not stated  "))
+    facts = _facts(cp1c.compute(_with_sources("positive", edited)))
+    sheet = facts["T1C.6.adjusted_ebitda_margin.sheet"]
+    assert (sheet.status, sheet.unit, sheet.limitation) == (
+        "missing",
+        "PERCENT",
+        "Not calculable: revenue is not stated on the issuer line of the peer source",
+    )
+    difference = facts["T1C.6.adjusted_ebitda_margin.difference"]
+    assert (difference.status, difference.unit, difference.period) == ("missing", "pp", None)
 
 
 def test_tie_out_differs_when_the_issuer_line_disagrees() -> None:
@@ -574,7 +601,7 @@ def test_negative_denominator_is_not_meaningful_with_its_reason() -> None:
         (1, ISSUER_LINE + "\n", ""),  # no issuer line
         (1, ISSUER_LINE, ISSUER_LINE + "\n" + ISSUER_LINE),  # two issuer lines
         (1, ALDER, ALDER + "\n"),  # a blank line inside the table
-        # provisional (not ruled): a duplicate page:2 label
+        # round 4 (a): a duplicate page:2 label
         (
             2,
             "Alder Ridge Holdings  IFRS  1  December 31",
@@ -591,13 +618,110 @@ def test_1c4_every_table_rule_breach_is_peer_table_not_found_alone(
         cp1c.compute(case)
 
 
-def test_peer_source_not_ready_is_peer_table_not_found() -> None:
+def _not_ready(status: Literal["missing", "unreadable"]) -> tuple[Source, ...]:
     *frozen, peers = sources("positive")
-    missing = Source(
-        source_id=peers.source_id, name=peers.name, status="missing", limitation="Not supplied"
+    stale = Source(source_id=peers.source_id, name=peers.name, status=status, limitation="Not read")
+    return (*frozen, stale)
+
+
+@pytest.mark.parametrize("status", ["missing", "unreadable"])
+def test_round4_b_peer_source_not_ready_composes_the_no_peers_design(
+    status: Literal["missing", "unreadable"],
+) -> None:
+    case = _with_sources("no_peers", _not_ready(status))
+    assert cp1c.calculation_issues(case) == ()
+    found = cp1c.compute(case)
+    ready = "No ready peer source is in the pack"
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["no_peers"]["facts"]}
+    got = {i.fact.fact_id: i.fact for i in found.facts}
+    assert list(got) == list(frozen)  # the no-peers design, fact for fact
+    for fact_id, want in frozen.items():
+        if want.get("limitation") == "No peer source is in the pack":
+            assert got[fact_id].limitation == ready, fact_id
+        else:
+            assert got[fact_id].limitation == want.get("limitation"), fact_id
+    universe = next(c for c in found.claims if c.claim_id == "T1C.1.universe")
+    assert universe.text == f"{ready}, so no universe is formed [T1C.8.total.sheet]."
+    assert all(ready not in c.text for c in found.claims if c.claim_id != "T1C.1.universe")
+
+
+def test_round4_b_assessment_with_a_peer_source_not_ready_is_the_r10_class() -> None:
+    issues = cp1c.calculation_issues(_with_sources("positive", _not_ready("missing")))
+    peers = [a["peer"] for a in submissions()["positive"]["peer_benchmark"]["assessments"]]
+    for peer in peers:
+        assert f"Assessment given without a peer source in the pack: {peer}" in issues
+    assert "Peer table not found" not in issues
+    assert not any(i.startswith(("Unknown peer", "Assess each", "Confidence")) for i in issues)
+
+
+def test_round4_b_frozen_no_peers_keeps_its_wording() -> None:
+    universe = next(c for c in result("no_peers").claims if c.claim_id == "T1C.1.universe")
+    assert universe.text.startswith("No peer source is in the pack, so")
+
+
+# Rides with round 4 (reviewer Low): the 1C1 check order where two conditions coincide.
+# Composed case: Brookmere, Calder and Dunmore adjusted EBITDA 0.0 (margins 0, so the margin
+# median over three included peers is zero; leverage is not_applicable for them, so the
+# leverage median has one peer and is missing) and Alder revenue 0.0 (its margin is
+# not_applicable). Ellsworth stays excluded.
+
+
+def _coinciding() -> cp1c.PeerBenchmarkResult:
+    edited = sources("positive")
+    for old, new in (
+        (
+            "Alder Ridge Holdings  2025-12-31  200.0  52.0",
+            "Alder Ridge Holdings  2025-12-31  0.0  52.0",
+        ),
+        (
+            "Brookmere Industries  2025-12-31  150.0  33.0",
+            "Brookmere Industries  2025-12-31  150.0  0.0",
+        ),
+        ("Calder Vale Group  2025-12-31  90.0  27.0", "Calder Vale Group  2025-12-31  90.0  0.0"),
+        (
+            "Dunmore Cross Corporation  2025-09-30  300.0  48.0",
+            "Dunmore Cross Corporation  2025-09-30  300.0  0.0",
+        ),
+    ):
+        *frozen, peers = edited
+        texts = [span.text for span in peers.spans]
+        assert old in texts[0], old
+        texts[0] = texts[0].replace(old, new, 1)
+        spans = tuple(
+            Span(locator=s.locator, text=t) for s, t in zip(peers.spans, texts, strict=True)
+        )
+        edited = (*frozen, peers.model_copy(update={"spans": spans}))
+    body = json.loads(json.dumps(submissions()["positive"]["peer_benchmark"]))
+    body["overall"]["rationale"] = "The peer set is described in the tables."
+    return cp1c.compute(_with_sources("positive", edited, payload=body))
+
+
+def test_1c1_value_not_meaningful_comes_before_a_zero_median() -> None:
+    facts = _facts(_coinciding())
+    assert facts["T1C.4.adjusted_ebitda_margin.median"].amount == 0
+    flag = facts["T1C.5.p01.adjusted_ebitda_margin_flag"]
+    assert (flag.status, flag.limitation) == (
+        "not_applicable",
+        "Not meaningful: the peer's own ratio is not meaningful",
     )
-    case = _with_sources("positive", (*frozen, missing))
-    assert cp1c.calculation_issues(case) == ("Peer table not found",)
+    zero = facts["T1C.5.p02.adjusted_ebitda_margin_flag"]
+    assert (zero.status, zero.limitation) == (
+        "not_applicable",
+        "Not meaningful: the peer median is zero",
+    )
+
+
+def test_1c1_median_missing_comes_before_a_not_meaningful_value() -> None:
+    facts = _facts(_coinciding())
+    assert facts["T1C.4.total_leverage_adjusted.median"].status == "missing"
+    flag = facts["T1C.5.p02.total_leverage_adjusted_flag"]
+    assert (flag.status, flag.limitation) == ("missing", cp1c.NO_MEDIAN)
+
+
+def test_1c1_excluded_comes_before_a_missing_median() -> None:
+    facts = _facts(_coinciding())
+    flag = facts["T1C.5.p05.total_leverage_adjusted_flag"]
+    assert (flag.status, flag.limitation) == ("not_applicable", cp1c.EXCLUDED)
 
 
 def test_1c3_missing_page2_table_reads_not_stated() -> None:
@@ -671,7 +795,8 @@ def test_high_confidence_rule_does_not_apply_without_a_peer_source() -> None:
     assert cp1c.calculation_issues(inputs("no_peers", payload=body)) == ()
 
 
-# Round 2 C1: the prohibited-conclusion check over every analyst text field, in the ruled order.
+# Round 2 C1: the prohibited-conclusion check over every analyst text field, in the ruled order;
+# round 4 (c): gap fields gap by gap (pinned by test_c1_prohibited_fields_in_the_ruled_order).
 
 
 def test_prohibited_conclusions_in_limitations_and_gaps_are_refused() -> None:

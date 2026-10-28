@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from deploy_vii.contracts import Source, Span
@@ -62,6 +64,9 @@ def _cp1() -> cp1d.Cp1Operands:
     currency = FINANCIAL["source_dimensions"]["currency"]
     figures = {
         name: cp1d.Cp1Figure(
+            # manifest `figures.<name>.fact_id` is bound at run time (Stage 2); Stage 1 names the
+            # fact by the module's own reference to it, `cp1:<figure>` (`cell_notation`).
+            fact_id=f"cp1:{name}",
             figure=name,
             label=f["label"],
             unit=f["unit"],
@@ -587,20 +592,43 @@ def test_amount_inside_the_product_bound_composes() -> None:
 LONG_DECIMAL = "0." + "0" * 250 + "1"
 
 
-@pytest.mark.parametrize("row", [0, 2])
-def test_basis_amount_outside_the_product_bound_is_an_issue(row: int) -> None:
-    """Fix round 2 N1: a quoted basis amount outside `financial_contracts.Number` is refused with
-    the bounds wording (step 6) and never reaches composition; a03 also covers Recurring."""
-    payload = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+EXACTNESS = "Accepted basis amount cannot be held exactly as a product amount: "
+BOUNDS = "Accepted basis must be above 0 and below the proposed amount: "
+
+
+@pytest.mark.parametrize(
+    ("case", "row", "amount", "issue"),
+    [
+        # Round 5b Y4: precision beyond ten places is not a bounds failure.
+        ("positive", 0, LONG_DECIMAL, EXACTNESS),
+        ("positive", 2, LONG_DECIMAL, EXACTNESS),  # Partly supported + Recurring keeps the basis
+        ("positive", 0, "1.12345678901", EXACTNESS),  # between 0 and the proposed 3.00
+        ("positive", 0, "20.12345678901", EXACTNESS),  # checked before the bounds comparison
+        # Y4: at or above 1e18 against a stated proposed amount, the bounds text is true.
+        ("positive", 0, "1" + "0" * 18, BOUNDS),
+        # Y4: the Recurring path on an unstated proposed amount has no bound to compare with.
+        ("gap", 3, "1" + "0" * 18, EXACTNESS),
+    ],
+)
+def test_basis_amount_outside_the_product_bound_is_an_issue(
+    case: str, row: int, amount: str, issue: str
+) -> None:
+    """Fix round 2 N1 and round 5b Y4: a quoted basis amount outside `financial_contracts.Number`
+    is a step-6 shape failure, returned alone, that never reaches composition."""
+    payload = copy.deepcopy(SUBMISSIONS[case]["earnings_quality"])
     assessment = payload["assessments"][row]
     assessment["achievability"] = "Partly supported"
+    if case == "gap":
+        assessment["recurrence"] = "Recurring"
     assessment["accepted_basis"] = {
-        **assessment["evidence"][0],
-        "quote": f"a saving of {LONG_DECIMAL}",
+        **(
+            assessment["evidence"]
+            or SUBMISSIONS["positive"]["earnings_quality"]["assessments"][0]["evidence"]
+        )[0],
+        "quote": f"a saving of {amount}",
     }
-    label = assessment["addback"]
-    issues = cp1d.validation_issues(_inputs("positive", payload))
-    assert issues == (f"Accepted basis must be above 0 and below the proposed amount: {label}",)
+    issues = cp1d.validation_issues(_inputs(case, payload))
+    assert issues == (f"{issue}{assessment['addback']}",)
 
 
 @pytest.mark.parametrize(("numerator", "denominator"), [("2.5", "30"), ("1", "30"), ("-1", "30")])
@@ -617,13 +645,91 @@ def test_cp1_ratio_at_cp1_precision_binds(numerator: str, denominator: str) -> N
     assert facts["T1D.4.cp1_net_leverage.result"].text == "Differs"
 
 
+@pytest.mark.parametrize("amount", ["1E-38", "1" + "0" * 18])
 @pytest.mark.parametrize("figure", ["total_debt", "adjusted_ebitda"])
-def test_cp1_amount_outside_the_product_bound_is_refused_at_input(figure: str) -> None:
+def test_cp1_amount_outside_the_product_bound_is_an_invariant_raise(
+    figure: str, amount: str
+) -> None:
+    """Round 5b Y1 (1D-y): an invariant raise naming the CP-1 fact, not a refusal."""
     cp1 = _cp1()
-    with pytest.raises(ValueError):
-        dataclasses.replace(
-            cp1, **{figure: dataclasses.replace(getattr(cp1, figure), amount=Decimal("1E-38"))}
-        )
+    operand = getattr(cp1, figure)
+    want = (
+        f"CP-1 fact {operand.fact_id} ({operand.figure}) is outside financial_contracts.Number; "
+        "CP-1D cannot hold it exactly"
+    )
+    with pytest.raises(ValueError) as raised:
+        dataclasses.replace(operand, amount=Decimal(amount))
+    assert str(raised.value) == want
+
+
+ORACLE_PINS = {
+    # docs/CP1D-OWNER-LEASE.md header, oracle amendment 1D1 (LEAD 2026-10-28).
+    "expected.json": "6015b443603b16f9af8c5417e6fa69f7468fa243f37b64575f745aac6549bd8c",
+    "manifest.json": "7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585",
+    "submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
+}
+
+
+@pytest.mark.parametrize("name", ORACLE_PINS)
+def test_oracle_is_the_pinned_revision(name: str) -> None:
+    assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == ORACLE_PINS[name]
+
+
+def test_reported_bridge_totals_cite_their_line() -> None:
+    """Ruling 1D1 / oracle amendment: the two stated totals cite their bridge total line."""
+    facts = {f.fact_id: f for f in cp1d.compute(_case_inputs("positive")).facts}
+    sha = MANIFEST["synthetic_source"]["positive"]["sha256"]
+    for fact_id, line in (
+        ("T1D.4.proposed_total.reported", "Total proposed adjustments  6.00"),
+        ("T1D.4.mgmt_ebitda.reported", "Management financing-case EBITDA  36.00"),
+    ):
+        assert [c.model_dump() for c in facts[fact_id].citations] == [
+            {"source_id": "bridge", "source_sha256": sha, "locator": "page:1", "quote": line}
+        ]
+
+
+def test_missing_bridge_source_is_not_found() -> None:
+    """Round 5b Y2: 1D-x covers a bridge source CP-0 marks `missing`."""
+    missing = Source(
+        source_id="bridge",
+        name=MANIFEST["synthetic_source"]["name"],
+        status="missing",
+        limitation="Not supplied",
+    )
+    inputs = _case_inputs("positive")
+    frozen = tuple(s for s in inputs.sources if s.source_id != "bridge")
+    inputs = dataclasses.replace(inputs, sources=(*frozen, missing))
+    assert cp1d.validation_issues(inputs) == ("Bridge table not found",)
+
+
+FULL_ONLY = sorted(
+    cp1d.module_fact_ids(
+        cp1d.parse_bridge([p["text"] for p in MANIFEST["synthetic_source"]["positive"]["pages"]]),
+        1,
+    )
+    - {f"T1D.1.a{n:02d}.{name}" for n in range(1, 5) for name in ("type", "status", "claimed")}
+    - {"T1D.1.stmt.type", "T1D.1.stmt.status", "T1D.1.stmt.claimed"}
+    - {f"T1D.2.a{n:02d}.{name}" for n in range(2, 5) for name in cp1d._ASSESSMENT_FIELDS}
+)
+
+
+@settings(max_examples=150, deadline=None)
+@given(
+    ref=st.sampled_from(FULL_ONLY),
+    form=st.sampled_from(["{%s}", "{%s|US$ m}", "{%s|%%}", "{%s|x}", "[%s]", "{calc:%s|US$ m}"]),
+)
+def test_partial_checks_never_exceed_the_full_check(ref: str, form: str) -> None:
+    """Round 5b Y3 (c): under r03 (a01 fails its shape) a02's references to facts only a full
+    composition carries report no issue the full module does not also report."""
+    refusal = _submitted_refusal("r03")
+    text = " See " + form % ref + "."
+    partial = copy.deepcopy(refusal["payload"])
+    partial["assessments"][1]["rationale"] += text
+    full = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    full["assessments"][1]["rationale"] += text
+    full_issues = set(cp1d.validation_issues(_inputs("positive", full)))
+    partial_issues = set(cp1d.validation_issues(_inputs("positive", partial)))
+    assert partial_issues - set(refusal["expected_issues"]) <= full_issues
 
 
 @pytest.mark.parametrize("sha256", [None, MANIFEST["synthetic_source"]["positive"]["sha256"]])

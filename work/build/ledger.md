@@ -304,3 +304,4 @@
 - 2026-10-28 CP-2E r13 done: ccdeeeb (item 8 comma joins, B3 W exemption with index-0 guard; 8/8 mutants; frozen unchanged). agent=mx-feature fix-rounds=0 gates-first-pass=n. Review: mx-precise
 - 2026-10-28 CP-8 r13 done: 0de521a (item 7 _labelled run rule, item 8 _whole joins; 8/8 mutants; 563 labelled checks unchanged). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-precise
 - 2026-10-28 CP-2D r13 fix1 done: 36d3746 (runway M1, addendum 4 state-word prose, R1/R3/R4 pins; 26/26 mutants). agent=mx-feature fix-rounds=1 gates-first-pass=n. Re-review: mx-precise scoped
+- 2026-10-28 CP-3D r13 review FINDINGS (mx-precise): M1 quote-edge comma reads part of a page comma run (cp3d.py:261-262; p_comma_edge.py) = same class as CP-1D H2, which LEAD addendum 4 confirmed ('a quote edge at the page's , or , is an edge, as items 7 and 8 intend'); applied to CP-3D as ruled. Fix round 1: mx-feature. CP-8/CP-2E reviewers asked to check the same class

@@ -290,3 +290,5 @@
 - 2026-10-28 CP-8 r12 fix1 done: f99db43 (LEAD addendum: exemption kept; index-0 guard (?<=.); reviewer rows refused). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped
 - 2026-10-28 CP-3C r13 review APPROVE (mx-precise), no findings; Info to LEAD: unsourced currency when cash_closing missing; status words in minimum-cash/seniority dependants; _check_value CP-1 prefix. Merged 6373602 into claude/round12
 - 2026-10-28 CP-2D r13 done: 7f2a9a2 (items 1, 3; delta tables + re-pin guard; 19/19 mutants). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-precise
+- 2026-10-28 LEAD addendum 3 cherry-picked (6a641c1): only CP-3D amortisation_nonzero moves; B3 index-0 guard confirmed (2 more library cases -> CP-3D r13); blank support/citation quotes refused with <path>: empty text in every citation-taking owner, CP-4C first (-> CP-4C r13); B9 one-line-only by design; prose.is_blank extension queued by LEAD
+- 2026-10-28 0d-c follow-ups review APPROVE (mx-precise). Merged f316a20 into claude/round12

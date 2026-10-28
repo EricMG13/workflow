@@ -197,9 +197,55 @@ def test_operand_unit_and_scale_must_match_the_topic() -> None:
         _upstream(rescaled)
 
 
-def test_unsettled_operand_without_unit_takes_its_twins_unit() -> None:
+def _limited_with(changes: dict[str, dict[str, Any]], drop_cash: bool = False) -> dict[str, Fact]:
+    facts = [f.model_copy(update=changes.get(f.label, {})) for f in _cp1_facts()]
+    sub = deepcopy(SUBMISSIONS["limited"])
+    if drop_cash:  # cash becomes Not assessed, so its assessment is no longer admitted
+        sub["assessments"] = [a for a in sub["assessments"] if a["topic_id"] != "cash"]
+    result = cpl10.change_screen(submission=json.dumps(sub), upstream=_upstream(facts))
+    return {c.fact.fact_id: c.fact for c in result.cells}
+
+
+def test_unsettled_copied_cell_takes_the_topics_unit() -> None:
+    # Round 5 (f): a copied cell whose value is not known takes the topic's unit, currency and
+    # scale, never its own or its twin's; the limited case has both leverage ends missing.
+    q2, q3 = cpl10.QUARTERS[1].column, cpl10.QUARTERS[2].column
+    unitless = {"unit": None, "currency": None, "scale": Decimal(1)}
+    odd = {"unit": "THOUSANDS", "currency": "EUR", "scale": Decimal(1000)}
+    cells = _limited_with(
+        {
+            f"{q2} · total_leverage_reported": unitless,
+            f"{q3} · total_leverage_reported": unitless,
+            f"{q2} · interest_coverage_reported": odd,
+        }
+    )
+    for fact_id in (
+        "TL10.2.total_leverage.from_value",
+        "TL10.2.total_leverage.to_value",
+        "TL10.2.interest_coverage.from_value",
+    ):
+        fact = cells[fact_id]
+        assert (fact.status, fact.unit, fact.currency, fact.scale) == (
+            "missing",
+            "MULTIPLE",
+            None,
+            Decimal(1),
+        ), fact_id
+    # a MILLIONS topic: its own USD and 1,000,000 even when the twin is known in another currency
+    cash = {"status": "missing", "amount": None, "limitation": "close gap", **odd}
+    cells = _limited_with(
+        {f"{q3} · cash_closing": cash, f"{q2} · cash_closing": {"currency": "EUR"}},
+        drop_cash=True,
+    )
+    fact = cells["TL10.2.cash.to_value"]
+    assert (fact.unit, fact.currency, fact.scale) == ("MILLIONS", "USD", Decimal(1000000))
+    known = cells["TL10.2.cash.from_value"]  # a known copied cell stays verbatim
+    assert (known.unit, known.currency, known.scale) == ("MILLIONS", "EUR", Decimal(1000000))
+
+
+def test_unsettled_operand_without_unit_is_accepted() -> None:
     # Ruling (f): units are checked on known operands only; a missing fact with unit None is
-    # accepted and its copied cell takes the unit of the other end of the pair.
+    # accepted (round 5: its copied cell takes the topic's unit, here equal to its twin's).
     q1, q4 = cpl10.QUARTERS[0], cpl10.QUARTERS[3]
     start = f"{q1.column} · total_leverage_reported"
     cash_close = f"{q4.column} · cash_closing"
@@ -593,6 +639,27 @@ def test_text_check_binds_every_python_built_fact() -> None:
 
 
 @pytest.mark.parametrize(
+    "ref",
+    [
+        "TL10.3.cash.assessment",
+        "TL10.3.cash.credit_transmission",
+        "TL10.3.cash.confidence",
+        "TL10.3.overall.assessment",
+        "TL10.4.cash.decision_impact",
+    ],
+)
+@pytest.mark.parametrize(
+    "path",
+    [("assessments", 0, "assessment"), ("assessments", 1, "credit_transmission")],
+)
+def test_reference_to_an_analyst_cell_is_refused(ref: str, path: tuple[Any, ...]) -> None:
+    # Round 5 P2: analyst cells stay unbound; citing one is refused with the product issue.
+    sub = _with(path, f"See [{ref}] for the screen.")
+    prefix = f"{path[0]}[{path[1]}].{path[2]}"
+    assert _issues(sub) == [f"{prefix}: Unresolved reference: {ref}"]
+
+
+@pytest.mark.parametrize(
     ("text", "issue"),
     [
         (
@@ -633,6 +700,7 @@ _PAIRING = "must be Insufficient Information exactly when the category is"
     [
         ("Analyst Interpretation", "Insufficient Information", [f"confidence: {_PAIRING}"]),
         ("Insufficient Information", "Medium", [f"confidence: {_PAIRING}"]),
+        ("Insufficient Information", "Low", [f"confidence: {_PAIRING}"]),  # round 5 (e): both ways
         ("Insufficient Information", "Insufficient Information", []),
         (
             "Insufficient Information",

@@ -148,6 +148,8 @@ _MONTH_ALT = "|".join(_MONTHS)
 _DATE = re.compile(rf"^({_MONTH_ALT}) ([1-9]|[12][0-9]|3[01]), ((?:19|20)[0-9]{{2}})$")
 _PUBLISHED = re.compile(rf"Published ((?:{_MONTH_ALT}) [0-9]{{1,2}}, [0-9]{{4}})\.")
 _NUMERAL = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,4})?$")
+_DECIMAL = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")  # any decimal numeral, before its shape
+_SHAPE = "must have at most three integer digits and four decimal places"
 _RECOVERY = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,2})?$")
 
 
@@ -391,6 +393,15 @@ class _Issues:
         if text is not None and any(ch.isnumeric() for ch in text):
             self.add(f"{path}: digits are not allowed")
 
+    def conclusion_free(self, path: str, text: str | None) -> None:
+        """Ruling 6b C3: the pinned frame on every analyst text field; quotes are never checked."""
+        if text is not None and _PROHIBITED.search(text):
+            self.add(f"{path}: text carries a prohibited conclusion")
+
+    def analyst_text(self, path: str, text: str | None) -> None:
+        self.digit_free(path, text)
+        self.conclusion_free(path, text)
+
     def on_page(self, source_id: str, locator: str, quote: str, path: str) -> bool:
         pages = self.context.pages
         if source_id not in pages:
@@ -424,10 +435,10 @@ def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | Non
     if not out.on_page(o.source_id, o.locator, o.quote, path):
         return None
     lt = o.level_text
-    if not _NUMERAL.match(lt):
+    if not _DECIMAL.match(lt):  # keeps pinned refusals[1] ("ninety")
         out.add(f"{path}: level_text {lt} is not a decimal number")
         return None
-    if not _token_once(lt, o.quote):
+    if not _token_once(lt, o.quote):  # ruling 6b C2: occurrence before shape
         out.add(f"{path}: level_text {lt} does not occur in the quote")
         return None
     if o.kind == "indicative_talk":
@@ -437,8 +448,11 @@ def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | Non
     elif not _labelled(o.kind, lt, o.quote):
         out.add(f"{path}: {o.kind} level_text {lt} is not labelled {o.kind} in the quote")
         return None
+    if "." in lt and len(lt.split(".")[1]) > 4:
+        out.add(f"{path}: level_text {lt} must have at most four decimal places")
+        return None
     value = Decimal(lt)
-    if not 0 < value <= 200:
+    if not 0 < value <= 200:  # also every level of more than three integer digits
         out.add(f"{path}: level must be above 0 and at most 200")
         return None
     return value
@@ -492,8 +506,11 @@ def _check_quoted_numeral(
         return None
     if not out.ref_on_page(quote, key):
         return None
-    if not _NUMERAL.match(text) or not _token_once(text, quote.quote):
+    if not _token_once(text, quote.quote):  # ruling 6b C2: occurrence before shape
         out.add(f"{key}: {label} {text} does not occur in the quote")
+        return None
+    if not _NUMERAL.match(text):
+        out.add(f"{key}: {label} {text} {_SHAPE}")
         return None
     return Decimal(text)
 
@@ -548,8 +565,10 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
         out.add("reference_rate: exactly one of level and absence is required")
     elif rr.level is not None and out.ref_on_page(rr.level.quote, "reference_rate.level.quote"):
         pt = rr.level.percent_text
-        if not _NUMERAL.match(pt) or not _token_once(pt, rr.level.quote.quote):
+        if not _token_once(pt, rr.level.quote.quote):  # ruling 6b C2
             out.add(f"reference_rate: level percent_text {pt} does not occur in the quote")
+        elif not _NUMERAL.match(pt):
+            out.add(f"reference_rate: level percent_text {pt} {_SHAPE}")
     if rr.absence is not None:
         out.digit_free("reference_rate.absence.reason", rr.absence.reason)
         out.digit_free("reference_rate.absence.follow_up", rr.absence.follow_up)
@@ -560,7 +579,7 @@ def _check_recovery(sub: MarketImpliedSubmission, out: _Issues) -> None:
     if bool(rec) == bool(sub.recovery_absence):
         out.add("recovery: exactly one of recovery and recovery_absence is required")
     elif rec is not None:
-        out.digit_free("recovery.rationale", rec.rationale)
+        out.analyst_text("recovery.rationale", rec.rationale)
         ok = _RECOVERY.match(rec.percent_text) is not None
         if not ok or not Decimal(0) <= Decimal(rec.percent_text) < PAR:
             out.add("recovery: percent must be at least 0 and below 100")
@@ -576,10 +595,8 @@ def _check_technicals(sub: MarketImpliedSubmission, out: _Issues) -> None:
             out.add(f"{path}: aspect {x.aspect} appears more than once")
         if x.category not in CATEGORIES:
             out.add(f"{path}: category {x.category} is not allowed")
-        out.digit_free(f"{path}.text", x.text)
-        out.digit_free(f"{path}.limitation", x.limitation)
-        if _PROHIBITED.search(x.text):
-            out.add(f"{path}.text: text carries a prohibited conclusion")
+        out.analyst_text(f"{path}.text", x.text)
+        out.analyst_text(f"{path}.limitation", x.limitation)
         if (x.category == "Insufficient Information") != bool(x.limitation):
             out.add(f"{path}: limitation is required for Insufficient Information and only for it")
         if x.category == "Documentary Fact" and not x.basis:
@@ -599,18 +616,16 @@ def submission_issues(
         ("recovery_absence", submission.recovery_absence),
     ):
         if absence is not None:
-            out.digit_free(f"{key}.reason", absence.reason)
-            out.digit_free(f"{key}.follow_up", absence.follow_up)
+            out.analyst_text(f"{key}.reason", absence.reason)
+            out.analyst_text(f"{key}.follow_up", absence.follow_up)
     inst = submission.instrument
-    out.digit_free("instrument.name", inst.name)
+    out.analyst_text("instrument.name", inst.name)
     if out.ref_on_page(inst.quote, "instrument.quote") and inst.name not in inst.quote.quote:
         out.add("instrument: name does not occur in the quote")
     _check_terms(submission.terms, quotation, out)
     _check_recovery(submission, out)
     _check_technicals(submission, out)
-    out.digit_free("summary.text", submission.summary.text)
-    if _PROHIBITED.search(submission.summary.text):
-        out.add("summary.text: text carries a prohibited conclusion")
+    out.analyst_text("summary.text", submission.summary.text)
     return tuple(out.items)
 
 
@@ -1410,6 +1425,23 @@ def absence_paths(submission: MarketImpliedSubmission) -> tuple[str, ...]:
     return tuple(out)
 
 
+def _single_dealer(sub: MarketImpliedSubmission) -> list[str]:
+    """Ruling 6b C1: the single-dealer limitation, keyed on the observed sides only."""
+    sides = [k for k in ("bid", "offer") if any(o.kind == k for o in sub.observations)]
+    if len(sides) == 2:
+        return [
+            "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
+        ]
+    if sides:
+        return [
+            (
+                f"Single dealer quotation with only the {sides[0]} observed; trading activity in the "
+                "period to the quotation date is not read"
+            )
+        ]
+    return []  # talk only: LVL-01 and the talk limitation already say it
+
+
 def own_limitations(submission: MarketImpliedSubmission) -> tuple[str, ...]:
     """The module's own limitations, in the lease's order, de-duplicated."""
     sub = submission
@@ -1419,9 +1451,7 @@ def own_limitations(submission: MarketImpliedSubmission) -> tuple[str, ...]:
             "No third-party market quotation source is in the pack, so no market level is shown"
         )
     else:
-        out.append(
-            "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
-        )
+        out += _single_dealer(sub)
     out += [x.limitation for x in sub.technicals if x.limitation]
     if any(o.kind == "indicative_talk" for o in sub.observations):
         out.append("Indicative dealer talk is shown but is not used in any calculation")

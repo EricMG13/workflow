@@ -114,6 +114,7 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
 
 - [ ] **G1-X.** One Opus agent, brief `work/build/g1x/brief.md`, rebased on the S1a integration commit, then `mx-adversary`.
 - [ ] **H1.** `_SOURCE_STEPS["CP-3"]`, the `*-submission` producer rule and the fixed source mappings for CP-DR, CP-1D and CP-3D (`work/lead/cp3-cp6-owner-preparation/review-precise-r3-1.md` Q6).
+  - H1 also stops `host._execution_state` (host.py:645) from calling `step_chain` for owner-only modules; a `_SOURCE_STEPS` row alone is not enough (protocol §5, LEAD 4d709bf; G1-X adversary L3, `work/build/g1x/review-adversary.md`).
 - [ ] **Per module.** One Opus agent per module adds three things:
   - the plug-in parts and a store adapter (settled head → Stage 1 input object);
   - the `owner_workflow.py` registrations, `bindings/<cp>.py`, `shipped.py` and `_Spec` rows;
@@ -153,6 +154,10 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
       - refuse an unfinished attempt in the final snapshot.
     - **MEDIUM 1.** The CP-MODEL attempt and head `inputs` are unbound. Apply the same replay, plus `current_inputs(final, deterministic) == attempt.inputs`.
     - **LOW 1.** A sealed receipt can carry a pending attempt; HIGH 1 closes it.
+  - G1-X adversary review (`work/build/g1x/review-adversary.md`). These predate G1-X and are with the owner (LEAD, 2026-10-28):
+    - **Known gap (owner, via LEAD 3f59be2).** Refused records can be dropped, duplicated or reordered across tickets without detection; §4 records them "exactly as for today's".
+    - **0d product defect (owner approved; LEAD branch `lead/0d-normalise`, `live/schema.py` only).** A `normalise` TypeError or RecursionError escapes `submit_review` after the binding audit write, and RecursionError escapes the verifier. When the fix lands, remove G1-X's recorded-payload `_fill` TypeError mapping in a later G1-X change (plus any caller diff LEAD sends).
+  - CP-8 `cp8.what_changed.outcome.value`: the rails line binds the number of `T7.3.window.realized_value`, never the pinned literal `∅ G#` (rulings round 5, LEAD notes).
 - [ ] **Stage 4 review.** Fable reviews, then fixes and commits.
 
 ## Stage 5 — Final verification

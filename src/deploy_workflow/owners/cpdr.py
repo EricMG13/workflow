@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Literal
+from typing import Literal, get_args
 
 from deploy_vii.contracts import (
     Citation,
@@ -24,7 +24,8 @@ from deploy_vii.contracts import (
     TableRow,
     Text,
 )
-from deploy_vii.readiness import citation_issues
+from deploy_vii.readiness import GapKind, GapSeverity, citation_issues
+from deploy_vii.registry import modules
 
 MODULE_ID = "CP-DR"
 STEP_ID = "research"
@@ -48,6 +49,13 @@ EMPTY_LIMITATION = "No gaps identified by this supplied review; no research ques
 BASE_LIMITATION = (
     "Research used the prepared local sources only; nothing outside the pack was searched."
 )
+# Ruling R4 (round 5): a gap text with more than one candidate consumer split settles not stated.
+AMBIGUOUS_LIMITATION = "Not stated: the CP-0 gap text names its consumers ambiguously"
+# Round 6e: a gap whose "affects" list is empty settles with this reason on named_consumers.
+NO_CONSUMER_LIMITATION = "Not stated: the CP-0 gap names no consumer"
+AFFECTS = "; affects "
+_KINDS = frozenset(get_args(GapKind))
+_SEVERITIES = frozenset(get_args(GapSeverity))
 
 GapStatus = Literal["Resolved", "Partially resolved", "Unresolved"]
 
@@ -80,31 +88,56 @@ class ResearchSubmission(Contract):
 
 @dataclass(frozen=True)
 class AgendaGap:
-    """One CP-0 gap, parsed from its ``T5.<gap_id>.gap`` fact."""
+    """One CP-0 gap, parsed from its ``T5.<gap_id>.gap`` fact ``text``.
+
+    ``description``, ``named_consumers`` and ``remediation`` are None when the text splits more
+    than one way (ruling R4): they are not stated, and the full text stands for the gap.
+    """
 
     gap_id: str
     kind_severity: str
-    description: str
-    named_consumers: tuple[str, ...]
-    remediation: str
+    description: str | None
+    named_consumers: tuple[str, ...] | None
+    remediation: str | None
+    text: str
+
+
+def _consumers(segment: str, ids: frozenset[str]) -> tuple[str, ...] | None:
+    """The segment as a ``", "``-list of methodology ids, or None when it is not one."""
+    if not segment:
+        return ()  # readiness.py joins an empty affected_modules to ""
+    names = tuple(segment.split(", "))
+    return names if all(name in ids for name in names) else None
 
 
 def _parse_gap(gap_id: str, text: str) -> AgendaGap:
-    """``<kind>/<severity>: <description>; affects <m, ...>; <remediation>`` (readiness.py)."""
+    """``<kind>/<severity>: <description>; affects <m, ...>; <remediation>`` (readiness.py:497-503).
+
+    Ruling R4 (round 5), the fallback while Stage 1 has no reader of the structured
+    ``ReadinessGap``: kind and severity come before the first ``": "``; a candidate split is any
+    ``"; affects "`` whose segment up to the next ``"; "`` is a list of methodology ids. One
+    candidate is used; several leave description, consumers and remediation not stated. A head
+    outside the closed vocabularies, or no candidate, is not CP-0's form and raises.
+    """
     head, sep, rest = text.partition(": ")
-    affects = rest.rfind("; affects ")
-    if not sep or affects < 0:
+    kind, slash, severity = head.partition("/")
+    if not (sep and slash) or kind not in _KINDS or severity not in _SEVERITIES:
         raise ValueError(f"CP-0 gap fact is not in the readiness form: {gap_id}")
-    consumers, sep, remediation = rest[affects + len("; affects ") :].partition("; ")
-    if not sep:
+    ids = frozenset(module.module_id for module in modules())
+    splits: list[tuple[str, tuple[str, ...], str]] = []
+    at = rest.find(AFFECTS)
+    while at >= 0:
+        segment, sep, remediation = rest[at + len(AFFECTS) :].partition("; ")
+        consumers = _consumers(segment, ids) if sep else None
+        if consumers is not None:
+            splits.append((rest[:at], consumers, remediation))
+        at = rest.find(AFFECTS, at + 1)
+    if not splits:
         raise ValueError(f"CP-0 gap fact is not in the readiness form: {gap_id}")
-    return AgendaGap(
-        gap_id=gap_id,
-        kind_severity=head,
-        description=rest[:affects],
-        named_consumers=tuple(consumers.split(", ")) if consumers else (),
-        remediation=remediation,
-    )
+    if len(splits) > 1:
+        return AgendaGap(gap_id, head, None, None, None, text)
+    ((description, consumers, remediation),) = splits
+    return AgendaGap(gap_id, head, description, consumers, remediation, text)
 
 
 def parse_agenda(facts: Iterable[Fact]) -> tuple[AgendaGap, ...]:
@@ -382,14 +415,21 @@ class _Builder:
             formula=FORMULA_COUNT,
         )
 
-    def missing(self, table: str, row: str, field: str, limitation: str) -> str:
+    def missing(
+        self,
+        table: str,
+        row: str,
+        field: str,
+        limitation: str,
+        value_class: str | None = "analyst_judgment",
+    ) -> str:
         return self._add(
             table,
             row,
             field,
             status="missing",
             limitation=limitation,
-            value_class="analyst_judgment",
+            value_class=value_class,
         )
 
     def not_applicable(self, table: str, row: str, field: str, unit: str) -> str:
@@ -415,14 +455,40 @@ def _table(
     rows: list[tuple[str, tuple[str, ...]]],
     row_label: str | None = None,
 ) -> ReportTable:
-    """A declared table; each row is labelled with its id unless ``row_label`` names it."""
+    """A declared table; each row is labelled from its id unless ``row_label`` names it."""
     return ReportTable(
         table_id=table_id,
         title=title,
         row_header=row_header,
         columns=tuple(TableColumn(field=f, label=label) for f, label in columns),
-        rows=tuple(TableRow(row_id=r, label=row_label or r, fact_ids=ids) for r, ids in rows),
+        rows=tuple(
+            TableRow(row_id=r, label=row_label or _row_label(r), fact_ids=ids) for r, ids in rows
+        ),
     )
+
+
+def _row_label(row_id: str) -> str:
+    """Ruling R5: the row id with "-" and "_" as spaces and its first letter upper-cased."""
+    words = row_id.replace("-", " ").replace("_", " ")
+    return words[:1].upper() + words[1:]
+
+
+def _agenda_cells(build: _Builder, gap: AgendaGap) -> tuple[str, str, str]:
+    """TDR.1 description, kind/severity and named consumers of one agenda gap."""
+    row = gap.gap_id
+    if gap.description is None or gap.named_consumers is None:  # ruling R4: split ambiguous
+        description = build.missing("TDR.1", row, "description", AMBIGUOUS_LIMITATION, None)
+        kind_severity = build.text("TDR.1", row, "kind_severity", gap.kind_severity)
+        consumers = build.missing("TDR.1", row, "named_consumers", AMBIGUOUS_LIMITATION, None)
+        return description, kind_severity, consumers
+    # facts are added in column order (the result's fact order)
+    description = build.text("TDR.1", row, "description", gap.description)
+    kind_severity = build.text("TDR.1", row, "kind_severity", gap.kind_severity)
+    if gap.named_consumers:
+        consumers = build.text("TDR.1", row, "named_consumers", ", ".join(gap.named_consumers))
+    else:  # round 6e: a gap naming no consumer settles not stated, with no own line
+        consumers = build.missing("TDR.1", row, "named_consumers", NO_CONSUMER_LIMITATION, None)
+    return description, kind_severity, consumers
 
 
 def _evidence(citations: tuple[Citation, ...]) -> str:
@@ -432,18 +498,17 @@ def _evidence(citations: tuple[Citation, ...]) -> str:
 def _gap_rows(
     build: _Builder, inputs: CpdrInputs, counts: tuple[GapCount, ...]
 ) -> list[tuple[str, tuple[str, ...]]]:
-    agenda = {gap.gap_id: gap for gap in inputs.agenda}
+    """TDR.1 rows in agenda order, CP-0's T5 order (ruling C4)."""
+    by_gap = {count.gap_id: count for count in counts}
     rows: list[tuple[str, tuple[str, ...]]] = []
-    for count in counts:
-        gap = agenda[count.gap_id]  # compose checked the submission against the agenda
+    for gap in inputs.agenda:
+        count = by_gap[gap.gap_id]  # compose checked the submission against the agenda
         row = gap.gap_id
         rows.append(
             (
                 row,
                 (
-                    build.text("TDR.1", row, "description", gap.description),
-                    build.text("TDR.1", row, "kind_severity", gap.kind_severity),
-                    build.text("TDR.1", row, "named_consumers", ", ".join(gap.named_consumers)),
+                    *_agenda_cells(build, gap),
                     build.number("TDR.1", row, "questions", count.questions, "questions"),
                     build.number("TDR.1", row, "answered", count.answered, "questions"),
                     build.number("TDR.1", row, "unresolved", count.unresolved, "questions"),
@@ -542,7 +607,10 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
         raise ValueError("A gap appears twice in the submission")
     bk = bookkeeping(submission=inputs.submission)
     build = _Builder(inputs.as_of.isoformat())
-    questions = [(g.gap_id, q) for g in inputs.submission.gaps for q in g.questions]
+    # ruling C4 (rounds 6b and 6e): every per-gap sequence (TDR.1, TDR.2, claims, "Unresolved:"
+    # lines, consumption facts) follows agenda order, with submission order inside a gap
+    asked = {gap.gap_id: gap.questions for gap in inputs.submission.gaps}
+    questions = [(gap.gap_id, q) for gap in inputs.agenda for q in asked[gap.gap_id]]
     tables: list[ReportTable] = []
     if inputs.agenda:  # an empty agenda emits neither TDR.1 nor TDR.2 (Method 5)
         gap_rows = _gap_rows(build, inputs, bk.gaps)
@@ -571,6 +639,12 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
 
     unresolved = [q for _, q in questions if q.outcome == "not_found"]
     limitations = [BASE_LIMITATION]
+    limitations += [  # ruling R4; placed after the base line, in agenda order (not pinned)
+        f"CP-0 gap {gap.gap_id} cannot be split into description, consumers and remediation; "
+        "its full text is the gap."
+        for gap in inputs.agenda
+        if gap.description is None
+    ]
     if not inputs.agenda:
         limitations.append(EMPTY_LIMITATION)
     limitations += [f"Unresolved: {q.text} {q.limitation}" for q in unresolved]
@@ -582,7 +656,7 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
         if q.outcome == "answered" and q.answer is not None
     ]
     consumed = (
-        *(f"TDR.1.{g.gap_id}.{field}" for g in bk.gaps for field in PER_GAP_CONSUMED),
+        *(f"TDR.1.{g.gap_id}.{field}" for g in inputs.agenda for field in PER_GAP_CONSUMED),
         *(f"TDR.3.total.{field}" for field in TOTAL_FIELDS),
         *(f"TDR.2.{q.question_id}.answer" for q in unresolved),
     )

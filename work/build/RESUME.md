@@ -20,7 +20,7 @@ Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 10
 | H1 fix 1 re-review (mx-precise) | 278f0aa | see ledger (impl a69f811059171c714) | F1 waits for LEAD round 10; merge after both |
 | G1-X fix 2 (remove `_fill` TypeError mapping; lane + 31aeee0) | lane | a1095e3383256490c (worktree g1x-fill) | scoped mx-adversary review |
 | CP-2G re-review of fix 1 + 2 (mx-adversary) | 5002b6d | see ledger (impl a4377a7580e8e70db) | round 9, then merge; budget spent |
-| CP-8 review of fix 1 + 6h (mx-precise) | cba7f82 | see ledger (impl a3cc9818386e8861a) | one Opus review of fix 1 + 6h; merges with CP-3 and CP-5 |
+| CP-8 round 9 (fix 1 + 6h approved at cba7f82) | cba7f82 | a3cc9818386e8861a | scoped review of round 9; merges with CP-3 and CP-5 |
 | CP-2H round 7 | 5d91e7b | a52b5ec0919986ddb | first mx-adversary review, a killed mutant per refusal (29) |
 | CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-4C round 8 Part A (money: A-1) | 0284eca | a2c15c441717ec41c | first mx-adversary review (property test, mutants) |

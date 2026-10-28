@@ -234,3 +234,4 @@
 - 2026-10-28 CP-1D class fix 1 cacd98e (test-only): M1, L1 x2, L2 killed; 21/21 own mutants; frozen readings 0; gates 0. agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y. Scoped re-review to the same mx-precise reviewer
 - 2026-10-28 CP-L10 frame adjustment ef8bf0c: all eight fields use the pinned `<path>: empty`; 6/6 mutants; gates 0. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-feature (d6e63383+..ef8bf0c)
 - 2026-10-28 CP-1D class fix 1 re-review (mx-precise): APPROVE (M1, L1 x2, L2 killed; accepted survivors only). Merged (57ee05a). CP-1D ledger: agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y
+- 2026-10-28 CP-L10 class review (mx-feature): APPROVE (p_blank 0, 6/6 mutants; Low/Info: coverage test hardcodes its model list). Merged (8363b79). All nine class rounds merged; Stage 1 class work complete

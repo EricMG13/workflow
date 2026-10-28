@@ -4,7 +4,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 
 ## Merged into the lane
 - **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3, CP-2G, CP-8, CP-5, CP-4C, CP-2H, CP-3C.
-- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01); CP-3D r10 (a1de97d); G1-X fix 2 + LEAD 0d (857081c; G1/S1a deferred); CP-1D r10 (b7cd02e); CP-2G Stage 1 + fixes 1-2 + r9 (947a57d); CP-2E r10 + fix 1 (a1b50c8); CP-3 re-pin (6c6ea02), CP-8 through r10 (dae85ed), CP-5 + fix 1 (81e8c0b), with LEAD 2682310; H1 fix 2 (38f0f46; deferred suites pending); CP-4C + r8 + fix 1 (3b9c3dc); CP-2H + r7 + fix 1 (f843772; B7 strict xfail); CP-3C through fix 2; library (defect-classes); H1b; CP-1C, CP-2D, CP-8, CP-3D, CP-2G, CP-2E, CP-DR, CP-1D class rounds; CP-4C r11. Fast tests 3434 passed, 2 skipped, 1 xfailed (fast set adds tests/test_defect_classes_selfcheck.py).
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01); CP-3D r10 (a1de97d); G1-X fix 2 + LEAD 0d (857081c; G1/S1a deferred); CP-1D r10 (b7cd02e); CP-2G Stage 1 + fixes 1-2 + r9 (947a57d); CP-2E r10 + fix 1 (a1b50c8); CP-3 re-pin (6c6ea02), CP-8 through r10 (dae85ed), CP-5 + fix 1 (81e8c0b), with LEAD 2682310; H1 fix 2 (38f0f46; deferred suites pending); CP-4C + r8 + fix 1 (3b9c3dc); CP-2H + r7 + fix 1 (f843772; B7 strict xfail); CP-3C through fix 2; library (defect-classes); H1b; CP-1C, CP-2D, CP-8, CP-3D, CP-2G, CP-2E, CP-DR, CP-1D, CP-L10 class rounds (all nine done); CP-4C r11. Fast tests 3600+ passed (see ledger), 2 skipped, 1 xfailed (fast set adds tests/test_defect_classes_selfcheck.py).
 - **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
 - **LEAD docs:** 8483de4 (E6), 3674158 (round 6 oracle batch), rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
@@ -16,7 +16,6 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 ## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Opus cap 6 (LEAD AGENTS.md proposal); ruling-text diffs reviewed by mx-feature.
 | Work | Base | Agent | Next |
 |---|---|---|---|
-| CP-L10 class round mx-feature review | ef8bf0c (agent-aa6ef474a0f78ec9e, branch worktree-agent-aa6ef474a0f78ec9e) | reviewer a134280df72bdeff9 | on APPROVE: merge, run fast tests |
 
 
 ## Next when a slot frees
@@ -38,7 +37,7 @@ Open questions live in `work/build/stage1/<cp>/questions.md` (cp2h, cp3c, cp4c, 
 In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor; round 10 sign rule in methods/cp1d, cp3d, cp8, cp2e; unsigned-grammar limitation in methods/cp8 and cp3d; CP-3C facility ids as prose names at MC-2; CP-8 item 2 guard-limit note.
 
 ## After the class rounds (next steps, 2026-10-28 16:15Z)
-1. Merge CP-L10 on approval (CP-1D merged). If either review returned while the session was away, read the agent's SubagentHandback in its task .output.
+1. (done) All class rounds merged. No agents in flight. If either review returned while the session was away, read the agent's SubagentHandback in its task .output.
 2. Check LEAD's answer to the 16:08Z pointer (quote-sign-questions.md "Open for LEAD"; cp2h B7-B10; cp4c B7). Apply rulings as rulings rounds.
 3. Riding Lows batch (ledger, 2026-10-28 class reviews): one test-only round per module, with mx-feature review.
 4. Stage 1 end review (Opus, mx-precise or mx-adversary) on the lane, then Stage 2 per AGENTS.md 423a06e.

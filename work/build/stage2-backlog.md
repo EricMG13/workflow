@@ -52,3 +52,11 @@ Stage 1 is closed at `codex/checkpoint` e89b2a2. Only a High or Medium defect re
 - **[CP-2D] Low (ruling gap; LEAD).** With a conflicting or not_applicable commitment and missing drawings, the runway, LIQ-01, GAP-01 and the limitation name only "drawings undisclosed". That is true, but it misses the commitment's state, and with a not_applicable commitment it implies a revolver exists. Precedence is at cp2d.py:617. Source: cp2d/r13-fix1-review.md item 4; `<S>/cp2d-r13-fix1-review/f1_state_prose_and_mixed.py`.
 - **[CP-2D] Low (wording).** `OPERAND_LABELS["rcf_drawn"]` = "RCF drawings" gives "RCF drawings, which is conflicting" and "RCF drawings is conflicting", where the verb should be plural. This affects cp2d.py:225, 826, 1390 and 1394. Source: cp2d/r13-fix1-review.md L1.
 - **[CP-3D] Low.** `_whole_on_page` docstring (cp3d.py:258, :260-261) still describes the old edges; name `_EDGE_BEFORE` and the comma. Source: cp3d/r13-fix1-review.md.
+- **[CP-4C] Low (test gap).** These mutants survive (`<S>/cp4c-r13-review/p_mutants_review.py`):
+  - `\d` in place of `[0-9]` in the source patterns (Arabic-Indic digits);
+  - an unescaped `.` in the d01 pattern;
+  - `base_period("s03")` hard-coded at cp4c.py:1411;
+  - `base_period` returning None for a shared None period.
+
+  Pin each one. Source: cp4c/r13-review.md.
+- **[CP-4C] Low (LEAD, unruled).** cp4c.py:465-468: an unsettled shock with `period=None` raises `differ in period`. It also pre-empts the round 8 A-4 copy of a missing or conflicting `ebitda_decline`. Today this is not reachable. Question: does R1 L2 "if they differ" cover a shock that has no period? Source: cp4c/r13-review.md.

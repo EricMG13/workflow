@@ -5,6 +5,7 @@ Every expected value comes from `cases/cp4-owner/expected.json` through the Stag
 builders. Nothing here runs a store run: those are deferred (`work/build/deferred-runs.md`).
 """
 
+import dataclasses
 import hashlib
 import importlib
 import inspect
@@ -12,12 +13,19 @@ import json
 import typing
 from collections.abc import Callable
 from dataclasses import replace
+from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
-from deploy_vii import cp4_legal
+from deploy_vii import cp4_legal, report_view
+from deploy_vii.bindings import cp4 as cp4_binding_map
+from deploy_vii.bindings import validate_bindings
+from deploy_vii.bindings.shipped import SHIPPED_MAPS
+from deploy_vii.contracts import Fact, Module, ModuleView, ReportTable, TableColumn, TableRow
+from deploy_vii.registry import plan
+from deploy_vii.render import empty_view
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow.owners import cp4
 from deploy_workflow.workflow import WorkflowError
@@ -338,3 +346,291 @@ def test_seams_take_the_protocol_positional_forms() -> None:
     for seam in (cp4.probe, cp4.view, cp4.precheck):
         kinds = {p.kind for p in inspect.signature(seam).parameters.values()}
         assert kinds == {inspect.Parameter.POSITIONAL_OR_KEYWORD}
+
+
+# --- the adapter: bound CP-0 and CP-1 heads -> the Stage 1 input object ------------------------
+
+FACILITIES = stage1.VIEW["expected_values"]["facilities"]
+
+
+def _module(pack: Any, module_id: str, **fields: Any) -> Module:
+    run = pack.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=module_id,
+        status="restricted",
+        **fields,
+    )
+
+
+def _heads(case: str) -> tuple[Module, Module]:
+    """CP-0 and CP-1 built from the frozen oracle values: the T3 authority per source, the one
+    CP-1 metric fact, the T4.18 facility and the CP-1 limitations."""
+    pack = stage1.make_pack(case)
+    authority = stage1.EXPECTED[stage1.PACK_OF[case]]["CP-0"]["T3_authority"]
+    cp0 = _module(
+        pack,
+        "CP-0",
+        facts=tuple(
+            Fact(
+                fact_id=f"T3.{source}.authority",
+                label="Authority",
+                table_id="T3",
+                row_id=source,
+                field="authority",
+                text=text,
+            )
+            for source, text in authority.items()
+        ),
+        limitations=("CP-0 limitation",),
+    )
+    metric = stage1.cp1_fact()
+    facility_facts = tuple(
+        Fact(
+            fact_id=f"T4.18.{item['facility_id']}.{field}",
+            label=field,
+            table_id="T4.18",
+            row_id=item["facility_id"],
+            field=field,
+            text=item[field],
+        )
+        for item in FACILITIES
+        for field in ("facility_id", "facility_name")
+    )
+    table = ReportTable(
+        table_id=metric.table_id,
+        title="KPI dashboard",
+        columns=(TableColumn(field=metric.field, label="LTM Q4 25"),),
+        rows=(
+            TableRow(
+                row_id=metric.row_id, label="net_leverage_reported", fact_ids=(metric.fact_id,)
+            ),
+        ),
+    )
+    cp1 = _module(
+        pack,
+        "CP-1",
+        facts=(metric, *facility_facts),
+        tables=(table,),
+        limitations=stage1.cp1_gaps(case),
+    )
+    return cp0, cp1
+
+
+class _World:
+    """The two methods `upstream_of` calls on a store."""
+
+    def __init__(self, pack: Any, heads: dict[str, Module]) -> None:
+        self._pack, self._heads = pack, heads
+
+    def pack(self) -> Any:
+        return self._pack
+
+    def result(self, sha256: str) -> Module:
+        return self._heads[sha256]
+
+
+def _bound_upstream(case: str, cp0: Module, cp1: Module) -> cp4_legal.Upstream:
+    pack = stage1.make_pack(case)
+    inputs = stage1.make_inputs(case, pack)
+    shas = {item.input_id: item.sha256 for item in inputs}
+    world: Any = _World(pack, {shas["CP-0"]: cp0, shas["CP-1"]: cp1})
+    attempt: Any = SimpleNamespace(module_id="CP-4", inputs=inputs)
+    return cp4_legal.upstream_of(world, attempt)
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_adapter_returns_the_stage_1_input_object(case: str) -> None:
+    cp0, cp1 = _heads(case)
+    got = _bound_upstream(case, cp0, cp1)
+    want = replace(
+        stage1.make_upstream(case),
+        cp0_sha256=cp0.content_hash(),
+        cp1_sha256=cp1.content_hash(),
+    )
+    assert got == want
+
+
+FIELDS = [f.name for f in dataclasses.fields(cp4_legal.Upstream)]
+
+
+@pytest.mark.parametrize("field", FIELDS)
+def test_adapter_fills_each_upstream_field_from_the_heads(field: str) -> None:
+    """Each field of the input object is read from the bound heads, so changing the head value
+    it comes from changes that field and no other."""
+    cp0, cp1 = _heads("positive")
+    base = _bound_upstream("positive", cp0, cp1)
+    metric = cp1.facts[0]
+    other_facility = Fact(
+        fact_id="T4.18.extra.facility_id",
+        label="facility_id",
+        table_id="T4.18",
+        row_id="extra",
+        field="facility_id",
+        text="extra-loan",
+    )
+    changed: dict[str, tuple[Module, Module]] = {
+        "cp0_sha256": (cp0.model_copy(update={"limitations": ("other",)}), cp1),
+        "cp1_sha256": (cp0, cp1.model_copy(update={"attempt": 1})),
+        "cp1_status": (cp0, cp1.model_copy(update={"status": "accepted"})),
+        "authority": (
+            cp0.model_copy(update={"facts": (cp0.facts[0].model_copy(update={"text": "filed"}),)}),
+            cp1,
+        ),
+        "legal_sources": (
+            cp0.model_copy(
+                update={
+                    "facts": tuple(
+                        f.model_copy(update={"text": "issuer"})
+                        if f.row_id == "legal-covenants"
+                        else f
+                        for f in cp0.facts
+                    )
+                }
+            ),
+            cp1,
+        ),
+        "facilities": (cp0, cp1.model_copy(update={"facts": (*cp1.facts, other_facility)})),
+        "facts": (
+            cp0,
+            cp1.model_copy(
+                update={"facts": (metric.model_copy(update={"amount": Decimal(2)}), *cp1.facts[1:])}
+            ),
+        ),
+        "rows": (
+            cp0,
+            cp1.model_copy(
+                update={
+                    "tables": (
+                        cp1.tables[0].model_copy(
+                            update={
+                                "rows": (cp1.tables[0].rows[0].model_copy(update={"label": "x"}),)
+                            }
+                        ),
+                    )
+                }
+            ),
+        ),
+        "cp1_gaps": (cp0, cp1.model_copy(update={"limitations": (*cp1.limitations, "new gap")})),
+    }
+    moved = _bound_upstream("positive", *changed[field])
+    assert getattr(moved, field) != getattr(base, field)
+
+
+def test_every_upstream_field_has_an_adapter_case() -> None:
+    assert FIELDS == [
+        "cp0_sha256",
+        "cp1_sha256",
+        "cp1_status",
+        "authority",
+        "legal_sources",
+        "facilities",
+        "facts",
+        "rows",
+        "cp1_gaps",
+    ]
+
+
+# --- bindings and the _Spec rows --------------------------------------------------------------
+
+
+def _expected_view(case: str) -> Any:
+    """A View whose CP-4 module holds the oracle-equal tables the Stage 1 composer returns."""
+    inputs = stage1.make_inputs_object(case)
+    result = cp4.compute(inputs)
+    assert result.report is not None
+    module = cp4_legal.cp4_module(result.report, inputs.inputs, 0).model_copy(
+        update={"status": "restricted"}
+    )
+    view = empty_view(inputs.pack.run)
+    shown = ModuleView(
+        module_id="CP-4",
+        title="CP-4 oracle tables",
+        aliases=(),
+        status="restricted",
+        artifact_sha256=module.content_hash(),
+        facts=module.facts,
+        tables=module.tables,
+        claims=module.claims,
+        limitations=module.limitations,
+    )
+    return view.model_copy(
+        update={"modules": tuple(shown if m.module_id == "CP-4" else m for m in view.modules)}
+    )
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_validate_bindings_over_the_expected_tables(case: str) -> None:
+    view = _expected_view(case)
+    cp4_tables = next(m for m in view.modules if m.module_id == "CP-4").tables
+    assert [t.table_id for t in cp4_tables] == stage1.EXPECTED["table_order"]
+    assert validate_bindings(view, SHIPPED_MAPS) == ()
+
+
+def test_each_cp4_block_has_its_spec_row() -> None:
+    blocks = {e.block_id for e in cp4_binding_map.CP4.entries}
+    own = set(cp4_binding_map.BLOCKS)
+    assert own <= blocks
+    assert set(report_view._COVENANT_REFINANCING) == own
+    for block in cp4_binding_map.BLOCKS:
+        spec = report_view._spec_of(block)
+        assert spec is report_view._COVENANT_REFINANCING[block]
+        assert (spec.owner, spec.producers, spec.kind) == ("CP-4", ("CP-4",), "dense")
+
+
+# --- D3: what the lease exposes, and that CP-4's own consumption stays open --------------------
+
+
+def test_d3_cp4_is_read_by_no_module_in_its_plan() -> None:
+    """Lease D3: the run proves CP-4's upstream consumption; no module in `plan(("CP-4",))`
+    consumes CP-4, so downstream consumption stays open and nothing here claims it."""
+    planned = plan(("CP-4",))
+    assert planned == tuple(stage1.EXPECTED["execution"]["plan_order"])
+    assert stage1.MANIFEST["consumers_of_cp4_for_this_plan"] == []
+    consumers = {"CP-3", "CP-3C", "CP-4C", "CP-5"}
+    assert not consumers & set(planned)
+    assert planned[-1] == "CP-4"
+
+
+# --- the run driver's pure parts (the store runs are deferred) ---------------------------------
+
+drivers: Any = importlib.import_module("cp4_runs")
+
+
+def test_driver_covers_the_oracle_cases_and_their_searches() -> None:
+    assert set(drivers.CASES) == set(stage1.SUBMISSIONS) & {
+        "positive",
+        "gap",
+        "gap_false_same_definition",
+    }
+    assert drivers.SEARCH == {
+        "positive": "Covenant EBITDA",
+        "gap": "Schedule A",
+        "gap_false_same_definition": "Schedule A",
+    }
+    assert drivers.CORRECTED == {"gap_false_same_definition": "gap"}
+
+
+@pytest.mark.parametrize("case", ["positive", "gap", "gap_false_same_definition"])
+def test_driver_literals_bind_the_pack_hash_and_leave_the_figure(case: str) -> None:
+    pack = stage1.make_pack(case)
+    review = drivers.literal(case, "readiness_review", pack)
+    assert drivers.PACK_PLACEHOLDER not in review and pack.content_hash() in review
+    covenants = drivers.literal(case, "legal_covenants")
+    assert covenants.count(drivers.FIG) == 1
+    bound = drivers.bind_metric(covenants, "fact-id-1")
+    assert drivers.FIG not in bound and "fact-id-1" in bound
+    json.loads(bound)
+
+
+def test_driver_figure_predicate_refuses_two_candidates() -> None:
+    metric = stage1.cp1_fact()
+    twin = metric.model_copy(update={"fact_id": metric.fact_id + "-twin"})
+    s1a: Any = importlib.import_module("s1a_runs")
+    assert s1a.figure_fact([metric], drivers.METRIC) is metric
+    with pytest.raises(RuntimeError):
+        s1a.figure_fact([metric, twin], drivers.METRIC)
+    with pytest.raises(RuntimeError):
+        s1a.figure_fact([], drivers.METRIC)

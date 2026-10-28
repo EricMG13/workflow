@@ -349,9 +349,14 @@ _AMOUNT = re.compile(r"[0-9]+(?:\.[0-9]+)?")
 # `1-December`, `2024-2025`, `2024-\n2025`, `S-350` are unsigned); "+" is ignored; a numeral in
 # accounting parentheses, "(" or "( " before the first digit and ")" or " )" after the last,
 # reads as negative. The amount string stays `-<digits>`. The bridge table keeps `_AMOUNT`.
+# Round 13 items 7 and 8: a figure is a whole numeral run. None starts after a digit, a point, or
+# a digit and a comma (with at most one space), and none ends before a digit, a point and a
+# digit, or a comma (with at most one space) and a digit; so `.25`, `-.25`, `(.25)`, `1.2.5`,
+# `1,250`, `1, 250` and `1,\n250` hold no figure. The grammar takes no separators in Stage 1.
 _SIGNED_AMOUNT = re.compile(
     r"\( ?(?P<parenthesised>[0-9]+(?:\.[0-9]+)?) ?\)"
-    r"|(?P<sign>(?<![A-Za-z0-9])- ?)?(?P<digits>[0-9]+(?:\.[0-9]+)?)"
+    r"|(?P<sign>(?<![A-Za-z0-9])- ?)?(?<![0-9.])(?<![0-9],)(?<![0-9], )"
+    r"(?P<digits>[0-9]+(?:\.[0-9]+)?)(?![0-9]|[.,][0-9]|, [0-9])"
 )
 _TYPES = ("Saving", "Cost")
 # Round 4 (k): an amount is the product `financial_contracts.Number` (-1e18 < x < 1e18, 28
@@ -564,7 +569,8 @@ _W_MINUS = re.compile(r"(?<![A-Za-z0-9])- ?\Z")
 _OPEN_PAREN = re.compile(r"\( ?\Z")
 _CLOSE_PAREN = re.compile(r" ?\)")
 _DIGIT_OR_POINT = re.compile(r"[0-9.]")
-_CONTINUES = re.compile(r"[0-9]|\.[0-9]")
+_CONTINUES = re.compile(r"[0-9]|[.,][0-9]|, [0-9]")
+_COMMA_BEFORE = re.compile(r"[0-9],(?: )?\Z")
 
 
 def _edge_cut(
@@ -574,11 +580,12 @@ def _edge_cut(
     joined) in some reading of its page, the edge figure at `digits` of `normalise(quote)` is
     not the same unsigned whole figure on the page.
 
-    Start edge: the page character before the digits is a digit or ".", or the page holds a
-    minus by rule W (round 12: directly or one space before them), or an accounting "(" or "( "
-    that a ")" or " )" right after the digits closes. End edge: the page text after the digits
-    is a digit, "." plus a digit, or a ")" or " )" closing a "(" or "( " right before them. A
-    start-edge figure keeps its offsets in the joined quote and an end-edge one its offsets from
+    Start edge: the page character before the digits is a digit or ".", or the page's characters
+    before them are a digit and "," (round 13 item 8; one space may follow the comma), or the
+    page holds a minus by rule W (round 12: directly or one space before them), or an accounting
+    "(" or "( " that a ")" or " )" right after the digits closes. End edge: the page text after
+    the digits is a digit, "." or "," plus a digit, ", " plus a digit, or a ")" or " )" closing a
+    "(" or "( " right before them. A start-edge figure keeps its offsets in the joined quote and an end-edge one its offsets from
     the end, since a join only removes the spaces after a wrapped hyphen."""
     plain = normalise(quote)
     for needle in _readings(quote):
@@ -601,6 +608,7 @@ def _cut(text: str, start: int, end: int, *, at_start: bool, at_end: bool) -> bo
         return True
     if at_start and (
         _DIGIT_OR_POINT.fullmatch(text[start - 1 : start]) is not None
+        or _COMMA_BEFORE.search(text, max(0, start - 3), start) is not None
         or _W_MINUS.search(text, lead, start) is not None
     ):
         return True

@@ -849,6 +849,25 @@ def test_hyphen_after_a_letter_or_digit_is_not_a_sign(line: str, issues: tuple[s
         ("contract A-\n350", ["350"]),
         ("the 95- 96 range", ["95", "96"]),
         ("the 95 - 96 range", ["95", "-96"]),
+        # Round 13 item 7: a figure is a whole numeral run. None starts after a digit or a
+        # point, and none ends before a digit or a point and a digit.
+        ("a saving of .25", []),
+        ("a saving of -.25", []),
+        ("a saving of (.25)", []),
+        ("a saving of 1.2.5", []),
+        ("section 4.2.1 a saving of 25", ["25"]),
+        # Round 13 item 8, with the LEAD comma-space join: `<digit>,` and `<digit>, ` join
+        # the run, so no figure is read after either, nor before `,<digit>` or `, <digit>`.
+        ("a saving of 1,250", []),
+        ("a saving of 1, 250", []),
+        ("a saving of 1,\n250", []),
+        ("a saving of -1,250", []),
+        ("a saving of (1,250)", []),
+        # Unaffected: a list of words, a comma after a word, and a figure before a plain stop.
+        ("a saving of 25, and 30", ["25", "30"]),
+        ("savings, 250 a year", ["250"]),
+        ("a saving of 25, which holds", ["25"]),
+        ("a saving of 25. It holds", ["25"]),
     ],
 )
 def test_basis_amounts_read_the_printed_sign(quote: str, amounts: list[str]) -> None:
@@ -1159,6 +1178,15 @@ def test_defect_class_basis_quote(c: QuoteCase) -> None:
         ("The level is (25 ) percent.", "25 ) percent."),
         ("The level is ( 25 ) percent.", "25 ) percent."),
         ("The level is ( 25 ) percent.", "The level is ( 25"),
+        # Round 13 item 8: the page's `<digit>,` or `<digit>, ` before a start-edge figure, and
+        # `,<digit>` or `, <digit>` after an end-edge one, join it to a longer run.
+        ("The level is 1,250 per year.", "250 per year."),
+        ("The level is 1, 250 per year.", "250 per year."),
+        ("The level is 1,\n250 per year.", "250 per year."),
+        ("The level is 25,250 per year.", "The level is 25"),
+        ("The level is 25, 250 per year.", "The level is 25"),
+        # A point-led page run (existing guard, kept).
+        ("The level is 4.2.1 per year.", "1 per year."),
     ],
 )
 def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
@@ -1185,6 +1213,15 @@ def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
         ("The level ( 25 percent over) holds.", "25 percent over) holds."),
         ("The level is 25) percent.", "The level is 25"),
         ("The level is 25 ) percent.", "The level is 25"),
+        # Round 13 Low (round 12 review): `_W_MINUS` and `_OPEN_PAREN` end at the digits (`\\Z`),
+        # so a letter between the sign or parenthesis and the digits makes neither a sign.
+        ("The level is -a25 percent.", "25 percent."),
+        ("The level is (a25) percent.", "25) percent."),
+        # Round 13 item 8: a comma that is no part of a numeral run cuts nothing.
+        ("The level is 25, a rise.", "The level is 25"),
+        # The comma join ends at the digits: a letter between "<digit>," and the figure.
+        ("The level is 1,a25 percent.", "25 percent."),
+        ("The level is 2025, up from 25 percent.", "25 percent."),
     ],
 )
 def test_edge_figure_whole_on_the_page_is_counted(page: str, quote: str) -> None:

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 
 from deploy_vii import prose
 from deploy_vii.contracts import Citation, Fact, Source, Span, validate_tables
@@ -20,6 +21,8 @@ from deploy_vii.report_view import fact_spelling
 from deploy_workflow.owners.cpdr import (
     AgendaGap,
     CpdrInputs,
+    GapResearch,
+    ResearchQuestion,
     ResearchSubmission,
     bookkeeping,
     compose,
@@ -732,3 +735,81 @@ def test_c4_every_per_gap_sequence_follows_the_agenda() -> None:
         "TDR.2.distribution-policy.answer",
     )
     validate_tables(result.tables, result.facts)
+
+
+# Round 11 "Blank text is one defect class" (shared library `tests/defect_classes.py`): every
+# analyst text field refuses whitespace-only text. CP-DR pins no empty-text frame, so the fallback
+# `<path>: empty text` applies. `text` and `answer` are `Text` (`min_length=1`), so the schema's
+# refusal of `""` stands; a not_found `limitation` of `""` keeps its completeness issue. The
+# fields run on the frozen `partial` submission: questions[0] is answered (text, answer) and
+# questions[2] is not_found (limitation; an answered question carries none by design).
+BLANK_FIELDS: tuple[tuple[str, int, str], ...] = (
+    ("gaps[0].questions[0].text", 0, "text"),
+    ("gaps[0].questions[0].answer", 0, "answer"),
+    ("gaps[0].questions[2].limitation", 2, "limitation"),
+)
+# Ids and closed vocabularies; citations go to the shared `citation_issues` check. CP-DR reads no
+# figure, name or label from a quote, so the quote-reader cases (B1, B3) do not apply.
+NOT_TEXT_FIELDS = frozenset({"question_id", "outcome", "category", "citations", "searched_sources"})
+
+
+def _blank_adapter(index: int, key: str) -> Adapter:
+    """Places the value in one analyst text field of the frozen partial submission. Page and quote
+    are unused: CP-DR reads no value from an analyst quote."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        raw = json.loads(json.dumps(SUBMISSIONS["cpdr"]["partial"]))
+        raw["gaps"][0]["questions"][index][key] = value
+        return check(submission(raw))
+
+    return adapter
+
+
+def test_blank_fields_cover_every_analyst_text_field() -> None:
+    """Every submission field is a blank-class text field or a named non-text field."""
+    assert set(ResearchSubmission.model_fields) == {"gaps"}
+    assert set(GapResearch.model_fields) == {"gap_id", "questions"}
+    texts = {key for _, _, key in BLANK_FIELDS}
+    assert set(ResearchQuestion.model_fields) == texts | NOT_TEXT_FIELDS
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(blank: BlankCase, field: tuple[str, int, str]) -> None:
+    path, index, key = field
+    failure = blank_failure(blank, _blank_adapter(index, key), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+def test_blank_text_twin_is_accepted(field: tuple[str, int, str]) -> None:
+    """The twin: the same field holding text is accepted outright."""
+    _, index, key = field
+    assert _blank_adapter(index, key)("", "", "Which prepared source names the owners?") == ()
+
+
+def test_blank_text_path_names_the_gap_and_question() -> None:
+    """The path carries the submitted gap and question positions (0-based), not index 0 only."""
+    owner = edited(OWNER, limitation="  ")
+    sub = submission(
+        {
+            "gaps": [
+                {"gap_id": GAP_ID, "questions": [TRANSACTIONS, DISTRIBUTIONS, owner]},
+                {"gap_id": "gap-b", "questions": [edited(POLICY, text="\t")]},
+            ]
+        }
+    )
+    second = Fact(
+        fact_id="T5.gap-b.gap",
+        label="gap",
+        table_id="T5",
+        row_id="gap-b",
+        field="gap",
+        text="scope/material: Something is absent; affects CP-DR; Supply it",
+    )
+    gaps = (*agenda(empty=False), *parse_agenda((second,)))
+    issues = validate_research(submission=sub, upstream=gaps, pack=sources())
+    assert issues == (
+        "gaps[0].questions[2].limitation: empty text",
+        "gaps[1].questions[0].text: empty text",
+    )

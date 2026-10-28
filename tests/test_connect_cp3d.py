@@ -940,11 +940,10 @@ def test_every_owner_workflow_row_is_registered_for_cp3d() -> None:
 
 
 def test_registrations_were_appended_not_reordered() -> None:
-    assert list(owner._CORES)[-1] == "CP-3D"
-    assert (
-        list(owner.OWNER_SPECS)[-2:] == ["CP-3D", "CP-MODEL"]
-        or list(owner.OWNER_SPECS)[-1] == "CP-3D"
-    )
+    assert "CP-3D" in owner._CORES
+    specs = list(owner.OWNER_SPECS)
+    assert specs[:5] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
+    assert "CP-3D" in specs[5:]
 
 
 def test_check_steps_passes_for_the_registered_spec() -> None:

@@ -20,7 +20,8 @@ Sources: review-precise-1 of CP-2A and CP-2D, review-precise-2 of CP-4
 | `QUALIFICATION` | all | The `head_of` qualification used by `_verify` (`_QUALIFICATION[m]`). |
 | `probe(store, snapshot, attempt) -> None` | all | Raises `WorkflowError("identity_mismatch")` unless the settled attempt and head rebuild exactly (as `owners/cp1a.probe`). Registered in `_PROBES[m]`. |
 | `view(historical, attempt) -> tuple[str, str]` | steps with `inputs="module_context"` | `(sha256, body)` of the exact `read_inputs` view; registered in `_VIEWS[step]`. |
-| `precheck(store, binding, stored) -> tuple[str, ...]` | optional | A gate on the filled payload. See §4. |
+| `ENTRY_VALIDATOR(execution, pack, attempt) -> StepValidation` | every analytical module except CP-0 and CP-1 | The validator the module's entry (or its owner core's `submit`) hands `Execution.submit_step`; registered in the fixed dict `_ENTRY_VALIDATORS[m]` (as `cp1a.ENTRY_VALIDATOR`). The verifier replays an invalid step through it on the historical snapshot (S1a R4-2). `_check_specs` refuses `not_permitted` at create a spec whose module has no row, so an invalid step can never be journaled unverifiable (LEAD amendment 2026-10-28, rulings round 4 A1). |
+| `precheck(store, binding, stored) -> tuple[str, ...]` | optional | A gate on the filled payload, registered in the fixed dict `_PRECHECKS[m]` for live-contract and owner-only modules alike (CP-4 registers `owners.cp4.precheck`). See §4. |
 | `STEP_IDS: tuple[str, ...]` | owner-only | The step sequence `_owner_historical`, `_activate` and the verifier use where `step_chain` has none. |
 | `SCHEMAS: Mapping[str, type[Contract]]` | owner-only | Model-facing schema per step; `_fill` normalises through it when the step is not in `live.submission.STEPS`. |
 | `RULES(text, seen) -> tuple[str, ...]` | owner-only steps with `sources=True` | The tool-use evidence rules of the step (cited page read, absence backed by a search), pure over the payload text and the session's `Seen`; reuses `live/tools.py` (`unread_citation_issues`, `UNBACKED_ABSENCE`) and returns issues in the product's sorted order. With `rules="journaled"`, G1-X calls it in place of `ToolRules().issues` (which raises for a step that is not a tool-loop step) both at submit and in the verifier (LEAD amendment 2026-10-28, CP-3D review-precise-1 F1). |
@@ -33,12 +34,18 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
 
 ## 3. Inputs
 - `inputs="module_context"` is accepted for any step with a `_VIEWS` entry (S1a accepted only
-  `MODULE_CONTEXTS` steps). The name stays. An owner-only step may also have `sources=True` (CP-DR:
+  `MODULE_CONTEXTS` steps). The name stays. Any step, live-contract or owner-only, may combine
+  `module_context` with `sources=True` (CP-3 `relative_value`; rulings round 4 A4) (CP-DR:
   the view is its agenda, the pack tools its evidence; LEAD amendment 2026-10-28); its pack scope is a
   fixed host-side mapping built by the H1 host task, never caller-supplied.
 - `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`,
   with or without a source session (CP-4 review-precise-2 F5). `read_inputs` serves
   `projection` or `module_context`.
+- `_check_specs` refuses (`not_permitted`) an owner-only step that offers statement extraction,
+  uses a step id in `live.submission.STEPS`, or has `rules="journaled"` without `sources=True`; and
+  any step outside CP-0/CP-1 with `rules="precheck"` or `inputs="projection"` (those take the
+  11-field financial binding) (rulings round 4 A3). CP-4's `inputs="step_context"` is added by its
+  build as its lease says (`docs/CP4-OWNER-LEASE.md:37-38`).
 
 ## 4. Precheck gate
 - Runs on the filled payload after `_fill`, before `rules` of any mode and before the journal.
@@ -54,6 +61,9 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
 ## 5. Not in G1-X
 - Analytical modules after the deterministic CP-MODEL in a plan: no current lease needs it
   (CP-2D runs without CP-MODEL). Add when a lease does.
+- An owner-only `sources=True` step opens a real `SourceSession` only through the H1 fixed host
+  mapping; until H1 lands, such steps are exercised by test-only sessions and no Stage 2 run of
+  them is admitted (rulings round 4 A5; build order unchanged).
 
 ## 6. D12 amendment
 A new `src/deploy_vii/bindings/<cp>.py` holding only FP block bindings (no arithmetic, reads

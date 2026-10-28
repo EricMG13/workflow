@@ -457,8 +457,10 @@ def _edited(case: str, page: int, old: str, new: str) -> tuple[Source, ...]:
     return (*frozen, peers.model_copy(update={"spans": spans}))
 
 
-def _with_sources(case: str, edited: tuple[Source, ...], payload: Any = None) -> Any:
-    base = inputs(case, payload=payload)
+def _with_sources(
+    case: str, edited: tuple[Source, ...], payload: Any = None, cp1: dict[str, Fact] | None = None
+) -> Any:
+    base = inputs(case, payload=payload, cp1=cp1)
     return cp1c.PeerBenchmarkInputs(
         issuer_name=base.issuer_name,
         sources=edited,
@@ -666,7 +668,7 @@ def test_round4_b_frozen_no_peers_keeps_its_wording() -> None:
 # not_applicable). Ellsworth stays excluded.
 
 
-def _coinciding() -> cp1c.PeerBenchmarkResult:
+def _coinciding(cp1: dict[str, Fact] | None = None) -> cp1c.PeerBenchmarkResult:
     edited = sources("positive")
     for old, new in (
         (
@@ -693,7 +695,7 @@ def _coinciding() -> cp1c.PeerBenchmarkResult:
         edited = (*frozen, peers.model_copy(update={"spans": spans}))
     body = json.loads(json.dumps(submissions()["positive"]["peer_benchmark"]))
     body["overall"]["rationale"] = "The peer set is described in the tables."
-    return cp1c.compute(_with_sources("positive", edited, payload=body))
+    return cp1c.compute(_with_sources("positive", edited, payload=body, cp1=cp1))
 
 
 def test_1c1_value_not_meaningful_comes_before_a_zero_median() -> None:
@@ -893,3 +895,349 @@ def test_c2_zero_peer_median() -> None:
     assert "not flagged" not in claim.text
     other = next(c for c in found.claims if c.claim_id == "T1C.4.total_leverage_adjusted")
     assert other.text.endswith(" The issuer is not flagged an outlier on this metric.")
+
+
+# --- round 5 P1 and round 6 B1 (docs/rulings/2026-10-28-stage1.md) ------------------------------------
+
+
+def test_round5_p1_not_ready_peer_source_own_line() -> None:
+    found = cp1c.compute(_with_sources("no_peers", _not_ready("unreadable")))
+    assert found.limitations[0] == (
+        "No ready peer source is in the pack: no peer universe, median, position or outlier flag "
+        "can be formed."
+    )
+    assert (
+        result("no_peers").limitations[0] == expected()["cases"]["no_peers"]["own_limitations"][0]
+    )
+
+
+# B1: a CP-1 T4.10 ratio that is not known. The reviewer's probe makes interest coverage
+# not_applicable (cash interest zero); a second case makes the margin missing with unit None.
+COVERAGE_NA = "Not meaningful: cash interest is zero (ZERO_OR_NEGATIVE_DENOMINATOR)"
+MARGIN_MISSING = "Not calculable: revenue is not stated"
+NOT_COMPARED = "Not compared: one side is not available"
+
+
+def _cp1_not_known() -> dict[str, Fact]:
+    metrics = cp1_metrics()
+    coverage = metrics["interest_coverage_adjusted"]
+    metrics["interest_coverage_adjusted"] = coverage.model_copy(
+        update={
+            "amount": None,
+            "status": "not_applicable",
+            "limitation": COVERAGE_NA,
+            "unit": "PERCENT",
+            "currency": "USD",
+            "scale": Decimal(1_000_000),
+            "decimals": 2,
+        }
+    )
+    margin = metrics["adjusted_ebitda_margin"]
+    metrics["adjusted_ebitda_margin"] = margin.model_copy(
+        update={"amount": None, "status": "missing", "limitation": MARGIN_MISSING, "unit": None}
+    )
+    return metrics
+
+
+def _plain(case: str) -> Any:
+    body = json.loads(json.dumps(submissions()[case]["peer_benchmark"]))
+    body["overall"]["rationale"] = "The peer set is described in the tables."
+    return body
+
+
+def _b1(case: str) -> cp1c.PeerBenchmarkResult:
+    found = inputs(case, payload=_plain(case), cp1=_cp1_not_known())
+    assert cp1c.calculation_issues(found) == ()
+    return cp1c.compute(found)
+
+
+def test_b1_probe_payload_is_refused_not_raised() -> None:
+    """Probe B1: the positive payload cites the issuer's coverage as a figure; with CP-1's ratio
+    not known that is an issue, never a ValueError out of validation."""
+    issues = cp1c.calculation_issues(inputs("positive", cp1=_cp1_not_known()))
+    assert "Figure reference names a gap: T1C.3.issuer.interest_coverage_adjusted" in issues
+
+
+@pytest.mark.parametrize(
+    ("metric", "status", "reason", "unit"),
+    [
+        ("interest_coverage_adjusted", "not_applicable", COVERAGE_NA, "MULTIPLE"),
+        ("adjusted_ebitda_margin", "missing", MARGIN_MISSING, "PERCENT"),
+    ],
+)
+def test_b1_copies_carry_cp1_status_and_limitation(
+    metric: str, status: str, reason: str, unit: str
+) -> None:
+    facts = _facts(_b1("positive"))
+    source = _cp1_not_known()[metric]
+    for fact_id in (f"T1C.3.issuer.{metric}", f"T1C.6.{metric}.cp1"):
+        fact = facts[fact_id]
+        # round 6g: an unsettled copy takes the metric's unit, currency and scale (a ratio has
+        # no currency and scale 1, as T1C.3's own ratios); every other key stays verbatim
+        assert (fact.status, fact.limitation, fact.amount) == (status, reason, None)
+        assert (fact.unit, fact.currency, fact.scale) == (unit, None, Decimal(1)), fact_id
+        assert (
+            fact.period,
+            fact.citations,
+            fact.calculation_id,
+            fact.value_class,
+            fact.decimals,
+        ) == (
+            source.period,
+            source.citations,
+            source.calculation_id,
+            source.value_class,
+            source.decimals,
+        ), fact_id
+
+
+@pytest.mark.parametrize("metric", ["interest_coverage_adjusted", "adjusted_ebitda_margin"])
+def test_b1_peer_statistics_unchanged_and_issuer_cells_not_compared(metric: str) -> None:
+    facts = _facts(_b1("positive"))
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["positive"]["facts"]}
+    for name in ("n", "median", "outlier_count"):
+        fact_id = f"T1C.4.{metric}.{name}"
+        assert _exact(facts[fact_id].amount) == frozen[fact_id]["amount_exact"], fact_id
+    units = {"difference": {m.key: m for m in cp1c.METRICS}[metric].difference_unit, "position": "rank",
+             "of": "entities"}  # fmt: skip
+    for name, unit in units.items():
+        fact = facts[f"T1C.4.{metric}.{name}"]
+        assert (fact.status, fact.limitation, fact.unit, fact.period, fact.value_class) == (
+            "missing",
+            NOT_COMPARED,
+            unit,
+            cp1c.MIXED_PERIOD,
+            None,
+        ), name
+
+
+@pytest.mark.parametrize(
+    ("metric", "status", "reason"),
+    [
+        ("interest_coverage_adjusted", "not_applicable",
+         "Not meaningful: the issuer's CP-1 ratio is not meaningful"),
+        ("adjusted_ebitda_margin", "missing", "Not calculable: the issuer's CP-1 value is missing"),
+    ],
+)  # fmt: skip
+def test_b1_issuer_outlier_cells_use_the_issuer_wording(
+    metric: str, status: str, reason: str
+) -> None:
+    facts = _facts(_b1("positive"))
+    for name, unit in (("deviation", "PERCENT"), ("flag", None)):
+        fact = facts[f"T1C.5.issuer.{metric}_{name}"]
+        assert (fact.status, fact.limitation, fact.unit, fact.period, fact.value_class) == (
+            status,
+            reason,
+            unit,
+            cp1c.MIXED_PERIOD,
+            None,
+        ), name
+    # peers keep their own flags
+    assert facts[f"T1C.5.p01.{metric}_flag"].status == "known"
+
+
+@pytest.mark.parametrize("metric", ["interest_coverage_adjusted", "adjusted_ebitda_margin"])
+def test_b1_tie_out_not_compared(metric: str) -> None:
+    facts = _facts(_b1("positive"))
+    assert facts[f"T1C.6.{metric}.sheet"].status == "known"
+    difference = facts[f"T1C.6.{metric}.difference"]
+    assert (
+        difference.status,
+        difference.limitation,
+        difference.unit,
+        difference.period,
+        difference.value_class,
+    ) == (
+        "missing",
+        NOT_COMPARED,
+        {m.key: m for m in cp1c.METRICS}[metric].difference_unit,
+        None,
+        None,
+    )
+    result_fact = facts[f"T1C.6.{metric}.result"]
+    assert (result_fact.text, result_fact.value_class, result_fact.calculation_id) == (
+        "Not compared",
+        None,
+        None,
+    )
+
+
+def test_b1_claims() -> None:
+    claims = {c.claim_id: c.text for c in _b1("positive").claims}
+    assert claims["T1C.4.interest_coverage_adjusted"] == (
+        "Interest coverage (adjusted) of the issuer is [T1C.3.issuer.interest_coverage_adjusted] "
+        "against a peer median of {T1C.4.interest_coverage_adjusted.median|x} across "
+        "{T1C.4.interest_coverage_adjusted.n|peers}. The outlier test does not apply to the issuer "
+        "on this metric because its CP-1 value is not available."
+    )
+    assert claims["T1C.4.adjusted_ebitda_margin"] == (
+        "Adjusted EBITDA margin of the issuer is [T1C.3.issuer.adjusted_ebitda_margin] against a "
+        "peer median of {T1C.4.adjusted_ebitda_margin.median|%} across "
+        "{T1C.4.adjusted_ebitda_margin.n|peers}. The outlier test does not apply to the issuer on "
+        "this metric because its CP-1 value is not available."
+    )
+    frozen = {c["claim_id"]: c["text"] for c in expected()["cases"]["positive"]["claims"]}
+    assert claims["T1C.4.total_leverage_adjusted"] == frozen["T1C.4.total_leverage_adjusted"]
+
+
+def test_b1_own_lines_follow_the_peer_source_lines_in_metrics_order() -> None:
+    limitations = list(_b1("positive").limitations)
+    frozen = expected()["cases"]["positive"]["own_limitations"]
+    assert limitations[:2] == frozen[:2]
+    tail = (
+        "so its difference from the peer median, its position and its outlier flag are not "
+        "compared."
+    )
+    assert limitations[2:4] == [
+        f"The issuer's adjusted EBITDA margin is not available in CP-1 ({MARGIN_MISSING}), {tail}",
+        f"The issuer's interest coverage (adjusted) is not available in CP-1 ({COVERAGE_NA}), {tail}",
+    ]
+    assert limitations[4:] == frozen[2:]
+
+
+def test_b1_new_strings_pass_prose_and_bare_figures() -> None:
+    found = _b1("positive")
+    bound = prose.bind(item.fact for item in found.facts)
+    issuer = manifest()["cases"]["positive"]["run"]["issuer_name"]
+    for claim in found.claims:
+        assert prose.issues(claim.text, bound, names=(issuer,)) == (), claim.claim_id
+
+
+def test_b1_precedence_no_peer_source_then_median_missing() -> None:
+    no_peers = _facts(_b1("no_peers"))
+    for name in ("difference", "position", "of"):
+        fact = no_peers[f"T1C.4.interest_coverage_adjusted.{name}"]
+        assert fact.limitation == "No peer source is in the pack", name
+    assert no_peers["T1C.6.interest_coverage_adjusted.difference"].limitation == (
+        "No peer source is in the pack"
+    )
+    gap = _facts(_b1("gap"))
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["gap"]["facts"]}
+    for name in ("difference", "position", "of"):
+        fact_id = f"T1C.4.interest_coverage_adjusted.{name}"
+        assert gap[fact_id].limitation == frozen[fact_id]["limitation"], name
+
+
+def test_b1_known_cp1_fact_with_the_wrong_unit_still_raises() -> None:
+    metrics = cp1_metrics()
+    metrics["total_leverage_adjusted"] = metrics["total_leverage_adjusted"].model_copy(
+        update={"unit": "PERCENT"}
+    )
+    with pytest.raises(ValueError, match="CP-1 fact unavailable for total_leverage_adjusted"):
+        cp1c.calculation_issues(inputs("positive", cp1=metrics))
+
+
+B1_SENTENCE = (
+    " The outlier test does not apply to the issuer on this metric because its CP-1 value is not "
+    "available."
+)
+
+
+def test_b1_claim_comes_before_the_zero_median_sentence() -> None:
+    """Review M1: the 1C1 order puts the issuer's unknown value ahead of a zero median."""
+    found = _coinciding(cp1=_cp1_not_known())
+    facts = _facts(found)
+    assert facts["T1C.4.adjusted_ebitda_margin.median"].amount == 0
+    assert facts["T1C.3.issuer.adjusted_ebitda_margin"].status == "missing"
+    text = {c.claim_id: c.text for c in found.claims}["T1C.4.adjusted_ebitda_margin"]
+    assert text.endswith(B1_SENTENCE)
+    assert "peer median is zero" not in text
+
+
+def test_b1_claim_sentence_skipped_when_the_median_is_missing_or_no_peer_source() -> None:
+    """Review L1 / round 6g: the median-missing and no-peer-source reasons come first."""
+    for case in ("gap", "no_peers"):
+        frozen = {c["claim_id"]: c["text"] for c in expected()["cases"][case]["claims"]}
+        claims = {c.claim_id: c.text for c in _b1(case).claims}
+        k = "interest_coverage_adjusted"
+        want = frozen[f"T1C.4.{k}"].replace(f"{{T1C.3.issuer.{k}|x}}", f"[T1C.3.issuer.{k}]")
+        assert claims[f"T1C.4.{k}"] == want, case
+        assert B1_SENTENCE not in claims[f"T1C.4.{k}"], case
+
+
+CONFLICTING = "Conflicting: CP-1's reconciliation does not agree"
+
+
+ISSUER_CONFLICTING = "Not calculable: the issuer's CP-1 value is conflicting"  # round 6h (a)
+
+
+def _cp1_conflicting(metric: str = "total_leverage_adjusted") -> dict[str, Fact]:
+    metrics = cp1_metrics()
+    metrics[metric] = metrics[metric].model_copy(
+        update={"amount": None, "status": "conflicting", "limitation": CONFLICTING}
+    )
+    return metrics
+
+
+def test_6g_conflicting_cp1_fact_takes_the_b1_path() -> None:
+    found = inputs("positive", payload=_plain("positive"), cp1=_cp1_conflicting())
+    assert cp1c.calculation_issues(found) == ()
+    result_ = cp1c.compute(found)
+    facts = _facts(result_)
+    k, source = "total_leverage_adjusted", cp1_metrics()["total_leverage_adjusted"]
+    for fact_id in (f"T1C.3.issuer.{k}", f"T1C.6.{k}.cp1"):
+        fact = facts[fact_id]
+        assert (fact.status, fact.limitation, fact.amount, fact.unit) == (
+            "conflicting",
+            CONFLICTING,
+            None,
+            "MULTIPLE",
+        ), fact_id
+        assert (fact.period, fact.calculation_id) == (source.period, source.calculation_id)
+    for fact_id in (
+        f"T1C.4.{k}.difference",
+        f"T1C.4.{k}.position",
+        f"T1C.4.{k}.of",
+        f"T1C.6.{k}.difference",
+    ):
+        fact = facts[fact_id]
+        assert (fact.status, fact.limitation) == ("missing", NOT_COMPARED), fact_id
+    # round 6h (a): the issuer's outlier cells follow the B1 issuer frames, not the 1C2 text
+    for name, unit in (("deviation", "PERCENT"), ("flag", None)):
+        fact = facts[f"T1C.5.issuer.{k}_{name}"]
+        assert (fact.status, fact.limitation, fact.unit, fact.period, fact.value_class) == (
+            "missing",
+            ISSUER_CONFLICTING,
+            unit,
+            cp1c.MIXED_PERIOD,
+            None,
+        ), name
+    assert facts[f"T1C.5.p01.{k}_flag"].status == "known"
+    assert facts[f"T1C.6.{k}.result"].text == "Not compared"
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["positive"]["facts"]}
+    for name in ("n", "median", "outlier_count"):
+        fact_id = f"T1C.4.{k}.{name}"
+        assert _exact(facts[fact_id].amount) == frozen[fact_id]["amount_exact"], fact_id
+    claim = {c.claim_id: c.text for c in result_.claims}[f"T1C.4.{k}"]
+    assert claim.endswith(B1_SENTENCE)
+    tail = (
+        "so its difference from the peer median, its position and its outlier flag are not "
+        "compared."
+    )
+    assert result_.limitations[2] == (
+        f"The issuer's total leverage (adjusted) is not available in CP-1 ({CONFLICTING}), {tail}"
+    )
+
+
+def test_6h_conflicting_issuer_cells_keep_the_median_missing_reason_first() -> None:
+    """Round 6h (a): the conflicting reason sits at the value step of the 1C1 order, so a missing
+    median still comes first (the gap case's coverage median is missing)."""
+    k = "interest_coverage_adjusted"
+    found = inputs("gap", payload=_plain("gap"), cp1=_cp1_conflicting(k))
+    assert cp1c.calculation_issues(found) == ()
+    facts = _facts(cp1c.compute(found))
+    assert facts[f"T1C.3.issuer.{k}"].status == "conflicting"
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["gap"]["facts"]}
+    for name in ("deviation", "flag"):
+        fact_id = f"T1C.5.issuer.{k}_{name}"
+        assert (facts[fact_id].status, facts[fact_id].limitation) == (
+            "missing",
+            frozen[fact_id]["limitation"],
+        ), fact_id
+
+
+def test_6g_absent_cp1_fact_still_raises() -> None:
+    metrics = cp1_metrics()
+    del metrics["total_leverage_adjusted"]
+    with pytest.raises(ValueError, match="CP-1 fact unavailable for total_leverage_adjusted"):
+        cp1c.calculation_issues(inputs("positive", cp1=metrics))

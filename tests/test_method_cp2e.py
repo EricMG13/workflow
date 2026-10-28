@@ -227,15 +227,6 @@ def _operands(raw: dict[str, Any]) -> cp2e.Operands:
     )
 
 
-_E4A_XFAIL = pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "oracle-disagreement E4a: fixture_no_rate_terms stores 'the currency of the debt is not "
-        "stated'; ruling E4a gives 'the facility balance is not stated'; LEAD amendment pending"
-    ),
-)
-
-
 def _fixture_result(name: str) -> cp2e.Sensitivity:
     raw = EXPECTED["fixtures"][name]["inputs"]
     return cp2e.derive_sensitivity(
@@ -246,33 +237,10 @@ def _fixture_result(name: str) -> cp2e.Sensitivity:
     )
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        pytest.param(name, marks=_E4A_XFAIL) if name == "fixture_no_rate_terms" else name
-        for name in sorted(EXPECTED["fixtures"])
-    ],
-)
+@pytest.mark.parametrize("name", sorted(EXPECTED["fixtures"]))
 def test_composer_fixture(name: str) -> None:
+    """All eight fixtures; fixture_no_rate_terms is the live E4a test (oracle amendment E6)."""
     assert _stored_all(_fixture_result(name)) == EXPECTED["fixtures"][name]["stored"]
-
-
-def test_e4a_currency_stated_without_balance_in_the_composer() -> None:
-    """Ruling E4a, live: the five debt values of fixture_no_rate_terms carry the ruled reason;
-    every other value equals the frozen fixture."""
-    got = _stored_all(_fixture_result("fixture_no_rate_terms"))
-    want = EXPECTED["fixtures"]["fixture_no_rate_terms"]["stored"]
-    ruled = {"state": "missing", "reason": "the facility balance is not stated"}
-    debt_keys = ("debt_change", "debt_after", "lev_after")
-    assert got["foreign_debt"] == ruled
-    assert got["foreign_debt_share"] == ruled
-    assert [r[k] for r in got["fx"] for k in debt_keys] == [ruled] * (3 * len(got["fx"]))
-    top = set(got) - {"foreign_debt", "foreign_debt_share", "fx"}
-    assert {k: got[k] for k in top} == {k: want[k] for k in top}
-    for g, w in zip(got["fx"], want["fx"], strict=True):
-        assert {k: v for k, v in g.items() if k not in debt_keys} == {
-            k: v for k, v in w.items() if k not in debt_keys
-        }
 
 
 def test_partial_facility_adds_its_own_limitation() -> None:
@@ -571,7 +539,7 @@ def _grid() -> list[tuple[str, cp2e.MacroFxInputs]]:
     for terms in ("floating", "fixed", "absent"):
         for floor in ("0", "25"):
             for interest in ("5.00", "0", "-0.5"):
-                for ebitda in ("30.0", "0"):
+                for ebitda in ("30.0", "0", "-30.0"):
                     for ccy in ("USD", "EUR", "absent"):
                         for share in (False, True):
                             for hedge in (False, True):
@@ -604,28 +572,12 @@ def _grid() -> list[tuple[str, cp2e.MacroFxInputs]]:
 
 
 def test_valid_inputs_settle_with_clean_claims() -> None:
-    """Every grid combination composes with prose-clean claims, except the one branch no ruling
-    covers: coverage at base known but coverage after a shock not known (cash interest exactly
-    offset by the added interest)."""
-    raised = 0
+    """Every grid combination composes with prose-clean claims: A3 retired the coverage raise and
+    round 6i the fixed-rate floor raise."""
     for label, inputs in _grid():
-        try:
-            result = cp2e.compute(inputs)
-        except ValueError as error:
-            assert str(error).startswith("Claim figure: T2F.3.r0"), (label, error)
-            assert str(error).endswith(".cov_after is not a known number"), (label, error)
-            s = cp2e.derive_sensitivity(
-                operands=cp2e.operands_of(inputs),
-                rate_shocks_bp=inputs.rate_shocks_bp,
-                fx_shocks=inputs.fx_shocks,
-                hedge_ratio=inputs.hedge_ratio,
-            )
-            assert s.cov_base.state == "known", label
-            assert any(r.gross.state == "known" != r.cov_after.state for r in s.rate), label
-            raised += 1
-            continue
+        result = cp2e.compute(inputs)
+        assert result.claims, label
         _assert_prose_clean(result)
-    assert raised == 24  # floating, floor 0, cash interest -0.5 (offset by the 100 bp shock)
 
 
 @pytest.mark.parametrize("token", ["(5", "5)"])
@@ -646,3 +598,161 @@ def test_source_names_are_required() -> None:
     (names,) = [f for f in dataclasses.fields(cp2e.MacroFxInputs) if f.name == "source_names"]
     assert names.default is dataclasses.MISSING
     assert names.default_factory is dataclasses.MISSING
+
+
+# --- round 5 (E7, E8) and round 6 (A3, A4) ---------------------------------------------------
+def _negative_gross_inputs(interest: str) -> cp2e.MacroFxInputs:
+    """Directly built inputs (the pure composer path; a validated facility balance is never
+    negative): a negative balance gives a negative added interest, so interest after the shock
+    can be zero or negative while coverage at base is known."""
+    base = _value(_inputs("positive"), "interest", interest)
+    assert base.facility is not None
+    balance = copy.replace(base.facility.balance, value=Decimal(-50))
+    return copy.replace(base, facility=copy.replace(base.facility, balance=balance))
+
+
+def _e7(nth: str, n: int, word: str) -> str:
+    return (
+        f"For the {nth} rate shock tested, the floating-rate debt of {{T2F.2.r01.value|US$ m}} adds "
+        f"{{T2F.3.r{n:02d}.gross|US$ m}} of annual cash interest before any hedge; interest "
+        f"coverage after the shock is not meaningful because cash interest after the shock is "
+        f"{word}: [T2F.3.r{n:02d}.cov_after]."
+    )
+
+
+def test_e7_coverage_after_not_meaningful_with_base_known() -> None:
+    result = cp2e.compute(_negative_gross_inputs("0.5"))  # 100 bp: after 0; 200 bp: after -0.5
+    assert result.sensitivity.cov_base.state == "known"
+    cells = {c.fact_id: c for c in _cells(result)}
+    for n, nth, word in ((1, "first", "zero"), (2, "second", "negative")):
+        reason = f"Not meaningful: interest after the shock is {word}"
+        for field in ("cov_after", "cov_change"):
+            cell = cells[f"T2F.3.r{n:02d}.{field}"]
+            assert (cell.status, cell.limitation) == ("not_applicable", reason), cell.fact_id
+        claim = _claim(result, f"CP-2E-RATE-{n:02d}")
+        assert claim.text == _e7(nth, n, word)
+        assert claim.refs == (
+            "T2F.2.r01.value",
+            f"T2F.3.r{n:02d}.gross",
+            f"T2F.3.r{n:02d}.cov_after",
+        )
+    _assert_prose_clean(result)
+
+
+def _derive(**changes: Any) -> cp2e.Sensitivity:
+    operands = copy.replace(cp2e.operands_of(_inputs("positive")), **changes)
+    return cp2e.derive_sensitivity(
+        operands=operands,
+        rate_shocks_bp=(Decimal(100),),
+        fx_shocks=(Decimal("0.1"),),
+        hedge_ratio=None,
+    )
+
+
+def _na(reason: str) -> dict[str, str]:
+    return {"state": "not_applicable", "reason": reason}
+
+
+def test_a3_negative_divisors_are_not_meaningful() -> None:
+    interest = _derive(interest=Decimal(-2))
+    assert _stored(interest.cov_base) == _na("cash interest is negative")
+    assert _stored(interest.rate[0].cov_after) == _na("interest after the shock is negative")
+    ebitda = _derive(ebitda=Decimal(-30))
+    assert _stored(ebitda.lev_base) == _na("EBITDA is negative")
+    assert _stored(ebitda.rate[0].share_of_ebitda) == _na("EBITDA is negative")
+    assert ebitda.cov_base.state == "known"  # a negative numerator is a value
+    debt = _derive(total_debt=Decimal(-50))
+    assert _stored(debt.floating_share) == _na("total debt is negative")
+    assert _stored(debt.foreign_debt_share) == _na("total debt is negative")
+    share = copy.replace(cp2e.operands_of(_inputs("positive")), foreign_ebitda_share=Decimal(-20))
+    after = cp2e.derive_sensitivity(
+        operands=share,
+        rate_shocks_bp=(Decimal(100),),
+        fx_shocks=(Decimal("0.1"),),
+        hedge_ratio=None,
+    )
+    assert _stored(after.fx[0].lev_after) == _na("EBITDA after the shock is negative")
+    zero = _derive(interest=Decimal(0))  # the zero reasons stay byte for byte
+    assert _stored(zero.cov_base) == _na("cash interest is zero")
+
+
+def test_a3_negative_base_coverage_falls_under_e3() -> None:
+    result = cp2e.compute(_value(_inputs("positive"), "interest", "-0.5"))
+    assert result.sensitivity.cov_base.state == "not_applicable"
+    assert _claim(result, "CP-2E-RATE-01").text == _e3("first", 1, "[T2F.3.r01.cov_after]")
+    assert _claim(result, "CP-2E-RATE-02").text == _e3("second", 2, "{T2F.3.r02.cov_after|x}")
+    _assert_prose_clean(result)
+
+
+@pytest.mark.parametrize(
+    ("phrase", "rate_type"),
+    [("floating-rate", "FLOATING"), ("Fixed-Rate", "FIXED"), ("floating -  rate", "FLOATING")],
+)
+def test_e8_hyphenated_rate_phrases_count(phrase: str, rate_type: str) -> None:
+    sentence = f"The facility has a {phrase} coupon on the SOFR reference rate"
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["rate_basis"].update(quote=sentence, rate_type=rate_type)
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == ()
+
+
+def test_e8_both_stems_hyphenated_is_neither() -> None:
+    sentence = (
+        "The facility has a floating-rate coupon on the SOFR reference rate, not a fixed-rate"
+    )
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["rate_basis"]["quote"] = sentence
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
+        "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
+    )
+
+
+_A4_ABOVE = (
+    "The reference rate level is not in any source and the facility floor is above zero, so the "
+    "rate shocks are not calculated and downward shocks are not tested"
+)
+
+
+def test_a4_floor_above_zero_limitation() -> None:
+    result = cp2e.compute(_floor(_inputs("positive"), "25"))
+    assert _A4_ABOVE in result.limitations
+    assert not any(
+        t.startswith("The reference rate level is not in any source, so")
+        for t in result.limitations
+    )
+    assert result.limitations == tuple(r.cells[0].text for r in result.tables[8].rows)
+
+
+def _fixed(inputs: cp2e.MacroFxInputs) -> cp2e.MacroFxInputs:
+    assert inputs.facility is not None
+    basis = copy.replace(inputs.facility.basis, rate_type="FIXED")
+    return copy.replace(inputs, facility=copy.replace(inputs.facility, basis=basis))
+
+
+@pytest.mark.parametrize("floor", ["0", "25"])
+def test_round6i_no_floor_limitation_on_fixed_rate_debt(floor: str) -> None:
+    """Round 6i: a floor does not bind a fixed coupon, so neither floor line is emitted; every
+    other limitation stays as built (the positive case's own limitations without its floor line)."""
+    result = cp2e.compute(_fixed(_floor(_inputs("positive"), floor)))
+    positive = EXPECTED["cases"]["positive"]["own_limitations"]
+    floor_line = positive[2]
+    assert floor_line.startswith("The reference rate level is not in any source, so a floor")
+    assert _A4_ABOVE not in result.limitations
+    assert list(result.limitations) == [t for t in positive if t != floor_line]
+    _assert_prose_clean(result)
+
+
+@pytest.mark.parametrize("phrase", ["fixed rates", "prefixed rate"])
+def test_e8_word_boundaries_are_pinned(phrase: str) -> None:
+    """The ruled \\b anchors: "fixed rates" and "prefixed rate" carry no rate phrase."""
+    sentence = f"The facility has a {phrase} coupon on the SOFR reference rate"
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["rate_basis"].update(quote=sentence, rate_type="FIXED")
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
+        "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
+    )

@@ -1,4 +1,4 @@
-# Undelivered to LEAD (app paused session messaging, 2026-10-28)
+# Sent to LEAD 2026-10-28 after the user resumed messaging (kept for the record)
 
 Modules: rounds 6f and 6g are on the lane (eb88467).
 - **CP-3D:** the 6g leading-zero rule went into its running 6e task.
@@ -48,3 +48,15 @@ Its next round batches these answers with A1, A5 and the oracle-batch re-pin, an
 **CP-3D rounds 6e and 6g** are applied (fc8c505, 215 passed) and under scoped review. Two points for your information:
 - The leading-zero issue uses the frame's `<path>`, which is `observations[i]` for levels. Every pinned level issue uses that form; the ruling's example used `level:`.
 - Recovery `percent_text` is not quoted and is not in the 6g field list, so it gets no leading-zero check.
+
+---
+
+**CP-3D 6e/6g** is approved and merged. One Info from the review: no ruling says where the leading-zero check goes relative to the bid/offer label check. The code puts it first, so an unlabelled `0200` gets the leading-zero issue rather than the label issue. Confirm?
+
+**CP-4C Stage 1** is built (8c57467, 130 passed; full list in `work/build/stage1/cp4c/report.md`). Your oracle-batch re-pin follows. Please rule on these, as for CP-2H:
+- **13 fail-closed states:** the "Fail-closed raises" list in the report.
+- **Exact conservation:** it fails for 3 equal classes sharing a partial payment. Each class is rounded at 38 digits, so the T4E.9 balance is left with a residue in the 38th digit. The code raises. Do you want a rule, such as a residual allocation or a tolerance, or keep failing closed?
+- **Citations, cross-module:** CP-4C cells carry de-duplicated input citations (oracle `lineage_rule`), but CP-2G Stage 1 does not propagate citations.
+- **Choices:**
+  - unknown upstream copies keep their status;
+  - T4E.1 shows the bound Input status (the builder hard-codes "restricted").

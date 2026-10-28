@@ -1,7 +1,8 @@
 """CP-1C (Peer benchmark): the Stage 1 calculation, pure Python over typed inputs.
 
-Lease: docs/CP1C-OWNER-LEASE.md (frozen revision 4, amendment 1 ruling: the universe totals are
-table T1C.8). Oracle: cases/cp1c-owner/expected.json. Python owns every number: peer ratios,
+Lease: docs/CP1C-OWNER-LEASE.md (frozen revision 4 with amendment 1: the universe totals are
+table T1C.8), as extended by docs/rulings/2026-10-28-stage1.md (CP-1C 1C1-1C6, round 2 C1-C3;
+a ruling wins over the lease). Oracle: cases/cp1c-owner/expected.json. Python owns every number: peer ratios,
 medians, differences, positions, deviations, outlier flags and counts, all in an exact 38-digit
 half-even decimal context. The analyst supplies only comparability judgments, rationale text,
 the overall view and the gaps. No I/O, store, host, session or render call happens here; the
@@ -12,7 +13,9 @@ import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
+from datetime import date
 from decimal import ROUND_HALF_EVEN, Context, Decimal
+from itertools import pairwise
 from typing import Literal
 
 from deploy_vii import prose
@@ -36,9 +39,10 @@ PEERS_SOURCE_ID = "peers"
 P1_HEADER = "Peer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO"
 P2_HEADER = "Peer  Reporting basis  Operating segments  Fiscal year end"
 NOT_STATED = "Not stated"
-# ASCII digits only: str.isdigit() and \d also accept digits Decimal() cannot read.
-AMOUNT = re.compile(r"-?[0-9]+(?:\.[0-9]+)?")
-PERIOD_END = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+# ASCII digits only. str.isdigit() and \d accept other Unicode digits: Decimal() reads some of
+# them (Arabic-Indic) and rejects others (superscripts); neither belongs in a source amount.
+AMOUNT = re.compile(r"-?[0-9]+(?:\.([0-9]+))?")
+PERIOD_END = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")  # and a real calendar date (1C4)
 TABLE_NOT_FOUND = "Peer table not found"
 NO_PEER_SOURCE = "No peer source is in the pack"
 NOT_STATED_IN_SOURCE = "Not stated in the peer source"
@@ -46,10 +50,20 @@ MIXED_PERIOD = "Mixed: issuer LTM Q4 25, each peer's own twelve months"
 PROHIBITED_KINDS = ("instrument recommendation", "recovery conclusion")
 EXCLUDED = "Not meaningful: the peer is excluded from the universe"
 NO_MEDIAN = "Not calculable: no peer median (fewer than three included peers have a value)"
-# The peer summary's own basis line: USD, amounts in millions, shown to one decimal place.
-SHEET_UNIT = "MILLIONS"
-SHEET_CURRENCY = "USD"
-SHEET_SCALE = Decimal(1_000_000)
+OWN_NOT_MEANINGFUL = "Not meaningful: the peer's own ratio is not meaningful"  # ruling 1C1
+ZERO_MEDIAN = "Not meaningful: the peer median is zero"
+NOT_COMPARED = "Not compared: one side is not available"  # ruling 1C2
+# Round 2 C3: page:1 must carry this clause in its Basis line; the clause is what gives a source
+# amount its currency, unit and scale. Any other basis is outside the table rule.
+BASIS_PREFIX = "Basis:"
+SUPPORTED_BASIS: Mapping[tuple[str, str], tuple[str, str, Decimal]] = {
+    ("USD", "amounts in millions"): ("USD", "MILLIONS", Decimal(1_000_000)),
+}
+# The unit a settled source amount carries under the supported clause; the no-source gap twins
+# carry it too (a missing fact carries its settled twin's unit).
+NO_SOURCE_AMOUNT_UNIT = "MILLIONS"
+# The oracle shows every source amount at one decimal place (decimals 1). An amount stated more
+# precisely would be shown rounded, so it breaches the table rule (round 3 ruling 1C-x).
 SHEET_DECIMALS = 1
 PERCENT = "PERCENT"
 MULTIPLE = "MULTIPLE"
@@ -76,7 +90,6 @@ OPERANDS: tuple[tuple[str, str], ...] = (
 )
 OPERAND_LABEL: Mapping[str, str] = dict(OPERANDS)
 
-Status = Literal["known", "missing", "not_applicable"]
 Comparability = Literal["Comparable", "Partly comparable", "Not comparable"]
 
 
@@ -211,6 +224,9 @@ class PeerRow:
 @dataclass(frozen=True)
 class PeerSheet:
     source_sha256: str
+    currency: str  # read from the page:1 Basis line clause
+    unit: str
+    scale: Decimal
     issuer: PeerRow
     peers: tuple[PeerRow, ...]
 
@@ -220,17 +236,24 @@ def _split(line: str) -> list[str]:
     return re.split(r" {2,}", line)
 
 
-def _amount(token: str, line: str) -> Decimal | None:
+def _amount(token: str) -> Decimal | None:
     if token == NOT_STATED:
         return None
-    if not AMOUNT.fullmatch(token):
-        raise PeerTableError(f"Peer table amount not readable: {token} in {line}")
+    match = AMOUNT.fullmatch(token)
+    if match is None:
+        raise PeerTableError(TABLE_NOT_FOUND)
+    if len(match.group(1) or "") > SHEET_DECIMALS:  # ruling 1C-x: a table rule breach
+        raise PeerTableError(TABLE_NOT_FOUND)
     return Decimal(token)
 
 
-def _period_end(token: str, line: str) -> str:
+def _period_end(token: str) -> str:
     if not PERIOD_END.fullmatch(token):
-        raise PeerTableError(f"Peer table period end not readable: {token} in {line}")
+        raise PeerTableError(TABLE_NOT_FOUND)
+    try:
+        date.fromisoformat(token)
+    except ValueError:
+        raise PeerTableError(TABLE_NOT_FOUND) from None
     return token
 
 
@@ -238,7 +261,21 @@ def _span(source: Source, locator: str) -> str | None:
     return next((span.text for span in source.spans if span.locator == locator), None)
 
 
+def _basis(lines: Sequence[str]) -> tuple[str, str, Decimal]:
+    """Currency, unit and scale from the supported clause of a page:1 Basis line (C3)."""
+    for line in lines:
+        if not line.startswith(BASIS_PREFIX):
+            continue
+        parts = [part.strip().rstrip(".") for part in line[len(BASIS_PREFIX) :].split(";")]
+        for pair in pairwise(parts):
+            if pair in SUPPORTED_BASIS:
+                return SUPPORTED_BASIS[pair]
+    raise PeerTableError(TABLE_NOT_FOUND)
+
+
 def _basis_lines(source: Source) -> dict[str, BasisLine]:
+    """The page:2 table: it ends at the first line that is not 4 fields (1C4); without its
+    header every peer's basis cells read Not stated (1C3)."""
     text = _span(source, "page:2")
     lines = [] if text is None else text.split("\n")
     if P2_HEADER not in lines:
@@ -248,63 +285,77 @@ def _basis_lines(source: Source) -> dict[str, BasisLine]:
         parts = _split(line)
         if len(parts) != 4:
             break  # free-text notes follow the table
+        if parts[0] in basis:  # provisional (not ruled): a repeated page:2 label
+            raise PeerTableError(TABLE_NOT_FOUND)
         basis[parts[0]] = BasisLine(parts[1], parts[2], parts[3], line)
     return basis
 
 
+def _row(line: str, basis: Mapping[str, BasisLine]) -> PeerRow:
+    parts = _split(line)
+    if len(parts) != 7:
+        raise PeerTableError(TABLE_NOT_FOUND)
+    amounts = {key: _amount(token) for (key, _), token in zip(OPERANDS, parts[2:], strict=True)}
+    return PeerRow(parts[0], _period_end(parts[1]), amounts, line, basis.get(parts[0]))
+
+
 def parse_peer_source(source: Source | None, *, issuer_name: str) -> PeerSheet | None:
-    """The peer table rule: None when the pack holds no peers source; PeerTableError when the
-    source holds no readable table (no page:1 header line gives 'Peer table not found')."""
+    """The peer table rule: None when the pack holds no peers source. Every breach (no
+    readable page:1, no header, no supported Basis clause, a line that is not 7 fields, a bad
+    date, a non-decimal amount, an amount with more than one decimal place, a repeated label,
+    an issuer line count other than 1) raises PeerTableError('Peer table not found'), which is
+    returned alone (rulings 1C4, C3, 1C-x)."""
     if source is None:
         return None
-    if source.status != "ready" or source.sha256 is None:
-        raise PeerTableError(f"Peer source not readable: {source.status}")
-    text = _span(source, "page:1")
+    text = _span(source, "page:1") if source.status == "ready" else None
     lines = [] if text is None else text.split("\n")
-    if P1_HEADER not in lines:
+    if source.sha256 is None or P1_HEADER not in lines:
         raise PeerTableError(TABLE_NOT_FOUND)
+    start = lines.index(P1_HEADER)
+    currency, unit, scale = _basis(lines[:start])
     basis = _basis_lines(source)
-    rows: list[PeerRow] = []
-    for line in lines[lines.index(P1_HEADER) + 1 :]:
-        parts = _split(line)
-        if len(parts) != 7:
-            raise PeerTableError(f"Peer table row not readable: {line}")
-        amounts = {key: _amount(token, line) for (key, _), token in zip(OPERANDS, parts[2:])}
-        rows.append(
-            PeerRow(parts[0], _period_end(parts[1], line), amounts, line, basis.get(parts[0]))
-        )
+    rows = [_row(line, basis) for line in lines[start + 1 :]]
     labels = Counter(row.label for row in rows)
-    if duplicated := sorted(label for label, count in labels.items() if count > 1):
-        raise PeerTableError(f"Peer table repeats a row: {', '.join(duplicated)}")
-    if labels[issuer_name] != 1:
-        raise PeerTableError(f"Issuer line not found in the peer table: {issuer_name}")
+    if any(count > 1 for count in labels.values()) or labels[issuer_name] != 1:
+        raise PeerTableError(TABLE_NOT_FOUND)
     issuer = next(row for row in rows if row.label == issuer_name)
     peers = tuple(row for row in rows if row.label != issuer_name)
-    return PeerSheet(source.sha256, issuer, peers)
+    return PeerSheet(source.sha256, currency, unit, scale, issuer, peers)
 
 
 # --- the pure composer rules --------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
-class Ratio:
-    status: Status
-    value: Decimal | None = None
-    reason: str | None = None
+class Known:
+    value: Decimal
+    status: Literal["known"] = "known"
 
 
-def ratio(metric: Metric, amounts: Mapping[str, Decimal | None]) -> Ratio:
+@dataclass(frozen=True)
+class Unsettled:
+    status: Literal["missing", "not_applicable"]
+    reason: str
+
+
+Ratio = Known | Unsettled
+
+
+def ratio(
+    metric: Metric, amounts: Mapping[str, Decimal | None], *, where: str = "in the peer source"
+) -> Ratio:
     """One division of exact decimals; a Not stated operand is missing, a denominator not
-    positive is not_applicable (lease "peer metric")."""
+    positive is not_applicable (lease "peer metric"; `where` names the issuer line, 1C2)."""
     numerator, denominator = amounts[metric.numerator], amounts[metric.denominator]
     if numerator is None or denominator is None:
         absent = metric.numerator if numerator is None else metric.denominator
-        reason = f"Not calculable: {OPERAND_LABEL[absent].lower()} is not stated in the peer source"
-        return Ratio("missing", reason=reason)
+        return Unsettled(
+            "missing", f"Not calculable: {OPERAND_LABEL[absent].lower()} is not stated {where}"
+        )
     if denominator <= 0:
         reason = f"Not meaningful: {OPERAND_LABEL[metric.denominator].lower()} is not positive"
-        return Ratio("not_applicable", reason=reason)
-    return Ratio("known", CTX.divide(numerator, denominator))
+        return Unsettled("not_applicable", reason)
+    return Known(CTX.divide(numerator, denominator))
 
 
 def peer_metrics(row: PeerRow) -> dict[str, Ratio]:
@@ -338,8 +389,10 @@ def position(
 def outlier(value: Decimal, peer_median_value: Decimal) -> tuple[Decimal, str] | None:
     """(deviation, flag); None when the median is zero (not_applicable). Outlier iff the
     absolute deviation is strictly above one half."""
-    if peer_median_value == 0:
-        return None
+    return None if peer_median_value == 0 else _deviation(value, peer_median_value)
+
+
+def _deviation(value: Decimal, peer_median_value: Decimal) -> tuple[Decimal, str]:
     deviation = CTX.divide(CTX.subtract(value, peer_median_value), peer_median_value)
     flag = "Outlier" if deviation.copy_abs() > OUTLIER_FRACTION else "Within range"
     return deviation, flag
@@ -401,17 +454,19 @@ def _fid(ref: Ref) -> str:
 
 
 class _Composer:
-    def __init__(self, peer_sha256: str | None) -> None:
+    def __init__(self, sheet: PeerSheet | None) -> None:
         self.items: list[PeerFact] = []
         self.rows: dict[str, list[TableRow]] = {table: [] for table in TABLES}
-        self.peer_sha256 = peer_sha256
+        self.sheet = sheet
+
+    def _peer_sheet(self) -> PeerSheet:
+        if self.sheet is None:  # a peer citation or source amount exists only with a sheet
+            raise ValueError("A peer source fact needs the peers source")
+        return self.sheet
 
     def cite(self, locator: str, quote: str) -> Citation:
-        if self.peer_sha256 is None:
-            raise ValueError("A peer citation needs the peers source")
-        return Citation(
-            source_id=PEERS_SOURCE_ID, source_sha256=self.peer_sha256, locator=locator, quote=quote
-        )
+        sha = self._peer_sheet().source_sha256
+        return Citation(source_id=PEERS_SOURCE_ID, source_sha256=sha, locator=locator, quote=quote)
 
     def _add(self, fact: Fact, derives: Sequence[str] = (), copied: str | None = None) -> None:
         self.items.append(PeerFact(fact, tuple(derives), copied))
@@ -430,7 +485,7 @@ class _Composer:
     ) -> None:
         """A known number: calculated unless `source` (its citations) marks a source amount."""
         table, row, name = ref
-        sheet = source is not None
+        sheet = self._peer_sheet() if source is not None else None
         self._add(
             Fact(
                 fact_id=_fid(ref),
@@ -442,8 +497,8 @@ class _Composer:
                 unit=unit,
                 period=period,
                 formula=formula,
-                currency=SHEET_CURRENCY if sheet else None,
-                scale=SHEET_SCALE if sheet else Decimal(1),
+                currency=sheet.currency if sheet else None,
+                scale=sheet.scale if sheet else Decimal(1),
                 decimals=SHEET_DECIMALS if sheet else None,
                 value_class="source" if sheet else "calculated",
                 calculation_id=None if sheet else f"calc:{_fid(ref)}",
@@ -628,7 +683,13 @@ def _universe(c: _Composer, peers: Sequence[_Peer], present: bool) -> None:
 def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer]) -> None:
     if sheet is None:
         for key, label in OPERANDS:
-            c.unsettled(("T1C.2", "none", key), label, NO_PEER_SOURCE, unit=SHEET_UNIT, period=None)
+            c.unsettled(
+                ("T1C.2", "none", key),
+                label,
+                NO_PEER_SOURCE,
+                unit=NO_SOURCE_AMOUNT_UNIT,
+                period=None,
+            )
         c.row("T1C.2", "none", "No peer source", [key for key, _ in OPERANDS])
         return
     for row_id, data in [("issuer", sheet.issuer), *((p.row_id, p.data) for p in peers)]:
@@ -639,7 +700,7 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
                     ("T1C.2", row_id, key),
                     label,
                     NOT_STATED_IN_SOURCE,
-                    unit=SHEET_UNIT,
+                    unit=sheet.unit,
                     period=data.period,
                 )
             else:
@@ -647,7 +708,7 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
                     ("T1C.2", row_id, key),
                     label,
                     value,
-                    unit=SHEET_UNIT,
+                    unit=sheet.unit,
                     period=data.period,
                     formula="Peer source amount",
                     source=(c.cite("page:1", data.line),),
@@ -655,20 +716,23 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
         c.row("T1C.2", row_id, data.label, [key for key, _ in OPERANDS])
 
 
-def _cp1_facts(inputs: PeerBenchmarkInputs) -> dict[str, Fact]:
+@dataclass(frozen=True)
+class _Cp1Cell:
+    fact: Fact
+    amount: Decimal
+    period: str
+
+
+def _cp1_facts(inputs: PeerBenchmarkInputs) -> dict[str, _Cp1Cell]:
     """The CP-1 T4.10 fact per metric: known, numeric, in the metric's unit, with a period."""
-    found: dict[str, Fact] = {}
+    found: dict[str, _Cp1Cell] = {}
     for metric in METRICS:
         fact = inputs.cp1_metrics.get(metric.key)
-        if (
-            fact is None
-            or fact.status != "known"
-            or fact.amount is None
-            or fact.unit != metric.unit
-            or fact.period is None
-        ):
+        if fact is None or fact.status != "known" or fact.unit != metric.unit:
             raise ValueError(f"CP-1 fact unavailable for {metric.key}")
-        found[metric.key] = fact
+        if fact.amount is None or fact.period is None:
+            raise ValueError(f"CP-1 fact unavailable for {metric.key}")
+        found[metric.key] = _Cp1Cell(fact, fact.amount, fact.period)
     return found
 
 
@@ -676,19 +740,19 @@ Values = dict[tuple[str, str], Ratio]
 
 
 def _normalised(
-    c: _Composer, cp1: Mapping[str, Fact], issuer: str, peers: Sequence[_Peer], present: bool
+    c: _Composer, cp1: Mapping[str, _Cp1Cell], issuer: str, peers: Sequence[_Peer], present: bool
 ) -> Values:
     values: Values = {}
     for m in METRICS:
-        c.copy(("T1C.3", "issuer", m.key), m.label, cp1[m.key])
-        values[("issuer", m.key)] = Ratio("known", cp1[m.key].amount)
+        c.copy(("T1C.3", "issuer", m.key), m.label, cp1[m.key].fact)
+        values[("issuer", m.key)] = Known(cp1[m.key].amount)
     c.row("T1C.3", "issuer", f"{issuer} (CP-1)", [m.key for m in METRICS])
     for p in peers:
         ratios = peer_metrics(p.data)
         for m in METRICS:
             got, ref = ratios[m.key], ("T1C.3", p.row_id, m.key)
             values[(p.row_id, m.key)] = got
-            if got.value is not None:
+            if isinstance(got, Known):
                 formula = f"{OPERAND_LABEL[m.numerator]} / {OPERAND_LABEL[m.denominator]}"
                 derives = (f"T1C.2.{p.row_id}.{m.numerator}", f"T1C.2.{p.row_id}.{m.denominator}")
                 c.amount(
@@ -701,11 +765,8 @@ def _normalised(
                     derives=derives,
                 )
             else:
-                status: Literal["missing", "not_applicable"] = (
-                    "not_applicable" if got.status == "not_applicable" else "missing"
-                )
                 c.unsettled(
-                    ref, m.label, got.reason or "", unit=m.unit, period=p.data.period, status=status
+                    ref, m.label, got.reason, unit=m.unit, period=p.data.period, status=got.status
                 )
         c.row("T1C.3", p.row_id, p.data.label, [m.key for m in METRICS])
     if not present:
@@ -786,8 +847,13 @@ def _settled_stats(
 
 
 def _statistics(
-    c: _Composer, peers: Sequence[_Peer], values: Values, present: bool
+    c: _Composer,
+    peers: Sequence[_Peer],
+    values: Values,
+    present: bool,
+    issuer: Mapping[str, Decimal],
 ) -> dict[str, _Stat | None]:
+    """T1C.4 per metric; `issuer` is the copied CP-1 value per metric."""
     stats: dict[str, _Stat | None] = {}
     for m in METRICS:
         k, units = m.key, _gap_units(m)
@@ -805,9 +871,9 @@ def _statistics(
             stats[k] = None
             continue
         known = [
-            (p.row_id, ratio_value)
+            (p.row_id, got.value)
             for p in peers
-            if p.included and (ratio_value := values[(p.row_id, k)].value) is not None
+            if p.included and isinstance(got := values[(p.row_id, k)], Known)
         ]
         c.count(
             ("T1C.4", k, "n"),
@@ -833,11 +899,26 @@ def _statistics(
                     period=MIXED_PERIOD,
                 )
             continue
-        issuer = values[("issuer", k)].value
-        if issuer is None:  # unreachable: the CP-1 copy is checked known
-            raise ValueError(f"CP-1 value missing for {k}")
-        _settled_stats(c, m, issuer, known, med)
+        _settled_stats(c, m, issuer[k], known, med)
     return stats
+
+
+def _flag_operands(
+    peer: _Peer | None, value: Ratio, stat: _Stat
+) -> Unsettled | tuple[Decimal, Decimal]:
+    """Why the deviation and flag are unsettled, in the ruled order (1C1): excluded, median
+    missing, value missing, value not_applicable, median zero; else (value, median)."""
+    if peer is not None and not peer.included:
+        return Unsettled("not_applicable", EXCLUDED)
+    if stat.median is None:
+        return Unsettled("missing", NO_MEDIAN)
+    if isinstance(value, Unsettled):
+        if value.status == "missing":
+            return Unsettled("missing", "Not calculable: the peer's value is not stated")
+        return Unsettled("not_applicable", OWN_NOT_MEANINGFUL)
+    if stat.median == 0:
+        return Unsettled("not_applicable", ZERO_MEDIAN)
+    return value.value, stat.median
 
 
 def _flag_cells(
@@ -846,48 +927,34 @@ def _flag_cells(
     dev = ("T1C.5", row_id, f"{m.key}_deviation")
     flag = ("T1C.5", row_id, f"{m.key}_flag")
     dev_label, flag_label = f"{m.label} · Deviation from median", f"{m.label} · Flag"
-    reason, status = "", "missing"
-    if peer is not None and not peer.included:
-        reason, status = EXCLUDED, "not_applicable"
-    elif stat.median is None:
-        reason = NO_MEDIAN
-    elif value.status == "missing":
-        reason = "Not calculable: the peer's value is not stated"
-    elif value.status == "not_applicable" or value.value is None:
-        # The lease and the oracle give no rule for an included peer whose own ratio is not
-        # meaningful (a denominator not positive); fail closed rather than invent one.
-        raise ValueError(f"No outlier rule for a not-meaningful included peer value: {row_id}")
-    else:
-        result = outlier(value.value, stat.median)
-        if result is None:
-            reason, status = "Not meaningful: the peer median is zero", "not_applicable"
-        else:
-            deviation, verdict = result
-            c.amount(
-                dev,
-                dev_label,
-                deviation,
-                unit=PERCENT,
-                period=MIXED_PERIOD,
-                formula="(value - peer median) / peer median",
-                derives=(f"T1C.3.{row_id}.{m.key}", f"T1C.4.{m.key}.median"),
-            )
-            c.text(
-                flag,
-                flag_label,
-                verdict,
-                value_class="calculated",
-                period=MIXED_PERIOD,
-                formula="Outlier iff |deviation| is strictly above one half",
-                derives=(_fid(dev),),
-            )
-            stat.flags[row_id] = verdict == "Outlier"
-            return
-    unsettled: Literal["missing", "not_applicable"] = (
-        "not_applicable" if status == "not_applicable" else "missing"
+    operands = _flag_operands(peer, value, stat)
+    if isinstance(operands, Unsettled):
+        gap = operands
+        c.unsettled(
+            dev, dev_label, gap.reason, unit=PERCENT, period=MIXED_PERIOD, status=gap.status
+        )
+        c.unsettled(flag, flag_label, gap.reason, unit=None, period=MIXED_PERIOD, status=gap.status)
+        return
+    deviation, verdict = _deviation(*operands)
+    c.amount(
+        dev,
+        dev_label,
+        deviation,
+        unit=PERCENT,
+        period=MIXED_PERIOD,
+        formula="(value - peer median) / peer median",
+        derives=(f"T1C.3.{row_id}.{m.key}", f"T1C.4.{m.key}.median"),
     )
-    c.unsettled(dev, dev_label, reason, unit=PERCENT, period=MIXED_PERIOD, status=unsettled)
-    c.unsettled(flag, flag_label, reason, unit=None, period=MIXED_PERIOD, status=unsettled)
+    c.text(
+        flag,
+        flag_label,
+        verdict,
+        value_class="calculated",
+        period=MIXED_PERIOD,
+        formula="Outlier iff |deviation| is strictly above one half",
+        derives=(_fid(dev),),
+    )
+    stat.flags[row_id] = verdict == "Outlier"
 
 
 def _outliers(
@@ -917,6 +984,17 @@ def _outliers(
         stat = stats[m.key]
         if stat is None or stat.median is None:
             continue  # its outlier_count gap was written with the other statistics
+        if stat.median == 0:  # round 2 C2: not a known 0
+            count = ("T1C.4", m.key, "outlier_count")
+            c.unsettled(
+                count,
+                STAT_LABELS["outlier_count"],
+                ZERO_MEDIAN,
+                unit="peers",
+                period=MIXED_PERIOD,
+                status="not_applicable",
+            )
+            continue
         tested = [p.row_id for p in peers if p.included and p.row_id in stat.flags]
         flagged = sum(1 for r in tested if stat.flags[r])
         c.count(
@@ -929,68 +1007,73 @@ def _outliers(
         )
 
 
-def _tie_out(c: _Composer, sheet: PeerSheet | None, cp1: Mapping[str, Fact]) -> None:
+def _issuer_line(m: Metric, sheet: PeerSheet | None) -> Unsettled | tuple[Decimal, str]:
+    """The issuer line's own ratio and period, or why it cannot be recomputed (1C2)."""
+    if sheet is None:
+        return Unsettled("missing", NO_PEER_SOURCE)
+    got = ratio(m, sheet.issuer.amounts, where="on the issuer line of the peer source")
+    return got if isinstance(got, Unsettled) else (got.value, sheet.issuer.period)
+
+
+def _tie_out(c: _Composer, sheet: PeerSheet | None, cp1: Mapping[str, _Cp1Cell]) -> None:
     """The issuer line on the peer source recomputed and set against the copied CP-1 value."""
     for m in METRICS:
-        k, source = m.key, cp1[m.key]
-        ref = ("T1C.6", k)
-        if sheet is None:
+        k, cell, label = m.key, cp1[m.key], "Issuer line on the peer source"
+        line = _issuer_line(m, sheet)
+        if isinstance(line, Unsettled):
+            period = None if sheet is None else sheet.issuer.period
+            sheet_ref = ("T1C.6", k, "sheet")
             c.unsettled(
-                (*ref, "sheet"),
-                "Issuer line on the peer source",
-                NO_PEER_SOURCE,
-                unit=m.unit,
-                period=None,
+                sheet_ref, label, line.reason, unit=m.unit, period=period, status=line.status
             )
-            c.copy((*ref, "cp1"), "CP-1", source)
-            c.unsettled(
-                (*ref, "difference"),
-                "Difference",
-                NO_PEER_SOURCE,
-                unit=m.difference_unit,
-                period=None,
-            )
-            c.text((*ref, "result"), "Result", "Not compared")
+            c.copy(("T1C.6", k, "cp1"), "CP-1", cell.fact)
+            # ruling 1C2: one side is not available, so nothing is compared
+            reason, when = (NO_PEER_SOURCE, None) if sheet is None else (NOT_COMPARED, cell.period)
+            unit = m.difference_unit
+            c.unsettled(("T1C.6", k, "difference"), "Difference", reason, unit=unit, period=when)
+            c.text(("T1C.6", k, "result"), "Result", "Not compared")
         else:
-            line = ratio(m, sheet.issuer.amounts)
-            if line.value is None or source.amount is None or source.period is None:
-                # No tie-out rule exists for an issuer line that cannot be recomputed.
-                raise ValueError(f"Issuer line on the peer source not calculable for {k}")
+            value, period = line
             c.amount(
-                (*ref, "sheet"),
-                "Issuer line on the peer source",
-                line.value,
+                ("T1C.6", k, "sheet"),
+                label,
+                value,
                 unit=m.unit,
-                period=sheet.issuer.period,
+                period=period,
                 formula=f"{OPERAND_LABEL[m.numerator]} / {OPERAND_LABEL[m.denominator]} "
                 "from the issuer line",
                 derives=(f"T1C.2.issuer.{m.numerator}", f"T1C.2.issuer.{m.denominator}"),
             )
-            c.copy((*ref, "cp1"), "CP-1", source)
-            delta = difference(line.value, source.amount, percent=m.percent)
-            formula = (
-                "(peer-source ratio minus CP-1 ratio) x 100, percentage points"
-                if m.percent
-                else "peer-source ratio minus CP-1 ratio"
-            )
-            c.amount(
-                (*ref, "difference"),
-                "Difference",
-                delta,
-                unit=m.difference_unit,
-                period=source.period,
-                formula=formula,
-                derives=(f"T1C.6.{k}.sheet", f"T1C.6.{k}.cp1"),
-            )
-            c.text(
-                (*ref, "result"),
-                "Result",
-                "Reconciled" if delta == 0 else "Differs",
-                value_class="calculated",
-                formula="Reconciled iff the difference is zero",
-                derives=(f"T1C.6.{k}.difference",),
-            )
+            c.copy(("T1C.6", k, "cp1"), "CP-1", cell.fact)
+            _tie_out_settled(c, m, value, cell)
         c.row("T1C.6", k, m.label, ("sheet", "cp1", "difference", "result"))
+
+
+def _tie_out_settled(c: _Composer, m: Metric, sheet_value: Decimal, cell: _Cp1Cell) -> None:
+    k = m.key
+    delta = difference(sheet_value, cell.amount, percent=m.percent)
+    formula = (
+        "(peer-source ratio minus CP-1 ratio) x 100, percentage points"
+        if m.percent
+        else "peer-source ratio minus CP-1 ratio"
+    )
+    c.amount(
+        ("T1C.6", k, "difference"),
+        "Difference",
+        delta,
+        unit=m.difference_unit,
+        period=cell.period,
+        formula=formula,
+        derives=(f"T1C.6.{k}.sheet", f"T1C.6.{k}.cp1"),
+    )
+    c.text(
+        ("T1C.6", k, "result"),
+        "Result",
+        "Reconciled" if delta == 0 else "Differs",
+        value_class="calculated",
+        formula="Reconciled iff the difference is zero",
+        derives=(f"T1C.6.{k}.difference",),
+    )
 
 
 GAP_FIELDS = (
@@ -1116,11 +1199,11 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     rows = sheet.peers if sheet is not None else ()
     peers = tuple(_Peer(f"p{n:02d}", row, by_label[row.label]) for n, row in enumerate(rows, 1))
     present = sheet is not None
-    c = _Composer(sheet.source_sha256 if sheet is not None else None)
+    c = _Composer(sheet)
     _universe(c, peers, present)
     _source_figures(c, sheet, peers)
     values = _normalised(c, cp1, inputs.issuer_name, peers, present)
-    stats = _statistics(c, peers, values, present)
+    stats = _statistics(c, peers, values, present, {k: cell.amount for k, cell in cp1.items()})
     _outliers(c, inputs.issuer_name, peers, values, stats, present)
     _tie_out(c, sheet, cp1)
     _gaps(c, inputs.submission.gaps)
@@ -1159,12 +1242,16 @@ def _claims(composed: _Composed, submission: PeerBenchmarkSubmission) -> tuple[C
             f"median of {ref(f'T1C.4.{k}.median', m.token)} across {ref(f'T1C.4.{k}.n', 'peers')}."
         )
         stat = composed.stats[k]
-        if stat is not None and stat.median is not None:
-            flagged = stat.flags.get("issuer", False)
+        issuer_flag = None if stat is None else stat.flags.get("issuer")
+        if issuer_flag is not None:  # the issuer's flag is known
             text += (
                 " The issuer is flagged an outlier on this metric."
-                if flagged
+                if issuer_flag
                 else " The issuer is not flagged an outlier on this metric."
+            )
+        elif stat is not None and stat.median == 0:  # round 2 C2
+            text += (
+                " The outlier test does not apply to this metric because the peer median is zero."
             )
         claims.append(Claim(claim_id=f"T1C.4.{k}", text=text, citations=()))
     overall = submission.overall
@@ -1217,16 +1304,29 @@ def _content_issues(submission: PeerBenchmarkSubmission, sheet: PeerSheet | None
     return issues
 
 
-def _analyst_texts(submission: PeerBenchmarkSubmission) -> list[tuple[str, str]]:
-    texts = [
-        (f"assessments[{n}].rationale", a.rationale) for n, a in enumerate(submission.assessments)
-    ]
-    return [*texts, ("overall.rationale", submission.overall.rationale)]
+def _prohibited_fields(submission: PeerBenchmarkSubmission) -> list[tuple[str, str]]:
+    """Every analyst text field, in the order of round 2 ruling C1 (paths 0-based, 1C5)."""
+    fields: list[tuple[str, str]] = []
+    for n, a in enumerate(submission.assessments):
+        fields.append((f"assessments[{n}].rationale", a.rationale))
+        if a.limitation is not None:
+            fields.append((f"assessments[{n}].limitation", a.limitation))
+    fields.append(("overall.rationale", submission.overall.rationale))
+    fields.append(("overall.limitation", submission.overall.limitation))
+    for n, gap in enumerate(submission.gaps):
+        for name in ("gap", "why_it_matters", "affected_analysis", "action"):
+            fields.append((f"gaps[{n}].{name}", getattr(gap, name)))
+    return fields
+
+
+def _prose_texts(submission: PeerBenchmarkSubmission) -> list[str]:
+    """The run texts the bare-figure and reference rules read: every rationale."""
+    return [a.rationale for a in submission.assessments] + [submission.overall.rationale]
 
 
 def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     """Every content issue of the analyst payload against the peer source and the module's own
-    facts. An unreadable peer table returns alone. References in the analyst's text are checked
+    facts. An unreadable peer table returns alone (1C4). References in the analyst's text are checked
     against the composed facts only when the assessment set is consistent (before that there
     are no facts to bind them to, and the set issues already refuse the payload)."""
     submission = inputs.submission
@@ -1238,11 +1338,11 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     issues = [*set_issues, *_content_issues(submission, sheet)]
     citations = tuple(c for a in submission.assessments for c in a.evidence)
     issues += citation_issues((*citations, *submission.overall.evidence), inputs.sources)
-    for path, text in _analyst_texts(submission):
+    for path, text in _prohibited_fields(submission):
         issues += prohibited_issues(path, text, kinds=PROHIBITED_KINDS)
     if not set_issues:
         bound = prose.bind(item.fact for item in _compose(inputs, sheet).facts)
-        for _, text in _analyst_texts(submission):
+        for text in _prose_texts(submission):
             issues += prose.issues(text, bound, names=(inputs.issuer_name,))
     return tuple(dict.fromkeys(issues))
 

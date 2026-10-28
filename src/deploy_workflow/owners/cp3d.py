@@ -18,7 +18,7 @@ from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal, localcontext
 from typing import Literal, Protocol
 
 from deploy_vii.contracts import Contract, Fact
-from deploy_vii.quotes import quoted
+from deploy_vii.quotes import normalise, quoted
 from deploy_vii.report_view import fact_spelling
 
 MODULE_ID = "CP-3D"
@@ -171,9 +171,10 @@ def _short_date(d: date) -> str:
 
 
 def _token_once(value_text: str, quote: str) -> bool:
-    """`value_text` occurs exactly once in `quote` as a whole numeric token."""
+    """`value_text` occurs exactly once as a whole numeric token in `quote` normalised, the
+    text `quoted` matched (a soft hyphen never splits or ends a token)."""
     pattern = r"(?<![0-9.])" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
-    return len(re.findall(pattern, quote)) == 1
+    return len(re.findall(pattern, normalise(quote))) == 1
 
 
 def publication_dates(pages: Mapping[str, Mapping[str, str]]) -> dict[tuple[str, str], date]:
@@ -420,7 +421,7 @@ class _Issues:
 
 
 def _labelled(kind: str, level_text: str, quote: str) -> bool:
-    words = " ".join(quote.split())
+    words = normalise(quote)  # the text `quoted` matched
     return (
         re.search(rf"\b{kind}\s+{re.escape(level_text)}(?![0-9])", words, re.IGNORECASE) is not None
     )
@@ -469,7 +470,7 @@ def _observation_date(o: Observation, path: str, out: _Issues) -> date | None:
             out.add(f"{path}: {o.kind} needs as_of_text")
         return None
     parsed = parse_date(o.as_of_text)
-    if o.as_of_text not in o.quote or parsed is None:
+    if o.as_of_text not in normalise(o.quote) or parsed is None:
         out.add(f"{path}: as_of_text {o.as_of_text} does not occur in the quote")
         return None
     return parsed
@@ -535,7 +536,7 @@ def _check_maturity(term: MaturityTerm, quotation: date | None, out: _Issues) ->
     if not out.ref_on_page(term.quote, "maturity"):
         return
     parsed = parse_date(term.date_text)
-    if parsed is None or term.date_text not in term.quote.quote:
+    if parsed is None or term.date_text not in normalise(term.quote.quote):
         out.add(f"maturity: date_text {term.date_text} does not occur in the quote")
     elif quotation is not None and parsed <= quotation:
         out.add("maturity: date is not after the quotation date")
@@ -567,7 +568,9 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
             out.add("amortisation: the simple margin convention requires zero amortisation")
     rr = terms.reference_rate
     out.analyst_text("reference_rate.name", rr.name)  # ruling 6e item 3
-    if out.ref_on_page(rr.quote, "reference_rate.quote") and rr.name not in rr.quote.quote:
+    if out.ref_on_page(rr.quote, "reference_rate.quote") and rr.name not in normalise(
+        rr.quote.quote
+    ):
         out.add("reference_rate: name does not occur in the quote")
     if bool(rr.level) == bool(rr.absence):
         out.add("reference_rate: exactly one of level and absence is required")
@@ -630,7 +633,9 @@ def submission_issues(
             out.analyst_text(f"{key}.follow_up", absence.follow_up)
     inst = submission.instrument
     out.analyst_text("instrument.name", inst.name)
-    if out.ref_on_page(inst.quote, "instrument.quote") and inst.name not in inst.quote.quote:
+    if out.ref_on_page(inst.quote, "instrument.quote") and inst.name not in normalise(
+        inst.quote.quote
+    ):
         out.add("instrument: name does not occur in the quote")
     _check_terms(submission.terms, quotation, out)
     _check_recovery(submission, out)

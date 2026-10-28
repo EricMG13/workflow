@@ -55,6 +55,9 @@ NO_MEDIAN = "Not calculable: no peer median (fewer than three included peers hav
 OWN_NOT_MEANINGFUL = "Not meaningful: the peer's own ratio is not meaningful"  # ruling 1C1
 ZERO_MEDIAN = "Not meaningful: the peer median is zero"
 NOT_COMPARED = "Not compared: one side is not available"  # ruling 1C2
+# Round 6 B1: the issuer's own outlier cells when its CP-1 ratio is not known.
+ISSUER_NOT_STATED = "Not calculable: the issuer's CP-1 value is missing"
+ISSUER_NOT_MEANINGFUL = "Not meaningful: the issuer's CP-1 ratio is not meaningful"
 # Round 2 C3: page:1 must carry this clause in its Basis line; the clause is what gives a source
 # amount its currency, unit and scale. Any other basis is outside the table rule.
 BASIS_PREFIX = "Basis:"
@@ -580,8 +583,9 @@ class _Composer:
         )
 
     def copy(self, ref: Ref, label: str, cp1: Fact) -> None:
-        """The CP-1 fact verbatim under this module's id: unit, amount, decimals, currency,
-        scale, period, value class, citations and CP-1's own calculation id."""
+        """The CP-1 fact verbatim under this module's id: status, limitation, unit, amount,
+        decimals, currency, scale, period, value class, citations and CP-1's own calculation
+        id (round 6 B1: status and limitation too, for every copy)."""
         table, row, name = ref
         self._add(
             Fact(
@@ -590,6 +594,8 @@ class _Composer:
                 table_id=table,
                 row_id=row,
                 field=name,
+                status=cp1.status,
+                limitation=cp1.limitation,
                 amount=cp1.amount,
                 unit=cp1.unit,
                 currency=cp1.currency,
@@ -722,20 +728,27 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
 @dataclass(frozen=True)
 class _Cp1Cell:
     fact: Fact
-    amount: Decimal
-    period: str
+    value: tuple[Decimal, str] | Unsettled  # the known amount and its period, or why not
 
 
 def _cp1_facts(inputs: PeerBenchmarkInputs) -> dict[str, _Cp1Cell]:
-    """The CP-1 T4.10 fact per metric: known, numeric, in the metric's unit, with a period."""
+    """The CP-1 T4.10 fact per metric. A known one is numeric, in the metric's unit, with a
+    period. A missing or not_applicable one is carried with CP-1's limitation, and a unit of
+    None takes the metric's unit (round 6 B1, round 4 (f)). Anything else is an invariant."""
     found: dict[str, _Cp1Cell] = {}
     for metric in METRICS:
         fact = inputs.cp1_metrics.get(metric.key)
-        if fact is None or fact.status != "known" or fact.unit != metric.unit:
+        if fact is None:
+            raise ValueError(f"CP-1 fact unavailable for {metric.key}")
+        if (fact.status == "missing" or fact.status == "not_applicable") and fact.limitation:
+            unsettled = fact.model_copy(update={"unit": fact.unit or metric.unit})
+            found[metric.key] = _Cp1Cell(unsettled, Unsettled(fact.status, fact.limitation))
+            continue
+        if fact.status != "known" or fact.unit != metric.unit:
             raise ValueError(f"CP-1 fact unavailable for {metric.key}")
         if fact.amount is None or fact.period is None:
             raise ValueError(f"CP-1 fact unavailable for {metric.key}")
-        found[metric.key] = _Cp1Cell(fact, fact.amount, fact.period)
+        found[metric.key] = _Cp1Cell(fact, (fact.amount, fact.period))
     return found
 
 
@@ -747,8 +760,10 @@ def _normalised(
 ) -> Values:
     values: Values = {}
     for m in METRICS:
-        c.copy(("T1C.3", "issuer", m.key), m.label, cp1[m.key].fact)
-        values[("issuer", m.key)] = Known(cp1[m.key].amount)
+        cell = cp1[m.key]
+        c.copy(("T1C.3", "issuer", m.key), m.label, cell.fact)
+        own = cell.value
+        values[("issuer", m.key)] = own if isinstance(own, Unsettled) else Known(own[0])
     c.row("T1C.3", "issuer", f"{issuer} (CP-1)", [m.key for m in METRICS])
     for p in peers:
         ratios = peer_metrics(p.data)
@@ -802,7 +817,7 @@ STAT_LABELS = {
 
 
 def _settled_stats(
-    c: _Composer, m: Metric, issuer: Decimal, known: Sequence[tuple[str, Decimal]], med: Decimal
+    c: _Composer, m: Metric, issuer: Ratio, known: Sequence[tuple[str, Decimal]], med: Decimal
 ) -> None:
     k = m.key
     ders = tuple(f"T1C.3.{r}.{k}" for r, _ in known)
@@ -816,6 +831,17 @@ def _settled_stats(
         formula="median of included peers' values; even count: (a + b) / 2",
         derives=ders,
     )
+    if isinstance(issuer, Unsettled):  # round 6 B1: the issuer side is not available
+        units = _gap_units(m)
+        for name in ("difference", "position", "of"):
+            c.unsettled(
+                ("T1C.4", k, name),
+                STAT_LABELS[name],
+                NOT_COMPARED,
+                unit=units[name],
+                period=MIXED_PERIOD,
+            )
+        return
     formula = (
         "(issuer value minus peer median) x 100, percentage points"
         if m.percent
@@ -824,13 +850,13 @@ def _settled_stats(
     c.amount(
         ("T1C.4", k, "difference"),
         STAT_LABELS["difference"],
-        difference(issuer, med, percent=m.percent),
+        difference(issuer.value, med, percent=m.percent),
         unit=m.difference_unit,
         period=MIXED_PERIOD,
         formula=formula,
         derives=(own, f"T1C.4.{k}.median"),
     )
-    rank, of = position(issuer, [v for _, v in known], higher_is_better=m.higher_is_better)
+    rank, of = position(issuer.value, [v for _, v in known], higher_is_better=m.higher_is_better)
     c.count(
         ("T1C.4", k, "position"),
         STAT_LABELS["position"],
@@ -850,13 +876,9 @@ def _settled_stats(
 
 
 def _statistics(
-    c: _Composer,
-    peers: Sequence[_Peer],
-    values: Values,
-    present: bool,
-    issuer: Mapping[str, Decimal],
+    c: _Composer, peers: Sequence[_Peer], values: Values, present: bool
 ) -> dict[str, _Stat | None]:
-    """T1C.4 per metric; `issuer` is the copied CP-1 value per metric."""
+    """T1C.4 per metric; the issuer's value is its copied CP-1 value."""
     stats: dict[str, _Stat | None] = {}
     for m in METRICS:
         k, units = m.key, _gap_units(m)
@@ -902,7 +924,7 @@ def _statistics(
                     period=MIXED_PERIOD,
                 )
             continue
-        _settled_stats(c, m, issuer[k], known, med)
+        _settled_stats(c, m, values[("issuer", k)], known, med)
     return stats
 
 
@@ -915,10 +937,17 @@ def _flag_operands(
         return Unsettled("not_applicable", EXCLUDED)
     if stat.median is None:
         return Unsettled("missing", NO_MEDIAN)
-    if isinstance(value, Unsettled):
+    if isinstance(value, Unsettled):  # the issuer (peer None) has its own wording (round 6 B1)
         if value.status == "missing":
-            return Unsettled("missing", "Not calculable: the peer's value is not stated")
-        return Unsettled("not_applicable", OWN_NOT_MEANINGFUL)
+            why = (
+                ISSUER_NOT_STATED
+                if peer is None
+                else "Not calculable: the peer's value is not stated"
+            )
+            return Unsettled("missing", why)
+        return Unsettled(
+            "not_applicable", ISSUER_NOT_MEANINGFUL if peer is None else OWN_NOT_MEANINGFUL
+        )
     if stat.median == 0:
         return Unsettled("not_applicable", ZERO_MEDIAN)
     return value.value, stat.median
@@ -1031,32 +1060,35 @@ def _tie_out(c: _Composer, sheet: PeerSheet | None, cp1: Mapping[str, _Cp1Cell])
             c.unsettled(
                 sheet_ref, label, line.reason, unit=m.unit, period=period, status=line.status
             )
-            c.copy(("T1C.6", k, "cp1"), "CP-1", cell.fact)
-            # ruling 1C2 / round 4 (d): one side is not available, so nothing is compared
+        else:
+            c.amount(
+                ("T1C.6", k, "sheet"),
+                label,
+                line[0],
+                unit=m.unit,
+                period=line[1],
+                formula=f"{OPERAND_LABEL[m.numerator]} / {OPERAND_LABEL[m.denominator]} "
+                "from the issuer line",
+                derives=(f"T1C.2.issuer.{m.numerator}", f"T1C.2.issuer.{m.denominator}"),
+            )
+        c.copy(("T1C.6", k, "cp1"), "CP-1", cell.fact)
+        if isinstance(line, Unsettled) or isinstance(cell.value, Unsettled):
+            # ruling 1C2 / round 4 (d) / round 6 B1: one side is not available, so nothing is
+            # compared; the absent-source reason comes first
             reason = c.absent if sheet is None else NOT_COMPARED
             unit = m.difference_unit
             c.unsettled(("T1C.6", k, "difference"), "Difference", reason, unit=unit, period=None)
             c.text(("T1C.6", k, "result"), "Result", "Not compared")
         else:
-            value, period = line
-            c.amount(
-                ("T1C.6", k, "sheet"),
-                label,
-                value,
-                unit=m.unit,
-                period=period,
-                formula=f"{OPERAND_LABEL[m.numerator]} / {OPERAND_LABEL[m.denominator]} "
-                "from the issuer line",
-                derives=(f"T1C.2.issuer.{m.numerator}", f"T1C.2.issuer.{m.denominator}"),
-            )
-            c.copy(("T1C.6", k, "cp1"), "CP-1", cell.fact)
-            _tie_out_settled(c, m, value, cell)
+            _tie_out_settled(c, m, line[0], *cell.value)
         c.row("T1C.6", k, m.label, ("sheet", "cp1", "difference", "result"))
 
 
-def _tie_out_settled(c: _Composer, m: Metric, sheet_value: Decimal, cell: _Cp1Cell) -> None:
+def _tie_out_settled(
+    c: _Composer, m: Metric, sheet_value: Decimal, cp1_value: Decimal, cp1_period: str
+) -> None:
     k = m.key
-    delta = difference(sheet_value, cell.amount, percent=m.percent)
+    delta = difference(sheet_value, cp1_value, percent=m.percent)
     formula = (
         "(peer-source ratio minus CP-1 ratio) x 100, percentage points"
         if m.percent
@@ -1067,7 +1099,7 @@ def _tie_out_settled(c: _Composer, m: Metric, sheet_value: Decimal, cell: _Cp1Ce
         "Difference",
         delta,
         unit=m.difference_unit,
-        period=cell.period,
+        period=cp1_period,
         formula=formula,
         derives=(f"T1C.6.{k}.sheet", f"T1C.6.{k}.cp1"),
     )
@@ -1106,6 +1138,8 @@ def _gaps(c: _Composer, gaps: Sequence[Gap]) -> None:
 
 def _limitations(
     present: bool,
+    absent: str,
+    cp1: Mapping[str, _Cp1Cell],
     peers: Sequence[_Peer],
     stats: Mapping[str, _Stat | None],
     gaps: Sequence[Gap],
@@ -1121,10 +1155,15 @@ def _limitations(
             "the same summary is tied to CP-1 in the definition alignment table."
         )
     else:
-        out.append(
-            "No peer source is in the pack: no peer universe, median, position or outlier "
-            "flag can be formed."
+        out.append(  # round 5 P1: the reason names a missing or a not-ready source
+            f"{absent}: no peer universe, median, position or outlier flag can be formed."
         )
+    out += [  # round 6 B1
+        f"The issuer's {m.label} is not available in CP-1 ({own.reason}), so its difference "
+        "from the peer median, its position and its outlier flag are not compared."
+        for m in METRICS
+        if isinstance(own := cp1[m.key].value, Unsettled)
+    ]
     out += [
         f"Partly comparable peer included: {p.data.label}: {p.assessment.limitation}"
         for p in peers
@@ -1215,12 +1254,12 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     _universe(c, peers, present)
     _source_figures(c, sheet, peers)
     values = _normalised(c, cp1, inputs.issuer_name, peers, present)
-    stats = _statistics(c, peers, values, present, {k: cell.amount for k, cell in cp1.items()})
+    stats = _statistics(c, peers, values, present)
     _outliers(c, inputs.issuer_name, peers, values, stats, present)
     _tie_out(c, sheet, cp1)
     _gaps(c, inputs.submission.gaps)
     tables = tuple(PeerTable(t, title, tuple(c.rows[t])) for t, title in TABLES.items())
-    limitations = _limitations(present, peers, stats, inputs.submission.gaps)
+    limitations = _limitations(present, c.absent, cp1, peers, stats, inputs.submission.gaps)
     return _Composed(_with_lineage(c.items), tables, limitations, peers, stats, c.absent)
 
 
@@ -1260,6 +1299,13 @@ def _claims(composed: _Composed, submission: PeerBenchmarkSubmission) -> tuple[C
                 " The issuer is flagged an outlier on this metric."
                 if issuer_flag
                 else " The issuer is not flagged an outlier on this metric."
+            )
+        elif (
+            stat is not None and stat.median is not None and status[f"T1C.3.issuer.{k}"] != "known"
+        ):
+            text += (  # round 6 B1, ahead of C2 in the 1C1 order
+                " The outlier test does not apply to the issuer on this metric because its CP-1 "
+                "value is not available."
             )
         elif stat is not None and stat.median == 0:  # round 2 C2
             text += (

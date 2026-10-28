@@ -1019,7 +1019,7 @@
     {
       "destination": "src/deploy_vii/live/tools.py",
       "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
-      "project_commit": "lead/0d-c (uncommitted)",
+      "project_commit": "bb4553bb1819e4354c5915345ae0dc7b301e79fe",
       "sha256": "a50a3f8c14069f16ee6f77610ecfe66d85972390aa8ce203176fc1b1b110bb1c",
       "reason": "Atomic read/search evidence publication after complete SOURCE rendering; preserve prior successes. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload. Also 0d-c bounded the rule and pre-fill issue text at the producer: absence_issues and unread_citation_issues give at most 20 lines of at most 600 characters through execution.listed_issues, with a tuple _walk.",
       "review": "work/lead/product-defects-0d/"
@@ -1072,7 +1072,7 @@
       "destination": "src/deploy_vii/live/submission.py",
       "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
       "prior_project_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
-      "project_commit": "lead/0d-c (uncommitted)",
+      "project_commit": "bb4553bb1819e4354c5915345ae0dc7b301e79fe",
       "sha256": "1b4aaa0967a5a9308e9061ceea6d365f1f7ee5ab88a8457fa18dffa073312186",
       "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload. Also 0d-c made _Resolver.unbound an insertion-ordered dict of issues built by execution.clipped (at most 600 characters each, an id never copied whole), returned by prefill as a tuple.",
       "review": "work/lead/product-defects-0d/"
@@ -1152,7 +1152,7 @@
       "destination": "src/deploy_vii/execution.py",
       "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
       "prior_project_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
-      "project_commit": "lead/0d-c (uncommitted)",
+      "project_commit": "bb4553bb1819e4354c5915345ae0dc7b301e79fe",
       "sha256": "ab6dba880e09507b6dd8c03d0895bcbd04ca8c9a98f2999475ee4220756434e0",
       "reason": "0d-c added clipped and listed_issues: a rule or pre-fill issue line is cut as bounded_issues would show it, built without joining more than 601 characters, at most 20 lines per rule.",
       "review": "work/lead/product-defects-0d/"

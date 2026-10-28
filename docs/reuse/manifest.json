@@ -1237,6 +1237,24 @@
       "sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
       "reason": "Register the CP-DR rails binding map (D12 one-line registration, appended last) with the CP-DR owner core.",
       "review": "docs/CPDR-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
+      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
+      "sha256": "8afa15fc82db7580e03c6405f43eee7adfa3344d2b2acfb7f490562084791cc1",
+      "reason": "Register the CP-3D binding map (D12 one-line registration, directly after CP-3) with the CP-3D owner core.",
+      "review": "docs/CP3D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
+      "sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
+      "reason": "Add the CP-3D relative-value mapping and one _spec_of loop entry (D12 registration, rows only).",
+      "review": "docs/CP3D-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

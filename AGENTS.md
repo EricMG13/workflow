@@ -97,6 +97,24 @@ Dispatch (user, 2026-10-28):
 - At most six Opus agents run at once across a session. Checks of a diff that
   only applies LEAD's ruling text go to `mx-feature`, not an Opus reviewer.
 
+Module stage routing (user, 2026-10-28; plan
+`docs/superpowers/plans/2026-10-28-verified-module-builds.md`). Stage 1 keeps its
+current routing until it closes.
+- Stage 2 (connections): one `mx-feature` (Sonnet) implementer per module and its
+  fix rounds. `mx-adversary` reviews the store adapter and the consumption proof;
+  `mx-precise` reviews the rest. The end-of-stage review is Opus
+  (`mx-precise`/`mx-autonomous`).
+- Stage 3 (pathways): `mx-feature` builds G2, CP-OS and chart wiring; `mx-precise`
+  reviews. Fable (`mx-architect`) may do the one end-of-stage check that every
+  pathway renders its assigned blocks.
+- Stage 4 (orchestration): Fable (`mx-architect`) writes one class-level plan
+  (verify by replaying the producer's rules, with the threat model's bounds) and
+  does the end-of-stage review; it writes no code. `mx-feature` implements;
+  `mx-adversary` attacks. If Fable is unavailable (credits), `mx-autonomous`
+  stands in.
+- These Fable uses are the only exception to the stop on Fable (user,
+  2026-10-28); LEAD's lane still dispatches none.
+
 ## Tool and data rules
 
 - Use fixed supported source search/read/extraction and bounded frozen-upstream

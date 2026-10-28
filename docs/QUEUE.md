@@ -3007,3 +3007,9 @@ historical receipt replay); fix round waits for the adversary review and the bas
 Wording note (CP-OS revision 2): Front Page "Full analysis" on relative-value, committee-challenge and
 what-changed lands on a "not part of this Pathway" page in credit_snapshot; resolves, but the label
 overstates; joins the override-slice wording task.
+
+G1-X protocol §2 amended (CP-3D review F1): owner-only steps with pack sources supply `RULES(text,
+seen)`; G1-X routes `rules="journaled"` to it at submit and verify. CP-3D review-1: changes required
+(FP03 ownership follows the design reference: CP-3D owns market-against-fundamentals; 70% loan
+recovery convention). CP-OS re-review 2: final proof check gets its own prefix `cpos_proof`; the
+shell skip link `#workbench` routes to "Unknown destination" (product defect, own task).

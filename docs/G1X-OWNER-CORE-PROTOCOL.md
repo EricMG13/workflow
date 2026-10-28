@@ -23,6 +23,7 @@ Sources: review-precise-1 of CP-2A and CP-2D, review-precise-2 of CP-4
 | `precheck(store, binding, stored) -> tuple[str, ...]` | optional | A gate on the filled payload. See §4. |
 | `STEP_IDS: tuple[str, ...]` | owner-only | The step sequence `_owner_historical`, `_activate` and the verifier use where `step_chain` has none. |
 | `SCHEMAS: Mapping[str, type[Contract]]` | owner-only | Model-facing schema per step; `_fill` normalises through it when the step is not in `live.submission.STEPS`. |
+| `RULES(text, seen) -> tuple[str, ...]` | owner-only steps with `sources=True` | The tool-use evidence rules of the step (cited page read, absence backed by a search), pure over the payload text and the session's `Seen`; reuses `live/tools.py` (`unread_citation_issues`, `UNBACKED_ABSENCE`) and returns issues in the product's sorted order. With `rules="journaled"`, G1-X calls it in place of `ToolRules().issues` (which raises for a step that is not a tool-loop step) both at submit and in the verifier (LEAD amendment 2026-10-28, CP-3D review-precise-1 F1). |
 | `submit(store, ticket_id, step_id, payload, rules) -> Submitted` | owner-only | Journals one step and returns the same `live.submission.Submitted` type `submit_model_payload` returns, so G1's identity check (`payload`, `nulls_resolved`, `prefilled`, `prefilled_kinds`) and step lookup stay unchanged. |
 
 Registration is a fixed dict in `owner_workflow.py` (`_CORES = {"CP-2A": cp2a, ...}`), never

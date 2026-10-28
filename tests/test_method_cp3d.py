@@ -1019,3 +1019,106 @@ def test_c3_order_recovery_rationale_after_the_terms_before_the_technicals() -> 
         f"recovery.rationale: {_PROHIBITED_FRAME}",
         f"technicals[1].text: {_PROHIBITED_FRAME}",
     ]
+
+
+# --- LEAD rulings round 6g (CP-3D leading zeros) ------------------------------------------------
+
+_LZ_PAGE = (
+    "Published January 10, 2026.\nDealer quotation on January 9, 2026: bid 0098.50 and offer "
+    "0200, expressed as a percentage of par.\nFacility margin is 025 basis points.\n"
+    "Mandatory annual amortisation is 00.\nThe SOFR reference rate is 04.30 percent.\n"
+    "Facility margin is 0.5 basis points."
+)
+
+
+def _lz_context() -> cp3d.MarketContext:
+    base = _with_page(_context("positive"), "financial", "page:9", _LZ_PAGE)
+    return _with_page(base, "market", "page:9", _LZ_PAGE)
+
+
+def _lz_quote(source_id: str, line: int) -> dict[str, str]:
+    return {"source_id": source_id, "locator": "page:9", "quote": _LZ_PAGE.split("\n")[line]}
+
+
+def _lz_level(kind: str, level: str) -> list[list[Any]]:
+    index = {"bid": 0, "offer": 1}[kind]
+    return [
+        [f"observations.{index}.locator", "page:9"],
+        [f"observations.{index}.quote", _LZ_PAGE.split("\n")[1]],
+        [f"observations.{index}.level_text", level],
+    ]
+
+
+@pytest.mark.parametrize(
+    ("edits", "issue"),
+    (  # ruling 6g: `<path>: <field> <x> must have no leading zero`
+        (
+            _lz_level("bid", "0098.50"),
+            "observations[0]: level_text 0098.50 must have no leading zero",
+        ),
+        (_lz_level("offer", "0200"), "observations[1]: level_text 0200 must have no leading zero"),
+        (
+            [
+                [
+                    "terms.margin",
+                    {"quote": _lz_quote("financial", 2), "bps_text": "025", "absence": None},
+                ]
+            ],
+            "margin: bps_text 025 must have no leading zero",
+        ),
+        (
+            [
+                [
+                    "terms.amortisation",
+                    {"quote": _lz_quote("financial", 3), "value_text": "00", "absence": None},
+                ]
+            ],
+            "amortisation: value_text 00 must have no leading zero",
+        ),
+        (
+            [
+                ["terms.reference_rate.absence", None],
+                [
+                    "terms.reference_rate.level",
+                    {"quote": _lz_quote("financial", 4), "percent_text": "04.30"},
+                ],
+            ],
+            "reference_rate: level percent_text 04.30 must have no leading zero",
+        ),
+    ),
+    ids=("bid", "offer", "margin", "amortisation", "reference_rate"),
+)
+def test_6g_leading_zero_is_refused(edits: list[list[Any]], issue: str) -> None:
+    raw = _edited(SUBMISSIONS["positive"], edits)
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_lz_context())
+    assert issues[0] == issue
+    assert not any(
+        "decimal places" in i or "at most 200" in i or "integer digits" in i for i in issues
+    )
+
+
+def test_6g_a_single_zero_integer_part_is_fine() -> None:
+    raw = _edited(
+        SUBMISSIONS["positive"],
+        [
+            [
+                "terms.margin",
+                {"quote": _lz_quote("financial", 5), "bps_text": "0.5", "absence": None},
+            ]
+        ],
+    )
+    assert cp3d.submission_issues(submission=_submission(raw), context=_lz_context()) == ()
+
+
+def test_6g_leading_zero_comes_after_occurrence() -> None:
+    raw = _edited(
+        SUBMISSIONS["positive"],
+        [
+            [
+                "terms.margin",
+                {"quote": _lz_quote("financial", 2), "bps_text": "0025", "absence": None},
+            ]
+        ],
+    )
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_lz_context())
+    assert list(issues) == ["margin: bps_text 0025 does not occur in the quote"]

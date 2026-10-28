@@ -150,6 +150,8 @@ _PUBLISHED = re.compile(rf"Published ((?:{_MONTH_ALT}) [0-9]{{1,2}}, [0-9]{{4}})
 _NUMERAL = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,4})?$")
 _DECIMAL = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")  # any decimal numeral, before its shape
 _SHAPE = "must have at most three integer digits and four decimal places"
+_LEADING_ZERO = re.compile(r"^0[0-9]")  # an integer part longer than one digit, starting with 0
+_NO_LEADING_ZERO = "must have no leading zero"  # ruling 6g
 _RECOVERY = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,2})?$")
 
 
@@ -441,6 +443,9 @@ def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | Non
     if not _token_once(lt, o.quote):  # ruling 6b C2: occurrence before shape
         out.add(f"{path}: level_text {lt} does not occur in the quote")
         return None
+    if _LEADING_ZERO.match(lt):  # ruling 6g: after occurrence, before decimals and bound
+        out.add(f"{path}: level_text {lt} {_NO_LEADING_ZERO}")
+        return None
     if o.kind == "indicative_talk":
         if _labelled("(?:bid|offer)", lt, o.quote):
             out.add(f"{path}: indicative_talk level_text {lt} is a bid or offer level in the quote")
@@ -509,6 +514,9 @@ def _check_quoted_numeral(
     if not _token_once(text, quote.quote):  # ruling 6b C2: occurrence before shape
         out.add(f"{key}: {label} {text} does not occur in the quote")
         return None
+    if _LEADING_ZERO.match(text):  # ruling 6g
+        out.add(f"{key}: {label} {text} {_NO_LEADING_ZERO}")
+        return None
     if not _NUMERAL.match(text):
         out.add(f"{key}: {label} {text} {_SHAPE}")
         return None
@@ -567,6 +575,8 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
         pt = rr.level.percent_text
         if not _token_once(pt, rr.level.quote.quote):  # ruling 6b C2
             out.add(f"reference_rate: level percent_text {pt} does not occur in the quote")
+        elif _LEADING_ZERO.match(pt):  # ruling 6g
+            out.add(f"reference_rate: level percent_text {pt} {_NO_LEADING_ZERO}")
         elif not _NUMERAL.match(pt):
             out.add(f"reference_rate: level percent_text {pt} {_SHAPE}")
     if rr.absence is not None:

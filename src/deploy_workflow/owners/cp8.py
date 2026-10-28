@@ -47,6 +47,7 @@ from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-8"
 STEP_ID = "decision_ledger"
@@ -120,10 +121,15 @@ _DATE_IN_QUOTE = re.compile(  # round 9 item 2's date match
 _FIGURE = re.compile(r"^[0-9]{1,3}\.[0-9]{2}$")  # a quoted figure or level: N.NN
 # Round 10 item 1: a figure read from a quote is the signed numeral it prints. A "-" is a minus
 # sign at the quote's start or after a character that is neither a letter nor a digit (so not
-# 1-December, 2024-2025, 95-96, S-350); "(N)" with no space inside is accounting negative.
+# 1-December, 2024-2025, 95-96, S-350); "(N)" is accounting negative. Round 12 rule W: the sign is
+# the figure's directly or one space before it, and each parenthesis may hold one space inside
+# (normalisation makes any whitespace run, a line break included, one space).
 _SIGN = r"(?<![A-Za-z0-9])-"
-_MULTIPLE = re.compile(rf"(?:{_SIGN})?[0-9]+\.[0-9]+x|\([0-9]+\.[0-9]+\)x")
-_DECIMAL = re.compile(rf"(?:{_SIGN})?[0-9]+\.[0-9]+|\([0-9]+\.[0-9]+\)")
+_MULTIPLE = re.compile(rf"(?:{_SIGN} ?)?[0-9]+\.[0-9]+x|\( ?[0-9]+\.[0-9]+ ?\)x")
+_DECIMAL = re.compile(rf"(?:{_SIGN} ?)?[0-9]+\.[0-9]+|\( ?[0-9]+\.[0-9]+ ?\)")
+# rule W: a minus one space before its figure, with a character of the value before it (the
+# lookbehind must not pass at index 0, where the page character before the "-" is unseen)
+_W_MINUS = re.compile(rf"(?<=.){_SIGN} (?=[0-9])")
 _REFERENCE = re.compile(r"[{}\[\]]")
 _SUBJECT = re.compile(r"default|restructuring")
 _PROHIBITED = re.compile(  # r14 prohibited conclusions (lease, analyst text)
@@ -397,9 +403,11 @@ def _only_date(at: str, quote: str) -> bool:
 
 def _whole(value: str) -> re.Pattern[str]:
     """``value`` as a whole unsigned number: a minus-signed or parenthesised printing is another
-    figure (round 10 item 1)."""
+    figure (round 10 item 1), with the sign directly or one space away (round 12 rule W)."""
     v = re.escape(value)
-    return re.compile(rf"(?<![0-9.])(?<!{_SIGN})(?!(?<=\(){v}\)){v}(?![0-9]|\.[0-9])")
+    return re.compile(
+        rf"(?<![0-9.])(?<!{_SIGN})(?<!{_SIGN} )(?!(?:(?<=\()|(?<=\( )){v} ?\)){v}(?![0-9]|\.[0-9])"
+    )
 
 
 def _token_once(value: str, quote: str) -> bool:
@@ -437,8 +445,9 @@ def _on_page(value: str, quote: str, page: str) -> bool:
 
 def _wrap_split(value: str, quote: str) -> bool:
     """Round 11 B3: a wrapped quote normalises its wrap to ``- ``, a spelling the page does not
-    print, so a text value that holds ``- `` does not occur in it (``quote`` is raw)."""
-    return hyphen_wrapped(quote) and "- " in normalise(value)
+    print, so a text value that holds ``- `` does not occur in it (``quote`` is raw). Under round
+    12 rule W a ``- `` one space before a digit is a minus, not a wrap, so it does not count."""
+    return hyphen_wrapped(quote) and "- " in _W_MINUS.sub("-", normalise(value))
 
 
 def _labelled(metric: str, value: str, quote: str) -> bool:
@@ -580,7 +589,7 @@ class _Checker:
     def _text(self, path: str, text: str) -> None:
         """Analyst text: non-empty, digit-free, no reference syntax, no prohibited conclusion."""
         hit = _PROHIBITED.search(text)
-        if not text.strip():
+        if is_blank(text):  # round 12 B10: whitespace and Cf characters
             self.found.append(f"{path}: text is empty")
         elif any(char.isnumeric() for char in text):
             self.found.append(f"{path}: digits are not allowed")
@@ -620,7 +629,7 @@ class _Checker:
         vocabulary = {"action_bias": ACTION_BIASES, "confidence": CONFIDENCES}.get(name)
         if found:
             self.found += found
-        elif not text.strip():  # round 9 item 1, the r27 frame
+        elif is_blank(text):  # round 9 item 1, the r27 frame (round 12 B10)
             self.found.append(f"{path}: text is empty")
         elif vocabulary is not None and text not in vocabulary:
             self.found.append(f"{path}: {text} is not one of {', '.join(vocabulary)}")
@@ -888,7 +897,7 @@ class _Checker:
         if item.label != FLAGGED:
             if item.flag_quote:
                 self.found.append(f"{path}: flag_quote is only for Flagged Risk Materialized")
-        elif not item.flag_quote or not item.flag_quote.strip():
+        elif not item.flag_quote or is_blank(item.flag_quote):  # round 12 B10
             self.found.append(f"{path}: Flagged Risk Materialized needs flag_quote")
         elif _norm(item.flag_quote) not in _norm(self.downside) or _wrap_split(
             item.flag_quote, self.downside

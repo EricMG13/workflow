@@ -1201,9 +1201,12 @@ def test_a_default_statement_dated_on_the_decision_day_is_refused() -> None:
     )
 
 
-def test_a_blank_flag_quote_is_refused() -> None:
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_a_blank_flag_quote_is_refused(blank: BlankCase) -> None:
+    """Round 12 B10: whitespace and Unicode format (Cf) characters count as blank, so a U+00AD
+    flag_quote (which normalises to "", a span of anything) is refused too."""
     lit = positive()
-    lit["attributions"][0]["flag_quote"] = "   "
+    lit["attributions"][0]["flag_quote"] = blank.value
     assert validator_issues(lit) == ("attributions[0]: Flagged Risk Materialized needs flag_quote",)
 
 
@@ -1739,3 +1742,151 @@ def test_r11_b3_a_hyphen_space_in_an_unwrapped_quote_still_occurs() -> None:
         "quote": case_ref(page),
     }
     assert issues_over(lit, with_page("prior_case", page)) == ()
+
+
+# --- round 12 rule W: whitespace never separates a sign from its figure ------------------------
+# A "-" (after a character that is neither a letter nor a digit) is the figure's minus directly or
+# one space before its first digit, and "(" / ")" are accounting parentheses with or without one
+# space inside each; normalisation makes a line break, CRLF, NBSP or thin space that one space.
+SIGNED_W = {  # form -> the printed figure, before any unit (JSON-safe: no line break)
+    "spaced hyphen-minus": "- {}",
+    "spaced minus sign": MINUS_SIGN + " {}",
+    "hyphen-minus then NBSP": "-" + NO_BREAK_SPACE + "{}",
+    "spaced parentheses": "( {} )",
+    "left-spaced parenthesis": "( {})",
+    "right-spaced parenthesis": "({} )",
+}
+
+
+@pytest.mark.parametrize("form", list(SIGNED_W))
+def test_r12_w_a_spaced_signed_observation_figure_does_not_occur(form: str) -> None:
+    leverage = SIGNED_W[form].format("1.80") + "x"
+    assert edited(positive(), "update", "reported as 1.80x.", f"reported as {leverage}.") == (
+        "observations[4]: value_text 1.80 does not occur in the quote",
+    )
+    bid = SIGNED_W[form].format("98.00")
+    assert edited(positive(), "market_update", "bid 98.00 and", f"bid {bid} and") == (
+        "observations[6]: value_text 98.00 does not occur in the quote",
+    )
+
+
+@pytest.mark.parametrize("form", list(SIGNED_W))
+def test_r12_w_a_spaced_signed_first_figure_after_the_label_is_not_the_value(form: str) -> None:
+    """The labelled reader (``_MULTIPLE``/``_DECIMAL``) reads the spaced sign with the figure."""
+    leverage = SIGNED_W[form].format("1.80") + "x"
+    new = f"reported as {leverage} against 1.80x."
+    assert edited(positive(), "update", "reported as 1.80x.", new) == (
+        (
+            "observations[4]: total_leverage value_text 1.80 is not labelled total_leverage in "
+            "the quote"
+        ),
+    )
+    bid = SIGNED_W[form].format("98.00")
+    assert edited(positive(), "market_update", "bid 98.00 and", f"bid {bid} against 98.00 and") == (
+        "observations[6]: loan_bid value_text 98.00 is not labelled loan_bid in the quote",
+    )
+
+
+@pytest.mark.parametrize("form", list(SIGNED_W))
+def test_r12_w_a_spaced_signed_size_level_does_not_occur(form: str) -> None:
+    level = SIGNED_W[form].format("1.75") + "x"
+    assert edited(positive(), "prior_case", "above 1.75x", f"above {level}") == (
+        "thesis.downside_sizes[0]: level_text 1.75 does not occur in the quote",
+    )
+
+
+DEALERS = "Dealers quote the loan at bid {}"
+OCCURS_NOT = BID + ": value_text 1.25 does not occur in the quote"
+
+
+@pytest.mark.parametrize(
+    ("page", "quote", "want"),
+    [
+        # the labelled W cases (the library has none): the page and the quote are the case text
+        (DEALERS.format("- 1.25."), None, (OCCURS_NOT,)),
+        (DEALERS.format("-\n1.25."), None, (OCCURS_NOT,)),
+        (DEALERS.format(f"{MINUS_SIGN}\r\n1.25."), None, (OCCURS_NOT,)),
+        (DEALERS.format("(-\n1.25)."), None, (OCCURS_NOT,)),
+        (DEALERS.format("(\n1.25)."), None, (OCCURS_NOT,)),
+        # the signed figure is the labelled one; the unsigned value occurs once elsewhere
+        (DEALERS.format("- 1.25, against 1.25 a year ago."), None, (NOT_LABELLED.format("1.25"),)),
+        (DEALERS.format("-\n1.25, against 1.25 a year ago."), None, (NOT_LABELLED.format("1.25"),)),
+        (
+            DEALERS.format("(\n1.25), against 1.25 a year ago."),
+            None,
+            (NOT_LABELLED.format("1.25"),),
+        ),
+        # an edge quote after a page "- " (round 11 B1 reads the page)
+        (DEALERS.format("- 1.25."), "1.25.", (OCCURS_NOT,)),
+        (DEALERS.format("-\n1.25."), "1.25.", (OCCURS_NOT,)),
+        # accepted twins: a line break with no sign, and a hyphen wrap after a letter
+        (DEALERS.format("1.25."), None, ()),
+        (DEALERS.format("\n1.25."), None, ()),
+        (DEALERS.format("A-\n1.25."), None, ()),
+    ],
+)
+def test_r12_w_labelled_realized_bid(page: str, quote: str | None, want: tuple[str, ...]) -> None:
+    assert realized_bid(page, page if quote is None else quote, "1.25") == want
+
+
+def test_r12_w_the_whole_figure_reads_the_spaced_sign() -> None:
+    for signed in ("as - 1.25", "as -\n1.25", "- 1.25", "as ( 1.25 )", "as (1.25 )", "as ( 1.25)"):
+        assert not cp8_module._token_once("1.25", cp8_module._norm(signed)), signed
+    for unsigned in ("A- 1.25", "2024- 1.25", "( 1.25 percent)", "(see 1.25 )", "as 1.25"):
+        assert cp8_module._token_once("1.25", unsigned), unsigned
+    # the accepted cost (a guard limit): a spaced range reads as signed, failing closed
+    assert not cp8_module._token_once("96", "95 - 96")
+
+
+def test_r12_w_a_wrapped_minus_is_not_a_wrap_split() -> None:
+    """Under W a ``-`` after a non-alphanumeric character and one whitespace before a digit is a
+    minus, not a hyphen wrap, so round 11 B3's wrap-split refusal does not count its ``- ``; the
+    figure reader judges it (the library's w-minus-wrap case on the size level)."""
+    page = "The level is -\n1.25 percent."
+    assert not cp8_module._wrap_split(page, page)
+    assert not cp8_module._wrap_split("rate (- 1.25)", "rate (-\n1.25)")
+    assert cp8_module._wrap_split("first- line", "first-\nline")  # B3 holds after a letter
+    assert cp8_module._wrap_split("A- 1.25", "A-\n1.25")  # and before a digit
+    assert cp8_module._wrap_split("is - line", "is -\nline")  # no digit follows: not a sign
+
+
+SPAN_FIELDS = {
+    "instrument": (
+        decision_text("instrument"),
+        "decision.instrument: text {} does not occur in the quote",
+    ),
+    "flag span": (
+        flag_span,
+        "attributions[0].flag_quote: not a span of the recorded downside paths",
+    ),
+    "size span": (
+        size_span,
+        "thesis.downside_sizes[0].quote: not a span of the recorded downside paths",
+    ),
+}
+
+
+@pytest.mark.parametrize("field", list(SPAN_FIELDS))
+@pytest.mark.parametrize(
+    ("page", "value"),
+    [
+        # review M1: a "- " at value index 0 is a page wrap whose preceding character is unseen
+        ("The instrument is Term Loan A-\n1.25 notes.", "- 1.25 notes"),
+        ("The instrument is the 2024-\n2025 notes.", "- 2025 notes"),
+        # LEAD round 13 addendum: only a minus after a non-alphanumeric character is exempt
+        ("The instrument is A-\n25 notes.", "A- 25 notes"),
+        ("The instrument is a -\nb notes.", "a - b notes"),
+    ],
+)
+def test_r12_w_a_wrap_at_the_value_edge_or_off_a_figure_is_b3_refused(
+    field: str, page: str, value: str
+) -> None:
+    adapter, refusal = SPAN_FIELDS[field]
+    assert refusal.format(value) in adapter(page, page, value)
+
+
+@pytest.mark.parametrize("field", list(SPAN_FIELDS))
+def test_r12_w_a_minus_wrap_inside_the_value_is_accepted(field: str) -> None:
+    page, value = "The instrument is -\n1.25 notes.", "is - 1.25 notes"
+    adapter, refusal = SPAN_FIELDS[field]
+    assert refusal.format(value) not in adapter(page, page, value)

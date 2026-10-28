@@ -106,7 +106,14 @@ from deploy_vii.cp6_committee import CommitteeSubmission, submit_cp6_step
 from deploy_vii.downstream_readiness import DownstreamInputs, DownstreamReview
 from deploy_vii.execution import Attempt, Execution, StepSubmission, StepValidation
 from deploy_vii.financial_contracts import FacilityObservation, FinancialBook, FinancialReview
-from deploy_vii.live.schema import Marked, exact_json, json_object, marked_fields, normalise
+from deploy_vii.live.schema import (
+    Marked,
+    exact_json,
+    json_object,
+    marked_fields,
+    normalise,
+    too_deep,
+)
 from deploy_vii.narrative import NarrativeReview
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.quality import QualityInputs, QualityReview
@@ -430,7 +437,7 @@ def compose(pack: PreparedPack, submission: ReadinessSubmission) -> Composition:
 def compose_payload(pack: PreparedPack, payload: str) -> Composition:
     """Parse a (null-resolved) model payload as a `ReadinessSubmission` and compose it."""
     try:
-        document = json.loads(payload)
+        document = None if too_deep(payload) else json.loads(payload)
     except ValueError:
         document = None
     if isinstance(document, dict) and "pack_sha256" in document:

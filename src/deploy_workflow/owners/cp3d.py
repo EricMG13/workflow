@@ -172,9 +172,20 @@ def _short_date(d: date) -> str:
 
 def _token_once(value_text: str, quote: str) -> bool:
     """`value_text` occurs exactly once as a whole numeric token in `quote` normalised, the
-    text `quoted` matched (a soft hyphen never splits or ends a token)."""
-    pattern = r"(?<![0-9.])" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
-    return len(re.findall(pattern, normalise(quote))) == 1
+    text `quoted` matched (a soft hyphen never splits or ends a token).
+
+    Round 10 item 1: the token is the signed numeral the quote prints. A `-` directly before it
+    that starts the quote or follows a non-alphanumeric is a minus sign, and a token with `(`
+    directly before and `)` directly after reads as negative, so neither is an occurrence of the
+    unsigned text. A `-` after a letter or digit (`95-96`, `S-350`) and a `+` are not signs."""
+    words = normalise(quote)
+    pattern = r"(?<![0-9.])(?<!(?<![A-Za-z0-9])-)" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
+    unsigned = [
+        m
+        for m in re.finditer(pattern, words)
+        if not (words[m.start() - 1 : m.start()] == "(" and words[m.end() : m.end() + 1] == ")")
+    ]
+    return len(unsigned) == 1
 
 
 def publication_dates(pages: Mapping[str, Mapping[str, str]]) -> dict[tuple[str, str], date]:

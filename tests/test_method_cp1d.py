@@ -19,7 +19,7 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from deploy_vii import quotes
-from deploy_vii.contracts import Source, Span
+from deploy_vii.contracts import Citation, Source, Span
 from deploy_vii.readiness import citation_issues
 from deploy_workflow.owners import cp1d
 
@@ -576,6 +576,9 @@ UNUSABLE_PAGES = {
     "(k) 30 digits": POSITIVE_PAGE1.replace(
         "Unrealised  1.00", "Unrealised  " + "9" * 17 + ".1234567890123"
     ),
+    # Round 10: `_bridge_amount` keeps its unsigned full match.
+    "round 10 minus": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  -1.00"),
+    "round 10 parentheses": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  (1.00)"),
 }
 
 
@@ -603,6 +606,7 @@ LONG_DECIMAL = "0." + "0" * 250 + "1"
 
 EXACTNESS = "Accepted basis amount cannot be held exactly as a product amount: "
 BOUNDS = "Accepted basis must be above 0 and below the proposed amount: "
+EXACTLY_ONE = "Accepted basis quote must contain exactly one amount: "
 
 
 @pytest.mark.parametrize(
@@ -624,6 +628,40 @@ def test_basis_amount_outside_the_product_bound_is_an_issue(
 ) -> None:
     """Fix round 2 N1 and round 5b Y4: a quoted basis amount outside `financial_contracts.Number`
     is a step-6 shape failure, returned alone, that never reaches composition."""
+    assert _basis_issues(case, row, amount) == (f"{issue}{_label(case, row)}",)
+
+
+@pytest.mark.parametrize(
+    ("case", "row", "amount"),
+    [
+        # Round 10: a signed amount against a stated proposed amount, before the exactness test.
+        ("positive", 0, "-1.80"),
+        ("positive", 0, "(1.80)"),
+        ("positive", 0, "-0.00000000001"),
+        ("positive", 0, "-1" + "0" * 18),
+        ("positive", 2, "-0.50"),  # Partly supported + Recurring, below the proposed 0.80
+        # LEAD round 10: "above 0" applies on its own on an unstated proposed amount (the
+        # Recurring path), also before the exactness test.
+        ("gap", 3, "0"),
+        ("gap", 3, "-1.80"),
+        ("gap", 3, "(1.80)"),
+        ("gap", 3, "-" + LONG_DECIMAL),
+    ],
+)
+def test_basis_amount_at_or_below_zero_is_the_bounds_issue(
+    case: str, row: int, amount: str
+) -> None:
+    """Round 10: the quote's sign is read, and a basis of 0 or less gets step 6's bounds text."""
+    assert _basis_issues(case, row, amount) == (f"{BOUNDS}{_label(case, row)}",)
+
+
+def _label(case: str, row: int) -> str:
+    return str(SUBMISSIONS[case]["earnings_quality"]["assessments"][row]["addback"])
+
+
+def _basis_issues(case: str, row: int, amount: str) -> tuple[str, ...]:
+    """Row `row` made Partly supported (Recurring in the gap pack, whose amount is unstated)
+    with a basis quote `a saving of <amount>`."""
     payload = copy.deepcopy(SUBMISSIONS[case]["earnings_quality"])
     assessment = payload["assessments"][row]
     assessment["achievability"] = "Partly supported"
@@ -636,8 +674,7 @@ def test_basis_amount_outside_the_product_bound_is_an_issue(
         )[0],
         "quote": f"a saving of {amount}",
     }
-    issues = cp1d.validation_issues(_inputs(case, payload))
-    assert issues == (f"{issue}{assessment['addback']}",)
+    return cp1d.validation_issues(_inputs(case, payload))
 
 
 # CP-8 adversary M1 class: `citation_issues` matches a quote through `quotes.normalise` (U+00AD
@@ -716,6 +753,83 @@ def test_dash_in_the_basis_figure_reads_like_the_match(dash: str) -> None:
     assert cp1d.validation_issues(inputs) == (
         f"Accepted basis quote must contain exactly one amount: {A01_LABEL}",
     )
+
+
+# Round 10 (LEAD, figure signs in quote readers): the basis amount is the signed numeral the
+# normalised quote prints. A "-" before the first digit is a minus when it starts the quote or
+# follows a character that is neither a letter nor a digit; "+" is ignored; a numeral in
+# accounting parentheses reads as negative.
+A01_LINE = "Signed contracts cover an annualised saving of {}."
+SIGNED_FIGURES = {
+    "U+2212": "\u22121.80",
+    "ASCII": "-1.80",
+    "U+2013": "\u20131.80",
+    "parentheses": "(1.80)",
+}
+
+
+def _a01_on_page1(line: str) -> cp1d.EarningsQualityInputs:
+    """The positive pack with `line` printed on page:1 and quoted as a01's accepted basis."""
+    page1 = _replaced(POSITIVE_PAGE1, HEADER, f"{line}\n{HEADER}")
+    payload = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    payload["assessments"][0]["accepted_basis"].update(locator="page:1", quote=line)
+    inputs = _bridge_inputs(page1, payload)
+    accepted = inputs.submission.assessments[0].accepted_basis
+    assert accepted is not None
+    assert citation_issues((accepted,), inputs.sources) == ()
+    return inputs
+
+
+@pytest.mark.parametrize("figure", SIGNED_FIGURES.values(), ids=SIGNED_FIGURES.keys())
+def test_signed_basis_figure_meets_the_bounds_rule(figure: str) -> None:
+    """A page printing a minus (or parentheses) before 1.80 states -1.80, below 0, so a01 gets
+    step 6's pinned bounds text instead of composing an unsigned 1.80."""
+    inputs = _a01_on_page1(A01_LINE.format(figure))
+    assert cp1d.validation_issues(inputs) == (f"{BOUNDS}{A01_LABEL}",)
+
+
+@pytest.mark.parametrize(
+    ("line", "issues"),
+    [
+        ("From 1-December, signed contracts cover the saving.", ()),
+        ("Supplier contract S-1.80 covers the annualised saving.", ()),
+        (A01_LINE.format("+1.80"), ()),
+        (A01_LINE.format("(1.80 million)"), ()),
+        ("Savings were signed over 2024-2025.", (f"{EXACTLY_ONE}{A01_LABEL}",)),
+        ("Savings were 95-96 percent signed.", (f"{EXACTLY_ONE}{A01_LABEL}",)),
+    ],
+)
+def test_hyphen_after_a_letter_or_digit_is_not_a_sign(line: str, issues: tuple[str, ...]) -> None:
+    """Non-sign forms read unsigned: a single amount below the proposed 3.00 composes, and a
+    range still holds two amounts (step 5)."""
+    assert cp1d.validation_issues(_a01_on_page1(line)) == issues
+
+
+@pytest.mark.parametrize(
+    ("quote", "amounts"),
+    [
+        ("from 1-December", ["1"]),
+        ("over 2024-2025", ["2024", "2025"]),
+        ("the 95-96 range", ["95", "96"]),
+        ("contract S-350", ["350"]),
+        ("a saving of +1.80", ["1.80"]),
+        ("(4.30 percent)", ["4.30"]),
+        ("-1.80 saved", ["-1.80"]),
+        ("a saving of (1.80)", ["-1.80"]),
+        ("a saving of \u22121.80", ["-1.80"]),
+        ("a saving of \u20141.80", ["-1.80"]),
+        ("a saving of 1.80 and 2.40", ["1.80", "2.40"]),
+    ],
+)
+def test_basis_amounts_read_the_printed_sign(quote: str, amounts: list[str]) -> None:
+    """Step 5 counts signed tokens; counts on unsigned text do not change."""
+    citation = Citation.model_validate(
+        {
+            **SUBMISSIONS["positive"]["earnings_quality"]["assessments"][0]["accepted_basis"],
+            "quote": quote,
+        }
+    )
+    assert cp1d._basis_amounts(citation) == amounts
 
 
 @pytest.mark.parametrize(("numerator", "denominator"), [("2.5", "30"), ("1", "30"), ("-1", "30")])

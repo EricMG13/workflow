@@ -69,7 +69,7 @@ from deploy_vii.contracts import Span
 from deploy_vii.cp1_workflow import FinancialSubmission
 from deploy_vii.financial_contracts import FinancialBook, StatementLine
 from deploy_vii.live.prompts import block, span_line
-from deploy_vii.live.schema import strict_schema
+from deploy_vii.live.schema import strict_schema, too_deep
 from deploy_vii.live.settings import COVERAGE_FLOOR_PLACES, LiveSettings, valid_coverage_floor
 from deploy_vii.live.submission import PART_CALL, PART_KINDS, STEPS
 from deploy_vii.preparation import PreparedPack
@@ -488,6 +488,8 @@ class Seen:
 
 
 def _document(payload: str) -> dict[str, Any] | None:
+    if too_deep(payload):  # fail closed: Pydantic refuses it, so no rule reads it
+        return None
     try:
         document = json.loads(payload)
     except ValueError:

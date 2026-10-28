@@ -10,7 +10,7 @@ no reader exists because the lease names none.
 import hashlib
 import json
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ from test_method_cp3 import make_inputs, mutate
 from deploy_vii import cp3_relative_value
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Fact, ModuleView, View
+from deploy_vii.contracts import Fact, ModuleView, Run, View
 from deploy_vii.cp3_relative_value import (
     RelativeValueReport,
     RelativeValueSubmission,
@@ -40,10 +40,11 @@ from deploy_vii.execution import (
     head_of,
 )
 from deploy_vii.live.tools import cited_locators
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import plan, step_chain
 from deploy_vii.report_view import _spec_of
 from deploy_workflow import owner_workflow as ow
-from deploy_workflow.owner_workflow import OwnerSpec, StepSpec
+from deploy_workflow.owner_workflow import OwnerSpec, OwnerWorkflow, StepSpec
 from deploy_workflow.owners import cp3
 from deploy_workflow.owners.cp3 import compute
 from deploy_workflow.workflow import WorkflowError
@@ -153,18 +154,32 @@ def _begin(root: Path, case: str) -> tuple[Execution, Attempt]:
     return store, store.begin("CP-3")
 
 
-def _settled(root: Path, case: str) -> tuple[Execution, Attempt]:
+def _settled(root: Path, case: str, *, repaired: bool = False) -> tuple[Execution, Attempt]:
+    """CP-3 settled by the product's own step. `repaired`: attempt 0 first submits an invalid
+    literal and finishes with issues, so the head settles on attempt 1 (repair_of set)."""
     store, attempt = _begin(root, case)
     payload = stage1._instantiate(SUBMISSIONS[case]["relative_value"])
+    if repaired:
+        bad = mutate(
+            SUBMISSIONS[case]["relative_value"], [["set", "preference.confidence", "High"]]
+        )
+        first = submit_cp3_step(store, attempt.ticket_id, STEP, stage1._instantiate(bad))
+        assert first.status == "finished"
+        assert first.issues
+        attempt = store.begin("CP-3")
+        assert attempt.number == 1
+        assert attempt.repair_of == first.ticket_id
     finished = submit_cp3_step(store, attempt.ticket_id, STEP, payload)
     assert finished.status == "finished"
+    assert finished.number == (1 if repaired else 0)
     return store, finished
 
 
-@pytest.fixture(scope="module", params=["positive", "gap"])
+@pytest.fixture(scope="module", params=["positive", "gap", "positive-attempt-1"])
 def settled(request: pytest.FixtureRequest) -> Iterator[tuple[Execution, Attempt]]:
+    case, _, repair = str(request.param).partition("-attempt-")
     with tempfile.TemporaryDirectory() as root:
-        yield _settled(Path(root), request.param)
+        yield _settled(Path(root), case, repaired=bool(repair))
 
 
 def _head(snapshot: ExecutionSnapshot) -> Head:
@@ -425,3 +440,81 @@ def test_oracle_pins_match_cases_pins_json() -> None:
         key = f"cases/cp3-cp6-owner/{name}"
         assert hashlib.sha256((ROOT / key).read_bytes()).hexdigest() == pins[key]
         assert runs.PINS[ROOT / key] == pins[key]
+
+
+# --- create-time refusals (lease :138-139): nothing is written ----------------------------------
+
+
+def _selection(modules: list[str]) -> PreparedPack:
+    pack = runs.make_pack("positive")
+    document = {**json.loads(pack.run.model_dump_json()), "requested_modules": modules}
+    return PreparedPack(run=Run.model_validate_json(json.dumps(document)), sources=pack.sources)
+
+
+# R3 as pinned plans CP-MODEL before CP-3 and is refused for that ordering until the G1 ordering
+# change lands (`claude/s2-g1x-order`), so the controls below drop CP-MODEL: they are the same
+# selection that `create` accepts, and a refusal below is then due to the added module only.
+CONTROL = ["CP-1", "CP-1A", "CP-2", "CP-3"]
+
+
+def _create(
+    root: Path, modules: list[str], specs: Mapping[str, OwnerSpec] | None = None
+) -> OwnerWorkflow:
+    return OwnerWorkflow.create(
+        root / "store",
+        _selection(modules),
+        specs=ow.OWNER_SPECS if specs is None else specs,
+        publication_directory=None,
+    )
+
+
+def test_control_selection_is_created(tmp_path: Path) -> None:
+    workflow = _create(tmp_path, CONTROL)
+    assert workflow._plan == ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-3")
+    assert (tmp_path / "store").exists()
+
+
+@pytest.mark.parametrize("extra", ["CP-4C", "CP-3D", "CP-2D", "CP-3C"])
+def test_a_module_without_a_spec_in_a_cp3_run_refuses_and_writes_nothing(
+    extra: str, tmp_path: Path
+) -> None:
+    assert extra not in ow.OWNER_SPECS
+    with pytest.raises(WorkflowError) as error:
+        _create(tmp_path, [*CONTROL, extra])
+    assert error.value.args[0] == "not_permitted"
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_a_plan_with_cp5_and_no_cp5_spec_refuses_and_writes_nothing(tmp_path: Path) -> None:
+    if "CP-5" in ow.OWNER_SPECS:
+        pytest.skip("CP-5 has a spec: the refusal is no longer about a missing spec")
+    with pytest.raises(WorkflowError) as error:
+        _create(tmp_path, [*CONTROL, "CP-5"])
+    assert error.value.args[0] == "not_permitted"
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"rules": "none"},
+        {"sources": False},
+        {"inputs": "module_context"},
+        {"schema": RelativeValueReport},
+    ],
+)
+def test_a_spec_override_refuses_and_writes_nothing(change: dict[str, Any], tmp_path: Path) -> None:
+    spec = ow.OWNER_SPECS["CP-3"]
+    step = StepSpec(**{**spec.steps[0].__dict__, **change})
+    specs = {m: ow.OWNER_SPECS[m] for m in ("CP-0", "CP-1", "CP-1A", "CP-2")}
+    specs["CP-3"] = OwnerSpec(spec.module_id, (step,), spec.entry, spec.kind, spec.publish)
+    with pytest.raises(WorkflowError) as error:
+        _create(tmp_path, CONTROL, specs=specs)
+    assert error.value.args[0] == "not_permitted"
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_the_unmodified_spec_mapping_is_created(tmp_path: Path) -> None:
+    """Control for the override test: the same mapping with the reference CP-3 row is accepted."""
+    specs = {m: ow.OWNER_SPECS[m] for m in ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-3")}
+    assert _create(tmp_path, CONTROL, specs=specs)._plan[-1] == "CP-3"

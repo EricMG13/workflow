@@ -485,6 +485,25 @@ def test_adapter_statuses_are_the_bound_input_statuses(case_kind: CaseKind, tmp_
     assert [i.status for i in attempt.inputs if i.input_id.startswith("CP-")] == [want] * 4
 
 
+def test_adapter_reads_each_status_from_its_own_bound_input(tmp_path: Path) -> None:
+    """CP-1 and CP-2A bound under different statuses, and a bound CP-2D (an optional edge this
+    version never reads): each context status is that input's own."""
+    store, pack, attempt = seed(tmp_path)
+    upstream = _upstream(store, attempt)
+    cp2d = Input(input_id="CP-2D", sha256="d" * 64, status="blocked")
+    bound = tuple(
+        i.model_copy(update={"status": "accepted"}) if i.input_id == "CP-1" else i
+        for i in upstream.bound
+    )
+    ctx = cp2g._inputs(pack, _submission(), replace(upstream, bound=(*bound, cp2d))).context
+    assert (ctx.cp1_status, ctx.cp2a_status, ctx.cp2d_status) == (
+        "accepted",
+        "restricted",
+        "blocked",
+    )
+    assert cp2g._inputs(pack, _submission(), upstream).context.cp2d_status is None
+
+
 def test_upstream_binds_the_attempt_and_reports_the_inputs_now(tmp_path: Path) -> None:
     store, _, attempt = seed(tmp_path)
     upstream = _upstream(store, attempt)

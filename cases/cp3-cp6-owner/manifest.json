@@ -82,7 +82,6 @@
     "R6": {
       "requested_modules": [
         "CP-1",
-        "CP-MODEL",
         "CP-1A",
         "CP-2",
         "CP-3",
@@ -94,7 +93,6 @@
         "CP-1",
         "CP-1A",
         "CP-2",
-        "CP-MODEL",
         "CP-3",
         "CP-5",
         "CP-6"
@@ -111,10 +109,9 @@
         "CP-2",
         "CP-3",
         "CP-5",
-        "CP-6",
-        "CP-MODEL"
+        "CP-6"
       ],
-      "note": "CP-6 lease run; CP-5 is required by CP-6 (methodology.json) and CP-3 is its second consumer"
+      "note": "CP-6 lease run; CP-5 is required by CP-6 (methodology.json) and CP-3 is its second consumer; CP-MODEL is not requested (rev 1: CP-5 follows every selected analyst and G1 publishes CP-MODEL last, so CP-5 could not begin; CP-MODEL publication is proved by S1a). The shared upstream.statuses.CP-MODEL, execution.statuses and execution.consumption.CP-MODEL hold for R3 only: R6 has no CP-MODEL head"
     }
   },
   "cases": [
@@ -176,7 +173,6 @@
             "pathway": "credit_snapshot",
             "requested_modules": [
               "CP-1",
-              "CP-MODEL",
               "CP-1A",
               "CP-2",
               "CP-3",
@@ -241,7 +237,6 @@
             "pathway": "credit_snapshot",
             "requested_modules": [
               "CP-1",
-              "CP-MODEL",
               "CP-1A",
               "CP-2",
               "CP-3",

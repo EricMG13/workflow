@@ -925,22 +925,6 @@
             "required_action": "Challenge the synthesis using the governance and disclosure rows",
             "citations": [],
             "flag_topics": []
-          },
-          {
-            "module_id": "CP-MODEL",
-            "status": "READY_WITH_LIMITATIONS",
-            "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
-            "why_it_matters": "The Model snapshot shows these fields with their source",
-            "gap": "Owners behind the holding company are not disclosed",
-            "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
-            "citations": [
-              {
-                "source_id": "business",
-                "locator": "page:1",
-                "quote": "All operations and all reported revenue are in the United States."
-              }
-            ],
-            "flag_topics": []
           }
         ]
       },
@@ -2030,22 +2014,6 @@
             "gap": "Ownership and distribution policy terms are not disclosed",
             "required_action": "Challenge the synthesis using the governance and disclosure rows",
             "citations": [],
-            "flag_topics": []
-          },
-          {
-            "module_id": "CP-MODEL",
-            "status": "READY_WITH_LIMITATIONS",
-            "handoff_item": "Issuer name, country, sector, shareholders, transaction summary and business description",
-            "why_it_matters": "The Model snapshot shows these fields with their source",
-            "gap": "Owners behind the holding company are not disclosed",
-            "required_action": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
-            "citations": [
-              {
-                "source_id": "business",
-                "locator": "page:1",
-                "quote": "All operations and all reported revenue are in the United States."
-              }
-            ],
             "flag_topics": []
           }
         ]

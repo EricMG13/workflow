@@ -20,7 +20,8 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | CP-2H first mx-adversary review | cc1d0fb | impl a52b5ec0919986ddb | fix round if needed, merge |
 | CP-4C first mx-adversary review (money) | bdde577 | impl a2c15c441717ec41c | fix round + round 10 ASCII cell grammar, merge |
 | CP-5 fix 1, tests only (cp5/fix1-brief.md) | 4e2d687 | a490ed6228f4da606 (worktree cp5-stage1) | mx-precise re-review, merge with CP-3 and CP-8 |
-| CP-2G round 9 (brief cp2g/round9-brief.md); fixes 1+2 APPROVED | 5002b6d | a4377a7580e8e70db | scoped mx-feature review, merge |
+| CP-2G round 9 mx-feature review | 947a57d | impl a4377a7580e8e70db | merge |
+| H1 fix round 2 (h1/fix2-brief.md) | lane | a69f811059171c714 | mx-adversary by finding id, merge; then H1b |
 | CP-3C fix 1 mx-adversary re-review | 8a45037 | impl aa5a4817fa00cd287 | merge |
 | CP-8 round 10 mx-feature review | dae85ed | impl a3cc9818386e8861a | merge with CP-3 and CP-5 |
 | CP-2E fix 1 (cp2e/fix1-brief.md) | c050f57 | a219254fe68cc1c2d | mx-precise re-review, merge |
@@ -28,7 +29,6 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 Built, waiting to merge with CP-5 (all carry 2682310): CP-3 re-pin 6c6ea02 (worktree cp3-stage1, pin-only diff checked); CP-8 (approved through round 9 at fa55df5; round 10 running).
 
 ## Next when a slot frees
-- H1 fix round 2 (brief h1/fix2-brief.md): round 10 items 2 and 5 (F1 `_submission_schema`, CP-DR held-source scope) plus the I1 docstring; round 2 of 2; mx-adversary re-review by finding id. Impl a69f811059171c714. Also apply the I2 prose to `work/build/h1/q6-source.md`.
 - H1b: the five leased `_SOURCE_STEPS`/`_OWNER_SCOPES` rows (round 10 item 6), one test per row, own review.
 - G1-side guards (round 10 item 6 follow-ups) ride with the next G1-X change.
 

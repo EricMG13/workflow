@@ -301,3 +301,169 @@ def test_a_numeric_fact_without_a_page_period_fails_closed() -> None:
     )
     with pytest.raises(ValueError, match="No publication date on financial page:5"):
         cp3d.market_implied_result(submission=_submission(SUBMISSIONS["positive"]), context=ctx)
+
+
+# --- fix round 1 (mx-adversary on a80aa23) -----------------------------------------------------
+
+
+def test_lvl_claim_date_is_the_bid_offer_quotation_date_not_the_talk_date() -> None:
+    """Talk listed first, with its own January 10 date: LVL-01 still states the quotation date."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    talk = raw["observations"].pop(2)
+    talk["quote"] = (
+        "Published January 10, 2026.\nDealers describe the indicative fair value of the "
+        "Northbridge Term Loan as around 99.75."
+    )
+    talk["as_of_text"] = "January 10, 2026"
+    raw["observations"].insert(0, talk)
+    sub, ctx = _submission(raw), _context("positive")
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    claims = cp3d.market_implied_result(submission=sub, context=ctx).claims
+    lvl = next(c for c in claims if c.claim_id == "CP-3D-LVL-01")
+    expected = next(
+        c for c in EXPECTED["cases"]["positive"]["claims"] if c["claim_id"] == "CP-3D-LVL-01"
+    )
+    assert lvl.text == expected["text"]
+
+
+@pytest.mark.parametrize("drop", (["offer"], ["bid"], ["bid", "offer"]), ids=lambda d: "+".join(d))
+def test_partial_quotation_fails_closed(drop: list[str]) -> None:
+    """Bid-only, offer-only and talk-only are valid submissions, but the lease pins no wording for
+    LVL-01 or the T3E.7 row of a partial quotation, so the composer refuses rather than invent it."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["observations"] = [o for o in raw["observations"] if o["kind"] not in drop]
+    sub, ctx = _submission(raw), _context("positive")
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    with pytest.raises(ValueError, match="partial quotation"):
+        cp3d.market_implied_result(submission=sub, context=ctx)
+
+
+def test_default_measures_not_meaningful_fail_closed_in_the_pd_claim() -> None:
+    """Above par: the margin is known and the default measures are not_applicable; no PD-01
+    wording is pinned for that state."""
+    page = (
+        "Published January 10, 2026.\nDealer quotation on January 9, 2026: bid 100.50 and "
+        "offer 101.00, expressed as a percentage of par."
+    )
+    ctx = _with_page(_context("positive"), "market", "page:9", page)
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    for obs, level in ((raw["observations"][0], "100.50"), (raw["observations"][1], "101.00")):
+        obs.update(locator="page:9", quote=page.split("\n")[1], level_text=level)
+    sub = _submission(raw)
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    with pytest.raises(ValueError, match="not meaningful"):
+        cp3d.market_implied_result(submission=sub, context=ctx)
+
+
+_DIGIT_EDITS = [
+    (
+        [["technicals.3.limitation", "No rating agency rated it in 2026"]],
+        "technicals[3].limitation: digits are not allowed",
+    ),
+    (
+        [
+            [
+                "terms.margin",
+                {
+                    "quote": None,
+                    "bps_text": None,
+                    "absence": {"reason": "No margin in 2026", "follow_up": "Ask"},
+                },
+            ]
+        ],
+        "margin.absence.reason: digits are not allowed",
+    ),
+    (
+        [
+            [
+                "terms.maturity",
+                {
+                    "quote": None,
+                    "date_text": None,
+                    "absence": {"reason": "Not stated", "follow_up": "Ask by 2026"},
+                },
+            ]
+        ],
+        "maturity.absence.follow_up: digits are not allowed",
+    ),
+    (
+        [
+            [
+                "terms.amortisation",
+                {
+                    "quote": None,
+                    "value_text": None,
+                    "absence": {"reason": "Not 1 schedule", "follow_up": "Ask"},
+                },
+            ]
+        ],
+        "amortisation.absence.reason: digits are not allowed",
+    ),
+]
+
+
+@pytest.mark.parametrize(("edits", "issue"), _DIGIT_EDITS, ids=lambda x: str(x)[:40])
+def test_limitation_and_term_absence_texts_are_digit_free(
+    edits: list[list[Any]], issue: str
+) -> None:
+    raw = _edited(SUBMISSIONS["positive"], edits)
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_context("positive"))
+    assert list(issues) == [issue]
+
+
+def test_every_oracle_literal_still_validates() -> None:
+    for case in CASES:
+        assert (
+            cp3d.submission_issues(
+                submission=_submission(SUBMISSIONS[case]), context=_context(case)
+            )
+            == ()
+        )
+    for entry in SUBMISSIONS["tool_use_refusals"]:
+        raw = _edited(SUBMISSIONS["positive"], entry.get("edits", []))
+        assert (
+            cp3d.submission_issues(submission=_submission(raw), context=_context("positive")) == ()
+        )
+
+
+def test_stored_values_round_half_up_at_a_tie() -> None:
+    # lease-literal: CP3D-OWNER-LEASE.md:71 "Stored to 0.1 bp" and :67 (expected.json#arithmetic
+    # decimal_context "stored outputs are quantised ROUND_HALF_UP"); a 365-day year makes
+    # (100 - price) / years x 100 exact, so 99.9995 is a 0.05 bp tie and 99.995 with a 4 percent
+    # level is a 0.04005 yield tie.
+    inputs = cp3d.MarketInputs(
+        bid=Decimal("99.9995"),
+        offer=Decimal("99.995"),
+        talk=None,
+        quotation_date=date(2026, 1, 1),
+        maturity=date(2027, 1, 1),
+        margin_bp=Decimal(0),
+        amortisation_zero=True,
+        recovery=Decimal(0),
+        reference_rate_level=Decimal("0.04"),
+    )
+    stored = cp3d.compose(inputs=inputs).stored()
+    assert (stored["disc_bid"], stored["dm_bid"], stored["lam_bid"]) == ("0.1", "0.1", "0.1")
+    assert stored["yield_offer"] == "0.0401"
+
+
+def test_margin_row_does_not_blame_the_margin_when_only_the_maturity_is_missing() -> None:
+    """Maturity absent, margin and zero amortisation cited: the builder's T3E.7 row would blame the
+    margin; no wording is pinned for this cause, so the composer refuses."""
+    raw = _edited(
+        SUBMISSIONS["positive"],
+        [
+            [
+                "terms.maturity",
+                {
+                    "quote": None,
+                    "date_text": None,
+                    "absence": {"reason": "Not stated", "follow_up": "Ask"},
+                },
+            ]
+        ],
+    )
+    sub, ctx = _submission(raw), _context("positive")
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    with pytest.raises(ValueError, match="want of a final maturity"):
+        cp3d.market_implied_result(submission=sub, context=ctx)

@@ -162,6 +162,11 @@ def parse_date(text: str) -> date | None:
         return None
 
 
+def _long_date(d: date) -> str:
+    """`Month D, YYYY`, the form the quotes state."""
+    return f"{_MONTHS[d.month - 1]} {d.day}, {d.year}"
+
+
 def _short_date(d: date) -> str:
     return f"{d.day} {_MONTHS[d.month - 1][:3]} {d.year}"
 
@@ -518,6 +523,14 @@ def _check_maturity(term: MaturityTerm, quotation: date | None, out: _Issues) ->
 
 def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
     _check_maturity(terms.maturity, quotation, out)
+    for key, term_absence in (
+        ("maturity", terms.maturity.absence),
+        ("margin", terms.margin.absence),
+        ("amortisation", terms.amortisation.absence),
+    ):
+        if term_absence is not None:
+            out.digit_free(f"{key}.absence.reason", term_absence.reason)
+            out.digit_free(f"{key}.absence.follow_up", term_absence.follow_up)
     margin = terms.margin
     if bool(margin.bps_text) == bool(margin.absence):
         out.add("margin: exactly one of bps_text and absence is required")
@@ -569,6 +582,7 @@ def _check_technicals(sub: MarketImpliedSubmission, out: _Issues) -> None:
         if x.category not in CATEGORIES:
             out.add(f"{path}: category {x.category} is not allowed")
         out.digit_free(f"{path}.text", x.text)
+        out.digit_free(f"{path}.limitation", x.limitation)
         if _PROHIBITED.search(x.text):
             out.add(f"{path}.text: text carries a prohibited conclusion")
         if (x.category == "Insufficient Information") != bool(x.limitation):
@@ -1318,6 +1332,10 @@ class _Composer:
 
     # T3E.7-T3E.9 ------------------------------------------------------------------------------
     def missing_inputs(self) -> Table:
+        if not self.market_absent and self.derived.mid is None:
+            raise ValueError(
+                "T3E.7: no lease wording for a partial quotation (bid or offer not observed)"
+            )
         miss: list[tuple[str, str]] = []
         if self.market_absent:
             miss.append(
@@ -1342,6 +1360,12 @@ class _Composer:
                     "Annual default intensity and cumulative default probability",
                     self.sub.recovery_absence.reason,
                 )
+            )
+        margin_cited = self.derived.margin_bp is not None and self.sub.terms.amortisation.value_text
+        if self.stored["dm_mid"] is None and not self.market_absent and margin_cited:
+            raise ValueError(
+                "T3E.7: no lease wording for a discount margin missing only for want of a final "
+                "maturity"
             )
         if self.stored["dm_mid"] is None and not self.market_absent:
             miss.append(
@@ -1476,8 +1500,8 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
     sub, s = c.sub, c.stored
     bid, offer, mid = "T3E.1.r01.level", "T3E.1.r02.level", "T3E.2.r01.value"
     out: list[ClaimText] = []
-    quotation_text = next((o.as_of_text for o in sub.observations if o.as_of_text), None)
-    if c.market_absent or quotation_text is None:
+    quotation = _quotation_date(sub)
+    if c.market_absent:
         out.append(
             claim(
                 "CP-3D-LVL-01",
@@ -1487,10 +1511,14 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
             )
         )
     else:
+        if quotation is None or not all(cells[r].status == "known" for r in (bid, offer, mid)):
+            raise ValueError(
+                "CP-3D-LVL-01: no lease wording for a partial quotation (bid, offer or mid missing)"
+            )
         out.append(
             claim(
                 "CP-3D-LVL-01",
-                f"On {quotation_text} the dealer quotation was {{{bid}|%}} bid and {{{offer}|%}} offer, "
+                f"On {_long_date(quotation)} the dealer quotation was {{{bid}|%}} bid and {{{offer}|%}} offer, "
                 f"a mid of {{{mid}|%}} of par.",
                 [bid, offer, mid],
             )
@@ -1544,6 +1572,11 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
                 "are risk-neutral measures.",
                 [lam, pd],
             )
+        )
+    elif s["pd_state_mid"] == "not_applicable":
+        raise ValueError(
+            "CP-3D-PD-01: no lease wording when the default measures are not meaningful "
+            "(simple discount margin not positive)"
         )
     else:
         needs = (

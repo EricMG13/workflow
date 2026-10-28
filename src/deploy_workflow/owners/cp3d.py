@@ -174,8 +174,12 @@ def _short_date(d: date) -> str:
 _MINUS = r"(?<![A-Za-z0-9])-"  # round 10 item 1: a minus sign, not a hyphen after a letter or digit
 # Round 12 rule W: the minus directly or one space before the figure (`normalise` prints any
 # whitespace run, a line break included, as one space).
-_CUT_BEFORE = re.compile(rf"(?:[0-9.]|{_MINUS} ?)\Z")  # round 11 B1: the page figure starts earlier
-_CUT_AFTER = re.compile(r"[0-9]|\.[0-9]")  # round 11 B1: the page figure goes on
+# Round 13 item 8: `<digit>,` and `<digit>, ` (one space) join the run, so no figure is read after
+# them, nor before `,<digit>` or `, <digit>`.
+_CUT_BEFORE = re.compile(
+    rf"(?:[0-9.]|[0-9], ?|{_MINUS} ?)\Z"
+)  # round 11 B1: the page figure starts earlier
+_CUT_AFTER = re.compile(r"[0-9]|[.,][0-9]|, [0-9]")  # round 11 B1: the page figure goes on
 _EDGE_AFTER = ("", ".")  # nothing or only a full stop after a figure at the quote end
 
 
@@ -196,7 +200,9 @@ def _tokens(value_text: str, text: str) -> list[re.Match[str]]:
     are not signs. Round 12 rule W: whitespace never separates a sign from its figure, so a minus
     one space before the token, and `( ` and ` )` around it, are signs too."""
     pattern = (
-        rf"(?<![0-9.])(?<!{_MINUS})(?<!{_MINUS} )" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
+        rf"(?<![0-9.])(?<![0-9],)(?<![0-9], )(?<!{_MINUS})(?<!{_MINUS} )"
+        + re.escape(value_text)
+        + r"(?![0-9]|[.,][0-9]|, [0-9])"
     )
     accounting = re.match(r"[0-9]", value_text) is not None
     return [
@@ -263,10 +269,22 @@ def _whole_on_page(value_text: str, quote: str, page: str) -> bool:
     return True
 
 
+_WRAP_SPLIT = re.compile(r"- ")
+_W_SIGN = re.compile(r"(?<![A-Za-z0-9])- (?=[0-9])")  # rule W's minus, `_MINUS` plus a digit
+
+
 def _name_occurs(name: str, quote: str) -> bool:
     """`name` is in the normalised quote. Round 11 B3: when the quote has a hyphenated line wrap,
-    a name holding `- ` (the wrap as `normalise` prints it) does not occur."""
-    return name in normalise(quote) and not (hyphen_wrapped(quote) and "- " in normalise(name))
+    a name holding `- ` (the wrap as `normalise` prints it) does not occur. Round 13 addendum: a
+    `- ` that is rule W's minus (not after a letter or digit, a digit next) is no wrap split. A
+    `- ` at index 0 cannot see the page character before it, so it stays a wrap split."""
+    if name not in normalise(quote):
+        return False
+    if not hyphen_wrapped(quote):
+        return True
+    plain = normalise(name)
+    exempt = {m.start() for m in _W_SIGN.finditer(plain) if m.start() > 0}
+    return all(m.start() in exempt for m in _WRAP_SPLIT.finditer(plain))
 
 
 def publication_dates(pages: Mapping[str, Mapping[str, str]]) -> dict[tuple[str, str], date]:

@@ -457,7 +457,7 @@ def test_adapter_follows_the_cp1_head_and_drops_what_the_core_does_not_read(
     """A CP-1 head whose total leverage differs from the oracle, plus a decoy, at another as-of
     date: the adapter keeps the head's four ratios in its order and the T2R.4 check follows."""
     metric = cp2h.CP1_METRICS[0]
-    facts = (_decoy(), *_scaled(stage1.cp1_facts("gap"), metric, "2.5"))
+    facts = (_decoy(), *reversed(_scaled(stage1.cp1_facts("gap"), metric, "2.5")))
     store, pack, attempt = seed(tmp_path, cp1_facts=facts, as_of="2026-02-03")
     upstream = _upstream(store, attempt)
     assert upstream.cp1 == facts
@@ -902,36 +902,24 @@ def test_shared_hostile_text_set_over_the_schemas() -> None:
         assert_hostile_refused(schema)
 
 
-def _strings(value: Any) -> list[str]:
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, dict):
-        return [s for v in value.values() for s in _strings(v)]
-    if isinstance(value, list | tuple):
-        return [s for v in value for s in _strings(v)]
-    return []
+# No free-text path of the schema is stored verbatim: every hostile value is an issue
+# (`model_text_failures` runs with an empty verbatim set at run level, `test_owner_cp2h.py`).
+CP2H_VERBATIM: frozenset[tuple[str | int, ...]] = frozenset()
 
 
-def test_model_text_is_refused_or_stored_verbatim() -> None:
-    """Round 3 item 2 at the validator (the run-level form is `test_owner_cp2h.py`): a hostile
-    value on any free-text path is an issue, or it composes and the module stores it verbatim."""
+def test_model_text_is_refused_at_the_validator() -> None:
+    """Round 3 item 2 at the validator: a hostile value on any free-text path of the positive
+    payload (24 paths) is an issue, so nothing raises after the binding write."""
     base = stage1.inputs("positive")
     payload = json.loads(base.submission.model_dump_json())
     paths = free_text_paths(payload, cp2h.TriggerSubmission)
     assert any(path_matches(("views", "*", "rationale"), p) for p in paths)
+    assert any(path_matches(("gaps", "*", "action"), p) for p in paths)
     for path in paths:
         for value in MODEL_TEXT_HOSTILE:
             text = json.dumps(with_text(payload, path, value))
-            if cp2h.payload_issues(text, pack=base.pack, upstream=base.upstream):
-                continue
-            sub = cp2h.TriggerSubmission.model_validate_json(text)
-            result = cp2h.compute(replace(base, submission=sub))
-            stored = [
-                *(c.fact.text for c in result.cells),
-                *(s for c in result.claims for s in (c.text, c.limitation)),
-                *result.own_limitations,
-            ]
-            assert value in stored, (path, value)
+            issues = cp2h.payload_issues(text, pack=base.pack, upstream=base.upstream)
+            assert issues and all(len(i) <= MAX_LINE for i in issues), (path, value)
 
 
 # --- the exact `read_inputs` view -----------------------------------------------------------------

@@ -2913,3 +2913,10 @@ only (`fix-2-brief.md`) with I1–I3 and L1. LEAD records the memoisation amendm
 CP4-SOURCE-HOST-LEASE (I5). CP-4 owner preparation done (`work/lead/cp4-owner-preparation/`,
 `cases/cp4-owner/`, three cases incl. false "Same definition"); LEAD rulings Q1–Q6 recorded in
 its report; independent mx-precise review queued.
+
+Owner preparations (2026-10-28, drafts in the LEAD worktree `work/lead/<slug>-preparation/` and
+`cases/<slug>/`, untracked until frozen): CP-2A (T5.x collision with CP-5 resolved to T2B.x only;
+new FP05 blocks downside-stress and break-points; static single-period stress recorded as a LEAD
+adaptation for review) and CP-3/CP-6 (one synthetic market source; CP-3 freezes on R3 now, CP-6
+after S1b/CP-5; CP-6 view narrowed to drop claim citations; H1 is its own host.py task). Rulings
+are at the end of each report.md. Independent reviews: CP-4 and CP-2A running; CP-3 (R3) queued.

@@ -420,7 +420,6 @@ class Cp2gEbitda:
     case: EbitdaCase
     year: ForecastYear
     fact: Fact  # T2H.4.<b|d><26|27|28>.ebitda
-    derives_from: tuple[str, ...]  # its CP-2G lineage (names the CP-2A scenario row)
 
 
 @dataclass(frozen=True)
@@ -429,6 +428,8 @@ class Cp2gHead:
     ebitda: tuple[Cp2gEbitda, ...]
     base_first: Fact  # T2H.7.b01.base_first
     down_first: Fact  # T2H.7.b01.down_first
+    down_ebitda_source: Fact  # T2H.3.d01.source: text "CP-2A T2B.1.<row>.ebitda_decline"
+    down_interest_source: Fact  # T2H.3.d02.source: text "CP-2A T2B.1.<row>.interest_increase"
 
     def of(self, case: EbitdaCase, year: ForecastYear) -> Cp2gEbitda:
         found = [e for e in self.ebitda if e.case == case and e.year == year]
@@ -444,10 +445,12 @@ class Cp2gHead:
         return self.base_first if case == "base" else self.down_first
 
 
+_SHOCKS = ("ebitda_decline", "interest_increase")
+
+
 @dataclass(frozen=True)
 class Cp2aHead:
     status: InputStatus
-    base_period: str
     facts: tuple[Fact, ...]  # T2B.1 facts
 
     def fact(self, fact_id: str) -> Fact:
@@ -455,6 +458,15 @@ class Cp2aHead:
         if len(found) != 1:
             raise ValueError(f"CP-4C needs exactly one CP-2A fact {fact_id}")
         return found[0]
+
+    def base_period(self, row: str) -> str:
+        """The one period the row's `ebitda_decline` and `interest_increase` facts share
+        (round 13 item 5, R1 L2)."""
+        periods = {self.fact(f"T2B.1.{row}.{name}").period for name in _SHOCKS}
+        (period,) = periods if len(periods) == 1 else (None,)
+        if period is None:
+            raise ValueError("CP-4C: CP-2A T2B.1 facts differ in period")
+        return period
 
 
 @dataclass(frozen=True)
@@ -724,6 +736,8 @@ def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], st
     q = c.amount_quote
     if q is None:
         return [f"claims[{i}].amount_quote: a source_row class cites the row it reads"]
+    if is_blank(q.quote):  # round 13 addendum 3: a quote is analyst text under the blank class
+        return [f"claims[{i}].amount_quote.quote: empty text"]
     page = pages.get(("financial", q.locator), "")
     if q.source_id != "financial" or q.quote not in page:
         return [f"claims[{i}].amount_quote: quote not found under {q.source_id} {q.locator}"]
@@ -777,7 +791,9 @@ def _claim_issues(
             debt = select_cp1(ctx.cp1.t410)["total_debt"].amount
             issues += [] if debt is None else _claim_above_zero(i, c, debt)
     for j, q in enumerate(c.support):
-        if q.source_id not in SCOPE:
+        if is_blank(q.quote):  # round 13 addendum 3: before the page-occurrence check
+            issues.append(f"claims[{i}].support[{j}].quote: empty text")
+        elif q.source_id not in SCOPE:
             issues.append(
                 f"claims[{i}].support[{j}].source_id: not in this step's source scope: "
                 f"{q.source_id}"
@@ -1304,17 +1320,20 @@ _PINNED_CONDITIONS = (
 )
 
 
-def _scenario_row(run_values: Mapping[str, _Value], cp2g: Cp2gHead) -> str:
-    """The CP-2A T2B.1 row CP-2G applied: the `cp2a:T2B.1.<row>.` lineage of the FY2026
-    downside EBITDA, which every downside EBITDA year used must share."""
-    down = cp2g.of("down", "FY2026")
-    lineage = next((d for d in down.derives_from if d.startswith("cp2a:T2B.1.")), None)
-    if lineage is None:
-        raise ValueError("CP-4C: CP-2G downside EBITDA names no CP-2A T2B.1 scenario")
-    for v in run_values.values():
-        if v.source.case == "down" and lineage not in v.source.derives_from:
-            raise ValueError(f"CP-4C: CP-2G {v.source.fact.fact_id} applies another CP-2A scenario")
-    return lineage.split(".")[2]
+_SOURCE_D01 = re.compile(r"CP-2A T2B\.1\.(s[0-9]{2})\.ebitda_decline")
+_SOURCE_D02 = re.compile(r"CP-2A T2B\.1\.(s[0-9]{2})\.interest_increase")
+
+
+def _scenario_row(cp2g: Cp2gHead) -> str:
+    """The CP-2A T2B.1 row CP-2G applied, named by the settled CP-2G `T2H.3.d01.source` and
+    `T2H.3.d02.source` texts (round 13 item 2, R1 M2). CP-2G writes them once for all years."""
+    d01 = _SOURCE_D01.fullmatch(cp2g.down_ebitda_source.text or "")
+    d02 = _SOURCE_D02.fullmatch(cp2g.down_interest_source.text or "")
+    if d01 is None or d02 is None or d01[1] != d02[1]:
+        raise ValueError(
+            "CP-4C: CP-2G T2H.3.d01 and T2H.3.d02 sources name no single CP-2A T2B.1 row"
+        )
+    return d01[1]
 
 
 def _upstream_map(ctx: Cp4cContext, cp1: Mapping[str, Fact]) -> dict[str, Fact]:
@@ -1362,7 +1381,7 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
         classes=classes,
         values=values,
         falls=falls,
-        scenario_row=_scenario_row(values, ctx.cp2g),
+        scenario_row=_scenario_row(ctx.cp2g),
         upstream=_upstream_map(ctx, cp1),
     )
 
@@ -1389,7 +1408,7 @@ def _t4e1(b: _Book, run: _Run) -> None:
             "u_cp2a",
             "CP-2A",
             ctx.cp2a.status,
-            f"Base period {ctx.cp2a.base_period}",
+            f"Base period {ctx.cp2a.base_period(run.scenario_row)}",
             "T2B.1 name and shock sizes of the downside scenario CP-2G applied",
             "Shock sizes are analyst assumptions.",
         ),
@@ -2137,11 +2156,8 @@ def _references(
         f = ctx.cp2g.of(v.ebitda_case, v.ebitda_year).fact
         used.setdefault(f.fact_id, f)  # one row per distinct fact id
     cp2g_facts = [*used.values(), ctx.cp2g.base_first, ctx.cp2g.down_first]
-    row = _scenario_row({v.case_id: _valuation(v, ctx.cp2g) for v in sub.valuation}, ctx.cp2g)
-    cp2a_facts = [
-        ctx.cp2a.fact(f"T2B.1.{row}.{name}")
-        for name in ("name", "ebitda_decline", "interest_increase")
-    ]
+    row = _scenario_row(ctx.cp2g)
+    cp2a_facts = [ctx.cp2a.fact(f"T2B.1.{row}.{name}") for name in ("name", *_SHOCKS)]
     cp4_facts = [ctx.cp4.fact(fid) for fid in CP4_FACTS]
 
     def refs(facts: Sequence[Fact]) -> tuple[Reference, ...]:

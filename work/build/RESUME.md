@@ -17,7 +17,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | Work | Base | Agent | Next |
 |---|---|---|---|
 | CP-2H fix 1 (cp2h/fix1-brief.md; decisions cp2h/questions.md) | cc1d0fb | a52b5ec0919986ddb | mx-adversary re-review, merge |
-| CP-4C fix 1 (cp4c/fix1-brief.md; decisions cp4c/questions.md) | bdde577 | a2c15c441717ec41c | mx-adversary re-review, merge |
+| CP-4C fix 1 mx-adversary re-review | 3b9c3dc | impl a2c15c441717ec41c | merge |
 | H1 fix 2 mx-adversary re-review | 38f0f46 | impl a69f811059171c714 | merge; then H1b |
 | CP-3C fix 1 mx-adversary re-review | 8a45037 | impl aa5a4817fa00cd287 | merge |
 

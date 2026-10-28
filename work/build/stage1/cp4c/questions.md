@@ -5,6 +5,7 @@
 - **Q2 (review L1, blank cell).** A row whose cell count differs from the header's (two-space split) has no number under any column, so it gets the same #11 text. Every frozen row has 7 cells.
 - **Q3 (review L2).** A known CP-1 EBITDA with no amount is an upstream contract break. It raises a `ValueError` invariant, as CP-1 total debt (:537) and CP-2G EBITDA (:593) already do.
 - **Q4 (round 10, Stage 1 defect).** The quoted cell must fully match the ASCII grammar `-?[0-9]+(\.[0-9]+)?` before `Decimal`; otherwise it gets the #11 text. Comma figures (`1,234.00`) are refused (review I1). The wording stays as pinned.
+- **Q5 (fix 1, confirmed by the controller).** A quote that starts two different page lines names no single cited row, so it gets the #11 text. Identical duplicate lines count as one line. This follows from Q1 and adds no wording.
 
 ## For LEAD (one batch)
 - **B1.** Builder sync for Q1 and Q2: `row_cells` / the two-space split in build.py:158-171. No frozen value moves.

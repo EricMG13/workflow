@@ -2821,3 +2821,9 @@ reproduces them byte for byte). sha256: expected d1aa1af9…9baa, manifest 9db03
 submissions bff9ed18…b35c. Independent mx-precise reviews 1–3 (APPROVE at 3) ran the product
 validators and composers on the oracle's literal inputs. Derivation and LEAD rulings:
 `docs/reviews/s1-snapshot-oracle.md`. Next: S1a and G2 leases (drafts in progress).
+
+Heavy runs (2026-10-28, under the lock, LEAD-queued): B1 full file 174 passed (5 h 53 min,
+P2/P3 applied); L2 full file 112 passed (78 min); G1 fix-1 RED 2 failed (the M1 and L1 tests,
+as predicted) then GREEN 14 passed (13 min). Next, lock-free: mx-adversary final review of B1,
+mx-adversary review of G1 after fix-1, mx-precise first review of L2, and the independent
+review of the S1a and G2 lease drafts. PM integrated the S1 oracle (checkpoint a9b829f).

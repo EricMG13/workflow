@@ -32,6 +32,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 Open questions live in `work/build/stage1/<cp>/questions.md` (cp2h, cp3c, cp4c, cp5) and `stage1/quote-sign-questions.md`. One pointer to LEAD every 20 minutes at most.
 
 ## Stage 2 notes collected
+- Round 12 (LEAD c27760e): record the rule W guard limit (a spaced range or a dash bullet before a figure is refused; no range exemption) in methods/cp1d, cp3d, cp8, cp2e; record the B8 malformed-last-row limit in methods/cp2h. The methods files live in src/deploy_vii/methods/ (Stage 2 boundary). After the Stage 1 release merge, CP-2H B7: turn test_frozen_composer_only_cp2g_status into a plain test; switch pin tests to cases/PINS.json.
 - Protocol §5 (LEAD d637afc): cores read model payload only through `json_object`/`payload_document`. Rewire cp2g:830, cp4c:938 and cpl10:926 (`model_validate_json` on raw text) at their Stage 2 seams.
 - On the Stage 1 release merge of codex/checkpoint (carries 0d-b): run test_schema_normalise_escapes.py, test_owner_workflow.py::test_equivalence_gap_verifier_replays_unrepresentable_submits and LEAD probe b04.
 In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor; round 10 sign rule in methods/cp1d, cp3d, cp8, cp2e; unsigned-grammar limitation in methods/cp8 and cp3d; CP-3C facility ids as prose names at MC-2; CP-8 item 2 guard-limit note.
@@ -39,6 +40,6 @@ In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; th
 ## After the class rounds (next steps, 2026-10-28 16:15Z)
 1. (done) All class rounds merged.
    In flight (2026-10-28 ~18:05Z): riding-Lows batch a2564bfd435381686 (worktree stage1-lows, brief stage1/lows-brief.md) then mx-feature review and merge; Stage 1 end review at 87b2a1a, brief stage1/end-review-brief.md: R1 acb9e707a8ed8d839 (mx-autonomous), R2 a8328bdae944bc35d (mx-precise), R3 a76107fc47c365f31 (mx-autonomous). Save each report to stage1/end-review-R<n>.md; findings go to fix rounds. If either review returned while the session was away, read the agent's SubagentHandback in its task .output.
-2. Check LEAD's answer to the 16:08Z pointer (quote-sign-questions.md "Open for LEAD"; cp2h B7-B10; cp4c B7). Apply rulings as rulings rounds.
+2. (LEAD answered: round 12, c27760e, cherry-picked as 688f185; brief stage1/round12-brief.md, integration branch claude/round12.) Check LEAD's answer to the 16:08Z pointer (quote-sign-questions.md "Open for LEAD"; cp2h B7-B10; cp4c B7). Apply rulings as rulings rounds.
 3. Riding Lows batch (ledger, 2026-10-28 class reviews): one test-only round per module, with mx-feature review.
 4. Stage 1 end review (Opus, mx-precise or mx-adversary) on the lane, then Stage 2 per AGENTS.md 423a06e.

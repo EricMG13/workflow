@@ -2844,3 +2844,19 @@ Leases frozen (2026-10-28): `docs/S1A-OWNER-RUN-LEASE.md` rev 1 and `docs/OWNER-
 WITH EDITS; every edit adopted as rev 1 amendments). S1a waits for G1 and L2 integration and
 the manifest adoption commit 49801d7; G2 waits for S1a. S1a task 1 reports the LTM fact
 predicate and the CP-2 view key tree for LEAD to freeze before tests are written.
+
+B1 mx-adversary final review (2026-10-28, `coordinator-3/work/cp1b-owner-b1/review-adversary-final.md`):
+HIGH found. No forgery is accepted, but three actor-triggerable inputs brick a run: H1
+`_complete_intent` matches steps from earlier intents (identical invalid bytes resubmitted
+fabricate an outcome or wedge the run); H2 deeply nested invoke arguments pass `_json_copy`
+but fail the receipt model, consuming a session sequence with no saved receipt; H3 a deep
+`submit_review` payload writes audit payloads before a `RecursionError`, leaving an orphan that
+blocks sealing. M1 `_put` crash residue inside record folders bricks `open()`. L1 a positive
+case with CP0 blocking CP-1 reaches `cp1_not_authorized` but the verifier demands
+`financial_missing`; L2 core/audit tamper errors escape `identity_mismatch`; L3
+`_stage_validation` charges B1's own ValidationErrors to the actor. LEAD rulings: H1–H3 and M1
+must be fixed; L1–L3 are fixed in the same round; dead `_cp0_validation` removed if
+unreferenced. B1 had no earlier fix round, so this is round 1 of 2 (`fix-1-brief.md`), TDD from
+the reviewer's probes. The public verifier is read-only and takes 347 s; recorded as a cost for
+the A4 IntegrityWorkflow task, which also carries the A4 transport's sequence-before-argument
+validation ordering noted in the same review.

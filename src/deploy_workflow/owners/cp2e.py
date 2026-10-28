@@ -494,10 +494,6 @@ _RATE_BP = (1, 1000)
 _FX_PERCENT = (1, 50)
 
 
-def _squash(text: str) -> str:
-    return re.sub(r"\s+", " ", text)
-
-
 def _once(token: str, quote: str) -> bool:
     """token occurs exactly once in the normalised quote as a whole, unsigned number.
 
@@ -543,7 +539,8 @@ class _Check:
         if not self.on_page(ref, path):
             return
         c = ref["code_text"]
-        in_quote = re.search(rf"(?<![A-Za-z]){re.escape(c)}(?![A-Za-z])", ref["quote"])
+        quote = normalise(ref["quote"])  # the text the on_page match read
+        in_quote = re.search(rf"(?<![A-Za-z]){re.escape(c)}(?![A-Za-z])", quote)
         if not re.fullmatch(r"[A-Z]{3}", c) or not in_quote:
             self.add(f"{path}: code_text {c} does not occur in the quote")
 
@@ -555,7 +552,7 @@ class _Check:
         if not _SENTENCE_NUM.fullmatch(v) or not _once(v, ref["quote"]):
             self.add(f"{path}: {key} {v} does not occur in the quote")
             return None
-        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", _squash(ref["quote"])):
+        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", normalise(ref["quote"])):
             self.add(f"{path}: {key} {v} is not labelled {label} in the quote")
             return None
         return Decimal(v)
@@ -610,13 +607,14 @@ def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
     )
     rb, path = r["rate_basis"], "rate_exposure.rate_basis"
     if chk.on_page(rb, path):
-        stems = {m.lower() for m in _RATE_PHRASE.findall(rb["quote"])}  # rulings E5 and E8
+        quote = normalise(rb["quote"])  # the text the on_page match read
+        stems = {m.lower() for m in _RATE_PHRASE.findall(quote)}  # rulings E5 and E8
         said = stems.pop().upper() if len(stems) == 1 else None
         if said is None:
             chk.add(f"{path}: the quote states neither a floating nor a fixed rate")
         elif rb["rate_type"] != said:
             chk.add(f"{path}: rate_type {rb['rate_type']} contradicts the quote")
-        elif said == "FLOATING" and rb["reference_rate"] not in rb["quote"]:
+        elif said == "FLOATING" and rb["reference_rate"] not in quote:
             chk.add(f"{path}: reference_rate does not occur in the quote")
     chk.labelled(r["spread"], "bps_text", "spread", "rate_exposure.spread")
     chk.labelled(r["floor"], "bps_text", "floor", "rate_exposure.floor")

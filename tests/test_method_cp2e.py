@@ -792,11 +792,20 @@ def test_round10_signed_share_does_not_occur(printed: str) -> None:
         ("Earnings abroad were 25 percent of EBITDA from 1-December.", "1"),
         ("Earnings abroad were 95-96 percent of EBITDA.", "96"),
         ("Earnings abroad of S-25 were reported.", "25"),
+        ("Earnings abroad of mid-25 were reported.", "25"),
         ("Earnings abroad were 20 percent over 2024-2025.", "20"),
         ("Earnings abroad were +25 percent of EBITDA.", "25"),
         ("Earnings abroad were (25 percent) of EBITDA.", "25"),
     ],
-    ids=["1-December", "95-96", "S-25", "2024-2025", "plus_ignored", "parenthesised_words"],
+    ids=[
+        "1-December",
+        "95-96",
+        "S-25",
+        "mid-25",
+        "2024-2025",
+        "plus_ignored",
+        "parenthesised_words",
+    ],
 )
 def test_round10_non_sign_forms_still_validate(sentence: str, percent_text: str) -> None:
     sub, pages = _share_submission(sentence, percent_text)
@@ -837,3 +846,61 @@ def test_negative_floor_fails_closed() -> None:
     """The riding Low: a negative floor (direct construction only) has no floor limitation."""
     with pytest.raises(ValueError, match="Floor limitation"):
         cp2e.compute(_floor(_inputs("positive"), "-25"))
+
+
+# --- fix round 1 (round 10 review M1): reads after the normalised quote match ----------------
+_SH = "\u00ad"  # soft hyphen: quotes.normalise deletes it, so quotes.quoted accepts the quote
+
+
+def _validate_with_page5(sub: dict[str, Any], sentence: str) -> tuple[str, ...]:
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    return cp2e.validate_macro_fx(submission=sub, pages=pages)
+
+
+def test_m1_code_is_read_on_the_normalised_quote() -> None:
+    """A: the page prints only EURIBOR; a hidden break must not yield the code EUR."""
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    quote = f"priced off EUR{_SH}IBOR"
+    sub["fx"]["debt_currency"] = {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": quote,
+        "code_text": "EUR",
+    }
+    assert _validate_with_page5(sub, "Debt is priced off EURIBOR.") == (
+        "fx.debt_currency: code_text EUR does not occur in the quote",
+    )
+
+
+def test_m1_rate_phrase_is_read_on_the_normalised_quote() -> None:
+    """B: the page states both phrases; a hidden break in one stem must not hide it."""
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    page = "It has a floating rate on SOFR reference rate and no fixed rate"
+    sub["rate_exposure"]["rate_basis"]["quote"] = page.replace("fixed", f"fi{_SH}xed")
+    assert _validate_with_page5(sub, page) == (
+        "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
+    )
+
+
+def test_m1_label_adjacency_is_read_on_the_normalised_quote() -> None:
+    """C: the page's spread is 250; 25 is another figure on the page."""
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    page = "The spread 250 basis points applies and 25 basis points is the fee"
+    sub["rate_exposure"]["spread"] = {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": page.replace("250", f"25{_SH}0"),
+        "bps_text": "25",
+    }
+    assert _validate_with_page5(sub, page) == (
+        "rate_exposure.spread: bps_text 25 is not labelled spread in the quote",
+    )
+
+
+def test_m1_reference_rate_is_read_on_the_normalised_quote() -> None:
+    """D: the page names SOFR; a hidden break in the quote must not refuse it."""
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    page = "The loan has a floating rate type with SOFR reference rate"
+    sub["rate_exposure"]["rate_basis"]["quote"] = page.replace("SOFR", f"SO{_SH}FR")
+    assert _validate_with_page5(sub, page) == ()

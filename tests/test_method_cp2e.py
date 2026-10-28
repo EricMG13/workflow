@@ -5,6 +5,7 @@ Inputs come from the oracle's own literals (submissions.json) and the frozen fin
 """
 
 import copy
+import dataclasses
 import json
 from decimal import Decimal
 from pathlib import Path
@@ -280,7 +281,7 @@ def _edit(base: dict[str, Any], path: str, value: Any) -> None:
 
 
 def _mutated(edits: list[list[Any]]) -> dict[str, Any]:
-    sub = copy.deepcopy(SUBMISSIONS[SUBMISSIONS["refusal_mutations"]["base"]])
+    sub: dict[str, Any] = copy.deepcopy(SUBMISSIONS[SUBMISSIONS["refusal_mutations"]["base"]])
     for path, value in edits:
         _edit(sub, path, value)
     return sub
@@ -331,3 +332,46 @@ def test_rate_claim_without_fixed_wording_is_refused() -> None:
     no_interest = copy.replace(inputs, interest=copy.replace(inputs.interest, value=Decimal(0)))
     with pytest.raises(ValueError, match="Rate claim"):
         cp2e.compute(no_interest)
+
+
+def test_fx_claim_with_a_stated_debt_currency_but_no_balance_is_refused() -> None:
+    """Rate terms absent, debt currency stated: no pinned wording, and "currency not stated"
+    would be false (review fix round 1, item 1)."""
+    inputs = _inputs("positive")
+    no_terms = copy.replace(
+        inputs,
+        facility=None,
+        rate_absence=cp2e.Absence(reason="Not stated", follow_up="Supply it"),
+    )
+    assert no_terms.debt_currency is not None
+    with pytest.raises(ValueError, match="FX claim"):
+        cp2e.compute(no_terms)
+
+
+def test_hedge_claim_with_a_stated_ratio_but_no_rate_terms_is_refused() -> None:
+    """Hedge ratio stated, after-hedge value missing for want of rate terms: no pinned wording,
+    and "needs a hedge ratio" would be false (review fix round 1, item 2)."""
+    gap = _inputs("gap_no_facility_schedule")
+    hedged = copy.replace(gap, hedge_ratio=Decimal("0.4"), hedge_absence=None)
+    with pytest.raises(ValueError, match="Hedge claim"):
+        cp2e.compute(hedged)
+
+
+@pytest.mark.parametrize("token", ["(5", "5)"])
+def test_unbalanced_parentheses_are_not_a_row_value(token: str) -> None:
+    """A row whose last token has one parenthesis is an issue, never a number or a crash."""
+    line = f"FX effect on cash  0  0  0  0  {token}"
+    pages = dict(_pages("positive"))
+    pages["page:3"] = pages["page:3"].replace("FX effect on cash  0  0  0  0  0", line)
+    assert line in pages["page:3"]
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["fx"]["fx_cash_effect"].update(quote=line, value_text=token)
+    issues = cp2e.validate_macro_fx(submission=sub, pages=pages)
+    assert issues == (f"fx.fx_cash_effect: value_text {token} is not the last value of the row",)
+
+
+def test_source_names_are_required() -> None:
+    """No empty default: T2F.8 cannot be composed without the pack's source names."""
+    (names,) = [f for f in dataclasses.fields(cp2e.MacroFxInputs) if f.name == "source_names"]
+    assert names.default is dataclasses.MISSING
+    assert names.default_factory is dataclasses.MISSING

@@ -11,7 +11,7 @@ orchestration seams (G1-X protocol section 2) are added to this file in later st
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from typing import Any, Literal
 
@@ -344,7 +344,7 @@ class MacroFxInputs:
     shock_rationale: str
     assessments: tuple[Assessment, ...]
     summary: str
-    source_names: Mapping[str, str] = field(default_factory=dict)
+    source_names: Mapping[str, str]
 
     def __post_init__(self) -> None:
         pairs = (
@@ -476,7 +476,7 @@ _ROW_LABELS = {
     "fx_cash_effect": "FX effect on cash",
 }
 _SENTENCE_NUM = re.compile(r"[0-9]{1,3}(?:\.[0-9]{1,4})?")  # operand bound: at most 999.9999
-_ROW_NUM = re.compile(r"\(?[0-9]+(?:\.[0-9]+)?\)?")
+_ROW_NUM = re.compile(r"[0-9]+(?:\.[0-9]+)?|\([0-9]+(?:\.[0-9]+)?\)")  # parentheses balanced
 _HEDGE_NUM = re.compile(r"[0-9]{1,3}(?:\.[0-9]{1,2})?")
 _FY_HEADER = re.compile(r"FY 2025(?:-12-31)?$")
 _MAX_SHOCKS = 3
@@ -1352,6 +1352,11 @@ def _claims(i: MacroFxInputs, s: Sensitivity, tables: Sequence[Table]) -> tuple[
             "states.",
             [foreign, debt_after, ebitda_change],
         )
+    elif i.debt_currency is not None:
+        raise ValueError(
+            "FX claim: the lease fixes no wording when the debt currency is stated but the "
+            f"currency effect on the debt is not calculable ({fx0.debt_after.reason})"
+        )
     else:
         add(
             "CP-2E-FX-01",
@@ -1366,6 +1371,11 @@ def _claims(i: MacroFxInputs, s: Sensitivity, tables: Sequence[Table]) -> tuple[
             f"After the analyst hedge assumption the first rate shock adds {fig(net)} of annual "
             "cash interest.",
             [net],
+        )
+    elif i.hedge_ratio is not None:
+        raise ValueError(
+            "Hedge claim: the lease fixes no wording when a hedge ratio is stated but the effect "
+            f"after hedges is not calculable ({s.rate[0].net.reason})"
         )
     else:
         add(

@@ -42,8 +42,8 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
-    "cases/cp3-cp6-owner/manifest.json": "2cb324becaeab80ff7d00e5a0ca3b33ef79a3d559fa7e25f5909b3d5eda3d87b",
+    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "cases/cp3-cp6-owner/manifest.json": "e3cb221737a3930278924eb16ad67208d9967cad455043565a79b24dcfae25c6",
 }
 MARKET_FILE = "cases/cp3-cp6-owner/manifest.json"
 MARKET_SHA = "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7"
@@ -993,6 +993,16 @@ def table(tid, title, cols, rows, row_header="Item", per_q="Run as of " + RUN_AS
         assert len(cells) == len(cols), (tid, rid)
         out.append({"row_id": rid, "label": label,
                     "facts": [fact(tid, rid, fld, lab, c, per_q) for (fld, lab), c in zip(cols, cells)]})
+    # table shape (contracts.py:270-272, validate_tables): one fact per column in every row, in column order,
+    # fact id <table>.<row>.<field>, no fact id repeated in the table
+    assert len({r["row_id"] for r in out}) == len(out), tid
+    seen = set()
+    for r in out:
+        assert len(r["facts"]) == len(cols), (tid, r["row_id"], len(r["facts"]), len(cols))
+        for (fld, _lab), f in zip(cols, r["facts"]):
+            assert f["fact_id"] == f"{tid}.{r['row_id']}.{fld}", (tid, r["row_id"], fld)
+            assert f["fact_id"] not in seen, f["fact_id"]
+            seen.add(f["fact_id"])
     return {"table_id": tid, "title": title, "row_header": row_header,
             "columns": [{"field": f, "label": l} for f, l in cols], "rows": out}
 

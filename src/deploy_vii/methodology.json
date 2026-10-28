@@ -114,17 +114,14 @@
     "optional": [],
     "purpose": "Benchmarks the issuer against a defined peer universe and flags outliers.",
     "table_ids": [
-      "T4.1",
-      "T4.10",
-      "T4.11",
-      "T4.2",
-      "T4.3",
-      "T4.4",
-      "T4.5",
-      "T4.6",
-      "T4.7",
-      "T4.8",
-      "T4.9"
+      "T1C.1",
+      "T1C.2",
+      "T1C.3",
+      "T1C.4",
+      "T1C.5",
+      "T1C.6",
+      "T1C.7",
+      "T1C.8"
     ]
   },
   {
@@ -142,12 +139,6 @@
     ],
     "purpose": "Challenges the adjusted-EBITDA bridge: tests each add-back for achievability and recurrence against evidence, reconciles adjusted EBITDA to cash, and restates leverage on the earnings the evidence supports.",
     "table_ids": [
-      "T1E.1",
-      "T1E.2",
-      "T1E.3",
-      "T1E.4",
-      "T1E.5",
-      "T1E.6",
       "T1D.1",
       "T1D.2",
       "T1D.3",
@@ -196,13 +187,6 @@
     "optional": [],
     "purpose": "Builds the downside and stress pathway: what breaks first and how far it falls.",
     "table_ids": [
-      "T5.1",
-      "T5.2",
-      "T5.3",
-      "T5.4",
-      "T5.5",
-      "T5.6",
-      "T5.7",
       "T2B.1",
       "T2B.2",
       "T2B.3",
@@ -563,7 +547,8 @@
       "CP-L40"
     ],
     "required": [
-      "CP-0"
+      "CP-0",
+      "CP-1"
     ],
     "optional": [],
     "purpose": "Runs a bounded LITE screening synthesis for CP-1, CP-1B.",
@@ -587,7 +572,8 @@
       "TL10.1",
       "TL10.2",
       "TL10.3",
-      "TL10.4"
+      "TL10.4",
+      "TL10.5"
     ]
   },
   {

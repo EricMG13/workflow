@@ -31,7 +31,7 @@ def test_only_cp1b_table_ownership_changes():
     cp1b = next(row for row in rows if row["module_id"] == "CP-1B")
     assert cp1b.pop("table_ids") == ["T1B.1", "T1B.2", "T1B.3"]
     digest = hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    assert digest == "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6"
+    assert digest == "43ce204f21717064ca188e882239a5628fd2f29d0f45a1179511d7067da90107"
     assert next(m for m in modules() if m.module_id == "CP-1B").required == ("CP-0", "CP-1")
     assert dependencies(("CP-1B", "CP-5"))["CP-5"] == {"CP-0", "CP-1", "CP-1B"}
     assert step_chain("CP-5").steps == ("integrity_review",)

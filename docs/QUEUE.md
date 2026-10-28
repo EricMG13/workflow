@@ -3068,3 +3068,11 @@ LEAD (2026-10-28): S1a integrated into the LEAD branch at fix round 4 (record `d
 LEAD (2026-10-28): CP-2G owner lease frozen (`docs/CP2G-OWNER-LEASE.md`). CP-1C amended (T1C.1 totals row → new table T1C.8; D8 T1C.1-T1C.8; header in `docs/CP1C-OWNER-LEASE.md`). Every oracle table must now hold one fact per column (`work/lead/owner-preparation-brief.md`); a scan of every owner oracle found only CP-1C (fixed) and CP-L10 (amendment running).
 
 LEAD (2026-10-28): CP-8 (revision 4) and CP-3C (revision 3) owner leases frozen (`docs/CP8-OWNER-LEASE.md`, `docs/CP3C-OWNER-LEASE.md`). Re-pin pass additions: the CP-8 builder gains the one-fact-per-column assertion; CP-3C also re-pins whenever `business_context.py` changes.
+
+LEAD (2026-10-28): CP-L10 amendment 1 re-frozen (`docs/CPL10-OWNER-LEASE.md` header: TL10.5 totals table, full TL10.3 overall row, run-bound TL10.1 markers, r13-r19, ordered citations; L1-L4 rulings binding until the CP-L10 rebuild in the serialised methodology change). The serialised change is now unblocked: D4 + TL10.5 + CP-1C D8 (T1C.1-T1C.8), one re-pin pass. Later CP-L10 revision: lineage of the missing `change` cell.
+
+LEAD (2026-10-28): Stage 1 rulings issued (`docs/rulings/2026-10-28-stage1.md`, 59 questions; no frozen case changes). Oracle amendments queued: CP-4 (4-1 basis text), CP-2A (A7 manifest sign text), CP-1D (1D1 T1D.4 source citations; after the serialised methodology change). Deferred optional oracle-builder syncs for unexercised branches (builder sha re-pin only): CP-2E E1/E5, CP-2A A4, CP-1C 1C1, CP-1D 1D2.
+
+LEAD (2026-10-28): rulings round 3 (2D-a scope fix, 2D-b..d, 1C-x, 1D-x) in `docs/rulings/2026-10-28-stage1.md`. Product note from the Modules lane: the CP-4 engine (`cp4_legal.py:546-554`) shows T4C.7 `threshold_value` exactly as typed (`+4.00`, `4.00E0`, fullwidth digits); headroom is correct; display normalisation is open (Modules lane, CP-4 build).
+
+LEAD (2026-10-28): S1a review-adversary-4 returned (non-blocking by user decision): known gaps for the orchestration stage (Modules lane), recorded in `docs/reviews/s1a-owner-run.md`: HIGH 1 verifier does not replay the begin rule (forged repairs/unblocking accepted), MEDIUM 1 CP-MODEL inputs unbound, LOW 1 pending attempt in a sealed receipt. Corrections and RED tests in `s1a-build/work/s1a/review-adversary-4.md`.

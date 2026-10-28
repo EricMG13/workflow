@@ -1,7 +1,7 @@
 """Writes cases/cpl10-owner/{manifest,submissions,expected}.json (stdlib only).
 
 An independent transcription of the CP-L10 (financial change screen) rules written in
-work/lead/cpl10-owner-preparation/lease-draft.md. deploy_vii is never imported or run here.
+work/lead/cpl10-owner-preparation/lease-draft.md. deploy_vii is never imported or run here. Amendment 1 (rulings F1-F5) is applied.
 Every number is derived from the frozen financial source bytes (cases/financial/manifest.json,
 hash-checked) with exact rational arithmetic (fractions.Fraction) and cross-checked against
 decimal.Context(prec=38, ROUND_HALF_EVEN), the context of model/_cells.py.
@@ -27,7 +27,7 @@ CTX = Context(prec=38, rounding=ROUND_HALF_EVEN)
 # --- 0. pinned inputs (every file this builder reads) -------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
 }
 RAW = {}
 for _rel, _sha in PINS.items():
@@ -48,12 +48,17 @@ PAGE = {p["locator"]: p["text"] for p in SRC["financial"]["pages"]}
 
 # --- 0b. methodology facts the lease relies on (asserted, not assumed) ---------------------------
 CPL10 = METH["CP-L10"]
-assert CPL10["required"] == ["CP-0"] and CPL10["optional"] == []  # today; D4 adds CP-1 (below)
-assert CPL10["table_ids"][-4:] == ["TL10.1", "TL10.2", "TL10.3", "TL10.4"]
+assert CPL10["required"] == ["CP-0", "CP-1"] and CPL10["optional"] == []  # landed: D4 added CP-1 (it was ["CP-0"])
+assert CPL10["table_ids"][-5:] == ["TL10.1", "TL10.2", "TL10.3", "TL10.4", "TL10.5"]  # landed: TL10.5 appended after TL10.4
 TL10 = [t for t in CPL10["table_ids"] if t.startswith("TL10.")]
 for _mid, _m in METH.items():  # D8: no other module lists a TL10.x id
     if _mid != "CP-L10":
         assert not set(TL10) & set(_m["table_ids"]), _mid
+# Amendment 1 F1: the totals live in a new table TL10.5, registered by the single serialised methodology change.
+TL10_NEW = "TL10.5"
+assert not any(TL10_NEW in _m["table_ids"] for _m in METH.values() if _m is not CPL10)  # D8: TL10.5 belongs to CP-L10 only
+assert TL10[-1] == TL10_NEW
+TL10_PRODUCED = TL10
 assert METH["CP-1"]["required"] == ["CP-0"]
 TARGET_TITLE = {k: METH[k]["title"] for k in ("CP-1D", "CP-2A", "CP-2D")}
 D4_PLAN = ["CP-0", "CP-1", "CP-L10"]  # plan(("CP-L10",)) after D4: CP-0, CP-1 required (block)
@@ -125,6 +130,10 @@ QKEYS = tuple(QUARTERS)
 # Marker for the calculation_id of a copied CP-1 cell: the CP-1 fact's own `canonical-kpi:<sha256>` id (every
 # T4.10 fact has one, source-class and missing ratio facts too), bound at run time, never literal here.
 CP1_CALCULATION_ID = "{{CP1_CALCULATION_ID}}"
+CLAIM_CITATION_RULE = ("Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim references, transitively through "
+                       "derives_from and the copied CP-1 cells (the CP-1C L3 rule: a calculated fact's citations are the ordered, de-duplicated concatenation of "
+                       "the citations of the facts in derives_from; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none")
+CP1_CITATION_MARKER = "{{{{CP1_CITATIONS:{label}}}}}"  # the citations of the named CP-1 T4.10 fact, bound at run time
 ORD = {"Q1": "first", "Q2": "second", "Q3": "third", "Q4": "fourth"}
 # CP-1's own limitation text for a month-less ratio. OBSERVED on the real promoted CP-1 head (a copy of
 # the S1 positive head, read-only probes of review-precise-1 and of revision 2, 2026-10-28): every
@@ -287,7 +296,7 @@ def pair_json(p):
 GAP_NO_PRIOR_YEAR = {
     "gap": "No prior-year statements are in the pack, so annual change and growth cannot be screened.",
     "why_it_matters": "A comparison of two quarters cannot separate a seasonal pattern from a trend.",
-    "affected_analysis": "Earnings and cash generation topics",
+    "affected_analysis": "overall",  # F4 (6): names a topic of the view or `overall`; the annual comparison concerns the whole screen
     "severity": "Material",
     "action": "Supply prior-year quarterly statements, then run the earnings quality and downside owners.",
 }
@@ -314,8 +323,7 @@ SUBMISSIONS = {
              "credit_transmission": "A modest rise in cash does not change the liquidity picture on its own."},
         ],
         "overall": {"rationale": "Nothing in the two middle quarters calls for a closer look beyond a small build in cash.",
-                    "category": "Analyst Interpretation", "confidence": "Low",
-                    "limitation": "Leverage and coverage cannot be compared because the financial foundation has no twelve-month basis for either quarter."},
+                    "category": "Analyst Interpretation", "confidence": "Low", "limitation": None},  # F4 (5): a non-Insufficient-Information overall carries no limitation
         "gaps": [],
     },
 }
@@ -343,6 +351,42 @@ for _case, _sub in SUBMISSIONS.items():
         assert not any(w in _text.lower() for w in PROHIBITED), (_case, _path)
 
 # --- 6. composition of one case ----------------------------------------------------------------
+# Table shape (owner-preparation-brief.md, "Table shape"; contracts.validate_tables): every row of a table has exactly one
+# fact per column, in column order, with fact id <table>.<row>.<field>; the table's facts are exactly the cells it references.
+COLUMNS = {
+    "TL10.1": ["subject_identity", "source_ref", "source_owner_module", "as_of_or_period", "scope_status", "topics_supported", "limitation"],
+    "TL10.2": ["from_value", "to_value", "change", "change_pct", "materiality", "evidence_status", "disposition", "priority_rank",
+               "source_owner_modules", "source_refs", "upgrade_module_ids"],
+    "TL10.3": ["screen_item", "assessment", "evidence", "credit_transmission", "screening_implication", "confidence", "source_refs"],
+    "TL10.4": ["topic_id", "trigger", "missing_inputs", "decision_impact", "required_source", "target_full_module_id",
+               "expected_owned_object", "blocking_for_full_decision"],
+    TL10_NEW: ["material", "watch", "stable", "not_assessed"],
+}
+assert list(COLUMNS) == TL10_PRODUCED
+# F3: TL10.1 scope_status and source_ref are run-bound by a stated rule, never a literal.
+HEAD_RESULT_SHA256 = {"CP-0": "{{CP0_RESULT_SHA256}}", "CP-1": "{{CP1_RESULT_SHA256}}"}
+HEAD_STATUS_WORD = {"CP-0": "{{CP0_STATUS_WORD}}", "CP-1": "{{CP1_STATUS_WORD}}"}
+
+
+def check_table_shape(case, facts, tables):
+    by_id = {}
+    for f in facts:
+        assert f["fact_id"] not in by_id, (case, f["fact_id"])
+        by_id[f["fact_id"]] = f
+    assert [t["table_id"] for t in tables] == TL10_PRODUCED, case
+    for t in tables:
+        cols = COLUMNS[t["table_id"]]
+        assert t["columns"] == cols, (case, t["table_id"])
+        seen = set()
+        assert len({r["row_id"] for r in t["rows"]}) == len(t["rows"]), (case, t["table_id"])
+        for r in t["rows"]:
+            assert len(r["fact_ids"]) == len(cols), (case, t["table_id"], r["row_id"], len(r["fact_ids"]), len(cols))  # contracts.py:270-272
+            for col, fid in zip(cols, r["fact_ids"]):
+                f = by_id[fid]
+                assert fid not in seen, (case, fid)
+                assert (f["table_id"], f["row_id"], f["field"]) == (t["table_id"], r["row_id"], col), (case, fid)
+                seen.add(fid)
+        assert seen == {f["fact_id"] for f in facts if f["table_id"] == t["table_id"]}, (case, t["table_id"])
 
 
 def composed_case(name):
@@ -383,6 +427,10 @@ def composed_case(name):
         return fact(table, row, field, label, status=status, unit=unit, period=period,
                     shown="∅ G#" if status == "missing" else "∅ G# n.m.", limitation=reason,
                     value_class="calculated" if status != "missing" else None)
+
+    def na(table, row, field, label, reason):
+        """A not_applicable text cell (F1: the overall row's cells that have no meaning for it); nothing is derived, so no value class."""
+        return fact(table, row, field, label, status="not_applicable", shown="\u2205 G# n.m.", limitation=reason)
 
     def copied(tid, field, label, ucl, cf, dec):
         """A TL10.2 cell that is the CP-1 T4.10 fact verbatim (value_class, calculation_id, citations, status)."""
@@ -435,22 +483,22 @@ def composed_case(name):
     counts = {k: sum(1 for r in rows if r["materiality"] == v) for k, v in
               (("material", "Material"), ("watch", "Watch"), ("stable", "Stable"), ("not_assessed", "Not assessed"))}
     assert sum(counts.values()) == len(TOPICS)
-    tids = [num("TL10.2", "total", k, f"Topics rated {lab}", D(counts[k]), "amount", "topics", decimals=0,
+    tids = [num(TL10_NEW, "total", k, f"Topics rated {lab}", D(counts[k]), "amount", "topics", decimals=0,
                 formula="count of topics by materiality") for k, lab in
             (("material", "Material"), ("watch", "Watch"), ("stable", "Stable"), ("not_assessed", "Not assessed"))]
-    t2.append({"row_id": "total", "label": "Total", "fact_ids": tids})
+    t5 = [{"row_id": "total", "label": "Total", "fact_ids": tids}]  # F1: its own table (the totals are not topic-screen columns)
     # --- TL10.1 scope and sources
     topics_ok = ", ".join(r["label"] for r in rows if r["evidence"] == "Complete")
     t1 = []
-    for rid, mod, per, status_note, topics in (
-        ("cp0", "CP-0", "as of 2026-01-10", "bound at run time: the CP-0 head status", "None: source readiness only"),
-        ("cp1", "CP-1", f"{QUARTERS[p[0]][1]} -> {QUARTERS[p[1]][1]}", "bound at run time: the CP-1 head status", topics_ok),
+    for rid, mod, per, topics in (
+        ("cp0", "CP-0", "as of 2026-01-10", "None: source readiness only"),
+        ("cp1", "CP-1", f"{QUARTERS[p[0]][1]} -> {QUARTERS[p[1]][1]}", topics_ok),
     ):
         ids = [text("TL10.1", rid, "subject_identity", "Subject identity", "Northbridge Synthetic Group", None),
-               text("TL10.1", rid, "source_ref", "Source reference", f"{mod} settled head (result_sha256 bound at run time)", None),
+               text("TL10.1", rid, "source_ref", "Source reference", f"{mod}:{HEAD_RESULT_SHA256[mod]}", None),
                text("TL10.1", rid, "source_owner_module", "Source owner module", mod, None),
                text("TL10.1", rid, "as_of_or_period", "As of or period", per, None),
-               text("TL10.1", rid, "scope_status", "Scope status", status_note, None),
+               text("TL10.1", rid, "scope_status", "Scope status", HEAD_STATUS_WORD[mod], None),
                text("TL10.1", rid, "topics_supported", "Topics supported", topics, "calculated" if rid == "cp1" else None),
                text("TL10.1", rid, "limitation", "Limitation", "Inherited limitations of the CP-0 and CP-1 heads apply; see the limitations rail.", None)]
         t1.append({"row_id": rid, "label": mod, "fact_ids": ids})
@@ -469,9 +517,15 @@ def composed_case(name):
                text("TL10.3", tid, "source_refs", "Source references", f"CP-1 {r['from_fact']['label']}; CP-1 {r['to_fact']['label']}", None)]
         t3.append({"row_id": tid, "label": r["label"], "fact_ids": ids})
     ov = sub["overall"]
+    not_ov = "Not applicable to the overall row"  # F1: the overall row is a full row; these cells have no meaning for it
     t3.append({"row_id": "overall", "label": "Overall", "fact_ids": [
+        text("TL10.3", "overall", "screen_item", "Screen item", "Overall", None),
         text("TL10.3", "overall", "assessment", "Assessment", ov["rationale"], "analyst_judgment"),
-        text("TL10.3", "overall", "confidence", "Confidence", ov["confidence"], "analyst_judgment")]})
+        na("TL10.3", "overall", "evidence", "Evidence", not_ov),
+        na("TL10.3", "overall", "credit_transmission", "Credit transmission", not_ov),
+        na("TL10.3", "overall", "screening_implication", "Screening implication", not_ov),
+        text("TL10.3", "overall", "confidence", "Confidence", ov["confidence"], "analyst_judgment"),
+        na("TL10.3", "overall", "source_refs", "Source references", not_ov)]})
     # --- TL10.4 upgrade triggers
     t4 = []
     for r in rows:
@@ -495,11 +549,11 @@ def composed_case(name):
                text("TL10.4", tid, "blocking_for_full_decision", "Blocking for full decision", "Yes" if r["materiality"] == "Material" else "No", "calculated")]
         t4.append({"row_id": tid, "label": r["label"], "fact_ids": ids})
     tables = [
-        {"table_id": "TL10.1", "title": "Scope and sources", "rows": t1},
-        {"table_id": "TL10.2", "title": "Topic screen", "rows": t2},
-        {"table_id": "TL10.3", "title": "Screen items", "rows": t3},
-        {"table_id": "TL10.4", "title": "Upgrade triggers", "rows": t4},
+        {"table_id": tid_, "title": title, "columns": list(COLUMNS[tid_]), "rows": rws} for tid_, title, rws in
+        (("TL10.1", "Scope and sources", t1), ("TL10.2", "Topic screen", t2), ("TL10.3", "Screen items", t3),
+         ("TL10.4", "Upgrade triggers", t4), (TL10_NEW, "Screen totals", t5))
     ]
+    check_table_shape(name, facts, tables)
     # --- claims (Python templates; analyst text is digit-free and carries no reference)
     for r in rows:
         tid, u = r["topic"], r["tok"]
@@ -518,14 +572,33 @@ def composed_case(name):
                            "text": (f"{r['label']}: the change {span} cannot be screened; [{base}.change] is not calculable because CP-1 "
                                     f"carries no known value for {ends}.")})
     claims.append({"claim_id": "TL10.2.summary", "limitation": None,
-                   "refs": [f"TL10.2.total.{k}|topics" for k in ("material", "watch", "stable", "not_assessed")],
-                   "text": ("Of seven screened topics, {TL10.2.total.material|topics} rate Material, {TL10.2.total.watch|topics} Watch, "
-                            "{TL10.2.total.stable|topics} Stable and {TL10.2.total.not_assessed|topics} cannot be assessed "
+                   "refs": [f"{TL10_NEW}.total.{k}|topics" for k in ("material", "watch", "stable", "not_assessed")],
+                   "text": ("Of seven screened topics, {TL10.5.total.material|topics} rate Material, {TL10.5.total.watch|topics} Watch, "
+                            "{TL10.5.total.stable|topics} Stable and {TL10.5.total.not_assessed|topics} cannot be assessed "
                             f"{span}.")})
     for r in rows:
         if r["topic"] in analyst:
             claims.append({"claim_id": f"TL10.3.{r['topic']}", "text": analyst[r["topic"]]["assessment"], "limitation": None, "refs": []})
     claims.append({"claim_id": "TL10.3.overall", "text": ov["rationale"], "limitation": ov["limitation"], "refs": []})
+    # F5 (the CP-1C L3 rule): Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim
+    # references, transitively through derives_from and the copied CP-1 cells. Citations are CP-1's own (bound at run time), so the oracle
+    # pins the ordered CP-1 T4.10 labels as markers.
+    by_id = {f["fact_id"]: f for f in facts}
+
+    def cit_labels(fid, trail=()):
+        assert fid not in trail, fid
+        f = by_id[fid]
+        if f.get("copied_from_cp1"):
+            return [f["copied_from_cp1"]]
+        out = []
+        for d in f.get("derives_from") or []:
+            out.extend(cit_labels(d, trail + (fid,)) if d in by_id else [d])
+        return out
+
+    for c in claims:
+        labels = list(dict.fromkeys(l for ref in c["refs"] for l in cit_labels(ref.split("|")[0])))
+        assert all(re.fullmatch(r"Q[1-4] 25 \(.*\) \u00b7 [a-z_]+", l) for l in labels), labels
+        c["citations"] = [CP1_CITATION_MARKER.format(label=l) for l in labels]
     # --- own limitations (exact)
     own = [
         "Relative-change thresholds are screening rules documented in the CP-L10 method; they are not covenant or credit tests.",
@@ -619,6 +692,25 @@ def refusals():
         "overall.rationale: empty")
     add("r12", "payload shape: comparison.from_period missing", lambda d: d["comparison"].pop("from_period"),
         "comparison.from_period: Field required", kind="shape")
+    # Amendment 1 F4: validation steps (5) overall and (6) gaps as rules, one literal each (the CP-3C Insufficient-Information precedent).
+    II = "Insufficient Information"
+    add("r13", "overall confidence is Insufficient Information exactly when its category is (category Insufficient Information, confidence Medium)",
+        lambda d: d["overall"].update(category=II, limitation="The comparison rests on two quarters only."),
+        "overall.confidence: must be Insufficient Information exactly when the category is")
+    add("r14", "Insufficient Information overall without its limitation",
+        lambda d: d["overall"].update(category=II, confidence=II, limitation=None),
+        "overall.limitation: an Insufficient Information overall states its limitation")
+    add("r15", "limitation on an overall that is not Insufficient Information",
+        setp(("overall", "limitation"), "A limitation without a gap."),
+        "overall.limitation: only an Insufficient Information overall carries a limitation")
+    add("r16", "gap names no topic of the view and not `overall`",
+        setp(("gaps", 0, "affected_analysis"), "Earnings and cash generation topics"),
+        "gaps[0].affected_analysis: must name a topic of the view or overall")
+    add("r17", "gap with a whitespace-only missing item (passes the product Text type; a content refusal)",
+        setp(("gaps", 0, "gap"), "   "), "gaps[0].gap: empty")
+    add("r18", "gap text with a digit", setp(("gaps", 0, "gap"), "No statements for 2024 are in the pack."),
+        "gaps[0].gap: must not contain a digit")
+    add("r19", "gap repeated", lambda d: d["gaps"].append(deepcopy(d["gaps"][0])), "gaps[1]: repeated gap")
     # product-produced spellings are r08's and r09's (prose.check, probed); every other issue text is this draft's.
     return out
 
@@ -653,6 +745,18 @@ REFUSED_CPL10_ROW = {"module_id": "CP-L10", "readiness": "CONDITIONAL", "evidenc
                      "missing_source": "Quarterly financial statements", "limitations": [MISSING_FIN]}
 REFUSED_GAP_ROW = {"gap_id": "missing-financial", "kind": "source", "severity": "material", "description": MISSING_FIN,
                    "affected_modules": ["CP-1", "CP-L10"], "remediation": "Supply quarterly financial statements"}
+
+def _methodology_digest(rows):
+    """tests/test_cp1b_registration.py:34 rule: sha256 of the rows with the CP-1B table_ids popped."""
+    rows = deepcopy(rows)
+    next(r for r in rows if r["module_id"] == "CP-1B").pop("table_ids")
+    return hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+_ROWS = json.loads(RAW["src/deploy_vii/methodology.json"])
+DIGEST_BEFORE = "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6"  # the test's pin before the serialised change (a literal)
+DIGEST_AFTER = _methodology_digest(_ROWS)  # computed from the landed methodology.json bytes pinned above (the whole serialised change)
+assert DIGEST_AFTER != DIGEST_BEFORE
 
 GREP_LOCATE = "locate by grep for the hash 348fbc4b...8d45 at build time (untracked or still moving in this worktree, so no line number is pinned)"
 # Navigator words probed on the committed report_view (sha256 51a6853e...0e12) with the reviewer's rp3 probe
@@ -693,13 +797,14 @@ for _s in NAV_STATES.values():
 
 D4_SIDE_EFFECTS = {
     "methodology_json": {"file": "src/deploy_vii/methodology.json", "sha256_before": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
-                         "change": "CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"]; sha256_after is struck when the edit lands",
-                         "serialised_change": "one methodology.json change carrying CP-L10 D4 and CP-1C D8 (T1C.1-T1C.7) together, with ONE re-pin pass of every builder that pins methodology.json (methodology_pinning_builders below); neither lands alone"},
+                         "sha256_after": PINS["src/deploy_vii/methodology.json"],
+                         "change": "landed in the serialised change: CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"] and CP-L10 `table_ids` gains TL10.5 (amendment 1, F1: appended after TL10.4); CP-1C `table_ids` become T1C.1-T1C.8 (the eleven T4.x ids dropped); CP-1D drops T1E.1-T1E.6; CP-2A drops T5.1-T5.7 (they stay CP-5's)",
+                         "serialised_change": "one methodology.json change carrying CP-L10 D4 (required edge), the CP-L10 table_ids gaining TL10.5 (amendment 1) and CP-1C D8 (T1C.1-T1C.8, CP-1C amendment 1) together, with ONE re-pin pass of every builder that pins methodology.json (methodology_pinning_builders below); neither lands alone"},
     "test_pin": {"file": "tests/test_cp1b_registration.py", "line": 34, "test": "test_only_cp1b_table_ownership_changes",
-                 "digest_before": "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6",
-                 "digest_after": "2f9aa78646dce706adf5c536e0863a558b0f73c712ef3b5b93d59af909b74c90",
-                 "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes only because of the D4 edit (probe: scratch copy of the rows)",
-                 "action": "update the pinned digest in the CP-L10 build commit (a deliberate registry change); the test fails otherwise"},
+                 "digest_before": DIGEST_BEFORE,
+                 "digest_after": DIGEST_AFTER, "digest_after_note": "computed by this builder from the landed methodology.json (the whole serialised change: D4, TL10.5, CP-1C D8, the CP-1D and CP-2A id drops); the c19be178... of the pre-landing text covered D4 and TL10.5 only and was not final",
+                 "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes because of the serialised methodology.json change (computed by this builder from the pinned methodology.json)",
+                 "action": "the pin is recomputed from methodology.json after the whole serialised change (not from D4 and TL10.5 alone) and updated in the same commit, a deliberate registry change; the test fails otherwise"},
     "methodology_pinning_builders": {
         "rule": "each asserts the methodology.json sha256 348fbc4b... and refuses after the edit. The build commit updates every pin in ONE re-pin pass (the serialised change with CP-1C D8), rebuilds each builder and compares: expected.json and submissions.json byte-identical; manifest.json differs only in the methodology pin value wherever the builder records it (key-limited diff). Any other output change goes back to LEAD (byte-identical manifest.json cannot hold: each builder writes the pin into it)",
         "files": [{"file": "cases/cp1c-owner/builder/build.py", "locate": GREP_LOCATE, "tracked": "untracked in this worktree (still moving)"},
@@ -770,17 +875,17 @@ def main():
     manifest = {
         "schema_version": "cpl10-owner-cases/1",
         "scope": "CP-L10 (aliases CP-L20, CP-L23, CP-L30, CP-L40) financial change screen: CP-0 to CP-1 to CP-L10 over the frozen financial pack",
-        "status": "DRAFT revision 4 (fix round 3 after review-precise-3 and the LEAD rulings of 2026-10-28: C1-C4, CP-OS/CP-DR headers as amended by the 0d re-pin); scoped check pending; not executed; build-first (no test run)",
+        "status": "AMENDMENT 1 of the frozen revision 4 (LEAD rulings F1-F5 of 2026-10-28, work/lead/cpl10-owner-preparation/amendment-1-rulings.md); scoped review pending; not executed; build-first (no test run)",
         "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
         "inputs_pinned": PINS,
         "financial_baseline": {"path": "cases/financial/manifest.json", "sources": [
             {"source_id": s, "sha256": SRC[s]["sha256"], "reuse": "Every page text and locator byte-identical; read by reference, never edited"} for s in ("identity", "financial")]},
         "no_new_source": "CP-L10 reads only the settled CP-1 head; the financial pack carries every operand, so no synthetic source and no synthetic peer is added. One issuer is screened for change between periods, not against peers.",
         "d4_edge_change": {"file": "src/deploy_vii/methodology.json", "module": "CP-L10",
-                           "required_before": CPL10["required"], "required_after": ["CP-0", "CP-1"],
+                           "required_before": ["CP-0"], "required_after": CPL10["required"],
                            "optional_after": [], "edge_rule": "CP-1 -> CP-L10 block (registry.edge_rule default for a required producer)",
                            "plan_L10": D4_PLAN, "cp1b": "not added: v1 reads no CP-1B fact (reading nothing would not be consumption); see lease question 3",
-                           "lands_with": "the CP-L10 build commit, together with every side effect below; this preparation edits none of them",
+                           "lands_with": "landed in the serialised methodology.json change, together with every side effect below (re-pin pass, test pin, reuse manifest entry)",
                            "side_effects": D4_SIDE_EFFECTS},
         "run": {"run_id": "cpl10-owner-positive", "issuer_id": "northbridge-synthetic", "issuer_name": "Northbridge Synthetic Group",
                 "as_of": "2026-01-10", "method_version": "deploy-v-r14", "case_kind": "synthetic", "pathway": "credit_snapshot",
@@ -812,8 +917,13 @@ def main():
                                           "{{ALL narrative gap ids}}": "every narrative.gaps[*].gap_id, in catalogue order"},
                               "validator_result": "validate_downstream_review: no issues; _assess_consumers row CP-L10 ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gap; probed by review-precise-1 and re-run in revision 2 on this literal with markers bound (revision-2.md)"},
             "cp1_calculation_id": {"marker": "{{CP1_CALCULATION_ID}}", "rule": "a copied TL10.2 cell carries the calculation_id of the CP-1 T4.10 fact named by copied_from_cp1 (canonical-kpi:<sha256>), read at run time; never literal"},
-            "cp0_status_text": "TL10.1 scope_status cells read the CP-0 and CP-1 head statuses at run time",
-            "result_sha256": "TL10.1 source_ref cells embed the head result_sha256 at run time",
+            "tl10_1_scope_status": {"rule": "TL10.1 `scope_status` = the bound head's status word as `report_view.module_display` spells it (restricted reads `With limitations`); no literal",
+                                    "markers": {"{{CP0_STATUS_WORD}}": "the CP-0 head's word", "{{CP1_STATUS_WORD}}": "the CP-1 head's word"},
+                                    "closed_run": "both heads settle restricted, so both read `With limitations` (navigator d4_cp1_settled); the test compares against the run, not this note"},
+            "tl10_1_source_ref": {"rule": "TL10.1 `source_ref` = `<module>:<result_sha256>`: the bound head's module id and its result sha256; no literal",
+                                  "markers": {"{{CP0_RESULT_SHA256}}": "the CP-0 head's result_sha256", "{{CP1_RESULT_SHA256}}": "the CP-1 head's result_sha256"}},
+            "claim_citations": {"rule": CLAIM_CITATION_RULE,
+                                "marker": "{{CP1_CITATIONS:<CP-1 T4.10 label>}}: the citations of that CP-1 fact, bound at run time; each claim lists its markers in first-reference order, de-duplicated"},
             "inherited_limitations": "execution.py settle rule (execution.inherited_limitations)",
             "ticket_and_call_ids": "structural only",
         },
@@ -852,6 +962,9 @@ def main():
             "status": "known | missing | not_applicable",
             "value_class_basis": "observed on the real CP-1 head for every copied cell (manifest.fact_selection_rule); a missing ratio fact keeps value_class `calculated`",
             "derives_from": "the CP-1 T4.10 labels a calculated fact derives from",
+            "table_shape": "every table of every case has one fact per column in every row, fact id <table>.<row>.<field> in column order (contracts.py:270-272, validate_tables); `tables[].columns` pins the order of the field names only; column labels are the product's and are not pinned; the builder asserts the shape for every table of both cases",
+            "not_applicable_text_cell": "a text cell with no meaning for its row (the TL10.3 overall row's evidence, credit_transmission, screening_implication and source_refs): status not_applicable, shown `\u2205 G# n.m.`, limitation `Not applicable to the overall row`, no value class, no calculation id",
+            "run_bound_cells": "TL10.1 scope_status and source_ref carry a marker, never a literal (manifest.run_time_bindings.tl10_1_scope_status, tl10_1_source_ref)",
         },
         "rules": {
             "thresholds": {"material_at_or_above": "1/10", "watch_at_or_above": "1/20", "basis": "|closing - starting| / |starting| of CP-1 facts; screening-policy literals (D11) that no source states, stated in methods/cpl10.md with an own limitation, never presented as sourced",
@@ -864,6 +977,19 @@ def main():
             "target_titles": TARGET_TITLE,
             "sign": "change = closing - starting (signed); change_pct = change / |starting| (signed)",
             "assessment_rule": "exactly one analyst assessment for each topic Python rates Material or Watch; none for Stable or Not assessed",
+            "overall_rule": {"confidence_high": "High is refused for every confidence, the overall's included (r07 pins the assessments[0] spelling `<path>.confidence: High is not allowed in a screen`)",
+                             "insufficient_information_pairing": "overall.confidence is Insufficient Information iff overall.category is Insufficient Information (r13; issue `overall.confidence: must be Insufficient Information exactly when the category is`)",
+                             "limitation": "an Insufficient Information overall (category) carries a non-null limitation (r14; `overall.limitation: an Insufficient Information overall states its limitation`); a category other than Insufficient Information forbids one (r15; `overall.limitation: only an Insufficient Information overall carries a limitation`); the CP-3C precedent, keyed on the category",
+                             "issue_order": "confidence High, then pairing, then limitation required, then limitation forbidden",
+                             "literal_consequence": "cases.limited.overall.limitation is null (it was a sentence on a Low-confidence Analyst Interpretation overall, which the forbidden-limitation rule now refuses)"},
+            "gaps_rule": {"topic": "each gap's `affected_analysis` equals a topic_id of the view or `overall` (r16; `gaps[<i>].affected_analysis: must name a topic of the view or overall`)",
+                          "missing_item": "each gap's `gap` (the missing item) is non-empty after trimming (r17; `gaps[<i>].gap: empty`)",
+                          "no_digit": "no gap text field (gap, why_it_matters, affected_analysis, action) contains a digit (r18; `gaps[<i>].<field>: must not contain a digit`)",
+                          "duplicates": "a gap with the same `affected_analysis` and `gap` text as an earlier gap is refused (r19; `gaps[<i>]: repeated gap`)",
+                          "issue_order": "per gap in order: topic, missing item, digit (field order gap, why_it_matters, affected_analysis, action), repeat",
+                          "literal_consequence": "the positive gap's affected_analysis is `overall` (it was `Earnings and cash generation topics`, which the topic rule now refuses; r16 reuses that text)"},
+            "claim_citations": CLAIM_CITATION_RULE,
+            "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell has none either, so a claim that references only counts or only a missing change carries no citations as the facts stand (a derives_from on those cells would be a fact-value change outside amendment 1)",
             "submission_types": {"note": "the field types decide shape versus content; pinned here, frozen with the lease",
                                  "comparison.from_period, to_period": "Text (contracts.Text: str, min_length 1)",
                                  "assessments[].topic_id, assessment, credit_transmission, overall.rationale, gaps[].*": "Text (contracts.Text); whitespace-only text passes the type and is a content refusal",
@@ -871,7 +997,7 @@ def main():
                                  "gaps[].severity": "business_context.Severity", "overall.limitation": "Text or null",
                                  "shape issues": "missing field, wrong type, empty string (min_length): `<dotted.path>: <pydantic message>`, returned alone"},
             "validation_order": ["shape (alone)", "comparison (an issue here ENDS validation: the ratings depend on the pair)", "assessments[] in submission order, then the missing-assessment check",
-                                 "analyst text of every assessment and overall: bare figures and references through the product prose path against the module's bound facts (fact ids and unique calculation ids), prohibited conclusions, empty text", "overall", "gaps"],
+                                 "analyst text of every assessment and overall: bare figures and references through the product prose path against the module's bound facts (fact ids and unique calculation ids), prohibited conclusions, empty text", "overall (rules.overall_rule)", "gaps (rules.gaps_rule)"],
         },
         "cases": cases,
         "fixtures": {"composer": FIXTURES, "rank": FIXTURE_RANK},
@@ -911,10 +1037,10 @@ def main():
             "settled_limitations": "cases.<case>.settled_limitations: the candidate's own limitations then `Synthetic case; not real issuer qualification` (execution.py:440-446), de-duplicated; own_limitations is the candidate's list",
         },
         "consumption": "OPEN: no consumer core reads CP-L10. registry.edge_rule('CP-5','CP-L10') is restricted (fan-in) but D3 counts CP-5 only after a lease extends its integrity scope and binds the CP-L10 head hash. cpl10_reader(store, head) pins what a consumer reads: status, per topic id/materiality/evidence/disposition/rank/change, counts.",
-        "d8_table_ids": {"registered": TL10, "other_registered_in_entry": [t for t in CPL10["table_ids"] if not t.startswith("TL10.")],
-                          "collision": "none: no other module's table_ids lists a TL10.x id (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
-                          "produced": TL10},
-        "rendered": {"block": None, "rails": {"evidence": ["TL10.1", "TL10.2", "TL10.3"], "limitations": ["TL10.4"]},
+        "d8_table_ids": {"registered": [t for t in TL10 if t != TL10_NEW], "added_by_the_serialised_methodology_change": [TL10_NEW], "other_registered_in_entry": [t for t in CPL10["table_ids"] if not t.startswith("TL10.")],
+                          "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is unused anywhere (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
+                          "produced": TL10_PRODUCED, "placement": "TL10.5 (Screen totals) joins the evidence rail block of TL10.2 (D7)"},
+        "rendered": {"block": None, "rails": {"evidence": ["TL10.1", "TL10.2", "TL10.5", "TL10.3"], "limitations": ["TL10.4"]},
                      "note": "no pathway lists CP-L10 and r14 has no Front Page block for it (architecture study section 4: screening, no block); rails only, as CP-DR",
                      "front_page_states": {
                          "method": "report_view.build over the credit_snapshot pathway with requested_modules ('CP-L10',) and registry.modules patched in memory for D4 (never written under src/); re-probed in revision 3 on the committed product after 0d (41a8fdb) and 0d(c) (b4ae187) (docs/reviews/0d-product-defects.md); the CP-L10 rail population is not probed (no bindings exist)",
@@ -942,6 +1068,8 @@ def main():
             "the blocked-CP-1 RefusedBegin is a lease statement read from owner_workflow.py, not walked",
             "the CP-L10 rail population and the settled CP-L10 render states are not probed",
             "thresholds and the Material/Watch/Not assessed ranking are screening policy not stated in any source; LEAD confirms",
+            "amendment 1: the issue wording of r13-r19 is this draft's proposal (the CP-3C pairing and limitation spellings adapted); the overall.confidence High spelling is pinned only for assessments[0] (r07)",
+            "amendment 1: the run-bound markers (head result_sha256, status word, CP-1 citations) are bound by the test, not by this oracle; citation order across a claim's referenced facts is this draft's reading of first-reference order",
         ],
     }
     dump(OUT / "manifest.json", manifest)

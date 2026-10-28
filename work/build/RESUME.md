@@ -12,7 +12,9 @@ Lane `claude/module-dev-status-review-0981b6` at f0e4a6d or later. Module tests:
   - the CP-2H and CP-4C leases and oracles.
 - **Stage 1 layer review:**
   - group A merged (6b20407), report in `stage1/review-A.md`;
-  - group B made no commit, report in `stage1/review-B.md`.
+  - group B made no commit, report in `stage1/review-B.md`;
+  - group C merged with CP-3 (b97c735), report in `stage1/review-C.md`.
+- **CP-L10 round 5** (6e63383) is approved and merged.
 
 ## Held (lane stays green)
 | Commit | Lands with |
@@ -24,19 +26,18 @@ Lane `claude/module-dev-status-review-0981b6` at f0e4a6d or later. Module tests:
 ## In flight (resume an agent by SendMessage to its id; worktree = `.claude/worktrees/agent-<id>` unless noted)
 | Work | Agent | Next |
 |---|---|---|
-| Stage 1 review group C (CP-3D, CP-DR, CP-4, CP-3) | a6fe6bee590a3ee10 | save `review-C.md`, merge; then CP-DR R4/R5 follow-up; CP-3 merges after |
+| CP-DR round 5 R4 (parsing fallback), R5 (worktree `cpdr-stage1`) | a3c578c73e0bfdae5 | scoped re-review |
 | G1-X fix 1 (M1, round-4 Part A, L1, L2, L4) | a3179638c813adbe7 | scoped mx-adversary re-review on M1 and Part A |
 | CP-8 rulings round 5 | a3cc9818386e8861a | first mx-adversary review |
 | CP-2G rulings round 5 (plus the 2ae589b re-pin) | a4377a7580e8e70db | first mx-adversary review |
 | CP-3C rulings round 5 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-2H Stage 1 build (plus the 2ae589b re-pin) | a52b5ec0919986ddb | first review |
 | CP-4C Stage 1 build (plus the 2ae589b re-pin) | a2c15c441717ec41c | first review |
-| CP-1D round 5b Y1–Y4 + 1D1 (worktree `cp1d-stage1`) | a76b4a3f828c3458d | scoped re-review |
-| CP-L10 round 5 P2, (e), (f) | aa6ef474a0f78ec9e | scoped re-review |
+| CP-1D round 5b + 1D1 review (7e29075) | ad69efc5b0d8a17d4 (mx-precise) | merge CP-1D first, then CP-2G/2H/4C |
 | CP-2D round 5 D-1..D-6, L1..L5 | a69f2394899aee6d5 | scoped re-review |
 
 ## Queued (subagent cap 10)
-- **LEAD round 6 is pending.** It rules group A A1–A5, group B B1–B4 and the CP-2A P1 statuses, and a CP-2A oracle amendment adds `fixture_quarter_known`. The CP-2E, CP-2A and CP-1C follow-ups wait for it so each lands in one round. CP-2D takes A1 and A5 in a round after its round 5 work.
+- **LEAD round 6 is pending.** Group C's C-3D-1 (Medium), C-3D-2, C-3D-3, C-DR-1 and C-3-3 were sent for it, and the CP-3D follow-up waits on them. It rules group A A1–A5, group B B1–B4 and the CP-2A P1 statuses, and a CP-2A oracle amendment adds `fixture_quarter_known`. The CP-2E, CP-2A and CP-1C follow-ups wait for it so each lands in one round. CP-2D takes A1 and A5 in a round after its round 5 work.
 - **Owner ruling on CP-2A P1 (option 1).** On a quarter base, every ratio and every ratio-based break is not calculated. Flows and the FCF break stay. Hold the code change until round 6 and the oracle amendment land. No Stage 2 run on a quarter base before then.
 - CP-2E follow-up: E6 cherry-pick 8483de4, re-pin, xfail flip; E7, E8. Implementer a219254fe68cc1c2d.
 - CP-2A follow-up: names, limitation refs. Implementer a34fec3e9469279cd.

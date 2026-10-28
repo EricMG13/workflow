@@ -2886,3 +2886,12 @@ Reviewers read code and may run probes under 60 s. Every deferred run is listed 
 command in the task report and in `work/lead/deferred-runs.md`; the B1 full-file run joins
 that list. No task counts as done, and nothing is integrated as verified, until its deferred
 runs pass in the final phase; commits made before then are recorded as build-only.
+
+G1 fix round 2 (2026-10-28, build-only): F1/F2 rulings met per mx-precise scoped re-review
+(`coordinator-1-owner/work/owner-workflow-g1/review-precise-2.md`). S1 (foreign-store test
+expects `identity_mismatch`; the code and the reference return `stale_binding`) and Q1
+(`create` reads the caller's mapping for `kind` after pinning) are new findings and go to a
+one-round mx-feature budget, fix-n2 (`fix-n2-brief.md`), with Q2 dead-seam removal. LEAD
+ratifies that an unplanned spec passes only if equal to the reference entry, and closes the
+`{"CP-X": None}` corner. L2 fix round 1 built (static gates clean); its mx-adversary review
+is running. S1a lease rev 2 frozen (12002e4).

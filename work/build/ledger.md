@@ -270,3 +270,5 @@
 - 2026-10-28 CP-4C r12 review dispatched: mx-adversary on babfd53
 - 2026-10-28 CP-3D r12 review APPROVE (mx-precise): Low L-cp3d-r12 _CUT_BEFORE space-arm guard unpinned (R/p_review_mutants.py mutant 2) rides with round 13; Info signed value_text plain-only. Merged 504d084 into claude/round12
 - 2026-10-28 CP-8 r12 implementer done: 8cecd09 (W, B10 incl flag_quote; _wrap_split ignores a W minus before a digit = unruled derivation, to reviewer + LEAD). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-precise
+- 2026-10-28 CP-2E r12 review CHANGES (mx-precise): M1 "only for it" limitation half unpinned after test replacement (probe cp2e-r12-review/mutants_review.py); I1 2024-2025 control out of bounds, no change. Fix round 1: mx-feature (test only)
+- 2026-10-28 Round 13 brief written (work/build/stage1/round13-brief.md); worktrees r13-{cp1d,cp3d,cp2d,cp3c,cpl10} cut at claude/round12 d2cb626; implementers mx-feature (user)

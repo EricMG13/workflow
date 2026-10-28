@@ -684,8 +684,10 @@ def test_bindings_place_every_expected_table_exactly_once(tmp_path: Path) -> Non
             ),
         ),
     )
-    assert validate_bindings(view, SHIPPED_MAPS) == ()
-    entries = SHIPPED_MAPS[-1].entries
+    # Only CP-2A's map: the view holds only CP-2A, and a later module's map is not this test's.
+    cp2a_map = next(m for m in SHIPPED_MAPS if m.module_id == MODULE)
+    assert validate_bindings(view, (cp2a_map,)) == ()
+    entries = cp2a_map.entries
     by_table = {e.fact_coord.table_id: e for e in entries}
     assert len(by_table) == len(entries)
     fp05 = EXPECTED["cases"]["positive"]["FP05"]

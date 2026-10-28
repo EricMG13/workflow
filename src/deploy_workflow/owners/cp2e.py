@@ -68,15 +68,16 @@ def _maybe(x: Decimal | None, reason: str) -> Value:
     return _missing(reason) if x is None else _known(x)
 
 
-def _ratio(num: Value, den: Value, zero_reason: str) -> Value:
-    """num / den: a missing operand propagates (numerator first); a zero divisor is n.m."""
+def _ratio(num: Value, den: Value, divisor: str) -> Value:
+    """num / den: a missing operand propagates (numerator first); a divisor <= 0 is n.m. with the
+    reason '<divisor> is zero' or '<divisor> is negative' (ruling A3)."""
     for v in (num, den):
         if v.state == "missing":
             return v
     if num.amount is None or den.amount is None:
         return _not_applicable("an input is not applicable")
-    if den.amount == 0:
-        return _not_applicable(zero_reason)
+    if den.amount <= 0:
+        return _not_applicable(f"{divisor} is {'zero' if den.amount == 0 else 'negative'}")
     return _known(num.amount / den.amount)
 
 
@@ -176,7 +177,7 @@ def _rate_shock(
 ) -> RateShock:
     gross = _gross(floating, floor_bp, shock_bp)
     interest_after = _combine(gross, interest, lambda g, i: i + g)
-    cov_after = _ratio(ebitda, interest_after, "interest after the shock is zero")
+    cov_after = _ratio(ebitda, interest_after, "interest after the shock")
     return RateShock(
         shock_bp=_known(shock_bp),
         gross=gross,
@@ -185,7 +186,7 @@ def _rate_shock(
         cov_after=cov_after,
         cov_change=_combine(cov_after, cov_base, lambda a, b: a - b),
         fcf_after=_combine(gross, fcf, lambda g, f: f - g),
-        share_of_ebitda=_ratio(gross, ebitda, "EBITDA is zero"),
+        share_of_ebitda=_ratio(gross, ebitda, "EBITDA"),
     )
 
 
@@ -206,7 +207,7 @@ def _fx_shock(
         debt_after=debt_after,
         ebitda_change=ebitda_change,
         ebitda_after=ebitda_after,
-        lev_after=_ratio(debt_after, ebitda_after, "EBITDA after the shock is zero"),
+        lev_after=_ratio(debt_after, ebitda_after, "EBITDA after the shock"),
     )
 
 
@@ -235,7 +236,7 @@ def derive_sensitivity(
         else:
             floating = _known(balance if op.rate_type == "FLOATING" else Decimal(0))
         hedge = _maybe(hedge_ratio, _NO_HEDGE)
-        cov_base = _ratio(ebitda, interest, "cash interest is zero")
+        cov_base = _ratio(ebitda, interest, "cash interest")
         if op.debt_foreign is None:
             foreign_debt = _missing(_NO_DEBT_CURRENCY)
         elif balance is None:
@@ -267,14 +268,14 @@ def derive_sensitivity(
         )
         return Sensitivity(
             floating=floating,
-            floating_share=_ratio(floating, debt, "total debt is zero"),
+            floating_share=_ratio(floating, debt, "total debt"),
             cov_base=cov_base,
-            lev_base=_ratio(debt, ebitda, "EBITDA is zero"),
+            lev_base=_ratio(debt, ebitda, "EBITDA"),
             hedge=hedge,
             floating_after_hedge=_combine(floating, hedge, lambda f, h: f * (1 - h)),
             rate=rate,
             foreign_debt=foreign_debt,
-            foreign_debt_share=_ratio(foreign_debt, debt, "total debt is zero"),
+            foreign_debt_share=_ratio(foreign_debt, debt, "total debt"),
             fx=fx,
         )
 
@@ -485,6 +486,7 @@ _ROW_LABELS = {
 _SENTENCE_NUM = re.compile(r"[0-9]{1,3}(?:\.[0-9]{1,4})?")  # operand bound: at most 999.9999
 _ROW_NUM = re.compile(r"[0-9]+(?:\.[0-9]+)?|\([0-9]+(?:\.[0-9]+)?\)")  # parentheses balanced
 _HEDGE_NUM = re.compile(r"[0-9]{1,3}(?:\.[0-9]{1,2})?")
+_RATE_PHRASE = re.compile(r"\b(floating|fixed)[\s-]+rate\b", re.IGNORECASE)
 _FY_HEADER = re.compile(r"FY 2025(?:-12-31)?$")
 _MAX_SHOCKS = 3
 _RATE_BP = (1, 1000)
@@ -596,9 +598,8 @@ def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
     )
     rb, path = r["rate_basis"], "rate_exposure.rate_basis"
     if chk.on_page(rb, path):
-        low = _squash(rb["quote"]).lower()  # ruling E5: exactly one of the two phrases
-        floating, fixed = "floating rate" in low, "fixed rate" in low
-        said = None if floating == fixed else ("FLOATING" if floating else "FIXED")
+        stems = {m.lower() for m in _RATE_PHRASE.findall(rb["quote"])}  # rulings E5 and E8
+        said = stems.pop().upper() if len(stems) == 1 else None
         if said is None:
             chk.add(f"{path}: the quote states neither a floating nor a fixed rate")
         elif rb["rate_type"] != said:
@@ -1287,10 +1288,30 @@ _LIM_MACRO = (
 )
 
 
+_LIM_FLOOR_ABOVE = (  # ruling A4
+    "The reference rate level is not in any source and the facility floor is above zero, so the "
+    "rate shocks are not calculated and downward shocks are not tested"
+)
+
+
+def _floor_limitation(facility: FacilityTerms) -> str:
+    """Ruling A4: the floor limitation by floor state. A4's not-stated text has no path here,
+    because the input object requires a quoted floor."""
+    floor = facility.floor_bp.value
+    if floor == 0:
+        return _LIM_FLOOR
+    if floor > 0 and facility.basis.rate_type == "FLOATING":
+        return _LIM_FLOOR_ABOVE
+    raise ValueError(
+        f"Floor limitation: no ruled wording for a {facility.basis.rate_type.lower()}-rate "
+        f"facility with a floor of {floor} basis points"
+    )
+
+
 def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
     out = [_LIM_STATIC, _LIM_CASH]
     if i.facility is not None:
-        out.append(_LIM_FLOOR)
+        out.append(_floor_limitation(i.facility))
         if i.facility.balance.value < i.total_debt.value:  # LEAD ruling 9: a remainder
             out.append(LIM_REMAINDER)
     else:
@@ -1365,10 +1386,18 @@ def _rate_claims(out: _Claims, s: Sensitivity) -> None:
         )
         if r.gross.state != "known":
             out.add(claim_id, rate_gap_claim(n, r.gross), [gross])
+        elif out.known(cov) and r.cov_after.state == "not_applicable":  # ruling E7
+            word = str(r.cov_after.reason).removeprefix("interest after the shock is ")
+            if word not in ("zero", "negative"):
+                raise ValueError(f"coverage after the shock is n.m. for {r.cov_after.reason!r}")
+            out.add(
+                claim_id,
+                f"{adds} debt of {out.fig(floating)} adds {out.fig(gross)} of annual cash interest "
+                "before any hedge; interest coverage after the shock is not meaningful because "
+                f"cash interest after the shock is {word}: [{cov_after}].",
+                [floating, gross, cov_after],
+            )
         elif out.known(cov):
-            # Coverage after the shock is known whenever coverage at base is known, except when
-            # cash interest is exactly offset by the added interest: no ruling covers that case,
-            # so fig() raises.
             out.add(
                 claim_id,
                 f"{adds} debt of {out.fig(floating)} adds {out.fig(gross)} of annual cash interest "

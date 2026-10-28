@@ -29,6 +29,7 @@ from deploy_vii.display import UnitClass, format_value
 from deploy_vii.financial_contracts import Number
 from deploy_vii.prose import Run, bind, tokenize
 from deploy_vii.prose import issues as prose_issues
+from deploy_vii.quotes import normalise
 from deploy_vii.readiness import citation_issues
 from deploy_vii.report_view import scale_label
 
@@ -500,7 +501,9 @@ def _accepts(assessment: Assessment) -> bool:
 
 
 def _basis_amounts(citation: Citation) -> list[str]:
-    return _AMOUNT.findall(citation.quote)
+    """The amounts in the quote as `citation_issues` matched it (`quotes.normalise`: U+00AD
+    removed, so a soft hyphen inside a figure does not split it)."""
+    return _AMOUNT.findall(normalise(citation.quote))
 
 
 @dataclass(frozen=True)

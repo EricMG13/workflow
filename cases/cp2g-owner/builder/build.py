@@ -33,9 +33,9 @@ D = Decimal
 
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "cases/cp2a-owner/manifest.json": "96c6644b8151175f3d422ffd2b4a893cbf9ac9b087c3896373495feb49044047",
-    "cases/cp2a-owner/submissions.json": "191180c2596c38fad13a9b190c6b0fb0103de21ff43b08d175c0f4cf38003a81",
-    "cases/cp2a-owner/expected.json": "457508a0643af8ca6e31bfec6103ae2a0ca9f009dfcc3bf57d29b001e88668b5",
+    "cases/cp2a-owner/manifest.json": "5219f063dcb130b38b8059397a73ff890ccb14ef03f8c2a6188b971dce7ead1a",
+    "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
+    "cases/cp2a-owner/expected.json": "ad5531da7cff4eca8e9c8e9a23cef6526a982537597e6830610877bec994ff89",
     "cases/cp1d-owner/manifest.json": "7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585",
     "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
     "cases/cp1d-owner/expected.json": "6015b443603b16f9af8c5417e6fa69f7468fa243f37b64575f745aac6549bd8c",

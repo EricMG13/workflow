@@ -1507,12 +1507,20 @@ class OfferedBase:
     facts: tuple[Fact, ...]
 
 
+def _in_usd_millions(fact: Fact) -> bool:
+    """The core stamps every amount USD millions (lease, Facts), so a known operand in any other
+    unit, currency or scale would be stamped wrong. An unsettled one carries no amount."""
+    return fact.status != "known" or (
+        fact.unit == "MILLIONS" and fact.currency == "USD" and fact.scale == 1000000
+    )
+
+
 def offered_bases(cp1: Iterable[Fact]) -> tuple[OfferedBase, ...]:
     """The base periods of a CP-1 head, in the order the head first states them.
 
     A period is offered only if its label parses (`period_kind`, `_column`) and CP-1 holds exactly
     one T4.10 fact per operand and reported-ratio metric for it (`BaseOperands.from_cp1` raises
-    otherwise). Any other period is not offered, so the analyst cannot choose it and no core call
+    otherwise), and every known operand is in USD millions (Stage 2 round 5 item 1). Any other period is not offered, so the analyst cannot choose it and no core call
     can raise on it (fail closed; CP-1 head integrity is not this module's to repair). One
     derivation feeds the view's `kind` and the core's `offered_periods` (round 5-6 L6)."""
     facts = tuple(f for f in cp1 if f.table_id == CP1_TABLE)
@@ -1531,7 +1539,8 @@ def offered_bases(cp1: Iterable[Fact]) -> tuple[OfferedBase, ...]:
                 break
             chosen.append(found[0])
         else:
-            bases.append(OfferedBase(period=period, kind=kind, facts=tuple(chosen)))
+            if all(_in_usd_millions(f) for f in chosen[: len(OPERAND_METRICS)]):
+                bases.append(OfferedBase(period=period, kind=kind, facts=tuple(chosen)))
     return tuple(bases)
 
 

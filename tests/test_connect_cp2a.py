@@ -941,3 +941,103 @@ def test_the_settled_head_follows_the_run_not_the_oracle_constants(tmp_path: Pat
     _, body = cp2a.view(_FrozenExecution(store, store.read()), attempt)
     assert json.loads(body)["inherited_limitations"] == []
     assert {u["module_id"]: u["status"] for u in json.loads(body)["upstream"]}["CP-1"] == "accepted"
+
+
+# --- units: a base is offered only in USD millions (Stage 2 round 5 item 1, CP-2A M2) ----------
+
+
+@pytest.mark.parametrize(
+    "update",
+    [
+        {"currency": "EUR"},
+        {"unit": "THOUSANDS", "scale": Decimal(1000)},
+        {"scale": Decimal(1000)},
+        {"unit": "THOUSANDS"},
+        {"currency": None},
+    ],
+)
+@pytest.mark.parametrize("metric", ["ebitda", "cash_interest", "fcf", "total_debt", "cash_closing"])
+def test_a_base_with_an_operand_outside_usd_millions_is_not_offered(
+    metric: str, update: dict[str, Any]
+) -> None:
+    facts = cp1_facts("positive")
+    changed = tuple(
+        f.model_copy(update=update) if f.period == LTM and f.row_id == metric else f for f in facts
+    )
+    assert tuple(b.period for b in cp2a.offered_bases(changed)) == (Q3,)
+
+
+def test_an_unsettled_operand_in_another_unit_does_not_unoffer_the_base() -> None:
+    """Only a known operand's unit is read; a missing one carries no amount (a gap, never 0)."""
+    facts = cp1_facts("interest_undisclosed")
+    assert any(f.status != "known" and f.row_id == "cash_interest" for f in facts)
+    other = tuple(
+        f.model_copy(update={"unit": None, "currency": None, "scale": Decimal(1)})
+        if f.status != "known" and f.row_id == "cash_interest"
+        else f
+        for f in facts
+    )
+    periods = tuple(b.period for b in cp2a.offered_bases(facts))
+    assert periods and tuple(b.period for b in cp2a.offered_bases(other)) == periods
+
+
+def test_the_adapter_refuses_a_euro_thousands_base_as_not_offered(tmp_path: Path) -> None:
+    store, pack, facts = seed(tmp_path)
+    eur = tuple(
+        f.model_copy(update={"currency": "EUR", "unit": "THOUSANDS", "scale": Decimal(1000)})
+        if f.period == LTM and f.unit == "MILLIONS"
+        else f
+        for f in facts
+    )
+    upstream = cp2a.Upstream(bound=store.begin(MODULE).inputs, current=(), cp1=eur)
+    submission = _submission()
+    inputs = cp2a._inputs(pack, submission, upstream)
+    assert inputs.offered_periods == (Q3,)
+    issues = cp2a.validate(inputs)
+    assert issues == (f"base_period: not an offered period: {LTM}",)
+
+
+# --- remaining reviewer survivors (fix round 1 L2) ---------------------------------------------
+
+
+def test_the_adapter_keeps_the_heads_fact_order(tmp_path: Path) -> None:
+    store, pack, facts = seed(tmp_path)
+    upstream = cp2a.Upstream(bound=store.begin(MODULE).inputs, current=(), cp1=facts[::-1])
+    inputs = cp2a._inputs(pack, _submission(), upstream)
+    assert inputs.cp1_facts == facts[::-1] and inputs.offered_periods == (Q3, LTM)
+
+
+def test_a_stale_line_names_a_status_change_with_the_same_hash(tmp_path: Path) -> None:
+    store, pack, facts = seed(tmp_path)
+    bound = store.begin(MODULE).inputs
+    current = tuple(
+        i.model_copy(update={"status": "accepted"}) if i.input_id == "CP-1" else i for i in bound
+    )
+    sha = next(i.sha256 for i in bound if i.input_id == "CP-1")[:12]
+    upstream = cp2a.Upstream(bound=bound, current=current, cp1=facts)
+    assert cp2a.validate_downside(pack=pack, submission=_submission(), upstream=upstream) == (
+        f"Stale input CP-1: bound restricted {sha}, current accepted {sha}",
+    )
+
+
+def test_a_refused_current_inputs_text_is_clipped(tmp_path: Path) -> None:
+    store, pack, facts = seed(tmp_path)
+    upstream = cp2a.Upstream(bound=store.begin(MODULE).inputs, current="x" * 5000, cp1=facts)
+    issues = cp2a.validate_downside(pack=pack, submission=_submission(), upstream=upstream)
+    assert len(issues) == 1 and len(issues[0]) <= MAX_LINE
+
+
+def test_the_view_shows_a_known_operand_it_does_not_let_the_analyst_cite(tmp_path: Path) -> None:
+    """A known fact with neither citation nor calculation is shown but has no ref and is not in
+    `cp1_facts`; with no citable fact at all the note says no figure may be written."""
+    store, pack, facts = seed(tmp_path)
+    bare = tuple(f.model_copy(update={"citations": (), "calculation_id": None}) for f in facts)
+    bound = store.begin(MODULE).inputs
+    tree = cp2a.context_block(
+        pack=pack, upstream=cp2a.Upstream(bound=bound, current=bound, cp1=bare)
+    )
+    first: Any = tree["base_periods"][0]
+    cell = first["operands"]["ebitda"]
+    assert cell["ref"] is None and cell["shown"] == "30 US$ m" and cell["status"] == "known"
+    assert tree["cp1_facts"] == []
+    assert "no figure may be referenced" in str(tree["cp1_facts_note"])

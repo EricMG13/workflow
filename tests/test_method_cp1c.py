@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 
 from deploy_vii import prose
 from deploy_vii.contracts import Citation, Fact, Source, Span
@@ -1241,3 +1242,58 @@ def test_6g_absent_cp1_fact_still_raises() -> None:
     del metrics["total_leverage_adjusted"]
     with pytest.raises(ValueError, match="CP-1 fact unavailable for total_leverage_adjusted"):
         cp1c.calculation_issues(inputs("positive", cp1=metrics))
+
+
+# Round 11 "Blank text is one defect class" (shared library `tests/defect_classes.py`): every
+# analyst text field refuses whitespace-only text. CP-1C pins no empty-text frame, so the fallback
+# `<path>: empty text` applies; `""` needs a refusal (these fields are plain `str`, so it is the
+# same frame). Paths follow `cp1c._prohibited_fields` (0-based, 1C5).
+BLANK_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = (
+    ("assessments[0].rationale", ("assessments", 0, "rationale")),
+    ("assessments[0].limitation", ("assessments", 0, "limitation")),
+    ("overall.rationale", ("overall", "rationale")),
+    ("overall.limitation", ("overall", "limitation")),
+    ("gaps[0].gap", ("gaps", 0, "gap")),
+    ("gaps[0].why_it_matters", ("gaps", 0, "why_it_matters")),
+    ("gaps[0].affected_analysis", ("gaps", 0, "affected_analysis")),
+    ("gaps[0].action", ("gaps", 0, "action")),
+)
+
+
+def _blank_adapter(keys: tuple[str | int, ...]) -> Adapter:
+    """Places the value in one analyst text field of the frozen positive payload. Page and quote
+    are unused: CP-1C reads no value from an analyst quote (citations go to the shared check)."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        body = json.loads(json.dumps(submissions()["positive"]["peer_benchmark"]))
+        cur: Any = body
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return cp1c.calculation_issues(inputs("positive", payload=body))
+
+    return adapter
+
+
+def test_blank_fields_cover_every_analyst_text_field() -> None:
+    """Every field `_prohibited_fields` reads (indices dropped) is one this class test sets."""
+    body = json.loads(json.dumps(submissions()["positive"]["peer_benchmark"]))
+    submission = cp1c.PeerBenchmarkSubmission.model_validate_json(json.dumps(body))
+    read = {re.sub(r"\[\d+\]", "[0]", path) for path, _ in cp1c._prohibited_fields(submission)}
+    assert read <= {path for path, _ in BLANK_FIELDS}, read
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(blank: BlankCase, field: tuple[str, tuple[str | int, ...]]) -> None:
+    path, keys = field
+    failure = blank_failure(blank, _blank_adapter(keys), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...]]) -> None:
+    """The twin: the same field holding text is not refused as empty."""
+    path, keys = field
+    issues = _blank_adapter(keys)("", "", "The peer figures are desk-supplied.")
+    assert EMPTY_TEXT.format(path=path) not in issues, issues

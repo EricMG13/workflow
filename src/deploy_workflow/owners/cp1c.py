@@ -1407,6 +1407,8 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     citations = tuple(c for a in submission.assessments for c in a.evidence)
     issues += citation_issues((*citations, *submission.overall.evidence), inputs.sources)
     for path, text in _prohibited_fields(submission):
+        if not text.strip():  # round 11: blank text is refused (no CP-1C frame is pinned)
+            issues.append(f"{path}: empty text")
         issues += prohibited_issues(path, text, kinds=PROHIBITED_KINDS)
     if not set_issues:
         bound = prose.bind(item.fact for item in _compose(inputs, sheet).facts)

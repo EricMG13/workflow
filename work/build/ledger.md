@@ -387,3 +387,4 @@
 - 21:35 Integration done ffa1c88 (9 merges; fast set 7913 passed; render 238 passed; pins 69; manifest 19/19). Merging into lane.
 - 21:43 Batch pass 2 done e3ff482 (CP-2D, CP-4, CP-L10, CP-1D merged; fast set 8302 passed; legal+connected 90; manifest 19/19). Opus builder 1: CP-1D fixes.
 - 21:59 Batch 1 CP-1D fixes 1c512aa+aafa9f0 (M1, M2, L4, method note; probes 0). Found: test_owner_g1x.py:613 delitem reorders _ENTRY_VALIDATORS on undo (order-dependent failures); folded into batch 2. Batch 2: CP-2G.
+- 22:52 Batch 2 CP-2G 165bd0b..8d5d404 (isolation fix; CP-2G connected; 26/26 mutants; connect set 1917 passed). Oracle defect -> close-release.md. Batch 3: CP-1C.

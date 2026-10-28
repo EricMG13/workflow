@@ -1,4 +1,4 @@
-<!-- LEAD copy of work/lead/s1-preparation/report.md (derivation, LEAD rulings); reviews review-precise-1..3 stay in work/. -->
+<!-- LEAD copy of work/lead/s1-preparation/report.md (derivation, LEAD rulings); reviews: s1-snapshot-oracle-review-precise-{1,2,3}.md. -->
 <!-- Saved by LEAD from the S1 preparation agent handback, 2026-10-27. -->
 I could not write `work/lead/s1-preparation/report.md`. The Write tool refused it ("Subagents should return findings as text, not write report files"). I did not work around that, so the full report is below for you to save. The other files are complete.
 
@@ -122,3 +122,11 @@ N2 and N3 implemented; N4 replaced CP1_TOKEN with the execution.py:345-366 filte
   CP-1's QA score (c) are rejected.
 - R3-Q2: the gap `business` entry's `event_scan` of `unassessed` is confirmed: the reduced
   note makes no event disclosure, so `no_events_identified` would be unsupported.
+
+## Revision 4 (frozen, 2026-10-27)
+Applies review-precise-3 L1 (documentation only): `CP-1.business_entry.positive` and the
+CP-1 tool-use expectation now name the reads, "read_pages business page:1 and page:3 and
+search_pack over business before submit" (expected.json:31, :76). New sha256: expected.json
+d1aa1af9…9baa; manifest.json and submissions.json unchanged. This is the frozen revision
+(6e9305c) that the S1a lease pins. It was not re-reviewed after L1, and no revision 3 copy
+survives to diff against.

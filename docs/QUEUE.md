@@ -2846,9 +2846,9 @@ the manifest adoption commit 49801d7; G2 waits for S1a. S1a task 1 reports the L
 predicate and the CP-2 view key tree for LEAD to freeze before tests are written.
 
 B1 mx-adversary final review (2026-10-28, `coordinator-3/work/cp1b-owner-b1/review-adversary-final.md`):
-HIGH found. No forgery is accepted, but three actor-triggerable inputs brick a run: H1
+HIGH found. No forged receipt verifies, but three actor-triggerable inputs brick a run: H1
 `_complete_intent` matches steps from earlier intents (identical invalid bytes resubmitted
-fabricate an outcome or wedge the run); H2 deeply nested invoke arguments pass `_json_copy`
+fabricate a step outcome or wedge the run); H2 deeply nested invoke arguments pass `_json_copy`
 but fail the receipt model, consuming a session sequence with no saved receipt; H3 a deep
 `submit_review` payload writes audit payloads before a `RecursionError`, leaving an orphan that
 blocks sealing. M1 `_put` crash residue inside record folders bricks `open()`. L1 a positive

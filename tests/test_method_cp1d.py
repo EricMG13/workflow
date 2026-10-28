@@ -1131,6 +1131,9 @@ def test_defect_class_basis_quote(c: QuoteCase) -> None:
         ("The level is -\n25 percent over the reference rate.", "25 percent over the reference"),
         # A wrapped quote found only with its wrap joined, cut at its end edge (250 on the page).
         ("The first-priority level is 250 percent.", "The first-\npriority level is 25"),
+        # The same at its start edge (425 on the page): the joined quote keeps the offsets
+        # from its start.
+        ("The level is 425 first-priority points.", "25 first-\npriority points."),
     ],
 )
 def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
@@ -1149,6 +1152,11 @@ def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
     [
         ("The first-priority level is 25 percent.", "The first-\npriority level is 25"),
         ("The level is - 25 percent; it was 425 before.", "25 percent;"),
+        ("The level is 25 first-priority points.", "25 first-\npriority points."),
+        # Accounting parentheses need both sides: "(" before a start-edge figure whose ")" is
+        # not right after it, or ")" after an end-edge figure with no "(" right before it.
+        ("The level (25 percent over) holds.", "25 percent over) holds."),
+        ("The level is 25) percent.", "The level is 25"),
     ],
 )
 def test_edge_figure_whole_on_the_page_is_counted(page: str, quote: str) -> None:
@@ -1216,6 +1224,10 @@ TEXT_FIELDS: dict[str, tuple[str, tuple[str | int, ...]]] = {
     "gaps[0].why_it_matters": ("gap", ("gaps", 0, "why_it_matters")),
     "gaps[0].affected_analysis": ("gap", ("gaps", 0, "affected_analysis")),
     "gaps[0].action": ("gap", ("gaps", 0, "action")),
+    "gaps[1].gap": ("gap", ("gaps", 1, "gap")),
+    "gaps[1].action": ("gap", ("gaps", 1, "action")),
+    "assessments[1].rationale": ("positive", ("assessments", 1, "rationale")),
+    "assessments[1].limitation": ("gap", ("assessments", 1, "limitation")),
     "statements_only overall.rationale": ("statements_only", ("overall", "rationale")),
 }
 
@@ -1223,6 +1235,8 @@ TEXT_FIELDS: dict[str, tuple[str, tuple[str | int, ...]]] = {
 def _text_inputs(path: str, text: str) -> cp1d.EarningsQualityInputs:
     case, keys = TEXT_FIELDS[path]
     payload = copy.deepcopy(SUBMISSIONS[case]["earnings_quality"])
+    if keys[:2] == ("gaps", 1):  # the fixtures hold one gap; a second copy of it
+        payload["gaps"].append(copy.deepcopy(payload["gaps"][0]))
     target: Any = payload
     for key in keys[:-1]:
         target = target[key]

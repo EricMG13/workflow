@@ -24,7 +24,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | CP-2G round 9 (brief cp2g/round9-brief.md); fixes 1+2 APPROVED | 5002b6d | a4377a7580e8e70db | scoped mx-feature review, merge |
 | CP-3C fix 1 (brief cp3c/fix1-brief.md) | adf826a | aa5a4817fa00cd287 | mx-adversary re-review by finding id, merge |
 | CP-8 round 10 signs (round10-brief.md) | fa55df5 | a3cc9818386e8861a | mx-precise, merge with CP-3 and CP-5 |
-| CP-2E round 10 signs + on_page + floor Low | aed93b3 | a219254fe68cc1c2d | mx-precise, merge |
+| CP-2E round 10 mx-precise review | c050f57 | impl a219254fe68cc1c2d | merge |
 | CP-1D round 10 signs | lane (worktree cp1d-stage1) | a0a6113941ee95350 | mx-precise, merge |
 | CP-3D round 10 signs | lane (worktree cp3d-stage1) | ab7a2e1b59e1c8f90 | mx-precise, merge |
 

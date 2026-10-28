@@ -1206,7 +1206,11 @@ _EARNINGS_QUALITY: Mapping[str, _Spec] = MappingProxyType(
             "Earnings quality", "CP-1D", "dense", ("CP-1D",), route_label="Full analysis"
         ),
         "restated-leverage": _Spec(
-            "Restated leverage", "CP-1D", "dense", ("CP-1D",), route_label="Full analysis"
+            "Cash conversion and restated leverage",
+            "CP-1D",
+            "dense",
+            ("CP-1D",),
+            route_label="Full analysis",
         ),
     }
 )

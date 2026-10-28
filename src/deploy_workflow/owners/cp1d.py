@@ -31,7 +31,6 @@ from deploy_vii.business_context import (
     Category,
     Confidence,
     Severity,
-    spelled,
 )
 from deploy_vii.contracts import (
     Citation,
@@ -71,7 +70,7 @@ from deploy_vii.prose import bind, tokenize
 from deploy_vii.prose import issues as prose_issues
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues, shape_issues
-from deploy_vii.report_view import figure_unit, scale_label
+from deploy_vii.report_view import fact_spelling, figure_unit, scale_label
 from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-1D"
@@ -2371,7 +2370,8 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
                 "label": fact.label,
                 "period": fact.period,
                 "unit": figure_unit(fact) or fact.unit,
-                "shown": spelled(fact),
+                # The cell spelling: the lease key tree keeps `unit` apart, so no unit is appended.
+                "shown": fact_spelling(fact, None)[2],
             }
             for fact in facts.values()
             if fact.status == "known"

@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
+import cp1d_runs as runs
 import pytest
 import test_method_cp1d as stage1
 
@@ -32,7 +33,7 @@ from deploy_vii.execution import (
 )
 from deploy_vii.live.tools import Seen, cited_locators
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.report_view import _EARNINGS_QUALITY, _spec_of, pathways
+from deploy_vii.report_view import _EARNINGS_QUALITY, Block, _spec_of, build, pathways
 from deploy_workflow import host, owner_workflow
 from deploy_workflow.owners import cp1d
 from deploy_workflow.workflow import WorkflowError
@@ -50,9 +51,15 @@ def _fact_id(name: str) -> str:
     return "interface-fact:" + hashlib.sha256(name.encode()).hexdigest()
 
 
-def _cp1_module(scale: Decimal = Decimal(1), as_of: datetime.date = AS_OF, t417: int = 0) -> Module:
+def _cp1_module(
+    scale: Decimal = Decimal(1),
+    as_of: datetime.date = AS_OF,
+    t417: int = 0,
+    decimals: int | None = 2,
+) -> Module:
     """A CP-1 head holding the seven T4.10 LTM Q4 25 facts (amounts times `scale`, leverage
-    recomputed as CP-1 does), an FY25 decoy per metric and `t417` T4.17 rows."""
+    recomputed as CP-1 does), an FY25 decoy per metric and `t417` T4.17 rows. `decimals=None`
+    shapes the facts as `model_interface` builds real CP-1 facts."""
     base = stage1._cp1()
     amounts = {f.figure: (f.amount or Decimal(0)) * scale for f in base.ordered()}
     amounts["total_leverage_adjusted"] = cp1d._quotient(
@@ -77,7 +84,7 @@ def _cp1_module(scale: Decimal = Decimal(1), as_of: datetime.date = AS_OF, t417:
                 value_class=f.value_class,
                 calculation_id="calc:" + f.figure,
                 scale=Decimal(1000000) if f.unit == "MILLIONS" else Decimal(1),
-                decimals=2,
+                decimals=decimals,
             )
         )
         facts.append(  # the FY25 decoy: same label, other period (never selected)
@@ -184,6 +191,38 @@ def _submission(case: str, cp1: Module | None = None) -> cp1d.EarningsQualitySub
     )
 
 
+def _fp02(case: str) -> dict[str, Block]:
+    """FP02 (`report_view.build`, earnings_update, the shipped maps) over the CP-1D module built
+    from the case's literal; every other shipped module is unrun."""
+    pack, upstream = _pack(case), _upstream()
+    report = cp1d.earnings_quality(pack=pack, submission=_submission(case), upstream=upstream)
+    module = cp1d.cp1d_module(report, inputs=upstream.bound, attempt=0)
+    view = View(
+        run=pack.run,
+        mode="accepted",
+        modules=(
+            ModuleView(
+                module_id="CP-1D",
+                title="Earnings quality",
+                aliases=("CP-1E",),
+                status=EXPECTED["cases"][case]["module_status"],
+                artifact_sha256="a" * 64,
+                facts=module.facts,
+                tables=module.tables,
+                claims=module.claims,
+                limitations=module.limitations,
+            ),
+            *(
+                ModuleView(module_id=m.module_id, title=m.module_id, aliases=(), status="unrun")
+                for m in SHIPPED_MAPS
+                if m.module_id != "CP-1D"
+            ),
+        ),
+    )
+    pathway = next(p for p in pathways() if p.id == "earnings_update")
+    return {b.block_id: b for b in build(view, pathway, SHIPPED_MAPS).blocks}
+
+
 # --- registrations equal the lease ---------------------------------------------------------------
 
 
@@ -234,9 +273,21 @@ def test_sources_flag_matches_the_h1_owner_scope_row() -> None:
 
 
 def test_registrations_are_appended_at_the_end() -> None:
-    assert list(owner_workflow._ENTRY_VALIDATORS)[-1] == "CP-1D"
-    assert list(owner_workflow._PROBES)[-1] == "CP-1D"
-    assert list(owner_workflow._VIEWS)[-1] == "earnings_quality"
+    """Brief section 3 (review L4): every CP-1D row follows the base rows and the CP-L10 row merged
+    before it, `OWNER_SPECS` included. Later modules append after CP-1D, so no last key is pinned."""
+    for rows, base in (
+        (owner_workflow.OWNER_SPECS, ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]),
+        (owner_workflow._QUALIFICATION, ["CP-1", "CP-1A", "CP-2", "CP-MODEL"]),
+        (owner_workflow._PROBES, ["CP-0", "CP-1", "CP-1A", "CP-2"]),
+        (owner_workflow._ENTRY_VALIDATORS, ["CP-1A", "CP-2"]),
+        (owner_workflow._CORES, []),
+    ):
+        keys = list(rows)
+        assert keys[: len(base)] == base
+        assert keys.index("CP-1D") > keys.index("CP-L10")
+    views = list(owner_workflow._VIEWS)
+    assert views[0] == "credit_synthesis"
+    assert views.index("earnings_quality") > views.index("change_screen")
     ids = [m.module_id for m in SHIPPED_MAPS]
     base = ["CP-0", "CP-1", "CP-1B", "CP-MODEL", "CP-1A", "CP-2"]
     assert ids[: len(base)] == base
@@ -245,22 +296,46 @@ def test_registrations_are_appended_at_the_end() -> None:
 
 
 def test_report_view_composition_and_spec_of() -> None:
+    """The `_Spec` heads are the oracle's FP02 heads (lease A1: FP02 equal expected)."""
     assert set(_EARNINGS_QUALITY) == {"earnings-quality", "restated-leverage"}
-    for block, title in (
-        ("earnings-quality", "Earnings quality"),
-        ("restated-leverage", "Restated leverage"),
-    ):
-        spec = _spec_of(block)
-        assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
-            title,
-            "CP-1D",
-            "dense",
-            ("CP-1D",),
-            "Full analysis",
-        )
+    for case in CASES:
+        oracle = EXPECTED["cases"][case]["FP02"]["blocks"]
+        assert set(oracle) == set(_EARNINGS_QUALITY)
+        for block, want in oracle.items():
+            spec = _spec_of(block)
+            assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
+                want["title"],
+                want["owner"],
+                want["kind"],
+                ("CP-1D",),
+                "Full analysis",
+            )
     blocks = next(p for p in pathways() if p.id == "earnings_update").blocks
     at = blocks.index("ebitda-adjustments")
     assert blocks[at + 1 : at + 3] == ("earnings-quality", "restated-leverage")
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_fp02_block_titles_and_tab_labels_equal_the_oracle(case: str) -> None:
+    """Review M2: the rendered FP02 heads, the binding labels and the rendered tab labels equal
+    `expected.json cases.<case>.FP02`. A one-table block renders no tab strip, so its one oracle
+    tab label is the binding label of its one table."""
+    blocks = _fp02(case)
+    entries = next(m for m in SHIPPED_MAPS if m.module_id == "CP-1D").entries
+    for block_id, want in EXPECTED["cases"][case]["FP02"]["blocks"].items():
+        block = blocks[block_id]
+        assert (block.title, block.owner, block.kind, block.state) == (
+            want["title"],
+            want["owner"],
+            want["kind"],
+            want["state"],
+        )
+        tabs = [(t["table_id"], t["label"]) for t in want["tabs"]]
+        assert [(e.fact_coord.table_id, e.label) for e in entries if e.block_id == block_id] == tabs
+        if len(tabs) == 1:
+            assert block.tab_label is None and block.tabs == ()
+        else:
+            assert [block.tab_label, *(t.label for t in block.tabs)] == [t[1] for t in tabs]
 
 
 @pytest.mark.parametrize("case", CASES)
@@ -712,12 +787,29 @@ def test_letter_after_a_run_is_still_read(line: str) -> None:
     assert cp1d._one_whole_run(line) is True
 
 
+@pytest.mark.parametrize(
+    "line", ["Savings of 1.5-Q are signed.", "Savings of 1.5-\nnd are signed."]
+)
+def test_round_5_item_12_readings_noted_in_the_method(line: str) -> None:
+    """Rulings round 5 item 12: the right side of a run never makes an identifier, and a decimal
+    run is never an ordinal, so `1.5-Q` and a wrapped `1.5-` then `nd` read 1.5 and compose."""
+    inputs = stage1._a01_on_page1(line)
+    accepted = inputs.submission.assessments[0].accepted_basis
+    assert accepted is not None
+    assert cp1d._one_whole_run(line) is True
+    assert cp1d._basis_amounts(accepted, inputs.sources) == ["1.5"]
+    assert cp1d.validation_issues(inputs) == ()
+
+
 def test_method_note_exists_and_names_each_limit() -> None:
     text = (ROOT / "src" / "deploy_vii" / "methods" / "cp1d.md").read_text()
     for needle in (
         "Rule W",
         "Item 8 comma costs",
         "Addendum 5",
+        "Round 5 item 12",
+        "`1.5-Q`",
+        "Source quotes",
         "one `Citation` per (source, page)",
     ):
         assert needle in text
@@ -754,7 +846,9 @@ def _command(module_id: str) -> Fact:
     )
 
 
-def _settled_store(tmp_path: Path, case: str, scale: Decimal = Decimal(1)) -> tuple[Execution, str]:
+def _settled_store(
+    tmp_path: Path, case: str, scale: Decimal = Decimal(1), decimals: int | None = 2
+) -> tuple[Execution, str]:
     """CP-0 and CP-1 settled in a real store (hand-built modules through `begin`/`finish`), then
     CP-1D begun. Returns the store and the CP-1D ticket."""
     pack = _pack(case)
@@ -770,7 +864,7 @@ def _settled_store(tmp_path: Path, case: str, scale: Decimal = Decimal(1)) -> tu
     )
     store.finish(cp0_ticket.ticket_id, cp0.model_dump_json(), lambda _m: ())
     cp1_ticket = store.begin("CP-1")
-    cp1 = _cp1_module(scale).model_copy(
+    cp1 = _cp1_module(scale, decimals=decimals).model_copy(
         update={"status": "candidate", "inputs": cp1_ticket.inputs, "run_id": pack.run.run_id}
     )
     store.finish(cp1_ticket.ticket_id, cp1.model_dump_json(), lambda _m: ())
@@ -886,3 +980,24 @@ def test_view_over_a_real_store_is_the_context_block(tmp_path: Path) -> None:
         "CP-1 note",
     ]
     assert [u["module_id"] for u in block["upstream"]] == ["CP-0", "CP-1"]
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_run_driver_binds_the_oracle_figures_over_the_view_of_a_real_store(
+    tmp_path: Path, case: str
+) -> None:
+    """Review M1: `cp1d_runs.fig_bindings` (what `drive_cp1d` calls in every closed run and fork)
+    over the real view of a fast store whose CP-1 facts are shaped as `model_interface` builds
+    them (no `decimals`). The view's `unit` and `shown` stay separate, as the oracle keeps them."""
+    store, ticket = _settled_store(tmp_path, case, decimals=None)
+    attempt = next(a for a in store.read().attempts if a.ticket_id == ticket)
+    _, body = cp1d.view(store, attempt)
+    figures = runs.oracle()["submissions"]["figures"]
+    raw = runs.literal(case, "earnings_quality")
+    names = {n: figures[n] for n in dict.fromkeys(m[1] for m in runs.FIG.finditer(raw))}
+    assert "adjusted_ebitda_ltm" in names  # every case's literal names it
+    cp1 = next_cp1(store)
+    ids = {f.label: f.fact_id for f in cp1.facts if f.period == runs.LTM_PERIOD}
+    expected = {n: (ids[f["label"]], f["unit_token"]) for n, f in figures.items()}
+    assert runs.fig_bindings(store, json.loads(body), names) == {n: expected[n] for n in names}
+    assert runs.fig_bindings(store, json.loads(body), figures) == expected  # all seven

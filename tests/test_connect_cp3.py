@@ -80,8 +80,7 @@ def test_owner_spec_row_equals_the_lease() -> None:
 
 
 def test_registration_rows_are_appended_and_complete() -> None:
-    # CP-1D's row sits before CP-MODEL until its builder moves it: compare the base rows only.
-    rows = [r for r in ow.OWNER_SPECS if r != "CP-1D"]
+    rows = list(ow.OWNER_SPECS)
     assert rows[:5] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
     assert "CP-3" in rows[5:]
     assert {"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3"} <= ow.SUPPORTED_ANALYTICAL

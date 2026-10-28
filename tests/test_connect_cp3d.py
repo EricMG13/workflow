@@ -941,8 +941,7 @@ def test_every_owner_workflow_row_is_registered_for_cp3d() -> None:
 
 def test_registrations_were_appended_not_reordered() -> None:
     assert "CP-3D" in owner._CORES
-    # CP-1D's row sits before CP-MODEL until its builder moves it: compare the base rows only.
-    specs = [r for r in owner.OWNER_SPECS if r != "CP-1D"]
+    specs = list(owner.OWNER_SPECS)
     assert specs[:5] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
     assert "CP-3D" in specs[5:]
 

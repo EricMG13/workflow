@@ -58,6 +58,19 @@ cp1d._one_whole_run("A saving of 2.5m.")  # True: 2.5
 cp1d._one_whole_run("The 2nds saving.")   # True: 2
 ```
 
+**Round 5 item 12 (accepted readings).** The right side of a run never makes an identifier:
+addendum 5 reads what follows a run as a unit suffix, and its one exception, the ordinal rule,
+never meets a decimal run. So `1.5-Q` and `1.5-` wrapped before `nd` read 1.5 and compose.
+```python
+cp1d._one_whole_run("Savings of 1.5-Q are signed.")     # True: 1.5
+cp1d._one_whole_run("Savings of 1.5-\nnd are signed.")  # True: 1.5
+```
+
+**Source quotes (user, 2026-10-28, AGENTS.md "Source quotes").** Quote reading is frozen: no new
+rule is written for how Python reads a figure from a model-chosen quote. A new edge case fails
+closed (the exactly-one issue above) and is recorded here as a guard limit; a reading rule changes
+only if a frozen case needs it.
+
 ## Citations on facts (Stage 2 round 3)
 
 A sourced fact (a bridge amount, an accepted basis) quotes its own field. A derived (calculated)

@@ -333,21 +333,6 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="analytical",
             publish=None,
         ),
-        "CP-1D": OwnerSpec(
-            module_id="CP-1D",
-            steps=(
-                step(
-                    "earnings_quality",
-                    cp1d.EarningsQualitySubmission,
-                    sources=True,
-                    inputs="module_context",
-                    rules="journaled",
-                ),
-            ),
-            entry="owner_core",
-            kind="analytical",
-            publish=None,
-        ),
         "CP-MODEL": OwnerSpec(
             module_id="CP-MODEL",
             steps=(),
@@ -464,6 +449,21 @@ def _default_specs() -> dict[str, OwnerSpec]:
         "CP-L10": OwnerSpec(
             module_id="CP-L10",
             steps=(step("change_screen", ChangeScreenSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-1D": OwnerSpec(
+            module_id="CP-1D",
+            steps=(
+                step(
+                    "earnings_quality",
+                    cp1d.EarningsQualitySubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
             entry="owner_core",
             kind="analytical",
             publish=None,

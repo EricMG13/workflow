@@ -32,7 +32,7 @@ CP1D = BindingMap(
         _bind("T1D.2", "earnings-quality", "Add-back assessment"),
         _bind("T1D.3", "earnings-quality", "Adjusted EBITDA bridge", "amount"),
         _bind("T1D.5", "earnings-quality", "Add-back share", "percent"),
-        _bind("T1D.6", "restated-leverage", "Cash conversion and restated leverage", "multiple"),
+        _bind("T1D.6", "restated-leverage", "Cash conversion and leverage", "multiple"),
         # Evidence.
         _bind("T1D.1", "evidence", "Add-back register"),
         _bind("T1D.4", "evidence", "Source tie-out and CP-1 reconciliation"),

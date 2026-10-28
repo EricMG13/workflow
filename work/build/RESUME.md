@@ -62,3 +62,17 @@ In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; th
 - Next LEAD pointer: CP-3C r13 Infos (unsourced currency when cash_closing missing, incl. all-blank currencies; conflicting status words in minimum-cash and T4.18 seniority dependants; _check_value message keeps CP-1 prefix).
 - After CP-4C r13: blank support/citation quote batch for every other owner module that takes citations (addendum 3); inventory first.
 - Waiting: LEAD signal that codex/checkpoint holds e89b2a2 (b10-repin); then merge it, cp3c pin test should go green.
+
+## Stage 1 closed (AGENTS.md b570399), Stage 2 starting (2026-10-28)
+- Lane bb0190e+ holds all of round 12 plus round 13 CP-L10, CP-3C and 0d-c. Fast set: 5938 passed, 2 skipped.
+- Round 13 in flight; merge each one when it is approved:
+  - CP-1D fix1 (H1/H2/M1, fail closed);
+  - CP-2D fix1 (runway M1 + money pins);
+  - CP-3D review;
+  - CP-4C review;
+  - CP-8 impl (items 7, 8);
+  - CP-2E impl (item 8 + B3 exemption).
+
+  CP-8 and CP-2E merge claude/r13-cp3d at Step 0 (library cases), so merge CP-3D first.
+- Backlog: work/build/stage2-backlog.md. Any non-High/Medium Stage 1 item goes there.
+- Stage 2 plan: the Plan agent draft goes to work/build/stage2/plan.md, then the per-module briefs. G1-X and H1/H1b are done. Routing: mx-feature builds; mx-adversary reviews the store adapter and consumption proof; mx-precise reviews the rest; modules merge serially.

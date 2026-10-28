@@ -67,6 +67,7 @@ from deploy_vii.live.submission import (
 from deploy_vii.live.tools import ToolRules
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import StepChain, dependencies, plan, step_chain
+from deploy_workflow import host
 from deploy_workflow.financial_workflow import (
     FILES,
     MAX_CALLS,
@@ -559,10 +560,10 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
     and CP-1 has an `_ENTRY_VALIDATORS` row (§2). A live-contract module keeps its registry
     chain and the chain's pack and extraction tools. An owner-only module has a registered,
     complete core: `STEP_IDS` (nonempty and distinct, as `Execution.submit_step` requires) are
-    its steps, `SCHEMAS[step]` is each step's schema, `submit` is callable and so is `RULES`
+    its steps (a tuple of str), `SCHEMAS[step]` is each step's schema, `submit` is callable and so is `RULES`
     when a step is journaled. Its step ids stay outside `live.submission.STEPS` (so `_fill`
-    reads the core's `SCHEMAS`), it offers no statement extraction, and a `journaled` step has
-    pack sources (`RULES` judges the session's `Seen`). Every step: no upstream grant, some
+    reads the core's `SCHEMAS`), it offers no statement extraction, a step has pack sources exactly when `host._OWNER_SCOPES`
+    has its row, and a `journaled` step has pack sources (`RULES` judges the session's `Seen`). Every step: no upstream grant, some
     evidence (pack sources or a read), `module_context` only with a `_VIEWS` entry, and the
     financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
     take."""
@@ -591,7 +592,10 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
             or any(schemas.get(s.step_id) is not s.schema for s in spec.steps)
         ):
             raise WorkflowError("not_permitted")
-        sequence = tuple(getattr(core, "STEP_IDS", ()))
+        raw = getattr(core, "STEP_IDS", ())
+        if type(raw) is not tuple or not all(type(i) is str for i in raw):
+            raise WorkflowError("not_permitted")
+        sequence = raw
     else:
         sequence = chain.steps
     # `Execution.submit_step` takes only a nonempty, duplicate-free sequence.
@@ -607,6 +611,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
                 item.step_id not in STEPS
                 and not item.extract
                 and (item.rules != "journaled" or item.sources)
+                and item.sources == ((module_id, item.step_id) in host._OWNER_SCOPES)
             )
         else:
             served = item.sources == (item.step_id in chain.pack_sources) and item.extract == (

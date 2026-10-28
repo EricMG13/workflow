@@ -47,6 +47,7 @@ from deploy_vii.live.submission import Submitted, _with_rules
 from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import plan, step_chain
+from deploy_workflow import host
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.host import SourceSession
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
@@ -325,6 +326,11 @@ class _FakeSession:
         }
 
 
+def _scopes_with_sourced_step() -> Any:
+    """The H1 scope table with the fake module's sourced step, as a module task adds its row."""
+    return MappingProxyType({**host._OWNER_SCOPES, (MODULE, SOURCED): lambda _pack: ()})
+
+
 @pytest.fixture
 def g1x(monkeypatch: pytest.MonkeyPatch) -> Iterator[SimpleNamespace]:
     """Register the fake core exactly where a module task registers a real one."""
@@ -340,6 +346,7 @@ def g1x(monkeypatch: pytest.MonkeyPatch) -> Iterator[SimpleNamespace]:
     monkeypatch.setitem(owner._PRECHECKS, MODULE, _precheck)
     monkeypatch.setitem(owner._ENTRY_VALIDATORS, MODULE, _validate)
     monkeypatch.setattr(owner, "SourceSession", _FakeSession)
+    monkeypatch.setattr(host, "_OWNER_SCOPES", _scopes_with_sourced_step())
     yield SimpleNamespace(core=core, spec=spec, monkeypatch=monkeypatch)
 
 
@@ -510,6 +517,61 @@ def test_owner_only_spec_must_be_served_by_its_core(g1x: SimpleNamespace, tmp_pa
             ),
         },
     )
+
+
+def test_owner_step_sources_follow_the_h1_scope_table(g1x: SimpleNamespace, tmp_path: Path) -> None:
+    """G1-X §2: an owner-only step offers pack sources exactly when `host._OWNER_SCOPES` has a row
+    for it, so G1 never serves a source the H1 host would not lease, or the reverse."""
+    spec = g1x.spec
+    sourced, viewed = spec.steps
+    _refused_at_create(
+        tmp_path,
+        {
+            "sources without a scope row": (
+                MODULE,
+                spec,
+                lambda m: m.setattr(
+                    host,
+                    "_OWNER_SCOPES",
+                    MappingProxyType(
+                        {k: v for k, v in host._OWNER_SCOPES.items() if k != (MODULE, SOURCED)}
+                    ),
+                ),
+            ),
+            "scope row without sources": (
+                MODULE,
+                replace(spec, steps=(sourced, replace(viewed, sources=True))),
+                _unchanged,
+            ),
+        },
+    )
+
+
+def test_owner_core_step_ids_are_a_tuple_of_str(g1x: SimpleNamespace, tmp_path: Path) -> None:
+    """G1-X §2: `STEP_IDS` is a tuple of str; a list, or a tuple holding a non-str, is refused."""
+    core = g1x.core
+    _refused_at_create(
+        tmp_path,
+        {
+            "STEP_IDS a list": (
+                MODULE,
+                g1x.spec,
+                lambda m: m.setattr(core, "STEP_IDS", [SOURCED, VIEWED]),
+            ),
+            "STEP_IDS with a non-str": (
+                MODULE,
+                g1x.spec,
+                lambda m: m.setattr(core, "STEP_IDS", (SOURCED, 2)),
+            ),
+        },
+    )
+
+
+def test_every_registered_module_passes_the_step_check() -> None:
+    """The new guards refuse no module registered today."""
+    for module_id, spec in owner.OWNER_SPECS.items():
+        if module_id in owner._FINANCIAL_MODULES or module_id in owner._ENTRY_VALIDATORS:
+            owner._check_steps(module_id, spec)
 
 
 def test_entry_follows_from_the_module(g1x: SimpleNamespace, tmp_path: Path) -> None:

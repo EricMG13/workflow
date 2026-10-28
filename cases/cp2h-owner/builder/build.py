@@ -35,8 +35,8 @@ D = Decimal
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-    "cases/cp2g-owner/manifest.json": "1c36928c44a0a69ce9da286db4332f2d8aa8e2fca1b1d9504b9191969d105242",
-    "cases/cp2g-owner/submissions.json": "aaa8ea0eeb563064cc944c69ec0e7b3dbc54032243fa72d07d6a735be49da86f",
+    "cases/cp2g-owner/manifest.json": "b0c8c4bcdf3c0e00e33c41cc124d8ca86c47db14c82077c7d40504cc2bf6eee7",
+    "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
     "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
     "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
 }

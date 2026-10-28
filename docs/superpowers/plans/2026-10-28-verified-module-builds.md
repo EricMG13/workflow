@@ -155,8 +155,8 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
     - **MEDIUM 1.** The CP-MODEL attempt and head `inputs` are unbound. Apply the same replay, plus `current_inputs(final, deterministic) == attempt.inputs`.
     - **LOW 1.** A sealed receipt can carry a pending attempt; HIGH 1 closes it.
   - G1-X adversary review (`work/build/g1x/review-adversary.md`). These predate G1-X and are with the owner (LEAD, 2026-10-28):
-    - **Known gap (recommended).** Refused records can be dropped, duplicated or reordered across tickets without detection; §4 records them "exactly as for today's".
-    - **0d product defect.** A `normalise` TypeError or RecursionError escapes `submit_review` after the binding audit write, and RecursionError escapes the verifier. When the `_Walker.branch` root fix lands, remove G1-X's recorded-payload `_fill` TypeError mapping in a later G1-X change.
+    - **Known gap (owner, via LEAD 3f59be2).** Refused records can be dropped, duplicated or reordered across tickets without detection; §4 records them "exactly as for today's".
+    - **0d product defect (owner approved; LEAD branch `lead/0d-normalise`, `live/schema.py` only).** A `normalise` TypeError or RecursionError escapes `submit_review` after the binding audit write, and RecursionError escapes the verifier. When the fix lands, remove G1-X's recorded-payload `_fill` TypeError mapping in a later G1-X change (plus any caller diff LEAD sends).
   - CP-8 `cp8.what_changed.outcome.value`: the rails line binds the number of `T7.3.window.realized_value`, never the pinned literal `∅ G#` (rulings round 5, LEAD notes).
 - [ ] **Stage 4 review.** Fable reviews, then fixes and commits.
 

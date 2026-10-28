@@ -697,7 +697,10 @@ class _Walker:
         """The one union branch `value` can belong to; None when it is not determined."""
         discriminator = node.get("discriminator")
         if isinstance(discriminator, dict) and isinstance(value, dict):
-            target = discriminator.get("mapping", {}).get(value.get(discriminator["propertyName"]))
+            tag = value.get(discriminator["propertyName"])
+            if not isinstance(tag, str):  # a list or dict tag is unhashable: not determined
+                return None
+            target = discriminator.get("mapping", {}).get(tag)
             return self.resolve({"$ref": target}) if isinstance(target, str) else None
         options = [self.resolve(b) for b in (*node.get("anyOf", ()), *node.get("oneOf", ()))]
         key = "properties" if isinstance(value, dict) else "items"
@@ -779,9 +782,38 @@ def marked_fields(model: type[BaseModel], document: dict[str, Any]) -> tuple[Mar
     return tuple(found)
 
 
+# JSON containers deep; no live schema nests near it (the deepest is 11; Pydantic's limit is 200).
+MAX_NESTING = 64
+
+
+def too_deep(payload: str) -> bool:
+    """Whether `payload` nests more than `MAX_NESTING` arrays/objects (brackets in strings
+    ignored), counted before any parse so no recursion runs on hostile input."""
+    depth = 0
+    in_string = escaped = False
+    for char in payload:
+        if in_string:
+            in_string = not (char == '"' and not escaped)
+            escaped = char == "\\" and not escaped
+        elif char == '"':
+            in_string = True
+            escaped = False
+        elif char in "[{":
+            depth += 1
+            if depth > MAX_NESTING:
+                return True
+        elif char in "]}":
+            depth -= 1
+    return False
+
+
 def json_object(payload: str) -> dict[str, Any] | None:
     """`payload` parsed as a JSON object, floats as Decimal (`exact_json` keeps their digits);
-    None for anything else: invalid or truncated JSON, NaN or Infinity, or a non-object."""
+    None for anything else: invalid or truncated JSON, NaN or Infinity, a non-object, or nesting
+    deeper than `MAX_NESTING` (fail closed: `normalise` leaves it unchanged and Pydantic refuses
+    it as ill-shaped)."""
+    if too_deep(payload):
+        return None
     try:
         document = json.loads(payload, parse_float=Decimal, parse_constant=_refuse_constant)
     except ValueError:
@@ -812,4 +844,9 @@ def normalise(model: type[BaseModel], payload: str) -> tuple[str, tuple[str, ...
     walker.fill(model.model_json_schema(), document, "")
     if not walker.paths:
         return payload, ()
-    return exact_json(document), tuple(walker.paths)
+    resolved = exact_json(document)
+    try:
+        resolved.encode()
+    except UnicodeEncodeError:  # a lone surrogate cannot be stored: leave it for Pydantic to refuse
+        return payload, ()
+    return resolved, tuple(walker.paths)

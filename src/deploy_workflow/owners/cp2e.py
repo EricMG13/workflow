@@ -1294,24 +1294,27 @@ _LIM_FLOOR_ABOVE = (  # ruling A4
 )
 
 
-def _floor_limitation(facility: FacilityTerms) -> str:
-    """Ruling A4: the floor limitation by floor state. A4's not-stated text has no path here,
-    because the input object requires a quoted floor."""
+def _floor_limitation(facility: FacilityTerms) -> str | None:
+    """Ruling A4 by floor state, for floating-rate debt only (round 6i): a floor does not bind a
+    fixed coupon, so fixed-rate debt has no floor limitation. A4's not-stated text has no path
+    here, because the input object requires a quoted floor."""
+    if facility.basis.rate_type == "FIXED":
+        return None
     floor = facility.floor_bp.value
     if floor == 0:
         return _LIM_FLOOR
-    if floor > 0 and facility.basis.rate_type == "FLOATING":
+    if floor > 0:
         return _LIM_FLOOR_ABOVE
-    raise ValueError(
-        f"Floor limitation: no ruled wording for a {facility.basis.rate_type.lower()}-rate "
-        f"facility with a floor of {floor} basis points"
-    )
+    # A validated floor is digits only; a negative one needs directly built inputs.
+    raise ValueError(f"Floor limitation: a floor of {floor} basis points is not a quoted floor")
 
 
 def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
     out = [_LIM_STATIC, _LIM_CASH]
     if i.facility is not None:
-        out.append(_floor_limitation(i.facility))
+        floor_line = _floor_limitation(i.facility)
+        if floor_line is not None:
+            out.append(floor_line)
         if i.facility.balance.value < i.total_debt.value:  # LEAD ruling 9: a remainder
             out.append(LIM_REMAINDER)
     else:

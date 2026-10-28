@@ -66,3 +66,4 @@
 - 2026-10-28 methodology change (a48990d) merged into lane (301fd90): all merged module tests pass except two CP-1C pin tests; re-pin dispatched to the CP-1C implementer
 - 2026-10-28 Stage 1 layer review (mx-architect) dispatched: group A (CP-2E, CP-2D, CP-2A) and group C (CP-3D, CP-DR, CP-4, CP-3); group B (CP-1C, CP-1D, CP-L10) waits for the CP-1C re-pin
 - 2026-10-28 cp1c re-pin 2524eb4 merged into lane; all merged module tests plus cp1b_registration pass on lane
+- 2026-10-28 g1x-stage2 adversary review (mx-adversary) on d36b5ab: CHANGES REQUIRED. M1 (forged payload escapes the verifier as a raw TypeError, a regression from the narrowed R4-4 catch); Lows L1, L2, L4 ride with fix 1; L3 to H1; pre-existing refused-record and runtime normalise escapes to the owner. Fix 1 dispatched to the G1-X implementer with rulings round 4 Part A, and the M1 mapping ruled under R4-4

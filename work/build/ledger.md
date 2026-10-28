@@ -283,3 +283,4 @@
 - 2026-10-28 CP-2E r12 fix1 re-review APPROVE (mx-precise). Merged cfd6e3e into claude/round12. CP-2E r13 (item 8) held until LEAD rules the CP-3D date block
 - 2026-10-28 CP-1D r13 done: 80cccb1 (items 7, 8 LEAD join, \Z anchor Low; 12/12 mutants). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-adversary (watch: '1, 2 and 3' reads ['3'] -> exactly-one may accept)
 - 2026-10-28 CP-3C r13 done: 6373602 (item 4 statuses, item 5 currency invariant; 16/16 mutants). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-precise (judge: missing cash_closing leaves currency unchecked)
+- 2026-10-28 CP-8 r12 review FINDINGS (mx-precise): M1 _wrap_split W exemption lets a value starting at a hyphen wrap escape B3 (cp8-r12-review/p_wrap_split_edge.py). Controller decision (fail closed, matches CP-3D/CP-2E): revert the exemption; size-level w-minus-wrap cases satisfied by the B3 span refusal. LEAD informed. Fix round 1: mx-feature

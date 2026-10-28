@@ -23,7 +23,7 @@ Lane `claude/module-dev-status-review-0981b6` at 6ba071b or later. Fast tests: 9
 | CP-1D raw-quote fix review | 7c88a98 | aa7fe668e36cb82b8 (worktree cp1d-stage1) | merge after APPROVE; signed-basis defect to LEAD |
 | CP-3D raw-quote check | lane | a5aa3f0ca842029cd (worktree cp3d-stage1) | scoped review if code changed; then 6h percent_text leading zero |
 | CP-2H round 7 | 5d91e7b | a52b5ec0919986ddb | first mx-adversary review, a killed mutant per refusal (29) |
-| CP-2E round 6i + E8 anchors | af23f7f | a219254fe68cc1c2d | scoped mx-feature review, merge |
+| CP-2E round 6i review (mx-feature) | aed93b3 | see ledger (impl a219254fe68cc1c2d) | merge |
 | CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-4C round 8 Part A (money: A-1) | 0284eca | a2c15c441717ec41c | first mx-adversary review (property test, mutants) |
 | CP-1C round 6h (a) | lane | ad161c52418d5cb9a (worktree cp1c-stage1) | scoped review, merge |

@@ -272,3 +272,5 @@
 - 2026-10-28 CP-8 r12 implementer done: 8cecd09 (W, B10 incl flag_quote; _wrap_split ignores a W minus before a digit = unruled derivation, to reviewer + LEAD). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-precise
 - 2026-10-28 CP-2E r12 review CHANGES (mx-precise): M1 "only for it" limitation half unpinned after test replacement (probe cp2e-r12-review/mutants_review.py); I1 2024-2025 control out of bounds, no change. Fix round 1: mx-feature (test only)
 - 2026-10-28 Round 13 brief written (work/build/stage1/round13-brief.md); worktrees r13-{cp1d,cp3d,cp2d,cp3c,cpl10} cut at claude/round12 d2cb626; implementers mx-feature (user)
+- 2026-10-28 CP-2H r12 review APPROVE (mx-precise): Low B8 "any later line" unpinned (cp2h-r12-review/review_mutants.sh after_last_line_only) rides with next CP-2H change; Info per-page rule, probe import path. Merged add5fa8 into claude/round12
+- 2026-10-28 Round 13 dispatched (mx-feature): CP-1D, CP-3D, CP-2D, CP-3C, CP-L10; CP-2E r12 fix round 1 (mx-feature, test only)

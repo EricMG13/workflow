@@ -1,0 +1,222 @@
+# CP-3C (Refinancing and liability-management risk) owner lease — FROZEN by LEAD 2026-10-28 (preparation revision 3)
+
+Frozen after `review-precise-2.md` (CHANGES REQUIRED M-A, M-B; LEAD rulings, then a hash re-check) and revision 3 (`revision-3.md`: M-A, M-B, both Low wordings, and the `fulcrum` recovery-conclusion kind applied as ruled). LEAD rebuilt twice from scratch copies of the repo inputs with `python3 -I`: identical, and equal to the committed files. Pins: manifest aa2c8f57cc6077109db684c0b5aa1c620d1e19453f8640089db7176a82e67d0e, submissions 8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c, expected 50ef4a7f9199e1da4a73fc75eaaf6bc8215bef12cec26067d2d44aead0952e5f, builder 66a3ba8696a81d58d527c1fbf0f0841738537b666225c8479988bd619e16412d. `methods-cp3c-draft.md` is committed as `docs/methods-drafts/cp3c.md`; the build moves it to `src/deploy_vii/methods/cp3c.md`.
+
+LEAD notes at freeze: (1) Known re-pin: the builder pins `methodology.json`; it joins the single serialised methodology change (expected and submissions byte-identical; the manifest changes only in that pin; this header is amended then). (2) Second re-pin trigger: the builder pins `src/deploy_vii/business_context.py` (`manifest.frozen_inputs[8]`). The phrase guard reuses `prohibited_issues` default kinds, so any change to that file re-pins this builder and re-runs the 28-sentence guard probe before the oracle is used again. (3) The G1 re-raise is cited at `owner_workflow.py:618-623` (`_begin`), which LEAD checked; the review's `:452-456` predates the S1a integration. (4) T3D.7-T3D.9 are text rows with no facts, so `validate_tables` did not cover them; T3D.1-T3D.6 pass and the builder asserts one fact per column there.
+
+Former draft heading follows.
+
+# CP-3C (Refinancing and liability-management risk) owner lease: DRAFT rev 3, 2026-10-28 (fix round 2 after review-precise-2)
+
+_mx-feature preparation, pre-code. Nothing here is frozen or reviewed. Oracle: `cases/cp3c-owner/` (manifest, submissions, expected, stdlib builder). No CP-3C core exists, so this lease designs one (`src/deploy_workflow/owners/cp3c.py`); it writes no code. Every G1 seam (owner-core entry, signatures, registration) is `docs/G1X-OWNER-CORE-PROTOCOL.md`, which supersedes any signature this lease states differently. Upstream leases are frozen and read as they stand: `docs/CP2D-OWNER-LEASE.md` (oracle pins in its header; I verified the files on disk hash to those pins), `docs/CP2A-OWNER-LEASE.md`, `docs/CP4-OWNER-LEASE.md`, `docs/CP3D-OWNER-LEASE.md`._
+
+Pins (revision 3; rebuilt in place and from two scratch copies of the pinned inputs with `python3 -I`, all byte-identical): manifest `aa2c8f57cc6077109db684c0b5aa1c620d1e19453f8640089db7176a82e67d0e`, submissions `8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c`, expected `50ef4a7f9199e1da4a73fc75eaaf6bc8215bef12cec26067d2d44aead0952e5f`, builder `66a3ba8696a81d58d527c1fbf0f0841738537b666225c8479988bd619e16412d`. The builder now also pins `src/deploy_vii/business_context.py` (sha256 `1d8f0cc5…41a7`, the prohibited-conclusion guard it transcribes). **Re-pin trigger:** any change to the phrase tables of that file forces a re-pin of this builder; it is its own trigger, separate from the single serialised methodology change (`methodology.json`, open question 10). The method record for `methods/cp3c.md` is `methods-cp3c-draft.md`. FP04 design reference (read only, outside the repository, never edited): `/Users/ericguei/Documents/DEPLOY VII/design/reference/rbot-fp-04-covenant-refinancing.dc.html`, sha256 `57f921b3b4c1ed53ab3c5cd39295dd5bd9f29b46d4b5978f3974cab1f78169ad`.
+
+## Why
+
+CP-3C answers one question: given the maturity wall and the liquidity that the liquidity bridge shows, how much principal must be refinanced, at what pricing sensitivity, through which paths, and how exposed are the creditors if the issuer turns to a liability-management exercise (LME)? Python computes the principal payable at each maturity, the resources available then, the refinancing need, the cost sensitivity of a margin step-up on interest cover, and the claims at or ahead of each facility. The analyst judges only a margin step-up (an assumption) and the feasibility of five paths. Purpose (`methodology.json`): "Assesses refinancing and liability-management risk before or during distress." Architecture row (`docs/reviews/owner-harness-architecture.md:67`): Python "refinancing need/cost, LME capacity from CP-4"; analyst "path, LME likelihood"; sections FP04 `refinancing-paths`, `lme-creditor-exposure`. `docs/MODULES.csv` assigns "FP04 refinancing".
+
+The r14 CP-3C SKILL.md is not in this repository (same situation as CP-2D, decision 0005). The titles and columns of `T3D.1..T3D.9`, the five path kinds and the claim wording are this preparation's adaptation record; LEAD confirms (open question 7).
+
+## Edges (D4) and which optional edges this version reads
+
+Checked with `registry` and the pinned `methodology.json` (the builder asserts them): required CP-0, CP-1, CP-2D, each `edge_rule == "block"`; optional CP-1A, CP-2A, CP-4, CP-3D, each `restricted`; no `edge_rules` entry. `registry.plan(("CP-3C",))` = `(CP-0, CP-1, CP-1A, CP-2, CP-2D, CP-3C)`: CP-2 and CP-1A arrive through CP-2D. `registry.step_chain("CP-3C")` raises "CP-3C has no live step contract". `contracts.py:56` already lists CP-3C in pathway `covenant_refinancing`. **D4 ruling proposed: `methodology.json` as is; no edit and no proposal.** Dependency note: the builder pins `src/deploy_vii/methodology.json` (sha256 `348fbc4b…8d45`), so the D4 build that edits that file must re-pin this builder as it re-pins the frozen ones (dispatch-queue 2026-10-28).
+
+**This version reads no optional edge.** Fewest edges that keep the refinancing analysis honest; each unread edge is an own limitation and an `optional_edges.unread` entry in the manifest:
+
+| Edge | Read? | Reason |
+|---|---|---|
+| CP-4 | no | LME capacity needs CP-4 basket capacity amounts. The frozen CP-4 oracle always shows them missing ("Basket capacity amounts are not calculated... unknown capacity is not zero"), so no arithmetic flows in, and CP-4 runs on the legal pack (identity, financial, legal): a different pack and a second promotion. The LME half is shown as honest gaps and the liability-management path must be Insufficient Information. Read CP-4 in a later revision when CP-4 quantifies baskets. |
+| CP-3D | no | The market source (third_party) would join the pack and no source states a reference rate level (CP-3D's own yield is a gap in every pack case). Refinancing cost is a margin step-up over current terms, not an all-in market rate. |
+| CP-2A | no | A stressed refinancing case needs a CP-2A run; the Stress column of T3D.5 is a gap. |
+| CP-1A | no | Business and ownership context would inform owner support and asset sales; that path is Insufficient Information. |
+
+An unread optional edge is absent from `attempt.inputs`, from the view and from the trace, and never refuses `begin`.
+
+## Module kind (G1-X protocol section 1)
+
+Owner-only module: `OWNER_SPECS["CP-3C"] = OwnerSpec("CP-3C", (StepSpec("refinancing_risk", RefinancingRiskSubmission, sources=False, extract=False, upstream_grant=None, inputs="module_context", rules="none"),), "owner_core", "analytical", None)`. The core supplies every protocol section 2 item that applies: `QUALIFICATION`, `STEP_IDS = ("refinancing_risk",)`, `SCHEMAS`, `probe`, `view` (registered `_VIEWS["refinancing_risk"]`), `submit`. No `precheck` (validation failures journal as invalid steps, as for CP-2D), no `RULES` (no pack source). No `src/deploy_vii` registry edit and no `StepChain`.
+
+## Prerequisites
+
+1. S1a integrated, then G1-X (`SUPPORTED_ANALYTICAL` += CP-3C, `_CORES["CP-3C"] = cp3c`).
+2. The CP-2D core built (`owners.cp2d.cp2d_reader(store, head)`, `_VIEWS["liquidity_bridge"]`) with one pin extension (open question 3).
+3. `docs/TOOL-CONTRACT.md` row for CP-3C (Tool use).
+4. G2 delivery scope (Rendered sections).
+5. Two CP-0 literal deltas, `submissions.json#cp0_consumer_deltas` (CP-2D entry reused byte for byte from the frozen CP-2D oracle, then the new CP-3C entry). Probed 2026-10-28 with the product `readiness.validate_review` and `build_readiness` on a scratch pack of this run: accepted; omitting the CP-3C delta, or the CP-2D delta, gives "Assess each selected canonical live consumer exactly once"; the built CP-0 facts `T4.CP-3C.{demand,readiness,rationale}` and `T8.CP-3C.{candidate_command,exact_command,sources,limits,upstream}` equal `expected.cp0_with_cp3c.added_facts_cp3c`.
+6. CP-1's downstream-readiness stage names CP-3C requirements `debt_schedule`, `maturity_profile` (`downstream_readiness.py:34`, `:178`) and CP-2D `earnings_quality_metrics`. The S1 readiness literal is `{"consumers": []}` (S1 CP-1 readiness blob: `consumers: []`), so nothing supplies them there and CP-1 T4.13 would show CP-2D and CP-3C `not_ready`. This run therefore ships its own CP-1 readiness literal, `submissions.json#cp1_downstream_review`: requested consumers CP-1A, CP-2, CP-2D, CP-3C; it assesses CP-2D (`earnings_quality_metrics`, EBITDA key-figure evidence) and CP-3C (`debt_schedule`, `maturity_profile`, `observation:facilities` evidence) with every retained gap scoped `relevant`, and leaves CP-1A and CP-2 unassessed as S1 does; selectors are resolved against the promoted pack's `DownstreamInputs`. The oracle pins CP-3C and CP-2D `ready_with_limitations` and CP-1A, CP-2 `not_ready` in `expected.json#cp1_downstream_readiness`. Probed 2026-10-28 on a scratch copy of the S1 promoted CP-1 store with this run's four requested consumers (`validate_downstream_review` returns no issue; `_assess_consumers` gives the statuses above; KPI evidence for `debt_schedule` is refused "Incompatible or unavailable dependency evidence: CP-3C debt_schedule"). The frozen CP-2D run is unchanged (its T4.13 stays `not_ready` for CP-2D; QUEUE carries the note for the CP-2D build). T4.13 does not gate `begin` (the edge rule does, `execution.py:236-245`). A promotion of this pack was not run (Not verified).
+
+## The run
+
+New run `slice-cp3c-positive`: pathway `covenant_refinancing`, `requested_modules` = CP-1, CP-1A, CP-2, CP-2D, CP-3C; plan `CP-0, CP-1, CP-1A, CP-2, CP-2D, CP-3C` (checked). It is the CP-2D run plus CP-3C, over the same S1 source bytes (identity and financial from `cases/financial/manifest.json`, business from `cases/snapshot/manifest.json` positive; pins in `manifest.frozen_inputs`), with the S1 CP-0 (plus the two deltas), CP-1, CP-1A, CP-2 literals and the frozen CP-2D step literals unchanged. It is a new run, not an extension of the CP-2D run: `Run` is part of `PreparedPack` (`preparation.py:48-51`), so `requested_modules` and `run_id` change the pack hash. CP-MODEL is left out (G1 refuses an analytical module after a deterministic one). Cost: one CP-1 promotion (11-26 minutes); the other cases clone the settled store before the step that differs.
+
+| Case | Base | Notes |
+|---|---|---|
+| `positive` | settled upstream with CP-2D positive literal (horizon 24, minimum cash 10) | CP-3C with step-up 400 bp |
+| `gap_minimum_cash` | clone before CP-2D; CP-2D settles its `gap_minimum_cash` literal (no minimum cash) | resources, need and cover missing; principal known |
+| `gap_no_repricing` | clone of the positive store before CP-3C | `repricing_absence`; cost cells missing; need known |
+| `blocked_cp3c` | clone before CP-3C | attempts 0 and 1 invalid (`step_up_over_limit`, `step_up_negative`) |
+| `begin_refused_cp2d_blocked` | clone of the settled upstream; CP-2D attempts 0 and 1 submit `cases/cp2d-owner/submissions.json#cp2d_blocked` | no CP-3C submission: CP-2D attempt 1 settles blocked and the walk retains the CP-3C begin as a refusal (`receipt.refusals`, kind `blocked`), no CP-3C attempt |
+| 7 composer fixtures | none (pure `compose_refinancing`) | `fixture_two_facilities`, `_burn`, `_long_horizon`, `_rank_not_stated`, `_zero_ebitda`, `_zero_step_up`, `_amortisation_missing` |
+
+## Method (what Python computes; every value is a Decimal)
+
+Unit MILLIONS (US$ m), entity "Northbridge Synthetic Group, IFRS consolidated group", balance date D0 = 2025-12-31 (CP-2D's), flows the twelve months to D0 (LTM Q4 25 = FY25). Operands: CP-1 `cash_closing`, `undrawn_rcf`, `adjusted_ebitda`, `cash_interest` (T4.10 LTM facts; the interest is shown as an outflow, -5.00, and the magnitude is its negation) and per T4.18 facility (q4-2025 snapshot, QUARTER over FY alias) `secured_status`, `seniority`, `annual_amortisation`; CP-2D (through `cp2d_reader`): horizon, run-rate annual flow F, minimum cash or its gap, funding gap or its gap, the wall rows (principal, maturity date, months from D0, inside-horizon flag). Full rules: `expected.json#method_rules`.
+
+1. **Order.** Facilities by months from D0 (CP-2D's whole-month rule), ties by `facility_id`.
+2. **Principal payable at maturity** (balloon) = principal - min(annual amortisation x months / 12, principal). Positive: 50.
+3. **Resources at maturity j** = cash + undrawn revolver (assumed available at every maturity, own limitation) - minimum cash + F x months_j / 12 - sum over facilities of amortisation up to min(months_j, own months) - principal paid from resources at earlier maturities. Positive: 20 + 0 - 10 + 0 - 0 - 0 = 10. F is held flat to each maturity, including dates after the CP-2D horizon (own limitation); the refinancing of an earlier shortfall is not modelled (own limitation).
+4. **Resources applied** = min(balloon, max(0, resources)). **Refinancing need** = balloon - applied. **Cover** = applied / balloon (not_applicable when the balloon is 0). Positive: applied 10, need 40, cover 20.0%. A computed need 0 is "no need", distinct from missing.
+5. **Burden** (T3D.2): totals of balloon, applied, need; principal maturing after the CP-2D horizon (50: the wall lies outside the horizon, which is why the CP-2D funding gap reads 0 while the need is 40); nearest maturity date and months; balloon / adjusted EBITDA (50 / 30 = 1.6667, 1.67x) and need / adjusted EBITDA (1.33x); a non-positive EBITDA gives not_applicable (`∅ G# n.m.`).
+6. **Cost sensitivity** (T3D.3): added annual cash interest = total balloon x margin step-up (bp) / 10000 (the whole balloon is assumed repriced; amend-and-extend or full refinancing); pro forma interest = cash interest + added; interest cover = adjusted EBITDA / interest (30 / 5 = 6.00x), pro forma 30 / 7 = 4.2857 (4.29x). Step-up 0 bp is a known 0; an unassessed step-up makes the cost cells missing. No reference rate level exists in any source, so an all-in rate is never calculated.
+7. **Creditor position** (T3D.4) and **LME capacity** (T3D.5). Rank = (secured_status: SECURED 0, UNSECURED 1; seniority: SUPER_SENIOR 0 ... JUNIOR 4) compared lexicographically; claims at or ahead = principal of facilities with rank <= the facility's; a NOT_STATED flag makes every claims cell missing. T3D.5 mirrors the design reference's Base / LME / Stress columns: Base is the largest claims at or ahead (50, 1.67x), LME and Stress are gaps in every case (CP-4 and CP-2A unread).
+8. **Storage.** Ratios (multiples, shares, cover) are stored quantised to 4 dp half-up and shown from the stored value (display.py); amounts are exact. The oracle derives all of it from pages 2-5 of the frozen financial source and the pinned CP-2D cells, cross-checks them (builder asserts: wall principal, maturity, months and inside flag equal the CP-2D cells; F equals CP-2D `T2E.3.r01`; fixture_long_horizon need 40 equals the CP-2D long_horizon funding gap 40; total principal equals reported total debt).
+
+Missing rule: any missing operand makes each dependent value missing with a stated reason; nothing defaults to 0 or N/A; zero, missing, not_applicable and blocked stay distinct. Blocked is the module-level state (a blocked or stale required edge refuses `begin`).
+
+Expected numbers (`expected.json#cases`):
+
+| Case | Balloon | Resources at maturity | Need | Added interest | Cover now / pro forma | Claims ahead (Base) |
+|---|---|---|---|---|---|---|
+| positive | 50 | 10 | 40 | 2 | 6.00x / 4.29x | 50, 1.67x |
+| gap_minimum_cash | 50 | missing | missing | 2 | 6.00x / 4.29x | 50, 1.67x |
+| gap_no_repricing | 50 | 10 | 40 | missing | 6.00x / missing | 50, 1.67x |
+| fixture_two_facilities (min cash 0, amortising loan) | 56 | 4.5 then (8.5) | 51.5 (25.5 + 26) | 2.24 | 6 / 4.1436 | 80 (2.6667) |
+| fixture_burn (F = -6) | 50 | (14) | 50 | 2 | 6 / 4.2857 | 50 |
+| fixture_long_horizon | 50 | 10 | 40 (= CP-2D gap 40) | 2 | 6 / 4.2857 | 50 |
+
+## Files
+
+New: `src/deploy_workflow/owners/cp3c.py` (core, about 450 lines); `tests/test_owner_cp3c.py`; `tests/cp3c_runs.py` exporting `cp3c_closed(case, root)` (pack assembly, literals, run-time substitutions, tool-call sequence; imports the pack and literal helpers of `tests/cp2d_runs.py`; G2 imports it).
+
+`owner_workflow.py` (G1-X): `OWNER_SPECS["CP-3C"]`, `_CORES["CP-3C"]`, `SUPPORTED_ANALYTICAL`, `_QUALIFICATION["CP-3C"]`, `_PROBES["CP-3C"]`, `_VIEWS["refinancing_risk"] = cp3c.view`.
+
+D12 registrations (PM serialises; recorded in `docs/reuse/manifest.json`):
+- `bindings/shipped.py`: `CP3C` after `CP2D` in `SHIPPED_MAPS`; new `bindings/cp3c.py` (FP block bindings only, no arithmetic, never imports `deploy_workflow`; protocol section 6), slots prefixed `cp3c-`.
+- `report_view.py`: two `_Spec` rows in `_COVENANT_REFINANCING` (Rendered sections).
+- `registry.py`: none. `methodology.json`: none (D4 as is; T3D ids registered, D8 below).
+- `methods/cp3c.md`: the method record at freeze, drafted in `methods-cp3c-draft.md` (method, what is left out, prohibited conclusions), as `methods/cp2d.md`, `cp3d.md`.
+
+## Public API
+
+Seam functions are positional and exactly as protocol section 2; internals take keyword arguments only.
+
+```
+owners.cp3c.MODULE_ID = "CP-3C"; STEP_ID = "refinancing_risk"; STEP_IDS = (STEP_ID,); QUALIFICATION
+SCHEMAS = {STEP_ID: RefinancingRiskSubmission}
+class StepUp(Contract):             bps: int; rationale: Text    # an uncited D11 analyst assumption: no basis_refs
+class RepricingAbsence(Contract):   reason: Text; follow_up: Text
+class PathAssessment(Contract):     kind: Literal["repay_from_resources","amend_and_extend","market_refinancing",
+                                                 "asset_sale_or_equity","liability_management"]
+                                    feasibility: Literal["High","Medium","Low","Insufficient Information"]
+                                    category: Literal["Analyst Interpretation","Insufficient Information"]
+                                    text: Text; credit_implication: Text; basis_refs: tuple[Identifier, ...]
+                                    limitation: str | None
+class RefinancingRiskSubmission(Contract):
+                                    repricing: StepUp | None; repricing_absence: RepricingAbsence | None
+                                    paths: tuple[PathAssessment, ...]
+# seams (positional; protocol section 2)
+probe(store, snapshot, attempt) -> None          # WorkflowError("identity_mismatch") unless the settled attempt and head rebuild exactly
+view(historical, attempt) -> tuple[str, str]     # (sha256, body) of the exact read_inputs view
+submit(store, ticket_id, step_id, payload, rules) -> Submitted
+cp3c_reader(store, head) -> Cp3cHead             # consumer reader for CP-4C (not a G1 seam)
+# internals (keyword arguments only)
+cp3c_upstream(*, store, attempt) -> Upstream     # bound CP-0, CP-1, CP-2D heads through cp1 reads and cp2d_reader; inherited limitations
+operands(*, cp1, cp2d) -> Operands               # predicate reads; missing stays missing
+compose_refinancing(*, operands, step_up_bps) -> Refinancing   # pure Decimal; no I/O (the oracle's compose)
+validate_refinancing(*, submission, upstream) -> tuple[str, ...]
+refinancing_risk(*, pack, submission, upstream) -> RefinancingRiskReport
+cp3c_module(*, report, inputs, attempt) -> Module
+context_block(*, pack, upstream) -> dict[str, object]   # the exact read_inputs view; view() hashes it
+```
+Reuse: no new arithmetic library. The facility register is read from CP-1 T4.18 with the same QUARTER-over-FY rule as CP-2D (`financial_series._maturity_figure` selection); wall rows come from `cp2d_reader`. `model/debt.py`, `model/metrics.py` and `facility_fx.py` operate on pre-promotion CP-MODEL frames and are not callable on CP-1 head facts (CP-2D lease, same finding). A facility in another currency than USD is not summed: every amount that includes it is missing with a limitation (not exercised by any frozen pack).
+
+## Submission schema (reference and judgment only)
+
+Digit-free text, no figures: figures are Python's, shown only in tables and in Python-composed claims whose figures are `{<fact_id>|<unit>}` references to CP-3C's own cells (MC-2: `execution.py:296`). The analyst supplies: `repricing.bps` (an integer, 0..1000, an uncited analyst assumption, decision D11, stored as an `analyst_judgment` fact in unit basis points, never mixed into source totals) with a rationale (no `basis_refs`: it is an uncited assumption), or `repricing_absence`; and exactly one `PathAssessment` per kind. `basis_refs` are `{{FACT:name}}` tokens for names the view offers (CP-1 names, `term-loan.<field>`, CP-2D `cp2d.*` names; `manifest.fact_bindings`), replaced at run time by the offered ref. Literals: `submissions.json#cp3c.{positive,gap_minimum_cash,gap_no_repricing}`. A feasibility is High, Medium or Low exactly when the category is Analyst Interpretation; Insufficient Information states its limitation and only it does.
+
+## Composer: zero / missing / blocked, tables, claims, status
+
+- Copied cells keep the upstream fact's own `value_class`, citations and calculation id (CP-1 T4.18 and CP-2D principal and maturity `source`; months and inside-horizon `calculated`; CP-2D horizon and minimum cash `analyst_judgment`); the unit is MILLIONS throughout, except the cover column of T3D.1 (`c10`, "Resources cover of principal at maturity"), whose gap cell is PERCENT with no currency like its known twin (no `currency` unit arrives) and **every cell in MILLIONS carries `currency: USD`, a missing or not-applicable (gap) cell too: it carries its settled twin's unit and currency (the rule CP-1C froze)** (otherwise `report_view.figure_unit` reads "US$ m" against the fact's unit `m`; the CP-1 T4.10 head facts already carry USD and CP-2D lease acceptance 1 pins it on every amount cell). For a CP-2D copy (`cp2d_operand`) the amount, unit, state and shown value equal the frozen CP-2D oracle cell; its `period` and `value_class` are the CP-2D head fact's own, bound at run time: the period 2025-12-31 on every copy and the `value_class` of a copied gap (`T3D.2.r10`, `r11`) are this oracle's proposal, which the CP-2D oracle does not pin. Computed cells are `calculated` with `formula`; every numeric fact carries a `period` (balance date, or the LTM window for flows and ratios, or the run as-of for the step-up). A copy of an analyst fact is never referenced by a claim.
+- Tables (`expected.json#cases.<case>.tables`, cell ids `T3D.<n>.rNN` or `.cK`): T3D.1 Refinancing need by maturity (10 columns per facility); T3D.2 Refinancing burden; T3D.3 Refinancing cost sensitivity; T3D.4 Creditor position; T3D.5 LME capacity (Base / LME / Stress); T3D.6 Refinancing paths (feasibility, assessment, implication, basis); T3D.7 Analyst judgments; T3D.8 Gaps ledger (one row per own limitation); T3D.9 Upstream trace. T3D.10 and T3D.11 are registered and unused.
+- Claims (`CP-3C-NEED-01`, `-HORIZON-01`, `-BURDEN-01`, `-COST-01`, `-LME-01`): figures only as `{fact_id|US$ m}` or `{fact_id|x}`, gaps only as `[fact_id]` chips, the period as a date label. The gap forms are fixed per case in `expected.json`. Probed read-only with the product (`prose.issues` over Facts built from the expected cells, `prose.bare_figures` on the text outside references, `report_view.fact_spelling` on every cell): zero issues, zero bare figures, zero spelling mismatches in all 15 claims and in the shown value of every cell (amount 2 shown "2"; multiples "1.67x"; percent "20.0%"; "400 bp"; "48 months"; gap `∅ G1`, not_applicable `∅ G1 n.m.`).
+- Status always `restricted` (own limitations non-empty). Own limitations (`expected.json#cases.<case>.own_limitations`, one T3D.8 row each): run-rate basis; resources basis; revolver availability (the undrawn committed revolver is assumed available at every maturity date, even where it matures earlier; its own maturity is not read); minimum cash (CP-2D's exact assumption string, or the CP-3C gap string); margin step-up (assumption or gap); reference rate level; market access (CP-3D unread); liability-management capacity (CP-4 unread); stress case (CP-2A unread); business context (CP-1A unread); ranking basis; plus one Gap row for each Insufficient Information assessment's limitation. Inherited: CP-0 head, CP-1 head, CP-2D head, each limitations then inherited, de-duplicated, own removed (`execution.py:345-366`); bound at run time.
+
+## Refusals (wording fixed; `submissions.json#refusal_inputs`, `expected.json#refusals`)
+
+All validator refusals are journaled: the step is invalid, attempt 0 is re-begun as attempt 1, attempt 1 invalid settles blocked. One literal full payload per class (builder self-checked: each yields exactly its one issue under the oracle's own statement of the rules, and the three case literals yield none):
+
+| Class | Issue |
+|---|---|
+| step-up out of range (`-1`, `1001`) | `repricing.bps: must be between 0 and 1000` |
+| step-up and absence | `repricing: give repricing or repricing_absence, not both` |
+| neither | `repricing: give repricing or repricing_absence` |
+| path missing / repeated | `paths: must hold exactly one row per kind` |
+| digit in a path text | `paths[repay_from_resources].text: must not contain a figure` |
+| digit in the rationale | `repricing.rationale: must not contain a figure` |
+| prohibited conclusion: `business_context.prohibited_issues(path, text)` with its default kinds (peer ranking, instrument recommendation, recovery conclusion; ACTIONS excluded), plus one core-local check with three kinds, `covenant compliance` (complies, complied, complying, compliant, compliance, breach(es/ed), met, satisfied within four words of covenant(s); "headroom is sufficient"), `recovery conclusion` (the word "fulcrum", in the product's issue form: naming a fulcrum security is a recovery conclusion) and `refinancing outcome` (will be refinanced, will refinance, refinancing is assured, refinancing is certain, will default) | the product's form, one issue per matching phrase, product issues first: `paths[<kind>].<field>: prohibited conclusion (<kind>): "<phrase>"` (three payloads: `We recommend this path.` -> `(instrument recommendation): "we recommend"`; `The expected recovery is high.` -> `(recovery conclusion): "expected recovery"`; `The covenant test is met.` -> `(covenant compliance): "met"`) |
+| unknown basis ref | `paths[repay_from_resources].basis_refs: names a fact the view does not offer` |
+| feasibility without basis | `paths[amend_and_extend].basis_refs: a High, Medium or Low feasibility cites at least one fact` |
+| Insufficient Information without limitation | `paths[asset_sale_or_equity].limitation: an Insufficient Information assessment states its limitation` |
+| limitation without Insufficient Information | `paths[amend_and_extend].limitation: only an Insufficient Information assessment carries a limitation` |
+| feasibility and category disagree | `paths[repay_from_resources].feasibility: must be Insufficient Information exactly when the category is` |
+| LME judged without capacity evidence | `paths[liability_management].feasibility: needs legal covenant capacity evidence, which is not bound; state Insufficient Information` |
+
+Issues are returned in the oracle's order (`expected.json#refusal_order`): repricing presence, bps range, one row per kind, then for each text field in order (the repricing text fields, then per submitted path its text, credit_implication and limitation) the figure issue and the guard issues, for all paths, and only then per submitted path the basis_refs, feasibility/category, limitation, cites-a-fact and liability-management issues. `expected.json#prohibited_probe` records 28 sentences (the three literals, the reviewer's missed and false-positive sentences, and the three added in revision 3: the fulcrum sentence, refused, and "Refinancing is likely." and "The issuer is in breach.", recorded guard limits) with the issue the guard returns or none; a conclusion no guard phrase names (for example "Holders should avoid this credit.", "Default is likely.", "We advise lenders to extend.") is valid text under a phrase guard (`guard_limit`). **The guard is a phrase guard, not a semantic review; of the probe sentences, the eight it does not catch are: "Expected recoveries are high.", "We advise lenders to extend.", "Holders should avoid this credit.", "Default is likely.", "We suggest an amend and extend.", "Lenders should extend the maturity.", "Refinancing is likely." and "The issuer is in breach."** (other conclusions outside the probe, for example "Lenders may recover their principal.", are not caught either), and "The loan is held in compliance with no stated covenant evidence." is refused (a compliance word next to covenant). A wrong-typed `bps` is a schema type error owned by G1's generic refusal. Run refusals: any `invoke` is a refused `not_permitted` receipt; a submit without its own `read_inputs` is `not_permitted`; a snapshot change between read and submit is `stale_binding`; when CP-2D settles blocked the walk's next `_begin("CP-3C")` is refused by the store (`BLOCKED_EDGE`, after a blocked producer) and retained as a `RefusedBegin` of kind `blocked` (`owner_workflow.py:448-478`): the CP-2D attempt-1 submit returns `refusal: "cp3c_blocked"`, `receipt.refusals` holds one entry (CP-3C, the post-CP-2D snapshot, reason starting with `BLOCKED_EDGE`) and no CP-3C attempt exists (`expected.json#negative_cases.begin_refused_cp2d_blocked`); a stale or unrun CP-0 or CP-1 head is not retained this way (G1's `_begin` re-raises unless the error is the blocked edge and some head is blocked, `owner_workflow.py:618-623`) and is not pinned; for a blocked CP-0 or CP-1 head the same code retains the refusal, but the walk stops at CP-1A first, so it is never a CP-3C refusal and is not pinned; a refused submit is recorded in G1's audit and receipt, is not journaled and consumes no attempt. Negative cases: `expected.json#negative_cases.blocked_cp3c` (attempts 0 and 1 invalid) and `begin_refused_cp2d_blocked` (no CP-3C submission).
+
+## Tool use (D2)
+
+CP-3C has no pack source and no pack tool (`pack_sources` empty). The only tool-use evidence is `read_inputs`, so a D2 exception is needed, exactly as CP-2's and CP-2D's. Add to `docs/TOOL-CONTRACT.md`'s matrix: "CP-3C `refinancing_risk`: exactly the view `owners.cp3c.view(historical, attempt)` registered in G1's `_VIEWS["refinancing_risk"]` (`module_context()` has no such entry and deploy_vii cannot register a deploy_workflow core): the bound CP-1 and CP-2D facts named by `manifest.fact_bindings` (`ref`, `name`, `source`, `label`, `period`, `unit`, `shown`, `status`, `limitation`) including missing ones, the facility list (text fields only), the unread optional edges, the step-up and path bounds and the inherited limitations; no quote, citation or record_json at any depth; key tree frozen in `cases/cp3c-owner/manifest.json#view_tree_draft` after a probe on the first product-settled core". Missing facts are offered with their status so zero and missing stay distinguishable. Acceptance: zero ok calls; exactly one `read_inputs` per attempt before the submit; its body shape equals the frozen tree; no `quote` string of the S1 literals occurs in it. The view tree is a draft proposal, not an observation.
+
+## Consumption proof (D3)
+
+- **Limitation (CP-1 readiness).** CP-1A and CP-2 are requested consumers of this run's CP-1 readiness but are not assessed by its literal, so they stay `not_ready` exactly as in S1; only CP-2D and CP-3C are assessed. This is a stated limitation of the run, not a defect.
+- **CP-2D is consumed by CP-3C.** The consumer core is `owners.cp3c`, which reads the settled CP-2D head through `cp2d_reader(store, head)` in an actual run. Proof in the output (`expected.json#consumption.cp2d_consumed_by_cp3c`): CP-3C's attempt inputs `prepared-pack, CP-0, CP-1, CP-2D` carry the final CP-2D head's `result_sha256`; T3D.1 columns 1-4, T3D.2 rows 10-12 and T3D.4 column 3 are copies carrying `cp2d_operand` ids with the CP-2D cell's value and value class; claim `CP-3C-HORIZON-01` references the CP-2D funding-gap copy; in `gap_minimum_cash` the CP-2D missing minimum cash and funding gap arrive as gaps, never 0, and the dependent CP-3C values are gaps. Once this run passes, `docs/MODULES.csv` may record CP-2D `downstream_consumption` (LEAD's call; this lease does not edit it).
+- **CP-3C consumption stays OPEN.** CP-4C lists CP-3C optional and has no core; `cp3_relative_value.py:99-104` and `cp6_committee.py:113` state CP-3 and CP-6 never read CP-3C; CP-5 counts only after a D3 scope lease that extends its integrity scope to CP-3C. This lease ships `cp3c_reader(store, head)` and pins what CP-4C must expose (`expected.json#consumption.cp3c_consumed_by`): head hash and status, total balloon, the need (or missing), the per-facility need rows, the added interest (or missing), the Base claims at or ahead, the path feasibilities, own limitations. No test claims CP-3C's own consumption.
+- **Verifier probe and tamper.** `owners.cp3c.probe` reruns validation on the frozen execution (reads the three bound heads, rebuilds the candidate Module with the Python composer over the journaled payload, gets the head hash back). The tamper recipe is `expected.json#tamper`, in the shape of `cases/cpdr-owner/expected.json#tamper`: on the closed positive run, edit only the amount of the computed fact `T3D.2.r02` (resources applied, `10` -> `11`) in the CP-3C result Module, write the blob under its new hash, rewrite the snapshot (CP-3C Attempt and Head `result_sha256`), the retained receipt and the settling `OwnerSubmission` as the recipe steps 1-5 say, with the audit file under its new hash. The target is a computed fact that is not in the step output (the step output is the judgment submission), in no claim and in no other fact's lineage (builder-asserted), so the forged Module is consistent and only the probe's rebuild contradicts it. Expect `_verify_audit` and every check before `_PROBES` to pass on the forged copy (call and read replay, journaled-step replay, `head_of` equality), then `cp3c.probe` to raise `identity_mismatch`; a test asserting `identity_mismatch` alone would never show the probe was reached. Recorded limitations: an edited step output is caught by the store's blob hash check, and an edited retained `read_inputs` body by the call and read replay, not by the probe.
+
+## Rendered sections (D7) and table ids (D8)
+
+Per the FP04 design reference (sha above), the blocks headed CP-3C are **Refinancing paths** (path / feasibility chip / impact, ILLUSTRATIVE tag) and **LME capacity and creditor exposure** (a collapsed block whose one-line meta reads "Claims at or ahead of ... Base, ... LME; Stress ∅ G#": exactly T3D.5). `report_view.py` `_COVENANT_REFINANCING` gains, as admitted D12 rows:
+- `refinancing-paths`: `_Spec("Refinancing paths", "CP-3C", "dense", ("CP-3C",), route_label="Full analysis")`;
+- `lme-creditor-exposure`: `_Spec("LME capacity and creditor exposure", "CP-3C", "dense", ("CP-3C",), collapsed=True, route_label="Full analysis")` (collapsed as in the reference; the existing `capacity` row is not collapsed although its reference block is, open question 9).
+`bindings/cp3c.py` slots prefixed `cp3c-`: `T3D.6` (primary), `T3D.1`, `T3D.2`, `T3D.3` to `refinancing-paths`; `T3D.5` (primary), `T3D.4` to `lme-creditor-exposure`; `T3D.7`, `T3D.9` to `evidence`; `T3D.8` to `limitations`. Rendered through G2 `owner_rendering.py` with a `DELIVERY_SCOPES` entry for `(covenant_refinancing, [CP-1, CP-1A, CP-2, CP-2D, CP-3C], synthetic)`; sections `refinancing-paths`, `lme-creditor-exposure` and the two rails (the CP-2D blocks are asserted by the CP-2D lease; CP-4 blocks are unasserted, CP-4 not requested). **Recorded conflict:** the reference headers its `Funding gap` block "CP-3C - Fig. CR.3" (year, maturing, liquidity left, pressure), and `Maturity wall` "MODEL"; the frozen CP-2D lease registers `funding-gap` and `maturity-wall` to CP-2D. CP-3C's T3D.1 serves the same per-maturity content as a tab of `refinancing-paths` and registers neither block (open question 2).
+
+D8 collision check, run 2026-10-28: `T3D.1`-`T3D.11` appear in `methodology.json` only under CP-3C (the builder asserts no other module lists a `T3D.` id); a grep of `src`, `tests`, `docs` and `cases` found them in `methodology.json` alone before this preparation. `T3D.10` and `T3D.11` are registered and unused. No new registration.
+
+## Acceptance (from `expected.json` only)
+
+1. **Positive.** CP-0, CP-1, CP-1A, CP-2, CP-2D settled restricted; CP-0 facts for CP-2D and CP-3C equal the deltas (`cp0_with_cp3c`); the CP-2D head's tables equal `cp2d-owner/expected.json` cases.positive; CP-3C settled `restricted` with inputs `prepared-pack, CP-0, CP-1, CP-2D` hash-equal to the final heads plus `refinancing-risk-submission`; tables T3D.1-T3D.9 equal `cases.positive.tables` (ids, columns, `shown`, units, currency USD on every MILLIONS cell including gap cells, value classes, periods, and a citation (copy) or `calculation_id` (computed) on every cell a claim references); claims equal `template`, and the resolved rendering equals `text`; own limitations equal; the receipt verifies; store and model bytes unchanged afterwards.
+2. **gap_minimum_cash** and **gap_no_repricing.** The cells and claims listed in the expected cases are gaps (`∅ G#`, never 0), the known cells stay known (balloon 50; added interest 2; cover 6.00x), the module still settles `restricted`.
+3. **Fixtures.** `compose_refinancing` over each fixture's `inputs` equals `cases.<fixture>.derived` (the fixtures carry no tables).
+4. **Refusals and tool use.** Each `refusal_inputs` payload yields exactly its issue; `cp3c_blocked` settles blocked; the CP-2D-blocked walk retains the CP-3C begin refusal (no CP-3C submission); every `prohibited_probe` sentence yields its recorded issues from the product guard plus the core-local check; zero ok calls; read-before-submit; stale binding.
+5. **Verifier probe.** As Consumption proof: `expected.json#tamper` forged consistently, every check before `_PROBES` passes, then `cp3c.probe` raises `identity_mismatch`.
+5b. **CP-1 readiness.** The run's CP-1 readiness literal validates with no issue and CP-1's readiness assesses CP-2D and CP-3C `ready_with_limitations` (`expected.json#cp1_downstream_readiness`; CP-1A and CP-2 `not_ready`).
+6. **Consumption.** CP-2D: the proof above; CP-3C's own: recorded OPEN, no test claims it.
+7. **Rendering.** The two blocks populated, owner CP-3C, tabs as above, cells equal expected `shown` (gap spelling pattern `∅ G#` and `∅ G# n.m.` excepted).
+8. **Gates.** `ruff check`, `ruff format --check`, `MYPYPATH=src mypy --strict` on the changed files.
+
+## Deferred test commands (build-first: not run now; LEAD's final phase)
+
+```
+cd "<LEAD worktree>" && PYTHONPATH=src "../../../.venv/bin/python" -m pytest tests/test_owner_cp3c.py -x -q      # one CP-1 promotion
+python3 -I cases/cp3c-owner/builder/build.py && shasum -a 256 cases/cp3c-owner/*.json                            # oracle reproduces byte for byte
+```
+Plus the lease's own gates and `tests/test_owner_workflow.py` unchanged (G1 regression).
+
+## Open questions for LEAD (with recommendation)
+
+1. **Optional edges.** This version reads none (CP-4, CP-3D, CP-2A, CP-1A each an own limitation). Recommend accept; revisit CP-4 when it quantifies baskets (then a combined legal-pack run, new CP-0 and CP-1 literals, a CP-4 reader pin).
+2. **Funding-gap and maturity-wall ownership.** The FP04 reference headers `Funding gap` CP-3C (and `Maturity wall` MODEL); the frozen CP-2D lease took both. Recommend keep the frozen CP-2D assignment and let T3D.1 serve as a tab of `refinancing-paths`; if LEAD prefers the reference, amend the CP-2D lease (T2E.5 would move) before the CP-3C build.
+3. **CP-2D reader pin extension.** CP-3C also reads the run-rate annual flow `T2E.3.r01` (the CP-2D lease pins horizon, minimum cash or absence, wall rows, funding gap or missing, head hash, status). Recommend add it to `cp2d_reader` when CP-2D is built (the reader does not exist yet) and record it in the CP-2D lease header.
+4. **Liability-management rule.** The validator forces Insufficient Information for the `liability_management` path while CP-4 is unbound (one refusal class). It is a design rule, not a source fact. Recommend accept; drop it only when CP-4 is read.
+5. **Pricing convention.** The whole balloon is repriced by an analyst margin step-up in basis points (0..1000, 400 in the literal), an uncited D11 assumption with a limitation; it shows the interest cover effect, not a market rate. Recommend accept.
+6. **Run-rate beyond the CP-2D horizon.** F is held flat to each maturity (own limitation), and the refinancing of an earlier shortfall is not modelled. Recommend accept as stated limitations.
+7. **Design adaptation.** T3D titles and columns, the five path kinds and the claim wording have no r14 text. Recommend `methods/cp3c.md` at freeze.
+8. **Month-end months.** CP-2D's whole-month rule gives Dec 31 to Jun 30 = 29 months (Dec 31 to Jul 31 = 31). The frozen rule stays; the fixture uses 2028-07-31. Recommend leave CP-2D as frozen and keep the note.
+9. **Collapsed LME block.** Following the reference, `lme-creditor-exposure` is `collapsed=True`; the existing `capacity` spec is not. Recommend collapsed, and align `capacity` when CP-4's FP04 render is next touched.
+10. **D4 re-pin.** This builder pins `methodology.json`; the D4 build that edits it must re-pin the CP-3C builder with the frozen ones (add to the CP-L10 D4 list). Recommend yes.
+11. **CP-1 downstream requirements** `debt_schedule` and `maturity_profile` for CP-3C: closed in design by LEAD ruling (option (a)): this run's CP-1 readiness literal assesses CP-2D and CP-3C and the oracle pins `ready_with_limitations`; the literal was validated on the S1 store copy, so confirm only that the promotion of this pack accepts it (first test run).
+12. **Cost.** New pack, so one CP-1 promotion plus CP-2D twice and CP-3C three times (clones). Recommend one module-scoped fixture, as for CP-2D.
+
+Not verified: no CP-3C core, validator or composer exists, so no expected value was compared with product output; the builder (`python3 -I`, in place and from two scratch copies, identical) is the only thing run besides read-only product probes: `registry.plan/edge_rule/step_chain`, `readiness.validate_review/build_readiness` on a scratch pack, `prose.issues/bare_figures` and `report_view.fact_spelling` over Facts built from the expected cells (currency USD from the cells), `business_context.prohibited_issues` against the oracle's transcription, `validate_downstream_review` and `_assess_consumers` on a scratch copy of the S1 CP-1 store, and `validate_bindings`. The CP-1 promotion for this run pack (the readiness literal's evidence selectors and statuses on it), the CP-2D cells (the CP-2D oracle is itself unexecuted), calculation ids and citations on copied cells, the view tree, the G1-X seams, the FP04 populated render, the verifier probe and the tamper recipe (never executed), blocked and begin-refused outcomes, multi-facility ordering with real pack data, and the amortisation, ranking and missing-amortisation rules beyond their fixtures are not exercised.

@@ -317,3 +317,4 @@
 - 2026-10-28 Stage 2 CP-3D dispatched (mx-feature, worktree s2-cp3d at e5e63af); G1-X guards review dispatched (mx-precise)
 - 2026-10-28 CP-1D r13 fix1 re-review APPROVE (mx-adversary); merged 9f61127. Round 13 complete in the lane. Two predating CP-1D fail-opens (non-ASCII second figure; digits in a word) to the owner via backlog
 - 2026-10-28 G1-X guards review APPROVE (mx-precise); 1 Low to stage2/lows.md; merged 3d25683
+- 2026-10-28 USER: treat the two predating CP-1D fail-opens (non-ASCII second figure; digits inside a word) as Medium and fix now, fail closed. Dispatch mx-feature (worktree cp1d-owner-fix), review mx-adversary

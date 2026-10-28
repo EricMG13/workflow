@@ -6,10 +6,10 @@ CP-0 (and, when bound, CP-6) upstream. Python parses every quoted figure and dat
 each variance, breach, count and status in exact Decimal; the analyst supplies only verbatim
 quotes and judgments. The G1-X seams (store, RULES, submit, probe, reader) come in later stages.
 
-Wording beyond the lease and the oracle comes from LEAD's round 5 rulings
-(``docs/rulings/2026-10-28-stage1.md``, "CP-8", 8-1 to 8-20). Where nothing pins one (an evidence
-cell with no cited quote), composition fails closed with ``ValueError``; each such point is
-listed for LEAD. A ``ValueError`` starting "invariant:" marks a state no validated submission
+Wording beyond the lease and the oracle comes from LEAD's rulings
+(``docs/rulings/2026-10-28-stage1.md``: round 5 "CP-8", 8-1 to 8-20, and round 6c, 8-24). Where
+nothing pins one (a quotation split on one side and missing on the other), composition fails
+closed with ``ValueError``; each such point is listed for LEAD. A ``ValueError`` starting "invariant:" marks a state no validated submission
 reaches (8-8 and 8-12 among them).
 """
 
@@ -163,9 +163,9 @@ def _unpinned(point: str) -> str:
 
 
 def _name(metric: str) -> str:
-    """``<name>`` of the round 5 rulings: the T7.4 row label with its first letter lower-cased
-    (a bid or offer names the mid's row, the measure it feeds)."""
-    label = METRIC_NAME["loan_mid" if metric in QUOTATION else metric]
+    """``<name>`` of the rulings: the row label with its first letter lower-cased (a T7.3 bid
+    or offer row names itself, round 6c (a))."""
+    label = METRIC_NAME[metric]
     return label[0].lower() + label[1:]
 
 
@@ -1115,10 +1115,24 @@ _PROCESS_SAID: Mapping[str, str] = {
     "N": "the process is judged unsound",  # 8-4
     NOT_ASSESSED: "process quality is not assessed",
 }
-_NOT_COMPARED: Mapping[str, tuple[str, str]] = {  # 8-1: the lacking side -> (item, follow-up)
-    "realized": ("Realized {}", "Supply a dated post-decision source that states {}"),
-    "expected": ("Expected {}", "Cite the expected {} from the Prior Case record"),
+_NOT_COMPARED: Mapping[tuple[str, ...], tuple[str, str, str]] = {  # 8-1, 8-24
+    # the sides lacking a value -> (missing item, side said, follow-up)
+    ("expected",): ("Expected {}", "expected", "Cite the expected {} from the Prior Case record"),
+    ("realized",): (
+        "Realized {}",
+        "realized",
+        "Supply a dated post-decision source that states {}",
+    ),
+    ("expected", "realized"): (
+        "Expected and realized {}",
+        "expected or realized",
+        (
+            "Cite the expected {} from the Prior Case record and supply a dated post-decision "
+            "source that states it"
+        ),
+    ),
 }
+COMPARED_ONLY = "Variance and attribution are shown only for the compared measures"
 _EXPECTATIONS = (  # T7.8 rows of the unrecorded expectations: (field, item, impact)
     (
         "expected_spread_return",
@@ -1301,8 +1315,8 @@ class _Composer:
         return f"{self.cells.sources[ref.source_id].name}, {ref.locator}"
 
     def _evidence(self, refs: Sequence[QuoteRef]) -> str:
-        if not refs:
-            raise ValueError(_unpinned("an evidence cell with no cited quote"))
+        if not refs:  # T7.2 and the window always cite; T7.4 handles none itself (8-24)
+            raise ValueError("invariant: an evidence cell lists at least one cited quote")
         return "; ".join(dict.fromkeys(self._label(ref) for ref in refs))
 
     def _not_observed(self, metric: str | None = None) -> str:
@@ -1582,7 +1596,10 @@ class _Composer:
                 cells.gap("confidence", "Not assessed: the measure is not compared")
             else:
                 cells.text("confidence", level, value_class="analyst_judgment")
-            cells.text("evidence_id", self._evidence(refs), refs=refs, value_class="calculated")
+            if refs:
+                cells.text("evidence_id", self._evidence(refs), refs=refs, value_class="calculated")
+            else:  # 8-24
+                cells.gap("evidence_id", f"Not stated: no quote is cited for {_name(metric)}")
 
     # T7.5
 
@@ -1792,30 +1809,45 @@ class _Composer:
             cells.text(field, text)
 
     def _not_compared(self, metric: str) -> None:
-        """8-1: a row per measure that lacks a value. Under outcome_absence the outcome row
-        covers the realized side; a split quotation (8-7) records both values, so no row."""
+        """8-1, 8-24 and round 6c (b): one row per uncompared measure. Under outcome_absence
+        the outcome row covers the realized side (6c (d)); a split side records both figures."""
         m = self.d.measures[metric]
-        lacking = [
+        split = [s for s in SIDES if metric == "loan_mid" and _split(self._dates(s))]
+        lacking = tuple(
             side
             for side, value in (("expected", m.expected), ("realized", m.realized))
             if value is None
+            and side not in split
             and not (side == "realized" and self.absent is not None)
-            and not (metric == "loan_mid" and _split(self._dates(side)))
-        ]
-        if not lacking:
-            return
-        if len(lacking) != 1:  # unreachable while the T7.4 evidence cell fails closed first
-            raise ValueError(_unpinned(f"a follow-up for {metric} with neither value"))
-        side, name = lacking[0], _name(metric)
-        item, follow_up = _NOT_COMPARED[side]
-        self._gap_row(
+        )
+        row_id, gap, name = (
             f"not_compared_{metric}",
             f"{METRIC_NAME[metric]} not compared",
-            item.format(name),
-            f"No {side} value is recorded for {name}, so its variance cannot be measured",
-            "Variance and attribution are shown only for the compared measures",
-            follow_up.format(name),
+            _name(metric),
         )
+        if split and lacking:  # no ruled row says both a split and a missing side
+            raise ValueError(_unpinned(f"a {metric} row with a split and a missing side"))
+        if split:
+            sides = _listed(split)
+            self._gap_row(
+                row_id,
+                gap,
+                f"Same-day {sides} bid and offer",
+                f"The {sides} bid and offer are quoted on different dates, so no mid level is "
+                "calculated and its variance cannot be measured",
+                COMPARED_ONLY,
+                "Cite a bid and an offer quoted on the same day",
+            )
+        elif lacking:
+            item, said, follow_up = _NOT_COMPARED[lacking]
+            self._gap_row(
+                row_id,
+                gap,
+                item.format(name),
+                f"No {said} value is recorded for {name}, so its variance cannot be measured",
+                COMPARED_ONLY,
+                follow_up.format(name),
+            )
 
     def _gaps(self) -> None:
         dec, th = self.sub.decision, self.sub.thesis
@@ -2014,7 +2046,7 @@ class _Composer:
         exit_trigger = th.exit_trigger.quote
         if exit_trigger is None:  # 8-17
             out.append(LIM_NO_EXIT)
-        elif not any(char.isdigit() for char in exit_trigger.quote):
+        elif re.search(r"[0-9]", exit_trigger.quote) is None:  # 6c (f): ASCII, as prose tokenises
             out.append(LIM_EXIT)
         out.append(LIM_NO_OUTCOME if self.absent is not None else LIM_INTERIM)
         uncompared = [_name(m) for m in METRICS if m not in self.d.compared]

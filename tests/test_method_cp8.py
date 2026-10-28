@@ -503,12 +503,16 @@ def test_8_1_two_measures_not_compared() -> None:
         "not_compared_interest_cover",
         "not_compared_loan_mid",
     ]
-    # <name> is the T7.4 row label: the quotation's bid and offer feed the mid's row
+    # round 6c (a): a T7.3 row names itself; the mid's name stays where it is compared (T7.4)
+    for metric, name in (("loan_bid", "dealer bid"), ("loan_offer", "dealer offer")):
+        reason = f"Not stated: no realized {name} is recorded from a post-decision source"
+        t73 = cells(report, "T7.3", metric)
+        assert all(missing(t73[f], reason) for f in ("realized_value", "as_of", "source")), metric
+        assert missing(t73["evidence_id"], reason), metric
     mid = (
         "Not stated: no realized mid level of the term loan quotation is recorded from a "
         "post-decision source"
     )
-    assert missing(cells(report, "T7.3", "loan_bid")["realized_value"], mid)
     assert missing(cells(report, "T7.4", "loan_mid")["realized"], mid)
 
 
@@ -537,15 +541,55 @@ def test_8_2_missing_expected_settles() -> None:
     )
 
 
-def test_8_2_missing_expected_under_outcome_absence_still_fails_closed() -> None:
-    # not ruled: the T7.4 evidence cell then cites nothing and no gap wording is pinned for it
-    sub = submission(
-        without(copy.deepcopy(SUBMISSIONS["no_outcome"]), "expected", "total_leverage")
+def no_evidence(fact: Fact, name: str) -> bool:
+    """8-24: an evidence cell with no cited quote: missing, no refs, no class, no calc id."""
+    return missing(fact, f"Not stated: no quote is cited for {name}") and (
+        fact.citations,
+        fact.value_class,
+        fact.calculation_id,
+    ) == ((), None, None)
+
+
+def test_8_24_missing_expected_under_outcome_absence() -> None:
+    lit = without(copy.deepcopy(SUBMISSIONS["no_outcome"]), "expected", "total_leverage")
+    report = settle(lit, case="no_outcome")
+    t74 = cells(report, "T7.4", "total_leverage")
+    assert no_evidence(t74["evidence_id"], "total leverage")
+    assert missing(
+        t74["expected"],
+        "Not stated: no expected total leverage is recorded from the Prior Case record",
     )
-    up, packed = upstream("no_outcome"), pack("no_outcome")
-    assert validate_ledger(submission=sub, upstream=up, pack=packed) == ()
-    with pytest.raises(ValueError, match="no pinned wording"):
-        decision_ledger(pack=packed, submission=sub, upstream=up)
+    rows = row_ids(report, "T7.8")
+    # (d): only the expected side adds a row; the frozen outcome row covers the realized side
+    assert rows.index("not_compared_total_leverage") + 1 == rows.index("outcome")
+    assert [r for r in rows if r.startswith("not_compared_")] == ["not_compared_total_leverage"]
+    assert texts(report, "T7.8", "not_compared_total_leverage")["missing_item"] == (
+        "Expected total leverage"
+    )
+    assert report.limitations == tuple(EXPECTED["cases"]["no_outcome"]["own_limitations"])
+
+
+def test_8_24_neither_value_without_outcome_absence() -> None:
+    lit = without(without(positive(), "expected", "interest_cover"), "realized", "interest_cover")
+    report = settle(uncompared(lit, "interest_cover"))
+    assert no_evidence(cells(report, "T7.4", "interest_cover")["evidence_id"], "interest cover")
+    assert texts(report, "T7.8", "not_compared_interest_cover") == {
+        "gap": "Interest cover not compared",
+        "missing_item": "Expected and realized interest cover",
+        "why_it_matters": (
+            "No expected or realized value is recorded for interest cover, so its variance "
+            "cannot be measured"
+        ),
+        "impact_on_output": "Variance and attribution are shown only for the compared measures",
+        "follow_up": (
+            "Cite the expected interest cover from the Prior Case record and supply a dated "
+            "post-decision source that states it"
+        ),
+    }
+    assert (
+        "Measures not compared: interest cover; their variance and attribution are not shown."
+        in report.limitations
+    )
 
 
 def test_8_3_unchanged_measure_claim() -> None:
@@ -634,13 +678,66 @@ def test_8_6_partly_unrecorded_fields(recorded: tuple[str, ...], line: str | Non
     assert limits[1] == (POSITIVE_LIMITS[2] if line is None else line)
 
 
-def test_8_7_bid_and_offer_dated_differently() -> None:
-    lit = positive()
-    offer = lit["observations"][3]
-    assert (offer["side"], offer["metric"]) == ("expected", "loan_offer")
-    offer.update(
-        as_of_text="January 10, 2026", quote={**offer["quote"], "quote": Q_OFFER_TWO_DATES}
+Q_REALIZED_OFFER_TWO_DATES = (  # market_update page:1, verbatim: from the sheet's own date
+    "Published April 30, 2026. Quotations are as of the close on April 29, 2026.\n"
+    "This invented case is test data, not evidence about a real issuer.\n"
+    "Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic "
+    "Group, with final maturity on December 31, 2029.\n"
+    "Dealer quotation on April 29, 2026: bid 98.00 and offer 98.75"
+)
+
+
+def split(lit: dict[str, Any], side: str) -> dict[str, Any]:
+    """The side's offer re-dated by a longer verbatim span of the same page (8-7)."""
+    at, as_of, quote = (
+        (3, "January 10, 2026", Q_OFFER_TWO_DATES)
+        if side == "expected"
+        else (7, "April 30, 2026", Q_REALIZED_OFFER_TWO_DATES)
     )
+    offer = lit["observations"][at]
+    assert (offer["side"], offer["metric"]) == (side, "loan_offer")
+    offer.update(as_of_text=as_of, quote={**offer["quote"], "quote": quote})
+    return lit
+
+
+def split_row(sides: str) -> dict[str, str]:
+    return {  # round 6c (b)
+        "gap": "Mid level of the term loan quotation not compared",
+        "missing_item": f"Same-day {sides} bid and offer",
+        "why_it_matters": (
+            f"The {sides} bid and offer are quoted on different dates, so no mid level is "
+            "calculated and its variance cannot be measured"
+        ),
+        "impact_on_output": "Variance and attribution are shown only for the compared measures",
+        "follow_up": "Cite a bid and an offer quoted on the same day",
+    }
+
+
+def test_8_7_both_sides_split_take_one_row() -> None:
+    report = settle(uncompared(split(split(positive(), "expected"), "realized"), "loan_mid"))
+    t74 = cells(report, "T7.4", "loan_mid")
+    assert missing(
+        t74["realized"],
+        "Not calculable: the realized bid and offer are quoted on different dates "
+        "(2026-04-29 and 2026-04-30)",
+    )
+    assert texts(report, "T7.8", "not_compared_loan_mid") == split_row("expected and realized")
+    assert report.derived.window_end == date(2026, 4, 30)  # the latest realized as-of date
+
+
+def test_8_7_split_beside_a_missing_side_fails_closed() -> None:
+    # not ruled: a split expected quotation and no realized quotation; neither row says both
+    lit = without(split(positive(), "expected"), "realized", "loan_bid", "loan_offer")
+    sub = submission(uncompared(lit, "loan_mid"))
+    assert (
+        validate_ledger(submission=sub, upstream=upstream("positive"), pack=pack("positive")) == ()
+    )
+    with pytest.raises(ValueError, match="no pinned wording"):
+        decision_ledger(pack=pack("positive"), submission=sub, upstream=upstream("positive"))
+
+
+def test_8_7_bid_and_offer_dated_differently() -> None:
+    lit = split(positive(), "expected")
     with_judgments = submission(lit)
     found = validate_ledger(
         submission=with_judgments, upstream=upstream("positive"), pack=pack("positive")
@@ -662,8 +759,7 @@ def test_8_7_bid_and_offer_dated_differently() -> None:
         "Measures not compared: mid level of the term loan quotation; their variance and "
         "attribution are not shown."
     ) in report.limitations
-    # not ruled: 8-1's T7.8 wording ("No expected value is recorded") would be false here; no row
-    assert "not_compared_loan_mid" not in row_ids(report, "T7.8")
+    assert texts(report, "T7.8", "not_compared_loan_mid") == split_row("expected")  # 6c (b)
 
 
 def test_8_9_prior_case_authority_from_cp0() -> None:
@@ -770,6 +866,17 @@ def test_8_17_exit_trigger_stating_a_figure() -> None:
     limits = settle(lit).limitations
     assert POSITIVE_LIMITS[2] not in limits
     assert not any("exit" in limit for limit in limits)
+
+
+def test_8_17_a_footnote_mark_is_not_a_figure() -> None:
+    # round 6c (f): only an ASCII digit states a threshold; a superscript mark keeps LIM_EXIT
+    old = "Exit trigger recorded: a sharp move in the quotation. No threshold was recorded."
+    new = old.replace("quotation.", "quotation.²")
+    lit = positive()
+    assert lit["thesis"]["exit_trigger"]["quote"]["quote"] == old
+    lit["thesis"]["exit_trigger"]["quote"]["quote"] = new
+    limits = settle(lit, packed=edited_pack("prior_case", old, new)).limitations
+    assert limits[2] == POSITIVE_LIMITS[2]
 
 
 def test_8_20_cp6_states_insufficient_information() -> None:

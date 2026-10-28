@@ -266,7 +266,6 @@ def test_compose_bridge_refuses_horizon_outside_bound() -> None:
 _BALANCE = "2025-12-31"
 _LTM = "LTM Q4 25 \u00b7 2025-01-01 to 2025-12-31"
 _Q4_BALANCE = "q4-2025 \u00b7 2025-10-01 to 2025-12-31"
-_T410 = "LTM Q4 25: 2025-01-01 to 2025-12-31"
 # cp1_operand -> the CP-1 fact's own period, verbatim; a numeric cell with no cp1_operand takes
 # the balance date.
 PERIOD_DELTA: dict[str, str] = {
@@ -287,9 +286,13 @@ PERIOD_DELTA: dict[str, str] = {
     **dict.fromkeys(
         ("cash_bs", "restricted_cash", "rcf_commitment", "rcf_drawn", "total_debt_bs"), _Q4_BALANCE
     ),
-    **dict.fromkeys(("undrawn_rcf", "liquidity", "liquidity_to_debt"), _T410),
-    **dict.fromkeys(("T4.18 commitment - drawn_amount", "T4.18 principal"), "q4-2025"),
+    "T4.18 principal": "q4-2025",
 }
+# Stage 2 backlog (addendum 4 (c), (d)): a recomputed cell takes the balance date; its cp1_operand
+# tag is a twin pointer only.
+RECOMPUTED_TAGS = frozenset(
+    {"undrawn_rcf", "liquidity", "liquidity_to_debt", "T4.18 commitment - drawn_amount"}
+)
 GAP_VALUE_CLASS_DELTA: dict[tuple[str, str], str] = {
     ("gap_minimum_cash", "T2E.3.r09"): "calculated",
     ("gap_minimum_cash", "T2E.5.r04"): "analyst_judgment",
@@ -331,7 +334,11 @@ def _assert_cell(got: cp2d.Cell, want: dict[str, Any], case: str) -> None:
     assert got.value_class == want_class, where
     numeric = want["state"] == "known" and want.get("amount") is not None
     operand = want.get("cp1_operand")
-    want_period = (_BALANCE if operand is None else PERIOD_DELTA[operand]) if numeric else None
+    want_period = None
+    if numeric:
+        want_period = (
+            _BALANCE if operand is None or operand in RECOMPUTED_TAGS else PERIOD_DELTA[operand]
+        )
     assert got.period == want_period, where
     assert got.unit == want.get("unit"), where
     assert _num_equal(got.amount, want.get("amount")), where
@@ -698,7 +705,8 @@ def test_runway_names_the_revolver_operand_and_its_state(
     operands = _ro(_base_operands(), cfo=Decimal(13), **{field: _unknown(status)})
     b = _compose(operands, 24, "10")
     assert b.runway_state == "missing"
-    assert b.runway_reason == f"Not calculable: {label} is {word}"
+    be = "are" if label == "RCF drawings" else "is"
+    assert b.runway_reason == f"Not calculable: {label} {be} {word}"
     assert b.months_to_minimum_cash is None
     assert "undisclosed" not in (b.runway_reason or "")
 
@@ -746,22 +754,23 @@ def test_unknown_revolver_prose_uses_the_state_word_not_undisclosed(
 ) -> None:
     # LEAD addendum 4: LIQ-01, GAP-01 and the own limitation name the operand and its state.
     inputs = _inputs("positive")
+    be = "are" if label == "RCF drawings" else "is"
     operands = _ro(_operands("fixture_burn"), **{field: _unknown(status)})
     result = cp2d.compute(replace(inputs, operands=operands))
     liq = _claim(result, "CP-2D-LIQ-01")
     assert liq.template == (
         f"Available liquidity at 31 Dec 2025 is not calculated: [T2E.2.r07] needs {label}, "
-        f"which is {word}; cash is {{T2E.2.r01|US$ m}}."
+        f"which {be} {word}; cash is {{T2E.2.r01|US$ m}}."
     )
     gap = _claim(result, "CP-2D-GAP-01")
     assert gap.template == (
-        f"The funding gap is not calculated because {label} is {word}; cash-only headroom over "
+        f"The funding gap is not calculated because {label} {be} {word}; cash-only headroom over "
         "the assumed minimum cash is {T2E.5.r05|US$ m}."
     )
     assert prose.check(liq.template, refs={"T2E.2.r01"}, gaps={"T2E.2.r07"}) == ()
     assert prose.check(gap.template, refs={"T2E.5.r05"}, gaps=()) == ()
     limitation = (
-        f"The funding gap is not calculated because {label} is {word}; the cash-only headroom "
+        f"The funding gap is not calculated because {label} {be} {word}; the cash-only headroom "
         "over minimum cash is shown as a lower bound."
     )
     assert prose.bare_figures(limitation) == ()
@@ -1810,20 +1819,11 @@ def test_r13_m1_a_sum_of_differing_periods_raises_the_invariant() -> None:
         cp2d.compute(inputs)
 
 
-def test_r13_m1_a_difference_of_differing_facility_periods_raises_the_invariant() -> None:
-    """T2E.2.r06 is the sum over facilities of commitment less drawn amount."""
-    other = replace(LOAN, facility_id="other-loan", period="a different period")
-    inputs = _with_loan(LOAN)
-    inputs = replace(inputs, operands=replace(inputs.operands, facilities=(LOAN, other)))
-    with pytest.raises(ValueError, match=r"^CP-2D: operands of T2E\.2\.r06 differ in period$"):
-        cp2d.compute(inputs)
-
-
 def test_r13_m1_a_facility_principal_keeps_the_facility_period() -> None:
     odd = replace(LOAN, period="a facility period")
     cells = _cells(cp2d.compute(_with_loan(odd)))
     assert cells["T2E.4.r01.c1"].period == "a facility period"
-    assert cells["T2E.2.r06"].period == "a facility period"
+    assert cells["T2E.2.r06"].period == _BALANCE  # recomputed: the balance date
 
 
 def test_r13_m1_gap_not_applicable_and_text_cells_carry_no_period() -> None:

@@ -80,6 +80,15 @@ Five ideas. The plan is `docs/superpowers/plans/2026-10-28-verified-module-build
    check and the Stage 4 class-level plan and review, never for code; `mx-autonomous`
    stands in if Fable has no credits. LEAD's lane dispatches no Fable.
 
+Source quotes (user, 2026-10-28): quote reading is frozen. No new ruling on how
+Python reads a figure from a model-chosen quote (CP-1D, CP-3D, CP-8, CP-2E); a new
+edge case fails closed and is recorded as a guard limit in `methods/<cp>.md`,
+unless a frozen case needs it. Modules not yet built or connected (CP-1C, CP-2G,
+CP-2H, CP-3C, CP-4C, CP-OS and later ones) never read a figure from a model quote:
+they take it from an upstream fact or a Python-addressed figure id, and their
+citations only check that the quote occurs on the page. Migrating the four existing
+readers to figure ids waits until after Stage 5.
+
 Housekeeping: an implementer first checks its worktree HEAD equals the lane tip
 (smoke-test one agent before a cohort). A fix round leaves a brief, a report and a
 commit, no source copies. LEAD moves closed QUEUE.md entries to QUEUE-ARCHIVE.md.

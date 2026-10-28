@@ -2904,3 +2904,12 @@ fix-1 (`coordinator-3/work/cp1b-owner-b1/review-adversary-fix-1.md`): H1–H3 an
 no new HIGH; N1 (audit-root `_put` residue blocks the seal; M1 not closed at its cause), N2
 (`open()` maps B1 programming errors to identity_mismatch), N4 (over-4300-digit integers escape
 `_json_copy`) go to fix round 2 of 2 (`fix-2-brief.md`); N3 ruled in a CP1B-OWNER-LEASE note.
+
+L2 fix-1 mx-adversary review (2026-10-28, `coordinator-1-source-host/work/cp4-source-host/review-adversary-1.md`):
+no production defect (recorder sees every blob, no unsafe key collision, 8-thread race clean,
+every hit failure maps to identity_mismatch). M1: no test pins the snapshot half of the cache
+key (mutant accepts forged CP-1 ancestry after a warm cache) → fix round 2 of 2, tests and docs
+only (`fix-2-brief.md`) with I1–I3 and L1. LEAD records the memoisation amendment in
+CP4-SOURCE-HOST-LEASE (I5). CP-4 owner preparation done (`work/lead/cp4-owner-preparation/`,
+`cases/cp4-owner/`, three cases incl. false "Same definition"); LEAD rulings Q1–Q6 recorded in
+its report; independent mx-precise review queued.

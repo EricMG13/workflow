@@ -279,3 +279,11 @@ native rendering remain separate explicit caller gaps; source-host alone closes
 none. No product imports/tests/engines/providers/jobs ran during this freeze.
 
 Not verified: future host implementation/tests and pure-probe enforcement, actual CP4 source/owner/CP5 participation or semantics, durable owner recovery, selected-run/native output or providers.
+
+LEAD amendment (2026-10-28, L2 fix round 1; recorded here after the mx-adversary review I5):
+CP-1 producer authentication may be memoised in process (never persisted), keyed on the
+snapshot content hash plus the producer head's result hash. A cache hit must re-read and
+hash-check every blob digest the original verification read, so tampered bytes (SH-R16) and
+missing blobs (SH-R12) still refuse; any other snapshot hash misses. The cached value is the
+verified result only; no writer or store handle is cached. This is consistent with "No semantic
+auth cache may bypass changed referenced bytes" above.

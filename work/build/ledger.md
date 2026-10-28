@@ -343,3 +343,4 @@
 - 19:51 LEAD Stage 2 round 3 cherry-picked: alias canonicalise; H1 class + shared defect test (due before further claims); citation rule; CP-2E L1 lease-only; synthetic settled side. Brief updated. Merges held until shared model-text/hostile test lands.
 - 19:52 CP-2A review: REQUEST CHANGES (M1 acceptance tests; M2 predating unit/currency -> LEAD). Fix round queued behind the shared defect-class test (cap 10). Shared defect test dispatched first: it gates further claims.
 - 19:52 CP-DR fix1 APPROVED; merge held until shared defect-class test lands (round 3).
+- 19:53 CP-3D fix1 APPROVED. Riding Lows (methods derived-rule note per round 3, head-tamper test, exact own-limitations) to implementer; merge held for shared defect test. CP-4 review dispatched.

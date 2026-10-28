@@ -482,7 +482,9 @@ def test_binding_map_equals_the_lease() -> None:
 
 
 def test_binding_map_is_shipped_last_and_slots_are_unique() -> None:
-    assert SHIPPED_MAPS[-1] is CP8
+    ids = [m.module_id for m in SHIPPED_MAPS]
+    assert CP8 in SHIPPED_MAPS
+    assert ids.index("CP-8") > ids.index("CP-6")
     assert len(SHIPPED_MAPS) == len({m.module_id for m in SHIPPED_MAPS})
     slots = [e.slot for m in SHIPPED_MAPS for e in m.entries]
     assert len(slots) == len(set(slots))

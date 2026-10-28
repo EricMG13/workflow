@@ -14,6 +14,7 @@ the correctly rounded rational. This module does no I/O and makes no store, host
 the run-time wiring (store, journal, view, probe) is added in later stages.
 """
 
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Context, Decimal, Inexact, InvalidOperation, Overflow, localcontext
@@ -112,6 +113,24 @@ REPORTED = {
 CP1_TABLE = "T4.10"
 
 
+GATE_QUARTER = "CP-1 has no twelve-month basis for this period"
+GATE_FY_LTM = "CP-1 reports no value for this ratio for this period"
+PeriodKind = Literal["quarter", "fy", "ltm"]
+
+
+def period_kind(period: str) -> PeriodKind:
+    """The kind of a CP-1 base period, from its label (`LTM Q4 25: ...`, `FY25: ...`,
+    `Q3 25: ...`); an unknown label fails closed."""
+    head = period.partition(": ")[0]
+    if re.fullmatch(r"LTM Q[1-4] [0-9]{2}", head):
+        return "ltm"
+    if re.fullmatch(r"FY[0-9]{2}", head):
+        return "fy"
+    if re.fullmatch(r"Q[1-4] [0-9]{2}", head):
+        return "quarter"
+    raise ValueError(f"Unknown CP-1 base period kind: {period}")
+
+
 def _column(period: str) -> str:
     """The T4.10 column label of a view period: `LTM Q4 25: a to b` -> `LTM Q4 25 (a to b)`."""
     head, sep, span = period.partition(": ")
@@ -167,23 +186,19 @@ class BaseOperands:
             return fact.amount if fact.status == "known" else None
 
         cash_interest = amount("cash_interest")
-        if cash_interest is not None and cash_interest > 0:
-            # The lease reads I = -cash_interest; the manifest says "magnitude". They agree only
-            # for CP-1's sign-normalised negative outflow, so a positive amount is refused
-            # until LEAD rules.
-            raise ValueError(
-                f"CP-1 cash interest for {period} is positive ({cash_interest}); "
-                "CP-2A reads only a negative (outflow) amount"
-            )
+        # Ruling A6: a quarter base has no twelve-month basis in CP-1; an FY or LTM base whose
+        # CP-1 ratio is not known reads that CP-1 reports no value for it.
+        gate = GATE_QUARTER if period_kind(period) == "quarter" else GATE_FY_LTM
         gates = {
-            ratio: f"CP-1 has no twelve-month basis for this period ({sources[metric].limitation})"
+            ratio: f"{gate} ({sources[metric].limitation})"
             for ratio, metric in REPORTED.items()
             if amount(metric) is None
         }
         return cls(
             period=period,
             ebitda=amount("ebitda"),
-            # CP-1 stores cash interest as a negative (outflow) amount; I = -cash_interest.
+            # Ruling A7: I = -cash_interest exactly (CP-1 stores the outflow negative); a
+            # positive stored value gives I < 0, which the I <= 0 rules cover.
             interest=None if cash_interest is None else -cash_interest,
             fcf=amount("fcf"),
             total_debt=amount("total_debt"),
@@ -317,6 +332,10 @@ AT_BASE = "Already reached at base"
 NOT_REACHED = "Not reached by a decline of up to 100%"
 NOT_CALCULABLE = "Not calculable"
 NET_DEBT_NOT_POSITIVE = "Net debt is not positive, so no EBITDA decline raises net leverage"
+TOTAL_DEBT_NOT_POSITIVE = "Total debt is not positive, so no EBITDA decline raises total leverage"
+INTEREST_NOT_POSITIVE = (
+    "Not calculable: base cash interest is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
+)
 DENOMINATOR = "Not calculable: the denominator is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
 BreakKind = Literal["fcf", "coverage", "total_leverage", "net_leverage"]
 
@@ -363,27 +382,46 @@ _GATE: Mapping[BreakKind, str | None] = {
 _Head = tuple[str, Literal["Definition", "Analyst assumption"], str, BreakKind, Decimal]
 
 
+def _short_circuit(base: BaseOperands, kind: BreakKind) -> tuple[str, str] | None:
+    """Ruling A1: (outcome, reason) of a break no EBITDA decline can reach or measure."""
+    d, i, nd = base.total_debt, base.interest, base.net_debt
+    if kind == "total_leverage" and d is not None and d <= 0:
+        return NOT_REACHED, TOTAL_DEBT_NOT_POSITIVE
+    if kind == "net_leverage" and nd is not None and nd <= 0:
+        return NOT_REACHED, NET_DEBT_NOT_POSITIVE
+    if kind == "coverage" and i is not None and i <= 0:
+        return NOT_CALCULABLE, INTEREST_NOT_POSITIVE
+    return None
+
+
 def _break(
     base: BaseOperands,
     head: _Head,
     needs: Sequence[str],
     terms: tuple[Decimal, Decimal, Decimal] | None,
 ) -> BreakPoint:
-    """`terms` = (numerator, denominator, EBITDA at the break) when every operand is present."""
+    """`terms` = (numerator, denominator, EBITDA at the break) when every operand is present.
+
+    Ruling A8, order of checks: missing operands in formula order, then the CP-1 gate, then the
+    short-circuits, then s*."""
     break_id, origin, test, kind, level = head
+
+    def unsettled(outcome: str, reason: str) -> BreakPoint:
+        return BreakPoint(break_id, origin, test, kind, level, outcome, None, None, None, reason)
+
     gate = _GATE[kind]
     reason = _missing(base, needs) or (
         f"Not calculable: {base.gates[gate]}" if gate is not None and gate in base.gates else None
     )
-    if reason is None and terms is not None and terms[1] <= 0:
-        reason = DENOMINATOR
-    if reason is not None or terms is None:
-        if reason is None:
-            raise ValueError(f"{break_id}: an operand is missing without a reason")
-        return BreakPoint(
-            break_id, origin, test, kind, level, NOT_CALCULABLE, None, None, None, reason
-        )
+    if reason is not None:
+        return unsettled(NOT_CALCULABLE, reason)
+    if (short := _short_circuit(base, kind)) is not None:
+        return unsettled(*short)
+    if terms is None:
+        raise ValueError(f"{break_id}: an operand is missing without a reason")
     num, den, at_break = terms
+    if den <= 0:
+        return unsettled(NOT_CALCULABLE, DENOMINATOR)
     exact = Fraction(num) / Fraction(den)
     outcome = AT_BASE if exact <= 0 else NOT_REACHED if exact > 1 else REACHED
     return BreakPoint(
@@ -427,7 +465,7 @@ def break_points(
             )
         )
         one = Decimal(1)
-        floor = None if i is None else (e - one * i, e, i)
+        floor = None if i is None or i <= 0 else (e - one * i, e, i)
         out.append(
             _break(
                 base,
@@ -446,29 +484,19 @@ def break_points(
             )
             lvl = t.level
             if t.metric == "total_leverage":
-                terms = None if d is None else (lvl * e - d, lvl * e, CONTEXT.divide(d, lvl))
+                terms = (
+                    None if d is None or d <= 0 else (lvl * e - d, lvl * e, CONTEXT.divide(d, lvl))
+                )
                 out.append(_break(base, head, ("total_debt",), terms))
             elif t.metric == "net_leverage":
-                if nd is not None and nd <= 0:
-                    out.append(
-                        BreakPoint(
-                            head[0],
-                            "Analyst assumption",
-                            t.label,
-                            "net_leverage",
-                            lvl,
-                            NOT_REACHED,
-                            None,
-                            None,
-                            None,
-                            NET_DEBT_NOT_POSITIVE,
-                        )
-                    )
-                    continue
-                terms = None if nd is None else (lvl * e - nd, lvl * e, CONTEXT.divide(nd, lvl))
-                out.append(_break(base, head, ("total_debt", "cash"), terms))
+                net = (
+                    None
+                    if nd is None or nd <= 0
+                    else (lvl * e - nd, lvl * e, CONTEXT.divide(nd, lvl))
+                )
+                out.append(_break(base, head, ("total_debt", "cash"), net))
             else:
-                terms = None if i is None else (e - lvl * i, e, lvl * i)
+                terms = None if i is None or i <= 0 else (e - lvl * i, e, lvl * i)
                 out.append(_break(base, head, ("interest",), terms))
     return tuple(out)
 
@@ -534,14 +562,22 @@ def _prose_issues(
     ]
 
 
+def _name_issues(path: str, text: str) -> list[str]:
+    """A scenario name or threshold label: not empty (M4), no digit, brace or bracket, and no
+    prohibited conclusion (ruling A3)."""
+    if not text.strip():
+        return [f"{path}: empty text"]
+    issues = [f"{path}: {NAME_RULE}"] if _bad_name(text) else []
+    return [*issues, *prohibited_issues(path, text)]
+
+
 def _scenario_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
     issues: list[str] = []
     seen: set[str] = set()
     for n, sc in enumerate(inputs.submission.scenarios):
         path = f"scenarios[{n}]"
-        if _bad_name(sc.name):
-            issues.append(f"{path}.name: {NAME_RULE}")
-        if sc.name in seen:
+        issues += _name_issues(f"{path}.name", sc.name)
+        if sc.name.strip() and sc.name in seen:
             issues.append(f"{path}.name: duplicate scenario name: {sc.name}")
         seen.add(sc.name)
         issues += _prose_issues(f"{path}.rationale", sc.rationale, bound, inputs.names)
@@ -560,25 +596,23 @@ def _threshold_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
         seen.add(t.metric)
         if Decimal(t.level) <= 0:
             issues.append(f"{path}.level: must be greater than zero")
-        if _bad_name(t.label):
-            issues.append(f"{path}.label: {NAME_RULE}")
+        issues += _name_issues(f"{path}.label", t.label)
         issues += _prose_issues(f"{path}.rationale", t.rationale, bound, inputs.names)
     return issues
 
 
 def validate(inputs: Inputs) -> tuple[str, ...]:
     """Every content issue of the submission, in the order base_period, scenarios, thresholds,
-    assessment, gaps; empty when it composes. Shape issues are the schema's (Pydantic)."""
+    assessment, gaps; empty when it composes. Shape issues are the schema's (Pydantic).
+
+    Ruling A5: a base_period issue ends validation and is returned alone."""
     sub = inputs.submission
-    issues: list[str] = []
     if sub.base_period not in inputs.offered_periods:
-        issues.append(f"base_period: not an offered period: {sub.base_period}")
-    else:
-        base = BaseOperands.from_cp1(inputs.cp1_facts, period=sub.base_period)
-        if base.ebitda is None or base.ebitda <= 0:
-            issues.append(
-                f"base_period: base EBITDA is missing or not positive for {sub.base_period}"
-            )
+        return (f"base_period: not an offered period: {sub.base_period}",)
+    base = BaseOperands.from_cp1(inputs.cp1_facts, period=sub.base_period)
+    if base.ebitda is None or base.ebitda <= 0:
+        return (f"base_period: base EBITDA is missing or not positive for {sub.base_period}",)
+    issues: list[str] = []
     bound = prose.bind(referencable(inputs.cp1_facts))
     issues += _scenario_issues(inputs, bound)
     issues += _threshold_issues(inputs, bound)
@@ -1107,10 +1141,12 @@ def _references(
 ) -> tuple[list[Fact], ReportTable]:
     """The CP-1 facts the prose names (reading order), then the four reported ratios, each once,
     copied verbatim under their own fact ids."""
+    a = sub.assessment
     texts = [
-        *(sc.rationale for sc in sub.scenarios),
+        # ruling A3: a limitation's figures follow its row's rationale
+        *(text for sc in sub.scenarios for text in (sc.rationale, sc.limitation) if text),
         *(t.rationale for t in sub.thresholds),
-        sub.assessment.rationale,
+        *(text for text in (a.rationale, a.limitation) if text),
         *(
             text
             for g in sub.gaps
@@ -1192,9 +1228,11 @@ def _limitations(
                 f"Base {WORDS[name]} is not available in CP-1 for {base.period}: "
                 "every figure that needs it is Not calculable."
             )
-    # The CP-1 gate line, once per gate reason a cell actually shows.
+    # The CP-1 gate line, once per gate reason a cell actually shows; ruling A6 omits it on an
+    # FY or LTM base.
     shown = {reason for row in stressed.values() for reason in row.why.values()}
-    for ratio in RATIOS:
+    quarter = period_kind(base.period) == "quarter"
+    for ratio in RATIOS if quarter else ():
         gate = base.gates.get(ratio)
         if gate is not None and f"Not calculable: {gate}" in shown:
             line = (

@@ -448,13 +448,19 @@ def _v02_inputs() -> cp2a.Inputs:
     return inputs_for("positive", bind_payload(REFUSALS["v02"]["payload"], ids), edited)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="oracle-disagreement v02: frozen oracle expects 1 issue, validator returns 3; "
-    "pending LEAD amendment",
-)
 def test_v02_base_ebitda_missing_on_the_composer() -> None:
+    """Ruling A5: a base_period issue ends validation and is returned alone, so the literal v02
+    payload gives exactly its one pinned issue."""
     assert cp2a.validate(_v02_inputs()) == tuple(REFUSAL_ISSUES["v02"])
+
+
+def test_v01_base_period_issue_is_returned_alone() -> None:
+    """Ruling A5: a period that is not offered ends validation; later issues are not reported."""
+    facts = cp1_facts("positive")
+    payload = bind_payload(REFUSALS["v01"]["payload"], fig_ids(facts))
+    payload["scenarios"][0]["name"] = "Moderate downturn 2"
+    payload["assessment"]["confidence"] = "High"
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == REFUSAL_ISSUES["v01"]
 
 
 def test_v02_is_refused_by_the_composer() -> None:
@@ -525,14 +531,193 @@ def test_limitation_fields_are_prose_checked() -> None:
     ]
 
 
-def test_positive_cp1_cash_interest_fails_closed() -> None:
-    """CP-1 stores cash interest as a negative outflow; a positive amount is refused until LEAD
-    rules between the lease (I = -cash_interest) and the manifest (magnitude)."""
+INTEREST_NOT_POSITIVE = (
+    "Not calculable: base cash interest is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
+)
+TOTAL_DEBT_NOT_POSITIVE = "Total debt is not positive, so no EBITDA decline raises total leverage"
+
+
+def test_positive_cp1_cash_interest_is_negated() -> None:
+    """Ruling A7: I = -cash_interest exactly; a positive stored value gives I < 0, and the
+    coverage breaks fall to the I <= 0 rule (A1)."""
     facts = cp1_facts("positive")
     label = EXPECTED["cases"]["positive"]["cp1_inputs"]["cash_interest"]["label"]
     edited = _edit(facts, label, amount=Decimal(5))
-    with pytest.raises(ValueError, match="cash interest"):
-        cp2a.BaseOperands.from_cp1(edited, period=LTM)
+    assert cp2a.BaseOperands.from_cp1(edited, period=LTM).interest == Decimal(-5)
+    payload = bind_payload(SUBMISSIONS["positive"]["downside_pathway"], fig_ids(facts))
+    result = cp2a.compute(inputs_for("positive", payload, edited))
+    by_id = {f.fact_id: f for f in result.facts}
+    for bid in ("b02", "b05"):  # b05 is the interest coverage watch level
+        point = next(p for p in result.breaks if p.break_id == bid)
+        assert (point.outcome, point.reason, point.required_exact) == (
+            "Not calculable",
+            INTEREST_NOT_POSITIVE,
+            None,
+        )
+        fact = by_id[f"T2B.6.{bid}.required_decline"]
+        assert (fact.status, fact.limitation) == ("missing", INTEREST_NOT_POSITIVE)
+    assert [p.break_id for p in result.ranking] == ["b01", "b03", "b04"]
+
+
+def _base(**values: Decimal | None) -> cp2a.BaseOperands:
+    start: dict[str, Decimal | None] = {
+        "ebitda": Decimal(30),
+        "interest": Decimal(5),
+        "fcf": Decimal(9),
+        "total_debt": Decimal(50),
+        "cash": Decimal(20),
+    }
+    start.update(values)
+    return cp2a.BaseOperands(period=LTM, **start, gates={}, sources={})
+
+
+WATCHES = (
+    cp2a.ThresholdSpec("total_leverage", Decimal("2.50"), "Total leverage watch level"),
+    cp2a.ThresholdSpec("net_leverage", Decimal("2.00"), "Net leverage watch level"),
+    cp2a.ThresholdSpec("interest_coverage", Decimal("2.00"), "Interest coverage watch level"),
+)
+
+
+@pytest.mark.parametrize("debt", [Decimal(0), Decimal(-1)])
+def test_total_leverage_break_without_positive_debt_is_not_reached(debt: Decimal) -> None:
+    """Ruling A1: D <= 0 -> Not reached, not applicable, the ruled limitation; never ranked."""
+    points = cp2a.break_points(base=_base(total_debt=debt, cash=Decimal(0)), thresholds=WATCHES)
+    total = points[2]
+    assert (total.outcome, total.reason, total.required_exact) == (
+        "Not reached by a decline of up to 100%",
+        TOTAL_DEBT_NOT_POSITIVE,
+        None,
+    )
+    assert total not in cp2a.rank(points)
+
+
+@pytest.mark.parametrize("interest", [Decimal(0), Decimal(-2)])
+def test_coverage_breaks_without_positive_interest_are_not_calculable(interest: Decimal) -> None:
+    """Ruling A1: I <= 0 -> Not calculable (missing) for b02 and a coverage watch level."""
+    points = cp2a.break_points(base=_base(interest=interest), thresholds=WATCHES)
+    for point in (points[1], points[4]):
+        assert (point.outcome, point.reason, point.required_exact) == (
+            "Not calculable",
+            INTEREST_NOT_POSITIVE,
+            None,
+        )
+
+
+def test_zero_debt_composes_not_applicable_total_leverage_break() -> None:
+    """Ruling A1 through the composer: the T2B.6 cells are not applicable with the ruled text;
+    ruling A6: on an LTM base a CP-1 ratio CP-1 reports no value for reads the FY/LTM wording."""
+    facts = cp1_facts("positive")
+    cells = EXPECTED["cases"]["positive"]["cp1_inputs"]
+    edited = _edit(facts, cells["total_debt"]["label"], amount=Decimal(0))
+    edited = _edit(edited, cells["total_leverage_reported"]["label"], amount=Decimal(0))
+    no_value = "ZERO_OR_NEGATIVE_DENOMINATOR"
+    edited = _edit(edited, cells["fcf_to_debt"]["label"], **MISSING, limitation=no_value)
+    payload = bind_payload(SUBMISSIONS["positive"]["downside_pathway"], fig_ids(facts))
+    result = cp2a.compute(inputs_for("positive", payload, edited))
+    by_id = {f.fact_id: f for f in result.facts}
+    for field in ("required_decline", "ebitda_at_break"):
+        fact = by_id[f"T2B.6.b03.{field}"]
+        assert (fact.status, fact.limitation) == ("not_applicable", TOTAL_DEBT_NOT_POSITIVE)
+    assert by_id["T2B.6.b03.outcome"].text == "Not reached by a decline of up to 100%"
+    assert "b03" not in [p.break_id for p in result.ranking]
+    ltm_wording = (
+        f"Not calculable: CP-1 reports no value for this ratio for this period ({no_value})"
+    )
+    assert by_id["T2B.4.s01.fcf_to_debt"].limitation == ltm_wording
+    assert not any(line.startswith("Twelve-month ratios") for line in result.limitations)
+
+
+def test_quarter_gate_precedes_the_net_debt_short_circuit() -> None:
+    """Ruling A8: missing operands, then the CP-1 gate, then the short-circuits. On the gated
+    quarter base, net debt <= 0 no longer reads Not reached; it is the gate's Not calculable."""
+    facts = cp1_facts("gap")
+    edited = _edit(
+        facts, EXPECTED["cases"]["gap"]["cp1_inputs"]["cash_closing"]["label"], amount=Decimal(60)
+    )
+    payload = json.loads(json.dumps(SUBMISSIONS["gap"]["downside_pathway"]))
+    payload["thresholds"] = [{
+        "metric": "net_leverage", "level": "2.00", "label": "Net leverage watch level",
+        "category": "Analyst Interpretation", "rationale": "An internal watch level, not a covenant.",
+    }]  # fmt: skip
+    result = cp2a.compute(inputs_for("gap", payload, edited))
+    net = result.breaks[2]
+    gate = EXPECTED["cases"]["gap"]["cp1_inputs"]["net_leverage_reported"]["limitation"]
+    assert (net.outcome, net.reason) == (
+        "Not calculable",
+        f"Not calculable: CP-1 has no twelve-month basis for this period ({gate})",
+    )
+
+
+def test_missing_operand_precedes_the_gate_and_the_short_circuit() -> None:
+    """Ruling A8 on the pure function: a missing operand's reason comes first."""
+    base = cp2a.BaseOperands(
+        period=Q3, ebitda=Decimal(30), interest=None, fcf=Decimal(9), total_debt=None,
+        cash=Decimal(20), gates={"interest_coverage": "gated", "total_leverage": "gated"},
+        sources={},
+    )  # fmt: skip
+    points = cp2a.break_points(base=base, thresholds=WATCHES)
+    assert [p.reason for p in points[1:]] == [
+        "Not calculable: base cash interest is missing",
+        "Not calculable: base total debt is missing",
+        "Not calculable: base total debt is missing",
+        "Not calculable: base cash interest is missing",
+    ]
+
+
+def test_fcf_reasons_come_before_interest_reasons() -> None:
+    """Ruling A4: formula order puts F before I (base FCF and cash interest both missing)."""
+    facts = cp1_facts("interest_undisclosed")
+    fcf = EXPECTED["cases"]["interest_undisclosed"]["cp1_inputs"]["fcf"]["label"]
+    edited = _edit(facts, fcf, **MISSING, limitation="Fixture: FCF withheld")
+    payload = SUBMISSIONS["interest_undisclosed"]["downside_pathway"]
+    result = cp2a.compute(inputs_for("interest_undisclosed", payload, edited))
+    by_id = {f.fact_id: f for f in result.facts}
+    # s02 carries an interest increase, so both the F and the I reason could apply
+    assert by_id["T2B.3.s02.fcf"].limitation == "Not calculable: base free cash flow is missing"
+    assert (
+        by_id["T2B.4.s02.fcf_to_debt"].limitation
+        == "Not calculable: stressed free cash flow is missing"
+    )
+    assert result.breaks[0].reason == "Not calculable: base free cash flow is missing"
+    assert (
+        "Base free cash flow is not available in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31: "
+        "every figure that needs it is Not calculable."
+    ) in result.limitations
+
+
+def test_limitation_figures_are_collected_after_their_rationale() -> None:
+    """Ruling A3: a figure named in a limitation joins cp1_references after its row's
+    rationale."""
+    facts = cp1_facts("positive")
+    ids = fig_ids(facts)
+    payload = json.loads(json.dumps(SUBMISSIONS["positive"]["downside_pathway"]))
+    payload["scenarios"][0]["rationale"] = "Earnings fall from the {{FIG:ebitda_ltm|US$ m}} level."
+    payload["scenarios"][0]["limitation"] = "Free cash flow of {{FIG:fcf_ltm|US$ m}} is held."
+    payload["scenarios"][1]["rationale"] = "Debt of {{FIG:total_debt_ltm|US$ m}} is held."
+    payload["assessment"]["rationale"] = "The scenarios test how far earnings can fall."
+    result = cp2a.compute(inputs_for("positive", bind_payload(payload, ids), facts))
+    table = next(t for t in result.tables if t.table_id == "cp1_references")
+    named = [ids["ebitda_ltm"], ids["fcf_ltm"], ids["total_debt_ltm"]]
+    assert [r.fact_ids[0] for r in table.rows][:3] == named
+
+
+def test_names_and_labels_are_guarded() -> None:
+    """Ruling A3 (prohibited conclusions in names and labels) and M4 (an empty or blank name
+    or label is refused with the empty-text wording)."""
+    facts = cp1_facts("positive")
+    payload = bind_payload(SUBMISSIONS["positive"]["downside_pathway"], fig_ids(facts))
+    payload["scenarios"][0]["name"] = "Downturn versus peers"
+    payload["scenarios"][1]["name"] = ""
+    payload["scenarios"][2]["name"] = "   "
+    payload["thresholds"][0]["label"] = "We recommend a leverage watch"
+    payload["thresholds"][1]["label"] = ""
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        'scenarios[0].name: prohibited conclusion (peer ranking): "versus peers"',
+        "scenarios[1].name: empty text",
+        "scenarios[2].name: empty text",
+        'thresholds[0].label: prohibited conclusion (instrument recommendation): "we recommend"',
+        "thresholds[1].label: empty text",
+    ]
 
 
 def test_v17_stale_input_is_stage_2() -> None:
@@ -610,7 +795,7 @@ thresholds = st.lists(
 
 
 @settings(max_examples=300, deadline=None)
-@given(e=positive, i=positive, f=amounts, d=positive, c=nonneg, ts=thresholds)
+@given(e=positive, i=amounts, f=amounts, d=amounts, c=nonneg, ts=thresholds)
 def test_property_round_trip(
     e: Decimal,
     i: Decimal,
@@ -619,8 +804,8 @@ def test_property_round_trip(
     c: Decimal,
     ts: list[tuple[cp2a.Metric, Decimal]],
 ) -> None:
-    # debt and cash interest kept positive: at zero debt (or zero interest) the lease recipe gives
-    # s* = 1 where the stressed ratio is undefined (reported to LEAD, not exercised by the oracle)
+    # any sign of debt and interest: ruling A1 short-circuits D <= 0 (Not reached) and I <= 0
+    # (Not calculable), which carry no s* and are not round-tripped
     base = operands(e, i, f, d, c)
     spec = tuple(cp2a.ThresholdSpec(metric=m, level=lvl, label=f"{m} watch") for m, lvl in ts)
     for point in cp2a.break_points(base=base, thresholds=spec):
@@ -631,11 +816,13 @@ def test_property_round_trip(
             Decimal(exact.numerator), Decimal(exact.denominator)
         )
         assert _level_at(base, point, exact) == Fraction(point.level), point.break_id
+        assert not (point.kind == "total_leverage" and d <= 0)
+        assert not (point.kind == "coverage" and i <= 0)
 
 
 @settings(max_examples=300, deadline=None)
 @given(
-    e=positive, i=positive, f=amounts, d=nonneg, extra=nonneg, k=fractions_, s=fractions_,
+    e=positive, i=amounts, f=amounts, d=amounts, c=nonneg, k=fractions_, s=fractions_,
     t=fractions_,
 )  # fmt: skip
 def test_property_monotonic(
@@ -643,21 +830,30 @@ def test_property_monotonic(
     i: Decimal,
     f: Decimal,
     d: Decimal,
-    extra: Decimal,
+    c: Decimal,
     k: Decimal,
     s: Decimal,
     t: Decimal,
 ) -> None:
-    # net debt kept non-negative: with negative net debt a falling EBITDA lowers net leverage
-    base = operands(e, i, f, d + extra, d)
+    """Ruling A2 scopes, as the decline rises at fixed k (where calculable): EBITDA and FCF do
+    not rise; coverage does not rise; total leverage does not fall when D >= 0; net leverage
+    does not fall when ND >= 0 and does not rise when ND < 0; FCF/debt does not rise when D > 0."""
+    base = operands(e, i, f, d, c)
     low, high = sorted((s, t))
     a = cp2a.stress(base=base, decline=low, increase=k)
     b = cp2a.stress(base=base, decline=high, increase=k)
-    assert a.ebitda is not None and b.ebitda is not None and b.ebitda <= a.ebitda
-    assert a.fcf is not None and b.fcf is not None and b.fcf <= a.fcf
-    assert a.interest_coverage is not None and b.interest_coverage is not None
-    assert b.interest_coverage <= a.interest_coverage
-    for name in ("total_leverage", "net_leverage"):
+
+    def pair(name: str) -> tuple[Decimal, Decimal] | None:
         before, after = getattr(a, name), getattr(b, name)
-        if before is not None and after is not None:
-            assert after >= before, name
+        return None if before is None or after is None else (before, after)
+
+    assert b.ebitda <= a.ebitda
+    assert a.fcf is not None and b.fcf is not None and b.fcf <= a.fcf
+    if (cover := pair("interest_coverage")) is not None:
+        assert cover[1] <= cover[0]
+    if d >= 0 and (total := pair("total_leverage")) is not None:
+        assert total[1] >= total[0]
+    if (net := pair("net_leverage")) is not None:
+        assert net[1] >= net[0] if d - c >= 0 else net[1] <= net[0]
+    if d > 0 and (to_debt := pair("fcf_to_debt")) is not None:
+        assert to_debt[1] <= to_debt[0]

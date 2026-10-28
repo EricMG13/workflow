@@ -338,3 +338,4 @@
 - 19:46 LEAD: CP-1D L3/I2 remedy (backlog); CP-5 selection 'still refused, consumes' confirmed; comments cite round 2 + CP-5->CP-MODEL edge, DC-5 open. 0d-d held to Stage 2 close.
 - 19:47 G1-X order follow-up 3218b49 (comments per LEAD, nothing-written assertion). Queued for mx-adversary.
 - 19:48 CP-3 review: REQUEST CHANGES (M1 lease acceptance tests; M2 CP-3B alias passes create -> LEAD). Fix round 1. CP-DR re-review dispatched.
+- 19:49 CP-2E review: REQUEST CHANGES (H1 summary bracket raises after binding write; M1 first-quote citations; M2 acceptance tests). Fix round 1. CP-3D fix1 done (9d74fc7, per-cell Cites; 1320 passed); scoped re-review dispatched.

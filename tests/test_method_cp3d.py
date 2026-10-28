@@ -1122,3 +1122,192 @@ def test_6g_leading_zero_comes_after_occurrence() -> None:
     )
     issues = cp3d.submission_issues(submission=_submission(raw), context=_lz_context())
     assert list(issues) == ["margin: bps_text 0025 does not occur in the quote"]
+
+
+# --- reads after a normalised quote match (CP-8 adversary M1 class) ----------------------------
+
+_SH = "­"  # soft hyphen: `quotes.normalise` deletes it, so the locator check accepts it
+_POSITIVE: dict[str, Any] = SUBMISSIONS["positive"]
+_BID_LINE: str = _POSITIVE["observations"][0]["quote"]
+_INSTRUMENT_LINE: str = _POSITIVE["instrument"]["quote"]["quote"]
+_SH_LINES = (
+    "Dealer quotation on January 9, 2026: bid 98.503 and offer 98.50.",
+    "Facility margin is 425 basis points.",
+    "Mandatory annual amortisation is 10 percent.",
+    "The SOFR reference rate is 4.30 percent.",
+)
+
+
+def _soft(text: str, word: str, at: int) -> str:
+    """`text` with a soft hyphen `at` characters into its one occurrence of `word`."""
+    assert text.count(word) == 1, word
+    return text.replace(word, word[:at] + _SH + word[at:])
+
+
+def _sh_context() -> cp3d.MarketContext:
+    page = "\n".join(_SH_LINES)
+    return _with_page(
+        _with_page(_context("positive"), "financial", "page:9", page), "market", "page:9", page
+    )
+
+
+def _sh_ref(line: int, word: str, at: int) -> dict[str, str]:
+    return {
+        "source_id": "financial",
+        "locator": "page:9",
+        "quote": _soft(_SH_LINES[line], word, at),
+    }
+
+
+@pytest.mark.parametrize(
+    ("edits", "issue"),
+    (
+        (  # the CP-8 M1 shape: the page states 98.50, the raw quote holds a token 98
+            [
+                ["observations.0.quote", _soft(_BID_LINE, "98.50", 2)],
+                ["observations.0.level_text", "98"],
+            ],
+            "observations[0]: level_text 98 does not occur in the quote",
+        ),
+        (
+            [
+                ["observations.0.quote", _soft(_BID_LINE, "98.50", 1)],
+                ["observations.0.level_text", "8.50"],
+            ],
+            "observations[0]: level_text 8.50 does not occur in the quote",
+        ),
+        (  # the page's bid is 98.503; 98.50 is its offer
+            [
+                ["observations.0.locator", "page:9"],
+                [
+                    "observations.0.quote",
+                    _soft(_soft(_SH_LINES[0], "98.503", 5), "offer 98.50", 9),
+                ],
+            ],
+            "observations[0]: bid level_text 98.50 is not labelled bid in the quote",
+        ),
+        (  # talk at the page's bid level, with the bid label split
+            [
+                ["observations.2.locator", "page:1"],
+                ["observations.2.quote", _soft(_BID_LINE, "bid", 1)],
+                ["observations.2.level_text", "98.50"],
+            ],
+            "observations[2]: indicative_talk level_text 98.50 is a bid or offer level in the quote",
+        ),
+        (
+            [["terms.margin", {"quote": _sh_ref(1, "425", 1), "bps_text": "25", "absence": None}]],
+            "margin: bps_text 25 does not occur in the quote",
+        ),
+        (  # the page states 10 percent; a zero would select the simple margin convention
+            [
+                [
+                    "terms.amortisation",
+                    {"quote": _sh_ref(2, "10", 1), "value_text": "0", "absence": None},
+                ]
+            ],
+            "amortisation: value_text 0 does not occur in the quote",
+        ),
+        (
+            [
+                ["terms.reference_rate.absence", None],
+                [
+                    "terms.reference_rate.level",
+                    {"quote": _sh_ref(3, "4.30", 1), "percent_text": "4"},
+                ],
+            ],
+            "reference_rate: level percent_text 4 does not occur in the quote",
+        ),
+        (  # a name the page does not state (it holds the soft hyphen)
+            [
+                ["terms.reference_rate.name", _soft("SOFR", "SOFR", 2)],
+                ["terms.reference_rate.quote.quote", _soft("SOFR reference rate", "SOFR", 2)],
+            ],
+            "reference_rate: name does not occur in the quote",
+        ),
+        (
+            [
+                ["instrument.name", _soft("Northbridge Term Loan", "Northbridge", 5)],
+                ["instrument.quote.quote", _soft(_INSTRUMENT_LINE, "Northbridge Term Loan", 5)],
+            ],
+            "instrument: name does not occur in the quote",
+        ),
+    ),
+    ids=(
+        "level-split",
+        "level-cp8-shape",
+        "bid-label",
+        "talk-label",
+        "margin",
+        "amortisation",
+        "reference-rate-level",
+        "reference-rate-name",
+        "instrument-name",
+    ),
+)
+def test_reads_refuse_what_the_normalised_quote_does_not_state(
+    edits: list[list[Any]], issue: str
+) -> None:
+    raw = _edited(_POSITIVE, edits)
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_sh_context())
+    assert list(issues) == [issue]
+
+
+@pytest.mark.parametrize(
+    "edits",
+    (
+        [["observations.1.quote", _soft(_BID_LINE, "offer", 3)]],
+        [["observations.0.quote", _soft(_BID_LINE, "2026", 2)]],
+        [["terms.maturity.quote.quote", _soft(_INSTRUMENT_LINE, "2029", 2)]],
+        [["terms.reference_rate.quote.quote", _soft("SOFR reference rate", "SOFR", 2)]],
+        [["instrument.quote.quote", _soft(_INSTRUMENT_LINE, "Northbridge Term Loan", 5)]],
+    ),
+    ids=("offer-label", "as-of-date", "maturity-date", "reference-rate-name", "instrument-name"),
+)
+def test_reads_accept_what_the_normalised_quote_states(edits: list[list[Any]]) -> None:
+    """A soft hyphen inside the label, date or name: the composition is the positive oracle's."""
+    sub, ctx = _submission(_edited(_POSITIVE, edits)), _context("positive")
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    result = cp3d.market_implied_result(submission=sub, context=ctx)
+    expected = EXPECTED["cases"]["positive"]
+    assert [_table_dict(t) for t in result.tables] == expected["tables"]
+    assert [c.text for c in result.claims] == [c["text"] for c in expected["claims"]]
+
+
+# --- round 6h (the CP-3D 6g readings) ----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("percent", "issues"),
+    (
+        ("070", ["recovery: percent_text 070 must have no leading zero"]),
+        ("0100", ["recovery: percent_text 0100 must have no leading zero"]),  # before the bound
+        ("0.5", []),
+    ),
+)
+def test_6h_recovery_percent_text_gets_the_leading_zero_check(
+    percent: str, issues: list[str]
+) -> None:
+    raw = _edited(SUBMISSIONS["positive"], [["recovery.percent_text", percent]])
+    got = cp3d.submission_issues(submission=_submission(raw), context=_context("positive"))
+    assert list(got) == issues
+
+
+@pytest.mark.parametrize(
+    ("index", "level", "issue"),
+    (  # a shape check, so it comes before the label check: neither token is labelled as quoted
+        (0, "0200", "observations[0]: level_text 0200 must have no leading zero"),
+        (2, "0098.50", "observations[2]: level_text 0098.50 must have no leading zero"),
+    ),
+    ids=("bid-at-the-offer", "talk-at-the-bid"),
+)
+def test_6h_leading_zero_comes_before_the_label_check(index: int, level: str, issue: str) -> None:
+    raw = _edited(
+        SUBMISSIONS["positive"],
+        [
+            [f"observations.{index}.locator", "page:9"],
+            [f"observations.{index}.quote", _LZ_PAGE.split("\n")[1]],
+            [f"observations.{index}.level_text", level],
+        ],
+    )
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_lz_context())
+    assert list(issues) == [issue]

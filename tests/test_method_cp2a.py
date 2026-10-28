@@ -795,6 +795,38 @@ def test_round5_limitation_references_are_stored_spelled() -> None:
     assert ids["total_debt_ltm"] in copied
 
 
+def test_round9_gap_texts_are_stored_spelled() -> None:
+    """Round 9 choice 5: each {ref|unit} in a T2B.9 gap text, and in its `Gap (…)` own line,
+    is stored spelled as rendered; the cells stay analyst judgment and the facts stay in
+    cp1_references."""
+    facts = cp1_facts("positive")
+    ids = fig_ids(facts)
+    payload = json.loads(json.dumps(SUBMISSIONS["positive"]["downside_pathway"]))
+    gap = payload["gaps"][0]
+    gap["gap"] = "Debt of {{FIG:total_debt_ltm|US$ m}} has no maturity schedule."
+    gap["why_it_matters"] = "Leverage of {{FIG:total_leverage_reported|x}} may breach a test."
+    gap["affected_analysis"] = "Break-point ranking at {{FIG:total_debt_ltm|US$ m}} of debt"
+    gap["action"] = "Compare {{FIG:total_leverage_reported|x}} with the lenders' tests."
+    result = cp2a.compute(inputs_for("positive", bind_payload(payload, ids), facts))
+    cells = {f.fact_id: f for f in result.facts if f.table_id == "T2B.9"}
+    expected = {
+        "gap": "Debt of 50 US$ m has no maturity schedule.",
+        "why_it_matters": "Leverage of 1.67x may breach a test.",
+        "affected_analysis": "Break-point ranking at 50 US$ m of debt",
+        "action": "Compare 1.67x with the lenders' tests.",
+    }
+    for field, text in expected.items():
+        cell = cells[f"T2B.9.g01.{field}"]
+        assert (cell.text, cell.value_class) == (text, "analyst_judgment")
+    assert f"Gap (Material): {expected['gap']}" in result.limitations
+    assert not any("{" in (f.text or "") for f in cells.values())
+    assert not any("{" in line for line in result.limitations)
+    copied = {
+        r.fact_ids[0] for t in result.tables if t.table_id == "cp1_references" for r in t.rows
+    }
+    assert {ids["total_debt_ltm"], ids["total_leverage_reported"]} <= copied
+
+
 AT_BASE_LINE = (
     "Free cash flow at or below zero is already reached at the base period, before any EBITDA "
     "decline."

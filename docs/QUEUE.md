@@ -3026,3 +3026,8 @@ CP-2A frozen (2026-10-28): review-precise-4 FREEZE (revision 4 by mx-escalate); 
 matched; `docs/CP2A-OWNER-LEASE.md`. Methods drafts for CP-2A and CP-2D committed under
 `docs/methods-drafts/` (they move to `src/deploy_vii/methods/` with each build). B1 fix round 4 done
 (replay-verified recovery of a lost later begin record; two test gaps closed); adversary re-review next.
+
+PM full suite on codex/checkpoint bb8ccef (2026-10-28; `-m "not live and not browser"`, 664 tests, 1h09m40s):
+662 passed, 2 failed — only `tests/test_cp1b_registration.py::test_fresh_public_source_upstream_import_orders[False|True]`
+(child-process `ModuleNotFoundError`), the harness defect fixed on the LEAD branch in 41c08cb (its deferred
+run stays in the final phase). Live/browser tests paused; ruff/mypy not run by PM.

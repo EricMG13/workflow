@@ -37,7 +37,8 @@ Open questions live in `work/build/stage1/<cp>/questions.md` (cp2h, cp3c, cp4c, 
 In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor; round 10 sign rule in methods/cp1d, cp3d, cp8, cp2e; unsigned-grammar limitation in methods/cp8 and cp3d; CP-3C facility ids as prose names at MC-2; CP-8 item 2 guard-limit note.
 
 ## After the class rounds (next steps, 2026-10-28 16:15Z)
-1. (done) All class rounds merged. No agents in flight. If either review returned while the session was away, read the agent's SubagentHandback in its task .output.
+1. (done) All class rounds merged.
+   In flight (2026-10-28 ~18:05Z): riding-Lows batch a2564bfd435381686 (worktree stage1-lows, brief stage1/lows-brief.md) then mx-feature review and merge; Stage 1 end review at 87b2a1a, brief stage1/end-review-brief.md: R1 acb9e707a8ed8d839 (mx-autonomous), R2 a8328bdae944bc35d (mx-precise), R3 a76107fc47c365f31 (mx-autonomous). Save each report to stage1/end-review-R<n>.md; findings go to fix rounds. If either review returned while the session was away, read the agent's SubagentHandback in its task .output.
 2. Check LEAD's answer to the 16:08Z pointer (quote-sign-questions.md "Open for LEAD"; cp2h B7-B10; cp4c B7). Apply rulings as rulings rounds.
 3. Riding Lows batch (ledger, 2026-10-28 class reviews): one test-only round per module, with mx-feature review.
 4. Stage 1 end review (Opus, mx-precise or mx-adversary) on the lane, then Stage 2 per AGENTS.md 423a06e.

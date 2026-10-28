@@ -37,7 +37,7 @@ If an agent stopped mid-task, its worktree holds the uncommitted work: inspect i
 ## LEAD state
 LEAD is paused too. The G1-X open items and the open Stage 1 points for CP-1C, CP-L10, CP-3D and CP-1D are queued for rulings in LEAD's `work/lead/RESUME.md`. Until then each case keeps failing closed or composing as now.
 
-## First steps next session
+## Session 2 (resumed 2026-10-28): steps 2–4 dispatched; step 1 moved to after the Stage 1 merges, so the re-pin batch touches each test once
 1. Merge `lead/methodology-serialised` (a48990d), or LEAD's branch tip, which carries it as 2b58105 (methodology.json 1bb6c0bc), into the lane, with one re-pin batch for module tests whose builder or manifest hashes changed. Verify it by running the affected Stage 1 tests.
 2. Send LEAD the open points it doesn't yet hold: CP-8 (12 raising states plus points 13–23), CP-2G (9 plus 8 decisions), CP-3C (1–8), CP-2D (the inferred wordings in the CP-2D row above), CP-2A (M4 wording and the items in `work/build/stage1/cp2a/rulings-report.md`). Each module report lists them.
 3. Reviews, as slots allow:

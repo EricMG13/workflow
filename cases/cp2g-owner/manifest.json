@@ -1,0 +1,329 @@
+{
+ "schema_version": "cp2g-owner-cases/1",
+ "scope": "CP-2G Forward credit model: CP-0, CP-1, CP-2A (required) and CP-1D (optional) over the frozen financial pack, CP-2G consuming the frozen CP-2A and CP-1D facts under their D3 pins",
+ "status": "DRAFT revision 2 (fix round 1 on review-precise-1) by the cp2g-owner preparation task, 2026-10-28; scoped re-review pending; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/cp2a-owner/manifest.json": "96c6644b8151175f3d422ffd2b4a893cbf9ac9b087c3896373495feb49044047",
+  "cases/cp2a-owner/submissions.json": "191180c2596c38fad13a9b190c6b0fb0103de21ff43b08d175c0f4cf38003a81",
+  "cases/cp2a-owner/expected.json": "457508a0643af8ca6e31bfec6103ae2a0ca9f009dfcc3bf57d29b001e88668b5",
+  "cases/cp1d-owner/manifest.json": "842ced201a3c123f327ad18ec4e24c8834d4ba3712546bce8dd9404458a9abff",
+  "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
+  "cases/cp1d-owner/expected.json": "549d5ef3dad0ceab4486f4ca351dad14051bd2c89841bc3c478d17e978223170",
+  "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+ },
+ "financial_baseline": {
+  "path": "cases/financial/manifest.json",
+  "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "sources": [
+   {
+    "source_id": "identity",
+    "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   },
+   {
+    "source_id": "financial",
+    "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   }
+  ]
+ },
+ "bridge_source": {
+  "path": "cases/cp1d-owner/manifest.json",
+  "json_path": "synthetic_source.positive",
+  "source_id": "bridge",
+  "sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+  "reuse": "the CP-1D positive bridge pages, byte-identical, in the pack of the positive and cp1d_blocked runs (CP-1D needs them); the gap, refused, blocked and cp2a_blocked runs use the identity and financial sources only",
+  "check": "builder asserts the U+000C-joined page sha256 equals the pinned value"
+ },
+ "tamper": "expected.json#tamper: the positive closed run, CP-2G result Module fact T2H.7.b03.down_first forged FY2026 -> Not reached by FY2028 (frozen CP-DR shape)",
+ "no_new_source": "CP-2G reads the settled CP-1, CP-2A and CP-1D heads only and opens no SourceSession; no synthetic source is added by this lease. The analyst driver values are literal submission input.",
+ "edges": {
+  "decision": "D4: methodology.json as is. CP-2G required CP-0, CP-1, CP-2A (rule block); optional CP-1D, CP-2D (rule restricted); no edge_rules entry. The r14 skill also lists CP-1B and CP-2 as advisory; methodology.json does not and this lease does not add them.",
+  "required": [
+   "CP-0",
+   "CP-1",
+   "CP-2A"
+  ],
+  "optional": [
+   "CP-1D",
+   "CP-2D"
+  ],
+  "plans": {
+   "CP-2G": [
+    "CP-0",
+    "CP-1",
+    "CP-2A",
+    "CP-2G"
+   ],
+   "CP-2G+CP-1D": [
+    "CP-0",
+    "CP-1",
+    "CP-1D",
+    "CP-2A",
+    "CP-2G"
+   ]
+  },
+  "input_order": "execution.current_inputs binds prepared-pack then the upstream heads in plan order: positive [prepared-pack, CP-0, CP-1, CP-1D, CP-2A]; gap [prepared-pack, CP-0, CP-1, CP-2A]"
+ },
+ "cases": {
+  "positive": {
+   "run": {
+    "run_id": "cp2g-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2G",
+     "CP-1D"
+    ]
+   },
+   "pack": "identity + financial + bridge (as cases/cp1d-owner positive)",
+   "submission": "submissions.json cases.positive",
+   "expected": "expected.json cases.positive",
+   "execution": "closed run: CP-0, CP-1 (five stages), CP-1D (frozen CP-1D positive), CP-2A (frozen CP-2A positive), CP-2G; CP-1D bound and read"
+  },
+  "gap": {
+   "run": {
+    "run_id": "cp2g-owner-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2G"
+    ]
+   },
+   "pack": "identity + financial, as tests/test_financial_workflow.py make_pack()",
+   "submission": "submissions.json cases.gap",
+   "expected": "expected.json cases.gap",
+   "execution": "closed run: CP-0, CP-1, CP-2A (frozen CP-2A positive), CP-2G; CP-1D not requested (optional edge unbound), minimum liquidity not assessed"
+  },
+  "cp1d_blocked": {
+   "run": {
+    "run_id": "cp2g-owner-cp1d-blocked",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2G",
+     "CP-1D"
+    ]
+   },
+   "pack": "identity + financial + bridge",
+   "submission": "submissions.json cases.cp1d_blocked (positive-derived: minimum liquidity 10, an assessment that names no CP-1D figure)",
+   "expected": "expected.json cases.cp1d_blocked",
+   "execution": "closed run: CP-1D settles blocked (CP-1D refusals r06 twice); CP-2A positive; CP-2G begins under the restricted edge with Input CP-1D status blocked"
+  },
+  "refused": {
+   "run": {
+    "run_id": "cp2g-owner-refused",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2G"
+    ]
+   },
+   "pack": "financial source missing (cases/financial/manifest.json negative_case)",
+   "submission": "submissions.json refused",
+   "expected": "expected.json cases.refused",
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A and CP-2G are never begun"
+  },
+  "blocked": {
+   "run": {
+    "run_id": "cp2g-owner-blocked",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2G"
+    ]
+   },
+   "pack": "same pack as gap",
+   "submission": "submissions.json refusals r01 (attempt 0) then v13 (attempt 1)",
+   "expected": "expected.json cases.blocked",
+   "execution": "closed run to CP-2A, then CP-2G attempt 0 invalid (rejected) and attempt 1 invalid (blocked)"
+  },
+  "cp2a_blocked": {
+   "run": {
+    "run_id": "cp2g-owner-cp2a-blocked",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2G"
+    ]
+   },
+   "pack": "same pack as gap",
+   "submission": "cases/cp2a-owner/submissions.json refusals r01 then v13 for CP-2A",
+   "expected": "expected.json cases.cp2a_blocked",
+   "execution": "closed run to CP-1, then CP-2A settles blocked; CP-2G begin raises ValueError('Required upstream is unrun, stale or blocked') (edge rule block)"
+  },
+  "fixture_total_loss": {
+   "run": null,
+   "execution": "composer only: positive CP-1 facts, CP-2A positive scenario s04 (EBITDA falls to zero) as the downside"
+  },
+  "fixture_cash_missing": {
+   "run": null,
+   "execution": "composer only: the positive CP-1 facts with cash_closing set to status missing (limitation 'Cash and cash equivalents are not disclosed in the supplied statements.')"
+  },
+  "fixture_debt_repaid": {
+   "run": null,
+   "execution": "composer only: the whole term loan repaid in the first year, so debt is a known zero and coverage and FCF-to-debt are not calculable"
+  },
+  "fixture_cp2a_gap_head": {
+   "run": null,
+   "execution": "composer only: CP-1 positive facts with the frozen CP-2A gap head (base period Q3 25; break b02 and b03 required declines missing)"
+  }
+ },
+ "fact_selection_rule": {
+  "table_id": "T4.10",
+  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+  "predicate": "fact.table_id == 'T4.10' and fact.label == 'LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 <metric>'; exactly one match per metric (probe: 500 T4.10 facts, unique labels), zero or several fail",
+  "metrics": [
+   "capex",
+   "capex_to_revenue",
+   "cash_closing",
+   "cash_interest",
+   "cash_taxes",
+   "ebitda",
+   "ebitda_margin",
+   "fcf",
+   "fcf_to_debt",
+   "interest_coverage_reported",
+   "net_leverage_reported",
+   "revenue",
+   "total_debt",
+   "total_leverage_reported",
+   "undrawn_rcf",
+   "working_capital_change"
+  ],
+  "operands": {
+   "revenue": "revenue",
+   "ebitda": "ebitda",
+   "interest": "cash_interest",
+   "taxes": "cash_taxes",
+   "wc": "working_capital_change",
+   "capex": "capex",
+   "fcf": "fcf",
+   "debt": "total_debt",
+   "cash": "cash_closing",
+   "undrawn": "undrawn_rcf"
+  },
+  "sign": "CP-1 stores cash_interest, cash_taxes, working_capital_change and capex as negative outflows; CP-2G uses their magnitudes",
+  "observed_value_class": {
+   "revenue": "calculated",
+   "ebitda": "calculated",
+   "cash_interest": "calculated",
+   "cash_taxes": "calculated",
+   "working_capital_change": "calculated",
+   "capex": "calculated",
+   "fcf": "calculated",
+   "total_debt": "source",
+   "cash_closing": "source",
+   "undrawn_rcf": "calculated",
+   "ebitda_margin": "calculated",
+   "capex_to_revenue": "calculated",
+   "total_leverage_reported": "calculated",
+   "net_leverage_reported": "calculated",
+   "interest_coverage_reported": "calculated",
+   "fcf_to_debt": "calculated"
+  },
+  "probe": "S1 positive promoted CP-1 head (read only copy r2pos-orig), 2026-10-28, LTM Q4 25 column: revenue 120, ebitda 30.0, cash_interest -5.00, cash_taxes -4, working_capital_change -2.0, capex -10.0, fcf 9.00, total_debt 50.00, cash_closing 20.00, undrawn_rcf 0, ebitda_margin 0.25, capex_to_revenue 0.0833...; all known; the other upstream facts are literal ids (below)",
+  "fact_ids": "interface-fact:<sha256>; bound at run time, never literal"
+ },
+ "upstream_fact_selection": {
+  "CP-2A": {
+   "head": "the settled CP-2A head of the run",
+   "scenario": "T2B.1.<row>.ebitda_decline and T2B.1.<row>.interest_increase of the row named by downside.scenario",
+   "breaks": "T2B.6.<row>.{origin,test,level,required_decline,outcome} for every row of the register, in register order",
+   "fact_ids": "literal (table.row.field assigned by CP-2A); read from cases/cp2a-owner/expected.json cases.positive (pinned)"
+  },
+  "CP-1D": {
+   "head": "the settled CP-1D head of the run",
+   "facts": [
+    "T1D.3.supported.value",
+    "T1D.6.supported.total_leverage",
+    "T1D.6.supported.net_leverage"
+   ],
+   "fact_ids": "literal; read from cases/cp1d-owner/expected.json cases.positive (pinned)"
+  }
+ },
+ "run_time_bindings": {
+  "figure_placeholders": "{{FIG:name|token}} -> {<fact_id>|<token>}: cp1 names by fact_selection_rule, cp1d names to the literal ids above; only a fact with a citation or a calculation can be referenced in prose, so the uncited analyst cells of CP-2A (shock sizes, watch levels) are never FIG names; unreplaced it is malformed run text (refusal v11)",
+  "fact_id_marker": "{{FACT_ID:name}} in an expected issue -> the fact id bound to FIG name",
+  "cp0_consumer_rows": "positive and cp1d_blocked: CP-1, CP-1D (cases/cp1d-owner submissions positive.readiness_review.consumers), CP-2A (submissions.json cp0_consumer_row_cp2a) and CP-2G (cp0_consumer_row_cp2g); gap, blocked, cp2a_blocked: CP-1 (default), CP-2A, CP-2G; T8 commands Run <module> for each",
+  "cp1_readiness": "submissions.json cases.<case>.cp1_readiness (consumer entries CP-1D?, CP-2A, CP-2G); markers bound by the frozen run_time_bindings of the CP-1D and CP-2A manifests; {{EVID:kpi <key>, LTM Q4 25 basis}} for the new CP-2G entry: the one kpi catalogue record with that key whose display_basis_id is the basis record (kind basis, label 'LTM Q4 25', column_key 'LTM:fy-2025', scope 'historical')",
+  "pack_hash": "PreparedPack.content_hash() of the run's pack",
+  "inherited_limitations": "execution.py inherited_limitations rule (see expected.execution)",
+  "ticket_and_call_ids": "structural only"
+ },
+ "figures": {
+  "revenue_ltm": {
+   "source": "cp1",
+   "metric": "revenue",
+   "unit_token": "US$ m"
+  },
+  "ebitda_margin_ltm": {
+   "source": "cp1",
+   "metric": "ebitda_margin",
+   "unit_token": "%"
+  },
+  "capex_to_revenue_ltm": {
+   "source": "cp1",
+   "metric": "capex_to_revenue",
+   "unit_token": "%"
+  },
+  "total_debt_ltm": {
+   "source": "cp1",
+   "metric": "total_debt",
+   "unit_token": "US$ m"
+  },
+  "total_leverage_reported": {
+   "source": "cp1",
+   "metric": "total_leverage_reported",
+   "unit_token": "x"
+  },
+  "total_leverage_supported": {
+   "source": "cp1d",
+   "fact_id": "T1D.6.supported.total_leverage",
+   "unit_token": "x"
+  }
+ },
+ "tool_use": {
+  "CP-2G": "session-less and source-free: no SourceSession and no pack tool; the only tool use is one ok read_inputs (the exact view context_block, a D2 exception frozen by this lease) before the submit; every invoke is a refused not_permitted receipt",
+  "view_tree_draft": {
+   "note": "a proposal, not an observation: the implementer commits cases/cp2g-owner/cp2g-view-tree.json from a product-settled head; no quote, citations or record_json key at any depth",
+   "keys": {
+    "upstream": "[{module_id, status}] for CP-0, CP-1, CP-2A and CP-1D (state bound|unbound|blocked)",
+    "base": "{period, forecast_periods: [FY2026, FY2027, FY2028], operands: {revenue, ebitda, cash_interest, cash_taxes, working_capital_change, capex, fcf, total_debt, cash_closing, undrawn_rcf: {ref|null, shown|null, status, limitation|null}}, ratios: {ebitda_margin, capex_to_revenue, total_leverage_reported, net_leverage_reported, interest_coverage_reported, fcf_to_debt: {...}}}",
+    "drivers": "[{name, label, unit_class, bounds: {min, max, places}}] for the seven drivers; minimum_liquidity: {places, may_be_not_assessed: true}",
+    "cp2a": "{base_period, scenarios: [{row, name, ebitda_decline: {shown, status}, interest_increase: {shown, status}}], breaks: [{row, origin, test, level: {shown, status}, required_decline: {shown|null, status, limitation|null}, outcome}]}",
+    "cp1d": "{state, supported_ebitda: {ref, shown}|null, supported_total_leverage: {ref, shown}|null, supported_net_leverage: {ref, shown}|null}",
+    "break_metrics_offered": "[total_leverage, net_leverage, interest_coverage]; the rows b01 and b02 (origin Definition) are fixed and not offered",
+    "cp1_facts": "[{ref, label, period, unit, shown}] referencable CP-1 operands and ratios (a fact with a citation or calculation only)",
+    "cp1d_facts": "[{ref, label, period, unit, shown}] referencable CP-1D facts (T1D.3.supported.value, T1D.6.supported.total_leverage, T1D.6.supported.net_leverage) when bound",
+    "inherited_limitations": "[str]"
+   }
+  }
+ }
+}

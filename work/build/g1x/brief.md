@@ -3,8 +3,10 @@
 Implementer: general-purpose, model opus (user routing, 2026-10-28). Reviewer: mx-adversary (ordering and replay); Opus fix rounds. mx-architect reviews only at the end of Layer 1 (G1-X, G2, H1 all committed) and applies its own fixes.
 
 ## Base
-- **Commit:** `<S1A_INTEGRATED_SHA>` on `claude/review-wip-worktrees-0145fe`. It is filled in when LEAD reports the S1a integration. Start only from it.
-- **Worktree:** your own, cut from that commit.
+- **Commit:** S1a was integrated at `235c208` (fix round 4) on `claude/review-wip-worktrees-0145fe`. The lane branch `claude/module-dev-status-review-0981b6` merges it at the commit named in your dispatch.
+- **Worktree:** your own isolated worktree, fast-forwarded to that lane commit (step 0 of the dispatch).
+- **Deferred S1a gaps** (`docs/reviews/s1a-owner-run.md`) belong to Stage 4. Don't fix them here, but don't make them worse.
+- **Stage 1 cores:** they live on separate branches and are not on your base. G1-X serves them later; don't import them.
 
 ## Inputs (read these and nothing else first)
 | File | Why |

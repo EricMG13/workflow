@@ -3040,3 +3040,8 @@ final phase) still applies.
 LEAD (2026-10-28): CP-3D and CP-1D owner leases frozen (`docs/CP3D-OWNER-LEASE.md`, `docs/CP1D-OWNER-LEASE.md`; oracles `cases/cp3d-owner`, `cases/cp1d-owner`). Each is built only after S1a and G1-X integrate; CP-3D also needs the H1 host scope (market + financial).
 
 LEAD (2026-10-28): L2 source-host speedup integrated (build-only) after fix round 2 (mutant kills) scoped APPROVE; host b0bda00c…5b56, tests c564b9b7…116e. Its pytest rows stay deferred to the final phase. H1 may now build on it once S1a integrates.
+
+Known gap (B1 fix-4 adversary Info, 2026-10-28; pre-existing, not B1-specific): core tickets are not authenticated; a head with a forged ticket value is accepted through begin recovery and equally with a forged stored record. Own task later.
+Defect (0d review input, 2026-10-28): the call band (`report_view._call`, ~:2090) reports "outside_pathway" for CP-6 when a `requested_modules` override drops it (same class as 0d (a)). Own task after 0d lands.
+
+LEAD (2026-10-28): CP-DR owner lease frozen (`docs/CPDR-OWNER-LEASE.md`, review-precise-3 FREEZE after revision 4 by mx-escalate). Its acceptance 7 render pin and its methodology pin are known re-pins (header).

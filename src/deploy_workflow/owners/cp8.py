@@ -6,9 +6,11 @@ CP-0 (and, when bound, CP-6) upstream. Python parses every quoted figure and dat
 each variance, breach, count and status in exact Decimal; the analyst supplies only verbatim
 quotes and judgments. The G1-X seams (store, RULES, submit, probe, reader) come in later stages.
 
-Where neither the lease nor the oracle pins a wording (a partial outcome, an unchanged
-direction, a process judged unsound, ...), composition fails closed with ``ValueError`` instead
-of writing one; each such point is listed for LEAD.
+Wording beyond the lease and the oracle comes from LEAD's round 5 rulings
+(``docs/rulings/2026-10-28-stage1.md``, "CP-8", 8-1 to 8-20). Where nothing pins one (an evidence
+cell with no cited quote), composition fails closed with ``ValueError``; each such point is
+listed for LEAD. A ``ValueError`` starting "invariant:" marks a state no validated submission
+reaches (8-8 and 8-12 among them).
 """
 
 import re
@@ -125,11 +127,19 @@ LIM_RECORD = (
     "The Prior Case record is a supplied file of unknown authority; its authenticity is its hash "
     "only."
 )
-LIM_UNRECORDED = (
-    "Portfolio posture, position size, expected spread or return, rating path and holding period "
-    "are not recorded in the Prior Case record"
+LIM_CLASSIFIED = (  # 8-9: a Prior Case record CP-0 classifies other than unknown
+    "The Prior Case record is a supplied file classified {} by CP-0; its authenticity is its hash "
+    "only."
+)
+UNRECORDED = (  # 8-6: the pinned limitation's fragments, in its order
+    "Portfolio posture",
+    "position size",
+    "expected spread or return",
+    "rating path",
+    "holding period",
 )
 LIM_EXIT = "The exit trigger records no threshold, so exit discipline cannot be measured"
+LIM_NO_EXIT = "No exit trigger is recorded, so exit discipline cannot be measured"  # 8-17
 LIM_NO_OUTCOME = (
     "No post-decision outcome source was supplied, so no realized outcome, variance or "
     "attribution is shown"
@@ -140,10 +150,35 @@ LIM_ONE_DECISION = (
     "comparable decisions are needed)"
 )
 LIM_NO_CP6 = "No current CP-6 decision is in this run, so the decision itself is not compared"
+LIM_CP6_INSUFFICIENT = (  # 8-20
+    "CP-6 states Insufficient Information, so the decision itself is not compared"
+)
+LIM_NOT_COMPARED = (  # 8-1
+    "Measures not compared: {}; their variance and attribution are not shown."
+)
 
 
 def _unpinned(point: str) -> str:
     return f"{point}: no pinned wording in lease rev 4 or the oracle; fails closed for LEAD"
+
+
+def _name(metric: str) -> str:
+    """``<name>`` of the round 5 rulings: the T7.4 row label with its first letter lower-cased
+    (a bid or offer names the mid's row, the measure it feeds)."""
+    label = METRIC_NAME["loan_mid" if metric in QUOTATION else metric]
+    return label[0].lower() + label[1:]
+
+
+def _listed(names: Sequence[str]) -> str:
+    """Names joined with ", " and a final " and "."""
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def _authority(authority: Mapping[str, str], source_id: str) -> str:
+    found = authority.get(source_id)
+    if found is None:  # 8-12: CP-0 writes a T3 authority for every source it assesses
+        raise ValueError(f"invariant: CP-0 T3 states no authority for pack source {source_id}")
+    return found
 
 
 # --- submission schema (reference and judgment only) ---------------------------------------------
@@ -368,11 +403,24 @@ def _parts(metric: str) -> tuple[str, ...]:
     return QUOTATION if metric == "loan_mid" else (metric,)
 
 
-def _compared(keys: Iterable[tuple[str, str]]) -> tuple[str, ...]:
-    """Measures with an expected and a realized observation (the mid needs bid and offer)."""
+def _split(as_of: Mapping[str, date]) -> tuple[date, date] | None:
+    """8-7: a side's (bid, offer) dates when they differ; that side's mid is then not calculable."""
+    bid, offer = as_of.get("loan_bid"), as_of.get("loan_offer")
+    return None if bid is None or offer is None or bid == offer else (bid, offer)
+
+
+def _compared(
+    keys: Iterable[tuple[str, str]], as_of: Mapping[str, Mapping[str, date]]
+) -> tuple[str, ...]:
+    """Measures with an expected and a realized observation (the mid needs bid and offer, each
+    side quoted on one date)."""
     have = set(keys)
+    split = any(_split(as_of[side]) for side in SIDES)
     return tuple(
-        m for m in METRICS if all((side, part) in have for side in SIDES for part in _parts(m))
+        m
+        for m in METRICS
+        if all((side, part) in have for side in SIDES for part in _parts(m))
+        and not (m == "loan_mid" and split)
     )
 
 
@@ -416,6 +464,7 @@ class _Checker:
         self.sizes: dict[str, RecordedSize | None] = {}  # None: a size reported invalid
         self.submitted: set[tuple[str, str]] = set()
         self.values: dict[tuple[str, str], Decimal] = {}
+        self.as_of: dict[str, dict[str, date]] = {side: {} for side in SIDES}  # valid entries
 
     def run(self) -> tuple[str, ...]:
         self._decision()
@@ -423,7 +472,7 @@ class _Checker:
         self._sizes()
         self._observations()
         self._outcome()
-        compared = _compared(self.submitted)
+        compared = _compared(self.submitted, self.as_of)
         self._confidence(compared)
         self._attributions(compared)
         self._lessons(compared)
@@ -476,40 +525,34 @@ class _Checker:
         if absence.quote is not None:
             self.found += self._cite(f"{path}.absence.quote", absence.quote, DECISION_SOURCE)
 
-    def _authority_of(self, source_id: str) -> str:
-        authority = self.authority.get(source_id)
-        if authority is None:
-            raise ValueError(f"CP-0 T3 states no authority for pack source {source_id}")
-        return authority
-
     # decision record and thesis
 
     def _decision(self) -> None:
         for name, item in self.sub.decision.fields():
             path = f"decision.{name}"
-            if (item.text is None) == (item.absence is None):
-                self.found.append(f"{path}: exactly one of text and absence is required")
-            elif item.absence is not None:
+            if item.absence is not None and item.text is None:
                 if name not in DECISION_OPTIONAL:
                     self.found.append(f"{path}: a required decision field cannot be absent")
-                elif item.quote is not None:
-                    raise ValueError(_unpinned(f"{path}: a quote beside an absence"))
+                elif item.quote is not None:  # 8-10, the r29 frame
+                    self.found.append(f"{path}: exactly one of quote and absence is required")
                 else:
                     self._absence(path, item.absence)
+            elif item.text is not None and item.absence is None:
+                if item.quote is None:  # 8-10, the r32 frame
+                    self.found.append(f"{path}: text and quote are given together")
+                else:
+                    self._decision_text(name, path, item.text, item.quote)
             else:
-                self._decision_text(name, path, item)
+                self.found.append(f"{path}: exactly one of text and absence is required")
 
-    def _decision_text(self, name: str, path: str, item: DecisionField) -> None:
-        text = item.text
-        if item.quote is None or text is None:
-            raise ValueError(_unpinned(f"{path}: a text without its quote"))
-        found = self._cite(f"{path}.quote", item.quote, DECISION_SOURCE)
+    def _decision_text(self, name: str, path: str, text: str, quote: QuoteRef) -> None:
+        found = self._cite(f"{path}.quote", quote, DECISION_SOURCE)
         vocabulary = {"action_bias": ACTION_BIASES, "confidence": CONFIDENCES}.get(name)
         if found:
             self.found += found
         elif vocabulary is not None and text not in vocabulary:
             self.found.append(f"{path}: {text} is not one of {', '.join(vocabulary)}")
-        elif text not in item.quote.quote:
+        elif text not in quote.quote:
             self.found.append(f"{path}: text {text} does not occur in the quote")
         elif name == "decision_date":
             self.decision_date = parse_date(text)
@@ -585,6 +628,7 @@ class _Checker:
                     self.found += found
                 else:
                     self.values[key] = Decimal(obs.value_text)
+                    self.as_of[obs.side][obs.metric] = _date(obs.as_of_text)
         for side in SIDES:
             bid, offer = (side, "loan_bid"), (side, "loan_offer")
             if (bid in self.submitted) != (offer in self.submitted):
@@ -630,7 +674,7 @@ class _Checker:
         if source_id == DECISION_SOURCE:
             return [f"{path}.quote: a realized observation cannot cite {DECISION_SOURCE}"]
         want = "third_party" if obs.metric in QUOTATION else "issuer"
-        have = self._authority_of(source_id)
+        have = _authority(self.authority, source_id)
         if have != want:
             article = "an" if want[0] in "aeiou" else "a"
             return [
@@ -669,7 +713,7 @@ class _Checker:
             statement.as_of_text,
         )
         as_of = parse_date(at) if at in quote else None
-        if not found and (have := self._authority_of(source_id)) != "issuer":
+        if not found and (have := _authority(self.authority, source_id)) != "issuer":
             found = [
                 f"default_restructuring: needs an issuer source, {source_id} is {have} (CP-0 T3)"
             ]
@@ -687,13 +731,12 @@ class _Checker:
     # judgments
 
     def _confidence(self, compared: tuple[str, ...]) -> None:
-        given: set[str] = set()
+        given = [entry.metric_id for entry in self.sub.confidence]
         for i, entry in enumerate(self.sub.confidence):
-            if entry.metric_id in given:
-                raise ValueError(_unpinned(f"confidence: {entry.metric_id} given more than once"))
-            given.add(entry.metric_id)
             if entry.metric_id not in compared:
                 self.found.append(f"confidence[{i}]: {entry.metric_id} is not a compared metric")
+            elif given.count(entry.metric_id) > 1:  # 8-11: once per occurrence (r42)
+                self.found.append(f"confidence: {entry.metric_id} appears more than once")
             elif entry.level not in LEVELS:
                 self.found.append(
                     f"confidence[{i}]: {entry.level} is not one of {', '.join(LEVELS)}"
@@ -822,6 +865,7 @@ class LedgerInputs:
     """Every operand ``derive`` reads, parsed by Python from the validated submission."""
 
     expected: Mapping[str, Decimal]  # observation metric -> quoted value (Prior Case record)
+    expected_as_of: Mapping[str, date]
     realized: Mapping[str, Decimal]  # observation metric -> quoted value (later sources)
     realized_as_of: Mapping[str, date]
     decision_date: date
@@ -832,15 +876,11 @@ class LedgerInputs:
 
 
 def ledger_inputs(*, submission: DecisionLedgerSubmission, pack: Sequence[Source]) -> LedgerInputs:
-    expected: dict[str, Decimal] = {}
-    realized: dict[str, Decimal] = {}
-    realized_as_of: dict[str, date] = {}
+    values: dict[str, dict[str, Decimal]] = {side: {} for side in SIDES}
+    as_of: dict[str, dict[str, date]] = {side: {} for side in SIDES}
     for obs in submission.observations:
-        if obs.side == "realized":
-            realized[obs.metric] = Decimal(obs.value_text)
-            realized_as_of[obs.metric] = _date(obs.as_of_text)
-        else:
-            expected[obs.metric] = Decimal(obs.value_text)
+        values[obs.side][obs.metric] = Decimal(obs.value_text)
+        as_of[obs.side][obs.metric] = _date(obs.as_of_text)
     overall = [a.label for a in submission.attributions if a.metric_id == OVERALL]
     if len(overall) != 1:
         raise ValueError("A validated submission has exactly one overall attribution")
@@ -848,9 +888,10 @@ def ledger_inputs(*, submission: DecisionLedgerSubmission, pack: Sequence[Source
     if decision_text is None:
         raise ValueError("A validated submission states its decision date")
     return LedgerInputs(
-        expected=expected,
-        realized=realized,
-        realized_as_of=realized_as_of,
+        expected=values["expected"],
+        expected_as_of=as_of["expected"],
+        realized=values["realized"],
+        realized_as_of=as_of["realized"],
         decision_date=_date(decision_text),
         downside_sizes={
             z.metric_id: RecordedSize(comparator=z.comparator, level=Decimal(z.level_text))
@@ -888,12 +929,15 @@ class Derived:
     decisions_required: int
 
 
-def _level(metric: str, values: Mapping[str, Decimal]) -> Decimal | None:
-    """A measure's value; the quotation mid is (bid + offer) / 2 as a fraction of par."""
+def _level(metric: str, values: Mapping[str, Decimal], as_of: Mapping[str, date]) -> Decimal | None:
+    """A measure's value; the quotation mid is (bid + offer) / 2 as a fraction of par, and not
+    calculable from a bid and an offer quoted on different dates (8-7)."""
     if metric != "loan_mid":
         return values.get(metric)
     bid, offer = values.get("loan_bid"), values.get("loan_offer")
-    return None if bid is None or offer is None else (bid + offer) / 2 / 100
+    if bid is None or offer is None or _split(as_of):
+        return None
+    return (bid + offer) / 2 / 100
 
 
 def _direction(variance: Decimal) -> Direction:
@@ -901,7 +945,8 @@ def _direction(variance: Decimal) -> Direction:
 
 
 def _measure(metric: str, inputs: LedgerInputs) -> MeasureDiff:
-    expected, realized = _level(metric, inputs.expected), _level(metric, inputs.realized)
+    expected = _level(metric, inputs.expected, inputs.expected_as_of)
+    realized = _level(metric, inputs.realized, inputs.realized_as_of)
     variance = None if expected is None or realized is None else realized - expected
     size = inputs.downside_sizes.get(metric) if metric in SIZE_METRICS else None
     return MeasureDiff(
@@ -1067,7 +1112,12 @@ _LINES: Mapping[str, tuple[str, str]] = {  # claim id -> what-changed row (id, l
 }
 _PROCESS_SAID: Mapping[str, str] = {
     "Y": "the process is judged sound",
+    "N": "the process is judged unsound",  # 8-4
     NOT_ASSESSED: "process quality is not assessed",
+}
+_NOT_COMPARED: Mapping[str, tuple[str, str]] = {  # 8-1: the lacking side -> (item, follow-up)
+    "realized": ("Realized {}", "Supply a dated post-decision source that states {}"),
+    "expected": ("Expected {}", "Cite the expected {} from the Prior Case record"),
 }
 _EXPECTATIONS = (  # T7.8 rows of the unrecorded expectations: (field, item, impact)
     (
@@ -1255,11 +1305,17 @@ class _Composer:
             raise ValueError(_unpinned("an evidence cell with no cited quote"))
         return "; ".join(dict.fromkeys(self._label(ref) for ref in refs))
 
-    def _not_observed(self) -> str:
-        """The gap reason of a realized entry that is absent: only outcome_absence states one."""
-        if self.absent is None:
-            raise ValueError(_unpinned("a realized entry missing without outcome_absence"))
-        return self.absent.reason
+    def _not_observed(self, metric: str | None = None) -> str:
+        """The gap reason of an absent realized entry: outcome_absence's, else 8-1's for a
+        measure. The default and window rows exist whenever a realized observation does."""
+        if self.absent is not None:
+            return self.absent.reason
+        if metric is None:
+            raise ValueError("invariant: a realized outcome has its default and window rows")
+        return f"Not stated: no realized {_name(metric)} is recorded from a post-decision source"
+
+    def _dates(self, side: str) -> Mapping[str, date]:
+        return self.inputs.expected_as_of if side == "expected" else self.inputs.realized_as_of
 
     def _refs(self, side: str, metric: str) -> list[QuoteRef]:
         return [
@@ -1267,9 +1323,9 @@ class _Composer:
         ]
 
     def _as_of(self, side: str, metric: str) -> date:
-        dates = {_date(self.observed[(side, p)].as_of_text) for p in _parts(metric)}
-        if len(dates) != 1:
-            raise ValueError(_unpinned(f"a {side} quotation whose bid and offer dates differ"))
+        dates = {self._dates(side)[p] for p in _parts(metric)}
+        if len(dates) != 1:  # derive gives no mid from a split quotation (8-7)
+            raise ValueError(f"invariant: a known {side} {metric} has one as-of date")
         return dates.pop()
 
     def compose(self) -> LedgerReport:
@@ -1378,7 +1434,7 @@ class _Composer:
             unit, places = OBS_UNIT[metric]
             obs = self.observed.get(("realized", metric))
             if obs is None:
-                self._absent_entry(self._not_observed(), unit)
+                self._absent_entry(self._not_observed(metric), unit)
                 continue
             as_of = _date(obs.as_of_text)
             quoted = Decimal(obs.value_text)
@@ -1437,10 +1493,21 @@ class _Composer:
     def _value_cell(self, side: str, metric: str, value: Decimal | None) -> None:
         unit, places = ("decimal_fraction", 3) if metric == "loan_mid" else ("MULTIPLE", 2)
         refs = self._refs(side, metric)
+        split = _split(self._dates(side)) if metric == "loan_mid" else None
         if value is None:
-            if side == "expected":
-                raise ValueError(_unpinned(f"no expected {metric} in the Prior Case record"))
-            self.cells.gap(side, self._not_observed(), unit=unit)
+            if split is not None:  # 8-7
+                reason = (
+                    f"Not calculable: the {side} bid and offer are quoted on different dates "
+                    f"({split[0].isoformat()} and {split[1].isoformat()})"
+                )
+            elif side == "expected":  # 8-2
+                reason = (
+                    f"Not stated: no expected {_name(metric)} is recorded from the Prior Case "
+                    "record"
+                )
+            else:
+                reason = self._not_observed(metric)
+            self.cells.gap(side, reason, unit=unit)
             return
         as_of = self._as_of(side, metric).isoformat()
         if metric == "loan_mid":
@@ -1537,8 +1604,15 @@ class _Composer:
             return
         breach = self.d.measures[metric].downside_breach
         size = next((z for z in self.sub.thesis.downside_sizes if z.metric_id == metric), None)
-        if breach is None or size is None:
-            raise ValueError(_unpinned(f"a compared {metric} with no recorded downside size"))
+        if size is None:  # 8-5: missing, not not_applicable: a size could be recorded
+            cells.gap(
+                "breach",
+                "Not calculable: the Prior Case record has no recorded downside size for "
+                + _name(metric),
+            )
+            return
+        if breach is None:
+            raise ValueError(f"invariant: a compared {metric} with a size has a breach decision")
         cells.text(
             "breach",
             "Breached" if breach else "Not breached",
@@ -1580,8 +1654,8 @@ class _Composer:
 
     def _calibration(self) -> None:
         recorded, required = self.d.decisions_recorded, self.d.decisions_required
-        if recorded != 1 or required != DECISIONS_REQUIRED:
-            raise ValueError(_unpinned(f"a calibration gate over {recorded} recorded decisions"))
+        if recorded != 1 or required != DECISIONS_REQUIRED:  # 8-8: unique pack ids; 0 is BLOCKED
+            raise ValueError(f"invariant: the calibration gate reads one record, not {recorded}")
         cells = self.cells
         cells.row("T7.6", "gate", "Calibration gate")
         cells.text(
@@ -1717,6 +1791,32 @@ class _Composer:
         ):
             cells.text(field, text)
 
+    def _not_compared(self, metric: str) -> None:
+        """8-1: a row per measure that lacks a value. Under outcome_absence the outcome row
+        covers the realized side; a split quotation (8-7) records both values, so no row."""
+        m = self.d.measures[metric]
+        lacking = [
+            side
+            for side, value in (("expected", m.expected), ("realized", m.realized))
+            if value is None
+            and not (side == "realized" and self.absent is not None)
+            and not (metric == "loan_mid" and _split(self._dates(side)))
+        ]
+        if not lacking:
+            return
+        if len(lacking) != 1:  # unreachable while the T7.4 evidence cell fails closed first
+            raise ValueError(_unpinned(f"a follow-up for {metric} with neither value"))
+        side, name = lacking[0], _name(metric)
+        item, follow_up = _NOT_COMPARED[side]
+        self._gap_row(
+            f"not_compared_{metric}",
+            f"{METRIC_NAME[metric]} not compared",
+            item.format(name),
+            f"No {side} value is recorded for {name}, so its variance cannot be measured",
+            "Variance and attribution are shown only for the compared measures",
+            follow_up.format(name),
+        )
+
     def _gaps(self) -> None:
         dec, th = self.sub.decision, self.sub.thesis
         for field, decision_item in (("posture", dec.posture), ("size", dec.size)):
@@ -1739,6 +1839,9 @@ class _Composer:
             a = unrecorded[field].absence
             if a is not None:
                 self._gap_row(field, f"{item} not recorded", item, a.reason, impact, a.follow_up)
+        for metric in METRICS:
+            if metric not in self.d.compared:
+                self._not_compared(metric)
         if self.absent is not None:
             self._gap_row(
                 "outcome",
@@ -1748,16 +1851,22 @@ class _Composer:
                 "Outcome log, variances and attribution are absent",
                 self.absent.follow_up,
             )
-        elif self.d.compared != METRICS:
-            raise ValueError(_unpinned("a measure not compared without outcome_absence"))
-        if self.up.cp6 is None:
+        if self.up.cp6 is None or INSUFFICIENT in self.up.cp6:  # 8-20: CP-6 Insufficient
+            why, follow_up = (
+                ("CP-6 is not in this run", "Select CP-6 in the run")
+                if self.up.cp6 is None
+                else (
+                    "CP-6 states Insufficient Information",
+                    "Complete the CP-6 committee decision",
+                )
+            )
             self._gap_row(
                 "current_decision",
                 "No current decision to compare",
                 "Current committee decision",
-                "CP-6 is not in this run",
+                why,
                 "The decision line of the what-changed block is missing",
-                "Select CP-6 in the run",
+                follow_up,
             )
         self._gap_row(
             "calibration_gate",
@@ -1793,10 +1902,11 @@ class _Composer:
             direction = self.d.measures[metric].direction
             if metric not in self.d.compared or direction is None:
                 continue
-            if direction == "Unchanged":
-                raise ValueError(_unpinned(f"a variance claim for an unchanged {metric}"))
             was = self._figure(facts, f"T7.4.{metric}.expected")
             now = self._figure(facts, f"T7.4.{metric}.realized")
+            if direction == "Unchanged":  # 8-3
+                texts.append((claim_id, f"{lead} {was} and is now {now}, unchanged."))
+                continue
             by = self._figure(facts, f"T7.4.{metric}.magnitude")
             texts.append((claim_id, f"{lead} {was} and is now {now}, {direction.lower()} by {by}."))
         if self.d.window_days is not None:
@@ -1819,8 +1929,8 @@ class _Composer:
             )
         overall = self.attributed[OVERALL]
         said = _PROCESS_SAID.get(overall.process_sound)
-        if said is None:
-            raise ValueError(_unpinned(f"an overall process judged {overall.process_sound}"))
+        if said is None:  # the validator admits only PROCESS
+            raise ValueError(f"invariant: an overall process judged {overall.process_sound}")
         texts.append(("CP-8-ATT-01", f"The attribution is {overall.label}; {said}."))
         recorded = self._figure(facts, "T7.6.gate.decisions_recorded")
         required = self._figure(facts, "T7.6.gate.decisions_required")
@@ -1884,30 +1994,37 @@ class _Composer:
     # own limitations
 
     def _limitations(self) -> tuple[str, ...]:
-        if self.up.authority.get(DECISION_SOURCE) != "unknown":
-            raise ValueError(_unpinned("a Prior Case record whose CP-0 authority is not unknown"))
+        authority = _authority(self.up.authority, DECISION_SOURCE)
+        out = [LIM_RECORD if authority == "unknown" else LIM_CLASSIFIED.format(authority)]  # 8-9
         dec, th = self.sub.decision, self.sub.thesis
-        unrecorded = [
-            item.absence is not None
-            for item in (
-                dec.posture,
-                dec.size,
-                th.expected_spread_return,
-                th.expected_rating_path,
-                th.expected_hold,
+        absences = (
+            dec.posture.absence,
+            dec.size.absence,
+            th.expected_spread_return.absence,
+            th.expected_rating_path.absence,
+            th.expected_hold.absence,
+        )
+        absent = [text for text, a in zip(UNRECORDED, absences, strict=True) if a is not None]
+        if absent:  # 8-6
+            listed = _listed(absent)
+            verb = "is" if len(absent) == 1 else "are"
+            out.append(
+                f"{listed[0].upper()}{listed[1:]} {verb} not recorded in the Prior Case record"
             )
-        ]
-        out = [LIM_RECORD]
-        if all(unrecorded):
-            out.append(LIM_UNRECORDED)
-        elif any(unrecorded):
-            raise ValueError(_unpinned("some but not all of posture, size and expectations absent"))
-        if th.exit_trigger.quote is not None:
+        exit_trigger = th.exit_trigger.quote
+        if exit_trigger is None:  # 8-17
+            out.append(LIM_NO_EXIT)
+        elif not any(char.isdigit() for char in exit_trigger.quote):
             out.append(LIM_EXIT)
         out.append(LIM_NO_OUTCOME if self.absent is not None else LIM_INTERIM)
+        uncompared = [_name(m) for m in METRICS if m not in self.d.compared]
+        if self.absent is None and uncompared:  # 8-1
+            out.append(LIM_NOT_COMPARED.format(_listed(uncompared)))
         out.append(LIM_ONE_DECISION)
         if self.up.cp6 is None:
             out.append(LIM_NO_CP6)
+        elif INSUFFICIENT in self.up.cp6:  # 8-20
+            out.append(LIM_CP6_INSUFFICIENT)
         return tuple(out)
 
 

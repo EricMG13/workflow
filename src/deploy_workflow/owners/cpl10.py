@@ -6,9 +6,10 @@ Arithmetic is exact on Fractions, quantised once to Decimal (38 digits, half-eve
 operand is never 0.
 """
 
+import hashlib
 import json
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import (
@@ -26,14 +27,42 @@ from typing import Literal
 from pydantic import ValidationError
 
 from deploy_vii.business_context import Category, Confidence, Severity
-from deploy_vii.contracts import Citation, Contract, Fact, Text
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    Module,
+    ReportTable,
+    Run,
+    TableColumn,
+    TableRow,
+    Text,
+)
 from deploy_vii.display import UnitClass, format_value
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    inherited_limitations,
+    text_sha256,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.prose import bind
 from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
-from deploy_vii.report_view import fact_spelling
+from deploy_vii.report_view import fact_spelling, status_display
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-L10"
 STEP_ID = "change_screen"
@@ -55,6 +84,7 @@ DISPOSITION: dict[str, str] = {
     "Not assessed": "Evidence needed",
 }
 PROHIBITED = ("recommend", "recovery", "covenant")  # CP-1A's prohibited conclusions
+BAD_PAYLOAD = "(root): not a JSON object within the payload bounds"
 INSUFFICIENT = "Insufficient Information"
 OVERALL = "overall"  # the gap target that is not a topic
 _USD, _MILLION = "USD", Decimal(1000000)
@@ -277,6 +307,7 @@ class Upstream:
     cp1_status_word: str
     cp1_result_sha256: str
     cp1_facts: Mapping[str, Fact]  # '<column> · <metric>' -> CP-1 T4.10 fact
+    inherited_limitations: tuple[str, ...] = ()  # CP-0 then CP-1 head limitations (the view)
 
     def __post_init__(self) -> None:
         for topic in TOPICS:
@@ -301,6 +332,17 @@ class Upstream:
 
 
 # --- the screening rule -------------------------------------------------------------------------
+
+
+def _plain(value: Decimal) -> Decimal:
+    """The stored form of the exact change: zero is `0` (never `-0` or `0E+2`) and a whole number
+    has no positive exponent. The value is unchanged; only its text (hash, view, reader) is."""
+    if value == 0:
+        return Decimal(0)
+    exponent = value.as_tuple().exponent
+    if isinstance(exponent, int) and exponent > 0:
+        return value.quantize(Decimal(1), context=_EXACT)
+    return value
 
 
 def _q38(value: Fraction) -> Decimal:
@@ -335,7 +377,7 @@ def screen_topic(*, start: Decimal | None, close: Decimal | None) -> TopicScreen
         return TopicScreen("Not assessed", "Missing", None, "missing", None, None, False)
     a, b = Fraction(start), Fraction(close)
     change = b - a
-    exact = _EXACT.subtract(close, start)
+    exact = _plain(_EXACT.subtract(close, start))
     if a == 0:
         rating: Materiality = "Stable" if change == 0 else "Material"
         return TopicScreen(rating, "Complete", exact, "not_applicable", None, None, True)
@@ -932,9 +974,22 @@ def _compose(upstream: Upstream, sub: ChangeScreenSubmission) -> _Composed:
 def _parse(
     submission: str | bytes | Mapping[str, object],
 ) -> ChangeScreenSubmission | tuple[str, ...]:
-    raw = json.dumps(submission) if isinstance(submission, Mapping) else submission
+    """Model text is read only through the bounded parse (`json_object`, protocol section 6): a
+    payload that is not a storable JSON object within the nesting bound is a shape issue."""
+    if isinstance(submission, Mapping):
+        text: str | None = exact_json(dict(submission))
+    elif isinstance(submission, bytes):
+        try:
+            text = submission.decode()
+        except UnicodeDecodeError:
+            text = None
+    else:
+        text = submission
+    document = None if text is None else json_object(text)
+    if document is None:
+        return (BAD_PAYLOAD,)
     try:
-        return ChangeScreenSubmission.model_validate_json(raw)
+        return ChangeScreenSubmission.model_validate_json(exact_json(document))
     except ValidationError as error:
         return shape_issues(error)
 
@@ -1103,3 +1158,315 @@ def change_screen(
         claims=tuple(_claims(composed.rows, sub, composed.span, facts)),
         limitations=_limitations(composed.rows, sub),
     )
+
+
+# --- Stage 2: the G1-X plug-in parts (docs/G1X-OWNER-CORE-PROTOCOL.md section 2) ----------------
+
+QUALIFICATION = Qualification(implementation="implemented")
+CP0, CP1 = "CP-0", "CP-1"
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+_SYNTHETIC = "Synthetic case; not real issuer qualification"  # execution.settle's own text
+_VIEW_GAP = "G0"  # a valid gap id the view spells with, shown as the unbound `G#`
+SCREEN_RULES = (
+    "Python rates each of the seven topics for the change between the two quarters you choose. "
+    "A topic is Material when the absolute change is at least one tenth of the absolute starting "
+    "value, Watch when it is at least one twentieth, otherwise Stable; the rating uses the exact "
+    "values, not the rounded percentage. A zero starting value with a change is Material. A "
+    "topic with a missing value at either end is Not assessed. Ranks run Material, Watch, Not "
+    "assessed, Stable, larger relative change first. Write exactly one assessment for each topic "
+    "rated Material or Watch in `pair_screens` for your pair, none for any other. Confidence is "
+    "Medium or Low, never High. Write no figure, no reference and no recommendation, recovery or "
+    "covenant conclusion."
+)
+
+
+class ScreenReport(Contract):
+    """What the validated step retains: the composed module body, bound to the run and pack."""
+
+    schema_version: Literal["change-screen/1"] = "change-screen/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[Text, ...]
+
+
+def _bound(store: Execution, attempt: Attempt, module_id: str) -> tuple[Input, Module]:
+    item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+    if item is None:
+        raise ValueError(f"The CP-L10 attempt binds no {module_id} input")
+    return item, store.result(item.sha256)
+
+
+def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
+    """The CP-0 and CP-1 heads `attempt` binds, read from the store: the run identity, each
+    head's status word and result hash, the 28 CP-1 T4.10 operands (zero or several matches
+    refuse) and the limitations the settled module will inherit."""
+    snapshot = store.read()
+    cp0, cp1 = (_bound(store, attempt, m) for m in (CP0, CP1))
+    own = (*OWN_LIMITATIONS, *((_SYNTHETIC,) if snapshot.run.case_kind == "synthetic" else ()))
+    return Upstream(
+        issuer_name=snapshot.run.issuer_name,
+        as_of=snapshot.run.as_of,
+        cp0_status_word=status_display(cp0[0].status)[1],
+        cp0_result_sha256=cp0[0].sha256,
+        cp1_status_word=status_display(cp1[0].status)[1],
+        cp1_result_sha256=cp1[0].sha256,
+        cp1_facts=bind_operands(cp1[1].facts),
+        inherited_limitations=inherited_limitations(snapshot, attempt, own, store.head_module),
+    )
+
+
+def _plain_text(amount: Decimal | None) -> str | None:
+    return None if amount is None else format(amount, "f")
+
+
+def context_block(*, upstream: Upstream) -> dict[str, object]:
+    """The exact `read_inputs` view (lease D2): upstream statuses, the four quarters, each topic's
+    values as Python spells them, Python's rating of every offered pair, the rules and the
+    inherited limitations. No quote, citation or record."""
+    topics = [
+        {
+            "topic_id": t.topic_id,
+            "label": t.label,
+            "cp1_metric": t.cp1_metric,
+            "unit": t.unit,
+            "values": [
+                {
+                    "period": v.period,
+                    "status": v.status,
+                    "amount_exact": _plain_text(v.amount),
+                    "shown": v.shown.replace(_VIEW_GAP, "G#"),
+                    "limitation": v.limitation,
+                }
+                for v in t.values
+            ],
+        }
+        for t in view_topics(upstream, gap_ref=_VIEW_GAP)
+    ]
+    return {
+        "upstream": [
+            {"module_id": CP0, "status": upstream.cp0_status_word},
+            {"module_id": CP1, "status": upstream.cp1_status_word},
+        ],
+        "periods": [{"period": q.period, "column": q.column} for q in QUARTERS],
+        "topics": topics,
+        "pair_screens": [
+            {
+                "from_period": p.from_period,
+                "to_period": p.to_period,
+                "topics": [{"topic_id": i, "materiality": m} for i, m in p.topics],
+            }
+            for p in pair_screens(upstream)
+        ],
+        "rules": SCREEN_RULES,
+        "inherited_limitations": list(upstream.inherited_limitations),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of CP-L10's one read, as compact JSON (protocol section 2). An upstream the
+    adapter cannot bind is an identity failure of the read, never a partial view."""
+    try:
+        upstream = cpl10_upstream(historical, attempt)
+    except ValueError as error:
+        raise WorkflowError("identity_mismatch") from error
+    body = json.dumps(
+        context_block(upstream=upstream), ensure_ascii=False, separators=(",", ":"), allow_nan=False
+    )
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+def _label(field: str) -> str:
+    return field.replace("_", " ").capitalize()
+
+
+def screen_report(
+    *, submission: str, upstream: Upstream, run: Run, pack_sha256: str
+) -> ScreenReport:
+    """The composed report of a valid submission (raises ValueError listing every issue)."""
+    result = change_screen(submission=submission, upstream=upstream)
+    parsed = _parse(submission)
+    assert not isinstance(parsed, tuple)  # change_screen validated it
+    return ScreenReport(
+        run=run,
+        pack_sha256=pack_sha256,
+        submission_sha256=parsed.content_hash(),
+        tables=tuple(
+            ReportTable(
+                table_id=t.table_id,
+                title=t.title,
+                columns=tuple(TableColumn(field=f, label=_label(f)) for f in t.columns),
+                rows=tuple(
+                    TableRow(row_id=r.row_id, label=r.label, fact_ids=r.fact_ids) for r in t.rows
+                ),
+            )
+            for t in result.tables
+        ),
+        facts=tuple(c.fact for c in result.cells),
+        claims=tuple(
+            Claim(claim_id=c.claim_id, text=c.text, citations=c.citations, limitation=c.limitation)
+            for c in result.claims
+        ),
+        limitations=result.limitations,
+    )
+
+
+def cpl10_module(report: ScreenReport, *, inputs: tuple[Input, ...], attempt: int) -> Module:
+    """The candidate: the report's body bound to `inputs` plus the submission digest (the tail)."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator the entry hands `Execution.submit_step` and the verifier replays. An
+    upstream the adapter cannot bind is returned as an issue, so the step settles invalid instead
+    of staying pending."""
+    payload = store.payload(attempt.steps[0].payload_sha256)
+    parsed = _parse(payload)
+    if isinstance(parsed, tuple):
+        return StepValidation(issues=parsed)
+    try:
+        upstream = cpl10_upstream(store, attempt)
+    except ValueError as error:
+        return StepValidation(issues=(f"CP-L10: {error}",))
+    issues = validate_screen(submission=payload, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = screen_report(
+        submission=payload, upstream=upstream, run=pack.run, pack_sha256=pack.content_hash()
+    )
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    return cpl10_module(
+        ScreenReport.model_validate_json(output), inputs=attempt.inputs, attempt=attempt.number
+    )
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one `change_screen` step and, when it is valid, settle CP-L10 with the Python
+    candidate (as `cp2_synthesis.submit_cp2_step`). An invalid step finishes the attempt."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-L10 has one step, {STEP_ID}")
+    if rules is not None:
+        raise ValueError("CP-L10 has no tool-loop rules")
+    normalised, resolved = normalise(ChangeScreenSubmission, payload)
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    if attempt is None or attempt.module_id != MODULE_ID or attempt.status != "pending":
+        raise ValueError("Ticket is absent, finished or belongs to another module")
+    if attempt.steps and attempt.steps[0].payload_sha256 != text_sha256(normalised):
+        raise ValueError("Ticket already retains a different response; resume or interrupt")
+    if not attempt.steps or attempt.steps[0].status == "pending":
+        attempt = store.submit_step(
+            ticket_id,
+            MODULE_ID,
+            STEP_IDS,
+            STEP_ID,
+            normalised,
+            lambda pack, current: _validate_step(store, pack, current),
+        )
+    if attempt.status != "finished":
+        outcome = _validate_step(store, store.pack(), attempt)
+        if outcome.issues or outcome.output is None or not outcome.retained_as(attempt.steps[0]):
+            raise ValueError("Retained CP-L10 output differs from trusted validation")
+        candidate = _candidate(outcome.output, attempt)
+        attempt = store.finish(
+            ticket_id,
+            candidate.model_dump_json(),
+            lambda supplied: () if supplied == candidate else ("CP-L10 candidate differs",),
+            qualification=QUALIFICATION,
+        )
+    return Submitted(attempt, normalised, resolved, (), (), None)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """The verifier's rebuild: raises `identity_mismatch` unless the settled attempt and head are
+    exactly what the validator and `cpl10_module` produce (protocol section 2)."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+# --- D3 (OPEN): the reader pins what a consumer reads; no consumer core exists ------------------
+
+
+@dataclass(frozen=True)
+class TopicRead:
+    topic_id: str
+    materiality: str
+    evidence: str
+    disposition: str
+    rank: int
+    change: Decimal | None
+
+
+@dataclass(frozen=True)
+class Cpl10Head:
+    status: str
+    result_sha256: str
+    topics: tuple[TopicRead, ...]
+    counts: Mapping[str, int]
+
+
+def cpl10_reader(store: Execution, head: Head) -> Cpl10Head:
+    """What a consumer reads of a settled CP-L10 head (lease D3, expected.consumption): status,
+    per topic id, materiality, evidence, disposition, rank and change, and the counts, all read
+    from the settled facts. Consumption is OPEN: no consumer core reads this yet."""
+    if head.module_id != MODULE_ID:
+        raise ValueError(f"{head.module_id} is not a CP-L10 head")
+    module = store.head_module(head)
+    facts = {f.fact_id: f for f in module.facts}
+
+    def fact(table: str, row: str, field: str) -> Fact:
+        found = facts.get(f"{table}.{row}.{field}")
+        if found is None:
+            raise ValueError(f"CP-L10 head lacks {table}.{row}.{field}")
+        return found
+
+    def text(row: str, field: str) -> str:
+        value = fact("TL10.2", row, field).text
+        if value is None:
+            raise ValueError(f"CP-L10 fact TL10.2.{row}.{field} has no text")
+        return value
+
+    def number(table: str, row: str, field: str) -> Decimal:
+        value = fact(table, row, field).amount
+        if value is None:
+            raise ValueError(f"CP-L10 fact {table}.{row}.{field} has no amount")
+        return value
+
+    topics = tuple(
+        TopicRead(
+            topic_id=t,
+            materiality=text(t, "materiality"),
+            evidence=text(t, "evidence_status"),
+            disposition=text(t, "disposition"),
+            rank=int(number("TL10.2", t, "priority_rank")),
+            change=fact("TL10.2", t, "change").amount,
+        )
+        for t in TOPIC_IDS
+    )
+    counts = {key: int(number("TL10.5", "total", key)) for key, _ in _COUNTS}
+    return Cpl10Head(module.status, head.result_sha256, topics, counts)

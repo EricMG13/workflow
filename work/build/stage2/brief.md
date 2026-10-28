@@ -7,7 +7,7 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
 |---|---|---|
 | Lane tip | named in your dispatch | Step 0 |
 | Lease | `docs/<CP>-OWNER-LEASE.md`: the D12, Public API, D3 and D7 sections, and the amended headers | what you build |
-| Protocol | `docs/G1X-OWNER-CORE-PROTOCOL.md` §2-§6 | the plug-in parts, §5 parse and the `listed_issues` rule |
+| Protocol | `docs/G1X-OWNER-CORE-PROTOCOL.md` §2-§6 | the plug-in parts, and the §6 `json_object` parse and `listed_issues` rules |
 | Oracle | `cases/<slug>-owner/{manifest,submissions,expected}.json`, `cases/PINS.json` | the expected values (never edit `cases/`) |
 | Core | `src/deploy_workflow/owners/<cp>.py` and its Stage 1 input type | what the adapter fills |
 | Patterns | `owners/cp1a.py:17-60`, `owners/cp2.py:13-34`, `src/deploy_vii/bindings/cp4.py:27-76`, `tests/s1a_runs.py:27-212`, `tests/test_owner_g1x.py:333-341` | the shape to copy |
@@ -29,7 +29,7 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
    - The `owner_workflow.py` registrations.
    - `src/deploy_vii/bindings/<cp>.py`.
    - The `shipped.py` and `_Spec` rows.
-   - The `<cp>_reader` that the lease names. The producer owns the reader and its Head type.
+   - The reader your lease's Public API names, where it puts it (rulings stage2 Q6). Consumer Stage 1 types stay; a consumer adapter calls the producer's reader and selects into its own type.
    - The run driver `tests/<cp>_runs.py`.
    - The D3 test.
 3. **Registrations are append-only.** Add your rows at the end of each dict or tuple, and never reorder existing rows. `SHIPPED_MAPS` takes the lease's stated position. If the lease names your module as the creator of a `report_view.py` composition, create it.
@@ -37,7 +37,9 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
 5. **Library boundary.**
    - `src/deploy_vii` changes only by the lease's D12 one-liners, `bindings/<cp>.py` and `methods/<cp>.md`.
    - Never edit `methodology.json`, `docs/TOOL-CONTRACT.md`, `cases/` or any engine. Report any edit they need as text for LEAD.
-   - Also report the `DELIVERY_SCOPES` row you intend (pathway, requested modules, synthetic) for G2 at Stage 3.
+   - Copy your lease's `DeliveryScope` row word for word into the report, or write "none in lease" (rulings stage2 Q1). Never write a new row.
+   - No `MODULE_FAMILY` row in Stage 2 (Q8).
+   - A composition creator (Q10) also appends it to the `_spec_of` loop (`report_view.py:1198`).
 6. **Fast tests** (each file under about 60 s), in a new `tests/test_connect_<cp>.py`:
    - `tests/test_method_<cp>.py` stays green;
    - the registration rows equal the lease, and `_check_steps(m, OWNER_SPECS[m])` passes;
@@ -47,6 +49,7 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
    - `view` matches the `view_tree_draft` keys and holds no quote strings;
    - `validate_bindings` over the expected tables returns `()`, and `_spec_of(block)` returns the row;
    - the reader exposes what the lease pins;
+   - the shared hostile-text set in `tests/defect_classes.py` over your `SCHEMAS`, once it lands (rulings stage2 Q5);
    - `tests/test_owner_g1x.py` and `tests/test_host_h1.py` stay green.
 7. **Deferred to Stage 5** (write these, do not run them): store runs `tests/test_owner_<cp>.py`, `tests/<cp>_runs.py` runs, the D3 run assertions, receipts, promotion, `test_owner_workflow.py`, `test_owner_s1a.py`, the source suites and the render runs. List the exact commands in your report for `work/build/deferred-runs.md`.
 
@@ -62,7 +65,7 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
 - The commit SHA and the files, with each lease line mapped to its symbol.
 - Each backlog row, marked done or blocked.
 - The test-first evidence, gate exit codes and mutant results.
-- The text for LEAD (`methodology.json`, TOOL-CONTRACT, D2 view row) and the intended `DELIVERY_SCOPES` row.
+- The text for LEAD (`methodology.json`, TOOL-CONTRACT, D2 view row) and the lease's `DeliveryScope` row copied word for word (or "none in lease").
 - The deferred commands.
 - `Not verified:`
 - The ledger line `agent=mx-feature fix-rounds=0 gates-first-pass=<y|n|n/a>`.

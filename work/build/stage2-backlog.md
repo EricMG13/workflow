@@ -10,12 +10,14 @@ Stage 1 is closed at `codex/checkpoint` e89b2a2. Only a High or Medium defect re
 
   Sources: rulings round 12, round 13 item 8, addendum 2.
 - **Blank support and citation quotes** (round 13 addendum 3). Every owner module that takes citations refuses a quote that `is_blank`, with `<path>: empty text`, at the support or citation step, before the page-occurrence check. CP-4C is done in round 13. Inventory the rest first; where the defect is present it is Medium (CP-4C review, `<S>/cp4c-r12-review/p_blank_support_quote.py`).
-- **Caller-quoting issue lines** (protocol §5, 0d-c audit `work/build/stage1/0dc/r13-report.md`). When a core gains `RULES` or `_PRECHECKS`, build those lines only through `listed_issues`/`clipped`. The audit lists the f-string sites in cp1c, cp2a, cp2g, cp2h, cp3c, cp1d and cpdr.
+- **Caller-quoting issue lines** (protocol §6, 0d-c audit `work/build/stage1/0dc/r13-report.md`). When a core gains `RULES` or `_PRECHECKS`, build those lines only through `listed_issues`/`clipped`. The audit lists the f-string sites in cp1c, cp2a, cp2g, cp2h, cp3c, cp1d and cpdr.
 - **Owner items:**
   - 30 product `assert`s;
   - jscpd not wired;
   - CP-2E `fx.` paths;
   - the cp2h test loads the cp2g expected without a hash check (Info).
+
+- **Hostile-text set over `SCHEMAS`** (rulings stage2 Q5): add the probe set (`q5_host675_raise_classes.py`: deep arrays/objects, 200k-digit int, NaN, lone surrogate, non-object, duplicate keys, empty text, bracket and `{a|b}` floods) to shared `tests/defect_classes.py`; each `test_connect_<cp>` runs it over its `SCHEMAS` and asserts only `ValueError` subclasses. Modules task, once.
 
 ## Per module
 | Module | Item | Source |

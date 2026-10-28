@@ -289,3 +289,4 @@
 - 2026-10-28 0d-c follow-ups done: f316a20 (M1 bounded _gate, M2 docstring, M-R1 test, blank.py re-export; §5: no core has RULES/_PRECHECKS yet, f-string caller-quoting sites listed for Stage 2). 211 method failures at 67df6a1 = CP-2E/CP-8 round 12 expected red + cp3c LEAD pin. agent=mx-feature fix-rounds=0 gates-first-pass=n. Review: mx-precise
 - 2026-10-28 CP-8 r12 fix1 done: f99db43 (LEAD addendum: exemption kept; index-0 guard (?<=.); reviewer rows refused). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped
 - 2026-10-28 CP-3C r13 review APPROVE (mx-precise), no findings; Info to LEAD: unsourced currency when cash_closing missing; status words in minimum-cash/seniority dependants; _check_value CP-1 prefix. Merged 6373602 into claude/round12
+- 2026-10-28 CP-2D r13 done: 7f2a9a2 (items 1, 3; delta tables + re-pin guard; 19/19 mutants). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-precise

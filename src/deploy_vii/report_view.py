@@ -1206,6 +1206,13 @@ _DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
         "forward-breakpoints": _Spec(
             "Forward break points", "CP-2G", "dense", ("CP-2G",), route_label="Full analysis"
         ),
+        # docs/CP4C-OWNER-LEASE.md D7: both ids already in the preset, specs added here.
+        "recovery-by-class": _Spec(
+            "Recovery by class", "CP-4C", "dense", ("CP-4C",), route_label="Full analysis"
+        ),
+        "value-allocation-claims": _Spec(
+            "Value allocation and claims", "CP-4C", "dense", ("CP-4C",), route_label="Full analysis"
+        ),
     }
 )
 # Heads and owner codes of the two FP 02 blocks CP-1D owns (docs/CP1D-OWNER-LEASE.md, D7).

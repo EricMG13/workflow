@@ -385,3 +385,4 @@
 - 20:47 User: "use opus for batch connection" -> batch builders are general-purpose model opus.
 - 21:15 CP-2D financial_render 22 passed (1h04m).
 - 21:35 Integration done ffa1c88 (9 merges; fast set 7913 passed; render 238 passed; pins 69; manifest 19/19). Merging into lane.
+- 21:43 Batch pass 2 done e3ff482 (CP-2D, CP-4, CP-L10, CP-1D merged; fast set 8302 passed; legal+connected 90; manifest 19/19). Opus builder 1: CP-1D fixes.

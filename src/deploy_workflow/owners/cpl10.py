@@ -275,12 +275,14 @@ class Upstream:
                 fact = self.cp1_facts.get(label)
                 if fact is None or fact.label != label:
                     raise ValueError(f"unbound CP-1 operand: {label}")
-                if fact.status == "known" and fact.amount is None:
+                if fact.status != "known":
+                    continue  # ruling (f): units and scales are checked on known operands only
+                if fact.amount is None:
                     raise ValueError(f"CP-1 operand without an amount: {label}")
                 if fact.unit != topic.unit:
                     raise ValueError(f"CP-1 operand unit {fact.unit} is not {topic.unit}: {label}")
                 scales.add(fact.scale)
-            if len(scales) != 1:
+            if len(scales) > 1:
                 raise ValueError(f"CP-1 operands of {topic.topic_id} differ in scale")
 
     def operand(self, topic: Topic, period: str) -> Fact:
@@ -525,10 +527,13 @@ class _Cells:
     def not_applicable(self, field: str, label: str, reason: str) -> None:
         self.add(field, label, status="not_applicable", limitation=reason)
 
-    def copied(self, field: str, label: str, cp1: Fact) -> None:
+    def copied(self, field: str, label: str, cp1: Fact, twin: Fact) -> None:
         """The CP-1 value with its value_class, status, limitation, citations and calculation_id
-        verbatim (lease :121); CP-1's formula is not copied (L10-c). Shown at 2 dp."""
+        verbatim (lease :121); CP-1's formula is not copied (L10-c). Shown at 2 dp. An unsettled
+        fact without a unit takes the unit (with its currency and scale) of the other end of the
+        pair (ruling (f))."""
         known_money = cp1.status == "known" and cp1.unit == "MILLIONS"
+        unit_of = twin if cp1.status != "known" and cp1.unit is None else cp1
         fact = Fact(
             fact_id=f"{self.table}.{self.row_id}.{field}",
             label=label,
@@ -537,9 +542,9 @@ class _Cells:
             field=field,
             amount=cp1.amount,
             status=cp1.status,
-            unit=cp1.unit,
-            currency=cp1.currency,
-            scale=cp1.scale,
+            unit=unit_of.unit,
+            currency=unit_of.currency,
+            scale=unit_of.scale,
             decimals=2 if known_money else None,
             period=cp1.period,
             citations=cp1.citations,
@@ -572,8 +577,8 @@ def _topic_row(r: TopicResult, pair_period: str, cp1: Mapping[str, Fact]) -> _Ce
     """TL10.2: the copied CP-1 cells, the exact change, its rating, rank and pointers."""
     t, s = r.topic, r.screen
     cells = _Cells("TL10.2", t.topic_id, cp1)
-    cells.copied("from_value", f"{t.label} · Starting value", r.start)
-    cells.copied("to_value", f"{t.label} · Closing value", r.close)
+    cells.copied("from_value", f"{t.label} · Starting value", r.start, r.close)
+    cells.copied("to_value", f"{t.label} · Closing value", r.close, r.start)
     derives = (r.start.label, r.close.label)
     pct_label = f"{t.label} · Change on starting level"
     if s.change is None:
@@ -926,8 +931,15 @@ def _comparison_issues(comparison: Comparison) -> list[str]:
     return issues
 
 
-def _high(path: str, confidence: str) -> list[str]:
-    return [f"{path}.confidence: High is not allowed in a screen"] if confidence == "High" else []
+def _confidence_issues(path: str, confidence: str, category: str) -> list[str]:
+    """High is refused for every confidence; then confidence is Insufficient Information iff the
+    category is (L2 order; ruling (e) applies the pairing to assessments as to the overall)."""
+    issues = [f"{path}.confidence: High is not allowed in a screen"] if confidence == "High" else []
+    if (confidence == INSUFFICIENT) != (category == INSUFFICIENT):
+        issues.append(
+            f"{path}.confidence: must be Insufficient Information exactly when the category is"
+        )
+    return issues
 
 
 def _assessment_issues(sub: ChangeScreenSubmission, rated: Mapping[str, Materiality]) -> list[str]:
@@ -945,7 +957,7 @@ def _assessment_issues(sub: ChangeScreenSubmission, rated: Mapping[str, Material
         elif a.topic_id in seen:
             issues.append(f"{path}.topic_id: repeated: {a.topic_id}")
         seen.add(a.topic_id)
-        issues += _high(path, a.confidence)
+        issues += _confidence_issues(path, a.confidence, a.category)
     issues += [
         f"assessments: missing assessment for {tid} ({rating})"
         for tid, rating in rated.items()
@@ -974,12 +986,8 @@ def _text_issues(sub: ChangeScreenSubmission, bound: Mapping[str, Fact], issuer:
 
 def _overall_issues(overall: Overall) -> list[str]:
     """Step (5), in the L2 order: High, pairing, limitation required, limitation forbidden."""
-    issues = _high("overall", overall.confidence)
+    issues = _confidence_issues("overall", overall.confidence, overall.category)
     insufficient = overall.category == INSUFFICIENT
-    if (overall.confidence == INSUFFICIENT) != insufficient:
-        issues.append(
-            "overall.confidence: must be Insufficient Information exactly when the category is"
-        )
     if insufficient and overall.limitation is None:
         issues.append(
             "overall.limitation: an Insufficient Information overall states its limitation"

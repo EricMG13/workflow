@@ -63,3 +63,10 @@ CP-3D, CP-8, CP-2E, CP-2H, CP-4C and CP-2D start after the riding-Lows batch (`s
 - the gates;
 - `Not verified:`;
 - the ledger line `agent=general-purpose(opus) fix-rounds=0 gates-first-pass=<y|n>`.
+
+## Dispatch notes (claude/round12 at 128c3ca, after the lane merge)
+- Expected red at 128c3ca: cp2d 44, cp2e 89, cp3d 124, cp8 121. CP-2H and CP-4C are not red, because their test files never ran the library cases.
+- **CP-2H and CP-4C.** First add a `BLANK_CASES` adapter test over every analyst text field, through `blank_failure` with the module's pinned frame. Watch it go red: the Cf cases for both, and also the whitespace cases on CP-4C's `plain` fields (R3 M2). Then fix.
+- **CP-8 and CP-2E.** Add labelled W cases in the module test, such as `bid - 1.25` and `bid -\n1.25` for CP-8, and `spread - 25` and `spread -\n25` for CP-2E, because the library has no labelled W cases (Part L review Low).
+- **CP-2E** also fixes the `bool()` asymmetry at cp2e.py:715 (round 12 Info). The `fx.` path item is an owner item; leave it.
+- **Riding Lows that touch these files:** none open, since the Lows batch is merged.

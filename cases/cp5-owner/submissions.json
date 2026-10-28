@@ -1,0 +1,593 @@
+{
+ "schema_version": "cp5-owner-submissions/1",
+ "note": "Literal analyst judgment only: reviews, contradictions and gaps. Python writes every finding, id and status. A {{FIG:name}} reference is a CP-2 fact_id (the CP-1 fact_id of a verbatim cp1_references copy), replaced at run time as in cases/snapshot/submissions.json. Support judgments are the oracle author's; they need independent semantic review (mechanical cleanliness is not support).",
+ "positive": {
+  "claim_reviews": [
+   {
+    "claim_ref": "cash_flow_quality",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the cash flow record behind the capital requirement point, and nothing in it goes beyond that record.",
+    "upstream_refs": [
+     "cash_flow_quality#c1"
+    ]
+   },
+   {
+    "claim_ref": "coverage",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the interest service record it describes, and its mechanism and implication stay inside that record.",
+    "upstream_refs": [
+     "coverage#c1"
+    ]
+   },
+   {
+    "claim_ref": "data_quality",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the source description that records the missing assurance, which is what the claim says.",
+    "upstream_refs": [
+     "data_quality#c1"
+    ]
+   },
+   {
+    "claim_ref": "definition_risks",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the earnings definition it describes, and the covenant caveat is stated as a caveat.",
+    "upstream_refs": [
+     "definition_risks#c1"
+    ]
+   },
+   {
+    "claim_ref": "key_gaps",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the entity record that limits the perimeter, and the claim restates that limit.",
+    "upstream_refs": [
+     "key_gaps#c1"
+    ]
+   },
+   {
+    "claim_ref": "leverage",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the debt record it describes as material, and the claim adds only a mechanism and an implication.",
+    "upstream_refs": [
+     "leverage#c1"
+    ]
+   },
+   {
+    "claim_ref": "liquidity",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the cash record it relies on, and the stated flexibility is no stronger than that record.",
+    "upstream_refs": [
+     "liquidity#c1"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r01",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states the distributor and manufacturer revenue sources and that the split is not disclosed, as the claim says.",
+    "upstream_refs": [
+     "credit_translation.r01#c1",
+     "credit_translation.r01.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r02",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states the pass-through lag as a management statement, and the claim keeps it as a statement.",
+    "upstream_refs": [
+     "credit_translation.r02#c1",
+     "credit_translation.r02.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r03",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states that no concentration disclosure is supplied, which is the claim.",
+    "upstream_refs": [
+     "credit_translation.r03#c1",
+     "credit_translation.r03.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r04",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states the ownership and the quarterly distributions, and the claim stops at what is stated.",
+    "upstream_refs": [
+     "credit_translation.r04#c1",
+     "credit_translation.r04.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r05",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited financial page states the unaudited title, the cited business page states that no security, guarantee or covenant detail is supplied, and the evidence cell with the concentration citation of the neighbouring row states the missing concentration disclosure, which together are the claim.",
+    "upstream_refs": [
+     "credit_translation.r05#c1",
+     "credit_translation.r05.evidence",
+     "credit_translation.r05#c2",
+     "credit_translation.r03#c1"
+    ]
+   },
+   {
+    "claim_ref": "T2.1.assessment",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The assessment cell and the copied reference figures state the leverage and cover reading, and its basis cells name the CP-1A rows that state the caveats the cell lists.",
+    "upstream_refs": [
+     "T2.1.assessment.assessment",
+     "{{FIG:total_leverage_reported}}",
+     "{{FIG:net_leverage_reported}}",
+     "{{FIG:interest_coverage_reported}}",
+     "T2.1.assessment.basis",
+     "T2.10.kf02.basis"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf01",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and the copied reference figures state the low leverage reading for the stated period.",
+    "upstream_refs": [
+     "T2.10.kf01.finding",
+     "{{FIG:total_leverage_reported}}",
+     "{{FIG:net_leverage_reported}}",
+     "{{FIG:interest_coverage_reported}}"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf02",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and its basis cell state the single term loan and the single maturity date.",
+    "upstream_refs": [
+     "T2.10.kf02.finding",
+     "T2.10.kf02.basis"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf03",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and its basis cell state the shareholder distributions and the undisclosed owners.",
+    "upstream_refs": [
+     "T2.10.kf03.finding",
+     "T2.10.kf03.basis"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf04",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and its basis cell state the missing concentration and covenant items, and the assessment limitation cell states the unaudited statements.",
+    "upstream_refs": [
+     "T2.10.kf04.finding",
+     "T2.10.kf04.basis",
+     "T2.1.assessment.limitation"
+    ]
+   },
+   {
+    "claim_ref": "T3.1.i01",
+    "producer_module": "CP-3",
+    "support": "supported",
+    "rationale": "The instrument cells and the cited market pages state the single dealer quotation and the indicative talk, and the claim keeps talk apart from a quotation.",
+    "upstream_refs": [
+     "T3.1.i01.fundamental_view",
+     "T3.1.i01.market_observation",
+     "T3.3.m01.quote",
+     "T3.1.i01#c1",
+     "T3.1.i01#c2"
+    ]
+   },
+   {
+    "claim_ref": "T3.4.preference",
+    "producer_module": "CP-3",
+    "support": "supported",
+    "rationale": "The preference cell, its basis cell and the cited market pages state the ordering of the single instrument and its provisional status.",
+    "upstream_refs": [
+     "T3.4.preference.rationale",
+     "T3.4.preference.basis",
+     "T3.4.preference#c1",
+     "T3.4.preference#c2"
+    ]
+   }
+  ],
+  "contradictions": [],
+  "gaps": [
+   {
+    "gap": "Legal documents and covenant terms are outside the evaluated set",
+    "why_it_matters": "The credit view and the relative value view both rest on the absence of covenant evidence, and this review cannot test any covenant statement.",
+    "affected_modules": [
+     "CP-2",
+     "CP-3"
+    ],
+    "severity": "Material",
+    "action": "Review the credit view again once the legal documents and covenant terms are supplied."
+   }
+  ]
+ },
+ "gap": {
+  "claim_reviews": [
+   {
+    "claim_ref": "cash_flow_quality",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the cash flow record behind the capital requirement point, and nothing in it goes beyond that record.",
+    "upstream_refs": [
+     "cash_flow_quality#c1"
+    ]
+   },
+   {
+    "claim_ref": "coverage",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the interest service record it describes, and its mechanism and implication stay inside that record.",
+    "upstream_refs": [
+     "coverage#c1"
+    ]
+   },
+   {
+    "claim_ref": "data_quality",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the source description that records the missing assurance, which is what the claim says.",
+    "upstream_refs": [
+     "data_quality#c1"
+    ]
+   },
+   {
+    "claim_ref": "definition_risks",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the earnings definition it describes, and the covenant caveat is stated as a caveat.",
+    "upstream_refs": [
+     "definition_risks#c1"
+    ]
+   },
+   {
+    "claim_ref": "key_gaps",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the entity record that limits the perimeter, and the claim restates that limit.",
+    "upstream_refs": [
+     "key_gaps#c1"
+    ]
+   },
+   {
+    "claim_ref": "leverage",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the debt record it describes as material, and the claim adds only a mechanism and an implication.",
+    "upstream_refs": [
+     "leverage#c1"
+    ]
+   },
+   {
+    "claim_ref": "liquidity",
+    "producer_module": "CP-1",
+    "support": "supported",
+    "rationale": "The claim's own citations carry the cash record it relies on, and the stated flexibility is no stronger than that record.",
+    "upstream_refs": [
+     "liquidity#c1"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r01",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states the distributor and manufacturer revenue sources and that the split is not disclosed, as the claim says.",
+    "upstream_refs": [
+     "credit_translation.r01#c1",
+     "credit_translation.r01.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r02",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states the pass-through lag as a management statement, and the claim keeps it as a statement.",
+    "upstream_refs": [
+     "credit_translation.r02#c1",
+     "credit_translation.r02.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r03",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states that no concentration disclosure is supplied, which is the claim.",
+    "upstream_refs": [
+     "credit_translation.r03#c1",
+     "credit_translation.r03.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r04",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited business page states the ownership and the quarterly distributions, and the claim stops at what is stated.",
+    "upstream_refs": [
+     "credit_translation.r04#c1",
+     "credit_translation.r04.evidence"
+    ]
+   },
+   {
+    "claim_ref": "credit_translation.r05",
+    "producer_module": "CP-1A",
+    "support": "supported",
+    "rationale": "The cited financial page states the unaudited title, the cited business page states that no security, guarantee or covenant detail is supplied, and the evidence cell with the concentration citation of the neighbouring row states the missing concentration disclosure, which together are the claim.",
+    "upstream_refs": [
+     "credit_translation.r05#c1",
+     "credit_translation.r05.evidence",
+     "credit_translation.r05#c2",
+     "credit_translation.r03#c1"
+    ]
+   },
+   {
+    "claim_ref": "T2.1.assessment",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The assessment cell and the copied reference figures state the leverage and cover reading, and its basis cells name the CP-1A rows that state the caveats the cell lists.",
+    "upstream_refs": [
+     "T2.1.assessment.assessment",
+     "{{FIG:total_leverage_reported}}",
+     "{{FIG:net_leverage_reported}}",
+     "{{FIG:interest_coverage_reported}}",
+     "T2.1.assessment.basis",
+     "T2.10.kf02.basis"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf01",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and the copied reference figures state the low leverage reading for the stated period.",
+    "upstream_refs": [
+     "T2.10.kf01.finding",
+     "{{FIG:total_leverage_reported}}",
+     "{{FIG:net_leverage_reported}}",
+     "{{FIG:interest_coverage_reported}}"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf02",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and its basis cell state the single term loan and the single maturity date.",
+    "upstream_refs": [
+     "T2.10.kf02.finding",
+     "T2.10.kf02.basis"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf03",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and its basis cell state the shareholder distributions and the undisclosed owners.",
+    "upstream_refs": [
+     "T2.10.kf03.finding",
+     "T2.10.kf03.basis"
+    ]
+   },
+   {
+    "claim_ref": "T2.10.kf04",
+    "producer_module": "CP-2",
+    "support": "supported",
+    "rationale": "The key finding cell and its basis cell state the missing concentration and covenant items, and the assessment limitation cell states the unaudited statements.",
+    "upstream_refs": [
+     "T2.10.kf04.finding",
+     "T2.10.kf04.basis",
+     "T2.1.assessment.limitation"
+    ]
+   },
+   {
+    "claim_ref": "T3.4.preference",
+    "producer_module": "CP-3",
+    "support": "supported",
+    "rationale": "The market evidence cells record that no market source exists, which is exactly what the claim says.",
+    "upstream_refs": [
+     "T3.4.preference.rationale",
+     "T3.3.m01.kind",
+     "T3.3.m01.limitation"
+    ]
+   }
+  ],
+  "contradictions": [],
+  "gaps": [
+   {
+    "gap": "No market quotation source reached the evaluated set",
+    "why_it_matters": "The relative value claim rests on the absence of market evidence, so this review can confirm only that the absence is recorded.",
+    "affected_modules": [
+     "CP-3"
+    ],
+    "severity": "Material",
+    "action": "Review the relative value claim again once a dated market quotation source is supplied."
+   },
+   {
+    "gap": "Legal documents and covenant terms are outside the evaluated set",
+    "why_it_matters": "The credit view and the relative value view both rest on the absence of covenant evidence, and this review cannot test any covenant statement.",
+    "affected_modules": [
+     "CP-2",
+     "CP-3"
+    ],
+    "severity": "Material",
+    "action": "Review the credit view again once the legal documents and covenant terms are supplied."
+   }
+  ]
+ },
+ "refusal_mutations": [
+  {
+   "id": "cp5-unreviewed-claim",
+   "op": {
+    "remove_review": [
+     "CP-2",
+     "T2.10.kf02"
+    ]
+   }
+  },
+  {
+   "id": "cp5-doubly-reviewed",
+   "op": {
+    "duplicate_review": [
+     "CP-2",
+     "T2.10.kf01"
+    ]
+   }
+  },
+  {
+   "id": "cp5-unresolved-claim-ref",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      14,
+      "claim_ref"
+     ],
+     "T2.10.kf09"
+    ]
+   }
+  },
+  {
+   "id": "cp5-producer-not-evaluated",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      14,
+      "producer_module"
+     ],
+     "CP-4"
+    ]
+   }
+  },
+  {
+   "id": "cp5-unresolved-upstream-ref",
+   "op": {
+    "append": [
+     [
+      "claim_reviews",
+      14,
+      "upstream_refs"
+     ],
+     "T2.10.kf02.nope"
+    ]
+   }
+  },
+  {
+   "id": "cp5-supported-names-no-ref",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      14,
+      "upstream_refs"
+     ],
+     []
+    ]
+   }
+  },
+  {
+   "id": "cp5-figure-in-rationale",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      13,
+      "rationale"
+     ],
+     "The reading of 5 in the cell is the claim."
+    ]
+   }
+  },
+  {
+   "id": "cp5-claim-id-in-rationale",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      13,
+      "rationale"
+     ],
+     "The cell T2.10.kf01 states the claim."
+    ]
+   }
+  },
+  {
+   "id": "cp5-empty-rationale",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      13,
+      "rationale"
+     ],
+     " "
+    ]
+   }
+  },
+  {
+   "id": "cp5-contradiction-one-module",
+   "op": {
+    "set": [
+     [
+      "contradictions"
+     ],
+     [
+      {
+       "claim_refs": [
+        {
+         "producer_module": "CP-2",
+         "claim_ref": "T2.10.kf01"
+        },
+        {
+         "producer_module": "CP-2",
+         "claim_ref": "T2.10.kf02"
+        }
+       ],
+       "nature": "Scope differs between the two claims",
+       "rationale": "The two claims read the same cell differently.",
+       "severity": "Minor"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "id": "cp5-gap-unbound-module",
+   "op": {
+    "set": [
+     [
+      "gaps",
+      0,
+      "affected_modules"
+     ],
+     [
+      "CP-4"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "cp5-shape-unknown-support",
+   "op": {
+    "set": [
+     [
+      "claim_reviews",
+      13,
+      "support"
+     ],
+     "sound"
+    ]
+   }
+  }
+ ]
+}

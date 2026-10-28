@@ -651,7 +651,6 @@
             "CP-1",
             "CP-1A",
             "CP-2",
-            "CP-MODEL",
             "CP-3",
             "CP-5",
             "CP-6"
@@ -2189,39 +2188,6 @@
                         "limitation": null
                       }
                     ]
-                  },
-                  {
-                    "row_id": "r05",
-                    "label": "CP-MODEL",
-                    "facts": [
-                      {
-                        "fact_id": "downstream_readiness.r05.status",
-                        "column": "Status",
-                        "text": "READY_WITH_LIMITATIONS",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": null,
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "downstream_readiness.r05.gap",
-                        "column": "Gap",
-                        "text": "Owners behind the holding company are not disclosed",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "downstream_readiness.r05.required_action",
-                        "column": "Required action",
-                        "text": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      }
-                    ]
                   }
                 ]
               }
@@ -2502,83 +2468,17 @@
                         "limitation": null
                       }
                     ]
-                  },
-                  {
-                    "row_id": "r05",
-                    "label": "CP-MODEL",
-                    "facts": [
-                      {
-                        "fact_id": "T2D.10.r05.handoff_tag",
-                        "column": "Handoff Tag",
-                        "text": "CP-2C-HANDOFF-CP-MODEL",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": null,
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.handoff_item",
-                        "column": "Handoff Item",
-                        "text": "Issuer name, country, sector, shareholders, transaction summary and business description",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.why_it_matters",
-                        "column": "Why It Matters",
-                        "text": "The Model snapshot shows these fields with their source",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.required_consumer_action",
-                        "column": "Required Consumer Action",
-                        "text": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.source_flag_link",
-                        "column": "Source / Flag Link",
-                        "text": "Sources: business page:1",
-                        "status": "known",
-                        "cites": [
-                          [
-                            "business",
-                            "page:1"
-                          ]
-                        ],
-                        "value_class": null,
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.limitation",
-                        "column": "Limitation",
-                        "text": "Owners behind the holding company are not disclosed",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      }
-                    ]
                   }
                 ]
               }
             }
           },
-          "catalogue_size": 78,
+          "catalogue_size": 76,
           "consumers_judged": [
             "CP-2",
             "CP-3",
             "CP-5",
-            "CP-6",
-            "CP-MODEL"
+            "CP-6"
           ],
           "claims_unchanged": true
         }
@@ -5084,7 +4984,6 @@
             "CP-1",
             "CP-1A",
             "CP-2",
-            "CP-MODEL",
             "CP-3",
             "CP-5",
             "CP-6"
@@ -6273,39 +6172,6 @@
                         "limitation": null
                       }
                     ]
-                  },
-                  {
-                    "row_id": "r05",
-                    "label": "CP-MODEL",
-                    "facts": [
-                      {
-                        "fact_id": "downstream_readiness.r05.status",
-                        "column": "Status",
-                        "text": "READY_WITH_LIMITATIONS",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": null,
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "downstream_readiness.r05.gap",
-                        "column": "Gap",
-                        "text": "Owners behind the holding company are not disclosed",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "downstream_readiness.r05.required_action",
-                        "column": "Required action",
-                        "text": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      }
-                    ]
                   }
                 ]
               }
@@ -6586,83 +6452,17 @@
                         "limitation": null
                       }
                     ]
-                  },
-                  {
-                    "row_id": "r05",
-                    "label": "CP-MODEL",
-                    "facts": [
-                      {
-                        "fact_id": "T2D.10.r05.handoff_tag",
-                        "column": "Handoff Tag",
-                        "text": "CP-2C-HANDOFF-CP-MODEL",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": null,
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.handoff_item",
-                        "column": "Handoff Item",
-                        "text": "Issuer name, country, sector, shareholders, transaction summary and business description",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.why_it_matters",
-                        "column": "Why It Matters",
-                        "text": "The Model snapshot shows these fields with their source",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.required_consumer_action",
-                        "column": "Required Consumer Action",
-                        "text": "Show the snapshot fields with their sources and mark undisclosed ones as gaps",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.source_flag_link",
-                        "column": "Source / Flag Link",
-                        "text": "Sources: business page:1",
-                        "status": "known",
-                        "cites": [
-                          [
-                            "business",
-                            "page:1"
-                          ]
-                        ],
-                        "value_class": null,
-                        "limitation": null
-                      },
-                      {
-                        "fact_id": "T2D.10.r05.limitation",
-                        "column": "Limitation",
-                        "text": "Owners behind the holding company are not disclosed",
-                        "status": "known",
-                        "cites": [],
-                        "value_class": "analyst_judgment",
-                        "limitation": null
-                      }
-                    ]
                   }
                 ]
               }
             }
           },
-          "catalogue_size": 76,
+          "catalogue_size": 74,
           "consumers_judged": [
             "CP-2",
             "CP-3",
             "CP-5",
-            "CP-6",
-            "CP-MODEL"
+            "CP-6"
           ],
           "claims_unchanged": true
         }
@@ -8438,9 +8238,9 @@
             "R6": {
               "source_classification": 4,
               "T2D.1": 4,
-              "downstream_readiness": 5,
-              "T2D.10": 5,
-              "cp1a_rows": 78
+              "downstream_readiness": 4,
+              "T2D.10": 4,
+              "cp1a_rows": 76
             }
           },
           "gap": {
@@ -8454,9 +8254,9 @@
             "R6": {
               "source_classification": 3,
               "T2D.1": 3,
-              "downstream_readiness": 5,
-              "T2D.10": 5,
-              "cp1a_rows": 76
+              "downstream_readiness": 4,
+              "T2D.10": 4,
+              "cp1a_rows": 74
             }
           }
         }

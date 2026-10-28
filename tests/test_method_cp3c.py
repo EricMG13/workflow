@@ -20,6 +20,7 @@ from typing import Any
 
 import pytest
 
+from deploy_vii.display import format_date
 from deploy_workflow.owners import cp3c
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,12 +33,13 @@ CP2D_EXPECTED: dict[str, Any] = json.loads(
 )
 BINDINGS: dict[str, Any] = MANIFEST["fact_bindings"]
 
-# docs/CP3C-OWNER-LEASE.md header (rev 3) and manifest.json#frozen_inputs.
+# docs/CP3C-OWNER-LEASE.md header (rev 3, re-pinned by LEAD 2026-10-28 for methodology.json:
+# builder and manifest only) and manifest.json#frozen_inputs.
 PINS = {
-    "cases/cp3c-owner/manifest.json": "aa2c8f57cc6077109db684c0b5aa1c620d1e19453f8640089db7176a82e67d0e",
+    "cases/cp3c-owner/manifest.json": "d5ca731c45891613a2982b0e538162127fa8f290017f6da43161c6f4fe616f53",
     "cases/cp3c-owner/submissions.json": "8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c",
     "cases/cp3c-owner/expected.json": "50ef4a7f9199e1da4a73fc75eaaf6bc8215bef12cec26067d2d44aead0952e5f",
-    "cases/cp3c-owner/builder/build.py": "66a3ba8696a81d58d527c1fbf0f0841738537b666225c8479988bd619e16412d",
+    "cases/cp3c-owner/builder/build.py": "b461d897370cac9885df1bb9b2572ae2bc6411ed7f417a7194db58efacccd46a",
 }
 PACK_CASES = ("positive", "gap_minimum_cash", "gap_no_repricing")
 FIXTURES = tuple(k for k in EXPECTED["cases"] if k.startswith("fixture_"))
@@ -268,7 +270,11 @@ def _derived(r: cp3c.Refinancing) -> dict[str, Any]:
         "total_resources_applied": r.total_applied,
         "total_refinancing_need": r.total_need,
         "principal_after_cp2d_horizon": r.principal_after_horizon,
-        "nearest_maturity": r.nearest_maturity.isoformat(),
+        "nearest_maturity": (
+            r.nearest_maturity.isoformat()
+            if isinstance(r.nearest_maturity, date)
+            else r.nearest_maturity
+        ),
         "months_to_nearest_maturity": r.months_to_nearest,
         "principal_payable_over_ebitda": r.payable_over_ebitda,
         "need_over_ebitda": r.need_over_ebitda,
@@ -293,12 +299,16 @@ def _derived(r: cp3c.Refinancing) -> dict[str, Any]:
     }
 
 
+def _missing(value: Any) -> bool:
+    return isinstance(value, cp3c.Gap) and value.applicable
+
+
 def _same(expected: Any, actual: Any, at: str = "") -> None:
     """Oracle equality: numeric Decimal equality, ``nm`` is not applicable, None is missing."""
     if expected is None:
-        assert actual is None, f"{at}: expected missing, got {actual!r}"
+        assert _missing(actual), f"{at}: expected missing, got {actual!r}"
     elif expected == "nm":
-        assert actual == cp3c.NOT_APPLICABLE, f"{at}: expected n.m., got {actual!r}"
+        assert isinstance(actual, cp3c.Gap) and not actual.applicable, f"{at}: {actual!r}"
     elif isinstance(actual, Decimal):
         assert isinstance(expected, str) and Decimal(expected) == actual, (
             f"{at}: {expected!r} != {actual!r}"
@@ -353,7 +363,7 @@ def test_pack_case_derived_values(case: str) -> None:
 def test_pack_case_missing_is_not_zero(case: str) -> None:
     derived = _derived(cp3c.compute(_inputs(case)).refinancing)
     for key in EXPECTED["cases"][case]["missing_not_zero"]:
-        assert derived[key] is None, (case, key)
+        assert _missing(derived[key]), (case, key)
 
 
 @pytest.mark.parametrize("case", PACK_CASES)
@@ -455,7 +465,7 @@ def test_fixture_derived_values(name: str) -> None:
     _same(EXPECTED["cases"][name]["derived"], _derived(result), name)
     derived = _derived(result)
     for key in EXPECTED["cases"][name]["missing_not_zero"]:
-        assert derived[key] is None, (name, key)
+        assert _missing(derived[key]), (name, key)
 
 
 def test_unassessed_step_up_is_missing_and_zero_step_up_is_known_zero() -> None:
@@ -463,7 +473,7 @@ def test_unassessed_step_up_is_missing_and_zero_step_up_is_known_zero() -> None:
     zero = cp3c.compose_refinancing(operands=operands, step_up_bps=0)
     unassessed = cp3c.compose_refinancing(operands=operands, step_up_bps=None)
     assert zero.added_interest == 0 and zero.added_interest is not None
-    assert unassessed.added_interest is None and unassessed.pro_forma_interest_cover is None
+    assert _missing(unassessed.added_interest) and _missing(unassessed.pro_forma_interest_cover)
 
 
 # --- lease boundaries the oracle states as rules (not oracle cases) ----------------------------
@@ -481,10 +491,18 @@ def test_a_covered_maturity_is_a_known_zero_need_not_missing() -> None:
     assert r.maturities[0].cover == 1
 
 
+NM = "(ZERO_OR_NEGATIVE_DENOMINATOR)"
+
+
+def _nm(reason: str) -> cp3c.Gap:
+    return cp3c.Gap(f"Not meaningful: {reason} {NM}", applicable=False)
+
+
 def test_zero_interest_gives_not_applicable_cover() -> None:
-    """method_rules.interest_cover: a zero interest is not_applicable."""
-    r = cp3c.compose_refinancing(operands=_single(cash_interest_paid=Decimal(0)), step_up_bps=None)
-    assert r.interest_cover == cp3c.NOT_APPLICABLE
+    """method_rules.interest_cover: a zero interest is not_applicable (C-2 reason)."""
+    r = cp3c.compose_refinancing(operands=_single(cash_interest_paid=Decimal(0)), step_up_bps=0)
+    assert r.interest_cover == _nm("cash interest paid is zero or negative")
+    assert r.pro_forma_interest_cover == _nm("cash interest paid is zero or negative")
 
 
 def test_fully_amortised_principal_gives_not_applicable_cover() -> None:
@@ -495,7 +513,8 @@ def test_fully_amortised_principal_gives_not_applicable_cover() -> None:
         operands=replace(operands, facilities=(replace(f, annual_amortisation=Decimal(50)),)),
         step_up_bps=0,
     )
-    assert r.maturities[0].principal_payable == 0 and r.maturities[0].cover == cp3c.NOT_APPLICABLE
+    assert r.maturities[0].principal_payable == 0
+    assert r.maturities[0].cover == _nm("principal payable at maturity is zero")
 
 
 def _two_facilities() -> tuple[cp3c.Operands, cp3c.FacilityOperand, cp3c.FacilityOperand]:
@@ -504,14 +523,35 @@ def _two_facilities() -> tuple[cp3c.Operands, cp3c.FacilityOperand, cp3c.Facilit
     return operands, earlier, later
 
 
-def test_equal_months_order_by_facility_id() -> None:
-    """method_rules.facility_order: ties by facility_id, whatever order the facilities arrive in."""
+def test_equal_maturity_dates_order_by_facility_id() -> None:
+    """Ruling C-4 (2D6): ties by facility_id, whatever order the facilities arrive in."""
     operands, earlier, later = _two_facilities()
-    tied = replace(later, facility_id="a-loan", months=earlier.months)
+    tied = replace(
+        later, facility_id="a-loan", maturity_date=earlier.maturity_date, months=earlier.months
+    )
     r = cp3c.compose_refinancing(
         operands=replace(operands, facilities=(earlier, tied)), step_up_bps=0
     )
     assert [m.facility.facility_id for m in r.maturities] == ["a-loan", earlier.facility_id]
+
+
+def test_c4_facilities_order_by_maturity_date_not_months() -> None:
+    """Ruling C-4: (maturity_date, facility_id). 2028-08-30 is 31 whole months from 2025-12-31,
+    as is 2028-07-31, so a months order would put a-loan first."""
+    operands, earlier, later = _two_facilities()
+    maturity = date(2028, 8, 30)
+    months, inside = cp3c.wall_position(
+        balance_date=BALANCE_DATE, maturity=maturity, horizon_months=24
+    )
+    assert months == earlier.months
+    same_month = replace(
+        later, facility_id="a-loan", maturity_date=maturity, months=months, inside_horizon=inside
+    )
+    r = cp3c.compose_refinancing(
+        operands=replace(operands, facilities=(same_month, earlier)), step_up_bps=0
+    )
+    assert [m.facility.facility_id for m in r.maturities] == [earlier.facility_id, "a-loan"]
+    assert r.nearest_maturity == earlier.maturity_date
 
 
 def test_amortisation_of_a_matured_facility_stops_at_its_maturity() -> None:
@@ -585,12 +625,15 @@ def test_compute_refuses_an_invalid_submission() -> None:
         cp3c.compute(inputs)
 
 
-# --- fail closed where the lease and oracle pin no wording -------------------------------------
+# --- LEAD rulings round 5 (docs/rulings/2026-10-28-stage1.md "# Round 5", CP-3C) -------------
 
 
-def _positive_with(terms: cp3c.FacilityTerms) -> cp3c.Cp3cInputs:
+def _positive_with(
+    *terms: cp3c.FacilityTerms, wall: tuple[cp3c.WallRow, ...] | None = None
+) -> cp3c.Cp3cInputs:
     inputs = _inputs("positive")
-    return replace(inputs, cp1=replace(inputs.cp1, facilities=(terms,)))
+    cp2d = inputs.cp2d if wall is None else replace(inputs.cp2d, wall=wall)
+    return replace(inputs, cp1=replace(inputs.cp1, facilities=terms), cp2d=cp2d)
 
 
 def _positive_terms() -> cp3c.FacilityTerms:
@@ -598,38 +641,480 @@ def _positive_terms() -> cp3c.FacilityTerms:
     return terms
 
 
-def test_missing_amortisation_fails_closed_in_the_tables() -> None:
-    missing = cp3c.Cp1Fact(
-        table_id="T4.18",
-        period="q4-2025",
+def _positive_row() -> cp3c.WallRow:
+    (row,) = _inputs("positive").cp2d.wall
+    return row
+
+
+def _missing_cp1(name: str) -> cp3c.Cp1Fact:
+    """A CP-1 head fact the head states as missing (its own limitation as the reason)."""
+    b = BINDINGS[name]
+    numeric = name in _T410 or b.get("field") == "annual_amortisation"
+    return cp3c.Cp1Fact(
+        table_id=b["table_id"],
+        period=b["period"],
         status="missing",
-        reason="Not stated",
-        value_class="source",
+        unit="MILLIONS" if numeric else None,
+        value_class=_CP1_CLASS[b["table_id"]],
+        reason="Not stated in the source",
     )
-    inputs = _positive_with(replace(_positive_terms(), annual_amortisation=missing))
-    with pytest.raises(ValueError, match="not pinned"):
-        cp3c.compute(inputs)
 
 
-def test_unstated_ranking_fails_closed_in_the_tables() -> None:
-    unstated = cp3c.Cp1Fact(
-        table_id="T4.18", period="q4-2025", status="known", text="NOT_STATED", value_class="source"
-    )
-    inputs = _positive_with(replace(_positive_terms(), secured_status=unstated))
-    with pytest.raises(ValueError, match="not pinned"):
-        cp3c.compute(inputs)
+def _cp1_amount(name: str, amount: str) -> cp3c.Cp1Fact:
+    return replace(_cp1_fact(name), amount=Decimal(amount))
 
 
-def test_a_facility_in_another_currency_fails_closed() -> None:
-    inputs = _positive_with(replace(_positive_terms(), currency="EUR"))
-    with pytest.raises(ValueError, match="currency"):
-        cp3c.compute(inputs)
+def _with_cp1(**facts: Any) -> cp3c.Cp3cInputs:
+    """The positive case with some CP-1 T4.10 facts replaced (Any: replace() checks the names)."""
+    inputs = _inputs("positive")
+    return replace(inputs, cp1=replace(inputs.cp1, **facts))
 
 
-def test_a_zero_step_up_claim_fails_closed() -> None:
-    """The pinned COST-01 template says the step-up lowers interest cover; at 0 bp it does not."""
+def _with_step_up(inputs: cp3c.Cp3cInputs, bps: int) -> cp3c.Cp3cInputs:
     payload = json.loads(json.dumps(SUBMISSIONS["cp3c"]["positive"]))
-    payload["repricing"]["bps"] = 0
-    inputs = replace(_inputs("positive"), submission=_submission(payload))
-    with pytest.raises(ValueError, match="CP-3C-COST-01"):
-        cp3c.compute(inputs)
+    payload["repricing"]["bps"] = bps
+    return replace(inputs, submission=_submission(payload))
+
+
+def _gone(fact: cp3c.Cp2dFact, reason: str) -> cp3c.Cp2dFact:
+    return replace(fact, status="missing", amount=None, text=None, period=None, reason=reason)
+
+
+def _no_amortisation() -> cp3c.FacilityTerms:
+    missing = _missing_cp1("term-loan.annual_amortisation")
+    return replace(_positive_terms(), annual_amortisation=missing)
+
+
+# Cells that are gaps in every case (lease: no LME evidence and no stress case is bound).
+_ALWAYS_GAPS = {f"T3D.5.r0{r}.c{c}" for r in (1, 2) for c in (2, 3)}
+
+
+def _own_gaps(result: cp3c.Cp3cResult) -> dict[str, tuple[str, str | None]]:
+    """fact_id -> (status, reason) of each own cell that is not known; copies keep their
+    upstream reason and are left out (T3D.3.r01 is an own negation of the CP-1 outflow)."""
+    return {
+        c.fact_id: (c.status, c.reason)
+        for t in result.tables
+        for r in t.rows
+        for c in r.cells
+        if c.status != "known"
+        and c.cp2d_operand is None
+        and c.cp1_operand in (None, "cash_interest")
+        and c.fact_id not in _ALWAYS_GAPS
+    }
+
+
+def _cells_of(result: cp3c.Cp3cResult) -> dict[str, cp3c.Cell]:
+    return {c.fact_id: c for t in result.tables for r in t.rows for c in r.cells}
+
+
+def _claim(result: cp3c.Cp3cResult, claim_id: str) -> str:
+    (claim,) = (c for c in result.claims if c.claim_id == claim_id)
+    return claim.template
+
+
+def _all(ids: list[str], status: str, reason: str) -> dict[str, tuple[str, str | None]]:
+    return dict.fromkeys(ids, (status, reason))
+
+
+_ROW_PAYABLE = ["T3D.1.r01.c5", "T3D.1.r01.c6"]
+_ROW_RESOURCES = [f"T3D.1.r01.c{n}" for n in (7, 8, 9, 10)]
+_RESOURCES = [*_ROW_RESOURCES, "T3D.2.r02", "T3D.2.r03", "T3D.2.r09"]
+_PAYABLE = [*_ROW_PAYABLE, "T3D.2.r01", "T3D.2.r04", "T3D.2.r08"]
+_REPRICED = ["T3D.3.r05", "T3D.3.r06", "T3D.3.r07", "T3D.3.r08"]
+_CLAIMS = ["T3D.4.r01.c5", "T3D.4.r01.c6", "T3D.5.r01.c1", "T3D.5.r02.c1"]
+_OVER_EBITDA = ["T3D.2.r08", "T3D.2.r09", "T3D.4.r01.c6", "T3D.5.r02.c1"]
+AMORT = "Not calculable: facility term-loan annual amortisation is not stated"
+COST = "An assumed margin step-up on the principal payable at maturity adds "
+LME_TAIL = (
+    "; the position after such an exercise is [T3D.5.r01.c2] because the legal capacity "
+    "evidence is not bound."
+)
+NEED_GAP = (
+    "Principal payable at maturity totals {r01}; the refinancing need after resources is "
+    "[T3D.2.r03], because {cause}."
+)
+DATE = format_date(BALANCE_DATE)
+
+
+# C-1 COST-01
+
+
+def test_c1_cost_claim_at_a_zero_step_up_leaves_interest_cover() -> None:
+    result = cp3c.compute(_with_step_up(_inputs("positive"), 0))
+    assert _claim(result, "CP-3C-COST-01") == (
+        f"{COST}{{T3D.3.r06|US$ m}} to annual cash interest and leaves interest cover at "
+        "{T3D.3.r03|x}."
+    )
+
+
+def test_c1_cost_claim_with_cover_raised_changes_interest_cover() -> None:
+    """Negative EBITDA: the cover rises towards zero as interest grows."""
+    result = cp3c.compute(_with_cp1(adjusted_ebitda=_cp1_amount("adjusted_ebitda", "-30")))
+    assert _claim(result, "CP-3C-COST-01") == (
+        f"{COST}{{T3D.3.r06|US$ m}} to annual cash interest and changes interest cover from "
+        "{T3D.3.r03|x} to {T3D.3.r08|x}."
+    )
+
+
+def test_c1_cost_claim_with_one_cover_not_known_keeps_the_known_side() -> None:
+    result = cp3c.compute(_with_cp1(cash_interest=_cp1_amount("cash_interest", "0")))
+    assert _claim(result, "CP-3C-COST-01") == (
+        f"{COST}{{T3D.3.r06|US$ m}} to annual cash interest; interest cover is [T3D.3.r03] "
+        "before and {T3D.3.r08|x} after it."
+    )
+
+
+def test_c1_cost_claim_with_neither_cover_known() -> None:
+    result = cp3c.compute(_with_cp1(cash_interest=_missing_cp1("cash_interest")))
+    assert _claim(result, "CP-3C-COST-01") == (
+        f"{COST}{{T3D.3.r06|US$ m}} to annual cash interest; interest cover is [T3D.3.r03] "
+        "before and [T3D.3.r08] after it."
+    )
+
+
+# C-2 reasons
+
+
+def test_c2_missing_amortisation_names_the_facility() -> None:
+    result = cp3c.compute(_positive_with(_no_amortisation()))
+    assert _own_gaps(result) == _all([*_PAYABLE, *_RESOURCES, *_REPRICED], "missing", AMORT)
+
+
+def test_c2_resources_reason_takes_minimum_cash_before_amortisation() -> None:
+    inputs = _inputs("gap_minimum_cash")
+    result = cp3c.compute(
+        replace(inputs, cp1=replace(inputs.cp1, facilities=(_no_amortisation(),)))
+    )
+    assert _own_gaps(result) == {
+        **_all([*_PAYABLE, *_REPRICED], "missing", AMORT),
+        **_all(_RESOURCES, "missing", cp3c.REASON_MINIMUM_CASH),
+    }
+
+
+@pytest.mark.parametrize(
+    ("names", "label"),
+    [
+        (("cash_closing",), "cash and cash equivalents"),
+        (("undrawn_rcf",), "undrawn revolver"),
+        (("undrawn_rcf", "cash_closing"), "cash and cash equivalents"),
+    ],
+)
+def test_c2_missing_resources_operand_names_the_first_in_formula_order(
+    names: tuple[str, ...], label: str
+) -> None:
+    result = cp3c.compute(_with_cp1(**{n: _missing_cp1(n) for n in names}))
+    reason = f"Not calculable: {label} is missing"
+    assert _own_gaps(result) == _all(_RESOURCES, "missing", reason)
+
+
+def test_c2_missing_run_rate_names_the_cp2d_flow() -> None:
+    inputs = _inputs("positive")
+    run_rate = _gone(inputs.cp2d.run_rate, "Not calculable: Operating cash flow is missing")
+    result = cp3c.compute(replace(inputs, cp2d=replace(inputs.cp2d, run_rate=run_rate)))
+    reason = "Not calculable: CP-2D run-rate annual flow is missing"
+    assert _own_gaps(result) == _all(_RESOURCES, "missing", reason)
+
+
+def test_c2_missing_ebitda_and_cash_interest() -> None:
+    ebitda = cp3c.compute(_with_cp1(adjusted_ebitda=_missing_cp1("adjusted_ebitda")))
+    assert _own_gaps(ebitda) == _all(
+        ["T3D.2.r08", "T3D.2.r09", "T3D.3.r03", "T3D.3.r08", "T3D.4.r01.c6", "T3D.5.r02.c1"],
+        "missing",
+        "Not calculable: adjusted EBITDA is missing",
+    )
+    interest = cp3c.compute(_with_cp1(cash_interest=_missing_cp1("cash_interest")))
+    assert _own_gaps(interest) == _all(
+        ["T3D.3.r01", "T3D.3.r03", "T3D.3.r07", "T3D.3.r08"],
+        "missing",
+        "Not calculable: cash interest paid is missing",
+    )
+
+
+@pytest.mark.parametrize("ebitda", ["0", "-30"])
+def test_c2_non_positive_ebitda_is_not_meaningful(ebitda: str) -> None:
+    result = cp3c.compute(_with_cp1(adjusted_ebitda=_cp1_amount("adjusted_ebitda", ebitda)))
+    reason = f"Not meaningful: adjusted EBITDA is zero or negative {NM}"
+    assert _own_gaps(result) == _all(_OVER_EBITDA, "not_applicable", reason)
+
+
+def test_c2_zero_cash_interest_and_zero_balloon_are_not_meaningful() -> None:
+    result = cp3c.compute(_with_cp1(cash_interest=_cp1_amount("cash_interest", "0")))
+    reason = f"Not meaningful: cash interest paid is zero or negative {NM}"
+    assert _own_gaps(result) == {"T3D.3.r03": ("not_applicable", reason)}
+    amortised = _cp1_amount("term-loan.annual_amortisation", "50")
+    result = cp3c.compute(_positive_with(replace(_positive_terms(), annual_amortisation=amortised)))
+    reason = f"Not meaningful: principal payable at maturity is zero {NM}"
+    assert _own_gaps(result) == {"T3D.1.r01.c10": ("not_applicable", reason)}
+
+
+@pytest.mark.parametrize(
+    ("field", "term"), [("secured_status", "secured status"), ("seniority", "seniority")]
+)
+def test_c2_unstated_ranking_names_the_facility_and_term(field: str, term: str) -> None:
+    name = f"term-loan.{field}"
+    for fact in (replace(_cp1_fact(name), text="NOT_STATED"), _missing_cp1(name)):
+        change: dict[str, Any] = {field: fact}
+        result = cp3c.compute(_positive_with(replace(_positive_terms(), **change)))
+        reason = f"Not calculable: facility term-loan {term} is not stated"
+        assert _own_gaps(result) == _all(_CLAIMS, "missing", reason)
+
+
+# C-3 claim gap forms
+
+
+def test_c3_need_claim_names_the_unstated_amortisation() -> None:
+    result = cp3c.compute(_positive_with(_no_amortisation()))
+    cause = "facility term-loan annual amortisation is not stated"
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+
+
+def test_c3_need_claim_names_the_missing_operand() -> None:
+    result = cp3c.compute(_with_cp1(cash_closing=_missing_cp1("cash_closing")))
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(
+        r01="{T3D.2.r01|US$ m}", cause="cash and cash equivalents is missing"
+    )
+
+
+def test_c3_lme_claim_names_the_unstated_ranking() -> None:
+    unstated = replace(_cp1_fact("term-loan.secured_status"), text="NOT_STATED")
+    result = cp3c.compute(_positive_with(replace(_positive_terms(), secured_status=unstated)))
+    assert _claim(result, "CP-3C-LME-01") == (
+        "Claims at or ahead of the most junior facility are [T3D.5.r01.c1] before any "
+        "liability-management exercise, because facility term-loan secured status is not stated"
+        f"{LME_TAIL}"
+    )
+
+
+def test_c3_burden_claim_with_non_positive_ebitda() -> None:
+    result = cp3c.compute(_with_cp1(adjusted_ebitda=_cp1_amount("adjusted_ebitda", "0")))
+    assert _claim(result, "CP-3C-BURDEN-01") == (
+        "Principal payable at maturity is [T3D.2.r08] of adjusted EBITDA for the twelve months "
+        f"to {DATE}, because adjusted EBITDA is zero or negative; the refinancing need is "
+        "[T3D.2.r09] of the same earnings."
+    )
+
+
+def test_unruled_claim_slots_take_the_chip_form() -> None:
+    """Not ruled (listed for LEAD): with the amortisation not stated, HORIZON-01, BURDEN-01 and
+    COST-01 keep their pinned or C-1 words and show each cell that is not known as its chip."""
+    result = cp3c.compute(_positive_with(_no_amortisation()))
+    assert _claim(result, "CP-3C-HORIZON-01") == (
+        "The liquidity analysis reports a funding gap of {T3D.2.r10|US$ m} at its horizon end, "
+        "while [T3D.2.r04] falls due after that horizon."
+    )
+    assert _claim(result, "CP-3C-BURDEN-01") == (
+        "Principal payable at maturity is [T3D.2.r08] of adjusted EBITDA for the twelve months "
+        f"to {DATE}; the refinancing need is [T3D.2.r09] of the same earnings."
+    )
+    assert _claim(result, "CP-3C-COST-01") == (
+        f"{COST}[T3D.3.r06] to annual cash interest; interest cover is {{T3D.3.r03|x}} before "
+        "and [T3D.3.r08] after it."
+    )
+
+
+# C-6 other states
+
+
+def test_c6_a_facility_in_another_currency_uses_the_2d5_wording() -> None:
+    fx = "Not calculable: facility term-loan is in EUR, not USD; no FX conversion is applied"
+    row = _positive_row()
+    wall = (replace(row, principal=_gone(row.principal, fx)),)
+    result = cp3c.compute(_positive_with(replace(_positive_terms(), currency="EUR"), wall=wall))
+    assert _own_gaps(result) == _all(
+        [*_PAYABLE, *_RESOURCES, *_REPRICED, "T3D.4.r01.c4", *_CLAIMS], "missing", fx
+    )
+    cells = _cells_of(result)
+    statuses = [cells[f"T3D.1.r01.c{n}"].status for n in (1, 2, 3, 4)]
+    assert statuses == ["missing", "known", "known", "known"]
+    assert result.own_limitations[-3] == (
+        "Facility term-loan is denominated in EUR; maturity-wall totals and shares are not "
+        "calculated because no FX conversion is applied."
+    )
+    assert list(result.gaps_ledger.rows[-3]) == ["Facility currency (term-loan)", "Limitation"]
+    cause = fx.removeprefix("Not calculable: ")
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+
+
+def test_c6_an_empty_register_settles_with_its_own_line() -> None:
+    none = "Not calculable: no facility is in the CP-1 debt register"
+    result = cp3c.compute(_positive_with(wall=()))
+    t3d2 = [f"T3D.2.r0{n}" for n in (1, 2, 3, 4, 5, 6, 8, 9)]
+    assert _own_gaps(result) == _all(
+        [*t3d2, *_REPRICED, "T3D.5.r01.c1", "T3D.5.r02.c1"], "missing", none
+    )
+    by_id = {t.table_id: t for t in result.tables}
+    assert by_id["T3D.1"].rows == () and by_id["T3D.4"].rows == ()
+    assert result.refinancing.total_principal == cp3c.Gap(none)  # never a summed 0
+    assert result.own_limitations[-3] == (
+        "No facility is in the CP-1 debt register; refinancing figures are not calculated."
+    )
+    assert list(result.gaps_ledger.rows[-3]) == ["Facility schedule", "Gap"]
+
+
+def test_c6_zero_total_principal_gives_known_zero_totals_and_no_shares() -> None:
+    row = _positive_row()
+    zero = replace(row, principal=replace(row.principal, amount=Decimal(0)))
+    result = cp3c.compute(_positive_with(_positive_terms(), wall=(zero,)))
+    assert _own_gaps(result) == {
+        "T3D.1.r01.c10": (
+            "not_applicable",
+            f"Not meaningful: principal payable at maturity is zero {NM}",
+        ),
+        "T3D.4.r01.c4": (
+            "not_applicable",
+            f"Not meaningful: total facility principal is zero {NM}",
+        ),
+    }
+    assert result.refinancing.total_principal == 0 and result.refinancing.total_need == 0
+
+
+def test_c6_an_unknown_ranking_flag_is_an_invariant() -> None:
+    flag = replace(_cp1_fact("term-loan.secured_status"), text="PARI_PASSU")
+    with pytest.raises(ValueError, match="unknown ranking flag") as raised:
+        cp3c.compute(_positive_with(replace(_positive_terms(), secured_status=flag)))
+    assert "not pinned" not in str(raised.value)
+
+
+@pytest.mark.parametrize(("field", "value"), [("months", Decimal(47)), ("inside_horizon", "Yes")])
+def test_c6_a_wall_row_off_cp2ds_rule_uses_the_recomputed_position(field: str, value: Any) -> None:
+    row = _positive_row()
+    fact = getattr(row, field)
+    changed = replace(fact, amount=value) if field == "months" else replace(fact, text=value)
+    result = cp3c.compute(
+        _positive_with(_positive_terms(), wall=(replace(row, **{field: changed}),))
+    )
+    (m,) = result.refinancing.maturities
+    assert (m.facility.months, m.facility.inside_horizon) == (48, False)
+    column = 3 if field == "months" else 4
+    copy = _cells_of(result)[f"T3D.1.r01.c{column}"]
+    assert (copy.amount, copy.text) == (changed.amount, changed.text)  # CP-2D's own value
+    assert _own_gaps(result) == {}
+    assert result.own_limitations[-3] == (
+        "CP-2D's maturity wall for facility term-loan differs from the position recomputed from "
+        "its horizon and maturity date; CP-3C uses the recomputed position and shows both."
+    )
+    assert list(result.gaps_ledger.rows[-3]) == [
+        "CP-2D maturity wall cross-check (term-loan)",
+        "Limitation",
+    ]
+
+
+def test_c6_a_facility_missing_from_the_wall_leaves_its_cells_and_totals_missing() -> None:
+    notes = "Not calculable: facility notes is not in the CP-2D maturity wall"
+    other = replace(_positive_terms(), facility_id="notes")
+    result = cp3c.compute(_positive_with(_positive_terms(), other))
+    own_row = [f"T3D.1.r02.c{n}" for n in range(1, 11)] + [f"T3D.4.r02.c{n}" for n in range(1, 7)]
+    totals = ["T3D.2.r01", "T3D.2.r04", "T3D.2.r05", "T3D.2.r06", "T3D.2.r08"]
+    resources = [*_ROW_RESOURCES, "T3D.2.r02", "T3D.2.r03", "T3D.2.r09"]
+    assert _own_gaps(result) == _all(
+        [*own_row, *resources, *totals, *_REPRICED, "T3D.4.r01.c4", *_CLAIMS], "missing", notes
+    )
+    assert result.own_limitations[-3] == notes
+    assert [r.label for r in result.tables[0].rows] == [
+        "Northbridge Term Loan (term-loan)",
+        "Northbridge Term Loan (notes)",
+    ]
+
+
+def test_c6_a_facility_missing_from_the_register_is_labelled_by_its_id() -> None:
+    reason = "Not calculable: facility term-loan is not in the CP-1 debt register"
+    result = cp3c.compute(_positive_with())
+    assert [r.label for r in result.tables[0].rows] == ["term-loan"]
+    assert {c.reason for r in result.tables[0].rows for c in r.cells} == {reason}
+    assert result.own_limitations[-3] == reason
+
+
+# C-8 no de-duplication (confirmed; no code change)
+
+
+def test_c8_a_repeated_issue_is_reported_each_time() -> None:
+    payload = json.loads(json.dumps(SUBMISSIONS["cp3c"]["positive"]))
+    path = next(p for p in payload["paths"] if p["basis_refs"])
+    path["basis_refs"] = ["not-offered", "also-not-offered"]
+    issues = cp3c.submission_issues(submission=_submission(payload), offered=OFFERED)
+    at = f"paths[{path['kind']}].basis_refs: names a fact the view does not offer"
+    assert list(issues).count(at) == 2
+
+
+# C-7 Stage 2 bindings
+
+
+def test_c7_a_gap_copy_keeps_the_upstream_class_period_and_reason() -> None:
+    inputs = _inputs("gap_minimum_cash")
+    minimum = replace(inputs.cp2d.minimum_cash, period=BALANCE_DATE.isoformat())
+    result = cp3c.compute(replace(inputs, cp2d=replace(inputs.cp2d, minimum_cash=minimum)))
+    copy = _cells_of(result)["T3D.2.r11"]
+    assert (copy.status, copy.value_class, copy.period, copy.reason) == (
+        "missing",
+        minimum.value_class,
+        minimum.period,
+        minimum.reason,
+    )
+    ebitda = _missing_cp1("adjusted_ebitda")
+    copy = _cells_of(cp3c.compute(_with_cp1(adjusted_ebitda=ebitda)))["T3D.2.r07"]
+    assert (copy.value_class, copy.period, copy.reason) == (
+        ebitda.value_class,
+        ebitda.period,
+        ebitda.reason,
+    )
+
+
+def test_a_negative_total_principal_fails_closed() -> None:
+    """Not ruled (C-6 rules a zero total only): listed for LEAD."""
+    row = _positive_row()
+    negative = replace(row, principal=replace(row.principal, amount=Decimal(-1)))
+    with pytest.raises(ValueError, match="negative"):
+        cp3c.compute(_positive_with(_positive_terms(), wall=(negative,)))
+
+
+# Precedence checks for the round 5 composer (formula order, own facility first, wall order)
+
+
+def test_without_a_matched_facility_the_resources_operands_still_come_first() -> None:
+    inputs = _inputs("gap_minimum_cash")
+    result = cp3c.compute(replace(inputs, cp1=replace(inputs.cp1, facilities=())))
+    gaps = _own_gaps(result)
+    assert gaps["T3D.2.r02"] == gaps["T3D.2.r03"] == ("missing", cp3c.REASON_MINIMUM_CASH)
+    assert gaps["T3D.2.r01"] == (
+        "missing",
+        "Not calculable: facility term-loan is not in the CP-1 debt register",
+    )
+
+
+def test_an_unranked_row_names_its_own_facility_and_the_junior_total_the_first() -> None:
+    operands, earlier, later = _two_facilities()
+    both = (replace(earlier, seniority=None), replace(later, seniority="NOT_STATED"))
+    r = cp3c.compose_refinancing(operands=replace(operands, facilities=both), step_up_bps=0)
+    named = {c.facility.facility_id: c.claims_at_or_ahead for c in r.creditors}
+    reason = "Not calculable: facility {} seniority is not stated"
+    assert named == {f.facility_id: cp3c.Gap(reason.format(f.facility_id)) for f in both}
+    assert r.junior_claims == cp3c.Gap(reason.format(earlier.facility_id))
+
+
+def test_equal_ranks_order_creditors_by_maturity_date() -> None:
+    operands, earlier, later = _two_facilities()
+    maturity = date(2028, 8, 30)  # 31 whole months, as earlier's 2028-07-31
+    peer = replace(
+        later,
+        facility_id="a-loan",
+        maturity_date=maturity,
+        months=earlier.months,
+        secured_status=earlier.secured_status,
+        seniority=earlier.seniority,
+    )
+    r = cp3c.compose_refinancing(
+        operands=replace(operands, facilities=(peer, earlier)), step_up_bps=0
+    )
+    assert [c.facility.facility_id for c in r.creditors] == [earlier.facility_id, "a-loan"]
+
+
+def test_amortisation_comes_before_the_principal_in_formula_order() -> None:
+    fx = "Not calculable: facility term-loan is in EUR, not USD; no FX conversion is applied"
+    row = _positive_row()
+    terms = replace(_no_amortisation(), currency="EUR")
+    result = cp3c.compute(
+        _positive_with(terms, wall=(replace(row, principal=_gone(row.principal, fx)),))
+    )
+    gaps = _own_gaps(result)
+    assert (gaps["T3D.1.r01.c5"], gaps["T3D.1.r01.c6"]) == (("missing", AMORT), ("missing", fx))

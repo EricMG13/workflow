@@ -6,11 +6,12 @@ available then, the refinancing need, the cost of an analyst margin step-up on i
 and the claims at or ahead of each facility. The analyst supplies only the step-up (or its
 absence) and one feasibility judgment per refinancing path. No optional edge is read.
 
-Missing is never 0: a missing operand makes each dependent value missing, and a table cell
-states a reason only where the lease or the oracle (cases/cp3c-owner/expected.json) fixes its
-wording; anywhere else the table build raises ValueError rather than invent one. Nothing here
-does I/O or touches a store, host, session or renderer. Connection, tool-use and orchestration
-seams (G1-X protocol section 2) are added to this file in later stages.
+Missing is never 0: a value that is not calculated is a ``Gap`` carrying its reason, the first
+missing operand in formula order (LEAD rulings round 5, C-2 and C-6, which extend the frozen
+lease and oracle). Each reason and claim form is one the oracle (cases/cp3c-owner/expected.json)
+or a ruling fixes; an input state no ruling settles raises ValueError rather than invent one.
+Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
+orchestration seams (G1-X protocol section 2) are added to this file in later stages.
 """
 
 import re
@@ -41,9 +42,6 @@ PathKind = Literal[
 ]
 Feasibility = Literal["High", "Medium", "Low", "Insufficient Information"]
 Category = Literal["Analyst Interpretation", "Insufficient Information"]
-
-NOT_APPLICABLE: Final = "n.m."  # a defined ratio over a non-positive denominator, never missing
-Ratio = Decimal | Literal["n.m."] | None
 
 II: Final = "Insufficient Information"
 KINDS: tuple[PathKind, ...] = (
@@ -288,7 +286,7 @@ class FacilityTerms:
     """The CP-1 T4.18 terms of one facility (QUARTER period over its FY alias)."""
 
     facility_id: str
-    currency: str
+    currency: str  # the currency unit of the T4.18 principal fact (ruling C-7)
     facility_name: Cp1Fact
     secured_status: Cp1Fact
     seniority: Cp1Fact
@@ -335,19 +333,103 @@ class Cp3cInputs:
     offered: Mapping[str, str]  # view ref -> binding name
 
 
-# --- the composer (lease "Method"; every value a Decimal) -------------------------------------
+# --- values that are known or carry the reason they are not (rulings C-2, C-6) ----------------
+
+
+@dataclass(frozen=True)
+class Gap:
+    """A value that is not calculated, with its reason: missing, or not meaningful (shown as
+    not_applicable) when ``applicable`` is False. Missing is never 0."""
+
+    reason: str
+    applicable: bool = True
+
+
+Num = Decimal | Gap
+
+_NOT_CALCULABLE = "Not calculable: "
+_NM = " (ZERO_OR_NEGATIVE_DENOMINATOR)"
+
+
+def missing_reason(label: str) -> str:
+    """Ruling C-2 (the 2D-b frame): the reason of a missing operand and its dependants."""
+    return f"{_NOT_CALCULABLE}{label} is missing"
+
+
+# Reasons fixed by the oracle (expected.json cells) and by rulings C-2 and C-6.
+REASON_MINIMUM_CASH = "Not calculable: minimum cash not assessed"
+REASON_STEP_UP = "Not calculable: margin step-up not assessed"
+REASON_LME = "Not calculable: liability-management capacity evidence is not bound"
+REASON_STRESS = "Not calculable: no stressed case is bound"
+STEP_UP_NOT_ASSESSED = "Margin step-up not assessed"
+NOT_STATED = "Not calculable: facility {fid} {term} is not stated"
+FX_REASON = "Not calculable: facility {fid} is in {ccy}, not {base}; no FX conversion is applied"
+NOT_IN = "Not calculable: facility {fid} is not in the {source}"
+NO_FACILITY = "Not calculable: no facility is in the CP-1 debt register"
+NM_EBITDA = "Not meaningful: adjusted EBITDA is zero or negative" + _NM
+NM_PAYABLE = "Not meaningful: principal payable at maturity is zero" + _NM
+NM_INTEREST = "Not meaningful: cash interest paid is zero or negative" + _NM
+NM_TOTAL = "Not meaningful: total facility principal is zero" + _NM
+
+
+def _op(value: Decimal | None, label: str) -> Num:
+    return Gap(missing_reason(label)) if value is None else value
+
+
+def _first(*values: Num) -> Gap | None:
+    """The first gap in formula order, if any."""
+    return next((v for v in values if isinstance(v, Gap)), None)
+
+
+def _total(values: Iterable[Num]) -> Num:
+    """Sum, or the first gap in formula order (a missing operand never defaults to zero)."""
+    values = tuple(values)
+    return _first(*values) or sum((v for v in values if not isinstance(v, Gap)), _ZERO)
+
+
+def _diff(a: Num, b: Num) -> Num:
+    if isinstance(a, Gap):
+        return a
+    if isinstance(b, Gap):
+        return b
+    return a - b
+
+
+def _r4(x: Decimal) -> Decimal:
+    return x.quantize(_FOUR_DP, rounding=ROUND_HALF_UP)
+
+
+def _ratio(num: Num, den: Num, not_meaningful: str) -> Num:
+    """num / den stored at 4 dp; a denominator <= 0 is not meaningful (ruling C-2)."""
+    if isinstance(num, Gap):
+        return num
+    if isinstance(den, Gap):
+        return den
+    return Gap(not_meaningful, applicable=False) if den <= 0 else _r4(num / den)
+
+
+# --- the composer (lease "Method"; every value a Decimal or a Gap) -----------------------------
 
 
 @dataclass(frozen=True)
 class FacilityOperand:
     facility_id: str
-    principal: Decimal
+    principal: Num  # a Gap when the facility is in another currency (ruling C-6)
     maturity_date: date
-    months: int  # whole months from D0 (CP-2D's rule)
+    months: int  # whole months from D0 (CP-2D's rule, recomputed)
     inside_horizon: bool  # maturity on or before the CP-2D horizon end
-    annual_amortisation: Decimal | None
+    annual_amortisation: Decimal | None  # None: not stated
     secured_status: str | None  # SECURED, UNSECURED or NOT_STATED; None is missing
     seniority: str | None
+    wall_differs: bool = False  # CP-2D's months or inside flag differ from the recomputed ones
+
+
+@dataclass(frozen=True)
+class UnmatchedFacility:
+    """A facility in only one of the CP-1 register and the CP-2D wall (ruling C-6)."""
+
+    facility_id: str
+    reason: str
 
 
 @dataclass(frozen=True)
@@ -361,49 +443,52 @@ class Operands:
     adjusted_ebitda: Decimal | None
     cash_interest_paid: Decimal | None  # a positive magnitude
     facilities: tuple[FacilityOperand, ...]
+    unmatched: tuple[UnmatchedFacility, ...] = ()
 
 
 @dataclass(frozen=True)
 class MaturityRow:
     facility: FacilityOperand
-    amortisation_before_maturity: Decimal | None
-    principal_payable: Decimal | None
-    resources: Decimal | None
-    applied: Decimal | None
-    need: Decimal | None
-    cover: Ratio
+    amortisation_before_maturity: Num
+    principal_payable: Num
+    resources: Num
+    applied: Num
+    need: Num
+    cover: Num
 
 
 @dataclass(frozen=True)
 class CreditorRow:
     facility: FacilityOperand
-    share: Decimal
-    claims_at_or_ahead: Decimal | None
-    claims_over_ebitda: Ratio
+    share: Num
+    claims_at_or_ahead: Num
+    claims_over_ebitda: Num
 
 
 @dataclass(frozen=True)
 class Refinancing:
     operands: Operands
     step_up_bps: Decimal | None
-    base_resources: Decimal | None
-    maturities: tuple[MaturityRow, ...]  # ascending months, ties by facility_id
-    creditors: tuple[CreditorRow, ...]  # by rank, then months, then facility_id
-    total_principal: Decimal
-    total_principal_payable: Decimal | None
-    total_applied: Decimal | None
-    total_need: Decimal | None
-    principal_after_horizon: Decimal | None
-    nearest_maturity: date
-    months_to_nearest: int
-    payable_over_ebitda: Ratio
-    need_over_ebitda: Ratio
-    added_interest: Decimal | None
-    pro_forma_interest: Decimal | None
-    interest_cover: Ratio
-    pro_forma_interest_cover: Ratio
-    junior_claims: Decimal | None
-    junior_over_ebitda: Ratio
+    base_resources: Num
+    maturities: tuple[MaturityRow, ...]  # wall order: maturity date, then facility_id (C-4)
+    creditors: tuple[CreditorRow, ...]  # by rank, then wall order; wall order when unranked
+    unmatched: tuple[UnmatchedFacility, ...]  # by facility_id, after every dated facility
+    total_principal: Num
+    total_principal_payable: Num
+    total_applied: Num
+    total_need: Num
+    principal_after_horizon: Num
+    nearest_maturity: date | Gap
+    months_to_nearest: int | Gap
+    payable_over_ebitda: Num
+    need_over_ebitda: Num
+    cash_interest_paid: Num
+    added_interest: Num
+    pro_forma_interest: Num
+    interest_cover: Num
+    pro_forma_interest_cover: Num
+    junior_claims: Num
+    junior_over_ebitda: Num
 
 
 def _add_months(start: date, months: int) -> date:
@@ -434,140 +519,159 @@ _SENIORITY_RANK = {
 }
 
 
-def _rank(f: FacilityOperand) -> tuple[int, int] | None:
-    """(security, seniority), compared lexicographically; NOT_STATED or missing ranks nothing."""
+def _rank(f: FacilityOperand) -> tuple[int, int] | Gap:
+    """(security, seniority), compared lexicographically; NOT_STATED or missing is a Gap."""
     ranks: list[int] = []
-    for value, table in ((f.secured_status, _SECURED_RANK), (f.seniority, _SENIORITY_RANK)):
+    for term, value, table in (
+        ("secured status", f.secured_status, _SECURED_RANK),
+        ("seniority", f.seniority, _SENIORITY_RANK),
+    ):
         if value is None or value == "NOT_STATED":
-            return None
-        if value not in table:
+            return Gap(NOT_STATED.format(fid=f.facility_id, term=term))
+        if value not in table:  # CP-1's ranking vocabulary is closed (ruling C-6): an invariant
             raise ValueError(f"CP-3C {f.facility_id}: unknown ranking flag {value!r}")
         ranks.append(table[value])
     return ranks[0], ranks[1]
 
 
-def _r4(x: Decimal) -> Decimal:
-    return x.quantize(_FOUR_DP, rounding=ROUND_HALF_UP)
-
-
-def _ratio(num: Decimal | None, den: Decimal | None) -> Ratio:
-    if num is None or den is None:
-        return None
-    return NOT_APPLICABLE if den <= 0 else _r4(num / den)
-
-
-def _total(values: Iterable[Decimal | None]) -> Decimal | None:
-    total = _ZERO
-    for v in values:
-        if v is None:
-            return None
-        total += v
-    return total
-
-
-def _amortised(f: FacilityOperand, months: int) -> Decimal | None:
-    """Amortisation paid on f over the first ``months``, capped at its principal."""
+def _amortised(f: FacilityOperand, months: int) -> Num:
+    """min(annual amortisation x months / 12, principal), the operands in formula order."""
     if f.annual_amortisation is None:
-        return None
+        return Gap(NOT_STATED.format(fid=f.facility_id, term="annual amortisation"))
+    if isinstance(f.principal, Gap):
+        return f.principal
     return min(f.annual_amortisation * months / _MONTHS_PER_YEAR, f.principal)
 
 
-def _base(o: Operands) -> Decimal | None:
-    """Cash plus undrawn committed revolver less minimum cash, before any flow."""
-    if o.cash is None or o.undrawn_revolver is None or o.minimum_cash is None:
-        return None
-    return o.cash + o.undrawn_revolver - o.minimum_cash
+def _resources(base: Num, flow: Num, months: int, amortised_to: Num, paid_before: Decimal) -> Num:
+    if isinstance(base, Gap):
+        return base
+    if isinstance(flow, Gap):
+        return flow
+    if isinstance(amortised_to, Gap):
+        return amortised_to
+    return base + flow * months / _MONTHS_PER_YEAR - amortised_to - paid_before
 
 
-def _maturity_rows(o: Operands, ordered: Sequence[FacilityOperand]) -> tuple[MaturityRow, ...]:
-    """Missingness is the same at every maturity: the base and the flow do not depend on the
-    date, and one missing amortisation leaves every amortised-to sum (and its balloon) missing,
-    so no maturity is ever known after an unknown one."""
-    base, annual = _base(o), o.run_rate_annual
+def _maturity_rows(
+    base: Num, flow: Num, ordered: Sequence[FacilityOperand], unmatched: Sequence[Gap]
+) -> tuple[MaturityRow, ...]:
+    """The resources reason (ruling C-2) is the first gap among cash, revolver and minimum cash
+    (``base``), the flow, then each facility's amortisation in wall order and the unmatched
+    facilities. It is the same at every maturity: each amortised-to sum needs every facility."""
     rows: list[MaturityRow] = []
     paid_before = _ZERO  # principal paid from resources at earlier maturities
     for f in ordered:
         own = _amortised(f, f.months)
-        balloon = None if own is None else f.principal - own
-        amortised_to = _total(_amortised(g, min(f.months, g.months)) for g in ordered)
-        resources = None
-        if base is not None and annual is not None and amortised_to is not None:
-            flow = annual * f.months / _MONTHS_PER_YEAR
-            resources = base + flow - amortised_to - paid_before
-        applied = need = None
-        cover: Ratio = None
-        if resources is not None and balloon is not None:
-            applied = min(balloon, max(_ZERO, resources))
-            need = balloon - applied
-            cover = NOT_APPLICABLE if balloon == 0 else _r4(applied / balloon)
-            paid_before += applied
-        rows.append(MaturityRow(f, own, balloon, resources, applied, need, cover))
+        balloon = _diff(f.principal, own)
+        amortised_to = _total(
+            (*(_amortised(g, min(f.months, g.months)) for g in ordered), *unmatched)
+        )
+        resources = _resources(base, flow, f.months, amortised_to, paid_before)
+        if isinstance(resources, Gap) or isinstance(balloon, Gap):
+            # A balloon gap is f's own amortisation gap, which ``amortised_to`` carries.
+            lost = resources if isinstance(resources, Gap) else balloon
+            rows.append(MaturityRow(f, own, balloon, resources, lost, lost, lost))
+            continue
+        applied = min(balloon, max(_ZERO, resources))
+        cover = Gap(NM_PAYABLE, applicable=False) if balloon == 0 else _r4(applied / balloon)
+        paid_before += applied
+        rows.append(MaturityRow(f, own, balloon, resources, applied, balloon - applied, cover))
     return tuple(rows)
 
 
 def _creditor_rows(
-    ordered: Sequence[FacilityOperand], total: Decimal, ebitda: Decimal | None
-) -> tuple[CreditorRow, ...]:
-    ranks = {f.facility_id: r for f in ordered if (r := _rank(f)) is not None}
-    if len(ranks) < len(ordered):  # one unranked facility leaves every claim missing
-        return tuple(CreditorRow(f, _r4(f.principal / total), None, None) for f in ordered)
-    rows = []
-    for f in sorted(ordered, key=lambda f: (ranks[f.facility_id], f.months, f.facility_id)):
+    ordered: Sequence[FacilityOperand], unmatched: Sequence[Gap], total: Num, ebitda: Num
+) -> tuple[tuple[CreditorRow, ...], Num]:
+    """The rows, and the claims at or ahead of the most junior facility. One facility not
+    ranked (or unmatched) leaves every claim missing, the rows in wall order; a row names its
+    own facility first, the junior total the first such facility in wall order."""
+    ranked = [(f, _rank(f)) for f in ordered]
+    unranked = _first(*(r for _, r in ranked if isinstance(r, Gap)), *unmatched)
+    rows: list[CreditorRow] = []
+    if unranked is not None:
+        for f, r in ranked:
+            gap = r if isinstance(r, Gap) else unranked
+            rows.append(CreditorRow(f, _ratio(f.principal, total, NM_TOTAL), gap, gap))
+        return tuple(rows), unranked
+    ranks = {f.facility_id: r for f, r in ranked if not isinstance(r, Gap)}
+    for f in sorted(ordered, key=lambda f: (ranks[f.facility_id], f.maturity_date, f.facility_id)):
         own = ranks[f.facility_id]
-        claims = sum((g.principal for g in ordered if ranks[g.facility_id] <= own), _ZERO)
-        rows.append(CreditorRow(f, _r4(f.principal / total), claims, _ratio(claims, ebitda)))
-    return tuple(rows)
+        claims = _total(g.principal for g in ordered if ranks[g.facility_id] <= own)
+        share = _ratio(f.principal, total, NM_TOTAL)
+        rows.append(CreditorRow(f, share, claims, _ratio(claims, ebitda, NM_EBITDA)))
+    # The most junior facility's claims are those of the last rank: every facility.
+    return tuple(rows), rows[-1].claims_at_or_ahead if rows else Gap(NO_FACILITY)
+
+
+def _repriced(payable: Num, step: Num) -> Num:
+    """principal repriced x margin step-up / 10000, the operands in formula order."""
+    if isinstance(payable, Gap):
+        return payable
+    if isinstance(step, Gap):
+        return step
+    return payable * step / _BP_PER_UNIT
 
 
 def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refinancing:
     """The Method over the operands, pure Decimal; ``step_up_bps`` None is an unassessed step-up."""
     o = operands
-    if not o.facilities:
-        raise ValueError(
-            "CP-3C: no facility to refinance; the lease pins no output for it (not pinned)"
-        )
-    if len({f.facility_id for f in o.facilities}) != len(o.facilities):
+    ids = [f.facility_id for f in o.facilities] + [u.facility_id for u in o.unmatched]
+    if len(set(ids)) != len(ids):
         raise ValueError("CP-3C: a facility_id repeats")
     with localcontext(_CONTEXT):
-        ordered = tuple(sorted(o.facilities, key=lambda f: (f.months, f.facility_id)))
-        total = sum((f.principal for f in ordered), _ZERO)
-        if total <= 0:
-            raise ValueError("CP-3C: total facility principal is not positive (not pinned)")
-        rows = _maturity_rows(o, ordered)
-        creditors = _creditor_rows(ordered, total, o.adjusted_ebitda)
-        payable = _total(r.principal_payable for r in rows)
-        need = _total(r.need for r in rows)
-        step = None if step_up_bps is None else Decimal(step_up_bps)
-        added = None if step is None or payable is None else payable * step / _BP_PER_UNIT
-        pro_forma = (
-            None if added is None or o.cash_interest_paid is None else o.cash_interest_paid + added
+        ordered = tuple(sorted(o.facilities, key=lambda f: (f.maturity_date, f.facility_id)))
+        unmatched = tuple(sorted(o.unmatched, key=lambda u: u.facility_id))
+        # Undated in CP-3C's view, so after every dated facility (2D-c); every total needs it.
+        extra = tuple(Gap(u.reason) for u in unmatched)
+        # No facility at all: each facility-dependent value takes this one reason (C-6).
+        none = None if ordered or unmatched else Gap(NO_FACILITY)
+        minimum: Num = Gap(REASON_MINIMUM_CASH) if o.minimum_cash is None else o.minimum_cash
+        cash_and_revolver = _total(
+            (_op(o.cash, "cash and cash equivalents"), _op(o.undrawn_revolver, "undrawn revolver"))
         )
-        # Claims are all known or all missing (one unranked facility ranks nothing).
-        claims = [c.claims_at_or_ahead for c in creditors if c.claims_at_or_ahead is not None]
-        junior = max(claims) if len(claims) == len(creditors) else None
+        base = _diff(cash_and_revolver, minimum)
+        flow = _op(o.run_rate_annual, "CP-2D run-rate annual flow")
+        ebitda = _op(o.adjusted_ebitda, "adjusted EBITDA")
+        paid = _op(o.cash_interest_paid, "cash interest paid")
+        rows = _maturity_rows(base, flow, ordered, extra)
+        total = none or _total((*(f.principal for f in ordered), *extra))
+        if isinstance(total, Decimal) and total < 0:
+            raise ValueError("CP-3C: total facility principal is negative (not pinned)")
+        creditors, junior = _creditor_rows(ordered, extra, total, ebitda)
+        payable = none or _total((*(r.principal_payable for r in rows), *extra))
+        # Without a matched facility there is no row; the resources operands still come first.
+        pool = none or _first(base, flow)
+        applied = pool or _total((*(r.applied for r in rows), *extra))
+        need = pool or _total((*(r.need for r in rows), *extra))
+        after = (r.principal_payable for r in rows if not r.facility.inside_horizon)
+        step: Num = Gap(REASON_STEP_UP) if step_up_bps is None else Decimal(step_up_bps)
+        added = _repriced(payable, step)
+        pro_forma = _total((paid, added))
+        undated = none or _first(*extra)
         return Refinancing(
             operands=o,
-            step_up_bps=step,
-            base_resources=_base(o),
+            step_up_bps=None if isinstance(step, Gap) else step,
+            base_resources=base,
             maturities=rows,
             creditors=creditors,
+            unmatched=unmatched,
             total_principal=total,
             total_principal_payable=payable,
-            total_applied=_total(r.applied for r in rows),
+            total_applied=applied,
             total_need=need,
-            principal_after_horizon=_total(
-                r.principal_payable for r in rows if not r.facility.inside_horizon
-            ),
-            nearest_maturity=ordered[0].maturity_date,
-            months_to_nearest=ordered[0].months,
-            payable_over_ebitda=_ratio(payable, o.adjusted_ebitda),
-            need_over_ebitda=_ratio(need, o.adjusted_ebitda),
+            principal_after_horizon=none or _total((*after, *extra)),
+            nearest_maturity=undated or ordered[0].maturity_date,
+            months_to_nearest=undated or ordered[0].months,
+            payable_over_ebitda=_ratio(payable, ebitda, NM_EBITDA),
+            need_over_ebitda=_ratio(need, ebitda, NM_EBITDA),
+            cash_interest_paid=paid,
             added_interest=added,
             pro_forma_interest=pro_forma,
-            interest_cover=_ratio(o.adjusted_ebitda, o.cash_interest_paid),
-            pro_forma_interest_cover=_ratio(o.adjusted_ebitda, pro_forma),
+            interest_cover=_ratio(ebitda, paid, NM_INTEREST),
+            pro_forma_interest_cover=_ratio(ebitda, pro_forma, NM_INTEREST),
             junior_claims=junior,
-            junior_over_ebitda=_ratio(junior, o.adjusted_ebitda),
+            junior_over_ebitda=_ratio(junior, ebitda, NM_EBITDA),
         )
 
 
@@ -615,14 +719,14 @@ def _facility(
     row: WallRow, terms: FacilityTerms, *, balance_date: date, horizon: int, currency: str
 ) -> FacilityOperand:
     fid = row.facility_id
-    if terms.currency != currency:
-        raise ValueError(
-            f"CP-3C {fid}: a facility in currency {terms.currency} is not summed with {currency}; "
-            "the lease pins no wording for that limitation (not pinned)"
-        )
-    principal = _cp2d_amount(row.principal)
-    if principal is None:
-        raise ValueError(f"CP-3C {fid}: wall principal missing (not pinned)")
+    principal: Num
+    if terms.currency != currency:  # ruling C-6 with 2D5's reason; the currency per C-7
+        principal = Gap(FX_REASON.format(fid=fid, ccy=terms.currency, base=currency))
+    else:
+        amount = _cp2d_amount(row.principal)
+        if amount is None:
+            raise ValueError(f"CP-3C {fid}: wall principal missing (not pinned)")
+        principal = amount
     maturity = date.fromisoformat(
         _known_text(row.maturity_date.fact_id, row.maturity_date.status, row.maturity_date.text)
     )
@@ -632,32 +736,30 @@ def _facility(
     )
     if flag not in ("Yes", "No"):
         raise ValueError(f"CP-3C {row.inside_horizon.fact_id}: inside-horizon flag {flag!r}")
-    inside = flag == "Yes"
+    # Ruling C-6 (2D-d): CP-3C uses the recomputed position; the copies show CP-2D's.
     position = wall_position(balance_date=balance_date, maturity=maturity, horizon_months=horizon)
-    if position != (months, inside):
-        raise ValueError(
-            f"CP-3C {fid}: the CP-2D wall row disagrees with its own maturity and horizon"
-        )
     return FacilityOperand(
         facility_id=fid,
         principal=principal,
         maturity_date=maturity,
-        months=months,
-        inside_horizon=inside,
+        months=position[0],
+        inside_horizon=position[1],
         annual_amortisation=_cp1_amount(f"{fid}.annual_amortisation", terms.annual_amortisation),
         secured_status=_cp1_text(f"{fid}.secured_status", terms.secured_status),
         seniority=_cp1_text(f"{fid}.seniority", terms.seniority),
+        wall_differs=position != (months, flag == "Yes"),
     )
 
 
-def _terms_by_id(cp1: Cp1Operands, cp2d: Cp2dOperands) -> dict[str, FacilityTerms]:
+def _sources(
+    cp1: Cp1Operands, cp2d: Cp2dOperands
+) -> tuple[dict[str, FacilityTerms], dict[str, WallRow]]:
+    """The CP-1 register and the CP-2D wall by facility_id."""
     terms = {t.facility_id: t for t in cp1.facilities}
-    wall = [r.facility_id for r in cp2d.wall]
-    if len(terms) != len(cp1.facilities) or len(set(wall)) != len(wall) or set(wall) != set(terms):
-        raise ValueError(
-            "CP-3C: the CP-1 facility register and the CP-2D wall name different facilities"
-        )
-    return terms
+    wall = {r.facility_id: r for r in cp2d.wall}
+    if len(terms) != len(cp1.facilities) or len(wall) != len(cp2d.wall):
+        raise ValueError("CP-3C: a facility_id repeats")
+    return terms, wall
 
 
 def compose_operands(
@@ -667,7 +769,7 @@ def compose_operands(
     if cp1.cash_interest.period != cp1.adjusted_ebitda.period:
         raise ValueError("CP-3C: cash interest and adjusted EBITDA cover different periods")
     interest = _cp1_amount("cash_interest", cp1.cash_interest)
-    terms = _terms_by_id(cp1, cp2d)
+    terms, wall = _sources(cp1, cp2d)
     horizon = _whole_months(cp2d.horizon)
     facilities = tuple(
         _facility(
@@ -678,6 +780,16 @@ def compose_operands(
             currency=currency,
         )
         for row in cp2d.wall
+        if row.facility_id in terms
+    )
+    unmatched = tuple(
+        UnmatchedFacility(
+            fid,
+            NOT_IN.format(
+                fid=fid, source="CP-2D maturity wall" if fid in terms else "CP-1 debt register"
+            ),
+        )
+        for fid in sorted(terms.keys() ^ wall.keys())
     )
     return Operands(
         cash=_cp1_amount("cash_closing", cp1.cash_closing),
@@ -687,6 +799,7 @@ def compose_operands(
         adjusted_ebitda=_cp1_amount("adjusted_ebitda", cp1.adjusted_ebitda),
         cash_interest_paid=None if interest is None else interest.copy_negate(),  # exact
         facilities=facilities,
+        unmatched=unmatched,
     )
 
 
@@ -694,13 +807,6 @@ def compose_operands(
 
 # A gap's report-wide G<n> is bound at render time (expected.json shown_pattern "∅ G<n>").
 GAP_SHOWN: Mapping[CellStatus, str] = {"missing": "∅ G#", "not_applicable": "∅ G# n.m."}
-
-# Reasons the oracle fixes (expected.json cells); no other reason is ever written.
-REASON_MINIMUM_CASH = "Not calculable: minimum cash not assessed"
-REASON_STEP_UP = "Not calculable: margin step-up not assessed"
-REASON_LME = "Not calculable: liability-management capacity evidence is not bound"
-REASON_STRESS = "Not calculable: no stressed case is bound"
-STEP_UP_NOT_ASSESSED = "Margin step-up not assessed"
 
 
 @dataclass(frozen=True)
@@ -796,28 +902,24 @@ def _text(text: str, value_class: ValueClass, formula: str | None = None) -> _Sp
     return _Spec("known", value_class, text=text, formula=formula)
 
 
-def _gap(reason: str | None, unit: str, value_class: ValueClass = "calculated") -> _Spec:
-    """A missing cell; a None reason means no reason is pinned, and the cell build refuses it."""
+def _gap(reason: str, unit: str | None, value_class: ValueClass = "calculated") -> _Spec:
     return _Spec("missing", value_class, unit=unit, reason=reason)
 
 
-def _value(x: Ratio, unit: str, period: str, formula: str, why: str | None = None) -> _Spec:
-    """A computed value: known, missing for the pinned reason ``why``, or not applicable."""
-    if x is None:
-        return _gap(why, unit)
-    if isinstance(x, Decimal):
-        return replace(_known(x, unit, period), formula=formula)
-    return _Spec("not_applicable", "calculated", unit=unit)  # the oracle pins no n.m. reason
+def _value(x: Num, unit: str, period: str, formula: str) -> _Spec:
+    """A computed value: known with its formula, or a gap with its reason (ruling C-2)."""
+    if isinstance(x, Gap):
+        status: CellStatus = "missing" if x.applicable else "not_applicable"
+        return _Spec(status, "calculated", unit=unit, reason=x.reason)
+    return replace(_known(x, unit, period), formula=formula)
 
 
 def _copy(fact: Cp1Fact | Cp2dFact, at: str) -> _Spec:
-    """A copied upstream fact: its own value, unit, period, value_class and reason."""
+    """A copied upstream fact: its own value, unit, period, value_class and reason (C-7)."""
     if fact.value_class is None:
         raise ValueError(f"CP-3C {at}: a copied fact keeps its value_class, and none is bound")
-    if fact.status == "missing":
-        if fact.unit is None:
-            raise ValueError(f"CP-3C {at}: a copied gap keeps its unit, and none is bound")
-        return _gap(fact.reason, fact.unit, fact.value_class)
+    if fact.status == "missing" and fact.reason is not None:  # a missing fact has a reason
+        return replace(_gap(fact.reason, fact.unit, fact.value_class), period=fact.period)
     if fact.text is not None:
         return _text(fact.text, fact.value_class)
     if fact.amount is None or fact.unit is None or fact.period is None:
@@ -837,10 +939,6 @@ def _materialise(
     spec: _Spec, *, table_id: str, row_id: str, field: str, label: str, currency: str
 ) -> Cell:
     fact_id = f"{table_id}.{row_id}" if field == "value" else f"{table_id}.{row_id}.{field}"
-    if spec.status != "known" and spec.reason is None:
-        raise ValueError(
-            f"CP-3C {fact_id}: {spec.status} with no reason the oracle pins for it (not pinned)"
-        )
     cell = Cell(
         fact_id=fact_id,
         table_id=table_id,
@@ -910,25 +1008,40 @@ class _Context:
     wall: Mapping[str, WallRow]
     balance: str  # the balance-date period
     flows: str  # the LTM window of flows and ratios
-    why_resources: str | None  # the pinned reason a resources-dependent value is missing
-    why_step_up: str | None  # the pinned reason a step-up-dependent value is missing
+
+    @property
+    def ids(self) -> tuple[str, ...]:
+        """Every facility in wall order, the unmatched ones last (ruling C-6)."""
+        r = self.refinancing
+        matched = (m.facility.facility_id for m in r.maturities)
+        return (*matched, *(u.facility_id for u in r.unmatched))
 
     def label(self, facility_id: str) -> str:
+        """'<name> (<id>)'; a facility the CP-1 register lacks has no name, so its id alone."""
+        if facility_id not in self.terms:
+            return facility_id
         name = self.terms[facility_id].facility_name
         text = _known_text(f"{facility_id}.facility_name", name.status, name.text)
         return f"{text} ({facility_id})"
 
-    def usd(self, x: Ratio, formula: str, why: str | None = None) -> _Spec:
-        return _value(x, _MILLIONS, self.balance, formula, why)
+    def unmatched(self, columns: Sequence[tuple[str | None, ValueClass]]) -> list[Line]:
+        """A row per unmatched facility, every cell missing with its reason (ruling C-6)."""
+        return [
+            (self.label(u.facility_id), [_gap(u.reason, unit, cls) for unit, cls in columns])
+            for u in self.refinancing.unmatched
+        ]
 
-    def usd_flow(self, x: Ratio, formula: str, why: str | None = None) -> _Spec:
-        return _value(x, _MILLIONS, self.flows, formula, why)
+    def usd(self, x: Num, formula: str) -> _Spec:
+        return _value(x, _MILLIONS, self.balance, formula)
 
-    def percent(self, x: Ratio, formula: str, why: str | None = None) -> _Spec:
-        return _value(x, "PERCENT", self.balance, formula, why)
+    def usd_flow(self, x: Num, formula: str) -> _Spec:
+        return _value(x, _MILLIONS, self.flows, formula)
 
-    def multiple(self, x: Ratio, formula: str, why: str | None = None) -> _Spec:
-        return _value(x, "MULTIPLE", self.flows, formula, why)
+    def percent(self, x: Num, formula: str) -> _Spec:
+        return _value(x, "PERCENT", self.balance, formula)
+
+    def multiple(self, x: Num, formula: str) -> _Spec:
+        return _value(x, "MULTIPLE", self.flows, formula)
 
 
 _T3D1_COLUMNS = (
@@ -948,10 +1061,26 @@ _RESOURCES_FORMULA = (
     " - amortisation to the date - earlier principal paid from resources"
 )
 _APPLIED_FORMULA = "min(principal payable at maturity, max(0, resources at maturity))"
+# (unit, value_class) per column of an unmatched facility's row (the copies' classes).
+_T3D1_GAPS: tuple[tuple[str | None, ValueClass], ...] = (
+    (_MILLIONS, "source"),
+    (None, "source"),
+    ("months", "calculated"),
+    (None, "calculated"),
+    *((_MILLIONS, "calculated"),) * 5,
+    ("PERCENT", "calculated"),
+)
+_T3D4_GAPS: tuple[tuple[str | None, ValueClass], ...] = (
+    (None, "source"),
+    (None, "source"),
+    (_MILLIONS, "source"),
+    ("PERCENT", "calculated"),
+    (_MILLIONS, "calculated"),
+    ("MULTIPLE", "calculated"),
+)
 
 
 def _t3d1(c: _Context) -> Table:
-    res = c.why_resources
     rows: list[Line] = []
     for m in c.refinancing.maturities:
         w = c.wall[m.facility.facility_id]
@@ -964,12 +1093,13 @@ def _t3d1(c: _Context) -> Table:
                 m.amortisation_before_maturity, "min(annual amortisation x months / 12, principal)"
             ),
             c.usd(m.principal_payable, "principal - amortisation before maturity"),
-            c.usd(m.resources, _RESOURCES_FORMULA, res),
-            c.usd(m.applied, _APPLIED_FORMULA, res),
-            c.usd(m.need, "principal payable at maturity - resources applied", res),
-            c.percent(m.cover, "resources applied / principal payable at maturity", res),
+            c.usd(m.resources, _RESOURCES_FORMULA),
+            c.usd(m.applied, _APPLIED_FORMULA),
+            c.usd(m.need, "principal payable at maturity - resources applied"),
+            c.percent(m.cover, "resources applied / principal payable at maturity"),
         ]
         rows.append((c.label(m.facility.facility_id), cells))
+    rows += c.unmatched(_T3D1_GAPS)
     columns = tuple(col.format(d0=c.balance) for col in _T3D1_COLUMNS)
     title = "Refinancing need by maturity"
     return _table("T3D.1", title, "Facility", columns, rows, c.inputs.currency)
@@ -981,14 +1111,22 @@ def _single(c: _Context, table_id: str, title: str, rows: Sequence[tuple[str, _S
 
 
 def _t3d2(c: _Context) -> Table:
-    r, cp2d, res = c.refinancing, c.inputs.cp2d, c.why_resources
-    months = replace(
-        _known(Decimal(r.months_to_nearest), "months", c.balance),
-        formula="months from the balance date to the earliest maturity",
+    r, cp2d = c.refinancing, c.inputs.cp2d
+    months = (
+        _gap(r.months_to_nearest.reason, "months")
+        if isinstance(r.months_to_nearest, Gap)
+        else replace(
+            _known(Decimal(r.months_to_nearest), "months", c.balance),
+            formula="months from the balance date to the earliest maturity",
+        )
+    )
+    nearest = (
+        _gap(r.nearest_maturity.reason, None)
+        if isinstance(r.nearest_maturity, Gap)
+        else _text(r.nearest_maturity.isoformat(), "calculated", "earliest maturity date")
     )
     outside = "sum of principal payable at maturity of facilities outside the CP-2D horizon"
     payable = "sum of principal payable at maturity"
-    nearest = _text(r.nearest_maturity.isoformat(), "calculated", "earliest maturity date")
     rows = [
         (
             "Principal payable at maturity, all facilities",
@@ -996,9 +1134,9 @@ def _t3d2(c: _Context) -> Table:
         ),
         (
             "Resources applied at the maturity dates",
-            c.usd(r.total_applied, "sum of resources applied", res),
+            c.usd(r.total_applied, "sum of resources applied"),
         ),
-        ("Refinancing need after resources", c.usd(r.total_need, "sum of refinancing need", res)),
+        ("Refinancing need after resources", c.usd(r.total_need, "sum of refinancing need")),
         ("Principal maturing after the CP-2D horizon", c.usd(r.principal_after_horizon, outside)),
         ("Nearest maturity date", nearest),
         ("Months to the nearest maturity", months),
@@ -1009,7 +1147,7 @@ def _t3d2(c: _Context) -> Table:
         ),
         (
             "Refinancing need / LTM adjusted EBITDA",
-            c.multiple(r.need_over_ebitda, "refinancing need / adjusted EBITDA", res),
+            c.multiple(r.need_over_ebitda, "refinancing need / adjusted EBITDA"),
         ),
         ("CP-2D funding gap at its horizon end", _from_cp2d(cp2d.funding_gap)),
         ("Minimum cash applied (analyst assumption set in CP-2D)", _from_cp2d(cp2d.minimum_cash)),
@@ -1019,14 +1157,14 @@ def _t3d2(c: _Context) -> Table:
 
 
 def _t3d3(c: _Context) -> Table:
-    r, step = c.refinancing, c.why_step_up
+    r = c.refinancing
     bps = r.step_up_bps
     step_up = (
         _gap(STEP_UP_NOT_ASSESSED, "basis_points", "analyst_judgment")
         if bps is None
         else _known(bps, "basis_points", c.inputs.as_of.isoformat(), "analyst_judgment")
     )
-    paid = c.usd_flow(r.operands.cash_interest_paid, "negation of the CP-1 cash interest outflow")
+    paid = c.usd_flow(r.cash_interest_paid, "negation of the CP-1 cash interest outflow")
     pro_forma = "cash interest paid + added annual cash interest"
     pro_forma_cover = "adjusted EBITDA / pro forma annual cash interest"
     rows = [
@@ -1043,10 +1181,10 @@ def _t3d3(c: _Context) -> Table:
         ),
         (
             "Added annual cash interest",
-            c.usd_flow(r.added_interest, "principal repriced x margin step-up / 10000", step),
+            c.usd_flow(r.added_interest, "principal repriced x margin step-up / 10000"),
         ),
-        ("Pro forma annual cash interest", c.usd_flow(r.pro_forma_interest, pro_forma, step)),
-        ("Pro forma interest cover", c.multiple(r.pro_forma_interest_cover, pro_forma_cover, step)),
+        ("Pro forma annual cash interest", c.usd_flow(r.pro_forma_interest, pro_forma)),
+        ("Pro forma interest cover", c.multiple(r.pro_forma_interest_cover, pro_forma_cover)),
     ]
     return _single(c, "T3D.3", "Refinancing cost sensitivity", rows)
 
@@ -1070,6 +1208,7 @@ def _t3d4(c: _Context) -> Table:
             c.multiple(cr.claims_over_ebitda, "claims at or ahead / adjusted EBITDA"),
         ]
         rows.append((c.label(fid), cells))
+    rows += c.unmatched(_T3D4_GAPS)
     columns = (
         "Security",
         "Seniority",
@@ -1226,6 +1365,41 @@ _FIXED_TAIL = (
 )
 
 
+# Own lines of ruling C-6 (the texts are ruled; the T3D.8 labels and kinds follow CP-2D's D-1).
+_NO_FACILITY_LINE = (
+    "Facility schedule",
+    "Gap",
+    "No facility is in the CP-1 debt register; refinancing figures are not calculated.",
+)
+_FX_LINE = (
+    "Facility {fid} is denominated in {ccy}; maturity-wall totals and shares are not calculated "
+    "because no FX conversion is applied."
+)
+_WALL_LINE = (
+    "CP-2D's maturity wall for facility {fid} differs from the position recomputed from its "
+    "horizon and maturity date; CP-3C uses the recomputed position and shows both."
+)
+
+
+def _facility_lines(c: _Context) -> list[tuple[str, str, str]]:
+    r = c.refinancing
+    lines = [] if r.maturities or r.unmatched else [_NO_FACILITY_LINE]
+    for m in r.maturities:
+        fid, ccy = m.facility.facility_id, c.terms[m.facility.facility_id].currency
+        if ccy != c.inputs.currency:
+            lines.append(
+                (f"Facility currency ({fid})", "Limitation", _FX_LINE.format(fid=fid, ccy=ccy))
+            )
+        if m.facility.wall_differs:
+            label = f"CP-2D maturity wall cross-check ({fid})"
+            lines.append((label, "Limitation", _WALL_LINE.format(fid=fid)))
+    # The same words as the cells' reason (ruling C-6).
+    lines += [
+        (f"Facility register and wall ({u.facility_id})", "Gap", u.reason) for u in r.unmatched
+    ]
+    return lines
+
+
 def _limitations(c: _Context) -> tuple[tuple[str, str, str], ...]:
     """(T3D.8 label, kind, text) per own limitation, in the oracle's order."""
     s = c.inputs.submission
@@ -1241,6 +1415,7 @@ def _limitations(c: _Context) -> tuple[tuple[str, str, str], ...]:
         _MINIMUM_CASH[c.inputs.cp2d.minimum_cash.status == "known"],
         _STEP_UP[s.repricing is not None],
         *_FIXED_TAIL,
+        *_facility_lines(c),
         *paths,
     )
 
@@ -1262,14 +1437,13 @@ def _upstream_shown(
 def _trace(c: _Context) -> TextTable:
     """T3D.9: [name, module, table or stable id, shown] for each name read, CP-1 then CP-2D."""
     cp1, cp2d = c.inputs.cp1, c.inputs.cp2d
-    order = [m.facility.facility_id for m in c.refinancing.maturities]
     named_cp1: list[tuple[str, Cp1Fact]] = [
         ("cash_closing", cp1.cash_closing),
         ("undrawn_rcf", cp1.undrawn_rcf),
         ("adjusted_ebitda", cp1.adjusted_ebitda),
         ("cash_interest", cp1.cash_interest),
     ]
-    for fid in order:
+    for fid in (i for i in c.ids if i in c.terms):
         t = c.terms[fid]
         named_cp1 += [
             (f"{fid}.facility_name", t.facility_name),
@@ -1283,7 +1457,7 @@ def _trace(c: _Context) -> TextTable:
         ("cp2d.min_cash", cp2d.minimum_cash),
         ("cp2d.funding_gap", cp2d.funding_gap),
     ]
-    for fid in order:
+    for fid in (i for i in c.ids if i in c.wall):
         w = c.wall[fid]
         named_cp2d += [
             (f"cp2d.{fid}.principal", w.principal),
@@ -1340,9 +1514,7 @@ class _Claims:
     def fig(self, fact_id: str) -> str:
         cell = self.cells[fact_id]
         if cell.status != "known" or cell.amount is None or cell.value_class == "analyst_judgment":
-            raise ValueError(
-                f"CP-3C claim figure {fact_id}: not a known computed figure (not pinned)"
-            )
+            raise ValueError(f"CP-3C claim figure {fact_id}: not a known computed figure")
         unit = figure_unit(cell.fact())
         if unit is None:
             raise ValueError(f"CP-3C claim figure {fact_id}: no figure unit")
@@ -1374,9 +1546,27 @@ class _Claims:
         return ClaimText(claim_id, template, "".join(parts), references, (*names, *references))
 
 
+def _because(cell: Cell) -> str:
+    """A computed gap's reason as a claim's cause (ruling C-3): the reason less its prefix."""
+    return (cell.reason or "").removeprefix(_NOT_CALCULABLE)
+
+
+def _names(c: _Context, cp1: Sequence[str], cp2d: Sequence[str]) -> list[str]:
+    """Bound names per facility in wall order; an unmatched facility names the half it has."""
+    return [
+        name
+        for fid in c.ids
+        for name in (
+            *(f"{fid}.{n}" for n in cp1 if fid in c.terms),
+            *(f"cp2d.{fid}.{n}" for n in cp2d if fid in c.wall),
+        )
+    ]
+
+
 def _claims(c: _Context, cells: Mapping[str, Cell]) -> tuple[ClaimText, ...]:
+    """The pinned claims, the gap forms of rulings C-1 and C-3, and a chip for any other cell
+    that is not known (the fig-or-chip rule those rulings apply; listed for LEAD)."""
     k = _Claims(cells)
-    order = [m.facility.facility_id for m in c.refinancing.maturities]
     need = cells["T3D.2.r03"]
     if need.status == "known":
         tail = (
@@ -1389,44 +1579,38 @@ def _claims(c: _Context, cells: Mapping[str, Cell]) -> tuple[ClaimText, ...]:
             "minimum cash has not been assessed."
         )
     else:
-        raise ValueError("CP-3C CP-3C-NEED-01: no gap form is pinned for this reason (not pinned)")
-    need_names = [
-        n for fid in order for n in (f"{fid}.annual_amortisation", f"cp2d.{fid}.principal")
-    ]
+        tail = (
+            f"the refinancing need after resources is {k.chip('T3D.2.r03')}, because "
+            f"{_because(need)}."
+        )
+    need_names = _names(c, ("annual_amortisation",), ("principal",))
     need_names += ["cash_closing", "undrawn_rcf", "cp2d.run_rate", "cp2d.min_cash"]
     claims = [
         k.claim(
             "CP-3C-NEED-01",
-            f"Principal payable at maturity totals {k.fig('T3D.2.r01')}; {tail}",
+            f"Principal payable at maturity totals {k.either('T3D.2.r01')}; {tail}",
             need_names,
         ),
         k.claim(
             "CP-3C-HORIZON-01",
             f"The liquidity analysis reports a funding gap of {k.either('T3D.2.r10')} at its "
-            f"horizon end, while {k.fig('T3D.2.r04')} falls due after that horizon.",
-            ["cp2d.funding_gap", "cp2d.horizon", *(f"cp2d.{fid}.inside_horizon" for fid in order)],
+            f"horizon end, while {k.either('T3D.2.r04')} falls due after that horizon.",
+            ["cp2d.funding_gap", "cp2d.horizon", *_names(c, (), ("inside_horizon",))],
         ),
-        k.claim(
-            "CP-3C-BURDEN-01",
-            f"Principal payable at maturity is {k.fig('T3D.2.r08')} of adjusted EBITDA for the "
-            f"twelve months to {format_date(c.inputs.balance_date)}; the refinancing need is "
-            f"{k.either('T3D.2.r09')} of the same earnings.",
-            ["adjusted_ebitda"],
-        ),
+        _burden_claim(c, k),
         _cost_claim(c, k),
-        k.claim(
-            "CP-3C-LME-01",
-            f"Claims at or ahead of the most junior facility are {k.fig('T3D.5.r01.c1')} before "
-            "any liability-management exercise; the position after such an exercise is "
-            f"{k.chip('T3D.5.r01.c2')} because the legal capacity evidence is not bound.",
-            [
-                n
-                for fid in order
-                for n in (f"{fid}.secured_status", f"{fid}.seniority", f"cp2d.{fid}.principal")
-            ],
-        ),
+        _lme_claim(c, k),
     ]
     return tuple(claims)
+
+
+def _burden_claim(c: _Context, k: _Claims) -> ClaimText:
+    head = f"Principal payable at maturity is {k.either('T3D.2.r08')} of adjusted EBITDA for the "
+    head += f"twelve months to {format_date(c.inputs.balance_date)}"
+    if k.cells["T3D.2.r08"].reason == NM_EBITDA:  # ruling C-3
+        head += ", because adjusted EBITDA is zero or negative"
+    template = f"{head}; the refinancing need is {k.either('T3D.2.r09')} of the same earnings."
+    return k.claim("CP-3C-BURDEN-01", template, ["adjusted_ebitda"])
 
 
 def _cost_claim(c: _Context, k: _Claims) -> ClaimText:
@@ -1438,18 +1622,33 @@ def _cost_claim(c: _Context, k: _Claims) -> ClaimText:
             [],
         )
     now, after = c.refinancing.interest_cover, c.refinancing.pro_forma_interest_cover
-    if not (isinstance(now, Decimal) and isinstance(after, Decimal) and after < now):
-        # The pinned template says the step-up "lowers" interest cover; it states nothing else.
-        raise ValueError(
-            "CP-3C CP-3C-COST-01: interest cover is not lowered; no wording is pinned (not pinned)"
-        )
-    return k.claim(
-        "CP-3C-COST-01",
+    adds = (
         "An assumed margin step-up on the principal payable at maturity adds "
-        f"{k.fig('T3D.3.r06')} to annual cash interest and lowers interest cover from "
-        f"{k.fig('T3D.3.r03')} to "
-        f"{k.fig('T3D.3.r08')}.",
-        ["cash_interest", "adjusted_ebitda"],
+        f"{k.either('T3D.3.r06')} to annual cash interest"
+    )
+    # Ruling C-1: the verb follows the stored covers; a cover not known takes its chip.
+    if isinstance(now, Gap) or isinstance(after, Gap):
+        tail = (
+            f"; interest cover is {k.either('T3D.3.r03')} before and {k.either('T3D.3.r08')} "
+            "after it."
+        )
+    elif after == now:
+        tail = f" and leaves interest cover at {k.fig('T3D.3.r03')}."
+    else:
+        verb = "lowers" if after < now else "changes"
+        tail = f" and {verb} interest cover from {k.fig('T3D.3.r03')} to {k.fig('T3D.3.r08')}."
+    return k.claim("CP-3C-COST-01", adds + tail, ["cash_interest", "adjusted_ebitda"])
+
+
+def _lme_claim(c: _Context, k: _Claims) -> ClaimText:
+    junior = k.cells["T3D.5.r01.c1"]
+    cause = "" if junior.status == "known" else f", because {_because(junior)}"  # ruling C-3
+    return k.claim(
+        "CP-3C-LME-01",
+        f"Claims at or ahead of the most junior facility are {k.either('T3D.5.r01.c1')} before "
+        f"any liability-management exercise{cause}; the position after such an exercise is "
+        f"{k.chip('T3D.5.r01.c2')} because the legal capacity evidence is not bound.",
+        _names(c, ("secured_status", "seniority"), ("principal",)),
     )
 
 
@@ -1480,15 +1679,14 @@ def compute(inputs: Cp3cInputs) -> Cp3cResult:
     refinancing = compose_refinancing(
         operands=operands, step_up_bps=None if repricing is None else repricing.bps
     )
+    terms, wall = _sources(inputs.cp1, inputs.cp2d)
     c = _Context(
         inputs=inputs,
         refinancing=refinancing,
-        terms=_terms_by_id(inputs.cp1, inputs.cp2d),
-        wall={w.facility_id: w for w in inputs.cp2d.wall},
+        terms=terms,
+        wall=wall,
         balance=inputs.balance_date.isoformat(),
         flows=inputs.cp1.adjusted_ebitda.period,
-        why_resources=REASON_MINIMUM_CASH if inputs.cp2d.minimum_cash.status == "missing" else None,
-        why_step_up=REASON_STEP_UP if repricing is None else None,
     )
     tables = (_t3d1(c), _t3d2(c), _t3d3(c), _t3d4(c), _t3d5(c), _t3d6(c))
     cells = {cell.fact_id: cell for t in tables for row in t.rows for cell in row.cells}

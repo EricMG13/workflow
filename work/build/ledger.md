@@ -332,3 +332,4 @@
 - 19:40 CP-DR review: REQUEST CHANGES (M1 lease-required deferred tests unwritten; L1 constant-survivor mutants; L2 reader coercion; L3 manifest). Fix round 1 to same mx-feature. CP-2D review dispatched (Opus slot).
 - 19:41 CP-3D review: REQUEST CHANGES (M1 first-quote-per-page citations attach unsupporting quotes; lease T3E.3 'citing its quote' -> per-cell provenance; M2 Acceptance 5-6 tests). Fix round 1. CP-L10 review dispatched.
 - 19:42 CP-1D owner fix merged (a4eba58); fast set 6394 passed, pins 69.
+- 19:43 CP-4 completion b640f77 (driver, test_owner_cp4, adapter/bindings/spec/D3 tests); CP-5 built 258b9ab. Both queued for mx-adversary review. CP-1D Stage 2 dispatched.

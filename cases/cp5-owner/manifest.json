@@ -1,0 +1,199 @@
+{
+ "schema_version": "cp5-owner-cases/1",
+ "scope": "CP-5 integrity review (integrity_review) as a G1 owner over the CP-1, CP-1A, CP-2 and CP-3 heads of the CP-3/CP-6 credit-snapshot run; consumed by CP-6",
+ "status": "DRAFT revision 2 by owner-preparation task cp5-owner, 2026-10-28 (LEAD rulings 1-9 applied; review-precise-1 fix round 1: F1, F2, L1, L2, L3); not executed",
+ "pins": {
+  "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+  "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+  "cases/cp3-cp6-owner/manifest.json": "525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10",
+  "cases/cp3-cp6-owner/submissions.json": "eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b",
+  "cases/cp3-cp6-owner/expected.json": "8ca60c96ac443282ac49a0ded495b751cf3b5457b9491f419a26ca59c0b3c310"
+ },
+ "reuse": {
+  "pack sources": "cases/cp3-cp6-owner/manifest.json cases[*].pack_sources (and, through it, cases/financial/manifest.json and cases/snapshot/manifest.json business_source), bytes unchanged. CP-5 reads no pack source: it is a submit-only step and the prepared pack only serves its citation checks.",
+  "heads": "the CP-1A, CP-2 and CP-3 heads are the CP-3 oracle's (cases/cp3-cp6-owner/expected.json) and the S1 oracle's (cases/snapshot/expected.json); the CP-1 head is the genuine promotion, bound at run time"
+ },
+ "run": {
+  "requested_modules": [
+   "CP-1",
+   "CP-1A",
+   "CP-2",
+   "CP-3",
+   "CP-5",
+   "CP-6"
+  ],
+  "plan_order": [
+   "CP-0",
+   "CP-1",
+   "CP-1A",
+   "CP-2",
+   "CP-3",
+   "CP-5",
+   "CP-6"
+  ],
+  "live_consumers_of_cp0": [
+   "CP-1",
+   "CP-1A",
+   "CP-2",
+   "CP-3",
+   "CP-5",
+   "CP-6"
+  ],
+  "note": "CP-5 and CP-6 share one run (D3: CP-6 is the consumer that proves CP-5; LEAD ruling 4: no R5 run, no extra promotion). This run is the cp3-cp6-owner R6, amended in revision 1 (LEAD ruling 1) so that CP-MODEL is not requested: CP-5 follows every selected analyst and G1 publishes CP-MODEL last, so a run requesting it could never begin CP-5. CP-5's consumption of CP-MODEL (DC-5) is therefore not proved here; it stays open on the CP-MODEL row (G1-X section 5: add it when a lease needs it)."
+ },
+ "rulings_applied": {
+  "1": "CP-MODEL is not requested; cp3-cp6-owner R6 amended and re-pinned here (asserted against its manifest)",
+  "2": "owner view = context_block with every fact of the non-CP-1 heads plus the integrity_projection facts of CP-1, no citation quote, bound as view(historical, attempt) -> (sha256, body): expected.json view",
+  "3": "TOOL-CONTRACT CP-5 row amended to the owner view; python_findings reduced to kind label plus where: expected.json view.binding and TOOL_CONTRACT_ROW in execution.tool_use",
+  "4": "CP-5 runs only inside the CP-6 run (R6); no R5 run, no extra promotion: run.note",
+  "5": "mechanical findings asserted at run time (RT-1, RT-2); analyst finding categories not built",
+  "6": "each CP-1 claim carries at least one citation: run-time assertion RT-3",
+  "7": "independent semantic review of the 37 literal support judgments (19 positive, 18 gap) by review-precise-1: semantic_review",
+  "8": "docs/MODULES.csv CP-5 row moves only after the R6 run; the earnings pathway stays separate",
+  "9": "noted: the CP-0 literals already list CP-5; {{CP5_FINDINGS_SUFFIX}} is '' in both cases"
+ },
+ "run_time_bindings": {
+  "note": "Assertions the owner test makes against the actual run (the CP-1 head is a genuine promotion; none of these is derivable here). A failure of any is reported to LEAD, not absorbed into the oracle.",
+  "RT-1": {
+   "ruling": 5,
+   "assert": "the bound CP-1 head's claim ids equal, as a set and in count, exactly cash_flow_quality, coverage, data_quality, definition_risks, key_gaps, leverage, liquidity (seven narrative claims; the frozen id list), each with the shared limitation text CP1_CLAIM_LIMITATION; no other CP-1 claim exists"
+  },
+  "RT-2": {
+   "ruling": 5,
+   "assert": "cp5_integrity.python_checks over the bound scope returns zero findings: the owner view's python_findings is [] at the top level and for every claim, blocked_upstream is [], T5.9 holds only its `none` row, and no CP-5-FINDING-NNN exists in the settled head"
+  },
+  "RT-3": {
+   "ruling": 6,
+   "assert": "each of the seven CP-1 claims carries at least one citation (len(claim.citations) >= 1), so the `<claim>#c1` upstream_ref and the T5.3 trace row exist; a claim with none fails the run and the oracle must switch that claim to a fact ref. Also (revision 2, L1) the first citation's (source_id, locator) equals the one observed on S1: leverage financial page:4, coverage financial page:2, cash_flow_quality financial page:3, liquidity financial page:4, data_quality financial page:1, definition_risks financial page:5, key_gaps identity page:1",
+   "c1_source_locator": {
+    "leverage": [
+     "financial",
+     "page:4"
+    ],
+    "coverage": [
+     "financial",
+     "page:2"
+    ],
+    "cash_flow_quality": [
+     "financial",
+     "page:3"
+    ],
+    "liquidity": [
+     "financial",
+     "page:4"
+    ],
+    "data_quality": [
+     "financial",
+     "page:1"
+    ],
+    "definition_risks": [
+     "financial",
+     "page:5"
+    ],
+    "key_gaps": [
+     "identity",
+     "page:1"
+    ]
+   }
+  }
+ },
+ "semantic_review": {
+  "ruling": 7,
+  "who": "review-precise-1, independent of the oracle author",
+  "scope": "the 37 literal support judgments (positive 19, gap 18) in submissions.json: each rationale and 'supported' verdict against the cited cells (S1 oracle for CP-1A and CP-2, CP-3 oracle for CP-3, the run's CP-1 head for the seven narrative claims)",
+  "note": "mechanical cleanliness (prose.issues, the validator) is not support"
+ },
+ "cases": [
+  {
+   "case_id": "cp5-positive",
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "status": "ready",
+     "limitation": null
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "status": "ready",
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    },
+    {
+     "source_id": "business",
+     "name": "Business and ownership note",
+     "status": "ready",
+     "limitation": null
+    },
+    {
+     "source_id": "market",
+     "name": "Third-party loan market quotation sheet",
+     "status": "ready",
+     "limitation": null
+    }
+   ],
+   "run": {
+    "run_id": "slice-cp6-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-1",
+     "CP-1A",
+     "CP-2",
+     "CP-3",
+     "CP-5",
+     "CP-6"
+    ]
+   },
+   "submissions": "cases/cp5-owner/submissions.json#positive"
+  },
+  {
+   "case_id": "cp5-gap",
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "status": "ready",
+     "limitation": null
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "status": "ready",
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    },
+    {
+     "source_id": "business",
+     "name": "Business and ownership note",
+     "status": "ready",
+     "limitation": null
+    }
+   ],
+   "run": {
+    "run_id": "slice-cp6-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-1",
+     "CP-1A",
+     "CP-2",
+     "CP-3",
+     "CP-5",
+     "CP-6"
+    ]
+   },
+   "change_from_positive": "no market source: CP-0 records the gap, CP-3 settles Insufficient Information (cp3-cp6 oracle gap case)",
+   "submissions": "cases/cp5-owner/submissions.json#gap"
+  }
+ ]
+}

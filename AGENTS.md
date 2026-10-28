@@ -27,11 +27,26 @@ historical records keep their original route names.
 - Two Sonnet fix rounds per task. For a third, `mx-autonomous` writes a root-cause
   fix plan and a fresh `mx-feature` executes it; no Fable (user, 2026-10-28). There
   is no fourth: LEAD takes the open findings to the user. Only rounds that fix a
-  High or Medium finding count (global §1 stop rule).
+  High or Medium finding count (global §1 stop rule). Findings from any review of
+  the same task share its two-round budget; a later review's findings never start a
+  new one (user, 2026-10-28).
 - `mx-precise` reviews each task and independently reviews financial/stateful
   expected results; `mx-adversary` also reviews diffs touching financial,
   ordering/concurrency or security code, and re-reviews only fixes of its own
   High or Medium findings. Opus/architect agents never write code.
+- A re-review brief lists the finding IDs it checks, and the review checks only
+  those. Anything else it notices goes under "Out of scope", never changes the
+  verdict, and LEAD takes it to the user. When only Low or Info findings remain,
+  the verdict is PASS with notes (user, 2026-10-28).
+- When a second round hits the same defect class (for example crash residue
+  between writes, a forgery path through a verifier, refusal mapping), stop
+  patching sites. `mx-autonomous` writes one plan for the whole class (one atomic
+  commit point, verify by replaying the producer's rules), and the lease states the
+  threat model's bounds (which crash points, which forger) that reviews hold to
+  (user, 2026-10-28).
+- A fix round leaves a brief, a report and a commit. Do not save copies of the
+  source or tests per round; the commit holds them. LEAD moves closed entries
+  from docs/QUEUE.md to docs/QUEUE-ARCHIVE.md (user, 2026-10-28).
 - Coordinator sessions plan and dispatch; they do not write product code.
 - User instructions require confidence-review after any code change, before
   declaring completion or committing. Enumerate doubts, trace causes, refute
@@ -51,6 +66,36 @@ PR cap does not apply to lane integrations (user, 2026-10-27). Reuse existing
 reviews rather than add approval chains. Stop inventing policy at unclear semantics:
 name the exact requirement and have LEAD resolve it from the adopted source.
 LEAD's rulings are applied to a draft before its first independent review.
+
+Module builds (user, 2026-10-28):
+- An oracle or lease preparer runs the product's table, claim and render
+  validators and a scratch double rebuild before handback, and reports their exit
+  codes. Reviews after the first check only the diff. LEAD accepts the reviewer's
+  rebuild exit code and does not rebuild again itself.
+- Each module keeps one questions file (`work/<lane>/<module>/questions.md`). A
+  module's first task lists its open semantic questions there (signs, bases,
+  fail-closed cases). No build is dispatched until LEAD has ruled on all of them
+  in one batch, frozen the oracle and marked the lease closed. Later questions go
+  to the same file; Modules sends LEAD one message pointing at the files at most
+  every 20 minutes, which also keeps both sessions under the app's message cap.
+- LEAD rules only on questions that cross modules or change an oracle. The
+  Modules controller decides questions that affect one module only, from its
+  lease, and records each decision in the lane ledger.
+- Module tests pin oracle and method files through one shared manifest of hashes,
+  so an oracle change is one re-pin commit, not an agent round per module. LEAD
+  releases oracle and lease changes at fixed points (once per stage), in
+  dependency order with product-wording changes first, and each lease lists its
+  pin consumers. Modules merges `codex/checkpoint` at each point instead of
+  cherry-picking or holding individual LEAD commits.
+- A defect class found in one module (for example the CP-8 soft hyphen) becomes a
+  shared test every module runs, not a per-module hunt.
+
+Dispatch (user, 2026-10-28):
+- An implementer's first step enters a worktree cut from the lane tip and checks
+  that `git rev-parse HEAD` equals the tip; stop on mismatch. Before launching a
+  cohort, dispatch one agent and confirm it starts on the right commit.
+- At most six Opus agents run at once across a session. Checks of a diff that
+  only applies LEAD's ruling text go to `mx-feature`, not an Opus reviewer.
 
 ## Tool and data rules
 

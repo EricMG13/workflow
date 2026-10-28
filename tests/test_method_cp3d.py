@@ -1311,3 +1311,123 @@ def test_6h_leading_zero_comes_before_the_label_check(index: int, level: str, is
     )
     issues = cp3d.submission_issues(submission=_submission(raw), context=_lz_context())
     assert list(issues) == [issue]
+
+
+# --- LEAD round 10, item 1: figure signs in quote readers ---------------------------------------
+
+_SIGNS = {"minus": "−{}", "ascii": "-{}", "en-dash": "–{}", "parentheses": "({})"}
+
+
+def _sign_lines(form: str) -> tuple[str, ...]:
+    """Every reader's line with its figure printed in `form`; the analyst text stays unsigned."""
+    s = _SIGNS[form].format
+    return (
+        f"Dealer quotation on January 9, 2026: bid {s('98.50')} and offer 99.25.",
+        f"Dealer quotation on January 9, 2026: bid 98.50 and offer {s('99.25')}.",
+        f"Dealers describe the indicative fair value as around {s('99.75')}.",
+        f"Facility margin is {s('425')} basis points.",
+        f"Mandatory annual amortisation is {s('0')}.",
+        f"The SOFR reference rate is {s('4.30')} percent.",
+    )
+
+
+def _sign_context(lines: tuple[str, ...]) -> cp3d.MarketContext:
+    page = "\n".join(lines)
+    return _with_page(
+        _with_page(_context("positive"), "financial", "page:9", page), "market", "page:9", page
+    )
+
+
+def _sign_ref(lines: tuple[str, ...], line: int) -> dict[str, str]:
+    return {"source_id": "financial", "locator": "page:9", "quote": lines[line]}
+
+
+def _sign_edits(lines: tuple[str, ...], reader: str, text: str) -> list[list[Any]]:
+    """The positive oracle with one reader's quote moved to `lines` and its text set to `text`."""
+    if reader in ("bid", "offer", "talk"):
+        i = ("bid", "offer", "talk").index(reader)
+        return [
+            [f"observations.{i}.locator", "page:9"],
+            [f"observations.{i}.quote", lines[i]],
+            [f"observations.{i}.level_text", text],
+        ]
+    if reader == "margin":
+        return [["terms.margin", {"quote": _sign_ref(lines, 3), "bps_text": text, "absence": None}]]
+    if reader == "amortisation":
+        amort = {"quote": _sign_ref(lines, 4), "value_text": text, "absence": None}
+        return [["terms.amortisation", amort]]
+    level = {"quote": _sign_ref(lines, 5), "percent_text": text}
+    return [["terms.reference_rate.absence", None], ["terms.reference_rate.level", level]]
+
+
+_UNSIGNED = (  # (reader, the unsigned analyst text, the pinned issue it gets under the rule)
+    ("bid", "98.50", "observations[0]: level_text 98.50 does not occur in the quote"),
+    ("offer", "99.25", "observations[1]: level_text 99.25 does not occur in the quote"),
+    ("talk", "99.75", "observations[2]: level_text 99.75 does not occur in the quote"),
+    ("margin", "425", "margin: bps_text 425 does not occur in the quote"),
+    ("amortisation", "0", "amortisation: value_text 0 does not occur in the quote"),
+    (
+        "reference_rate",
+        "4.30",
+        "reference_rate: level percent_text 4.30 does not occur in the quote",
+    ),
+)
+
+
+@pytest.mark.parametrize("form", tuple(_SIGNS))
+@pytest.mark.parametrize(("reader", "text", "issue"), _UNSIGNED, ids=[u[0] for u in _UNSIGNED])
+def test_r10_unsigned_text_against_a_signed_figure_does_not_occur(
+    form: str, reader: str, text: str, issue: str
+) -> None:
+    """Round 10 item 1 and its Parentheses ruling: the quote prints a negative figure, so the
+    unsigned `*_text` does not occur; the pinned issue fires at the occurrence check."""
+    lines = _sign_lines(form)
+    raw = _edited(_POSITIVE, _sign_edits(lines, reader, text))
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_sign_context(lines))
+    assert list(issues) == [issue]
+
+
+@pytest.mark.parametrize(
+    ("reader", "line", "text"),
+    (  # a `-` after a letter or a digit is not a sign; `+` is ignored; a parenthesis that does
+        # not close directly after the digits leaves the figure unsigned
+        ("talk", "Dealers describe the indicative fair value as around 95-96.", "96"),
+        ("talk", "Dealers describe the indicative fair value as around 95–96.", "96"),
+        ("margin", "Facility margin is S-350 basis points.", "350"),
+        ("margin", "Facility margin is +425 basis points.", "425"),
+        ("margin", "Facility margin (set at 425) is in basis points.", "425"),
+        ("reference_rate", "The SOFR reference rate (4.30 percent) applies.", "4.30"),
+    ),
+    ids=("95-96", "95-en-dash-96", "S-350", "plus", "close-paren-only", "open-paren-only"),
+)
+def test_r10_non_sign_forms_still_validate(reader: str, line: str, text: str) -> None:
+    index = {"talk": 2, "margin": 3, "reference_rate": 5}[reader]
+    lines = tuple(line if i == index else x for i, x in enumerate(_sign_lines("ascii")))
+    raw = _edited(_POSITIVE, _sign_edits(lines, reader, text))
+    ctx = _sign_context(lines)
+    assert cp3d.submission_issues(submission=_submission(raw), context=ctx) == ()
+
+
+def test_r10_a_hyphen_after_a_digit_leaves_the_token_to_its_shape_check() -> None:
+    """`2024-2025`: the `-` follows a digit, so `2025` occurs and gets the shape issue."""
+    lines = (*_sign_lines("ascii")[:5], "The SOFR reference rate is quoted for 2024-2025.")
+    raw = _edited(_POSITIVE, _sign_edits(lines, "reference_rate", "2025"))
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_sign_context(lines))
+    assert list(issues) == [f"reference_rate: level percent_text 2025 {cp3d._SHAPE}"]
+
+
+@pytest.mark.parametrize(
+    ("reader", "text", "issue"),
+    (  # a signed analyst text keeps today's refusal
+        ("bid", "-98.50", "observations[0]: level_text -98.50 is not a decimal number"),
+        ("margin", "-425", f"margin: bps_text -425 {cp3d._SHAPE}"),
+        ("amortisation", "-0", f"amortisation: value_text -0 {cp3d._SHAPE}"),
+        ("reference_rate", "-4.30", f"reference_rate: level percent_text -4.30 {cp3d._SHAPE}"),
+    ),
+    ids=("bid", "margin", "amortisation", "reference_rate"),
+)
+def test_r10_signed_analyst_text_keeps_its_refusal(reader: str, text: str, issue: str) -> None:
+    lines = _sign_lines("ascii")
+    raw = _edited(_POSITIVE, _sign_edits(lines, reader, text))
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_sign_context(lines))
+    assert list(issues) == [issue]

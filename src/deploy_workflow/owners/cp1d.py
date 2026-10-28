@@ -341,6 +341,15 @@ _PROPOSED_TOTAL = "Total proposed adjustments"
 _MANAGEMENT_EBITDA = "Management financing-case EBITDA"
 _NOT_STATED = "Not stated"
 _AMOUNT = re.compile(r"[0-9]+(?:\.[0-9]+)?")
+# Round 10 (LEAD): a basis amount is the signed numeral the normalised quote prints. A "-"
+# directly before the first digit is a minus when it starts the quote or follows a character
+# that is neither a letter nor a digit (so `1-December`, `2024-2025`, `S-350` are unsigned);
+# "+" is ignored; a numeral in accounting parentheses, "(" directly before the first digit and
+# ")" directly after the last, reads as negative. The bridge table keeps `_AMOUNT`.
+_SIGNED_AMOUNT = re.compile(
+    r"\((?P<parenthesised>[0-9]+(?:\.[0-9]+)?)\)"
+    r"|(?P<sign>(?<![A-Za-z0-9])-)?(?P<digits>[0-9]+(?:\.[0-9]+)?)"
+)
 _TYPES = ("Saving", "Cost")
 # Round 4 (k): an amount is the product `financial_contracts.Number` (-1e18 < x < 1e18, 28
 # digits, 10 places). Bridge amounts, quoted basis amounts and CP-1 amount operands hold it, so
@@ -501,9 +510,15 @@ def _accepts(assessment: Assessment) -> bool:
 
 
 def _basis_amounts(citation: Citation) -> list[str]:
-    """The amounts in the quote as `citation_issues` matched it (`quotes.normalise`: U+00AD
-    removed, so a soft hyphen inside a figure does not split it)."""
-    return _AMOUNT.findall(normalise(citation.quote))
+    """The signed amounts in the quote as `citation_issues` matched it (`quotes.normalise`:
+    U+00AD removed, so a soft hyphen inside a figure does not split it; U+2212 and the dashes
+    read as "-"), each as a decimal string (round 10, `_SIGNED_AMOUNT`)."""
+    return [
+        f"-{match['parenthesised']}"
+        if match["parenthesised"] is not None
+        else f"{match['sign'] or ''}{match['digits']}"
+        for match in _SIGNED_AMOUNT.finditer(normalise(citation.quote))
+    ]
 
 
 @dataclass(frozen=True)
@@ -575,13 +590,17 @@ def _shape_issue(item: BridgeItem, assessment: Assessment) -> str | None:
             return None  # ruling 1D7: the content rule `Cannot accept an unstated amount`
         # Fix round 2 N1 / round 5b Y4: an amount outside the product bound never composes. At
         # or above 1e18 against a stated proposed amount the bounds text is true; otherwise
-        # (precision, or no stated proposed amount) the exactness text is.
+        # (precision, or no stated proposed amount) the exactness text is. Round 10: "above 0"
+        # applies on its own, so a signed amount at or below 0 gets the bounds text first, also
+        # on an unstated proposed amount (the Recurring path).
         bounds = f"Accepted basis must be above 0 and below the proposed amount: {label}"
+        if amount <= 0:
+            return bounds
         if not _is_number(amount):
             if item.amount is not None and amount >= _NUMBER_LIMIT:
                 return bounds
             return f"Accepted basis amount cannot be held exactly as a product amount: {label}"
-        if item.amount is not None and not 0 < amount < item.amount:
+        if item.amount is not None and not amount < item.amount:
             return bounds
     return None
 

@@ -1228,6 +1228,15 @@
       "sha256": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
       "reason": "Round 12 B10: blank QA explanation (model text) is whitespace or Unicode Cf (prose.is_blank).",
       "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "b22972d6d8c7f97825d70fbc6bc59de41a2f5ba5",
+      "sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
+      "reason": "Register the CP-DR rails binding map (D12 one-line registration, appended last) with the CP-DR owner core.",
+      "review": "docs/CPDR-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

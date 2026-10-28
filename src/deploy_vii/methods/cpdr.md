@@ -1,4 +1,3 @@
-<!-- DRAFT for a future src/deploy_vii/methods/cpdr.md; recorded here, not installed (pre-code; LEAD ruling Q7, 2026-10-28). -->
 # CP-DR — deep research (LOCAL gap mode): titles and columns adaptation
 
 Method basis: Deploy V r14 CP-DR (purpose in `methodology.json`: "Resolve material evidence gaps for named consumers, or answer a standalone issuer/sector research question"; required CP-0, no optional edge, tables TDR.1-TDR.3). The r14 CP-DR SKILL.md is not in this repository (same situation as CP-2 and CP-2D). The titles, columns and claims below are therefore a LEAD-accepted adaptation (ruling Q7), not a transcription of r14. Execution adaptation: the analyst writes research questions and, for each, a cited answer or a "not found" with its limitation; Python reads the CP-0 gap agenda, checks every quote, page and tool use, counts, divides, assigns every identifier and composes every table. Scope: gap mode only; the standalone question mode is deferred (the Run has no question field). LOCAL: only the prepared pack through `search_pack` and `read_pages`; no web, provider or credential.
@@ -24,3 +23,13 @@ Row ids: TDR.1 the CP-0 `gap_id`; TDR.2 the analyst's `question_id`; TDR.3 `tota
 - Whether a quoted span answers its question is analyst judgment; Python checks verbatim location and that the page was read and the source searched.
 - Module status is restricted whenever it carries a limitation (always: the local-only coverage line); inherited limitations come from CP-0.
 - Consumers: none today. CP-5 is the only registry edge (restricted); it counts as consumption only after a scope lease binds the CP-DR head and cites the TDR facts.
+
+## Guard limits (accepted costs, Stage 2)
+
+- **Digit rule.** Any character `str.isdigit()` accepts, in a question, an answer or a limitation, is refused (`text must not contain a figure`). A year, an ordinal written with digits and a non-ASCII digit all count. The cost is that an analyst cannot write "2025" in prose; a figure reaches the reader only as a quoted source span or as Python's own count.
+- **Prohibited words.** The case-insensitive substrings `recommend`, `refinanc`, `covenant` and `recovery` are refused wherever they occur in those fields, so "recommendation", "refinancing" and "covenants" are refused with the base word.
+- **Blank quotes.** A citation whose quote is whitespace or Unicode format characters only is refused as `gaps[i].questions[j].citations[k].quote: empty text`, before the page-occurrence check, so the analyst is told the quote is empty and not that an empty reading was not found.
+- **Cited pages.** The cited-page rule (`RULES`) judges `page:N` locators only; any other locator is left to the quote and locator check. A `not_found` question is an absence claim: each searched source needs a recorded `search_pack` over it (scoped to that source or to every source).
+- **Rules are pure over the payload text.** `RULES` does not know pack membership, so a searched source or a citation source outside the pack yields its membership issue and its tool-use issue. That is one defect with two consequences, and both lines are listed.
+- **Issue lines are bounded.** Lines that quote the payload are cut at 600 characters, and a list past 20 lines keeps the first 19 and a count of the rest.
+- **Not here.** Rule W (spaced ranges, dash bullets), B8 and the item 8 comma costs belong to CP-1D, CP-3D, CP-8, CP-2E and CP-2H. CP-DR reads no figure, name or label from a quote.

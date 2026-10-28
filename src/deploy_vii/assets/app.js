@@ -496,7 +496,9 @@
       const withheld = node("p", null, "call-note");
       withheld.append(chip(front.call_words.glyph, front.call_words.word), document.createTextNode(front.call_state === "blocked"
         ? " The call is withheld; the blocking reason is listed under Limitations."
-        : ` ${front.pathway.title} does not make this call.`));
+        : front.call_state === "not-requested"
+          ? " CP-6 was not requested in this run."
+          : ` ${front.pathway.title} does not make this call.`));
       band.append(withheld);
     } else if (front.call_state === "no-judgement") band.append(node("p", "No judgement is recorded. Module status and supporting evidence stay visible.", "call-note"));
     return band;
@@ -736,14 +738,15 @@
     const foot = $("nav-foot"); foot.replaceChildren();
     const unrun = inPathway.filter(row => row.glyph === "unrun");
     if (unrun.length) foot.append(node("p", `${unrun[0].word} · ${unrun.length}`));
-    if (outside.length) {
-      const details = node("details"); details.append(node("summary", `${outside[0].word} · ${outside.length}`));
-      outside.filter(matches).forEach(row => {
+    [...new Set(outside.map(row => row.word))].forEach(word => {
+      const group = outside.filter(row => row.word === word);
+      const details = node("details"); details.append(node("summary", `${word} · ${group.length}`));
+      group.filter(matches).forEach(row => {
         const link = node("a"); link.href = "#" + row.module_id; link.append(glyph(row.glyph, 12), node("span", row.module_id, "num"), node("span", row.title));
         details.append(link);
       });
       foot.append(details);
-    }
+    });
     renderSearch(filter);
   };
   const renderSearch = (filter) => {

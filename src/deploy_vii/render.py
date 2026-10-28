@@ -19,11 +19,11 @@ from deploy_vii.report_view import (
     exact_text,
     fact_spelling,
     gap_refs,
+    module_display,
     module_refs,
     navigator,
     pathways,
     resolve,
-    status_display,
 )
 
 
@@ -153,6 +153,7 @@ def render(view: View, report: ReportView | None = None) -> str:
     payload = view.model_dump(mode="json")
     gap_ids = gap_refs(report.index)
     shown: list[dict[str, object]] = []
+    module_status = module_display(view)
     for module_payload, module in zip(payload["modules"], view.modules, strict=True):
         if module.status == "rejected":
             continue  # A rejected attempt is never displayed; it stays in evidence.
@@ -168,9 +169,7 @@ def render(view: View, report: ReportView | None = None) -> str:
             claim_payload["runs"] = [run.model_dump(mode="json") for run in runs]
             claim_payload["plain"] = "".join(run.text for run in runs)
         # Status is shown as glyph and word; the internal token never reaches the HTML.
-        module_payload["status_glyph"], module_payload["status_word"] = status_display(
-            module.status
-        )
+        module_payload["status_glyph"], module_payload["status_word"] = module_status(module)
         del module_payload["status"]
         shown.append(module_payload)
     payload["modules"] = shown

@@ -9,7 +9,7 @@ gap.
 
 import re
 from collections import Counter
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -32,6 +32,7 @@ from deploy_vii.contracts import (
     View,
 )
 from deploy_vii.display import CellState, UnitClass, format_date, format_value
+from deploy_vii.registry import dependencies
 
 if TYPE_CHECKING:
     from deploy_vii.bindings import Binding, BindingMap
@@ -51,7 +52,7 @@ BlockState = Literal[
     "populated", "collapsed", "condition", "not_run", "not_in_pathway", "absent", "blocked"
 ]
 BlockKind = Literal["dense", "keyvalue", "period_grid", "prose", "chart"]
-CallWithheld = Literal["outside_pathway", "blocked"]
+CallWithheld = Literal["outside_pathway", "not_requested", "blocked"]
 ChartKind = Literal["line", "grouped", "stacked", "waterfall", "debt_stack", "na"]
 FigurePlacement = Literal["above", "below", "beside"]
 BlockWidth = Literal["full", "five", "seven"]
@@ -837,6 +838,22 @@ class NavRow(Contract):
     word: Text
 
 
+def module_display(view: View) -> Callable[[ModuleView], tuple[str, str]]:
+    """Glyph and word of a module's status in this run.
+
+    A preset module (or its required producers) that the run's ``requested_modules`` override
+    left out was not requested: it reads "Not run". Only a module outside the preset keeps
+    "Not in this Pathway".
+    """
+    preset = dependencies(PATHWAY_MODULES[view.run.pathway])
+
+    def display(module: ModuleView) -> tuple[str, str]:
+        not_requested = module.status == "not_in_pathway" and module.module_id in preset
+        return status_display("unrun" if not_requested else module.status)
+
+    return display
+
+
 def navigator(view: View) -> tuple[NavRow, ...]:
     """Rows in registry order. Modules in the Pathway are numbered 1..N; the rest are footer rows.
 
@@ -844,13 +861,14 @@ def navigator(view: View) -> tuple[NavRow, ...]:
     """
     rows: list[NavRow] = []
     number = 0
+    display = module_display(view)
     for module in view.modules:
         if module.status == "rejected":
             continue
         in_pathway = module.status != "not_in_pathway"
         if in_pathway:
             number += 1
-        glyph, word = status_display(module.status)
+        glyph, word = display(module)
         rows.append(
             NavRow(
                 module_id=module.module_id,
@@ -1218,8 +1236,6 @@ def _honest_state(
     # A module of the preset or its required producers that the run's ``requested_modules``
     # override left out is in this Pathway; it was only not requested. Only a module outside
     # both is "not part of" the Pathway.
-    from deploy_vii.registry import dependencies
-
     in_pathway = dependencies(pathway.requested_modules)
     not_requested = [code for code in outside if code in in_pathway]
     foreign = [code for code in outside if code not in not_requested]
@@ -1733,15 +1749,18 @@ def _block(
     )
 
 
-def _call(modules: Mapping[str, ModuleView]) -> tuple[tuple[CallItem, ...], CallWithheld | None]:
+def _call(
+    modules: Mapping[str, ModuleView], pathway: Pathway
+) -> tuple[tuple[CallItem, ...], CallWithheld | None]:
     """The call band (task 8.7): CP-6 makes the call. A settled (accepted or restricted) CP-6
     head shows its final-bias action bias (``cp6_committee.ACTION_BIAS_FACT``) as the "Action
     bias" fact and its confidence (``cp6_committee.CONFIDENCE_FACT``) as the "Confidence"
     scale, metered by ``cp6_committee.call_scale`` (user decision, 24 Oct 2026); both texts are
-    the head's facts, never recomputed. CP-6 outside the Pathway withholds the
-    call as not in this Pathway; CP-6 blocked, or unable to run because a required producer is
-    blocked, withholds it as blocked; otherwise no judgement is recorded and the band says so. A
-    settled head without its action bias and confidence fails closed (ValueError)."""
+    the head's facts, never recomputed. CP-6 outside the Pathway withholds the call as not in
+    this Pathway; CP-6 in the Pathway but left out by the run's ``requested_modules`` override
+    withholds it as not requested; CP-6 blocked, or unable to run because a required producer
+    is blocked, withholds it as blocked; otherwise no judgement is recorded and the band says
+    so. A settled head without its action bias and confidence fails closed (ValueError)."""
     # Function-local: ``cp6_committee`` imports this module (``figure_unit``) at import time.
     from deploy_vii import cp6_committee
 
@@ -1749,6 +1768,8 @@ def _call(modules: Mapping[str, ModuleView]) -> tuple[tuple[CallItem, ...], Call
     cp6 = modules.get(cp6_committee.MODULE_ID)
     status = cp6.status if cp6 is not None else None
     if status == "not_in_pathway":
+        if cp6_committee.MODULE_ID in dependencies(pathway.requested_modules):
+            return pending, "not_requested"
         return pending, "outside_pathway"
     if cp6 is not None and status in cp6_committee.SETTLED:
         facts = {fact.fact_id: fact for fact in cp6.facts}
@@ -2088,7 +2109,7 @@ def build(view: View, pathway: Pathway, maps: Iterable["BindingMap"]) -> ReportV
         _block(block_id, pathway, view, placed[block_id], refs, reasons)
         for block_id in pathway.blocks
     )
-    call, withheld = _call({module.module_id: module for module in view.modules})
+    call, withheld = _call({module.module_id: module for module in view.modules}, pathway)
     return ReportView(
         pathway=pathway,
         call=call,
@@ -2106,6 +2127,8 @@ def call_state(report: ReportView) -> tuple[str, tuple[str, str] | None]:
         return "blocked", status_display("blocked")
     if report.call_withheld == "outside_pathway":
         return "outside", status_display("not_in_pathway")
+    if report.call_withheld == "not_requested":
+        return "not-requested", status_display("unrun")
     if any(item.kind != "na" for item in report.call):
         return "populated", None
     return "no-judgement", None

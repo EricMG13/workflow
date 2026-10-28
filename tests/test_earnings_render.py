@@ -442,11 +442,9 @@ def test_core_html_preserves_full_analysis_source_context_and_limits(case):
     assert payload["analytical_qualification"] == payload["native_host_qualification"] == "unrun"
     for other in payload["modules"]:
         if other["module_id"] in {"CP-MODEL", "CP-5", "CP-1"}:
-            assert (other["status_glyph"], other["status_word"]) == (
-                ("unrun", "Not run")
-                if other["module_id"] == "CP-1"
-                else ("na", "Not in this Pathway")
-            )
+            # The run requests only CP-1B: CP-1, CP-MODEL and CP-5 are earnings_update preset
+            # modules the override left out, so all three were not requested (not foreign).
+            assert (other["status_glyph"], other["status_word"]) == ("unrun", "Not run")
             assert not other["facts"] and not other["tables"]
             assert other["artifact_sha256"] is None
     record = next(f for f in module["facts"] if f["row_id"] == "evidence.inputs")

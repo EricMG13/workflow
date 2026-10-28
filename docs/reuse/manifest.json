@@ -1096,12 +1096,39 @@
       "review": "docs/reviews/0d-product-defects.md"
     },
     {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "a1fc47cd8affd47cddb42b429dc1764a2870b9f888afd41c32ef871e53d17a08",
+      "project_commit": "",
+      "sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "reason": "Call band and navigator say a preset module (or its required producer) left out by a requested_modules override was not requested (Not run), not 'Not in this Pathway'; new CallWithheld value not_requested; dependencies imported at module level.",
+      "review": "docs/reviews/0d-product-defects.md"
+    },
+    {
+      "destination": "src/deploy_vii/render.py",
+      "imported_sha256": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+      "prior_project_sha256": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+      "project_commit": "",
+      "sha256": "7bf8d889fb8f5b74d84f0239664c801a1c0fcfbc3a40e32da6ea49f1cd8bf253",
+      "reason": "Module payload status word follows the same rule as the navigator: a preset module left out by a requested_modules override reads Not run, not 'Not in this Pathway'.",
+      "review": "docs/reviews/0d-product-defects.md"
+    },
+    {
       "destination": "src/deploy_vii/assets/app.js",
       "imported_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
       "prior_project_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
       "project_commit": "41a8fdb94395d312bce08eef37c6fe939a4bfa35",
       "sha256": "1d7f0c606b52ca7718df2b3a70f7d7dfa86c5d9218aff577285ccaa74693be86",
       "reason": "Skip link focuses the main region and cancels its default jump so the hash router never sees #workbench; loading the shell at #workbench is the default Front Page view.",
+      "review": "docs/reviews/0d-product-defects.md"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.js",
+      "imported_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "prior_project_sha256": "1d7f0c606b52ca7718df2b3a70f7d7dfa86c5d9218aff577285ccaa74693be86",
+      "project_commit": "",
+      "sha256": "0f0fe30bf97384d46ebfba4d6d09bc1b179918d6c36cba03b7ef8ee149bf7706",
+      "reason": "Call band sentence for the not-requested state says CP-6 was not requested in this run instead of the Pathway not making the call. The same revision groups the navigator footer's outside rows by status word, one summary per word.",
       "review": "docs/reviews/0d-product-defects.md"
     }
   ],

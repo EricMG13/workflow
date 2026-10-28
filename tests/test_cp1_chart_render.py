@@ -544,3 +544,86 @@ def test_loading_the_shell_at_the_skip_link_hash_is_the_default_view():
     )
     html = render(empty_view(run))
     assert 'return route === "overview" || route === "workbench" ? "front" : route;' in html
+
+
+def test_call_band_script_says_cp6_was_not_requested_for_the_not_requested_state():
+    """The shipped call band must not say the Pathway "does not make this call" when CP-6 was
+    only left out by the run's ``requested_modules`` override."""
+    html = render(empty_view(_override_run("credit_snapshot", ("CP-1",))))
+    marker = 'front.call_state === "not-requested"'
+    assert marker in html
+    branch = html.split(marker, 1)[1].split("does not make this call", 1)[0]
+    assert '" CP-6 was not requested in this run."' in branch
+
+
+def test_navigator_footer_groups_outside_rows_by_word():
+    """One summary per word: override-excluded ("Not run") and foreign ("Not in this Pathway")
+    rows must not share the first row's word and the total count."""
+    html = render(empty_view(_override_run("credit_snapshot", ("CP-1",))))
+    marker = "[...new Set(outside.map(row => row.word))].forEach(word => {"
+    assert marker in html
+    group = html.split(marker, 1)[1].split("});", 1)[0]
+    assert "outside.filter(row => row.word === word)" in group
+    assert "`${word} · ${group.length}`" in group
+    assert "outside[0].word" not in html
+
+
+def test_module_payload_word_follows_the_not_requested_rule():
+    """The module payload word (shown in the shell) matches the navigator: a preset module the
+    override left out reads "Not run"; a module outside the preset keeps "Not in this Pathway"."""
+    html = render(empty_view(_override_run("credit_snapshot", ("CP-1",))))
+    modules = {m["module_id"]: m for m in _payload(html)["modules"]}
+    assert (modules["CP-6"]["status_glyph"], modules["CP-6"]["status_word"]) == ("unrun", "Not run")
+    assert modules["CP-8"]["status_word"] == "Not in this Pathway"
+
+
+def _override_run(pathway_id: str, requested: tuple[str, ...]) -> Run:
+    return Run(
+        run_id="override-call",
+        issuer_id="northbridge-synthetic",
+        issuer_name="Northbridge Synthetic Group",
+        as_of=date(2026, 1, 10),
+        case_kind="synthetic",
+        pathway=pathway_id,
+        requested_modules=requested,
+    )
+
+
+def test_call_band_under_override_reads_not_requested_not_outside_pathway():
+    """CP-6 is in the credit_snapshot preset; ``requested_modules=("CP-1",)`` only left it out."""
+    from deploy_vii.report_view import call_state
+
+    run = _override_run("credit_snapshot", ("CP-1",))
+    pathway = next(item for item in pathways() if item.id == "credit_snapshot")
+    assert "CP-6" in pathway.requested_modules
+    report = build(empty_view(run), pathway, SHIPPED_MAPS)
+    assert report.call_withheld == "not_requested"
+    state, words = call_state(report)
+    assert state != "outside"
+    assert words == ("unrun", "Not run")
+
+
+def test_call_band_outside_the_preset_keeps_not_in_this_pathway():
+    from deploy_vii.report_view import call_state
+
+    run = _override_run("earnings_update", ("CP-1",))
+    pathway = next(item for item in pathways() if item.id == "earnings_update")
+    assert "CP-6" not in pathway.requested_modules
+    report = build(empty_view(run), pathway, SHIPPED_MAPS)
+    assert report.call_withheld == "outside_pathway"
+    assert call_state(report) == ("outside", ("na", "Not in this Pathway"))
+
+
+def test_navigator_word_distinguishes_override_excluded_from_foreign_module():
+    from deploy_vii.report_view import navigator
+
+    rows = {
+        row.module_id: row
+        for row in navigator(empty_view(_override_run("credit_snapshot", ("CP-1",))))
+    }
+    assert (
+        "CP-6"
+        in next(item for item in pathways() if item.id == "credit_snapshot").requested_modules
+    )
+    assert str(rows["CP-6"].word) == "Not run"  # preset module the override left out
+    assert str(rows["CP-8"].word) == "Not in this Pathway"  # CP-8 is outside the preset

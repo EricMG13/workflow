@@ -18,7 +18,7 @@ from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal, localcontext
 from typing import Literal, Protocol
 
 from deploy_vii.contracts import Contract, Fact
-from deploy_vii.quotes import normalise, quoted
+from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.report_view import fact_spelling
 
 MODULE_ID = "CP-3D"
@@ -170,22 +170,94 @@ def _short_date(d: date) -> str:
     return f"{d.day} {_MONTHS[d.month - 1][:3]} {d.year}"
 
 
-def _token_once(value_text: str, quote: str) -> bool:
-    """`value_text` occurs exactly once as a whole numeric token in `quote` normalised, the
-    text `quoted` matched (a soft hyphen never splits or ends a token).
+_MINUS = r"(?<![A-Za-z0-9])-"  # round 10 item 1: a minus sign, not a hyphen after a letter or digit
+_CUT_BEFORE = re.compile(rf"(?:[0-9.]|{_MINUS})\Z")  # round 11 B1: the page figure starts earlier
+_CUT_AFTER = re.compile(r"[0-9]|\.[0-9]")  # round 11 B1: the page figure goes on
+_EDGE_AFTER = ("", ".")  # nothing or only a full stop after a figure at the quote end
 
-    Round 10 item 1: the token is the signed numeral the quote prints. A `-` directly before it
-    that starts the quote or follows a non-alphanumeric is a minus sign, and a token with `(`
-    directly before and `)` directly after reads as negative, so neither is an occurrence of the
-    unsigned text. A `-` after a letter or digit (`95-96`, `S-350`) and a `+` are not signs."""
-    words = normalise(quote)
-    pattern = r"(?<![0-9.])(?<!(?<![A-Za-z0-9])-)" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
-    unsigned = [
+
+def _tokens(value_text: str, text: str) -> list[re.Match[str]]:
+    """Where `value_text` is a whole unsigned numeric token of the normalised `text`.
+
+    Round 10 item 1: the token is the signed numeral the text prints. A `-` directly before it
+    that starts the text or follows a non-alphanumeric is a minus sign, and a token that starts
+    with a digit with `(` directly before and `)` directly after reads as negative, so neither is
+    an occurrence of the unsigned text. Round 11 B2: `(-425)` prints the signed `-425`, which
+    occurs and gets its shape issue. A `-` after a letter or digit (`95-96`, `S-350`) and a `+`
+    are not signs."""
+    pattern = rf"(?<![0-9.])(?<!{_MINUS})" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
+    accounting = re.match(r"[0-9]", value_text) is not None
+    return [
         m
-        for m in re.finditer(pattern, words)
-        if not (words[m.start() - 1 : m.start()] == "(" and words[m.end() : m.end() + 1] == ")")
+        for m in re.finditer(pattern, text)
+        if not (
+            accounting
+            and text[m.start() - 1 : m.start()] == "("
+            and text[m.end() : m.end() + 1] == ")"
+        )
     ]
-    return len(unsigned) == 1
+
+
+def _token_once(value_text: str, quote: str) -> bool:
+    """`value_text` occurs exactly once as a whole numeric token (`_tokens`) in `quote`
+    normalised, the text `quoted` matched (a soft hyphen never splits or ends a token)."""
+    return len(_tokens(value_text, normalise(quote))) == 1
+
+
+def _readings(raw: str) -> tuple[str, ...]:
+    """`normalise(raw)`, and the reading with its hyphenated line wraps joined if it has one."""
+    plain = normalise(raw)
+    return (plain, reading(raw, join_wraps=True).text) if hyphen_wrapped(raw) else (plain,)
+
+
+def _occurrences(needle: str, text: str) -> list[int]:
+    """Every index at which `needle` starts in `text`, overlapping ones included."""
+    found: list[int] = []
+    at = text.find(needle)
+    while at >= 0:
+        found.append(at)
+        at = text.find(needle, at + 1)
+    return found
+
+
+def _cut(page: str, start: int, end: int, *, at_start: bool, at_end: bool) -> bool:
+    """Whether the page figure at [start, end) of a page reading is not the same unsigned whole
+    figure: at a start edge a digit, `.` or minus sign before it; at an end edge a digit or `.`
+    and a digit after it; at either edge an accounting `(` and `)` around it."""
+    before, after = page[:start], page[end:]
+    if before.endswith("(") and after.startswith(")"):
+        return True
+    return (at_start and _CUT_BEFORE.search(before) is not None) or (
+        at_end and _CUT_AFTER.match(after) is not None
+    )
+
+
+def _whole_on_page(value_text: str, quote: str, page: str) -> bool:
+    """Round 11 B1: a figure at an edge of the quote occurs only if the page holds the same
+    unsigned whole figure there, at every occurrence of each needle (`normalise(quote)`, and its
+    joined reading if the quote is wrapped) in each page reading.
+
+    The start edge is nothing before the figure. The ruling's "or only a sign" changes no outcome
+    here: such a sign is quoted, so the page prints it too; a minus is already no token
+    (`_tokens`), and a `+` or an unclosed `(` is never a cut. The end edge is nothing or only `.`
+    after it (`_EDGE_AFTER`)."""
+    for needle in _readings(quote):
+        for m in _tokens(value_text, needle):
+            at_start = m.start() == 0
+            at_end = needle[m.end() :] in _EDGE_AFTER
+            if not (at_start or at_end):
+                continue
+            for text in _readings(page):
+                for at in _occurrences(needle, text):
+                    if _cut(text, at + m.start(), at + m.end(), at_start=at_start, at_end=at_end):
+                        return False
+    return True
+
+
+def _name_occurs(name: str, quote: str) -> bool:
+    """`name` is in the normalised quote. Round 11 B3: when the quote has a hyphenated line wrap,
+    a name holding `- ` (the wrap as `normalise` prints it) does not occur."""
+    return name in normalise(quote) and not (hyphen_wrapped(quote) and "- " in normalise(name))
 
 
 def publication_dates(pages: Mapping[str, Mapping[str, str]]) -> dict[tuple[str, str], date]:
@@ -413,6 +485,9 @@ class _Issues:
             self.add(f"{path}: text carries a prohibited conclusion")
 
     def analyst_text(self, path: str, text: str | None) -> None:
+        if text is not None and not text.strip():  # round 11: blank text is one defect class
+            self.add(f"{path}: empty text")
+            return
         self.digit_free(path, text)
         self.conclusion_free(path, text)
 
@@ -429,6 +504,12 @@ class _Issues:
 
     def ref_on_page(self, ref: QuoteRef, path: str) -> bool:
         return self.on_page(ref.source_id, ref.locator, ref.quote, path)
+
+    def occurs(self, value_text: str, source_id: str, locator: str, quote: str) -> bool:
+        """Ruling 6b C2 with rounds 10 and 11: `value_text` is the one whole unsigned token of
+        the quote, and the page holds it whole at a quote edge (B1). Only after `on_page`."""
+        page = self.context.pages[source_id][locator]
+        return _token_once(value_text, quote) and _whole_on_page(value_text, quote, page)
 
 
 def _labelled(kind: str, level_text: str, quote: str) -> bool:
@@ -452,7 +533,7 @@ def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | Non
     if not _DECIMAL.match(lt):  # keeps pinned refusals[1] ("ninety")
         out.add(f"{path}: level_text {lt} is not a decimal number")
         return None
-    if not _token_once(lt, o.quote):  # ruling 6b C2: occurrence before shape
+    if not out.occurs(lt, o.source_id, o.locator, o.quote):  # ruling 6b C2: occurrence first
         out.add(f"{path}: level_text {lt} does not occur in the quote")
         return None
     if _LEADING_ZERO.match(lt):  # ruling 6g: after occurrence, before decimals and bound
@@ -523,7 +604,7 @@ def _check_quoted_numeral(
         return None
     if not out.ref_on_page(quote, key):
         return None
-    if not _token_once(text, quote.quote):  # ruling 6b C2: occurrence before shape
+    if not out.occurs(text, quote.source_id, quote.locator, quote.quote):  # ruling 6b C2
         out.add(f"{key}: {label} {text} does not occur in the quote")
         return None
     if _LEADING_ZERO.match(text):  # ruling 6g
@@ -579,15 +660,16 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
             out.add("amortisation: the simple margin convention requires zero amortisation")
     rr = terms.reference_rate
     out.analyst_text("reference_rate.name", rr.name)  # ruling 6e item 3
-    if out.ref_on_page(rr.quote, "reference_rate.quote") and rr.name not in normalise(
-        rr.quote.quote
+    if out.ref_on_page(rr.quote, "reference_rate.quote") and not _name_occurs(
+        rr.name, rr.quote.quote
     ):
         out.add("reference_rate: name does not occur in the quote")
     if bool(rr.level) == bool(rr.absence):
         out.add("reference_rate: exactly one of level and absence is required")
     elif rr.level is not None and out.ref_on_page(rr.level.quote, "reference_rate.level.quote"):
         pt = rr.level.percent_text
-        if not _token_once(pt, rr.level.quote.quote):  # ruling 6b C2
+        q = rr.level.quote
+        if not out.occurs(pt, q.source_id, q.locator, q.quote):  # ruling 6b C2
             out.add(f"reference_rate: level percent_text {pt} does not occur in the quote")
         elif _LEADING_ZERO.match(pt):  # ruling 6g
             out.add(f"reference_rate: level percent_text {pt} {_NO_LEADING_ZERO}")
@@ -646,8 +728,8 @@ def submission_issues(
             out.analyst_text(f"{key}.follow_up", absence.follow_up)
     inst = submission.instrument
     out.analyst_text("instrument.name", inst.name)
-    if out.ref_on_page(inst.quote, "instrument.quote") and inst.name not in normalise(
-        inst.quote.quote
+    if out.ref_on_page(inst.quote, "instrument.quote") and not _name_occurs(
+        inst.name, inst.quote.quote
     ):
         out.add("instrument: name does not occur in the quote")
     _check_terms(submission.terms, quotation, out)

@@ -771,6 +771,9 @@ BREAK_AT_BASE = (
     "at which EBITDA no longer covers cash interest compares same-period flows but is gated like "
     "a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period."
 )
+# Release batch item 1 (fb371d5; round 6 batch review L1): where that break's ratio gate holds on
+# a single-quarter base (the builder's gate_na), the line also says it is not calculated there.
+BREAK_AT_BASE_NA = BREAK_AT_BASE[:-1] + ", and it is not calculated on a single-quarter base."
 NOT_CALC_CROSSING = (
     "A metric that is not calculable under a scenario shows Not calculable against every break "
     "point, including a break whose required decline is below that scenario's decline."
@@ -1324,7 +1327,9 @@ def _limitations(
     limits = [ANALYST_SHOCKS]
     if sub.thresholds:
         limits.append(WATCH_LEVELS)
-    limits += [STATIC, HELD, LIQUIDITY, COVENANT, MATURITY, BREAK_AT_BASE]
+    quarter_gated = _GATE["coverage"] in base.not_meaningful
+    limits += [STATIC, HELD, LIQUIDITY, COVENANT, MATURITY]
+    limits.append(BREAK_AT_BASE_NA if quarter_gated else BREAK_AT_BASE)
     if unreached:
         limits.append(NOT_CALC_CROSSING)
     # Ruling A2: one line per break already reached at base, in register order.

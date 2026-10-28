@@ -756,3 +756,84 @@ def test_e8_word_boundaries_are_pinned(phrase: str) -> None:
     assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
         "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
     )
+
+
+# --- round 10: figure signs in quote readers, the product quote match, the riding Low --------
+def _share_submission(sentence: str, percent_text: str) -> tuple[dict[str, Any], dict[str, str]]:
+    """The positive literal with a stated foreign EBITDA share quoted from a variant page:2."""
+    pages = dict(_pages("positive"))
+    pages["page:2"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["fx"]["operating_fx_absence"] = None
+    sub["fx"]["foreign_ebitda_share"] = {
+        "source_id": "financial",
+        "locator": "page:2",
+        "quote": sentence,
+        "percent_text": percent_text,
+    }
+    return sub, pages
+
+
+@pytest.mark.parametrize(
+    "printed",
+    ["\u221225", "-25", "\u201325", "(25)"],
+    ids=["minus_sign", "ascii_hyphen", "en_dash", "parentheses"],
+)
+def test_round10_signed_share_does_not_occur(printed: str) -> None:
+    sub, pages = _share_submission(f"Earnings abroad were {printed} percent of EBITDA.", "25")
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
+        "fx.foreign_ebitda_share: percent_text 25 does not occur in the quote",
+    )
+
+
+@pytest.mark.parametrize(
+    ("sentence", "percent_text"),
+    [
+        ("Earnings abroad were 25 percent of EBITDA from 1-December.", "1"),
+        ("Earnings abroad were 95-96 percent of EBITDA.", "96"),
+        ("Earnings abroad of S-25 were reported.", "25"),
+        ("Earnings abroad were 20 percent over 2024-2025.", "20"),
+        ("Earnings abroad were +25 percent of EBITDA.", "25"),
+        ("Earnings abroad were (25 percent) of EBITDA.", "25"),
+    ],
+    ids=["1-December", "95-96", "S-25", "2024-2025", "plus_ignored", "parenthesised_words"],
+)
+def test_round10_non_sign_forms_still_validate(sentence: str, percent_text: str) -> None:
+    sub, pages = _share_submission(sentence, percent_text)
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == ()
+
+
+def test_round10_signed_labelled_operand_does_not_occur() -> None:
+    """A labelled operand printed with a minus gets the "does not occur" issue (one check before
+    the label adjacency)."""
+    sentence = "The margin is spread \u22125 basis points over the reference rate."
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["spread"] = {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": sentence,
+        "bps_text": "5",
+    }
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
+        "rate_exposure.spread: bps_text 5 does not occur in the quote",
+    )
+
+
+def test_round10_on_page_uses_the_product_quote_match() -> None:
+    """An en dash in a quote of a page that prints a hyphen matches, as citation_issues does."""
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    basis = {
+        "source_id": "financial",
+        "locator": "page:1",
+        "quote": "January 1\u2013December 31, 2025",
+    }
+    sub["assessments"][0]["basis"].append(basis)
+    assert cp2e.validate_macro_fx(submission=sub, pages=_pages("positive")) == ()
+
+
+def test_negative_floor_fails_closed() -> None:
+    """The riding Low: a negative floor (direct construction only) has no floor limitation."""
+    with pytest.raises(ValueError, match="Floor limitation"):
+        cp2e.compute(_floor(_inputs("positive"), "-25"))

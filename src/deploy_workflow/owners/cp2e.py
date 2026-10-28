@@ -16,6 +16,7 @@ from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from typing import Any, Literal
 
 from deploy_vii.contracts import Fact
+from deploy_vii.quotes import normalise, quoted
 from deploy_vii.report_view import fact_spelling, figure_unit
 
 MODULE_ID = "CP-2E"
@@ -498,9 +499,20 @@ def _squash(text: str) -> str:
 
 
 def _once(token: str, quote: str) -> bool:
-    """token occurs exactly once in quote as a whole number."""
-    pattern = r"(?<![0-9.])" + re.escape(token) + r"(?![0-9]|\.[0-9])"
-    return len(re.findall(pattern, quote)) == 1
+    """token occurs exactly once in the normalised quote as a whole, unsigned number.
+
+    Round 10: the quote's figure is the signed numeral it prints. A ``-`` directly before the
+    first digit is a minus when it starts the quote or follows a character that is neither a
+    letter nor a digit, and a numeral in accounting parentheses reads as negative; such a printed
+    figure is not an occurrence of the unsigned token. A ``+`` is ignored."""
+    text = normalise(quote)  # maps U+2212 and the dashes to "-"
+    pattern = r"(?<![0-9.])(?<!(?<![A-Za-z0-9])-)" + re.escape(token) + r"(?![0-9]|\.[0-9])"
+    unsigned = [
+        m
+        for m in re.finditer(pattern, text)
+        if not (text[m.start() - 1 : m.start()] == "(" and text[m.end() : m.end() + 1] == ")")
+    ]
+    return len(unsigned) == 1
 
 
 class _Check:
@@ -522,7 +534,7 @@ class _Check:
         if sid != SOURCE_ID:
             self.add(f"{path}: source {sid} is outside the CP-2E scope ({SOURCE_ID})")
             return False
-        if loc not in self.pages or _squash(ref["quote"]) not in _squash(self.pages[loc]):
+        if loc not in self.pages or not quoted(ref["quote"], self.pages[loc]):
             self.add(f"{path}: quote not found on {sid} {loc}")
             return False
         return True

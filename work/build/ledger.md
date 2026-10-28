@@ -368,3 +368,4 @@
 - 20:25 Q-SQ1 answered (CP-4C source_row complies; judgements outside (b); CP-1D item 12 confirmed).
 - 20:25 CP-2A fix2 fbe2d3c (M1 consumer rows, A3 pin, T4.10 filter; tests only). Scoped re-review.
 - 20:25 G1-X order fix1 5b3756a (M1 deferred test passes 587 s; M2 two-later case kills both mutants; L1). Scoped re-review.
+- 20:26 Shared defect test fix2 292b1d2 (verbatim pattern must accept a value; p5 exit 0). Scoped re-review.

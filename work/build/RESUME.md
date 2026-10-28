@@ -23,7 +23,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | CP-2G round 9 mx-feature review | 947a57d | impl a4377a7580e8e70db | merge |
 | H1 fix round 2 (h1/fix2-brief.md) | lane | a69f811059171c714 | mx-adversary by finding id, merge; then H1b |
 | CP-3C fix 1 mx-adversary re-review | 8a45037 | impl aa5a4817fa00cd287 | merge |
-| CP-2E fix 1 (cp2e/fix1-brief.md) | c050f57 | a219254fe68cc1c2d | mx-precise re-review, merge |
+| CP-2E fix 1 mx-precise re-review | a1b50c8 | impl a219254fe68cc1c2d | merge |
 
 Built, waiting to merge with CP-5 (all carry 2682310): CP-3 re-pin 6c6ea02 (worktree cp3-stage1, pin-only diff checked); CP-8 dae85ed (approved through round 10).
 

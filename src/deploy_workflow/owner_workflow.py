@@ -1646,14 +1646,7 @@ def _verify_submissions(
             raise WorkflowError("identity_mismatch")
         historical = _hist(store, binding.binding)
         raw = _raw(store, binding.payload_sha256)
-        try:
-            filled, resolved, paths, kinds = _fill(historical, binding.binding, raw)
-        except TypeError:
-            # R4-4, controller ruling on M1: the recorded payload is tamperable, and a forged
-            # discriminator value that is unhashable makes `live.schema.normalise` raise
-            # `TypeError` (`_Walker.branch`; the tag-type guard there is LEAD's). Fails closed;
-            # remove this mapping once that guard lands.
-            raise WorkflowError("identity_mismatch") from None
+        filled, resolved, paths, kinds = _fill(historical, binding.binding, raw)
         if (filled, resolved, paths, kinds) != (
             _raw(store, submission.stored_payload_sha256),
             submission.nulls_resolved,
@@ -1991,9 +1984,7 @@ def verify_owner_run_receipt(
     Exception mapping (S1a R4-4, as B1 N2): a tamper cause refuses `identity_mismatch`. Those are
     evidence that fails to parse or to hash (`ValueError`: pydantic, JSON, UTF-8, the store's
     blob and snapshot checks, the core refusals) and evidence that is missing or unreadable
-    (`OSError`); every lookup a forged record can reach is an explicit check. One call maps a
-    `TypeError` too: `_verify_submissions` filling a recorded payload, which a forged
-    discriminator value makes `live.schema.normalise` raise (M1). Elsewhere programming errors
+    (`OSError`); every lookup a forged record can reach is an explicit check. Programming errors
     (`TypeError`, `KeyError`, `StopIteration`, `AttributeError`, ...) propagate unchanged."""
     try:
         receipt = OwnerRunReceipt.model_validate_json(receipt.model_dump_json())

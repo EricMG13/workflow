@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from functools import cache
 from pathlib import Path
-from typing import Any
+from typing import Any, cast, get_args
 
 import pytest
 from hypothesis import HealthCheck, given, settings
@@ -40,6 +40,7 @@ from deploy_vii.contracts import (
     Claim,
     Fact,
     Input,
+    InputStatus,
     Module,
     ReportTable,
     Run,
@@ -567,6 +568,12 @@ def _flatten(sequence: Sequence[dict[str, Any]], bound: Sequence[str]) -> tuple[
     return tuple(dict.fromkeys(items))
 
 
+def _bound_status(head: Module) -> InputStatus:
+    """A settled head's status as its consumer binds it (accepted, restricted or blocked)."""
+    assert head.status in get_args(InputStatus), head.status
+    return cast(InputStatus, head.status)
+
+
 @dataclass(frozen=True)
 class Fixture:
     case: str
@@ -607,7 +614,10 @@ def make_fixture(case: str, cp1a_quote: str | None = None) -> Fixture:
     }
     bound = (
         Input(input_id="prepared-pack", sha256=pack.content_hash(), status="accepted"),
-        *(Input(input_id=m, sha256=h.content_hash(), status=h.status) for m, h in heads.items()),
+        *(
+            Input(input_id=m, sha256=h.content_hash(), status=_bound_status(h))
+            for m, h in heads.items()
+        ),
     )
     sequence = EXPECTED[case]["inherited_limitations"]["sequence"]
     scope = ReviewScope(
@@ -928,13 +938,15 @@ def _exempt(path: tuple[Any, ...], value: Any, block: dict[str, Any]) -> bool:
     return module["module_id"] == "CP-3" and re.fullmatch(r"T3\.3\.[^.]+\.quote", ref) is not None
 
 
-def _citation_quotes(scope: ReviewScope) -> set[str]:
-    return {
-        c.quote
-        for _, head in scope.heads
-        for record in (*head.claims, *head.facts)
-        for c in record.citations
+def _quotes(head: Module) -> set[str]:
+    """Every citation quote of a head: its claims' and its facts'."""
+    return {c.quote for claim in head.claims for c in claim.citations} | {
+        c.quote for fact in head.facts for c in fact.citations
     }
+
+
+def _citation_quotes(scope: ReviewScope) -> set[str]:
+    return {q for _, head in scope.heads for q in _quotes(head)}
 
 
 @pytest.mark.parametrize("case", CASES)
@@ -986,8 +998,18 @@ def test_view_lists_every_literal_upstream_ref(case: str) -> None:
             assert ref in named[review["producer_module"]], (review["claim_ref"], ref)
 
 
-def test_view_refuses_a_scope_with_issues() -> None:
-    scope = dataclasses.replace(make_fixture("positive").scope, issues=("Stale inputs: probe",))
+@pytest.mark.parametrize(
+    "issue",
+    [
+        "Stale inputs: probe",
+        "Stale input CP-2: probe",
+        "Unreadable upstream head CP-2: probe",
+        "Unreadable upstream head: inherited limitations: probe",
+    ],
+)
+def test_view_refuses_a_scope_with_issues(issue: str) -> None:
+    """Any `review_scope` issue (the stale and the unreadable forms) refuses the view."""
+    scope = dataclasses.replace(make_fixture("positive").scope, issues=(issue,))
     with pytest.raises(WorkflowError, match="^identity_mismatch$"):
         view_body(scope)
 
@@ -1027,6 +1049,159 @@ def test_property_a_failing_quote_never_reaches_the_view(word: str) -> None:
     _, block, body = _failing_view(quote)
     assert len(block["python_findings"]) == 1
     assert quote not in body and prefix(quote) not in body
+
+
+# --- the view over scopes the frozen cases never build (review-adversary F1, F2) -------------------
+
+
+def _rescope(
+    heads: Mapping[str, Module], blocked: frozenset[str] = frozenset(), issues: tuple[str, ...] = ()
+) -> ReviewScope:
+    """A positive-case scope over `heads` (module id -> head), every bound hash and status taken
+    from the head itself, as `execution.current_inputs` binds them."""
+    fixture = make_fixture("positive")
+    bound = (
+        Input(input_id="prepared-pack", sha256=fixture.pack.content_hash(), status="accepted"),
+        *(
+            Input(input_id=m, sha256=h.content_hash(), status=_bound_status(h))
+            for m, h in heads.items()
+        ),
+    )
+    return ReviewScope(
+        pack=fixture.pack,
+        inputs=bound,
+        heads=tuple((i, heads[i.input_id]) for i in bound[1:] if i.input_id not in NOT_EVALUATED),
+        blocked=blocked,
+        inherited=fixture.scope.inherited,
+        issues=issues,
+    )
+
+
+def _revalidated(head: Module, **update: Any) -> Module:
+    return Module.model_validate_json(head.model_copy(update=update).model_dump_json())
+
+
+def _marks(block: dict[str, Any]) -> dict[tuple[str, str], list[str]]:
+    return {
+        (m["module_id"], c["claim_id"]): c["python_findings"]
+        for m in block["modules"]
+        for c in m["claims"]
+    }
+
+
+def _top_level(scope: ReviewScope) -> list[str]:
+    """Lease construction step 5: the kind label plus where of every Python finding, in order."""
+    return [f"{KIND_LABEL[f.kind]}: {f.where}" for f in python_checks(scope).findings]
+
+
+def test_view_cuts_every_mark_of_a_claim_with_several_failing_citations() -> None:
+    """Kills A02 (only the first mark cut) and A11 (top-level findings de-duplicated): a CP-1A
+    claim whose every citation fails gives one finding, and one mark, per citation."""
+    heads = dict(make_fixture("positive").heads)
+    cp1a = heads["CP-1A"]
+    target = max(cp1a.claims, key=lambda c: len(c.citations))
+    quotes = [
+        f"Probe failing quote {chr(97 + i)} for this claim" for i in range(len(target.citations))
+    ]
+    assert len(quotes) >= 2
+    claims = tuple(
+        c.model_copy(
+            update={
+                "citations": tuple(
+                    x.model_copy(update={"quote": q})
+                    for x, q in zip(c.citations, quotes, strict=True)
+                )
+            }
+        )
+        if c.claim_id == target.claim_id
+        else c
+        for c in cp1a.claims
+    )
+    heads["CP-1A"] = _revalidated(cp1a, claims=claims)
+    scope = _rescope(heads)
+    _, body = view_body(scope)
+    block = json.loads(body)
+    assert [f.kind for f in python_checks(scope).findings] == ["claim_citation"] * len(quotes)
+    assert _marks(block)[("CP-1A", target.claim_id)] == ["claim_citation"] * len(quotes)
+    assert block["python_findings"] == _top_level(scope)
+    assert len(block["python_findings"]) == len(quotes)
+    assert not [q for q in quotes if q in body or prefix(q) in body]
+
+
+def test_view_keeps_a_blocked_heads_quotes_out() -> None:
+    """Kills A03 (quotes stripped from evaluated heads only): a blocked optional head is bound
+    and listed (lease, Blocked), and its citation quotes stay out of the body."""
+    heads = dict(make_fixture("positive").heads)
+    cp1a = heads["CP-1A"]
+    heads["CP-1A"] = _revalidated(cp1a, status="blocked")
+    scope = _rescope(heads, blocked=frozenset({"CP-1A"}))
+    _, body = view_body(scope)
+    block = json.loads(body)
+    listed = next(m for m in block["modules"] if m["module_id"] == "CP-1A")
+    assert listed["evaluated"] is False and listed["status"] == "blocked"
+    assert "quote" not in set(_keys_anywhere(block))
+    quotes = _quotes(cp1a)
+    shown = list(_strings(block, lambda p, v: _exempt(p, v, block)))
+    assert quotes and not [q for q in quotes if any(q in s for s in shown)]
+    assert [f.kind for f in python_checks(scope).findings] == ["blocked_upstream"]
+    assert block["python_findings"] == _top_level(scope)
+    assert block["blocked_upstream"] == ["CP-1A"]
+
+
+# A genuine CP-1 fact id (financial_periods.py: `interface-fact:<sha256>`), which holds a `:`.
+INTERFACE_ID = "interface-fact:" + hashlib.sha256(b"T4.10 total_leverage_reported").hexdigest()
+
+
+@pytest.mark.parametrize("fact_id", [FIGS["total_leverage_reported"].fact_id, INTERFACE_ID])
+def test_view_marks_a_flagged_reference_as_kind_on_ref(fact_id: str) -> None:
+    """Kills A01 (the ` on <ref>` part dropped), A09/M14 (cut at `:`) and A05 (top level from
+    modules and subject): a figure the CP-2 copy disagrees with flags every claim that names it
+    `figure_identity on <ref>` (lease step 4), also when the ref is a genuine `:` id."""
+    old = FIGS["total_leverage_reported"].fact_id
+    heads = {
+        m: Module.model_validate_json(h.model_dump_json().replace(old, fact_id))
+        for m, h in make_fixture("positive").heads.items()
+    }
+    cp2 = heads["CP-2"]
+    facts = tuple(
+        f.model_copy(update={"amount": f.amount + 1})
+        if f.fact_id == fact_id and f.amount is not None
+        else f
+        for f in cp2.facts
+    )
+    heads["CP-2"] = _revalidated(cp2, facts=facts)
+    scope = _rescope(heads)
+    block = json.loads(view_body(scope)[1])
+    flagged = {key: marks for key, marks in _marks(block).items() if marks}
+    assert ("CP-1", "leverage") in flagged and ("CP-2", "T2.10.kf01") in flagged
+    assert all(marks == [f"figure_identity on {fact_id}"] for marks in flagged.values())
+    assert [f.kind for f in python_checks(scope).findings] == ["figure_identity"]
+    assert block["python_findings"] == _top_level(scope)
+
+
+def test_view_over_an_empty_evaluated_set() -> None:
+    """Kills A05 on the one finding without a module: the empty evaluated set."""
+    scope = _rescope({"CP-0": make_fixture("positive").heads["CP-0"]})
+    block = json.loads(view_body(scope)[1])
+    assert [f.kind for f in python_checks(scope).findings] == ["empty_evaluated_set"]
+    assert block["python_findings"] == _top_level(scope)
+    assert block["modules"] == []
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_view_keeps_the_head_citation_order(case: str) -> None:
+    """Kills A04 (citations reversed): each claim's citations are the head's, in order."""
+    fixture = make_fixture(case)
+    block = json.loads(view_body(fixture.scope)[1])
+    for module in block["modules"]:
+        head = fixture.heads[module["module_id"]]
+        claims = {c.claim_id: c for c in head.claims}
+        for claim in module["claims"]:
+            expected = [
+                {"ref": f"{claim['claim_id']}#c{n}", "source_id": x.source_id, "locator": x.locator}
+                for n, x in enumerate(claims[claim["claim_id"]].citations, 1)
+            ]
+            assert claim["citations"] == expected
 
 
 # --- validator refusals (expected.json refusals.validator_refusals) --------------------------------

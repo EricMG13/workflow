@@ -1552,15 +1552,15 @@ def _yld_claim(c: _Composer, claim: _Claim) -> ClaimText:
             "source in the pack states.",
             [_YLD],
         )
-    if c.derived.days is None:
+    if c.sub.terms.maturity.date_text is None:
         return claim(
             cid,
             f"The all-in yield is not calculated: [{_YLD}] needs a final maturity date, which no "
             "source in the pack states.",
             [_YLD],
         )
-    # A quoted level with a missing mid margin for another cause (no mid, no margin): no ruled
-    # wording; the DM-01 gap form's neutral wording, recorded for LEAD.
+    # A quoted level, a stated maturity and a missing mid margin for another cause (no mid, no
+    # quotation date, no margin): no ruled wording; the DM-01 gap form's neutral wording.
     return claim(cid, f"The all-in yield is not calculated: [{_YLD}] is not available.", [_YLD])
 
 

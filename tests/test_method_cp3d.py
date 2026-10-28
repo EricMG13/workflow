@@ -569,6 +569,21 @@ def test_x1_v_maturity_absent_with_a_quoted_level() -> None:
     )
 
 
+def test_x1_talk_only_with_a_level_and_a_stated_maturity_does_not_blame_the_maturity() -> None:
+    """mx-precise M1 on 9b871a7: with no quotation date `days` is missing although the maturity
+    is stated; YLD-01 must not say that no source states a final maturity date."""
+    page = "Published January 10, 2026.\nThe SOFR reference rate is 4.30 percent."
+    ctx = _with_page(_context("positive"), "financial", "page:9", page)
+    raw = _without(("bid", "offer"))
+    raw["terms"]["reference_rate"]["absence"] = None
+    quote = {"source_id": "financial", "locator": "page:9", "quote": page.split("\n")[1]}
+    raw["terms"]["reference_rate"]["level"] = {"quote": quote, "percent_text": "4.30"}
+    assert raw["terms"]["maturity"]["date_text"]
+    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (
+        "The all-in yield is not calculated: [T3E.3.r05.mid] is not available."
+    )
+
+
 def _variants() -> list[tuple[str, dict[str, Any], bool]]:
     """Every combination of observed kinds, recovery, maturity, margin and a quoted level."""
     out = []

@@ -1534,6 +1534,54 @@ def test_b3_a_name_the_validator_accepts_composes() -> None:
     assert any("Tranche B 2027" in c.text for c in claims)
 
 
+def test_b3_the_issuer_name_is_spared_in_a_class_name() -> None:
+    """B3 reads names with the same `names` compute uses: the issuer's own digit is no bare
+    figure, and the class name composes."""
+    base = _context("positive")
+    run = base.pack.run.model_copy(update={"issuer_name": "Northbridge 2 Holdings"})
+    ctx = replace(base, pack=base.pack.model_copy(update={"run": run}))
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = "Northbridge 2 Holdings Notes"
+    assert _payload_issues(payload, ctx) == ()
+    assert _payload_issues(payload) == ("claims[1].name: Bare figure: 2",)  # another issuer
+    claims = _compute_with(ctx, payload).claims
+    assert any("Northbridge 2 Holdings Notes" in c.text for c in claims)
+
+
+@pytest.mark.parametrize("name", ["Term Loan B-2", "Q1 Notes"])
+def test_b3_a_class_name_is_read_as_spelt(name: str) -> None:
+    """Class names keep their case in the claims, so B3 reads them as typed (only a valuation
+    label is lower-cased): these pass, and compose."""
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = name
+    assert _payload_issues(payload) == ()
+    claims = _compute_with(_context("positive"), payload).claims
+    assert any(name in c.text for c in claims)
+
+
+def test_b2_a_known_total_debt_without_an_amount_still_raises() -> None:
+    ctx = _with_cp1(
+        _context("positive"), "total_debt", status="known", amount=None, text="n/a", unit=None
+    )
+    with pytest.raises(ValueError, match="CP-1 total debt .* is known without an amount"):
+        _compute_with(ctx, _bind_all(_payload("positive")))
+
+
+def test_b6_ev_reason_comes_first_when_both_operands_are_unknown() -> None:
+    """Gap v03 has no EV; with CP-1 EBITDA missing too, the implied multiple takes EV's reason."""
+    changes = {"status": "missing", "amount": None, "calculation_id": None, "limitation": "Gone"}
+    ctx = _with_cp1(_context("gap"), "ebitda", **changes)
+    got = _records(cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs("gap").submission)))
+    ev_reason = "Not calculable: the EV multiple was not assessed"
+    assert (got["T4E.3.v03.ev"]["status"], got["T4E.3.v03.ev"]["limitation"]) == (
+        "missing",
+        ev_reason,
+    )
+    implied = got["T4E.3.v03.implied_ltm_multiple"]
+    assert (implied["status"], implied["limitation"]) == ("missing", ev_reason)
+    assert got["T4E.3.v01.implied_ltm_multiple"]["limitation"] == CP1_EBITDA_MISSING
+
+
 def test_q6_a_quote_must_cover_whole_cells() -> None:
     assert _payload_issues(_quoting("Pr")) == (NO_NUMBER,)
     cut = "Other current liabilities  10  10  10  10  1"  # cuts the last figure

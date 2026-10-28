@@ -22,7 +22,7 @@ Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 10
 | CP-2H first mx-adversary review | cc1d0fb | see ledger (impl a52b5ec0919986ddb) | fix round if needed, merge |
 | CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-4C first mx-adversary review (money) | bdde577 | see ledger (impl a2c15c441717ec41c) | fix round if needed, merge |
-| CP-5 Stage 1 build | lane + 2682310 | a490ed6228f4da606 (worktree cp5-stage1) | first mx-adversary review; merges with CP-3 and CP-8 |
+| CP-5 first mx-adversary review | 4e2d687 | see ledger (impl a490ed6228f4da606, worktree cp5-stage1) | merge with CP-3 and CP-8 |
 
 Built, waiting to merge with CP-5 (all carry 2682310): CP-3 re-pin 6c6ea02 (worktree cp3-stage1, pin-only diff checked); CP-8 fa55df5 (approved through round 9).
 

@@ -44,6 +44,7 @@ from deploy_workflow.tools.source import SourceError, SourceTools
 _SOURCE_STEPS = {
     "CP-0": ("source_readiness",),
     "CP-1": ("source_context", "financials"),
+    "CP-1A": ("business_context",),
     "CP-4": ("legal_covenants",),
 }
 

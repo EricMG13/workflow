@@ -20,9 +20,9 @@ Lane `claude/module-dev-status-review-0981b6` at 4c7b6a3 or later. Fast tests: 9
 | H1 mx-adversary review | 2bd61a7 | a72eed029a03a38bf (impl a69f811059171c714) | then H1 open points 1–6 to LEAD with the reviewer's reading |
 | CP-8 first adversary review | a5c4011 | af64c7b718d678452 (impl a3cc9818386e8861a) | small round for the split-plus-missing case once LEAD rules |
 | CP-2G first adversary review | 0e28916 | af5c5ac1e28b12e3e (impl a4377a7580e8e70db) | merge after APPROVE, with the 3674158 re-pin (manifest b0c8c4bc…, submissions 25a96ebb…) |
-| CP-2A scoped review (r5, r6, P1-W) | 7ba456e | accf6e5d5ad04d398 (impl a34fec3e9469279cd) | merge with CP-2E; choice 5 to LEAD |
-| CP-2E scoped review (E6–E8, A3, A4) | af23f7f | a6116d5fbd782f091 (impl a219254fe68cc1c2d) | merge with CP-2A |
-| CP-2D scoped review (r5 + r6/6f, from f0e4a6d) | 3e099de | a9f01544fcd59ff6d (impl a69f2394899aee6d5) | 6f (e) ratio string to LEAD unless the rulings decide it |
+| CP-2A fix round 1 (M1 + L1-L3) | 7ba456e | a34fec3e9469279cd | scoped re-review, then merge CP-2A + CP-2E + CP-2D with the oracle batch |
+| CP-2E approved (E6–E8, A3, A4) | af23f7f | impl a219254fe68cc1c2d | merge with CP-2A; Low (E8 anchors) rides with the next fix |
+| CP-2D approved (r5 + r6/6f) | 3e099de | impl a69f2394899aee6d5 | merge with CP-2A and CP-2E; Lows L1-L6 ride with the next fix |
 
 ## Built, waiting on LEAD (outbox `work/build/outbox-lead.md` plus the 4c7b6a3 message)
 - **CP-3C** 9e78d63 (impl aa5a4817fa00cd287): round 5 choices 1–7 → small round → first mx-adversary review. Merges after CP-2A/2E.

@@ -10,12 +10,13 @@ import json
 import re
 from calendar import monthrange
 from dataclasses import replace
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -1354,3 +1355,212 @@ def test_r9_l6_wall_date_issue_follows_basis_issue() -> None:
         "basis_refs names a fact the view does not offer",
         "the maturity_wall assessment must cite T4.18 maturity_date",
     )
+
+
+# --- round 11 class round: blank text (docs/rulings/2026-10-28-stage1.md "# Round 11", LEAD
+# rulings "Blank text is one defect class"; tests/defect_classes.py). CP-2D reads no figure, name
+# or label from an analyst quote, so only the blank cases apply. No CP-2D frame is pinned, so the
+# fallback `<path>: empty text` is used.
+
+
+def _blank_adapter(case: str, path: tuple[str | int, ...]) -> Adapter:
+    """Places the value at `path` in a frozen literal submission; the page and quote are unused
+    (CP-2D cites no quote)."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        payload = json.loads(json.dumps(SUBMISSIONS["cp2d"][case]))
+        cur: Any = payload
+        for key in path[:-1]:
+            cur = cur[key]
+        cur[path[-1]] = value
+        return cp2d.submission_issues(
+            submission=_submission(payload),
+            offered_refs=OFFERED,
+            maturity_date_refs=MATURITY_REFS,
+        )
+
+    return adapter
+
+
+def _blank_field(case: str, *path: str | int) -> tuple[str, Adapter]:
+    """(the issue path, e.g. `assessments[0].text`, and its adapter)."""
+    named = "".join(f"[{p}]" if isinstance(p, int) else f".{p}" for p in path).lstrip(".")
+    return named, _blank_adapter(case, path)
+
+
+BLANK_FIELDS: tuple[tuple[str, Adapter], ...] = (
+    *(
+        _blank_field("positive", "assessments", i, field)
+        for i in range(3)
+        for field in ("text", "credit_implication")
+    ),
+    # A limitation on a non-Insufficient assessment also gets LIMITATION_ISSUE; on the
+    # Insufficient Information assessment it also gets INSUFFICIENT_ISSUE (both unchanged).
+    _blank_field("positive", "assessments", 0, "limitation"),
+    _blank_field("gap_minimum_cash", "assessments", 2, "limitation"),
+    _blank_field("positive", "minimum_cash", "rationale"),
+    _blank_field("gap_minimum_cash", "minimum_cash_absence", "reason"),
+    _blank_field("gap_minimum_cash", "minimum_cash_absence", "follow_up"),
+)
+
+
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=[c.case_id for c in BLANK_CASES])
+@pytest.mark.parametrize("path,adapter", BLANK_FIELDS, ids=[path for path, _ in BLANK_FIELDS])
+def test_r11_blank_text_is_refused(blank: BlankCase, path: str, adapter: Adapter) -> None:
+    assert blank_failure(blank, adapter, EMPTY_TEXT.format(path=path)) is None
+
+
+@pytest.mark.parametrize("path,adapter", BLANK_FIELDS, ids=[path for path, _ in BLANK_FIELDS])
+def test_r11_blank_text_twin_is_not_refused_as_empty(path: str, adapter: Adapter) -> None:
+    """Real text in the same field is not refused as empty."""
+    issues = adapter("", "", "Cash is held as an analyst assumption.")
+    assert EMPTY_TEXT.format(path=path) not in issues
+
+
+def test_r11_blank_fields_cover_every_analyst_text_field() -> None:
+    """Every path CP-2D reads as analyst text (2D-a's list) is in BLANK_FIELDS, by field name."""
+    positive = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+    for a in positive["assessments"]:
+        a["limitation"] = "A stated limitation."
+    read = [
+        path
+        for case in (positive, SUBMISSIONS["cp2d"]["gap_minimum_cash"])
+        for path, _ in cp2d.analyst_text_fields(_submission(case))
+    ]
+
+    def name(path: str) -> str:
+        return re.sub(r"\[\d+\]", "[i]", path)
+
+    assert {name(p) for p in read} == {name(p) for p, _ in BLANK_FIELDS}
+    assert set(read) >= {p for p, _ in BLANK_FIELDS}
+
+
+def test_r11_blank_issue_sits_with_the_text_checks_in_field_order() -> None:
+    """The empty-text issues follow SECTION_ISSUE and precede DIGIT_ISSUE, one per path."""
+    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+    payload["assessments"] = payload["assessments"][:2]
+    payload["assessments"][1]["credit_implication"] = " "
+    payload["assessments"][0]["text"] = "\t"
+    payload["minimum_cash"]["rationale"] += " Seven of them."
+    payload["minimum_cash"]["rationale"] = payload["minimum_cash"]["rationale"].replace(
+        "Seven", "7"
+    )
+    issues = cp2d.submission_issues(
+        submission=_submission(payload), offered_refs=OFFERED, maturity_date_refs=MATURITY_REFS
+    )
+    assert issues == (
+        "assessments must hold exactly one row per section",
+        "assessments[0].text: empty text",
+        "assessments[1].credit_implication: empty text",
+        "text must not contain a figure",
+    )
+
+
+# --- round 11 riding item: a maturity before D0 takes the CP-3C B1 rule (LEAD rulings "CP-2D, a
+# maturity before D0") ---------------------------------------------------------------------------
+
+PRE_D0 = "Not calculable: facility term-loan maturity date is before the balance date"
+PRE_D0_LINE = (
+    "Facility term-loan maturity date is before the balance date; maturity-wall figures that "
+    "need it are not calculated."
+)
+PRE_D0_GAP = (
+    "The funding gap is not calculated: [T2E.5.r07] needs every facility to mature on or after "
+    "the balance date, and one does not."
+)
+# Months from D0 and inside-horizon, then every dependant: amortisation and maturities inside the
+# horizon, cash at horizon end and the funding-gap rows built on it.
+PRE_D0_CELLS = (
+    "T2E.4.r01.c3",
+    "T2E.4.r01.c4",
+    "T2E.3.r06",
+    "T2E.3.r07",
+    "T2E.3.r08",
+    "T2E.5.r01",
+    "T2E.5.r03",
+    "T2E.5.r05",
+    "T2E.5.r06",
+    "T2E.5.r07",
+)
+
+
+@pytest.mark.parametrize("maturity", [date(2025, 6, 30), BALANCE_DATE - timedelta(days=1)])
+def test_r11_a_maturity_before_d0_is_a_gap(maturity: date) -> None:
+    """D0 - 1 day included. The date, principal, shares and cumulative share stay known."""
+    assert BALANCE_DATE == date(2025, 12, 31)
+    result = cp2d.compute(_with_loan(replace(LOAN, maturity_date=maturity)))
+    cells = _cells(result)
+    for fact_id in PRE_D0_CELLS:
+        assert (cells[fact_id].state, cells[fact_id].reason) == ("gap", PRE_D0), fact_id
+    assert cells["T2E.4.r01.c2"].shown == maturity.isoformat()
+    for fact_id in ("T2E.4.r01.c1", "T2E.4.r01.c5", "T2E.4.r01.c6", "T2E.3.r09", "T2E.2.r06"):
+        assert cells[fact_id].state == "known", fact_id
+    b = result.bridge
+    assert b.maturity_inside_horizon == cp2d.Gap(PRE_D0)
+    assert result.own_limitations[-1] == PRE_D0_LINE
+    assert result.gaps_ledger.rows[-1] == ("Facility maturity date (term-loan)", "Limitation")
+    assert "Interest after maturity" not in [label for label, _ in result.gaps_ledger.rows]
+    assert _gap_text(result) == PRE_D0_GAP
+    assert prose.check(PRE_D0_GAP, refs=(), gaps={"T2E.5.r07"}) == ()
+    assert prose.bare_figures("needs every facility to mature on or after the balance date") == ()
+    # MAT-01 keeps the chip form, as an unstated maturity date does.
+    assert _claim(result, "CP-2D-MAT-01").chips == ("T2E.3.r07",)
+
+
+def test_r11_a_maturity_on_d0_is_zero_months_and_inside() -> None:
+    """D0 itself is not before D0: no reason, no own line, and the principal falls due."""
+    result = cp2d.compute(_with_loan(replace(LOAN, maturity_date=BALANCE_DATE)))
+    cells = _cells(result)
+    assert (cells["T2E.4.r01.c3"].amount, cells["T2E.4.r01.c4"].shown) == (Decimal(0), "Yes")
+    assert LOAN.principal is not None
+    assert cells["T2E.3.r07"].amount == -LOAN.principal
+    assert result.bridge.maturity_inside_horizon is True
+    assert PRE_D0 not in {c.reason for c in cells.values()}
+    assert not [x for x in result.own_limitations if "before the balance date" in x]
+    assert ("Interest after maturity", "Limitation") in result.gaps_ledger.rows
+    assert "before the balance date" not in _gap_text(result)
+    # With the gap missing for another cause, form 3 finds nothing on D0 and form 4 speaks.
+    on_d0 = _with_loan(replace(LOAN, maturity_date=BALANCE_DATE))
+    on_d0 = replace(on_d0, operands=replace(on_d0.operands, cfo=None))
+    assert _gap_text(cp2d.compute(on_d0)) == (
+        "The funding gap is not calculated: [T2E.5.r07] needs Operating cash flow, which is "
+        "missing."
+    )
+
+
+def test_r11_pre_d0_takes_the_maturity_date_slot_in_d2_order() -> None:
+    """Currency comes first; the pre-D0 cause comes before an unstated principal."""
+    past = replace(LOAN, maturity_date=date(2025, 6, 30))
+    assert _gap_text(cp2d.compute(_with_loan(replace(past, principal=None)))) == PRE_D0_GAP
+    assert _gap_text(cp2d.compute(_with_loan(replace(past, currency=None)))) == (
+        "The funding gap is not calculated: [T2E.5.r07] needs every facility with its currency "
+        "stated, and one is not."
+    )
+
+
+def test_r11_pre_d0_own_line_takes_the_maturity_date_slot() -> None:
+    """The line sits where an unstated maturity date's line would, after the FX line and before
+    the principal line."""
+    past = replace(LOAN, maturity_date=date(2025, 6, 30), currency="EUR", principal=None)
+    labels = [label for label, _ in cp2d.compute(_with_loan(past)).gaps_ledger.rows]
+    start = labels.index("Facility currency (term-loan)")
+    assert labels[start : start + 3] == [
+        "Facility currency (term-loan)",
+        "Facility maturity date (term-loan)",
+        "Facility principal (term-loan)",
+    ]
+
+
+def test_r11_a_known_inside_facility_keeps_the_flag_known() -> None:
+    """With another facility known inside the horizon, some maturity falls inside it."""
+    inputs = _inputs("positive")
+    past = replace(LOAN, facility_id="old-loan", maturity_date=date(2025, 6, 30))
+    inside = replace(LOAN, maturity_date=date(2026, 6, 30))
+    result = cp2d.compute(
+        replace(inputs, operands=replace(inputs.operands, facilities=(past, inside)))
+    )
+    assert result.bridge.maturity_inside_horizon is True
+    reason = "Not calculable: facility old-loan maturity date is before the balance date"
+    assert result.bridge.maturities_in_horizon == cp2d.Gap(reason)
+    assert [w.facility.facility_id for w in result.bridge.wall] == ["old-loan", "term-loan"]
+    assert not isinstance(result.bridge.wall[1].cumulative_share, cp2d.Gap)

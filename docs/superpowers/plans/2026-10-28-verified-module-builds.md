@@ -96,7 +96,7 @@ For each module:
 | CP-2D | 2D1–2D9 | 2D1 substring match (not word boundary); 2D9 financing total; zero debt not_applicable |
 | CP-1C | 1C1–1C6 | folded into the running fix 1 |
 | CP-1D | 1D1–1D10 | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
-| CP-4 | 4-1 | wait for LEAD's oracle commit |
+| CP-4 | 4-1 | oracle amended at 7328203 (expected 154fc2d0…, builder 71cf0758…; merged ad96d2d): merge, re-pin, assert the new basis text |
 
 LEAD round 2 is pending: X1 (CP-3D), L10-a/b/c, C1–C3, and the 1D2 basis-limitation follow-up. Those cases fail closed until it arrives. `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
 

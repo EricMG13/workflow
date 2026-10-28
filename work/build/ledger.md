@@ -24,3 +24,4 @@
 - 2026-10-28 cp3d-stage1 re-review (mx-adversary) on 5f4a87b: APPROVE. Low A (tie test uses a crossed quote) carried to the Stage 1 Fable review; Low B (five valid shapes raise after validation) to LEAD.
 - 2026-10-28 cp2d-stage1-fix1 `pytest tests/test_method_cp2d.py` exit 0, 64 passed 0 failed (0.21 s), branch worktree-agent-a69f2394899aee6d5 c8338f9, 15/16 mutants killed (M11 S&U formula with LEAD), mypy both files 0, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
 - 2026-10-28 LEAD rulings 2d27e50 merged into lane (638faf7); rulings rounds queued per module (plan §Rulings rounds)
+- 2026-10-28 LEAD ae9f1f1 merged into lane (ad96d2d): CP-4 oracle 4-1 at 7328203; AGENTS.md review-round rules from codex/checkpoint 963ef62

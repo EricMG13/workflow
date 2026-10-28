@@ -3,8 +3,8 @@
 Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 10 on it). Fast tests 1982 passed, 2 skipped, 1 xfailed (fast set now includes tests/test_schema_normalise_escapes.py). History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
 
 ## Merged into the lane
-- **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3, CP-2G, CP-8, CP-5, CP-4C, CP-2H.
-- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01); CP-3D r10 (a1de97d); G1-X fix 2 + LEAD 0d (857081c; G1/S1a deferred); CP-1D r10 (b7cd02e); CP-2G Stage 1 + fixes 1-2 + r9 (947a57d); CP-2E r10 + fix 1 (a1b50c8); CP-3 re-pin (6c6ea02), CP-8 through r10 (dae85ed), CP-5 + fix 1 (81e8c0b), with LEAD 2682310; H1 fix 2 (38f0f46; deferred suites pending); CP-4C + r8 + fix 1 (3b9c3dc); CP-2H + r7 + fix 1 (f843772; B7 strict xfail).
+- **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3, CP-2G, CP-8, CP-5, CP-4C, CP-2H, CP-3C.
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01); CP-3D r10 (a1de97d); G1-X fix 2 + LEAD 0d (857081c; G1/S1a deferred); CP-1D r10 (b7cd02e); CP-2G Stage 1 + fixes 1-2 + r9 (947a57d); CP-2E r10 + fix 1 (a1b50c8); CP-3 re-pin (6c6ea02), CP-8 through r10 (dae85ed), CP-5 + fix 1 (81e8c0b), with LEAD 2682310; H1 fix 2 (38f0f46; deferred suites pending); CP-4C + r8 + fix 1 (3b9c3dc); CP-2H + r7 + fix 1 (f843772; B7 strict xfail); CP-3C through fix 2 (merged after 2026-10-28 b0d77a2 approve). Fast tests 2150 passed, 2 skipped, 1 xfailed.
 - **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
 - **LEAD docs:** 8483de4 (E6), 3674158 (round 6 oracle batch), rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
@@ -18,8 +18,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 |---|---|---|---|
 | CP-4C round 11 mx-adversary review | ed1a721 | impl a2c15c441717ec41c | merge |
 | H1b mx-adversary review | 0717fad (worktree h1b) | impl mx-feature ab8d695f66c635633 | merge |
-| CP-3C fix 2 mx-precise re-review | b0d77a2 | impl aa5a4817fa00cd287 | merge |
-| Defect-class library mx-feature review | c032752 (worktree defect-classes) | impl a0170223c25fb1f60 | merge, then class rounds (stage1/class-round-brief.md): quote readers CP-3D, CP-8, CP-2E, CP-1D first, then blank-only CP-1C, CP-2D, CP-2G, CP-DR, CP-L10; at most 6 Opus at once |
+| Defect-class library fix 1 (review: Medium blank `""`, 2 Lows) | c032752 (worktree defect-classes) | impl a0170223c25fb1f60 | merge, then class rounds (stage1/class-round-brief.md): quote readers CP-3D, CP-8, CP-2E, CP-1D first, then blank-only CP-1C, CP-2D, CP-2G, CP-DR, CP-L10; at most 6 Opus at once |
 
 
 ## Next when a slot frees

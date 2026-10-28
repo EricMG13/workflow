@@ -1,0 +1,356 @@
+{
+  "schema_version": "cp2d-owner-cases/1",
+  "scope": "CP-2D (Liquidity) owner inputs: a CP-0 -> CP-1 -> CP-1A -> CP-2 -> CP-2D run over the frozen S1 sources, one positive CP-2D attempt, one long-horizon attempt and one minimum-cash gap attempt cloned from the same settled upstream, plus three composer-level fixtures",
+  "status": "DRAFT rev 3 2026-10-28 (preparation by mx-feature; LEAD rulings on review-precise-1 and review-precise-2 applied); independent review and LEAD adoption pending; not executed against any product core (none exists)",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+  "frozen_inputs": [
+    {
+      "path": "cases/financial/manifest.json",
+      "sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+      "use": "identity and financial sources, pages and shas reused by reference; oracle pointers q4_ltm_derived_source_units cross-checked"
+    },
+    {
+      "path": "cases/snapshot/manifest.json",
+      "sha256": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+      "use": "business source pages and sha reused by reference (positive); CP-0/CP-1/CP-1A/CP-2 packs follow it"
+    },
+    {
+      "path": "cases/snapshot/submissions.json",
+      "sha256": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+      "use": "literal CP-0 readiness review, CP-1 source_context, CP-1A business_context and CP-2 credit_synthesis reused unchanged except the CP-0 consumer delta below"
+    },
+    {
+      "path": "cases/snapshot/expected.json",
+      "sha256": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+      "use": "S1 expected values are NOT reused for CP-1A/CP-2 tables: the consumer set differs (no CP-MODEL), see lease open question 2"
+    },
+    {
+      "path": "cases/snapshot/cp2-view-tree.json",
+      "sha256": "f739395cbcf30ae2af710d8423927a8f810c8c4b948c07c6e6583e2a3b86f446",
+      "use": "CP-2 view tree (shape reference only; CP-2D's own view tree is a draft in this manifest)"
+    },
+    {
+      "path": "cases/legal/manifest.json",
+      "sha256": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+      "use": "legal pack: unused_commitment_oracle cross-checked (undrawn term loan commitment 0); the legal source is NOT a CP-2D input (CP-4 is not an upstream edge of CP-2D)"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "identity",
+      "ref": "cases/financial/manifest.json#sources[identity]",
+      "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+    },
+    {
+      "source_id": "financial",
+      "ref": "cases/financial/manifest.json#sources[financial]",
+      "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    },
+    {
+      "source_id": "business",
+      "ref": "cases/snapshot/manifest.json#business_source.positive",
+      "sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49"
+    }
+  ],
+  "run": {
+    "run_id": "slice-cp2d-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "covenant_refinancing",
+    "requested_modules": [
+      "CP-1",
+      "CP-1A",
+      "CP-2",
+      "CP-2D"
+    ]
+  },
+  "run_note": "A new run (new run_id, pathway and requested_modules change PreparedPack.content_hash), over the S1 source bytes. The S1 positive run (slice-snapshot-positive, credit_snapshot) cannot be extended in place: Run is part of the pack (preparation.py:48-51), and FP04 composes only for pathway covenant_refinancing (render.py:130). CP-MODEL is left out of requested_modules: registry.plan puts CP-MODEL before CP-2D and G1 refuses an analytical module after a deterministic one.",
+  "plan_order_expected": [
+    "CP-0",
+    "CP-1",
+    "CP-1A",
+    "CP-2",
+    "CP-2D"
+  ],
+  "upstream_literals": {
+    "CP-0": "cases/snapshot/submissions.json#positive.readiness_review with pack_sha256 bound at run time and cp0_consumer_delta appended to consumers",
+    "CP-1": "cases/snapshot/submissions.json#cp1_submission and #positive.cp1_source_context (S1 CP-1 literals, imported as S1a does)",
+    "CP-1A": "cases/snapshot/submissions.json#positive.business_context",
+    "CP-2": "cases/snapshot/submissions.json#positive.credit_synthesis with {{FIG:name}} replaced as S1a lease rev 2 M2 freezes"
+  },
+  "cp0_consumer_delta": "submissions.json#cp0_consumer_delta",
+  "analyst_judgment_policy": "Horizon, minimum cash and the three assessments are literal submission input. Figures never appear in submitted text (builder-checked: no digit, no refinancing/LME/recommendation/recovery word).",
+  "fact_bindings": {
+    "cash_closing": {
+      "table_id": "T4.10",
+      "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) · cash_closing",
+      "rule": "exactly one fact; zero or several fail"
+    },
+    "undrawn_rcf": {
+      "table_id": "T4.10",
+      "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) · undrawn_rcf",
+      "rule": "exactly one fact; zero or several fail"
+    },
+    "liquidity": {
+      "table_id": "T4.10",
+      "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) · liquidity",
+      "rule": "exactly one fact; zero or several fail"
+    },
+    "total_debt": {
+      "table_id": "T4.10",
+      "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) · total_debt",
+      "rule": "exactly one fact; zero or several fail"
+    },
+    "liquidity_to_debt": {
+      "table_id": "T4.10",
+      "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) · liquidity_to_debt",
+      "rule": "exactly one fact; zero or several fail"
+    },
+    "cfo_reported": {
+      "table_id": "T4.10",
+      "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) · cfo_reported",
+      "rule": "exactly one fact; zero or several fail"
+    },
+    "opening_cash": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Opening cash · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "cfo": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Operating cash flow · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "investing": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Net cash used in investing · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "debt_issuance": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Debt issuance · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "debt_repayment": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Debt repayment · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "net_debt_issuance": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Net debt issuance · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "equity_issuance": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Equity issuance · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "equity_repurchases": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Equity repurchases · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "dividends_paid": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Dividends paid · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "other_investing_financing": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Other investing and financing · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "financing": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Net cash used in financing · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "fx_effect": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "FX effect on cash · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "closing_cash": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Closing cash · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "fcf_unlevered": {
+      "table_id": "T4.5",
+      "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+      "label": "Fcf unlevered · LTM Q4 25",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "cash_bs": {
+      "table_id": "T4.6",
+      "period": "q4-2025 · 2025-10-01 to 2025-12-31",
+      "label": "Cash and cash equivalents · q4-2025",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "restricted_cash": {
+      "table_id": "T4.6",
+      "period": "q4-2025 · 2025-10-01 to 2025-12-31",
+      "label": "Restricted cash · q4-2025",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "rcf_commitment": {
+      "table_id": "T4.6",
+      "period": "q4-2025 · 2025-10-01 to 2025-12-31",
+      "label": "RCF commitment · q4-2025",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "rcf_drawn": {
+      "table_id": "T4.6",
+      "period": "q4-2025 · 2025-10-01 to 2025-12-31",
+      "label": "RCF drawings · q4-2025",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "total_debt_bs": {
+      "table_id": "T4.6",
+      "period": "q4-2025 · 2025-10-01 to 2025-12-31",
+      "label": "Total debt · q4-2025",
+      "rule": "exactly one fact; status is read, never defaulted"
+    },
+    "T4.18 principal": {
+      "table_id": "T4.18",
+      "field": "principal",
+      "period": "q4-2025",
+      "facility_id": "term-loan",
+      "rule": "the QUARTER period at the latest period end wins over its FY alias; the alias must agree on every term (financial_series._maturity_figure rule); one facility row per facility_id"
+    },
+    "T4.18 maturity_date": {
+      "table_id": "T4.18",
+      "field": "maturity_date",
+      "period": "q4-2025",
+      "facility_id": "term-loan",
+      "rule": "the QUARTER period at the latest period end wins over its FY alias; the alias must agree on every term (financial_series._maturity_figure rule); one facility row per facility_id"
+    },
+    "T4.18 commitment": {
+      "table_id": "T4.18",
+      "field": "commitment",
+      "period": "q4-2025",
+      "facility_id": "term-loan",
+      "rule": "the QUARTER period at the latest period end wins over its FY alias; the alias must agree on every term (financial_series._maturity_figure rule); one facility row per facility_id"
+    },
+    "T4.18 drawn_amount": {
+      "table_id": "T4.18",
+      "field": "drawn_amount",
+      "period": "q4-2025",
+      "facility_id": "term-loan",
+      "rule": "the QUARTER period at the latest period end wins over its FY alias; the alias must agree on every term (financial_series._maturity_figure rule); one facility row per facility_id"
+    },
+    "T4.18 annual_amortisation": {
+      "table_id": "T4.18",
+      "field": "annual_amortisation",
+      "period": "q4-2025",
+      "facility_id": "term-loan",
+      "rule": "the QUARTER period at the latest period end wins over its FY alias; the alias must agree on every term (financial_series._maturity_figure rule); one facility row per facility_id"
+    }
+  },
+  "fact_binding_note": "Predicates were observed on a real promoted CP-1 head (work/lead/s1a-task1/report.md store, probed read-only 2026-10-28): each of the names below selects exactly one fact there. {{FACT:name}} tokens in basis_refs are replaced by that fact's fact_id at run time.",
+  "view_tree_draft": {
+    "status": "DRAFT: shape proposed by this preparation, not observed (no core exists); LEAD freezes it after a probe on the first product-settled core, as S1a did for CP-2",
+    "view": "owners.cp2d.view(historical, attempt) -> (sha256, body), registered in G1's _VIEWS['liquidity_bridge'] (docs/G1X-OWNER-CORE-PROTOCOL.md); NOT module_context(), which has no liquidity_bridge entry",
+    "top_level_keys_in_order": [
+      "upstream",
+      "cp1_facts",
+      "cp1_facts_note",
+      "bounds",
+      "inherited_limitations"
+    ],
+    "upstream": "[{module_id, status}] for CP-0, CP-1, CP-2 (the three edges; CP-1A is not an edge and is not read)",
+    "cp1_facts": "[{ref, name, label, period, unit, shown, status, limitation|null}] one entry per name in fact_bindings, INCLUDING missing facts (status missing, shown a gap word, never a number); sorted by name",
+    "bounds": {
+      "horizon_months": [
+        1,
+        60
+      ],
+      "minimum_cash": "decimal >= 0 in US$ m, or null with minimum_cash_absence"
+    },
+    "forbidden_keys": [
+      "quote",
+      "citations",
+      "record_json",
+      "formula",
+      "source_amount",
+      "stated_amount"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "positive",
+      "base": "settled upstream of slice-cp2d-positive",
+      "submission": "submissions.json#cp2d.positive"
+    },
+    {
+      "case_id": "long_horizon",
+      "base": "clone of the positive store before CP-2D begins",
+      "submission": "submissions.json#cp2d.long_horizon"
+    },
+    {
+      "case_id": "gap_minimum_cash",
+      "base": "clone of the positive store before CP-2D begins",
+      "submission": "submissions.json#cp2d.gap_minimum_cash"
+    },
+    {
+      "case_id": "blocked_cp2d",
+      "base": "clone of the positive store before CP-2D begins",
+      "submission": "submissions.json#cp2d_blocked (attempts 0 and 1 both invalid)",
+      "expected": "expected.json#negative_cases.blocked_cp2d"
+    },
+    {
+      "case_id": "begin_refused_cp2_blocked",
+      "base": "clone of the settled upstream with CP-2 re-settled blocked (CP-2 attempts 0 and 1 both fail a rule, as in docs/S1A-OWNER-RUN-LEASE.md, the unreplaced {{FIG}} case) before CP-2D begins",
+      "submission": "none: begin is refused",
+      "expected": "expected.json#negative_cases.begin_refused_cp2_blocked"
+    }
+  ],
+  "fact_copy_rule": "A table cell copied from a CP-1 fact keeps that fact's value_class (T4.5 statement-history facts: calculated; T4.6 and T4.18: source) and normalises the unit 'currency' -> MILLIONS (both USD, scale 1e6) so a table never mixes amount units; copied cells carry cp1_unit='currency' in expected.json as the record of the normalisation.",
+  "fixtures": [
+    {
+      "fixture_id": "fixture_rcf_undisclosed",
+      "kind": "composer-level unit fixture, not a pack run",
+      "construction": "the positive CP-1 fact set with these facts replaced by status missing and the limitation 'Required statement item not supplied': T4.6 RCF commitment, T4.6 RCF drawings, T4.10 undrawn_rcf and T4.10 liquidity (and liquidity_to_debt). Why not a run: the frozen financial source states 'There is no revolving credit facility' and shows RCF 0 (explicit zero); an undisclosed revolver needs a new financial source variant and a new CP-1 promotion, deferred (lease open question 1)."
+    },
+    {
+      "fixture_id": "fixture_rcf_undisclosed_min_above_cash",
+      "kind": "composer-level unit fixture, not a pack run",
+      "construction": "as fixture_rcf_undisclosed (same missing facts) with minimum cash 30, above cash 20: cash alone does not clear the minimum and the revolver is unknown, so the runway is missing ('Not calculable: revolver undisclosed'), not 'not reached'; cash-only headroom (10) stays known."
+    },
+    {
+      "fixture_id": "fixture_burn",
+      "kind": "composer-level unit fixture, not a pack run",
+      "construction": "the positive CP-1 fact set with T4.5 Operating cash flow (LTM Q4 25) replaced by 13.00 and every dependent total left as in the positive set (so sources and uses calculate closing cash 14 against reported 20, difference (6), shown as an own limitation); exercises a negative run-rate and the months-to-minimum-cash arithmetic that no frozen pack reaches (all frozen flows net to zero)."
+    }
+  ],
+  "consumer": {
+    "planned": "CP-3C (refinancing / LME risk; required edge CP-2D -> CP-3C, methodology.json)",
+    "exists_today": false,
+    "other_readers": "CP-3 and CP-6 never read CP-2D (cp3_relative_value.py:100, cp6_committee.py:113); CP-5 reads it only after a D3 scope lease",
+    "consumption_proof": "OPEN: no consumer core exists, so no consumption can be proven in this lease"
+  }
+}

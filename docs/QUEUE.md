@@ -2981,3 +2981,10 @@ refusal); S1a mx-adversary provenance review running. CP-2D revision 3 (claims c
 references; horizon left out of claims) and CP-2A revision 2 under scoped re-review. CP-OS prep done
 (D6 render-time proof, no G1 change), review running. CP-DR prep done; protocol §3 amended (an
 owner-only step may combine a view with pack sources; scope from a fixed host mapping).
+
+CP-2D frozen (2026-10-28): review-precise-3 FREEZE; LEAD scratch rebuild matched;
+`docs/CP2D-OWNER-LEASE.md` (Acceptance 1 amended: currency and citation/calculation presence on
+claim-referenced cells; `Claim.text` equals the template). CP-2A revision 2 re-review: CHANGES
+REQUIRED (v17 stale-input refusal is validator-only; definition-constant value class); revision 3
+queued. L2 source-host speedup built (parse cache keyed by blob digest; warm CP-1 memo fixture for
+19 cases); review queued. CP-DR and CP-1D preps done, independent reviews running; CP-L10 prep running.

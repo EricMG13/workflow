@@ -1,0 +1,891 @@
+{
+  "schema_version": "cp2d-owner-submissions/1",
+  "note": "Literal analyst input only. {{FACT:name}} tokens are replaced by CP-1 fact ids at run time (manifest.fact_bindings). CP-0, CP-1, CP-1A and CP-2 literals are those of cases/snapshot/submissions.json, unchanged.",
+  "cp0_consumer_delta": {
+    "module_id": "CP-2D",
+    "readiness": "READY_WITH_LIMITATIONS",
+    "evidence_demand": "Settled CP-1 cash flow, balance sheet and facility facts and the CP-2 credit view",
+    "source_ids": [
+      "identity",
+      "financial"
+    ],
+    "rationale": "The liquidity bridge can run on settled upstream facts with explicit source and scope limitations.",
+    "citations": [
+      {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+      },
+      {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:5",
+        "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+      }
+    ],
+    "missing_source": null,
+    "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+  },
+  "cp2d": {
+    "positive": {
+      "horizon_months": 24,
+      "minimum_cash": {
+        "amount": "10",
+        "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+        "basis_refs": []
+      },
+      "minimum_cash_absence": null,
+      "assessments": [
+        {
+          "section": "liquidity_runway",
+          "category": "Analyst Interpretation",
+          "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+          "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cfo_reported}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "maturity_wall",
+          "category": "Documentary Fact",
+          "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+          "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+          "basis_refs": [
+            "{{FACT:total_debt}}",
+            "{{FACT:T4.18 maturity_date}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "funding_gap",
+          "category": "Analyst Interpretation",
+          "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+          "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+          "basis_refs": [
+            "{{FACT:liquidity}}",
+            "{{FACT:undrawn_rcf}}"
+          ],
+          "limitation": null
+        }
+      ]
+    },
+    "long_horizon": {
+      "horizon_months": 60,
+      "minimum_cash": {
+        "amount": "10",
+        "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+        "basis_refs": []
+      },
+      "minimum_cash_absence": null,
+      "assessments": [
+        {
+          "section": "liquidity_runway",
+          "category": "Analyst Interpretation",
+          "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+          "credit_implication": "Distributions absorb the free cash flow the business generates, leaving no internal capacity to repay principal at maturity.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cfo_reported}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "maturity_wall",
+          "category": "Documentary Fact",
+          "text": "The single term loan is the whole debt stack and falls due inside the horizon assessed, as one payment of the full principal.",
+          "credit_implication": "A single bullet maturity concentrates repayment risk on one date and requires resources the issuer does not hold today.",
+          "basis_refs": [
+            "{{FACT:total_debt}}",
+            "{{FACT:T4.18 maturity_date}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "funding_gap",
+          "category": "Analyst Interpretation",
+          "text": "Resources at the horizon end fall short of the assumed minimum cash once the term loan falls due, so an external funding need is identified.",
+          "credit_implication": "The shortfall equals the amount that must be raised or extended, and no committed undrawn facility exists to absorb it.",
+          "basis_refs": [
+            "{{FACT:liquidity}}",
+            "{{FACT:undrawn_rcf}}"
+          ],
+          "limitation": null
+        }
+      ]
+    },
+    "gap_minimum_cash": {
+      "horizon_months": 24,
+      "minimum_cash": null,
+      "minimum_cash_absence": {
+        "reason": "No minimum cash covenant or liquidity policy is stated in any pack source.",
+        "follow_up": "Obtain the issuer's treasury policy or any minimum liquidity undertaking before sizing the funding gap."
+      },
+      "assessments": [
+        {
+          "section": "liquidity_runway",
+          "category": "Analyst Interpretation",
+          "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+          "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cfo_reported}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "maturity_wall",
+          "category": "Documentary Fact",
+          "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+          "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+          "basis_refs": [
+            "{{FACT:total_debt}}",
+            "{{FACT:T4.18 maturity_date}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "funding_gap",
+          "category": "Insufficient Information",
+          "text": "No minimum cash level is stated in the sources, so the funding need cannot be sized.",
+          "credit_implication": "Without a minimum cash level the headroom and any funding gap stay unquantified, which weakens the liquidity view.",
+          "basis_refs": [
+            "{{FACT:liquidity}}"
+          ],
+          "limitation": "The minimum operating cash level is not stated in the pack sources; headroom and funding gap are not calculated."
+        }
+      ]
+    }
+  },
+  "cp2d_blocked": {
+    "note": "L5: attempt 0 and attempt 1 are both invalid, so CP-2D settles blocked. Each attempt is a full literal payload (the same as refusal_inputs.horizon_zero and .horizon_over_limit); attempt 1 is begun with repair_of set.",
+    "attempt_0": {
+      "horizon_months": 0,
+      "minimum_cash": {
+        "amount": "10",
+        "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+        "basis_refs": []
+      },
+      "minimum_cash_absence": null,
+      "assessments": [
+        {
+          "section": "liquidity_runway",
+          "category": "Analyst Interpretation",
+          "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+          "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cfo_reported}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "maturity_wall",
+          "category": "Documentary Fact",
+          "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+          "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+          "basis_refs": [
+            "{{FACT:total_debt}}",
+            "{{FACT:T4.18 maturity_date}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "funding_gap",
+          "category": "Analyst Interpretation",
+          "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+          "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+          "basis_refs": [
+            "{{FACT:liquidity}}",
+            "{{FACT:undrawn_rcf}}"
+          ],
+          "limitation": null
+        }
+      ]
+    },
+    "attempt_1": {
+      "horizon_months": 61,
+      "minimum_cash": {
+        "amount": "10",
+        "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+        "basis_refs": []
+      },
+      "minimum_cash_absence": null,
+      "assessments": [
+        {
+          "section": "liquidity_runway",
+          "category": "Analyst Interpretation",
+          "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+          "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+          "basis_refs": [
+            "{{FACT:cash_closing}}",
+            "{{FACT:undrawn_rcf}}",
+            "{{FACT:cfo_reported}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "maturity_wall",
+          "category": "Documentary Fact",
+          "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+          "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+          "basis_refs": [
+            "{{FACT:total_debt}}",
+            "{{FACT:T4.18 maturity_date}}"
+          ],
+          "limitation": null
+        },
+        {
+          "section": "funding_gap",
+          "category": "Analyst Interpretation",
+          "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+          "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+          "basis_refs": [
+            "{{FACT:liquidity}}",
+            "{{FACT:undrawn_rcf}}"
+          ],
+          "limitation": null
+        }
+      ]
+    }
+  },
+  "refusal_inputs": {
+    "note": "Each entry is a full literal payload (base_case names the cp2d case it was derived from); expected issue wording is fixed in expected.json#refusals. A wrong-typed horizon is a schema type error owned by G1's generic schema refusal, not a CP-2D validator class.",
+    "horizon_zero": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 0,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "horizon_over_limit": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 61,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "minimum_cash_negative": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "-1",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "minimum_cash_and_absence": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": {
+          "reason": "No minimum cash covenant or liquidity policy is stated in any pack source.",
+          "follow_up": "Obtain the issuer's treasury policy or any minimum liquidity undertaking before sizing the funding gap."
+        },
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "neither_minimum_cash_nor_absence": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": null,
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "section_missing": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "section_repeated": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "digit_in_text": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions. It is 5 per cent.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "covenant_compliance_wording": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends. The covenant test is met.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "figure_free_text_forbidden_word": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period. A refinancing path is available.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "unknown_basis_ref": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}",
+              "{{FACT:not_a_fact}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "insufficient_without_limitation": {
+      "base_case": "gap_minimum_cash",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": null,
+        "minimum_cash_absence": {
+          "reason": "No minimum cash covenant or liquidity policy is stated in any pack source.",
+          "follow_up": "Obtain the issuer's treasury policy or any minimum liquidity undertaking before sizing the funding gap."
+        },
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "funding_gap",
+            "category": "Insufficient Information",
+            "text": "No minimum cash level is stated in the sources, so the funding need cannot be sized.",
+            "credit_implication": "Without a minimum cash level the headroom and any funding gap stay unquantified, which weakens the liquidity view.",
+            "basis_refs": [
+              "{{FACT:liquidity}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    },
+    "limitation_without_insufficient": {
+      "base_case": "positive",
+      "payload": {
+        "horizon_months": 24,
+        "minimum_cash": {
+          "amount": "10",
+          "rationale": "A cash cushion of this size is held as an analyst assumption for operating needs and is not a source figure.",
+          "basis_refs": []
+        },
+        "minimum_cash_absence": null,
+        "assessments": [
+          {
+            "section": "liquidity_runway",
+            "category": "Analyst Interpretation",
+            "text": "Cash is the only liquidity source because there is no revolving credit facility, so the runway rests on operating cash flow covering capital spending and distributions.",
+            "credit_implication": "Distributions absorb the free cash flow the business generates, leaving little internal capacity to build a liquidity cushion or reduce debt early.",
+            "basis_refs": [
+              "{{FACT:cash_closing}}",
+              "{{FACT:undrawn_rcf}}",
+              "{{FACT:cfo_reported}}"
+            ],
+            "limitation": null
+          },
+          {
+            "section": "maturity_wall",
+            "category": "Documentary Fact",
+            "text": "The single term loan is the whole debt stack and falls due on one date after the horizon assessed, so no repayment is scheduled inside it.",
+            "credit_implication": "Debt service inside the horizon is limited to interest, because no principal falls due before the horizon ends.",
+            "basis_refs": [
+              "{{FACT:total_debt}}",
+              "{{FACT:T4.18 maturity_date}}"
+            ],
+            "limitation": "A limitation without a gap."
+          },
+          {
+            "section": "funding_gap",
+            "category": "Analyst Interpretation",
+            "text": "Cash alone covers the assumed minimum cash with room to spare, so no external funding need is identified inside the horizon.",
+            "credit_implication": "The absence of committed undrawn funding means any shortfall beyond the horizon would depend on lender consent, so headroom should be monitored each period.",
+            "basis_refs": [
+              "{{FACT:liquidity}}",
+              "{{FACT:undrawn_rcf}}"
+            ],
+            "limitation": null
+          }
+        ]
+      }
+    }
+  }
+}

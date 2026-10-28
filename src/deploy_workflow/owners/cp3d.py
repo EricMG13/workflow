@@ -20,6 +20,7 @@ from typing import Literal, Protocol
 from deploy_vii.contracts import Contract, Fact
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-3D"
 
@@ -171,9 +172,17 @@ def _short_date(d: date) -> str:
 
 
 _MINUS = r"(?<![A-Za-z0-9])-"  # round 10 item 1: a minus sign, not a hyphen after a letter or digit
-_CUT_BEFORE = re.compile(rf"(?:[0-9.]|{_MINUS})\Z")  # round 11 B1: the page figure starts earlier
+# Round 12 rule W: the minus directly or one space before the figure (`normalise` prints any
+# whitespace run, a line break included, as one space).
+_CUT_BEFORE = re.compile(rf"(?:[0-9.]|{_MINUS} ?)\Z")  # round 11 B1: the page figure starts earlier
 _CUT_AFTER = re.compile(r"[0-9]|\.[0-9]")  # round 11 B1: the page figure goes on
 _EDGE_AFTER = ("", ".")  # nothing or only a full stop after a figure at the quote end
+
+
+def _parenthesised(before: str, after: str) -> bool:
+    """Round 10 item 1 with round 12 rule W: an accounting `(` or `( ` ends `before` and `)` or
+    ` )` starts `after`."""
+    return before.endswith(("(", "( ")) and after.startswith((")", " )"))
 
 
 def _tokens(value_text: str, text: str) -> list[re.Match[str]]:
@@ -184,17 +193,16 @@ def _tokens(value_text: str, text: str) -> list[re.Match[str]]:
     with a digit with `(` directly before and `)` directly after reads as negative, so neither is
     an occurrence of the unsigned text. Round 11 B2: `(-425)` prints the signed `-425`, which
     occurs and gets its shape issue. A `-` after a letter or digit (`95-96`, `S-350`) and a `+`
-    are not signs."""
-    pattern = rf"(?<![0-9.])(?<!{_MINUS})" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
+    are not signs. Round 12 rule W: whitespace never separates a sign from its figure, so a minus
+    one space before the token, and `( ` and ` )` around it, are signs too."""
+    pattern = (
+        rf"(?<![0-9.])(?<!{_MINUS})(?<!{_MINUS} )" + re.escape(value_text) + r"(?![0-9]|\.[0-9])"
+    )
     accounting = re.match(r"[0-9]", value_text) is not None
     return [
         m
         for m in re.finditer(pattern, text)
-        if not (
-            accounting
-            and text[m.start() - 1 : m.start()] == "("
-            and text[m.end() : m.end() + 1] == ")"
-        )
+        if not (accounting and _parenthesised(text[: m.start()], text[m.end() :]))
     ]
 
 
@@ -222,10 +230,11 @@ def _occurrences(needle: str, text: str) -> list[int]:
 
 def _cut(page: str, start: int, end: int, *, at_start: bool, at_end: bool) -> bool:
     """Whether the page figure at [start, end) of a page reading is not the same unsigned whole
-    figure: at a start edge a digit, `.` or minus sign before it; at an end edge a digit or `.`
-    and a digit after it; at either edge an accounting `(` and `)` around it."""
+    figure: at a start edge a digit, `.` or minus sign (round 12 rule W: directly or one space)
+    before it; at an end edge a digit or `.` and a digit after it; at either edge an accounting
+    `(` and `)` around it, each with or without one space inside (rule W)."""
     before, after = page[:start], page[end:]
-    if before.endswith("(") and after.startswith(")"):
+    if _parenthesised(before, after):
         return True
     return (at_start and _CUT_BEFORE.search(before) is not None) or (
         at_end and _CUT_AFTER.match(after) is not None
@@ -485,7 +494,7 @@ class _Issues:
             self.add(f"{path}: text carries a prohibited conclusion")
 
     def analyst_text(self, path: str, text: str | None) -> None:
-        if text is not None and not text.strip():  # round 11: blank text is one defect class
+        if text is not None and is_blank(text):  # round 11, round 12 B10: blank text class
             self.add(f"{path}: empty text")
             return
         self.digit_free(path, text)

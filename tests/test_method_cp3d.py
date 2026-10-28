@@ -1724,3 +1724,66 @@ def test_r11_b1_a_full_stop_after_the_figure_is_still_its_end_edge(
     """`The level is 25.`: only `.` follows the figure, so the page must not go on with a digit."""
     issues = _MARGIN_CLASS(page, "The level is 25.", "25")
     assert (_MARGIN_25 not in issues) is accepted
+
+
+# --- LEAD round 12 rule W beyond the shared cases: labelled bid, spaced parentheses, text start ---
+
+
+@pytest.mark.parametrize(
+    ("line", "accepted"),
+    (
+        ("Dealers quote the loan at bid - 1.25.", False),
+        ("Dealers quote the loan at bid -\n1.25.", False),
+        ("Dealers quote the loan at bid 1.25.", True),
+        ("Dealers quote the loan at bid\n1.25.", True),
+    ),
+    ids=("bid-minus-space", "bid-minus-wrap", "bid-genuine", "bid-break"),
+)
+def test_r12_w_a_labelled_bid_after_a_spaced_minus_does_not_occur(
+    line: str, accepted: bool
+) -> None:
+    """The bid reader (`_token_once` before `_labelled`): `bid - 1.25` prints the signed `-1.25`,
+    so the unsigned `1.25` does not occur; a line break with no minus keeps it."""
+    issues = _bid(line, line, "1.25")
+    occurs = "observations[0]: level_text 1.25 does not occur in the quote"
+    labelled = "observations[0]: bid level_text 1.25 is not labelled bid in the quote"
+    assert issues == (() if accepted else (occurs,))
+    assert labelled not in issues
+
+
+@pytest.mark.parametrize(
+    ("page", "quote", "accepted"),
+    (  # whole quotes (`_tokens`): one space inside either parenthesis, or the text's first `-`
+        ("Facility margin is (25 ) basis points.", None, False),
+        ("Facility margin is ( 25 ) basis points.", None, False),
+        ("Facility margin is (25\n) basis points.", None, False),
+        ("Facility margin is (see 25 ) basis points.", None, True),
+        ("- 25 percent over the reference rate.", None, False),
+        ("25 percent over the reference rate.", None, True),
+        # edge quotes (`_cut`): the page's spaced parentheses cut the figure at either edge
+        ("Facility margin is ( 25 ) basis points.", "25 ) basis points.", False),
+        ("Facility margin is 25 ) basis points.", "25 ) basis points.", True),
+        ("Facility margin is ( 25 ) basis points.", "Facility margin is ( 25", False),
+        ("Facility margin is ( 25 basis points.", "Facility margin is ( 25", True),
+    ),
+    ids=(
+        "close-space",
+        "both-spaces",
+        "close-wrap",
+        "words-inside",
+        "start-minus-space",
+        "start-genuine",
+        "edge-start-spaced-parens",
+        "edge-start-no-open",
+        "edge-end-spaced-parens",
+        "edge-end-no-close",
+    ),
+)
+def test_r12_w_spaced_parentheses_and_a_leading_minus(
+    page: str, quote: str | None, accepted: bool
+) -> None:
+    """Rule W: `(` or `( ` before the first digit and `)` or ` )` after the last read as negative,
+    in the quote (`_tokens`) and on the page at an edge (`_cut`); a `- ` that starts the text is a
+    minus. Each refused case has an accepted twin."""
+    issues = _MARGIN_CLASS(page, page if quote is None else quote, "25")
+    assert (_MARGIN_25 not in issues) is accepted

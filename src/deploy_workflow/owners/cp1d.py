@@ -16,7 +16,7 @@ No I/O, store, host, session or render call happens here (Stage 2 adds those).
 
 import re
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_EVEN, Context, Decimal, Inexact, InvalidOperation, Rounded
 from typing import Literal
@@ -24,9 +24,10 @@ from typing import Literal
 from deploy_vii.business_context import Category, Confidence, Severity
 from deploy_vii.contracts import Citation, Contract, Fact, Source, Text
 from deploy_vii.display import UnitClass, format_value
-from deploy_vii.prose import bind
+from deploy_vii.prose import Run, bind, tokenize
 from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import citation_issues
+from deploy_vii.report_view import scale_label
 
 MODULE_ID = "CP-1D"
 BRIDGE_SOURCE_ID = "bridge"
@@ -86,9 +87,33 @@ class Cp1Figure:
     label: str
     unit: str
     period: str
-    amount: Decimal
+    amount: Decimal | None
     value_class: ValueClass
     currency: str | None = None
+    status: FactStatus = "known"
+    limitation: str | None = None
+
+    def __post_init__(self) -> None:
+        if (self.status == "known") != (self.amount is not None):
+            raise ValueError(f"CP-1 figure {self.figure}: a known figure has an amount")
+        if self.status != "known" and not self.limitation:
+            raise ValueError(f"CP-1 figure {self.figure}: an unsettled figure needs a limitation")
+        if self.amount is not None and not _bounded(self.amount):
+            raise ValueError(f"CP-1 figure {self.figure}: amount outside {_DIGITS} digits")
+
+    @property
+    def value(self) -> Decimal:
+        """The amount of an operand `Cp1Operands` requires to be known."""
+        if self.amount is None:
+            raise ValueError(f"CP-1 figure {self.figure} is not known")
+        return self.amount
+
+    @property
+    def reason(self) -> str:
+        """CP-1's own limitation of an unsettled figure."""
+        if not self.limitation:
+            raise ValueError(f"CP-1 figure {self.figure} has no limitation")
+        return self.limitation
 
 
 _CP1_FIGURES = (
@@ -121,6 +146,8 @@ class Cp1Operands:
                 raise ValueError(f"CP-1 operand {attribute} must be {name} in {unit}")
         if len({f.period for f in figures}) != 1:
             raise ValueError("CP-1 operands must share one period")
+        if any(f.status != "known" for f in figures if f.unit == "MILLIONS"):
+            raise ValueError("CP-1 amount operands must be known")
         currencies = {f.currency for f in figures if f.unit == "MILLIONS"}
         if len(currencies) != 1 or None in currencies:
             raise ValueError("CP-1 amount operands must share one stated currency")
@@ -254,14 +281,14 @@ class Cp1Reference:
     label: str
     unit: str
     period: str
-    amount: Decimal
-    shown: str
+    amount: Decimal | None
+    shown: str | None
     value_class: ValueClass
-    status: Literal["known"] = "known"
+    status: FactStatus = "known"
 
     @property
-    def amount_exact(self) -> str:
-        return exact_text(self.amount)
+    def amount_exact(self) -> str | None:
+        return None if self.amount is None else exact_text(self.amount)
 
 
 @dataclass(frozen=True)
@@ -301,6 +328,23 @@ _PROPOSED_TOTAL = "Total proposed adjustments"
 _MANAGEMENT_EBITDA = "Management financing-case EBITDA"
 _NOT_STATED = "Not stated"
 _AMOUNT = re.compile(r"[0-9]+(?:\.[0-9]+)?")
+_TYPES = ("Saving", "Cost")
+# Every amount the module handles has at most this many significant digits and decimal places,
+# so sums stay exact and every value spells exactly (`display.format_value`).
+_DIGITS = 38
+
+
+def _bounded(value: Decimal) -> bool:
+    exponent = value.as_tuple().exponent
+    return (
+        value.is_finite()
+        and isinstance(exponent, int)
+        and len(value.as_tuple().digits) <= _DIGITS
+        and -_DIGITS <= exponent
+        and value.adjusted() < _DIGITS
+    )
+
+
 _FIELDS = re.compile(r" {2,}")
 
 
@@ -328,17 +372,19 @@ class _Unparseable(ValueError):
 def _bridge_amount(token: str) -> Decimal | None:
     if token == _NOT_STATED:
         return None
-    if not _AMOUNT.fullmatch(token):
+    if not _AMOUNT.fullmatch(token) or not _bounded(amount := Decimal(token)):
         raise _Unparseable(token)
-    return Decimal(token)
+    return amount
 
 
 def parse_bridge(pages: Sequence[str]) -> Bridge | None:
     """The bridge table on page:1, or None when it cannot be read (`Bridge table not found`).
 
     Page:1 must have a line starting with the FY2025 basis and the exact header line; every
-    later line splits on two or more spaces into an item (4 fields) or one of the two stated
-    totals (2 fields). An amount is a decimal or `Not stated` (missing, never 0).
+    later line splits on two or more spaces into an item (4 fields, type Saving or Cost) or one
+    of the two stated totals (2 fields). An amount is a decimal of at most 38 digits or
+    `Not stated` (missing, never 0). Rulings 1D4, 1D5, 1D9: anything else, a duplicate label or
+    total, or no item row at all, is not a bridge table.
     """
     lines = pages[0].split("\n") if pages else []
     if not any(line.startswith(_BASIS_LINE) for line in lines) or _HEADER not in lines:
@@ -350,6 +396,8 @@ def parse_bridge(pages: Sequence[str]) -> Bridge | None:
             parts = _FIELDS.split(line)
             if len(parts) == 4:
                 label, kind, status, amount = parts
+                if kind not in _TYPES:
+                    return None
                 row_id = f"a{len(items) + 1:02d}"
                 items.append(BridgeItem(row_id, label, kind, status, _bridge_amount(amount), line))
             elif len(parts) == 2 and parts[0] in (_PROPOSED_TOTAL, _MANAGEMENT_EBITDA):
@@ -360,7 +408,7 @@ def parse_bridge(pages: Sequence[str]) -> Bridge | None:
                 return None
     except _Unparseable:
         return None
-    if len({item.label for item in items}) != len(items):
+    if not items or len({item.label for item in items}) != len(items):
         return None
     return Bridge(tuple(items), totals.get(_PROPOSED_TOTAL), totals.get(_MANAGEMENT_EBITDA))
 
@@ -439,16 +487,22 @@ class _Outcome:
 
 
 def _outcome(item: BridgeItem, assessment: Assessment) -> _Outcome:
-    """Applied fraction and accepted amount of a shape-valid assessment (lease recipe table)."""
-    if not _accepts(assessment):  # incl. Recurring, which forces 0 on any achievability
-        return _Outcome(item, assessment, "rule", Decimal(0), None, Decimal(0))
+    """Applied fraction and accepted amount of a shape-valid assessment (lease recipe table).
+
+    Recurring forces f = 0 on any achievability (ruling 1D2); a cited basis amount is kept as
+    evidence on that path, and an analyst fraction is not applied.
+    """
+    cited = assessment.accepted_basis
+    if not _accepts(assessment):
+        kept = None if cited is None else Decimal(_basis_amounts(cited)[0])
+        return _Outcome(item, assessment, "rule", Decimal(0), kept, Decimal(0))
     claimed = item.amount
     if claimed is None:
         raise ValueError(f"Cannot accept an unstated amount: {item.label}")
     if assessment.achievability == "Supported":
         return _Outcome(item, assessment, "rule", Decimal(1), None, _EXACT.multiply(claimed, 1))
-    if assessment.accepted_basis is not None:
-        basis = Decimal(_basis_amounts(assessment.accepted_basis)[0])
+    if cited is not None:
+        basis = Decimal(_basis_amounts(cited)[0])
         return _Outcome(item, assessment, "source", _quotient(basis, claimed), basis, basis)
     if assessment.accepted_fraction is None:
         raise ValueError(f"Partly supported without basis or fraction: {item.label}")
@@ -486,19 +540,22 @@ def _shape_issue(item: BridgeItem, assessment: Assessment) -> str | None:
     return None
 
 
+_FITS = {"Saving": ("Not applicable",), "Cost": ("Non-recurring", "Recurring", "Not assessable")}
+
+
 def _rule_issues(item: BridgeItem, assessment: Assessment) -> list[str]:
-    """Content rules of one shape-valid assessment, before its citations and prose."""
+    """Content rules of one shape-valid assessment in ruling 1D10's order: evidence,
+    recurrence, unstated amount (citations and prose follow)."""
     label, recurrence = item.label, assessment.recurrence
     found: list[str] = []
-    if _accepts(assessment) and item.amount is None:
-        found.append(f"Cannot accept an unstated amount: {label}")
     if _accepts(assessment) and not assessment.evidence:
         found.append(f"Evidence required for an accepted add-back: {label}")
-    fits = {"Saving": ("Not applicable",), "Cost": ("Non-recurring", "Recurring", "Not assessable")}
-    if recurrence not in fits.get(item.type, ()):
+    if recurrence not in _FITS[item.type]:
         found.append(f"Recurrence does not fit the add-back type: {label}")
     if recurrence == "Not assessable" and assessment.achievability != "Insufficient evidence":
         found.append(f"Recurrence can be not assessable only with insufficient evidence: {label}")
+    if _accepts(assessment) and item.amount is None:
+        found.append(f"Cannot accept an unstated amount: {label}")
     return found
 
 
@@ -681,7 +738,7 @@ def _register(out: _Facts, bridge: Bridge | None, source: Source | None, cp1: Cp
             else:
                 out.number(at, item.amount, "MILLIONS", "Bridge source amount", (), "source", line)
             out.row("T1D.1", row, item.label, _REGISTER_FIELDS)
-    recorded = _EXACT.subtract(cp1.adjusted_ebitda.amount, cp1.ebitda.amount)
+    recorded = _EXACT.subtract(cp1.adjusted_ebitda.value, cp1.ebitda.value)
     out.text(("T1D.1", "stmt", "type", "Type"), "Statement adjustment")
     out.text(("T1D.1", "stmt", "status", "Status"), "Recorded")
     out.number(
@@ -710,7 +767,7 @@ def _assessment_rows(out: _Facts, outcomes: Sequence[_Outcome]) -> None:
             f"T1D.1.{row}.claimed",
             f"T1D.2.{row}.applied_fraction",
         )
-        if o.path == "source" and o.basis is not None and a.accepted_basis is not None:
+        if o.basis is not None and a.accepted_basis is not None:
             basis_citation = (a.accepted_basis,)  # as given; citation_issues located it
             out.number(
                 basis_at,
@@ -721,6 +778,9 @@ def _assessment_rows(out: _Facts, outcomes: Sequence[_Outcome]) -> None:
                 "source",
                 basis_citation,
             )
+        else:
+            out.gap(basis_at, "MILLIONS", _NO_BASIS, "not_applicable")
+        if o.path == "source":
             out.number(
                 share_at,
                 o.fraction,
@@ -730,7 +790,6 @@ def _assessment_rows(out: _Facts, outcomes: Sequence[_Outcome]) -> None:
             )
             out.number(accepted_at, o.accepted, "MILLIONS", "Source-supported amount", (basis_id,))
         else:
-            out.gap(basis_at, "MILLIONS", _NO_BASIS, "not_applicable")
             if o.path == "judgment":
                 out.number(
                     share_at,
@@ -795,7 +854,7 @@ class _Totals:
 
 
 def _totals(bridge: Bridge | None, outcomes: Sequence[_Outcome], cp1: Cp1Operands) -> _Totals:
-    start = cp1.adjusted_ebitda.amount
+    start = cp1.adjusted_ebitda.value
     amounts = [o.item.amount for o in outcomes]
     claimed = None
     if bridge is not None and all(a is not None for a in amounts):
@@ -942,11 +1001,36 @@ def _tie(
     out.row("T1D.4", row_id, label, _TIE_FIELDS)
 
 
-def _positive(value: Decimal, what: str) -> Decimal:
-    """A denominator the lease divides by only when above 0; any other value is not specified."""
+_BASIS_LABEL = {
+    "start": "Adjusted EBITDA, statements (CP-1)",
+    "mgmt": "Management financing-case EBITDA",
+    "supported": "Supported adjusted EBITDA",
+}
+
+
+def _not_meaningful(bridge_row: str) -> str:
+    """Ruling 1D3: a ratio over a basis EBITDA that is zero or negative."""
+    return (
+        f"Not meaningful: {_BASIS_LABEL[bridge_row]} is zero or negative "
+        "(ZERO_OR_NEGATIVE_DENOMINATOR)"
+    )
+
+
+def _ratio(
+    out: _Facts,
+    at: tuple[str, str, str, str],
+    numerator: Decimal,
+    denominator: tuple[Decimal, str],
+    unit: str,
+    formula: str,
+    derives: Sequence[str],
+) -> None:
+    """One quotient over a T1D.3 EBITDA basis: not_applicable when that basis is not above 0."""
+    value, bridge_row = denominator
     if value <= 0:
-        raise ValueError(f"{what} is not above 0; the lease defines no result for it")
-    return value
+        out.gap(at, unit, _not_meaningful(bridge_row), "not_applicable")
+    else:
+        out.number(at, _quotient(numerator, value), unit, formula, derives)
 
 
 def _tie_outs(out: _Facts, bridge: Bridge | None, totals: _Totals, cp1: Cp1Operands) -> None:
@@ -965,7 +1049,6 @@ def _tie_outs(out: _Facts, bridge: Bridge | None, totals: _Totals, cp1: Cp1Opera
         bridge.management_ebitda if bridge else None,
         (totals.management, "T1D.3.mgmt.value"),
     )
-    start = _positive(totals.start, "Statement adjusted EBITDA")
     for row, label, reported, debt in (
         (
             "cp1_total_leverage",
@@ -975,32 +1058,44 @@ def _tie_outs(out: _Facts, bridge: Bridge | None, totals: _Totals, cp1: Cp1Opera
         ),
         ("cp1_net_leverage", "Statement net leverage against CP-1", cp1.net_leverage, cp1.net_debt),
     ):
-        recomputed = _quotient(debt.amount, start)
-        out.number(
-            ("T1D.4", row, "reported", "CP-1 reported"),
-            reported.amount,
-            "MULTIPLE",
-            f"CP-1 {reported.figure}",
-            (f"cp1:{reported.figure}",),
-        )
-        out.number(
-            ("T1D.4", row, "recomputed", "Recomputed"),
-            recomputed,
-            "MULTIPLE",
-            "Debt / statement adjusted EBITDA",
-            (f"cp1:{debt.figure}", "T1D.3.start.value"),
-        )
-        out.number(
-            ("T1D.4", row, "difference", "Difference"),
-            _EXACT.subtract(recomputed, reported.amount),
-            "MULTIPLE",
-            "Recomputed minus CP-1",
-            (f"T1D.4.{row}.recomputed", f"T1D.4.{row}.reported"),
-        )
-        out.text(
-            ("T1D.4", row, "result", "Result"),
-            "Reconciled" if recomputed == reported.amount else "Differs",
-        )
+        reported_at = ("T1D.4", row, "reported", "CP-1 reported")
+        if reported.amount is None:  # ruling 1D3: the reported side keeps CP-1's status
+            out.gap(reported_at, "MULTIPLE", reported.reason, reported.status)
+        else:
+            out.number(
+                reported_at,
+                reported.amount,
+                "MULTIPLE",
+                f"CP-1 {reported.figure}",
+                (f"cp1:{reported.figure}",),
+            )
+        recomputed_at = ("T1D.4", row, "recomputed", "Recomputed")
+        recomputed = None
+        if totals.start <= 0:
+            out.gap(recomputed_at, "MULTIPLE", _not_meaningful("start"), "not_applicable")
+        else:
+            recomputed = _quotient(debt.value, totals.start)
+            out.number(
+                recomputed_at,
+                recomputed,
+                "MULTIPLE",
+                "Debt / statement adjusted EBITDA",
+                (f"cp1:{debt.figure}", "T1D.3.start.value"),
+            )
+        difference_at = ("T1D.4", row, "difference", "Difference")
+        if recomputed is None or reported.amount is None:
+            out.gap(difference_at, "MULTIPLE", "Not compared: one side is not available")
+            result = "Not compared"
+        else:
+            out.number(
+                difference_at,
+                _EXACT.subtract(recomputed, reported.amount),
+                "MULTIPLE",
+                "Recomputed minus CP-1",
+                (f"T1D.4.{row}.recomputed", f"T1D.4.{row}.reported"),
+            )
+            result = "Reconciled" if recomputed == reported.amount else "Differs"
+        out.text(("T1D.4", row, "result", "Result"), result)
         out.row("T1D.4", row, label, _TIE_FIELDS)
 
 
@@ -1012,16 +1107,20 @@ def _shares(out: _Facts, bridge: Bridge | None, totals: _Totals) -> None:
     elif totals.claimed is None or totals.management is None:
         out.gap(management_at, "PERCENT", _UNSTATED_ANY)
     else:
-        out.number(
+        _ratio(
+            out,
             management_at,
-            _quotient(totals.claimed, _positive(totals.management, "Management EBITDA")),
+            totals.claimed,
+            (totals.management, "mgmt"),
             "PERCENT",
             "Proposed add-backs / management financing-case EBITDA",
             ("T1D.3.claimed.value", "T1D.3.mgmt.value"),
         )
-    out.number(
+    _ratio(
+        out,
         ("T1D.5", "supported", "value", "Accepted add-backs / supported EBITDA"),
-        _quotient(totals.accepted, _positive(totals.supported, "Supported adjusted EBITDA")),
+        totals.accepted,
+        (totals.supported, "supported"),
         "PERCENT",
         "Accepted add-backs / supported adjusted EBITDA",
         ("T1D.3.accepted.value", "T1D.3.supported.value"),
@@ -1078,7 +1177,7 @@ def _conversion(out: _Facts, bridge: Bridge | None, totals: _Totals, cp1: Cp1Ope
             )
         out.number(
             ("T1D.6", row, "cfo", "Operating cash flow"),
-            cp1.cfo.amount,
+            cp1.cfo.value,
             "MILLIONS",
             "CP-1 cfo_adjusted",
             ("cp1:cfo_ltm",),
@@ -1087,9 +1186,11 @@ def _conversion(out: _Facts, bridge: Bridge | None, totals: _Totals, cp1: Cp1Ope
             if ebitda is None:
                 out.gap(("T1D.6", row, name, title), unit, reason, status)
             else:
-                out.number(
+                _ratio(
+                    out,
                     ("T1D.6", row, name, title),
-                    _quotient(numerator.amount, _positive(ebitda, f"{label} EBITDA")),
+                    numerator.value,
+                    (ebitda, bridge_row),
                     unit,
                     formula,
                     (f"cp1:{numerator.figure}", f"T1D.6.{row}.ebitda"),
@@ -1138,6 +1239,11 @@ def _limitations(
         f"Proposed amount is not stated for {o.item.label}: every figure that needs it is Not calculable."
         for o in outcomes
         if o.item.amount is None
+    ]
+    lines += [
+        f"Recurring add-back excluded although a source amount is cited: {o.item.label}."
+        for o in outcomes
+        if o.path == "rule" and o.basis is not None
     ]
     if any(o.path == "judgment" for o in outcomes):
         lines.append(
@@ -1216,8 +1322,9 @@ def _cp1_references(cp1: Cp1Operands) -> tuple[Cp1Reference, ...]:
             unit=f.unit,
             period=f.period,
             amount=f.amount,
-            shown=_spell(f.amount, f.unit, None),
+            shown=None if f.amount is None else _spell(f.amount, f.unit, None),
             value_class=f.value_class,
+            status=f.status,
         )
         for f in cp1.ordered()
     )
@@ -1257,14 +1364,46 @@ def _composable(item: BridgeItem, assessment: Assessment) -> bool:
 _UNRESOLVED = "Unresolved reference: "
 
 
-def _bases_positive(totals: _Totals) -> bool:
-    """Every EBITDA basis the lease divides by is above 0 (else `_positive` fails closed)."""
-    management = totals.management
-    return totals.start > 0 and totals.supported > 0 and (management is None or management > 0)
+@dataclass(frozen=True)
+class _Shape:
+    """What the structure alone says about a fact: its unit (None for text), whether it is
+    always a gap (`none` rows), and whether it may carry a calculation id."""
+
+    unit: str | None
+    always_gap: bool = False
+    calculated: bool = True
 
 
-def module_fact_ids(bridge: Bridge | None, gaps: int) -> frozenset[str]:
-    """Every fact id a full composition carries, from the structure alone (no values)."""
+_UNITS = {
+    "claimed": "MILLIONS",
+    "basis": "MILLIONS",
+    "applied_fraction": "PERCENT",
+    "accepted": "MILLIONS",
+    "unsupported": "MILLIONS",
+    "value": "MILLIONS",
+    "ebitda": "MILLIONS",
+    "cfo": "MILLIONS",
+    "cfo_to_ebitda": "PERCENT",
+    "total_leverage": "MULTIPLE",
+    "net_leverage": "MULTIPLE",
+}
+
+
+def _shape(table: str, row: str, name: str) -> _Shape:
+    if row == "none":
+        return _Shape(None, always_gap=True, calculated=False)
+    if table == "T1D.4" and name != "result":
+        control = row.startswith("cp1_")  # the CP-1 controls; the other two tie bridge totals
+        return _Shape(
+            "MULTIPLE" if control else "MILLIONS", calculated=control or name != "reported"
+        )
+    unit = "PERCENT" if table == "T1D.5" else _UNITS.get(name)
+    source = (table == "T1D.1" and row != "stmt") or name == "basis"
+    return _Shape(unit, calculated=unit is not None and not source)
+
+
+def _module_shapes(bridge: Bridge | None, gaps: int) -> dict[str, _Shape]:
+    """Every fact a full composition carries, by id, from the structure alone (no values)."""
     items = bridge.items if bridge is not None else ()
     rows: list[tuple[str, str, tuple[str, ...]]] = [
         *(("T1D.1", i.row_id, _REGISTER_FIELDS) for i in items),
@@ -1280,52 +1419,101 @@ def module_fact_ids(bridge: Bridge | None, gaps: int) -> frozenset[str]:
         rows.append(("T1D.2", "none", _ASSESSMENT_FIELDS))
     if not gaps:
         rows.append(("T1D.7", "none", _GAP_FIELDS))
-    return frozenset(f"{table}.{row}.{name}" for table, row, names in rows for name in names)
+    return {
+        f"{table}.{row}.{name}": _shape(table, row, name)
+        for table, row, names in rows
+        for name in names
+    }
+
+
+def module_fact_ids(bridge: Bridge | None, gaps: int) -> frozenset[str]:
+    """Every fact id a full composition carries, from the structure alone (no values)."""
+    return frozenset(_module_shapes(bridge, gaps))
+
+
+def _structural_issues(run: Run, shape: _Shape, currency: str | None) -> list[str]:
+    """The product's reference checks (`prose._run_issues`, `prose._fact_issues`) that the
+    structure decides; whether a numeric fact is known depends on values and is not checked."""
+    if not run.figure:
+        return []
+    if shape.always_gap:
+        return [f"Figure reference names a gap: {run.text}"]
+    if shape.unit is None:
+        return [f"Figure reference needs a known numeric fact: {run.text}"]
+    shown = {"PERCENT": "%", "MULTIPLE": "x"}.get(shape.unit) or scale_label(shape.unit, currency)
+    if run.unit is not None and run.unit not in {shape.unit, shown}:
+        return [f"Unit {run.unit} differs from the fact's unit {shown or shape.unit}: {run.text}"]
+    return []
+
+
+def _rationale_issues(
+    text: str, bound: Mapping[str, Fact], absent: Mapping[str, _Shape], currency: str | None
+) -> list[str]:
+    """`prose.issues` against the bound facts; a reference to a fact only a full composition
+    carries (or its calculation id) gets the structural checks instead of `Unresolved`."""
+    found: list[str] = []
+    for issue in prose_issues(text, bound):
+        ref = issue.removeprefix(_UNRESOLVED) if issue.startswith(_UNRESOLVED) else None
+        target = None if ref is None else absent.get(ref.removeprefix("calc:"))
+        if ref is None or target is None or (ref.startswith("calc:") and not target.calculated):
+            found.append(issue)
+            continue
+        for run in tokenize(text):
+            if run.kind != "text" and run.text == ref:
+                found += _structural_issues(run, target, currency)
+    return list(dict.fromkeys(found))
 
 
 def _bridge_issues(inputs: EarningsQualityInputs, source: Source, bridge: Bridge) -> list[str]:
-    """Label rules, then each item's shape failure alone or its content rules, citations and
-    prose (bound to every module fact when all items compose), then the confidence rule."""
-    label_issues, pairs = _assessments_by_item(bridge, inputs.submission.assessments)
+    """Ruling 1D10 from step 3: the assessment set, then each assessment in submission order
+    (its basis/fraction shape failure alone, else evidence, recurrence, unstated amount,
+    citations, prose), then the overall confidence rule."""
+    submission, currency = inputs.submission, inputs.cp1.adjusted_ebitda.currency
+    label_issues, pairs = _assessments_by_item(bridge, submission.assessments)
     shapes = {item.label: _shape_issue(item, a) for item, a in pairs}
-    valid = [(item, a) for item, a in pairs if shapes[item.label] is None]
-    composed = [_outcome(item, a) for item, a in valid if _composable(item, a)]
-    complete = not label_issues and len(composed) == len(bridge.items)
-    if complete and _bases_positive(_totals(bridge, composed, inputs.cp1)):
+    composed = [
+        _outcome(item, a)
+        for item, a in pairs
+        if shapes[item.label] is None and _composable(item, a)
+    ]
+    if len(composed) == len(bridge.items):
         out = _compose(inputs, bridge, source, composed)
-    else:  # T1D.1 and the composable T1D.2 rows; compute fails closed on any remaining cause
-        out = _Facts(inputs.cp1.adjusted_ebitda.period, inputs.cp1.adjusted_ebitda.currency)
+    else:  # T1D.1 and the composable T1D.2 rows; compute is never reached with these issues
+        out = _Facts(inputs.cp1.adjusted_ebitda.period, currency)
         _register(out, bridge, source, inputs.cp1)
         _assessment_rows(out, composed)
     bound = bind(f.to_fact() for f in out.facts)
-    # Fact ids only a full composition carries: naming one is not an unresolved reference here.
-    absent = module_fact_ids(bridge, len(inputs.submission.gaps)) - bound.keys()
+    absent = {
+        fact_id: shape
+        for fact_id, shape in _module_shapes(bridge, len(submission.gaps)).items()
+        if fact_id not in bound
+    }
+    items = {item.label: item for item, _ in pairs}
     found = list(label_issues)
-    for item, a in pairs:
+    for a in submission.assessments:
+        item = items.get(a.addback)
+        if item is None:  # unknown or assessed more than once: the set issues above
+            continue
         shape = shapes[item.label]
         if shape is not None:
             found.append(shape)
             continue
-        cited = (*a.evidence, *filter(None, (a.accepted_basis,)))
         found += _rule_issues(item, a)
-        found += citation_issues(cited, inputs.sources)
-        found += [
-            issue
-            for issue in prose_issues(a.rationale, bound)
-            if not (issue.startswith(_UNRESOLVED) and issue.removeprefix(_UNRESOLVED) in absent)
-        ]
-    if inputs.submission.overall.confidence == "High":
+        found += citation_issues((*a.evidence, *filter(None, (a.accepted_basis,))), inputs.sources)
+        found += _rationale_issues(a.rationale, bound, absent, currency)
+    if submission.overall.confidence == "High":
         found.append("Confidence cannot be High: the add-back evidence is management-supplied")
     return found
 
 
 def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
-    """Every calculation-level issue of the submission against the pack and the bridge.
+    """Every calculation-level issue of the submission against the pack and the bridge, in
+    ruling 1D10's order: bridge, assessment set, each assessment, overall (gaps have no rule).
 
-    Shape rules come first; a shape failure is returned alone for its item and that item's
-    citations and prose are not checked (`expected.json refusal_rules`). Tool-use rules (cited
-    page read) are Stage 2; the overall rationale's `{{FIG:...}}` references are bound to CP-1
-    facts at run time, so its prose is checked there.
+    A bridge source CP-0 did not mark ready (ruling 1D-x) or an unreadable bridge table gives
+    `Bridge table not found` alone. Tool-use rules (cited page read) are Stage 2; the overall
+    rationale's `{{FIG:...}}` references are bound to CP-1 facts at run time, so its prose is
+    checked there.
     """
     submission = inputs.submission
     source = _bridge_source(inputs.sources)
@@ -1339,7 +1527,7 @@ def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
                 "Evidence required when no bridge is supplied: the statements' add-back disclosure"
             )
     else:
-        bridge = parse_bridge(_pages(source))
+        bridge = parse_bridge(_pages(source)) if source.status == "ready" else None
         if bridge is None:
             return ("Bridge table not found",)
         found = _bridge_issues(inputs, source, bridge)

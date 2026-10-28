@@ -7,6 +7,7 @@ expected value.
 
 import copy
 import dataclasses
+import hashlib
 import json
 from decimal import Decimal
 from pathlib import Path
@@ -357,10 +358,41 @@ def test_partly_supported_recurring_composes_as_zero(given: str) -> None:
         {**f, **achievability} if f["fact_id"] == "T1D.2.a03.achievability" else f
         for f in base["facts"]
     ]
+    limitations = list(base["own_limitations"])
+    if given == "basis":
+        # Rulings 1D2 + round 2: the cited amount stays a known source fact, with one own line.
+        quote = {"source_id": "bridge", "locator": "page:2", "quote": A03_BASIS}
+        basis = {
+            "fact_id": "T1D.2.a03.basis",
+            "table_id": "T1D.2",
+            "row_id": "a03",
+            "field": "basis",
+            "label": "Source-supported amount",
+            "status": "known",
+            "unit": "MILLIONS",
+            "period": base["cp1_references"][0]["period"],
+            "amount_exact": "0.2",
+            "shown": "0.20",
+            "currency": "USD",
+            "scale": "1000000",
+            "decimals": 2,
+            "value_class": "source",
+            "formula": "Amount in the cited quote",
+            "calculation_id": None,
+            "derives_from": [],
+            "citations": [quote],
+            "limitation": None,
+        }
+        want = [basis if f["fact_id"] == "T1D.2.a03.basis" else f for f in want]
+        limitations.insert(
+            1,
+            "Recurring add-back excluded although a source amount is cited: "
+            "Legal and advisory fees.",
+        )
     _assert_facts(result, want)
     assert _tables(result) == base["tables"]
     assert _claims(result) == base["claims"]
-    assert list(result.limitations) == base["own_limitations"]
+    assert list(result.limitations) == limitations
     assert _operands(result) == base["operands"]
 
 
@@ -371,18 +403,78 @@ def _with_adjusted_ebitda(amount: Decimal) -> cp1d.Cp1Operands:
     )
 
 
-def test_nonpositive_ebitda_fails_closed_alike_for_every_pack() -> None:
-    """Until LEAD rules: no issue from validation, one ValueError text from compute, any pack."""
-    messages = set()
-    for case in CASES:
-        inputs = _inputs(
-            case, SUBMISSIONS[case]["earnings_quality"], cp1=_with_adjusted_ebitda(Decimal(-5))
+def _not_meaningful(label: str) -> str:
+    return f"Not meaningful: {label} is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
+
+
+@pytest.mark.parametrize("amount", ["-5", "0"])
+@pytest.mark.parametrize("case", CASES)
+def test_nonpositive_ebitda_settles(case: str, amount: str) -> None:
+    """Ruling 1D3: ratios and shares on a basis whose EBITDA is <= 0 are not meaningful; the
+    CP-1 controls compare nothing; validation and compute never raise for it."""
+    inputs = _inputs(
+        case, SUBMISSIONS[case]["earnings_quality"], cp1=_with_adjusted_ebitda(Decimal(amount))
+    )
+    assert cp1d.validation_issues(inputs) == ()
+    facts = {f.fact_id: f for f in cp1d.compute(inputs).facts}
+    statements = _not_meaningful("Adjusted EBITDA, statements (CP-1)")
+    for name in ("cfo_to_ebitda", "total_leverage", "net_leverage"):
+        fact = facts[f"T1D.6.statements.{name}"]
+        assert (fact.status, fact.limitation, fact.cell_state) == (
+            "not_applicable",
+            statements,
+            "not_meaningful",
         )
-        assert cp1d.validation_issues(inputs) == ()
-        with pytest.raises(ValueError) as raised:
-            cp1d.compute(inputs)
-        messages.add(str(raised.value))
-    assert len(messages) == 1, messages
+    for row, figure in (
+        ("cp1_total_leverage", "total_leverage_adjusted"),
+        ("cp1_net_leverage", "net_leverage_adjusted"),
+    ):
+        reported = facts[f"T1D.4.{row}.reported"]
+        assert (reported.status, reported.amount_exact) == (
+            "known",
+            MANIFEST["figures"][figure]["amount_exact"],
+        )
+        recomputed = facts[f"T1D.4.{row}.recomputed"]
+        assert (recomputed.status, recomputed.limitation) == ("not_applicable", statements)
+        difference = facts[f"T1D.4.{row}.difference"]
+        assert (difference.status, difference.limitation) == (
+            "missing",
+            "Not compared: one side is not available",
+        )
+        assert facts[f"T1D.4.{row}.result"].text == "Not compared"
+    supported = facts["T1D.3.supported.value"]
+    assert supported.amount is not None
+    if supported.amount <= 0:
+        share = facts["T1D.5.supported.value"]
+        want = _not_meaningful("Supported adjusted EBITDA")
+        assert (share.status, share.limitation) == ("not_applicable", want)
+        assert facts["T1D.6.supported.total_leverage"].limitation == want
+
+
+def test_cp1_reported_leverage_keeps_cp1_status() -> None:
+    """Ruling 1D3: the reported side of a CP-1 control keeps CP-1's own status."""
+    cp1 = _cp1()
+    limitation = "Not meaningful: EBITDA is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
+    unsettled = dataclasses.replace(
+        cp1.total_leverage, amount=None, status="not_applicable", limitation=limitation
+    )
+    inputs = _inputs(
+        "positive",
+        SUBMISSIONS["positive"]["earnings_quality"],
+        cp1=dataclasses.replace(cp1, total_leverage=unsettled),
+    )
+    result = cp1d.compute(inputs)
+    facts = {f.fact_id: f for f in result.facts}
+    reported = facts["T1D.4.cp1_total_leverage.reported"]
+    assert (reported.status, reported.amount, reported.limitation) == (
+        "not_applicable",
+        None,
+        limitation,
+    )
+    assert facts["T1D.4.cp1_total_leverage.recomputed"].status == "known"
+    assert facts["T1D.4.cp1_total_leverage.result"].text == "Not compared"
+    ref = next(r for r in result.cp1_references if r.figure == "total_leverage_adjusted")
+    assert (ref.status, ref.amount_exact, ref.shown) == ("not_applicable", None, None)
 
 
 @pytest.mark.parametrize(
@@ -427,6 +519,111 @@ def test_module_ids_equal_a_full_composition(case: str) -> None:
     bridge = None if source is None else cp1d.parse_bridge([p.text for p in source.spans])
     ids = cp1d.module_fact_ids(bridge, len(inputs.submission.gaps))
     assert ids == frozenset(f.fact_id for f in result.facts)
+
+
+def _bridge_inputs(page1: str, payload: dict[str, Any]) -> cp1d.EarningsQualityInputs:
+    """The positive pack with page:1 of the bridge replaced; citations re-pinned to its hash."""
+    page2 = MANIFEST["synthetic_source"]["positive"]["pages"][1]
+    pages = [{"locator": "page:1", "text": page1}, page2]
+    sha = hashlib.sha256("\f".join(p["text"] for p in pages).encode()).hexdigest()
+    payload = copy.deepcopy(payload)
+    for assessment in payload["assessments"]:
+        for citation in [*assessment["evidence"], assessment["accepted_basis"]]:
+            if citation is not None:
+                citation["source_sha256"] = sha
+    inputs = _inputs("positive", payload)
+    bridge = _source("bridge", MANIFEST["synthetic_source"]["name"], pages, sha)
+    frozen = tuple(s for s in inputs.sources if s.source_id != "bridge")
+    return dataclasses.replace(inputs, sources=(*frozen, bridge))
+
+
+POSITIVE_PAGE1 = MANIFEST["synthetic_source"]["positive"]["pages"][0]["text"]
+HEADER = "Item  Type  Status  Amount"
+
+
+UNUSABLE_PAGES = {
+    "1D4 type": POSITIVE_PAGE1.replace("fees  Cost  Incurred", "fees  Expense  Incurred"),
+    "1D5 blank line": POSITIVE_PAGE1 + "\n",
+    "1D5 stray row": POSITIVE_PAGE1 + "\nRounding  0.01",
+    "1D5 duplicate total": POSITIVE_PAGE1 + "\nTotal proposed adjustments  6.00",
+    "1D5 non-decimal": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  1,00"),
+    "1D9 no rows": POSITIVE_PAGE1.split(HEADER)[0] + HEADER,
+    "digits": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  1." + "0" * 250 + "1"),
+}
+
+
+@pytest.mark.parametrize("ruling", UNUSABLE_PAGES)
+def test_unusable_bridge_table_is_not_found(ruling: str) -> None:
+    page1 = UNUSABLE_PAGES[ruling]
+    assert cp1d.parse_bridge([page1]) is None
+    inputs = _bridge_inputs(page1, SUBMISSIONS["positive"]["earnings_quality"])
+    assert cp1d.validation_issues(inputs) == ("Bridge table not found",)
+    with pytest.raises(ValueError):
+        cp1d.compute(inputs)
+
+
+@pytest.mark.parametrize("sha256", [None, MANIFEST["synthetic_source"]["positive"]["sha256"]])
+def test_unreadable_bridge_is_not_found_before_parse(sha256: str | None) -> None:
+    """Ruling 1D-x: CP-0's `unreadable` status governs; hash and spans are not read."""
+    synthetic = MANIFEST["synthetic_source"]
+    unreadable = Source(
+        source_id="bridge",
+        name=synthetic["name"],
+        status="unreadable",
+        sha256=sha256,
+        spans=tuple(
+            Span(locator=p["locator"], text=p["text"]) for p in synthetic["positive"]["pages"]
+        ),
+        limitation="Unreadable",
+    )
+    inputs = _case_inputs("positive")
+    frozen = tuple(s for s in inputs.sources if s.source_id != "bridge")
+    inputs = dataclasses.replace(inputs, sources=(*frozen, unreadable))
+    assert cp1d.validation_issues(inputs) == ("Bridge table not found",)
+
+
+def test_issue_order_follows_ruling_1d10() -> None:
+    """Assessment set first, then per assessment in submission order: evidence, recurrence,
+    unstated amount, citations, prose; then overall."""
+    payload = copy.deepcopy(SUBMISSIONS["gap"]["earnings_quality"])
+    a04 = payload["assessments"][3]
+    a04.update(achievability="Partly supported", accepted_fraction="0.50")
+    a04["recurrence"] = "Non-recurring"
+    a03 = payload["assessments"][2]
+    a03["rationale"] += " It was 0.2."
+    payload["assessments"] = [a04, a03, *payload["assessments"][:2]]
+    payload["overall"]["confidence"] = "High"
+    issues = cp1d.validation_issues(_inputs("gap", payload))
+    label = "Insurance and facilities savings"
+    assert list(issues) == [
+        f"Evidence required for an accepted add-back: {label}",
+        f"Recurrence does not fit the add-back type: {label}",
+        f"Cannot accept an unstated amount: {label}",
+        "Bare figure: 0.2",
+        "Confidence cannot be High: the add-back evidence is management-supplied",
+    ]
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "{calc:T1D.3.supported.value|US$ m}",
+        "{T1D.3.supported.value|%}",
+        "{T1D.4.cp1_total_leverage.result|x}",
+        "{T1D.6.supported.total_leverage|US$ m}",
+    ],
+)
+def test_partial_composition_checks_like_the_full_module(ref: str) -> None:
+    """Reviewer L-a/L-b: under r03 (a01 shape failure) a02's references to facts only a full
+    composition carries give exactly the issues the full module gives them."""
+    refusal = _submitted_refusal("r03")
+    partial = copy.deepcopy(refusal["payload"])
+    partial["assessments"][1]["rationale"] += f" See {ref}."
+    full = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    full["assessments"][1]["rationale"] += f" See {ref}."
+    full_issues = list(cp1d.validation_issues(_inputs("positive", full)))
+    partial_issues = list(cp1d.validation_issues(_inputs("positive", partial)))
+    assert partial_issues == [*refusal["expected_issues"], *full_issues]
 
 
 @pytest.mark.skip(reason="Stage 2/4: needs a store, a CP-1 promotion and G1 execution")

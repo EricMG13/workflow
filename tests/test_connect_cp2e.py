@@ -859,3 +859,64 @@ def test_the_reader_reports_the_head_status(status: str) -> None:
     head = head_of(module)
     other = SimpleNamespace(head_module=lambda h: module)
     assert cp2e.cp2e_reader(cast(Execution, other), head).status == status
+
+
+# --- fix round 1, rulings round 5: label decimal (item 2) and absence paths (item 3) -------------
+def test_a_decimal_label_run_does_not_label_a_whole_figure() -> None:
+    """`spread 25.5` must not label the token 25 when another whole 25 is the quote's one
+    occurrence (probe p_label_decimal): the label match needs the whole-run trailing guard."""
+    sentence = "The margin is spread 25.5 basis points and the fee is 25 basis points."
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    raw = _positive()
+    raw["rate_exposure"]["spread"] = {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": sentence,
+        "bps_text": "25",
+    }
+    assert cp2e.validate_macro_fx(submission=raw, pages=pages) == (
+        "rate_exposure.spread: bps_text 25 is not labelled spread in the quote",
+    )
+
+
+@pytest.mark.parametrize("tail", [" basis points", ".", " and more"])
+def test_a_whole_labelled_figure_is_still_accepted(tail: str) -> None:
+    sentence = f"The margin is spread 25{tail}"
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    raw = _positive()
+    raw["rate_exposure"]["spread"] = {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": sentence,
+        "bps_text": "25",
+    }
+    assert cp2e.validate_macro_fx(submission=raw, pages=pages) == ()
+
+
+@pytest.mark.parametrize(
+    ("path", "key"),
+    [
+        (("rate_absence",), "rate_absence"),
+        (("fx", "debt_currency_absence"), "fx.debt_currency_absence"),
+        (("fx", "operating_fx_absence"), "fx.operating_fx_absence"),
+        (("hedge_absence",), "hedge_absence"),
+    ],
+    ids=["rate", "debt-currency", "operating-fx", "hedge"],
+)
+@pytest.mark.parametrize("part", ["reason", "follow_up"])
+def test_an_absence_digit_issue_names_the_submission_path(
+    path: tuple[str, ...], key: str, part: str
+) -> None:
+    raw = _no_absence()
+    if path == ("rate_absence",):
+        raw["rate_exposure"] = None
+    node: Any = raw
+    for step in path[:-1]:
+        node = node[step]
+    node[path[-1]] = {"reason": "none", "follow_up": "ask"}
+    node[path[-1]][part] = "see 5 items"
+    issues = cp2e.validate_macro_fx(submission=raw, pages=_pages("positive"))
+    assert f"{key}.{part}: digits are not allowed" in issues
+    assert not any(i.startswith(f"{path[-1]}.") for i in issues if path[0] == "fx")

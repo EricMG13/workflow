@@ -679,7 +679,8 @@ class _Check:
         if not _SENTENCE_NUM.fullmatch(v) or not _once(v, ref["quote"], self.pages[ref["locator"]]):
             self.add(f"{path}: {key} {v} does not occur in the quote")
             return None
-        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", normalise(ref["quote"])):
+        # the round 13 whole-run trailing guard: `spread 25.5` does not label the token 25
+        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9]|[.,][0-9])", normalise(ref["quote"])):
             self.add(f"{path}: {key} {v} is not labelled {label} in the quote")
             return None
         return Decimal(v)
@@ -849,7 +850,7 @@ def validate_macro_fx(
             at = key if sub.get(key) else f"fx.{key}"  # the field's place in the submission
             for part in ("reason", "follow_up"):
                 chk.empty(f"{at}.{part}", absence[part])
-                chk.digit_free(f"{key}.{part}", absence[part])
+                chk.digit_free(f"{at}.{part}", absence[part])
     chk.shocks(
         sub["rate_shocks_bp"], "rate_shocks_bp", "a whole number of basis points", 4, _RATE_BP
     )

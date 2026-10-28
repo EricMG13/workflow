@@ -73,5 +73,6 @@ or more cannot be quoted by this step; that is stated, not a source limit.
   where the page prints `-`; the normalised name is what T2F.1 stores and shows.
 - The summary becomes a claim, so it must be valid run text (no unbalanced `[` or `{`) and must
   hold no reference: either is a journaled issue at `summary.text`.
-- Open with LEAD, not built here: the label-decimal question (`spread 25.5` is accepted by the
-  labelled reader) and the `fx.` paths item.
+- A labelled operand needs a whole run after its label (`(?![0-9]|[.,][0-9])`), so `spread 25.5`
+  does not label the token 25. Absence digit issues name the submission path
+  (`fx.debt_currency_absence.reason`).

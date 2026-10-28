@@ -357,3 +357,4 @@
 - 20:10 CP-L10 review: REQUEST CHANGES (M1 view amount_exact text vs oracle; M2 driver KeyError/period label; M3 acceptance tests). Round 5 item 9. Fix round 1.
 - 20:10 CP-5 review REQUEST CHANGES (M1 adapter equality untested). Shared test review REQUEST CHANGES (M1 require_issue too broad). Round 5 items 10-11. Fix rounds dispatched for both.
 - 20:12 CP-2E fix1 APPROVED (p3 follow-up invalid explained: fresh binding needs reads; p3b settles). Merge held for shared test.
+- 20:14 G1-X order review: REQUEST CHANGES (M1 deferred published-path test broken at CP-0 consumers; M2 no two-later case). Fix round 1.

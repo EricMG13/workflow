@@ -34,3 +34,16 @@ Stage 1 is closed at `codex/checkpoint` e89b2a2. Only a High or Medium defect re
 | All | `prose.is_blank` gains Cc, default-ignorables and U+2800 in LEAD's end batch; the `owners/blank.py` re-export inherits it | round 13 addendum 3 |
 
 `<S>` = `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad`
+
+## Added from LEAD (2026-10-28, after closure)
+- **[CP-2D]** A sum copy (T2E.1.r05) takes one operand's status. Treat it as a dependant gap: `Not calculable: Equity issuance is conflicting`. Source: cp2d/r13-review.md L4; addendum 4 (b).
+- **[CP-2D]** The copy period rule keys on a copy, meaning a value read from the CP-1 fact. A recomputed cell (undrawn_rcf, liquidity, liquidity_to_debt, commitment less drawn) takes the balance date, not the CP-1 metric's period. No invariant. The tag may stay as a twin pointer. The CP-2D re-pin must use this. Source: addendum 4 (c), (d).
+- **[LEAD product]** 0d-d: `readiness._echoes_item_error` is O(errors²). LEAD applies it as its first Stage 2 task (0d-d-plan.md, LEAD worktree).
+- **[LEAD product]** `readiness.citation_issues` accepts a whitespace-only quote. Refuse a blank quote.
+- **[LEAD product]** 0d-c Lows:
+  - R1: the exact summary count;
+  - R8-R11, c05 and c08: state the real worst-case record bound;
+  - the complexity claim in the tools.py:33-35 docstring;
+  - the `clipped` docstring needs limit >= 1.
+- **[LEAD release at Stage 2 close]** The CP-3C manifest `frozen_inputs[8]` `use` text names BC_PROHIBITED, BC_NEAR and BC_NOUN. The real names are PROHIBITED, NEAR_INSTRUMENT and INSTRUMENT_NOUN. The other release items are in the per-module table above. The named deltas (CP-2D, CP-3D) are held until then.
+- **Correction (LEAD):** the blank support or citation quote fix ran in Stage 1 only in CP-4C, which was its Medium. Every other citation-taking module takes it from this backlog (row "Every module" above).

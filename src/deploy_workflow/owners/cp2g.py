@@ -17,7 +17,7 @@ orchestration seams (G1-X protocol section 2) are added to this file in later st
 """
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
 from typing import Annotated, Literal
@@ -32,7 +32,7 @@ from deploy_vii.business_context import (
     prohibited_issues,
     referencable,
 )
-from deploy_vii.contracts import Contract, Fact, Input, InputStatus
+from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
@@ -2385,6 +2385,45 @@ def _own_limitations(
     return tuple(out)
 
 
+def _cite(b: _Book, run: _Run) -> None:
+    """Lease :132 (lineage_rule): a calculated fact's citations are the ordered, de-duplicated
+    concatenation of the citations of the facts in its derives_from list, in that order; an own
+    fact contributes its own (transitively CP-1) citations; analyst inputs and CP-2A watch levels
+    carry none. A lineage entry the rule cannot resolve fails closed."""
+    upstream = {f"cp1:{metric}": f for metric, f in run.cp1.items()}
+    cp2a = [run.scenario.decline, run.scenario.increase]
+    for x in run.ctx.cp2a.breaks:
+        cp2a += [x.level, x.required_decline]
+    upstream |= {f"cp2a:{f.fact_id}": f for f in cp2a}
+    upstream |= {f"cp1d:{f.fact_id}": f for f in run.cp1d or ()}
+    done: dict[str, tuple[Citation, ...]] = {}
+
+    def of(ref: str, path: tuple[str, ...]) -> tuple[Citation, ...]:
+        if ref in upstream:
+            return upstream[ref].citations
+        if ref not in b.by_id or ref in path:
+            raise ValueError(f"CP-2G: lineage {' -> '.join((*path, ref))} names no settled fact")
+        if ref not in done:
+            cell = b.by_id[ref]
+            fact = cell.fact
+            calculated = fact.status == "known" and fact.value_class == "calculated"
+            done[ref] = (
+                tuple(dict.fromkeys(c for d in cell.derives_from for c in of(d, (*path, ref))))
+                if calculated
+                else fact.citations
+            )
+        return done[ref]
+
+    cited = [of(cell.fact.fact_id, ()) for cell in b.cells]
+    b.cells = [
+        replace(cell, fact=cell.fact.model_copy(update={"citations": cites}))
+        if cites != cell.fact.citations
+        else cell
+        for cell, cites in zip(b.cells, cited, strict=True)
+    ]
+    b.by_id = {cell.fact.fact_id: cell for cell in b.cells}
+
+
 def compute(inputs: ForwardInputs) -> ForwardResult:
     """The forward model of one valid submission; raises ValueError on any issue."""
     run = _resolve(inputs)
@@ -2400,6 +2439,7 @@ def compute(inputs: ForwardInputs) -> ForwardResult:
     _t2h7(b, run, tests, results)
     traj = _t2h8(b, run)
     _t2h9(b, run)
+    _cite(b, run)
     claims = _claims(b, run, tests, results, traj)
     tables = tuple(Table(t, title, tuple(b.rows[t])) for t, title in TABLES.items())
     break_rows = tuple(

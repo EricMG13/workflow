@@ -571,6 +571,82 @@ def test_cell_spelling_matches_fp05(case: str) -> None:
                     assert fact.field == cell["field"]
 
 
+LINEAGE_CITATIONS = (  # lease :132, expected.json lineage_rule (round 8 A-3)
+    "A calculated fact's citations are the ordered, de-duplicated concatenation of the citations "
+    "of the facts in its derives_from list, in that order (cp4_legal._computed pattern), where an "
+    "own fact contributes its own (transitively CP-1) citations; analyst inputs and CP-2A watch "
+    "levels carry none."
+)
+
+
+def _rule_citations(case: str) -> dict[str, tuple[Citation, ...]]:
+    """Every composed fact's citations by the lineage rule, applied from the case's inputs."""
+    ctx, cells = _context(case), {c.fact.fact_id: c for c in _result(case).cells}
+    upstream = {f"cp1:{m}": f for m, f in cp2g.select_cp1(ctx.cp1_facts).items()}
+    for s in ctx.cp2a.scenarios:
+        upstream |= {f"cp2a:{f.fact_id}": f for f in (s.decline, s.increase)}
+    for b in ctx.cp2a.breaks:
+        upstream |= {f"cp2a:{f.fact_id}": f for f in (b.level, b.required_decline)}
+    upstream |= {f"cp1d:{f.fact_id}": f for f in ctx.cp1d.facts() or ()}
+
+    @cache
+    def of(ref: str) -> tuple[Citation, ...]:
+        if ref in upstream:
+            return upstream[ref].citations
+        cell = cells[ref]
+        if cell.fact.status != "known" or cell.fact.value_class != "calculated":
+            return ()  # analyst inputs, CP-2A watch levels and texts carry none
+        return tuple(dict.fromkeys(c for d in cell.derives_from for c in of(d)))
+
+    return {fid: of(fid) for fid in cells}
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_citations_follow_the_lineage_rule(case: str) -> None:
+    assert EXPECTED["lineage_rule"].startswith(LINEAGE_CITATIONS)
+    want = _rule_citations(case)
+    for cell in _result(case).cells:
+        assert cell.fact.citations == want[cell.fact.fact_id], cell.fact.fact_id
+
+
+def test_citations_order_and_de_duplication() -> None:
+    """The rule on the positive case, where only the CP-1 source facts (total debt, cash) cite:
+    the order follows derives_from and a repeated citation is kept once, at its first place."""
+    cp1 = cp2g.select_cp1(_context("positive").cp1_facts)
+    (debt,), (cash,) = cp1["total_debt"].citations, cp1["cash_closing"].citations
+    cells = _cells(_result("positive"))
+    assert cells["T2H.2.debt.value"].citations == (debt,)
+    assert cells["T2H.6.a25.net_leverage"].citations == (debt, cash)
+    assert cells["T2H.5.b26.closing_cash"].citations == (cash, debt)  # opening cash, then FCF
+    assert cells["T2H.6.b26.net_leverage"].citations == (debt, cash)  # (debt) + (cash, debt)
+    assert cells["T2H.4.a25.revenue"].citations == ()
+    assert cells["T2H.3.a01.fy1"].citations == ()  # an analyst input
+
+
+def test_cp2a_watch_level_copies_carry_no_citation() -> None:
+    """The rule's "analyst inputs and CP-2A watch levels carry none": with cited CP-2A cells,
+    the T2H.7 level copy (analyst_judgment) and the first-year texts cite nothing, while the
+    calculated required-decline copy carries the CP-2A citation."""
+    cite = cp2g.select_cp1(_context("positive").cp1_facts)["total_debt"].citations
+    ctx = _context("positive")
+    breaks = tuple(
+        dataclasses.replace(
+            b,
+            level=b.level.model_copy(update={"citations": cite}),
+            required_decline=b.required_decline.model_copy(update={"citations": cite}),
+        )
+        if b.row == "b03"
+        else b
+        for b in ctx.cp2a.breaks
+    )
+    ctx = dataclasses.replace(ctx, cp2a=dataclasses.replace(ctx.cp2a, breaks=breaks))
+    cells = _cells(_compose(ctx, _bind_all(_payload("positive"))))
+    assert cells["T2H.7.b03.level"].value_class == "analyst_judgment"
+    assert cells["T2H.7.b03.level"].citations == ()
+    assert cells["T2H.7.b03.base_first"].citations == ()
+    assert cells["T2H.7.b03.static_decline"].citations == cite
+
+
 @pytest.mark.parametrize("case", CASES)
 def test_known_fact_never_derives_from_unknown(case: str) -> None:
     cells = {c.fact.fact_id: c for c in _result(case).cells}

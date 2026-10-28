@@ -870,8 +870,9 @@ def test_c2_unstated_ranking_names_the_facility_and_term(field: str, term: str) 
 
 
 def test_c3_need_claim_names_the_unstated_amortisation() -> None:
+    """Round 11 Q3: the cause frame carries no facility id."""
     result = cp3c.compute(_positive_with(_no_amortisation()))
-    cause = "facility term-loan annual amortisation is not stated"
+    cause = "the total needs every facility with its annual amortisation stated, and one is not"
     assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
 
 
@@ -885,11 +886,8 @@ def test_c3_need_claim_names_the_missing_operand() -> None:
 def test_c3_lme_claim_names_the_unstated_ranking() -> None:
     unstated = replace(_cp1_fact("term-loan.secured_status"), text="NOT_STATED")
     result = cp3c.compute(_positive_with(replace(_positive_terms(), secured_status=unstated)))
-    assert _claim(result, "CP-3C-LME-01") == (
-        "Claims at or ahead of the most junior facility are [T3D.5.r01.c1] before any "
-        "liability-management exercise, because facility term-loan secured status is not stated"
-        f"{LME_TAIL}"
-    )
+    cause = "the total needs every facility with its secured status stated, and one is not"  # Q3
+    assert _claim(result, "CP-3C-LME-01") == LME_GAP.format(cause=cause)
 
 
 def test_c3_burden_claim_with_non_positive_ebitda() -> None:
@@ -1207,7 +1205,7 @@ def test_b6_a_usd_facility_without_a_wall_principal() -> None:
     assert _cells_of(result)["T3D.1.r01.c1"].reason == copied  # C-7: CP-2D's own limitation
     assert result.own_limitations[-3] == _UNSTATED_LINE.format(term="principal")
     assert list(result.gaps_ledger.rows[-3]) == ["Facility principal (term-loan)", "Gap"]
-    cause = "facility term-loan principal is not stated"
+    cause = "the total needs every facility with its principal stated, and one is not"  # Q3
     assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
 
 
@@ -1337,18 +1335,43 @@ def _dated(row: cp3c.WallRow, maturity: str, months: int, inside: str) -> cp3c.W
     )
 
 
-def test_m1_a_maturity_before_the_balance_date_is_an_invariant() -> None:
-    """Not ruled (listed for LEAD): negative months would sign-flip amortisation, flow and
-    balloon, so the Method fails closed; a maturity on D0 itself is 0 months and computes."""
+PRE_D0 = "Not calculable: facility {fid} maturity date is before the balance date"
+
+
+def test_b1_a_maturity_before_the_balance_date_is_a_gap() -> None:
+    """Round 11 B1: the date stays known; months, the flag and every dependant take the reason;
+    total principal, shares, creditor rows and the nearest maturity date stay known."""
     past = _dated(_positive_row(), "2025-06-30", -6, "Yes")
-    with pytest.raises(ValueError, match=r"term-loan.*2025-06-30.*2025-12-31"):
-        cp3c.compute(_positive_with(_positive_terms(), wall=(past,)))
+    result = cp3c.compute(_positive_with(_positive_terms(), wall=(past,)))
+    reason = PRE_D0.format(fid="term-loan")
+    (m,) = result.refinancing.maturities
+    assert m.facility.maturity_date == date(2025, 6, 30)
+    assert (m.facility.months, m.facility.inside_horizon) == (cp3c.Gap(reason), cp3c.Gap(reason))
+    positions = [*_PAYABLE, *_RESOURCES, *_REPRICED, "T3D.2.r06"]
+    assert _own_gaps(result) == _all(positions, "missing", reason)
+    assert result.refinancing.nearest_maturity == date(2025, 6, 30)
+    copies = _cells_of(result)
+    assert (copies["T3D.1.r01.c3"].amount, copies["T3D.1.r01.c4"].text) == (Decimal(-6), "Yes")
+    assert result.own_limitations[-3] == (
+        "Facility term-loan maturity date is before the balance date; maturity-wall figures "
+        "that need it are not calculated."
+    )
+    assert list(result.gaps_ledger.rows[-3]) == ["Facility maturity date (term-loan)", "Limitation"]
+    assert not [x for x in result.own_limitations if "maturity wall for facility" in x]
+    cause = (
+        "the total needs every facility to mature on or after the balance date, and one does not"
+    )
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+
+
+def test_b1_a_maturity_on_the_balance_date_is_zero_months() -> None:
     on_d0 = _dated(_positive_row(), "2025-12-31", 0, "Yes")
     (m,) = cp3c.compute(_positive_with(_positive_terms(), wall=(on_d0,))).refinancing.maturities
     assert m.facility.months == 0
 
 
-def test_m2_facility_ids_with_digits_are_names_not_figures() -> None:
+def test_q3_causes_carry_no_facility_id() -> None:
+    """Round 11 Q3: ids with digits (tl2, tla1) never reach the claim prose."""
     row = _positive_row()
     copied = "Not calculable: facility tl2 principal is not stated (CP-2D)"
     tl2 = replace(row, facility_id="tl2", principal=_gone(row.principal, copied))
@@ -1360,8 +1383,21 @@ def test_m2_facility_ids_with_digits_are_names_not_figures() -> None:
             wall=(tl2, replace(row, facility_id="tla1")),
         )
     )
-    cause = "facility tl2 principal is not stated"
+    cause = "the total needs every facility with its principal stated, and one is not"
     assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+    cause = "the total needs every facility with its seniority stated, and one is not"
+    assert _claim(result, "CP-3C-LME-01") == LME_GAP.format(cause=cause)
+
+
+def test_q3_an_unmatched_facility_takes_the_register_and_wall_frame() -> None:
+    other = replace(_positive_terms(), facility_id="notes")
+    result = cp3c.compute(_positive_with(_positive_terms(), other))
+    cause = (
+        "the total needs every facility in both the CP-1 debt register and the CP-2D maturity "
+        "wall, and one is not"
+    )
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+    assert _claim(result, "CP-3C-LME-01") == LME_GAP.format(cause=cause)
 
 
 def test_a13_a_positive_cp1_cash_interest_is_a_negative_interest_paid() -> None:
@@ -1411,7 +1447,7 @@ def test_a39_a_usd_principal_gap_keeps_its_own_cause_beside_a_eur_facility() -> 
             wall=(usd, replace(row, facility_id="b-eur")),
         )
     )
-    cause = "facility a-usd principal is not stated"
+    cause = "the total needs every facility with its principal stated, and one is not"
     assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
 
 
@@ -1498,4 +1534,93 @@ def test_a_repeated_operand_facility_is_an_invariant() -> None:
 
 def test_a_claim_template_with_a_bare_figure_is_refused() -> None:
     with pytest.raises(ValueError, match="Bare figure"):
-        cp3c._Claims({}, ()).claim("CP-3C-TEST", "The need is 40 million.", ())
+        cp3c._Claims({}).claim("CP-3C-TEST", "The need is 40 million.", ())
+
+
+# Round 11 B2: one Gap own line per unstated term, in the ruled per-facility order
+
+
+_CREDITOR_LINE = (
+    "Facility term-loan {term} is not stated; creditor-position figures that need it are not "
+    "calculated."
+)
+
+
+def _all_terms_unstated(**changes: Any) -> cp3c.FacilityTerms:
+    seniority = replace(_cp1_fact("term-loan.seniority"), text="NOT_STATED")
+    return replace(
+        _no_amortisation(),
+        secured_status=_missing_cp1("term-loan.secured_status"),
+        seniority=seniority,
+        **changes,
+    )
+
+
+def _facility_rows(result: cp3c.Cp3cResult) -> list[tuple[str, str]]:
+    return [(label, kind) for label, kind in result.gaps_ledger.rows if "(term-loan)" in label]
+
+
+def _facility_texts(result: cp3c.Cp3cResult) -> list[str]:
+    return [x for x in result.own_limitations if "term-loan" in x]
+
+
+def test_b2_no_currency_undated_and_every_term_unstated() -> None:
+    row = _undated(_positive_row())
+    result = cp3c.compute(_positive_with(_all_terms_unstated(currency=None), wall=(row,)))
+    assert _facility_texts(result) == [
+        _UNSTATED_LINE.format(term="currency"),
+        _UNSTATED_LINE.format(term="maturity date"),
+        _UNSTATED_LINE.format(term="annual amortisation"),
+        _CREDITOR_LINE.format(term="secured status"),
+        _CREDITOR_LINE.format(term="seniority"),
+    ]
+    assert _facility_rows(result) == [
+        ("Facility currency (term-loan)", "Gap"),
+        ("Facility maturity date (term-loan)", "Gap"),
+        ("Facility annual amortisation (term-loan)", "Gap"),
+        ("Facility secured status (term-loan)", "Gap"),
+        ("Facility seniority (term-loan)", "Gap"),
+    ]
+
+
+def test_b2_principal_terms_then_the_wall_row_lines() -> None:
+    row = _positive_row()
+    off = replace(row, principal=_gone(row.principal, "Not stated (test)"))
+    off = replace(off, months=replace(row.months, amount=Decimal(47)))
+    result = cp3c.compute(_positive_with(_all_terms_unstated(), wall=(off,)))
+    assert _facility_texts(result) == [
+        _UNSTATED_LINE.format(term="principal"),
+        _UNSTATED_LINE.format(term="annual amortisation"),
+        _CREDITOR_LINE.format(term="secured status"),
+        _CREDITOR_LINE.format(term="seniority"),
+        (
+            "CP-2D's maturity wall for facility term-loan differs from the position recomputed "
+            "from its horizon and maturity date; CP-3C uses the recomputed position and shows both."
+        ),
+    ]
+
+
+def test_b2_a_pre_d0_line_comes_before_the_principal_line() -> None:
+    past = _dated(_positive_row(), "2025-06-30", -6, "Yes")
+    past = replace(past, principal=_gone(past.principal, "Not stated (test)"))
+    result = cp3c.compute(_positive_with(_positive_terms(), wall=(past,)))
+    assert _facility_rows(result) == [
+        ("Facility maturity date (term-loan)", "Limitation"),
+        ("Facility principal (term-loan)", "Gap"),
+    ]
+
+
+# Round 11 B5: a blank Insufficient Information limitation
+
+
+@pytest.mark.parametrize("blank", ["", " ", "\t\n"])
+def test_b5_a_blank_insufficient_information_limitation_is_refused(blank: str) -> None:
+    payload = json.loads(json.dumps(SUBMISSIONS["cp3c"]["positive"]))
+    (lme,) = (p for p in payload["paths"] if p["kind"] == "liability_management")
+    lme["limitation"] = blank or None
+    issues = cp3c.submission_issues(submission=_submission(payload), offered=OFFERED)
+    pinned = (
+        "paths[liability_management].limitation: an Insufficient Information assessment states "
+        "its limitation"
+    )
+    assert issues == (pinned,)

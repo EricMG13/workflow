@@ -17,6 +17,7 @@ orchestration seams (G1-X protocol section 2) are added to this file in later st
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
+from dataclasses import field as _field
 from datetime import date
 from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
 from typing import Final, Literal
@@ -213,7 +214,7 @@ def submission_issues(
             issues.append(
                 f"{at}.feasibility: must be Insufficient Information exactly when the category is"
             )
-        if insufficient and not p.limitation:
+        if insufficient and not (p.limitation or "").strip():  # round 11 B5: blank is none
             issues.append(
                 f"{at}.limitation: an Insufficient Information assessment states its limitation"
             )
@@ -347,6 +348,9 @@ class Gap:
 
     reason: str
     applicable: bool = True
+    # Round 11 Q3: the claim cause frame of a facility gap, set where the gap is made (by its
+    # kind, never by comparing reasons); None takes the reason less its prefix.
+    cause: str | None = _field(default=None, compare=False)
 
 
 Num = Decimal | Gap
@@ -379,6 +383,23 @@ CURRENCY_UNSTATED = (
     "Not calculable: facility {fid} currency is not stated; no FX conversion is applied"
 )
 HORIZON_MISSING = missing_reason("CP-2D horizon")
+PRE_D0 = "Not calculable: facility {fid} maturity date is before the balance date"  # round 11 B1
+# Round 11 Q3 cause frames (no facility id; CP-2D L5), and round 8 B2's FX frame.
+_UNSTATED_CAUSE = "the total needs every facility with its {term} stated, and one is not"
+_UNMATCHED_CAUSE = (
+    "the total needs every facility in both the CP-1 debt register and the CP-2D maturity wall, "
+    "and one is not"
+)
+_PRE_D0_CAUSE = (
+    "the total needs every facility to mature on or after the balance date, and one does not"
+)
+_FX_CAUSE = "the total needs every facility in USD, and one is not"
+
+
+def _unstated_gap(fid: str, term: str) -> Gap:
+    return Gap(NOT_STATED.format(fid=fid, term=term), cause=_UNSTATED_CAUSE.format(term=term))
+
+
 NM_TOTAL_NEGATIVE = "Not meaningful: total facility principal is negative" + _NM
 
 
@@ -541,7 +562,7 @@ def _rank(f: FacilityOperand) -> tuple[int, int] | Gap:
         ("seniority", f.seniority, _SENIORITY_RANK),
     ):
         if value is None or value == "NOT_STATED":
-            return Gap(NOT_STATED.format(fid=f.facility_id, term=term))
+            return _unstated_gap(f.facility_id, term)
         if value not in table:  # CP-1's ranking vocabulary is closed (ruling C-6): an invariant
             raise ValueError(f"CP-3C {f.facility_id}: unknown ranking flag {value!r}")
         ranks.append(table[value])
@@ -570,7 +591,7 @@ def _earlier(a: int | Gap, b: int | Gap) -> int | Gap:
 def _amortised(f: FacilityOperand, months: int | Gap) -> Num:
     """min(annual amortisation x months / 12, principal), the operands in formula order."""
     if f.annual_amortisation is None:
-        return Gap(NOT_STATED.format(fid=f.facility_id, term="annual amortisation"))
+        return _unstated_gap(f.facility_id, "annual amortisation")
     if isinstance(months, Gap):
         return months
     if isinstance(f.principal, Gap):
@@ -670,7 +691,7 @@ def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refin
         ordered = tuple(sorted(o.facilities, key=_wall_key))
         unmatched = tuple(sorted(o.unmatched, key=lambda u: u.facility_id))
         # Undated in CP-3C's view, so after every dated facility (2D-c); every total needs it.
-        extra = tuple(Gap(u.reason) for u in unmatched)
+        extra = tuple(Gap(u.reason, cause=_UNMATCHED_CAUSE) for u in unmatched)
         # No facility at all: each facility-dependent value takes this one reason (C-6).
         none = None if ordered or unmatched else Gap(NO_FACILITY)
         minimum: Num = Gap(REASON_MINIMUM_CASH) if o.minimum_cash is None else o.minimum_cash
@@ -785,12 +806,15 @@ def _facility(
     fid = row.facility_id
     principal: Num
     if terms.currency is None:  # round 8 B6 (2D-c); the currency per A5
-        principal = Gap(CURRENCY_UNSTATED.format(fid=fid))
+        principal = Gap(
+            CURRENCY_UNSTATED.format(fid=fid), cause=_UNSTATED_CAUSE.format(term="currency")
+        )
     elif terms.currency != currency:  # ruling C-6 with 2D5's reason
-        principal = Gap(FX_REASON.format(fid=fid, ccy=terms.currency, base=currency))
+        fx = FX_REASON.format(fid=fid, ccy=terms.currency, base=currency)
+        principal = Gap(fx, cause=_FX_CAUSE)
     else:
         amount = _cp2d_amount(row.principal)
-        unstated = Gap(NOT_STATED.format(fid=fid, term="principal"))  # round 8 B6 (2D-c)
+        unstated = _unstated_gap(fid, "principal")  # round 8 B6 (2D-c)
         principal = unstated if amount is None else amount
     stated = _stated_text(
         row.maturity_date.fact_id, row.maturity_date.status, row.maturity_date.text
@@ -799,14 +823,12 @@ def _facility(
     months: int | Gap
     inside: bool | Gap
     if stated is None:  # round 8 B6 (2D-c): no position
-        maturity = months = inside = Gap(NOT_STATED.format(fid=fid, term="maturity date"))
+        maturity = months = inside = _unstated_gap(fid, "maturity date")
+    elif (maturity := date.fromisoformat(stated)) < balance_date:
+        # Round 11 B1: the date stays known; the position takes the unstated date's slot.
+        months = inside = Gap(PRE_D0.format(fid=fid), cause=_PRE_D0_CAUSE)
     else:
         # Ruling C-6 and round 8 B6: CP-3C uses its recomputed position; the copies show CP-2D's.
-        maturity = date.fromisoformat(stated)
-        if maturity < balance_date:  # not ruled (listed for LEAD): months would be negative
-            raise ValueError(
-                f"CP-3C {fid}: maturity date {maturity} is before the balance date {balance_date}"
-            )
         months = months_from(balance_date, maturity)
         inside = (
             horizon if isinstance(horizon, Gap) else maturity <= _add_months(balance_date, horizon)
@@ -1462,8 +1484,19 @@ _WALL_NONE_LINE = (
 )
 
 
-def _unstated(fid: str, term: str) -> tuple[str, str, str]:
-    return (f"Facility {term} ({fid})", "Gap", _UNSTATED_LINE.format(fid=fid, term=term))
+# Round 11 B1 and B2 (the ruled texts; labels `Facility <term> (<id>)`).
+_PRE_D0_LINE = (
+    "Facility {fid} maturity date is before the balance date; maturity-wall figures that need it "
+    "are not calculated."
+)
+_CREDITOR_LINE = (
+    "Facility {fid} {term} is not stated; creditor-position figures that need it are not "
+    "calculated."
+)
+
+
+def _unstated(fid: str, term: str, text: str = _UNSTATED_LINE) -> tuple[str, str, str]:
+    return (f"Facility {term} ({fid})", "Gap", text.format(fid=fid, term=term))
 
 
 def _wall_lines(row: WallRow, f: FacilityOperand) -> list[str]:
@@ -1482,7 +1515,8 @@ def _wall_lines(row: WallRow, f: FacilityOperand) -> list[str]:
 
 
 def _facility_lines(c: _Context) -> list[tuple[str, str, str]]:
-    """Facility by facility in wall order: currency, maturity date, principal, wall row."""
+    """Facility by facility in wall order (round 11 B2): currency, maturity date (unstated or
+    before D0), principal, annual amortisation, secured status, seniority, wall row."""
     r = c.refinancing
     lines = [] if r.maturities or r.unmatched else [_NO_FACILITY_LINE]
     for m in r.maturities:
@@ -1496,8 +1530,16 @@ def _facility_lines(c: _Context) -> list[tuple[str, str, str]]:
             )
         if isinstance(f.maturity_date, Gap):
             lines.append(_unstated(fid, "maturity date"))
+        elif f.maturity_date < c.inputs.balance_date:
+            text = _PRE_D0_LINE.format(fid=fid)
+            lines.append((f"Facility maturity date ({fid})", "Limitation", text))
         if ccy == c.inputs.currency and isinstance(f.principal, Gap):
             lines.append(_unstated(fid, "principal"))
+        if f.annual_amortisation is None:
+            lines.append(_unstated(fid, "annual amortisation"))
+        for term, value in (("secured status", f.secured_status), ("seniority", f.seniority)):
+            if value is None or value == "NOT_STATED":
+                lines.append(_unstated(fid, term, _CREDITOR_LINE))
         label = f"CP-2D maturity wall cross-check ({fid})"
         lines += [(label, "Limitation", text) for text in _wall_lines(c.wall[fid], f)]
     # The same words as the cells' reason (ruling C-6).
@@ -1615,9 +1657,8 @@ class ClaimText:
 
 
 class _Claims:
-    def __init__(self, cells: Mapping[str, Cell], ids: Sequence[str]) -> None:
+    def __init__(self, cells: Mapping[str, Cell]) -> None:
         self.cells = cells
-        self.ids = ids  # facility ids: names whose digits are not figures
 
     def fig(self, fact_id: str) -> str:
         cell = self.cells[fact_id]
@@ -1638,7 +1679,7 @@ class _Claims:
 
     def claim(self, claim_id: str, template: str, names: Sequence[str]) -> ClaimText:
         gaps = {k for k, v in self.cells.items() if v.status != "known"}
-        found = prose.check(template, refs=self.cells.keys() - gaps, gaps=gaps, names=self.ids)
+        found = prose.check(template, refs=self.cells.keys() - gaps, gaps=gaps)
         if found:
             raise ValueError(f"CP-3C {claim_id}: {'; '.join(found)}")
         parts, refs = [], []
@@ -1654,22 +1695,12 @@ class _Claims:
         return ClaimText(claim_id, template, "".join(parts), references, (*names, *references))
 
 
-# Round 8 B2: a currency cause takes the L5/6f frame, never the facility's own reason.
-_FX_CAUSE = "the total needs every facility in USD, and one is not"
-_CURRENCY_CAUSE = "the total needs every facility with its currency stated, and one is not"
-
-
-def _because(c: _Context, cell: Cell) -> str:
-    """A computed gap's reason as a claim's cause (C-3, round 8 B2): the reason less its prefix,
-    or the frame for a facility in another currency or with no currency stated."""
-    for m in c.refinancing.maturities:
-        principal, ccy = m.facility.principal, c.terms[m.facility.facility_id].currency
-        if isinstance(principal, Gap) and principal.reason == cell.reason:
-            if ccy is None:
-                return _CURRENCY_CAUSE
-            if ccy != c.inputs.currency:
-                return _FX_CAUSE
-    return (cell.reason or "").removeprefix(_NOT_CALCULABLE)
+def _because(value: Num) -> str:
+    """A computed gap as a claim's cause (C-3, round 8 B2, round 11 Q3): a facility gap's frame,
+    otherwise the reason less its prefix."""
+    if not isinstance(value, Gap):
+        raise TypeError("CP-3C: a claim cause needs a value that is not calculated")
+    return value.cause or value.reason.removeprefix(_NOT_CALCULABLE)
 
 
 def _names(c: _Context, cp1: Sequence[str], cp2d: Sequence[str]) -> list[str]:
@@ -1687,7 +1718,7 @@ def _names(c: _Context, cp1: Sequence[str], cp2d: Sequence[str]) -> list[str]:
 def _claims(c: _Context, cells: Mapping[str, Cell]) -> tuple[ClaimText, ...]:
     """The pinned claims, the gap forms of rulings C-1 and C-3, and a chip for any other cell
     that is not known (the fig-or-chip rule those rulings apply; listed for LEAD)."""
-    k = _Claims(cells, c.ids)
+    k = _Claims(cells)
     need = cells["T3D.2.r03"]
     if need.status == "known":
         tail = (
@@ -1702,7 +1733,7 @@ def _claims(c: _Context, cells: Mapping[str, Cell]) -> tuple[ClaimText, ...]:
     else:
         tail = (
             f"the refinancing need after resources is {k.chip('T3D.2.r03')}, because "
-            f"{_because(c, need)}."
+            f"{_because(c.refinancing.total_need)}."
         )
     need_names = _names(c, ("annual_amortisation",), ("principal",))
     need_names += ["cash_closing", "undrawn_rcf", "cp2d.run_rate", "cp2d.min_cash"]
@@ -1763,7 +1794,7 @@ def _cost_claim(c: _Context, k: _Claims) -> ClaimText:
 
 def _lme_claim(c: _Context, k: _Claims) -> ClaimText:
     junior = k.cells["T3D.5.r01.c1"]
-    cause = "" if junior.status == "known" else f", because {_because(c, junior)}"  # C-3
+    cause = "" if junior.status == "known" else f", because {_because(c.refinancing.junior_claims)}"
     return k.claim(
         "CP-3C-LME-01",
         f"Claims at or ahead of the most junior facility are {k.either('T3D.5.r01.c1')} before "

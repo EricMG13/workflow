@@ -27,7 +27,9 @@ historical records keep their original route names.
 - Two Sonnet fix rounds per task. For a third, `mx-autonomous` writes a root-cause
   fix plan and a fresh `mx-feature` executes it; no Fable (user, 2026-10-28). There
   is no fourth: LEAD takes the open findings to the user. Only rounds that fix a
-  High or Medium finding count (global §1 stop rule).
+  High or Medium finding count (global §1 stop rule). Findings from any review of
+  the same task share its two-round budget; a later review's findings never start a
+  new one (user, 2026-10-28).
 - `mx-precise` reviews each task and independently reviews financial/stateful
   expected results; `mx-adversary` also reviews diffs touching financial,
   ordering/concurrency or security code, and re-reviews only fixes of its own

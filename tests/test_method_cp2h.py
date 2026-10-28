@@ -1216,6 +1216,146 @@ def test_input_selection_fails_closed() -> None:
         cp2h.Cp2gMetrics(status="restricted", facts=tuple(reversed(metrics.facts)))
 
 
+# --- fix round 1 (review-adversary F1-F4) -----------------------------------------------------------
+
+TL_TERM, FCF_TERM = "Above  2.75x", "Below  10.0%"
+THRESHOLD_FORMS = {
+    "multiple_no_point": (TL_TERM, "Above  4x"),
+    "multiple_one_place": (TL_TERM, "Above  2.7x"),
+    "multiple_three_places": (TL_TERM, "Above  2.755x"),
+    "percent_no_point": (FCF_TERM, "Below  10%"),
+    "percent_two_places": (FCF_TERM, "Below  10.05%"),
+    "percent_many_places": (FCF_TERM, "Below  1.23456789012345678901234567891%"),
+    "minus": (TL_TERM, "Above  -2.75x"),
+    "plus": (TL_TERM, "Above  +2.75x"),
+    "comma": (TL_TERM, "Above  2,75x"),
+    "fullwidth": (TL_TERM, "Above  ２.７５x"),
+}
+
+
+@pytest.mark.parametrize("form", THRESHOLD_FORMS)
+def test_threshold_grammar(form: str) -> None:
+    """F1 (questions.md Q1): the manifest parse rule's `N.NNx` and `N.N%` only; any other form,
+    a sign included, is `Trigger terms not found`."""
+    old, new = THRESHOLD_FORMS[form]
+    with pytest.raises(cp2h.SourceIssue, match="^Trigger terms not found$"):
+        cp2h.parse_ratings(_edited("positive", [(2, old, new)]))
+
+
+def test_percent_threshold_is_an_exact_shift() -> None:
+    """F3 (Q2): a percent threshold becomes a fraction by an exact exponent shift; a value longer
+    than the default 28-digit context is not rounded."""
+    pages = _edited("positive", [(2, FCF_TERM, "Below  1234567890123456789012345678.9%")])
+    term = next(t for t in cp2h.parse_ratings(pages).triggers if t.metric.startswith("Free"))
+    assert term.threshold == Decimal("12345678901234567890123456.789")
+    assert cp2h.exact_text(term.threshold) == "12345678901234567890123456.789"
+
+
+def test_scale_position_sign_is_refused() -> None:
+    """F4 C46: a signed scale position is not a whole number."""
+    with pytest.raises(cp2h.SourceIssue, match="^Rating scale not found$"):
+        cp2h.parse_ratings(_edited("positive", [(1, "11  BB  Ba2", "-11  BB  Ba2")]))
+
+
+def test_issue_order_on_one_payload() -> None:
+    """F2: round 7 (a) on one payload with several issues per view: views in register order,
+    unknown agencies last by submission index; within a view agency, confidence, rationale,
+    evidence, limitation; then the missing views; overall rationale, High, limitation; gaps."""
+    payload = copy.deepcopy(raw_payload("positive"))
+    alder = payload["views"][0]
+    zeta, yota = copy.deepcopy(alder), copy.deepcopy(alder)
+    zeta["agency"], yota["agency"] = "Zeta Ratings", "Yota Ratings"
+    for v in (alder, zeta, yota):
+        v["confidence"] = "High"
+        v["rationale"] = "Headroom is 2.75x today."
+        v["evidence"] = [dict(v["evidence"][0], quote="not on the page")]
+        v["limitation"] = "Limit 9 applies."
+    payload["views"] = [zeta, alder, yota]  # Brook Credit has no view
+    payload["overall"].update(
+        confidence="High", rationale="Overall 3.1x.", limitation="Overall limit 4."
+    )
+    payload["gaps"][0]["gap"] = "Gap 5x."
+    issues = cp2h.validate(inputs("positive", payload))
+    view = ("confidence", "rationale", "evidence[0]", "limitation")
+    assert [i.split(":", 1)[0] for i in issues] == [
+        *(f"views[1].{f}" for f in view),
+        "views[0].agency",
+        *(f"views[0].{f}" for f in view),
+        "views[2].agency",
+        *(f"views[2].{f}" for f in view),
+        "views",
+        "overall.rationale",
+        "overall.confidence",
+        "overall.limitation",
+        "gaps[0].gap",
+    ]
+    assert issues[4] == "views[0].agency: not an agency in the rating register: Zeta Ratings"
+    assert issues[14] == "views: no view for agency Brook Credit"
+
+
+def test_unsettled_reasons_take_the_first_year() -> None:
+    """F4 C25, C26: the tightest headroom and year take the first unsettled year's reason and
+    status (lease T2R.5, round 7 (f)); T2R.6 the first unknown year's reason, status missing."""
+    b26, b28 = "T2H.6.b26.fcf_to_debt", "T2H.6.b28.fcf_to_debt"
+    for first, last in (("missing", "not_applicable"), ("not_applicable", "missing")):
+        got = cp2h.compute(_with_cp2g("positive", {b26: first, b28: last}))
+        cells = {c.fact.fact_id: c.fact for c in got.cells}
+        for field in ("tightest", "tightest_year"):
+            fact = cells[f"T2R.5.t03_base.{field}"]
+            assert (fact.status, fact.limitation) == (first, _why(b26)), (first, field)
+        fact = cells["T2R.6.t03.base_first"]
+        assert (fact.status, fact.limitation) == ("missing", _why(b26)), first
+
+
+def test_root_reason_puts_the_threshold_first() -> None:
+    """F4 C27: an unstated threshold is the root reason even when the CP-2G ratio is unsettled;
+    the T2R.4 copy keeps CP-2G's own reason."""
+    a25, d27 = "T2H.6.a25.fcf_to_debt", "T2H.6.d27.fcf_to_debt"
+    got = cp2h.compute(_with_cp2g("gap", {a25: "missing", d27: "not_applicable"}))
+    cells = {c.fact.fact_id: c.fact for c in got.cells}
+    assert cells["T2R.4.t03.actual"].limitation == _why(a25)
+    for fact_id in ("T2R.4.t03.headroom", "T2R.5.t03_down.y2", "T2R.6.t03.down_first"):
+        assert (cells[fact_id].status, cells[fact_id].limitation) == (
+            "missing",
+            cp2h.THRESHOLD_NS,
+        ), fact_id
+
+
+def test_publication_dates_are_read_from_the_lines() -> None:
+    """F4 G1, round 7 (g): another valid date reaches the T2R.3 and T2R.8 periods."""
+    pages = _edited(
+        "positive",
+        [
+            (2, PUBLISHED, "Published March 3, 2026.\n"),
+            (0, PUBLISHED, "Published February 29, 2024.\n"),
+        ],
+    )
+    got = cp2h.compute(_over(inputs("positive"), pages))
+    periods = {
+        (c.fact.table_id, c.fact.period)
+        for c in got.cells
+        if (c.fact.table_id, c.fact.field) in (("T2R.3", "threshold"), ("T2R.8", "notches"))
+    }
+    assert periods == {
+        ("T2R.3", "Terms published 2026-03-03, tested at each fiscal year end"),
+        ("T2R.8", "As of 2024-02-29"),
+    }
+
+
+def test_input_invariants() -> None:
+    """C47: a CP-2G fact with another unit fails; C48: the CP-1 selection reads table T4.10 only."""
+    metrics = cp2g_metrics("gap")
+    wrong = tuple(
+        f.model_copy(update={"unit": "PERCENT"}) if f.fact_id == "T2H.6.a25.total_leverage" else f
+        for f in metrics.facts
+    )
+    with pytest.raises(ValueError, match="unexpected unit or period"):
+        cp2h.Cp2gMetrics(status=metrics.status, facts=wrong)
+    facts = cp1_facts("gap")
+    other = facts[0].model_copy(update={"fact_id": "interface-fact:other", "table_id": "T4.9"})
+    assert cp2h.select_cp1((*facts, other))[facts[0].row_id] == facts[0]
+
+
 # --- property tests (expected.json property_tests) -------------------------------------------------
 
 DECIMALS = st.decimals(min_value=Decimal(-1000), max_value=Decimal(1000), places=6, allow_nan=False)

@@ -137,7 +137,9 @@ Comparison = Literal["Above", "Below"]
 Direction = Literal["Downgrade", "Upgrade"]
 UnitKind = Literal["multiple", "percent"]
 _FIELDS = re.compile(r"\s{2,}")
-_THRESHOLD = re.compile(r"([0-9]+(?:\.[0-9]+)?)(x|%)")
+# The manifest parse rule: `N.NNx` (multiple) or `N.N%` (percent); any other form is refused
+# (round 7 item 8; questions.md Q1).
+_THRESHOLD = re.compile(r"[0-9]+\.[0-9]{2}x|[0-9]+\.[0-9]%")
 _ISO_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 _MONTHS = (
     "January",
@@ -311,11 +313,13 @@ def _register(
 def _threshold(text: str, metric: Metric) -> Decimal | None:
     if text == THRESHOLD_NOT_STATED:
         return None
-    m = _THRESHOLD.fullmatch(text)
-    if m is None or (m.group(2) == "x") != (metric.unit_class == "multiple"):
+    if not _THRESHOLD.fullmatch(text) or (text[-1] == "x") != (metric.unit_class == "multiple"):
         raise SourceIssue(TERMS_NOT_FOUND)
-    value = Decimal(m.group(1))
-    return _canonical(value if metric.unit_class == "multiple" else value.scaleb(-2))
+    value = Decimal(text[:-1])
+    if metric.unit_class == "percent":  # an exact exponent shift, no context rounds (Q2)
+        sign, digits, exponent = value.as_tuple()
+        value = Decimal((sign, digits, int(exponent) - 2))
+    return _canonical(value)
 
 
 def _terms(rows: list[tuple[str, list[str]]]) -> tuple[TriggerTerm, ...]:

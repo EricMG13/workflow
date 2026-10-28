@@ -60,3 +60,7 @@ Stage 1 is closed at `codex/checkpoint` e89b2a2. Only a High or Medium defect re
 
   Pin each one. Source: cp4c/r13-review.md.
 - **[CP-4C] Low (LEAD, unruled).** cp4c.py:465-468: an unsettled shock with `period=None` raises `differ in period`. It also pre-empts the round 8 A-4 copy of a missing or conflicting `ebitda_decline`. Today this is not reachable. Question: does R1 L2 "if they differ" cover a shock that has no period? Source: cp4c/r13-review.md.
+- **[CP-1D] OWNER: two fail-opens that predate round 13** (cp1d/r13-fix1-review.md). Both are exit 1 at d2cb626 and at 9f61127.
+  - **Non-ASCII digits.** A second figure written in fullwidth, Arabic-Indic or superscript digits is not seen by `[0-9]`, so a two-figure quote composes. Probe: `<S>/cp1d-r13-fix1-review/p4_unicode_digits.py`.
+  - **Digits inside a word.** A run inside a word (`Q2`, `A1`, `2nd`) is read as the basis. Probe: `p9_run_in_word.py`.
+  - The owner decides the severity. Neither is ruled.

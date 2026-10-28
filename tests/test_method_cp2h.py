@@ -39,38 +39,25 @@ CP2G: dict[str, Any] = json.loads(
 FINANCIAL: dict[str, Any] = json.loads(
     (ROOT / "cases" / "financial" / "manifest.json").read_text(encoding="utf-8")
 )
-# Oracle pins: the lease header after the round 6 oracle batch (3674158; docs/CP2H-OWNER-LEASE.md:3),
-# and the upstream files its builder pins.
-PINS = {
-    "cases/cp2h-owner/manifest.json": (
-        "680720d93213f3ff6b0234ecb5d87fd04ccb467e7092180ba7816eaa4a77beb0"
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+# The CP-2H oracle and builder, and the upstream files its builder pins.
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = (
+    *(
+        f"cases/cp2h-owner/{name}"
+        for name in ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
     ),
-    "cases/cp2h-owner/submissions.json": (
-        "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e"
-    ),
-    "cases/cp2h-owner/expected.json": (
-        "59cdb4d1c8d14b554beccc69bf7b59e94c13d5d26f51f0a05d36c7769b010ea5"
-    ),
-    "cases/cp2h-owner/builder/build.py": (
-        "95d08f984b2bdd7ad788281bd5e3a93c14b00b3cf328270c40033b77b9692ef5"
-    ),
-    "cases/cp2g-owner/manifest.json": (
-        "b0c8c4bcdf3c0e00e33c41cc124d8ca86c47db14c82077c7d40504cc2bf6eee7"
-    ),
-    "cases/cp2g-owner/expected.json": (
-        "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c"
-    ),
-    "src/deploy_vii/methodology.json": (
-        "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6"
-    ),
-}
+    "cases/cp2g-owner/manifest.json",
+    "cases/cp2g-owner/expected.json",
+    "src/deploy_vii/methodology.json",
+)
 COMPOSED = ("positive", "gap", "fixture_total_loss", "fixture_boundary")
 ISSUER = FINANCIAL["run"]["issuer_name"]
 FIG = re.compile(r"\{\{FIG:([a-z_]+)\|([^}]*)\}\}")
 REF = re.compile(r"\{([A-Za-z0-9][A-Za-z0-9_.:-]*)\|([^}]*)\}")
 
 
-@pytest.mark.parametrize("path", PINS)
+@pytest.mark.parametrize("path", PINNED)
 def test_oracle_pins(path: str) -> None:
     assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == PINS[path]
 
@@ -303,9 +290,6 @@ def test_facts(case: str) -> None:
     got = report(case)
     assert [c.fact.fact_id for c in got.cells] == [f["fact_id"] for f in want]
     for cell, expected in zip(got.cells, want, strict=True):
-        if (case, cell.fact.fact_id) == ("fixture_total_loss", "T2R.1.u_cp2g.status"):
-            # B5: the bound Input's status; the frozen `composer_only` is a strict xfail below
-            expected = {**expected, "text": BOUND[3].status, "shown": BOUND[3].status}
         _assert_cell(cell, expected)
 
 
@@ -990,7 +974,8 @@ SOURCE_BREACHES: dict[str, tuple[list[tuple[int, str, str]], str]] = {
         "Trigger terms not found",
     ),
     "threshold_form": ([(2, "Above  2.75x", "Above  2.75 times")], "Trigger terms not found"),
-    "threshold_unit": ([(2, "Below  10.0%", "Below  10.0x")], "Trigger terms not found"),
+    # grammar-valid (`N.NNx`) with the wrong unit for a percent metric: the unit check refuses it
+    "threshold_unit": ([(2, "Below  10.0%", "Below  10.00x")], "Trigger terms not found"),
     "term_twice": (
         [
             (
@@ -1226,7 +1211,10 @@ THRESHOLD_FORMS = {
     "percent_no_point": (FCF_TERM, "Below  10%"),
     "percent_two_places": (FCF_TERM, "Below  10.05%"),
     "percent_many_places": (FCF_TERM, "Below  1.23456789012345678901234567891%"),
+    "multiple_no_integer": (TL_TERM, "Above  .75x"),
+    "percent_no_integer": (FCF_TERM, "Below  .5%"),
     "minus": (TL_TERM, "Above  -2.75x"),
+    "percent_minus": (FCF_TERM, "Below  -10.0%"),
     "plus": (TL_TERM, "Above  +2.75x"),
     "comma": (TL_TERM, "Above  2,75x"),
     "fullwidth": (TL_TERM, "Above  ２.７５x"),
@@ -1444,19 +1432,17 @@ def test_upstream_statuses_are_the_bound_inputs() -> None:
     ]
 
 
-@pytest.mark.xfail(
-    strict=True, reason="B5: the frozen composer-only fixture pins CP-2G's head status"
-)
 def test_frozen_composer_only_cp2g_status() -> None:
-    """`cases.fixture_total_loss` pins `T2R.1.u_cp2g.status` as `composer_only` (CP-2G's head
-    status); under B5 the status is the bound CP-2G Input's, which cannot be `composer_only`."""
+    """B7 (round 12): `cases.fixture_total_loss` pins `T2R.1.u_cp2g.status` as the bound CP-2G
+    Input's status, `restricted`, no longer CP-2G's head status `composer_only`."""
     want = next(
         f
         for f in EXPECTED["cases"]["fixture_total_loss"]["facts"]
         if f["fact_id"] == "T2R.1.u_cp2g.status"
     )
+    assert want["text"] == want["shown"] == "restricted"
     got = next(c for c in report("fixture_total_loss").cells if c.fact.fact_id == want["fact_id"])
-    assert got.fact.text == want["text"]
+    _assert_cell(got, want)
 
 
 def test_upstream_status_needs_a_bound_input() -> None:

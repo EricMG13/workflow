@@ -131,8 +131,8 @@
           },
           {
             "file": "docs/CP2E-OWNER-LEASE.md",
-            "line": 3,
-            "names": "builder 06f6ee61... / manifest 5b5a5e53... (frozen at ac82330); line 42 names methodology.json 348fbc4b...8d45; its line 5 note (3) already announces this re-pin"
+            "line": "by text",
+            "names": "builder 06f6ee61... / manifest 5b5a5e53... (the paragraph that begins \"Frozen after `review-precise-2.md`\"; amendment paragraphs insert above it, so its line moves and is found by that text); the Pins list item 4 (\"4. Pins (the builder asserts them)\") names methodology.json 348fbc4b...8d45; note (3) of the freeze paragraph already announces this re-pin"
           },
           {
             "file": "docs/CP3D-OWNER-LEASE.md",
@@ -164,7 +164,7 @@
       },
       "reuse_manifest": {
         "file": "docs/reuse/manifest.json",
-        "action": "append one entry for src/deploy_vii/methodology.json to the end of `local_patch_lineage` (new sha256, the D12 one-line registration reason, review pointer); the previous hash 348fbc4b... is at lines 1063-1069 (not a position to insert after)"
+        "action": "the entry for src/deploy_vii/methodology.json is in `post_import_patches` (the file is an imported one), not `local_patch_lineage` (new sha256, the D12 one-line registration reason, review pointer); LEAD ruling at the re-pin (review L1)"
       },
       "run_behaviour": {
         "plan": {

@@ -917,17 +917,16 @@ def test_cp1_amount_outside_the_product_bound_is_an_invariant_raise(
     assert str(raised.value) == want
 
 
-ORACLE_PINS = {
-    # docs/CP1D-OWNER-LEASE.md header, oracle amendment 1D1 (LEAD 2026-10-28).
-    "expected.json": "6015b443603b16f9af8c5417e6fa69f7468fa243f37b64575f745aac6549bd8c",
-    "manifest.json": "7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585",
-    "submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("name", ORACLE_PINS)
+@pytest.mark.parametrize(
+    "name", ("expected.json", "manifest.json", "submissions.json", "builder/build.py")
+)
 def test_oracle_is_the_pinned_revision(name: str) -> None:
-    assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == ORACLE_PINS[name]
+    digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()
+    assert digest == PINS[f"cases/cp1d-owner/{name}"]
 
 
 def test_reported_bridge_totals_cite_their_line() -> None:

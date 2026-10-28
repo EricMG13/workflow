@@ -52,19 +52,15 @@ FIG_RE = re.compile(r"\{\{FIG:([a-z_]+)\}\}")
 PLACEHOLDER_RE = re.compile(r"<label and period of FIG:([a-z_]+)>")
 
 
-# The LEAD freeze of the CP-3 half (docs/CP3-OWNER-LEASE.md, header): expected and submissions
-# from the freeze line; builder and manifest from the serialised methodology re-pin line.
-PINNED = {
-    "manifest.json": "525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10",
-    "submissions.json": "eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b",
-    "expected.json": "8ca60c96ac443282ac49a0ded495b751cf3b5457b9491f419a26ca59c0b3c310",
-    "builder/build.py": "67db98157b66a0861696cf25482a7aba63576025c9e25b9ada976d344ae6d952",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
 
 
 def test_oracle_files_are_the_pinned_revision() -> None:
-    for name, digest in PINNED.items():
-        assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == digest, name
+    for name in PINNED:
+        digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()
+        assert digest == PINS[f"cases/cp3-cp6-owner/{name}"], name
 
 
 # --- inputs from the oracle's sources ------------------------------------------------------------

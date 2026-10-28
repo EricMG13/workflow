@@ -1,5 +1,7 @@
 # CP-DR (Deep research, LOCAL) owner lease — FROZEN by LEAD 2026-10-28 (draft rev 4)
 
+Pin consumers: none (no other builder pins or reads this module's files). Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
+
 Amended by LEAD 2026-10-28 (rulings round 10 item 5; H1 review-adversary open point 1). D-B's scope "the whole ready pack" becomes "every source the prepared pack holds; one that is not ready answers `unavailable`, never its bytes". This is one convention for every fixed owner row. No frozen CP-DR pack holds a source that is not ready, so nothing moves.
 
 Re-pinned by LEAD 2026-10-28 in the serialised `methodology.json` change (branch `lead/methodology-serialised`; `work/lead/methodology-serialised/review.md` COMMIT): `methodology.json` 348fbc4b… → 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 (CP-L10 required + CP-1 and TL10.5; CP-1C T1C.1-T1C.8; CP-1D drops T1E.*; CP-2A drops T5.*); two scratch rebuilds identical. builder 6dc0efbb… → 591da654cfe1eb0e932bffa3b48b7dc362d9d1f3180821bd838e3bdd0f99aae5; manifest c9b3734e… → 44862ca3166a29f7d8ff44e7c1073bbdfa2229201c46d83586a262f5de192066; expected unchanged; submissions unchanged. Pins elsewhere in this file are superseded where they differ.
@@ -30,7 +32,7 @@ The r14 CP-DR SKILL.md is not in this repository. Titles and columns of TDR.1-TD
 
 1. S1a integrated and G1-X built. Today `SUPPORTED_ANALYTICAL = {CP-0, CP-1}` and `ENTRIES = (cp0_review, model_payload)`.
 2. **D-A (admitted, protocol section 3 amended).** An owner-only step may have `sources=True` together with `inputs="module_context"`: CP-DR's one step `research` has the pack tools as evidence and `read_inputs` as the agenda view. No core attribute (`PACK_SOURCE_STEPS` is not used). Its pack scope is the fixed host-side mapping of D-B.
-3. **D-B (admitted).** The H1 host task adds the fixed mapping (`_SOURCE_STEPS["CP-DR"]` equivalent and scope = the whole ready pack), never caller-supplied. `host.SourceSession.from_execution` today resolves `_SOURCE_STEPS[module]`, `step_chain(module)` and `declared_sources/readable_sources` from the registry (`host.py:584-587, 662-666`); for CP-DR all three come back empty or raise. `src/deploy_vii` must not import `deploy_workflow`, so the mapping lives in `host.py`.
+3. **D-B (admitted).** The H1 host task adds the fixed mapping (`_SOURCE_STEPS["CP-DR"]` equivalent and scope = every source the prepared pack holds, a source that is not ready answering `unavailable`; amended by rulings round 10 item 5), never caller-supplied. `host.SourceSession.from_execution` today resolves `_SOURCE_STEPS[module]`, `step_chain(module)` and `declared_sources/readable_sources` from the registry (`host.py:584-587, 662-666`); for CP-DR all three come back empty or raise. `src/deploy_vii` must not import `deploy_workflow`, so the mapping lives in `host.py`.
 4. **D-C (admitted, protocol section 6).** `bindings/cpdr.py` (FP block bindings only, rails only, never imports `deploy_workflow`), `bindings/shipped.py` `CPDR` appended to `SHIPPED_MAPS`. No `methodology.json` change (ids already registered). No `report_view.py` change (no block).
 5. TOOL-CONTRACT.md matrix row for CP-DR (tool use section).
 6. G2 delivery scope (rendering section).
@@ -170,7 +172,7 @@ Target: the settled CP-DR result Module of the closed partial run, fact `TDR.1.m
 
 ## Tool use (TOOL-CONTRACT, D2)
 
-CP-DR is a pack-tool step: `search_pack` and `read_pages` over every ready pack source (no `extract_statements`; no upstream tools). Matrix row to add: "CP-DR research | exactly the view `owners.cpdr.view(historical, attempt)` registered in `_VIEWS['research']` (gap agenda, source ids and statuses, question limits; no quote, citation or record_json at any depth) | pack search/read over all ready sources". Acceptance: exactly one ok `read_inputs` per attempt before submit; the search and read calls of `submissions.tool_calls.<case>` are ok with `expect_header` / `expect_spans`; `searched_sources` of not-found questions and cited locators are checked against `Seen` by the core's `RULES`. Hit counts follow the documented any-term, case-insensitive substring rule and were compared with `PackTools` headers in the revision probe (all match). A `read_inputs` record counts as tool use only for the view it is; the pack calls are the research tool use.
+CP-DR is a pack-tool step: `search_pack` and `read_pages` over every source the prepared pack holds, a source that is not ready answering `unavailable` (rulings round 10 item 5; no `extract_statements`; no upstream tools). Matrix row to add: "CP-DR research | exactly the view `owners.cpdr.view(historical, attempt)` registered in `_VIEWS['research']` (gap agenda, source ids and statuses, question limits; no quote, citation or record_json at any depth) | pack search/read over every source the prepared pack holds (a not-ready one answers `unavailable`)". Acceptance: exactly one ok `read_inputs` per attempt before submit; the search and read calls of `submissions.tool_calls.<case>` are ok with `expect_header` / `expect_spans`; `searched_sources` of not-found questions and cited locators are checked against `Seen` by the core's `RULES`. Hit counts follow the documented any-term, case-insensitive substring rule and were compared with `PackTools` headers in the revision probe (all match). A `read_inputs` record counts as tool use only for the view it is; the pack calls are the research tool use.
 
 ## Consumption proof (D3): OPEN
 
@@ -209,7 +211,7 @@ Plus ruff, `MYPYPATH=src mypy` on changed files, `tests/test_owner_workflow.py` 
 ## Rulings and open points (numbering of `report.md`)
 
 1. D-A: admitted without a core attribute (protocol section 3 amended).
-2. D-B: admitted (H1 host task, fixed mapping, whole ready pack).
+2. D-B: admitted (H1 host task, fixed mapping, every held source, not-ready ones `unavailable`; rulings round 10 item 5).
 3. Standalone question mode: deferred (empty agenda is a valid settled state, not a free-form question).
 4. CP-DR-only run (not `(CP-1A, CP-DR)`).
 5. Blocked-case defects journaled vs other refusals in a gate: every validator refusal is a journaled invalid step consuming an attempt; no precheck (applied: H2).

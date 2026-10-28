@@ -33,19 +33,15 @@ CASES = ("positive", "gap_no_recovery", "gap_no_market")
 FIXTURES = tuple(EXPECTED["fixtures"])
 
 
-# docs/CP3D-OWNER-LEASE.md header: expected and submissions from the LEAD freeze; builder and
-# manifest from the serialised methodology re-pin line.
-PINNED = {
-    "manifest.json": "bc7b29acd9f40769e63577331e17f2f11323709833f1eca1bddddc3a9fa0e070",
-    "submissions.json": "9263752346480a48571f0065eb864595bd4489ce4ce4fd675e967b401cde86de",
-    "expected.json": "67e8507fd28b936877d24157af29407fb63e97e87130f23190dc19765c7a89e5",
-    "builder/build.py": "fb72aa38f0310ee9b40c4b97774262043f8421ab0c58a481a3a304059dd69ed8",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
 
 
 def test_oracle_files_are_the_pinned_revision() -> None:
-    for name, digest in PINNED.items():
-        assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == digest, name
+    for name in PINNED:
+        digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()
+        assert digest == PINS[f"cases/cp3d-owner/{name}"], name
 
 
 def _all_pages() -> dict[str, dict[str, str]]:
@@ -1563,6 +1559,30 @@ def test_r11_class_text_cases(
 ) -> None:
     """Soft hyphen, NBSP and the wrap refusal (round 11 B3) through both name readers."""
     assert dc.quote_failure(c, adapter, refusal) is None
+
+
+@pytest.mark.parametrize(
+    ("reader", "adapter", "refusal"), _CLASS_TEXTS, ids=[r[0] for r in _CLASS_TEXTS]
+)
+def test_r11_b3_names_the_wrap_refusal_accepts(
+    reader: str, adapter: dc.Adapter, refusal: str
+) -> None:
+    """Round 11 B3 refuses a name with `- ` only in a wrapped quote. An unwrapped quote that
+    prints `- ` keeps the name, and a wrapped quote keeps a name with a plain hyphen (whose
+    digit takes its own refusal)."""
+    page = "The Acme first- priority Term Loan is quoted."
+    assert adapter(page, page, "Acme first- priority Term Loan") == ()
+    wrapped = "The Acme Term Loan B-2 first-\npriority tranche is quoted."
+    issues = tuple(adapter(wrapped, wrapped, "Acme Term Loan B-2"))
+    assert refusal not in issues
+    assert issues == (f"{reader}: digits are not allowed",)
+
+
+def test_r11_b1_an_overlapping_occurrence_is_read() -> None:
+    """Every occurrence of the quote on the page is read, one that overlaps the one before it
+    included: the second `5 .5` in `x 5 .5 .5` starts inside `.5`, so its figure is cut."""
+    assert cp3d._whole_on_page("5", "5 .5", "x 5 .5")
+    assert not cp3d._whole_on_page("5", "5 .5", "x 5 .5 .5")
 
 
 def _blank_adapter(case: str, path: str, absent: str | None = None) -> dc.Adapter:

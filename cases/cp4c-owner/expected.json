@@ -19,7 +19,7 @@
  "waterfall_rules": {
   "order": "classes by the analyst's rank number, lowest first; classes of one rank share pro rata; the secured_debt class must rank strictly first",
   "distributable": "enterprise value only (EBITDA x multiple); cash is not added, costs are not deducted",
-  "recipe": "paid = min(available, group total); recovery = paid / group total (one division); distribution = claim x paid / group total (one division of an exact product); shortfall = claim - distribution; next available = available - paid; equity residual = what remains (a known 0 when creditors absorb all value)",
+  "recipe": "paid = min(available, group total); recovery = paid / group total (one division, 38 digits half-even); when paid = group total each distribution is its claim; when 0 < paid < group total the distributions are allocated by exact largest remainder at the rank quantum q = 10^(paid.adjusted() - 37), ties to the later class in claims order, and sum to paid exactly (rulings round 8 A-1); shortfall = claim - distribution (38 digits); next available = available - paid; equity residual = what remains (a known 0 when creditors absorb all value); T4E.9 balances exactly",
   "missing": "a missing claim blocks its rank group and every lower rank and the equity residual; a missing or unassessed EV blocks everything; a known EV of 0 gives known 0 recoveries; nothing becomes 0",
   "value_break": "the first rank group whose paid < total; if none, equity; not determinable (missing with the root reason) when an earlier group is blocked",
   "attachment": "claims ahead / EBITDA and claims through the class / EBITDA (the multiple at which the class is covered in full); missing when EBITDA is missing, zero or negative",

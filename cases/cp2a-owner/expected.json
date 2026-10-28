@@ -12578,7 +12578,7 @@
     "Liquidity is not tested: stressed free cash flow is not set against the cash balance or any undrawn facility and no liquidity runway is computed; the liquidity runway belongs to CP-2D.",
     "No covenant test is applied: the watch levels are not covenant tests; covenant compliance belongs to CP-4.",
     "No maturity or refinancing wall is stressed: debt maturities and refinancing risk belong to CP-2D and CP-3C.",
-    "Break points hold cash interest at the base period level (no interest increase). The break at which EBITDA no longer covers cash interest compares same-period flows but is gated like a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period.",
+    "Break points hold cash interest at the base period level (no interest increase). The break at which EBITDA no longer covers cash interest compares same-period flows but is gated like a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period, and it is not calculated on a single-quarter base.",
     "Ratios are not calculated on a single-quarter base: CP-1 reads each ratio from the twelve months ending that quarter, while CP-2A's base operands are one quarter's flows.",
     "Gap (Material): Twelve-month leverage and coverage are not calculable for the fourth quarter."
    ],

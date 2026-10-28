@@ -46,19 +46,15 @@ RULES_PREFIXES = (
 )
 
 
-# docs/CPDR-OWNER-LEASE.md header: submissions from the LEAD freeze, expected from the 0d render
-# re-pin, builder and manifest from the serialised methodology re-pin line.
-PINNED = {
-    "manifest.json": "44862ca3166a29f7d8ff44e7c1073bbdfa2229201c46d83586a262f5de192066",
-    "submissions.json": "4ffb322a4d640bc6208250cfd0697cef389b8d0843f6071340247e31b478b1af",
-    "expected.json": "36572c50b663ab4a1f6eaa300d7ee2e668f511cb206dcacfa820105e60b65263",
-    "builder/build.py": "591da654cfe1eb0e932bffa3b48b7dc362d9d1f3180821bd838e3bdd0f99aae5",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
 
 
 def test_oracle_files_are_the_pinned_revision() -> None:
-    for name, digest in PINNED.items():
-        assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == digest, name
+    for name in PINNED:
+        digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()
+        assert digest == PINS[f"cases/cpdr-owner/{name}"], name
 
 
 def cp0_facts(*, empty: bool) -> tuple[Fact, ...]:

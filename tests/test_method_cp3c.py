@@ -35,14 +35,13 @@ CP2D_EXPECTED: dict[str, Any] = json.loads(
 )
 BINDINGS: dict[str, Any] = MANIFEST["fact_bindings"]
 
-# docs/CP3C-OWNER-LEASE.md header (rev 3; LEAD re-pins 2026-10-28 for methodology.json and the
-# round 6 oracle batch, builder and manifest only) and manifest.json#frozen_inputs.
-PINS = {
-    "cases/cp3c-owner/manifest.json": "7a0056a1145f9a92efd11f18fd6512e8c86e508b25176d457f0fe07394ad8a5a",
-    "cases/cp3c-owner/submissions.json": "8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c",
-    "cases/cp3c-owner/expected.json": "50ef4a7f9199e1da4a73fc75eaaf6bc8215bef12cec26067d2d44aead0952e5f",
-    "cases/cp3c-owner/builder/build.py": "b2cdb63c560abdfdd4387f5d337fb7462c93218b4c24f48c6c4142deaf00bf56",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+# The upstream inputs are pinned by manifest.json#frozen_inputs.
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = tuple(
+    f"cases/cp3c-owner/{name}"
+    for name in ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
+)
 PACK_CASES = ("positive", "gap_minimum_cash", "gap_no_repricing")
 FIXTURES = tuple(k for k in EXPECTED["cases"] if k.startswith("fixture_"))
 BALANCE_DATE = date.fromisoformat(EXPECTED["method_rules"]["balance_date"])
@@ -53,8 +52,8 @@ STATE = {"known": "known", "missing": "gap", "not_applicable": "not_applicable"}
 
 
 def test_oracle_files_match_the_lease_pins() -> None:
-    for path, sha in PINS.items():
-        assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == sha, path
+    for path in PINNED:
+        assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == PINS[path], path
     for frozen in MANIFEST["frozen_inputs"]:
         digest = hashlib.sha256((ROOT / frozen["path"]).read_bytes()).hexdigest()
         assert digest == frozen["sha256"], frozen["path"]

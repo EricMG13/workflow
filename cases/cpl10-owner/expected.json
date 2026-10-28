@@ -6959,7 +6959,7 @@
       "TL20.3",
       "TL20.4"
     ],
-    "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is unused anywhere (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
+    "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is registered to CP-L10 alone (asserted above; LEAD ruling at the re-pin, review L2); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
     "produced": [
       "TL10.1",
       "TL10.2",

@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
+from deploy_vii.live import tools
 from deploy_vii.live.schema import MAX_NESTING, json_object, normalise, too_deep
 from deploy_vii.live.submission import PART_CALL, PART_MODELS, STEPS, compose_payload
 from deploy_vii.live.tools import Seen, ToolRules, cited_locators
@@ -161,6 +162,8 @@ def test_source_step_refusals_leave_no_orphan_binding(tmp_path: Path) -> None:
         "deep": '{"sources":' + "[" * DEEP + "]" * DEEP + "}",
         "deep3000": '{"sources":' + "[" * 3000 + "]" * 3000 + "}",
         "surrogate": '{"schema_version":null,"zz":"\\ud800"}',
+        "unread_echo": '{"x":{"source_id":"\\ud800","locator":"page:1"}}',
+        "absence_echo": '{"sources":[{"source_id":"\\ud800","event_scan":"no_events_identified"}]}',
     }
     for label, payload in payloads.items():
         workflow, pack = t.start(tmp_path / label)
@@ -174,3 +177,121 @@ def test_source_step_refusals_leave_no_orphan_binding(tmp_path: Path) -> None:
 def test_lone_surrogate_after_null_resolution_is_left_unchanged() -> None:
     payload = '{"schema_version":null,"zz":"\\ud800"}'
     assert normalise(STEPS["source_context"].schema, payload) == (payload, ())
+
+
+LONE = "\\ud800"
+ECHOES = {
+    "unread": '{"x":{"source_id":"' + LONE + '","locator":"page:1"}}',
+    "absence": '{"sources":[{"source_id":"' + LONE + '","event_scan":"no_events_identified"}]}',
+    "key_missing": '{"' + LONE + '":{"status":"missing","observation_id":"x"}}',
+    "key_marker": '{"' + LONE + '":{"available":"No"}}',
+}
+
+
+def test_payload_parses_refuse_lone_surrogates_and_keep_pairs() -> None:
+    cases = {  # payload -> kept as a document (True) or refused as None (False)
+        '{"a":"\\ud800"}': False,
+        '{"a":"\\udc00"}': False,
+        '{"a":"\\udc00\\ud800"}': False,  # reversed pair: two lone halves
+        '{"a":"\\ud800x"}': False,
+        '{"\\ud800":1}': False,  # a key
+        '{"a":[{"b":{"\\udfff":"x"}}]}': False,  # a nested key
+        '{"a":"\\ud83d\\ude00"}': True,  # a valid pair
+        '{"a":"\\\\ud800"}': True,  # an escaped backslash: literal text
+        '{"a":"\\u00e9\\u2028"}': True,
+    }
+    for payload, keep in cases.items():
+        assert (json_object(payload) is not None) is keep, ("json_object", payload)
+        assert (tools._document(payload) is not None) is keep, ("_document", payload)
+    pair = '{"x":{"source_id":"\\ud83d\\ude00","locator":"page:1"}}'
+    assert len(tools.unread_citation_issues(pair, Seen())) == 1
+
+
+def test_rules_never_quote_an_unstorable_string() -> None:
+    from deploy_vii.execution import StepValidation
+
+    for step in ("source_readiness", "source_context", "financials", "business_context"):
+        for name, payload in ECHOES.items():
+            issues = ToolRules().issues(step, payload, seen=Seen(), context=None)
+            for issue in issues:
+                issue.encode()
+            StepValidation(issues=("(root): x", *issues)).model_dump_json()
+            assert issues == (), (step, name)
+
+
+def test_financials_absence_key_echo_leaves_no_orphan_binding(tmp_path: Path) -> None:
+    import test_financial_workflow as t
+
+    workflow, pack = t.start(tmp_path)
+    t.read_sources(workflow)
+    assert workflow.submit_review(t.readiness(pack))["status"] == "valid"
+    for source in ("identity", "financial"):
+        workflow.invoke("read_pages", {"source_id": source, "first_page": 1, "last_page": 1})
+    workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
+    assert workflow.submit_review(t.context(pack))["status"] == "valid"
+    outcome = workflow.submit_review(ECHOES["key_missing"])
+    assert outcome["status"] == "refused"
+    assert outcome["issues"] == [
+        "Financials must extract every located statement page in this epoch"
+    ]
+    assert _orphan_bindings(workflow) == 0
+
+
+def test_rule_echo_after_financial_gap_run_still_seals_and_verifies(tmp_path: Path) -> None:
+    import test_financial_workflow as t
+
+    from deploy_vii.execution import Execution
+    from deploy_workflow.financial_workflow import verify_financial_slice_receipt
+
+    workflow, pack = t.start(tmp_path, gap=True)
+    t.read_sources(workflow, gap=True)
+    assert workflow.submit_review(ECHOES["unread"])["status"] == "invalid"
+    t.read_sources(workflow, gap=True)
+    assert workflow.submit_review(t.readiness(pack, gap=True))["status"] == "valid"
+    workflow.publish_model()
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    verify_financial_slice_receipt(Execution(tmp_path / "store"), receipt, model_directory=None)
+
+
+def test_rule_echo_does_not_wedge_the_earnings_intent(tmp_path: Path) -> None:
+    import test_earnings_workflow as te
+
+    core = te.api()
+    pack = te.pack_for("E-QOQ-FLAT")
+    workflow = core.EarningsWorkflow.create(
+        tmp_path / "owner", pack, case_manifest=te.CASE_MANIFEST, case_id="E-QOQ-FLAT"
+    )
+
+    def read() -> None:
+        for source in ("identity", "financial"):
+            workflow.invoke("read_pages", {"source_id": source, "first_page": 1, "last_page": 1})
+
+    read()
+    echo = '{"x":{"source_id":"' + LONE + '","locator":"page:2"}}'
+    assert workflow.submit_review(echo).disposition == "invalid"
+    assert core._unresolved(workflow._store) == ()
+    read()  # a rejected CP-0 try opens a new epoch
+    assert workflow.submit_review(te.foundation_review(pack)).disposition == "valid"
+
+
+def test_live_parses_model_text_only_through_payload_document() -> None:
+    import ast
+
+    from deploy_vii import live
+
+    found: set[tuple[str, str]] = set()
+    for path in Path(live.__file__).parent.glob("*.py"):
+        tree = ast.parse(path.read_text())
+        for function in ast.walk(tree):
+            if not isinstance(function, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            for node in ast.walk(function):
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "loads"
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "json"
+                ):
+                    found.add((path.stem, function.name))
+    assert found == {("schema", "payload_document"), ("context", "evidence_table")}

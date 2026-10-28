@@ -1551,6 +1551,16 @@ def test_r11_pre_d0_own_line_takes_the_maturity_date_slot() -> None:
     ]
 
 
+def test_r11_a_foreign_facility_before_d0_takes_the_fx_reason_in_the_schedule() -> None:
+    """The currency precedence holds: a EUR facility that matures before D0 gives the schedule
+    cells the FX reason, not the pre-D0 one."""
+    past = replace(LOAN, maturity_date=date(2025, 6, 30), currency="EUR")
+    cells = _cells(cp2d.compute(_with_loan(past)))
+    fx = "Not calculable: facility term-loan is in EUR, not USD; no FX conversion is applied"
+    for fact_id in ("T2E.3.r06", "T2E.3.r07", "T2E.3.r08"):
+        assert (cells[fact_id].state, cells[fact_id].reason) == ("gap", fx), fact_id
+
+
 def test_r11_a_known_inside_facility_keeps_the_flag_known() -> None:
     """With another facility known inside the horizon, some maturity falls inside it."""
     inputs = _inputs("positive")

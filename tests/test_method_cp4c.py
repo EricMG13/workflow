@@ -36,24 +36,24 @@ from deploy_workflow.owners import cp4c
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases" / "cp4c-owner"
-# The lease header pins (docs/CP4C-OWNER-LEASE.md, re-pinned for the CP-1D 1D1 cascade) and the
-# upstream oracle files the builder pins and this test reads.
-PINS = {
-    "cases/cp4c-owner/manifest.json": "9cf100831af87c3972656a858588b50a3b77ac30422bd17664b82e1740592a93",
-    "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
-    "cases/cp4c-owner/expected.json": "61ddb316372469ce74920147423000a2f4ee846fc9c9f94a9f58f990d9ad9fcc",
-    "cases/cp4c-owner/builder/build.py": "806252b5d3913ad4cfcedcd024f0c89cace83958ec96c989212202b30e30762f",
-    "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
-    "cases/cp2a-owner/expected.json": "ad5531da7cff4eca8e9c8e9a23cef6526a982537597e6830610877bec994ff89",
-    "cases/cp4-owner/expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
-    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+# The CP-4C oracle and builder and the upstream oracle files this test reads; the files it does not
+# list (the financial and legal manifests) are pinned by the pinned CP-4C manifest's `pins`.
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = (
+    *(
+        f"cases/cp4c-owner/{name}"
+        for name in ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
+    ),
+    "cases/cp2g-owner/expected.json",
+    "cases/cp2a-owner/expected.json",
+    "cases/cp4-owner/expected.json",
+)
 
 
-def _pinned(rel: str) -> Any:
+def _pinned(rel: str, pins: dict[str, str] = PINS) -> Any:
     data = (ROOT / rel).read_bytes()
-    assert hashlib.sha256(data).hexdigest() == PINS[rel], rel
+    assert hashlib.sha256(data).hexdigest() == pins[rel], rel
     return json.loads(data)
 
 
@@ -63,8 +63,8 @@ MANIFEST: dict[str, Any] = _pinned("cases/cp4c-owner/manifest.json")
 CP2G_EXP: dict[str, Any] = _pinned("cases/cp2g-owner/expected.json")
 CP2A_EXP: dict[str, Any] = _pinned("cases/cp2a-owner/expected.json")
 CP4_EXP: dict[str, Any] = _pinned("cases/cp4-owner/expected.json")
-FIN: dict[str, Any] = _pinned("cases/financial/manifest.json")
-LEGAL: dict[str, Any] = _pinned("cases/legal/manifest.json")
+FIN: dict[str, Any] = _pinned("cases/financial/manifest.json", MANIFEST["pins"])
+LEGAL: dict[str, Any] = _pinned("cases/legal/manifest.json", MANIFEST["pins"])
 FINANCIAL = next(s for s in FIN["sources"] if s["source_id"] == "financial")
 
 RUNS = ("positive", "gap")
@@ -75,8 +75,10 @@ UPSTREAM_PREFIXES = ("cp1:", "cp2a:", "cp2g:", "cp4:")
 
 
 def test_oracle_files_are_the_pinned_revision() -> None:
-    for rel, digest in PINS.items():
-        assert hashlib.sha256((ROOT / rel).read_bytes()).hexdigest() == digest, rel
+    for rel in PINNED:
+        assert hashlib.sha256((ROOT / rel).read_bytes()).hexdigest() == PINS[rel], rel
+    for rel in ("cases/financial/manifest.json", "cases/legal/manifest.json"):
+        assert hashlib.sha256((ROOT / rel).read_bytes()).hexdigest() == MANIFEST["pins"][rel], rel
 
 
 def _norm(x: Decimal | None) -> str | None:
@@ -1532,6 +1534,54 @@ def test_b3_a_name_the_validator_accepts_composes() -> None:
     assert _payload_issues(payload) == ()
     claims = _compute_with(_context("positive"), payload).claims
     assert any("Tranche B 2027" in c.text for c in claims)
+
+
+def test_b3_the_issuer_name_is_spared_in_a_class_name() -> None:
+    """B3 reads names with the same `names` compute uses: the issuer's own digit is no bare
+    figure, and the class name composes."""
+    base = _context("positive")
+    run = base.pack.run.model_copy(update={"issuer_name": "Northbridge 2 Holdings"})
+    ctx = replace(base, pack=base.pack.model_copy(update={"run": run}))
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = "Northbridge 2 Holdings Notes"
+    assert _payload_issues(payload, ctx) == ()
+    assert _payload_issues(payload) == ("claims[1].name: Bare figure: 2",)  # another issuer
+    claims = _compute_with(ctx, payload).claims
+    assert any("Northbridge 2 Holdings Notes" in c.text for c in claims)
+
+
+@pytest.mark.parametrize("name", ["Term Loan B-2", "Q1 Notes"])
+def test_b3_a_class_name_is_read_as_spelt(name: str) -> None:
+    """Class names keep their case in the claims, so B3 reads them as typed (only a valuation
+    label is lower-cased): these pass, and compose."""
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = name
+    assert _payload_issues(payload) == ()
+    claims = _compute_with(_context("positive"), payload).claims
+    assert any(name in c.text for c in claims)
+
+
+def test_b2_a_known_total_debt_without_an_amount_still_raises() -> None:
+    ctx = _with_cp1(
+        _context("positive"), "total_debt", status="known", amount=None, text="n/a", unit=None
+    )
+    with pytest.raises(ValueError, match="CP-1 total debt .* is known without an amount"):
+        _compute_with(ctx, _bind_all(_payload("positive")))
+
+
+def test_b6_ev_reason_comes_first_when_both_operands_are_unknown() -> None:
+    """Gap v03 has no EV; with CP-1 EBITDA missing too, the implied multiple takes EV's reason."""
+    changes = {"status": "missing", "amount": None, "calculation_id": None, "limitation": "Gone"}
+    ctx = _with_cp1(_context("gap"), "ebitda", **changes)
+    got = _records(cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs("gap").submission)))
+    ev_reason = "Not calculable: the EV multiple was not assessed"
+    assert (got["T4E.3.v03.ev"]["status"], got["T4E.3.v03.ev"]["limitation"]) == (
+        "missing",
+        ev_reason,
+    )
+    implied = got["T4E.3.v03.implied_ltm_multiple"]
+    assert (implied["status"], implied["limitation"]) == ("missing", ev_reason)
+    assert got["T4E.3.v01.implied_ltm_multiple"]["limitation"] == CP1_EBITDA_MISSING
 
 
 def test_q6_a_quote_must_cover_whole_cells() -> None:

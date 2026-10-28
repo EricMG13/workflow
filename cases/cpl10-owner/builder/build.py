@@ -825,7 +825,7 @@ D4_SIDE_EFFECTS = {
     "frozen_lease_headers": {
         "rule": "fifth side effect: the build commit amends these six frozen-lease headers and docs/INTEGRATION.md:969 under a LEAD note (the builder pin and the methodology hash they name change with the serialised methodology change)",
         "files": [{"file": "docs/CP1D-OWNER-LEASE.md", "line": 3, "names": "builder 037b3e9d... / manifest 842ced20...; line 27 names methodology.json 348fbc4b...8d45"},
-                  {"file": "docs/CP2E-OWNER-LEASE.md", "line": 3, "names": "builder 06f6ee61... / manifest 5b5a5e53... (frozen at ac82330); line 42 names methodology.json 348fbc4b...8d45; its line 5 note (3) already announces this re-pin"},
+                  {"file": "docs/CP2E-OWNER-LEASE.md", "line": "by text", "names": "builder 06f6ee61... / manifest 5b5a5e53... (the paragraph that begins \"Frozen after `review-precise-2.md`\"; amendment paragraphs insert above it, so its line moves and is found by that text); the Pins list item 4 (\"4. Pins (the builder asserts them)\") names methodology.json 348fbc4b...8d45; note (3) of the freeze paragraph already announces this re-pin"},
                   {"file": "docs/CP3D-OWNER-LEASE.md", "line": 3, "names": "pins dee1a8... and 592444..."},
                   {"file": "docs/CP3-OWNER-LEASE.md", "lines": "286-289", "names": "manifest 2cb324be... / builder 80450c52..."},
                   {"file": "docs/CPOS-OWNER-LEASE.md", "line": 3, "names": "the CP-OS header as amended by the 0d re-pin (landed at e8ee084; its re-pin paragraph at :5 carries the current builder and manifest pins, which supersede the 68c15d6e... / 50a447... pair of :3). LEAD supplies the post-re-pin hashes; none is copied here"},
@@ -833,7 +833,7 @@ D4_SIDE_EFFECTS = {
                   {"file": "docs/INTEGRATION.md", "line": 969, "names": "the methodology.json hash 348fbc4b...8d45"}],
         "note": "the build commit re-pins, so each header's builder/manifest hash after the re-pin is struck from the rebuilt files (a methodology pin change alters the builder bytes and, where the manifest records the pin, the manifest bytes); no post-0d-re-pin hash is written here for CP-OS or CP-DR (LEAD supplies them)",
     },
-    "reuse_manifest": {"file": "docs/reuse/manifest.json", "action": "append one entry for src/deploy_vii/methodology.json to the end of `local_patch_lineage` (new sha256, the D12 one-line registration reason, review pointer); the previous hash 348fbc4b... is at lines 1063-1069 (not a position to insert after)"},
+    "reuse_manifest": {"file": "docs/reuse/manifest.json", "action": "the entry for src/deploy_vii/methodology.json is in `post_import_patches` (the file is an imported one), not `local_patch_lineage` (new sha256, the D12 one-line registration reason, review pointer); LEAD ruling at the re-pin (review L1)"},
     "run_behaviour": {
         "plan": {"plan(('CP-L10',))": [["CP-0", "CP-L10"], ["CP-0", "CP-1", "CP-L10"]], "plan(('CP-L20',))": [["CP-0", "CP-L10"], ["CP-0", "CP-1", "CP-L10"]],
                  "plan(('CP-L10','CP-5'))": [["CP-0", "CP-L10", "CP-5"], ["CP-0", "CP-1", "CP-L10", "CP-5"]]},
@@ -1038,7 +1038,7 @@ def main():
         },
         "consumption": "OPEN: no consumer core reads CP-L10. registry.edge_rule('CP-5','CP-L10') is restricted (fan-in) but D3 counts CP-5 only after a lease extends its integrity scope and binds the CP-L10 head hash. cpl10_reader(store, head) pins what a consumer reads: status, per topic id/materiality/evidence/disposition/rank/change, counts.",
         "d8_table_ids": {"registered": [t for t in TL10 if t != TL10_NEW], "added_by_the_serialised_methodology_change": [TL10_NEW], "other_registered_in_entry": [t for t in CPL10["table_ids"] if not t.startswith("TL10.")],
-                          "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is unused anywhere (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
+                          "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is registered to CP-L10 alone (asserted above; LEAD ruling at the re-pin, review L2); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
                           "produced": TL10_PRODUCED, "placement": "TL10.5 (Screen totals) joins the evidence rail block of TL10.2 (D7)"},
         "rendered": {"block": None, "rails": {"evidence": ["TL10.1", "TL10.2", "TL10.5", "TL10.3"], "limitations": ["TL10.4"]},
                      "note": "no pathway lists CP-L10 and r14 has no Front Page block for it (architecture study section 4: screening, no block); rails only, as CP-DR",

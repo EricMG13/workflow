@@ -480,6 +480,7 @@ def check_submission(sub, pack_ids):
             size_state[m] = (cmpr, Decimal(lt))
     obs = sub["observations"]
     seen = {}
+    counted = set()  # 8-14: every in-vocabulary observation counts toward duplicates and pairing, whatever its later state
     for i, o in enumerate(obs):
         p = f"observations[{i}]"
         key = (o["side"], o["metric"])
@@ -489,9 +490,10 @@ def check_submission(sub, pack_ids):
         if o["metric"] not in OBS_METRICS:
             issues.append(f"{p}: metric {o['metric']} is not one of {', '.join(OBS_METRICS)}")
             continue
-        if key in seen:
+        if key in counted:
             issues.append(f"observations: ({o['side']}, {o['metric']}) appears more than once")
             continue
+        counted.add(key)
         sid = o["quote"]["source_id"]
         if o["side"] == "expected":
             found = ref_ok(f"{p}.quote", o["quote"], pack_ids, DECISION_SOURCE)
@@ -522,9 +524,9 @@ def check_submission(sub, pack_ids):
             continue
         seen[key] = Decimal(v)
     for side in ("expected", "realized"):
-        if ("loan_bid" in {m for s, m in seen if s == side}) != ("loan_offer" in {m for s, m in seen if s == side}):
+        if ((side, "loan_bid") in counted) != ((side, "loan_offer") in counted):
             issues.append(f"observations: {side} loan_bid and loan_offer must be given together")
-        elif (side, "loan_bid") in seen and seen[(side, "loan_bid")] > seen[(side, "loan_offer")]:
+        elif (side, "loan_bid") in seen and (side, "loan_offer") in seen and seen[(side, "loan_bid")] > seen[(side, "loan_offer")]:
             issues.append(f"observations: {side} bid exceeds offer")
     has_real = any(s == "realized" for s, _ in seen) or any(o["side"] == "realized" for o in obs)
     ab = sub.get("outcome_absence")

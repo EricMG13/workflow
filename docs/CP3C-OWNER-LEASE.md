@@ -1,5 +1,7 @@
 # CP-3C (Refinancing and liability-management risk) owner lease — FROZEN by LEAD 2026-10-28 (preparation revision 3)
 
+Pin consumers: `cases/cp4c-owner/builder/build.py` pins `manifest.json`. Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
+
 Amended by LEAD 2026-10-28 (rulings round 11): CP-3C computes at precision 60, as the builder does (build.py:19). A /12 proration that does not terminate is rounded half-even at 60 significant digits, so `principal = amortisation + payable` is not an exact invariant. Modules' probe `p_cp3c_precision.py` (exit 0) shows every frozen case is identical at 28 and 60 digits, so nothing is re-pinned. Round 11 also rules CP-3C B1 (a maturity before D0 is a gap with an own Limitation line), B2 (one own Gap line per unstated term), B5 (a blank II limitation is refused) and the id-free claim causes.
 
 Amended by LEAD 2026-10-28 (round 6 oracle batch, `docs/rulings/2026-10-28-stage1.md` round 6; `work/lead/r6batch-review.md` COMMIT): round 6 A1 `months_between` (no value moves; lease note :218 "29 months" superseded, as Dec 31 to Jun 30 is 30) and the CP-2D pins. A scratch rebuild in dependency order was byte-identical. builder b461d897… → b2cdb63c560abdfdd4387f5d337fb7462c93218b4c24f48c6c4142deaf00bf56; manifest d5ca731c… → 7a0056a1145f9a92efd11f18fd6512e8c86e508b25176d457f0fe07394ad8a5a; files not listed are unchanged. Pins elsewhere in this file are superseded where they differ.

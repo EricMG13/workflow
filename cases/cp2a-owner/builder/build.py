@@ -137,12 +137,12 @@ OBSERVED_CLASS = {
            "interest_coverage_reported": "calculated", "fcf_to_debt": "calculated"},
 }
 OBSERVED_CLASS["Q4"] = dict(OBSERVED_CLASS["Q3"])  # round 6 P1-W item 7: the value classes follow the gap case's Q3 25 facts
-OBSERVED_CELL = {  # the CP-1 T4.10 cell text (fact_spelling) observed on the probe head
+OBSERVED_CELL = {  # the CP-1 T4.10 cell text (fact_spelling) observed on the probe head (LTM and Q3 entries)
     "LTM": {"ebitda": "30", "cash_interest": "(5)", "fcf": "9", "total_debt": "50", "cash_closing": "20",
             "total_leverage_reported": "1.67x", "net_leverage_reported": "1.00x",
             "interest_coverage_reported": "6.00x", "fcf_to_debt": "18.0%"},
     "Q3": {"ebitda": "8", "cash_interest": "(1)", "fcf": "2", "total_debt": "49", "cash_closing": "19"},
-    # Q4 25 quarter flows with the LTM Q4 25 ratios and closing balances (CP-1 reads a quarter's ratio from its twelve months)
+    # Q4 25 quarter flows with the LTM Q4 25 ratios and closing balances (CP-1 reads a quarter's ratio from its twelve months); derived via show(), not observed
     "Q4": {"ebitda": "8", "cash_interest": "(1)", "fcf": "2", "total_debt": "50", "cash_closing": "20",
            "total_leverage_reported": "1.67x", "net_leverage_reported": "1.00x",
            "interest_coverage_reported": "6.00x", "fcf_to_debt": "18.0%"},
@@ -297,8 +297,9 @@ def stress(base, s, k, gate_ratios, gate_reason, gate_na=False):
         why["fcf_to_debt"] = "Not calculable: stressed free cash flow is missing"
     else:
         out["fcf_to_debt"] = ratio("fcf_to_debt", f2, d, "Not calculable: debt is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)", ("total_debt",))
-    if f2 is None:
-        why["fcf"] = "Not calculable: base cash interest is missing, so an interest increase cannot be applied"
+    if f2 is None:  # A4: formula order puts F before I, so a missing base FCF is named first
+        why["fcf"] = ("Not calculable: base free cash flow is missing" if f is None
+                      else "Not calculable: base cash interest is missing, so an interest increase cannot be applied")
     out["why"] = why
     out["na"] = na
     return out
@@ -348,7 +349,7 @@ def breaks_for(base, thresholds, gate_ratios, gate_reason, gate_na=False):
             add(t["bid"], "Analyst assumption", t["label"], "total_leverage", lvl, None if d is None else lvl * e - d, lvl * e, lambda s, lvl=lvl: d / lvl, True, ("total_debt",))
         elif t["metric"] == "net_leverage":
             nd = None if (d is None or c is None) else d - c
-            if nd is not None and nd <= 0:
+            if nd is not None and nd <= 0 and gate_ratios:  # A8: missing operands, then the gate, then this short-circuit
                 rows.append({"bid": t["bid"], "origin": "Analyst assumption", "test": t["label"], "kind": "net_leverage", "level": lvl,
                              "outcome": "Not reached by a decline of up to 100%", "reason": "Net debt is not positive, so no EBITDA decline raises net leverage"})
             else:
@@ -588,6 +589,9 @@ COVENANT = "No covenant test is applied: the watch levels are not covenant tests
 MATURITY = "No maturity or refinancing wall is stressed: debt maturities and refinancing risk belong to CP-2D and CP-3C."
 BREAK_AT_BASE = ("Break points hold cash interest at the base period level (no interest increase). The break at which EBITDA no longer covers cash interest "
                  "compares same-period flows but is gated like a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period.")
+BREAK_AT_BASE_NA = ("Break points hold cash interest at the base period level (no interest increase). The break at which EBITDA no longer covers cash interest "
+                    "compares same-period flows but is gated like a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period, "
+                    "and it is not calculated on a single-quarter base.")
 NOT_CALC_CROSSING = ("A metric that is not calculable under a scenario shows Not calculable against every break point, "
                      "including a break whose required decline is below that scenario's decline.")
 
@@ -637,6 +641,9 @@ def build_case(name):
     gate, gate_reason = spec["gate"], spec["gate_reason"]
     gate_na = spec.get("gate_na", False)
     cp1 = spec["cp1"]
+    if not gate:  # P1-W item 2 is per ratio; this builder carries one gate flag per base, so a mixed base is refused
+        _known = {cp1[m]["status"] == "known" for m in RATIO_REPORTED.values()}
+        assert _known == {gate_na}, (name, "mixed CP-1 ratio statuses on a quarter base need the per-ratio gate")
     facts, rows_by_table, claims, own_limits = [], {t: [] for t in TABLES}, [], []
 
     def fact(table, row, field, label, **kw):
@@ -814,7 +821,7 @@ def build_case(name):
         own_limits.append("Break-point watch levels are analyst assumptions, not covenants; no covenant owner is an input.")
     own_limits.append("Stress is applied to the base period's flows with debt and cash held at their reported closing balances; no forward cash build, refinancing or mitigating action is modelled.")
     own_limits.append("Cash taxes, capital expenditure and working capital are held at the base period; no tax shield is taken.")
-    own_limits.extend((LIQUIDITY, COVENANT, MATURITY, BREAK_AT_BASE))
+    own_limits.extend((LIQUIDITY, COVENANT, MATURITY, BREAK_AT_BASE_NA if gate_na else BREAK_AT_BASE))
     if unreached_crossing:
         own_limits.append(NOT_CALC_CROSSING)
     for key, value in base.items():

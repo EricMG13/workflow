@@ -228,3 +228,4 @@
 - 2026-10-28 merged CP-3D (eb4b3cb), CP-2G (4c4892c), CP-2E (38f0ddc) into the lane (63659ff); fast tests 3414 passed, 2 skipped, 1 xfailed
 - 2026-10-28 CP-1D class review (mx-precise) on 48267a0: CHANGES REQUIRED. M1 (test gap, money): the start-edge shift for a joined quote is unpinned; the mutant counts 25 from 425. Lows: L1 accounting-parenthesis accept side, L2 gaps[1+] blank. Info I1 (predates, to LEAD): a quote's own `-\n` before the figure drops the page minus. Decisions (b) and (c) are consistent; (a) quote not on its page goes to LEAD. Fix 1 sent to the implementer
 - 2026-10-28 CP-DR class round 3b30a98: blank 12 red to 0 (fallback frame, after rule 6 and before rule 7), 8/8 mutants killed, gates 0. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-feature
+- 2026-10-28 16:08Z LEAD pointer sent (one batch): wrap-minus question (CP-3D, CP-8, CP-2E, CP-1D), CP-1D (a), cp2h B7-B10, cp4c B7, Info confirmations, owner items

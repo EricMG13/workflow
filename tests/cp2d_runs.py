@@ -16,6 +16,7 @@ from typing import Any
 import s1a_runs as s1a
 
 from deploy_vii.contracts import Run
+from deploy_vii.execution import Execution
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.owner_workflow import OwnerWorkflow
 from deploy_workflow.owners import cp2d
@@ -66,14 +67,20 @@ def start(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
     return OwnerWorkflow.create(root / "store", pack), pack
 
 
-def reach(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
-    """CP-0, CP-1, CP-1A and CP-2 settled; CP-2D begun and untouched. The slow part."""
+def reach_cp2(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+    """CP-0, CP-1 and CP-1A settled; CP-2 begun and untouched. The slow part (CP-1 promotion)."""
     workflow, pack = start(root)
     s1a.drive_cp0(workflow, pack, "positive", text=cp0_text(pack))
     s1a.drive_cp1(workflow, pack, "positive")
     cp1a = s1a.drive_cp1a(workflow, pack, "positive")
     if cp1a["status"] != "valid":
         raise RuntimeError(f"CP-1A not valid: {cp1a['issues']}")
+    return workflow, pack
+
+
+def reach(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+    """CP-0, CP-1, CP-1A and CP-2 settled; CP-2D begun and untouched."""
+    workflow, pack = reach_cp2(root)
     outcome = s1a.drive_cp2(workflow, "positive", s1a.read_cp2(workflow))
     if outcome["status"] != "valid":
         raise RuntimeError(f"CP-2 not valid: {outcome['issues']}")
@@ -121,3 +128,48 @@ def cp2d_closed(case: str, root: Path, template: OwnerWorkflow | None = None) ->
         raise RuntimeError(f"CP-2D not valid: {outcome['issues']}")
     workflow.write_receipt(root / "owner-receipt.json")
     return root / "store", root / "owner-receipt.json"
+
+
+# --- acceptance drivers (docs/CP2D-OWNER-LEASE.md Refusals; expected.json#negative_cases) --------
+
+
+def blocked_cp2d(root: Path, template: OwnerWorkflow) -> OwnerWorkflow:
+    """`blocked_cp2d`: attempts 0 and 1 are both invalid, so CP-2D settles blocked; the walk
+    completes and a receipt can be written."""
+    workflow = s1a.clone_workflow(template, root)
+    blocked = oracle()["submissions"]["cp2d_blocked"]
+    for attempt in ("attempt_0", "attempt_1"):
+        workflow.read_inputs()
+        outcome = workflow.submit_review(
+            bind_facts(json.dumps(blocked[attempt], ensure_ascii=False), workflow)
+        )
+        if outcome["status"] != "invalid":
+            raise RuntimeError(f"{attempt} not invalid: {outcome['status']}")
+    return workflow
+
+
+def begin_refused_cp2_blocked(root: Path, template_cp2: OwnerWorkflow) -> OwnerWorkflow:
+    """`begin_refused_cp2_blocked`: CP-2 is settled blocked (its attempts 0 and 1 both fail a rule,
+    the unreplaced {{FIG}} literal), so CP-2D's begin is refused (edge_rule block) and the walk
+    ends with a retained refusal and no CP-2D attempt."""
+    workflow = s1a.clone_workflow(template_cp2, root)
+    raw = s1a.literal("positive", "credit_synthesis")
+    for _ in range(2):
+        s1a.read_cp2(workflow)
+        outcome = workflow.submit_review(raw)
+        if outcome["status"] != "invalid":
+            raise RuntimeError(f"CP-2 literal not invalid: {outcome['status']}")
+    return workflow
+
+
+def seal(workflow: OwnerWorkflow, root: Path) -> Path:
+    workflow.write_receipt(root / "owner-receipt.json")
+    return root / "owner-receipt.json"
+
+
+def verify_receipt(store_root: Path, receipt: Any) -> None:
+    """`verify_owner_run_receipt` over a sealed run; a tamper raises `WorkflowError`
+    (`identity_mismatch`), a stale submit `stale_binding`, a premature submit `not_permitted`."""
+    from deploy_workflow.owner_workflow import verify_owner_run_receipt
+
+    verify_owner_run_receipt(Execution(store_root), receipt)

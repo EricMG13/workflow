@@ -247,7 +247,9 @@ def _cp1_fact(name: str, operand: cp2d.Operand | None) -> Fact:
     return Fact(**base, status=operand.status, limitation=operand.limitation, **shape)
 
 
-def _row_facts(row: str, period: str, values: dict[str, Any], ids: str) -> list[Fact]:
+def _row_facts(
+    row: str, period: str, values: dict[str, Any], ids: str, currency: str = "USD"
+) -> list[Fact]:
     """One T4.18 row's facts. `values` maps a field to an amount, a text, or an Operand-like
     non-known marker (a str starting with "!" is a missing fact with that limitation)."""
     out: list[Fact] = []
@@ -263,7 +265,11 @@ def _row_facts(row: str, period: str, values: dict[str, Any], ids: str) -> list[
             "citations": (CITATION,),
             "value_class": "source",
         }
-        money: dict[str, Any] = {"unit": "MILLIONS", "currency": "USD", "scale": Decimal(1000000)}
+        money: dict[str, Any] = {
+            "unit": "MILLIONS",
+            "currency": currency,
+            "scale": Decimal(1000000),
+        }
         if isinstance(value, str) and value.startswith("!"):
             out.append(Fact(**base, status="missing", limitation=value[1:]))
         elif isinstance(value, Decimal):
@@ -287,10 +293,10 @@ def _facility_values(f: cp2d.Facility) -> dict[str, Any]:
     }
 
 
-def _period_rows() -> list[Fact]:
+def _period_rows(end: str = "2025-12-31") -> list[Fact]:
     facts: list[Fact] = []
     for pid, kind in (("q4-2025", "QUARTER"), ("fy-2025", "FY")):
-        for field, text in (("period_id", pid), ("period_type", kind), ("end_date", "2025-12-31")):
+        for field, text in (("period_id", pid), ("period_type", kind), ("end_date", end)):
             facts.append(
                 Fact(
                     fact_id=f"cp1:T4.14:{pid}:{field}",
@@ -307,7 +313,13 @@ def _period_rows() -> list[Fact]:
     return facts
 
 
-def cp1_module(operands: cp2d.Operands, run: Run | None = None, *, ids: str = "plain") -> Module:
+def cp1_module(
+    operands: cp2d.Operands,
+    run: Run | None = None,
+    *,
+    ids: str = "plain",
+    end: str = "2025-12-31",
+) -> Module:
     """A CP-1 module holding the facts the CP-2D bindings select, from Stage 1 operands."""
     facts = [_cp1_fact(name, cast("cp2d.Operand | None", getattr(operands, name))) for name in USED]
     facts += [
@@ -318,12 +330,14 @@ def cp1_module(operands: cp2d.Operands, run: Run | None = None, *, ids: str = "p
             "fcf_unlevered", cp2d.Operand("missing", None, None, "Free cash flow is not derived")
         ),
     ]
-    facts += _period_rows()
+    facts += _period_rows(end)
     for facility in operands.facilities or ():
         for period in ("q4-2025", "fy-2025"):
             row = f"{facility.facility_id}-{period}"
             tag = "plain" if (period == "q4-2025" and ids == "plain") else "row"
-            facts += _row_facts(row, period, _facility_values(facility), tag)
+            facts += _row_facts(
+                row, period, _facility_values(facility), tag, facility.currency or "USD"
+            )
     pack = run or PACK.run
     return Module(
         run_id=pack.run_id,
@@ -1125,3 +1139,278 @@ def test_adapter_reads_the_facility_currency_as_stated_or_not_stated(
     submission = tm._submission(tm.SUBMISSIONS["cp2d"]["positive"])
     got = cp2d._inputs(store, attempt, submission).operands.facilities
     assert got == (loan,) and got[0].currency == currency
+
+
+# --- fix round 1: M1 (a facility in another currency), M2 (the alias both ways), M4 -----------
+
+
+def _facts_of(module: Module, table: str, **where: str) -> list[Fact]:
+    return [
+        f
+        for f in module.facts
+        if f.table_id == table and all(getattr(f, k) == v for k, v in where.items())
+    ]
+
+
+def _swap_facts(module: Module, change: Callable[[Fact], Fact | None]) -> Module:
+    facts = [x for f in module.facts if (x := change(f)) is not None]
+    return module.model_copy(update={"facts": tuple(facts)})
+
+
+def test_a_facility_in_another_currency_takes_the_lease_fx_path() -> None:
+    """Lease Reuse (Facility FX) and ruling A5: CP-1 writes the money terms in the row's own
+    currency; the row and every total are then missing with the limitation, not a refusal."""
+    loan = replace(tm.LOAN, currency="EUR")
+    operands = replace(tm._base_operands(), facilities=(loan,))
+    selection = cp2d.select_cp1(cp1_module(operands))
+    assert selection.operands.facilities == (loan,)
+    submission = tm._submission(tm.SUBMISSIONS["cp2d"]["positive"])
+    result = cp2d.compute(
+        cp2d.Cp2dInputs(
+            operands=selection.operands,
+            balance_date=selection.balance_date,
+            submission=submission,
+            offered_refs=tm.OFFERED,
+            maturity_date_refs=tm.MATURITY_REFS,
+        )
+    )
+    cells = tm._cells(result)
+    reason = "Not calculable: facility term-loan is in EUR, not USD; no FX conversion is applied"
+    assert (cells["T2E.4.r01.c1"].state, cells["T2E.4.r01.c1"].reason) == ("gap", reason)
+    assert cells["T2E.3.r07"].state == "gap" and cells["T2E.5.r07"].state == "gap"
+
+
+def test_a_facility_money_fact_must_agree_with_the_rows_stated_currency() -> None:
+    good = cp1_module(replace(tm._base_operands(), facilities=(replace(tm.LOAN, currency="EUR"),)))
+    forged = _swap_facts(
+        good,
+        lambda f: (
+            f.model_copy(update={"currency": "USD"})
+            if f.table_id == "T4.18" and f.field == "principal"
+            else f
+        ),
+    )
+    with pytest.raises(ValueError, match="principal is not in the facility's stated currency"):
+        cp2d.select_cp1(forged)
+
+
+def test_a_facility_money_fact_must_be_in_millions() -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(
+        good,
+        lambda f: (
+            f.model_copy(update={"scale": Decimal(1)})
+            if f.table_id == "T4.18" and f.field == "commitment"
+            else f
+        ),
+    )
+    with pytest.raises(ValueError, match="T4.18 commitment is not in millions"):
+        cp2d.select_cp1(forged)
+
+
+def _alias_only_facility() -> Module:
+    good = cp1_module(tm._base_operands())
+    extra = [
+        f.model_copy(
+            update={
+                "fact_id": f.fact_id + "-b",
+                "row_id": f.row_id + "-b",
+                **({"text": "bridge-loan"} if f.field == "facility_id" else {}),
+            }
+        )
+        for f in _facts_of(good, "T4.18", period="fy-2025")
+    ]
+    return good.model_copy(update={"facts": (*good.facts, *extra)})
+
+
+def test_alias_check_runs_both_ways() -> None:
+    with pytest.raises(ValueError, match="bridge-loan has a fy-2025 row but no q4-2025 row"):
+        cp2d.select_cp1(_alias_only_facility())
+
+
+def test_alias_check_refuses_a_facility_without_its_alias_row() -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(
+        good, lambda f: None if f.table_id == "T4.18" and f.period == "fy-2025" else f
+    )
+    with pytest.raises(ValueError, match="term-loan lacks its fy-2025 alias row"):
+        cp2d.select_cp1(forged)
+
+
+def test_alias_check_compares_a_term_present_in_only_one_row() -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(
+        good,
+        lambda f: (
+            None
+            if f.table_id == "T4.18" and f.period == "fy-2025" and f.field == "annual_amortisation"
+            else f
+        ),
+    )
+    # annual_amortisation is a required term for the facility itself; the alias lacks it
+    with pytest.raises(ValueError, match="annual_amortisation differs between"):
+        cp2d.select_cp1(forged)
+
+
+def test_alias_check_compares_the_basis() -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(
+        good,
+        lambda f: (
+            f.model_copy(update={"basis": "IFRS · borrower"})
+            if f.table_id == "T4.18" and f.period == "fy-2025" and f.field == "principal"
+            else f
+        ),
+    )
+    with pytest.raises(ValueError, match="principal differs between"):
+        cp2d.select_cp1(forged)
+
+
+def test_adapter_refuses_two_rows_of_a_facility_in_one_period() -> None:
+    good = cp1_module(tm._base_operands())
+    twin = [
+        f.model_copy(update={"fact_id": f.fact_id + "-twin", "row_id": f.row_id + "-twin"})
+        for f in _facts_of(good, "T4.18", period="q4-2025")
+    ]
+    with pytest.raises(ValueError, match="term-loan has two T4.18 rows in q4-2025"):
+        cp2d.select_cp1(good.model_copy(update={"facts": (*good.facts, *twin)}))
+
+
+def test_adapter_refuses_a_duplicate_coordinate() -> None:
+    good = cp1_module(tm._base_operands())
+    first = _facts_of(good, "T4.18", period="q4-2025", field="principal")[0]
+    dup = first.model_copy(update={"fact_id": first.fact_id + "-dup"})
+    with pytest.raises(ValueError, match="duplicate CP-1 coordinate T4.18/"):
+        cp2d.select_cp1(good.model_copy(update={"facts": (*good.facts, dup)}))
+
+
+def test_adapter_refuses_a_known_numeric_fact_that_has_no_amount() -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(
+        good,
+        lambda f: (
+            f.model_copy(update={"amount": None, "text": "19"}) if f.fact_id == "cp1:cfo" else f
+        ),
+    )
+    with pytest.raises(ValueError, match="cfo is known without an amount and a period"):
+        cp2d.select_cp1(forged)
+
+
+@pytest.mark.parametrize(
+    ("name", "update", "message"),
+    [
+        ("liquidity_to_debt", {"unit": "MULTIPLE"}, "liquidity_to_debt is not a percent fraction"),
+        ("cash_bs", {"unit": "PERCENT"}, "cash_bs is not in US dollars millions"),
+        ("liquidity", {"unit": "PERCENT"}, "liquidity is not in US dollars millions"),
+    ],
+)
+def test_adapter_checks_the_unit_class_of_each_amount(
+    name: str, update: dict[str, Any], message: str
+) -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(
+        good, lambda f: f.model_copy(update=update) if f.fact_id == _stand_in(name) else f
+    )
+    with pytest.raises(ValueError, match=message):
+        cp2d.select_cp1(forged)
+
+
+@pytest.mark.parametrize("end", ["2025-12-30", "2026-03-31", "2024-02-29"])
+def test_balance_date_is_the_schedule_period_end_whatever_it_is(end: str) -> None:
+    got = cp2d.select_cp1(cp1_module(tm._base_operands(), end=end))
+    assert got.balance_date == date.fromisoformat(end)
+
+
+def test_balance_date_is_refused_when_cp1_states_none() -> None:
+    good = cp1_module(tm._base_operands())
+    forged = _swap_facts(good, lambda f: None if f.table_id == "T4.14" else f)
+    with pytest.raises(ValueError, match="states no end date for q4-2025"):
+        cp2d.select_cp1(forged)
+
+
+def test_view_refuses_a_cp1_module_of_another_run(upstream: tuple[Execution, Attempt]) -> None:
+    store, attempt = upstream
+    other = PreparedPack(
+        run=PACK.run.model_copy(update={"run_id": "another-run"}), sources=PACK.sources
+    )
+    with pytest.raises(ValueError, match="belongs to another run"):
+        cp2d.context_block(pack=other, upstream=_upstream_of(store, attempt))
+
+
+# --- the reader on varied heads ---------------------------------------------------------------
+
+
+def test_reader_reads_the_long_horizon_head(tmp_path: Path) -> None:
+    store, attempt = make_upstream(tmp_path, "long_horizon")
+    _submit(store, attempt, _literal("long_horizon"))
+    read = cp2d.cp2d_reader(store, _head(store))
+    assert read.horizon_months == 60 and read.minimum_cash == Decimal(10)
+    assert read.funding_gap == Decimal(40)
+    (row,) = read.wall
+    assert row.inside_horizon is True and row.months_to_maturity == Decimal(48)
+
+
+def test_reader_exposes_status_and_hash_only_for_a_stale_head(tmp_path: Path) -> None:
+    from deploy_vii.execution import staled
+
+    store, attempt = make_upstream(tmp_path)
+    _submit(store, attempt, _literal("positive"))
+    stale = staled(_head(store), "Prepared pack changed; rerun required")
+    read = cp2d.cp2d_reader(store, stale)
+    assert (read.status, read.head_sha256) == ("stale", stale.result_sha256)
+    assert (read.horizon_months, read.minimum_cash, read.minimum_cash_absent) == (None, None, None)
+    assert (read.wall, read.funding_gap, read.funding_gap_missing) == ((), None, None)
+
+
+def test_reader_checks_the_head_against_its_blob_before_the_status(tmp_path: Path) -> None:
+    store, attempt = make_upstream(tmp_path)
+    _submit(store, attempt, _literal("positive"))
+    forged = _head(store).model_copy(update={"inputs": ()})
+    with pytest.raises(ValueError, match="does not match its result blob"):
+        cp2d.cp2d_reader(store, forged)
+
+
+def _two_facility_operands() -> cp2d.Operands:
+    early = replace(
+        tm.LOAN,
+        facility_id="a-note",
+        name="A Note",
+        principal=Decimal(30),
+        commitment=Decimal(30),
+        drawn_amount=Decimal(30),
+        maturity_date=date(2027, 6, 30),
+    )
+    late = replace(
+        tm.LOAN,
+        facility_id="b-loan",
+        name="B Loan",
+        principal=Decimal(20),
+        commitment=Decimal(20),
+        drawn_amount=Decimal(20),
+        maturity_date=date(2031, 3, 31),
+    )
+    return replace(tm._base_operands(), facilities=(late, early))
+
+
+def test_reader_reads_two_facilities_in_maturity_order(tmp_path: Path) -> None:
+    store = make_store(tmp_path, cp1_module(_two_facility_operands(), ids="row"))
+    attempt = store.begin("CP-2D")
+    payload = _literal("positive").replace(
+        "cp1:T4.18_maturity_date", "cp1:a-note-q4-2025:maturity_date"
+    )
+    done = _submit(store, attempt, payload)
+    assert not done.journal.issues, done.journal.steps[0].issues
+    read = cp2d.cp2d_reader(store, _head(store))
+    first, second = read.wall
+    assert (first.facility, first.principal, first.maturity_date) == (
+        "A Note (a-note)",
+        Decimal(30),
+        date(2027, 6, 30),
+    )
+    assert (first.months_to_maturity, first.inside_horizon) == (Decimal(18), True)
+    assert (first.share_of_total_debt, first.cumulative_share) == (Decimal("0.6"), Decimal("0.6"))
+    assert (second.facility, second.principal) == ("B Loan (b-loan)", Decimal(20))
+    assert (second.months_to_maturity, second.inside_horizon) == (Decimal(63), False)
+    assert (second.share_of_total_debt, second.cumulative_share) == (Decimal("0.4"), Decimal(1))
+    # cash 20 at 24 months, less the 30 maturing inside it: resources -10, minimum cash 10 -> 20
+    assert read.funding_gap == Decimal(20) and read.horizon_months == 24

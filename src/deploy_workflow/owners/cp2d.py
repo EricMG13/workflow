@@ -1964,7 +1964,7 @@ def _operand_of(name: str, fact: Fact) -> Operand:
     becomes an amount."""
     _usd_millions(name, fact)
     if fact.status == "known":
-        if fact.amount is None or fact.period is None:
+        if fact.amount is None:
             raise ValueError(f"CP-2D: {name} is known without an amount and a period")
         return Operand("known", fact.amount, fact.period, None)
     return Operand(fact.status, None, None, fact.limitation)
@@ -1987,13 +1987,14 @@ def _known_text(row: Mapping[str, Fact], field: str) -> str | None:
 
 
 def _same_terms(a: Fact, b: Fact) -> bool:
-    return (a.amount, a.text, a.status, a.unit, a.currency, a.scale) == (
+    return (a.amount, a.text, a.status, a.unit, a.currency, a.scale, a.basis) == (
         b.amount,
         b.text,
         b.status,
         b.unit,
         b.currency,
         b.scale,
+        b.basis,
     )
 
 
@@ -2035,14 +2036,22 @@ def _facility_rows(
         by_period[facility_id, period] = row
         if period == SCHEDULE_PERIOD:
             chosen[facility_id] = row
+    for alias in aliases:
+        listed = {fid for (fid, period) in by_period if period == alias}
+        for facility_id in sorted(set(chosen) - listed):
+            raise ValueError(f"CP-2D: facility {facility_id} lacks its {alias} alias row")
+        for facility_id in sorted(listed - set(chosen)):
+            raise ValueError(
+                f"CP-2D: facility {facility_id} has a {alias} row but no {SCHEDULE_PERIOD} row"
+            )
     facilities = []
     for facility_id, row in chosen.items():
         for alias in aliases:
-            other = by_period.get((facility_id, alias))
-            if other is None:
-                raise ValueError(f"CP-2D: facility {facility_id} lacks its {alias} alias row")
+            other = by_period[facility_id, alias]
             for term in _FACILITY_TERMS:
-                if term in row and term in other and not _same_terms(row[term], other[term]):
+                if (term in row) != (term in other) or (
+                    term in row and not _same_terms(row[term], other[term])
+                ):
                     raise ValueError(
                         f"CP-2D: facility {facility_id} {term} differs between its "
                         f"{SCHEDULE_PERIOD} row and its {alias} alias"
@@ -2052,15 +2061,28 @@ def _facility_rows(
 
 
 def _facility_of(facility_id: str, row: Mapping[str, Fact]) -> Facility:
+    """The Stage 1 facility of a T4.18 row. CP-1 writes the money terms in the row's own
+    currency, so a facility in another currency is read as stated: the Stage 1 FX path makes its
+    row and every total missing with the limitation (lease Reuse, ruling A5). A money term must
+    be in millions and agree with the currency the row states."""
+    currency = _known_text(row, "currency")
     for field in FACILITY_FIELDS:
         if field not in row:
             raise ValueError(f"CP-2D: facility {facility_id} has no CP-1 {field} fact")
-        _usd_millions(f"T4.18 {field}", row[field])
+        fact = row[field]
+        if fact.amount is None:
+            continue
+        if fact.unit != "MILLIONS" or fact.scale != Decimal(1000000):
+            raise ValueError(f"CP-2D: T4.18 {field} is not in millions")
+        if currency is not None and fact.currency != currency:
+            raise ValueError(
+                f"CP-2D: T4.18 {field} is not in the facility's stated currency ({currency})"
+            )
     when = _known_text(row, "maturity_date")
     return Facility(
         facility_id=facility_id,
         name=_known_text(row, "facility_name") or facility_id,
-        currency=_known_text(row, "currency"),
+        currency=currency,
         principal=row["principal"].amount,
         maturity_date=None if when is None else date.fromisoformat(when),
         commitment=row["commitment"].amount,

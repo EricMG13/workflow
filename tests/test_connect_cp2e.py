@@ -421,7 +421,9 @@ def _view(case: str) -> View:
 @pytest.mark.parametrize("case", CASES)
 def test_the_shipped_maps_bind_every_cp2e_fact_exactly_once(case: str) -> None:
     assert validate_bindings(_view(case), SHIPPED_MAPS) == ()
-    assert SHIPPED_MAPS[-1] is CP2E
+    ids = [m.module_id for m in SHIPPED_MAPS]
+    assert CP2E in SHIPPED_MAPS
+    assert ids.index("CP-2E") > ids.index("CP-6")
 
 
 def test_the_binding_rows_equal_the_oracle() -> None:

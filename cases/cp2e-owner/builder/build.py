@@ -562,7 +562,8 @@ def NA(why):
 
 
 def ratio(num, den, why_zero):
-    """num / den over derived values; missing propagates, a zero denominator is not applicable."""
+    """num / den over derived values; missing propagates, a zero or negative denominator is not applicable
+    (A3, round 6): the zero reason is why_zero byte for byte, a negative one reads '... is negative'."""
     for v in (num, den):
         if v[0] == "missing":
             return v
@@ -570,6 +571,9 @@ def ratio(num, den, why_zero):
         return NA("an input is not applicable")
     if den[1] == 0:
         return NA(why_zero)
+    if den[1] < 0:
+        assert why_zero.endswith(" is zero"), why_zero
+        return NA(why_zero[: -len("zero")] + "negative")
     return K(num[1] / den[1])
 
 
@@ -1559,7 +1563,7 @@ def main():
             "rate_shock_gross": "floating debt x shock_bp / 10000 (annual, before hedges); computed only when the floor is quoted as zero (the reference rate level is in no source, so an upward move by k passes in full); a floor above zero or not stated makes it missing; a fixed-rate facility makes it a known zero; downward shocks are refused by the validator",
             "rate_shock_net": "gross x (1 - hedge ratio); missing without a hedge ratio",
             "interest_after": "cash interest paid + gross increase",
-            "coverage": "EBITDA / cash interest; EBITDA / interest after the shock; change = after - before; a zero divisor is not_applicable, never infinity or 0",
+            "coverage": "EBITDA / cash interest; EBITDA / interest after the shock; change = after - before; a zero or negative divisor is not_applicable (a negative one reads \"... is negative\"), never infinity or 0",
             "fcf_after": "levered free cash flow - gross increase (no tax shield, no repricing date)",
             "share_of_ebitda": "gross increase / EBITDA; EBITDA zero is not_applicable",
             "leverage": "total debt / EBITDA",

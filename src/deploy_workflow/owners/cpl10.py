@@ -997,7 +997,7 @@ def _text_issues(sub: ChangeScreenSubmission, bound: Mapping[str, Fact], issuer:
 
 def _overall_issues(overall: Overall) -> list[str]:
     """Step (5), in the L2 order: High, pairing, limitation required, limitation forbidden, then
-    empty text (round 11 blank text; no frame is pinned, so the fallback `<path>: empty text`)."""
+    empty text (round 11 blank text, in the module's pinned frame `<path>: empty`)."""
     issues = _confidence_issues("overall", overall.confidence, overall.category)
     insufficient = overall.category == INSUFFICIENT
     if insufficient and overall.limitation is None:
@@ -1009,13 +1009,13 @@ def _overall_issues(overall: Overall) -> list[str]:
             "overall.limitation: only an Insufficient Information overall carries a limitation"
         )
     if overall.limitation is not None and not overall.limitation.strip():
-        issues.append("overall.limitation: empty text")
+        issues.append("overall.limitation: empty")
     return issues
 
 
 def _gap_issues(gaps: tuple[Gap, ...]) -> list[str]:
     """Step (6), per gap in order: topic, missing item, empty why and action (round 11 blank
-    text, fallback frame), digits (field order), repeat."""
+    text, the module's frame `<path>: empty`), digits (field order), repeat."""
     issues: list[str] = []
     seen: set[tuple[str, str]] = set()
     for i, g in enumerate(gaps):
@@ -1026,7 +1026,7 @@ def _gap_issues(gaps: tuple[Gap, ...]) -> list[str]:
             issues.append(f"{path}.gap: empty")
         for field in ("why_it_matters", "action"):
             if not getattr(g, field).strip():
-                issues.append(f"{path}.{field}: empty text")
+                issues.append(f"{path}.{field}: empty")
         for field in ("gap", "why_it_matters", "affected_analysis", "action"):
             if _DIGIT.search(getattr(g, field)):
                 issues.append(f"{path}.{field}: must not contain a digit")

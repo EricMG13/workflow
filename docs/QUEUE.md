@@ -2929,3 +2929,12 @@ checkpoint base; the test file is a deferred run. CP-4 owner oracle review 1: ar
 positive/gap oracles match the product cell for cell; H1 (false-same case must be a refusal
 expectation) and H2 (gate marker list frozen as ["has the meaning assigned in", "is not
 supplied with this copy"], verifier replay, tamper) plus M1/M2/L1–L6 go to revision 2.
+
+B1 fix-2 mx-adversary re-review (2026-10-28, `coordinator-3/work/cp1b-owner-b1/review-adversary-fix-2.md`):
+N1, N2, N4 closed; no new HIGH; R1 MEDIUM regression (removing the open() wrapper lets tampered or
+deleted evidence reach unguarded lookups and core replays at 10 probed sites, raising raw errors
+instead of identity_mismatch) plus L1 and L2 (pre-existing). Third fix goes to a fresh mx-escalate
+(`fix-3-brief.md`): explicit per-site checks, (f) call-site mapping of core begin refusals in
+`_verify_begin` ruled, Info ruling: the public verifier, sealed open() and setup try may keep their
+documented refusal mapping (refusal, never valid output, lease line 110). CP-4 oracle revision 2
+done (gate markers pinned, false-same as refusal); scoped re-review running.

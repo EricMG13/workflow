@@ -1,0 +1,314 @@
+{
+ "schema_version": "cp1c-owner-cases/1",
+ "scope": "CP-1C Peer benchmark: CP-0 to CP-1 to CP-1C over the frozen financial pack alone (no peer source: limitation-only) and with one new SYNTHETIC peer financial summary source",
+ "status": "DRAFT by the cp1c-owner preparation task, 2026-10-28; independent review pending; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+ },
+ "financial_baseline": {
+  "path": "cases/financial/manifest.json",
+  "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "sources": [
+   {
+    "source_id": "identity",
+    "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   },
+   {
+    "source_id": "financial",
+    "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   }
+  ]
+ },
+ "frozen_finding": "The frozen packs hold ONE issuer (Northbridge Synthetic Group). No frozen page names a peer or a comparable (asserted: the word 'peer' occurs on no frozen financial or identity page), so a peer benchmark cannot be formed from them. Case no_peers is the limitation-only design over the frozen pack; cases positive and gap add one SYNTHETIC source.",
+ "synthetic_source": {
+  "SYNTHETIC": true,
+  "label": "Invented test data. The peers do not exist; no figure is a real market fact; every page says so.",
+  "source_id": "peers",
+  "name": "Peer financial summary (synthetic)",
+  "status": "ready",
+  "media_type": "text/plain",
+  "extractor": "supplied-representation",
+  "extraction_status": "complete",
+  "pack_limitation": "Synthetic desk summary of invented peers; unaudited; not a market fact.",
+  "positive": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "SYNTHETIC PEER DATA DESK\nPeer financial summary for credit benchmarking\nPublished January 10, 2026.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nBasis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries.\nAdjusted EBITDA is reported EBITDA with no add-backs, as in the Northbridge Synthetic Group statements. Total debt is gross financial debt at the period end. Interest expense is cash interest paid. FFO is operating cash flow before working capital.\nPeer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO\nNorthbridge Synthetic Group  2025-12-31  120.0  30.0  50.0  5.0  21.0\nAlder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6\nBrookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0\nCalder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9\nDunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0\nEllsworth Park Limited  2025-12-31  500.0  150.0  75.0  7.5  60.0"
+    },
+    {
+     "locator": "page:2",
+     "text": "SYNTHETIC PEER DATA DESK\nPeer reporting basis and period alignment\nPublished January 10, 2026.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nEach line is as stated by the peer in its own unaudited summary. The desk has restated no peer to the Northbridge Synthetic Group basis.\nPeer  Reporting basis  Operating segments  Fiscal year end\nNorthbridge Synthetic Group  IFRS  1  December 31\nAlder Ridge Holdings  IFRS  1  December 31\nBrookmere Industries  IFRS  1  December 31\nCalder Vale Group  IFRS  1  December 31\nDunmore Cross Corporation  IFRS  1  June 30\nEllsworth Park Limited  US GAAP  6  December 31\nDunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end.\nEllsworth Park Limited is a diversified group with six operating segments reporting under US GAAP; the desk offers it as a size reference only."
+    }
+   ],
+   "sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b"
+  },
+  "gap": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "SYNTHETIC PEER DATA DESK\nPeer financial summary for credit benchmarking\nPublished January 10, 2026.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nBasis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries.\nAdjusted EBITDA is reported EBITDA with no add-backs, as in the Northbridge Synthetic Group statements. Total debt is gross financial debt at the period end. Interest expense is cash interest paid. FFO is operating cash flow before working capital.\nPeer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO\nNorthbridge Synthetic Group  2025-12-31  120.0  30.0  50.0  5.0  21.0\nAlder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6\nBrookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0\nCalder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
+    },
+    {
+     "locator": "page:2",
+     "text": "SYNTHETIC PEER DATA DESK\nPeer reporting basis and period alignment\nPublished January 10, 2026.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nEach line is as stated by the peer in its own unaudited summary. The desk has restated no peer to the Northbridge Synthetic Group basis.\nPeer  Reporting basis  Operating segments  Fiscal year end\nNorthbridge Synthetic Group  IFRS  1  December 31\nAlder Ridge Holdings  IFRS  1  December 31\nBrookmere Industries  IFRS  1  December 31\nCalder Vale Group  IFRS  1  December 31"
+    }
+   ],
+   "sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+   "derivation": "three peers (Alder Ridge Holdings, Brookmere Industries, Calder Vale Group), Calder Vale Group's interest expense 'Not stated', no notes on page:2"
+  },
+  "fixtures": {
+   "peer_table_not_found": {
+    "pages": [
+     {
+      "locator": "page:1",
+      "text": "SYNTHETIC PEER DATA DESK\nPeer financial summary for credit benchmarking\nPublished January 10, 2026.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nBasis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries.\nAdjusted EBITDA is reported EBITDA with no add-backs, as in the Northbridge Synthetic Group statements. Total debt is gross financial debt at the period end. Interest expense is cash interest paid. FFO is operating cash flow before working capital.\nNorthbridge Synthetic Group  2025-12-31  120.0  30.0  50.0  5.0  21.0\nAlder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6\nBrookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0\nCalder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9\nDunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0\nEllsworth Park Limited  2025-12-31  500.0  150.0  75.0  7.5  60.0"
+     },
+     {
+      "locator": "page:2",
+      "text": "SYNTHETIC PEER DATA DESK\nPeer reporting basis and period alignment\nPublished January 10, 2026.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nEach line is as stated by the peer in its own unaudited summary. The desk has restated no peer to the Northbridge Synthetic Group basis.\nPeer  Reporting basis  Operating segments  Fiscal year end\nNorthbridge Synthetic Group  IFRS  1  December 31\nAlder Ridge Holdings  IFRS  1  December 31\nBrookmere Industries  IFRS  1  December 31\nCalder Vale Group  IFRS  1  December 31\nDunmore Cross Corporation  IFRS  1  June 30\nEllsworth Park Limited  US GAAP  6  December 31\nDunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end.\nEllsworth Park Limited is a diversified group with six operating segments reporting under US GAAP; the desk offers it as a size reference only."
+     }
+    ],
+    "sha256": "55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971",
+    "derivation": "the positive page:1 without its 'Peer  Period end  ...' header line; used only by refusal r11 (no run)"
+   }
+  },
+  "why": "No frozen source carries a second issuer. The source adds an invented peer summary so the median, outlier and position rules have something to compute.",
+  "consistency_with_frozen_figures": [
+   "The issuer line restates frozen FY2025 figures exactly: revenue 120.0 (page:2), adjusted EBITDA 30.0 (page:2), total debt 50.0 (page:4, 50.00), interest expense 5.0 (page:3 cash interest paid 5.00, the peer sheet's own definition; CP-1 coverage uses page:2 net interest expense, also 5.00, so the two are equal here), FFO 21.0 (page:3 operating cash flow before working capital 21.00); each asserted equal by the builder",
+   "The issuer's basis line (IFRS, 1 operating segment, December 31 year end) equals frozen page:1 'Reporting basis: IFRS', 'One operating segment' and identity 'Fiscal year end: December 31'",
+   "The issuer ratios recomputed from the issuer line equal CP-1's T4.10 LTM values exactly: 25.0%, 5/3 (1.67x), 6.00x, 42.0% (asserted)",
+   "The source adds no fact about the issuer's business, ownership, debt terms or any frozen quantity beyond the five restated figures",
+   "Peer names carry no digit (the claim check treats a digit outside a label or the issuer name as a bare figure)"
+  ],
+  "peer_rows_positive": [
+   [
+    "Alder Ridge Holdings",
+    "2025-12-31",
+    "200.0",
+    "52.0",
+    "104.0",
+    "8.0",
+    "41.6"
+   ],
+   [
+    "Brookmere Industries",
+    "2025-12-31",
+    "150.0",
+    "33.0",
+    "99.0",
+    "11.0",
+    "30.0"
+   ],
+   [
+    "Calder Vale Group",
+    "2025-12-31",
+    "90.0",
+    "27.0",
+    "40.5",
+    "4.5",
+    "18.9"
+   ],
+   [
+    "Dunmore Cross Corporation",
+    "2025-09-30",
+    "300.0",
+    "48.0",
+    "240.0",
+    "24.0",
+    "30.0"
+   ],
+   [
+    "Ellsworth Park Limited",
+    "2025-12-31",
+    "500.0",
+    "150.0",
+    "75.0",
+    "7.5",
+    "60.0"
+   ]
+  ]
+ },
+ "cases": {
+  "positive": {
+   "run": {
+    "run_id": "cp1c-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-1C"
+    ]
+   },
+   "pack": "identity + financial + peers (positive)",
+   "submission": "submissions.json positive",
+   "expected": "expected.json cases.positive",
+   "execution": "closed run: CP-0, CP-1 (five stages, readiness = cp1_readiness literal, source_context literal with the peers source), CP-1C"
+  },
+  "gap": {
+   "run": {
+    "run_id": "cp1c-owner-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-1C"
+    ]
+   },
+   "pack": "identity + financial + peers (gap: three peers, one interest expense Not stated)",
+   "submission": "submissions.json gap",
+   "expected": "expected.json cases.gap",
+   "execution": "closed run: interest coverage has two peers with a value, below the minimum of three, so its median, position, outlier count and flags are missing; the other three metrics have three"
+  },
+  "no_peers": {
+   "run": {
+    "run_id": "cp1c-owner-no-peers",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-1C"
+    ]
+   },
+   "pack": "identity + financial, as tests/test_financial_workflow.py make_pack() (no peer source)",
+   "submission": "submissions.json no_peers",
+   "expected": "expected.json cases.no_peers",
+   "execution": "closed run: the limitation-only design: issuer cells known (CP-1), every peer-derived cell missing, never 0"
+  },
+  "refused": {
+   "run": {
+    "run_id": "cp1c-owner-refused",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-1C"
+    ]
+   },
+   "pack": "financial source missing (cases/financial/manifest.json negative_case); identity only",
+   "submission": "submissions.json refused",
+   "expected": "expected.json cases.refused",
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1C never begun"
+  }
+ },
+ "cp1_fact_selection_rule": {
+  "table_id": "T4.10",
+  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+  "predicate": "fact.table_id == 'T4.10' and fact.period == period and fact.label == '<column> \u00b7 <metric>' with column 'LTM Q4 25 (2025-01-01 to 2025-12-31)'; exactly one match, zero or several fail closed",
+  "metrics": {
+   "adjusted_ebitda_margin": "adjusted_ebitda_margin",
+   "total_leverage_adjusted": "total_leverage_adjusted",
+   "interest_coverage_adjusted": "interest_coverage_adjusted",
+   "ffo_to_debt": "ffo_to_debt"
+  },
+  "copy_rule": "T1C.3.issuer.<metric> and T1C.6.<metric>.cp1 copy the CP-1 fact: same unit, amount, decimals/currency/scale, value_class and citations; calculation_id is CP-1's own, bound at run time ({{CP1_CALCULATION_ID}}); the module fact id is its own",
+  "probe": "S1 positive promoted CP-1 head, read-only copy, 2026-10-28: adjusted_ebitda_margin PERCENT 0.25 calculated (25.0%); total_leverage_adjusted MULTIPLE 1.6666666666666666666666666666666666667 calculated (1.67x); interest_coverage_adjusted MULTIPLE 6 calculated (6.00x); ffo_to_debt PERCENT 0.42 calculated (42.0%); all known; no currency/scale on ratios"
+ },
+ "plan": {
+  "requested_modules": [
+   "CP-1C"
+  ],
+  "plan_order": [
+   "CP-0",
+   "CP-1",
+   "CP-1C"
+  ],
+  "cp_model": "not requested. registry.plan(('CP-1C','CP-MODEL')) = (CP-0, CP-1, CP-1C, CP-MODEL): CP-MODEL would follow CP-1C"
+ },
+ "host_scope": {
+  "CP-1C": "fixed H1 mapping, never caller-supplied: identity, financial and peers when the prepared pack holds a source with id 'peers' (no_peers: identity and financial)",
+  "protocol": "docs/G1X-OWNER-CORE-PROTOCOL.md section 3: an owner-only step may combine a module_context view with pack sources"
+ },
+ "d8": {
+  "cp1c_table_ids_today": [
+   "T4.1",
+   "T4.10",
+   "T4.11",
+   "T4.2",
+   "T4.3",
+   "T4.4",
+   "T4.5",
+   "T4.6",
+   "T4.7",
+   "T4.8",
+   "T4.9"
+  ],
+  "collisions_today": {
+   "T4.1": [
+    "CP-1",
+    "CP-1C"
+   ],
+   "T4.10": [
+    "CP-1",
+    "CP-1C",
+    "CP-4"
+   ],
+   "T4.11": [
+    "CP-1",
+    "CP-1C",
+    "CP-4"
+   ],
+   "T4.2": [
+    "CP-1",
+    "CP-1C",
+    "CP-4"
+   ],
+   "T4.3": [
+    "CP-1",
+    "CP-1C",
+    "CP-4"
+   ],
+   "T4.4": [
+    "CP-1",
+    "CP-1C"
+   ],
+   "T4.5": [
+    "CP-1",
+    "CP-1C"
+   ],
+   "T4.6": [
+    "CP-1",
+    "CP-1C"
+   ],
+   "T4.8": [
+    "CP-1",
+    "CP-1C"
+   ],
+   "T4.9": [
+    "CP-1",
+    "CP-1C",
+    "CP-4"
+   ]
+  },
+  "unshared_today": [
+   "T4.7"
+  ],
+  "proposed_ids": [
+   "T1C.1",
+   "T1C.2",
+   "T1C.3",
+   "T1C.4",
+   "T1C.5",
+   "T1C.6",
+   "T1C.7"
+  ],
+  "proposed_ids_collisions": []
+ }
+}

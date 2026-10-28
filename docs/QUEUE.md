@@ -2878,3 +2878,11 @@ previous LEAD session stopped at 04:37Z on the usage limit. Lost and redone:
   `write_receipt` verify exactly as `verify_owner_run_receipt`. I6's bare
   `pytest.raises(WorkflowError)` gain code checks; I1–I5 and I7 need no change; I8 is covered
   by the line-cap waiver.
+
+Build-first rule (user, 2026-10-28T08:20Z): build first and leave test runs to the end.
+Until LEAD opens the final verification phase, implementers write each RED test before its
+fix but run no pytest and take no heavy-job lock; static gates (ruff, mypy) still run.
+Reviewers read code and may run probes under 60 s. Every deferred run is listed with its exact
+command in the task report and in `work/lead/deferred-runs.md`; the B1 full-file run joins
+that list. No task counts as done, and nothing is integrated as verified, until its deferred
+runs pass in the final phase; commits made before then are recorded as build-only.

@@ -38,6 +38,9 @@ Open questions live in `work/build/stage1/<cp>/questions.md` (cp2h, cp3c, cp4c, 
 - On the Stage 1 release merge of codex/checkpoint (carries 0d-b): run test_schema_normalise_escapes.py, test_owner_workflow.py::test_equivalence_gap_verifier_replays_unrepresentable_submits and LEAD probe b04.
 In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor; round 10 sign rule in methods/cp1d, cp3d, cp8, cp2e; unsigned-grammar limitation in methods/cp8 and cp3d; CP-3C facility ids as prose names at MC-2; CP-8 item 2 guard-limit note.
 
+## Routing (user, 2026-10-28)
+- Round 13 work uses Sonnet implementers (`mx-feature`), not Opus. Reviews unchanged.
+
 ## After the class rounds (next steps, 2026-10-28 16:15Z)
 1. (done) All class rounds merged.
    Stage 1 release merged (17480de) and follow-up merged (e321357); lane green, 3669 passed. Lane merged into claude/round12 at 128c3ca.

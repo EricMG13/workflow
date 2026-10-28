@@ -370,3 +370,6 @@
 - 20:25 G1-X order fix1 5b3756a (M1 deferred test passes 587 s; M2 two-later case kills both mutants; L1). Scoped re-review.
 - 20:26 Shared defect test fix2 292b1d2 (verbatim pattern must accept a value; p5 exit 0). Scoped re-review.
 - 20:27 CP-5 fix1 re-review: APPROVE (750f036). agent=mx-feature fix-rounds=1 gates-first-pass=y. Merge after shared test.
+- 20:28 G1-X order fix1 re-review: APPROVE (5b3756a). agent=mx-feature fix-rounds=1 gates-first-pass=y.
+- 20:28 Shared defect test fix2 re-review: APPROVE (292b1d2). agent=mx-feature fix-rounds=2 gates-first-pass=n.
+- 20:28 **User: "no more per module work from stage 2 onwards".** Answers: in-flight agents finish; approved merge in one batch; rejected are parked (no further fix rounds). The 5 unconnected modules (CP-1C, CP-2G, CP-2H, CP-3C, CP-4C) get one batch build and one whole-stage review. Unreviewed fix rounds (CP-2D, CP-4, CP-L10) go to that review. The shared-helper calls become one stage-level test, not per-module edits.

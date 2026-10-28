@@ -83,7 +83,9 @@ def make_pack(case: str) -> PreparedPack:
             name=item["name"],
             status=item["status"],
             sha256=item["sha256"],
-            spans=tuple(Span(**page) for page in PAGES[item["sha256"]]),
+            spans=tuple(
+                Span(locator=page["locator"], text=page["text"]) for page in PAGES[item["sha256"]]
+            ),
             extraction_status="complete",
             limitation=item["limitation"],
         )
@@ -238,6 +240,9 @@ def _check_metric_copy(actual: Fact, want: Mapping[str, Any], metric: Fact) -> N
     assert actual.amount == metric.amount and actual.unit == metric.unit
     assert (actual.period, actual.basis) == (metric.period, metric.basis)
     assert want["period"] == f"bound from the CP-1 fact ({metric.period})"
+    # oracle-disagreement: basis wording, pending LEAD. The cell text writes "(IFRS consolidated
+    # group)" but figures.predicate_facts.basis_observed is "IFRS · consolidated group"; the
+    # actual value is pinned above (actual.basis == the CP-1 fact's basis_observed).
     assert want["basis"].startswith("bound from the CP-1 fact (")
     assert actual.citations == metric.citations
     assert want["note"] == FIGURE["cp1_coordinate"]
@@ -368,7 +373,8 @@ def _check_table(
             note = _DECIMAL_NOTE.match(cell["text"] or "")
             if note:
                 shown, equal = note.groups()
-                assert fact.text == shown and Decimal(fact.text) == Decimal(equal)
+                assert fact.text is not None and fact.text == shown
+                assert Decimal(fact.text) == Decimal(equal)
                 assert _plain(fact, labels[field]) == {**cell, "text": shown}
                 continue
             assert _plain(fact, labels[field]) == cell
@@ -377,6 +383,7 @@ def _check_table(
 
 def _ctx(inputs: cp4.Cp4Inputs) -> dict[str, Any]:
     metric = inputs.upstream.facts[0]
+    digests = {s.source_id: s.sha256 for s in inputs.pack.sources if s.sha256 is not None}
     return {
         "metric": metric,
         "metric_row": inputs.upstream.rows[(metric.table_id, metric.row_id)],
@@ -386,9 +393,7 @@ def _ctx(inputs: cp4.Cp4Inputs) -> dict[str, Any]:
             f"r{i:02d}": tuple(
                 Citation(
                     source_id=q.source_id,
-                    source_sha256=next(
-                        s.sha256 for s in inputs.pack.sources if s.source_id == q.source_id
-                    ),
+                    source_sha256=digests[q.source_id],
                     locator=q.locator,
                     quote=q.quote,
                 )
@@ -562,6 +567,66 @@ def test_semantic_gate_scope_includes_cited_page_text() -> None:
     assert list(cp4.semantic_issues(pack=inputs.pack, submission=variant)) == refusal["issues"]
 
 
+def _marker_quote(covenant: cp4_legal.Covenant) -> cp4_legal.Quote:
+    markers = EXPECTED["semantic_gate"]["markers"]
+    (quote,) = (q for q in covenant.citations if all(m in q.quote for m in markers))
+    return quote
+
+
+def test_semantic_gate_normalises_case_and_whitespace_in_page_text() -> None:
+    """Match rule: whitespace runs collapsed to one space, then case-folded. A test-only pack whose
+    cited page:2 writes both markers with case and whitespace variants (the marker quote dropped,
+    so only that page text can match) still yields the frozen refusal."""
+    inputs = make_inputs_object("gap_false_same_definition")
+    (covenant,) = inputs.submission.covenants
+    marker = _marker_quote(covenant)
+    kept = tuple(q for q in covenant.citations if q is not marker)
+    assert {(q.source_id, q.locator) for q in kept} == {("legal-covenants", "page:2")}
+    variant_text = (
+        "Covenant EBITDA Has  the\nMeaning assigned  IN incorporated Schedule A. "
+        "Schedule A IS NOT\tSUPPLIED  with this\n  COPY."
+    )
+    for marker_text in EXPECTED["semantic_gate"]["markers"]:
+        assert marker_text not in variant_text
+        assert marker_text not in variant_text.casefold()
+        assert marker_text not in re.sub(r"\s+", " ", variant_text)
+    legal = next(s for s in inputs.pack.sources if s.source_id == "legal-covenants")
+    spans = tuple(
+        span.model_copy(update={"text": variant_text}) if span.locator == "page:2" else span
+        for span in legal.spans
+    )
+    pack = inputs.pack.model_copy(
+        update={
+            "sources": tuple(
+                s.model_copy(update={"spans": spans}) if s is legal else s
+                for s in inputs.pack.sources
+            )
+        }
+    )
+    variant = inputs.submission.model_copy(
+        update={"covenants": (covenant.model_copy(update={"citations": kept}),)}
+    )
+    refusal = EXPECTED["gap_false_same_definition"]["CP-4"]["refusal"]
+    assert list(cp4.semantic_issues(pack=pack, submission=variant)) == refusal["issues"]
+
+
+def test_semantic_gate_quote_of_page_absent_from_pack_is_scanned() -> None:
+    """Scope rule (controller ruling 4): a citation whose locator is not a pack page contributes
+    only its quote. The marker quote alone, cited at a locator absent from the pack, still
+    yields the frozen refusal, so the quote texts are in scope."""
+    inputs = make_inputs_object("gap_false_same_definition")
+    (covenant,) = inputs.submission.covenants
+    absent = "page:99"
+    legal = next(s for s in inputs.pack.sources if s.source_id == "legal-covenants")
+    assert absent not in {span.locator for span in legal.spans}
+    quote = _marker_quote(covenant).model_copy(update={"locator": absent})
+    variant = inputs.submission.model_copy(
+        update={"covenants": (covenant.model_copy(update={"citations": (quote,)}),)}
+    )
+    refusal = EXPECTED["gap_false_same_definition"]["CP-4"]["refusal"]
+    assert list(cp4.semantic_issues(pack=inputs.pack, submission=variant)) == refusal["issues"]
+
+
 def test_false_same_definition_refused_before_composition(
     results: dict[str, tuple[cp4.Cp4Inputs, cp4.Cp4Result]],
 ) -> None:
@@ -585,6 +650,7 @@ def test_false_same_values_would_compose_without_the_gate(
     )
     room = _fact(report, "T4.9.r01.headroom")
     share = _fact(report, "T4.9.r01.headroom_share")
+    assert room.amount is not None
     assert f"{room.amount.normalize()} {room.unit}" == must_not["headroom"]
     assert f"{share.amount} {share.unit}" == must_not["headroom_share"]
     assert _fact(report, "T4.9.r01.test_on_cp_1_metric").text == must_not["verdict"]

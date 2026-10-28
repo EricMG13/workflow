@@ -341,3 +341,4 @@
 - 19:49 CP-2E review: REQUEST CHANGES (H1 summary bracket raises after binding write; M1 first-quote citations; M2 acceptance tests). Fix round 1. CP-3D fix1 done (9d74fc7, per-cell Cites; 1320 passed); scoped re-review dispatched.
 - 19:50 CP-8 review: REQUEST CHANGES (M1 settled own limitations carry synthetic line; M2 acceptance 3/5/6 + submit untested). Controller interim: tests assert settle's real output, built by settle (LEAD asked). Fix round 1. g1x-order review dispatched.
 - 19:51 LEAD Stage 2 round 3 cherry-picked: alias canonicalise; H1 class + shared defect test (due before further claims); citation rule; CP-2E L1 lease-only; synthetic settled side. Brief updated. Merges held until shared model-text/hostile test lands.
+- 19:52 CP-2A review: REQUEST CHANGES (M1 acceptance tests; M2 predating unit/currency -> LEAD). Fix round queued behind the shared defect-class test (cap 10). Shared defect test dispatched first: it gates further claims.

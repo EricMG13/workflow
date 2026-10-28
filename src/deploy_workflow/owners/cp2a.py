@@ -10,19 +10,22 @@ base period is known (CP-1's twelve-month gate; a quarter is never annualised).
 
 Arithmetic: sums and products are exact (a Decimal context that traps any rounding), and every
 quotient is one division in `model/_cells.CONTEXT` (38 digits, ROUND_HALF_EVEN), so each value is
-the correctly rounded rational. This module does no I/O and makes no store, host or render call;
-the run-time wiring (store, journal, view, probe) is added in later stages.
+the correctly rounded rational. The calculation (everything above "Stage 2") does no I/O. The last
+section connects it (protocol `docs/G1X-OWNER-CORE-PROTOCOL.md` §2): the upstream read, the one
+store adapter `_inputs` that submit, probe and view share, and the plug-in parts.
 """
 
+import hashlib
+import json
 import re
 import unicodedata
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Context, Decimal, Inexact, InvalidOperation, Overflow, localcontext
 from fractions import Fraction
-from typing import Literal
+from typing import Literal, get_args
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from deploy_vii import prose
 from deploy_vii.business_context import (
@@ -38,12 +41,34 @@ from deploy_vii.contracts import (
     Claim,
     Contract,
     Fact,
+    Hash,
+    Input,
+    Module,
     ReportTable,
+    Run,
     TableColumn,
     TableRow,
+    Text,
 )
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Qualification,
+    StepValidation,
+    bounded_issues,
+    clipped,
+    current_inputs,
+    inherited_limitations,
+)
+from deploy_vii.live.schema import normalise
+from deploy_vii.live.submission import Submitted
 from deploy_vii.model._cells import CONTEXT
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.readiness import shape_issues
+from deploy_vii.report_view import figure_unit
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2A"
 STEP_ID = "downside_pathway"
@@ -590,7 +615,7 @@ def _prose_issues(
     if is_blank(text):
         return [f"{path}: empty text"]
     return [
-        *(f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)),
+        *(clipped((path, ": ", issue)) for issue in prose.issues(text, bound, names=names)),
         *prohibited_issues(path, text),
     ]
 
@@ -617,7 +642,7 @@ def _scenario_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
         if sc.name.strip() == BASE_ROW:
             issues.append(f"{path}.name: {RESERVED_BASE}")
         if not is_blank(sc.name) and sc.name in seen:
-            issues.append(f"{path}.name: duplicate scenario name: {sc.name}")
+            issues.append(clipped((path, ".name: duplicate scenario name: ", sc.name)))
         seen.add(sc.name)
         issues += _prose_issues(f"{path}.rationale", sc.rationale, bound, inputs.names)
         if sc.limitation is not None:
@@ -1369,7 +1394,7 @@ def compute(inputs: Inputs) -> Result:
     """The composed CP-2A content of a valid submission; raises ValueError on any issue."""
     issues = validate(inputs)
     if issues:
-        raise ValueError("; ".join(issues))
+        raise ValueError("; ".join(bounded_issues(issues)))
     sub = inputs.submission
     base = BaseOperands.from_cp1(inputs.cp1_facts, period=sub.base_period)
     bound = prose.bind(referencable(inputs.cp1_facts))
@@ -1409,3 +1434,333 @@ def compute(inputs: Inputs) -> Result:
         ranking=ranked,
         crossings=crossings,
     )
+
+
+# --- Stage 2: the connection to the store (docs/CP2A-OWNER-LEASE.md, G1-X protocol §2) --------
+
+PROMOTED = Qualification(implementation="implemented")
+QUALIFICATION = PROMOTED
+STEP_IDS = (STEP_ID,)
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: DownsideSubmission}
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+CP0, CP1 = "CP-0", "CP-1"
+SCENARIO_BOUNDS = {"min": "0", "max": "1", "places": 4}
+
+
+class DownsideReport(Contract):
+    """The retained step output: the composed content bound to the pack and the submission."""
+
+    schema_version: Literal["downside-pathway/1"] = "downside-pathway/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[Text, ...]
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-2A attempt binds, read once from the journal (`cp2a_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp1` is the facts of the bound CP-1 head; `inherited` is what settlement will
+    carry from the bound heads (`execution.inherited_limitations`)."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp1: tuple[Fact, ...]
+    inherited: tuple[str, ...] = ()
+
+
+def cp2a_upstream(store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-1 head's facts, the current input set and the inherited limitations. A
+    refusal of `current_inputs` (an upstream gone stale, unrun or blocked, or CP-0 no longer
+    authorizing CP-2A) is kept as text: the validator reports it as a staleness issue."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+    bound = next((item for item in attempt.inputs if item.input_id == CP1), None)
+    if bound is None:
+        raise ValueError(f"The CP-2A attempt binds no {CP1} input")
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp1=store.result(bound.sha256).facts,
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+@dataclass(frozen=True)
+class OfferedBase:
+    """A base period the view offers: its `kind` and the nine T4.10 facts the core reads."""
+
+    period: str
+    kind: PeriodKind
+    facts: tuple[Fact, ...]
+
+
+def offered_bases(cp1: Iterable[Fact]) -> tuple[OfferedBase, ...]:
+    """The base periods of a CP-1 head, in the order the head first states them.
+
+    A period is offered only if its label parses (`period_kind`, `_column`) and CP-1 holds exactly
+    one T4.10 fact per operand and reported-ratio metric for it (`BaseOperands.from_cp1` raises
+    otherwise). Any other period is not offered, so the analyst cannot choose it and no core call
+    can raise on it (fail closed; CP-1 head integrity is not this module's to repair). One
+    derivation feeds the view's `kind` and the core's `offered_periods` (round 5-6 L6)."""
+    facts = tuple(f for f in cp1 if f.table_id == CP1_TABLE)
+    metrics = (*OPERAND_METRICS, *REPORTED.values())
+    bases: list[OfferedBase] = []
+    for period in dict.fromkeys(f.period for f in facts if f.period is not None):
+        try:
+            kind = period_kind(period)
+            column = _column(period)
+        except ValueError:
+            continue
+        chosen: list[Fact] = []
+        for metric in metrics:
+            found = [f for f in facts if f.label == f"{column} · {metric}" and f.period == period]
+            if len(found) != 1:
+                break
+            chosen.append(found[0])
+        else:
+            bases.append(OfferedBase(period=period, kind=kind, facts=tuple(chosen)))
+    return tuple(bases)
+
+
+def _inputs(pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream) -> Inputs:
+    """The store adapter: the settled CP-1 head's offered T4.10 facts (in the head's order), the
+    offered periods and the issuer name, as the Stage 1 `Inputs` the core reads. Submit, probe and
+    the entry validator reach the core only through this."""
+    bases = offered_bases(upstream.cp1)
+    chosen = {f.fact_id for base in bases for f in base.facts}
+    return Inputs(
+        submission=submission,
+        cp1_facts=tuple(f for f in upstream.cp1 if f.fact_id in chosen),
+        offered_periods=tuple(base.period for base in bases),
+        names=(pack.run.issuer_name,),
+    )
+
+
+def _stale_issues(upstream: Upstream) -> list[str]:
+    if isinstance(upstream.current, str):
+        return [clipped(("Stale inputs: ", upstream.current))]
+    bound = {item.input_id: item for item in upstream.bound}
+    current = {item.input_id: item for item in upstream.current}
+
+    def state(item: Input | None) -> str:
+        return "absent" if item is None else f"{item.status} {item.sha256[:12]}"
+
+    return [
+        f"Stale input {key}: bound {state(bound.get(key))}, current {state(current.get(key))}"
+        for key in dict.fromkeys((*bound, *current))
+        if bound.get(key) != current.get(key)
+    ]
+
+
+def validate_downside(
+    *, pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Every issue of `submission` over the bound `upstream`: staleness first, then the core's
+    content issues in their order; empty when it composes."""
+    issues = [*_stale_issues(upstream), *validate(_inputs(pack, submission, upstream))]
+    return tuple(dict.fromkeys(issues))
+
+
+def downside_report(
+    *, pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream
+) -> DownsideReport:
+    """The composed report of a valid submission; raises ValueError on any issue."""
+    issues = validate_downside(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        raise ValueError("; ".join(bounded_issues(issues)))
+    result = compute(_inputs(pack, submission, upstream))
+    return DownsideReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=result.tables,
+        facts=result.facts,
+        claims=result.claims,
+        limitations=result.limitations,
+    )
+
+
+def cp2a_module(report: DownsideReport, *, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-2A candidate: the report's tables and claims bound to `inputs`, then the
+    submission's content hash (the owner-only settled tail, protocol §2 `SCHEMAS`)."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands the journal and the verifier replays (its last step is
+    the one under validation)."""
+    step = attempt.steps[-1]
+    try:
+        submission = DownsideSubmission.model_validate_json(store.payload(step.payload_sha256))
+    except ValidationError as error:
+        return StepValidation(issues=shape_issues(error))
+    upstream = cp2a_upstream(store, attempt)
+    issues = validate_downside(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = downside_report(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _submit_step(store: Execution, ticket_id: str, payload: str) -> Attempt:
+    """Retain the one `downside_pathway` response, validate it, then settle CP-2A with the Python
+    candidate (as `cp2_synthesis.submit_cp2_step`). An invalid step finishes the attempt rejected
+    (blocked on the repair): there is no within-attempt repair. A crash after the step resumes
+    from the retained step."""
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    if attempt is None or attempt.module_id != MODULE_ID or attempt.status != "pending":
+        raise ValueError("Ticket is absent, finished or belongs to another module")
+    if (
+        attempt.steps
+        and attempt.steps[0].payload_sha256 != hashlib.sha256(payload.encode()).hexdigest()
+    ):
+        raise ValueError("Ticket already retains a different response; resume or interrupt")
+    if not attempt.steps or attempt.steps[0].status == "pending":
+        attempt = store.submit_step(
+            ticket_id,
+            MODULE_ID,
+            STEP_IDS,
+            STEP_ID,
+            payload,
+            lambda pack, current: _validate_step(store, pack, current),
+        )
+    if attempt.status == "finished":
+        return attempt
+    outcome = _validate_step(store, store.pack(), attempt)
+    if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+        raise ValueError("Retained CP-2A output differs from trusted validation")
+    candidate = _candidate(outcome.output or "", attempt)
+    return store.finish(
+        ticket_id,
+        candidate.model_dump_json(),
+        lambda supplied: () if supplied == candidate else ("CP-2A candidate differs",),
+        qualification=QUALIFICATION,
+    )
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal one `downside_pathway` payload: null resolution against the model-facing schema,
+    then the validated step and, when valid, the settlement. CP-2A has no tool-loop rules."""
+    if rules is not None:
+        raise ValueError("CP-2A has no tool-loop rules (rule mode none)")
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-2A has one step, {STEP_ID}")
+    normalised, resolved = normalise(DownsideSubmission, payload)
+    journal = _submit_step(store, ticket_id, normalised)
+    return Submitted(journal, normalised, resolved, (), (), None)
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    return cp2a_module(
+        DownsideReport.model_validate_json(output), inputs=attempt.inputs, attempt=attempt.number
+    )
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+# --- the exact `read_inputs` view ---------------------------------------------------------------
+
+
+def _cell(fact: Fact, referencable_ids: frozenset[str]) -> dict[str, object]:
+    known = fact.status == "known"
+    return {
+        "ref": fact.fact_id if fact.fact_id in referencable_ids else None,
+        "shown": spelled(fact) if known else None,
+        "status": fact.status,
+        "limitation": fact.limitation,
+    }
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """What `read_inputs` returns, all Python's (lease Tool use): the upstream statuses, the
+    offered base periods with each operand and reported ratio, the CP-1 facts a figure reference
+    may name, the shock bounds, the watch metrics and the limitations settlement will inherit.
+    No quote, citation or record. `pack` is part of the lease signature; the view reads none of
+    it."""
+    del pack
+    bases = offered_bases(upstream.cp1)
+    allowed = frozenset(f.fact_id for f in referencable(f for b in bases for f in b.facts))
+    figures = [f for b in bases for f in b.facts if f.fact_id in allowed]
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id.startswith("CP-")
+        ],
+        "base_periods": [
+            {
+                "period": base.period,
+                "kind": base.kind,
+                "operands": {
+                    metric: _cell(fact, allowed)
+                    for metric, fact in zip(
+                        OPERAND_METRICS, base.facts[: len(OPERAND_METRICS)], strict=True
+                    )
+                },
+                "ratios": {
+                    ratio: _cell(fact, allowed)
+                    for ratio, fact in zip(RATIOS, base.facts[len(OPERAND_METRICS) :], strict=True)
+                },
+            }
+            for base in bases
+        ],
+        "cp1_facts": [
+            {
+                "ref": fact.fact_id,
+                "label": fact.label,
+                "period": fact.period,
+                "unit": figure_unit(fact) or fact.unit,
+                "shown": spelled(fact),
+            }
+            for fact in figures
+        ],
+        "cp1_facts_note": (
+            "Reference a figure only as {ref|unit} with a ref and unit listed in cp1_facts."
+            if figures
+            else "CP-1 offers no referencable figure: no figure may be referenced, so write no "
+            "figure at all (labels only)."
+        ),
+        "scenario_bounds": {"decline": SCENARIO_BOUNDS, "increase": SCENARIO_BOUNDS},
+        "threshold_metrics": list(get_args(Metric)),
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the one `read_inputs` record, as compact JSON (S1a lease rev 2, M4)."""
+    context = context_block(pack=historical.pack(), upstream=cp2a_upstream(historical, attempt))
+    body = json.dumps(context, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body

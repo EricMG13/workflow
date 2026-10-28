@@ -1,5 +1,5 @@
-<!-- Draft of src/deploy_vii/methods/cp2a.md (documentation, D12). Lands at LEAD freeze. LEAD adaptation per ruling Q2; no r14 CP-2A text exists in the repo. -->
-# CP-2A Downside pathway: method (LEAD adaptation, draft)
+<!-- src/deploy_vii/methods/cp2a.md (documentation, D12). LEAD adaptation per ruling Q2; no r14 CP-2A text exists in the repo. Moved from docs/methods-drafts/cp2a.md with the Stage 2 build. -->
+# CP-2A Downside pathway: method (LEAD adaptation)
 
 Purpose (methodology.json): what breaks first and how far it falls. CP-2A is a static, single-period stress of one CP-1 base period, computed in Python from settled CP-1 facts. The analyst chooses the base period, the scenarios, the shock sizes and the watch levels (labelled analyst assumptions, uncited; confidence is never High).
 
@@ -21,3 +21,9 @@ T2B.1 scenarios, T2B.2 base operands, T2B.3 stressed flows, T2B.4 stressed metri
 
 ## Review challenge (ruling Q2)
 The independent review must challenge this adaptation against methodology.json's purpose; the static slice is defensible for a first owner (ranking and required decline are answered) but defers the forward path to CP-2G.
+
+## Connection notes (Stage 2)
+- **Base periods offered.** The view offers a period only if CP-1 holds exactly one T4.10 fact for each of the nine operand and reported-ratio metrics for it and its label parses as `LTM Qn yy`, `FYyy` or `Qn yy`. A period that fails either test is not offered, so it cannot be chosen; the view's `kind` and the core's `offered_periods` come from the same derivation. CP-1 head integrity is not repaired here.
+- **Guard limits.** CP-2A takes no citations and has no tool-loop rules or precheck, so the rule W, B8, item 8 comma and blank support-quote limits of other owners do not apply. The `{ref|unit}` references and the free-text checks are `prose.issues`, `prose.bare_figures` and `prohibited_issues` over the analyst's text only; a figure written as a bare numeral is refused, never read.
+- **Issue lines.** A line that quotes the analyst's text (a scenario name, a prose issue) is cut at 600 characters (`execution.clipped`); the journal keeps at most 20 lines.
+- **Staleness.** The step validator reports `Stale input CP-1: bound <status> <12 hex>, current <status> <12 hex>` when the bound CP-1 head is no longer current, as defence in depth; through the workflow a changed head refuses `stale_binding` first.

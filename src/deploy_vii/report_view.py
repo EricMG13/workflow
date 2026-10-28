@@ -562,6 +562,8 @@ _PRESETS: tuple[tuple[PathwayId, str, str, tuple[str, ...]], ...] = (
         "Is the distress gate met; which path and fulcrum; what recoveries?",
         (
             "distress-gate",
+            "downside-stress",
+            "break-points",
             "recovery-by-class",
             "value-allocation-claims",
             "liquidity-runway",
@@ -1159,6 +1161,18 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         ),
     }
 )
+# Heads and owner codes of the Distressed & Restructuring Front Page (``rbot-fp-05-*.dc.html``).
+# CP-2A creates the composition with its two downside blocks (lease D7); later owners append rows.
+_DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
+    {
+        "downside-stress": _Spec(
+            "Downside stress", "CP-2A", "dense", ("CP-2A",), route_label="Full analysis"
+        ),
+        "break-points": _Spec(
+            "Break points", "CP-2A", "dense", ("CP-2A",), route_label="Full analysis"
+        ),
+    }
+)
 _NO_PRODUCER = "No module produces this block yet."
 _UNBOUND_OWNER = "Unbound"
 _PERIOD_CLASSES = (
@@ -1195,7 +1209,7 @@ def _strip_note(block_id: str) -> str:
 
 
 def _spec_of(block_id: str) -> _Spec:
-    for composition in (_CREDIT_SNAPSHOT, _EARNINGS_UPDATE, _COVENANT_REFINANCING):
+    for composition in (_CREDIT_SNAPSHOT, _EARNINGS_UPDATE, _COVENANT_REFINANCING, _DISTRESSED):
         if block_id in composition:
             return composition[block_id]
     # Blocks only another Pathway lists are not produced yet: they keep the idle view's wording.

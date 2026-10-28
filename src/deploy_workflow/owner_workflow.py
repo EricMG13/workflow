@@ -93,33 +93,36 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2
+from deploy_workflow.owners import cp1a, cp2, cp2a
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
-SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2"})
+SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"})
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
 # G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
 # raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
 # supplies `STEP_IDS`, `SCHEMAS`, `submit` and, for steps with pack sources, `RULES`.
-_CORES: dict[str, ModuleType] = {}
+_CORES: dict[str, ModuleType] = {"CP-2A": cp2a}
 _QUALIFICATION = {
     "CP-1": PROMOTED,
     "CP-1A": CP1A_PROMOTED,
     "CP-2": CP2_PROMOTED,
     "CP-MODEL": PUBLISHED,
+    "CP-2A": cp2a.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
     "CP-1": _verify_promotion,
     "CP-1A": cp1a.probe,
     "CP-2": cp2.probe,
+    "CP-2A": cp2a.probe,
 }
 # The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4; G1-X §3: any
 # step with an entry here may declare `inputs="module_context"`).
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
+    "downside_pathway": cp2a.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -127,6 +130,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
 _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepValidation]] = {
     "CP-1A": cp1a.ENTRY_VALIDATOR,
     "CP-2": cp2.ENTRY_VALIDATOR,
+    "CP-2A": cp2a.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -172,6 +176,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.quality import QualityReview
     from deploy_vii.readiness import ReadinessReview
     from deploy_vii.source_context import SourceContextReview
+    from deploy_workflow.owners.cp2a import DownsideSubmission
 
     def step(
         step_id: str,
@@ -246,6 +251,13 @@ def _default_specs() -> dict[str, OwnerSpec]:
             entry=None,
             kind="deterministic",
             publish=publish_cp_model,
+        ),
+        "CP-2A": OwnerSpec(
+            module_id="CP-2A",
+            steps=(step("downside_pathway", DownsideSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
         ),
     }
 

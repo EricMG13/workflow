@@ -85,6 +85,21 @@ For each module:
 - [ ] `mx-adversary` reviews arithmetic against the lease. Any fix round goes to an Opus agent.
 - [ ] Merge into the lane branch.
 
+**Rulings rounds** (LEAD `docs/rulings/2026-10-28-stage1.md`, 2d27e50; a ruling beats the lease). Each module gets one rulings round after its current review returns. The original implementer merges the lane tip, applies its section test-first and runs the reviewer's probes. The round is not counted as a fix round. Review is scoped to the ruling diff: `mx-adversary` for financial arithmetic (CP-2D, CP-2A, CP-1D, CP-1C), `mx-precise` for wording-only rounds (CP-2E, CP-DR, CP-3D). The merged modules (CP-2E, CP-DR, CP-3D) are reworked on their own branches and merged again.
+
+| Module | Rulings | Notes |
+|---|---|---|
+| CP-2E | E1–E5 | merged; rework on branch |
+| CP-2A | A1–A8 | A5 replaces the v02 strict xfail; A7 removes the positive-interest refusal |
+| CP-3D | D1–D3 | merged; X1 (five raising shapes) waits for round 2 |
+| CP-DR | R1–R3 | merged; rework on branch |
+| CP-2D | 2D1–2D9 | 2D1 substring match (not word boundary); 2D9 financing total; zero debt not_applicable |
+| CP-1C | 1C1–1C6 | folded into the running fix 1 |
+| CP-1D | 1D1–1D10 | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
+| CP-4 | 4-1 | wait for LEAD's oracle commit |
+
+LEAD round 2 is pending: X1 (CP-3D), L10-a/b/c, C1–C3, and the 1D2 basis-limitation follow-up. Those cases fail closed until it arrives. `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
+
 Then:
 - [ ] **Stage 1 review.** Fable checks every module's calculation against its lease, the input-field lists against `manifest.fact_bindings`, and that nothing reaches into a store, the host or a renderer. It fixes and commits, test-first.
 

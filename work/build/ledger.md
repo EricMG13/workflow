@@ -278,3 +278,4 @@
 - 2026-10-28 CP-2E r12 fix1 done: cfd6e3e (test only, M1 pinned; mutants_review 8/8 killed). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped (Medium fix)
 - 2026-10-28 CP-L10 r13 done: d688c6b (change exact in _EXACT; reviewer pair + bound pairs). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-feature
 - 2026-10-28 CP-3D r13 BLOCKED: fcd7db2 item 8 built; frozen refusal mutation amortisation_nonzero (quote 'December 31, 2029', value_text 31) moves to 'does not occur' under comma-space join -> LEAD. agent=mx-feature fix-rounds=0 gates-first-pass=n
+- 2026-10-28 Lane merged into claude/round12 (67df6a1). 0d-c M1/M2/M-R1 + blank.py re-export + protocol §5 audit dispatched: mx-feature on claude/r13-0dc (review mx-precise). LEAD told: cp3c pin red (business_context.py), CP-3D item 8 date block (a/b/c), CP-8 _wrap_split question

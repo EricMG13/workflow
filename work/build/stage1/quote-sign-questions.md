@@ -5,3 +5,6 @@
 - B2 (CP-3D round 10 review L1, decided locally as a riding Low): the parenthesis exclusion applies only when the match starts with a digit, so `(-425)` with `-425` keeps today's shape refusal.
 - B3. A public joined-reading helper in `deploy_vii.quotes` (normalise does not join quote-side hyphen wraps; CP-8 L-1, CP-3D Low 1; the CP-2E fix 1 review notes the same gap for `-\n`).
 - AGENTS.md rule 3: this class (raw read after a normalised match, and sign reading) should become one shared test every quote-reading module runs. Proposed as a Modules task once LEAD confirms B1.
+
+## Ruled by LEAD round 11 (d60035b)
+B1: a figure at a quote edge is read on the page. B2: Modules decides (CP-3D keeps the shape refusal for `(-425)`). B3: no helper; a name or text value with `- ` on a hyphen-wrapped quote does not occur. The shared class test is a Modules task (stage1/defect-classes-brief.md).

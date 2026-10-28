@@ -195,7 +195,7 @@ claim is authorized. Do not implement another arithmetic engine.
 | CP-1 source_context | none | explicitly declared sources; search/read only |
 | CP-1 financials | validated earlier source_context by existing step projection | explicitly declared sources; search/read/extract |
 | CP-2 credit_synthesis | exactly `module_context("credit_synthesis")`: bound CP-1 referencable facts (`ref`, `label`, `period`, `unit`, `shown`), the CP-1A catalogue rows and signals, upstream statuses and inherited limitations, with the per-case key tree frozen in `cases/snapshot/cp2-view-tree.json` (S1a lease rev 2; a D2 exception that counts as tool use) | none |
-| CP-5 integrity_review | explicitly granted bound CP-1 canonical fact/status view; includes missing facts; single-producer no-claim integrity scope | none |
+| CP-5 integrity_review | exactly the owner view of docs/CP5-OWNER-LEASE.md: cp5_integrity.context_block over the bound heads (every fact of the non-CP-1 bound heads; for CP-1 the facts integrity_projection keeps), no `quote` key at any depth and no citation quote string outside CP-3's own T3.3 `*.quote` facts (`shown`, `text`, `label`; CP-3's settled market-evidence facts, not citations), python_findings reduced to the kind label plus where; served by read_inputs on the G1 pathway only. The v1 and CP5-v2 upstream-tool grants stay for the earnings pathway | none |
 
 All other source/upstream view pairs refuse until explicitly leased. CP-1 narrative/
 readiness/quality remain source-free and use only their existing adopted projections.

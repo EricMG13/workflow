@@ -13,7 +13,7 @@ a quotation split on one side and missing on the other). A ``ValueError`` starti
 """
 
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import (
@@ -111,6 +111,11 @@ _MONTHS = (
     *("July", "August", "September", "October", "November", "December"),
 )
 _DATE = re.compile(r"^(" + "|".join(_MONTHS) + r") ([1-9]|[12][0-9]|3[01]), ((?:19|20)[0-9]{2})$")
+_DATE_IN_QUOTE = re.compile(  # round 9 item 2's date match
+    r"(?<![A-Za-z])("
+    + "|".join(_MONTHS)
+    + r") ([1-9]|[12][0-9]|3[01]), ((?:19|20)[0-9]{2})(?![0-9])"
+)
 _FIGURE = re.compile(r"^[0-9]{1,3}\.[0-9]{2}$")  # a quoted figure or level: N.NN
 _MULTIPLE = re.compile(r"[0-9]+\.[0-9]+x")
 _DECIMAL = re.compile(r"[0-9]+\.[0-9]+")
@@ -379,6 +384,12 @@ def _norm(text: str) -> str:
     return normalise(text)
 
 
+def _only_date(at: str, quote: str) -> bool:
+    """Round 9 item 2: every ``Month D, YYYY`` date the normalised quote states is ``at`` (a
+    repeat is fine). ISO or day-first dates are not seen (a guard limit for methods/cp8.md)."""
+    return all(match.group(0) == at for match in _DATE_IN_QUOTE.finditer(quote))
+
+
 def _token_once(value: str, quote: str) -> bool:
     """``value`` occurs exactly once in the normalised ``quote`` as a whole number."""
     pattern = r"(?<![0-9.])" + re.escape(value) + r"(?![0-9]|\.[0-9])"
@@ -490,8 +501,15 @@ class _Checker:
 
     # shared rules
 
-    def _cite(self, path: str, ref: QuoteRef, only: str | None = None) -> list[str]:
-        """Pack, then the CP-8 scope, then the field's own source, then locator and quote."""
+    def _cite(
+        self,
+        path: str,
+        ref: QuoteRef,
+        only: str | None = None,
+        rule: Callable[[str], list[str]] | None = None,
+    ) -> list[str]:
+        """Pack, then the CP-8 scope, then the field's own source rule (``only``, or ``rule`` over
+        the source id), then locator and quote: lease :60 for every quote (round 9 item 4)."""
         source = self.index.get(ref.source_id)
         if source is None or source.status != "ready" or source.sha256 is None:
             return [_UNAVAILABLE + ref.source_id]  # citation_issues' own condition and wording
@@ -499,6 +517,8 @@ class _Checker:
             return [f"{path}: source {ref.source_id} is outside the CP-8 scope"]
         if only is not None and ref.source_id != only:
             return [f"{path}: must cite {only}"]
+        if rule is not None and (found := rule(ref.source_id)):
+            return found
         citation = Citation(
             source_id=ref.source_id,
             source_sha256=source.sha256,
@@ -550,6 +570,8 @@ class _Checker:
         vocabulary = {"action_bias": ACTION_BIASES, "confidence": CONFIDENCES}.get(name)
         if found:
             self.found += found
+        elif not text.strip():  # round 9 item 1, the r27 frame
+            self.found.append(f"{path}: text is empty")
         elif vocabulary is not None and text not in vocabulary:
             self.found.append(f"{path}: {text} is not one of {', '.join(vocabulary)}")
         elif text not in _norm(quote.quote):
@@ -656,6 +678,8 @@ class _Checker:
             ]
         if as_of is None:
             return [f"{path}: as_of_text {obs.as_of_text} does not occur in the quote"]
+        if not _only_date(obs.as_of_text, quote):  # round 9 item 2, both sides
+            return [f"{path}: as_of_text {obs.as_of_text} is not the only date in the quote"]
         if (
             obs.side == "realized"
             and self.decision_date is not None
@@ -667,20 +691,23 @@ class _Checker:
     def _observation_source(self, path: str, obs: ObservationEntry) -> list[str]:
         if obs.side == "expected":
             return self._cite(f"{path}.quote", obs.quote, DECISION_SOURCE)
-        found = self._cite(f"{path}.quote", obs.quote)
-        source_id = obs.quote.source_id
-        if found:
-            return found
-        if source_id == DECISION_SOURCE:
-            return [f"{path}.quote: a realized observation cannot cite {DECISION_SOURCE}"]
-        want = "third_party" if obs.metric in QUOTATION else "issuer"
-        have = _authority(self.authority, source_id)
-        if have != want:
-            article = "an" if want[0] in "aeiou" else "a"
-            return [
-                f"{path}: {obs.metric} needs {article} {want} source, {source_id} is {have} (CP-0 T3)"
-            ]
-        return []
+
+        def rule(source_id: str) -> list[str]:  # r36, then the authority (r11)
+            if source_id == DECISION_SOURCE:
+                return [f"{path}.quote: a realized observation cannot cite {DECISION_SOURCE}"]
+            want = "third_party" if obs.metric in QUOTATION else "issuer"
+            have = _authority(self.authority, source_id)
+            if have != want:
+                article = "an" if want[0] in "aeiou" else "a"
+                return [
+                    (
+                        f"{path}: {obs.metric} needs {article} {want} source, {source_id} is {have} "
+                        "(CP-0 T3)"
+                    )
+                ]
+            return []
+
+        return self._cite(f"{path}.quote", obs.quote, rule=rule)
 
     def _outcome(self) -> None:
         realized = any(obs.side == "realized" for obs in self.sub.observations)
@@ -706,17 +733,27 @@ class _Checker:
             self._default(statement)
 
     def _default(self, statement: DefaultStatement) -> None:
-        found = self._cite("default_restructuring.quote", statement.quote)
-        source_id, quote, at = (
-            statement.quote.source_id,
-            _norm(statement.quote.quote),
-            statement.as_of_text,
-        )
+        def rule(source_id: str) -> list[str]:  # round 9 item 3 (the r36 frame), then issuer
+            if source_id == DECISION_SOURCE:
+                return [
+                    (
+                        "default_restructuring.quote: a default or restructuring statement cannot "
+                        f"cite {DECISION_SOURCE}"
+                    )
+                ]
+            have = _authority(self.authority, source_id)
+            if have != "issuer":
+                return [
+                    (
+                        f"default_restructuring: needs an issuer source, {source_id} is {have} "
+                        "(CP-0 T3)"
+                    )
+                ]
+            return []
+
+        found = self._cite("default_restructuring.quote", statement.quote, rule=rule)
+        quote, at = _norm(statement.quote.quote), statement.as_of_text
         as_of = parse_date(at) if at in quote else None
-        if not found and (have := _authority(self.authority, source_id)) != "issuer":
-            found = [
-                f"default_restructuring: needs an issuer source, {source_id} is {have} (CP-0 T3)"
-            ]
         if found:
             self.found += found
         elif not _SUBJECT.search(_norm(quote).lower()):
@@ -725,6 +762,10 @@ class _Checker:
             )
         elif as_of is None:
             self.found.append(f"default_restructuring: as_of_text {at} does not occur in the quote")
+        elif not _only_date(at, quote):  # round 9 item 2
+            self.found.append(
+                f"default_restructuring: as_of_text {at} is not the only date in the quote"
+            )
         elif self.decision_date is not None and as_of <= self.decision_date:
             self.found.append(f"default_restructuring: as_of {at} is not after the decision date")
 
@@ -1884,6 +1925,16 @@ class _Composer:
             a = unrecorded[field].absence
             if a is not None:
                 self._gap_row(field, f"{item} not recorded", item, a.reason, impact, a.follow_up)
+        exit_absence = th.exit_trigger.absence
+        if exit_absence is not None:  # round 9 item 5: after the expectations, as in T7.2
+            self._gap_row(
+                "exit_trigger",
+                "Exit trigger not recorded",
+                "Exit trigger",
+                exit_absence.reason,
+                "Exit discipline cannot be measured",
+                exit_absence.follow_up,
+            )
         for metric in METRICS:
             if metric not in self.d.compared:
                 self._not_compared(metric)

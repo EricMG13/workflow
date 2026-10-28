@@ -386,7 +386,7 @@ LIM_INTERIM = POSITIVE_LIMITS[3]
 Q_OFFER_TWO_DATES = (  # prior_case page:2, verbatim: the offer's span reaches the cover line's date
     "Interest cover recorded at Approval on January 10, 2026 was 6.00x.\n"
     "Dealer quotation recorded at Approval, as of January 9, 2026: bid 98.50 and offer 99.25"
-)
+)  # round 9 item 2 refuses it (two dates); kept as that refusal's input
 
 
 def positive() -> dict[str, Any]:
@@ -445,10 +445,16 @@ def missing(fact: Fact, reason: str) -> bool:
     return (fact.status, fact.text, fact.amount, fact.limitation) == ("missing", None, None, reason)
 
 
-def edited_pack(source_id: str, old: str, new: str, case: str = "positive") -> tuple[Source, ...]:
-    """The case's pack with one stated line edit on one source (its hash recomputed)."""
+def edited_pack(
+    source_id: str,
+    old: str,
+    new: str,
+    case: str = "positive",
+    base: tuple[Source, ...] | None = None,
+) -> tuple[Source, ...]:
+    """The case's pack (or ``base``) with one stated line edit on one source (hash recomputed)."""
     out = []
-    for source in pack(case):
+    for source in pack(case) if base is None else base:
         if source.source_id == source_id:
             spans = tuple(
                 Span(locator=s.locator, text=s.text.replace(old, new)) for s in source.spans
@@ -685,26 +691,61 @@ def test_8_6_partly_unrecorded_fields(recorded: tuple[str, ...], line: str | Non
     assert limits[1] == (POSITIVE_LIMITS[2] if line is None else line)
 
 
-Q_REALIZED_OFFER_TWO_DATES = (  # market_update page:1, verbatim: from the sheet's own date
-    "Published April 30, 2026. Quotations are as of the close on April 29, 2026.\n"
-    "This invented case is test data, not evidence about a real issuer.\n"
-    "Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic "
-    "Group, with final maturity on December 31, 2029.\n"
-    "Dealer quotation on April 29, 2026: bid 98.00 and offer 98.75"
-)
+# 8-7 under round 9 item 2: an as-of date is the only date its quote states, so a split
+# quotation cites its bid and its offer from separate single-date lines. No frozen page has
+# such lines, so the side's quotation line is edited into two (a stated edit, hash recomputed).
+SPLIT_LINES = {  # side -> (source, frozen line, edited lines, bid quote, offer quote, offer as-of)
+    "expected": (
+        "prior_case",
+        (
+            "Dealer quotation recorded at Approval, as of January 9, 2026: bid 98.50 and offer "
+            "99.25, expressed as a percentage of par."
+        ),
+        (
+            "Dealer quotation recorded at Approval, as of January 9, 2026: bid 98.50.\n"
+            "Dealer offer recorded at Approval, as of January 10, 2026: offer 99.25, expressed as a "
+            "percentage of par."
+        ),
+        "Dealer quotation recorded at Approval, as of January 9, 2026: bid 98.50.",
+        "Dealer offer recorded at Approval, as of January 10, 2026: offer 99.25",
+        "January 10, 2026",
+    ),
+    "realized": (
+        "market_update",
+        (
+            "Dealer quotation on April 29, 2026: bid 98.00 and offer 98.75, expressed as a "
+            "percentage of par."
+        ),
+        (
+            "Dealer quotation on April 29, 2026: bid 98.00.\n"
+            "Dealer offer on April 30, 2026: offer 98.75, expressed as a percentage of par."
+        ),
+        "Dealer quotation on April 29, 2026: bid 98.00.",
+        "Dealer offer on April 30, 2026: offer 98.75",
+        "April 30, 2026",
+    ),
+}
 
 
 def split(lit: dict[str, Any], side: str) -> dict[str, Any]:
-    """The side's offer re-dated by a longer verbatim span of the same page (8-7)."""
-    at, as_of, quote = (
-        (3, "January 10, 2026", Q_OFFER_TWO_DATES)
-        if side == "expected"
-        else (7, "April 30, 2026", Q_REALIZED_OFFER_TWO_DATES)
-    )
-    offer = lit["observations"][at]
-    assert (offer["side"], offer["metric"]) == (side, "loan_offer")
-    offer.update(as_of_text=as_of, quote={**offer["quote"], "quote": quote})
+    """The side's bid and offer cited from the edited lines of ``split_pack``; the offer's
+    date differs from the bid's (8-7)."""
+    _, line, _, bid_quote, offer_quote, offer_as_of = SPLIT_LINES[side]
+    for metric, quote in (("loan_bid", bid_quote), ("loan_offer", offer_quote)):
+        obs = next(o for o in lit["observations"] if (o["side"], o["metric"]) == (side, metric))
+        assert obs["quote"]["quote"] == line
+        obs["quote"] = {**obs["quote"], "quote": quote}
+        if metric == "loan_offer":
+            obs["as_of_text"] = offer_as_of
     return lit
+
+
+def split_pack(*sides: str) -> tuple[Source, ...]:
+    packed = pack("positive")
+    for side in sides:
+        source_id, line, lines, *_ = SPLIT_LINES[side]
+        packed = edited_pack(source_id, line, lines, base=packed)
+    return packed
 
 
 def split_row(sides: str) -> dict[str, str]:
@@ -721,7 +762,10 @@ def split_row(sides: str) -> dict[str, str]:
 
 
 def test_8_7_both_sides_split_take_one_row() -> None:
-    report = settle(uncompared(split(split(positive(), "expected"), "realized"), "loan_mid"))
+    report = settle(
+        uncompared(split(split(positive(), "expected"), "realized"), "loan_mid"),
+        packed=split_pack("expected", "realized"),
+    )
     t74 = cells(report, "T7.4", "loan_mid")
     assert missing(
         t74["realized"],
@@ -760,7 +804,7 @@ def test_6h_one_side_split_and_the_other_missing(
     split_side: str, missing_side: str, dates: str
 ) -> None:
     lit = without(split(positive(), split_side), missing_side, "loan_bid", "loan_offer")
-    report = settle(uncompared(lit, "loan_mid"))
+    report = settle(uncompared(lit, "loan_mid"), packed=split_pack(split_side))
     assert texts(report, "T7.8", "not_compared_loan_mid") == {
         "gap": "Mid level of the term loan quotation not compared",
         "missing_item": f"Same-day {split_side} bid and offer, and a {missing_side} quotation",
@@ -790,14 +834,11 @@ def test_6h_one_side_split_and_the_other_missing(
 
 
 def test_8_7_bid_and_offer_dated_differently() -> None:
-    lit = split(positive(), "expected")
-    with_judgments = submission(lit)
-    found = validate_ledger(
-        submission=with_judgments, upstream=upstream("positive"), pack=pack("positive")
-    )
+    lit, packed = split(positive(), "expected"), split_pack("expected")
+    found = validate_ledger(submission=submission(lit), upstream=upstream("positive"), pack=packed)
     # the quotation is not compared, so its judgments are refused
     assert "confidence[2]: loan_mid is not a compared metric" in found
-    report = settle(uncompared(lit, "loan_mid"))
+    report = settle(uncompared(lit, "loan_mid"), packed=packed)
     t74 = cells(report, "T7.4", "loan_mid")
     assert missing(
         t74["expected"],
@@ -1187,3 +1228,140 @@ def test_composition_runs_under_the_exact_context(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(cp8_module, "format_date", spy)
     report_of("positive")
     assert traps and all(traps)
+
+
+# --- LEAD round 9, CP-8 items 1-5 (docs/rulings/2026-10-28-stage1.md, "# Round 9") ---------------
+
+UPDATE_PAGE = next(s for s in pack("positive") if s.source_id == "update").spans[0].text
+
+
+def update_span(first: str, last: str) -> str:
+    """A verbatim span of the frozen update page from ``first`` through ``last``."""
+    start = UPDATE_PAGE.index(first)
+    return UPDATE_PAGE[start : UPDATE_PAGE.index(last, start) + len(last)]
+
+
+@pytest.mark.parametrize(
+    ("field", "text"),
+    [
+        ("action_bias", ""),
+        ("confidence", " "),
+        ("instrument", ""),
+        ("decision_date", " "),
+        ("decision_maker_role", " "),
+        ("posture", " "),
+    ],
+)
+def test_r9_1_blank_decision_text_is_empty(field: str, text: str) -> None:
+    lit = positive()
+    item = lit["decision"][field]
+    quote = item["absence"]["quote"] if "absence" in item else item["quote"]
+    lit["decision"][field] = {"text": text, "quote": quote}
+    assert validator_issues(lit) == (f"decision.{field}: text is empty",)
+
+
+def test_r9_2_an_as_of_is_the_only_date_its_quote_states() -> None:
+    # p03: realized leverage carrying the default line's date from a longer verbatim span
+    lev = positive()
+    lev["observations"][4]["quote"]["quote"] = update_span(Q_REALIZED_LEVERAGE, "April 30, 2026.")
+    lev["observations"][4]["as_of_text"] = "April 30, 2026"
+    assert validator_issues(lev) == (
+        "observations[4]: as_of_text April 30, 2026 is not the only date in the quote",
+    )
+    # the expected side too: the offer's span reaches the cover line's date (the old 8-7 setup)
+    offer = positive()
+    offer["observations"][3].update(as_of_text="January 10, 2026")
+    offer["observations"][3]["quote"]["quote"] = Q_OFFER_TWO_DATES
+    assert validator_issues(offer) == (
+        "observations[3]: as_of_text January 10, 2026 is not the only date in the quote",
+    )
+    # the default statement
+    default = positive()
+    span = update_span(Q_REALIZED_LEVERAGE, "April 30, 2026.")
+    default["default_restructuring"]["quote"]["quote"] = span
+    assert validator_issues(default) == (
+        "default_restructuring: as_of_text April 30, 2026 is not the only date in the quote",
+    )
+    # a repeat of the same date is fine
+    same = positive()
+    two = update_span(Q_REALIZED_LEVERAGE, "is reported as 5.50x.")
+    same["observations"][4]["quote"]["quote"] = two
+    assert two.count("March 31, 2026") == 2
+    assert validator_issues(same) == ()
+
+
+@pytest.mark.parametrize("authority", ["unknown", "issuer"])
+def test_r9_3_a_default_statement_cannot_cite_prior_case(authority: str) -> None:
+    # p10: a Prior Case page carrying an incidence line, whatever CP-0 classifies it
+    line = "No default or restructuring had occurred as of February 2, 2026."
+    packed = edited_pack("prior_case", "Exit trigger recorded:", line + "\nExit trigger recorded:")
+    base = upstream("positive")
+    up = Upstream(as_of=base.as_of, authority={**base.authority, "prior_case": authority})
+    lit = positive()
+    lit["default_restructuring"] = {
+        "as_of_text": "February 2, 2026",
+        "quote": {"source_id": "prior_case", "locator": "page:2", "quote": line},
+    }
+    found = validate_ledger(submission=submission(lit), upstream=up, pack=packed)
+    assert found == (
+        "default_restructuring.quote: a default or restructuring statement cannot cite prior_case",
+    )
+
+
+def test_r9_4_the_source_rule_comes_before_locator_and_quote() -> None:
+    # p11: two defects each; lease :60 reports the field's own source rule first
+    on_prior_case = positive()
+    on_prior_case["observations"][4]["quote"] = {
+        "source_id": "prior_case",
+        "locator": "page:9",
+        "quote": "Total leverage 1.80x",
+    }
+    assert validator_issues(on_prior_case) == (
+        "observations[4].quote: a realized observation cannot cite prior_case",
+    )
+    third_party = positive()
+    third_party["observations"][4]["quote"] = {
+        "source_id": "market_update",
+        "locator": "page:1",
+        "quote": "Total leverage 1.80x as of March 31, 2026",
+    }
+    assert validator_issues(third_party) == (
+        (
+            "observations[4]: total_leverage needs an issuer source, market_update is third_party "
+            "(CP-0 T3)"
+        ),
+    )
+    default = positive()
+    default["default_restructuring"]["quote"] = {
+        "source_id": "market_update",
+        "locator": "page:1",
+        "quote": "No default as of April 30, 2026.",
+    }
+    assert validator_issues(default) == (
+        "default_restructuring: needs an issuer source, market_update is third_party (CP-0 T3)",
+    )
+
+
+def test_r9_5_an_exit_trigger_absence_has_its_gap_row() -> None:
+    lit = positive()
+    reason, follow_up = (
+        "The Prior Case record names no exit trigger",
+        "Record an exit trigger at the next Approval",
+    )
+    lit["thesis"]["exit_trigger"] = {
+        "absence": {"quote": None, "reason": reason, "follow_up": follow_up}
+    }
+    report = settle(lit)
+    rows = row_ids(report, "T7.8")
+    assert rows[rows.index("expected_hold") + 1] == "exit_trigger"  # T7.2 order: exit last
+    assert texts(report, "T7.8", "exit_trigger") == {
+        "gap": "Exit trigger not recorded",
+        "missing_item": "Exit trigger",
+        "why_it_matters": reason,
+        "impact_on_output": "Exit discipline cannot be measured",
+        "follow_up": follow_up,
+    }
+    assert (
+        report.limitations[2]
+        == "No exit trigger is recorded, so exit discipline cannot be measured"
+    )

@@ -1,5 +1,7 @@
 # CP-1D (Earnings quality) owner lease — FROZEN by LEAD 2026-10-28 (preparation revision 3)
 
+Re-pinned by LEAD 2026-10-28 in the serialised `methodology.json` change (branch `lead/methodology-serialised`; `work/lead/methodology-serialised/review.md` COMMIT): `methodology.json` 348fbc4b… → 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 (CP-L10 required + CP-1 and TL10.5; CP-1C T1C.1-T1C.8; CP-1D drops T1E.*; CP-2A drops T5.*); two scratch rebuilds identical. builder 037b3e9d… → 1d0e534b09227b9f8a35e1e5cb475acbe0585a7a0401c9002e65d847f66ea8da; manifest 842ced20… → 7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585; expected unchanged; submissions unchanged. Pins elsewhere in this file are superseded where they differ.
+
 Frozen after the scoped re-check of revision 3 (all review-precise-2 findings closed; one stale lease sentence, fixed here by LEAD). Pins: manifest 842ced201a3c123f327ad18ec4e24c8834d4ba3712546bce8dd9404458a9abff, submissions e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7, expected 549d5ef3dad0ceab4486f4ca351dad14051bd2c89841bc3c478d17e978223170, builder 037b3e9d3193e68ec47086b062f10f07b28a181b72d4325e4028e8c154d573d9. The manifest's `status` still names the draft; the freeze is this header, not a re-pin. `refusal_rules.order`'s "a shape failure returns alone" applies per item, in the six steps of `refusal_rules.basis_fraction_order`. The seven shape-step issue texts are this lease's own (no product helper exists); the core must emit them exactly.
 
 Former draft heading follows.

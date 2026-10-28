@@ -10,10 +10,12 @@ is a Stage 5 run; `tests/test_owner_cp2a.py` and `tests/cp2a_runs.py` carry thos
 import hashlib
 import importlib
 import json
+import random
 import re
+from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 from test_method_cp2a import (
@@ -35,7 +37,7 @@ from deploy_vii.business_context import CP1_REFERENCES
 from deploy_vii.contracts import Citation, Fact, Input, Module, ModuleView, Run, View
 from deploy_vii.execution import Attempt, Execution, Head, Qualification, head_of
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.report_view import _PRESETS, _spec_of
+from deploy_vii.report_view import _PRESETS, _spec_of, fact_spelling
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.owners import cp2a
 from deploy_workflow.workflow import WorkflowError
@@ -88,6 +90,45 @@ def test_prose_issue_quoting_the_payload_is_clipped() -> None:
     assert issues and all(len(i) <= MAX_LINE for i in issues), [len(i) for i in issues]
 
 
+def test_base_period_and_label_lines_quoting_the_payload_are_clipped() -> None:
+    payload = _positive_payload()
+    payload["base_period"] = "Q" + "9" * 5000
+    issues = cp2a.validate(inputs_for("positive", payload))
+    assert issues and all(len(i) <= MAX_LINE for i in issues)
+    payload = _positive_payload()
+    payload["thresholds"] = [
+        {**t, "label": "Watch level " + "x" * 5000} for t in payload["thresholds"][:2]
+    ]
+    issues = cp2a.validate(inputs_for("positive", payload))
+    assert [i for i in issues if "appears more than once" in i]
+    assert all(len(i) <= MAX_LINE for i in issues)
+
+
+def test_the_join_of_a_raised_composition_is_bounded() -> None:
+    """Backlog: `compute` raises on any issue; its message is the bounded list (20 lines and a
+    count), not every line."""
+    inputs = inputs_for("positive", _many_issue_payload())
+    assert len(cp2a.validate(inputs)) > 20
+    with pytest.raises(ValueError, match=r"further issues not listed") as caught:
+        cp2a.compute(inputs)
+    assert len(str(caught.value).split("; ")) == 21
+
+
+def _many_issue_payload() -> dict[str, Any]:
+    payload = _positive_payload()
+    payload["gaps"] = [
+        {
+            "gap": f"Gap number {chr(97 + n)}",
+            "why_it_matters": " ",
+            "affected_analysis": " ",
+            "severity": "Minor",
+            "action": " ",
+        }
+        for n in range(8)
+    ]
+    return payload
+
+
 # --- the plug-in parts that need no store (protocol section 2) ---------------------------------
 
 
@@ -118,9 +159,11 @@ def test_schemas_round_trip_and_give_the_tail_digest(case: str) -> None:
 # --- the store adapter ----------------------------------------------------------------------
 
 
-def _pack() -> PreparedPack:
+def _pack(as_of: str | None = None) -> PreparedPack:
     base = runs.make_pack("positive")
     document = json.loads(base.run.model_dump_json())
+    if as_of is not None:
+        document["as_of"] = as_of
     document["pathway"] = "distressed_restructuring"
     document["requested_modules"] = [MODULE]
     return PreparedPack(run=Run.model_validate_json(json.dumps(document)), sources=base.sources)
@@ -173,11 +216,16 @@ def _decoys(pack: PreparedPack) -> tuple[Fact, ...]:
 
 
 def seed(
-    root: Path, case: str = "positive", *, decoys: bool = False
+    root: Path,
+    case: str = "positive",
+    *,
+    decoys: bool = False,
+    as_of: str | None = None,
+    cp1_status: Literal["accepted", "restricted"] = "restricted",
 ) -> tuple[Execution, PreparedPack, tuple[Fact, ...]]:
     """A store whose CP-0 and CP-1 heads are hand-built settled modules (CP-0 authorizes CP-2A;
     CP-1 holds the oracle's T4.10 facts of `case` and its sibling columns)."""
-    pack = _pack()
+    pack = _pack(as_of)
     store = Execution.create(root / "store", pack)
     facts = _recited(pack, cp1_facts(case))
     snapshot = store.read()
@@ -199,10 +247,10 @@ def seed(
     cp1 = Module(
         **common,
         module_id="CP-1",
-        status="restricted",
+        status=cp1_status,
         inputs=(pack_input, Input(input_id="CP-0", sha256=cp0_head.result_sha256)),
         facts=(*facts, *(_decoys(pack) if decoys else ())),
-        limitations=(SYNTHETIC,),
+        limitations=(SYNTHETIC,) if cp1_status == "restricted" else (),
     )
     for module in (cp0, cp1):
         store._store(module.model_dump_json())
@@ -214,15 +262,33 @@ def seed(
     return store, pack, facts
 
 
-def test_adapter_returns_the_stage_1_input_object(tmp_path: Path) -> None:
+def test_adapter_returns_the_stage_1_input_object_but_for_offered_periods(
+    tmp_path: Path,
+) -> None:
+    """The adapter equals the Stage 1 `Inputs` over the same CP-1 facts in every field but one.
+    `offered_periods` differs on purpose (round 5-6 L6): Stage 1 hands the core the three periods
+    `(LTM, Q3, Q4)` its fixture states; the adapter offers only the periods the head supports
+    (nine T4.10 facts each, a parsable label), in the head's order. The core's result is the
+    same either way, since the submission's base period is offered in both."""
     store, pack, facts = seed(tmp_path)
     attempt = store.begin(MODULE)
     got = cp2a._inputs(pack, _submission(), cp2a.cp2a_upstream(store, attempt))
     stage_1 = inputs_for("positive", _positive_payload(), facts)
-    assert got == cp2a.Inputs(
-        submission=stage_1.submission, cp1_facts=facts, offered_periods=(LTM, Q3), names=(ISSUER,)
-    )
+    assert stage_1.offered_periods == (LTM, Q3, Q4)
+    assert got.offered_periods == (LTM, Q3)
+    assert list(got.offered_periods) != list(stage_1.offered_periods)
+    assert got == replace(stage_1, offered_periods=(LTM, Q3))
     assert got.names == (pack.run.issuer_name,)
+    assert cp2a.compute(got) == cp2a.compute(stage_1)
+
+
+def test_adapter_offers_the_head_order_not_a_sorted_one(tmp_path: Path) -> None:
+    """The gap case's head states Q3 before the LTM column; the offer keeps that order."""
+    store, pack, facts = seed(tmp_path, "gap")
+    attempt = store.begin(MODULE)
+    got = cp2a._inputs(pack, _submission(), cp2a.cp2a_upstream(store, attempt))
+    assert got.offered_periods == (Q3, LTM)
+    assert got.cp1_facts == facts
 
 
 def test_adapter_drops_what_the_core_does_not_read(tmp_path: Path) -> None:
@@ -353,18 +419,16 @@ def test_probe_refuses_a_head_that_does_not_rebuild(tmp_path: Path) -> None:
     snapshot, finished = store.read(), _finished(store, attempt)
     step = finished.steps[0]
     forged = {
-        "another attempt number": finished.model_copy(update={"number": 1}),
-        "another step output": finished.model_copy(
-            update={"steps": (step.model_copy(update={"output_sha256": "0" * 64}),)}
-        ),
-        "two steps": finished.model_copy(update={"steps": (step, step)}),
+        "another step output": step.model_copy(update={"output_sha256": "0" * 64}),
+        "a step that is not valid": step.model_copy(update={"status": "invalid"}),
     }
-    # The shared `probe_one_step` raises `identity_mismatch`, or the settlement's own ValueError
-    # for a candidate that is not the retained payload; the receipt verifier maps both.
-    for name, forged_attempt in forged.items():
-        with pytest.raises((WorkflowError, ValueError)):
-            cp2a.probe(store, snapshot, forged_attempt)
-        assert name
+    for name, forged_step in forged.items():
+        with pytest.raises(WorkflowError) as caught:
+            cp2a.probe(store, snapshot, finished.model_copy(update={"steps": (forged_step,)}))
+        assert caught.value.code == "identity_mismatch", name
+    with pytest.raises(WorkflowError) as two:
+        cp2a.probe(store, snapshot, finished.model_copy(update={"steps": (step, step)}))
+    assert two.value.code == "identity_mismatch"
 
 
 def test_probe_refuses_a_head_whose_module_differs(tmp_path: Path) -> None:
@@ -375,8 +439,9 @@ def test_probe_refuses_a_head_whose_module_differs(tmp_path: Path) -> None:
     other["assessment"]["rationale"] = "A different, figure-free rationale for the assessment."
     changed = store._store(json.dumps(other))
     step = finished.steps[0].model_copy(update={"payload_sha256": changed})
-    with pytest.raises(WorkflowError, match="identity_mismatch"):
+    with pytest.raises(WorkflowError) as caught:
         cp2a.probe(store, snapshot, finished.model_copy(update={"steps": (step,)}))
+    assert caught.value.code == "identity_mismatch"
 
 
 @pytest.mark.parametrize("rid", RUN_LEVEL)
@@ -568,9 +633,13 @@ BLOCKS = ("downside-stress", "break-points")
 
 
 def test_preset_inserts_the_two_blocks_after_the_gate() -> None:
+    """CP-2A's own pair, in order, right after `distress-gate`. Later modules insert their own
+    ids after the pair and append `_Spec` rows (CP-2G lease :52, CP-4C lease :80), so nothing
+    here pins the total length or an id outside the pair."""
     blocks = next(b for pid, _, _, b in _PRESETS if pid == "distressed_restructuring")
-    assert blocks[:4] == ("distress-gate", *BLOCKS, "recovery-by-class")
-    assert len(blocks) == 13
+    gate = blocks.index("distress-gate")
+    assert blocks[gate : gate + 3] == ("distress-gate", *BLOCKS)
+    assert len(set(blocks)) == len(blocks)
 
 
 def test_spec_rows_are_the_lease_composition() -> None:
@@ -583,12 +652,16 @@ def test_spec_rows_are_the_lease_composition() -> None:
             (MODULE,),
             "Full analysis",
         )
-    assert _spec_of("recovery-by-class").owner == "Unbound"
+    # An id no composition names keeps the idle wording (`_spec_of` falls through).
+    assert _spec_of("no-such-block-id").owner == "Unbound"
 
 
-def test_shipped_maps_end_with_cp2a() -> None:
-    assert SHIPPED_MAPS[-1].module_id == MODULE
-    assert len(SHIPPED_MAPS) == 11
+def test_shipped_maps_hold_cp2a_once_after_cp6() -> None:
+    """CP-2A lease: `SHIPPED_MAPS += CP2A`, so after the shipped maps; a later appender goes
+    after it."""
+    ids = [m.module_id for m in SHIPPED_MAPS]
+    assert ids.count(MODULE) == 1
+    assert ids.index(MODULE) > ids.index("CP-6")
 
 
 def test_bindings_place_every_expected_table_exactly_once(tmp_path: Path) -> None:
@@ -628,3 +701,241 @@ def test_bindings_place_every_expected_table_exactly_once(tmp_path: Path) -> Non
     rails = {*fp05["evidence_rail_tables"], *fp05["limitations_rail_tables"]}
     assert set(by_table) == {*placed, *rails}
     assert all(e.cell_slot.startswith("cp2a-") for e in entries)
+
+
+# --- the L6 offer rule as a property (round 5-6 L6; fix round 1 L2) --------------------------
+
+
+def _perturbed(rng: random.Random, base: tuple[Fact, ...], periods: list[str]) -> tuple[Fact, ...]:
+    facts = list(base)
+    for _ in range(rng.randint(1, 3)):
+        i = rng.randrange(len(facts))
+        fact = facts[i]
+        op = rng.randrange(7)
+        if op == 0:
+            facts.pop(i)
+        elif op == 1:
+            facts.append(fact.model_copy(update={"fact_id": f"{fact.fact_id}:dup{rng.random()}"}))
+        elif op == 2:
+            facts[i] = fact.model_copy(update={"period": rng.choice(periods)})
+        elif op == 3:
+            facts[i] = fact.model_copy(update={"period": "Odd basis: 2025-01-01 to 2025-12-31"})
+        elif op == 4:
+            head, _, span = rng.choice(periods).partition(": ")
+            metric = fact.label.split(" · ")[-1]
+            facts[i] = fact.model_copy(update={"label": f"{head} ({span}) · {metric}"})
+        elif op == 5:
+            facts[i] = fact.model_copy(update={"table_id": "T4.9"})
+        else:
+            twin = {"fact_id": f"{fact.fact_id}:t", "table_id": "T4.1"}
+            facts.append(fact.model_copy(update=twin))
+    return tuple(facts)
+
+
+def _parses(period: str) -> bool:
+    try:
+        cp2a.period_kind(period)
+        cp2a._column(period)
+    except ValueError:
+        return False
+    return True
+
+
+def _composes(facts: tuple[Fact, ...], period: str) -> cp2a.BaseOperands | None:
+    try:
+        return cp2a.BaseOperands.from_cp1(facts, period=period)
+    except ValueError:
+        return None
+
+
+class _Run:
+    issuer_name = ISSUER
+
+
+class _Pack:
+    run = _Run()
+
+
+def test_a_period_is_offered_exactly_when_the_core_can_compose_it() -> None:
+    """Over random corruptions of a CP-1 head: (A) a period is offered iff its label parses and
+    `BaseOperands.from_cp1` succeeds on the whole head (nothing is dropped silently, nothing the
+    core would raise on is offered); (B) the adapter's facts give `from_cp1` the same nine facts
+    `offered_bases` chose, and `validate` never raises."""
+    rng = random.Random(20261028)
+    base = cp1_facts("fixture_quarter_known")
+    periods = sorted({f.period for f in base if f.period})
+    submission = _submission()
+    for n in range(400):
+        facts = _perturbed(rng, base, periods)
+        offered = {b.period: b for b in cp2a.offered_bases(facts)}
+        for period in {f.period for f in facts if f.period} | set(periods):
+            expect = _parses(period) and _composes(facts, period) is not None
+            assert expect == (period in offered), (n, period)
+        pack: Any = _Pack()
+        chosen = submission.model_copy(update={"base_period": next(iter(offered), LTM)})
+        inputs = cp2a._inputs(pack, chosen, cp2a.Upstream(bound=(), current=(), cp1=facts))
+        assert inputs.offered_periods == tuple(offered)
+        for period, found in offered.items():
+            operands = _composes(inputs.cp1_facts, period)
+            assert operands is not None and tuple(operands.sources.values()) == found.facts
+        cp2a.validate(inputs)
+
+
+# --- staleness through the store, ordering, the CP-1 blob (fix round 1 L2, L4) ----------------
+
+
+def _swap_cp1_head(store: Execution, limitation: str) -> str:
+    """Replace the CP-1 head by another CP-1 module (as a re-run would) and return its hash."""
+    snapshot = store.read()
+    old = next(h for h in snapshot.heads if h.module_id == "CP-1")
+    module = store.result(old.result_sha256).model_copy(update={"limitations": (limitation,)})
+    store._store(module.model_dump_json())
+    heads = tuple(head_of(module) if h.module_id == "CP-1" else h for h in snapshot.heads)
+    store._write(snapshot.model_copy(update={"parent": snapshot.content_hash(), "heads": heads}))
+    return module.content_hash()
+
+
+def test_upstream_binds_the_attempt_and_reports_the_head_now(tmp_path: Path) -> None:
+    store, pack, _ = seed(tmp_path)
+    attempt = store.begin(MODULE)
+    fresh = cp2a.cp2a_upstream(store, attempt)
+    assert fresh.bound == attempt.inputs and fresh.current == attempt.inputs
+    new_hash = _swap_cp1_head(store, "A re-run CP-1 head")
+    upstream = cp2a.cp2a_upstream(store, attempt)
+    assert upstream.bound == attempt.inputs
+    assert isinstance(upstream.current, tuple) and upstream.current != upstream.bound
+    old = next(i for i in attempt.inputs if i.input_id == "CP-1")
+    assert upstream.cp1 == fresh.cp1  # the facts are the bound head's, not the new one's
+    issues = cp2a.validate_downside(pack=pack, submission=_submission(), upstream=upstream)
+    assert issues == (
+        f"Stale input CP-1: bound restricted {old.sha256[:12]}, current restricted {new_hash[:12]}",
+    )
+
+
+def test_stale_lines_come_before_content_lines(tmp_path: Path) -> None:
+    store, pack, _ = seed(tmp_path)
+    attempt = store.begin(MODULE)
+    _swap_cp1_head(store, "A re-run CP-1 head")
+    payload = _positive_payload()
+    payload["scenarios"][1]["name"] = payload["scenarios"][0]["name"]
+    submission = cp2a.DownsideSubmission.model_validate_json(json.dumps(payload))
+    issues = cp2a.validate_downside(
+        pack=pack, submission=submission, upstream=cp2a.cp2a_upstream(store, attempt)
+    )
+    assert len(issues) == 2
+    assert issues[0].startswith("Stale input CP-1: bound ")
+    assert "duplicate scenario name" in issues[1]
+
+
+def test_a_bound_cp1_input_that_is_not_a_cp1_module_is_refused(tmp_path: Path) -> None:
+    store, _, _ = seed(tmp_path)
+    attempt = store.begin(MODULE)
+    cp0 = next(i for i in attempt.inputs if i.input_id == "CP-0")
+    swapped = tuple(
+        i.model_copy(update={"sha256": cp0.sha256}) if i.input_id == "CP-1" else i
+        for i in attempt.inputs
+    )
+    with pytest.raises(ValueError, match="CP-1"):
+        cp2a.cp2a_upstream(store, attempt.model_copy(update={"inputs": swapped}))
+
+
+def test_the_view_states_the_oracle_unit_token_and_spelling(tmp_path: Path) -> None:
+    """The `unit` a figure reference must use is `figure_unit`, not the raw fact unit."""
+    store, _, facts = seed(tmp_path)
+    attempt = store.begin(MODULE)
+    _, body = cp2a.view(_FrozenExecution(store, store.read()), attempt)
+    offered = {f["ref"]: f for f in json.loads(body)["cp1_facts"]}
+    by_label = {f.label: f for f in facts}
+    for name, figure in SUBMISSIONS["figures"].items():
+        entry = offered[by_label[figure["cp1_label"]].fact_id]
+        assert (entry["unit"], entry["shown"]) == (figure["unit_token"], figure["spelled"]), name
+
+
+# --- the settled head against the oracle (A1: unit, shown, claims) -----------------------------
+
+
+def test_settled_facts_and_claims_equal_the_oracle(tmp_path: Path) -> None:
+    store, _, attempt, _ = _settled(tmp_path)
+    module = store.head_module(_head(store, MODULE))
+    case = EXPECTED["cases"]["positive"]
+    ids = fig_ids(cp1_facts("positive"))
+    mine = [f for f in module.facts if f.table_id != CP1_REFERENCES]
+    assert [f.fact_id for f in mine] == [e["fact_id"] for e in case["facts"]]
+    for fact, want in zip(mine, case["facts"], strict=True):
+        assert fact.status == want["status"] and fact.unit == want.get("unit"), fact.fact_id
+        assert fact.period == want.get("period") and fact.value_class == want.get("value_class")
+        if fact.status == "known":
+            assert fact_spelling(fact, None)[2] == want["shown"], fact.fact_id
+    assert [c.claim_id for c in module.claims] == [c["claim_id"] for c in case["claims"]]
+    for claim, want in zip(module.claims, case["claims"], strict=True):
+        assert claim.text == bind_payload(want["text"], ids), claim.claim_id
+        assert claim.limitation == want["limitation"]
+    assert attempt.number == 0
+
+
+# --- A3 clones through the workflow, in seconds (lease Acceptance A3) --------------------------
+
+
+def _workflow(root: Path) -> tuple[Any, Execution]:
+    """A workflow at the CP-2A step over the hand-seeded CP-0 and CP-1 heads. The plan is the one
+    module (`("CP-2A",)`), so the CP-0 and CP-1 history a receipt needs does not exist: receipt
+    verification (A4) is the Stage 5 test's."""
+    store, _, _ = seed(root)
+    return owner.OwnerWorkflow(store, (MODULE,), None), store
+
+
+def test_a3_pack_tools_are_refused_and_submit_before_read_is_not_permitted(tmp_path: Path) -> None:
+    workflow, store = _workflow(tmp_path)
+    call = workflow.invoke(
+        "read_pages", {"source_id": "financial", "first_page": 1, "last_page": 1}
+    )
+    assert (call["status"], call["error_code"], call["body"]) == ("refused", "not_permitted", None)
+    with pytest.raises(WorkflowError) as unread:
+        workflow.submit_review(json.dumps(_positive_payload()))
+    assert unread.value.code == "not_permitted"
+    assert [h.module_id for h in store.read().heads] == ["CP-0", "CP-1"]
+
+
+def test_a3_a_changed_snapshot_between_read_and_submit_is_stale(tmp_path: Path) -> None:
+    workflow, store = _workflow(tmp_path)
+    workflow.read_inputs()
+    store.interrupt(workflow._binding.ticket_id, "external change between read and submit")
+    with pytest.raises(WorkflowError) as caught:
+        workflow.submit_review(json.dumps(_positive_payload()))
+    assert caught.value.code == "stale_binding"
+
+
+def test_a3_the_one_read_is_the_view_and_a_valid_submit_settles(tmp_path: Path) -> None:
+    workflow, store = _workflow(tmp_path)
+    read = workflow.read_inputs()
+    assert (read["inputs_sha256"], read["body"]) == cp2a.view(
+        _FrozenExecution(store, store.read()), store.read().attempts[-1]
+    )
+    outcome = workflow.submit_review(json.dumps(_positive_payload()))
+    assert outcome["status"] == "valid" and outcome["issues"] == []
+    assert _head(store, MODULE).status == "restricted"
+
+
+def test_a3_an_unreplaced_figure_is_invalid(tmp_path: Path) -> None:
+    workflow, _ = _workflow(tmp_path)
+    workflow.read_inputs()
+    text = json.dumps(SUBMISSIONS["positive"]["downside_pathway"])
+    outcome = workflow.submit_review(text)
+    assert outcome["status"] == "invalid" and outcome["issues"]
+
+
+def test_the_settled_head_follows_the_run_not_the_oracle_constants(tmp_path: Path) -> None:
+    """A different as_of and an accepted (not restricted) CP-1 head: the module carries them,
+    the bound CP-1 input keeps its status, and no inherited limitation is invented."""
+    store, pack, _ = seed(tmp_path, as_of="2026-03-31", cp1_status="accepted")
+    attempt = store.begin(MODULE)
+    _submit(store, attempt, json.dumps(_positive_payload()))
+    head = _head(store, MODULE)
+    module = store.head_module(head)
+    assert module.as_of.isoformat() == "2026-03-31" == pack.run.as_of.isoformat()
+    assert next(i for i in module.inputs if i.input_id == "CP-1").status == "accepted"
+    assert head.status == "restricted"
+    assert SYNTHETIC in module.limitations and module.inherited_limitations == ()
+    _, body = cp2a.view(_FrozenExecution(store, store.read()), attempt)
+    assert json.loads(body)["inherited_limitations"] == []
+    assert {u["module_id"]: u["status"] for u in json.loads(body)["upstream"]}["CP-1"] == "accepted"

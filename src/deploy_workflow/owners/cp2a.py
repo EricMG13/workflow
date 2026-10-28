@@ -664,7 +664,7 @@ def _threshold_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
         issues += _prose_issues(f"{path}.rationale", t.rationale, bound, inputs.names)
     labels = [t.label for t in inputs.submission.thresholds]
     issues += [
-        f"thresholds: {label} appears more than once"
+        f"thresholds: {clipped((label,), 300)} appears more than once"
         for label in dict.fromkeys(labels)
         if not is_blank(label) and labels.count(label) > 1
     ]
@@ -678,7 +678,7 @@ def validate(inputs: Inputs) -> tuple[str, ...]:
     Ruling A5: a base_period issue ends validation and is returned alone."""
     sub = inputs.submission
     if sub.base_period not in inputs.offered_periods:
-        return (f"base_period: not an offered period: {sub.base_period}",)
+        return (clipped(("base_period: not an offered period: ", sub.base_period)),)
     base = BaseOperands.from_cp1(inputs.cp1_facts, period=sub.base_period)
     if base.ebitda is None or base.ebitda <= 0:
         return (f"base_period: base EBITDA is missing or not positive for {sub.base_period}",)
@@ -1487,10 +1487,13 @@ def cp2a_upstream(store: Execution, attempt: Attempt) -> Upstream:
     bound = next((item for item in attempt.inputs if item.input_id == CP1), None)
     if bound is None:
         raise ValueError(f"The CP-2A attempt binds no {CP1} input")
+    head = store.result(bound.sha256)
+    if head.module_id != CP1:
+        raise ValueError(f"The CP-2A attempt's {CP1} input is a {head.module_id} module")
     return Upstream(
         bound=attempt.inputs,
         current=current,
-        cp1=store.result(bound.sha256).facts,
+        cp1=head.facts,
         inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
     )
 

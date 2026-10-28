@@ -4,22 +4,30 @@ Each case is well-formed (its quote is on its page under `quotes.quoted`, ids ar
 case names an accepted twin with the same value), and each refused case really differs from that
 twin under `quotes.quoted`: the twin's quote is not on the refused page, or the two values differ
 once normalised. A refused case is also a trap: its value is a substring of its normalised quote,
-so a plain substring check would accept it.
+so a plain substring check would accept it. A rule W case (round 12) holds its sign one space from
+the figure in the plain reading, so round 10's "directly before" alone does not read it signed,
+and every reading of it is signed. A blank value is whitespace or `Cf` only (round 12 B10).
 """
 
+import re
+import unicodedata
 from collections.abc import Sequence
 
 import pytest
 from defect_classes import (
     BLANK_CASES,
     BLANK_VALUES,
+    BOM,
     FIGURE_CASES,
     FIGURES,
     LABEL_TEMPLATES,
     MINUS,
     NBSP,
+    R12_B10,
+    R12_W,
     SOFT_HYPHEN,
     TEXT_CASES,
+    ZWSP,
     Adapter,
     BlankCase,
     QuoteCase,
@@ -30,7 +38,7 @@ from defect_classes import (
 )
 from pydantic import ValidationError
 
-from deploy_vii.quotes import hyphen_wrapped, normalise, quoted
+from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 
 LABELLED = tuple(label_cases("bid", f) for f in FIGURES)
 ALL: tuple[QuoteCase, ...] = (*FIGURE_CASES, *TEXT_CASES, *(c for g in LABELLED for c in g))
@@ -86,7 +94,8 @@ def test_edge_cut_twins_are_the_nearest_accepted_edge_case() -> None:
         assert twin.defect == "edge_cut" and twin.case_id.startswith(("edge-start-", "edge-end-"))
         starts = normalise(c.quote).startswith(c.value)
         assert twin.case_id.startswith("edge-start-" if starts else "edge-end-"), c.case_id
-    for cid in ("edge-prefix-25", "edge-minus-1.25", "edge-10", "edge-minus-0.25"):
+    only_page = ("edge-prefix-25", "edge-minus-1.25", "edge-10", "edge-minus-0.25")
+    for cid in (*only_page, *(f"w-edge-minus-space-{f}" for f in FIGURES)):
         c = case(cid, FIGURE_CASES)
         twin = case(str(c.twin), FIGURE_CASES)
         assert c.quote == twin.quote and not _same(c.page, twin.page), "only the page differs"
@@ -129,6 +138,71 @@ def test_class_characters_are_present() -> None:
     assert {"edge-close-paren-25", "edge-open-paren-25"} <= edges
 
 
+_W_REFUSED = ("minus-space", "minus-wrap", "minus-nbsp", "parens-wrap", "edge-minus-space")
+_W_ACCEPTED = ("break", "letter-wrap")
+
+
+def test_rule_w_cases_are_present() -> None:
+    """Round 12 rule W: a spaced minus, an interior `-\\n`, U+2212 then NBSP, `(\\n` and an
+    edge figure after a page `- ` (refused, each figure); the hyphen wraps `A-\\n` and
+    `2024-\\n2025`, `95-96` and a line break with no minus (accepted)."""
+    w = {c.case_id: c for c in FIGURE_CASES if c.ruling == R12_W}
+    for f in FIGURES:
+        assert all(not w[f"w-{k}-{f}"].accepted for k in _W_REFUSED)
+        assert all(w[f"w-{k}-{f}"].accepted for k in _W_ACCEPTED)
+        assert f"-\n{f}" in w[f"w-minus-wrap-{f}"].quote
+        assert f"{MINUS}{NBSP}{f}" in w[f"w-minus-nbsp-{f}"].quote
+        assert f"(\n{f})" in w[f"w-parens-wrap-{f}"].quote
+        assert f"A-\n{f}" in w[f"w-letter-wrap-{f}"].quote
+    assert w["w-2024-2025-wrap"].accepted and "2024-\n2025" in w["w-2024-2025-wrap"].quote
+    assert case("sign-95-96", FIGURE_CASES).accepted
+
+
+_DIRECT_MINUS = re.compile(r"(?<![A-Za-z0-9])-\Z")
+_SPACED_MINUS = re.compile(r"(?<![A-Za-z0-9])- \Z")
+
+
+def _signs(text: str, value: str) -> set[str]:
+    """How each whole occurrence of `value` in a normalised text is signed: `r10` (a minus or
+    accounting parentheses directly at the figure), `w` (only one space away) or `none`."""
+    kinds: set[str] = set()
+    for m in re.finditer(rf"(?<![0-9.]){re.escape(value)}(?![0-9]|\.[0-9])", text):
+        before, after = text[: m.start()], text[m.end() :]
+        if _DIRECT_MINUS.search(before) or (before.endswith("(") and after.startswith(")")):
+            kinds.add("r10")
+        elif _SPACED_MINUS.search(before) or (
+            before.endswith(("(", "( ")) and after.startswith((")", " )"))
+        ):
+            kinds.add("w")
+        else:
+            kinds.add("none")
+    return kinds
+
+
+def _readings(raw: str) -> tuple[str, ...]:
+    joined = reading(raw, join_wraps=True).text
+    return (normalise(raw), joined) if hyphen_wrapped(raw) else (normalise(raw),)
+
+
+@pytest.mark.parametrize(
+    "c", [c for c in FIGURE_CASES if c.ruling == R12_W], ids=lambda c: c.case_id
+)
+def test_rule_w_case_is_signed_only_under_w(c: QuoteCase) -> None:
+    """A refused W case is signed one space away in the plain reading (round 10 alone misses it)
+    and signed in every reading; an accepted control is unsigned in every reading. An edge case
+    carries its sign on the page, outside its quote."""
+    signed = c.page if c.defect == "edge_cut" else c.quote
+    if c.accepted:
+        assert all(_signs(r, c.value) == {"none"} for r in _readings(c.quote))
+        assert all(_signs(r, c.value) == {"none"} for r in _readings(c.page))
+        return
+    assert _signs(normalise(signed), c.value) == {"w"}
+    assert all("none" not in _signs(r, c.value) for r in _readings(signed))
+    if c.defect == "edge_cut":
+        assert normalise(c.quote).startswith(c.value)
+        assert _signs(normalise(c.quote), c.value) == {"none"}
+
+
 @pytest.mark.parametrize("label", ["bid", "offer", "spread", "balance of"])
 @pytest.mark.parametrize("figure", FIGURES)
 def test_label_cases_bind_the_label(label: str, figure: str) -> None:
@@ -146,12 +220,25 @@ def test_label_needs_two_letters_and_a_family_figure() -> None:
         label_cases("bid", "0.25")
 
 
+def _blank(text: str) -> bool:
+    """Round 12 B10, written here from the ruling (no owner is imported)."""
+    return all(ch.isspace() or unicodedata.category(ch) == "Cf" for ch in text)
+
+
 def test_blank_cases_split_empty_from_whitespace_only() -> None:
     assert [c.value for c in BLANK_CASES] == list(BLANK_VALUES)
     for c in BLANK_CASES:
-        assert not c.value.strip() and quoted(c.quote, c.page)
+        assert _blank(c.value) and quoted(c.quote, c.page)
         assert c.whitespace_only == (c.value != "")
     assert [c.value for c in BLANK_CASES if not c.whitespace_only] == [""]
+
+
+def test_blank_values_hold_format_characters() -> None:
+    """B10: the four `Cf` values, which `str.strip()` keeps, carry the round 12 ruling."""
+    kept = [c for c in BLANK_CASES if c.value.strip()]
+    assert [c.value for c in kept] == [ZWSP, BOM, SOFT_HYPHEN, f" {ZWSP}\n"]
+    assert all(c.ruling == R12_B10 for c in kept)
+    assert all(c.ruling != R12_B10 for c in BLANK_CASES if c not in kept)
 
 
 # --- the assertion helpers, against plain readers written here (no owner) ----------------------
@@ -163,7 +250,7 @@ def _naive(page: str, quote: str, value: str) -> Sequence[str]:
 
 
 def _empty_frame(page: str, quote: str, value: str) -> Sequence[str]:
-    return ("text: empty text",) if not value.strip() else ()
+    return ("text: empty text",) if _blank(value) else ()
 
 
 def test_quote_failure_reports_a_wrong_outcome() -> None:
@@ -190,7 +277,7 @@ def _schema_refuses_empty(page: str, quote: str, value: str) -> Sequence[str]:
                 }
             ],
         )
-    return ("text: empty text",) if not value.strip() else ()
+    return ("text: empty text",) if _blank(value) else ()
 
 
 def _issue_refuses_empty(page: str, quote: str, value: str) -> Sequence[str]:
@@ -205,6 +292,16 @@ def test_blank_failure_needs_the_frame() -> None:
     assert blank_failure(blank, _empty_frame, "text: empty text") is None
     message = blank_failure(blank, _naive, "text: empty text")
     assert message is not None and "expected 'text: empty text'" in message
+
+
+def test_a_strip_reader_fails_exactly_the_format_cases() -> None:
+    """The B10 class: a `not value.strip()` reader passes every case but the `Cf` ones."""
+
+    def strip_frame(page: str, quote: str, value: str) -> Sequence[str]:
+        return ("text: empty text",) if not value.strip() else ()
+
+    failed = [c.value for c in BLANK_CASES if blank_failure(c, strip_frame, "text: empty text")]
+    assert failed == [c.value for c in BLANK_CASES if c.ruling == R12_B10]
 
 
 @pytest.mark.parametrize("adapter", [_schema_refuses_empty, _issue_refuses_empty, _empty_frame])
@@ -225,7 +322,7 @@ def test_empty_text_still_needs_a_refusal() -> None:
 
 def test_whitespace_only_text_does_not_accept_a_schema_refusal() -> None:
     def schema_everywhere(page: str, quote: str, value: str) -> Sequence[str]:
-        return ("text: String should have at least 1 character",) if not value.strip() else ()
+        return ("text: String should have at least 1 character",) if _blank(value) else ()
 
     for c in BLANK_CASES:
         failed = blank_failure(c, schema_everywhere, "text: empty text") is not None

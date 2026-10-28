@@ -1,4 +1,4 @@
-"""Shared defect-class cases (AGENTS.md rules 3 and 4; LEAD round 11): data and assertions.
+r"""Shared defect-class cases (AGENTS.md rules 3 and 4; LEAD rounds 11 and 12): data and assertions.
 
 A helper module, not a test module (pytest collects only `test_*.py`). It imports no owner: each
 module's own test file runs these cases through its own reader with its own `Adapter`, a callable
@@ -11,6 +11,15 @@ Rules encoded (`docs/rulings/2026-10-28-stage1.md`):
   ignored. An unsigned analyst figure does not occur in a quote that prints it signed.
 - `R10_PARENS`: round 10 "Parentheses". `(` directly before the first digit and `)` directly after
   the last reads as negative; a parenthesis enclosing a unit or words is unaffected.
+- `R12_W`: round 12 rule W, amending both: whitespace never separates a sign from its figure. In
+  the four quote readers, on `normalise(text)` and the joined reading, of the quote and the page,
+  the minus is `(?<![A-Za-z0-9])- ?` (directly or one space before the first digit), and the
+  accounting negative is `(` or `( ` before the first digit with `)` or ` )` after the last.
+  `normalise` makes any whitespace run one space, so `- `, `-\n`, U+2212 then NBSP and `(\n` all
+  read signed, and an edge figure after a page `- ` is cut (B1). After a letter or digit `-\n`
+  stays a hyphen wrap (`A-\n25`, `2024-\n2025`), not a sign. The accepted cost: a spaced range
+  (`95 - 96`) or a dash bullet before a figure reads signed (no library case before round 12
+  held one, so no expected outcome changed).
 - `R11_B1`: round 11 Quote readers B1. A figure at an edge of `normalise(quote)` occurs only if it
   is the same unsigned whole figure on the page (start edge: not a digit, `.`, minus or closed
   accounting `(` before it; end edge: not a digit, `.` plus a digit, or closing `)` after it).
@@ -23,7 +32,10 @@ Rules encoded (`docs/rulings/2026-10-28-stage1.md`):
   whitespace-only text with the module's pinned empty-text frame, or `<path>: empty text`.
   Controller decision (library fix 1): for `""` an existing refusal stands, such as a `Text`
   field's pydantic `min_length=1` (raised, or reported as an issue); the frame is required only
-  for whitespace-only text (`value != ""` and `value.strip() == ""`).
+  for blank text that is not `""` (`whitespace_only`).
+- `R12_B10`: round 12 B10. Blank is every character whitespace (`str.isspace`) or of Unicode
+  category `Cf` (`deploy_workflow.owners.blank.is_blank`), so U+200B, U+FEFF, U+00AD and
+  `" \u200b\n"`, which `str.strip()` keeps, get the same frame at the same position.
 
 Outcomes. A refused case expects the field's pinned refusal (passed in by the module, usually its
 "does not occur in the quote" frame) among the issues. An accepted case expects that refusal to be
@@ -31,15 +43,18 @@ absent; other issues the field's own bounds or shape raise for the value are out
 Every refused case names an accepted twin, its nearest accepted counterpart: the same value
 (except `wrap-split`, whose twin holds the joined spelling) on a page that prints the figure or
 name plainly. An edge cut's twin is the accepted edge case with the same or nearest quote
-(`edge-start-<f>` or `edge-end-<f>`), so the pair differs mainly in the page. The self-check proves
-only that a refused case is not a normalisation-equal spelling of its twin (page, quote and value
-are not all equal under `quotes.quoted`); it does not prove the expected outcome, which rests on
-the rulings.
+(`edge-start-<f>` or `edge-end-<f>`), so the pair differs mainly in the page. A rule W case's twin
+is the case with its sign deleted: `genuine-<f>` for `- <f>` and U+2212 then NBSP, `w-break-<f>`
+(the same line break, no sign) for `-\n<f>` and `(\n<f>)`, and `edge-start-<f>` for the edge.
+The self-check proves only that a refused case is not a normalisation-equal spelling of its twin
+(page, quote and value are not all equal under `quotes.quoted`), and that a W case is signed only
+one space away; it does not prove the expected outcome, which rests on the rulings.
 
 Cases the rulings do not pin are not here (listed in the inventory report), for example a value
 carrying its own soft hyphen, or a joined value against a wrapped quote.
 """
 
+import unicodedata
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from typing import Literal
@@ -58,6 +73,8 @@ NBSP = " "
 MINUS = "−"
 EN_DASH = "–"
 EM_DASH = "—"
+ZWSP = "\u200b"  # ZERO WIDTH SPACE (Cf)
+BOM = "\ufeff"  # ZERO WIDTH NO-BREAK SPACE, the byte order mark (Cf)
 
 R10_SIGN = "Round 10 §1 (read the sign)"
 R10_PARENS = "Round 10 For LEAD: Parentheses"
@@ -65,6 +82,8 @@ R11_B1 = "Round 11 Quote readers B1 (edge cut)"
 R11_B3 = "Round 11 Quote readers B3 (wrap refusal)"
 R9_M1 = "Round 9 CP-8 M1 normalised quote; round 11 shared class test"
 R11_BLANK = "Round 11 LEAD rulings: Blank text is one defect class"
+R12_W = "Round 12 rule W (whitespace never separates a sign from its figure)"
+R12_B10 = "Round 12 B10 (Unicode format characters count as blank)"
 
 EMPTY_TEXT = "{path}: empty text"
 """The fallback frame where a module pins none (round 11 blank text)."""
@@ -89,7 +108,9 @@ class BlankCase:
     value: str
     page: str  # a genuine page and quote, for a field whose text must sit beside a quote
     quote: str
-    whitespace_only: bool  # False for "": an existing refusal stands, the frame is not required
+    # False for "": an existing refusal stands, the frame is not required. True for every other
+    # blank value, whitespace or `Cf` (B10), which needs the frame.
+    whitespace_only: bool
     ruling: str = R11_BLANK
 
 
@@ -129,9 +150,10 @@ FIGURES = ("25", "1.25")
 
 
 def _family(f: str) -> tuple[QuoteCase, ...]:
-    """The cases built the same way for figure `f`; ids end in `-<f>`; twins are `genuine-<f>`, and
-    `edge-start-<f>` or `edge-end-<f>` for an edge cut."""
+    """The cases built the same way for figure `f`; ids end in `-<f>`; twins are `genuine-<f>`,
+    `edge-start-<f>` or `edge-end-<f>` for an edge cut, and `w-break-<f>` for a wrapped sign."""
     twin, start, end = f"genuine-{f}", f"edge-start-{f}", f"edge-end-{f}"
+    w_break = f"w-break-{f}"
     rest = " percent over the reference rate."
     return (
         _genuine(f),
@@ -165,12 +187,30 @@ def _family(f: str) -> tuple[QuoteCase, ...]:
             f,
             R10_PARENS,
         ),
+        # Rule W (round 12): a sign one whitespace character from the figure. The quote is the
+        # page, so it spans the break.
+        _figure(f"w-minus-space-{f}", "signs", _level(f"- {f}"), f, R12_W, twin=twin),
+        _figure(f"w-minus-wrap-{f}", "signs", _level(f"-\n{f}"), f, R12_W, twin=w_break),
+        _figure(f"w-minus-nbsp-{f}", "signs", _level(MINUS + NBSP + f), f, R12_W, twin=twin),
+        _figure(f"w-parens-wrap-{f}", "signs", _level(f"(\n{f})"), f, R12_W, twin=w_break),
+        # Its accepted controls: a line break with no sign, and a hyphen wrap after a letter.
+        _figure(w_break, "signs", _level(f"\n{f}"), f, R12_W),
+        _figure(f"w-letter-wrap-{f}", "signs", _level(f"A-\n{f}"), f, R12_W),
         # Edge cut (round 11 B1): the figure touches an edge of the normalised quote.
         _figure(
             f"edge-prefix-{f}", "edge_cut", _level(f"4{f}"), f, R11_B1, quote=f + rest, twin=start
         ),
         _figure(
             f"edge-minus-{f}", "edge_cut", _level(f"-{f}"), f, R11_B1, quote=f + rest, twin=start
+        ),
+        _figure(
+            f"w-edge-minus-space-{f}",
+            "edge_cut",
+            _level(f"- {f}"),
+            f,
+            R12_W,
+            quote=f + rest,
+            twin=start,
         ),
         _figure(
             f"edge-close-paren-{f}",
@@ -229,6 +269,8 @@ FIGURE_CASES: tuple[QuoteCase, ...] = (
     _figure("sign-2024-2025", "signs", "The level is fixed for 2024-2025.", "2025", R10_SIGN),
     _figure("sign-95-96", "signs", _level("95-96"), "96", R10_SIGN),
     _figure("sign-s-350", "signs", "The level is S-350 over the reference rate.", "350", R10_SIGN),
+    # Rule W's control: a hyphen wrap after a digit is not a sign.
+    _figure("w-2024-2025-wrap", "signs", "The level is fixed for 2024-\n2025.", "2025", R12_W),
     # The round 11 B1 examples with their own figures, and their accepted edge twins.
     *(
         _figure(
@@ -380,9 +422,22 @@ def label_cases(label: str, figure: str = FIGURES[0]) -> tuple[QuoteCase, ...]:
     )
 
 
-BLANK_VALUES = ("", "   ", "\n", " ", "\t ")
+BLANK_VALUES = ("", "   ", "\n", " ", "\t ", ZWSP, BOM, SOFT_HYPHEN, f" {ZWSP}\n")
+
+
+def _blank_ruling(value: str) -> str:
+    return R12_B10 if any(unicodedata.category(ch) == "Cf" for ch in value) else R11_BLANK
+
+
 BLANK_CASES: tuple[BlankCase, ...] = tuple(
-    BlankCase(f"blank-{i}", value, f"The {NAME} is quoted by dealers.", NAME, value != "")
+    BlankCase(
+        f"blank-{i}",
+        value,
+        f"The {NAME} is quoted by dealers.",
+        NAME,
+        value != "",
+        _blank_ruling(value),
+    )
     for i, value in enumerate(BLANK_VALUES)
 )
 

@@ -11,7 +11,15 @@ import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
-from decimal import ROUND_HALF_EVEN, Context, Decimal, localcontext
+from decimal import (
+    ROUND_HALF_EVEN,
+    Context,
+    Decimal,
+    Inexact,
+    InvalidOperation,
+    Rounded,
+    localcontext,
+)
 from fractions import Fraction
 from typing import Literal
 
@@ -38,6 +46,7 @@ PctStatus = Literal["known", "not_applicable", "missing"]
 MATERIAL_AT = Fraction(1, 10)
 WATCH_AT = Fraction(1, 20)
 _CTX = Context(prec=38, rounding=ROUND_HALF_EVEN)
+_EXACT = Context(prec=200, traps=[Inexact, Rounded, InvalidOperation])  # `change`: never rounded
 _CLASS_ORDER: dict[str, int] = {"Material": 0, "Watch": 1, "Not assessed": 2, "Stable": 3}
 DISPOSITION: dict[str, str] = {
     "Material": "Upgrade to full module",
@@ -305,7 +314,7 @@ def _q38(value: Fraction) -> Decimal:
 class TopicScreen:
     materiality: Materiality
     evidence: Literal["Complete", "Missing"]
-    change: Decimal | None  # closing - starting, exact (one subtraction)
+    change: Decimal | None  # closing - starting, exact (one subtraction, never rounded)
     pct_status: PctStatus
     pct: Decimal | None  # signed change / |starting|, 38 digits half-even
     pct_fraction: Fraction | None  # the exact signed quotient
@@ -326,9 +335,10 @@ def screen_topic(*, start: Decimal | None, close: Decimal | None) -> TopicScreen
         return TopicScreen("Not assessed", "Missing", None, "missing", None, None, False)
     a, b = Fraction(start), Fraction(close)
     change = b - a
+    exact = _EXACT.subtract(close, start)
     if a == 0:
         rating: Materiality = "Stable" if change == 0 else "Material"
-        return TopicScreen(rating, "Complete", _q38(change), "not_applicable", None, None, True)
+        return TopicScreen(rating, "Complete", exact, "not_applicable", None, None, True)
     if abs(change) >= abs(a) * MATERIAL_AT:
         rating = "Material"
     elif abs(change) >= abs(a) * WATCH_AT:
@@ -336,7 +346,7 @@ def screen_topic(*, start: Decimal | None, close: Decimal | None) -> TopicScreen
     else:
         rating = "Stable"
     signed = change / abs(a)
-    return TopicScreen(rating, "Complete", _q38(change), "known", _q38(signed), signed, False)
+    return TopicScreen(rating, "Complete", exact, "known", _q38(signed), signed, False)
 
 
 def rank_key(

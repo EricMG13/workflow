@@ -9,6 +9,7 @@ The run assertions (`cp6_closed`, RT-1 to RT-3, D3) wait on the CP-6 freeze and 
 
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,17 +17,19 @@ import pytest
 import test_method_cp5 as stage1
 
 from deploy_vii import cp5_integrity
-from deploy_vii.contracts import Fact, Module
-from deploy_vii.cp5_integrity import IntegritySubmission, cp5_module
+from deploy_vii.contracts import Fact, Input, Module
+from deploy_vii.cp5_integrity import IntegritySubmission, ReviewScope, cp5_module
 from deploy_vii.execution import (
     Attempt,
     Execution,
     ExecutionSnapshot,
     StepSubmission,
+    bounded_issues,
     current_inputs,
     head_of,
     settle,
 )
+from deploy_vii.live.submission import submit_model_payload
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.owners import cp5
@@ -77,7 +80,12 @@ def _heads(case: str, blocked: str | None = None) -> dict[str, Module]:
 
 
 def make_journal(
-    tmp_path: Path, case: str, *, finished: bool = False, blocked: str | None = None
+    tmp_path: Path,
+    case: str,
+    *,
+    finished: bool = False,
+    blocked: str | None = None,
+    number: int = 0,
 ) -> Journal:
     pack = stage1.make_pack(case)
     store = Execution.create(tmp_path / "store", pack)
@@ -93,7 +101,7 @@ def make_journal(
     step = StepSubmission(
         step_id=STEP, inputs=inputs, payload_sha256=store._store(submission), status="pending"
     )
-    attempt = Attempt(ticket_id="t5", module_id="CP-5", inputs=inputs, number=0, steps=(step,))
+    attempt = Attempt(ticket_id="t5", module_id="CP-5", inputs=inputs, number=number, steps=(step,))
     snapshot = snapshot.model_copy(update={"attempts": (attempt,)})
     store._write(snapshot)
     journal = Journal(store, snapshot, attempt, submission)
@@ -394,22 +402,25 @@ def test_blocked_head_makes_the_submitted_review_invalid(tmp_path: Path) -> None
     assert outcome.output is None and outcome.issues
 
 
-def test_stale_binding_after_a_head_is_resettled(pending: Journal) -> None:
+def test_stale_binding_after_a_head_is_resettled(settled: Journal) -> None:
     """The attempt binds CP-2's hash at begin; a later head with another hash is a stale binding
     for the view, the validator and the probe's historical replay."""
-    store = pending.store
-    cp2 = store.head_module(next(h for h in pending.snapshot.heads if h.module_id == "CP-2"))
+    store = settled.store
+    cp2 = store.head_module(next(h for h in settled.snapshot.heads if h.module_id == "CP-2"))
     newer = cp2.model_copy(update={"limitations": (*cp2.limitations, "Re-settled later")})
     store._store(newer.model_dump_json())
-    heads = tuple(head_of(newer) if h.module_id == "CP-2" else h for h in pending.snapshot.heads)
-    moved = pending.snapshot.model_copy(update={"heads": heads})
+    heads = tuple(head_of(newer) if h.module_id == "CP-2" else h for h in settled.snapshot.heads)
+    moved = settled.snapshot.model_copy(update={"heads": heads})
     store._write(moved)
     frozen = _FrozenExecution(store, moved)
     with pytest.raises(WorkflowError) as caught:
-        cp5.view(frozen, pending.attempt)
+        cp5.view(frozen, settled.attempt)
     assert caught.value.code == "identity_mismatch"
-    outcome = cp5.ENTRY_VALIDATOR(frozen, frozen.pack(), pending.attempt)
+    outcome = cp5.ENTRY_VALIDATOR(frozen, frozen.pack(), settled.attempt)
     assert outcome.output is None and outcome.issues
+    with pytest.raises(WorkflowError) as probed:
+        cp5.probe(store, moved, settled.attempt)
+    assert probed.value.code == "identity_mismatch"
 
 
 def test_stale_head_status_is_a_stale_binding(pending: Journal) -> None:
@@ -419,5 +430,147 @@ def test_stale_head_status_is_a_stale_binding(pending: Journal) -> None:
         for h in pending.snapshot.heads
     )
     moved = pending.snapshot.model_copy(update={"heads": heads})
-    with pytest.raises(WorkflowError):
-        cp5.view(_FrozenExecution(store, moved), pending.attempt)
+    frozen = _FrozenExecution(store, moved)
+    with pytest.raises(WorkflowError) as caught:
+        cp5.view(frozen, pending.attempt)
+    assert caught.value.code == "identity_mismatch"
+    outcome = cp5.ENTRY_VALIDATOR(frozen, frozen.pack(), pending.attempt)
+    assert outcome.output is None and outcome.issues
+
+
+# --- the store adapter equals the Stage 1 scope (review M1) ----------------------------------------
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_review_scope_equals_the_stage1_scope(tmp_path: Path, case: str) -> None:
+    journal = make_journal(tmp_path, case)
+    got = cp5_integrity.review_scope(
+        _FrozenExecution(journal.store, journal.snapshot), journal.attempt
+    )
+    heads = _heads(case)
+    pack = stage1.make_pack(case)
+    bound = (
+        Input(input_id="prepared-pack", sha256=pack.content_hash(), status="accepted"),
+        *(
+            Input(input_id=m, sha256=h.content_hash(), status=stage1._bound_status(h))
+            for m, h in heads.items()
+        ),
+    )
+    sequence = stage1.EXPECTED[case]["inherited_limitations"]["sequence"]
+    cp1 = heads["CP-1"]
+    want = ReviewScope(
+        pack=pack,
+        inputs=bound,
+        heads=tuple(
+            (i, heads[i.input_id])
+            for i in bound
+            if i.input_id in stage1.EXPECTED[case]["evaluated"]
+        ),
+        inherited=stage1._flatten(sequence, (*cp1.limitations, *cp1.inherited_limitations)),
+    )
+    for name in ("pack", "inputs", "heads", "blocked", "inherited", "issues"):
+        assert getattr(got, name) == getattr(want, name), name
+    assert got.inherited  # a dropped or reordered sequence cannot equal an empty one by accident
+    assert got.issues == ()
+
+
+def _forge_inputs(
+    attempt: Attempt, change: Callable[[tuple[Input, ...]], tuple[Input, ...]]
+) -> Attempt:
+    return attempt.model_copy(
+        update={
+            "inputs": change(attempt.inputs),
+            "steps": tuple(
+                s.model_copy(update={"inputs": change(s.inputs)}) for s in attempt.steps
+            ),
+        }
+    )
+
+
+FORGERIES: dict[str, Callable[[tuple[Input, ...]], tuple[Input, ...]]] = {
+    "drop_cp3": lambda ins: tuple(i for i in ins if i.input_id != "CP-3"),
+    "drop_cp2": lambda ins: tuple(i for i in ins if i.input_id != "CP-2"),
+    "extra_input": lambda ins: (*ins, Input(input_id="CP-1B", sha256="1" * 64, status="accepted")),
+    "forged_cp2_hash": lambda ins: tuple(
+        i.model_copy(update={"sha256": "0" * 64}) if i.input_id == "CP-2" else i for i in ins
+    ),
+    "forged_pack_hash": lambda ins: tuple(
+        i.model_copy(update={"sha256": "2" * 64}) if i.input_id == "prepared-pack" else i
+        for i in ins
+    ),
+    "cp3_bound_blocked": lambda ins: tuple(
+        i.model_copy(update={"status": "blocked"}) if i.input_id == "CP-3" else i for i in ins
+    ),
+}
+
+
+@pytest.mark.parametrize("forgery", sorted(FORGERIES))
+def test_forged_attempt_inputs_are_refused(pending: Journal, forgery: str) -> None:
+    forged = _forge_inputs(pending.attempt, FORGERIES[forgery])
+    frozen = _FrozenExecution(pending.store, pending.snapshot)
+    with pytest.raises(WorkflowError) as caught:
+        cp5.view(frozen, forged)
+    assert caught.value.code == "identity_mismatch"
+    outcome = cp5.ENTRY_VALIDATOR(frozen, frozen.pack(), forged)
+    assert outcome.output is None and outcome.issues
+
+
+def test_probe_accepts_a_head_settled_at_attempt_one(tmp_path: Path) -> None:
+    """The candidate carries the attempt number; a probe that rebuilt it at 0 would refuse."""
+    journal = make_journal(tmp_path, "positive", finished=True, number=1)
+    assert journal.attempt.number == 1
+    head = next(h for h in journal.snapshot.heads if h.module_id == "CP-5")
+    assert journal.store.head_module(head).attempt == 1
+    cp5.probe(journal.store, journal.snapshot, journal.attempt)
+
+
+# --- the G1 call sites that run without R6 (review L3) ----------------------------------------------
+
+
+def _empty_attempt(journal: Journal) -> Journal:
+    attempt = journal.attempt.model_copy(update={"steps": ()})
+    snapshot = journal.snapshot.model_copy(update={"attempts": (attempt,)})
+    journal.store._write(snapshot)
+    return Journal(journal.store, snapshot, attempt, journal.payload)
+
+
+def test_g1_read_inputs_serves_the_cp5_view(pending: Journal) -> None:
+    pending = _empty_attempt(pending)
+    binding = owner._owner_binding(pending.snapshot, pending.attempt, STEP)
+    spec = owner.OWNER_SPECS["CP-5"].steps[0]
+    served = owner._inputs(pending.store, binding, spec)
+    frozen = _FrozenExecution(pending.store, pending.snapshot)
+    assert served == cp5.view(frozen, pending.attempt)
+    assert owner._VIEWS[STEP] is cp5.view
+
+
+def test_g1_entry_settles_cp5(tmp_path: Path) -> None:
+    for case in CASES:
+        journal = _empty_attempt(make_journal(tmp_path / case, case))
+        submitted = submit_model_payload(journal.store, "t5", STEP, journal.payload)
+        assert submitted.journal.status == "finished"
+        assert submitted.journal.steps[0].status == "valid"
+        settled_head = next(h for h in journal.store.read().heads if h.module_id == "CP-5")
+        assert settled_head.status == "restricted"  # synthetic case: always restricted
+
+
+def test_g1_invalid_step_replays_the_entry_validator_issues(tmp_path: Path) -> None:
+    journal = _empty_attempt(make_journal(tmp_path, "positive"))
+    bad = json.loads(journal.payload)
+    bad["claim_reviews"] = bad["claim_reviews"][1:]  # one claim left unreviewed
+    text = json.dumps(bad)
+    binding = owner._owner_binding(journal.snapshot, journal.attempt, STEP)
+    historical = owner._owner_historical(journal.store, binding)
+    step = StepSubmission(
+        step_id=STEP,
+        inputs=journal.attempt.inputs,
+        payload_sha256=journal.store._store(text),
+        status="pending",
+    )
+    view = journal.attempt.model_copy(update={"steps": (step,)})
+    replay = owner._entry_outcome(historical, binding, text, view)
+    assert replay.output is None and replay.issues
+    submitted = submit_model_payload(journal.store, "t5", STEP, text)
+    assert submitted.journal.steps[0].status == "invalid"
+    assert submitted.journal.steps[0].issues == bounded_issues(replay.issues)
+    assert replay.issues == cp5.ENTRY_VALIDATOR(historical, historical.pack(), view).issues

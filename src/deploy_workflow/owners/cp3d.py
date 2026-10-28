@@ -541,8 +541,8 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
         ("amortisation", terms.amortisation.absence),
     ):
         if term_absence is not None:
-            out.digit_free(f"{key}.absence.reason", term_absence.reason)
-            out.digit_free(f"{key}.absence.follow_up", term_absence.follow_up)
+            out.analyst_text(f"{key}.absence.reason", term_absence.reason)
+            out.analyst_text(f"{key}.absence.follow_up", term_absence.follow_up)
     margin = terms.margin
     if bool(margin.bps_text) == bool(margin.absence):
         out.add("margin: exactly one of bps_text and absence is required")
@@ -558,7 +558,7 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
         if value is not None and value != 0:
             out.add("amortisation: the simple margin convention requires zero amortisation")
     rr = terms.reference_rate
-    out.digit_free("reference_rate.name", rr.name)
+    out.analyst_text("reference_rate.name", rr.name)  # ruling 6e item 3
     if out.ref_on_page(rr.quote, "reference_rate.quote") and rr.name not in rr.quote.quote:
         out.add("reference_rate: name does not occur in the quote")
     if bool(rr.level) == bool(rr.absence):
@@ -570,8 +570,8 @@ def _check_terms(terms: Terms, quotation: date | None, out: _Issues) -> None:
         elif not _NUMERAL.match(pt):
             out.add(f"reference_rate: level percent_text {pt} {_SHAPE}")
     if rr.absence is not None:
-        out.digit_free("reference_rate.absence.reason", rr.absence.reason)
-        out.digit_free("reference_rate.absence.follow_up", rr.absence.follow_up)
+        out.analyst_text("reference_rate.absence.reason", rr.absence.reason)
+        out.analyst_text("reference_rate.absence.follow_up", rr.absence.follow_up)
 
 
 def _check_recovery(sub: MarketImpliedSubmission, out: _Issues) -> None:

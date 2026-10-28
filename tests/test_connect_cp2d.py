@@ -1370,6 +1370,18 @@ def test_reader_checks_the_head_against_its_blob_before_the_status(tmp_path: Pat
         cp2d.cp2d_reader(store, forged)
 
 
+def test_reader_checks_a_stale_head_against_its_blob_too(tmp_path: Path) -> None:
+    from deploy_vii.execution import staled
+
+    store, attempt = make_upstream(tmp_path)
+    _submit(store, attempt, _literal("positive"))
+    forged = staled(_head(store), "Prepared pack changed; rerun required").model_copy(
+        update={"inputs": ()}
+    )
+    with pytest.raises(ValueError, match="does not match its result blob"):
+        cp2d.cp2d_reader(store, forged)
+
+
 def _two_facility_operands() -> cp2d.Operands:
     early = replace(
         tm.LOAN,

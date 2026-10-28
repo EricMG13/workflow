@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 
 from deploy_vii.display import format_date
 from deploy_workflow.owners import cp3c
@@ -1639,7 +1640,7 @@ def test_b2_a_pre_d0_line_comes_before_the_principal_line() -> None:
 # Round 11 B5: a blank Insufficient Information limitation
 
 
-@pytest.mark.parametrize("blank", ["", " ", "\t\n"])
+@pytest.mark.parametrize("blank", ["", " ", "\t\n", "\u200b", "\ufeff", "\u00ad", " \u200b\n"])
 def test_b5_a_blank_insufficient_information_limitation_is_refused(blank: str) -> None:
     payload = json.loads(json.dumps(SUBMISSIONS["cp3c"]["positive"]))
     (lme,) = (p for p in payload["paths"] if p["kind"] == "liability_management")
@@ -1650,3 +1651,65 @@ def test_b5_a_blank_insufficient_information_limitation_is_refused(blank: str) -
         "its limitation"
     )
     assert issues == (pinned,)
+
+
+# Round 11 blank text (R3 M1), round 12 B10: every analyst `Text` field refuses blank text with
+# the fallback frame (CP-3C pins none). `""` keeps the schema's `min_length` refusal; a blank
+# limitation is B5's, above.
+
+# (oracle case, path, keys): each `Text` field `_text_fields` reads, from a case that holds it.
+BLANK_FIELDS: tuple[tuple[str, str, tuple[str | int, ...]], ...] = (
+    ("positive", "repricing.rationale", ("repricing", "rationale")),
+    ("gap_no_repricing", "repricing_absence.reason", ("repricing_absence", "reason")),
+    ("gap_no_repricing", "repricing_absence.follow_up", ("repricing_absence", "follow_up")),
+    *(
+        ("positive", f"paths[{p['kind']}].{name}", ("paths", i, name))
+        for i, p in enumerate(SUBMISSIONS["cp3c"]["positive"]["paths"])
+        for name in ("text", "credit_implication")
+    ),
+)
+
+
+def _blank_adapter(case: str, keys: tuple[str | int, ...]) -> Adapter:
+    """Places the value in one analyst text field of the frozen case payload. Page and quote are
+    unused: CP-3C reads no value from an analyst quote."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        payload = json.loads(json.dumps(SUBMISSIONS["cp3c"][case]))
+        cur: Any = payload
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return cp3c.submission_issues(submission=_submission(payload), offered=OFFERED)
+
+    return adapter
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[1])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(
+    blank: BlankCase, field: tuple[str, str, tuple[str | int, ...]]
+) -> None:
+    case, path, keys = field
+    failure = blank_failure(blank, _blank_adapter(case, keys), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[1])
+def test_blank_text_twin_is_accepted(field: tuple[str, str, tuple[str | int, ...]]) -> None:
+    """The twin: the same field holding text is not refused as empty."""
+    case, path, keys = field
+    issues = _blank_adapter(case, keys)("", "", "The refinancing view is a desk judgment.")
+    assert EMPTY_TEXT.format(path=path) not in issues, issues
+
+
+def test_blank_fields_cover_every_text_field() -> None:
+    """Every non-limitation field `_text_fields` reads, over the cases the class test uses, is
+    one this class test sets (a limitation is B5's)."""
+    read = {
+        path
+        for case in ("positive", "gap_no_repricing")
+        for path, _ in cp3c._text_fields(_submission(SUBMISSIONS["cp3c"][case]))
+        if not path.endswith(".limitation")
+    }
+    assert read == {path for _, path, _ in BLANK_FIELDS}, read

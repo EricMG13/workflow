@@ -27,6 +27,7 @@ from deploy_vii.business_context import prohibited_issues
 from deploy_vii.contracts import Contract, Fact, Identifier, Text
 from deploy_vii.display import format_date
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-3C"
 BPS_BOUNDS = (0, 1000)
@@ -199,6 +200,10 @@ def submission_issues(
     if sorted(p.kind for p in s.paths) != sorted(KINDS):
         issues.append(_ONE_PER_KIND)
     for field, text in _text_fields(s):
+        # Round 11 blank text (R3 M1) and round 12 B10, in the fallback frame (CP-3C pins none).
+        # A limitation is not here: a blank one is B5's, below. `""` stays the schema's refusal.
+        if not field.endswith(".limitation") and is_blank(text):
+            issues.append(f"{field}: empty text")
         if _DIGIT.search(text):
             issues.append(f"{field}: must not contain a figure")
         issues.extend(prohibited_conclusions(field, text))
@@ -214,7 +219,7 @@ def submission_issues(
             issues.append(
                 f"{at}.feasibility: must be Insufficient Information exactly when the category is"
             )
-        if insufficient and not (p.limitation or "").strip():  # round 11 B5: blank is none
+        if insufficient and is_blank(p.limitation or ""):  # round 11 B5, B10: blank is none
             issues.append(
                 f"{at}.limitation: an Insufficient Information assessment states its limitation"
             )

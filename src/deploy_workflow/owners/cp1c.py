@@ -23,6 +23,7 @@ from deploy_vii.business_context import Category, Severity, prohibited_issues
 from deploy_vii.contracts import Citation, Claim, Contract, Fact, Source, TableRow
 from deploy_vii.readiness import citation_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-1C"
 
@@ -1367,7 +1368,7 @@ def _content_issues(submission: PeerBenchmarkSubmission, sheet: PeerSheet | None
     for a in submission.assessments:
         if not a.evidence:
             issues.append(f"Evidence required for a comparability assessment: {a.peer}")
-        if a.comparability == "Partly comparable" and not (a.limitation or "").strip():
+        if a.comparability == "Partly comparable" and is_blank(a.limitation or ""):
             issues.append(f"Limitation required for Partly comparable: {a.peer}")
     return issues
 
@@ -1407,7 +1408,7 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     citations = tuple(c for a in submission.assessments for c in a.evidence)
     issues += citation_issues((*citations, *submission.overall.evidence), inputs.sources)
     for path, text in _prohibited_fields(submission):
-        if not text.strip():  # round 11: blank text is refused (no CP-1C frame is pinned)
+        if is_blank(text):  # round 11, round 12 B10: blank text is refused (no CP-1C frame)
             issues.append(f"{path}: empty text")
         issues += prohibited_issues(path, text, kinds=PROHIBITED_KINDS)
     if not set_issues:

@@ -1291,6 +1291,17 @@ def test_blank_text_is_refused(blank: BlankCase, field: tuple[str, tuple[str | i
     assert failure is None, failure
 
 
+@pytest.mark.parametrize(
+    "blank", [c for c in BLANK_CASES if c.whitespace_only], ids=lambda c: c.case_id
+)
+def test_blank_partly_comparable_limitation_is_no_limitation(blank: BlankCase) -> None:
+    """Round 12 B10: a limitation of whitespace and `Cf` characters alone states none, so a Partly
+    comparable assessment holding it still lacks its limitation (as whitespace does)."""
+    peer = submissions()["positive"]["peer_benchmark"]["assessments"][3]["peer"]
+    issues = _blank_adapter(("assessments", 3, "limitation"))("", "", blank.value)
+    assert f"Limitation required for Partly comparable: {peer}" in issues, issues
+
+
 @pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
 def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...]]) -> None:
     """The twin: the same field holding text is not refused as empty."""

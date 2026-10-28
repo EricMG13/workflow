@@ -43,6 +43,7 @@ from deploy_vii.contracts import (
     TableRow,
 )
 from deploy_vii.model._cells import CONTEXT
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-2A"
 STEP_ID = "downside_pathway"
@@ -586,7 +587,7 @@ def _bad_name(text: str) -> bool:
 def _prose_issues(
     path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str]
 ) -> list[str]:
-    if not text.strip():
+    if is_blank(text):
         return [f"{path}: empty text"]
     return [
         *(f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)),
@@ -597,7 +598,7 @@ def _prose_issues(
 def _name_issues(path: str, text: str) -> list[str]:
     """A scenario name or threshold label: not empty (M4), no digit, brace or bracket, and no
     prohibited conclusion (ruling A3)."""
-    if not text.strip():
+    if is_blank(text):
         return [f"{path}: empty text"]
     issues = []
     if any(unicodedata.category(ch) in ("Cc", "Zl", "Zp") for ch in text):
@@ -615,7 +616,7 @@ def _scenario_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
         issues += _name_issues(f"{path}.name", sc.name)
         if sc.name.strip() == BASE_ROW:
             issues.append(f"{path}.name: {RESERVED_BASE}")
-        if sc.name.strip() and sc.name in seen:
+        if not is_blank(sc.name) and sc.name in seen:
             issues.append(f"{path}.name: duplicate scenario name: {sc.name}")
         seen.add(sc.name)
         issues += _prose_issues(f"{path}.rationale", sc.rationale, bound, inputs.names)
@@ -640,7 +641,7 @@ def _threshold_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
     issues += [
         f"thresholds: {label} appears more than once"
         for label in dict.fromkeys(labels)
-        if label.strip() and labels.count(label) > 1
+        if not is_blank(label) and labels.count(label) > 1
     ]
     return issues
 

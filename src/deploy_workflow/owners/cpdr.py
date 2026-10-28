@@ -26,6 +26,7 @@ from deploy_vii.contracts import (
 )
 from deploy_vii.readiness import GapKind, GapSeverity, citation_issues
 from deploy_vii.registry import modules
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-DR"
 STEP_ID = "research"
@@ -192,8 +193,9 @@ def _question_issues(
         if source not in ready
     ]
     found += citation_issues(question.citations, sources)
-    # Round 11 blank text: no CP-DR frame is pinned, so the fallback applies. `""` keeps its
-    # existing refusal (the `Text` schema, or the not_found completeness issue).
+    # Round 11 blank text (round 12 B10: `Cf` counts as blank): no CP-DR frame is pinned, so the
+    # fallback applies. `""` keeps its existing refusal (the `Text` schema, or the not_found
+    # completeness issue).
     found += [
         f"{path}.{field}: empty text"
         for field, value in (
@@ -201,7 +203,7 @@ def _question_issues(
             ("answer", question.answer),
             ("limitation", question.limitation),
         )
-        if value and not value.strip()
+        if value and is_blank(value)
     ]
     texts = [t for t in (question.text, question.answer, question.limitation) if t]
     if any(char.isdigit() for text in texts for char in text):

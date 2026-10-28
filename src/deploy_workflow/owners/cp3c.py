@@ -32,8 +32,9 @@ from deploy_workflow.owners.blank import is_blank
 MODULE_ID = "CP-3C"
 BPS_BOUNDS = (0, 1000)
 
-Status = Literal["known", "missing"]
-CellStatus = Literal["known", "missing", "not_applicable"]
+# The product's four statuses (round 13 R1 L1, the CP-4C pattern); a head fact keeps its own.
+Status = Literal["known", "missing", "conflicting", "not_applicable"]
+CellStatus = Status
 ValueClass = Literal["source", "calculated", "analyst_judgment"]
 PathKind = Literal[
     "repay_from_resources",
@@ -246,8 +247,8 @@ def _check_value(
         raise ValueError(f"{what}: a known fact carries exactly one of amount or text")
     if status == "known" and reason is not None:
         raise ValueError(f"{what}: a known fact carries no reason")
-    if status == "missing" and (amount is not None or text is not None or not reason):
-        raise ValueError(f"{what}: a missing fact carries a reason and no value")
+    if status != "known" and (amount is not None or text is not None or not reason):
+        raise ValueError(f"{what}: a {_STATE_WORD[status]} fact carries a reason and no value")
 
 
 @dataclass(frozen=True)
@@ -265,7 +266,8 @@ class Cp1Fact:
     text: str | None = None
     unit: str | None = None
     value_class: ValueClass | None = None  # the head fact's own (kept by a copied cell)
-    reason: str | None = None  # the head fact's limitation when missing
+    reason: str | None = None  # the head fact's limitation when it is not known
+    currency: str | None = None  # the head fact's own currency (round 13 item 5)
 
     def __post_init__(self) -> None:
         _check_value(f"CP-1 {self.table_id}", self.status, self.amount, self.text, self.reason)
@@ -283,6 +285,7 @@ class Cp2dFact:
     period: str | None = None
     value_class: ValueClass | None = None
     reason: str | None = None
+    currency: str | None = None  # the cell's own currency (round 13 item 5)
 
     def __post_init__(self) -> None:
         _check_value(f"CP-2D {self.fact_id}", self.status, self.amount, self.text, self.reason)
@@ -408,8 +411,21 @@ def _unstated_gap(fid: str, term: str) -> Gap:
 NM_TOTAL_NEGATIVE = "Not meaningful: total facility principal is negative" + _NM
 
 
-def _op(value: Decimal | None, label: str) -> Num:
-    return Gap(missing_reason(label)) if value is None else value
+# an unsettled head fact's status as its dependants' reason names it (round 13 R1 L1, as CP-4C)
+_STATE_WORD: Mapping[Status, str] = {
+    "known": "known",
+    "missing": "missing",
+    "conflicting": "conflicting",
+    "not_applicable": "not applicable",
+}
+
+
+def _op(value: Decimal | None, label: str, status: Status = "missing") -> Num:
+    """The operand, or its gap: ``Not calculable: <label> is <missing|conflicting|not applicable>``
+    (C-2 frame)."""
+    if value is not None:
+        return value
+    return Gap(f"{_NOT_CALCULABLE}{label} is {_STATE_WORD[status]}")
 
 
 def _first(*values: object) -> Gap | None:
@@ -479,6 +495,11 @@ class Operands:
     cash_interest_paid: Decimal | None  # a positive magnitude
     facilities: tuple[FacilityOperand, ...]
     unmatched: tuple[UnmatchedFacility, ...] = ()
+    # The status of each unsettled operand above, by field name; one absent here is missing.
+    statuses: Mapping[str, Status] = _field(default_factory=dict)
+
+    def status(self, name: str) -> Status:
+        return self.statuses.get(name, "missing")
 
 
 @dataclass(frozen=True)
@@ -701,12 +722,15 @@ def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refin
         none = None if ordered or unmatched else Gap(NO_FACILITY)
         minimum: Num = Gap(REASON_MINIMUM_CASH) if o.minimum_cash is None else o.minimum_cash
         cash_and_revolver = _total(
-            (_op(o.cash, "cash and cash equivalents"), _op(o.undrawn_revolver, "undrawn revolver"))
+            (
+                _op(o.cash, "cash and cash equivalents", o.status("cash")),
+                _op(o.undrawn_revolver, "undrawn revolver", o.status("undrawn_revolver")),
+            )
         )
         base = _diff(cash_and_revolver, minimum)
-        flow = _op(o.run_rate_annual, "CP-2D run-rate annual flow")
-        ebitda = _op(o.adjusted_ebitda, "adjusted EBITDA")
-        paid = _op(o.cash_interest_paid, "cash interest paid")
+        flow = _op(o.run_rate_annual, "CP-2D run-rate annual flow", o.status("run_rate_annual"))
+        ebitda = _op(o.adjusted_ebitda, "adjusted EBITDA", o.status("adjusted_ebitda"))
+        paid = _op(o.cash_interest_paid, "cash interest paid", o.status("cash_interest_paid"))
         rows = _maturity_rows(base, flow, ordered, extra)
         total = none or _total((*(f.principal for f in ordered), *extra))
         creditors, junior = _creditor_rows(ordered, extra, total, ebitda)
@@ -761,7 +785,7 @@ _MILLIONS = "MILLIONS"
 def _amount(
     what: str, status: Status, amount: Decimal | None, unit: str | None, want: str
 ) -> Decimal | None:
-    if status == "missing":
+    if status != "known":
         return None
     if amount is None or unit != want:
         raise ValueError(f"CP-3C {what}: expected a {want} amount")
@@ -777,8 +801,8 @@ def _cp2d_amount(fact: Cp2dFact, want: str = _MILLIONS) -> Decimal | None:
 
 
 def _stated_text(what: str, status: Status, text: str | None) -> str | None:
-    """A text fact's text, or None when it is missing; a known fact without text is refused."""
-    if status == "missing":
+    """A text fact's text, or None when it is not known; a known fact without text is refused."""
+    if status != "known":
         return None
     if text is None:
         raise ValueError(f"CP-3C {what}: expected a text fact")
@@ -803,6 +827,31 @@ def _flag(fact: Cp2dFact) -> bool | None:
     if flag not in (None, "Yes", "No"):
         raise ValueError(f"CP-3C {fact.fact_id}: inside-horizon flag {flag!r}")
     return None if flag is None else flag == "Yes"
+
+
+def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> None:
+    """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
+    currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
+    A missing cash_closing states none, so the reporting currency stands unchecked then."""
+    cash = cp1.cash_closing
+    if cash.status == "known":
+        if cash.currency is None or is_blank(cash.currency):
+            raise ValueError("CP-3C cash_closing: currency is not set")
+        if cash.currency != currency:
+            raise ValueError(
+                f"CP-3C: reporting currency {currency!r} is not cash_closing's {cash.currency!r}"
+            )
+    read: list[tuple[str, Cp1Fact | Cp2dFact]] = [
+        ("undrawn_rcf", cp1.undrawn_rcf),
+        ("adjusted_ebitda", cp1.adjusted_ebitda),
+        ("cash_interest", cp1.cash_interest),
+        *((f"{t.facility_id}.annual_amortisation", t.annual_amortisation) for t in cp1.facilities),
+        *((f.fact_id, f) for f in (cp2d.run_rate, cp2d.minimum_cash, cp2d.funding_gap)),
+        *((r.principal.fact_id, r.principal) for r in cp2d.wall),
+    ]
+    for name, fact in read:
+        if fact.status == "known" and fact.unit == _MILLIONS and fact.currency != currency:
+            raise ValueError(f"CP-3C {name}: currency {fact.currency!r} is not {currency!r}")
 
 
 def _facility(
@@ -891,6 +940,17 @@ def compose_operands(
         )
         for fid in sorted(terms.keys() ^ wall.keys())
     )
+    statuses = {
+        name: fact.status
+        for name, fact in (
+            ("cash", cp1.cash_closing),
+            ("undrawn_revolver", cp1.undrawn_rcf),
+            ("run_rate_annual", cp2d.run_rate),
+            ("adjusted_ebitda", cp1.adjusted_ebitda),
+            ("cash_interest_paid", cp1.cash_interest),
+        )
+        if fact.status != "known"
+    }
     return Operands(
         cash=_cp1_amount("cash_closing", cp1.cash_closing),
         undrawn_revolver=_cp1_amount("undrawn_rcf", cp1.undrawn_rcf),
@@ -900,13 +960,19 @@ def compose_operands(
         cash_interest_paid=None if interest is None else interest.copy_negate(),  # exact
         facilities=facilities,
         unmatched=unmatched,
+        statuses=statuses,
     )
 
 
 # --- cells and tables ---------------------------------------------------------------------------
 
 # A gap's report-wide G<n> is bound at render time (expected.json shown_pattern "∅ G<n>").
-GAP_SHOWN: Mapping[CellStatus, str] = {"missing": "∅ G#", "not_applicable": "∅ G# n.m."}
+# A conflicting fact is spelled as a gap, as the product spells it (report_view.py:932-933).
+GAP_SHOWN: Mapping[CellStatus, str] = {
+    "missing": "∅ G#",
+    "conflicting": "∅ G#",
+    "not_applicable": "∅ G# n.m.",
+}
 
 
 @dataclass(frozen=True)
@@ -1018,8 +1084,9 @@ def _copy(fact: Cp1Fact | Cp2dFact, at: str) -> _Spec:
     """A copied upstream fact: its own value, unit, period, value_class and reason (C-7)."""
     if fact.value_class is None:
         raise ValueError(f"CP-3C {at}: a copied fact keeps its value_class, and none is bound")
-    if fact.status == "missing" and fact.reason is not None:  # a missing fact has a reason
-        return replace(_gap(fact.reason, fact.unit, fact.value_class), period=fact.period)
+    if fact.status != "known" and fact.reason is not None:  # an unsettled fact has a reason
+        gap = _gap(fact.reason, fact.unit, fact.value_class)
+        return replace(gap, status=fact.status, period=fact.period)
     if fact.text is not None:
         return _text(fact.text, fact.value_class)
     if fact.amount is None or fact.unit is None or fact.period is None:
@@ -1582,8 +1649,8 @@ def _upstream_shown(
     unit: str | None,
     period: str | None,
 ) -> str:
-    if status == "missing":
-        return GAP_SHOWN["missing"]
+    if status != "known":
+        return GAP_SHOWN[status]
     fact = Fact(fact_id="upstream", label=name, amount=amount, text=text, unit=unit, period=period)
     return fact_spelling(fact, None)[2]
 
@@ -1829,6 +1896,7 @@ def compute(inputs: Cp3cInputs) -> Cp3cResult:
     issues = submission_issues(submission=inputs.submission, offered=inputs.offered)
     if issues:
         raise ValueError("CP-3C submission is invalid: " + "; ".join(issues))
+    check_currency(cp1=inputs.cp1, cp2d=inputs.cp2d, currency=inputs.currency)
     operands = compose_operands(
         cp1=inputs.cp1, cp2d=inputs.cp2d, balance_date=inputs.balance_date, currency=inputs.currency
     )

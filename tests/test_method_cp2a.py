@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -1142,3 +1143,66 @@ def test_property_monotonic(
         assert net[1] >= net[0] if d - c >= 0 else net[1] <= net[0]
     if d > 0 and (to_debt := pair("fcf_to_debt")) is not None:
         assert to_debt[1] <= to_debt[0]
+
+
+# --- round 11 blank text, round 12 B10 (Unicode Cf characters count as blank) -----------------
+
+# Every analyst text field `validate` reads, with the keys that reach it in the payload.
+BLANK_FIELDS: tuple[tuple[str, tuple[str | int, ...]], ...] = (
+    ("scenarios[0].name", ("scenarios", 0, "name")),
+    ("scenarios[0].rationale", ("scenarios", 0, "rationale")),
+    ("scenarios[0].limitation", ("scenarios", 0, "limitation")),
+    ("thresholds[0].label", ("thresholds", 0, "label")),
+    ("thresholds[0].rationale", ("thresholds", 0, "rationale")),
+    ("assessment.rationale", ("assessment", "rationale")),
+    ("assessment.limitation", ("assessment", "limitation")),
+    ("gaps[0].gap", ("gaps", 0, "gap")),
+    ("gaps[0].why_it_matters", ("gaps", 0, "why_it_matters")),
+    ("gaps[0].affected_analysis", ("gaps", 0, "affected_analysis")),
+    ("gaps[0].action", ("gaps", 0, "action")),
+)
+
+
+def _blank_adapter(keys: tuple[str | int, ...]) -> Adapter:
+    """Places the value in one analyst text field of the frozen positive payload. Page and quote
+    are unused: CP-2A reads no value from an analyst quote."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        facts = cp1_facts("positive")
+        payload = _positive_payload(facts)
+        cur: Any = payload
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return cp2a.validate(inputs_for("positive", payload, facts))
+
+    return adapter
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(blank: BlankCase, field: tuple[str, tuple[str | int, ...]]) -> None:
+    path, keys = field
+    failure = blank_failure(blank, _blank_adapter(keys), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...]]) -> None:
+    """The twin: the same field holding text is not refused as empty."""
+    path, keys = field
+    issues = _blank_adapter(keys)("", "", "Downside drivers are desk judgments")
+    assert EMPTY_TEXT.format(path=path) not in issues, issues
+
+
+def test_format_character_labels_are_not_reported_as_duplicates() -> None:
+    """B10: two labels of a format character alone are blank, so they give their two empty-text
+    issues only, as two whitespace labels do."""
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["thresholds"][0]["label"] = "\u200b"
+    payload["thresholds"][1]["label"] = "\u200b"
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        "thresholds[0].label: empty text",
+        "thresholds[1].label: empty text",
+    ]

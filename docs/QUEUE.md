@@ -3045,3 +3045,5 @@ Known gap (B1 fix-4 adversary Info, 2026-10-28; pre-existing, not B1-specific): 
 Defect (0d review input, 2026-10-28): the call band (`report_view._call`, ~:2090) reports "outside_pathway" for CP-6 when a `requested_modules` override drops it (same class as 0d (a)). Own task after 0d lands.
 
 LEAD (2026-10-28): CP-DR owner lease frozen (`docs/CPDR-OWNER-LEASE.md`, review-precise-3 FREEZE after revision 4 by mx-escalate). Its acceptance 7 render pin and its methodology pin are known re-pins (header).
+
+LEAD (2026-10-28): 0d (a) override-slice wording and (b) skip link landed 41a8fdb (build-only; review docs/reviews/0d-product-defects.md; manifest landing commit 2fadf0b). 0d(c) call band + navigator running. Known red until the re-pin after 0d(c): the frozen CP-OS builder pins HEAD's old report_view.py/app.js (cases/cpos-owner/builder/build.py:28-29) and its skip-link exception (:118-119); the CP-OS re-pin, CP-DR acceptance 7 and CP-L10 rev 3 render states follow 0d(c) in one pass.

@@ -38,6 +38,7 @@ from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-2G"
 SCHEMA_VERSION = "forward-credit-model/1"
@@ -710,7 +711,7 @@ _OPERAND_ORDER: Mapping[BreakKind, tuple[str, ...]] = {
 def _text_issues(
     path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str]
 ) -> list[str]:
-    if not text.strip():
+    if is_blank(text):
         return [f"{path}: empty text"]
     issues = [f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)]
     issues.extend(prohibited_issues(path, text))
@@ -724,9 +725,9 @@ def _text_issues(
 
 
 def _limitation_issues(path: str, text: str | None) -> list[str]:
-    """Round 11 blank text: a stated limitation of whitespace alone (or `""`) is empty text, in
-    the pinned frame (V08). A limitation is optional, so None is not refused."""
-    return [f"{path}: empty text"] if text is not None and not text.strip() else []
+    """Round 11 blank text: a stated limitation of whitespace alone (round 12 B10: and `Cf`
+    characters), or `""`, is empty text, in the pinned frame (V08). A limitation is optional, so None is not refused."""
+    return [f"{path}: empty text"] if text is not None and is_blank(text) else []
 
 
 def _is_definition(b: Cp2aBreak) -> bool:

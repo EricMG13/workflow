@@ -329,3 +329,4 @@
 - 19:36 CP-L10 built (3b3ad2b+e0bb540), CP-2D built (545a8a7..1ec1b40), CP-1D owner fix round 1 (a1aa19d, frozen moved 0, gates 0).
 - 19:37 CP-5 dispatched at 8b46132. CP-1D fix1 scoped re-review (same mx-adversary). Review queue (Opus cap 6): CP-3 (8704e1f, mx-precise), CP-L10 (6e7f5b3, mx-adversary), CP-2D (b47c667, mx-adversary). Asked LEAD on CP-3 R3 create (seen_deterministic).
 - 19:38 LEAD Stage 2 round 2 cherry-picked (68272ac): analytical after CP-MODEL admitted when neither consumes the other. G1-X plan-order ride-along dispatched (mx-feature; mx-adversary review).
+- 19:40 CP-DR review: REQUEST CHANGES (M1 lease-required deferred tests unwritten; L1 constant-survivor mutants; L2 reader coercion; L3 manifest). Fix round 1 to same mx-feature. CP-2D review dispatched (Opus slot).

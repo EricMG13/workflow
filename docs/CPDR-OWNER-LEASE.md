@@ -1,5 +1,7 @@
 # CP-DR (Deep research, LOCAL) owner lease — FROZEN by LEAD 2026-10-28 (draft rev 4)
 
+Pin consumers: none (no other builder pins or reads this module's files). Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
+
 Amended by LEAD 2026-10-28 (rulings round 10 item 5; H1 review-adversary open point 1). D-B's scope "the whole ready pack" becomes "every source the prepared pack holds; one that is not ready answers `unavailable`, never its bytes". This is one convention for every fixed owner row. No frozen CP-DR pack holds a source that is not ready, so nothing moves.
 
 Re-pinned by LEAD 2026-10-28 in the serialised `methodology.json` change (branch `lead/methodology-serialised`; `work/lead/methodology-serialised/review.md` COMMIT): `methodology.json` 348fbc4b… → 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 (CP-L10 required + CP-1 and TL10.5; CP-1C T1C.1-T1C.8; CP-1D drops T1E.*; CP-2A drops T5.*); two scratch rebuilds identical. builder 6dc0efbb… → 591da654cfe1eb0e932bffa3b48b7dc362d9d1f3180821bd838e3bdd0f99aae5; manifest c9b3734e… → 44862ca3166a29f7d8ff44e7c1073bbdfa2229201c46d83586a262f5de192066; expected unchanged; submissions unchanged. Pins elsewhere in this file are superseded where they differ.

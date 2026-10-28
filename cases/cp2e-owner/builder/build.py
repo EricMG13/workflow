@@ -288,7 +288,10 @@ def check_submission(sub, pages):
         rb = re_["rate_basis"]
         if on_page(rb, "rate_exposure.rate_basis", issues, pages):
             low = rb["quote"].lower()
-            said = "FLOATING" if "floating" in low else ("FIXED" if "fixed" in low else None)
+            # E5 as amended by round 5 E8: `\b(floating|fixed)[\s-]+rate\b`, case-insensitive; both or neither is the "neither" issue
+            _fl = any(m.group(1) == "floating" for m in re.finditer(r"\b(floating|fixed)[\s-]+rate\b", low))
+            _fx = any(m.group(1) == "fixed" for m in re.finditer(r"\b(floating|fixed)[\s-]+rate\b", low))
+            said = "FLOATING" if _fl and not _fx else ("FIXED" if _fx and not _fl else None)
             if said is None:
                 issues.append("rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate")
             elif rb["rate_type"] != said:
@@ -943,8 +946,15 @@ def own_limitations(sub):
            "Interest income on the cash balance is not shocked, so the added interest is not offset by any higher "
            "income on cash"]
     if sub.get("rate_exposure"):
-        out.append("The reference rate level is not in any source, so a floor of zero is treated as not binding for the "
-                   "upward shocks and downward shocks are not tested")
+        # A4 (rounds 6 and 6i): the floor texts apply to floating-rate debt only; a fixed-rate facility gets neither
+        rx = sub["rate_exposure"]
+        if rx["rate_basis"]["rate_type"] == "FLOATING":
+            if D(rx["floor"]["bps_text"]) == 0:
+                out.append("The reference rate level is not in any source, so a floor of zero is treated as not binding for the "
+                           "upward shocks and downward shocks are not tested")
+            else:
+                out.append("The reference rate level is not in any source and the facility floor is above zero, so the rate "
+                           "shocks are not calculated and downward shocks are not tested")
         if remainder_applies(D(sub["rate_exposure"]["facility_balance"]["value_text"]),
                              row_decimal(sub["earnings"]["total_debt"]["value_text"])):
             out.append(LIM_REMAINDER)
@@ -1000,14 +1010,29 @@ def compose_claims(case, sub, d, tables):
     if d["fx"]:
         r0 = d["fx"][0]
         dafter, ech = fid("T2F.4", "r01", "debt_after"), fid("T2F.4", "r01", "ebitda_change")
-        if r0["debt_after"][0] == "known":
+        lev = fid("T2F.4", "r01", "lev_after")
+        share_known = bool(sub["fx"].get("foreign_ebitda_share"))  # E1: the share of EBITDA earned abroad is stated
+        # E4a: the reason the foreign debt is missing, as the claim names it
+        need = ("the facility balance" if d["foreign_debt"] == ("missing", "the facility balance is not stated")
+                else "the currency of the debt")
+        if r0["debt_after"][0] == "known" and share_known:
+            lev_ref = fig(lev) if by_id[lev]["status"] == "known" else f"[{lev}]"
+            add("CP-2E-FX-01",
+                f"The debt in a foreign currency is {fig(fdebt)}, so the first currency move leaves total debt "
+                f"at {fig(dafter)}, changes EBITDA by {fig(ech)} and leaves total leverage at {lev_ref}.",
+                [fdebt, dafter, ech, lev])
+        elif r0["debt_after"][0] == "known":
             add("CP-2E-FX-01",
                 f"The debt in a foreign currency is {fig(fdebt)}, so the first currency move leaves total debt "
                 f"at {fig(dafter)}; the effect on EBITDA is not calculated: [{ech}] needs the share of earnings "
                 "in other currencies, which no source states.", [fdebt, dafter, ech])
+        elif share_known:
+            add("CP-2E-FX-01",
+                f"The first currency move changes EBITDA by {fig(ech)}; the currency effect on the debt is not "
+                f"calculated: [{fdebt}] needs {need}, which the pack does not state.", [ech, fdebt])
         else:
             add("CP-2E-FX-01",
-                f"The currency effect on the debt is not calculated: [{fdebt}] needs the currency of the debt, which the "
+                f"The currency effect on the debt is not calculated: [{fdebt}] needs {need}, which the "
                 "pack does not state.", [fdebt])
     if d["rate"]:
         net = fid("T2F.3", "r01", "net")

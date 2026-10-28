@@ -10,13 +10,13 @@ orchestration seams (G1-X protocol section 2) are added to this file in later st
 """
 
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, replace
 from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from typing import Any, Literal
 
 from deploy_vii.contracts import Fact
-from deploy_vii.quotes import normalise, quoted
+from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.report_view import fact_spelling, figure_unit
 
 MODULE_ID = "CP-2E"
@@ -494,21 +494,54 @@ _RATE_BP = (1, 1000)
 _FX_PERCENT = (1, 50)
 
 
-def _once(token: str, quote: str) -> bool:
-    """token occurs exactly once in the normalised quote as a whole, unsigned number.
+def _unsigned(token: str, text: str) -> set[tuple[int, int]]:
+    """The spans where ``token`` is a whole, unsigned number in ``text`` (a normalised reading).
 
-    Round 10: the quote's figure is the signed numeral it prints. A ``-`` directly before the
-    first digit is a minus when it starts the quote or follows a character that is neither a
-    letter nor a digit, and a numeral in accounting parentheses reads as negative; such a printed
-    figure is not an occurrence of the unsigned token. A ``+`` is ignored."""
-    text = normalise(quote)  # maps U+2212 and the dashes to "-"
+    Round 10: a figure is the signed numeral the text prints. A ``-`` directly before the first
+    digit is a minus when it starts the text or follows a character that is neither a letter nor
+    a digit, and a numeral in accounting parentheses reads as negative; such a printed figure is
+    not an occurrence of the unsigned token. A ``+`` is ignored."""
     pattern = r"(?<![0-9.])(?<!(?<![A-Za-z0-9])-)" + re.escape(token) + r"(?![0-9]|\.[0-9])"
-    unsigned = [
-        m
+    return {
+        m.span()
         for m in re.finditer(pattern, text)
         if not (text[m.start() - 1 : m.start()] == "(" and text[m.end() : m.end() + 1] == ")")
-    ]
-    return len(unsigned) == 1
+    }
+
+
+def _readings(raw: str) -> tuple[str, ...]:
+    """``normalise(raw)``, plus the same with its hyphen wraps joined if ``raw`` holds one."""
+    plain = normalise(raw)  # maps U+2212 and the dashes to "-"
+    return (plain, reading(raw, join_wraps=True).text) if hyphen_wrapped(raw) else (plain,)
+
+
+def _starts(needle: str, text: str) -> Iterator[int]:
+    """Every index at which ``needle`` occurs in ``text``, overlapping occurrences included."""
+    at = text.find(needle)
+    while at >= 0:
+        yield at
+        at = text.find(needle, at + 1)
+
+
+def _once(token: str, quote: str, page: str) -> bool:
+    """token occurs exactly once in the normalised quote as a whole, unsigned number (round 10),
+    and the page prints it there as the same unsigned whole figure (round 11 B1).
+
+    B1: a figure at an edge of the quote occurs only if, at every occurrence of the quote (as
+    normalised, and with its wraps joined if wrapped) in every reading of the page, the page does
+    not continue it: no digit, ``.`` or minus sign before it, no digit or ``.`` plus a digit
+    after it, and no accounting parentheses around it. Every occurrence is checked, not only the
+    edge ones: away from an edge the characters around the figure are the quote's own, which the
+    quote reading has already passed, so the result is the same."""
+    if len(_unsigned(token, normalise(quote))) != 1:
+        return False
+    for text in _readings(page):
+        on_page = _unsigned(token, text)
+        for needle in _readings(quote):
+            for at in _starts(needle, text):
+                if any((at + s, at + e) not in on_page for s, e in _unsigned(token, needle)):
+                    return False
+    return True
 
 
 class _Check:
@@ -521,9 +554,19 @@ class _Check:
     def add(self, issue: str) -> None:
         self.issues.append(issue)
 
+    def empty(self, path: str, text: str | None) -> None:
+        """Round 11: analyst text that is present but blank (whitespace only, or "") is refused."""
+        if text is not None and not text.strip():
+            self.add(f"{path}: empty text")
+
     def digit_free(self, path: str, text: str | None) -> None:
         if text is not None and any(ch.isnumeric() for ch in text):
             self.add(f"{path}: digits are not allowed")
+
+    def prose(self, path: str, text: str) -> None:
+        """An analyst text field: not blank, and digit-free."""
+        self.empty(path, text)
+        self.digit_free(path, text)
 
     def on_page(self, ref: Mapping[str, Any], path: str) -> bool:
         sid, loc = ref["source_id"], ref["locator"]
@@ -549,7 +592,7 @@ class _Check:
         if not self.on_page(ref, path):
             return None
         v = ref[key]
-        if not _SENTENCE_NUM.fullmatch(v) or not _once(v, ref["quote"]):
+        if not _SENTENCE_NUM.fullmatch(v) or not _once(v, ref["quote"], self.pages[ref["locator"]]):
             self.add(f"{path}: {key} {v} does not occur in the quote")
             return None
         if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", normalise(ref["quote"])):
@@ -601,6 +644,11 @@ class _Check:
             self.add(f"{path}: shocks must be strictly increasing")
 
 
+def _split(rb: Mapping[str, Any]) -> bool:
+    """Round 11 B3: a wrapped quote's name spelled with the wrap's ``- `` is not on the page."""
+    return hyphen_wrapped(rb["quote"]) and "- " in normalise(rb["reference_rate"])
+
+
 def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
     balance = chk.labelled(
         r["facility_balance"], "value_text", "balance of", "rate_exposure.facility_balance"
@@ -614,8 +662,9 @@ def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
             chk.add(f"{path}: the quote states neither a floating nor a fixed rate")
         elif rb["rate_type"] != said:
             chk.add(f"{path}: rate_type {rb['rate_type']} contradicts the quote")
-        elif said == "FLOATING" and rb["reference_rate"] not in quote:
+        elif said == "FLOATING" and (rb["reference_rate"] not in quote or _split(rb)):
             chk.add(f"{path}: reference_rate does not occur in the quote")
+    chk.empty(f"{path}.reference_rate", rb["reference_rate"])
     chk.labelled(r["spread"], "bps_text", "spread", "rate_exposure.spread")
     chk.labelled(r["floor"], "bps_text", "floor", "rate_exposure.floor")
     return balance
@@ -632,7 +681,8 @@ def _check_fx(chk: _Check, fx: Mapping[str, Any]) -> None:
     pair_ok = chk.exactly_one(fe, fx.get("operating_fx_absence"), path, names)
     if pair_ok and fe and chk.on_page(fe, path):
         pt = fe["percent_text"]
-        ok = _SENTENCE_NUM.fullmatch(pt) and _once(pt, fe["quote"]) and Decimal(pt) <= 100
+        page = chk.pages[fe["locator"]]
+        ok = _SENTENCE_NUM.fullmatch(pt) and _once(pt, fe["quote"], page) and Decimal(pt) <= 100
         if not ok:
             chk.add(f"{path}: percent_text {pt} does not occur in the quote")
 
@@ -641,14 +691,14 @@ def _check_hedge(chk: _Check, sub: Mapping[str, Any]) -> None:
     hr = sub.get("hedge_ratio")
     names = ("hedge_ratio", "hedge_absence")
     if chk.exactly_one(hr, sub.get("hedge_absence"), "hedge_ratio", names) and hr:
-        chk.digit_free("hedge_ratio.rationale", hr["rationale"])
+        chk.prose("hedge_ratio.rationale", hr["rationale"])
         pt = hr["percent_text"]
         if not _HEDGE_NUM.fullmatch(pt) or not Decimal(pt) <= 100:
             chk.add("hedge_ratio: percent must be at least 0 and at most 100")
 
 
 def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
-    chk.digit_free("shock_rationale", sub["shock_rationale"])
+    chk.prose("shock_rationale", sub["shock_rationale"])
     sections = [a["section"] for a in sub["assessments"]]
     for i, a in enumerate(sub["assessments"]):
         p = f"assessments[{i}]"
@@ -658,9 +708,10 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
             chk.add(f"{p}: section {a['section']} appears more than once")
         if a["category"] not in _CATEGORIES:
             chk.add(f"{p}: category {a['category']} is not allowed")
-        chk.digit_free(f"{p}.text", a["text"])
+        chk.prose(f"{p}.text", a["text"])
         if _PROHIBITED.search(a["text"]):
             chk.add(f"{p}.text: text carries a prohibited conclusion")
+        chk.empty(f"{p}.limitation", a.get("limitation"))
         if (a["category"] == "Insufficient Information") != bool(a.get("limitation")):
             chk.add(f"{p}: limitation is required for Insufficient Information and only for it")
         if a["category"] == "Documentary Fact" and not a["basis"]:
@@ -670,7 +721,7 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
     for s in _SECTIONS:
         if s not in sections:
             chk.add(f"assessments: section {s} is missing")
-    chk.digit_free("summary.text", sub["summary"]["text"])
+    chk.prose("summary.text", sub["summary"]["text"])
     if _PROHIBITED.search(sub["summary"]["text"]):
         chk.add("summary.text: text carries a prohibited conclusion")
 
@@ -700,8 +751,10 @@ def validate_macro_fx(
     for key in ("rate_absence", "debt_currency_absence", "operating_fx_absence", "hedge_absence"):
         absence = sub.get(key) or fx.get(key)
         if absence:
-            chk.digit_free(f"{key}.reason", absence["reason"])
-            chk.digit_free(f"{key}.follow_up", absence["follow_up"])
+            at = key if sub.get(key) else f"fx.{key}"  # the field's place in the submission
+            for part in ("reason", "follow_up"):
+                chk.empty(f"{at}.{part}", absence[part])
+                chk.digit_free(f"{key}.{part}", absence[part])
     chk.shocks(
         sub["rate_shocks_bp"], "rate_shocks_bp", "a whole number of basis points", 4, _RATE_BP
     )

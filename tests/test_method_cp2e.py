@@ -7,14 +7,17 @@ Inputs come from the oracle's own literals (submissions.json) and the frozen fin
 import copy
 import dataclasses
 import json
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import defect_classes as dc
 import pytest
 
 from deploy_vii import prose
 from deploy_vii.contracts import Fact
+from deploy_vii.quotes import normalise, reading
 from deploy_workflow.owners import cp2e
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -904,3 +907,294 @@ def test_m1_reference_rate_is_read_on_the_normalised_quote() -> None:
     page = "The loan has a floating rate type with SOFR reference rate"
     sub["rate_exposure"]["rate_basis"]["quote"] = page.replace("SOFR", f"SO{_SH}FR")
     assert _validate_with_page5(sub, page) == ()
+
+
+# --- round 11: the shared defect classes (tests/defect_classes.py) through the validator -------
+# Each case places (page, quote, value) in one analyst field of the positive literal; the case
+# page is a fresh locator of the financial source (the validator needs only that it exists).
+_LOC = "page:9"
+_FLOATING = " The loan carries a floating rate."
+
+
+def _issues_with(raw: dict[str, Any], page: str | None = None) -> tuple[str, ...]:
+    pages = _pages("positive") if page is None else {**_pages("positive"), _LOC: page}
+    return cp2e.validate_macro_fx(submission=raw, pages=pages)
+
+
+def _cited(quote: str) -> dict[str, str]:
+    return {"source_id": "financial", "locator": _LOC, "quote": quote}
+
+
+def _share_adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["fx"]["operating_fx_absence"] = None
+    raw["fx"]["foreign_ebitda_share"] = {**_cited(quote), "percent_text": value}
+    return _issues_with(raw, page)
+
+
+def _spread_adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["rate_exposure"]["spread"] = {**_cited(quote), "bps_text": value}
+    return _issues_with(raw, page)
+
+
+def _reference_rate_adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+    """The reader needs one stated rate phrase: it follows the quote, in the quote and on the page
+    (inserted right after where the page prints the quote, so the quote stays contiguous)."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["rate_exposure"]["rate_basis"] = {
+        **_cited(quote + _FLOATING),
+        "rate_type": "FLOATING",
+        "reference_rate": value,
+    }
+    return _issues_with(raw, _after_quote(page, quote, _FLOATING))
+
+
+def _after_quote(page: str, quote: str, text: str) -> str:
+    """``page`` with ``text`` inserted right after the raw span the quote matches."""
+    needles = (normalise(quote), reading(quote, join_wraps=True).text)
+    for join_wraps in (False, True):
+        span = reading(page, join_wraps=join_wraps)
+        for needle in needles:
+            at = span.text.find(needle)
+            if at >= 0:
+                end = span.origin[at + len(needle) - 1] + 1
+                return page[:end] + text + page[end:]
+    raise AssertionError(f"the case quote is not on its page: {quote!r}")
+
+
+def _share_holds(value: str) -> bool:
+    """The share's bound (at most 999.9999 and at most 100) folds into the same refusal, so a case
+    whose value is outside it cannot be judged on its quote."""
+    return bool(cp2e._SENTENCE_NUM.fullmatch(value)) and Decimal(value) <= 100
+
+
+_SHARE_CASES = [c for c in dc.FIGURE_CASES if _share_holds(c.value)]
+_SPREAD_FIGURE_CASES = [c for c in dc.FIGURE_CASES if cp2e._SENTENCE_NUM.fullmatch(c.value)]
+_SPREAD_LABEL_CASES = [c for f in dc.FIGURES for c in dc.label_cases("spread", f)]
+
+
+def _ids(c: dc.QuoteCase) -> str:
+    return c.case_id
+
+
+def _does_not_occur(path: str, key: str, value: str) -> str:
+    return f"{path}: {key} {value} does not occur in the quote"
+
+
+def test_class_cases_cover_the_bounds() -> None:
+    """Only the two figures above the share's bound and the one off the operand shape are left
+    out, so every edge, sign, dash, NBSP and soft-hyphen family is judged."""
+    left = {c.case_id for c in dc.FIGURE_CASES} - {c.case_id for c in _SHARE_CASES}
+    assert left == {"sign-2024-2025", "sign-s-350"}
+    left = {c.case_id for c in dc.FIGURE_CASES} - {c.case_id for c in _SPREAD_FIGURE_CASES}
+    assert left == {"sign-2024-2025"}
+
+
+@pytest.mark.parametrize("c", _SHARE_CASES, ids=_ids)
+def test_class_foreign_share_figure(c: dc.QuoteCase) -> None:
+    refusal = _does_not_occur("fx.foreign_ebitda_share", "percent_text", c.value)
+    assert dc.quote_failure(c, _share_adapter, refusal) is None
+    # Not vacuous: an accepted case is a valid submission, a refused one has only the refusal.
+    assert _share_adapter(c.page, c.quote, c.value) == (() if c.accepted else (refusal,))
+
+
+@pytest.mark.parametrize("c", _SPREAD_FIGURE_CASES, ids=_ids)
+def test_class_labelled_operand_figure(c: dc.QuoteCase) -> None:
+    """A labelled operand reads its figure with the same rule (round 11 B1 in every reader)."""
+    refusal = _does_not_occur("rate_exposure.spread", "bps_text", c.value)
+    assert dc.quote_failure(c, _spread_adapter, refusal) is None
+    issues = _spread_adapter(c.page, c.quote, c.value)
+    labelled = f"rate_exposure.spread: bps_text {c.value} is not labelled spread in the quote"
+    # These pages carry no `spread` label: an accepted figure reaches the label check.
+    assert issues == ((labelled,) if c.accepted else (refusal,))
+
+
+@pytest.mark.parametrize("c", _SPREAD_LABEL_CASES, ids=lambda c: f"{c.case_id}-{c.value}")
+def test_class_labelled_operand_label(c: dc.QuoteCase) -> None:
+    """Round 10: a signed labelled figure with an unsigned repeat is refused at the label check;
+    an accepted case gets neither refusal."""
+    not_labelled = f"rate_exposure.spread: bps_text {c.value} is not labelled spread in the quote"
+    occurs = _does_not_occur("rate_exposure.spread", "bps_text", c.value)
+    if c.accepted:
+        for refusal in (not_labelled, occurs):
+            assert dc.quote_failure(c, _spread_adapter, refusal) is None
+    else:
+        assert dc.quote_failure(c, _spread_adapter, not_labelled) is None
+    issues = _spread_adapter(c.page, c.quote, c.value)
+    assert issues == (() if c.accepted else (not_labelled,))
+
+
+@pytest.mark.parametrize("c", dc.TEXT_CASES, ids=_ids)
+def test_class_reference_rate_text(c: dc.QuoteCase) -> None:
+    refusal = "rate_exposure.rate_basis: reference_rate does not occur in the quote"
+    assert dc.quote_failure(c, _reference_rate_adapter, refusal) is None
+    assert _reference_rate_adapter(c.page, c.quote, c.value) == (() if c.accepted else (refusal,))
+
+
+def _set_text(
+    keys: tuple[str | int, ...], prep: Callable[[dict[str, Any]], None] | None = None
+) -> dc.Adapter:
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        raw = copy.deepcopy(SUBMISSIONS["positive"])
+        if prep is not None:
+            prep(raw)
+        cur: Any = raw
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return _issues_with(raw, _FIXED_PAGE)
+
+    return adapter
+
+
+_ABSENT = {"reason": "Not stated in the pack", "follow_up": "Supply the disclosure"}
+
+
+def _rate_absent(raw: dict[str, Any]) -> None:
+    raw["rate_exposure"] = None
+    raw["rate_absence"] = dict(_ABSENT)
+
+
+def _debt_currency_absent(raw: dict[str, Any]) -> None:
+    raw["fx"]["debt_currency"] = None
+    raw["fx"]["debt_currency_absence"] = dict(_ABSENT)
+
+
+def _hedge_stated(raw: dict[str, Any]) -> None:
+    raw["hedge_absence"] = None
+    raw["hedge_ratio"] = {"percent_text": "40", "rationale": "The policy hedges part of the debt"}
+
+
+_FIXED_PAGE = "The loan carries a fixed rate."
+
+
+def _fixed_rate(raw: dict[str, Any]) -> None:
+    """A fixed-rate basis: its reference rate is not read from the quote, but it is still text."""
+    raw["rate_exposure"]["rate_basis"] = {
+        **_cited(_FIXED_PAGE),
+        "rate_type": "FIXED",
+        "reference_rate": "SOFR",
+    }
+
+
+# Every analyst text field (path, where it sits, the state change that makes it present). Not
+# here: quotes, source ids and locators (citations); value_text, bps_text, percent_text and
+# code_text (figures and codes, read from quotes); rate_type, section and category (closed sets).
+_TEXT_FIELDS: tuple[tuple[str, tuple[str | int, ...], Callable[[dict[str, Any]], None] | None], ...]
+_TEXT_FIELDS = (
+    ("shock_rationale", ("shock_rationale",), None),
+    *(
+        (f"assessments[{i}].text", ("assessments", i, "text"), None)
+        for i in range(len(SUBMISSIONS["positive"]["assessments"]))
+    ),
+    ("assessments[2].limitation", ("assessments", 2, "limitation"), None),
+    ("summary.text", ("summary", "text"), None),
+    ("hedge_ratio.rationale", ("hedge_ratio", "rationale"), _hedge_stated),
+    ("hedge_absence.reason", ("hedge_absence", "reason"), None),
+    ("hedge_absence.follow_up", ("hedge_absence", "follow_up"), None),
+    ("fx.operating_fx_absence.reason", ("fx", "operating_fx_absence", "reason"), None),
+    ("fx.operating_fx_absence.follow_up", ("fx", "operating_fx_absence", "follow_up"), None),
+    ("rate_absence.reason", ("rate_absence", "reason"), _rate_absent),
+    ("rate_absence.follow_up", ("rate_absence", "follow_up"), _rate_absent),
+    (
+        "fx.debt_currency_absence.reason",
+        ("fx", "debt_currency_absence", "reason"),
+        _debt_currency_absent,
+    ),
+    (
+        "fx.debt_currency_absence.follow_up",
+        ("fx", "debt_currency_absence", "follow_up"),
+        _debt_currency_absent,
+    ),
+    (
+        "rate_exposure.rate_basis.reference_rate",
+        ("rate_exposure", "rate_basis", "reference_rate"),
+        None,
+    ),
+    (
+        "rate_exposure.rate_basis.reference_rate",
+        ("rate_exposure", "rate_basis", "reference_rate"),
+        _fixed_rate,
+    ),
+)
+
+
+@pytest.mark.parametrize(("path", "keys", "prep"), _TEXT_FIELDS, ids=[f[0] for f in _TEXT_FIELDS])
+def test_class_text_field_set_up_is_valid(
+    path: str, keys: tuple[str | int, ...], prep: Callable[[dict[str, Any]], None] | None
+) -> None:
+    """Each field's set-up, with its own literal text, is a valid submission."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    if prep is not None:
+        prep(raw)
+    assert _issues_with(raw, _FIXED_PAGE) == ()
+
+
+@pytest.mark.parametrize("c", dc.BLANK_CASES, ids=lambda c: c.case_id)
+@pytest.mark.parametrize(("path", "keys", "prep"), _TEXT_FIELDS, ids=[f[0] for f in _TEXT_FIELDS])
+def test_class_blank_text(
+    path: str,
+    keys: tuple[str | int, ...],
+    prep: Callable[[dict[str, Any]], None] | None,
+    c: dc.BlankCase,
+) -> None:
+    expected = dc.EMPTY_TEXT.format(path=path)
+    assert dc.blank_failure(c, _set_text(keys, prep), expected) is None
+
+
+# --- round 11 B1 and B3 beyond the shared cases: every quote occurrence in every reading --------
+@pytest.mark.parametrize(
+    ("page", "quote", "accepted"),
+    [
+        # The joined page reading prints a minus before the figure (the plain one a spaced dash).
+        ("Earnings abroad were -\n25 percent of EBITDA.", "25 percent of EBITDA.", False),
+        # Only the wrapped quote's joined spelling is on the page, and there it is cut from 255.
+        (
+            "Earnings abroad of the first-priority unit were 255 percent.",
+            "Earnings abroad of the first-\npriority unit were 25",
+            False,
+        ),
+        ("Earnings abroad of the first-priority unit were 25 percent.", None, True),
+        # The quote occurs twice; the second occurrence is cut from 255.
+        ("Share 25 percent. Share 255 percent.", "Share 25", False),
+        ("Share 25 percent. Share 25 percent.", "Share 25", True),
+        # The second occurrence overlaps the first (it starts on the first's last digit).
+        ("Units 5 of 25 of 255 percent.", "5 of 25", False),
+        ("Units 5 of 25 of 25 percent.", "5 of 25", True),
+    ],
+    ids=[
+        "joined-page-minus",
+        "wrapped-quote-cut",
+        "wrapped-quote-twin",
+        "second-occurrence-cut",
+        "second-occurrence-twin",
+        "overlapping-occurrence-cut",
+        "overlapping-occurrence-twin",
+    ],
+)
+def test_b1_every_occurrence_in_every_reading(page: str, quote: str | None, accepted: bool) -> None:
+    quote = "Earnings abroad of the first-\npriority unit were 25" if quote is None else quote
+    refusal = _does_not_occur("fx.foreign_ebitda_share", "percent_text", "25")
+    assert _share_adapter(page, quote, "25") == (() if accepted else (refusal,))
+
+
+def test_b1_reads_the_labelled_operand_on_the_page() -> None:
+    """A floor quoted as `floor 2` from a page that prints `floor 25` is refused."""
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["floor"] = {**_cited("floor 2"), "bps_text": "2"}
+    assert _issues_with(sub, "The loan has a floor 25 basis points.") == (
+        "rate_exposure.floor: bps_text 2 does not occur in the quote",
+    )
+
+
+def test_b3_applies_only_to_a_wrapped_quote() -> None:
+    """An unwrapped quote that prints `first- priority` itself holds the value: it occurs."""
+    page = "The SOFR first- priority loan has terms."
+    assert _reference_rate_adapter(page, "SOFR first- priority loan", "first- priority") == ()
+
+
+def test_b3_refuses_only_the_wrap_spelling() -> None:
+    """A wrapped quote still holds a hyphenated name that is not spelled with the wrap's `- `."""
+    page = "The Term-SOFR loan is first-\npriority debt."
+    assert _reference_rate_adapter(page, page, "Term-SOFR") == ()

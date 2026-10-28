@@ -1,4 +1,4 @@
-# Undelivered to LEAD (app paused session messaging, 2026-10-28)
+# Sent to LEAD 2026-10-28 after the user resumed messaging (kept for the record)
 
 Modules: rounds 6f and 6g are on the lane (eb88467).
 - **CP-3D:** the 6g leading-zero rule went into its running 6e task.

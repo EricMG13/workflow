@@ -91,7 +91,7 @@ def _upstream(facts: list[Fact] | None = None) -> cpl10.Upstream:
     return cpl10.Upstream(
         issuer_name=run["issuer_name"],
         as_of=date.fromisoformat(run["as_of"]),
-        cp0_status_word="With limitations",
+        cp0_status_word="Validated",  # distinct from CP-1's, so a swapped binding is caught
         cp0_result_sha256=_digest("cp0 head"),
         cp1_status_word="With limitations",
         cp1_result_sha256=_digest("cp1 head"),
@@ -197,30 +197,79 @@ def test_operand_unit_and_scale_must_match_the_topic() -> None:
         _upstream(rescaled)
 
 
-@pytest.mark.parametrize(
-    ("missing_end", "ends"), [("close", "the closing quarter"), ("start", "the starting quarter")]
-)
-def test_missing_end_limitation_is_taken_first(missing_end: str, ends: str) -> None:
-    """The missing end's CP-1 limitation is cited even when the known end carries a note."""
+def test_unsettled_operand_without_unit_takes_its_twins_unit() -> None:
+    # Ruling (f): units are checked on known operands only; a missing fact with unit None is
+    # accepted and its copied cell takes the unit of the other end of the pair.
     q1, q4 = cpl10.QUARTERS[0], cpl10.QUARTERS[3]
-    start, close = f"{q1.column} · cash_closing", f"{q4.column} · cash_closing"
-    gap, known = (close, start) if missing_end == "close" else (start, close)
+    start = f"{q1.column} · total_leverage_reported"
+    cash_close = f"{q4.column} · cash_closing"
     facts = []
     for f in _cp1_facts():
-        if f.label == known:
-            f = f.model_copy(update={"limitation": "known end note"})
-        elif f.label == gap:
-            f = f.model_copy(update={"status": "missing", "amount": None, "limitation": "end gap"})
+        if f.label == start:
+            assert f.status == "missing"
+            f = f.model_copy(update={"unit": None})
+        elif f.label == cash_close:
+            update = {"status": "missing", "amount": None, "limitation": "close gap"}
+            f = f.model_copy(update={**update, "unit": None, "currency": None, "scale": Decimal(1)})
         facts.append(f)
     upstream = _upstream(facts)
     sub = deepcopy(SUBMISSIONS["positive"])
     sub["assessments"] = [sub["assessments"][1]]  # cash is now Not assessed
     result = cpl10.change_screen(submission=json.dumps(sub), upstream=upstream)
     cells = {c.fact.fact_id: c.fact for c in result.cells}
-    want = f"Not calculable: CP-1 carries no known value for {ends} (end gap)"
+    lev = cells["TL10.2.total_leverage.from_value"]
+    assert (lev.status, lev.unit, lev.currency, lev.scale) == (
+        "missing",
+        "MULTIPLE",
+        None,
+        Decimal(1),
+    )
+    cash = cells["TL10.2.cash.to_value"]
+    assert (cash.status, cash.unit, cash.currency, cash.scale) == (
+        "missing",
+        "MILLIONS",
+        "USD",
+        Decimal(1000000),
+    )
+    # a known operand without the topic's unit is still refused
+    known = [
+        f.model_copy(update={"unit": None}) if f.label == cash_close else f for f in _cp1_facts()
+    ]
+    with pytest.raises(ValueError, match="unit None is not MILLIONS"):
+        _upstream(known)
+
+
+@pytest.mark.parametrize(
+    ("missing_end", "ends", "cited"),
+    [
+        ("close", "the closing quarter", "close gap"),
+        ("start", "the starting quarter", "start gap"),
+        ("both", "either quarter", "start gap"),
+    ],
+)
+def test_missing_end_limitation_is_taken_first(missing_end: str, ends: str, cited: str) -> None:
+    """The missing end's CP-1 limitation is cited even when the known end carries a note; with
+    both ends missing, the starting end's."""
+    q1, q4 = cpl10.QUARTERS[0], cpl10.QUARTERS[3]
+    start, close = f"{q1.column} · cash_closing", f"{q4.column} · cash_closing"
+    facts = []
+    for f in _cp1_facts():
+        end = "start" if f.label == start else "close" if f.label == close else None
+        if end is not None and missing_end in (end, "both"):
+            gap = {"status": "missing", "amount": None, "limitation": f"{end} gap"}
+            f = f.model_copy(update=gap)
+        elif end is not None:
+            f = f.model_copy(update={"limitation": "known end note"})
+        facts.append(f)
+    upstream = _upstream(facts)
+    sub = deepcopy(SUBMISSIONS["positive"])
+    sub["assessments"] = [sub["assessments"][1]]  # cash is now Not assessed
+    result = cpl10.change_screen(submission=json.dumps(sub), upstream=upstream)
+    cells = {c.fact.fact_id: c.fact for c in result.cells}
+    want = f"Not calculable: CP-1 carries no known value for {ends} ({cited})"
     assert cells["TL10.2.cash.change"].limitation == want
     assert cells["TL10.4.cash.required_source"].text == (
-        "A CP-1 known value for each quarter compared (CP-1: end gap)"
+        f"A CP-1 known value for each quarter compared (CP-1: {cited})"
     )
 
 
@@ -574,6 +623,44 @@ def test_assessment_order_not_assessable_before_repeated() -> None:
         "assessments[2].topic_id: not assessable: ebitda is rated Stable",
         "assessments[3].topic_id: not assessable: ebitda is rated Stable",
     ]
+
+
+_PAIRING = "must be Insufficient Information exactly when the category is"
+
+
+@pytest.mark.parametrize(
+    ("category", "confidence", "issues"),
+    [
+        ("Analyst Interpretation", "Insufficient Information", [f"confidence: {_PAIRING}"]),
+        ("Insufficient Information", "Medium", [f"confidence: {_PAIRING}"]),
+        ("Insufficient Information", "Insufficient Information", []),
+        (
+            "Insufficient Information",
+            "High",
+            ["confidence: High is not allowed in a screen", f"confidence: {_PAIRING}"],
+        ),
+    ],
+)
+def test_assessment_confidence_pairing(category: str, confidence: str, issues: list[str]) -> None:
+    # Ruling (e): checked after the High check (L2 order); assessments carry no limitation.
+    sub = _with(("assessments", 0, "category"), category)
+    sub["assessments"][0]["confidence"] = confidence
+    assert _issues(sub) == [f"assessments[0].{issue}" for issue in issues]
+
+
+def test_repeated_gap_keys_on_target_and_text() -> None:
+    sub = deepcopy(SUBMISSIONS["positive"])
+    sub["gaps"].append({**sub["gaps"][0], "affected_analysis": "cash"})
+    assert _issues(sub) == []  # the same gap text on another target is not a repeat
+
+
+def test_scope_status_binds_each_heads_own_word() -> None:
+    result = cpl10.change_screen(submission=_payload("positive"), upstream=UPSTREAM)
+    words = {c.fact.fact_id: c.fact.text for c in result.cells if c.fact.field == "scope_status"}
+    assert words == {
+        "TL10.1.cp0.scope_status": "Validated",
+        "TL10.1.cp1.scope_status": "With limitations",
+    }
 
 
 def test_overall_issue_order() -> None:

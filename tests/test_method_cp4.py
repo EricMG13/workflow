@@ -28,7 +28,9 @@ CASE = ROOT / "cases/cp4-owner"
 PINNED = {
     "manifest.json": "2c12bf6836f54b704201af217866002d279b51cd8f1ed6094154aec9198f6b23",
     "submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
-    "expected.json": "a60ab627d353eeb8871024e0efe664cce38322fcfa3edaf7ccda9f257fdc1423",
+    # Amendment 1 (ruling 4-1, docs/CP4-OWNER-LEASE.md:3): expected and builder re-pinned.
+    "expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
+    "builder/build.py": "71cf075839362058f6be70140995bfb363a19228151842414200f4d961755446",
 }
 EXPECTED = json.loads((CASE / "expected.json").read_text())
 MANIFEST = json.loads((CASE / "manifest.json").read_text())
@@ -240,10 +242,8 @@ def _check_metric_copy(actual: Fact, want: Mapping[str, Any], metric: Fact) -> N
     assert actual.amount == metric.amount and actual.unit == metric.unit
     assert (actual.period, actual.basis) == (metric.period, metric.basis)
     assert want["period"] == f"bound from the CP-1 fact ({metric.period})"
-    # oracle-disagreement: basis wording, pending LEAD. The cell text writes "(IFRS consolidated
-    # group)" but figures.predicate_facts.basis_observed is "IFRS · consolidated group"; the
-    # actual value is pinned above (actual.basis == the CP-1 fact's basis_observed).
-    assert want["basis"].startswith("bound from the CP-1 fact (")
+    assert want["basis"] == f"bound from the CP-1 fact ({metric.basis})"
+    assert want["basis"] == "bound from the CP-1 fact (IFRS · consolidated group)"
     assert actual.citations == metric.citations
     assert want["note"] == FIGURE["cp1_coordinate"]
 

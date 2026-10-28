@@ -91,14 +91,15 @@ For each module:
 |---|---|---|
 | CP-2E | E1–E5 | merged; rework on branch |
 | CP-2A | A1–A8 | A5 replaces the v02 strict xfail; A7 removes the positive-interest refusal |
-| CP-3D | D1–D3 | merged; X1 (five raising shapes) waits for round 2 |
+| CP-3D | D1–D3, X1 (i)–(v) | merged; rework on branch; the five shapes get claim wording, none raises |
 | CP-DR | R1–R3 | merged; rework on branch |
 | CP-2D | 2D1–2D9 | 2D1 substring match (not word boundary); 2D9 financing total; zero debt not_applicable |
-| CP-1C | 1C1–1C6 | folded into the running fix 1 |
-| CP-1D | 1D1–1D10 | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
-| CP-4 | 4-1 | oracle amended at 7328203 (expected 154fc2d0…, builder 71cf0758…; merged ad96d2d): merge, re-pin, assert the new basis text |
+| CP-1C | 1C1–1C6, C1–C3 | folded into the running fix 1; C2 overrides the builder; 200.04 precision unruled (provisional refusal) |
+| CP-1D | 1D1–1D10, 1D2 follow-up | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
+| CP-4 | 4-1 | b658bc1 approved and merged (056b355); re-pin to 7328203 (expected 154fc2d0…, builder 71cf0758…) dispatched |
+| CP-L10 | L10-a, L10-c | folded into the running amendment-1 fix; L10-b `methods/cpl10.md` note goes to Stage 2 |
 
-LEAD round 2 is pending: X1 (CP-3D), L10-a/b/c, C1–C3, and the 1D2 basis-limitation follow-up. Those cases fail closed until it arrives. `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
+LEAD round 2 is committed at 842c911 (merged d9cada2). `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
 
 Then:
 - [ ] **Stage 1 review.** Fable checks every module's calculation against its lease, the input-field lists against `manifest.fact_bindings`, and that nothing reaches into a store, the host or a renderer. It fixes and commits, test-first.

@@ -5,10 +5,12 @@ Expectations come from the leases, never from the code under test:
 - rows (`docs/CP3-OWNER-LEASE.md:53-65`, `docs/CP3D-OWNER-LEASE.md:46,87`,
   `docs/CPDR-OWNER-LEASE.md:31`, `docs/CP1D-OWNER-LEASE.md:30` and
   `cases/cp1d-owner/manifest.json` "fixed H1 mapping"): CP-3 `relative_value` keeps the
-  registry's scope; CP-3D `market_implied` reads market and financial only; CP-DR `research` the
-  whole ready pack; CP-1D `earnings_quality` identity, financial and bridge as the pack holds them;
+  registry's scope; CP-3D `market_implied` reads market and financial only; CP-DR `research`
+  every source the pack holds (rulings round 10 item 5); CP-1D `earnings_quality` identity,
+  financial and bridge as the pack holds them;
 - an owner-only module's step order is its registered G1-X core's, never `step_chain`'s;
-- the `*-submission` producer rule (Q6 (b)) and its memo per (snapshot hash, producer hash).
+- the `*-submission` producer rule (Q6 (b)) and its memo per (snapshot hash, producer hash), with
+  the schema chosen by the producer's module (rulings round 10 item 2, H1 F1).
 
 The owner cores of CP-3D and CP-DR register in their own Stage 2 tasks, so each session test
 registers a test-only one-step core (`_fake_core`, the G1-X fake-core pattern of
@@ -47,7 +49,7 @@ from deploy_vii.registry import step_chain
 from deploy_workflow import host
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.host import SourceSession
-from deploy_workflow.tools.source import SourceError
+from deploy_workflow.tools.source import SourceError, SourceTools
 from deploy_workflow.workflow import WorkflowError
 
 owner: Any = importlib.import_module("deploy_workflow.owner_workflow")
@@ -72,9 +74,16 @@ class Note(Contract):
     cites: tuple[Cite, ...] = ()
 
 
-def _fake_core(module: str, step: str) -> ModuleType:
-    """A one-step owner core for `module`: its step validates any `Note`, settles the module and
-    rebuilds it in `probe`; `RULES` is the product cited-page rule (G1-X §2)."""
+def _no_tail(_: Note) -> tuple[Input, ...]:
+    return ()
+
+
+def _fake_core(
+    module: str, step: str, tail: Callable[[Note], tuple[Input, ...]] = _no_tail
+) -> ModuleType:
+    """A one-step owner core for `module`: its step validates any `Note`, settles the module
+    (its candidate binds the attempt inputs, then `tail(note)`) and rebuilds it in `probe`;
+    `RULES` is the product cited-page rule (G1-X §2)."""
     steps = (step,)
 
     def validate(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
@@ -85,14 +94,15 @@ def _fake_core(module: str, step: str) -> ModuleType:
             return StepValidation(issues=("Fake validator: malformed note",))
         return StepValidation(output=json.dumps({"module": module, "note": note.note}))
 
-    def candidate(snapshot: ExecutionSnapshot, attempt: Attempt) -> Module:
+    def candidate(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> Module:
         run = snapshot.run
+        note = Note.model_validate_json(store.payload(attempt.steps[0].payload_sha256))
         return Module(
             run_id=run.run_id,
             issuer_id=run.issuer_id,
             as_of=run.as_of,
             module_id=module,
-            inputs=attempt.inputs,
+            inputs=(*attempt.inputs, *tail(note)),
             attempt=attempt.number,
         )
 
@@ -112,7 +122,7 @@ def _fake_core(module: str, step: str) -> ModuleType:
             validator = _with_rules(validator, rules, normal)
         attempt = store.submit_step(ticket_id, module, steps, step_id, normal, validator)
         if attempt.status == "pending" and all(s.status == "valid" for s in attempt.steps):
-            settled = candidate(store.read(), attempt)
+            settled = candidate(store, store.read(), attempt)
             attempt = store.finish(
                 ticket_id, settled.model_dump_json(), same(settled), qualification=QUALIFICATION
             )
@@ -135,7 +145,7 @@ def _fake_core(module: str, step: str) -> ModuleType:
             or store.step_output(retained.output_sha256 or "") != outcome.output
         ):
             raise WorkflowError("identity_mismatch")
-        settled = candidate(snapshot, attempt)
+        settled = candidate(store, snapshot, attempt)
         finished, result = settle(
             snapshot,
             attempt,
@@ -162,10 +172,15 @@ def _fake_core(module: str, step: str) -> ModuleType:
     return core
 
 
-def _register(monkeypatch: pytest.MonkeyPatch, module: str, step: str) -> ModuleType:
+def _register(
+    monkeypatch: pytest.MonkeyPatch,
+    module: str,
+    step: str,
+    tail: Callable[[Note], tuple[Input, ...]] = _no_tail,
+) -> ModuleType:
     """Register the fake core exactly where a module task registers a real one; the session
     stays the real `SourceSession`."""
-    core = _fake_core(module, step)
+    core = _fake_core(module, step, tail)
     spec = owner.OwnerSpec(
         module_id=module,
         steps=(
@@ -364,8 +379,9 @@ def test_owner_scopes_are_the_leased_sources_in_pack_order() -> None:
         "identity",
         "financial",
     )
-    # CP-DR: the whole ready pack (CP-DR lease :31, D-B); a source that is not ready is not in it.
-    assert _scope("CP-DR", "research", *every, missing=("late",)) == every
+    # CP-DR: every source the pack holds (CP-DR lease D-B, amended in rulings round 10 item 5);
+    # one that is not ready stays in scope and answers `unavailable` (below).
+    assert _scope("CP-DR", "research", *every, missing=("late",)) == (*every, "late")
     # A named source the pack holds but cannot read stays named (the session then answers
     # `unavailable`, never its bytes).
     assert _scope("CP-3D", "market_implied", "financial", missing=("market",)) == (
@@ -416,7 +432,7 @@ def test_unread_cited_page_refuses_and_the_repair_attempt_reopens(cp3d: SimpleNa
     assert _sealed_verdict(workflow, cp3d.root) == "accepted"
 
 
-def test_cpdr_session_reads_the_whole_ready_pack(
+def test_cpdr_session_reads_every_held_source(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     _register(monkeypatch, "CP-DR", "research")
@@ -771,3 +787,156 @@ def test_memo_evicts_the_oldest_pass_beyond_its_limit(tmp_path: Path) -> None:
     for variant in variants:
         assert host._producer_inputs(store, variant, producer) is True
     assert list(host._SUBMISSION_VERIFIED) == [_memo_key(v, producer) for v in variants[4:]]
+
+
+# --- 5. fix round 2: the schema source (round 10 item 2, F1) and the CP-DR scope (item 5) ------
+
+MARKET_TAIL = "market-implied-submission"
+
+
+def _owner_head(
+    monkeypatch: pytest.MonkeyPatch, root: Path, tail: Callable[[Note], tuple[Input, ...]]
+) -> tuple[Execution, ExecutionSnapshot, Module]:
+    """A settled owner-only CP-3D head of the fake core whose candidate binds `tail(note)` after
+    its attempt inputs, through the public `OwnerWorkflow` API and a real session."""
+    _register(monkeypatch, "CP-3D", "market_implied", tail)
+    pack = _cp3d_pack()
+    workflow = _begun(root, pack, _cp3d_review(pack))
+    assert _read(workflow, "market", 1)["status"] == "ok"
+    assert workflow.submit_review(_note(("market", "page:1")))["status"] == "valid"
+    store = Execution(root / "store")
+    snapshot = store.read()
+    head = next(h for h in snapshot.heads if h.module_id == "CP-3D")
+    return store, snapshot, store.head_module(head)
+
+
+def _genuine_owner_tail(note: Note) -> tuple[Input, ...]:
+    """The protocol §2 tail: `<step id with hyphens>-submission` = SCHEMAS[step] digest."""
+    return (Input(input_id=MARKET_TAIL, sha256=note.content_hash()),)
+
+
+def test_settled_owner_only_head_is_an_authentic_producer(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    store, snapshot, producer = _owner_head(monkeypatch, tmp_path, _genuine_owner_tail)
+    assert producer.inputs[-1].input_id == MARKET_TAIL
+    assert host._producer_inputs(store, snapshot, producer) is True
+
+
+def _forged_owner_tails() -> dict[str, Callable[[Note], tuple[Input, ...]]]:
+    def digest(note: Note) -> tuple[Input, ...]:
+        return (Input(input_id=MARKET_TAIL, sha256="0" * 64),)
+
+    def identifier(note: Note) -> tuple[Input, ...]:
+        return (Input(input_id="market-implied", sha256=note.content_hash()),)
+
+    def other(note: Note) -> tuple[Input, ...]:
+        return (Input(input_id="research-submission", sha256=note.content_hash()),)
+
+    def two(note: Note) -> tuple[Input, ...]:
+        extra = Input(input_id="extra-submission", sha256=note.content_hash())
+        return (*_genuine_owner_tail(note), extra)
+
+    return {
+        "tail digest": digest,
+        "tail id": identifier,
+        "another -submission id": other,
+        "two tails": two,
+        "no tail": _no_tail,
+    }
+
+
+@pytest.mark.parametrize("label", list(_forged_owner_tails()))
+def test_forged_owner_only_tail_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, label: str
+) -> None:
+    """Each head is settled by the real journal (the replay reproduces it), so only the owner
+    tail rule refuses it: exactly one `market-implied-submission` with the retained digest."""
+    tail = _forged_owner_tails()[label]
+    store, snapshot, producer = _owner_head(monkeypatch, tmp_path, tail)
+    assert host._producer_inputs(store, snapshot, producer) is False
+
+
+def _schema_source(module_id: str, step_id: str) -> str:
+    try:
+        return host._submission_schema(module_id, step_id).__name__
+    except SourceError as error:
+        return f"SourceError {error.code}"
+
+
+def test_schema_source_follows_the_producer_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    """F1: `STEPS` for a live-contract module's own step; the registered core's `SCHEMAS` for an
+    owner-only module with that single step id; otherwise `not_permitted`, never `KeyError`."""
+    assert _schema_source("CP-1A", "business_context") == "BusinessContextSubmission"
+    # CP-1B is live but its step has no shared-live schema; no H1 row (round 10 item 2).
+    assert _schema_source("CP-1B", "earnings_delta") == "SourceError not_permitted"
+    # A live module claiming another module's step.
+    assert _schema_source("CP-1A", "credit_synthesis") == "SourceError not_permitted"
+    # An owner-only module without a registered core.
+    assert _schema_source("CP-3D", "market_implied") == "SourceError not_permitted"
+    core = _register(monkeypatch, "CP-3D", "market_implied")
+    assert _schema_source("CP-3D", "market_implied") == "Note"
+    # A step the core does not have as its only step.
+    assert _schema_source("CP-3D", "research") == "SourceError not_permitted"
+    monkeypatch.setattr(core, "STEP_IDS", ("market_implied", "second"))
+    assert _schema_source("CP-3D", "market_implied") == "SourceError not_permitted"
+    monkeypatch.setattr(core, "STEP_IDS", ("market_implied",))
+    # A schema that is not a Contract subclass.
+    monkeypatch.setattr(core, "SCHEMAS", {"market_implied": dict})
+    assert _schema_source("CP-3D", "market_implied") == "SourceError not_permitted"
+    # `SCHEMAS` that is not a mapping, or that lacks the step.
+    absent: tuple[dict[str, type[Note]] | None, ...] = (None, {})
+    for schemas in absent:
+        monkeypatch.setattr(core, "SCHEMAS", schemas)
+        assert _schema_source("CP-3D", "market_implied") == "SourceError not_permitted", schemas
+    # An owner module claiming a `STEPS` step (CP-3's `relative_value`).
+    monkeypatch.setattr(core, "STEP_IDS", ("relative_value",))
+    monkeypatch.setattr(core, "SCHEMAS", {"relative_value": Note})
+    assert _schema_source("CP-3D", "relative_value") == "SourceError not_permitted"
+
+
+def test_unsourced_settled_producer_refuses_before_any_payload_read(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A settled head whose step has no schema source raises `not_permitted` before its retained
+    payload is read: unregistering the core after settlement leaves no source."""
+    store, snapshot, producer = _owner_head(monkeypatch, tmp_path, _genuine_owner_tail)
+    monkeypatch.delitem(owner._CORES, "CP-3D")
+    reads: list[str] = []
+
+    def payload(self: Execution, digest: str) -> str:
+        reads.append(digest)
+        return Execution.payload(self, digest)
+
+    monkeypatch.setattr(host._RecordingExecution, "payload", payload)
+    with pytest.raises(SourceError) as caught:
+        host._producer_inputs(store, snapshot, producer)
+    assert caught.value.code == "not_permitted"
+    assert reads == []
+    assert host._SUBMISSION_VERIFIED == {}
+
+
+def test_live_cp1a_head_still_passes_under_the_schema_source(tmp_path: Path) -> None:
+    store, snapshot, producer = _cp1a_run(tmp_path, valid=True)
+    assert host._producer_inputs(store, snapshot, producer) is True
+
+
+def test_cpdr_held_missing_source_answers_unavailable() -> None:
+    """Round 10 item 5: CP-DR's scope is every source the pack holds; a held `missing` source is
+    in scope and its tools answer `unavailable`, never its bytes."""
+    pack = runs.make_pack("positive")
+    held = PreparedPack(run=pack.run, sources=(*pack.sources, _source("late", ready=False)))
+    scope = host._OWNER_SCOPES[("CP-DR", "research")](held)
+    assert scope == ("identity", "financial", "business", "late")
+    tools = SourceTools(held, scope, extraction=False)
+    for name, arguments in (
+        ("read_pages", {"source_id": "late", "first_page": 1, "last_page": 1}),
+        ("search_pack", {"query": "late", "source_id": "late"}),
+    ):
+        with pytest.raises(SourceError) as caught:
+            tools.stage(name, arguments)
+        assert caught.value.code == "unavailable", name
+    outside = SourceTools(held, ("identity",), extraction=False)
+    with pytest.raises(SourceError) as caught:
+        outside.stage("read_pages", {"source_id": "late", "first_page": 1, "last_page": 1})
+    assert caught.value.code == "not_permitted"

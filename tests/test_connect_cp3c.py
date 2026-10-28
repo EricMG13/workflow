@@ -22,7 +22,7 @@ import hashlib
 import importlib
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
@@ -41,12 +41,13 @@ from defect_classes import (
     with_text,
 )
 
+from deploy_vii import prose
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Fact, Input, Module, ModuleView, Run, View
 from deploy_vii.execution import MAX_ISSUE_CHARS, Attempt, Execution, Head, Qualification
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.report_view import fact_spelling
+from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.owners import cp2d, cp3c
 from deploy_workflow.workflow import WorkflowError
@@ -534,7 +535,7 @@ def _settle(store: Execution, module_id: str, body: Module | None, notes: bool) 
     )
 
 
-def seed(
+def make_store(
     root: Path,
     case: str = "positive",
     *,
@@ -542,18 +543,29 @@ def seed(
     as_of: str | None = None,
     case_kind: CaseKind = "synthetic",
     notes: bool = True,
-) -> tuple[Execution, PreparedPack, Attempt]:
-    """A real store with CP-0, CP-1, CP-1A and CP-2 settled from records, CP-2D settled by the
-    real CP-2D core over its frozen literal for `case`, and CP-3C begun."""
+    cp2d_literals: tuple[str, ...] | None = None,
+) -> tuple[Execution, PreparedPack]:
+    """A real store with CP-0, CP-1, CP-1A and CP-2 settled from records and CP-2D settled by the
+    real CP-2D core over its frozen literal for `case` (or over `cp2d_literals`, one per
+    attempt)."""
     pack = make_pack(as_of=as_of, case_kind=case_kind)
     store = Execution.create(root / "store", pack)
     for module_id in UPSTREAM:
         body = (cp1 or cp1_module(pack.run)) if module_id == "CP-1" else None
         _settle(store, module_id, body, notes)
-    ticket = store.begin("CP-2D")
-    text = tc2d._literal(CP2D_CASE[case])
-    done = cp2d.submit(store, ticket.ticket_id, "liquidity_bridge", text, None)
-    assert done.journal.status == "finished" and done.journal.issues == ()
+    for text in cp2d_literals or (tc2d._literal(CP2D_CASE[case]),):
+        ticket = store.begin("CP-2D")
+        done = cp2d.submit(store, ticket.ticket_id, "liquidity_bridge", text, None)
+        assert done.journal.status == "finished"
+    return store, pack
+
+
+def seed(
+    root: Path, case: str = "positive", **kwargs: Any
+) -> tuple[Execution, PreparedPack, Attempt]:
+    """`make_store`, then CP-3C begun."""
+    store, pack = make_store(root, case, **kwargs)
+    assert head(store, "CP-2D").status == "restricted"
     return store, pack, store.begin(MODULE)
 
 
@@ -1060,7 +1072,12 @@ _STATE = {"known": "known", "missing": "gap", "not_applicable": "not_applicable"
 @pytest.mark.parametrize("case", tm.PACK_CASES)
 def test_settled_tables_equal_the_oracle(case: str, tmp_path: Path) -> None:
     store, _, _, _ = settled(tmp_path, case)
-    module = store.head_module(head(store, MODULE))
+    assert_module_equals_oracle(store.head_module(head(store, MODULE)), case)
+
+
+def assert_module_equals_oracle(module: Module, case: str) -> None:
+    """The settled CP-3C module's tables, cells, ledgers and claims equal the oracle's `case`
+    (with the principal-period delta); `test_owner_cp3c` runs it on the closed store heads."""
     facts = {f.fact_id: f for f in module.facts}
     expected = tm.EXPECTED["cases"][case]
     titles = tm.EXPECTED["cp3c_module"]["table_titles"]
@@ -1094,6 +1111,24 @@ def test_settled_tables_equal_the_oracle(case: str, tmp_path: Path) -> None:
         assert tables[table_id].title == titles[table_id]
     assert [c.claim_id for c in module.claims] == [c["claim_id"] for c in expected["claims"]]
     assert [c.text for c in module.claims] == [c["template"] for c in expected["claims"]]
+    assert [resolved(c.text, facts) for c in module.claims] == [
+        c["text"] for c in expected["claims"]
+    ]
+
+
+def resolved(template: str, facts: Mapping[str, Fact]) -> str:
+    """A claim's run text as the reader sees it (the oracle's `text`): each figure its settled
+    spelling and figure unit, each chip its gap spelling."""
+    gaps = {fact_id for fact_id, f in facts.items() if f.status != "known"}
+    parts = []
+    for run in prose.tokenize(template, gaps=gaps):
+        if run.kind == "text":
+            parts.append(run.text)
+            continue
+        fact = facts[run.text]
+        unit = figure_unit(fact) if run.figure and fact.unit == "MILLIONS" else None
+        parts.append(f"{_shown(fact)} {unit}" if unit else _shown(fact))
+    return "".join(parts)
 
 
 @pytest.mark.parametrize("case", tm.PACK_CASES)
@@ -1307,6 +1342,11 @@ def test_validate_bindings_over_the_settled_tables_is_clean(case: str, tmp_path:
 def test_reader_exposes_what_the_lease_pins(case: str, tmp_path: Path) -> None:
     store, _, _, _ = settled(tmp_path, case)
     h = head(store, MODULE)
+    assert cp3c.cp3c_reader(store, h) == expected_read(h, case)
+
+
+def expected_read(h: Head, case: str) -> cp3c.Cp3cHead:
+    """What `cp3c_reader` returns on a settled head of `case`, read from the oracle."""
     expected = tm.EXPECTED["cases"][case]
     cells = tm._cells(expected["tables"])
 
@@ -1314,18 +1354,15 @@ def test_reader_exposes_what_the_lease_pins(case: str, tmp_path: Path) -> None:
         return Decimal(cells[fact_id]["amount"]) if cells[fact_id]["state"] == "known" else None
 
     paths = {p["kind"]: p["feasibility"] for p in tm.SUBMISSIONS["cp3c"][case]["paths"]}
-    assert cp3c.cp3c_reader(store, h) == cp3c.Cp3cHead(
+    (label,) = (row[0] for row in expected["tables"]["T3D.1"]["rows"])
+    return cp3c.Cp3cHead(
         status="restricted",
         head_sha256=h.result_sha256,
         total_principal_payable=amount("T3D.2.r01"),
         need=amount("T3D.2.r03"),
         need_missing=cells["T3D.2.r03"].get("reason"),
         need_rows=(
-            cp3c.NeedRow(
-                "Northbridge Term Loan (term-loan)",
-                amount("T3D.1.r01.c9"),
-                cells["T3D.1.r01.c9"].get("reason"),
-            ),
+            cp3c.NeedRow(label, amount("T3D.1.r01.c9"), cells["T3D.1.r01.c9"].get("reason")),
         ),
         added_interest=amount("T3D.3.r06"),
         added_interest_missing=cells["T3D.3.r06"].get("reason"),
@@ -1366,6 +1403,12 @@ def test_d3_cp3c_consumes_the_settled_cp2d_head(case: str, tmp_path: Path) -> No
     value class); CP-3C-HORIZON-01 references the funding-gap copy; in gap_minimum_cash the CP-2D
     gaps arrive as gaps, never 0, and their dependants are gaps."""
     store, _, attempt, _ = settled(tmp_path, case)
+    assert_consumes_cp2d(store, attempt, case)
+
+
+def assert_consumes_cp2d(store: Execution, attempt: Attempt, case: str) -> None:
+    """D3 for CP-2D on a settled CP-3C attempt of `case` (`test_owner_cp3c` runs it on the closed
+    store heads)."""
     final = head(store, "CP-2D")
     bound = next(i for i in attempt.inputs if i.input_id == "CP-2D")
     assert (bound.sha256, bound.status) == (final.result_sha256, final.status)
@@ -1392,3 +1435,60 @@ def test_d3_cp3c_consumes_the_settled_cp2d_head(case: str, tmp_path: Path) -> No
     if case == "gap_minimum_cash":
         for fact_id in ("T3D.2.r10", "T3D.2.r11", "T3D.2.r02", "T3D.2.r03", "T3D.2.r09"):
             assert mine[fact_id].status == "missing" and mine[fact_id].amount is None, fact_id
+
+
+# --- methods/cp3c.md (brief: the guard limits and the derived-citation rule) ------------------------
+
+METHODS = Path(__file__).resolve().parents[1] / "src" / "deploy_vii" / "methods" / "cp3c.md"
+
+
+def test_methods_record_the_guard_limits_and_the_derived_citation_rule() -> None:
+    text = " ".join(METHODS.read_text(encoding="utf-8").split())
+    passed = [
+        p["text"]
+        for p in tm.EXPECTED["prohibited_probe"]
+        if not p["issues"]
+        and p["class"] not in ("product_permitted", "false_positive_in_revision_1")
+    ]  # the conclusions the phrase guard passes (a neutral sentence passing is no limit)
+    assert len(passed) == 8 and all(f'"{s}"' in text for s in passed), passed
+    for note in (
+        "calc:<fact_id>",
+        "keeps its upstream fact's value, unit, period, value class, citations and calculation id",
+        "a ref is matched exactly",
+        "Any digit in an analyst text field is refused",
+        "`cp2d_reader` and the CP-2D head's cells disagree",
+        "never a stamped default",
+        "pin_extension_needed",
+    ):
+        assert note in text, note
+
+
+# --- the run driver's pure parts (tests/cp3c_runs.py; its store runs are deferred) -------------------
+
+runs: Any = importlib.import_module("cp3c_runs")
+
+
+def test_driver_reads_the_pinned_oracle_and_binds_every_literal_from_the_view(
+    tmp_path: Path,
+) -> None:
+    oracle = runs.oracle()
+    assert (oracle["expected"], oracle["submissions"]) == (tm.EXPECTED, tm.SUBMISSIONS)
+    store, _, attempt = seed(tmp_path)
+    body = json.loads(cp3c.view(store, attempt)[1])
+    names = refs(store, attempt)
+    payloads = [tm.SUBMISSIONS["cp3c"][case] for case in tm.PACK_CASES]
+    payloads += [tm.SUBMISSIONS["cp3c_blocked"][a] for a in ("attempt_0", "attempt_1")]
+    for payload in payloads:
+        text = runs.bind_facts(json.dumps(payload, ensure_ascii=False), body)
+        assert "{{FACT:" not in text
+        assert json.loads(text) == bound_payload(payload, names)
+    with pytest.raises(RuntimeError, match="FACT nowhere: not offered by the read view"):
+        runs.bind_facts('{"a": "{{FACT:nowhere}}"}', body)
+
+
+def test_driver_cp0_text_appends_both_consumer_deltas_in_order() -> None:
+    document = json.loads(runs.cp0_text(runs.make_pack()))
+    deltas = tm.SUBMISSIONS["cp0_consumer_deltas"]
+    assert [d["module_id"] for d in deltas] == ["CP-2D", "CP-3C"]
+    assert document["consumers"][-2:] == deltas
+    assert runs.make_pack().run == _run()

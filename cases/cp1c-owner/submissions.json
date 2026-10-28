@@ -1,0 +1,3369 @@
+{
+ "schema_version": "cp1c-owner-submissions/1",
+ "note": "Literal analyst submissions for the peer_benchmark step. {T1C.x.y.z|token} references name the module's own facts and are literal; [T1C.x.y.z] is a gap chip. No CP-1 run-time figure marker is needed in analyst text: the issuer's CP-1 values are referenced through the module's own copied cells (T1C.3.issuer.*). Comparability is analyst judgment (Comparable, Partly comparable, Not comparable); Python derives inclusion, ratios, medians, positions and outlier flags. tool_calls.<case> is the literal tool sequence of the peer_benchmark attempt: one read_inputs, then read_pages covering every cited page (no_peers: one search_pack over the identity and financial sources returning no span). Each refusal's calls_before_submit is the literal tool sequence before its submit: its base case's tool_calls, except r10, which adds read_pages financial 1-1 for the page:1 it cites. CP-0 readiness and CP-1 source_context are derived from cases/snapshot/submissions.json (pinned) with the business source replaced by the peers source; the later CP-1 stages are those of the financial case, unchanged; the CP-1 readiness stage is cp1_readiness.",
+ "positive": {
+  "readiness_review": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Historical financial foundation and peer benchmark",
+   "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "peers",
+     "document_family": "Peer financial summary (synthetic)",
+     "authority": "third_party",
+     "entity": "Synthetic peers",
+     "period": "Twelve months to the period ends shown",
+     "version_relationship": "Desk summary published with the statements",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "limitations": [
+      "Synthetic desk summary of invented peers; unaudited; not a market fact."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-1",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "module_id": "CP-1C",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Settled CP-1 ratios and a peer financial summary on aligned definitions",
+     "source_ids": [
+      "identity",
+      "financial",
+      "peers"
+     ],
+     "rationale": "The benchmark can run on settled CP-1 figures and the located peer summary with explicit limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+      "Synthetic desk summary of invented peers; unaudited; not a market fact."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "Located statements and the peer summary support a peer benchmark with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "cp1_source_context": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "entities": [
+    {
+     "entity_id": "issuer",
+     "name": "Northbridge Synthetic Group",
+     "entity_type": "group",
+     "roles": [
+      "issuer"
+     ],
+     "fiscal_year_end": "December 31",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "classification": "nonfinancial",
+     "document_type": "Identity note",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Identity only",
+     "analytical_use": "Issuer identity",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "Identity is not event evidence"
+    },
+    {
+     "source_id": "financial",
+     "classification": "financial",
+     "document_type": "Quarterly statements",
+     "published_on": "2026-01-10",
+     "evidence_class": "unaudited_without_auditor",
+     "evidence_rationale": "No auditor report",
+     "analytical_use": "Historical financial analysis",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "scopes": [
+      {
+       "scope_id": "opening-2024",
+       "entity_id": "issuer",
+       "period_label": "opening-2024",
+       "period_kind": "period_end",
+       "start_date": null,
+       "end_date": "2024-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q1-2025",
+       "entity_id": "issuer",
+       "period_label": "q1-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-03-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q2-2025",
+       "entity_id": "issuer",
+       "period_label": "q2-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-04-01",
+       "end_date": "2025-06-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q3-2025",
+       "entity_id": "issuer",
+       "period_label": "q3-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-07-01",
+       "end_date": "2025-09-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q4-2025",
+       "entity_id": "issuer",
+       "period_label": "q4-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-10-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "fy-2025",
+       "entity_id": "issuer",
+       "period_label": "fy-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      }
+     ],
+     "event_scan": "no_events_identified",
+     "event_scan_explanation": "Explicit no-event disclosure through as-of",
+     "event_scan_citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "peers",
+     "classification": "nonfinancial",
+     "document_type": "Peer financial summary (synthetic)",
+     "published_on": "2026-01-10",
+     "evidence_class": "external",
+     "evidence_rationale": "Third-party desk summary without auditor or filing status",
+     "analytical_use": "Peer ratios for CP-1C",
+     "citations": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "A desk summary is not event evidence"
+    }
+   ],
+   "limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   ]
+  },
+  "cp1_readiness": {
+   "step": "readiness",
+   "replaces": "the S1 literal {\"consumers\": []}; the run requests the consumer CP-1C (inputs.requested_consumers = (\"CP-1C\",), inputs.consumers = _requests((\"CP-1C\",)): policy step_12, requirements normalized_financials and period_coverage)",
+   "payload": {
+    "inputs_sha256": "{{PREFILLED:inputs_sha256}}",
+    "consumers": [
+     {
+      "entry": "CP-1C",
+      "requirements": [
+       {
+        "requirement": "normalized_financials",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:ISR}}",
+         "{{EVID:ISV}}",
+         "{{EVID:CFS}}",
+         "{{EVID:BS}}"
+        ],
+        "rationale": "Normalised income statement, cash flow and balance sheet lines for FY-2025 support the peer ratios; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in every peer comparison."
+        ]
+       },
+       {
+        "requirement": "period_coverage",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:SP}}",
+         "{{EVID:CON}}"
+        ],
+        "rationale": "The last twelve months of the fiscal year are constructed as the trailing basis; peer period ends are matched by the analyst, not by CP-1.",
+        "actions": [
+         "State any peer whose twelve months end on another date."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{GAP_IDS}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source-context and audit warning bears on the reliability of the issuer figures that anchor the peer comparison."
+       }
+      ]
+     }
+    ]
+   },
+   "run_time_bindings": {
+    "{{PREFILLED:inputs_sha256}}": "inputs.content_hash() of the readiness step inputs (prefilled; never literal)",
+    "{{EVID:ISV}}": "evidence_id of the one catalogue record of kind statement_IS with record.item_id == 'ebitda_adjusted' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:ISR}}": "evidence_id of the one catalogue record of kind statement_IS with record.item_id == 'revenue' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:CFS}}": "evidence_id of the one catalogue record of kind statement_CFS with record.item_id == 'cfo_ncfo' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:BS}}": "evidence_id of the one catalogue record of kind statement_BS with record.item_id == 'total_debt' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:SP}}": "evidence_id of the one catalogue record of kind source_period with record.period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:CON}}": "evidence_id of the one catalogue record of kind construction with record.column_key == 'LTM:fy-2025'; none or several fails closed",
+    "{{GAP_IDS}}": "every inputs.narrative.gaps[*].gap_id in order (replaces the placeholder element)"
+   },
+   "validated_on": "copy of the S1 positive CP-1 head (read-only copy, 2026-10-28, 1132 gaps all WARN): validate_downstream_review() returns no issues; _assess_consumers gives CP-1C status ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gaps",
+   "expected_assessment": {
+    "CP-1C": {
+     "status": "ready_with_limitations",
+     "unassessed_requirements": 0,
+     "unassessed_gaps": 0,
+     "blocking_gaps": [],
+     "requirement_status": "limited"
+    }
+   },
+   "negatives": [
+    "empty review: CP-1C is not_ready",
+    "no gap scope: CP-1C is not_ready",
+    "normalized_financials citing only one statement kind: validate_downstream_review refuses 'Incompatible or unavailable dependency evidence: CP-1C normalized_financials'"
+   ]
+  },
+  "peer_benchmark": {
+   "assessments": [
+    {
+     "peer": "Alder Ridge Holdings",
+     "comparability": "Comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:2",
+       "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "peer": "Brookmere Industries",
+     "comparability": "Comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:2",
+       "quote": "Brookmere Industries  IFRS  1  December 31"
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "peer": "Calder Vale Group",
+     "comparability": "Comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:2",
+       "quote": "Calder Vale Group  IFRS  1  December 31"
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "peer": "Dunmore Cross Corporation",
+     "comparability": "Partly comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:2",
+       "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+      }
+     ],
+     "limitation": "Period end differs from the issuer's."
+    },
+    {
+     "peer": "Ellsworth Park Limited",
+     "comparability": "Not comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+       "locator": "page:2",
+       "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+      }
+     ],
+     "limitation": null
+    }
+   ],
+   "overall": {
+    "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+    "category": "Analyst Interpretation",
+    "confidence": "Medium",
+    "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+    "evidence": []
+   },
+   "gaps": [
+    {
+     "gap": "The peer summary is unaudited and covers a handful of peers.",
+     "why_it_matters": "Medians and outlier flags move with one peer.",
+     "affected_analysis": "Peer statistics",
+     "severity": "Material",
+     "action": "Obtain filed statements for each peer and widen the universe."
+    }
+   ]
+  },
+  "tool_calls": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "peers",
+     "first_page": 1,
+     "last_page": 2
+    },
+    "expect_spans": [
+     {
+      "source_id": "peers",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "peers",
+      "locator": "page:2"
+     }
+    ]
+   }
+  ]
+ },
+ "gap": {
+  "readiness_review": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Historical financial foundation and peer benchmark",
+   "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "peers",
+     "document_family": "Peer financial summary (synthetic)",
+     "authority": "third_party",
+     "entity": "Synthetic peers",
+     "period": "Twelve months to the period ends shown",
+     "version_relationship": "Desk summary published with the statements",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "limitations": [
+      "Synthetic desk summary of invented peers; unaudited; not a market fact."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-1",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "module_id": "CP-1C",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Settled CP-1 ratios and a peer financial summary on aligned definitions",
+     "source_ids": [
+      "identity",
+      "financial",
+      "peers"
+     ],
+     "rationale": "The benchmark can run on settled CP-1 figures and the located peer summary with explicit limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+      "Synthetic desk summary of invented peers; unaudited; not a market fact."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "Located statements and the peer summary support a peer benchmark with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "cp1_source_context": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "entities": [
+    {
+     "entity_id": "issuer",
+     "name": "Northbridge Synthetic Group",
+     "entity_type": "group",
+     "roles": [
+      "issuer"
+     ],
+     "fiscal_year_end": "December 31",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "classification": "nonfinancial",
+     "document_type": "Identity note",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Identity only",
+     "analytical_use": "Issuer identity",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "Identity is not event evidence"
+    },
+    {
+     "source_id": "financial",
+     "classification": "financial",
+     "document_type": "Quarterly statements",
+     "published_on": "2026-01-10",
+     "evidence_class": "unaudited_without_auditor",
+     "evidence_rationale": "No auditor report",
+     "analytical_use": "Historical financial analysis",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "scopes": [
+      {
+       "scope_id": "opening-2024",
+       "entity_id": "issuer",
+       "period_label": "opening-2024",
+       "period_kind": "period_end",
+       "start_date": null,
+       "end_date": "2024-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q1-2025",
+       "entity_id": "issuer",
+       "period_label": "q1-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-03-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q2-2025",
+       "entity_id": "issuer",
+       "period_label": "q2-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-04-01",
+       "end_date": "2025-06-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q3-2025",
+       "entity_id": "issuer",
+       "period_label": "q3-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-07-01",
+       "end_date": "2025-09-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q4-2025",
+       "entity_id": "issuer",
+       "period_label": "q4-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-10-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "fy-2025",
+       "entity_id": "issuer",
+       "period_label": "fy-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      }
+     ],
+     "event_scan": "no_events_identified",
+     "event_scan_explanation": "Explicit no-event disclosure through as-of",
+     "event_scan_citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "peers",
+     "classification": "nonfinancial",
+     "document_type": "Peer financial summary (synthetic)",
+     "published_on": "2026-01-10",
+     "evidence_class": "external",
+     "evidence_rationale": "Third-party desk summary without auditor or filing status",
+     "analytical_use": "Peer ratios for CP-1C",
+     "citations": [
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:1",
+       "quote": "Basis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "A desk summary is not event evidence"
+    }
+   ],
+   "limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   ]
+  },
+  "cp1_readiness": {
+   "step": "readiness",
+   "replaces": "the S1 literal {\"consumers\": []}; the run requests the consumer CP-1C (inputs.requested_consumers = (\"CP-1C\",), inputs.consumers = _requests((\"CP-1C\",)): policy step_12, requirements normalized_financials and period_coverage)",
+   "payload": {
+    "inputs_sha256": "{{PREFILLED:inputs_sha256}}",
+    "consumers": [
+     {
+      "entry": "CP-1C",
+      "requirements": [
+       {
+        "requirement": "normalized_financials",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:ISR}}",
+         "{{EVID:ISV}}",
+         "{{EVID:CFS}}",
+         "{{EVID:BS}}"
+        ],
+        "rationale": "Normalised income statement, cash flow and balance sheet lines for FY-2025 support the peer ratios; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in every peer comparison."
+        ]
+       },
+       {
+        "requirement": "period_coverage",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:SP}}",
+         "{{EVID:CON}}"
+        ],
+        "rationale": "The last twelve months of the fiscal year are constructed as the trailing basis; peer period ends are matched by the analyst, not by CP-1.",
+        "actions": [
+         "State any peer whose twelve months end on another date."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{GAP_IDS}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source-context and audit warning bears on the reliability of the issuer figures that anchor the peer comparison."
+       }
+      ]
+     }
+    ]
+   },
+   "run_time_bindings": {
+    "{{PREFILLED:inputs_sha256}}": "inputs.content_hash() of the readiness step inputs (prefilled; never literal)",
+    "{{EVID:ISV}}": "evidence_id of the one catalogue record of kind statement_IS with record.item_id == 'ebitda_adjusted' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:ISR}}": "evidence_id of the one catalogue record of kind statement_IS with record.item_id == 'revenue' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:CFS}}": "evidence_id of the one catalogue record of kind statement_CFS with record.item_id == 'cfo_ncfo' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:BS}}": "evidence_id of the one catalogue record of kind statement_BS with record.item_id == 'total_debt' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:SP}}": "evidence_id of the one catalogue record of kind source_period with record.period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:CON}}": "evidence_id of the one catalogue record of kind construction with record.column_key == 'LTM:fy-2025'; none or several fails closed",
+    "{{GAP_IDS}}": "every inputs.narrative.gaps[*].gap_id in order (replaces the placeholder element)"
+   },
+   "validated_on": "copy of the S1 positive CP-1 head (read-only copy, 2026-10-28, 1132 gaps all WARN): validate_downstream_review() returns no issues; _assess_consumers gives CP-1C status ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gaps",
+   "expected_assessment": {
+    "CP-1C": {
+     "status": "ready_with_limitations",
+     "unassessed_requirements": 0,
+     "unassessed_gaps": 0,
+     "blocking_gaps": [],
+     "requirement_status": "limited"
+    }
+   },
+   "negatives": [
+    "empty review: CP-1C is not_ready",
+    "no gap scope: CP-1C is not_ready",
+    "normalized_financials citing only one statement kind: validate_downstream_review refuses 'Incompatible or unavailable dependency evidence: CP-1C normalized_financials'"
+   ]
+  },
+  "peer_benchmark": {
+   "assessments": [
+    {
+     "peer": "Alder Ridge Holdings",
+     "comparability": "Comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:2",
+       "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "peer": "Brookmere Industries",
+     "comparability": "Comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:2",
+       "quote": "Brookmere Industries  IFRS  1  December 31"
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "peer": "Calder Vale Group",
+     "comparability": "Comparable",
+     "category": "Analyst Interpretation",
+     "rationale": "Aligned reporting basis, segments and year end; its interest expense is not stated in the peer summary, so its coverage cannot be calculated.",
+     "evidence": [
+      {
+       "source_id": "peers",
+       "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+       "locator": "page:2",
+       "quote": "Calder Vale Group  IFRS  1  December 31"
+      }
+     ],
+     "limitation": null
+    }
+   ],
+   "overall": {
+    "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}. The peer median coverage is not available [T1C.4.interest_coverage_adjusted.median], so interest coverage is shown for the issuer without a comparison.",
+    "category": "Analyst Interpretation",
+    "confidence": "Low",
+    "limitation": "Only three peers are in the universe and one amount is not stated.",
+    "evidence": []
+   },
+   "gaps": [
+    {
+     "gap": "The peer summary omits one peer's interest expense.",
+     "why_it_matters": "Interest coverage has too few peers for a median.",
+     "affected_analysis": "Interest coverage comparison",
+     "severity": "Material",
+     "action": "Request the missing interest expense from the data desk."
+    }
+   ]
+  },
+  "tool_calls": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "peers",
+     "first_page": 1,
+     "last_page": 2
+    },
+    "expect_spans": [
+     {
+      "source_id": "peers",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "peers",
+      "locator": "page:2"
+     }
+    ]
+   }
+  ]
+ },
+ "no_peers": {
+  "readiness_review": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Historical financial foundation and peer benchmark",
+   "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-1",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "module_id": "CP-1C",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Settled CP-1 ratios; no peer financial summary is supplied",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "No peer summary is supplied; the benchmark reduces to the issuer's own ratios and states that no comparison is possible.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "Located statements support historical analysis; no peer summary is supplied.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "cp1_source_context": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "entities": [
+    {
+     "entity_id": "issuer",
+     "name": "Northbridge Synthetic Group",
+     "entity_type": "group",
+     "roles": [
+      "issuer"
+     ],
+     "fiscal_year_end": "December 31",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "classification": "nonfinancial",
+     "document_type": "Identity note",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Identity only",
+     "analytical_use": "Issuer identity",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "Identity is not event evidence"
+    },
+    {
+     "source_id": "financial",
+     "classification": "financial",
+     "document_type": "Quarterly statements",
+     "published_on": "2026-01-10",
+     "evidence_class": "unaudited_without_auditor",
+     "evidence_rationale": "No auditor report",
+     "analytical_use": "Historical financial analysis",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "scopes": [
+      {
+       "scope_id": "opening-2024",
+       "entity_id": "issuer",
+       "period_label": "opening-2024",
+       "period_kind": "period_end",
+       "start_date": null,
+       "end_date": "2024-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q1-2025",
+       "entity_id": "issuer",
+       "period_label": "q1-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-03-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q2-2025",
+       "entity_id": "issuer",
+       "period_label": "q2-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-04-01",
+       "end_date": "2025-06-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q3-2025",
+       "entity_id": "issuer",
+       "period_label": "q3-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-07-01",
+       "end_date": "2025-09-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q4-2025",
+       "entity_id": "issuer",
+       "period_label": "q4-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-10-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "fy-2025",
+       "entity_id": "issuer",
+       "period_label": "fy-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      }
+     ],
+     "event_scan": "no_events_identified",
+     "event_scan_explanation": "Explicit no-event disclosure through as-of",
+     "event_scan_citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   ]
+  },
+  "cp1_readiness": {
+   "step": "readiness",
+   "replaces": "the S1 literal {\"consumers\": []}; the run requests the consumer CP-1C (inputs.requested_consumers = (\"CP-1C\",), inputs.consumers = _requests((\"CP-1C\",)): policy step_12, requirements normalized_financials and period_coverage)",
+   "payload": {
+    "inputs_sha256": "{{PREFILLED:inputs_sha256}}",
+    "consumers": [
+     {
+      "entry": "CP-1C",
+      "requirements": [
+       {
+        "requirement": "normalized_financials",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:ISR}}",
+         "{{EVID:ISV}}",
+         "{{EVID:CFS}}",
+         "{{EVID:BS}}"
+        ],
+        "rationale": "Normalised income statement, cash flow and balance sheet lines for FY-2025 support the peer ratios; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in every peer comparison."
+        ]
+       },
+       {
+        "requirement": "period_coverage",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:SP}}",
+         "{{EVID:CON}}"
+        ],
+        "rationale": "The last twelve months of the fiscal year are constructed as the trailing basis; peer period ends are matched by the analyst, not by CP-1.",
+        "actions": [
+         "State any peer whose twelve months end on another date."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{GAP_IDS}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source-context and audit warning bears on the reliability of the issuer figures that anchor the peer comparison."
+       }
+      ]
+     }
+    ]
+   },
+   "run_time_bindings": {
+    "{{PREFILLED:inputs_sha256}}": "inputs.content_hash() of the readiness step inputs (prefilled; never literal)",
+    "{{EVID:ISV}}": "evidence_id of the one catalogue record of kind statement_IS with record.item_id == 'ebitda_adjusted' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:ISR}}": "evidence_id of the one catalogue record of kind statement_IS with record.item_id == 'revenue' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:CFS}}": "evidence_id of the one catalogue record of kind statement_CFS with record.item_id == 'cfo_ncfo' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:BS}}": "evidence_id of the one catalogue record of kind statement_BS with record.item_id == 'total_debt' and period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:SP}}": "evidence_id of the one catalogue record of kind source_period with record.period_id == 'fy-2025'; none or several fails closed",
+    "{{EVID:CON}}": "evidence_id of the one catalogue record of kind construction with record.column_key == 'LTM:fy-2025'; none or several fails closed",
+    "{{GAP_IDS}}": "every inputs.narrative.gaps[*].gap_id in order (replaces the placeholder element)"
+   },
+   "validated_on": "copy of the S1 positive CP-1 head (read-only copy, 2026-10-28, 1132 gaps all WARN): validate_downstream_review() returns no issues; _assess_consumers gives CP-1C status ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gaps",
+   "expected_assessment": {
+    "CP-1C": {
+     "status": "ready_with_limitations",
+     "unassessed_requirements": 0,
+     "unassessed_gaps": 0,
+     "blocking_gaps": [],
+     "requirement_status": "limited"
+    }
+   },
+   "negatives": [
+    "empty review: CP-1C is not_ready",
+    "no gap scope: CP-1C is not_ready",
+    "normalized_financials citing only one statement kind: validate_downstream_review refuses 'Incompatible or unavailable dependency evidence: CP-1C normalized_financials'"
+   ]
+  },
+  "peer_benchmark": {
+   "assessments": [],
+   "overall": {
+    "rationale": "No peer source is in the pack, so no peer universe, median or outlier flag can be formed. The issuer's own total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is shown without a comparison.",
+    "category": "Analyst Interpretation",
+    "confidence": "Low",
+    "limitation": "No peer data is available.",
+    "evidence": []
+   },
+   "gaps": [
+    {
+     "gap": "No peer financial source is in the pack.",
+     "why_it_matters": "The issuer cannot be positioned against comparable companies.",
+     "affected_analysis": "Peer benchmark",
+     "severity": "Critical",
+     "action": "Supply a peer financial summary with filed statements."
+    }
+   ]
+  },
+  "tool_calls": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "peer",
+     "source_id": null
+    },
+    "expect_header": "0 spans match 'peer'; showing 0.",
+    "expect_matching_spans": []
+   }
+  ]
+ },
+ "refused": {
+  "note": "Literal CP-0 review for the refused case = tests/test_financial_workflow.py readiness(pack, gap=True) with this consumer row appended and this gap row",
+  "cp0_consumer_row_cp1c": {
+   "module_id": "CP-1C",
+   "readiness": "CONDITIONAL",
+   "evidence_demand": "Settled CP-1 figures",
+   "source_ids": [
+    "identity"
+   ],
+   "rationale": "Quarterly financial statements were not supplied.",
+   "citations": [
+    {
+     "source_id": "identity",
+     "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "locator": "page:1",
+     "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+    }
+   ],
+   "missing_source": "Quarterly financial statements",
+   "limitations": [
+    "Quarterly financial statements were not supplied."
+   ]
+  },
+  "gap_row": {
+   "gap_id": "missing-financial",
+   "kind": "source",
+   "severity": "material",
+   "description": "Quarterly financial statements were not supplied.",
+   "affected_modules": [
+    "CP-1",
+    "CP-1C"
+   ],
+   "remediation": "Supply quarterly financial statements"
+  }
+ },
+ "refusals": [
+  {
+   "id": "r01",
+   "class": "unknown peer",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Fenwick Dale Partners",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Unknown peer: Fenwick Dale Partners",
+    "Assess each sheet peer exactly once: Brookmere Industries"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "note": "Renaming a row leaves the real row unassessed, so both issues appear",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r02",
+   "class": "peer not assessed",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Assess each sheet peer exactly once: Ellsworth Park Limited"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r03",
+   "class": "peer assessed twice",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Assess each sheet peer exactly once: Alder Ridge Holdings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r04",
+   "class": "evidence required for a comparability assessment",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Evidence required for a comparability assessment: Alder Ridge Holdings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r05",
+   "class": "limitation required for Partly comparable",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Limitation required for Partly comparable: Dunmore Cross Corporation"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r06",
+   "class": "bare figure in rationale",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of 6 operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Bare figure: 6"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r07",
+   "class": "quote not in the located page",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  2  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Quote/locator mismatch: quote not found under peers page:2 ("
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r08",
+   "class": "confidence High",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "High",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Confidence cannot be High: the peer figures are desk-supplied and unaudited"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r09",
+   "class": "prohibited conclusion",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference. Overweight the sector.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "overall.rationale: prohibited conclusion (instrument recommendation): \"overweight\""
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r10",
+   "class": "assessment with no peer source in the pack",
+   "base_case": "no_peers",
+   "pack": "no_peers",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "No peer source is in the pack, so no peer universe, median or outlier flag can be formed. The issuer's own total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is shown without a comparison.",
+     "category": "Analyst Interpretation",
+     "confidence": "Low",
+     "limitation": "No peer data is available.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No peer financial source is in the pack.",
+      "why_it_matters": "The issuer cannot be positioned against comparable companies.",
+      "affected_analysis": "Peer benchmark",
+      "severity": "Critical",
+      "action": "Supply a peer financial summary with filed statements."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Assessment given without a peer source in the pack: Alder Ridge Holdings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "peer",
+      "source_id": null
+     },
+     "expect_header": "0 spans match 'peer'; showing 0.",
+     "expect_matching_spans": []
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "financial",
+      "first_page": 1,
+      "last_page": 1
+     },
+     "expect_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r11",
+   "class": "peer table not found",
+   "base_case": "positive",
+   "pack": "unparseable",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Peer table not found"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "note": "manifest synthetic_source.fixtures.peer_table_not_found: a peer source whose page:1 has no table header line; every citation carries that fixture's sha256 (page:2 is unchanged, so every quote still locates) so the table check, not a citation check, is what refuses; the issue returns alone",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r12",
+   "class": "unresolved reference",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference. Compare {T1C.9.nothing.median|x}.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Unresolved reference: T1C.9.nothing.median"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r13",
+   "class": "figure reference names a gap",
+   "base_case": "gap",
+   "pack": "gap",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Aligned reporting basis, segments and year end; its interest expense is not stated in the peer summary, so its coverage cannot be calculated.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}. The peer median coverage is not available {T1C.4.interest_coverage_adjusted.median|x}, so interest coverage is shown for the issuer without a comparison.",
+     "category": "Analyst Interpretation",
+     "confidence": "Low",
+     "limitation": "Only three peers are in the universe and one amount is not stated.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary omits one peer's interest expense.",
+      "why_it_matters": "Interest coverage has too few peers for a median.",
+      "affected_analysis": "Interest coverage comparison",
+      "severity": "Material",
+      "action": "Request the missing interest expense from the data desk."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Figure reference names a gap: T1C.4.interest_coverage_adjusted.median"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r14",
+   "class": "run-time figure marker left unreplaced",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "peer": "Alder Ridge Holdings",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Alder Ridge Holdings  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Brookmere Industries",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Brookmere Industries  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Calder Vale Group",
+      "comparability": "Comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "Same reporting basis, one operating segment and the same year end as the issuer, so its ratios sit on aligned definitions.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Calder Vale Group  IFRS  1  December 31"
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "peer": "Dunmore Cross Corporation",
+      "comparability": "Partly comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "The twelve months end on a different date from the issuer year end, so the peer covers a shifted window; it stays in the universe with that limitation.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Dunmore Cross Corporation reports twelve months to September 30, 2025, which ends on a different date from the Northbridge Synthetic Group year end."
+       }
+      ],
+      "limitation": "Period end differs from the issuer's."
+     },
+     {
+      "peer": "Ellsworth Park Limited",
+      "comparability": "Not comparable",
+      "category": "Analyst Interpretation",
+      "rationale": "A different reporting basis and a diversified group of several operating segments, so its ratios are shown but kept out of every statistic.",
+      "evidence": [
+       {
+        "source_id": "peers",
+        "source_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+        "locator": "page:2",
+        "quote": "Ellsworth Park Limited  US GAAP  6  December 31"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The issuer's total leverage of {T1C.3.issuer.total_leverage_adjusted|x} is below the peer median of {T1C.4.total_leverage_adjusted.median|x}, its interest coverage of {T1C.3.issuer.interest_coverage_adjusted|x} is above the median of {T1C.4.interest_coverage_adjusted.median|x}, and its adjusted EBITDA margin of {T1C.3.issuer.adjusted_ebitda_margin|%} is close to the median of {T1C.4.adjusted_ebitda_margin.median|%}. The outlier register shows which peers distort a metric, so the median is the reference. Compare {{FIG:total_leverage_adjusted|x}}.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "The universe is a small desk-supplied set of unaudited summaries.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The peer summary is unaudited and covers a handful of peers.",
+      "why_it_matters": "Medians and outlier flags move with one peer.",
+      "affected_analysis": "Peer statistics",
+      "severity": "Material",
+      "action": "Obtain filed statements for each peer and widen the universe."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Malformed run text: unbalanced or empty reference"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "note": "the rationale carries a CP-1 run-time marker the harness never bound; only a harness that skips the binding step produces it (fails closed)",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "peers",
+      "first_page": 1,
+      "last_page": 2
+     },
+     "expect_spans": [
+      {
+       "source_id": "peers",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "peers",
+       "locator": "page:2"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "tool_refusals": [
+  {
+   "id": "t01",
+   "class": "cited_page_not_read",
+   "base_case": "positive",
+   "payload": "submissions.json positive peer_benchmark (valid)",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    }
+   ],
+   "disposition": "invalid attempt 0 (journaled rule unread_citation_issues against Seen); re-begun as attempt 1 with repair_of set; a valid attempt 1 with tool_calls.positive yields a verifying receipt",
+   "expected_issues": [
+    "Cited page not read through read_pages: peers page:2"
+   ]
+  },
+  {
+   "id": "t02",
+   "class": "non-pack invoke",
+   "base_case": "positive",
+   "call": {
+    "tool": "web_search",
+    "arguments": {
+     "query": "Alder Ridge Holdings leverage"
+    }
+   },
+   "expected_receipt": {
+    "status": "refused",
+    "reason": "not_permitted"
+   },
+   "journal": "none; no attempt consumed"
+  },
+  {
+   "id": "t03",
+   "class": "submit before read_inputs",
+   "base_case": "positive",
+   "calls_before_submit": [],
+   "expected_receipt": {
+    "status": "refused",
+    "reason": "not_permitted"
+   },
+   "journal": "none; no attempt consumed"
+  }
+ ],
+ "blocked": {
+  "attempt_0": "refusals r04",
+  "attempt_1": "refusals r04",
+  "note": "Both attempts invalid with the same issue; the CP-1C head settles blocked (S1a A3b pattern)"
+ }
+}

@@ -1,0 +1,160 @@
+# CP-1C (Peer benchmark) owner lease — FROZEN by LEAD 2026-10-28 (preparation revision 4)
+
+Frozen after `review-feature-3.md` (FREEZE, one unit-convention observation) and revision 4 (fix round 3: every missing or not-applicable fact carries its settled twin's unit; ten `unit` keys changed, medians included), which LEAD checked inline: rebuilt twice from a scratch copy with `python3 -I`, identical; manifest and submissions unchanged; the reviser's gap-twin check reports `differing=0`. Pins: manifest 408f4836d84310656ae5deed882907d58ac595dbfe563c91d592a3f4f9628381, submissions 13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912, expected 8bd3d32f7864e18e547c30a1270f020e5ccffec56c1216f1ed49068b687b385c, builder e65ec505348d32b25d80582605c59462f9029400d19f7ebe81a4365f563377a0. `methods-cp1c-draft.md` is committed as `docs/methods-drafts/cp1c.md`; the build moves it to `src/deploy_vii/methods/cp1c.md`.
+
+LEAD notes at freeze: (1) The draft heading below still reads revision 2; the text is revision 4 (`revision-3.md`, `revision-4.md` in `work/lead/cp1c-owner-preparation/`). (2) D8 (T1C.1-T1C.7) lands in the single serialised `methodology.json` change with CP-L10 D4; this builder's methodology pin re-pins then (expected and submissions byte-identical). (3) `pp` has no display class (`report_view._unit_class`), so `shown` is the exact text of the stored Decimal: the positive FFO difference displays "6.848484848484848484848484848484848485 pp". A product `pp` display class is a separate product task (`docs/QUEUE.md`); it would re-pin this oracle and the CP-4 `pp` render tests. (4) The synthetic sources are labelled test vectors on every page with a pack limitation; never a product pack.
+
+Former draft heading follows.
+
+# CP-1C (Peer benchmark) owner lease: DRAFT revision 2 for LEAD, 2026-10-28 (fix round 1 of review-precise-1)
+
+Pre-code draft by the `cp1c-owner` preparation task. Oracle: `cases/cp1c-owner/{manifest,submissions,expected}.json`, stdlib builder `cases/cp1c-owner/builder/build.py`. No product code or test written or run. Every G1 seam is `docs/G1X-OWNER-CORE-PROTOCOL.md`, which supersedes any statement here that differs.
+
+## Why
+
+methodology.json: CP-1C "Peer benchmark" "benchmarks the issuer against a defined peer universe and flags outliers"; required CP-0, CP-1 (edge `block`), no optional edge, `plan(("CP-1C",))` = (CP-0, CP-1, CP-1C). The architecture row (`owner-harness-architecture.md:59`) splits it: Python = normalised peer metrics, medians, outliers; analyst = universe and comparability; section = FP03 peer-positioning. The FP03 design reference (`rbot-fp-03-relative-value.dc.html`, "Peer positioning, CP-1C, Fig. RV.3") draws a range strip plus a peer table (peer, comparability chip, basis, data).
+
+**Frozen packs hold one issuer.** No frozen financial, identity or legal page names a peer or a comparable (the builder asserts the word "peer" occurs on no frozen financial or identity page). A benchmark needs more than one issuer, so the frozen pack alone cannot feed the median, outlier and position rules.
+
+**Recommendation (open question 1): both designs, side by side.**
+- Case `no_peers` is the limitation-only design over the frozen pack: the run settles `restricted`; the issuer's own CP-1 ratios are known cells; every peer-derived cell is `missing` ("No peer source is in the pack"), never 0; the CP-1 side of the tie-out table (`T1C.6.<metric>.cp1`) is a known copy of the CP-1 cell, `sheet` and `difference` are `missing` and `result` reads "Not compared"; the universe claim reads "No peer source is in the pack, so no universe is formed [T1C.1.total.sheet]."; one critical analyst gap.
+- Cases `positive` and `gap` add ONE **synthetic** source `peers`, "Peer financial summary (synthetic)": invented peers (Alder Ridge Holdings, Brookmere Industries, Calder Vale Group, Dunmore Cross Corporation, Ellsworth Park Limited) that do not exist. Every page states "This invented case is test data, not evidence about real issuers. The peers named below do not exist." Every page of the source (page:1 and page:2, all three variants) carries that sentence. The pack limitation reads "Synthetic desk summary of invented peers; unaudited; not a market fact." No peer figure is ever to be presented as a real market fact. The issuer line on the source restates five frozen FY2025 figures exactly (revenue 120.0, adjusted EBITDA 30.0, total debt 50.0, interest expense 5.0, FFO 21.0; the sheet defines interest expense as cash interest paid, so the builder asserts and the oracle cites frozen page:3 "Cash interest paid" 5.00, which equals the page:2 net interest expense that CP-1's coverage uses) and the issuer's basis line (IFRS, one segment, December 31) equals the frozen pages; the builder asserts all of it, and that the recomputed issuer ratios equal CP-1's T4.10 values exactly (25.0%, 5/3, 6.00x, 42.0%). The source adds no other fact about the issuer.
+- **Bounded use (LEAD ruling 1).** The synthetic `peers` source is a test vector only (cases and fixtures), labelled synthetic on every page and in the pack limitation; it is never part of a product pack. `no_peers` is the real-pack behaviour. Any rendered proof on the synthetic cases carries the synthetic label visibly.
+- Pinned by sha256 (`manifest.json synthetic_source`): positive `13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b`, gap `38d9d29b7424069c26d8c94034d819c7e767d1066ba66363d7ba908f06909ae8`, table-not-found fixture `55c45dad0ef51078a1b97ad43ed75167e5e2919fc6ceca3b74e3b6841ef15971`; every quote is a verbatim substring of its page (asserted in the builder).
+
+## Live-contract or owner-only
+
+`registry.step_chain("CP-1C")` raises "CP-1C has no live step contract" (probe). CP-1C is **owner-only** (`docs/G1X-OWNER-CORE-PROTOCOL.md` §1): `entry="owner_core"`, the core supplies every §2 item, no `src/deploy_vii` registry edit. Because it reads pack pages it is an owner-only step with `sources=True`, `inputs="module_context"` (the view), `rules="journaled"`, a core `RULES(text, seen)` attribute (§2) and a fixed H1 host scope mapping (§3): **identity, financial and, when the prepared pack holds a source with id `peers`, peers** (no_peers: identity and financial). The scope is never caller-supplied.
+
+## Prerequisites
+
+1. G1, the S1a extension and G1-X integrated (owner_core entry, `_VIEWS`, `_CORES`, `inputs="module_context"` with sources).
+2. H1 host task: the CP-1C scope mapping above (one entry beside CP-1D, CP-3D, CP-DR).
+3. The serialised `methodology.json` change (CP-L10 D4, CP-1C D8: CP-1C `table_ids` become `T1C.1`..`T1C.7`), landing in one pass for every lease with `METH_SHA` (build.py:39) re-pinned in that pass together with the matching frozen-lease header amendments (LEAD ruling 8). This lease edits nothing there; A7 depends on it.
+4. Pins: `cases/financial/manifest.json` `6b3eeffe…b93432`, `cases/snapshot/submissions.json` `bff9ed18…b35c`, `src/deploy_vii/methodology.json` `348fbc4b…8d45`.
+
+## Files
+
+- New `src/deploy_workflow/owners/cp1c.py` (about 450 lines).
+- `owner_workflow.py`: `OWNER_SPECS["CP-1C"]`, `_CORES`, `_QUALIFICATION`, `_PROBES`, `_VIEWS`.
+- D12 registrations: new `bindings/cp1c.py` (data only, §6) and `shipped.py`; `report_view.py`: one `_Spec` row for `peer-positioning` in the `_RELATIVE_VALUE` mapping (shared with the CP-3D lease; PM serialises) and its `_spec_of` loop entry.
+- `TOOL-CONTRACT.md` row for CP-1C `peer_benchmark`; `methods/cp1c.md` (adaptation record: metric set, thresholds, columns).
+- G2 `DeliveryScope(scope_id="cp1c-fp03-peers", pathway="relative_value", requested_modules=("CP-1C",), sections=("peer-positioning",), rails=("evidence","limitations"))`.
+- New `tests/test_owner_cp1c.py`, `tests/cp1c_runs.py` (`cp1c_closed(case, root)`).
+
+## Public API (`owners/cp1c.py`, keyword arguments except `store`)
+
+```
+MODULE_ID="CP-1C"; STEP_ID="peer_benchmark"; STEP_IDS=(STEP_ID,)
+QUALIFICATION; SCHEMAS={STEP_ID: PeerBenchmarkSubmission}; RULES(text, seen) -> tuple[str, ...]
+parse_peer_source(source) -> PeerSheet | None         # the table rule below
+peer_metrics(row) / median(values) / position(...) / outlier(value, median)   # pure, Decimal; exercised by expected.fixtures
+cp1c_upstream(store, attempt) -> Upstream             # CP-0, CP-1 heads; T4.10 facts by label (exactly one match each)
+validate_peer_benchmark(*, pack, submission, upstream) -> tuple[str, ...]
+peer_benchmark(*, pack, submission, upstream) -> Report      # raises ValueError on any issue
+context_block(*, pack, upstream) -> dict              # the exact read_inputs view
+cp1c_module(report, *, inputs, attempt) -> Module
+submit(store, ticket_id, step_id, payload, rules) -> Submitted
+view(historical, attempt) -> tuple[str, str]; probe(store, snapshot, attempt) -> None
+cp1c_reader(store, head) -> Cp1cHead                  # the consumer reader (Consumption)
+```
+Step `peer_benchmark`: `inputs="module_context"`, `sources=True`, `rules="journaled"`; no `precheck` (every content rule is a journaled validator issue, so the blocked case works). `RULES(text, seen)` reuses `live/tools.py` `unread_citation_issues` (exact text `Cited page not read through read_pages: <source_id> page:<n>`, product sorted order); the schema carries no `ABSENCE_MARKERS` value, so no absence rule fires (open question 13).
+
+## Submission schema (reference and judgment only; no computed number)
+
+```
+PeerBenchmarkSubmission: assessments: tuple[PeerAssessment,...]; overall: Overall; gaps: tuple[Gap,...]
+PeerAssessment: peer: str (exact sheet row label, issuer line excluded), comparability: Comparable|Partly comparable|Not comparable,
+                category, rationale (refs only), evidence: tuple[Citation] (>= 1), limitation: str|null (required for Partly comparable)
+Overall: rationale, category, confidence (Medium|Low; High refused when a peer source is present), limitation, evidence: tuple[Citation]
+Gap: gap, why_it_matters, affected_analysis, severity, action
+```
+Prose carries no digit outside `{ref|unit}`; refs name the module's own facts (`{T1C.3.issuer.total_leverage_adjusted|x}`, `{T1C.4.total_leverage_adjusted.median|x}`) or are `[ref]` gap chips for a fact that is not known. No CP-1 run-time `{{FIG}}` marker is needed: the issuer's CP-1 values are referenced through the module's copied cells. Citations are checked against the pack by `citation_issues` (verbatim quote under the located page) and against `Seen`. The analyst's text is also checked by `business_context.prohibited_issues` with kinds `instrument recommendation` and `recovery conclusion` (never `peer ranking`, which is this module's own subject).
+
+## Decimal composer (zero / missing / not_applicable / blocked kept distinct)
+
+**Peer table rule** (core rule, the builder transcribes it). Page:1 has the header line `Peer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO`; each following line splits on two or more spaces into 7 fields: label, period end `YYYY-MM-DD`, then five amounts (decimal or `Not stated` = missing). The row whose label equals the run's issuer name is the issuer line; the others are peers in sheet order (`p01`..). Page:2 has `Peer  Reporting basis  Operating segments  Fiscal year end` and 4-field rows; a row absent there gives `missing` basis cells; free-text notes follow the table. No header on page:1 gives `Peer table not found` alone (fixture `manifest.synthetic_source.fixtures.peer_table_not_found`, refusal r11).
+
+| Quantity | Recipe |
+|---|---|
+| peer metric | one division of exact decimals (38 digits half-even): margin = EBITDA / revenue; total leverage = debt / EBITDA; interest coverage = EBITDA / interest; FFO to debt = FFO / debt. An operand `Not stated` gives `missing` ("Not calculable: <operand> is not stated in the peer source"); a denominator not positive gives `not_applicable` ("Not meaningful") |
+| issuer metric | the copied CP-1 T4.10 fact (`adjusted_ebitda_margin`, `total_leverage_adjusted`, `interest_coverage_adjusted`, `ffo_to_debt`, column LTM Q4 25): same unit, amount, value_class (calculated in the probe), citations; calculation id is CP-1's own, bound at run time |
+| inclusion | Comparable and Partly comparable included; Not comparable excluded (shown, normalised, kept out of every statistic) |
+| n | included peers with a calculated value for the metric |
+| median | needs n >= 3 else `missing`; odd n the middle value; even n `(a + b) / 2` evaluated in the 38-digit half-even context on the stored values (fixtures pin it) |
+| difference | issuer minus median. Multiples: same unit (`MULTIPLE`). Percent metrics (margin, FFO to debt): **percentage points**, unit `pp`, the unit and formula follow CP-4 (`cp4_legal.py:970-972`); the amount is `(issuer − median)` in the 38-digit context, then `.scaleb(2)`, not CP-4's `amount * 100` (which gives `1.00 pp` and a 28-digit FFO cell); `shown` is exact text, compared as a string: `report_view.fact_spelling` spells it as exact text plus ` pp` (`1 pp`, `6.848484848484848484848484848484848485 pp`; the unit has no display class). The same rule applies to every percent-minus-percent difference, including `T1C.6.<percent metric>.difference` (unit `pp`, amount `(sheet − CP-1).scaleb(2)`, e.g. `0 pp`) |
+| period of derived facts | T1C.1 counts, T1C.4 and T1C.5 facts carry the period `Mixed: issuer LTM Q4 25, each peer's own twelve months` (one wording everywhere; a peer period end can differ, p04 ends 2025-09-30); each peer's own period stays on its T1C.2 and T1C.3 cells |
+| lineage citations | a calculated fact's `citations` are the ordered, de-duplicated concatenation of the citations of the facts in `derives_from`, transitively; the literal list excludes a copied CP-1 cell's citations (bound at run time); a fact that depends on a copied cell has its run-time citations bound from `derives_from` and `copied_from_cp1` (no separate field) |
+| position | 1 + number of entities strictly better than the issuer among included peers with a value and the issuer; ties share the position; direction per metric (margin, coverage, FFO to debt higher is better; leverage lower is better); `of` = n + 1 |
+| deviation | (value - median) / median in the context; median 0 gives `not_applicable` |
+| outlier flag | `Outlier` iff abs(deviation) strictly above 0.5, else `Within range`; exactly 0.5 is Within range; applied to the issuer and to each included peer; an excluded peer is `not_applicable`; a missing own value or n < 3 is `missing` |
+| tie-out | the issuer line on the peer source recomputed with the same ratios against the copied CP-1 value: difference exactly 0, `Reconciled` (a non-zero difference reads `Differs`) |
+
+A missing amount never becomes 0; a known 0 is shown as 0; `n` is always shown (an unsettled median never hides how many peers backed it). When there is no peer source every peer-derived cell is `missing` with the reason "No peer source is in the pack" (never 0, never `not_applicable`). A missing or not-applicable fact carries the unit its settled twin carries (`pp` for a percent-minus-percent difference, the metric's own unit for a median or a multiple difference, the count unit for counts; a text fact has none).
+
+**Expected values (positive).** Medians over four included peers: margin 24.0% (22.0%, 26.0% averaged), total leverage 2.50x, interest coverage 4.50x, FFO to debt 35.2% (shown; the stored value is the 38-digit repeating 0.3515…); issuer 25.0% / 1.67x / 6.00x / 42.0%; differences +1.0 points (`1 pp`), -0.83x, +1.50x, +6.8 points (`pp`); positions 3, 2, 2 (tied with Calder Vale at 6.00x), 2 of 5; Dunmore Cross Corporation (Partly comparable, 12 months to 2025-09-30) is the outlier on leverage (5.00x), coverage (2.00x) and FFO to debt (12.5%); Ellsworth Park Limited (Not comparable, US GAAP, six segments) is excluded. `gap`: three included peers; Calder Vale's interest expense Not stated, so coverage has n = 2 and median, difference, position, entities compared, outlier count and every coverage flag are `missing`; the other three metrics have medians 26.0%, 2.00x, 40.0% (odd n). `no_peers`: issuer cells known, everything else `missing`. The exact decimal of every cell is in `expected.json cases.<case>.facts` (derivation in the report).
+
+## Refusals
+
+Fourteen literal invalid payloads (`submissions.json refusals`, issues in `expected.json refusals`): r01 unknown peer (also leaves one real peer unassessed, so two issues); r02 peer not assessed; r03 peer assessed twice; r04 evidence required; r05 Partly comparable without limitation; r06 bare figure (`Bare figure: 6`, probed); r07 quote not located (`Quote/locator mismatch: quote not found under peers page:2 (`, probed); r08 confidence High; r09 prohibited conclusion (`overall.rationale: prohibited conclusion (instrument recommendation): "overweight"`, probed); r10 assessment with no peer source (base `no_peers`, own text, citing a valid financial quote and reading financial page:1 first (`read_pages financial 1-1`), so `unread_citation_issues` adds nothing and no other issue fires); r11 peer table not found (every citation carries the fixture's sha256, so the table check and not a citation check refuses); r12 unresolved reference (`Unresolved reference: T1C.9.nothing.median`, probed); r13 figure reference names a gap (base `gap`, probed); r14 an unreplaced `{{FIG:…}}` marker (`Malformed run text: unbalanced or empty reference`, probed; fails closed). Each refusal states its literal tool sequence `calls_before_submit` (its base case's `tool_calls`, plus the financial read for r10); `unread_citation_issues` over it returns no issue for r01-r14, so the only issues are the listed ones. Each is an invalid attempt 0, re-begun; two failures (`blocked`: r04, r04) settle the head blocked with the issues in its limitations. Tool-level (`submissions.tool_refusals`): t01 `cited_page_not_read` (invalid attempt 0 with `Cited page not read through read_pages: peers page:2`, re-begun with `repair_of`); t02 invoke of a non-pack tool `not_permitted`, nothing journaled; t03 submit before `read_inputs` `not_permitted`; snapshot change `stale_binding`; CP-1 missing gives a `RefusedBegin` (refused case, CP-0 row `CONDITIONAL`, T8 "DO NOT RUN" for CP-1 and CP-1C, probed). Only the product-produced wordings listed are not this draft's own.
+
+## Tool use (D2)
+
+Pack tools plus the view (§3): `read_inputs` serves the exact view `context_block`; `read_pages`/`search_pack` over the host-mapped sources carry the evidence. Key tree (shape; the implementer commits `cases/cp1c-owner/cp1c-view-tree.json` from product-settled heads):
+```
+upstream: [{module_id, status}]
+peers: {state: present|absent, source_id, pages: [locator], rows: [{row, label, period_end, amounts shown (Not stated spelled), basis}], issuer_line}
+cp1_facts: [{ref, label, period, unit, shown, value_class}]   rules: {minimum_included_peers, outlier_fraction, inclusion, position, direction}
+inherited_limitations: [str]
+```
+No quote text from a page, no record_json. Acceptance: exactly one ok `read_inputs` before the submit; ok `read_pages` calls covering every cited `page:N`; `no_peers`: one ok `search_pack` (query `peer`, unscoped over identity and financial) returning `0 spans match 'peer'; showing 0.` before the submit (the frozen pages never contain the word; asserted). Literal sequences: `submissions.json <case>.tool_calls`.
+
+## Consumption proof (D3): OPEN, no consumer exists
+
+`methodology.json` lists CP-1C optional for CP-2, CP-3 and CP-5 (`edge_rule` restricted). The shipped CP-2 core reads CP-1 and CP-1A; `cp3_relative_value.READ_OPTIONAL` is CP-1A and CP-4 (statuses and limitations only); `cp6_committee.READ_OPTIONAL` is CP-1A; CP-6 has no edge; `methods/cp2.md`, `cp3.md` and `cp6.md` name CP-1C as the owner of peer ranking and forbid it in their own text. CP-5 counts only after a lease extends its integrity scope to CP-1C and its attempt binds the CP-1C head hash and cites CP-1C facts (D3). **Named consumer for closure: CP-3 (`relative_value`, the `peer-positioning` section) once a CP-3 lease adds CP-1C to `READ_OPTIONAL` and reads `T1C.4.<metric>.median`, `.difference`, `.position`, `.outlier_count` and `T1C.1.total.included` as facts**, with its attempt inputs binding `Input("CP-1C", head.result_sha256, status)`. This lease ships `cp1c_reader(store, head)` and pins those facts (`expected.execution.consumption`); no completion claim covers consumption. **CP-1C is not complete until CP-3 (or another named consumer) reads it under its own lease amendment (PLAN.md:7-8).** CP-1C owns the position fact (the shipped methods for CP-2, CP-3 and CP-6 name it the owner of peer ranking): consumers may read the position but never re-rank (LEAD ruling 5). `docs/MODULES.csv`: `downstream_consumption: open`.
+
+## Rendered sections (D7)
+
+New block `peer-positioning`, owner CP-1C, kind dense, producers `("CP-1C",)`, route "Full analysis", in the `_RELATIVE_VALUE` mapping (the CP-3D lease creates the mapping with `market-against-fundamentals`; this lease adds one row, rows only, the Q10 admission). Tabs T1C.1 peer universe, T1C.3 normalised metrics, T1C.4 peer statistics, T1C.5 outlier register; evidence rail T1C.2, T1C.6; limitations rail T1C.7. Block state `populated`; unsettled cells spelled by `fact_spelling` (`expected.json cases.<case>.FP03`). The reference's range strip Fig. RV.3 is a chart with logic and is not admitted: the block shows tables and says so in `FP03.other_blocks`. The other FP03 blocks stay with CP-3/CP-3D or idle. Front-table `column` naming does not apply (no front table).
+
+## Table ids (D8) collision check
+
+Run over every module's `table_ids` in `methodology.json` (builder asserts it) and a repo grep of `src`, `tests`, `docs`, `cases` for `T1C.`. CP-1C lists T4.1-T4.6 and T4.8-T4.11, **all shared with CP-1** (T4.2, T4.3, T4.9, T4.10, T4.11 also with CP-4); T4.7 appears under CP-1C alone and nothing produces or reads it. `T1C.*` appears nowhere else. **Proposed: register `T1C.1`-`T1C.7` in place of CP-1C's eleven T4.x ids** (in the serialised `methodology.json` change, not this lease): T1C.1 peer universe, T1C.2 peer source figures, T1C.3 normalised metrics, T1C.4 peer statistics, T1C.5 outlier register, T1C.6 definition alignment and tie-out, T1C.7 gaps ledger. `table_ids` is read only by `registry.Responsibility` and a CP-1B registration test. The register is a proposal applied nowhere in this preparation: it lands in the serialised `methodology.json` change named in Prerequisites item 3 (not as this lease's own D12 edit).
+
+## Acceptance (expectations only from `expected.json`)
+
+A1 positive, A1b gap, A1c no_peers: plan CP-0, CP-1, CP-1C; heads restricted; CP-1C facts, tables, claims, own limitations, FP03 equal expected (copied CP-1 cells keep CP-1's value class, units and calculation id, bound at run time; inherited limitations per `execution.py:345-366`); claims pass `prose.prose_issues` (probed: 0 issues, 0 `bare_figures` hits). A2 refused. A3: refusals r01-r14, blocked, tool refusals on clones. A4 tamper (`expected.json#tamper`, the CP-DR rev 4 recipe): one result fact only the probe contradicts, `T1C.4.total_leverage_adjusted.position` 2 -> 1, forged consistently (blob R2 = `Module.content_hash()`; new snapshot and `current`; receipt `SettledHead` and every old-snapshot coordinate; the retained `OwnerSubmission` under its new hash; `receipt.sha256`). The test asserts `_verify_audit` and every check before `_PROBES` pass on the forged copy, then `cp1c.probe` raises `identity_mismatch` (asserting `identity_mismatch` alone would not show the probe was reached). An edited read body is caught earlier by `_verify_calls_reads` (`owner_workflow.py:966-1010`, called at :1175, before `_PROBES` at :1182) and an edited step output by the store's blob hash check; neither is a probe case. A5 fixtures: median, outlier boundary, position, minimum universe, zero denominators (`expected.fixtures`, hand-written expectations asserted). A6 `test_owner_workflow.py`/`test_owner_s1a.py` unchanged. A7 D8 (depends on the serialised `methodology.json` change, Prerequisites item 3): `registry.modules()` table ids unique for `T1C.*`. Gates: ruff check, ruff format --check, mypy --strict (`MYPYPATH=src`).
+
+## Deferred test commands (build-first)
+
+`PYTHONPATH=src pytest -q -p no:cacheprovider tests/test_owner_cp1c.py` (heavy: a genuine CP-1 promotion per case; one job under the lock). Oracle rebuild: `python3 -I cases/cp1c-owner/builder/build.py`, then compare sha256 of the three files.
+
+## CP-1 readiness for CP-1C (LEAD ruling S6)
+
+`downstream_readiness._DEPENDENCIES["CP-1C"] = ("normalized_financials","period_coverage")`, so the consumer is `step_12`, not `consumer_specific_review`. The CP-1 `readiness` step carries the literal in `submissions.json <case>.cp1_readiness` instead of `{"consumers": []}`: `normalized_financials` limited with FY-2025 statement_IS (revenue, adjusted EBITDA), statement_CFS (operating cash flow) and statement_BS (total debt) records, `period_coverage` limited with the fy-2025 source_period and the LTM construction, both with actions, and one `relevant` gap scope over every `inputs.narrative.gaps[*].gap_id`. Evidence ids are run-time bound by the predicates in `expected`/`submissions` (`{{EVID:ISR}}`, `ISV`, `CFS`, `BS`, `SP`, `CON`; exactly one match each; `inputs_sha256` prefilled). **Validated on a copy of the real S1 positive CP-1 head** (read-only copy, 1132 gaps all WARN): `validate_downstream_review` returns no issues; `_assess_consumers` gives CP-1C `ready_with_limitations`, 0 unassessed requirements, 0 unassessed gaps, no blocking gap; an empty review and a review without gap scope are `not_ready`; citing one statement kind only gives `Incompatible or unavailable dependency evidence: CP-1C normalized_financials`. The CP-0 review (consumer row CP-1C, `READY_WITH_LIMITATIONS`, peers source `third_party`/`fidelity verified`) and the CP-1 `source_context` (peers `nonfinancial`, `external` evidence class) validated with no issues for all three cases (`validate_review`, `build_readiness`, `commands_of`: "Run CP-1C"; `validate_source_context`).
+
+## Open questions for LEAD (recommendation first)
+
+1. **Peer evidence.** Recommend the synthetic `peers` source for positive and gap and the frozen pack for `no_peers`, as built. A limitation-only module (no synthetic source) loses the whole composer, so it could not be tested; recommend against. Every synthetic page is labelled; the manifest `synthetic_source` records the consistency list.
+2. **Minimum universe of three included peers.** Policy no source states; below it median, position and flags are `missing`. Recommend accept (one constant in the builder).
+3. **Outlier rule: strictly more than half the peer median.** Policy constant; recommend accept for v1 (a screen, not a credit test) and record it in `methods/cp1c.md`. LEAD may change the constant: the oracle rebuilds from one number.
+4. **Inclusion.** Partly comparable stays in the statistics with a mandatory limitation; Not comparable is shown but excluded. Recommend accept.
+5. **"Position" is not a ranking recommendation.** The shipped methods for CP-2, CP-3 and CP-6 forbid peer ranking in their own text because CP-1C owns it. Recommend naming the fact "position" (rank among included peers and the issuer) and keeping its wording descriptive; confirm CP-1C may state it.
+6. **Median arithmetic.** An even-count median averages the two stored 38-digit values in the context (not the exact rational), so a repeating value can differ from the exact rational in the last digit. Recommend accept (deterministic and fixture-pinned).
+7. **Metric set.** Four metrics aligned to CP-1 T4.10 (margin, leverage, coverage, FFO to debt). The r14 skill also names valuation metrics; the pack has no market data and relative value belongs to CP-3, so none is offered. Recommend accept; adding a metric is one table row set.
+8. **D8.** Proposed (LEAD ruling 8): register T1C.1-T1C.7 and drop CP-1C's eleven T4.x ids (T4.7 included) in the serialised `methodology.json` change. Recommend accept.
+9. **Block `peer-positioning`** in the shared `_RELATIVE_VALUE` mapping with CP-3D; PM to serialise the mapping edit; chart Fig. RV.3 deferred. Recommend accept.
+10. **CP-0 row in `no_peers`.** `READY_WITH_LIMITATIONS` so the module runs limitation-only (probed: "Run CP-1C"). A `CONDITIONAL` row would refuse the run at begin instead. Recommend running: the restricted head shows the reader exactly what is missing.
+11. **CP-1 readiness literal** (above): validated. Recommend accept as the oracle's literal.
+12. **Run without CP-MODEL.** `plan(("CP-1C","CP-MODEL"))` = (CP-0, CP-1, CP-1C, CP-MODEL); CP-MODEL is not requested here (as CP-1D, CP-2A).
+13. **Absence.** No `ABSENCE_MARKERS` field, so the `no_peers` search is an acceptance requirement, not a journaled rule. Recommend accept; adding a marker would need a schema field and `UNBACKED_ABSENCE` coverage.
+14. **Units.** Counts and positions use units `peers`, `entities`, `rank` (shown `4 peers`, `2 rank`), cosmetic as CP-L10 question 8.
+15. **Period alignment.** Python does not calendarise: a peer with another period end (Dunmore Cross Corporation) is the analyst's Partly comparable with a limitation. Ratios are currency-neutral, so no FX step is needed.
+
+## Probes run (read-only, build-first rule)
+
+`python3 -I cases/cp1c-owner/builder/build.py` twice from the repository root (identical sha256; revision 2 pins in `revision-2.md`). Scratch probes under the scratchpad (`PYTHONPATH=src`, venv python, each under 60 s, a copy of the real S1 positive head and scratch packs only; nothing written under `src/` or `tests/`; no pytest, no heavy job): (a) T4.10 labels, values, units, value classes of the real CP-1 head; (b) the CP-1 narrative catalogue and the readiness literal through `validate_downstream_review` and `_assess_consumers` (positive and three negatives); (c) `validate_review`, `build_readiness`, `commands_of`, `validate_source_context`, `citation_issues` on all pack variants, `Fact` construction and `fact_spelling` equality for every expected known cell, `prose.issues` on all 26 expected claims and every analyst text (0 issues), `prose.bare_figures` (0 hits), and the product wording of refusals r06, r07, r09, r12, r13, r14; (d) `registry.plan`, `edge_rule` and `step_chain`.
+
+Revision 2 (fix round 1): the reviewer's probes and `unread_citation_issues` on every refusal's `calls_before_submit` were rerun on the rebuilt oracle (`revision-2.md`). The method record is `methods-cp1c-draft.md`.
+
+Not verified: no CP-1C core, validator, composer or renderer exists, so no expected value was compared with product output; issue texts other than the probed product wordings are this draft's own; the real CP-1 head's later stages with a third (peers) source, the host scope mapping, `RULES` and `Seen` at run time, the view tree, the `peer-positioning` block and the `_RELATIVE_VALUE` mapping, the copied cell's calculation id and citations at run time, and consumption were not exercised.

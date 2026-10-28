@@ -1,0 +1,326 @@
+{
+  "schema_version": "cpl10-owner-cases/1",
+  "scope": "CP-L10 (aliases CP-L20, CP-L23, CP-L30, CP-L40) financial change screen: CP-0 to CP-1 to CP-L10 over the frozen financial pack",
+  "status": "DRAFT revision 4 (fix round 3 after review-precise-3 and the LEAD rulings of 2026-10-28: C1-C4, CP-OS/CP-DR headers as amended by the 0d re-pin); scoped check pending; not executed; build-first (no test run)",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+  "inputs_pinned": {
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+  },
+  "financial_baseline": {
+    "path": "cases/financial/manifest.json",
+    "sources": [
+      {
+        "source_id": "identity",
+        "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "reuse": "Every page text and locator byte-identical; read by reference, never edited"
+      },
+      {
+        "source_id": "financial",
+        "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "reuse": "Every page text and locator byte-identical; read by reference, never edited"
+      }
+    ]
+  },
+  "no_new_source": "CP-L10 reads only the settled CP-1 head; the financial pack carries every operand, so no synthetic source and no synthetic peer is added. One issuer is screened for change between periods, not against peers.",
+  "d4_edge_change": {
+    "file": "src/deploy_vii/methodology.json",
+    "module": "CP-L10",
+    "required_before": [
+      "CP-0"
+    ],
+    "required_after": [
+      "CP-0",
+      "CP-1"
+    ],
+    "optional_after": [],
+    "edge_rule": "CP-1 -> CP-L10 block (registry.edge_rule default for a required producer)",
+    "plan_L10": [
+      "CP-0",
+      "CP-1",
+      "CP-L10"
+    ],
+    "cp1b": "not added: v1 reads no CP-1B fact (reading nothing would not be consumption); see lease question 3",
+    "lands_with": "the CP-L10 build commit, together with every side effect below; this preparation edits none of them",
+    "side_effects": {
+      "methodology_json": {
+        "file": "src/deploy_vii/methodology.json",
+        "sha256_before": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+        "change": "CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"]; sha256_after is struck when the edit lands",
+        "serialised_change": "one methodology.json change carrying CP-L10 D4 and CP-1C D8 (T1C.1-T1C.7) together, with ONE re-pin pass of every builder that pins methodology.json (methodology_pinning_builders below); neither lands alone"
+      },
+      "test_pin": {
+        "file": "tests/test_cp1b_registration.py",
+        "line": 34,
+        "test": "test_only_cp1b_table_ownership_changes",
+        "digest_before": "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6",
+        "digest_after": "2f9aa78646dce706adf5c536e0863a558b0f73c712ef3b5b93d59af909b74c90",
+        "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes only because of the D4 edit (probe: scratch copy of the rows)",
+        "action": "update the pinned digest in the CP-L10 build commit (a deliberate registry change); the test fails otherwise"
+      },
+      "methodology_pinning_builders": {
+        "rule": "each asserts the methodology.json sha256 348fbc4b... and refuses after the edit. The build commit updates every pin in ONE re-pin pass (the serialised change with CP-1C D8), rebuilds each builder and compares: expected.json and submissions.json byte-identical; manifest.json differs only in the methodology pin value wherever the builder records it (key-limited diff). Any other output change goes back to LEAD (byte-identical manifest.json cannot hold: each builder writes the pin into it)",
+        "files": [
+          {
+            "file": "cases/cp1c-owner/builder/build.py",
+            "locate": "locate by grep for the hash 348fbc4b...8d45 at build time (untracked or still moving in this worktree, so no line number is pinned)",
+            "tracked": "untracked in this worktree (still moving)"
+          },
+          {
+            "file": "cases/cp1d-owner/builder/build.py",
+            "line": 36,
+            "tracked": "tracked; line re-grepped for revision 4"
+          },
+          {
+            "file": "cases/cp2e-owner/builder/build.py",
+            "line": 31,
+            "tracked": "tracked, frozen at ac82330; asserted at :60; line re-grepped for revision 4"
+          },
+          {
+            "file": "cases/cp2g-owner/builder/build.py",
+            "locate": "locate by grep for the hash 348fbc4b...8d45 at build time (untracked or still moving in this worktree, so no line number is pinned)",
+            "tracked": "untracked in this worktree (still moving)"
+          },
+          {
+            "file": "cases/cp3-cp6-owner/builder/build.py",
+            "line": 31,
+            "tracked": "tracked; line re-grepped for revision 4"
+          },
+          {
+            "file": "cases/cp3c-owner/builder/build.py",
+            "locate": "locate by grep for the hash 348fbc4b...8d45 at build time (untracked or still moving in this worktree, so no line number is pinned)",
+            "tracked": "untracked in this worktree (still moving)"
+          },
+          {
+            "file": "cases/cp3d-owner/builder/build.py",
+            "line": 34,
+            "tracked": "tracked; line re-grepped for revision 4"
+          },
+          {
+            "file": "cases/cp8-owner/builder/build.py",
+            "locate": "locate by grep for the hash 348fbc4b...8d45 at build time (untracked or still moving in this worktree, so no line number is pinned)",
+            "tracked": "untracked in this worktree (still moving: the pin sat at :38 in revision 3 and at :45 when revision 4 grepped)"
+          },
+          {
+            "file": "cases/cpdr-owner/builder/build.py",
+            "line": 30,
+            "tracked": "tracked, re-pinned at e8ee084 after 0d and 0d(c); line re-grepped for revision 4 at that commit"
+          },
+          {
+            "file": "cases/cpos-owner/builder/build.py",
+            "line": 25,
+            "tracked": "tracked, re-pinned at e8ee084 after 0d and 0d(c); line re-grepped for revision 4 at that commit"
+          }
+        ],
+        "this_builder": {
+          "file": "cases/cpl10-owner/builder/build.py",
+          "edits": "the build commit edits :30 (the pin) AND :51 (`assert CPL10[\"required\"] == [\"CP-0\"]` becomes [\"CP-0\", \"CP-1\"]); it fails at :51 as well as :30 after D4",
+          "sha256_before": "keep the literal 348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45 in D4_SIDE_EFFECTS (a literal, independent of PINS, so re-striking the pin at :30 leaves it at the before-hash); the build commit also re-hashes the CP-L10 manifest.json"
+        },
+        "note": "seven builders pinned methodology.json in revision 2 (cp1d, cp3d, cpdr, cp3-cp6, cpos, cp2e, this one); revision 3 greps cases/*/builder/build.py again and finds cp1c-owner, cp8-owner, cp2g-owner and cp3c-owner too: ten other builders plus this one. Revision 4 (LEAD ruling on C2): the four untracked or still-moving builders carry no line number and are located by grep at build time; the six tracked builders keep their re-grepped line. cp2a, cp2d and cp4 mention methodology.json in prose only (no pin)"
+      },
+      "frozen_lease_headers": {
+        "rule": "fifth side effect: the build commit amends these six frozen-lease headers and docs/INTEGRATION.md:969 under a LEAD note (the builder pin and the methodology hash they name change with the serialised methodology change)",
+        "files": [
+          {
+            "file": "docs/CP1D-OWNER-LEASE.md",
+            "line": 3,
+            "names": "builder 037b3e9d... / manifest 842ced20...; line 27 names methodology.json 348fbc4b...8d45"
+          },
+          {
+            "file": "docs/CP2E-OWNER-LEASE.md",
+            "line": 3,
+            "names": "builder 06f6ee61... / manifest 5b5a5e53... (frozen at ac82330); line 42 names methodology.json 348fbc4b...8d45; its line 5 note (3) already announces this re-pin"
+          },
+          {
+            "file": "docs/CP3D-OWNER-LEASE.md",
+            "line": 3,
+            "names": "pins dee1a8... and 592444..."
+          },
+          {
+            "file": "docs/CP3-OWNER-LEASE.md",
+            "lines": "286-289",
+            "names": "manifest 2cb324be... / builder 80450c52..."
+          },
+          {
+            "file": "docs/CPOS-OWNER-LEASE.md",
+            "line": 3,
+            "names": "the CP-OS header as amended by the 0d re-pin (landed at e8ee084; its re-pin paragraph at :5 carries the current builder and manifest pins, which supersede the 68c15d6e... / 50a447... pair of :3). LEAD supplies the post-re-pin hashes; none is copied here"
+          },
+          {
+            "file": "docs/CPDR-OWNER-LEASE.md",
+            "line": 3,
+            "names": "the CP-DR header as amended by the 0d re-pin (landed at e8ee084; its re-pin paragraph at :7 carries the current builder pin, which supersedes the 11fc8db6... of :3; the :5 note already announces this methodology re-pin). LEAD supplies the post-re-pin hashes; none is copied here"
+          },
+          {
+            "file": "docs/INTEGRATION.md",
+            "line": 969,
+            "names": "the methodology.json hash 348fbc4b...8d45"
+          }
+        ],
+        "note": "the build commit re-pins, so each header's builder/manifest hash after the re-pin is struck from the rebuilt files (a methodology pin change alters the builder bytes and, where the manifest records the pin, the manifest bytes); no post-0d-re-pin hash is written here for CP-OS or CP-DR (LEAD supplies them)"
+      },
+      "reuse_manifest": {
+        "file": "docs/reuse/manifest.json",
+        "action": "append one entry for src/deploy_vii/methodology.json to the end of `local_patch_lineage` (new sha256, the D12 one-line registration reason, review pointer); the previous hash 348fbc4b... is at lines 1063-1069 (not a position to insert after)"
+      },
+      "run_behaviour": {
+        "plan": {
+          "plan(('CP-L10',))": [
+            [
+              "CP-0",
+              "CP-L10"
+            ],
+            [
+              "CP-0",
+              "CP-1",
+              "CP-L10"
+            ]
+          ],
+          "plan(('CP-L20',))": [
+            [
+              "CP-0",
+              "CP-L10"
+            ],
+            [
+              "CP-0",
+              "CP-1",
+              "CP-L10"
+            ]
+          ],
+          "plan(('CP-L10','CP-5'))": [
+            [
+              "CP-0",
+              "CP-L10",
+              "CP-5"
+            ],
+            [
+              "CP-0",
+              "CP-1",
+              "CP-L10",
+              "CP-5"
+            ]
+          ]
+        },
+        "edge_rule('CP-L10','CP-1')": [
+          "raises ValueError 'No dependency edge from CP-1 to CP-L10'",
+          "block"
+        ],
+        "required_by_other_modules": "no module lists CP-L10 as a required or optional input, before or after; edge_rule('CP-5','CP-L10') stays restricted",
+        "idle_statuses": "CP-1 is in scope and unrun for a run that requests CP-L10 (in-scope unrun: CP-0, CP-L10 -> CP-0, CP-1, CP-L10)",
+        "readiness_live_consumers": "live_consumers(pack) for a run requesting CP-L10: ('CP-L10',) -> ('CP-1', 'CP-L10'); the CP-0 review must assess CP-1 as well as CP-L10 (a CP-L10-only review is refused 'Assess each selected canonical live consumer exactly once')",
+        "cp1_workflow_consumer_entries": "CP-1's readiness stage now requests the CP-L10 entry (cp1_workflow.consumer_entries), routed to consumer_specific_review with requirement consumer_specific_cp1_sufficiency; before the edit CP-1 ran with no CP-L10 request",
+        "front_page_cp1_blocks": "model-chart-strip, capital-structure, financials-credit-metrics: on the committed report_view (sha256 51a6853e...0e12) CP-1 is a credit_snapshot preset module, so under the CP-L10 override these read not_run `Not run: CP-1 was not requested in this run.` without D4, not_run `Not run: CP-1 has not run.` with D4 and CP-1 unrun, populated once CP-1 settles; render probe in expected.rendered",
+        "unaffected": "business_context.py:351 (read by review-precise-1: unaffected)"
+      }
+    }
+  },
+  "run": {
+    "run_id": "cpl10-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-L10"
+    ]
+  },
+  "cases": {
+    "positive": {
+      "submission": "submissions.json positive",
+      "expected": "expected.json cases.positive",
+      "pair": {
+        "from_period": "Q1 25: 2025-01-01 to 2025-03-31",
+        "to_period": "Q4 25: 2025-10-01 to 2025-12-31"
+      },
+      "execution": "closed run: CP-0, CP-1 (five stages, readiness = submissions.json cp1_downstream_review), CP-L10"
+    },
+    "limited": {
+      "submission": "submissions.json limited",
+      "expected": "expected.json cases.limited",
+      "pair": {
+        "from_period": "Q2 25: 2025-04-01 to 2025-06-30",
+        "to_period": "Q3 25: 2025-07-01 to 2025-09-30"
+      },
+      "execution": "same settled CP-0 and CP-1 heads (clone before CP-L10 begins); the pair has no known ratio at either end"
+    },
+    "refused": {
+      "run": {
+        "run_id": "cpl10-owner-refused",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-L10"
+        ]
+      },
+      "pack": "financial source missing: no pages/hash, extraction blocked, limitation 'Quarterly financial statements were not supplied.' (cases/financial/manifest.json negative_case)",
+      "submission": "submissions.json refused.cp0_consumer_row_cp1, refused.cp0_consumer_row_cpl10, refused.gap_row (no CP-L10 submission exists)",
+      "expected": "expected.json refused",
+      "execution": "CP-0 only; CP-1 begin raises NotAuthorized (RefusedBegin for CP-1, kind not_authorized); CP-L10 is never begun"
+    },
+    "blocked": {
+      "expected": "expected.json blocked",
+      "execution": "closed run: CP-0, CP-1 as positive, then CP-L10 attempt 0 invalid (rejected: refusals r01) and attempt 1 invalid (blocked: refusals r08)"
+    }
+  },
+  "fact_selection_rule": {
+    "table_id": "T4.10",
+    "predicate": "fact.table_id == 'T4.10' and fact.label == '<column> · <metric>'; exactly one fact per (column, metric) or the operand is refused as unbound (zero or several matches are not zero or first-wins)",
+    "columns": {
+      "Q1": {
+        "label": "Q1 25 (2025-01-01 to 2025-03-31)",
+        "period": "Q1 25: 2025-01-01 to 2025-03-31"
+      },
+      "Q2": {
+        "label": "Q2 25 (2025-04-01 to 2025-06-30)",
+        "period": "Q2 25: 2025-04-01 to 2025-06-30"
+      },
+      "Q3": {
+        "label": "Q3 25 (2025-07-01 to 2025-09-30)",
+        "period": "Q3 25: 2025-07-01 to 2025-09-30"
+      },
+      "Q4": {
+        "label": "Q4 25 (2025-10-01 to 2025-12-31)",
+        "period": "Q4 25: 2025-10-01 to 2025-12-31"
+      }
+    },
+    "metrics": {
+      "ebitda": "ebitda",
+      "fcf": "fcf",
+      "cash": "cash_closing",
+      "total_debt": "total_debt",
+      "net_debt": "net_debt",
+      "total_leverage": "total_leverage_reported",
+      "interest_coverage": "interest_coverage_reported"
+    },
+    "observed": "Q1, Q2, Q3 and Q4 columns on the real promoted CP-1 head (copy of the S1 positive head, 500 T4.10 facts, no duplicate label; review-precise-1 and the revision-2 probe): ebitda source; fcf calculated; cash_closing source; total_debt source; net_debt calculated; every fact has a `canonical-kpi:` calculation_id; every MILLIONS fact has currency USD and scale 1000000; Q1-Q3 ratio facts status missing, value_class calculated, limitation 'COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required'; Q4 total_leverage_reported 1.6666666666666666666666666666666666667 and interest_coverage_reported 6, value_class calculated",
+    "inferred_not_observed": "none: every copied cell (value_class, status, amount, unit, period) was read from the real head",
+    "fact_ids": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "run_time_bindings": {
+    "cp1_readiness": {
+      "literal": "submissions.json cp1_downstream_review",
+      "routing": "CP-L10 is not in downstream_readiness._DEPENDENCIES (:27-39), so the entry routes to `consumer_specific_review`, requirement `consumer_specific_cp1_sufficiency`; the dependency requirements `cash_flow_metrics` and `liquidity_data` are unknown for CP-L10 and refused",
+      "markers": {
+        "{{INPUTS_SHA256}}": "content hash of the step's prefilled DownstreamInputs (consumers replaced by the CP-L10 request)",
+        "{{EVID:kpi <K>, quarter <N>}}": "evidence_id of the FIRST catalogue record (catalogue order) of kind `kpi` whose record_json key is <K> (ebitda, fcf, cash_closing, total_debt, net_debt) and whose non-empty value.observation_ids all end in `-q<N>-2025`; a record whose observation ids include a later LTM match (Q4 cash, total debt, net debt) is selected by the Q4 observation, not the LTM one. 20 ids: N = 1..4 outer, K in that order inner",
+        "{{ALL narrative gap ids}}": "every narrative.gaps[*].gap_id, in catalogue order"
+      },
+      "validator_result": "validate_downstream_review: no issues; _assess_consumers row CP-L10 ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gap; probed by review-precise-1 and re-run in revision 2 on this literal with markers bound (revision-2.md)"
+    },
+    "cp1_calculation_id": {
+      "marker": "{{CP1_CALCULATION_ID}}",
+      "rule": "a copied TL10.2 cell carries the calculation_id of the CP-1 T4.10 fact named by copied_from_cp1 (canonical-kpi:<sha256>), read at run time; never literal"
+    },
+    "cp0_status_text": "TL10.1 scope_status cells read the CP-0 and CP-1 head statuses at run time",
+    "result_sha256": "TL10.1 source_ref cells embed the head result_sha256 at run time",
+    "inherited_limitations": "execution.py settle rule (execution.inherited_limitations)",
+    "ticket_and_call_ids": "structural only"
+  }
+}

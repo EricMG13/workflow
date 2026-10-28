@@ -80,6 +80,10 @@ Other modules join Stage 1 once LEAD freezes their leases: CP-1C, CP-L10, CP-8, 
 
 ## Stage 2 — Connections (needs S1a integrated)
 
+S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
+- LEAD integrates S1a after fix round 4, if its genuine-path probes pass, and then sends the integration SHA and the deferred-findings list.
+- The adversary review that follows does not block G1-X. Anything it finds goes to Stage 4.
+
 - [ ] **G1-X.** One Opus agent, brief `work/build/g1x/brief.md`, rebased on the S1a integration commit, then `mx-adversary`.
 - [ ] **H1.** `_SOURCE_STEPS["CP-3"]`, the `*-submission` producer rule and the fixed source mappings for CP-DR, CP-1D and CP-3D (`work/lead/cp3-cp6-owner-preparation/review-precise-r3-1.md` Q6).
 - [ ] **Per module.** One Opus agent per module adds three things:

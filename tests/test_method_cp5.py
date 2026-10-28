@@ -89,13 +89,12 @@ FIG_RE = re.compile(r"\{\{FIG:([a-z_]+)\}\}")
 LABEL_RE = re.compile(r"<label and period of FIG:([a-z_]+)>")
 MARKER_RE = re.compile(r"\{\{[^{}]+\}\}")
 
-# The LEAD freeze (docs/CP5-OWNER-LEASE.md, header): the oracle and its builder.
-PINNED = {
-    "cases/cp5-owner/manifest.json": "605a5baed84ff9e1fb5731f56de798af5812b4e6796622735339af64441acd91",
-    "cases/cp5-owner/submissions.json": "9effec68a97a450ae87ee7d203b36e80ee9b315e052dce9db66b2d17c6a2b8a4",
-    "cases/cp5-owner/expected.json": "48fcd8991b858b9b08fc12e965abfcde42d467dfce2aba04a98e9edba07e92d2",
-    "cases/cp5-owner/builder/build.py": "60805bcf42e26b09598a36571fbee2ff8015f067b22bca559bacc665a02394d2",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = tuple(
+    f"cases/cp5-owner/{name}"
+    for name in ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
+)
 
 
 def _sha(rel: str) -> str:
@@ -103,8 +102,8 @@ def _sha(rel: str) -> str:
 
 
 def test_oracle_files_are_the_pinned_revision() -> None:
-    for rel, digest in PINNED.items():
-        assert _sha(rel) == digest, rel
+    for rel in PINNED:
+        assert _sha(rel) == PINS[rel], rel
 
 
 def test_upstream_oracles_are_the_manifest_pins() -> None:

@@ -25,21 +25,12 @@ CASE = ROOT / "cases" / "cp1c-owner"
 CASES = ("positive", "gap", "no_peers")
 # CP-1's own calculation id is bound at run time; the oracle writes this placeholder for it.
 CP1_PLACEHOLDER = "{{CP1_CALCULATION_ID}}"
-# Oracle pins: docs/CP1C-OWNER-LEASE.md:3, the serialised methodology re-pin (LEAD 2026-10-28).
-PINS = {
-    "cases/cp1c-owner/manifest.json": (
-        "0b4d4f046a085fc9be91c6ef051d5db3dd1ea46335bfea71ea851b188cb62db3"
-    ),
-    "cases/cp1c-owner/submissions.json": (
-        "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912"
-    ),
-    "cases/cp1c-owner/expected.json": (
-        "e786acb384007d8a4111a7d572b50744cbcd70ee44954a3730b8703f6752fded"
-    ),
-    "cases/cp1c-owner/builder/build.py": (
-        "6c7018dcb31ca1d8abd6e324e7d9048fcfc20ab27501cfb4b4b239dd65fca8b0"
-    ),
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = tuple(
+    f"cases/cp1c-owner/{name}"
+    for name in ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
+)
 
 
 def _load(path: Path) -> Any:
@@ -357,7 +348,7 @@ def test_valid_payloads_raise_no_issue(case: str) -> None:
     assert cp1c.calculation_issues(inputs(case)) == ()
 
 
-@pytest.mark.parametrize("path", PINS)
+@pytest.mark.parametrize("path", PINNED)
 def test_oracle_pins(path: str) -> None:
     assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == PINS[path]
 

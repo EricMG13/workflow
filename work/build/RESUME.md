@@ -18,9 +18,11 @@ Lane `claude/module-dev-status-review-0981b6` at 4c7b6a3 or later. Fast tests: 9
 | Work | Commit | Agent | Next |
 |---|---|---|---|
 | H1 mx-adversary review | 2bd61a7 | a72eed029a03a38bf (impl a69f811059171c714) | then H1 open points 1–6 to LEAD with the reviewer's reading |
-| CP-8 first adversary review | a5c4011 | af64c7b718d678452 (impl a3cc9818386e8861a) | small round for the split-plus-missing case once LEAD rules |
-| CP-2G first adversary review | 0e28916 | af5c5ac1e28b12e3e (impl a4377a7580e8e70db) | merge after APPROVE, with the 3674158 re-pin (manifest b0c8c4bc…, submissions 25a96ebb…) |
-| CP-2A fix round 1 (M1 + L1-L3) | 7ba456e | a34fec3e9469279cd | scoped re-review, then merge CP-2A + CP-2E + CP-2D with the oracle batch |
+| CP-8 fix round 1 (M1 raw quote, L1 mutants) | a5c4011 | a3cc9818386e8861a | Opus re-review; LEAD items 1-5 and split-plus-missing in a later round |
+| CP-2G fix round 1 (M1-M3, L4, L5; merge + oracle batch + re-pin) | 0e28916 | a4377a7580e8e70db | Opus re-review, then merge with the CP-2A/2E/2D batch; L1-L3 with LEAD |
+| CP-2A fix 1 re-review | 88526a1 | aa5ff1b16326f04ea (impl a34fec3e9469279cd) | merge CP-2A + CP-2E + CP-2D with the oracle batch |
+| CP-1D raw-quote check | — | a65eff1d9057df7d0 (worktree cp1d-stage1) | scoped review if code changed |
+| CP-3D raw-quote check | — | a5aa3f0ca842029cd (worktree cp3d-stage1) | scoped review if code changed |
 | CP-2E approved (E6–E8, A3, A4) | af23f7f | impl a219254fe68cc1c2d | merge with CP-2A; Low (E8 anchors) rides with the next fix |
 | CP-2D approved (r5 + r6/6f) | 3e099de | impl a69f2394899aee6d5 | merge with CP-2A and CP-2E; Lows L1-L6 ride with the next fix |
 
@@ -32,7 +34,6 @@ Lane `claude/module-dev-status-review-0981b6` at 4c7b6a3 or later. Fast tests: 9
 - **CP-3D:** leading-zero vs label check order (Info).
 
 ## Queued
-- CP-1D B2 (invariant raise) rides with the next CP-1D change.
 - Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
 - Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 

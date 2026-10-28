@@ -143,6 +143,16 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
 ## Stage 4 — Orchestration
 
 - [ ] **Receipt hardening.** The receipt verifier's tamper and forgery cases (S1a's adversary findings, B1-class hardening) and each module's `tamper`/`refusals`/`tool_use` oracle sections. This stage owns them, if LEAD accepts the deferral proposed on 2026-10-28.
+  - S1a review-adversary-4 (the user ruled these known gaps owned here; LEAD 1879180, `docs/reviews/s1a-owner-run.md`, full report and RED tests in `/Users/ericguei/Documents/Deploy Workflow Sessions/s1a-build/work/s1a/review-adversary-4.md`):
+    - **HIGH 1.** The verifier never replays `Execution.begin`'s rule (`owner_workflow.py` `_verify_begins` :1007-1024, `_verify_attempts` :1427-1429, the :1632 exemption). Replay begin on `before`:
+      - refuse a pending attempt;
+      - take `current_inputs` with an explicit identity_mismatch mapping;
+      - take `previous` as the attempts with the same module and inputs;
+      - refuse if `previous and (len(previous) >= 2 or not previous[-1].issues)`;
+      - require an exact `after.attempts`;
+      - refuse an unfinished attempt in the final snapshot.
+    - **MEDIUM 1.** The CP-MODEL attempt and head `inputs` are unbound. Apply the same replay, plus `current_inputs(final, deterministic) == attempt.inputs`.
+    - **LOW 1.** A sealed receipt can carry a pending attempt; HIGH 1 closes it.
 - [ ] **Stage 4 review.** Fable reviews, then fixes and commits.
 
 ## Stage 5 — Final verification

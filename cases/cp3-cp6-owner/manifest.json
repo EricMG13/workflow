@@ -9,7 +9,7 @@
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
     "cases/snapshot/cp2-view-tree.json": "f739395cbcf30ae2af710d8423927a8f810c8c4b948c07c6e6583e2a3b86f446",
-    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6"
   },
   "reuse": {
     "identity": "cases/financial/manifest.json source identity, bytes unchanged",

@@ -1323,6 +1323,14 @@ class _Composer:
         return self.table("T3E.6", "Technicals", columns, rows, "Aspect")
 
     # T3E.7-T3E.9 ------------------------------------------------------------------------------
+    def _dm_ledger_reason(self) -> str:
+        """The first missing cause of the mid margin, in formula order (ruling round 4 (h))."""
+        if self.derived.years is None:
+            return "Needs a quotation date and a final maturity date"
+        if self.derived.mid is None:
+            return "Needs both an observed bid and an observed offer"
+        return "Needs a contractual margin and stated zero amortisation"
+
     def missing_inputs(self) -> Table:
         miss: list[tuple[str, str]] = []
         if self.market_absent:
@@ -1350,12 +1358,7 @@ class _Composer:
                 )
             )
         if self.stored["dm_mid"] is None and not self.market_absent:
-            miss.append(
-                (
-                    "Simple discount margin",
-                    "Needs a contractual margin and stated zero amortisation",
-                )
-            )
+            miss.append(("Simple discount margin", self._dm_ledger_reason()))
         rows: list[_RowSpec] = [
             (f"r{i:02d}", affected, [_Text(affected), _Text(reason)])
             for i, (affected, reason) in enumerate(miss, 1)
@@ -1536,7 +1539,8 @@ def _dm_claim(c: _Composer, claim: _Claim) -> ClaimText:
 
 
 def _yld_claim(c: _Composer, claim: _Claim) -> ClaimText:
-    """CP-3D-YLD-01; with a quoted level and no final maturity, ruling X1 (v)."""
+    """CP-3D-YLD-01; a quoted level with no final maturity is ruling X1 (v), with a stated
+    maturity but no mid margin ruling round 4 (g)."""
     cid = "CP-3D-YLD-01"
     if c.stored["yield_mid"] is not None:
         return claim(
@@ -1559,8 +1563,15 @@ def _yld_claim(c: _Composer, claim: _Claim) -> ClaimText:
             "source in the pack states.",
             [_YLD],
         )
-    # A quoted level, a stated maturity and a missing mid margin for another cause (no mid, no
-    # quotation date, no margin): no ruled wording; the DM-01 gap form's neutral wording.
+    if c.stored["dm_mid"] is None:  # a stated maturity, the mid margin missing (round 4 (g))
+        return claim(
+            cid,
+            f"The all-in yield is not calculated: [{_YLD}] needs the simple discount margin at the "
+            f"mid, which is not calculated: [{_DM}].",
+            [_YLD, _DM],
+        )
+    # Neither ruling applies. Unreachable today (a quoted level and a known mid margin give a
+    # known yield); the DM-01 gap form's neutral wording rather than a raise.
     return claim(cid, f"The all-in yield is not calculated: [{_YLD}] is not available.", [_YLD])
 
 

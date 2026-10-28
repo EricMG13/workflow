@@ -579,9 +579,68 @@ def test_x1_talk_only_with_a_level_and_a_stated_maturity_does_not_blame_the_matu
     quote = {"source_id": "financial", "locator": "page:9", "quote": page.split("\n")[1]}
     raw["terms"]["reference_rate"]["level"] = {"quote": quote, "percent_text": "4.30"}
     assert raw["terms"]["maturity"]["date_text"]
-    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (
-        "The all-in yield is not calculated: [T3E.3.r05.mid] is not available."
+    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (  # ruling round 4 (g)
+        "The all-in yield is not calculated: [T3E.3.r05.mid] needs the simple discount margin at "
+        "the mid, which is not calculated: [T3E.3.r03.mid]."
     )
+
+
+def test_g_bid_only_with_a_level_and_a_stated_maturity() -> None:
+    page = "Published January 10, 2026.\nThe SOFR reference rate is 4.30 percent."
+    ctx = _with_page(_context("positive"), "financial", "page:9", page)
+    raw = _without(("offer",))
+    raw["terms"]["reference_rate"]["absence"] = None
+    quote = {"source_id": "financial", "locator": "page:9", "quote": page.split("\n")[1]}
+    raw["terms"]["reference_rate"]["level"] = {"quote": quote, "percent_text": "4.30"}
+    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (  # ruling round 4 (g)
+        "The all-in yield is not calculated: [T3E.3.r05.mid] needs the simple discount margin at "
+        "the mid, which is not calculated: [T3E.3.r03.mid]."
+    )
+
+
+_NO_MARGIN = [
+    [
+        "terms.margin",
+        {"quote": None, "bps_text": None, "absence": {"reason": "Not stated", "follow_up": "Ask"}},
+    ]
+]
+
+
+@pytest.mark.parametrize(
+    ("label", "kinds_dropped", "edits", "reason"),
+    (  # ruling round 4 (h): first missing cause in formula order (years, mid, margin)
+        ("maturity absent", (), _NO_MATURITY, "Needs a quotation date and a final maturity date"),
+        ("talk only", ("bid", "offer"), [], "Needs a quotation date and a final maturity date"),
+        (
+            "talk only, no margin",
+            ("bid", "offer"),
+            _NO_MARGIN,
+            "Needs a quotation date and a final maturity date",
+        ),
+        ("bid only", ("offer",), [], "Needs both an observed bid and an observed offer"),
+        (
+            "offer only, no margin",
+            ("bid",),
+            _NO_MARGIN,
+            "Needs both an observed bid and an observed offer",
+        ),
+        ("no margin", (), _NO_MARGIN, "Needs a contractual margin and stated zero amortisation"),
+    ),
+    ids=lambda x: x if isinstance(x, str) and not x.startswith("Needs") else "",
+)
+def test_h_t3e7_discount_margin_row_names_the_first_missing_cause(
+    label: str, kinds_dropped: tuple[str, ...], edits: list[list[Any]], reason: str
+) -> None:
+    raw = _edited(_without(kinds_dropped), edits)
+    sub, ctx = _submission(raw), _context("positive")
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    t7 = next(
+        t
+        for t in cp3d.market_implied_result(submission=sub, context=ctx).tables
+        if t.table_id == "T3E.7"
+    )
+    rows = {r.label: [c.text for c in r.facts] for r in t7.rows}
+    assert rows["Simple discount margin"] == ["Simple discount margin", reason], label
 
 
 def _variants() -> list[tuple[str, dict[str, Any], bool]]:

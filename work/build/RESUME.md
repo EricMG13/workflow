@@ -31,3 +31,6 @@ If an agent stopped mid-task, its worktree holds the uncommitted work: inspect i
 - `methods/<cp>.md` notes: cp1d (1D4), cpl10 (L10-b), cp2d (the 2D-a stem list).
 - CP-2A `validate` raises on CP-1 head integrity, which needs a G1-X precheck.
 - CP-4 T4C.7 display is open in QUEUE (engine-side; the owner decides).
+
+## LEAD state
+LEAD is paused too. The G1-X open items and the open Stage 1 points for CP-1C, CP-L10, CP-3D and CP-1D are queued for rulings in LEAD's `work/lead/RESUME.md`. Until then each case keeps failing closed or composing as now.

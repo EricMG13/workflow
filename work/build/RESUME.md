@@ -20,7 +20,7 @@ Lane `claude/module-dev-status-review-0981b6` at 6ba071b or later. Fast tests: 9
 | H1 mx-adversary review | 2bd61a7 | a72eed029a03a38bf (impl a69f811059171c714) | H1 open points 1–6 to LEAD with the reviewer's reading |
 | CP-8 fix round 1 (M1 raw quote, L1 mutants) | a5c4011 | a3cc9818386e8861a | Opus re-review; then 6h split-and-missing + 2682310 re-pin |
 | CP-2G fix round 1 (M1–M3, L4, L5; merge, oracle batch, re-pin) | 0e28916 | a4377a7580e8e70db | Opus re-review; then round 8 A-3 citations (test-first); merge |
-| CP-1D raw-quote check | lane | a65eff1d9057df7d0 (worktree cp1d-stage1) | scoped review if code changed |
+| CP-1D raw-quote fix review | 7c88a98 | aa7fe668e36cb82b8 (worktree cp1d-stage1) | merge after APPROVE; signed-basis defect to LEAD |
 | CP-3D raw-quote check | lane | a5aa3f0ca842029cd (worktree cp3d-stage1) | scoped review if code changed; then 6h percent_text leading zero |
 | CP-2H round 7 | 5d91e7b | a52b5ec0919986ddb | first mx-adversary review, a killed mutant per refusal (29) |
 | CP-2E round 6i + E8 anchors | af23f7f | a219254fe68cc1c2d | scoped mx-feature review, merge |

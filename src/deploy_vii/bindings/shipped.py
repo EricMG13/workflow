@@ -6,6 +6,7 @@ from deploy_vii.bindings.cp1 import CP1
 from deploy_vii.bindings.cp1a import CP1A
 from deploy_vii.bindings.cp1b import CP1B
 from deploy_vii.bindings.cp2 import CP2
+from deploy_vii.bindings.cp2a import CP2A
 from deploy_vii.bindings.cp2e import CP2E
 from deploy_vii.bindings.cp3 import CP3
 from deploy_vii.bindings.cp3d import CP3D
@@ -21,6 +22,7 @@ from deploy_vii.bindings.cpdr import CPDR
 # CP-DR (lease D-C) is appended last: rails only, no Front Page block.
 # Stage 2: CP-2E (rails only, no block) appends at the end.
 # CP-8 (owner core, Stage 2) is appended last.
+# Stage 2: CP-2A appended last (CP2A lease: SHIPPED_MAPS += CP2A).
 SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP0,
     CP1,
@@ -36,4 +38,5 @@ SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CPDR,
     CP2E,
     CP8,
+    CP2A,
 )

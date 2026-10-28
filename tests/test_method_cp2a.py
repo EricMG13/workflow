@@ -1054,10 +1054,6 @@ def test_new_strings_pass_the_prose_rules() -> None:
         assert prose.bare_figures(text) == (), text
 
 
-def test_v17_stale_input_is_stage_2() -> None:
-    pytest.skip("v17 needs the attempt's bound Input records (Upstream): Stage 2")
-
-
 def test_valid_payloads_have_no_issue() -> None:
     for case in COMPOSED:
         facts = cp1_facts(case)

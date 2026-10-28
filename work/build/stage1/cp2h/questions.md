@@ -18,3 +18,6 @@
 
 ## Ruled by LEAD round 11 (d60035b)
 See `docs/rulings/2026-10-28-stage1.md` `# Round 11`, `## CP-2H`. Modules-decides items are recorded in the ledger (2026-10-28 round 11 line).
+
+## Open for LEAD (after round 11)
+- **B7 (from fix 1b, B5).** The controller's B5 decision (every T2R.1 status is the bound Input's, following LEAD's round 11 text) disagrees with one frozen cell: `cases.fixture_total_loss` `T2R.1.u_cp2g.status` = `composer_only`, which is CP-2G's head status. `InputStatus` has no `composer_only` value, so the live code gives `restricted`. Today that cell is a strict xfail (`test_frozen_composer_only_cp2g_status`) beside a live test of the ruled behaviour. Either re-pin the cell in the Stage 1 release batch, or rule that a composer-only fixture keeps the head status.

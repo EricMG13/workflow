@@ -16,7 +16,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 ## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Opus cap 6 (LEAD AGENTS.md proposal); ruling-text diffs reviewed by mx-feature.
 | Work | Base | Agent | Next |
 |---|---|---|---|
-| CP-2H fix 1b, round 11 (cp2h/fix1b-brief.md) | 87f2d9d | a52b5ec0919986ddb | mx-adversary re-review of fix 1 + 1b, merge |
+| CP-2H fix 1 + 1b mx-adversary re-review | f843772 | impl a52b5ec0919986ddb | merge |
 | CP-4C fix 1 mx-adversary re-review | 3b9c3dc | impl a2c15c441717ec41c | round 11 B2/B3/B6 rulings round, then merge |
 | H1 fix 2 mx-adversary re-review | 38f0f46 | impl a69f811059171c714 | merge; then H1b |
 | CP-3C fix 1b, round 11 (cp3c/fix1b-brief.md) | 8a45037 | aa5a4817fa00cd287 | mx-adversary re-review of fix 1 + 1b, merge |

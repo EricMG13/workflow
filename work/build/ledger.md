@@ -268,3 +268,13 @@
 - 2026-10-28 USER: use Sonnet implementers (mx-feature) for round 13 work. Reviews unchanged (mx-precise/mx-adversary per risk; mx-feature for ruling-text diffs)
 - 2026-10-28 CP-4C r12 implementer done: babfd53 (B10 every field incl plain R3 M2, B7 reserved {}[] after Bare figure; 9/9 mutants killed; gates y). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-adversary
 - 2026-10-28 CP-4C r12 review dispatched: mx-adversary on babfd53
+- 2026-10-28 CP-3D r12 review APPROVE (mx-precise): Low L-cp3d-r12 _CUT_BEFORE space-arm guard unpinned (R/p_review_mutants.py mutant 2) rides with round 13; Info signed value_text plain-only. Merged 504d084 into claude/round12
+- 2026-10-28 CP-8 r12 implementer done: 8cecd09 (W, B10 incl flag_quote; _wrap_split ignores a W minus before a digit = unruled derivation, to reviewer + LEAD). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-precise
+- 2026-10-28 CP-2E r12 review CHANGES (mx-precise): M1 "only for it" limitation half unpinned after test replacement (probe cp2e-r12-review/mutants_review.py); I1 2024-2025 control out of bounds, no change. Fix round 1: mx-feature (test only)
+- 2026-10-28 Round 13 brief written (work/build/stage1/round13-brief.md); worktrees r13-{cp1d,cp3d,cp2d,cp3c,cpl10} cut at claude/round12 d2cb626; implementers mx-feature (user)
+- 2026-10-28 CP-2H r12 review APPROVE (mx-precise): Low B8 "any later line" unpinned (cp2h-r12-review/review_mutants.sh after_last_line_only) rides with next CP-2H change; Info per-page rule, probe import path. Merged add5fa8 into claude/round12
+- 2026-10-28 Round 13 dispatched (mx-feature): CP-1D, CP-3D, CP-2D, CP-3C, CP-L10; CP-2E r12 fix round 1 (mx-feature, test only)
+- 2026-10-28 Lane merged codex/checkpoint 2344b17 (0d-c, b10-engines, rounds 12-13). Fast set + engine tests: 1 failed 3704 passed 2 skipped; FAILED test_method_cp3c.py::test_oracle_files_match_the_lease_pins (cp3c manifest frozen_inputs pins src/deploy_vii/business_context.py, changed by b10-engines cffdf9f) -> LEAD (cases/ is LEAD's)
+- 2026-10-28 CP-2E r12 fix1 done: cfd6e3e (test only, M1 pinned; mutants_review 8/8 killed). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped (Medium fix)
+- 2026-10-28 CP-L10 r13 done: d688c6b (change exact in _EXACT; reviewer pair + bound pairs). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-feature
+- 2026-10-28 CP-3D r13 BLOCKED: fcd7db2 item 8 built; frozen refusal mutation amortisation_nonzero (quote 'December 31, 2029', value_text 31) moves to 'does not occur' under comma-space join -> LEAD. agent=mx-feature fix-rounds=0 gates-first-pass=n

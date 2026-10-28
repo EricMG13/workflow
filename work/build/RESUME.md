@@ -50,3 +50,10 @@ In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; th
 2. (LEAD answered: round 12, c27760e, cherry-picked as 688f185; brief stage1/round12-brief.md, integration branch claude/round12.) Check LEAD's answer to the 16:08Z pointer (quote-sign-questions.md "Open for LEAD"; cp2h B7-B10; cp4c B7). Apply rulings as rulings rounds.
 3. Riding Lows batch (ledger, 2026-10-28 class reviews): one test-only round per module, with mx-feature review.
 4. Stage 1 end review (Opus, mx-precise or mx-adversary) on the lane, then Stage 2 per AGENTS.md 423a06e.
+
+## Round 13 (LEAD 7ee9c8b, cherry-picked 76d7820; brief work/build/stage1/round13-brief.md)
+- Running (mx-feature): CP-1D, CP-3D, CP-2D, CP-3C, CP-L10 in worktrees r13-<cp>, branches claude/r13-<cp> from claude/round12 d2cb626. Reviews: CP-1D mx-adversary; CP-3D, CP-2D, CP-3C mx-precise; CP-L10 mx-feature.
+- Queued after their r12 merge: CP-8 (items 7, 8; _labelled narrow join), CP-2E (item 8; label-decimal question still open with LEAD), CP-4C (item 2 + item 5 base_period).
+- Riding: CP-2H B8 later-line Low (next CP-2H change); CP-2G item 5 base_period invariant (next CP-2G change).
+- Stage 2 notes: item 8 comma guard limits in methods/<cp>.md (CP-1D, CP-3D, CP-8, CP-2E); CP-2D/CP-3C oracle re-pin and removal of the test delta.
+- Open for LEAD: CP-8 r12 `_wrap_split` derivation (ignores a W minus before a digit), pending its review.

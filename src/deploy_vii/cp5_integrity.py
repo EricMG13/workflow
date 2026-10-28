@@ -603,7 +603,7 @@ def python_checks(scope: ReviewScope) -> PythonChecks:
 def _text_issues(path: str, text: str, names: Sequence[str]) -> list[str]:
     """Model prose is labels only: no figure and no reference (`prose.issues` against no
     facts); upstream evidence is named in `upstream_refs`."""
-    if not text.strip():
+    if prose.is_blank(text):
         return [f"{path}: empty text"]
     return [f"{path}: {issue}" for issue in prose.issues(text, {}, names=names)]
 

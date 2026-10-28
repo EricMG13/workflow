@@ -685,7 +685,7 @@ def _text_issues(
     for path, row in _rows(submission):
         for name, text in _texts(row):
             where = f"{path}.{name}"
-            if not text.strip():
+            if prose.is_blank(text):
                 issues.append(f"{where}: empty text")
                 continue
             issues.extend(f"{where}: {issue}" for issue in prose.issues(text, bound, names=names))

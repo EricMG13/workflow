@@ -640,7 +640,7 @@ def _threshold_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
     issues += [
         f"thresholds: {label} appears more than once"
         for label in dict.fromkeys(labels)
-        if labels.count(label) > 1
+        if label.strip() and labels.count(label) > 1
     ]
     return issues
 

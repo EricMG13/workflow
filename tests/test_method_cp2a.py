@@ -878,6 +878,94 @@ def test_p1w_mixed_quarter_base() -> None:
     assert result.limitations[-3:-1] == (twelve, P1W_LINE)
 
 
+def _quarter_base(
+    *, interest: Decimal = Decimal("1.25"), total_debt: Decimal = Decimal(50)
+) -> cp2a.BaseOperands:
+    """A quarter base whose four CP-1 ratios are known (P1-W gates every ratio)."""
+    return cp2a.BaseOperands(
+        period=Q4,
+        ebitda=Decimal("7.5"),
+        interest=interest,
+        fcf=Decimal("2.25"),
+        total_debt=total_debt,
+        cash=Decimal(20),
+        gates={},
+        sources={},
+        not_meaningful=frozenset(cp2a.REPORTED),
+    )
+
+
+def test_p1w_gate_precedes_the_short_circuits_and_the_zero_check() -> None:
+    """P1-W item 2 (A8 order): missing operands, then A6, then P1-W, then the short-circuits
+    (breaks) or the zero-denominator check (stressed ratios)."""
+    # breaks: interest <= 0 and debt / net debt <= 0 would short-circuit; P1-W comes first
+    for base in (_quarter_base(interest=Decimal(-1)), _quarter_base(total_debt=Decimal(0))):
+        points = cp2a.break_points(base=base, thresholds=WATCHES)
+        assert [(p.outcome, p.reason) for p in points[1:]] == [
+            ("Not meaningful on a single-quarter base", P1W)
+        ] * 4
+    # stressed ratios: a 100% decline gives E' = 0, a negative interest I' < 0 and zero debt
+    # D = 0; each zero check comes after P1-W
+    zero_ebitda = cp2a.stress(base=_quarter_base(), decline=Decimal(1), increase=Decimal(0))
+    negative = cp2a.stress(
+        base=_quarter_base(interest=Decimal(-1), total_debt=Decimal(0)),
+        decline=Decimal(0),
+        increase=Decimal(0),
+    )
+    for row in (zero_ebitda, negative):
+        assert row.not_applicable == frozenset(cp2a.RATIOS)
+        assert {name: row.why[name] for name in cp2a.RATIOS} == dict.fromkeys(cp2a.RATIOS, P1W)
+
+
+def test_p1w_own_line_from_rows_alone() -> None:
+    """The P1-W own line is emitted when only T2B.4 rows show the reason: cash interest
+    missing (b02 is the operand's Not calculable) and no leverage watch level."""
+    facts = cp1_facts("fixture_quarter_known")
+    cells = EXPECTED["cases"]["fixture_quarter_known"]["cp1_inputs"]
+    edited = _edit(
+        facts, cells["cash_interest"]["label"], **MISSING, limitation="Fixture: withheld"
+    )
+    payload = json.loads(json.dumps(SUBMISSIONS["fixture_quarter_known"]["downside_pathway"]))
+    payload["thresholds"] = []
+    result = cp2a.compute(inputs_for("fixture_quarter_known", payload, edited))
+    assert [(p.break_id, p.outcome) for p in result.breaks] == [
+        ("b01", "Reached at the stated decline"),
+        ("b02", "Not calculable"),
+    ]
+    assert result.stressed["s00"].not_applicable == frozenset(
+        ("total_leverage", "net_leverage", "fcf_to_debt")
+    )
+    assert result.limitations.count(P1W_LINE) == 1
+
+
+def test_round5_names_line_separators_and_padded_reserved_label() -> None:
+    """Round 5 Names, confirmed choices: U+2028 (Zl) and U+2029 (Zp) are line breaks; the
+    reserved base label is matched after stripping."""
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["scenarios"][0]["name"] = "Deep\u2028downturn"
+    payload["scenarios"][1]["name"] = " Base (no stress) "
+    payload["scenarios"][2]["name"] = "Severe\u2029downturn"
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        "scenarios[0].name: contains a line break or control character",
+        "scenarios[1].name: Base (no stress) is reserved for the unstressed row",
+        "scenarios[2].name: contains a line break or control character",
+    ]
+
+
+def test_blank_threshold_labels_are_not_reported_as_duplicates() -> None:
+    """Two blank labels give their two empty-text issues only, as the scenario-name duplicate
+    check skips a blank name."""
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["thresholds"][0]["label"] = " "
+    payload["thresholds"][1]["label"] = " "
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        "thresholds[0].label: empty text",
+        "thresholds[1].label: empty text",
+    ]
+
+
 def test_new_strings_pass_the_prose_rules() -> None:
     """Round 5/6 process: every new stored string passes prose.issues and bare_figures."""
     for text in (P1W, P1W_LINE, AT_BASE_LINE, cp2a.QUARTER_OUTCOME, cp2a.QUARTER_NOT_COMPARED):

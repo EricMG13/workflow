@@ -46,3 +46,4 @@
 - 2026-10-28 cp3d-stage1 rulings review (mx-precise) on 9b871a7: CHANGES REQUIRED, M1 Medium (YLD-01 says maturity is unstated when only the quotation date is missing). Fix round 2 dispatched
 - 2026-10-28 LEAD round 4 (e86a192) cherry-picked as f606dbf (LEAD-tip merge undone to hold the methodology change)
 - 2026-10-28 cpdr-stage1-rulings `pytest tests/test_method_cpdr.py` exit 0, 47 passed, branch claude/cpdr-stage1 facb8ea (R1-R3), mutate_r2_order 6/6 killed, controller-verified on lane b181464, merged. agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y
+- 2026-10-28 cp3d-stage1-fix2 `pytest tests/test_method_cp3d.py` exit 0, 175 passed, branch claude/cp3d-stage1 a407e03 (M1), probes exit 0; round 4 (g)/(h) sent and resumed on the same agent. agent=general-purpose(opus) fix-rounds=2 gates-first-pass=n

@@ -90,13 +90,32 @@ Q3 = {
     "total_debt": DEBT_BS[3],
     "cash": CASH_BS[3],
 }
+# Q4 25 quarter base (fixture_quarter_known, round 6 P1-W item 7): the quarter flows are asserted
+# against the ruled values, which must equal the frozen source's Q4 25 column parsed above.
+Q4 = {
+    "ebitda": EBITDA_Q[3],
+    "interest": INTEREST_Q[3],
+    "fcf": FCF_Q[3],
+    "total_debt": DEBT_BS[4],
+    "cash": CASH_BS[4],
+}
+assert (Q4["ebitda"], Q4["interest"], Q4["fcf"]) == (D("7.5"), D("1.25"), D("2.25")), Q4
+assert (Q4["total_debt"], Q4["cash"]) == (D("50"), D("20")), Q4
 
 LTM_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+Q4_PERIOD = "Q4 25: 2025-10-01 to 2025-12-31"
+Q4_COLUMN = "Q4 25 (2025-10-01 to 2025-12-31)"
 Q3_PERIOD = "Q3 25: 2025-07-01 to 2025-09-30"
 LTM_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
 Q3_COLUMN = "Q3 25 (2025-07-01 to 2025-09-30)"
 # CP-1 text observed on the S1 positive promoted head (probe, read only) for a month-less ratio:
 Q3_GATE = "COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required"
+# P1-W (round 6): a ratio whose CP-1 fact is known, asked of a single-quarter base, is not meaningful
+P1W_REASON = "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+P1W_COMPARE = "Not compared: CP-2A's ratio is not meaningful on a single-quarter base"
+P1W_OUTCOME = "Not meaningful on a single-quarter base"
+P1W_LINE = ("Ratios are not calculated on a single-quarter base: CP-1 reads each ratio from the twelve months ending that quarter, "
+            "while CP-2A's base operands are one quarter's flows.")
 NOT_DISCLOSED = "Cash interest is not disclosed in the supplied statements."
 
 # --- 1b. the CP-1 facts CP-2A reads, as observed on the S1 positive promoted CP-1 head ----------
@@ -117,11 +136,16 @@ OBSERVED_CLASS = {
            "cash_closing": "source", "total_leverage_reported": "calculated", "net_leverage_reported": "calculated",
            "interest_coverage_reported": "calculated", "fcf_to_debt": "calculated"},
 }
+OBSERVED_CLASS["Q4"] = dict(OBSERVED_CLASS["Q3"])  # round 6 P1-W item 7: the value classes follow the gap case's Q3 25 facts
 OBSERVED_CELL = {  # the CP-1 T4.10 cell text (fact_spelling) observed on the probe head
     "LTM": {"ebitda": "30", "cash_interest": "(5)", "fcf": "9", "total_debt": "50", "cash_closing": "20",
             "total_leverage_reported": "1.67x", "net_leverage_reported": "1.00x",
             "interest_coverage_reported": "6.00x", "fcf_to_debt": "18.0%"},
     "Q3": {"ebitda": "8", "cash_interest": "(1)", "fcf": "2", "total_debt": "49", "cash_closing": "19"},
+    # Q4 25 quarter flows with the LTM Q4 25 ratios and closing balances (CP-1 reads a quarter's ratio from its twelve months)
+    "Q4": {"ebitda": "8", "cash_interest": "(1)", "fcf": "2", "total_debt": "50", "cash_closing": "20",
+           "total_leverage_reported": "1.67x", "net_leverage_reported": "1.00x",
+           "interest_coverage_reported": "6.00x", "fcf_to_debt": "18.0%"},
 }
 _mo = FIN["q4_ltm_metric_oracle"]
 ORACLE_RATIO = {rn: Fraction(_mo[m]["numerator"]) / Fraction(_mo[m]["denominator"]) for rn, m in RATIO_REPORTED.items()}
@@ -194,7 +218,7 @@ def cp1_inputs(which, column, period, base, *, gate, undisclosed=False):
         "fcf": base["fcf"], "total_debt": base["total_debt"], "cash_closing": base["cash"],
     }
     for rn, metric in RATIO_REPORTED.items():
-        amounts[metric] = q38(ORACLE_RATIO[rn]) if which == "LTM" else None
+        amounts[metric] = q38(ORACLE_RATIO[rn]) if which in ("LTM", "Q4") else None
     out = {}
     for metric in METRICS:
         value = amounts[metric]
@@ -225,7 +249,7 @@ def cp1_inputs(which, column, period, base, *, gate, undisclosed=False):
 NC_DENOM = "Not calculable: stressed EBITDA is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
 
 
-def stress(base, s, k, gate_ratios, gate_reason, missing=()):
+def stress(base, s, k, gate_ratios, gate_reason, gate_na=False):
     """One scenario. `base` holds Decimals (None where CP-1 has no known fact)."""
     e, i, f, d, c = (base[x] for x in ("ebitda", "interest", "fcf", "total_debt", "cash"))
     out = {}
@@ -240,6 +264,7 @@ def stress(base, s, k, gate_ratios, gate_reason, missing=()):
         out["fcf"] = f - e * s - (D(0) if k == 0 else i * k)
     e2, i2, f2 = out["ebitda"], out["interest"], out["fcf"]
     why = {}
+    na = set()  # ratios that are not_applicable (P1-W), not missing
 
     def ratio(name, num, den, den_zero_reason, needs=()):
         for what in needs:
@@ -247,7 +272,11 @@ def stress(base, s, k, gate_ratios, gate_reason, missing=()):
                 why[name] = f"Not calculable: base {WORDS[what]} is missing"
                 return None
         if not gate_ratios:
-            why[name] = f"Not calculable: {gate_reason}"
+            if gate_na:
+                why[name] = P1W_REASON
+                na.add(name)
+            else:
+                why[name] = f"Not calculable: {gate_reason}"
             return None
         if den <= 0:
             why[name] = den_zero_reason
@@ -271,13 +300,14 @@ def stress(base, s, k, gate_ratios, gate_reason, missing=()):
     if f2 is None:
         why["fcf"] = "Not calculable: base cash interest is missing, so an interest increase cannot be applied"
     out["why"] = why
+    out["na"] = na
     return out
 
 
 WORDS = {"total_debt": "total debt", "cash": "cash", "interest": "cash interest", "ebitda": "EBITDA", "fcf": "free cash flow"}
 
 
-def breaks_for(base, thresholds, gate_ratios, gate_reason):
+def breaks_for(base, thresholds, gate_ratios, gate_reason, gate_na=False):
     """Register of break points: required EBITDA decline s* at base cash interest."""
     e, i, f, d, c = (base[x] for x in ("ebitda", "interest", "fcf", "total_debt", "cash"))
     rows = []
@@ -287,6 +317,8 @@ def breaks_for(base, thresholds, gate_ratios, gate_reason):
         miss = [x for x in needs if base[x] is None]
         if miss:
             row.update(outcome="Not calculable", reason=f"Not calculable: base {WORDS[miss[0]]} is missing")
+        elif ratio_based and not gate_ratios and gate_na:
+            row.update(outcome=P1W_OUTCOME, reason=P1W_REASON, na=True)
         elif ratio_based and not gate_ratios:
             row.update(outcome="Not calculable", reason=f"Not calculable: {gate_reason}")
         elif s_den <= 0:
@@ -439,6 +471,10 @@ SUBMISSION = {
         ],
     },
 }
+# composer-only: the gap case's submission on the Q4 25 quarter base, whose CP-1 ratios are known (round 6 P1-W item 7)
+SUBMISSION["fixture_quarter_known"] = deepcopy(SUBMISSION["gap"])
+SUBMISSION["fixture_quarter_known"]["base_period"] = Q4_PERIOD
+SUBMISSION["fixture_quarter_known"]["gaps"][0]["gap"] = "Twelve-month leverage and coverage are not calculable for the fourth quarter."
 # composer-level gap: positive CP-1 facts with base cash interest missing (no run, no store).
 SUBMISSION["interest_undisclosed"] = {
     "base_period": LTM_PERIOD,
@@ -460,9 +496,12 @@ CASES = {
             "which": "Q3", "column": Q3_COLUMN, "undisclosed": False},
     "interest_undisclosed": {"submission": "interest_undisclosed", "base": dict(LTM, interest=None), "period": LTM_PERIOD, "gate": True,
                              "gate_reason": None, "execution": "composer_only", "which": "LTM", "column": LTM_COLUMN, "undisclosed": True},
+    "fixture_quarter_known": {"submission": "fixture_quarter_known", "base": Q4, "period": Q4_PERIOD, "gate": False, "gate_na": True,
+                              "gate_reason": P1W_REASON, "execution": "composer_only", "which": "Q4", "column": Q4_COLUMN,
+                              "undisclosed": False, "cp1_ratios": True},
 }
 for _c in CASES.values():
-    _c["cp1"] = cp1_inputs(_c["which"], _c["column"], _c["period"], _c["base"], gate=_c["gate"], undisclosed=_c["undisclosed"])
+    _c["cp1"] = cp1_inputs(_c["which"], _c["column"], _c["period"], _c["base"], gate=_c.get("cp1_ratios", _c["gate"]), undisclosed=_c["undisclosed"])
 # the threshold ids are assigned in submission order after the two definition breaks
 for _case in SUBMISSION.values():
     for _n, _t in enumerate(_case["thresholds"], 3):
@@ -596,6 +635,7 @@ def build_case(name):
     sub = SUBMISSION[spec["submission"]]
     base, period = spec["base"], spec["period"]
     gate, gate_reason = spec["gate"], spec["gate_reason"]
+    gate_na = spec.get("gate_na", False)
     cp1 = spec["cp1"]
     facts, rows_by_table, claims, own_limits = [], {t: [] for t in TABLES}, [], []
 
@@ -658,7 +698,7 @@ def build_case(name):
     runs = [dict(row="s00", name="Base (no stress)", s=D(0), k=D(0))] + [dict(row=sc["row"], name=sc["name"], s=sc["s"], k=sc["k"]) for sc in scenarios]
     results = {}
     for sc in runs:
-        res = stress(base, sc["s"], sc["k"], gate, gate_reason)
+        res = stress(base, sc["s"], sc["k"], gate, gate_reason, gate_na)
         results[sc["row"]] = res
         r, k = sc["row"], sc["k"]
         for fld, label, uc, key in (("ebitda", "Stressed EBITDA", "amount", "ebitda"), ("interest", "Stressed cash interest", "amount", "interest"), ("fcf", "Stressed free cash flow", "amount", "fcf")):
@@ -679,7 +719,7 @@ def build_case(name):
             formula = {"total_leverage": "Total debt / stressed EBITDA", "net_leverage": "(Total debt - cash) / stressed EBITDA",
                        "interest_coverage": "Stressed EBITDA / stressed cash interest", "fcf_to_debt": "Stressed free cash flow / total debt"}[rn]
             if res[rn] is None:
-                gap("T2B.4", r, rn, label, uc, res["why"][rn])
+                gap("T2B.4", r, rn, label, uc, res["why"][rn], status="not_applicable" if rn in res["na"] else "missing")
             else:
                 num("T2B.4", r, rn, label, res[rn], uc, formula, derives=lin_ratio(rn, k))
         reg("T2B.4", r, sc["name"], [x[0] for x in RATIO_NAMES])
@@ -689,9 +729,14 @@ def build_case(name):
         r = rn
         recomputed = results["s00"][rn]
         reported = cp1[RATIO_REPORTED[rn]]
-        assert (recomputed is None) == (reported["status"] != "known"), (name, rn)
+        assert (recomputed is None) == (reported["status"] != "known" or gate_na), (name, rn)
         reconciliation_refs[rn] = RATIO_REPORTED[rn]
-        if recomputed is None:
+        if recomputed is None and rn in results["s00"]["na"]:
+            # P1-W: CP-1's ratio copy stays known in cp1_references; CP-2A's recomputation is not meaningful on a quarter base
+            gap("T2B.5", r, "recomputed", "Recomputed from CP-2A base operands", uc, P1W_REASON, status="not_applicable")
+            gap("T2B.5", r, "difference", "Difference", uc, P1W_COMPARE, status="not_applicable")
+            text("T2B.5", r, "result", "Result", "Not compared")
+        elif recomputed is None:
             gap("T2B.5", r, "recomputed", "Recomputed from CP-2A base operands", uc, results["s00"]["why"][rn])
             gap("T2B.5", r, "difference", "Difference", uc, "Not compared: one side is not calculable")
             text("T2B.5", r, "result", "Result", "Not compared")
@@ -703,7 +748,7 @@ def build_case(name):
             text("T2B.5", r, "result", "Result", "Reconciled" if recomputed == cp1_value else "Differs")
         reg("T2B.5", r, label, ["recomputed", "difference", "result"])
     # T2B.6 break points
-    brk = breaks_for(base, thresholds, gate, gate_reason)
+    brk = breaks_for(base, thresholds, gate, gate_reason, gate_na)
     for n, row in enumerate(brk):
         row["bid"] = f"b{n + 1:02d}"
     for row in brk:
@@ -728,8 +773,9 @@ def build_case(name):
             gap("T2B.6", r, "required_decline", "Required EBITDA decline", "percent", why, status="not_applicable")
             gap("T2B.6", r, "ebitda_at_break", "EBITDA at the break", "amount", why, status="not_applicable")
         else:
-            gap("T2B.6", r, "required_decline", "Required EBITDA decline", "percent", row["reason"])
-            gap("T2B.6", r, "ebitda_at_break", "EBITDA at the break", "amount", row["reason"])
+            st = "not_applicable" if row.get("na") else "missing"
+            gap("T2B.6", r, "required_decline", "Required EBITDA decline", "percent", row["reason"], status=st)
+            gap("T2B.6", r, "ebitda_at_break", "EBITDA at the break", "amount", row["reason"], status=st)
         text("T2B.6", r, "outcome", "Outcome", row["outcome"])
         reg("T2B.6", r, label, ["origin", "test", "level", "required_decline", "ebitda_at_break", "outcome"])
     # T2B.7 ranking
@@ -747,7 +793,10 @@ def build_case(name):
             r = f"{sc['row']}-{row['bid']}"
             v, hit = crossing(row, results[sc["row"]])
             metric_uc = "amount" if row["kind"] == "fcf" else "multiple"
-            if v is None:
+            if row.get("na"):  # P1-W: a ratio break on a quarter base has no meaningful stressed value
+                gap("T2B.8", r, "stressed_value", "Stressed value", metric_uc, P1W_REASON, status="not_applicable")
+                v, hit = None, P1W_OUTCOME
+            elif v is None:
                 gap("T2B.8", r, "stressed_value", "Stressed value", metric_uc, results[sc["row"]]["why"].get({"fcf": "fcf", "coverage": "interest_coverage"}.get(row["kind"], row["kind"]), "Not calculable"))
                 unreached_crossing = unreached_crossing or "s" in row
             else:
@@ -755,8 +804,9 @@ def build_case(name):
                 num("T2B.8", r, "stressed_value", "Stressed value", v, metric_uc, "From T2B.3 or T2B.4", derives=derives)
             lvl_uc = "amount" if row["kind"] == "fcf" else "multiple"
             num("T2B.8", r, "level", "Level", row["level"], lvl_uc, "From T2B.6", row["level_class"])
-            text("T2B.8", r, "result", "Result", "Not calculable" if hit is None else ("Crossed" if hit else "Not crossed"))
-            row.setdefault("cross", {})[sc["row"]] = "Not calculable" if hit is None else ("Crossed" if hit else "Not crossed")
+            verdict = hit if isinstance(hit, str) else "Not calculable" if hit is None else ("Crossed" if hit else "Not crossed")
+            text("T2B.8", r, "result", "Result", verdict)
+            row.setdefault("cross", {})[sc["row"]] = verdict
             reg("T2B.8", r, f"{sc['name']} · {row['test']}", ["stressed_value", "level", "result"])
     # own limitations, gaps ledger
     own_limits.append("Scenario shock sizes are analyst assumptions without a source citation.")
@@ -770,7 +820,9 @@ def build_case(name):
     for key, value in base.items():
         if value is None:
             own_limits.append(f"Base {WORDS[key]} is not available in CP-1 for {period}: every figure that needs it is Not calculable.")
-    if not gate:
+    if gate_na:
+        own_limits.append(P1W_LINE)
+    elif not gate:
         own_limits.append(f"Twelve-month ratios are not calculable on the base period {period}: {gate_reason}")
     for n, g in enumerate(sub["gaps"], 1):
         r = f"g{n:02d}"
@@ -844,7 +896,7 @@ def build_case(name):
         "base_period": period, "base_operands": {k: (None if v is None else norm(v)) for k, v in bvals.items()},
         "cp1_inputs": cp1, "cp1_references": cp1_references, "reconciliation_refs": reconciliation_refs,
         "facts": facts, "tables": module_tables, "claims": claim_list, "own_limitations": own_limits,
-        "stress": {r: {k: (norm(v) if isinstance(v, D) else v) for k, v in res.items() if k != "why"} | {"not_calculable": res["why"]} for r, res in results.items()},
+        "stress": {r: {k: (norm(v) if isinstance(v, D) else v) for k, v in res.items() if k not in ("why", "na")} | {"not_calculable": res["why"]} for r, res in results.items()},
         "break_points": [
             {"break_id": b["bid"], "origin": b["origin"], "test": b["test"], "outcome": b["outcome"],
              "required_decline": None if "s" not in b else norm(b["s"]), "required_decline_fraction": b.get("s_fraction"),
@@ -1093,6 +1145,8 @@ def main():
                         "execution": "closed run: CP-0, CP-1 as positive, then CP-2A attempt 0 invalid (rejected) and attempt 1 invalid (blocked)"},
             "interest_undisclosed": {"run": None, "pack": None, "submission": "submissions.json interest_undisclosed", "expected": "expected.json interest_undisclosed",
                                      "execution": "composer only: the positive CP-1 module's facts with the base cash-interest fact and CP-1's coverage fact set to status missing (limitation '" + NOT_DISCLOSED + "'); no store, no run (a promoted head cannot be edited)"},
+            "fixture_quarter_known": {"run": None, "pack": None, "base_period": Q4_PERIOD, "submission": "submissions.json fixture_quarter_known", "expected": "expected.json fixture_quarter_known",
+                                      "execution": "composer only (round 6 P1-W item 7): the Q4 25 quarter base with CP-1 facts for the quarter flows (7.5, -1.25, 2.25), the closing balances (50, 20) and the four LTM Q4 25 ratios, all known; every ratio and ratio-based break is not_applicable on a single-quarter base; no store, no run"},
         },
         "refusal_cases": "submissions.json refusals (payloads) and expected.json refusals (exact issues); each is one journaled invalid step of CP-2A attempt 0 on the positive CP-1 head",
         "fact_selection_rule": {
@@ -1142,6 +1196,7 @@ def main():
                                 "affected_modules": ["CP-1", "CP-2A"], "remediation": "Supply quarterly financial statements"}},
         "positive": {"downside_pathway": public(SUBMISSION["positive"])},
         "gap": {"downside_pathway": public(SUBMISSION["gap"])},
+        "fixture_quarter_known": {"downside_pathway": public(SUBMISSION["fixture_quarter_known"])},
         "interest_undisclosed": {"downside_pathway": public(SUBMISSION["interest_undisclosed"])},
         "refusals": [{k: v for k, v in r.items() if k in ("id", "class", "mutation", "payload", "payload_text", "composer_only", "bind_placeholders", "upstream_literal", "note")} for r in refusal_list],
         "blocked": {"attempt_0": "refusals r01", "attempt_1": "refusals v13"},
@@ -1221,7 +1276,7 @@ def main():
     assert Fraction(mo["total_leverage_reported"]["numerator"]) / Fraction(mo["total_leverage_reported"]["denominator"]) == Fraction(5, 3)
     assert D(mo["fcf_to_debt"]["decimal"]) == D("0.18") and D(mo["interest_coverage_reported"]["decimal"]) == 6
     # sanity: no digits or brace characters in analyst names, labels and prose outside FIG tokens
-    for case in ("positive", "gap", "interest_undisclosed"):
+    for case in ("positive", "gap", "interest_undisclosed", "fixture_quarter_known"):
         sub = SUBMISSION[case]
         for sc in sub["scenarios"]:
             assert not re.search(r"[0-9{}\[\]]", sc["name"]), sc["name"]
@@ -1240,7 +1295,7 @@ def main():
         for text_ in b["own_limitations"]:
             assert not any(sp in text_ for sp in spelled), (name, text_)
     # sanity: the published submissions carry no builder-internal key
-    for case in ("positive", "gap", "interest_undisclosed"):
+    for case in ("positive", "gap", "interest_undisclosed", "fixture_quarter_known"):
         sub = submissions[case]["downside_pathway"]
         assert all(set(sc) == {"name", "ebitda_decline", "interest_increase", "category", "rationale", "limitation"} for sc in sub["scenarios"])
         assert all(set(t) == {"metric", "level", "label", "category", "rationale"} for t in sub["thresholds"])

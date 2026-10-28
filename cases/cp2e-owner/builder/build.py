@@ -562,7 +562,8 @@ def NA(why):
 
 
 def ratio(num, den, why_zero):
-    """num / den over derived values; missing propagates, a zero denominator is not applicable."""
+    """num / den over derived values; missing propagates, a zero or negative denominator is not applicable
+    (A3, round 6): the zero reason is why_zero byte for byte, a negative one reads '... is negative'."""
     for v in (num, den):
         if v[0] == "missing":
             return v
@@ -570,6 +571,9 @@ def ratio(num, den, why_zero):
         return NA("an input is not applicable")
     if den[1] == 0:
         return NA(why_zero)
+    if den[1] < 0:
+        assert why_zero.endswith(" is zero"), why_zero
+        return NA(why_zero[: -len("zero")] + "negative")
     return K(num[1] / den[1])
 
 
@@ -630,8 +634,10 @@ def derive(inp):
             r["share_of_ebitda"] = ratio(gross, ebitda, "EBITDA is zero")
             o["rate"].append(r)
         df = inp.get("debt_foreign")
-        if df is None or bal is None:
+        if df is None:
             foreign_debt = MISS("the currency of the debt is not stated")
+        elif bal is None:
+            foreign_debt = MISS("the facility balance is not stated")
         else:
             foreign_debt = K(bal if df else D(0))
         o["foreign_debt"] = foreign_debt
@@ -1557,11 +1563,11 @@ def main():
             "rate_shock_gross": "floating debt x shock_bp / 10000 (annual, before hedges); computed only when the floor is quoted as zero (the reference rate level is in no source, so an upward move by k passes in full); a floor above zero or not stated makes it missing; a fixed-rate facility makes it a known zero; downward shocks are refused by the validator",
             "rate_shock_net": "gross x (1 - hedge ratio); missing without a hedge ratio",
             "interest_after": "cash interest paid + gross increase",
-            "coverage": "EBITDA / cash interest; EBITDA / interest after the shock; change = after - before; a zero divisor is not_applicable, never infinity or 0",
+            "coverage": "EBITDA / cash interest; EBITDA / interest after the shock; change = after - before; a zero or negative divisor is not_applicable (a negative one reads \"... is negative\"), never infinity or 0",
             "fcf_after": "levered free cash flow - gross increase (no tax shield, no repricing date)",
             "share_of_ebitda": "gross increase / EBITDA; EBITDA zero is not_applicable",
             "leverage": "total debt / EBITDA",
-            "foreign_debt": "term loan balance if the quoted currency of the debt differs from the quoted reporting currency, zero if equal, missing when the currency of the debt is not stated",
+            "foreign_debt": "term loan balance if the quoted currency of the debt differs from the quoted reporting currency, zero if equal, missing when the currency of the debt is not stated, and the facility balance is not stated when the currency is stated without a balance",
             "fx_shock": "the foreign currency strengthens by m percent against the reporting currency: change in debt = foreign-currency debt x m; change in EBITDA = EBITDA x share earned in other currencies x m (missing when the share is not stated); leverage after = (debt + change in debt) / (EBITDA + change in EBITDA), missing when either change is missing",
             "operand_bounds": "a sentence operand (facility balance, spread, floor) is accepted only as 1 to 3 digits with at most 4 decimals (NUM_RE, at most 999.9999), so a balance of 1000 or more cannot be quoted by this step; stated, not a source limit",
             "facility_balance_vs_total_debt": "validator rule (LEAD ruling 9): when the balance and total debt both parse, a balance above total debt is the issue 'rate_exposure.facility_balance: value_text <balance> exceeds total debt <total debt text>', raised after the earnings rows. A balance below total debt is valid: the shock figures cover the quoted facility alone, the floating share stays known (balance / total debt), and the own limitation 'fixture_partial_facility.own_limitation_added' names the remainder whose rate type is not stated. Equal is the frozen case",

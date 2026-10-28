@@ -319,6 +319,53 @@
    ]
   }
  },
+ "fixture_quarter_known": {
+  "downside_pathway": {
+   "base_period": "Q4 25: 2025-10-01 to 2025-12-31",
+   "scenarios": [
+    {
+     "name": "Moderate downturn",
+     "ebitda_decline": "0.20",
+     "interest_increase": "0",
+     "category": "Analyst Interpretation",
+     "rationale": "A moderate fall in volumes lowers quarterly earnings while debt and cash interest stay as reported.",
+     "limitation": null
+    },
+    {
+     "name": "Severe downturn with higher rates",
+     "ebitda_decline": "0.40",
+     "interest_increase": "0.20",
+     "category": "Analyst Interpretation",
+     "rationale": "A severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+     "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+    }
+   ],
+   "thresholds": [
+    {
+     "metric": "total_leverage",
+     "level": "2.50",
+     "label": "Total leverage watch level",
+     "category": "Analyst Interpretation",
+     "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+    }
+   ],
+   "assessment": {
+    "rationale": "The chosen base period is a single quarter, so the twelve-month ratios are not available and only flow results can be stated.",
+    "category": "Analyst Interpretation",
+    "confidence": "Low",
+    "limitation": "Twelve-month ratios are not calculable for the chosen quarter."
+   },
+   "gaps": [
+    {
+     "gap": "Twelve-month leverage and coverage are not calculable for the fourth quarter.",
+     "why_it_matters": "Only stressed earnings and free cash flow can be stated; no ratio and no leverage break point can be.",
+     "affected_analysis": "Stressed credit metrics and the leverage watch level",
+     "severity": "Material",
+     "action": "Base the stress on the twelve-month column ending the fourth quarter."
+    }
+   ]
+  }
+ },
  "interest_undisclosed": {
   "downside_pathway": {
    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",

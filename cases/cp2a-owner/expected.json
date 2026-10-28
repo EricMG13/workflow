@@ -10457,6 +10457,2639 @@
    },
    "execution": "composer_only"
   },
+  "fixture_quarter_known": {
+   "base_period": "Q4 25: 2025-10-01 to 2025-12-31",
+   "base_operands": {
+    "ebitda": "7.5",
+    "interest": "1.25",
+    "fcf": "2.25",
+    "total_debt": "50",
+    "cash": "20",
+    "net_debt": "30"
+   },
+   "cp1_inputs": {
+    "ebitda": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 ebitda",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "7.5",
+     "value_class": "source",
+     "cell_text": "8",
+     "limitation": null
+    },
+    "cash_interest": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 cash_interest",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "-1.25",
+     "value_class": "normalized",
+     "cell_text": "(1)",
+     "limitation": null
+    },
+    "fcf": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 fcf",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "2.25",
+     "value_class": "calculated",
+     "cell_text": "2",
+     "limitation": null
+    },
+    "total_debt": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 total_debt",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "50",
+     "value_class": "source",
+     "cell_text": "50",
+     "limitation": null
+    },
+    "cash_closing": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 cash_closing",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "20",
+     "value_class": "source",
+     "cell_text": "20",
+     "limitation": null
+    },
+    "total_leverage_reported": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 total_leverage_reported",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "1.6666666666666666666666666666666666667",
+     "value_class": "calculated",
+     "cell_text": "1.67x",
+     "limitation": null
+    },
+    "net_leverage_reported": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 net_leverage_reported",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "1",
+     "value_class": "calculated",
+     "cell_text": "1.00x",
+     "limitation": null
+    },
+    "interest_coverage_reported": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 interest_coverage_reported",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "6",
+     "value_class": "calculated",
+     "cell_text": "6.00x",
+     "limitation": null
+    },
+    "fcf_to_debt": {
+     "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 fcf_to_debt",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "status": "known",
+     "amount_exact": "0.18",
+     "value_class": "calculated",
+     "cell_text": "18.0%",
+     "limitation": null
+    }
+   },
+   "cp1_references": {
+    "table_id": "cp1_references",
+    "title": "CP-1 facts referenced in CP-2A text",
+    "row_header": "CP-1 fact",
+    "rows": [
+     {
+      "row_id": "ref01",
+      "figure": "total_leverage_reported",
+      "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 total_leverage_reported \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+      "cp1_label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 total_leverage_reported",
+      "period": "Q4 25: 2025-10-01 to 2025-12-31",
+      "status": "known",
+      "unit": "x",
+      "shown": "1.67x",
+      "cell_text": "1.67x",
+      "value_class": "calculated",
+      "amount_exact": "1.6666666666666666666666666666666666667",
+      "limitation": null,
+      "fact_id": "bound at run time: the unique T4.10 fact with label cp1_label (manifest.json fact_selection_rule); the module carries the CP-1 fact verbatim under this fact_id"
+     },
+     {
+      "row_id": "ref02",
+      "figure": "net_leverage_reported",
+      "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 net_leverage_reported \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+      "cp1_label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 net_leverage_reported",
+      "period": "Q4 25: 2025-10-01 to 2025-12-31",
+      "status": "known",
+      "unit": "x",
+      "shown": "1.00x",
+      "cell_text": "1.00x",
+      "value_class": "calculated",
+      "amount_exact": "1",
+      "limitation": null,
+      "fact_id": "bound at run time: the unique T4.10 fact with label cp1_label (manifest.json fact_selection_rule); the module carries the CP-1 fact verbatim under this fact_id"
+     },
+     {
+      "row_id": "ref03",
+      "figure": "interest_coverage_reported",
+      "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 interest_coverage_reported \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+      "cp1_label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 interest_coverage_reported",
+      "period": "Q4 25: 2025-10-01 to 2025-12-31",
+      "status": "known",
+      "unit": "x",
+      "shown": "6.00x",
+      "cell_text": "6.00x",
+      "value_class": "calculated",
+      "amount_exact": "6",
+      "limitation": null,
+      "fact_id": "bound at run time: the unique T4.10 fact with label cp1_label (manifest.json fact_selection_rule); the module carries the CP-1 fact verbatim under this fact_id"
+     },
+     {
+      "row_id": "ref04",
+      "figure": "fcf_to_debt",
+      "label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 fcf_to_debt \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+      "cp1_label": "Q4 25 (2025-10-01 to 2025-12-31) \u00b7 fcf_to_debt",
+      "period": "Q4 25: 2025-10-01 to 2025-12-31",
+      "status": "known",
+      "unit": "%",
+      "shown": "18.0%",
+      "cell_text": "18.0%",
+      "value_class": "calculated",
+      "amount_exact": "0.18",
+      "limitation": null,
+      "fact_id": "bound at run time: the unique T4.10 fact with label cp1_label (manifest.json fact_selection_rule); the module carries the CP-1 fact verbatim under this fact_id"
+     }
+    ]
+   },
+   "reconciliation_refs": {
+    "total_leverage": "total_leverage_reported",
+    "net_leverage": "net_leverage_reported",
+    "interest_coverage": "interest_coverage_reported",
+    "fcf_to_debt": "fcf_to_debt"
+   },
+   "facts": [
+    {
+     "fact_id": "T2B.1.s01.name",
+     "table_id": "T2B.1",
+     "row_id": "s01",
+     "field": "name",
+     "label": "Scenario",
+     "status": "known",
+     "text": "Moderate downturn",
+     "shown": "Moderate downturn",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "T2B.1.s01.ebitda_decline",
+     "table_id": "T2B.1",
+     "row_id": "s01",
+     "field": "ebitda_decline",
+     "label": "EBITDA decline",
+     "status": "known",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.2",
+     "shown": "20.0%",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "analyst input",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.1.s01.interest_increase",
+     "table_id": "T2B.1",
+     "row_id": "s01",
+     "field": "interest_increase",
+     "label": "Cash interest increase",
+     "status": "known",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0",
+     "shown": "0.0%",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "analyst input",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.1.s01.category",
+     "table_id": "T2B.1",
+     "row_id": "s01",
+     "field": "category",
+     "label": "Category",
+     "status": "known",
+     "text": "Analyst Interpretation",
+     "shown": "Analyst Interpretation",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.1.s01.basis",
+     "table_id": "T2B.1",
+     "row_id": "s01",
+     "field": "basis",
+     "label": "Basis",
+     "status": "known",
+     "text": "No located evidence",
+     "shown": "No located evidence",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.1.s02.name",
+     "table_id": "T2B.1",
+     "row_id": "s02",
+     "field": "name",
+     "label": "Scenario",
+     "status": "known",
+     "text": "Severe downturn with higher rates",
+     "shown": "Severe downturn with higher rates",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "T2B.1.s02.ebitda_decline",
+     "table_id": "T2B.1",
+     "row_id": "s02",
+     "field": "ebitda_decline",
+     "label": "EBITDA decline",
+     "status": "known",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.4",
+     "shown": "40.0%",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "analyst input",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.1.s02.interest_increase",
+     "table_id": "T2B.1",
+     "row_id": "s02",
+     "field": "interest_increase",
+     "label": "Cash interest increase",
+     "status": "known",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.2",
+     "shown": "20.0%",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "analyst input",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.1.s02.category",
+     "table_id": "T2B.1",
+     "row_id": "s02",
+     "field": "category",
+     "label": "Category",
+     "status": "known",
+     "text": "Analyst Interpretation",
+     "shown": "Analyst Interpretation",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.1.s02.basis",
+     "table_id": "T2B.1",
+     "row_id": "s02",
+     "field": "basis",
+     "label": "Basis",
+     "status": "known",
+     "text": "No located evidence",
+     "shown": "No located evidence",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.2.ebitda.value",
+     "table_id": "T2B.2",
+     "row_id": "ebitda",
+     "field": "value",
+     "label": "EBITDA",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "7.5",
+     "shown": "7.50",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "CP-1 ebitda",
+     "calculation_id": "calc:T2B.2.ebitda.value",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.2.ebitda.source",
+     "table_id": "T2B.2",
+     "row_id": "ebitda",
+     "field": "source",
+     "label": "Source",
+     "status": "known",
+     "text": "CP-1 T4.10 ebitda \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "shown": "CP-1 T4.10 ebitda \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.2.interest.value",
+     "table_id": "T2B.2",
+     "row_id": "interest",
+     "field": "value",
+     "label": "Cash interest paid (outflow)",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1.25",
+     "shown": "1.25",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "CP-1 cash_interest, sign reversed",
+     "calculation_id": "calc:T2B.2.interest.value",
+     "derives_from": [
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.2.interest.source",
+     "table_id": "T2B.2",
+     "row_id": "interest",
+     "field": "source",
+     "label": "Source",
+     "status": "known",
+     "text": "CP-1 T4.10 cash_interest \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "shown": "CP-1 T4.10 cash_interest \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.2.fcf.value",
+     "table_id": "T2B.2",
+     "row_id": "fcf",
+     "field": "value",
+     "label": "Free cash flow",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "2.25",
+     "shown": "2.25",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "CP-1 fcf",
+     "calculation_id": "calc:T2B.2.fcf.value",
+     "derives_from": [
+      "fcf"
+     ]
+    },
+    {
+     "fact_id": "T2B.2.fcf.source",
+     "table_id": "T2B.2",
+     "row_id": "fcf",
+     "field": "source",
+     "label": "Source",
+     "status": "known",
+     "text": "CP-1 T4.10 fcf \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "shown": "CP-1 T4.10 fcf \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.2.total_debt.value",
+     "table_id": "T2B.2",
+     "row_id": "total_debt",
+     "field": "value",
+     "label": "Total debt",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "50",
+     "shown": "50.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "CP-1 total_debt",
+     "calculation_id": "calc:T2B.2.total_debt.value",
+     "derives_from": [
+      "total_debt"
+     ]
+    },
+    {
+     "fact_id": "T2B.2.total_debt.source",
+     "table_id": "T2B.2",
+     "row_id": "total_debt",
+     "field": "source",
+     "label": "Source",
+     "status": "known",
+     "text": "CP-1 T4.10 total_debt \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "shown": "CP-1 T4.10 total_debt \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.2.cash.value",
+     "table_id": "T2B.2",
+     "row_id": "cash",
+     "field": "value",
+     "label": "Cash and cash equivalents",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "20",
+     "shown": "20.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "CP-1 cash_closing",
+     "calculation_id": "calc:T2B.2.cash.value",
+     "derives_from": [
+      "cash_closing"
+     ]
+    },
+    {
+     "fact_id": "T2B.2.cash.source",
+     "table_id": "T2B.2",
+     "row_id": "cash",
+     "field": "source",
+     "label": "Source",
+     "status": "known",
+     "text": "CP-1 T4.10 cash_closing \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "shown": "CP-1 T4.10 cash_closing \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.2.net_debt.value",
+     "table_id": "T2B.2",
+     "row_id": "net_debt",
+     "field": "value",
+     "label": "Net debt",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "30",
+     "shown": "30.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "CP-1 total_debt - cash_closing",
+     "calculation_id": "calc:T2B.2.net_debt.value",
+     "derives_from": [
+      "total_debt",
+      "cash_closing"
+     ]
+    },
+    {
+     "fact_id": "T2B.2.net_debt.source",
+     "table_id": "T2B.2",
+     "row_id": "net_debt",
+     "field": "source",
+     "label": "Source",
+     "status": "known",
+     "text": "CP-1 T4.10 total_debt - cash_closing \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "shown": "CP-1 T4.10 total_debt - cash_closing \u00b7 Q4 25: 2025-10-01 to 2025-12-31",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.3.s00.ebitda",
+     "table_id": "T2B.3",
+     "row_id": "s00",
+     "field": "ebitda",
+     "label": "Stressed EBITDA",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "7.5",
+     "shown": "7.50",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "EBITDA x (1 - decline)",
+     "calculation_id": "calc:T2B.3.s00.ebitda",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s00.interest",
+     "table_id": "T2B.3",
+     "row_id": "s00",
+     "field": "interest",
+     "label": "Stressed cash interest",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1.25",
+     "shown": "1.25",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Cash interest x (1 + increase)",
+     "calculation_id": "calc:T2B.3.s00.interest",
+     "derives_from": [
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s00.fcf",
+     "table_id": "T2B.3",
+     "row_id": "s00",
+     "field": "fcf",
+     "label": "Stressed free cash flow",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "2.25",
+     "shown": "2.25",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Free cash flow - EBITDA x decline - cash interest x increase",
+     "calculation_id": "calc:T2B.3.s00.fcf",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s00.ebitda_change",
+     "table_id": "T2B.3",
+     "row_id": "s00",
+     "field": "ebitda_change",
+     "label": "EBITDA change",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0",
+     "shown": "0.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Stressed minus base",
+     "calculation_id": "calc:T2B.3.s00.ebitda_change",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s00.fcf_change",
+     "table_id": "T2B.3",
+     "row_id": "s00",
+     "field": "fcf_change",
+     "label": "Free cash flow change",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0",
+     "shown": "0.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Stressed minus base",
+     "calculation_id": "calc:T2B.3.s00.fcf_change",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.4.s00.total_leverage",
+     "table_id": "T2B.4",
+     "row_id": "s00",
+     "field": "total_leverage",
+     "label": "Total leverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s00.net_leverage",
+     "table_id": "T2B.4",
+     "row_id": "s00",
+     "field": "net_leverage",
+     "label": "Net leverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s00.interest_coverage",
+     "table_id": "T2B.4",
+     "row_id": "s00",
+     "field": "interest_coverage",
+     "label": "Interest coverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s00.fcf_to_debt",
+     "table_id": "T2B.4",
+     "row_id": "s00",
+     "field": "fcf_to_debt",
+     "label": "Free cash flow to debt",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.3.s01.ebitda",
+     "table_id": "T2B.3",
+     "row_id": "s01",
+     "field": "ebitda",
+     "label": "Stressed EBITDA",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "6",
+     "shown": "6.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "EBITDA x (1 - decline)",
+     "calculation_id": "calc:T2B.3.s01.ebitda",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s01.interest",
+     "table_id": "T2B.3",
+     "row_id": "s01",
+     "field": "interest",
+     "label": "Stressed cash interest",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1.25",
+     "shown": "1.25",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Cash interest x (1 + increase)",
+     "calculation_id": "calc:T2B.3.s01.interest",
+     "derives_from": [
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s01.fcf",
+     "table_id": "T2B.3",
+     "row_id": "s01",
+     "field": "fcf",
+     "label": "Stressed free cash flow",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.75",
+     "shown": "0.75",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Free cash flow - EBITDA x decline - cash interest x increase",
+     "calculation_id": "calc:T2B.3.s01.fcf",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s01.ebitda_change",
+     "table_id": "T2B.3",
+     "row_id": "s01",
+     "field": "ebitda_change",
+     "label": "EBITDA change",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "-1.5",
+     "shown": "(1.50)",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Stressed minus base",
+     "calculation_id": "calc:T2B.3.s01.ebitda_change",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s01.fcf_change",
+     "table_id": "T2B.3",
+     "row_id": "s01",
+     "field": "fcf_change",
+     "label": "Free cash flow change",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "-1.5",
+     "shown": "(1.50)",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Stressed minus base",
+     "calculation_id": "calc:T2B.3.s01.fcf_change",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.4.s01.total_leverage",
+     "table_id": "T2B.4",
+     "row_id": "s01",
+     "field": "total_leverage",
+     "label": "Total leverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s01.net_leverage",
+     "table_id": "T2B.4",
+     "row_id": "s01",
+     "field": "net_leverage",
+     "label": "Net leverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s01.interest_coverage",
+     "table_id": "T2B.4",
+     "row_id": "s01",
+     "field": "interest_coverage",
+     "label": "Interest coverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s01.fcf_to_debt",
+     "table_id": "T2B.4",
+     "row_id": "s01",
+     "field": "fcf_to_debt",
+     "label": "Free cash flow to debt",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.3.s02.ebitda",
+     "table_id": "T2B.3",
+     "row_id": "s02",
+     "field": "ebitda",
+     "label": "Stressed EBITDA",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "4.5",
+     "shown": "4.50",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "EBITDA x (1 - decline)",
+     "calculation_id": "calc:T2B.3.s02.ebitda",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s02.interest",
+     "table_id": "T2B.3",
+     "row_id": "s02",
+     "field": "interest",
+     "label": "Stressed cash interest",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1.5",
+     "shown": "1.50",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Cash interest x (1 + increase)",
+     "calculation_id": "calc:T2B.3.s02.interest",
+     "derives_from": [
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s02.fcf",
+     "table_id": "T2B.3",
+     "row_id": "s02",
+     "field": "fcf",
+     "label": "Stressed free cash flow",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "-1",
+     "shown": "(1.00)",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Free cash flow - EBITDA x decline - cash interest x increase",
+     "calculation_id": "calc:T2B.3.s02.fcf",
+     "derives_from": [
+      "fcf",
+      "ebitda",
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s02.ebitda_change",
+     "table_id": "T2B.3",
+     "row_id": "s02",
+     "field": "ebitda_change",
+     "label": "EBITDA change",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "-3",
+     "shown": "(3.00)",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Stressed minus base",
+     "calculation_id": "calc:T2B.3.s02.ebitda_change",
+     "derives_from": [
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.3.s02.fcf_change",
+     "table_id": "T2B.3",
+     "row_id": "s02",
+     "field": "fcf_change",
+     "label": "Free cash flow change",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "-3.25",
+     "shown": "(3.25)",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "Stressed minus base",
+     "calculation_id": "calc:T2B.3.s02.fcf_change",
+     "derives_from": [
+      "fcf",
+      "ebitda",
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.4.s02.total_leverage",
+     "table_id": "T2B.4",
+     "row_id": "s02",
+     "field": "total_leverage",
+     "label": "Total leverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s02.net_leverage",
+     "table_id": "T2B.4",
+     "row_id": "s02",
+     "field": "net_leverage",
+     "label": "Net leverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s02.interest_coverage",
+     "table_id": "T2B.4",
+     "row_id": "s02",
+     "field": "interest_coverage",
+     "label": "Interest coverage",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.4.s02.fcf_to_debt",
+     "table_id": "T2B.4",
+     "row_id": "s02",
+     "field": "fcf_to_debt",
+     "label": "Free cash flow to debt",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.5.total_leverage.recomputed",
+     "table_id": "T2B.5",
+     "row_id": "total_leverage",
+     "field": "recomputed",
+     "label": "Recomputed from CP-2A base operands",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.5.total_leverage.difference",
+     "table_id": "T2B.5",
+     "row_id": "total_leverage",
+     "field": "difference",
+     "label": "Difference",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not compared: CP-2A's ratio is not meaningful on a single-quarter base"
+    },
+    {
+     "fact_id": "T2B.5.total_leverage.result",
+     "table_id": "T2B.5",
+     "row_id": "total_leverage",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not compared",
+     "shown": "Not compared",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.5.net_leverage.recomputed",
+     "table_id": "T2B.5",
+     "row_id": "net_leverage",
+     "field": "recomputed",
+     "label": "Recomputed from CP-2A base operands",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.5.net_leverage.difference",
+     "table_id": "T2B.5",
+     "row_id": "net_leverage",
+     "field": "difference",
+     "label": "Difference",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not compared: CP-2A's ratio is not meaningful on a single-quarter base"
+    },
+    {
+     "fact_id": "T2B.5.net_leverage.result",
+     "table_id": "T2B.5",
+     "row_id": "net_leverage",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not compared",
+     "shown": "Not compared",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.5.interest_coverage.recomputed",
+     "table_id": "T2B.5",
+     "row_id": "interest_coverage",
+     "field": "recomputed",
+     "label": "Recomputed from CP-2A base operands",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.5.interest_coverage.difference",
+     "table_id": "T2B.5",
+     "row_id": "interest_coverage",
+     "field": "difference",
+     "label": "Difference",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not compared: CP-2A's ratio is not meaningful on a single-quarter base"
+    },
+    {
+     "fact_id": "T2B.5.interest_coverage.result",
+     "table_id": "T2B.5",
+     "row_id": "interest_coverage",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not compared",
+     "shown": "Not compared",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.5.fcf_to_debt.recomputed",
+     "table_id": "T2B.5",
+     "row_id": "fcf_to_debt",
+     "field": "recomputed",
+     "label": "Recomputed from CP-2A base operands",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.5.fcf_to_debt.difference",
+     "table_id": "T2B.5",
+     "row_id": "fcf_to_debt",
+     "field": "difference",
+     "label": "Difference",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not compared: CP-2A's ratio is not meaningful on a single-quarter base"
+    },
+    {
+     "fact_id": "T2B.5.fcf_to_debt.result",
+     "table_id": "T2B.5",
+     "row_id": "fcf_to_debt",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not compared",
+     "shown": "Not compared",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b01.origin",
+     "table_id": "T2B.6",
+     "row_id": "b01",
+     "field": "origin",
+     "label": "Origin",
+     "status": "known",
+     "text": "Definition",
+     "shown": "Definition",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b01.test",
+     "table_id": "T2B.6",
+     "row_id": "b01",
+     "field": "test",
+     "label": "Test",
+     "status": "known",
+     "text": "Free cash flow at or below zero",
+     "shown": "Free cash flow at or below zero",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b01.level",
+     "table_id": "T2B.6",
+     "row_id": "b01",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0",
+     "shown": "0.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": null,
+     "formula": "Definition: free cash flow of zero",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.6.b01.required_decline",
+     "table_id": "T2B.6",
+     "row_id": "b01",
+     "field": "required_decline",
+     "label": "Required EBITDA decline",
+     "status": "known",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.3",
+     "shown": "30.0%",
+     "decimals": null,
+     "value_class": "calculated",
+     "formula": "Free cash flow / EBITDA",
+     "calculation_id": "calc:T2B.6.b01.required_decline",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.6.b01.ebitda_at_break",
+     "table_id": "T2B.6",
+     "row_id": "b01",
+     "field": "ebitda_at_break",
+     "label": "EBITDA at the break",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "5.25",
+     "shown": "5.25",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "EBITDA x (1 - required decline)",
+     "calculation_id": "calc:T2B.6.b01.ebitda_at_break",
+     "derives_from": [
+      "ebitda",
+      "fcf"
+     ]
+    },
+    {
+     "fact_id": "T2B.6.b01.outcome",
+     "table_id": "T2B.6",
+     "row_id": "b01",
+     "field": "outcome",
+     "label": "Outcome",
+     "status": "known",
+     "text": "Reached at the stated decline",
+     "shown": "Reached at the stated decline",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b02.origin",
+     "table_id": "T2B.6",
+     "row_id": "b02",
+     "field": "origin",
+     "label": "Origin",
+     "status": "known",
+     "text": "Definition",
+     "shown": "Definition",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b02.test",
+     "table_id": "T2B.6",
+     "row_id": "b02",
+     "field": "test",
+     "label": "Test",
+     "status": "known",
+     "text": "EBITDA no longer covers cash interest",
+     "shown": "EBITDA no longer covers cash interest",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b02.level",
+     "table_id": "T2B.6",
+     "row_id": "b02",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1",
+     "shown": "1.00x",
+     "decimals": null,
+     "value_class": null,
+     "formula": "Definition: EBITDA equal to cash interest",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.6.b02.required_decline",
+     "table_id": "T2B.6",
+     "row_id": "b02",
+     "field": "required_decline",
+     "label": "Required EBITDA decline",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.6.b02.ebitda_at_break",
+     "table_id": "T2B.6",
+     "row_id": "b02",
+     "field": "ebitda_at_break",
+     "label": "EBITDA at the break",
+     "status": "not_applicable",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.6.b02.outcome",
+     "table_id": "T2B.6",
+     "row_id": "b02",
+     "field": "outcome",
+     "label": "Outcome",
+     "status": "known",
+     "text": "Not meaningful on a single-quarter base",
+     "shown": "Not meaningful on a single-quarter base",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b03.origin",
+     "table_id": "T2B.6",
+     "row_id": "b03",
+     "field": "origin",
+     "label": "Origin",
+     "status": "known",
+     "text": "Analyst assumption",
+     "shown": "Analyst assumption",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "T2B.6.b03.test",
+     "table_id": "T2B.6",
+     "row_id": "b03",
+     "field": "test",
+     "label": "Test",
+     "status": "known",
+     "text": "Total leverage watch level",
+     "shown": "Total leverage watch level",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.6.b03.level",
+     "table_id": "T2B.6",
+     "row_id": "b03",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "2.5",
+     "shown": "2.50x",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "analyst input",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.6.b03.required_decline",
+     "table_id": "T2B.6",
+     "row_id": "b03",
+     "field": "required_decline",
+     "label": "Required EBITDA decline",
+     "status": "not_applicable",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.6.b03.ebitda_at_break",
+     "table_id": "T2B.6",
+     "row_id": "b03",
+     "field": "ebitda_at_break",
+     "label": "EBITDA at the break",
+     "status": "not_applicable",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.6.b03.outcome",
+     "table_id": "T2B.6",
+     "row_id": "b03",
+     "field": "outcome",
+     "label": "Outcome",
+     "status": "known",
+     "text": "Not meaningful on a single-quarter base",
+     "shown": "Not meaningful on a single-quarter base",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.7.r01.break_point",
+     "table_id": "T2B.7",
+     "row_id": "r01",
+     "field": "break_point",
+     "label": "Break point",
+     "status": "known",
+     "text": "Free cash flow at or below zero",
+     "shown": "Free cash flow at or below zero",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.7.r01.required_decline",
+     "table_id": "T2B.7",
+     "row_id": "r01",
+     "field": "required_decline",
+     "label": "Required EBITDA decline",
+     "status": "known",
+     "unit": "PERCENT",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.3",
+     "shown": "30.0%",
+     "decimals": null,
+     "value_class": "calculated",
+     "formula": "= T2B.6.b01.required_decline",
+     "calculation_id": "calc:T2B.7.r01.required_decline",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.8.s01-b01.stressed_value",
+     "table_id": "T2B.8",
+     "row_id": "s01-b01",
+     "field": "stressed_value",
+     "label": "Stressed value",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0.75",
+     "shown": "0.75",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "From T2B.3 or T2B.4",
+     "calculation_id": "calc:T2B.8.s01-b01.stressed_value",
+     "derives_from": [
+      "fcf",
+      "ebitda"
+     ]
+    },
+    {
+     "fact_id": "T2B.8.s01-b01.level",
+     "table_id": "T2B.8",
+     "row_id": "s01-b01",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0",
+     "shown": "0.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": null,
+     "formula": "From T2B.6",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.8.s01-b01.result",
+     "table_id": "T2B.8",
+     "row_id": "s01-b01",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not crossed",
+     "shown": "Not crossed",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.8.s01-b02.stressed_value",
+     "table_id": "T2B.8",
+     "row_id": "s01-b02",
+     "field": "stressed_value",
+     "label": "Stressed value",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.8.s01-b02.level",
+     "table_id": "T2B.8",
+     "row_id": "s01-b02",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1",
+     "shown": "1.00x",
+     "decimals": null,
+     "value_class": null,
+     "formula": "From T2B.6",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.8.s01-b02.result",
+     "table_id": "T2B.8",
+     "row_id": "s01-b02",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not meaningful on a single-quarter base",
+     "shown": "Not meaningful on a single-quarter base",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.8.s01-b03.stressed_value",
+     "table_id": "T2B.8",
+     "row_id": "s01-b03",
+     "field": "stressed_value",
+     "label": "Stressed value",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.8.s01-b03.level",
+     "table_id": "T2B.8",
+     "row_id": "s01-b03",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "2.5",
+     "shown": "2.50x",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "From T2B.6",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.8.s01-b03.result",
+     "table_id": "T2B.8",
+     "row_id": "s01-b03",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not meaningful on a single-quarter base",
+     "shown": "Not meaningful on a single-quarter base",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.8.s02-b01.stressed_value",
+     "table_id": "T2B.8",
+     "row_id": "s02-b01",
+     "field": "stressed_value",
+     "label": "Stressed value",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "-1",
+     "shown": "(1.00)",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": "calculated",
+     "formula": "From T2B.3 or T2B.4",
+     "calculation_id": "calc:T2B.8.s02-b01.stressed_value",
+     "derives_from": [
+      "fcf",
+      "ebitda",
+      "cash_interest"
+     ]
+    },
+    {
+     "fact_id": "T2B.8.s02-b01.level",
+     "table_id": "T2B.8",
+     "row_id": "s02-b01",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MILLIONS",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "0",
+     "shown": "0.00",
+     "currency": "USD",
+     "scale": "1000000",
+     "decimals": 2,
+     "value_class": null,
+     "formula": "From T2B.6",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.8.s02-b01.result",
+     "table_id": "T2B.8",
+     "row_id": "s02-b01",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Crossed",
+     "shown": "Crossed",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.8.s02-b02.stressed_value",
+     "table_id": "T2B.8",
+     "row_id": "s02-b02",
+     "field": "stressed_value",
+     "label": "Stressed value",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.8.s02-b02.level",
+     "table_id": "T2B.8",
+     "row_id": "s02-b02",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "1",
+     "shown": "1.00x",
+     "decimals": null,
+     "value_class": null,
+     "formula": "From T2B.6",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.8.s02-b02.result",
+     "table_id": "T2B.8",
+     "row_id": "s02-b02",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not meaningful on a single-quarter base",
+     "shown": "Not meaningful on a single-quarter base",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.8.s02-b03.stressed_value",
+     "table_id": "T2B.8",
+     "row_id": "s02-b03",
+     "field": "stressed_value",
+     "label": "Stressed value",
+     "status": "not_applicable",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": null,
+     "shown": null,
+     "limitation": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+    },
+    {
+     "fact_id": "T2B.8.s02-b03.level",
+     "table_id": "T2B.8",
+     "row_id": "s02-b03",
+     "field": "level",
+     "label": "Level",
+     "status": "known",
+     "unit": "MULTIPLE",
+     "period": "Q4 25: 2025-10-01 to 2025-12-31",
+     "amount_exact": "2.5",
+     "shown": "2.50x",
+     "decimals": null,
+     "value_class": "analyst_judgment",
+     "formula": "From T2B.6",
+     "calculation_id": null,
+     "derives_from": []
+    },
+    {
+     "fact_id": "T2B.8.s02-b03.result",
+     "table_id": "T2B.8",
+     "row_id": "s02-b03",
+     "field": "result",
+     "label": "Result",
+     "status": "known",
+     "text": "Not meaningful on a single-quarter base",
+     "shown": "Not meaningful on a single-quarter base",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.9.g01.id",
+     "table_id": "T2B.9",
+     "row_id": "g01",
+     "field": "id",
+     "label": "Gap id",
+     "status": "known",
+     "text": "CP-2A-GAP-001",
+     "shown": "CP-2A-GAP-001",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.9.g01.gap",
+     "table_id": "T2B.9",
+     "row_id": "g01",
+     "field": "gap",
+     "label": "Gap",
+     "status": "known",
+     "text": "Twelve-month leverage and coverage are not calculable for the fourth quarter.",
+     "shown": "Twelve-month leverage and coverage are not calculable for the fourth quarter.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "T2B.9.g01.why_it_matters",
+     "table_id": "T2B.9",
+     "row_id": "g01",
+     "field": "why_it_matters",
+     "label": "Why it matters",
+     "status": "known",
+     "text": "Only stressed earnings and free cash flow can be stated; no ratio and no leverage break point can be.",
+     "shown": "Only stressed earnings and free cash flow can be stated; no ratio and no leverage break point can be.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "T2B.9.g01.affected_analysis",
+     "table_id": "T2B.9",
+     "row_id": "g01",
+     "field": "affected_analysis",
+     "label": "Affected analysis",
+     "status": "known",
+     "text": "Stressed credit metrics and the leverage watch level",
+     "shown": "Stressed credit metrics and the leverage watch level",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "T2B.9.g01.severity",
+     "table_id": "T2B.9",
+     "row_id": "g01",
+     "field": "severity",
+     "label": "Severity",
+     "status": "known",
+     "text": "Material",
+     "shown": "Material",
+     "value_class": null
+    },
+    {
+     "fact_id": "T2B.9.g01.action",
+     "table_id": "T2B.9",
+     "row_id": "g01",
+     "field": "action",
+     "label": "Action",
+     "status": "known",
+     "text": "Base the stress on the twelve-month column ending the fourth quarter.",
+     "shown": "Base the stress on the twelve-month column ending the fourth quarter.",
+     "value_class": "analyst_judgment"
+    }
+   ],
+   "tables": [
+    {
+     "table_id": "T2B.1",
+     "title": "Scenario register",
+     "rows": [
+      {
+       "row_id": "s01",
+       "label": "Moderate downturn",
+       "fact_ids": [
+        "T2B.1.s01.name",
+        "T2B.1.s01.ebitda_decline",
+        "T2B.1.s01.interest_increase",
+        "T2B.1.s01.category",
+        "T2B.1.s01.basis"
+       ]
+      },
+      {
+       "row_id": "s02",
+       "label": "Severe downturn with higher rates",
+       "fact_ids": [
+        "T2B.1.s02.name",
+        "T2B.1.s02.ebitda_decline",
+        "T2B.1.s02.interest_increase",
+        "T2B.1.s02.category",
+        "T2B.1.s02.basis"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.2",
+     "title": "Base operands",
+     "rows": [
+      {
+       "row_id": "ebitda",
+       "label": "EBITDA",
+       "fact_ids": [
+        "T2B.2.ebitda.value",
+        "T2B.2.ebitda.source"
+       ]
+      },
+      {
+       "row_id": "interest",
+       "label": "Cash interest paid (outflow)",
+       "fact_ids": [
+        "T2B.2.interest.value",
+        "T2B.2.interest.source"
+       ]
+      },
+      {
+       "row_id": "fcf",
+       "label": "Free cash flow",
+       "fact_ids": [
+        "T2B.2.fcf.value",
+        "T2B.2.fcf.source"
+       ]
+      },
+      {
+       "row_id": "total_debt",
+       "label": "Total debt",
+       "fact_ids": [
+        "T2B.2.total_debt.value",
+        "T2B.2.total_debt.source"
+       ]
+      },
+      {
+       "row_id": "cash",
+       "label": "Cash and cash equivalents",
+       "fact_ids": [
+        "T2B.2.cash.value",
+        "T2B.2.cash.source"
+       ]
+      },
+      {
+       "row_id": "net_debt",
+       "label": "Net debt",
+       "fact_ids": [
+        "T2B.2.net_debt.value",
+        "T2B.2.net_debt.source"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.3",
+     "title": "Stressed earnings and cash flow",
+     "rows": [
+      {
+       "row_id": "s00",
+       "label": "Base (no stress)",
+       "fact_ids": [
+        "T2B.3.s00.ebitda",
+        "T2B.3.s00.interest",
+        "T2B.3.s00.fcf",
+        "T2B.3.s00.ebitda_change",
+        "T2B.3.s00.fcf_change"
+       ]
+      },
+      {
+       "row_id": "s01",
+       "label": "Moderate downturn",
+       "fact_ids": [
+        "T2B.3.s01.ebitda",
+        "T2B.3.s01.interest",
+        "T2B.3.s01.fcf",
+        "T2B.3.s01.ebitda_change",
+        "T2B.3.s01.fcf_change"
+       ]
+      },
+      {
+       "row_id": "s02",
+       "label": "Severe downturn with higher rates",
+       "fact_ids": [
+        "T2B.3.s02.ebitda",
+        "T2B.3.s02.interest",
+        "T2B.3.s02.fcf",
+        "T2B.3.s02.ebitda_change",
+        "T2B.3.s02.fcf_change"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.4",
+     "title": "Stressed credit metrics",
+     "rows": [
+      {
+       "row_id": "s00",
+       "label": "Base (no stress)",
+       "fact_ids": [
+        "T2B.4.s00.total_leverage",
+        "T2B.4.s00.net_leverage",
+        "T2B.4.s00.interest_coverage",
+        "T2B.4.s00.fcf_to_debt"
+       ]
+      },
+      {
+       "row_id": "s01",
+       "label": "Moderate downturn",
+       "fact_ids": [
+        "T2B.4.s01.total_leverage",
+        "T2B.4.s01.net_leverage",
+        "T2B.4.s01.interest_coverage",
+        "T2B.4.s01.fcf_to_debt"
+       ]
+      },
+      {
+       "row_id": "s02",
+       "label": "Severe downturn with higher rates",
+       "fact_ids": [
+        "T2B.4.s02.total_leverage",
+        "T2B.4.s02.net_leverage",
+        "T2B.4.s02.interest_coverage",
+        "T2B.4.s02.fcf_to_debt"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.5",
+     "title": "Base reconciliation to CP-1",
+     "rows": [
+      {
+       "row_id": "total_leverage",
+       "label": "Total leverage",
+       "fact_ids": [
+        "T2B.5.total_leverage.recomputed",
+        "T2B.5.total_leverage.difference",
+        "T2B.5.total_leverage.result"
+       ]
+      },
+      {
+       "row_id": "net_leverage",
+       "label": "Net leverage",
+       "fact_ids": [
+        "T2B.5.net_leverage.recomputed",
+        "T2B.5.net_leverage.difference",
+        "T2B.5.net_leverage.result"
+       ]
+      },
+      {
+       "row_id": "interest_coverage",
+       "label": "Interest coverage",
+       "fact_ids": [
+        "T2B.5.interest_coverage.recomputed",
+        "T2B.5.interest_coverage.difference",
+        "T2B.5.interest_coverage.result"
+       ]
+      },
+      {
+       "row_id": "fcf_to_debt",
+       "label": "Free cash flow to debt",
+       "fact_ids": [
+        "T2B.5.fcf_to_debt.recomputed",
+        "T2B.5.fcf_to_debt.difference",
+        "T2B.5.fcf_to_debt.result"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.6",
+     "title": "Break-point register",
+     "rows": [
+      {
+       "row_id": "b01",
+       "label": "Free cash flow at or below zero",
+       "fact_ids": [
+        "T2B.6.b01.origin",
+        "T2B.6.b01.test",
+        "T2B.6.b01.level",
+        "T2B.6.b01.required_decline",
+        "T2B.6.b01.ebitda_at_break",
+        "T2B.6.b01.outcome"
+       ]
+      },
+      {
+       "row_id": "b02",
+       "label": "EBITDA no longer covers cash interest",
+       "fact_ids": [
+        "T2B.6.b02.origin",
+        "T2B.6.b02.test",
+        "T2B.6.b02.level",
+        "T2B.6.b02.required_decline",
+        "T2B.6.b02.ebitda_at_break",
+        "T2B.6.b02.outcome"
+       ]
+      },
+      {
+       "row_id": "b03",
+       "label": "Total leverage watch level",
+       "fact_ids": [
+        "T2B.6.b03.origin",
+        "T2B.6.b03.test",
+        "T2B.6.b03.level",
+        "T2B.6.b03.required_decline",
+        "T2B.6.b03.ebitda_at_break",
+        "T2B.6.b03.outcome"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.7",
+     "title": "First-break ranking",
+     "rows": [
+      {
+       "row_id": "r01",
+       "label": "Rank 1",
+       "fact_ids": [
+        "T2B.7.r01.break_point",
+        "T2B.7.r01.required_decline"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.8",
+     "title": "Scenario against break points",
+     "rows": [
+      {
+       "row_id": "s01-b01",
+       "label": "Moderate downturn \u00b7 Free cash flow at or below zero",
+       "fact_ids": [
+        "T2B.8.s01-b01.stressed_value",
+        "T2B.8.s01-b01.level",
+        "T2B.8.s01-b01.result"
+       ]
+      },
+      {
+       "row_id": "s01-b02",
+       "label": "Moderate downturn \u00b7 EBITDA no longer covers cash interest",
+       "fact_ids": [
+        "T2B.8.s01-b02.stressed_value",
+        "T2B.8.s01-b02.level",
+        "T2B.8.s01-b02.result"
+       ]
+      },
+      {
+       "row_id": "s01-b03",
+       "label": "Moderate downturn \u00b7 Total leverage watch level",
+       "fact_ids": [
+        "T2B.8.s01-b03.stressed_value",
+        "T2B.8.s01-b03.level",
+        "T2B.8.s01-b03.result"
+       ]
+      },
+      {
+       "row_id": "s02-b01",
+       "label": "Severe downturn with higher rates \u00b7 Free cash flow at or below zero",
+       "fact_ids": [
+        "T2B.8.s02-b01.stressed_value",
+        "T2B.8.s02-b01.level",
+        "T2B.8.s02-b01.result"
+       ]
+      },
+      {
+       "row_id": "s02-b02",
+       "label": "Severe downturn with higher rates \u00b7 EBITDA no longer covers cash interest",
+       "fact_ids": [
+        "T2B.8.s02-b02.stressed_value",
+        "T2B.8.s02-b02.level",
+        "T2B.8.s02-b02.result"
+       ]
+      },
+      {
+       "row_id": "s02-b03",
+       "label": "Severe downturn with higher rates \u00b7 Total leverage watch level",
+       "fact_ids": [
+        "T2B.8.s02-b03.stressed_value",
+        "T2B.8.s02-b03.level",
+        "T2B.8.s02-b03.result"
+       ]
+      }
+     ]
+    },
+    {
+     "table_id": "T2B.9",
+     "title": "Gaps ledger",
+     "rows": [
+      {
+       "row_id": "g01",
+       "label": "Gap 1",
+       "fact_ids": [
+        "T2B.9.g01.id",
+        "T2B.9.g01.gap",
+        "T2B.9.g01.why_it_matters",
+        "T2B.9.g01.affected_analysis",
+        "T2B.9.g01.severity",
+        "T2B.9.g01.action"
+       ]
+      }
+     ]
+    }
+   ],
+   "claims": [
+    {
+     "claim_id": "T2B.1.s01",
+     "text": "A moderate fall in volumes lowers quarterly earnings while debt and cash interest stay as reported.",
+     "limitation": null,
+     "citations": [],
+     "cp1_references": []
+    },
+    {
+     "claim_id": "T2B.1.s02",
+     "text": "A severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+     "limitation": "No rate curve or hedging disclosure supports the size of the interest increase.",
+     "citations": [],
+     "cp1_references": []
+    },
+    {
+     "claim_id": "T2B.4.s01",
+     "text": "Under the Moderate downturn scenario, stressed EBITDA is {T2B.3.s01.ebitda|US$ m} against {T2B.3.s00.ebitda|US$ m} at base, free cash flow is {T2B.3.s01.fcf|US$ m}, net leverage is [T2B.4.s01.net_leverage] and interest coverage is [T2B.4.s01.interest_coverage].",
+     "limitation": null,
+     "citations": [],
+     "cp1_references": []
+    },
+    {
+     "claim_id": "T2B.4.s02",
+     "text": "Under the Severe downturn with higher rates scenario, stressed EBITDA is {T2B.3.s02.ebitda|US$ m} against {T2B.3.s00.ebitda|US$ m} at base, free cash flow is {T2B.3.s02.fcf|US$ m}, net leverage is [T2B.4.s02.net_leverage] and interest coverage is [T2B.4.s02.interest_coverage].",
+     "limitation": null,
+     "citations": [],
+     "cp1_references": []
+    },
+    {
+     "claim_id": "T2B.7.first",
+     "text": "The first test reached is Free cash flow at or below zero at an EBITDA decline of {T2B.7.r01.required_decline|%}.",
+     "limitation": null,
+     "citations": [],
+     "cp1_references": []
+    },
+    {
+     "claim_id": "T2B.1.assessment",
+     "text": "The chosen base period is a single quarter, so the twelve-month ratios are not available and only flow results can be stated.",
+     "limitation": "Twelve-month ratios are not calculable for the chosen quarter.",
+     "citations": [],
+     "cp1_references": []
+    }
+   ],
+   "own_limitations": [
+    "Scenario shock sizes are analyst assumptions without a source citation.",
+    "Break-point watch levels are analyst assumptions, not covenants; no covenant owner is an input.",
+    "Stress is applied to the base period's flows with debt and cash held at their reported closing balances; no forward cash build, refinancing or mitigating action is modelled.",
+    "Cash taxes, capital expenditure and working capital are held at the base period; no tax shield is taken.",
+    "Liquidity is not tested: stressed free cash flow is not set against the cash balance or any undrawn facility and no liquidity runway is computed; the liquidity runway belongs to CP-2D.",
+    "No covenant test is applied: the watch levels are not covenant tests; covenant compliance belongs to CP-4.",
+    "No maturity or refinancing wall is stressed: debt maturities and refinancing risk belong to CP-2D and CP-3C.",
+    "Break points hold cash interest at the base period level (no interest increase). The break at which EBITDA no longer covers cash interest compares same-period flows but is gated like a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period.",
+    "Ratios are not calculated on a single-quarter base: CP-1 reads each ratio from the twelve months ending that quarter, while CP-2A's base operands are one quarter's flows.",
+    "Gap (Material): Twelve-month leverage and coverage are not calculable for the fourth quarter."
+   ],
+   "stress": {
+    "s00": {
+     "ebitda": "7.5",
+     "interest": "1.25",
+     "fcf": "2.25",
+     "total_leverage": null,
+     "net_leverage": null,
+     "interest_coverage": null,
+     "fcf_to_debt": null,
+     "not_calculable": {
+      "total_leverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "net_leverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "interest_coverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "fcf_to_debt": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+     }
+    },
+    "s01": {
+     "ebitda": "6",
+     "interest": "1.25",
+     "fcf": "0.75",
+     "total_leverage": null,
+     "net_leverage": null,
+     "interest_coverage": null,
+     "fcf_to_debt": null,
+     "not_calculable": {
+      "total_leverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "net_leverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "interest_coverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "fcf_to_debt": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+     }
+    },
+    "s02": {
+     "ebitda": "4.5",
+     "interest": "1.5",
+     "fcf": "-1",
+     "total_leverage": null,
+     "net_leverage": null,
+     "interest_coverage": null,
+     "fcf_to_debt": null,
+     "not_calculable": {
+      "total_leverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "net_leverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "interest_coverage": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base",
+      "fcf_to_debt": "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+     }
+    }
+   },
+   "break_points": [
+    {
+     "break_id": "b01",
+     "origin": "Definition",
+     "test": "Free cash flow at or below zero",
+     "outcome": "Reached at the stated decline",
+     "required_decline": "0.3",
+     "required_decline_fraction": "3/10",
+     "required_decline_shown": "30.0%",
+     "ebitda_at_break": "5.25",
+     "crossings": {
+      "s01": "Not crossed",
+      "s02": "Crossed"
+     },
+     "round_trip_exact_in_fraction": true
+    },
+    {
+     "break_id": "b02",
+     "origin": "Definition",
+     "test": "EBITDA no longer covers cash interest",
+     "outcome": "Not meaningful on a single-quarter base",
+     "required_decline": null,
+     "required_decline_fraction": null,
+     "required_decline_shown": null,
+     "ebitda_at_break": null,
+     "crossings": {
+      "s01": "Not meaningful on a single-quarter base",
+      "s02": "Not meaningful on a single-quarter base"
+     },
+     "round_trip_exact_in_fraction": false
+    },
+    {
+     "break_id": "b03",
+     "origin": "Analyst assumption",
+     "test": "Total leverage watch level",
+     "outcome": "Not meaningful on a single-quarter base",
+     "required_decline": null,
+     "required_decline_fraction": null,
+     "required_decline_shown": null,
+     "ebitda_at_break": null,
+     "crossings": {
+      "s01": "Not meaningful on a single-quarter base",
+      "s02": "Not meaningful on a single-quarter base"
+     },
+     "round_trip_exact_in_fraction": false
+    }
+   ],
+   "first_break": {
+    "break_id": "b01",
+    "test": "Free cash flow at or below zero",
+    "required_decline_shown": "30.0%"
+   },
+   "ranking": [
+    {
+     "rank": 1,
+     "break_id": "b01",
+     "test": "Free cash flow at or below zero",
+     "required_decline_shown": "30.0%"
+    }
+   ],
+   "module_status": "composer_only",
+   "FP05": {
+    "pathway": "distressed_restructuring",
+    "blocks": {
+     "downside-stress": {
+      "title": "Downside stress",
+      "owner": "CP-2A",
+      "kind": "dense",
+      "state": "populated",
+      "tabs": [
+       {
+        "table_id": "T2B.3",
+        "label": "Earnings and cash flow",
+        "rows": [
+         {
+          "row_id": "s00",
+          "label": "Base (no stress)",
+          "cells": [
+           {
+            "fact_id": "T2B.3.s00.ebitda",
+            "field": "ebitda",
+            "shown": "7.50",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s00.interest",
+            "field": "interest",
+            "shown": "1.25",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s00.fcf",
+            "field": "fcf",
+            "shown": "2.25",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s00.ebitda_change",
+            "field": "ebitda_change",
+            "shown": "0.00",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s00.fcf_change",
+            "field": "fcf_change",
+            "shown": "0.00",
+            "state": "known"
+           }
+          ]
+         },
+         {
+          "row_id": "s01",
+          "label": "Moderate downturn",
+          "cells": [
+           {
+            "fact_id": "T2B.3.s01.ebitda",
+            "field": "ebitda",
+            "shown": "6.00",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s01.interest",
+            "field": "interest",
+            "shown": "1.25",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s01.fcf",
+            "field": "fcf",
+            "shown": "0.75",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s01.ebitda_change",
+            "field": "ebitda_change",
+            "shown": "(1.50)",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s01.fcf_change",
+            "field": "fcf_change",
+            "shown": "(1.50)",
+            "state": "known"
+           }
+          ]
+         },
+         {
+          "row_id": "s02",
+          "label": "Severe downturn with higher rates",
+          "cells": [
+           {
+            "fact_id": "T2B.3.s02.ebitda",
+            "field": "ebitda",
+            "shown": "4.50",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s02.interest",
+            "field": "interest",
+            "shown": "1.50",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s02.fcf",
+            "field": "fcf",
+            "shown": "(1.00)",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s02.ebitda_change",
+            "field": "ebitda_change",
+            "shown": "(3.00)",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.3.s02.fcf_change",
+            "field": "fcf_change",
+            "shown": "(3.25)",
+            "state": "known"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "table_id": "T2B.4",
+        "label": "Credit metrics",
+        "rows": [
+         {
+          "row_id": "s00",
+          "label": "Base (no stress)",
+          "cells": [
+           {
+            "fact_id": "T2B.4.s00.total_leverage",
+            "field": "total_leverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s00.net_leverage",
+            "field": "net_leverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s00.interest_coverage",
+            "field": "interest_coverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s00.fcf_to_debt",
+            "field": "fcf_to_debt",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           }
+          ]
+         },
+         {
+          "row_id": "s01",
+          "label": "Moderate downturn",
+          "cells": [
+           {
+            "fact_id": "T2B.4.s01.total_leverage",
+            "field": "total_leverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s01.net_leverage",
+            "field": "net_leverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s01.interest_coverage",
+            "field": "interest_coverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s01.fcf_to_debt",
+            "field": "fcf_to_debt",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           }
+          ]
+         },
+         {
+          "row_id": "s02",
+          "label": "Severe downturn with higher rates",
+          "cells": [
+           {
+            "fact_id": "T2B.4.s02.total_leverage",
+            "field": "total_leverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s02.net_leverage",
+            "field": "net_leverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s02.interest_coverage",
+            "field": "interest_coverage",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.4.s02.fcf_to_debt",
+            "field": "fcf_to_debt",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "break-points": {
+      "title": "Break points",
+      "owner": "CP-2A",
+      "kind": "dense",
+      "state": "populated",
+      "tabs": [
+       {
+        "table_id": "T2B.6",
+        "label": "Break-point register",
+        "rows": [
+         {
+          "row_id": "b01",
+          "label": "Free cash flow at or below zero",
+          "cells": [
+           {
+            "fact_id": "T2B.6.b01.origin",
+            "field": "origin",
+            "shown": "Definition",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b01.test",
+            "field": "test",
+            "shown": "Free cash flow at or below zero",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b01.level",
+            "field": "level",
+            "shown": "0.00",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b01.required_decline",
+            "field": "required_decline",
+            "shown": "30.0%",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b01.ebitda_at_break",
+            "field": "ebitda_at_break",
+            "shown": "5.25",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b01.outcome",
+            "field": "outcome",
+            "shown": "Reached at the stated decline",
+            "state": "known"
+           }
+          ]
+         },
+         {
+          "row_id": "b02",
+          "label": "EBITDA no longer covers cash interest",
+          "cells": [
+           {
+            "fact_id": "T2B.6.b02.origin",
+            "field": "origin",
+            "shown": "Definition",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b02.test",
+            "field": "test",
+            "shown": "EBITDA no longer covers cash interest",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b02.level",
+            "field": "level",
+            "shown": "1.00x",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b02.required_decline",
+            "field": "required_decline",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.6.b02.ebitda_at_break",
+            "field": "ebitda_at_break",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.6.b02.outcome",
+            "field": "outcome",
+            "shown": "Not meaningful on a single-quarter base",
+            "state": "known"
+           }
+          ]
+         },
+         {
+          "row_id": "b03",
+          "label": "Total leverage watch level",
+          "cells": [
+           {
+            "fact_id": "T2B.6.b03.origin",
+            "field": "origin",
+            "shown": "Analyst assumption",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b03.test",
+            "field": "test",
+            "shown": "Total leverage watch level",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b03.level",
+            "field": "level",
+            "shown": "2.50x",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.6.b03.required_decline",
+            "field": "required_decline",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.6.b03.ebitda_at_break",
+            "field": "ebitda_at_break",
+            "shown": "\u2205 G# n.m.",
+            "state": "not_meaningful"
+           },
+           {
+            "fact_id": "T2B.6.b03.outcome",
+            "field": "outcome",
+            "shown": "Not meaningful on a single-quarter base",
+            "state": "known"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "table_id": "T2B.7",
+        "label": "First-break ranking",
+        "rows": [
+         {
+          "row_id": "r01",
+          "label": "Rank 1",
+          "cells": [
+           {
+            "fact_id": "T2B.7.r01.break_point",
+            "field": "break_point",
+            "shown": "Free cash flow at or below zero",
+            "state": "known"
+           },
+           {
+            "fact_id": "T2B.7.r01.required_decline",
+            "field": "required_decline",
+            "shown": "30.0%",
+            "state": "known"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    "other_blocks": "every other distressed_restructuring block keeps its idle wording (No module produces this block yet / unrun producers); CP-2A fills none of them",
+    "evidence_rail_tables": [
+     "T2B.1",
+     "T2B.2",
+     "T2B.5",
+     "T2B.8",
+     "cp1_references"
+    ],
+    "limitations_rail_tables": [
+     "T2B.9"
+    ]
+   },
+   "execution": "composer_only"
+  },
   "refused": {
    "execution": "run",
    "plan_order": [

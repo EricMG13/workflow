@@ -1,5 +1,5 @@
 """CP-2D (Liquidity) owner core: the Stage 1 calculation (docs/CP2D-OWNER-LEASE.md, Method,
-as amended by docs/rulings/2026-10-28-stage1.md section CP-2D, rounds 2 and 3).
+as amended by docs/rulings/2026-10-28-stage1.md, CP-2D sections of rounds 2 to 6f).
 
 Pure functions over typed inputs. Python owns every figure: sources and uses (T2E.1), the
 liquidity position (T2E.2), the run-rate cash runway (T2E.3), the maturity wall (T2E.4) and
@@ -73,7 +73,13 @@ class LiquidityBridgeSubmission(Contract):
 
 @dataclass(frozen=True)
 class Facility:
-    """One CP-1 T4.18 facility row at the balance date (QUARTER period over its FY alias)."""
+    """One CP-1 T4.18 facility row at the balance date (QUARTER period over its FY alias).
+
+    Ruling A5 (round 6): ``currency`` and ``name`` are the row's own ``currency`` and
+    ``facility_name`` text facts, taken from the same row (by ``facility_id``) as the bound
+    principal. They are never read through ``financial_series._maturity_figure``, which raises on
+    a non-USD row and would make the 2D5 path unreachable. The Stage 2 reader builds this.
+    """
 
     facility_id: str
     name: str
@@ -118,8 +124,8 @@ class Operands:
     undrawn_rcf: Decimal | None
     liquidity: Decimal | None
     liquidity_to_debt: Decimal | None
-    # T4.18 facility schedule
-    facilities: tuple[Facility, ...]
+    # T4.18 facility schedule: None when the schedule is absent, () when it lists no facility
+    facilities: tuple[Facility, ...] | None
 
 
 @dataclass(frozen=True)
@@ -129,6 +135,8 @@ class Cp2dInputs:
     submission: LiquidityBridgeSubmission
     # The CP-1 fact ids the read view offers (Stage 2 fills it from the view).
     offered_refs: frozenset[str]
+    # Of those, the T4.18 maturity_date fact ids (ruling D-5).
+    maturity_date_refs: frozenset[str]
 
 
 # --- values that are known or carry the reason they are not ------------------------------------
@@ -182,6 +190,10 @@ REV_DRAWN = "Revolver drawings not disclosed in the CP-1 register"
 REV_UNDRAWN = "Undrawn revolver not calculable: commitment undisclosed"
 REV_AVAILABLE = "Available liquidity not calculable: revolver undisclosed"
 REV_RATIO = "Not calculable: available liquidity missing"
+# Commitment known, drawings missing (ruling L1).
+DRAWINGS_UNDRAWN = "Undrawn revolver not calculable: drawings undisclosed"
+DRAWINGS_AVAILABLE = "Available liquidity not calculable: revolver drawings undisclosed"
+RUNWAY_NO_DRAWINGS = "Not calculable: revolver drawings undisclosed"
 FX_REASON = "Not calculable: facility {fid} is in {ccy}, not USD; no FX conversion is applied"
 CURRENCY_UNSTATED = (
     "Not calculable: facility {fid} currency is not stated; no FX conversion is applied"
@@ -189,7 +201,10 @@ CURRENCY_UNSTATED = (
 DATE_UNSTATED = "Not calculable: facility {fid} maturity date is not stated"
 PRINCIPAL_UNSTATED = "Not calculable: facility {fid} principal is not stated"
 ZERO_DEBT = "Not meaningful: total debt is zero (ZERO_OR_NEGATIVE_DENOMINATOR)"
+NEGATIVE_DEBT = "Not meaningful: total debt is negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
+# An absent T4.18 schedule, and one that lists no facility (ruling D-3).
 SCHEDULE_MISSING = missing_reason("T4.18 facility schedule")
+SCHEDULE_EMPTY = "Not calculable: the T4.18 facility schedule lists no facility"
 
 
 def _op(operands: Operands, name: str) -> Num:
@@ -224,8 +239,10 @@ def _ratio(numerator: Num, denominator: Num) -> Num:
         return numerator
     if isinstance(denominator, Gap):
         return denominator
-    if denominator <= 0:
+    if denominator == 0:
         return Gap(ZERO_DEBT, applicable=False)
+    if denominator < 0:
+        return Gap(NEGATIVE_DEBT, applicable=False)
     return CP1_CONTEXT.divide(numerator, denominator)
 
 
@@ -238,9 +255,10 @@ def add_months(start: date, months: int) -> date:
 
 
 def months_between(start: date, end: date) -> int:
-    """Whole calendar months; one less when the later day-of-month is earlier."""
+    """Ruling A1 (round 6): the largest n with ``add_months(start, n) <= end``, so months below
+    the horizon mean inside it and months above it mean outside."""
     months = (end.year - start.year) * 12 + (end.month - start.month)
-    return months - 1 if end.day < start.day else months
+    return months - 1 if add_months(start, months) > end else months
 
 
 # --- facilities (rulings 2D5, 2D6, 2D-c) ------------------------------------------------------
@@ -269,7 +287,10 @@ def _date_gap(f: Facility) -> Gap | None:
 
 
 def _term(f: Facility, value: Decimal | None, term: str) -> Num:
-    return Gap(missing_reason(f"facility {f.facility_id} {term}")) if value is None else value
+    """Ruling D-3: the 2D-c frame for commitment, drawn amount and annual amortisation."""
+    if value is None:
+        return Gap(f"Not calculable: facility {f.facility_id} {term} is not stated")
+    return value
 
 
 def _principal(f: Facility) -> Num:
@@ -297,12 +318,22 @@ def _amortisation(f: Facility, horizon_months: int) -> Num:
     return min(annual * horizon_months / 12, principal)
 
 
+def _schedule_gap(operands: Operands) -> Gap | None:
+    """Ruling D-3: an absent schedule is missing; an empty one is missing unless total debt is a
+    known zero, when nothing is owed and the schedule totals are a known zero."""
+    if operands.facilities is None:
+        return Gap(SCHEDULE_MISSING)
+    if operands.facilities or operands.total_debt_bs == 0:
+        return None
+    return Gap(SCHEDULE_EMPTY)
+
+
 def _schedule(
-    ordered: tuple[Facility, ...], horizon_months: int, horizon_end: date
+    ordered: tuple[Facility, ...], horizon_months: int, horizon_end: date, absent: Gap | None
 ) -> tuple[Num, Num]:
     """(maturities, amortisation) inside the horizon, each missing at its first gap."""
-    if not ordered:
-        return Gap(SCHEDULE_MISSING), Gap(SCHEDULE_MISSING)
+    if absent is not None:
+        return absent, absent
     maturities: Num = _ZERO
     amortisation: Num = _ZERO
     for f in ordered:
@@ -319,10 +350,10 @@ def _schedule(
     return maturities, amortisation
 
 
-def _undrawn_term(ordered: tuple[Facility, ...]) -> Num:
+def _undrawn_term(ordered: tuple[Facility, ...], absent: Gap | None) -> Num:
     """Undrawn term commitment: the sum of commitment less drawn (shown, not counted)."""
-    if not ordered:
-        return Gap(SCHEDULE_MISSING)
+    if absent is not None:
+        return absent
     total: Num = _ZERO
     for f in ordered:
         undrawn = _diff(
@@ -332,10 +363,10 @@ def _undrawn_term(ordered: tuple[Facility, ...]) -> Num:
     return total
 
 
-def _inside(ordered: tuple[Facility, ...], horizon_end: date) -> bool | Gap:
+def _inside(ordered: tuple[Facility, ...], horizon_end: date, absent: Gap | None) -> bool | Gap:
     """Whether any facility matures inside the horizon; missing while an undated one decides."""
-    if not ordered:
-        return Gap(SCHEDULE_MISSING)
+    if absent is not None:
+        return absent
     if any(f.maturity_date is not None and f.maturity_date <= horizon_end for f in ordered):
         return True
     undated = next((g for f in ordered if (g := _date_gap(f)) is not None), None)
@@ -399,6 +430,7 @@ def _runway(
     cash: Num,
     undrawn: Num,
     minimum_cash: Decimal | None,
+    revolver_reason: str = RUNWAY_NO_REVOLVER,
 ) -> tuple[RunwayState, str | None, Decimal | None]:
     """Months until cash reaches minimum cash from run-rate cash flow alone (Method 3)."""
     if minimum_cash is None:
@@ -411,7 +443,7 @@ def _runway(
         # A revolver is never negative, so cash alone clearing the minimum is enough.
         if annual >= 0 and cash - minimum_cash >= 0:
             return "not_reached", None, None
-        return "missing", RUNWAY_NO_REVOLVER, None
+        return "missing", revolver_reason, None
     start = cash + undrawn - minimum_cash
     if annual >= 0:
         if start >= 0:
@@ -472,8 +504,10 @@ def compose_bridge(
         minimum_cash = _ZERO  # "-0" is stored unsigned
     o = operands
     horizon_end = add_months(balance_date, horizon_months)
-    ordered = _ordered(o.facilities)
+    ordered = _ordered(o.facilities or ())
+    absent = _schedule_gap(o)
     undisclosed = o.rcf_commitment is None
+    drawings = not undisclosed and o.rcf_drawn is None
     with localcontext(_CONTEXT):
         # "Closing cash" in Methods 3 and 5 is T4.6 cash_bs (ruling 2D7).
         cash = _op(o, "cash_bs")
@@ -483,22 +517,24 @@ def compose_bridge(
         )
         monthly = annual if isinstance(annual, Gap) else annual / 12
         over_horizon = annual if isinstance(annual, Gap) else annual * horizon_months / 12
-        maturities, amortisation = _schedule(ordered, horizon_months, horizon_end)
+        maturities, amortisation = _schedule(ordered, horizon_months, horizon_end, absent)
         end_cash = _diff(_total(cash, over_horizon), _total(amortisation, maturities))
-        undrawn: Num = (
-            Gap(REV_UNDRAWN)
-            if undisclosed
-            else _diff(_op(o, "rcf_commitment"), _op(o, "rcf_drawn"))
-        )
+        undrawn: Num = _diff(_op(o, "rcf_commitment"), _op(o, "rcf_drawn"))
         available = _total(cash, undrawn)
         resources = _total(end_cash, undrawn)
-        if undisclosed and not isinstance(cash, Gap):
-            available = Gap(REV_AVAILABLE)
-        if undisclosed and not isinstance(end_cash, Gap):
-            resources = Gap(RUNWAY_NO_REVOLVER)
+        revolver_reason = RUNWAY_NO_DRAWINGS if drawings else RUNWAY_NO_REVOLVER
+        if undisclosed or drawings:
+            undrawn = Gap(REV_UNDRAWN if undisclosed else DRAWINGS_UNDRAWN)
+            if not isinstance(cash, Gap):
+                available = Gap(REV_AVAILABLE if undisclosed else DRAWINGS_AVAILABLE)
+            if not isinstance(end_cash, Gap):
+                resources = Gap(revolver_reason)
         to_debt = _ratio(available, _op(o, "total_debt_bs"))
+        # Round 6f (e): with drawings undisclosed the ratio carries the L1 undrawn string.
         if isinstance(available, Gap) and available.reason == REV_AVAILABLE:
             to_debt = Gap(REV_RATIO)
+        if isinstance(available, Gap) and available.reason == DRAWINGS_AVAILABLE:
+            to_debt = Gap(DRAWINGS_UNDRAWN)
         if minimum_cash is None:
             cash_only: Num = Gap(NOT_ASSESSED)
             headroom: Num = Gap(NOT_ASSESSED)
@@ -507,7 +543,11 @@ def compose_bridge(
             headroom = _diff(resources, minimum_cash)
         gap = headroom if isinstance(headroom, Gap) else max(_ZERO, -headroom)
         state, reason, months = _runway(
-            annual=annual, cash=cash, undrawn=undrawn, minimum_cash=minimum_cash
+            annual=annual,
+            cash=cash,
+            undrawn=undrawn,
+            minimum_cash=minimum_cash,
+            revolver_reason=revolver_reason,
         )
         # Sources and uses use CP-1's financing total; the lines are display rows (2D9).
         financing = _op(o, "financing")
@@ -528,7 +568,7 @@ def compose_bridge(
         )
         lines_difference = _diff(lines, financing)
         wall = _wall(ordered, balance_date, horizon_end, _op(o, "total_debt_bs"))
-        term_undrawn = _undrawn_term(ordered)
+        term_undrawn = _undrawn_term(ordered, absent)
     return Bridge(
         horizon_months=horizon_months,
         minimum_cash=minimum_cash,
@@ -538,7 +578,7 @@ def compose_bridge(
         run_rate_net_cash_flow_annual=annual,
         run_rate_net_cash_flow_monthly=monthly,
         run_rate_net_cash_flow_horizon=over_horizon,
-        maturity_inside_horizon=_inside(ordered, horizon_end),
+        maturity_inside_horizon=_inside(ordered, horizon_end, absent),
         maturities_in_horizon=maturities,
         amortisation_in_horizon=amortisation,
         cash_at_horizon_end_before_refinancing=end_cash,
@@ -609,6 +649,16 @@ def amount_text(value: Decimal) -> str:
     return format_value(value, "amount", "known") + " US$ m"
 
 
+def exact_amount_text(value: Decimal) -> str:
+    """Ruling L3: a difference spelled exactly (normalised, negatives in brackets, no
+    rounding), in US$ m. Trailing zeros are stripped from the text: ``Decimal.normalize`` would
+    round to the context precision."""
+    body = format(value.copy_abs(), "f")
+    if "." in body:
+        body = body.rstrip("0").rstrip(".")
+    return (f"({body})" if value < 0 else body) + " US$ m"
+
+
 def _months_text(value: Decimal | int) -> str:
     return f"{value} months"
 
@@ -647,6 +697,13 @@ FUNDING_GAP_ON_CASH_ALONE = (
     "The funding gap is not calculated because the revolver is undisclosed; the cash-only "
     "headroom over minimum cash is shown as a lower bound."
 )
+FUNDING_GAP_ON_CASH_ALONE_DRAWINGS = (
+    "The funding gap is not calculated because the revolver drawings are undisclosed; the "
+    "cash-only headroom over minimum cash is shown as a lower bound."
+)
+SCHEDULE_EMPTY_LIMITATION = (
+    "The T4.18 facility schedule lists no facility; maturity-wall figures are not calculated."
+)
 
 
 def _known_nonzero(value: Num) -> Decimal | None:
@@ -677,7 +734,7 @@ def _facility_limitations(f: Facility) -> list[tuple[str, str, str]]:
             out.append(
                 (
                     f"Facility {term} ({fid})",
-                    "Limitation",
+                    "Gap",
                     TERM_LIMITATION.format(fid=fid, term=term),
                 )
             )
@@ -706,7 +763,7 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
             (
                 "Sources and uses difference",
                 "Limitation",
-                SOURCES_AND_USES_DIFFER.format(amount=amount_text(difference)),
+                SOURCES_AND_USES_DIFFER.format(amount=exact_amount_text(difference)),
             )
         )
     lines = _known_nonzero(bridge.financing_lines_difference)
@@ -715,15 +772,24 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
             (
                 "Financing lines difference",
                 "Limitation",
-                FINANCING_LINES_DIFFER.format(amount=amount_text(lines)),
+                FINANCING_LINES_DIFFER.format(amount=exact_amount_text(lines)),
             )
         )
+    if isinstance(bridge.maturities_in_horizon, Gap) and (
+        bridge.maturities_in_horizon.reason == SCHEDULE_EMPTY
+    ):
+        out.append(("Facility schedule", "Gap", SCHEDULE_EMPTY_LIMITATION))
     for f in bridge.ordered_facilities:
         out += _facility_limitations(f)
     for label, text in check_cp1_totals(operands=operands, bridge=bridge):
         out.append((f"CP-1 {label} cross-check", "Limitation", text))
     if isinstance(bridge.undrawn_revolver, Gap):
-        out.append(("Funding gap on cash alone", "Limitation", FUNDING_GAP_ON_CASH_ALONE))
+        text = (
+            FUNDING_GAP_ON_CASH_ALONE_DRAWINGS
+            if bridge.undrawn_revolver.reason == DRAWINGS_UNDRAWN
+            else FUNDING_GAP_ON_CASH_ALONE
+        )
+        out.append(("Funding gap on cash alone", "Limitation", text))
     return tuple(out)
 
 
@@ -1058,20 +1124,42 @@ LIQ_UNDISCLOSED = (
     "Available liquidity at {d} is not calculated: [T2E.2.r07] needs the undrawn committed "
     "revolver, which is undisclosed; cash is {cash}."
 )
+LIQ_DRAWINGS = (
+    "Available liquidity at {d} is not calculated: [T2E.2.r07] needs the revolver drawings, "
+    "which are undisclosed; cash is {cash}."
+)
 GAP_UNDISCLOSED = (
     "The funding gap is not calculated because the revolver is undisclosed; cash-only headroom "
     "over the assumed minimum cash is {headroom}."
 )
+GAP_DRAWINGS = (
+    "The funding gap is not calculated because the revolver drawings are undisclosed; cash-only "
+    "headroom over the assumed minimum cash is {headroom}."
+)
+# Ruling L5: claims name no facility id.
 MAT_FX = (
     "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
-    "facility {fid} in USD; no FX conversion is applied."
+    "every facility in USD, and one is not; no FX conversion is applied."
 )
-# Not fixed by any ruling; the MAT-01 FX form applied to the funding gap (reported to LEAD).
-GAP_FX = (
-    "The funding gap is not calculated: [T2E.5.r07] needs facility {fid} in USD; no FX "
-    "conversion is applied."
+# Round 6f (d): an unstated currency does not prove "one is not" in USD; MAT_FX needs a stated
+# foreign currency.
+MAT_CURRENCY = (
+    "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
+    "every facility with its currency stated, and one is not; no FX conversion is applied."
 )
-GAP_MISSING = "The funding gap is not calculated: [T2E.5.r07] ({reason})."
+# Ruling D-2 forms 3 (with L5) and 4.
+GAP_FACILITY = (
+    "The funding gap is not calculated: [T2E.5.r07] needs every facility {need}, and one is not."
+)
+GAP_OPERAND = "The funding gap is not calculated: [T2E.5.r07] needs {label}, which is missing."
+# Form 4 labels for the schedule itself; no ruling fixes them (reported to LEAD). They omit
+# "T4.18": a claim's literal text may carry no bare figure (prose.bare_figures).
+SCHEDULE_LABELS = {
+    SCHEDULE_MISSING: "the facility schedule",
+    SCHEDULE_EMPTY: "a facility in the facility schedule",
+}
+# The gap's operands in formula order: cash at horizon end, then the revolver (form 5).
+_GAP_OPERANDS = ("cash_bs", "cfo", "investing", "financing", "net_debt_issuance")
 GAP_NOT_ASSESSED = "The funding gap is not calculated: the minimum cash has not been assessed."
 
 
@@ -1114,11 +1202,45 @@ def _currency_facility(b: Bridge) -> Facility | None:
     return next((f for f in b.ordered_facilities if _currency_gap(f) is not None), None)
 
 
-def _claims(b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimText, ...]:
+def _facility_need(f: Facility, horizon_end: date) -> str | None:
+    """Ruling D-2 form 3: what a facility lacks for the funding gap, in the ruled order (FX,
+    currency, maturity date, principal; annual amortisation when it matures after the horizon)."""
+    if f.currency is not None and f.currency != CURRENCY:
+        return "in USD"
+    if f.currency is None:
+        return "with its currency stated"
+    if f.maturity_date is None:
+        return "with its maturity date stated"
+    if f.principal is None:
+        return "with its principal stated"
+    if f.annual_amortisation is None and f.maturity_date > horizon_end:
+        return "with its annual amortisation stated"
+    return None
+
+
+def _gap_missing(o: Operands, b: Bridge) -> str | None:
+    """Forms 3 and 4 of ruling D-2 for a missing funding gap, or None for the revolver form."""
+    for f in b.ordered_facilities:
+        need = _facility_need(f, b.horizon_end)
+        if need is not None:
+            return GAP_FACILITY.format(need=need)
+    for name in _GAP_OPERANDS:
+        if getattr(o, name) is None:
+            return GAP_OPERAND.format(label=OPERAND_LABELS[name])
+    schedule = b.maturities_in_horizon
+    if isinstance(schedule, Gap) and schedule.reason in SCHEDULE_LABELS:
+        return GAP_OPERAND.format(label=SCHEDULE_LABELS[schedule.reason])
+    return None
+
+
+def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimText, ...]:
     c = _Claims(tables)
     d0 = format_date(b.balance_date)
-    if isinstance(b.undrawn_revolver, Gap) and not c.known("T2E.2.r07"):
-        liquidity = LIQ_UNDISCLOSED.format(d=d0, cash=c.slot("T2E.2.r01"))
+    revolver = b.undrawn_revolver
+    drawings = isinstance(revolver, Gap) and revolver.reason == DRAWINGS_UNDRAWN
+    if isinstance(revolver, Gap) and not c.known("T2E.2.r07"):
+        form = LIQ_DRAWINGS if drawings else LIQ_UNDISCLOSED
+        liquidity = form.format(d=d0, cash=c.slot("T2E.2.r01"))
     else:
         liquidity = (
             f"Available liquidity at {d0} is {c.slot('T2E.2.r07')} (cash {c.slot('T2E.2.r01')} "
@@ -1126,7 +1248,7 @@ def _claims(b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimText, ...]:
         )
     foreign = _currency_facility(b)
     if foreign is not None:
-        maturities = MAT_FX.format(fid=foreign.facility_id)
+        maturities = MAT_CURRENCY if foreign.currency is None else MAT_FX
     else:
         maturities = (
             f"The cash outflow from debt maturing inside the horizon is {c.slot('T2E.3.r07')} "
@@ -1163,13 +1285,12 @@ def _claims(b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimText, ...]:
             f"a funding gap of {gap} arises."
         )
         out.append(c.claim("CP-2D-GAP-01", template, gap_cites))
-    elif foreign is not None:
-        out.append(c.claim("CP-2D-GAP-01", GAP_FX.format(fid=foreign.facility_id), gap_cites))
-    elif isinstance(b.undrawn_revolver, Gap):
-        template = GAP_UNDISCLOSED.format(headroom=c.slot("T2E.5.r05"))
-        out.append(c.claim("CP-2D-GAP-01", template, gap_cites))
     else:
-        template = GAP_MISSING.format(reason=b.funding_gap.reason)
+        # Form 5 (the revolver) is reached only when forms 3 and 4 find nothing, so cash at the
+        # horizon end, and with it T2E.5.r05, is known there.
+        missing = _gap_missing(o, b)
+        form = GAP_DRAWINGS if drawings else GAP_UNDISCLOSED
+        template = missing or form.format(headroom=c.slot("T2E.5.r05"))
         out.append(c.claim("CP-2D-GAP-01", template, gap_cites))
     return tuple(out)
 
@@ -1201,7 +1322,11 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
     operand, facility term, currency or cross-check difference settles as gaps and limitations.
     """
     o = inputs.operands
-    issues = submission_issues(submission=inputs.submission, offered_refs=inputs.offered_refs)
+    issues = submission_issues(
+        submission=inputs.submission,
+        offered_refs=inputs.offered_refs,
+        maturity_date_refs=inputs.maturity_date_refs,
+    )
     if issues:
         raise ValueError("; ".join(issues))
     bridge = bridge_of(inputs)
@@ -1225,7 +1350,7 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
             tuple((label, kind) for label, kind, _ in limitations),
         ),
         own_limitations=tuple(text for _, _, text in limitations),
-        claims=_claims(bridge, tables),
+        claims=_claims(o, bridge, tables),
         # Own limitations always hold the run-rate basis, so the module is restricted.
         status="restricted",
     )
@@ -1243,6 +1368,7 @@ CONCLUSION_ISSUE = "text carries a prohibited conclusion"
 BASIS_ISSUE = "basis_refs names a fact the view does not offer"
 INSUFFICIENT_ISSUE = "an Insufficient Information assessment states its limitation"
 LIMITATION_ISSUE = "only an Insufficient Information assessment carries a limitation"
+WALL_DATE_ISSUE = "the maturity_wall assessment must cite T4.18 maturity_date"
 
 # Rulings 2D1/2D-a: the oracle builder's FORBIDDEN list (build.py:390-392) is the closed list,
 # matched as case-insensitive substrings over the analyst's submitted text fields only. The
@@ -1281,7 +1407,10 @@ def _texts(submission: LiquidityBridgeSubmission) -> list[str]:
 
 
 def submission_issues(
-    *, submission: LiquidityBridgeSubmission, offered_refs: frozenset[str]
+    *,
+    submission: LiquidityBridgeSubmission,
+    offered_refs: frozenset[str],
+    maturity_date_refs: frozenset[str],
 ) -> tuple[str, ...]:
     """Validator issues of a CP-2D submission, each once, in the lease's order."""
     s = submission
@@ -1308,6 +1437,9 @@ def submission_issues(
         refs += s.minimum_cash.basis_refs
     if any(r not in offered_refs for r in refs):
         issues.append(BASIS_ISSUE)
+    for a in s.assessments:
+        if a.section == "maturity_wall" and not maturity_date_refs & set(a.basis_refs):
+            issues.append(WALL_DATE_ISSUE)
     for a in s.assessments:
         carried = a.limitation is not None
         stated = a.limitation is not None and a.limitation.strip() != ""

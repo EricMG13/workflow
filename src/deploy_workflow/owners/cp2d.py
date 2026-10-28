@@ -530,11 +530,10 @@ def compose_bridge(
             if not isinstance(end_cash, Gap):
                 resources = Gap(revolver_reason)
         to_debt = _ratio(available, _op(o, "total_debt_bs"))
-        # Round 6f (e): with drawings undisclosed the ratio carries the L1 undrawn string.
+        # The builder pins REV_RATIO for an undisclosed revolver (build.py:516). With drawings
+        # undisclosed the ratio keeps its operand's reason, DRAWINGS_AVAILABLE (round 9 item 1).
         if isinstance(available, Gap) and available.reason == REV_AVAILABLE:
             to_debt = Gap(REV_RATIO)
-        if isinstance(available, Gap) and available.reason == DRAWINGS_AVAILABLE:
-            to_debt = Gap(DRAWINGS_UNDRAWN)
         if minimum_cash is None:
             cash_only: Num = Gap(NOT_ASSESSED)
             headroom: Num = Gap(NOT_ASSESSED)

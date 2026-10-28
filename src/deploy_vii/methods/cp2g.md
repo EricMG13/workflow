@@ -1,6 +1,6 @@
-# methods/cp2g.md (DRAFT rev 1, 2026-10-28): CP-2G Forward credit model, recorded LEAD adaptation (D12)
+# methods/cp2g.md: CP-2G Forward credit model, recorded LEAD adaptation (D12)
 
-Draft for LEAD to move to `methods/cp2g.md`. The r14 CP-2G SKILL.md is not in this repository, so this is a recorded adaptation, not a transcription (LEAD ruling 1, `report.md`). Oracle: `cases/cp2g-owner/` (builder `builder/build.py`). Lease: `lease-draft.md` (rev 2).
+Moved from the draft at Stage 2 (`docs/CP2G-OWNER-LEASE.md` Files). The r14 CP-2G SKILL.md is not in this repository, so this is a recorded adaptation, not a transcription (LEAD ruling 1, `report.md`). Oracle: `cases/cp2g-owner/` (builder `builder/build.py`). Lease: `lease-draft.md` (rev 2).
 
 ## Purpose and mapping
 
@@ -41,3 +41,13 @@ T2H.1 Upstream register; T2H.2 Historical-to-base bridge (CP-1 restatements as o
 ## Rendering
 
 Two proposed FP05 blocks in `distressed_restructuring` only (`forward-credit-path`, `forward-breakpoints`): a design extension, because the design reference has no CP-2G block. See the lease, "Rendered sections".
+
+## Connection notes (Stage 2)
+- **One adapter.** Submit, the entry validator, probe and view reach the core only through `cp2g._inputs`: the CP-1 head's selected T4.10 LTM facts (`select_cp1`, one per metric, in the head's order; a head without exactly one fails closed), the bound CP-2A and CP-1D heads, the bound statuses and the issuer name.
+- **CP-2A head.** `cp2a_of` reads every T2B.1 scenario (name, decline, increase) and T2B.6 break (origin, test, level, required decline, outcome) in register order; the name is the known text fact `T2B.1.<row>.name`. The base period is the one period the T2B.1 shocks state: a shock with no period is not a conflict, two periods raise `CP-2G: CP-2A T2B.1 facts differ in period`, and no period at all raises (fail closed).
+- **Parse.** The retained payload is read only through `json_object` (bounded, storable, exact decimals); the schema validates the document's exact re-serialisation. Text `json_object` refuses keeps Pydantic's own shape issue (the frozen r14 frame).
+- **Issue lines.** A `prose.issues` line quotes the analyst's text, so it is cut at 600 characters (`execution.clipped`), as is a refused `current_inputs` text; a raised composition lists at most 20 lines and a count. A rationale becomes `Claim.text`, so when `prose.issues` passes it, it is also checked as `RunText` (the type's message, never the input).
+- **Staleness.** Any bound upstream that changed is reported alone, before any content check (ruling 10); through the workflow a changed head refuses `stale_binding` first.
+- **Quotes.** CP-2G reads no source quote: it takes no citation from the analyst, and the view carries no `quote`, `citations` or `record_json` key. Model-typed scenario values and the minimum liquidity amount are analyst judgements (Q-SQ). Cell citations follow the lineage rule from the CP-1 facts the composer derives from.
+- **View tree.** The `read_inputs` view is the lease's draft tree (`manifest.json tool_use.view_tree_draft`): `upstream`, `base`, `drivers` (the seven bounds, then `minimum_liquidity` with `may_be_not_assessed`), `cp2a`, `cp1d`, `break_metrics_offered`, `cp1_facts`, `cp1d_facts`, `inherited_limitations`.
+- **Settled form.** The reference tables carry the upstream facts verbatim under their own ids; only the table, row and field coordinates change. Claims carry no citation. The reader `cp2g_reader` returns the settled own limitations (with the synthetic line on a synthetic case); a blocked head gives its status and hash only.

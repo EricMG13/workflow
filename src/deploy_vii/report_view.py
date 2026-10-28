@@ -566,6 +566,8 @@ _PRESETS: tuple[tuple[PathwayId, str, str, tuple[str, ...]], ...] = (
             "distress-gate",
             "downside-stress",
             "break-points",
+            "forward-credit-path",
+            "forward-breakpoints",
             "recovery-by-class",
             "value-allocation-claims",
             "liquidity-runway",
@@ -1189,6 +1191,7 @@ _RELATIVE_VALUE: Mapping[str, _Spec] = MappingProxyType(
 )
 # Heads and owner codes of the Distressed & Restructuring Front Page (``rbot-fp-05-*.dc.html``).
 # CP-2A creates the composition with its two downside blocks (lease D7); later owners append rows.
+# CP-2G appends its two forward blocks (docs/CP2G-OWNER-LEASE.md, D7).
 _DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
     {
         "downside-stress": _Spec(
@@ -1196,6 +1199,12 @@ _DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
         ),
         "break-points": _Spec(
             "Break points", "CP-2A", "dense", ("CP-2A",), route_label="Full analysis"
+        ),
+        "forward-credit-path": _Spec(
+            "Forward credit path", "CP-2G", "dense", ("CP-2G",), route_label="Full analysis"
+        ),
+        "forward-breakpoints": _Spec(
+            "Forward break points", "CP-2G", "dense", ("CP-2G",), route_label="Full analysis"
         ),
     }
 )

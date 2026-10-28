@@ -24,10 +24,14 @@ historical records keep their original route names.
 - `mx-feature` implements financial semantics, provenance/permissions, state,
   persistence, recovery and consequential parser behavior, and fixes in them.
 - `mx-scaffold` handles fully specified mechanical changes and PR mechanics.
-- Two Sonnet fix rounds per task; the third and later go to a fresh `mx-escalate`.
+- Two Sonnet fix rounds per task. For a third, `mx-autonomous` writes a root-cause
+  fix plan and a fresh `mx-feature` executes it; no Fable (user, 2026-10-28). There
+  is no fourth: LEAD takes the open findings to the user. Only rounds that fix a
+  High or Medium finding count (global §1 stop rule).
 - `mx-precise` reviews each task and independently reviews financial/stateful
   expected results; `mx-adversary` also reviews diffs touching financial,
-  ordering/concurrency or security code. Opus/architect agents never write code.
+  ordering/concurrency or security code, and re-reviews only fixes of its own
+  High or Medium findings. Opus/architect agents never write code.
 - Coordinator sessions plan and dispatch; they do not write product code.
 - User instructions require confidence-review after any code change, before
   declaring completion or committing. Enumerate doubts, trace causes, refute
@@ -46,6 +50,7 @@ An independent `mx-precise` review checks sensitive expectations. The global 800
 PR cap does not apply to lane integrations (user, 2026-10-27). Reuse existing
 reviews rather than add approval chains. Stop inventing policy at unclear semantics:
 name the exact requirement and have LEAD resolve it from the adopted source.
+LEAD's rulings are applied to a draft before its first independent review.
 
 ## Tool and data rules
 
@@ -66,9 +71,13 @@ name the exact requirement and have LEAD resolve it from the adopted source.
   need no lock and no per-run LEAD admission record, and may run concurrently.
   After each run append one line to the lane's `work/<lane>/ledger.md`: UTC time,
   run name, command, exit code, pass/fail counts,
-  `agent=<name> fix-rounds=<n> gates-first-pass=<y|n>`. LEAD still admits new leases
-  and commits for integration in docs/QUEUE.md. Do not freeze a run's source while
-  another writer edits it, restart quiet tests, or kill unrelated processes.
+  `agent=<name> fix-rounds=<n> gates-first-pass=<y|n|n/a>` (`n/a` when the affected
+  tests are deferred; static checks alone never give `y`). While tests are deferred
+  (build-first, user 2026-10-28), a fixer runs every reviewer probe named in the
+  findings it fixes, under 60 s each, and reports their exit codes. LEAD still
+  admits new leases and commits for integration in docs/QUEUE.md. Do not freeze a
+  run's source while another writer edits it, restart quiet tests, or kill
+  unrelated processes.
 
 ## Ownership and reuse
 

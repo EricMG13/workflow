@@ -6,6 +6,7 @@ oracle's own literals (`submissions.json`), pinned pages (`manifest.json`,
 """
 
 import copy
+import hashlib
 import json
 import re
 from datetime import date
@@ -28,6 +29,21 @@ FINANCIAL: dict[str, Any] = json.loads(
 
 CASES = ("positive", "gap_no_recovery", "gap_no_market")
 FIXTURES = tuple(EXPECTED["fixtures"])
+
+
+# docs/CP3D-OWNER-LEASE.md header: expected and submissions from the LEAD freeze; builder and
+# manifest from the serialised methodology re-pin line.
+PINNED = {
+    "manifest.json": "bc7b29acd9f40769e63577331e17f2f11323709833f1eca1bddddc3a9fa0e070",
+    "submissions.json": "9263752346480a48571f0065eb864595bd4489ce4ce4fd675e967b401cde86de",
+    "expected.json": "67e8507fd28b936877d24157af29407fb63e97e87130f23190dc19765c7a89e5",
+    "builder/build.py": "fb72aa38f0310ee9b40c4b97774262043f8421ab0c58a481a3a304059dd69ed8",
+}
+
+
+def test_oracle_files_are_the_pinned_revision() -> None:
+    for name, digest in PINNED.items():
+        assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == digest, name
 
 
 def _all_pages() -> dict[str, dict[str, str]]:

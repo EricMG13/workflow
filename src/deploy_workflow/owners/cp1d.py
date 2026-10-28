@@ -84,8 +84,10 @@ class EarningsQualitySubmission(Contract):
 
 @dataclass(frozen=True)
 class Cp1Figure:
-    """One CP-1 T4.10 fact (manifest `cp1_fact_selection_rule`), referenced as `cp1:<figure>`."""
+    """One CP-1 T4.10 fact (manifest `cp1_fact_selection_rule`), referenced as `cp1:<figure>`;
+    `fact_id` is that CP-1 fact's own id."""
 
+    fact_id: str
     figure: str
     label: str
     unit: str
@@ -105,8 +107,11 @@ class Cp1Figure:
             return
         if self.unit == "MULTIPLE" and not _is_cp1_ratio(self.amount):
             raise ValueError(f"CP-1 figure {self.figure}: not a CP-1 quotient of product Numbers")
-        if self.unit != "MULTIPLE" and not _is_number(self.amount):
-            raise ValueError(f"CP-1 figure {self.figure}: outside financial_contracts.Number")
+        if self.unit != "MULTIPLE" and not _is_number(self.amount):  # round 5b Y1: an invariant
+            raise ValueError(
+                f"CP-1 fact {self.fact_id} ({self.figure}) is outside financial_contracts.Number; "
+                "CP-1D cannot hold it exactly"
+            )
 
     @property
     def value(self) -> Decimal:
@@ -340,6 +345,7 @@ _TYPES = ("Saving", "Cost")
 # digits, 10 places). Bridge amounts, quoted basis amounts and CP-1 amount operands hold it, so
 # every sum and product here is exact and every value spells exactly (`display.format_value`).
 _NUMBER: TypeAdapter[Decimal] = TypeAdapter(Number)
+_NUMBER_LIMIT = Decimal("1e18")  # financial_contracts.Number: -1e18 < x < 1e18
 # A CP-1 ratio is CP-1's own 38-digit quotient of two such Numbers, so its magnitude lies
 # between 1e-29 and 1e29 (or it is 0); the T1D.4 difference against it stays exact.
 _RATIO_DIGITS = 38
@@ -380,6 +386,8 @@ class Bridge:
     items: tuple[BridgeItem, ...]
     proposed_total: Decimal | None
     management_ebitda: Decimal | None
+    proposed_total_line: str | None = None
+    management_ebitda_line: str | None = None
 
 
 class _Unparseable(ValueError):
@@ -408,6 +416,7 @@ def parse_bridge(pages: Sequence[str]) -> Bridge | None:
         return None
     items: list[BridgeItem] = []
     totals: dict[str, Decimal | None] = {}
+    total_lines: dict[str, str] = {}
     try:
         for line in lines[lines.index(_HEADER) + 1 :]:
             parts = _FIELDS.split(line)
@@ -421,13 +430,20 @@ def parse_bridge(pages: Sequence[str]) -> Bridge | None:
                 if parts[0] in totals:
                     return None
                 totals[parts[0]] = _bridge_amount(parts[1])
+                total_lines[parts[0]] = line
             else:
                 return None
     except _Unparseable:
         return None
     if not items or len({item.label for item in items}) != len(items):
         return None
-    return Bridge(tuple(items), totals.get(_PROPOSED_TOTAL), totals.get(_MANAGEMENT_EBITDA))
+    return Bridge(
+        tuple(items),
+        totals.get(_PROPOSED_TOTAL),
+        totals.get(_MANAGEMENT_EBITDA),
+        total_lines.get(_PROPOSED_TOTAL),
+        total_lines.get(_MANAGEMENT_EBITDA),
+    )
 
 
 # --- arithmetic and spelling ----------------------------------------------------------------
@@ -554,9 +570,16 @@ def _shape_issue(item: BridgeItem, assessment: Assessment) -> str | None:
         amount = Decimal(amounts[0])
         if item.amount is None and _accepts(assessment):
             return None  # ruling 1D7: the content rule `Cannot accept an unstated amount`
-        # Fix round 2 N1: an amount outside the product bound can never be accepted.
-        if not _is_number(amount) or (item.amount is not None and not 0 < amount < item.amount):
-            return f"Accepted basis must be above 0 and below the proposed amount: {label}"
+        # Fix round 2 N1 / round 5b Y4: an amount outside the product bound never composes. At
+        # or above 1e18 against a stated proposed amount the bounds text is true; otherwise
+        # (precision, or no stated proposed amount) the exactness text is.
+        bounds = f"Accepted basis must be above 0 and below the proposed amount: {label}"
+        if not _is_number(amount):
+            if item.amount is not None and amount >= _NUMBER_LIMIT:
+                return bounds
+            return f"Accepted basis amount cannot be held exactly as a product amount: {label}"
+        if item.amount is not None and not 0 < amount < item.amount:
+            return bounds
     return None
 
 
@@ -966,11 +989,13 @@ def _tie(
     out: _Facts,
     row: tuple[str, str],
     bridge: Bridge | None,
-    stated: Decimal | None,
+    reported: tuple[Decimal | None, tuple[Citation, ...]],
     recomputed: tuple[Decimal | None, str],
 ) -> None:
-    """A T1D.4 tie-out of a stated bridge total against the recomputed rows."""
+    """A T1D.4 tie-out of a stated bridge total (citing its line, ruling 1D1) against the
+    recomputed rows."""
     row_id, label = row
+    stated, line = reported
     value, source_fact = recomputed
 
     def at(name: str, title: str) -> tuple[str, str, str, str]:
@@ -989,7 +1014,13 @@ def _tie(
             out.gap(at("reported", "Stated"), "MILLIONS", _NOT_STATED_SOURCE)
         else:
             out.number(
-                at("reported", "Stated"), stated, "MILLIONS", "Bridge source amount", (), "source"
+                at("reported", "Stated"),
+                stated,
+                "MILLIONS",
+                "Bridge source amount",
+                (),
+                "source",
+                line,
             )
         if value is None:
             out.gap(at("recomputed", "Recomputed"), "MILLIONS", _UNSTATED_ANY)
@@ -1053,20 +1084,33 @@ def _ratio(
         out.number(at, _quotient(numerator, value), unit, formula, derives)
 
 
-def _tie_outs(out: _Facts, bridge: Bridge | None, totals: _Totals, cp1: Cp1Operands) -> None:
+def _total_line(source: Source | None, line: str | None) -> tuple[Citation, ...]:
+    return () if source is None or line is None else (_cite(source, "page:1", line),)
+
+
+def _tie_outs(
+    out: _Facts, pack: tuple[Bridge | None, Source | None], totals: _Totals, cp1: Cp1Operands
+) -> None:
     """T1D.4: stated bridge totals against the rows, then CP-1's leverage recomputed."""
+    bridge, source = pack
     _tie(
         out,
         ("proposed_total", "Proposed add-backs: stated total against rows"),
         bridge,
-        bridge.proposed_total if bridge else None,
+        (
+            bridge.proposed_total if bridge else None,
+            _total_line(source, bridge.proposed_total_line if bridge else None),
+        ),
         (totals.claimed, "T1D.3.claimed.value"),
     )
     _tie(
         out,
         ("mgmt_ebitda", "Management EBITDA: stated against statement EBITDA plus rows"),
         bridge,
-        bridge.management_ebitda if bridge else None,
+        (
+            bridge.management_ebitda if bridge else None,
+            _total_line(source, bridge.management_ebitda_line if bridge else None),
+        ),
         (totals.management, "T1D.3.mgmt.value"),
     )
     for row, label, reported, debt in (
@@ -1571,7 +1615,7 @@ def _compose(
     _register(out, bridge, source, cp1)
     _assessment_rows(out, outcomes)
     _bridge_rows(out, bridge, totals, len(outcomes))
-    _tie_outs(out, bridge, totals, cp1)
+    _tie_outs(out, (bridge, source), totals, cp1)
     _shares(out, bridge, totals)
     _conversion(out, bridge, totals, cp1)
     _gaps(out, inputs.submission.gaps)

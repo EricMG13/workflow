@@ -1248,5 +1248,109 @@ def test_6f_e_drawings_case_carries_only_the_l1_strings() -> None:
     inputs = _inputs("positive")
     result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, rcf_drawn=None)))
     cells = _cells(result)
-    assert cells["T2E.2.r09"].reason == "Undrawn revolver not calculable: drawings undisclosed"
+    # Round 9 item 1 corrects 6f (e): the ratio names its operand, available liquidity.
+    assert cells["T2E.2.r09"].reason == (
+        "Available liquidity not calculable: revolver drawings undisclosed"
+    )
     assert cells["T2E.5.r03"].reason == "Not calculable: revolver drawings undisclosed"
+
+
+# --- round 9 (item 1, D-1) and the riding Lows L1-L6 of round5-6-review.md ----------------------
+
+CASH_MISSING = "Not calculable: Cash and cash equivalents is missing"
+
+
+def test_r9_d1_currency_rows_by_kind() -> None:
+    unstated = cp2d.compute(_with_loan(replace(LOAN, currency=None)))
+    assert [r for r in unstated.gaps_ledger.rows if r[0].startswith("Facility currency")] == [
+        ("Facility currency (term-loan)", "Gap")
+    ]
+    assert (
+        "Facility term-loan currency is not stated; maturity-wall figures that need it are not "
+        "calculated."
+    ) in unstated.own_limitations
+    foreign = cp2d.compute(_with_loan(replace(LOAN, currency="EUR")))
+    assert [r for r in foreign.gaps_ledger.rows if r[0].startswith("Facility currency")] == [
+        ("Facility currency (term-loan)", "Limitation")
+    ]
+
+
+def _two_loans(first: str | None, second: str | None) -> cp2d.Cp2dInputs:
+    inputs = _inputs("positive")
+    a = replace(LOAN, facility_id="a-loan", currency=first, maturity_date=date(2028, 12, 31))
+    b = replace(LOAN, facility_id="b-loan", currency=second, maturity_date=date(2029, 12, 31))
+    return replace(inputs, operands=replace(inputs.operands, facilities=(a, b)))
+
+
+@pytest.mark.parametrize(
+    "first,second,need",
+    [(None, "EUR", "with its currency stated"), ("EUR", None, "in USD")],
+)
+def test_r9_l1_first_facility_in_wall_order_picks_the_mat01_form(
+    first: str | None, second: str | None, need: str
+) -> None:
+    result = cp2d.compute(_two_loans(first, second))
+    assert _claim(result, "CP-2D-MAT-01").template == (
+        "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] "
+        f"needs every facility {need}, and one is not; no FX conversion is applied."
+    )
+
+
+def test_r9_l2_amortisation_cause_only_after_the_horizon() -> None:
+    inside = replace(LOAN, maturity_date=date(2026, 6, 30), annual_amortisation=None)
+    operands = replace(_operands("fixture_rcf_undisclosed"), facilities=(inside,))
+    result = cp2d.compute(replace(_inputs("positive"), operands=operands))
+    assert _gap_text(result) == (
+        "The funding gap is not calculated because the revolver is undisclosed; cash-only "
+        "headroom over the assumed minimum cash is {T2E.5.r05|US$ m}."
+    )
+
+
+def test_r9_l3_cash_reason_wins_over_the_drawings_strings() -> None:
+    inputs = _inputs("positive")
+    operands = replace(inputs.operands, cash_bs=None, rcf_drawn=None)
+    cells = _cells(cp2d.compute(replace(inputs, operands=operands)))
+    for fact_id in ("T2E.2.r07", "T2E.5.r03", "T2E.2.r09"):
+        assert cells[fact_id].reason == CASH_MISSING, fact_id
+
+
+@pytest.mark.parametrize(
+    "missing,label",
+    [
+        ({"cash_bs": None}, "Cash and cash equivalents"),
+        ({"cfo": None, "net_debt_issuance": None}, "Operating cash flow"),
+        ({"cfo": None, "facilities": None}, "Operating cash flow"),
+    ],
+)
+def test_r9_l4_form4_names_the_first_operand_in_formula_order(
+    missing: dict[str, Any], label: str
+) -> None:
+    inputs = _inputs("positive")
+    result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, **missing)))
+    assert _gap_text(result) == (
+        f"The funding gap is not calculated: [T2E.5.r07] needs {label}, which is missing."
+    )
+
+
+def test_r9_l5_only_a_known_zero_debt_makes_an_empty_schedule_known() -> None:
+    b = _compose(replace(_base_operands(), facilities=(), total_debt_bs=Decimal(-50)), 24, "10")
+    assert isinstance(b.maturities_in_horizon, cp2d.Gap)
+    assert b.maturities_in_horizon.reason == (
+        "Not calculable: the T4.18 facility schedule lists no facility"
+    )
+
+
+def test_r9_l6_wall_date_issue_follows_basis_issue() -> None:
+    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+    payload["horizon_months"] = 0
+    wall = next(a for a in payload["assessments"] if a["section"] == "maturity_wall")
+    wall["basis_refs"] = [r for r in wall["basis_refs"] if "maturity_date" not in r]
+    wall["basis_refs"].append("cp1:not-offered")
+    issues = cp2d.submission_issues(
+        submission=_submission(payload), offered_refs=OFFERED, maturity_date_refs=MATURITY_REFS
+    )
+    assert issues == (
+        "horizon_months must be between 1 and 60",
+        "basis_refs names a fact the view does not offer",
+        "the maturity_wall assessment must cite T4.18 maturity_date",
+    )

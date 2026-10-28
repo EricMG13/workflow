@@ -16,6 +16,7 @@ from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from typing import Any, Literal
 
 from deploy_vii.contracts import Fact
+from deploy_vii.quotes import normalise, quoted
 from deploy_vii.report_view import fact_spelling, figure_unit
 
 MODULE_ID = "CP-2E"
@@ -493,14 +494,21 @@ _RATE_BP = (1, 1000)
 _FX_PERCENT = (1, 50)
 
 
-def _squash(text: str) -> str:
-    return re.sub(r"\s+", " ", text)
-
-
 def _once(token: str, quote: str) -> bool:
-    """token occurs exactly once in quote as a whole number."""
-    pattern = r"(?<![0-9.])" + re.escape(token) + r"(?![0-9]|\.[0-9])"
-    return len(re.findall(pattern, quote)) == 1
+    """token occurs exactly once in the normalised quote as a whole, unsigned number.
+
+    Round 10: the quote's figure is the signed numeral it prints. A ``-`` directly before the
+    first digit is a minus when it starts the quote or follows a character that is neither a
+    letter nor a digit, and a numeral in accounting parentheses reads as negative; such a printed
+    figure is not an occurrence of the unsigned token. A ``+`` is ignored."""
+    text = normalise(quote)  # maps U+2212 and the dashes to "-"
+    pattern = r"(?<![0-9.])(?<!(?<![A-Za-z0-9])-)" + re.escape(token) + r"(?![0-9]|\.[0-9])"
+    unsigned = [
+        m
+        for m in re.finditer(pattern, text)
+        if not (text[m.start() - 1 : m.start()] == "(" and text[m.end() : m.end() + 1] == ")")
+    ]
+    return len(unsigned) == 1
 
 
 class _Check:
@@ -522,7 +530,7 @@ class _Check:
         if sid != SOURCE_ID:
             self.add(f"{path}: source {sid} is outside the CP-2E scope ({SOURCE_ID})")
             return False
-        if loc not in self.pages or _squash(ref["quote"]) not in _squash(self.pages[loc]):
+        if loc not in self.pages or not quoted(ref["quote"], self.pages[loc]):
             self.add(f"{path}: quote not found on {sid} {loc}")
             return False
         return True
@@ -531,7 +539,8 @@ class _Check:
         if not self.on_page(ref, path):
             return
         c = ref["code_text"]
-        in_quote = re.search(rf"(?<![A-Za-z]){re.escape(c)}(?![A-Za-z])", ref["quote"])
+        quote = normalise(ref["quote"])  # the text the on_page match read
+        in_quote = re.search(rf"(?<![A-Za-z]){re.escape(c)}(?![A-Za-z])", quote)
         if not re.fullmatch(r"[A-Z]{3}", c) or not in_quote:
             self.add(f"{path}: code_text {c} does not occur in the quote")
 
@@ -543,7 +552,7 @@ class _Check:
         if not _SENTENCE_NUM.fullmatch(v) or not _once(v, ref["quote"]):
             self.add(f"{path}: {key} {v} does not occur in the quote")
             return None
-        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", _squash(ref["quote"])):
+        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", normalise(ref["quote"])):
             self.add(f"{path}: {key} {v} is not labelled {label} in the quote")
             return None
         return Decimal(v)
@@ -598,13 +607,14 @@ def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
     )
     rb, path = r["rate_basis"], "rate_exposure.rate_basis"
     if chk.on_page(rb, path):
-        stems = {m.lower() for m in _RATE_PHRASE.findall(rb["quote"])}  # rulings E5 and E8
+        quote = normalise(rb["quote"])  # the text the on_page match read
+        stems = {m.lower() for m in _RATE_PHRASE.findall(quote)}  # rulings E5 and E8
         said = stems.pop().upper() if len(stems) == 1 else None
         if said is None:
             chk.add(f"{path}: the quote states neither a floating nor a fixed rate")
         elif rb["rate_type"] != said:
             chk.add(f"{path}: rate_type {rb['rate_type']} contradicts the quote")
-        elif said == "FLOATING" and rb["reference_rate"] not in rb["quote"]:
+        elif said == "FLOATING" and rb["reference_rate"] not in quote:
             chk.add(f"{path}: reference_rate does not occur in the quote")
     chk.labelled(r["spread"], "bps_text", "spread", "rate_exposure.spread")
     chk.labelled(r["floor"], "bps_text", "floor", "rate_exposure.floor")
@@ -1294,24 +1304,27 @@ _LIM_FLOOR_ABOVE = (  # ruling A4
 )
 
 
-def _floor_limitation(facility: FacilityTerms) -> str:
-    """Ruling A4: the floor limitation by floor state. A4's not-stated text has no path here,
-    because the input object requires a quoted floor."""
+def _floor_limitation(facility: FacilityTerms) -> str | None:
+    """Ruling A4 by floor state, for floating-rate debt only (round 6i): a floor does not bind a
+    fixed coupon, so fixed-rate debt has no floor limitation. A4's not-stated text has no path
+    here, because the input object requires a quoted floor."""
+    if facility.basis.rate_type == "FIXED":
+        return None
     floor = facility.floor_bp.value
     if floor == 0:
         return _LIM_FLOOR
-    if floor > 0 and facility.basis.rate_type == "FLOATING":
+    if floor > 0:
         return _LIM_FLOOR_ABOVE
-    raise ValueError(
-        f"Floor limitation: no ruled wording for a {facility.basis.rate_type.lower()}-rate "
-        f"facility with a floor of {floor} basis points"
-    )
+    # A validated floor is digits only; a negative one needs directly built inputs.
+    raise ValueError(f"Floor limitation: a floor of {floor} basis points is not a quoted floor")
 
 
 def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
     out = [_LIM_STATIC, _LIM_CASH]
     if i.facility is not None:
-        out.append(_floor_limitation(i.facility))
+        floor_line = _floor_limitation(i.facility)
+        if floor_line is not None:
+            out.append(floor_line)
         if i.facility.balance.value < i.total_debt.value:  # LEAD ruling 9: a remainder
             out.append(LIM_REMAINDER)
     else:

@@ -984,24 +984,38 @@ def test_verifier_tamper_causes_map_to_identity_mismatch(
     assert _verdict(tmp_path / "unspecced", unspecced) == "identity_mismatch"
 
 
-def test_verifier_maps_a_forged_payload_type_error_to_identity_mismatch(
+def test_verifier_replays_a_non_str_discriminator_tag_as_invalid(
     g1x: SimpleNamespace, tmp_path: Path
 ) -> None:
-    """M1 (R4-4, controller ruling): a forged recorded payload whose discriminator value is
-    unhashable makes `normalise` raise `TypeError` (root cause `live.schema._Walker.branch`,
-    LEAD's); the verifier maps that one call, the recorded payload's fill, to tamper."""
-    receipt = _sealed(tmp_path)
-    old = receipt.submissions[-1]
-    assert old.binding.binding.step_id == VIEWED
+    """0d (LEAD, `live.schema._Walker.branch`): a discriminator tag that is not a str leaves the
+    union branch undetermined, so `normalise` returns the payload unchanged and the schema refuses
+    it. The step is journaled `invalid`, and the verifier replays the recorded payload with
+    nothing raised. The fill is no longer mapped to tamper: a `TypeError` from it is a
+    programming error and propagates (R4-4)."""
     raw = json.dumps({"note": "fine", "parts": [{"kind": []}]})
-    with pytest.raises(TypeError):
-        normalise(ViewedSubmission, raw)
-    digest = hashlib.sha256(raw.encode()).hexdigest()
-    owner._put(owner._audit(Execution(tmp_path / "store"), "payloads", digest), raw.encode())
-    binding = old.binding.model_copy(update={"payload_sha256": digest})
-    new = old.model_copy(update={"binding": binding})
-    forged = receipt.model_copy(update={"submissions": (*receipt.submissions[:-1], new)})
-    _swap(tmp_path, "submissions", old, new)
-    _swap(tmp_path, "bindings", old.binding, binding)
-    _reseal(tmp_path, forged)
-    assert _verdict(tmp_path, forged) == "identity_mismatch"
+    assert normalise(ViewedSubmission, raw) == (raw, ())
+    workflow = _start(tmp_path)
+    workflow.read_inputs()
+    _read_page(workflow)
+    assert workflow.submit_review(_sourced())["status"] == "valid"
+    workflow.read_inputs()
+    outcome = workflow.submit_review(raw)
+    assert outcome["status"] == "invalid"
+    _drive(workflow)
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    assert [s.disposition for s in receipt.submissions] == [
+        "valid",
+        "valid",
+        "invalid",
+        "valid",
+        "valid",
+    ]
+    assert _verdict(tmp_path, receipt) == "accepted"
+
+    def raising(*args: Any) -> Any:
+        raise TypeError("a programming error")
+
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr(owner, "normalise", raising)
+        with pytest.raises(TypeError):
+            owner.verify_owner_run_receipt(Execution(tmp_path / "store"), receipt)

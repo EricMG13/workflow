@@ -15,6 +15,17 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import (
+    BLANK_CASES,
+    FIGURE_CASES,
+    TEXT_CASES,
+    Adapter,
+    BlankCase,
+    QuoteCase,
+    blank_failure,
+    label_cases,
+    quote_failure,
+)
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -1426,6 +1437,7 @@ def test_r10_a_signed_size_level_does_not_occur(form: str) -> None:
     [
         "reported as 1.75-1.80x.",  # a dash after a digit (95-96)
         "reported as S-1.80x.",  # a dash after a letter (S-350)
+        "reported as s-1.80x.",  # a dash after a lowercase letter (round 10 review Low-1)
         "reported as +1.80x.",  # a plus is ignored
     ],
 )
@@ -1435,7 +1447,13 @@ def test_r10_a_dash_that_is_not_a_sign_still_validates(new: str) -> None:
 
 @pytest.mark.parametrize(
     ("value", "quote"),
-    [("1", "1-December"), ("2025", "2024-2025"), ("96", "95-96"), ("350", "S-350")],
+    [
+        ("1", "1-December"),
+        ("2025", "2024-2025"),
+        ("96", "95-96"),
+        ("350", "S-350"),
+        ("350", "s-350"),  # round 10 review Low-1: the guard covers lowercase letters
+    ],
 )
 def test_r10_the_rules_non_signs_are_read_unsigned(value: str, quote: str) -> None:
     assert cp8_module._token_once(value, quote)
@@ -1444,5 +1462,247 @@ def test_r10_the_rules_non_signs_are_read_unsigned(value: str, quote: str) -> No
 
 def test_r10_a_parenthesis_around_a_unit_is_not_a_sign() -> None:
     assert cp8_module._token_once("4.30", "(4.30 percent)")
+    # round 10 review Low-2: a ")" after the digits with no "(" right before them is unsigned
+    assert cp8_module._token_once("1.80", "(see 1.80)")
     assert cp8_module._labelled("loan_bid", "98.00", "bid (98.00 percent of par)")
     assert not cp8_module._labelled("loan_bid", "98.00", "bid (98.00) or 98.00")
+
+
+# --- round 11: the shared defect-class cases (AGENTS.md rules 3 and 4) -------------------------
+# Each adapter places the case's page at a fresh locator of the cited source and its quote and
+# value in one analyst field of the frozen positive (or no_outcome) submission; the library
+# (tests/defect_classes.py) holds the cases and the expected outcomes.
+
+CASE_LOC = "page:9"
+BID_TAIL = " Quoted on April 29, 2026."  # the frozen realized bid's as_of_text, as one date
+
+
+def with_page(source_id: str, page: str, case: str = "positive") -> tuple[Source, ...]:
+    """The case's pack with ``page`` added at ``CASE_LOC`` of one source (hash recomputed)."""
+    out = []
+    for source in pack(case):
+        if source.source_id == source_id:
+            spans = (*source.spans, Span(locator=CASE_LOC, text=page))
+            digest = hashlib.sha256("\f".join(s.text for s in spans).encode()).hexdigest()
+            source = source.model_copy(update={"spans": spans, "sha256": digest})
+        out.append(source)
+    return tuple(out)
+
+
+def case_ref(quote: str, source_id: str = "prior_case") -> dict[str, str]:
+    return {"source_id": source_id, "locator": CASE_LOC, "quote": quote}
+
+
+def size_level(page: str, quote: str, value: str) -> tuple[str, ...]:
+    """thesis.downside_sizes[0].level_text. The size quote is a span of the downside paths, so
+    both quotes are the case quote; the size statement after the figure is outside the class."""
+    lit = positive()
+    lit["thesis"]["downside_paths"]["quote"] = case_ref(quote)
+    lit["thesis"]["downside_sizes"][0].update(level_text=value, quote=case_ref(quote))
+    return issues_over(lit, with_page("prior_case", page))
+
+
+def realized_bid(page: str, quote: str, value: str) -> tuple[str, ...]:
+    """observations[6] (realized loan_bid): its as_of_text is appended to page and quote."""
+    lit = positive()
+    ref = case_ref(quote + BID_TAIL, "market_update")
+    lit["observations"][6].update(value_text=value, quote=ref)
+    return issues_over(lit, with_page("market_update", page + BID_TAIL))
+
+
+def decision_text(field: str) -> Adapter:
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        lit = positive()
+        lit["decision"][field] = {"text": value, "quote": case_ref(quote)}
+        return issues_over(lit, with_page("prior_case", page))
+
+    return adapter
+
+
+def flag_span(page: str, quote: str, value: str) -> tuple[str, ...]:
+    """attributions[0].flag_quote: a span of the downside paths, which quote the case quote."""
+    lit = positive()
+    lit["thesis"]["downside_paths"]["quote"] = case_ref(quote)
+    lit["attributions"][0]["flag_quote"] = value
+    return issues_over(lit, with_page("prior_case", page))
+
+
+def size_span(page: str, quote: str, value: str) -> tuple[str, ...]:
+    """thesis.downside_sizes[0].quote: a span of the downside paths, which quote the case quote."""
+    lit = positive()
+    lit["thesis"]["downside_paths"]["quote"] = case_ref(quote)
+    lit["thesis"]["downside_sizes"][0]["quote"] = case_ref(value)
+    return issues_over(lit, with_page("prior_case", page))
+
+
+def held(cases: tuple[QuoteCase, ...]) -> list[QuoteCase]:
+    """The cases whose value a CP-8 figure can hold (N.NN): a shorter or longer figure gets the
+    same 'does not occur' refusal from the field's own shape rule, so the case does not apply."""
+    return [c for c in cases if cp8_module._FIGURE.match(c.value)]
+
+
+BID = "observations[6]"
+NOT_LABELLED = BID + ": loan_bid value_text {} is not labelled loan_bid in the quote"
+QUOTE_FIELDS: dict[str, tuple[Adapter, str, list[QuoteCase]]] = {
+    # field -> (adapter, the field's pinned refusal with {} for the value, cases)
+    "size level": (
+        size_level,
+        "thesis.downside_sizes[0]: level_text {} does not occur in the quote",
+        held(FIGURE_CASES),
+    ),
+    "realized bid": (
+        realized_bid,
+        BID + ": value_text {} does not occur in the quote",
+        held(label_cases("bid", "1.25")),
+    ),
+    **{
+        f"decision {field}": (
+            decision_text(field),
+            f"decision.{field}: text {{}} does not occur in the quote",
+            list(TEXT_CASES),
+        )
+        for field in ("instrument", "decision_maker_role")
+    },
+    "flag span": (
+        flag_span,
+        "attributions[0].flag_quote: not a span of the recorded downside paths",
+        list(TEXT_CASES),
+    ),
+    "size span": (
+        size_span,
+        "thesis.downside_sizes[0].quote: not a span of the recorded downside paths",
+        list(TEXT_CASES),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("field", "case_id"),
+    [(field, c.case_id) for field, (_, _, cases) in QUOTE_FIELDS.items() for c in cases],
+)
+def test_r11_shared_quote_cases(field: str, case_id: str) -> None:
+    adapter, refusal, cases = QUOTE_FIELDS[field]
+    c = next(item for item in cases if item.case_id == case_id)
+    if field == "realized bid" and case_id == "sign-label":
+        refusal = NOT_LABELLED  # round 10: a signed first figure after the label
+    assert quote_failure(c, adapter, refusal.format(c.value)) is None
+    if field == "realized bid" and c.accepted:  # nor the label check's refusal
+        assert NOT_LABELLED.format(c.value) not in adapter(c.page, c.quote, c.value)
+
+
+def test_r11_the_size_level_holds_the_edge_cases_it_can() -> None:
+    """Most library figure cases print 25; CP-8 figures are N.NN, so only the 1.25 family and
+    0.25 run. The edge-cut group still covers both edges and every refused shape."""
+    ran = {c.case_id for c in QUOTE_FIELDS["size level"][2] if c.defect == "edge_cut"}
+    assert {
+        "edge-prefix-1.25",
+        "edge-minus-1.25",
+        "edge-close-paren-1.25",
+        "edge-open-paren-1.25",
+        "edge-end-digit-1.25",
+        "edge-minus-0.25",
+        "edge-start-1.25",
+        "edge-end-1.25",
+        "edge-stop-1.25",
+        "edge-mid-1.25",
+    } <= ran
+
+
+def blank_field(*keys: str | int, case: str = "positive") -> Adapter:
+    """Sets the text at ``keys`` of the case's submission; page and quote are not used. An
+    absent optional decision field is given as text, with the quote of its absence."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        lit: dict[str, Any] = copy.deepcopy(SUBMISSIONS[case])
+        if keys[0] == "decision" and keys[-1] == "text":
+            item = lit["decision"][keys[1]]
+            if "absence" in item:
+                lit["decision"][keys[1]] = {"text": "x", "quote": item["absence"]["quote"]}
+        cur: Any = lit
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return validator_issues(lit, case)
+
+    return adapter
+
+
+_ABSENT = (("decision", "posture"), ("decision", "size")) + tuple(
+    ("thesis", f) for f in ("expected_spread_return", "expected_rating_path", "expected_hold")
+)
+_GAP_FIELDS = ("gap", "missing_item", "why_it_matters", "impact_on_output", "follow_up")
+BLANK_FIELDS: dict[str, Adapter] = {
+    # path -> adapter; the pinned frame is "<path>: text is empty" (r27; round 9 item 1)
+    **{
+        f"decision.{name}": blank_field("decision", name, "text")
+        for name in (
+            "action_bias",
+            "confidence",
+            "instrument",
+            "decision_date",
+            "decision_maker_role",
+            "posture",
+            "size",
+        )
+    },
+    **{
+        f"{part}.{name}.absence.{key}": blank_field(part, name, "absence", key)
+        for part, name in _ABSENT
+        for key in ("reason", "follow_up")
+    },
+    **{
+        f"outcome_absence.{key}": blank_field("outcome_absence", key, case="no_outcome")
+        for key in ("reason", "follow_up")
+    },
+    "attributions[0].basis": blank_field("attributions", 0, "basis"),
+    "lessons[0].lesson": blank_field("lessons", 0, "lesson"),
+    **{f"extra_gaps[0].{key}": blank_field("extra_gaps", 0, key) for key in _GAP_FIELDS},
+    "synthesis.text": blank_field("synthesis", "text"),
+}
+
+
+@pytest.mark.parametrize("path", list(BLANK_FIELDS))
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_r11_blank_text_gets_the_pinned_frame(path: str, blank: BlankCase) -> None:
+    assert blank_failure(blank, BLANK_FIELDS[path], f"{path}: text is empty") is None
+
+
+def test_r11_b1_a_bid_cut_at_the_quote_end_is_read_on_the_page() -> None:
+    """The bid's figure can touch only the quote's end (its label comes first): `98.00` cut
+    from a page `98.005` does not occur; the same cut quote of the frozen page does."""
+    cut = "Dealer quotation on April 29, 2026: bid 98.00"
+    lit = positive()
+    lit["observations"][6]["quote"]["quote"] = cut
+    assert issues_over(lit, pack("positive")) == ()
+    assert edited(lit, "market_update", "bid 98.00 and", "bid 98.005 and") == (
+        "observations[6]: value_text 98.00 does not occur in the quote",
+    )
+
+
+def test_r11_b1_every_occurrence_of_the_quote_on_the_page_is_read() -> None:
+    page = "Sized at total leverage above 1.75x, and later 41.75x."
+    assert cp8_module._on_page("1.75", "1.75x", "Sized above 1.75x.")
+    assert not cp8_module._on_page("1.75", "1.75x", page)  # the second occurrence cuts 41.75
+    assert not cp8_module._on_page("1.75", "1.75x", "Sized above 41.75x.")
+    assert not cp8_module._on_page("1.75", "1.75x", "no such figure")  # the quote is not there
+
+
+def test_r11_b1_a_wrapped_page_is_read_both_ways() -> None:
+    joined = "Sized as above-\n 1.75x and"  # plain reading: "above- 1.75x"; joined: "above-1.75x"
+    assert cp8_module._on_page("1.75", "1.75x and", joined)
+    assert not cp8_module._on_page("1.75", "1.75x and", "Sized as (-\n1.75x and")
+
+
+def test_r11_b1_a_wrapped_quote_is_read_joined() -> None:
+    # the quote as written ("above- 1.75x") is not on the page; joined ("above-1.75x") it is
+    assert cp8_module._on_page("1.75", "above-\n1.75x", "Sized above-1.75x.")
+
+
+def test_r11_b3_a_hyphen_space_in_an_unwrapped_quote_still_occurs() -> None:
+    page = "Decision-maker role: Investment first- line Committee."
+    lit = positive()
+    lit["decision"]["decision_maker_role"] = {
+        "text": "Investment first- line Committee",
+        "quote": case_ref(page),
+    }
+    assert issues_over(lit, with_page("prior_case", page)) == ()

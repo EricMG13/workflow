@@ -8,8 +8,9 @@ quotes and judgments. The G1-X seams (store, RULES, submit, probe, reader) come 
 
 Wording beyond the lease and the oracle comes from LEAD's rulings
 (``docs/rulings/2026-10-28-stage1.md``: round 5 "CP-8", 8-1 to 8-20; round 6c, 8-24; round 6h,
-a quotation split on one side and missing on the other). A ``ValueError`` starting
-"invariant:" marks a state no validated submission reaches (8-8 and 8-12 among them).
+a quotation split on one side and missing on the other; round 11, quote readers B1 and B3).
+A ``ValueError`` starting "invariant:" marks a state no validated submission reaches (8-8 and
+8-12 among them).
 """
 
 import re
@@ -42,7 +43,7 @@ from deploy_vii.contracts import (
 from deploy_vii.cp6_committee import ACTION_BIASES, CONFIDENCES
 from deploy_vii.display import format_date
 from deploy_vii.prose import bind, issues, tokenize
-from deploy_vii.quotes import normalise
+from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, figure_unit
@@ -394,12 +395,50 @@ def _only_date(at: str, quote: str) -> bool:
     return all(match.group(0) == at for match in _DATE_IN_QUOTE.finditer(quote))
 
 
-def _token_once(value: str, quote: str) -> bool:
-    """``value`` occurs exactly once in the normalised ``quote`` as a whole unsigned number: a
-    minus-signed or parenthesised printing is another figure (round 10 item 1)."""
+def _whole(value: str) -> re.Pattern[str]:
+    """``value`` as a whole unsigned number: a minus-signed or parenthesised printing is another
+    figure (round 10 item 1)."""
     v = re.escape(value)
-    pattern = rf"(?<![0-9.])(?<!{_SIGN})(?!(?<=\(){v}\)){v}(?![0-9]|\.[0-9])"
-    return len(re.findall(pattern, quote)) == 1
+    return re.compile(rf"(?<![0-9.])(?<!{_SIGN})(?!(?<=\(){v}\)){v}(?![0-9]|\.[0-9])")
+
+
+def _token_once(value: str, quote: str) -> bool:
+    """``value`` occurs exactly once in the normalised ``quote`` as a whole unsigned number."""
+    return len(_whole(value).findall(quote)) == 1
+
+
+def _on_page(value: str, quote: str, page: str) -> bool:
+    """Round 11 B1: a figure read from a quote is the same unsigned whole figure on the page, at
+    every occurrence of the quote (normalised, and with its own wraps joined) in every reading of
+    the page (normalised, and with its wraps joined). ``quote`` and ``page`` are raw.
+
+    Only a figure at an edge of the quote can fail here (nothing or only a sign before it, nothing
+    or only ``.`` after it): elsewhere every character the test reads lies inside the quote, which
+    the quote reader has already judged. False when the quote is not on the page."""
+    whole = _whole(value)
+    needles = [normalise(quote)]
+    if hyphen_wrapped(quote):
+        needles.append(reading(quote, join_wraps=True).text)
+    readings = [normalise(page)]
+    if hyphen_wrapped(page):
+        readings.append(reading(page, join_wraps=True).text)
+    seen = False
+    for needle in needles:
+        for figure in whole.finditer(needle):
+            for text in readings:
+                at = text.find(needle)
+                while at >= 0:
+                    seen = True
+                    if not whole.match(text, at + figure.start()):
+                        return False
+                    at = text.find(needle, at + 1)
+    return seen
+
+
+def _wrap_split(value: str, quote: str) -> bool:
+    """Round 11 B3: a wrapped quote normalises its wrap to ``- ``, a spelling the page does not
+    print, so a text value that holds ``- `` does not occur in it (``quote`` is raw)."""
+    return hyphen_wrapped(quote) and "- " in normalise(value)
 
 
 def _labelled(metric: str, value: str, quote: str) -> bool:
@@ -533,6 +572,11 @@ class _Checker:
         )
         return list(citation_issues((citation,), self.pack))
 
+    def _page(self, ref: QuoteRef) -> str:
+        """The span text a citation names; only called once ``_cite`` has accepted it."""
+        source = self.index[ref.source_id]
+        return next(span.text for span in source.spans if span.locator == ref.locator)
+
     def _text(self, path: str, text: str) -> None:
         """Analyst text: non-empty, digit-free, no reference syntax, no prohibited conclusion."""
         hit = _PROHIBITED.search(text)
@@ -580,7 +624,7 @@ class _Checker:
             self.found.append(f"{path}: text is empty")
         elif vocabulary is not None and text not in vocabulary:
             self.found.append(f"{path}: {text} is not one of {', '.join(vocabulary)}")
-        elif text not in _norm(quote.quote):
+        elif text not in _norm(quote.quote) or _wrap_split(text, quote.quote):
             self.found.append(f"{path}: text {text} does not occur in the quote")
         elif name == "decision_date":
             self.decision_date = parse_date(text)
@@ -623,9 +667,13 @@ class _Checker:
         statement = f"{MEASURE_LABEL[size.metric_id]} {size.comparator} {level}x"
         if found:
             self.found += found
-        elif _norm(quote) not in _norm(self.downside):
+        elif _norm(quote) not in _norm(self.downside) or _wrap_split(quote, self.downside):
             self.found.append(f"{path}.quote: not a span of the recorded downside paths")
-        elif not _FIGURE.match(level) or not _token_once(level, quote):
+        elif (
+            not _FIGURE.match(level)
+            or not _token_once(level, quote)
+            or not _on_page(level, size.quote.quote, self._page(size.quote))
+        ):
             self.found.append(f"{path}: level_text {level} does not occur in the quote")
         elif statement not in _norm(quote).lower():
             self.found.append(f"{path}: quote does not state {statement}")
@@ -676,7 +724,11 @@ class _Checker:
         as_of = parse_date(obs.as_of_text) if obs.as_of_text in quote else None
         if found:
             return found
-        if not _FIGURE.match(value) or not _token_once(value, quote):
+        if (
+            not _FIGURE.match(value)
+            or not _token_once(value, quote)
+            or not _on_page(value, obs.quote.quote, self._page(obs.quote))
+        ):
             return [f"{path}: value_text {value} does not occur in the quote"]
         if not _labelled(obs.metric, value, quote):
             return [
@@ -838,7 +890,9 @@ class _Checker:
                 self.found.append(f"{path}: flag_quote is only for Flagged Risk Materialized")
         elif not item.flag_quote or not item.flag_quote.strip():
             self.found.append(f"{path}: Flagged Risk Materialized needs flag_quote")
-        elif _norm(item.flag_quote) not in _norm(self.downside):
+        elif _norm(item.flag_quote) not in _norm(self.downside) or _wrap_split(
+            item.flag_quote, self.downside
+        ):
             self.found.append(f"{path}.flag_quote: not a span of the recorded downside paths")
 
     def _flag_size(self, path: str, item: Attribution, compared: tuple[str, ...]) -> None:

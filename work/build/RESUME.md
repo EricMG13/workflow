@@ -36,4 +36,6 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 Open questions live in `work/build/stage1/<cp>/questions.md` (cp2h, cp3c, cp4c, cp5) and `stage1/quote-sign-questions.md`. One pointer to LEAD every 20 minutes at most.
 
 ## Stage 2 notes collected
+- Protocol §5 (LEAD d637afc): cores read model payload only through `json_object`/`payload_document`. Rewire cp2g:830, cp4c:938 and cpl10:926 (`model_validate_json` on raw text) at their Stage 2 seams.
+- On the Stage 1 release merge of codex/checkpoint (carries 0d-b): run test_schema_normalise_escapes.py, test_owner_workflow.py::test_equivalence_gap_verifier_replays_unrepresentable_submits and LEAD probe b04.
 In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor; round 10 sign rule in methods/cp1d, cp3d, cp8, cp2e; unsigned-grammar limitation in methods/cp8 and cp3d; CP-3C facility ids as prose names at MC-2; CP-8 item 2 guard-limit note.

@@ -28,3 +28,5 @@
 - 2026-10-28 LEAD rulings round 2 (842c911) merged into lane (d9cada2)
 - 2026-10-28 cp4-stage1 re-review (mx-adversary) on b658bc1: APPROVE; merged into lane (056b355). Info: engine cp4_legal.py:546-554 shows threshold_value as typed (predates the lane; owner)
 - 2026-10-28 cp1d-stage1 re-review (mx-adversary) on 3b080c9: APPROVE; merged into lane. Lows L-a/L-b and two pre-existing validation raises ride with the rulings round
+- 2026-10-28 cp2d-stage1 re-review (mx-adversary) on c8338f9: CHANGES REQUIRED (N1 Medium, prohibited-word over-match; settled by ruling 2D1). Rulings round 2D1-2D9 dispatched with N2/N3; round-3 questions 2D-a..d, 1C-x, 1D-x sent to LEAD
+- 2026-10-28 cp4-stage1-rulings `pytest tests/test_method_cp4.py` exit 0, 22 passed (0.38 s), branch worktree-agent-a137244cd727ee164 8395cc7 (test-only re-pin to 7328203), probes exit 0, controller-verified on lane 9c123a0 (22 passed), merged. agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y. Carried to Stage 1 review: casefold vs lower mutant survives (lease says "case-folded")

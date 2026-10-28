@@ -93,12 +93,14 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2, cp2e, cp3d, cpdr
+from deploy_workflow.owners import cp1a, cp2, cp2e, cp3, cp3d, cpdr
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
-SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3D", "CP-DR", "CP-2E"})
+SUPPORTED_ANALYTICAL = frozenset(
+    {"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3D", "CP-DR", "CP-2E", "CP-3"}
+)
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
 # G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
 # raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
@@ -112,6 +114,7 @@ _QUALIFICATION = {
     "CP-DR": cpdr.QUALIFICATION,
     "CP-3D": cp3d.QUALIFICATION,
     "CP-2E": cp2e.QUALIFICATION,
+    "CP-3": cp3.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -121,6 +124,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-DR": cpdr.probe,
     "CP-3D": cp3d.probe,
     "CP-2E": cp2e.probe,
+    "CP-3": cp3.probe,
 }
 # The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4; G1-X §3: any
 # step with an entry here may declare `inputs="module_context"`).
@@ -137,6 +141,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-DR": cpdr.ENTRY_VALIDATOR,
     "CP-3D": cp3d.ENTRY_VALIDATOR,
     "CP-2E": cp2e.ENTRY_VALIDATOR,
+    "CP-3": cp3.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -177,6 +182,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.business_context import BusinessContextSubmission
     from deploy_vii.cp1_workflow import FinancialSubmission
     from deploy_vii.cp2_synthesis import CreditSynthesisSubmission
+    from deploy_vii.cp3_relative_value import RelativeValueSubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
     from deploy_vii.quality import QualityReview
@@ -298,6 +304,20 @@ def _default_specs() -> dict[str, OwnerSpec]:
                 ),
             ),
             entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3": OwnerSpec(
+            module_id="CP-3",
+            steps=(
+                step(
+                    "relative_value",
+                    RelativeValueSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="model_payload",
             kind="analytical",
             publish=None,
         ),

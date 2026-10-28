@@ -347,3 +347,4 @@
 - 19:54 CP-3D riding Lows 0c47bc4 (methods citation rule, head-tamper test, exact own limitations; 1321 passed). CP-4 review dispatched.
 - 19:56 CP-2D review: REQUEST CHANGES (H1 frozen CP-4 FP04 render oracle pins the 3 blocks Unbound vs CP-2D lease D7 -> LEAD; M1 non-USD facility raises; M2 one-way alias; M3 acceptance tests; M4 weak money tests). Fix round 1 (M1-M4, Lows), H1 held. Merge gate adds the fast render suites.
 - 19:56 CP-3 fix1 done (f5d5bc4, e2669a2; 421 passed; 38 deferred written). Scoped re-review dispatched. CP-5 review dispatched; CP-2D reviewer stopped (report in).
+- 19:57 LEAD Stage 2 round 4 cherry-picked: CP-2D H1 option (a), CP2D_D7_DELTA in render tests until Stage 2 close re-pin.

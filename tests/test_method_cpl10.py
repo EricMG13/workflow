@@ -16,9 +16,18 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 
 from deploy_vii import prose
-from deploy_vii.contracts import Citation, Fact, ReportTable, TableColumn, TableRow, validate_tables
+from deploy_vii.contracts import (
+    Citation,
+    Contract,
+    Fact,
+    ReportTable,
+    TableColumn,
+    TableRow,
+    validate_tables,
+)
 from deploy_workflow.owners import cpl10
 
 CASE = Path(__file__).resolve().parents[1] / "cases" / "cpl10-owner"
@@ -745,4 +754,106 @@ def test_overall_issue_order() -> None:
     assert _issues(sub) == [
         "overall.confidence: must be Insufficient Information exactly when the category is",
         "overall.limitation: only an Insufficient Information overall carries a limitation",
+    ]
+
+
+# --- round 11 class round: blank text (docs/rulings/2026-10-28-stage1.md "# Round 11", LEAD
+# rulings "Blank text is one defect class"; tests/defect_classes.py). CP-L10 reads no figure,
+# name or label from an analyst quote, so only the blank cases apply. Whitespace-only text is
+# refused with the field's pinned frame `<path>: empty` (r11 overall.rationale, r17 gaps[i].gap,
+# lease step (4) for the assessments), else the fallback `<path>: empty text`. `""` keeps its
+# `Text` shape issue (controller decision, library fix 1). Ids and closed lists (topic_id,
+# affected_analysis, periods, category, confidence, severity) are not analyst text.
+_INSUFFICIENT = {
+    "category": cpl10.INSUFFICIENT,
+    "confidence": cpl10.INSUFFICIENT,
+    "limitation": "Two quarters only.",
+}
+BLANK_FIELDS: tuple[tuple[str, tuple[str | int, ...], str], ...] = (
+    ("assessments[0].assessment", ("assessments", 0, "assessment"), "{path}: empty"),
+    (
+        "assessments[0].credit_transmission",
+        ("assessments", 0, "credit_transmission"),
+        "{path}: empty",
+    ),
+    ("assessments[1].assessment", ("assessments", 1, "assessment"), "{path}: empty"),
+    ("overall.rationale", ("overall", "rationale"), "{path}: empty"),
+    ("overall.limitation", ("overall", "limitation"), EMPTY_TEXT),
+    ("gaps[0].gap", ("gaps", 0, "gap"), "{path}: empty"),
+    ("gaps[0].why_it_matters", ("gaps", 0, "why_it_matters"), EMPTY_TEXT),
+    ("gaps[0].action", ("gaps", 0, "action"), EMPTY_TEXT),
+)
+
+
+def _blank_adapter(keys: tuple[str | int, ...]) -> Adapter:
+    """Places the value in one analyst text field of the frozen positive payload; a limitation is
+    set on an Insufficient Information overall, the only overall that carries one (r14, r15).
+    Page and quote are unused: CP-L10 reads no value from an analyst quote."""
+
+    def adapter(page: str, quote: str, value: str) -> list[str]:
+        sub: dict[str, Any] = deepcopy(SUBMISSIONS["positive"])
+        if keys == ("overall", "limitation"):
+            sub["overall"].update(_INSUFFICIENT)
+        target: Any = sub
+        for key in keys[:-1]:
+            target = target[key]
+        target[keys[-1]] = value
+        return _issues(sub)
+
+    return adapter
+
+
+def test_blank_fields_cover_every_analyst_text_field() -> None:
+    models: dict[str, type[Contract]] = {
+        "assessments[0]": cpl10.Assessment,
+        "overall": cpl10.Overall,
+        "gaps[0]": cpl10.Gap,
+    }
+    not_text = {"assessments[0].topic_id", "gaps[0].affected_analysis"}
+    text = {
+        f"{prefix}.{name}"
+        for prefix, model in models.items()
+        for name, info in model.model_fields.items()
+        if info.annotation in (str, str | None) or "[str," in str(info.annotation)
+    }
+    assert text - not_text == {path for path, _, _ in BLANK_FIELDS if "[1]" not in path}
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(
+    blank: BlankCase, field: tuple[str, tuple[str | int, ...], str]
+) -> None:
+    path, keys, frame = field
+    failure = blank_failure(blank, _blank_adapter(keys), frame.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("field", BLANK_FIELDS, ids=lambda f: f[0])
+def test_blank_text_twin_is_accepted(field: tuple[str, tuple[str | int, ...], str]) -> None:
+    """The twin: the same field holding text is accepted outright."""
+    _, keys, _ = field
+    assert _blank_adapter(keys)("", "", "Only two quarters are compared.") == []
+
+
+def test_blank_limitation_ends_after_the_overall_rules() -> None:
+    # Step (5): the empty-text refusal follows r14 / r15, so a blank limitation on another
+    # overall carries both, r15 first.
+    sub = _with(("overall", "limitation"), "  ")
+    assert _issues(sub) == [
+        "overall.limitation: only an Insufficient Information overall carries a limitation",
+        "overall.limitation: empty text",
+    ]
+
+
+def test_blank_gap_fields_follow_the_gap_empty_check() -> None:
+    # Step (6): gap, why_it_matters, action empty checks in field order, before the digit check.
+    sub = deepcopy(SUBMISSIONS["positive"])
+    sub["gaps"][0].update(gap=" ", why_it_matters="\t", action="\n")
+    sub["gaps"].append({**SUBMISSIONS["positive"]["gaps"][0], "action": "Ask for 2024."})
+    assert _issues(sub) == [
+        "gaps[0].gap: empty",
+        "gaps[0].why_it_matters: empty text",
+        "gaps[0].action: empty text",
+        "gaps[1].action: must not contain a digit",
     ]

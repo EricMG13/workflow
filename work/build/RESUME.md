@@ -8,7 +8,7 @@ CP-2E, CP-DR, CP-3D, CP-4 (including the 4-1 re-pin), CP-1D (fix 1).
 ## In flight when paused (each commits on its own branch; check `git log` there)
 | Module / task | Branch | Worktree (`.claude/worktrees/…`) | Next step |
 |---|---|---|---|
-| G1-X (Stage 2) | agent branch, see `git worktree list` | agent-a3179638… | adversary review, then H1 |
+| G1-X (Stage 2): **done d36b5ab** (build-only; gates 0; light probes pass; report `work/build/g1x/report.md`) | `worktree-agent-a3179638c813adbe7` | agent-a3179638c813adbe7 | mx-adversary review (ordering and replay), then H1. Send LEAD the 5 open items in the report (validator seam needs a §2 amendment) |
 | CP-2G, CP-8, CP-3C Stage 1 builds | agent branches | agent-a4377a75…, agent-a3cc9818…, agent-aa5a4817… | answer open questions (LEAD), then adversary review |
 | CP-1C fix 1 + amendment 1 + rulings: **done 190eae7** (98 passed, gates 0, 15/15 reviewer mutants killed; probe1 exits 1 only because ruled refusals now refuse its inputs) | `worktree-cp1c-stage1` | cp1c-stage1 | adversary re-review. Send LEAD: page:2 duplicate label (provisional `Peer table not found`); peers source not `ready` refused before parse (agent's extension); C1 gap-field order gap by gap; 1C2 cell choices (period, unit, value class) |
 | CP-L10 fix 1 + amendment 1 + L10-a/c: **done 394fdc3** (55 passed, gates 0, 14/14 mutants in adapted `l10_mutate_r1.py`; test-first not followed, made up for by 23 failures against f4f3f8f) | `worktree-agent-aa6ef474a0f78ec9e` | agent-aa6ef474a0f78ec9e | adversary re-review. Send LEAD: assessment confidence Insufficient Information accepted (Rule says Medium or Low; step 5 refuses only High); B6 unit check may refuse real missing facts whose unit is None |
@@ -24,8 +24,8 @@ If an agent stopped mid-task, its worktree holds the uncommitted work: inspect i
 - CP-3 waits for the Stage 1 review.
 - Stage 1 review (mx-architect, once all Stage 1 modules are merged). It carries the CP-4 casefold test and the merged modules' Low notes.
 
-## Waiting on LEAD
-`lead/methodology-serialised` commit. Merge it before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module edits `methodology.json`.
+## Methodology change (landed, not merged into the lane)
+`lead/methodology-serialised` at a48990d (ede9ffe is the change; mx-precise COMMIT). Merge it before any Stage 2 build. It re-pins the builder and manifest of CP-1C, CP-1D, CP-2E, CP-2G, CP-3, CP-3C, CP-3D, CP-8, CP-DR, CP-L10 and CP-OS, plus CP-L10 expected (L2/L3 text only). Every module test that pins those hashes needs a re-pin in the same merge: one mechanical batch, checked by the controller running the affected Stage 1 tests. Next from LEAD: the CP-1D 1D1 amendment and the CP-2G, CP-2H and CP-4C re-pins.
 
 ## Stage 2 notes collected
 - `methods/<cp>.md` notes: cp1d (1D4), cpl10 (L10-b), cp2d (the 2D-a stem list).

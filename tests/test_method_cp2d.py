@@ -159,7 +159,13 @@ def _inputs(case: str) -> cp2d.Cp2dInputs:
     )
 
 
-def _num_equal(got: Decimal | None, want: str | None) -> bool:
+def _plain(value: object) -> object:
+    """A Gap compares as the oracle's null."""
+    return None if isinstance(value, cp2d.Gap) else value
+
+
+def _num_equal(got: object, want: str | None) -> bool:
+    got = _plain(got)
     if want is None or got is None:
         return got is None and want is None
     return got == _d(want)
@@ -196,7 +202,7 @@ def test_derived_values_equal_oracle(case: str) -> None:
     for key in decimal_keys:
         assert _num_equal(getattr(bridge, key), want[key]), (case, key, getattr(bridge, key))
     for key in CASES[case]["missing_not_zero"]:
-        assert getattr(bridge, key) is None, (case, key)
+        assert _plain(getattr(bridge, key)) is None, (case, key)
 
 
 @pytest.mark.parametrize("case", list(CASES))
@@ -286,18 +292,43 @@ def test_claims_equal_oracle(case: str) -> None:
             assert cells[ref].state == "known" and cells[ref].unit == "MILLIONS"
 
 
-def test_undisclosed_revolver_tables_fail_closed() -> None:
-    """No claim or gap wording is pinned for an undisclosed revolver: compute refuses to compose."""
-    case = "fixture_rcf_undisclosed"
-    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
-    inputs = cp2d.Cp2dInputs(
-        operands=_operands(case),
-        balance_date=BALANCE_DATE,
-        submission=_submission(payload),
-        offered_refs=OFFERED,
+def _cells(result: cp2d.Cp2dResult) -> dict[str, cp2d.Cell]:
+    return {c.fact_id: c for t in result.tables for r in t.rows for c in r.cells}
+
+
+def _claim(result: cp2d.Cp2dResult, claim_id: str) -> cp2d.ClaimText:
+    return next(c for c in result.claims if c.claim_id == claim_id)
+
+
+def test_undisclosed_revolver_composes_with_chip_claims() -> None:
+    """Ruling 2D2: chip-form LIQ-01 and GAP-01; the table gap reasons stay as the oracle builder
+    pins them (cases/cp2d-owner/builder/build.py build_tables)."""
+    inputs = replace(_inputs("positive"), operands=_operands("fixture_rcf_undisclosed"))
+    result = cp2d.compute(inputs)
+    assert list(result.own_limitations) == CASES["fixture_rcf_undisclosed"]["own_limitations"]
+    cells = _cells(result)
+    assert cells["T2E.2.r03"].reason == "Revolver commitment not disclosed in the CP-1 register"
+    assert cells["T2E.2.r04"].reason == "Revolver drawings not disclosed in the CP-1 register"
+    assert cells["T2E.2.r05"].reason == "Undrawn revolver not calculable: commitment undisclosed"
+    assert cells["T2E.2.r07"].reason == "Available liquidity not calculable: revolver undisclosed"
+    assert cells["T2E.2.r09"].reason == "Not calculable: available liquidity missing"
+    assert cells["T2E.5.r03"].reason == "Not calculable: revolver undisclosed"
+    assert cells["T2E.5.r07"].reason == "Not calculable: revolver undisclosed"
+    assert cells["T2E.5.r05"].amount == _d(
+        CASES["fixture_rcf_undisclosed"]["derived"]["cash_only_headroom"]
     )
-    with pytest.raises(ValueError, match="rcf_commitment"):
-        cp2d.compute(inputs)
+    liq = _claim(result, "CP-2D-LIQ-01")
+    assert liq.template == (
+        "Available liquidity at 31 Dec 2025 is not calculated: [T2E.2.r07] needs the undrawn "
+        "committed revolver, which is undisclosed; cash is {T2E.2.r01|US$ m}."
+    )
+    assert liq.text.endswith("; cash is 20 US$ m.")
+    assert liq.chips == ("T2E.2.r07",) and liq.references == ("T2E.2.r01",)
+    gap = _claim(result, "CP-2D-GAP-01")
+    assert gap.text == (
+        "The funding gap is not calculated because the revolver is undisclosed; cash-only "
+        "headroom over the assumed minimum cash is 10 US$ m."
+    )
 
 
 def test_sources_and_uses_difference_composes_restricted() -> None:
@@ -352,13 +383,23 @@ def test_compute_refuses_an_invalid_submission() -> None:
         cp2d.compute(replace(inputs, submission=_submission(payload)))
 
 
-def test_cp1_cross_check_mismatch_fails_closed() -> None:
+def test_cp1_cross_check_mismatch_settles_with_a_limitation() -> None:
+    """Ruling 2D-d: CP-2D uses its recomputed value and records the difference."""
     inputs = _inputs("positive")
-    tampered = replace(inputs, operands=replace(inputs.operands, liquidity=Decimal(21)))
-    assert cp2d.check_cp1_totals(operands=tampered.operands, bridge=cp2d.bridge_of(tampered))
-    with pytest.raises(ValueError, match="liquidity"):
-        cp2d.compute(tampered)
     assert cp2d.check_cp1_totals(operands=inputs.operands, bridge=cp2d.bridge_of(inputs)) == ()
+    tampered = replace(inputs, operands=replace(inputs.operands, liquidity=Decimal(21)))
+    result = cp2d.compute(tampered)
+    want = (
+        "CP-1's liquidity differs from the value recomputed from its line items; CP-2D uses the "
+        "recomputed value and shows both."
+    )
+    assert result.own_limitations[-1] == want
+    assert _cells(result)["T2E.2.r07"].amount == Decimal(20)
+    absent = replace(inputs, operands=replace(inputs.operands, undrawn_rcf=None))
+    result = cp2d.compute(absent)
+    want = "CP-1 reports no undrawn_rcf; the value recomputed from its line items is used."
+    assert result.own_limitations[-1] == want
+    assert _cells(result)["T2E.2.r05"].amount == Decimal(0)
 
 
 # --- calculation-level refusals ---------------------------------------------------------------
@@ -427,11 +468,12 @@ def test_empty_facility_schedule_is_missing_not_zero() -> None:
         "funding_gap",
         "undrawn_term_commitment",
     ):
-        assert getattr(b, key) is None, key
+        value = getattr(b, key)
+        assert isinstance(value, cp2d.Gap), key
+        assert value.reason == "Not calculable: T4.18 facility schedule is missing", key
     assert b.wall == ()
-    inputs = replace(_inputs("positive"), operands=operands)
-    with pytest.raises(ValueError, match="T4.18 facilities"):
-        cp2d.compute(inputs)
+    result = cp2d.compute(replace(_inputs("positive"), operands=operands))
+    assert _cells(result)["T2E.3.r07"].state == "gap"
 
 
 @pytest.mark.parametrize("total_debt", [None, Decimal(0)])
@@ -440,8 +482,15 @@ def test_missing_total_debt_keeps_wall_terms_known(total_debt: Decimal | None) -
     (row,) = b.wall
     assert row.months_to_maturity == CASES["positive"]["derived"]["months_to_maturity"]
     assert row.inside_horizon is False
-    assert row.share_of_total_debt is None and row.cumulative_share is None
-    assert b.liquidity_to_total_debt is None
+    for value in (row.share_of_total_debt, row.cumulative_share, b.liquidity_to_total_debt):
+        assert isinstance(value, cp2d.Gap)
+        if total_debt is None:
+            assert value.applicable and value.reason == "Not calculable: Total debt is missing"
+        else:  # ruling 2D5: not meaningful
+            assert not value.applicable
+            assert (
+                value.reason == "Not meaningful: total debt is zero (ZERO_OR_NEGATIVE_DENOMINATOR)"
+            )
 
 
 # --- lease-literal branch cases (controller-authorised, fix round 1) --------------------------
@@ -523,12 +572,12 @@ def test_maturity_on_the_horizon_end_is_inside() -> None:
 
 
 def test_two_facilities_cumulative_share_in_maturity_order() -> None:
-    # lease-literal: CP2D lease Method 4 (share of total debt and cumulative share); maturity
-    # order is this implementation's reading (one facility in every oracle case)
+    # lease-literal: CP2D lease Method 4 (share of total debt and cumulative share); ruling 2D6
+    # orders by (maturity_date, facility_id): the earlier facility has the later id (N3)
     loan = _base_operands().facilities[0]
     early = replace(
         loan,
-        facility_id="a-loan",
+        facility_id="b-loan",
         principal=Decimal(20),
         commitment=Decimal(20),
         drawn_amount=Decimal(20),
@@ -536,13 +585,13 @@ def test_two_facilities_cumulative_share_in_maturity_order() -> None:
     )
     late = replace(
         loan,
-        facility_id="b-loan",
+        facility_id="a-loan",
         principal=Decimal(30),
         commitment=Decimal(30),
         drawn_amount=Decimal(30),
     )
     b = _compose(replace(_base_operands(), facilities=(late, early)), 24, "10")
-    assert [r.facility.facility_id for r in b.wall] == ["a-loan", "b-loan"]
+    assert [r.facility.facility_id for r in b.wall] == ["b-loan", "a-loan"]
     assert [r.share_of_total_debt for r in b.wall] == [Decimal("0.4"), Decimal("0.6")]
     assert [r.cumulative_share for r in b.wall] == [Decimal("0.4"), Decimal("1.0")]
     assert b.maturities_in_horizon == Decimal(20)  # 2027-06-30 <= 2027-12-31
@@ -567,3 +616,289 @@ def test_undrawn_term_commitment_is_commitment_less_drawn() -> None:
     b = _compose(operands, 24, "10")
     assert b.undrawn_term_commitment == Decimal(10)
     assert b.available_liquidity == Decimal(20)
+
+
+# --- rulings round 2 and 3 (docs/rulings/2026-10-28-stage1.md, CP-2D) -------------------------
+
+
+def _analyst_issues(extra: str) -> tuple[str, ...]:
+    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+    payload["assessments"][0]["text"] += " " + extra
+    return cp2d.submission_issues(submission=_submission(payload), offered_refs=OFFERED)
+
+
+@pytest.mark.parametrize(
+    "extra", ["The issuer may resell the notes.", "A Helmet clause applies.", "The buyer pays."]
+)
+def test_forbidden_stems_match_as_substrings(extra: str) -> None:
+    """Ruling 2D1: substring match, so a stem inside another word refuses (a recorded limit)."""
+    assert _analyst_issues(extra) == (EXPECTED["refusals"]["covenant_compliance_wording"],)
+
+
+@pytest.mark.parametrize(
+    "field", ["text", "credit_implication", "limitation", "rationale", "reason", "follow_up"]
+)
+def test_forbidden_stems_checked_on_every_analyst_field(field: str) -> None:
+    """Ruling 2D-a: every analyst text field is checked."""
+    case = "gap_minimum_cash" if field in ("reason", "follow_up", "limitation") else "positive"
+    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"][case]))
+    if field == "rationale":
+        payload["minimum_cash"][field] += " Refinancing is likely."
+    elif field in ("reason", "follow_up"):
+        payload["minimum_cash_absence"][field] += " Refinancing is likely."
+    elif field == "limitation":
+        payload["assessments"][2][field] += " Refinancing is likely."
+    else:
+        payload["assessments"][1][field] += " Refinancing is likely."
+    issues = cp2d.submission_issues(submission=_submission(payload), offered_refs=OFFERED)
+    assert issues == (EXPECTED["refusals"]["figure_free_text_forbidden_word"],)
+
+
+def test_python_wording_is_not_checked_for_forbidden_stems() -> None:
+    """Ruling 2D-a: CP-2D's own labels and claim templates carry stems and are not checked."""
+    result = cp2d.compute(_inputs("positive"))
+    labels = [r.label for t in result.tables for r in t.rows]
+    assert "Cash at horizon end before refinancing" in labels
+    assert any("refinancing" in c.template for c in result.claims)
+    assert result.status == "restricted"
+
+
+def test_missing_operand_settles_with_its_reason() -> None:
+    """Ruling 2D-b: the cell and every dependant carry the first missing operand's reason."""
+    inputs = _inputs("positive")
+    result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, cfo=None)))
+    reason = "Not calculable: Operating cash flow is missing"
+    cells = _cells(result)
+    for fact_id in (
+        "T2E.1.r02",
+        "T2E.1.r09",
+        "T2E.1.r11",
+        "T2E.3.r01",
+        "T2E.3.r02",
+        "T2E.3.r05",
+        "T2E.3.r08",
+        "T2E.3.r09",
+        "T2E.5.r01",
+        "T2E.5.r03",
+        "T2E.5.r05",
+        "T2E.5.r06",
+        "T2E.5.r07",
+    ):
+        assert cells[fact_id].state == "gap" and cells[fact_id].reason == reason, fact_id
+    assert cells["T2E.2.r07"].state == "known"  # liquidity needs no cash flow
+    run = _claim(result, "CP-2D-RUN-01")
+    assert run.chips == ("T2E.3.r01", "T2E.3.r08") and run.references == ()
+    gap = _claim(result, "CP-2D-GAP-01")
+    assert gap.chips == ("T2E.5.r07",)
+    assert list(result.own_limitations) == CASES["positive"]["own_limitations"]
+
+
+def test_non_feeding_missing_operand_is_only_a_missing_cell() -> None:
+    inputs = _inputs("positive")
+    result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, restricted_cash=None)))
+    cell = _cells(result)["T2E.2.r02"]
+    assert cell.state == "gap" and cell.reason == "Not calculable: Restricted cash is missing"
+    assert list(result.own_limitations) == CASES["positive"]["own_limitations"]
+    assert sum(c.state != "known" for c in _cells(result).values()) == 1
+
+
+def _with_loan(loan: cp2d.Facility) -> cp2d.Cp2dInputs:
+    inputs = _inputs("positive")
+    return replace(inputs, operands=replace(inputs.operands, facilities=(loan,)))
+
+
+LOAN = _base_operands().facilities[0]
+
+
+def test_undated_facility_settles_with_the_date_reason() -> None:
+    """Ruling 2D-c (maturity date)."""
+    result = cp2d.compute(_with_loan(replace(LOAN, maturity_date=None)))
+    reason = "Not calculable: facility term-loan maturity date is not stated"
+    cells = _cells(result)
+    for fact_id in ("T2E.4.r01.c2", "T2E.4.r01.c3", "T2E.4.r01.c4", "T2E.4.r01.c6"):
+        assert cells[fact_id].state == "gap" and cells[fact_id].reason == reason, fact_id
+    assert cells["T2E.4.r01.c1"].state == "known" and cells["T2E.4.r01.c5"].state == "known"
+    for fact_id in ("T2E.3.r06", "T2E.3.r07", "T2E.3.r08", "T2E.5.r07"):
+        assert cells[fact_id].reason == reason, fact_id
+    assert result.own_limitations[-1] == (
+        "Facility term-loan maturity date is not stated; maturity-wall figures that need it are "
+        "not calculated."
+    )
+    assert _claim(result, "CP-2D-MAT-01").chips == ("T2E.3.r07",)
+
+
+def test_unstated_principal_settles_with_the_principal_reason() -> None:
+    """Ruling 2D-c (principal): the maturity date, months and inside-horizon stay known."""
+    result = cp2d.compute(_with_loan(replace(LOAN, principal=None)))
+    reason = "Not calculable: facility term-loan principal is not stated"
+    cells = _cells(result)
+    for fact_id in ("T2E.4.r01.c1", "T2E.4.r01.c5", "T2E.4.r01.c6"):
+        assert cells[fact_id].reason == reason, fact_id
+    assert cells["T2E.4.r01.c2"].shown == "2029-12-31"
+    # The loan matures after the horizon: amortisation needs the principal, maturities do not.
+    assert cells["T2E.3.r06"].reason == reason
+    assert cells["T2E.3.r07"].amount == 0
+
+
+def test_unstated_currency_takes_the_non_usd_path() -> None:
+    """Ruling 2D-c (currency)."""
+    result = cp2d.compute(_with_loan(replace(LOAN, currency=None)))
+    reason = (
+        "Not calculable: facility term-loan currency is not stated; no FX conversion is applied"
+    )
+    cells = _cells(result)
+    for fact_id in ("T2E.4.r01.c1", "T2E.4.r01.c5", "T2E.4.r01.c6", "T2E.3.r07", "T2E.2.r06"):
+        assert cells[fact_id].reason == reason, fact_id
+    assert result.own_limitations[-1] == (
+        "Facility term-loan currency is not stated; maturity-wall figures that need it are not "
+        "calculated."
+    )
+
+
+def test_non_usd_facility_settles_with_the_fx_reason() -> None:
+    """Ruling 2D5."""
+    result = cp2d.compute(_with_loan(replace(LOAN, currency="EUR")))
+    reason = "Not calculable: facility term-loan is in EUR, not USD; no FX conversion is applied"
+    cells = _cells(result)
+    for fact_id in (
+        "T2E.4.r01.c1",
+        "T2E.4.r01.c5",
+        "T2E.4.r01.c6",
+        "T2E.3.r06",
+        "T2E.3.r07",
+        "T2E.3.r08",
+        "T2E.5.r01",
+        "T2E.5.r03",
+        "T2E.5.r05",
+        "T2E.5.r06",
+        "T2E.5.r07",
+    ):
+        assert cells[fact_id].reason == reason, fact_id
+    for fact_id in ("T2E.4.r01.c2", "T2E.4.r01.c3", "T2E.4.r01.c4"):
+        assert cells[fact_id].state == "known", fact_id
+    assert result.own_limitations[-1] == (
+        "Facility term-loan is denominated in EUR; maturity-wall totals and shares are not "
+        "calculated because no FX conversion is applied."
+    )
+    assert _claim(result, "CP-2D-MAT-01").template == (
+        "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] "
+        "needs facility term-loan in USD; no FX conversion is applied."
+    )
+    assert _claim(result, "CP-2D-GAP-01").chips == ("T2E.5.r07",)
+
+
+def test_fx_facility_makes_every_later_cumulative_share_missing() -> None:
+    early = replace(LOAN, facility_id="eur", currency="EUR", maturity_date=date(2027, 1, 31))
+    late = replace(LOAN, facility_id="usd")
+    b = _compose(replace(_base_operands(), facilities=(late, early)), 24, "10")
+    eur, usd = b.wall
+    assert isinstance(eur.share_of_total_debt, cp2d.Gap)
+    assert isinstance(usd.cumulative_share, cp2d.Gap)
+    assert usd.cumulative_share.reason == eur.share_of_total_debt.reason
+    assert usd.share_of_total_debt == 1
+
+
+def test_undated_facility_sorts_after_dated_ones() -> None:
+    """Ruling 2D-c: an undated facility follows every dated one, ordered by facility_id."""
+    facilities = (
+        replace(LOAN, facility_id="a-undated", maturity_date=None),
+        replace(LOAN, facility_id="z-dated"),
+    )
+    b = _compose(replace(_base_operands(), facilities=facilities), 24, "10")
+    assert [r.facility.facility_id for r in b.wall] == ["z-dated", "a-undated"]
+
+
+def test_zero_total_debt_shares_are_not_meaningful() -> None:
+    """Ruling 2D5 (zero total debt)."""
+    inputs = _inputs("positive")
+    operands = replace(
+        inputs.operands, total_debt_bs=Decimal(0), total_debt=Decimal(0), liquidity_to_debt=None
+    )
+    result = cp2d.compute(replace(inputs, operands=operands))
+    cells = _cells(result)
+    for fact_id in ("T2E.4.r01.c5", "T2E.4.r01.c6", "T2E.2.r09"):
+        assert cells[fact_id].state == "not_applicable", fact_id
+        assert cells[fact_id].reason == (
+            "Not meaningful: total debt is zero (ZERO_OR_NEGATIVE_DENOMINATOR)"
+        )
+        assert cells[fact_id].spell(gap_id="G3") == "∅ G3 n.m."
+
+
+def test_ledger_headers() -> None:
+    """Ruling 2D8."""
+    result = cp2d.compute(_inputs("positive"))
+    assert result.judgments.row_header == "Judgment"
+    assert result.judgments.column == ("value", "Value")
+    assert result.gaps_ledger.row_header == "Item"
+    assert result.gaps_ledger.column == ("kind", "Kind")
+
+
+def test_sources_and_uses_use_the_financing_total() -> None:
+    """Ruling 2D9: the financing lines are display rows; a difference is a limitation."""
+    inputs = _inputs("positive")
+    operands = replace(inputs.operands, dividends_paid=Decimal(-8))  # lines sum to (3), total (4)
+    result = cp2d.compute(replace(inputs, operands=operands))
+    b = result.bridge
+    assert b.sources_and_uses_closing_cash_calculated == Decimal(20)  # 15 + 19 - 10 - 4 + 0
+    assert b.sources_and_uses_difference == 0
+    assert b.financing_lines_difference == Decimal(1)
+    assert ("Financing lines difference", "Limitation") in result.gaps_ledger.rows
+    assert (
+        "Financing lines differ from CP-1's net cash used in financing by 1 US$ m; sources and "
+        "uses use the financing total."
+    ) in result.own_limitations
+
+
+def test_negative_zero_minimum_cash_is_stored_unsigned() -> None:
+    """N2: "-0" passes validation and is stored as an unsigned zero."""
+    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+    payload["minimum_cash"]["amount"] = "-0"
+    result = cp2d.compute(replace(_inputs("positive"), submission=_submission(payload)))
+    assert result.bridge.minimum_cash is not None and not result.bridge.minimum_cash.is_signed()
+    amount = _cells(result)["T2E.5.r04"].amount
+    assert amount is not None and not amount.is_signed()
+
+
+def _no_raise_cases() -> list[tuple[str, cp2d.Cp2dInputs]]:
+    """The reviewer's raise list (probe3 section 5): valid submissions that used to raise."""
+    inputs = _inputs("positive")
+    o = inputs.operands
+    cases: list[tuple[str, cp2d.Cp2dInputs]] = []
+    for amount in ("1E+30", "123456789012345678901234567890"):
+        payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+        payload["minimum_cash"]["amount"] = amount
+        cases.append((f"minimum cash {amount}", replace(inputs, submission=_submission(payload))))
+    missing: dict[str, Any] = dict.fromkeys(cp2d.OPERAND_LABELS)
+    all_missing = replace(o, **missing)
+    variants: tuple[tuple[str, cp2d.Operands], ...] = (
+        ("restricted_cash None", replace(o, restricted_cash=None)),
+        ("undrawn_rcf None", replace(o, undrawn_rcf=None)),
+        ("liquidity_to_debt None", replace(o, liquidity_to_debt=None)),
+        ("cash_closing differs", replace(o, cash_closing=Decimal(21))),
+        ("facility commitment None", replace(o, facilities=(replace(LOAN, commitment=None),))),
+        ("total debt zero", replace(o, total_debt_bs=Decimal(0), total_debt=Decimal(0))),
+        ("EUR facility", replace(o, facilities=(replace(LOAN, currency="EUR"),))),
+        (
+            "negative total debt",
+            replace(o, total_debt_bs=Decimal(-50), total_debt=Decimal(-50), liquidity_to_debt=None),
+        ),
+        ("tiny burn", replace(o, cfo=Decimal(19) - Decimal("1E-60"))),
+        ("every operand missing", all_missing),
+        ("no facilities", replace(o, facilities=())),
+        ("revolver drawn missing only", replace(o, rcf_drawn=None)),
+    )
+    for label, operands in variants:
+        cases.append((label, replace(inputs, operands=operands)))
+    return cases
+
+
+NO_RAISE = _no_raise_cases()
+
+
+@pytest.mark.parametrize("index", range(len(NO_RAISE)), ids=[label for label, _ in NO_RAISE])
+def test_valid_submissions_never_raise(index: int) -> None:
+    label, inputs = NO_RAISE[index]
+    result = cp2d.compute(inputs)
+    assert result.status == "restricted", label
+    for cell in _cells(result).values():
+        assert cell.state == "known" or cell.reason, (label, cell.fact_id)

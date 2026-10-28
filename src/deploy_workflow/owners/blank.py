@@ -1,13 +1,9 @@
 """The one blank-text predicate for analyst text (LEAD round 12 B10).
 
-A text is blank when every character is whitespace (`str.isspace`) or a Unicode format character
-(category `Cf`: U+200B, U+FEFF, U+00AD, U+2060 and the like), which `str.strip()` keeps. `""` is
-blank, as `not "".strip()` is.
+The predicate itself is `deploy_vii.prose.is_blank`; this module keeps its public name for the
+owner cores (`from deploy_workflow.owners.blank import is_blank`).
 """
 
-import unicodedata
+from deploy_vii.prose import is_blank
 
-
-def is_blank(text: str) -> bool:
-    """Whether `text` holds only whitespace and Unicode format (`Cf`) characters."""
-    return all(ch.isspace() or unicodedata.category(ch) == "Cf" for ch in text)
+__all__ = ["is_blank"]

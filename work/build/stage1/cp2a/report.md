@@ -57,3 +57,5 @@ I did it manually. I listed doubts on missing-operand paths, the gate interplay,
 Not verified: an empty T2B.7 through G2 rendering or the FP05 tab; real CP-1 head facts (units, citations, calculation ids and fact ids are fixture values built from the oracle records); v17; any store, journal, view, probe, G1-X or rendering behaviour; behaviour at zero debt or zero interest (finding 1); shape messages under any pydantic other than 2.14.1.
 
 agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
+
+> **Superseded:** this is the Stage 1 build report. The current state, after fix round 2 and rulings A1–A8, is in `rulings-report.md` in this folder.

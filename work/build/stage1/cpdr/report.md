@@ -124,3 +124,39 @@ Not verified:
 - Fixture payloads are re-assembled from the partial literal per build.py; they are not stored in submissions.json.
 
 agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+
+## Fix round 1 (mx-adversary CHANGES REQUIRED on 59aea17)
+
+I wrote the tests first and watched them fail (36 failed, 8 passed) before changing any code.
+
+1. **Surviving mutants.** I added lease-literal tests, each labelled `# lease-literal: <line>`. The expected strings come verbatim from the lease (:46, :47, :112, :114, :115, :117). The payloads are the oracle's literal questions with one stated edit each. The new tests cover:
+   - accepted gaps with 1 and with 4 questions;
+   - an answered question with no category;
+   - a not_found question carrying a valid citation;
+   - several content issues on one question, in order: rule 4, then the digit rule, then prohibited words;
+   - a digit, and then a prohibited word, in the question text;
+   - each prohibited word in mixed case;
+   - a pack source that is not ready (status `missing`);
+   - a gap description containing "; ", with two consumers;
+   - the HALF_UP tie 1/32 = 0.0313, over 8 gaps with 4 questions each.
+2. **Empty consumers.** `named_consumers` is now `()` when "affects ; " is empty. Tested.
+3. **Strict facts.** `strict=False` is removed; every oracle fact validates strict.
+4. **Signatures.**
+   - `validate_research(*, submission, upstream, pack)`, with semantics unchanged.
+   - `bookkeeping(*, submission)` is kept pending LEAD's ruling.
+5. **compose fails closed.** It raises when an agenda gap is missing from the submission, when a submitted gap is outside the agenda, and when a gap is repeated. TDR.1/TDR.2 emission and the empty-agenda line are now decided from the agenda. A test covers each of the three refusals.
+
+**Test.** 45 passed in 0.24 s.
+
+**Gates.** All exit 0 after one `ruff format` of the test file plus one ISC004 rewrite:
+- ruff check
+- ruff format --check
+- mypy --strict
+
+**Mutation probe.** I ran `scratchpad/cpdr/mutate_r1.py`, a copy of `mutate.py`. The `ready_filter_removed` anchor is updated for the `sources` → `pack` rename, and three mutants are added: empty consumers, compose missing gap, compose extra gap. All 14 mutants are killed. A manual mutant that removes the compose repeat check is also killed.
+
+Not verified:
+- RULES/tool use, store and attempt behaviour, settled and inherited limitations, module status, blocked status, rendering and tamper (Stages 2-4).
+- The lease-literal cases rest on my reading of lease lines :46, :47 and :112-:117. The description-with-"; " and empty-consumer cases also rest on the T5 text form at readiness.py:500. None of these values is in expected.json.
+
+`2026-10-28 cpdr-stage1-fix1 pytest tests/test_method_cpdr.py exit 0, 45 passed 0 failed, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n`

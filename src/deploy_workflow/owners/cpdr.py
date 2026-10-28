@@ -102,7 +102,7 @@ def _parse_gap(gap_id: str, text: str) -> AgendaGap:
         gap_id=gap_id,
         kind_severity=head,
         description=rest[:affects],
-        named_consumers=tuple(consumers.split(", ")),
+        named_consumers=tuple(consumers.split(", ")) if consumers else (),
         remediation=remediation,
     )
 
@@ -167,10 +167,11 @@ def _question_issues(
 
 
 def validate_research(
-    *, submission: ResearchSubmission, agenda: tuple[AgendaGap, ...], sources: tuple[Source, ...]
+    *, submission: ResearchSubmission, upstream: tuple[AgendaGap, ...], pack: tuple[Source, ...]
 ) -> tuple[str, ...]:
-    """Content issues of a submission against the agenda and the pack, in the lease's order."""
-    agenda_ids = {gap.gap_id for gap in agenda}
+    """Content issues of a submission against the CP-0 agenda (``upstream``) and the pack
+    sources (``pack``), in the lease's order."""
+    agenda_ids = {gap.gap_id for gap in upstream}
     issues: list[str] = []
     counted: dict[str, int] = {}
     for gap in submission.gaps:
@@ -182,17 +183,17 @@ def validate_research(
             counted[gap.gap_id] = len(gap.questions)
     issues += [
         f"a gap takes 1 to 4 research questions: {gap.gap_id}"
-        for gap in agenda
+        for gap in upstream
         if not MIN_QUESTIONS <= counted.get(gap.gap_id, 0) <= MAX_QUESTIONS
     ]
-    ready = frozenset(source.source_id for source in sources if source.status == "ready")
+    ready = frozenset(source.source_id for source in pack if source.status == "ready")
     seen: set[str] = set()
     for gap in submission.gaps:
         for question in gap.questions:
             if question.question_id in seen:
                 issues.append(f"question_id appears twice: {question.question_id}")
             seen.add(question.question_id)
-            issues += _question_issues(question, ready, sources)
+            issues += _question_issues(question, ready, pack)
     return tuple(dict.fromkeys(issues))
 
 
@@ -333,8 +334,7 @@ class _Builder:
                     "row_id": row,
                     "field": field,
                     **values,
-                },
-                strict=False,
+                }
             )
         )
         return fact_id
@@ -424,9 +424,7 @@ def _gap_rows(
     agenda = {gap.gap_id: gap for gap in inputs.agenda}
     rows: list[tuple[str, tuple[str, ...]]] = []
     for count in counts:
-        gap = agenda.get(count.gap_id)
-        if gap is None:
-            raise ValueError(f"Submitted gap is not in the CP-0 agenda: {count.gap_id}")
+        gap = agenda[count.gap_id]  # compose checked the submission against the agenda
         row = gap.gap_id
         rows.append(
             (
@@ -516,12 +514,26 @@ def _summary(bk: Bookkeeping) -> str:
 
 
 def compose(inputs: CpdrInputs) -> CpdrResult:
-    """Facts, tables TDR.1-TDR.3, claims and own limitations of a validated submission."""
+    """Facts, tables TDR.1-TDR.3, claims and own limitations of a validated submission.
+
+    Fails closed when the submission does not address the agenda gap for gap (validator rules
+    1-2 should have refused it): an agenda gap missing, a gap outside the agenda, or a repeat.
+    """
+    submitted = [gap.gap_id for gap in inputs.submission.gaps]
+    agenda_ids = [gap.gap_id for gap in inputs.agenda]
+    for gap_id in agenda_ids:
+        if gap_id not in submitted:
+            raise ValueError(f"Agenda gap is missing from the submission: {gap_id}")
+    for gap_id in submitted:
+        if gap_id not in agenda_ids:
+            raise ValueError(f"Submitted gap is not in the CP-0 agenda: {gap_id}")
+    if len(set(submitted)) != len(submitted):
+        raise ValueError("A gap appears twice in the submission")
     bk = bookkeeping(submission=inputs.submission)
     build = _Builder(inputs.as_of.isoformat())
     questions = [(g.gap_id, q) for g in inputs.submission.gaps for q in g.questions]
     tables: list[ReportTable] = []
-    if bk.gaps:  # an empty agenda emits neither TDR.1 nor TDR.2 (Method 5)
+    if inputs.agenda:  # an empty agenda emits neither TDR.1 nor TDR.2 (Method 5)
         gap_rows = _gap_rows(build, inputs, bk.gaps)
         question_rows = [(q.question_id, _question_row(build, g, q)) for g, q in questions]
         tables += [
@@ -541,7 +553,7 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
 
     unresolved = [q for _, q in questions if q.outcome == "not_found"]
     limitations = [BASE_LIMITATION]
-    if not bk.gaps:
+    if not inputs.agenda:
         limitations.append(EMPTY_LIMITATION)
     limitations += [f"Unresolved: {q.text} {q.limitation}" for q in unresolved]
 

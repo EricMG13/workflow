@@ -169,7 +169,7 @@ def test_case_matches_the_oracle(case_id: str) -> None:
     want = EXPECTED["cases"][case_id]
     sub = submission(SUBMISSIONS["cpdr"][case_id])
     gaps = agenda(empty=case_id == "empty_agenda")
-    assert validate_research(submission=sub, agenda=gaps, sources=sources()) == ()
+    assert validate_research(submission=sub, upstream=gaps, pack=sources()) == ()
 
     result = compose(CpdrInputs(agenda=gaps, submission=sub, as_of=AS_OF))
 
@@ -257,7 +257,7 @@ def test_refusal_validator_issues(name: str) -> None:
     pinned = tuple(EXPECTED["refusals"][name]["step_issues"])
     content = tuple(i for i in pinned if not i.startswith(RULES_PREFIXES))
     gaps = agenda(empty=item["cp0"] == "cp0_readiness_review_empty_agenda")
-    got = validate_research(submission=submission(item["payload"]), agenda=gaps, sources=sources())
+    got = validate_research(submission=submission(item["payload"]), upstream=gaps, pack=sources())
     assert got == content
 
 
@@ -265,7 +265,186 @@ def test_blocked_attempts_validator_issues() -> None:
     for attempt in ("attempt_0", "attempt_1"):
         got = validate_research(
             submission=submission(SUBMISSIONS["cpdr"]["blocked"][attempt]),
-            agenda=agenda(empty=False),
-            sources=sources(),
+            upstream=agenda(empty=False),
+            pack=sources(),
         )
         assert got == tuple(EXPECTED["blocked"][attempt]["issues"]), attempt
+
+
+# --- lease-literal cases (fix round 1; strings and rules verbatim from docs/CPDR-OWNER-LEASE.md) --
+# Payloads reuse the oracle's literal questions (submissions.json#cpdr.partial / .unresolved) with
+# one stated edit each; the expected strings are the lease's own wording, never expected.json.
+
+PARTIAL_GAP = SUBMISSIONS["cpdr"]["partial"]["gaps"][0]
+TRANSACTIONS, DISTRIBUTIONS, OWNER = PARTIAL_GAP["questions"]
+POLICY = SUBMISSIONS["cpdr"]["unresolved"]["gaps"][0]["questions"][1]
+GAP_ID = PARTIAL_GAP["gap_id"]
+
+
+def one_gap(*questions: dict[str, Any]) -> ResearchSubmission:
+    return submission({"gaps": [{"gap_id": GAP_ID, "questions": list(questions)}]})
+
+
+def edited(question: dict[str, Any], **changes: Any) -> dict[str, Any]:
+    return {**question, **changes}
+
+
+def check(sub: ResearchSubmission, pack: tuple[Source, ...] | None = None) -> tuple[str, ...]:
+    return validate_research(
+        submission=sub, upstream=agenda(empty=False), pack=sources() if pack is None else pack
+    )
+
+
+@pytest.mark.parametrize(
+    "questions",
+    [
+        pytest.param([TRANSACTIONS], id="one-question"),
+        pytest.param([TRANSACTIONS, DISTRIBUTIONS, OWNER, POLICY], id="four-questions"),
+    ],
+)
+def test_a_gap_accepts_one_to_four_questions(questions: list[dict[str, Any]]) -> None:
+    # lease-literal: :112 "not 1 to 4 questions" is the only count refusal; 1 and 4 are accepted
+    assert check(one_gap(*questions)) == ()
+
+
+def test_answered_without_category() -> None:
+    # lease-literal: :114 answered: missing answer, category or citation
+    sub = one_gap(edited(TRANSACTIONS, category=None), DISTRIBUTIONS, OWNER)
+    issue = "an answered question needs an answer, a category and at least one citation: "
+    assert check(sub) == (issue + "transactions",)
+
+
+def test_not_found_with_a_citation_only() -> None:
+    # lease-literal: :114 not_found: has an answer, category or citation (the citation is a
+    # verbatim, in-pack literal, so rule 6 adds nothing)
+    sub = one_gap(TRANSACTIONS, DISTRIBUTIONS, edited(OWNER, citations=TRANSACTIONS["citations"]))
+    assert check(sub) == (
+        "a not_found question carries no answer, category or citation: owner-identity",
+    )
+
+
+def test_several_content_issues_on_one_question_in_rule_order() -> None:
+    # lease-literal: :114 then :117 (rule 4, then rule 7: digit rule, then prohibited words)
+    sub = one_gap(
+        edited(TRANSACTIONS, limitation="We recommend asking about 2025."), DISTRIBUTIONS, OWNER
+    )
+    assert check(sub) == (
+        "an answered question carries no limitation: transactions",
+        "text must not contain a figure: transactions",
+        "text carries a prohibited conclusion: transactions",
+    )
+
+
+def test_digit_in_question_text() -> None:
+    # lease-literal: :117 the digit rule covers the question `text`
+    sub = one_gap(TRANSACTIONS, DISTRIBUTIONS, edited(OWNER, text="Who owned the issuer in 2025?"))
+    assert check(sub) == ("text must not contain a figure: owner-identity",)
+
+
+def test_prohibited_word_in_question_text() -> None:
+    # lease-literal: :117 prohibited words in the same fields (question `text` included)
+    sub = one_gap(TRANSACTIONS, DISTRIBUTIONS, edited(OWNER, text="Who holds the recovery claim?"))
+    assert check(sub) == ("text carries a prohibited conclusion: owner-identity",)
+
+
+@pytest.mark.parametrize("word", ["Recommend", "REFINANCING", "covenant", "Recovery"])
+def test_each_prohibited_word_case_insensitive(word: str) -> None:
+    # lease-literal: :117 case-insensitive substrings "recommend", "refinanc", "covenant", "recovery"
+    limitation = f"No prepared source names the {word} terms."
+    sub = one_gap(TRANSACTIONS, DISTRIBUTIONS, edited(OWNER, limitation=limitation))
+    assert check(sub) == ("text carries a prohibited conclusion: owner-identity",)
+
+
+def test_a_pack_source_that_is_not_ready() -> None:
+    # lease-literal: :115 a source that is not a ready pack source
+    missing = Source(
+        source_id="registry",
+        name="Shareholder register",
+        status="missing",
+        limitation="The shareholder register was not supplied.",
+    )
+    searched = [*OWNER["searched_sources"], "registry"]
+    sub = one_gap(TRANSACTIONS, DISTRIBUTIONS, edited(OWNER, searched_sources=searched))
+    assert check(sub, (*sources(), missing)) == (
+        "searched source is not a ready prepared source: owner-identity registry",
+    )
+
+
+def _t5(text: str) -> Fact:
+    return Fact(
+        fact_id=f"T5.{GAP_ID}.gap",
+        label="gap",
+        table_id="T5",
+        row_id=GAP_ID,
+        field="gap",
+        text=text,
+    )
+
+
+def test_gap_description_containing_a_semicolon() -> None:
+    # lease-literal: :46 kind/severity before the first ": "; consumers between the last
+    # "; affects " and the next "; "; remediation the rest (T5 text form: readiness.py:500)
+    (gap,) = parse_agenda(
+        (
+            _t5(
+                "scope/material: Ownership content is absent; transaction content is absent; "
+                "affects CP-DR, CP-5; Supply the ownership and transaction documents"
+            ),
+        )
+    )
+    assert gap.kind_severity == "scope/material"
+    assert gap.description == "Ownership content is absent; transaction content is absent"
+    assert gap.named_consumers == ("CP-DR", "CP-5")
+    assert gap.remediation == "Supply the ownership and transaction documents"
+
+
+def test_gap_with_no_named_consumer() -> None:
+    # readiness.py:500 joins affected_modules with ", ": an empty list leaves "affects ; "
+    (gap,) = parse_agenda((_t5("scope/material: Ownership is absent; affects ; Supply it"),))
+    assert gap.named_consumers == ()
+    assert gap.remediation == "Supply it"
+
+
+def test_share_rounds_half_up_at_four_places() -> None:
+    # lease-literal: :47 share = a / n quantised to 4 places ROUND_HALF_UP; 1 / 32 = 0.03125
+    # is a tie at the fifth place (bookkeeping counts any submission; 8 gaps x 4 questions)
+    def renamed(question: dict[str, Any], suffix: str) -> dict[str, Any]:
+        return edited(question, question_id=f"{question['question_id']}-{suffix}")
+
+    gaps = [
+        {
+            "gap_id": f"gap-{g}",
+            "questions": [
+                renamed(TRANSACTIONS if (g, i) == (0, 0) else OWNER, f"{g}-{i}") for i in range(4)
+            ],
+        }
+        for g in range(8)
+    ]
+    bk = bookkeeping(submission=submission({"gaps": gaps}))
+    assert (bk.questions_total, bk.answered_total) == (32, 1)
+    assert bk.answered_share == Decimal("0.0313")
+    assert str(bk.answered_share) == "0.0313"
+
+
+# --- compose fails closed (fix round 1, item 5) ---------------------------------------------------
+
+
+def test_compose_refuses_an_agenda_gap_missing_from_the_submission() -> None:
+    inputs = CpdrInputs(
+        agenda=agenda(empty=False), submission=submission({"gaps": []}), as_of=AS_OF
+    )
+    with pytest.raises(ValueError, match="missing from the submission"):
+        compose(inputs)
+
+
+def test_compose_refuses_a_submission_against_the_empty_agenda() -> None:
+    # the empty-agenda limitation is decided by the agenda: a non-empty submission never gets it
+    sub = submission(SUBMISSIONS["cpdr"]["partial"])
+    with pytest.raises(ValueError, match="not in the CP-0 agenda"):
+        compose(CpdrInputs(agenda=agenda(empty=True), submission=sub, as_of=AS_OF))
+
+
+def test_compose_refuses_a_repeated_gap() -> None:
+    sub = submission(SUBMISSIONS["refusal_inputs"]["gap_repeated"]["payload"])
+    with pytest.raises(ValueError, match="appears twice"):
+        compose(CpdrInputs(agenda=agenda(empty=False), submission=sub, as_of=AS_OF))

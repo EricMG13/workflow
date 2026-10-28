@@ -53,16 +53,25 @@ The self-check proves only that a refused case is not a normalisation-equal spel
 (page, quote and value are not all equal under `quotes.quoted`), and that a W case is signed only
 one space away; it does not prove the expected outcome, which rests on the rulings.
 
+Two classes of hostile text (`docs/rulings/2026-10-28-stage2.md`):
+- `HOSTILE_JSON` (round 1 Q5): stored text that `schema.model_validate_json` must refuse only with a
+  `ValueError` subclass, because `host._execution_state` maps nothing else. `hostile_failures`.
+- `MODEL_TEXT_HOSTILE` (round 3 item 2): model text a step validator may pass although the type the
+  step builds from it refuses it after the binding audit write (protocol section 6). The module's
+  `test_connect_<cp>` calls `model_text_failures` over a fresh real run per case.
+
 Cases the rulings do not pin are not here (listed in the inventory report), for example a value
 carrying its own soft hyphen, or a joined value against a wrapped quote.
 """
 
+import copy
+import json
 import unicodedata
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
-from typing import Literal
+from typing import Any, Literal, Protocol
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 Defect = Literal["genuine", "soft_hyphen", "dashes", "nbsp", "signs", "edge_cut", "wrap"]
 # figure: an unlabelled figure read from the quote; label: a figure read after a label the module
@@ -589,3 +598,182 @@ def blank_failure(c: BlankCase, adapter: Adapter, expected: str) -> str | None:
             return None  # the existing schema refusal of "" stands (controller, library fix 1)
         raise
     return None if issues else f"{c.case_id} {c.value!r}: expected a refusal, got []"
+
+
+# --- Stage 2 round 1 Q5: hostile stored text raises only ValueError --------------------------
+
+HOSTILE_JSON: Mapping[str, str] = {
+    "deep_array": "[" * 200_000,
+    "deep_object": '{"a":' * 50_000 + "1" + "}" * 50_000,
+    "huge_int": '{"x":1' + "0" * 200_000 + "}",
+    "nan": '{"x":NaN}',
+    "lone_surrogate": '{"x":"\\ud800"}',
+    "not_object": '"text"',
+    "dup_keys": '{"x":1,"x":2}',
+    "empty": "",
+}
+"""The inputs of LEAD's Q5 probe, verbatim."""
+
+
+def _str_fields(schema: type[BaseModel]) -> list[str]:
+    return [
+        name
+        for name, field in schema.model_fields.items()
+        if field.annotation is str or "str" in repr(field.annotation)
+    ]
+
+
+def _one_field(field: str, text: str) -> str:
+    return json.dumps({field: text}, separators=(",", ":"))
+
+
+def hostile_inputs(schema: type[BaseModel]) -> dict[str, str]:
+    """`HOSTILE_JSON` plus, for the schema's first five string fields, a bracket flood and a
+    `{a|b}` flood in that field (the probe's per-field inputs)."""
+    texts = dict(HOSTILE_JSON)
+    for field in _str_fields(schema)[:5]:
+        texts[f"field_{field}_brackets"] = _one_field(field, "{" * 50_000 + "|" * 10)
+        texts[f"field_{field}_refs"] = _one_field(field, "{a|b}" * 20_000)
+    return texts
+
+
+def hostile_failures(schema: type[BaseModel]) -> list[str]:
+    """The hostile inputs for which `schema.model_validate_json` raises something that is not a
+    `ValueError` subclass, as `<label>: <class>`; `[]` when every raise is a `ValueError`
+    (pydantic's `ValidationError` is one). Accepting a hostile text is not a failure here: only
+    the exception class is the class. `Exception` is caught only to name its class; a
+    `KeyboardInterrupt` or `SystemExit` still propagates."""
+    bad: list[str] = []
+    for label, text in hostile_inputs(schema).items():
+        try:
+            schema.model_validate_json(text)
+        except ValueError:
+            continue
+        except Exception as error:  # noqa: BLE001 - only names the class of a non-ValueError
+            bad.append(f"{label}: {type(error).__name__}")
+    return bad
+
+
+# --- Stage 2 round 3 item 2: model text that passes the validator then fails a build ---------
+
+MODEL_TEXT_HOSTILE = ("Rates matter [a lot", "{low", "{}")
+TextPath = tuple[str | int, ...]
+_NOT_FREE = ("pattern", "enum", "const", "format")
+
+
+def _resolve(node: Mapping[str, Any], defs: Mapping[str, Any]) -> Mapping[str, Any]:
+    while "$ref" in node:
+        node = defs[node["$ref"].rsplit("/", 1)[-1]]
+    if "allOf" in node and len(node["allOf"]) == 1:
+        return _resolve(node["allOf"][0], defs)
+    return node
+
+
+def _walk(
+    node: Mapping[str, Any],
+    value: Any,
+    path: TextPath,
+    defs: Mapping[str, Any],
+    out: list[TextPath],
+) -> None:
+    node = _resolve(node, defs)
+    for key in ("anyOf", "oneOf"):
+        for branch in node.get(key, ()):
+            _walk(branch, value, path, defs, out)
+    if isinstance(value, str):
+        free = node.get("type") == "string" and not any(k in node for k in _NOT_FREE)
+        if free and path not in out:
+            out.append(path)
+    elif isinstance(value, dict):
+        props = node.get("properties", {})
+        extra = node.get("additionalProperties")
+        for key, item in value.items():
+            if key in props:
+                _walk(props[key], item, (*path, key), defs, out)
+            elif isinstance(extra, dict):
+                _walk(extra, item, (*path, key), defs, out)
+    elif isinstance(value, list):
+        prefix = node.get("prefixItems", ())
+        items = node.get("items")
+        for i, item in enumerate(value):
+            if i < len(prefix):
+                _walk(prefix[i], item, (*path, i), defs, out)
+            elif isinstance(items, dict):
+                _walk(items, item, (*path, i), defs, out)
+
+
+def free_text_paths(payload: Any, schema: type[BaseModel]) -> list[TextPath]:
+    """Every path in `payload` (parsed JSON, or its text) whose schema type is a free string: a
+    JSON-schema `string` with no pattern, enum, const or format (so identifiers, hashes, dates and
+    literals are not free text). Read from `schema.model_json_schema()`, so a new field is covered
+    without a name here. Each path is a tuple of keys and list indices."""
+    parsed = json.loads(payload) if isinstance(payload, str) else payload
+    document = schema.model_json_schema()
+    out: list[TextPath] = []
+    _walk(document, parsed, (), document.get("$defs", {}), out)
+    return out
+
+
+def with_text(payload: Any, path: TextPath, value: str) -> Any:
+    """A deep copy of `payload` (parsed JSON) with the string at `path` replaced by `value`."""
+    changed = copy.deepcopy(payload)
+    node = changed
+    for step in path[:-1]:
+        node = node[step]
+    node[path[-1]] = value
+    return changed
+
+
+class ReviewRun(Protocol):
+    """A run at the step under test: `OwnerWorkflow` over a real store, or a module's `submit`
+    seam wrapped to the same outcome (`status`, `issues`)."""
+
+    def submit_review(self, payload: str) -> Mapping[str, Any]: ...
+
+
+def _dotted(path: TextPath) -> str:
+    return ".".join(str(step) for step in path)
+
+
+def model_text_failures(
+    schema: type[BaseModel],
+    positive: str,
+    fresh: Callable[[], ReviewRun],
+    *,
+    values: Sequence[str] = MODEL_TEXT_HOSTILE,
+    require_issue: bool = True,
+) -> list[str]:
+    """Round 3 item 2: for each free-text path of the module's `positive` payload and each hostile
+    value, on a `fresh()` run at the step: nothing raises; the outcome lists an issue and is not
+    `valid` (a `valid` outcome is a failure unless `require_issue` is False, for a field the module
+    legitimately takes verbatim); and a following submission of `positive` is `valid`, so the run
+    is not wedged on `stale_binding`. `fresh()` returns a run whose `submit_review` does whatever
+    the module needs before a submit (reads), since a refused attempt re-activates the step.
+    Returns what failed as `<path>=<value>: <what>`; `[]` when none did. `Exception` is caught
+    only to report its class; the wedge check still runs after a raise."""
+    payload = json.loads(positive)
+    failures: list[str] = []
+    for path in free_text_paths(payload, schema):
+        for value in values:
+            label = f"{_dotted(path)}={value!r}"
+            run = fresh()
+            text = json.dumps(with_text(payload, path, value), ensure_ascii=False)
+            try:
+                outcome = run.submit_review(text)
+            except Exception as error:  # noqa: BLE001 - reports the class; the wedge check follows
+                failures.append(f"{label}: raised {type(error).__name__}: {str(error)[:80]}")
+            else:
+                if outcome["status"] == "valid":
+                    if require_issue:
+                        failures.append(f"{label}: accepted")
+                    continue  # taken verbatim and the step is done: nothing to wedge
+                if not outcome["issues"]:
+                    failures.append(f"{label}: {outcome['status']} with no issue")
+            try:
+                followed = run.submit_review(positive)["status"]
+            except Exception as error:  # noqa: BLE001 - reports the class as a wedge
+                failures.append(f"{label}: wedged, valid payload raised {type(error).__name__}")
+            else:
+                if followed != "valid":
+                    failures.append(f"{label}: wedged, valid payload was {followed}")
+    return failures

@@ -17,8 +17,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | Work | Base | Agent | Next |
 |---|---|---|---|
 | CP-4C round 11 mx-adversary review | ed1a721 | impl a2c15c441717ec41c | merge |
-| H1b mx-adversary review | 0717fad (worktree h1b) | impl mx-feature ab8d695f66c635633 | merge |
-| Defect-class library fix 1 (review: Medium blank `""`, 2 Lows) | c032752 (worktree defect-classes) | impl a0170223c25fb1f60 | merge, then class rounds (stage1/class-round-brief.md): quote readers CP-3D, CP-8, CP-2E, CP-1D first, then blank-only CP-1C, CP-2D, CP-2G, CP-DR, CP-L10; at most 6 Opus at once |
+| Class rounds (stage1/class-round-brief.md) | lane tip | see ledger | quote readers CP-3D, CP-8, CP-2E, CP-1D + CP-1C first; then CP-2D, CP-2G, CP-DR, CP-L10 |
 
 
 ## Next when a slot frees
@@ -26,7 +25,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 - Ride with the next change: CP-2D pre-D0 gap (round 11); CP-2G I1 explicit raise (round 11); per-module quote-edge (B1) and wrap (B3) fixes and blank-text fixes from the defect-class inventory.
 
 ## Queued
-- Riding Lows: CP-2H fix 1 N1 (`Below  10.00x` unit case), N2 (`.75x`, `.5%`, `-10.0%`); CP-4C N1/N2 (in round 11); H1b none yet; CP-8 r10 (lowercase guard; close-only parenthesis); CP-2E r10 L1 (in fix 1); CP-3D r10 L1 (parenthesis tested at match start, `(-425)`); CP-1D r10 (1D7-before-≤0 unpinned; `(` side untested); CP-3D name wrap-join (quote-6h-review Low 1; needs a public joined-reading helper in deploy_vii.quotes, with LEAD); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
+- Riding Lows: H1b A (shared `outside` universe for row tests, p07) and B (L3 unreadable source with bytes, p10) plus Info comments (host.py:48, test :340), with the next H1 change; owner item: CP-3D row test widening (h1b-review p11); CP-2H fix 1 N1 (`Below  10.00x` unit case), N2 (`.75x`, `.5%`, `-10.0%`); CP-4C N1/N2 (in round 11); H1b none yet; CP-8 r10 (lowercase guard; close-only parenthesis); CP-2E r10 L1 (in fix 1); CP-3D r10 L1 (parenthesis tested at match start, `(-425)`); CP-1D r10 (1D7-before-≤0 unpinned; `(` side untested); CP-3D name wrap-join (quote-6h-review Low 1; needs a public joined-reading helper in deploy_vii.quotes, with LEAD); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
 - Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
 - Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 

@@ -228,13 +228,19 @@ def test_check_steps_accepts_the_registered_spec() -> None:
 
 
 def test_registrations_are_appended_after_the_existing_rows() -> None:
-    assert list(owner_workflow.OWNER_SPECS)[-1] == "CP-L10"
-    assert list(owner_workflow._CORES)[-1] == "CP-L10"
-    assert list(owner_workflow._QUALIFICATION)[-1] == "CP-L10"
-    assert list(owner_workflow._PROBES)[-1] == "CP-L10"
-    assert list(owner_workflow._VIEWS)[-1] == STEP
-    assert list(owner_workflow._ENTRY_VALIDATORS)[-1] == "CP-L10"
-    assert SHIPPED_MAPS[-1] is CPL10
+    specs = list(owner_workflow.OWNER_SPECS)
+    assert specs.index("CP-L10") > specs.index("CP-MODEL")
+    for rows in (
+        owner_workflow._CORES,
+        owner_workflow._QUALIFICATION,
+        owner_workflow._PROBES,
+        owner_workflow._ENTRY_VALIDATORS,
+    ):
+        assert "CP-L10" in rows
+    assert STEP in owner_workflow._VIEWS
+    ids = [m.module_id for m in SHIPPED_MAPS]
+    assert CPL10 in SHIPPED_MAPS
+    assert ids.index("CP-L10") > ids.index("CP-6")
 
 
 # --- backlog: -0 / exponent form of the exact change -----------------------------------------

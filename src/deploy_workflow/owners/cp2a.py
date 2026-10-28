@@ -15,6 +15,7 @@ the run-time wiring (store, journal, view, probe) is added in later stages.
 """
 
 import re
+import unicodedata
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Context, Decimal, Inexact, InvalidOperation, Overflow, localcontext
@@ -30,6 +31,7 @@ from deploy_vii.business_context import (
     Severity,
     prohibited_issues,
     referencable,
+    spelled,
 )
 from deploy_vii.contracts import (
     Citation,
@@ -115,6 +117,16 @@ CP1_TABLE = "T4.10"
 
 GATE_QUARTER = "CP-1 has no twelve-month basis for this period"
 GATE_FY_LTM = "CP-1 reports no value for this ratio for this period"
+# Round 6 P1-W (final wording).
+QUARTER_REASON = (
+    "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+)
+QUARTER_OUTCOME = "Not meaningful on a single-quarter base"
+QUARTER_NOT_COMPARED = "Not compared: CP-2A's ratio is not meaningful on a single-quarter base"
+QUARTER_LINE = (
+    "Ratios are not calculated on a single-quarter base: CP-1 reads each ratio from the twelve "
+    "months ending that quarter, while CP-2A's base operands are one quarter's flows."
+)
 PeriodKind = Literal["quarter", "fy", "ltm"]
 
 
@@ -154,6 +166,9 @@ class BaseOperands:
     cash: Decimal | None
     gates: Mapping[str, str]
     sources: Mapping[str, Fact]
+    # Owner ruling P1 / round 6 P1-W: on a quarter base, the ratios whose CP-1 fact is known are
+    # not calculated (not applicable); a ratio CP-1 does not know keeps its A6 gate.
+    not_meaningful: frozenset[str] = frozenset()
 
     @property
     def net_debt(self) -> Decimal | None:
@@ -188,12 +203,14 @@ class BaseOperands:
         cash_interest = amount("cash_interest")
         # Ruling A6: a quarter base has no twelve-month basis in CP-1; an FY or LTM base whose
         # CP-1 ratio is not known reads that CP-1 reports no value for it.
-        gate = GATE_QUARTER if period_kind(period) == "quarter" else GATE_FY_LTM
+        quarter = period_kind(period) == "quarter"
+        gate = GATE_QUARTER if quarter else GATE_FY_LTM
         gates = {
             ratio: f"{gate} ({sources[metric].limitation})"
             for ratio, metric in REPORTED.items()
             if amount(metric) is None
         }
+        not_meaningful = frozenset(r for r in REPORTED if quarter and r not in gates)
         return cls(
             period=period,
             ebitda=amount("ebitda"),
@@ -205,6 +222,7 @@ class BaseOperands:
             cash=amount("cash_closing"),
             gates=gates,
             sources=sources,
+            not_meaningful=not_meaningful,
         )
 
 
@@ -265,6 +283,8 @@ class StressedRow:
     interest_coverage: Decimal | None
     fcf_to_debt: Decimal | None
     why: Mapping[str, str]
+    # the ratios whose None is not applicable (P1-W) rather than missing
+    not_applicable: frozenset[str] = frozenset()
 
 
 def stress(*, base: BaseOperands, decline: Decimal, increase: Decimal) -> StressedRow:
@@ -273,6 +293,7 @@ def stress(*, base: BaseOperands, decline: Decimal, increase: Decimal) -> Stress
     if e is None:
         raise ValueError("Base EBITDA is missing: the submission is invalid (v02)")
     why: dict[str, str] = {}
+    quarter: set[str] = set()
     with localcontext(_EXACT):
         e2 = e * (1 - decline)
         i2 = None if i is None else i * (1 + increase)
@@ -295,6 +316,9 @@ def stress(*, base: BaseOperands, decline: Decimal, increase: Decimal) -> Stress
         reason = _missing(base, needs) or (
             f"Not calculable: {base.gates[name]}" if name in base.gates else None
         )
+        if reason is None and name in base.not_meaningful:
+            quarter.add(name)
+            reason = QUARTER_REASON
         if reason is None and (num is None or den is None):
             raise ValueError(f"{name}: an operand is missing without a reason")
         if reason is None and den is not None and den <= 0:
@@ -322,6 +346,7 @@ def stress(*, base: BaseOperands, decline: Decimal, increase: Decimal) -> Stress
         interest_coverage=cover,
         fcf_to_debt=to_debt,
         why=why,
+        not_applicable=frozenset(quarter),
     )
 
 
@@ -415,6 +440,8 @@ def _break(
     )
     if reason is not None:
         return unsettled(NOT_CALCULABLE, reason)
+    if gate is not None and gate in base.not_meaningful:
+        return unsettled(QUARTER_OUTCOME, QUARTER_REASON)
     if (short := _short_circuit(base, kind)) is not None:
         return unsettled(*short)
     if terms is None:
@@ -518,9 +545,10 @@ _KIND_FIELD: Mapping[BreakKind, str] = {
 def crossing(point: BreakPoint, row: StressedRow) -> tuple[Decimal | None, str]:
     """A scenario's stressed metric against a break level: at or beyond it is Crossed (at or
     below for free cash flow and coverage, at or above for leverage)."""
-    value: Decimal | None = getattr(row, _KIND_FIELD[point.kind])
+    field = _KIND_FIELD[point.kind]
+    value: Decimal | None = getattr(row, field)
     if value is None:
-        return None, NOT_CALCULABLE
+        return None, QUARTER_OUTCOME if field in row.not_applicable else NOT_CALCULABLE
     floor = point.kind in ("fcf", "coverage")
     beyond = value <= point.level if floor else value >= point.level
     return value, "Crossed" if beyond else "Not crossed"
@@ -529,6 +557,10 @@ def crossing(point: BreakPoint, row: StressedRow) -> tuple[Decimal | None, str]:
 # --- validation (calculation-level refusals) -----------------------------------------------
 
 NAME_RULE = "no digit, brace or bracket is allowed in a name"
+# Round 5 Names (pinned wordings).
+CONTROL_RULE = "contains a line break or control character"
+BASE_ROW = "Base (no stress)"
+RESERVED_BASE = f"{BASE_ROW} is reserved for the unstressed row"
 HIGH_ISSUE = (
     "assessment.confidence: High is not allowed: "
     "shock sizes and watch levels are uncited analyst assumptions"
@@ -567,7 +599,11 @@ def _name_issues(path: str, text: str) -> list[str]:
     prohibited conclusion (ruling A3)."""
     if not text.strip():
         return [f"{path}: empty text"]
-    issues = [f"{path}: {NAME_RULE}"] if _bad_name(text) else []
+    issues = []
+    if any(unicodedata.category(ch) in ("Cc", "Zl", "Zp") for ch in text):
+        issues.append(f"{path}: {CONTROL_RULE}")
+    if _bad_name(text):
+        issues.append(f"{path}: {NAME_RULE}")
     return [*issues, *prohibited_issues(path, text)]
 
 
@@ -577,6 +613,8 @@ def _scenario_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
     for n, sc in enumerate(inputs.submission.scenarios):
         path = f"scenarios[{n}]"
         issues += _name_issues(f"{path}.name", sc.name)
+        if sc.name.strip() == BASE_ROW:
+            issues.append(f"{path}.name: {RESERVED_BASE}")
         if sc.name.strip() and sc.name in seen:
             issues.append(f"{path}.name: duplicate scenario name: {sc.name}")
         seen.add(sc.name)
@@ -598,6 +636,12 @@ def _threshold_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
             issues.append(f"{path}.level: must be greater than zero")
         issues += _name_issues(f"{path}.label", t.label)
         issues += _prose_issues(f"{path}.rationale", t.rationale, bound, inputs.names)
+    labels = [t.label for t in inputs.submission.thresholds]
+    issues += [
+        f"thresholds: {label} appears more than once"
+        for label in dict.fromkeys(labels)
+        if labels.count(label) > 1
+    ]
     return issues
 
 
@@ -986,10 +1030,15 @@ def _stress_rows(out: _Composer, run: _Run, row: StressedRow) -> None:
         value = getattr(row, ratio)
         coordinate = ("T2B.4", r, ratio, label)
         if value is None:
-            out.gap(coordinate, unit_class, row.why[ratio])
+            out.gap(coordinate, unit_class, row.why[ratio], _status(row, ratio))
         else:
             out.calc(coordinate, value, unit_class, formula, _ratio_lineage(ratio, k))
     out.register("T2B.4", r, run.name, RATIOS)
+
+
+def _status(row: StressedRow, name: str) -> Literal["missing", "not_applicable"]:
+    """A None ratio is not applicable under P1-W, otherwise missing."""
+    return "not_applicable" if name in row.not_applicable else "missing"
 
 
 def _reconciliation(out: _Composer, control: StressedRow) -> None:
@@ -1003,8 +1052,14 @@ def _reconciliation(out: _Composer, control: StressedRow) -> None:
             reason = control.why.get(ratio)
             if reason is None:
                 raise ValueError(f"{ratio}: recomputed but CP-1 reports no ratio (gate breached)")
-            out.gap(what, unit_class, reason)
-            out.gap(difference, unit_class, "Not compared: one side is not calculable")
+            status = _status(control, ratio)
+            out.gap(what, unit_class, reason, status)
+            not_compared = (
+                QUARTER_NOT_COMPARED
+                if status == "not_applicable"
+                else "Not compared: one side is not calculable"
+            )
+            out.gap(difference, unit_class, not_compared, status)
             out.text("T2B.5", ratio, "result", "Result", "Not compared", False)
         else:
             derives = _ratio_lineage(ratio, _ZERO)
@@ -1050,7 +1105,7 @@ def _breaks(out: _Composer, points: Sequence[BreakPoint]) -> None:
             out.calc(decline, p.required_decline, "percent", formula, BREAK_DECLINE[p.kind])
             at_formula = "EBITDA x (1 - required decline)"
             out.calc(at_break, p.ebitda_at_break, "amount", at_formula, BREAK_AT[p.kind])
-        elif p.outcome == NOT_REACHED:
+        elif p.outcome in (NOT_REACHED, QUARTER_OUTCOME):
             why = p.reason or "No decline up to 100% reaches the level"
             out.gap(decline, "percent", why, status="not_applicable")
             out.gap(at_break, "amount", why, status="not_applicable")
@@ -1091,7 +1146,9 @@ def _crossings(
             unit_class: UnitClass = "amount" if p.kind == "fcf" else "multiple"
             coordinate = ("T2B.8", r, "stressed_value", "Stressed value")
             if value is None:
-                out.gap(coordinate, unit_class, row.why.get(_KIND_FIELD[p.kind], NOT_CALCULABLE))
+                field = _KIND_FIELD[p.kind]
+                reason = row.why.get(field, NOT_CALCULABLE)
+                out.gap(coordinate, unit_class, reason, _status(row, field))
                 unreached = unreached or p.required_exact is not None
             else:
                 derives = (
@@ -1178,12 +1235,58 @@ def _references(
     return copies, table
 
 
+def _spelled(text: str | None, bound: Mapping[str, Fact]) -> str | None:
+    """Round 5 limitation refs: a stored limitation spells each `{ref|unit}` as rendered (the
+    shown value plus unit, `business_context.spelled`), never as raw braces. A validated
+    limitation holds only figure references to known CP-1 facts."""
+    if text is None:
+        return None
+    parts = []
+    for run in prose.tokenize(text):
+        if run.kind == "text":
+            parts.append(run.text)
+        elif run.figure and run.text in bound:
+            parts.append(spelled(bound[run.text]))
+        else:
+            raise ValueError(f"Limitation reference {run.text} does not name a known CP-1 figure")
+    return "".join(parts)
+
+
+def _first_claim(out: _Composer, ranked: Sequence[BreakPoint]) -> str:
+    """T2B.7.first; ruling A2 when the first-ranked break is already reached at base."""
+    first = ranked[0]
+    if first.outcome != AT_BASE:
+        return (
+            f"The first test reached is {first.test} at an EBITDA decline of "
+            f"{out.ref('T2B.7.r01.required_decline', '%')}."
+        )
+    text = (
+        f"The first test reached is {first.test}, already reached at base before any EBITDA "
+        "decline."
+    )
+    by_decline = [(n, p) for n, p in enumerate(ranked, 1) if p.outcome == REACHED]
+    if by_decline:
+        n, p = by_decline[0]
+        text += (
+            f" The first test reached by a decline is {p.test} at an EBITDA decline of "
+            f"{out.ref(f'T2B.7.r{n:02d}.required_decline', '%')}."
+        )
+    return text
+
+
 def _claims(
-    out: _Composer, sub: DownsideSubmission, runs: Sequence[_Run], ranked: Sequence[BreakPoint]
+    out: _Composer,
+    sub: DownsideSubmission,
+    runs: Sequence[_Run],
+    ranked: Sequence[BreakPoint],
+    bound: Mapping[str, Fact],
 ) -> list[Claim]:
     claims = [
         Claim(
-            claim_id=f"T2B.1.{run.row}", text=sc.rationale, citations=(), limitation=sc.limitation
+            claim_id=f"T2B.1.{run.row}",
+            text=sc.rationale,
+            citations=(),
+            limitation=_spelled(sc.limitation, bound),
         )
         for run, sc in zip(runs, sub.scenarios, strict=True)
     ]
@@ -1198,14 +1301,11 @@ def _claims(
         )
         claims.append(Claim(claim_id=f"T2B.4.{r}", text=text, citations=()))
     if ranked:
-        text = (
-            f"The first test reached is {ranked[0].test} at an EBITDA decline of "
-            f"{out.ref('T2B.7.r01.required_decline', '%')}."
-        )
-        claims.append(Claim(claim_id="T2B.7.first", text=text, citations=()))
+        claims.append(Claim(claim_id="T2B.7.first", text=_first_claim(out, ranked), citations=()))
     a = sub.assessment
+    limitation = _spelled(a.limitation, bound)
     claims.append(
-        Claim(claim_id="T2B.1.assessment", text=a.rationale, citations=(), limitation=a.limitation)
+        Claim(claim_id="T2B.1.assessment", text=a.rationale, citations=(), limitation=limitation)
     )
     return claims
 
@@ -1214,6 +1314,7 @@ def _limitations(
     sub: DownsideSubmission,
     base: BaseOperands,
     stressed: Mapping[str, StressedRow],
+    points: Sequence[BreakPoint],
     unreached: bool,
 ) -> list[str]:
     limits = [ANALYST_SHOCKS]
@@ -1222,6 +1323,12 @@ def _limitations(
     limits += [STATIC, HELD, LIQUIDITY, COVENANT, MATURITY, BREAK_AT_BASE]
     if unreached:
         limits.append(NOT_CALC_CROSSING)
+    # Ruling A2: one line per break already reached at base, in register order.
+    limits += [
+        f"{p.test} is already reached at the base period, before any EBITDA decline."
+        for p in points
+        if p.outcome == AT_BASE
+    ]
     for name in ("ebitda", "interest", "fcf", "total_debt", "cash"):
         if _operand(base, name) is None:
             limits.append(
@@ -1240,6 +1347,11 @@ def _limitations(
             )
             if line not in limits:
                 limits.append(line)
+    # P1-W: once when any cell shows the single-quarter reason; beside A6's line on a mixed base.
+    if any(row.not_applicable for row in stressed.values()) or any(
+        p.outcome == QUARTER_OUTCOME for p in points
+    ):
+        limits.append(QUARTER_LINE)
     return limits
 
 
@@ -1252,7 +1364,7 @@ def compute(inputs: Inputs) -> Result:
     base = BaseOperands.from_cp1(inputs.cp1_facts, period=sub.base_period)
     bound = prose.bind(referencable(inputs.cp1_facts))
     out = _Composer(base)
-    runs = [_Run("s00", "Base (no stress)", _ZERO, _ZERO)] + [
+    runs = [_Run("s00", BASE_ROW, _ZERO, _ZERO)] + [
         _Run(f"s{n:02d}", sc.name, Decimal(sc.ebitda_decline), Decimal(sc.interest_increase))
         for n, sc in enumerate(sub.scenarios, 1)
     ]
@@ -1270,9 +1382,9 @@ def compute(inputs: Inputs) -> Result:
     ranked = rank(points)
     _ranking(out, ranked)
     crossings, unreached = _crossings(out, runs[1:], stressed, points)
-    limits = _limitations(sub, base, stressed, unreached)
+    limits = _limitations(sub, base, stressed, points, unreached)
     _gaps(out, sub, limits)
-    claims = _claims(out, sub, runs[1:], ranked)
+    claims = _claims(out, sub, runs[1:], ranked, bound)
     if not ranked:
         limits.append(NO_FIRST_BREAK)
     copies, references = _references(sub, bound, base)

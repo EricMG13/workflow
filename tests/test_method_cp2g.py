@@ -24,8 +24,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from pydantic import BaseModel
 
 from deploy_vii import prose
 from deploy_vii.business_context import spelled
@@ -1221,6 +1223,42 @@ def test_m2_cp1_amount_must_be_usd_millions(
     assert str(validating.value) == str(composing.value) == want
 
 
+@pytest.mark.parametrize(
+    "update,found",
+    [
+        ({"unit": "THOUSANDS", "scale": D(1000)}, "USD THOUSANDS at scale 1000"),
+        ({"currency": "EUR"}, "EUR MILLIONS at scale 1000000"),
+        ({"scale": D(1000)}, "USD MILLIONS at scale 1000"),
+        ({"currency": None}, "None MILLIONS at scale 1000000"),
+    ],
+)
+def test_q12_cp1d_supported_ebitda_must_be_usd_millions(update: dict[str, Any], found: str) -> None:
+    """Round 11 Q12 (review I1): the CP-1D supported EBITDA read for the adjustment and the
+    comparisons fails closed on another book, an explicit raise in M2's place and frame (no
+    `assert`, which `python -O` strips). Its label is the running-text label (round 6d)."""
+    ctx = _cp1d_with("supported", **update)
+    want = (
+        f"CP-2G: CP-1D supported adjusted EBITDA must be USD MILLIONS at scale 1000000, not {found}"
+    )
+    with pytest.raises(ValueError) as composing:
+        _compose(ctx, _bind_all(_payload("positive")))
+    assert str(composing.value) == want
+
+
+def test_q12_cp1d_other_period_book_still_fails_closed() -> None:
+    """M2 checks every known amount fact: a known CP-1D EBITDA for another period is still copied
+    into T2H.2 as US$ m, so its book is checked before the period comparison."""
+    ctx = _cp1d_with("supported", currency="EUR", period="FY 24: 2024-01-01 to 2024-12-31")
+    with pytest.raises(ValueError, match="^CP-2G: CP-1D supported adjusted EBITDA must be USD"):
+        _compose(ctx, _bind_all(_payload("positive")))
+
+
+def test_q12_cp1d_usd_millions_twin_composes() -> None:
+    """The twin: the frozen CP-1D book (USD MILLIONS at scale 1000000) composes."""
+    ctx = _cp1d_with("supported", currency="USD", unit="MILLIONS", scale=D(1000000))
+    assert _compose(ctx, _bind_all(_payload("positive"))).cells
+
+
 def test_l4_unitless_unmapped_level_fails_closed() -> None:
     """L4: a G-7 row whose unsettled CP-2A level states no unit is an invariant failure."""
     ctx = _other_definition("Cash flow negative")
@@ -1485,6 +1523,94 @@ def test_prose_paths_are_checked(path: tuple[Any, ...]) -> None:
     where = ".".join(str(p) for p in path).replace("gaps.0", "gaps[0]")
     assert cp2g.payload_issues(json.dumps(payload), _context("positive")) == (
         f"{where}: Bare figure: 7",
+    )
+
+
+# Round 11 "Blank text is one defect class" (shared library `tests/defect_classes.py`): every
+# analyst text field refuses whitespace-only text with CP-2G's pinned frame `<path>: empty text`
+# (V08), which is the library fallback. The `limitation` fields are `str | None`, so `""` is not
+# refused by the schema and needs the same frame. Paths are the `content_issues` paths (0-based).
+_LIMITED = (
+    *(f"base_drivers.{d}" for d in cp2g.DRIVERS),
+    "downside",
+    "assessment",
+)
+BLANK_FIELDS: tuple[str, ...] = (
+    *(f"base_drivers.{d}.rationale" for d in cp2g.DRIVERS),
+    "downside.rationale",
+    "minimum_liquidity.rationale",
+    "assessment.rationale",
+    *(f"gaps[0].{k}" for k in ("gap", "why_it_matters", "affected_analysis", "action")),
+    *(f"{p}.limitation" for p in _LIMITED),
+)
+
+
+def _keys(path: str) -> list[str | int]:
+    return [int(k) if k.isdigit() else k for k in re.split(r"\.|\[|\]\.?", path) if k]
+
+
+def _blank_adapter(path: str) -> Adapter:
+    """Places the value in one analyst text field of the frozen positive payload. Page and quote
+    are unused: CP-2G reads no value from an analyst quote (figures are upstream facts by id)."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        payload = _bind_all(_payload("positive"))
+        keys = _keys(path)
+        cur: Any = payload
+        for key in keys[:-1]:
+            cur = cur[key]
+        cur[keys[-1]] = value
+        return cp2g.payload_issues(json.dumps(payload), _context("positive"))
+
+    return adapter
+
+
+def _text_paths(model: type[BaseModel], prefix: str) -> set[str]:
+    """Every free-text field of the submission schema: a plain `str` or `str | None` field with
+    no pattern (ids, Literals, figures and closed words are not analyst text)."""
+    out: set[str] = set()
+    for name, info in model.model_fields.items():
+        path = f"{prefix}{name}"
+        ann = info.annotation
+        inner = [a for a in getattr(ann, "__args__", ()) if isinstance(a, type)]
+        if ann in (str, str | None) and not info.metadata:
+            out.add(path)
+        elif isinstance(ann, type) and issubclass(ann, BaseModel):
+            out |= _text_paths(ann, f"{path}.")
+        elif inner and issubclass(inner[0], BaseModel) and str(ann).startswith("tuple"):
+            out |= _text_paths(inner[0], f"{path}[0].")
+    return out
+
+
+def test_blank_fields_cover_every_analyst_text_field() -> None:
+    """Every free-text field of `ForwardSubmission` is one this class test sets."""
+    assert _text_paths(cp2g.ForwardSubmission, "") == set(BLANK_FIELDS)
+
+
+@pytest.mark.parametrize("path", BLANK_FIELDS)
+@pytest.mark.parametrize("blank", BLANK_CASES, ids=lambda c: c.case_id)
+def test_blank_text_is_refused(blank: BlankCase, path: str) -> None:
+    failure = blank_failure(blank, _blank_adapter(path), EMPTY_TEXT.format(path=path))
+    assert failure is None, failure
+
+
+@pytest.mark.parametrize("path", BLANK_FIELDS)
+def test_blank_text_twin_is_accepted(path: str) -> None:
+    """The twin: the same field holding text is not refused as empty."""
+    issues = _blank_adapter(path)("", "", "The driver is an analyst view.")
+    assert EMPTY_TEXT.format(path=path) not in issues, issues
+
+
+def test_blank_limitation_is_reported_in_place() -> None:
+    """A blank limitation is reported beside its own rationale, in the pinned order (V06)."""
+    payload = _bind_all(_payload("positive"))
+    payload["base_drivers"]["capex_pct_revenue"]["limitation"] = " "
+    payload["downside"]["limitation"] = "\t"
+    payload["downside"]["rationale"] = "  "
+    assert cp2g.payload_issues(json.dumps(payload), _context("positive")) == (
+        "base_drivers.capex_pct_revenue.limitation: empty text",
+        "downside.rationale: empty text",
+        "downside.limitation: empty text",
     )
 
 

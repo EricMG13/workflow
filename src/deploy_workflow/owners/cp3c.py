@@ -59,10 +59,11 @@ KIND_LABEL: Mapping[PathKind, str] = {
     "liability_management": "Liability-management exercise",
 }
 
-# The oracle's builder computes in Python's default decimal context; this is that context,
-# fixed here so a caller's context cannot change a stored value. Ratios are then stored at
-# 4 dp half-up (manifest.json#ratio_storage_rule); amounts keep every digit.
-_CONTEXT = Context(prec=28)
+# The oracle's builder computes at 60 significant digits (cases/cp3c-owner/builder/build.py
+# sets getcontext().prec = 60); this is that precision, fixed here so a caller's context cannot
+# change a stored value. Ratios are then stored at 4 dp half-up
+# (manifest.json#ratio_storage_rule); amounts keep every digit.
+_CONTEXT = Context(prec=60)
 _FOUR_DP = Decimal("0.0001")
 _ZERO = Decimal(0)
 _MONTHS_PER_YEAR = Decimal(12)
@@ -641,8 +642,13 @@ def _creditor_rows(
         claims = _total(g.principal for g in ordered if ranks[g.facility_id] <= own)
         share = _ratio(f.principal, total, nm)
         rows.append(CreditorRow(f, share, claims, _ratio(claims, ebitda, NM_EBITDA)))
-    # The most junior facility's claims are those of the last rank: every facility.
-    return tuple(rows), rows[-1].claims_at_or_ahead if rows else Gap(NO_FACILITY)
+    # Lease Method 7 (method_rules.lme_capacity): the largest claims at or ahead of any rank.
+    # The last rank's claims hold every facility, so a gap there is the gap of every rank.
+    if not rows:
+        return (), Gap(NO_FACILITY)
+    last = rows[-1].claims_at_or_ahead
+    known = [c for r in rows if isinstance(c := r.claims_at_or_ahead, Decimal)]
+    return tuple(rows), last if isinstance(last, Gap) else max(known)
 
 
 def _repriced(payable: Num, step: Num) -> Num:
@@ -797,6 +803,10 @@ def _facility(
     else:
         # Ruling C-6 and round 8 B6: CP-3C uses its recomputed position; the copies show CP-2D's.
         maturity = date.fromisoformat(stated)
+        if maturity < balance_date:  # not ruled (listed for LEAD): months would be negative
+            raise ValueError(
+                f"CP-3C {fid}: maturity date {maturity} is before the balance date {balance_date}"
+            )
         months = months_from(balance_date, maturity)
         inside = (
             horizon if isinstance(horizon, Gap) else maturity <= _add_months(balance_date, horizon)
@@ -1605,8 +1615,9 @@ class ClaimText:
 
 
 class _Claims:
-    def __init__(self, cells: Mapping[str, Cell]) -> None:
+    def __init__(self, cells: Mapping[str, Cell], ids: Sequence[str]) -> None:
         self.cells = cells
+        self.ids = ids  # facility ids: names whose digits are not figures
 
     def fig(self, fact_id: str) -> str:
         cell = self.cells[fact_id]
@@ -1627,7 +1638,7 @@ class _Claims:
 
     def claim(self, claim_id: str, template: str, names: Sequence[str]) -> ClaimText:
         gaps = {k for k, v in self.cells.items() if v.status != "known"}
-        found = prose.check(template, refs=self.cells.keys() - gaps, gaps=gaps)
+        found = prose.check(template, refs=self.cells.keys() - gaps, gaps=gaps, names=self.ids)
         if found:
             raise ValueError(f"CP-3C {claim_id}: {'; '.join(found)}")
         parts, refs = [], []
@@ -1676,7 +1687,7 @@ def _names(c: _Context, cp1: Sequence[str], cp2d: Sequence[str]) -> list[str]:
 def _claims(c: _Context, cells: Mapping[str, Cell]) -> tuple[ClaimText, ...]:
     """The pinned claims, the gap forms of rulings C-1 and C-3, and a chip for any other cell
     that is not known (the fig-or-chip rule those rulings apply; listed for LEAD)."""
-    k = _Claims(cells)
+    k = _Claims(cells, c.ids)
     need = cells["T3D.2.r03"]
     if need.status == "known":
         tail = (

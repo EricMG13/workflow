@@ -15,7 +15,7 @@ import json
 import re
 from dataclasses import replace
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import Context, Decimal, localcontext
 from pathlib import Path
 from typing import Any
 
@@ -1323,3 +1323,179 @@ def test_b6_an_undated_row_names_its_own_date_before_any_amortisation() -> None:
         cp3c.Gap("Not calculable: facility notes annual amortisation is not stated"),
         why,
     ]
+
+
+# --- Fix round 1 (work/build/stage1/cp3c/review-adversary.md) ----------------------------------
+
+
+def _dated(row: cp3c.WallRow, maturity: str, months: int, inside: str) -> cp3c.WallRow:
+    return replace(
+        row,
+        maturity_date=replace(row.maturity_date, text=maturity),
+        months=replace(row.months, amount=Decimal(months)),
+        inside_horizon=replace(row.inside_horizon, text=inside),
+    )
+
+
+def test_m1_a_maturity_before_the_balance_date_is_an_invariant() -> None:
+    """Not ruled (listed for LEAD): negative months would sign-flip amortisation, flow and
+    balloon, so the Method fails closed; a maturity on D0 itself is 0 months and computes."""
+    past = _dated(_positive_row(), "2025-06-30", -6, "Yes")
+    with pytest.raises(ValueError, match=r"term-loan.*2025-06-30.*2025-12-31"):
+        cp3c.compute(_positive_with(_positive_terms(), wall=(past,)))
+    on_d0 = _dated(_positive_row(), "2025-12-31", 0, "Yes")
+    (m,) = cp3c.compute(_positive_with(_positive_terms(), wall=(on_d0,))).refinancing.maturities
+    assert m.facility.months == 0
+
+
+def test_m2_facility_ids_with_digits_are_names_not_figures() -> None:
+    row = _positive_row()
+    copied = "Not calculable: facility tl2 principal is not stated (CP-2D)"
+    tl2 = replace(row, facility_id="tl2", principal=_gone(row.principal, copied))
+    unranked = replace(_cp1_fact("term-loan.seniority"), text="NOT_STATED")
+    result = cp3c.compute(
+        _positive_with(
+            replace(_positive_terms(), facility_id="tl2"),
+            replace(_positive_terms(), facility_id="tla1", seniority=unranked),
+            wall=(tl2, replace(row, facility_id="tla1")),
+        )
+    )
+    cause = "facility tl2 principal is not stated"
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+
+
+def test_a13_a_positive_cp1_cash_interest_is_a_negative_interest_paid() -> None:
+    """CP-1 states cash interest as a signed flow; paid is its exact negation, not abs()."""
+    inputs = _with_cp1(cash_interest=_cp1_amount("cash_interest", "5"))
+    operands = cp3c.compose_operands(
+        cp1=inputs.cp1, cp2d=inputs.cp2d, balance_date=BALANCE_DATE, currency=CURRENCY
+    )
+    assert operands.cash_interest_paid == Decimal(-5)
+
+
+def test_a18_a_maturity_exactly_on_the_horizon_end_is_inside() -> None:
+    """2027-12-31 is D0 + 24 months (H = 24): inside, as CP-2D's wall states it."""
+    on_end = _dated(_positive_row(), "2027-12-31", 24, "Yes")
+    result = cp3c.compute(_positive_with(_positive_terms(), wall=(on_end,)))
+    (m,) = result.refinancing.maturities
+    assert m.facility.inside_horizon is True
+    assert not [line for line in result.own_limitations if "maturity wall for facility" in line]
+
+
+def test_a25_own_lines_name_currency_then_maturity_date_then_principal() -> None:
+    def own(result: cp3c.Cp3cResult) -> list[str]:
+        return [x for x in result.own_limitations if x.startswith("Facility term-loan ")]
+
+    row = _undated(_positive_row())
+    no_ccy = cp3c.compute(_positive_with(replace(_positive_terms(), currency=None), wall=(row,)))
+    assert own(no_ccy) == [
+        _UNSTATED_LINE.format(term="currency"),
+        _UNSTATED_LINE.format(term="maturity date"),
+    ]
+    gone = replace(row, principal=_gone(row.principal, "Not stated (test)"))
+    usd = cp3c.compute(_positive_with(_positive_terms(), wall=(gone,)))
+    assert own(usd) == [
+        _UNSTATED_LINE.format(term="maturity date"),
+        _UNSTATED_LINE.format(term="principal"),
+    ]
+
+
+def test_a39_a_usd_principal_gap_keeps_its_own_cause_beside_a_eur_facility() -> None:
+    """Round 8 B2: only the currency gap takes the FX frame; a-usd is first in wall order."""
+    row = _positive_row()
+    usd = replace(row, facility_id="a-usd", principal=_gone(row.principal, "Not stated (test)"))
+    result = cp3c.compute(
+        _positive_with(
+            replace(_positive_terms(), facility_id="a-usd"),
+            replace(_positive_terms(), facility_id="b-eur", currency="EUR"),
+            wall=(usd, replace(row, facility_id="b-eur")),
+        )
+    )
+    cause = "facility a-usd principal is not stated"
+    assert _claim(result, "CP-3C-NEED-01") == NEED_GAP.format(r01="[T3D.2.r01]", cause=cause)
+
+
+def test_l1_junior_claims_are_the_largest_claims_at_or_ahead() -> None:
+    """Lease Method 7 and method_rules.lme_capacity: the largest claims at or ahead, so a
+    negative junior principal does not lower the base below the senior claims."""
+    operands, earlier, later = _two_facilities()
+    senior = replace(earlier, secured_status="SECURED", seniority="SENIOR")
+    junior = replace(later, secured_status="UNSECURED", seniority="SENIOR", principal=Decimal(-10))
+    r = cp3c.compose_refinancing(
+        operands=replace(operands, facilities=(senior, junior)), step_up_bps=0
+    )
+    assert isinstance(senior.principal, Decimal)
+    claims = [c.claims_at_or_ahead for c in r.creditors]
+    assert claims == [senior.principal, senior.principal - 10]
+    assert r.junior_claims == senior.principal
+
+
+def test_l2_amounts_are_computed_at_the_builders_precision() -> None:
+    """cases/cp3c-owner/builder/build.py sets prec 60; 5 x 7 / 12 does not terminate."""
+    terms = replace(
+        _positive_terms(), annual_amortisation=_cp1_amount("term-loan.annual_amortisation", "5")
+    )
+    wall = (_dated(_positive_row(), "2026-07-31", 7, "Yes"),)
+    (m,) = cp3c.compute(_positive_with(terms, wall=wall)).refinancing.maturities
+    with localcontext(Context(prec=60)):
+        assert m.amortisation_before_maturity == Decimal(5) * 7 / 12
+
+
+# Fix round 1, Low survivors (review-adversary.md mutants A33-A45)
+
+
+@pytest.mark.parametrize(
+    ("at", "where"),
+    [
+        ("repricing_absence.reason", ("repricing_absence", "reason")),
+        ("paths[repay_from_resources].limitation", ("paths", 0, "limitation")),
+    ],
+)
+def test_absence_reason_and_path_limitation_are_guarded(at: str, where: tuple[Any, ...]) -> None:
+    payload = json.loads(json.dumps(SUBMISSIONS["cp3c"]["gap_no_repricing"]))
+    holder = payload
+    for key in where[:-1]:
+        holder = holder[key]
+    holder[where[-1]] = "The company will default."
+    issues = cp3c.submission_issues(submission=_submission(payload), offered=OFFERED)
+    assert f'{at}: prohibited conclusion (refinancing outcome): "will default"' in issues
+
+
+def test_the_covenant_guard_window_is_four_words() -> None:
+    near = "the covenants were in all respects met"
+    far = "the covenants were in all relevant respects met"
+    assert cp3c.prohibited_conclusions("x", near) and not cp3c.prohibited_conclusions("x", far)
+
+
+@pytest.mark.parametrize(
+    ("field", "change", "match"),
+    [
+        ("principal", {"unit": "THOUSANDS"}, "expected a MILLIONS amount"),
+        ("months", {"amount": Decimal("47.5")}, "whole number of months"),
+        ("inside_horizon", {"text": "Maybe"}, "inside-horizon flag"),
+    ],
+)
+def test_a_malformed_wall_fact_is_an_invariant(field: str, change: Any, match: str) -> None:
+    row = _positive_row()
+    bad: dict[str, Any] = {field: replace(getattr(row, field), **change)}
+    with pytest.raises(ValueError, match=match):
+        cp3c.compute(_positive_with(_positive_terms(), wall=(replace(row, **bad),)))
+
+
+def test_interest_and_ebitda_over_different_periods_is_an_invariant() -> None:
+    other = replace(_cp1_fact("cash_interest"), period="FY 2025: 2025-01-01 to 2025-12-31")
+    with pytest.raises(ValueError, match="different periods"):
+        cp3c.compute(_with_cp1(cash_interest=other))
+
+
+def test_a_repeated_operand_facility_is_an_invariant() -> None:
+    operands, earlier, _ = _two_facilities()
+    with pytest.raises(ValueError, match="facility_id repeats"):
+        cp3c.compose_refinancing(
+            operands=replace(operands, facilities=(earlier, earlier)), step_up_bps=0
+        )
+
+
+def test_a_claim_template_with_a_bare_figure_is_refused() -> None:
+    with pytest.raises(ValueError, match="Bare figure"):
+        cp3c._Claims({}, ()).claim("CP-3C-TEST", "The need is 40 million.", ())

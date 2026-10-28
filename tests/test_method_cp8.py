@@ -1890,3 +1890,99 @@ def test_r12_w_a_minus_wrap_inside_the_value_is_accepted(field: str) -> None:
     page, value = "The instrument is -\n1.25 notes.", "is - 1.25 notes"
     adapter, refusal = SPAN_FIELDS[field]
     assert refusal.format(value) not in adapter(page, page, value)
+
+
+# --- round 13 item 7: the `_labelled` run rule; item 8: the thousands comma ---------------------
+
+
+@pytest.mark.parametrize(
+    ("quote", "value"),
+    [
+        # the reported defect: a leading-point run after the label is not skipped
+        ("Dealers quote the loan at bid .75, or 0.50 a week ago.", "0.50"),
+        ("Dealers quote the loan at bid -.75, or 0.50 a week ago.", "0.50"),
+        ("Dealers quote the loan at bid (.75), or 0.50 a week ago.", "0.50"),
+        # a two-point run, and a grouped run, are not whole figures
+        ("Dealers quote the loan at bid 1.2.5, or 0.50 a week ago.", "0.50"),
+        ("Dealers quote the loan at bid 1,250, or 0.50 a week ago.", "0.50"),
+        # a run that holds the match from before it is not the match
+        ("Dealers quote the loan at bid 1,250.50 a week ago.", "250.50"),
+    ],
+)
+def test_r13_labelled_a_malformed_run_after_the_label_ends_the_search(
+    quote: str, value: str
+) -> None:
+    assert cp8_module._labelled("loan_bid", value, quote) is False
+    if len(value) == 4:  # a CP-8 figure: end to end the only issue is the label's
+        assert realized_bid(quote, quote, value) == (NOT_LABELLED.format(value),)
+
+
+@pytest.mark.parametrize(
+    ("quote", "value"),
+    [
+        # a plain integer run is still skipped (a date sits between the label and the figure)
+        ("Dealers quote the loan at bid 98, or 0.50 a week ago.", "0.50"),
+        ("Dealers quote the loan at bid on April 29, 2026 of 0.50.", "0.50"),
+        ("Dealers quote the loan at bid 0.75, or 0.50 a week ago.", "0.75"),
+        ("Dealers quote the loan at bid 98 and 99 and 0.50.", "0.50"),
+    ],
+)
+def test_r13_labelled_a_plain_integer_run_is_still_skipped(quote: str, value: str) -> None:
+    assert cp8_module._labelled("loan_bid", value, quote) is True
+
+
+def test_r13_labelled_joins_only_on_comma_digit() -> None:
+    """``, ?`` would join the day of a Month D, YYYY date to its year; ``,<digit>`` does not."""
+    quote = "Dealers quote the loan at bid on April 29, 2026 of 0.50."
+    assert cp8_module._labelled("loan_bid", "0.50", quote)
+    assert not cp8_module._labelled("loan_bid", "0.50", "bid 29,2026 of 0.50")
+
+
+@pytest.mark.parametrize(
+    ("quote", "value"),
+    [
+        ("Total leverage of .5, then 1.80x.", "1.80"),
+        ("Total leverage of 1.2.5x, then 1.80x.", "1.80"),
+        ("Total leverage of 1,250x, then 1.80x.", "1.80"),
+    ],
+)
+def test_r13_labelled_the_run_rule_holds_for_a_multiple(quote: str, value: str) -> None:
+    assert cp8_module._labelled("total_leverage", value, quote) is False
+    assert cp8_module._labelled("total_leverage", value, "Total leverage of 4, then 1.80x.")
+
+
+WRAPS = ("1,25", "1, 25", "1,\n25")
+
+
+@pytest.mark.parametrize("run", WRAPS)
+def test_r13_whole_no_figure_reads_from_a_thousands_comma_run(run: str) -> None:
+    text = cp8_module._norm(f"saving of {run} a year")
+    assert not cp8_module._token_once("25", text)
+    assert not cp8_module._token_once("1", text)
+
+
+def test_r13_whole_comma_twins_still_read() -> None:
+    assert cp8_module._token_once("25", cp8_module._norm("cut by 25, a year"))
+    assert cp8_module._token_once("25", cp8_module._norm("up, 25 a year"))
+    assert cp8_module._token_once("25", cp8_module._norm("up,\n25 a year"))
+    assert cp8_module._token_once("25", cp8_module._norm("in 2025, then 25 a year"))
+
+
+@pytest.mark.parametrize("run", WRAPS)
+def test_r13_whole_the_page_edge_reads_the_comma_run(run: str) -> None:
+    """The page is tested with the same pattern: a quote starting at the 25 whose page has
+    ``1,`` / ``1, `` before it does not state the figure."""
+    page = f"The downside saving is {run} percent."
+    assert not cp8_module._on_page("25", "25 percent.", page)
+    twin = "The downside saving is up, 25 percent."
+    assert cp8_module._on_page("25", "25 percent.", twin)
+
+
+@pytest.mark.parametrize("run", ("1,1.25", "1, 1.25", "1,\n1.25"))
+def test_r13_a_comma_run_in_the_quote_or_at_the_page_edge_is_no_figure(run: str) -> None:
+    refused = "thesis.downside_sizes[0]: level_text 1.25 does not occur in the quote"
+    inside = f"The downside is {run} percent."
+    assert refused in size_level(inside, inside, "1.25")
+    assert refused in size_level(inside, "1.25 percent.", "1.25")
+    for ok in ("The downside is up, 1.25 percent.", "The downside is 1.25, a lot."):
+        assert refused not in size_level(ok, ok, "1.25")

@@ -1848,3 +1848,45 @@ def test_r12_w_a_wrapped_minus_is_not_a_wrap_split() -> None:
     assert cp8_module._wrap_split("first- line", "first-\nline")  # B3 holds after a letter
     assert cp8_module._wrap_split("A- 1.25", "A-\n1.25")  # and before a digit
     assert cp8_module._wrap_split("is - line", "is -\nline")  # no digit follows: not a sign
+
+
+SPAN_FIELDS = {
+    "instrument": (
+        decision_text("instrument"),
+        "decision.instrument: text {} does not occur in the quote",
+    ),
+    "flag span": (
+        flag_span,
+        "attributions[0].flag_quote: not a span of the recorded downside paths",
+    ),
+    "size span": (
+        size_span,
+        "thesis.downside_sizes[0].quote: not a span of the recorded downside paths",
+    ),
+}
+
+
+@pytest.mark.parametrize("field", list(SPAN_FIELDS))
+@pytest.mark.parametrize(
+    ("page", "value"),
+    [
+        # review M1: a "- " at value index 0 is a page wrap whose preceding character is unseen
+        ("The instrument is Term Loan A-\n1.25 notes.", "- 1.25 notes"),
+        ("The instrument is the 2024-\n2025 notes.", "- 2025 notes"),
+        # LEAD round 13 addendum: only a minus after a non-alphanumeric character is exempt
+        ("The instrument is A-\n25 notes.", "A- 25 notes"),
+        ("The instrument is a -\nb notes.", "a - b notes"),
+    ],
+)
+def test_r12_w_a_wrap_at_the_value_edge_or_off_a_figure_is_b3_refused(
+    field: str, page: str, value: str
+) -> None:
+    adapter, refusal = SPAN_FIELDS[field]
+    assert refusal.format(value) in adapter(page, page, value)
+
+
+@pytest.mark.parametrize("field", list(SPAN_FIELDS))
+def test_r12_w_a_minus_wrap_inside_the_value_is_accepted(field: str) -> None:
+    page, value = "The instrument is -\n1.25 notes.", "is - 1.25 notes"
+    adapter, refusal = SPAN_FIELDS[field]
+    assert refusal.format(value) not in adapter(page, page, value)

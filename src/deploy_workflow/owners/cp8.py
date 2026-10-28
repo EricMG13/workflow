@@ -127,7 +127,9 @@ _FIGURE = re.compile(r"^[0-9]{1,3}\.[0-9]{2}$")  # a quoted figure or level: N.N
 _SIGN = r"(?<![A-Za-z0-9])-"
 _MULTIPLE = re.compile(rf"(?:{_SIGN} ?)?[0-9]+\.[0-9]+x|\( ?[0-9]+\.[0-9]+ ?\)x")
 _DECIMAL = re.compile(rf"(?:{_SIGN} ?)?[0-9]+\.[0-9]+|\( ?[0-9]+\.[0-9]+ ?\)")
-_W_MINUS = re.compile(rf"{_SIGN} (?=[0-9])")  # rule W: a minus one space before its figure
+# rule W: a minus one space before its figure, with a character of the value before it (the
+# lookbehind must not pass at index 0, where the page character before the "-" is unseen)
+_W_MINUS = re.compile(rf"(?<=.){_SIGN} (?=[0-9])")
 _REFERENCE = re.compile(r"[{}\[\]]")
 _SUBJECT = re.compile(r"default|restructuring")
 _PROHIBITED = re.compile(  # r14 prohibited conclusions (lease, analyst text)

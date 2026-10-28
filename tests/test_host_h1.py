@@ -464,7 +464,15 @@ def test_owner_step_outside_its_row_or_order_refuses(
     monkeypatch.setattr(host, "SourceTools", _NoCapability)
     for step_id in ("research", "relative_value", "g1x_sourced"):
         assert _refusal(cp3d.root, step_id) == "not_permitted", step_id
-    for steps in (("prior_step", "market_implied"), ["market_implied"], (), None):
+    malformed = (
+        ("prior_step", "market_implied"),
+        ["market_implied"],
+        (),
+        None,
+        ("market_implied", "market_implied"),
+        ("market_implied", 7),
+    )
+    for steps in malformed:
         monkeypatch.setattr(cp3d.core, "STEP_IDS", steps)
         assert _refusal(cp3d.root, "market_implied") == "not_permitted", steps
 
@@ -472,13 +480,16 @@ def test_owner_step_outside_its_row_or_order_refuses(
 def test_owner_scope_never_applies_to_a_live_contract_module(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """An owner scope row for a module with a live step contract refuses; without the row the
+    """An owner scope row for a module with a live step contract refuses, even with a core
+    registered for it (so only the live-contract guard refuses); without the row the
     live-contract session opens exactly as before."""
     pack = _requested(runs.make_pack("positive"), "CP-1A")
     review = json.loads(runs.literal("positive", "readiness_review", pack))
     review["consumers"] = [c for c in review["consumers"] if c["module_id"] == "CP-1A"]
     _begun(tmp_path, pack, json.dumps(review))
     assert _pending(tmp_path).module_id == "CP-1A"
+    assert _refusal(tmp_path, "business_context") == "opened"
+    monkeypatch.setitem(owner._CORES, "CP-1A", _fake_core("CP-1A", "business_context"))
     assert _refusal(tmp_path, "business_context") == "opened"
     widened = {**host._OWNER_SCOPES, ("CP-1A", "business_context"): lambda _: ("identity",)}
     monkeypatch.setattr(host, "_OWNER_SCOPES", MappingProxyType(widened))
@@ -609,3 +620,154 @@ def test_memo_skips_the_replay_but_rechecks_every_blob(
     with pytest.raises(ValueError, match="hash mismatch"):
         host._producer_inputs(store, snapshot, producer)
     assert replays == ["CP-1A"]
+
+
+# --- 4. fix round 1: self-consistent forgeries and the memo (H1 review F2, L3, L4) -----------
+
+Inputs = tuple[Input, ...]
+
+
+def _cp1a_journal(
+    root: Path,
+    genuine: tuple[Execution, ExecutionSnapshot, Module],
+    inputs: Callable[[Inputs, Inputs], Inputs],
+    *,
+    extra_step: bool = False,
+) -> tuple[Execution, ExecutionSnapshot, Module]:
+    """A self-consistent CP-1A head written through the public `Execution` API, so the settle
+    replay reproduces it and only the Q6 (b) checks can refuse it: the genuine business_context
+    payload journaled with a bypass validator (with `extra_step`, under a two-step sequence and a
+    second step), then finished with the genuine candidate whose inputs are `inputs(attempt
+    inputs, genuine tail)`."""
+    from deploy_vii.business_context import PROMOTED
+
+    g_store, g_snapshot, g_head = genuine
+    g_attempt = next(a for a in g_snapshot.attempts if a.result_sha256 == g_head.content_hash())
+    pack = _requested(runs.make_pack("positive"), "CP-1A")
+    review = json.loads(runs.literal("positive", "readiness_review", pack))
+    review["consumers"] = [c for c in review["consumers"] if c["module_id"] == "CP-1A"]
+    _begun(root, pack, json.dumps(review))
+    store = Execution(root / "store")
+    attempt = _pending(root)
+    sequence = ("business_context", "h1_extra") if extra_step else ("business_context",)
+
+    def bypass(_pack: PreparedPack, _attempt: Attempt) -> StepValidation:
+        return StepValidation(output="bypass: no composer ran")
+
+    payloads = (g_store.payload(g_attempt.steps[0].payload_sha256), "{}")
+    for step_id, payload in zip(sequence, payloads, strict=False):
+        store.submit_step(attempt.ticket_id, "CP-1A", sequence, step_id, payload, bypass)
+    candidate = json.loads(g_store.payload(g_attempt.payload_sha256 or ""))
+    tail = g_head.inputs[len(g_attempt.inputs) :]
+    candidate["inputs"] = [i.model_dump(mode="json") for i in inputs(attempt.inputs, tail)]
+    text = Module.model_validate_json(json.dumps(candidate)).model_dump_json()
+    finished = store.finish(attempt.ticket_id, text, lambda _: (), qualification=PROMOTED)
+    assert finished.status == "finished" and not finished.issues
+    assert len(finished.steps) == len(sequence)
+    snapshot = store.read()
+    head = next(h for h in snapshot.heads if h.module_id == "CP-1A")
+    return store, snapshot, store.head_module(head)
+
+
+def _unchanged(prefix: Inputs, tail: Inputs) -> Inputs:
+    return (*prefix, *tail)
+
+
+def _tail_digest(prefix: Inputs, tail: Inputs) -> Inputs:
+    return (*prefix, tail[0].model_copy(update={"sha256": "0" * 64}))
+
+
+def _tail_id(prefix: Inputs, tail: Inputs) -> Inputs:
+    return (*prefix, tail[0].model_copy(update={"input_id": "business-context"}))
+
+
+def _two_tails(prefix: Inputs, tail: Inputs) -> Inputs:
+    return (*prefix, tail[0], tail[0].model_copy(update={"input_id": "x-submission"}))
+
+
+def _reordered(prefix: Inputs, tail: Inputs) -> Inputs:
+    return (*reversed(prefix), *tail)
+
+
+def test_self_consistent_forgeries_reach_each_q6_check(tmp_path: Path) -> None:
+    """F2: each forgery is settled by the real journal, so the settle replay reproduces it and
+    only its named Q6 (b) check can refuse it. The unchanged journal passes, so each refusal
+    is that check's: one tail input, a `*-submission` id, the retained submission's digest,
+    the bound prefix in order, and a one-step attempt."""
+    genuine = _cp1a_run(tmp_path / "genuine", valid=True)
+    store, snapshot, control = _cp1a_journal(tmp_path / "control", genuine, _unchanged)
+    assert host._producer_inputs(store, snapshot, control) is True
+    variants: dict[str, tuple[Callable[[Inputs, Inputs], Inputs], bool]] = {
+        "tail digest": (_tail_digest, False),
+        "tail id": (_tail_id, False),
+        "two tails": (_two_tails, False),
+        "reordered prefix": (_reordered, False),
+        "two-step attempt": (_unchanged, True),
+    }
+    for label, (inputs, extra_step) in variants.items():
+        root = tmp_path / label.replace(" ", "-")
+        store, snapshot, forged = _cp1a_journal(root, genuine, inputs, extra_step=extra_step)
+        assert host._producer_inputs(store, snapshot, forged) is False, label
+
+
+def test_producer_without_a_producing_attempt_refuses(tmp_path: Path) -> None:
+    """L3: a head whose producing attempt the snapshot does not hold is refused, not an
+    `IndexError` (which `_execution_state` would not map)."""
+    store, snapshot, producer = _cp1a_run(tmp_path, valid=True)
+    orphan = snapshot.model_copy(
+        update={
+            "attempts": tuple(
+                a for a in snapshot.attempts if a.result_sha256 != producer.content_hash()
+            )
+        }
+    )
+    assert host._producer_inputs(store, orphan, producer) is False
+
+
+def _memo_key(snapshot: ExecutionSnapshot, producer: Module) -> tuple[str, str]:
+    """The Q6 memo key: (snapshot hash, producer result hash)."""
+    digest = hashlib.sha256(snapshot.model_dump_json().encode()).hexdigest()
+    return digest, producer.content_hash()
+
+
+def test_memo_keeps_passes_only(tmp_path: Path) -> None:
+    """L4: a refusal is never kept, so asking again refuses again and the memo stays empty."""
+    genuine = _cp1a_run(tmp_path / "genuine", valid=True)
+    store, snapshot, forged = _cp1a_journal(tmp_path / "forged", genuine, _tail_digest)
+    assert host._producer_inputs(store, snapshot, forged) is False
+    assert host._producer_inputs(store, snapshot, forged) is False
+    assert host._SUBMISSION_VERIFIED == {}
+
+
+def test_memo_key_is_the_snapshot_and_the_producer(tmp_path: Path) -> None:
+    """L4: a cached pass is served only for its own (snapshot, producer): another producer under
+    the cached snapshot, and the cached producer under another snapshot, are verified afresh."""
+    store, snapshot, producer = _cp1a_run(tmp_path, valid=True)
+    assert host._producer_inputs(store, snapshot, producer) is True
+    assert set(host._SUBMISSION_VERIFIED) == {_memo_key(snapshot, producer)}
+    tail = producer.inputs[-1]
+    other = producer.model_copy(
+        update={"inputs": (*producer.inputs[:-1], tail.model_copy(update={"sha256": "1" * 64}))}
+    )
+    assert host._producer_inputs(store, snapshot, other) is False
+    orphan = snapshot.model_copy(
+        update={
+            "attempts": tuple(
+                a for a in snapshot.attempts if a.result_sha256 != producer.content_hash()
+            )
+        }
+    )
+    assert host._producer_inputs(store, orphan, producer) is False
+    assert set(host._SUBMISSION_VERIFIED) == {_memo_key(snapshot, producer)}
+
+
+def test_memo_evicts_the_oldest_pass_beyond_its_limit(tmp_path: Path) -> None:
+    """L4: the memo holds at most 16 passes; the oldest is evicted first."""
+    store, snapshot, producer = _cp1a_run(tmp_path, valid=True)
+    limit = 16
+    assert host._SUBMISSION_VERIFIED_LIMIT == limit
+    # Passing snapshots that differ only in `parent`: each is its own key.
+    variants = [snapshot.model_copy(update={"parent": f"{i:064x}"}) for i in range(limit + 4)]
+    for variant in variants:
+        assert host._producer_inputs(store, variant, producer) is True
+    assert list(host._SUBMISSION_VERIFIED) == [_memo_key(v, producer) for v in variants[4:]]

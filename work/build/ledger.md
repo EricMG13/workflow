@@ -344,3 +344,4 @@
 - 19:52 CP-2A review: REQUEST CHANGES (M1 acceptance tests; M2 predating unit/currency -> LEAD). Fix round queued behind the shared defect-class test (cap 10). Shared defect test dispatched first: it gates further claims.
 - 19:52 CP-DR fix1 APPROVED; merge held until shared defect-class test lands (round 3).
 - 19:53 CP-3D fix1 APPROVED. Riding Lows (methods derived-rule note per round 3, head-tamper test, exact own-limitations) to implementer; merge held for shared defect test. CP-4 review dispatched.
+- 19:54 CP-3D riding Lows 0c47bc4 (methods citation rule, head-tamper test, exact own limitations; 1321 passed). CP-4 review dispatched.

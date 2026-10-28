@@ -907,3 +907,11 @@ LEAD (2026-10-28), owner decision ("Yes, fix at root"). Two items come from the 
 - **0d task.** `normalise` must not let `TypeError` or `RecursionError` escape. That covers the `_Walker.branch` unhashable discriminator (`src/deploy_vii/live/schema.py:700`) and deep nesting, at runtime (`submit_review`, after the binding audit write) and in the verifier. It runs in LEAD's 0d lane, and G1-X keeps its `_fill` TypeError mapping until it lands.
 - **Known gap for Stage 4 (Modules' receipt-hardening list).** Refused records can be dropped, duplicated or reordered across tickets without detection. This holds on the S1a base and on G1-X, and it matches protocol §4.
 Rulings rounds 4, 5 and 5b and the owner ruling on CP-2A P1 (gate every ratio on a quarter base) are in `docs/rulings/2026-10-28-stage1.md`. Oracle amendments landed: CP-2E E6 (8483de4) and CP-1D 1D1 with the CP-2G, CP-2H and CP-4C re-pins (2ae589b). Still queued: a CP-2A quarter-base fixture amendment, which follows round 6.
+
+LEAD (2026-10-28): the owner decided "Yes, fix at root".
+- **0d done.** The task above is integrated as 144659f (lead/0d-normalise 31aeee0; mx-adversary-2 PASS).
+- **0d-b task (owner-approved).** A model payload can still make `submit_review` raise after the binding audit write. The reproducing payload is a lone surrogate quoted by an evidence rule's `source_id` or `locator` (mx-adversary-2 P1, which predates 0d). The run is left with an orphan binding and cannot seal.
+  - M1 (deep nesting) was the same defect class, so under AGENTS.md c783570 this is planned once for the whole class by `mx-autonomous`. That plan names one commit point or one parse guard, and the threat-model bounds the reviews hold to.
+  - A fresh `mx-feature` executes it.
+  - The owner verifier-replay test (0d L1) rides with it.
+  - Any part of the fix in `src/deploy_workflow` goes to Modules.

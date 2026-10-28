@@ -23,7 +23,7 @@
 ## Probes (scratchpad)
 - Exit 0: probe12, probe11, probe6, probe7b, probe5, probe8 and probe13. probe13's 0.00000000001 basis now gets the Y4 wording.
 - `cp1d_rr2_probe9_rulings.py` exits 1. Its "(d)" input, CP-1 EBITDA 1E-38, now hits the Y1 invariant raise, which is the ruled behaviour.
-- `cp1d_rr2_probe10_partial_vs_full.py` exits 1. Its only DIFF lines, `[T1D.2.a01.accepted]` and `[T1D.6.statements.cfo]`, are the Y3 recorded residual.
+- `cp1d_rr2_probe10_partial_vs_full.py` exits 1. Its DIFF lines are the Y3 recorded residual. The reviewer counted three at the tip: `[T1D.3.claimed.value]`, `[T1D.2.a01.accepted]` and `[T1D.6.statements.cfo]`. 1D1 removed a fourth, `{T1D.4.proposed_total.reported|US$ m}`.
 
 ## For LEAD
 - The Y1 message gives a `bare_figures` hit on the interpolated fact id (`cp1:adjusted_ebitda_ltm`, or an `interface-fact:<sha>`). The fixed wording is clean.

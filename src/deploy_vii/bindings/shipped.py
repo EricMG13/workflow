@@ -17,6 +17,7 @@ from deploy_vii.bindings.cp6 import CP6
 from deploy_vii.bindings.cp8 import CP8
 from deploy_vii.bindings.cp_model import CP_MODEL
 from deploy_vii.bindings.cpdr import CPDR
+from deploy_vii.bindings.cpl10 import CPL10
 
 # Task 8.6: CP-2, CP-4, CP-3 and CP-5 in registry order after CP-1A; task 8.7: CP-6 after CP-5;
 # CP-3D (owner-only, docs/CP3D-OWNER-LEASE.md) directly after CP-3.
@@ -25,6 +26,7 @@ from deploy_vii.bindings.cpdr import CPDR
 # CP-8 (owner core, Stage 2) is appended last.
 # Stage 2: CP-2A appended last (CP2A lease: SHIPPED_MAPS += CP2A).
 # CP-2D directly after CP-2 (docs/CP2D-OWNER-LEASE.md).
+# CP-L10 appended last (docs/CPL10-OWNER-LEASE.md).
 SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP0,
     CP1,
@@ -42,4 +44,5 @@ SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP2E,
     CP8,
     CP2A,
+    CPL10,
 )

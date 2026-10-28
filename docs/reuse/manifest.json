@@ -1336,6 +1336,15 @@
       "sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
       "reason": "Merged CP-2D covenant/refinancing _Spec rows with the CP-3D _RELATIVE_VALUE and CP-2A _DISTRESSED compositions (D12 registration, rows only).",
       "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "6b679cab982521bd0d73a213e7294d45927d6894",
+      "sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "reason": "Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
+      "review": "docs/CPL10-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

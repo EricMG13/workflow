@@ -95,7 +95,20 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2, cp2a, cp2d, cp2e, cp3, cp3d, cp4, cp5, cp8, cpdr
+from deploy_workflow.owners import (
+    cp1a,
+    cp2,
+    cp2a,
+    cp2d,
+    cp2e,
+    cp3,
+    cp3d,
+    cp4,
+    cp5,
+    cp8,
+    cpdr,
+    cpl10,
+)
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
@@ -115,6 +128,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-2A",
         "CP-2D",
         "CP-4",
+        "CP-L10",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
@@ -128,6 +142,7 @@ _CORES: dict[str, ModuleType] = {
     "CP-8": cp8,
     "CP-2A": cp2a,
     "CP-2D": cp2d,
+    "CP-L10": cpl10,
 }
 _QUALIFICATION = {
     "CP-1": PROMOTED,
@@ -143,6 +158,7 @@ _QUALIFICATION = {
     "CP-2A": cp2a.QUALIFICATION,
     "CP-2D": cp2d.QUALIFICATION,
     "CP-4": CP4_PROMOTED,
+    "CP-L10": cpl10.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -158,6 +174,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-2A": cp2a.probe,
     "CP-2D": cp2d.probe,
     "CP-4": cp4.probe,
+    "CP-L10": cpl10.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -169,6 +186,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "downside_pathway": cp2a.view,
     "liquidity_bridge": cp2d.view,
     "legal_covenants": cp4.view,
+    "change_screen": cpl10.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -185,6 +203,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-2A": cp2a.ENTRY_VALIDATOR,
     "CP-2D": cp2d.ENTRY_VALIDATOR,
     "CP-4": cp4.ENTRY_VALIDATOR,
+    "CP-L10": cpl10.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -238,6 +257,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_workflow.owners.cp2e import MacroFxSubmission
     from deploy_workflow.owners.cp8 import DecisionLedgerSubmission
     from deploy_workflow.owners.cpdr import ResearchSubmission
+    from deploy_workflow.owners.cpl10 import ChangeScreenSubmission
 
     def step(
         step_id: str,
@@ -416,6 +436,13 @@ def _default_specs() -> dict[str, OwnerSpec]:
                 ),
             ),
             entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-L10": OwnerSpec(
+            module_id="CP-L10",
+            steps=(step("change_screen", ChangeScreenSubmission, inputs="module_context"),),
+            entry="owner_core",
             kind="analytical",
             publish=None,
         ),

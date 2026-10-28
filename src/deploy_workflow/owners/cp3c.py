@@ -288,7 +288,8 @@ class FacilityTerms:
     facility_id: str
     # The T4.18 row's own `currency` text fact, read by facility_id from the row the principal
     # comes from, never through financial_series._maturity_figure (ruling A5, amending C-7).
-    currency: str
+    # None: the fact is absent or not known (round 8 B6).
+    currency: str | None
     facility_name: Cp1Fact
     secured_status: Cp1Fact
     seniority: Cp1Fact
@@ -372,13 +373,19 @@ NM_EBITDA = "Not meaningful: adjusted EBITDA is zero or negative" + _NM
 NM_PAYABLE = "Not meaningful: principal payable at maturity is zero" + _NM
 NM_INTEREST = "Not meaningful: cash interest paid is zero or negative" + _NM
 NM_TOTAL = "Not meaningful: total facility principal is zero" + _NM
+# Round 8 B6 (the 2D-c, 2D-b and D-4/L2 frames).
+CURRENCY_UNSTATED = (
+    "Not calculable: facility {fid} currency is not stated; no FX conversion is applied"
+)
+HORIZON_MISSING = missing_reason("CP-2D horizon")
+NM_TOTAL_NEGATIVE = "Not meaningful: total facility principal is negative" + _NM
 
 
 def _op(value: Decimal | None, label: str) -> Num:
     return Gap(missing_reason(label)) if value is None else value
 
 
-def _first(*values: Num) -> Gap | None:
+def _first(*values: object) -> Gap | None:
     """The first gap in formula order, if any."""
     return next((v for v in values if isinstance(v, Gap)), None)
 
@@ -416,14 +423,13 @@ def _ratio(num: Num, den: Num, not_meaningful: str) -> Num:
 @dataclass(frozen=True)
 class FacilityOperand:
     facility_id: str
-    principal: Num  # a Gap when the facility is in another currency (ruling C-6)
-    maturity_date: date
-    months: int  # whole months from D0 (CP-2D's rule, recomputed)
-    inside_horizon: bool  # maturity on or before the CP-2D horizon end
+    principal: Num  # a Gap: another currency, currency or principal not stated (C-6, B6)
+    maturity_date: date | Gap  # a Gap sorts after every dated facility (round 8 B6, 2D-c)
+    months: int | Gap  # whole months from D0 (CP-2D's rule A1, recomputed)
+    inside_horizon: bool | Gap  # maturity on or before the CP-2D horizon end
     annual_amortisation: Decimal | None  # None: not stated
     secured_status: str | None  # SECURED, UNSECURED or NOT_STATED; None is missing
     seniority: str | None
-    wall_differs: bool = False  # CP-2D's months or inside flag differ from the recomputed ones
 
 
 @dataclass(frozen=True)
@@ -502,14 +508,18 @@ def _add_months(start: date, months: int) -> date:
     return date(year, month, min(start.day, last))
 
 
-def wall_position(*, balance_date: date, maturity: date, horizon_months: int) -> tuple[int, bool]:
-    """CP-2D's whole-month rule (ruling A1): (months from D0, inside the horizon). Months is the
-    largest n with D0 + n months on or before the maturity (31 Dec to 30 Jun is 6); inside when
-    the maturity is on or before D0 + horizon."""
+def months_from(balance_date: date, maturity: date) -> int:
+    """Ruling A1: the largest n with D0 + n months on or before the maturity (31 Dec to 30 Jun
+    is 6)."""
     months = (maturity.year - balance_date.year) * 12 + (maturity.month - balance_date.month)
-    if _add_months(balance_date, months) > maturity:
-        months -= 1
-    return months, maturity <= _add_months(balance_date, horizon_months)
+    return months - 1 if _add_months(balance_date, months) > maturity else months
+
+
+def wall_position(*, balance_date: date, maturity: date, horizon_months: int) -> tuple[int, bool]:
+    """CP-2D's whole-month rule: (months from D0, inside the horizon); inside when the maturity
+    is on or before D0 + horizon."""
+    inside = maturity <= _add_months(balance_date, horizon_months)
+    return months_from(balance_date, maturity), inside
 
 
 _SECURED_RANK = {"SECURED": 0, "UNSECURED": 1}
@@ -537,20 +547,45 @@ def _rank(f: FacilityOperand) -> tuple[int, int] | Gap:
     return ranks[0], ranks[1]
 
 
-def _amortised(f: FacilityOperand, months: int) -> Num:
+def _wall_key(f: FacilityOperand) -> tuple[bool, date, str]:
+    """Wall order (C-4): maturity date, then facility_id; an undated facility after every dated
+    one, by facility_id (round 8 B6, 2D-c)."""
+    dated = isinstance(f.maturity_date, date)
+    return (
+        not dated,
+        f.maturity_date if isinstance(f.maturity_date, date) else date.min,
+        f.facility_id,
+    )
+
+
+def _earlier(a: int | Gap, b: int | Gap) -> int | Gap:
+    if isinstance(a, Gap):
+        return a
+    if isinstance(b, Gap):
+        return b
+    return min(a, b)
+
+
+def _amortised(f: FacilityOperand, months: int | Gap) -> Num:
     """min(annual amortisation x months / 12, principal), the operands in formula order."""
     if f.annual_amortisation is None:
         return Gap(NOT_STATED.format(fid=f.facility_id, term="annual amortisation"))
+    if isinstance(months, Gap):
+        return months
     if isinstance(f.principal, Gap):
         return f.principal
     return min(f.annual_amortisation * months / _MONTHS_PER_YEAR, f.principal)
 
 
-def _resources(base: Num, flow: Num, months: int, amortised_to: Num, paid_before: Decimal) -> Num:
+def _resources(
+    base: Num, flow: Num, months: int | Gap, amortised_to: Num, paid_before: Decimal
+) -> Num:
     if isinstance(base, Gap):
         return base
     if isinstance(flow, Gap):
         return flow
+    if isinstance(months, Gap):
+        return months
     if isinstance(amortised_to, Gap):
         return amortised_to
     return base + flow * months / _MONTHS_PER_YEAR - amortised_to - paid_before
@@ -559,16 +594,17 @@ def _resources(base: Num, flow: Num, months: int, amortised_to: Num, paid_before
 def _maturity_rows(
     base: Num, flow: Num, ordered: Sequence[FacilityOperand], unmatched: Sequence[Gap]
 ) -> tuple[MaturityRow, ...]:
-    """The resources reason (ruling C-2) is the first gap among cash, revolver and minimum cash
-    (``base``), the flow, then each facility's amortisation in wall order and the unmatched
-    facilities. It is the same at every maturity: each amortised-to sum needs every facility."""
+    """The resources reason (ruling C-2) is the first gap in formula order: cash, revolver and
+    minimum cash (``base``), the flow, the facility's months to maturity, then each facility's
+    amortisation in wall order and the unmatched facilities (each amortised-to sum needs every
+    facility)."""
     rows: list[MaturityRow] = []
     paid_before = _ZERO  # principal paid from resources at earlier maturities
     for f in ordered:
         own = _amortised(f, f.months)
         balloon = _diff(f.principal, own)
         amortised_to = _total(
-            (*(_amortised(g, min(f.months, g.months)) for g in ordered), *unmatched)
+            (*(_amortised(g, _earlier(f.months, g.months)) for g in ordered), *unmatched)
         )
         resources = _resources(base, flow, f.months, amortised_to, paid_before)
         if isinstance(resources, Gap) or isinstance(balloon, Gap):
@@ -591,17 +627,19 @@ def _creditor_rows(
     own facility first, the junior total the first such facility in wall order."""
     ranked = [(f, _rank(f)) for f in ordered]
     unranked = _first(*(r for _, r in ranked if isinstance(r, Gap)), *unmatched)
+    # A share's denominator: zero and negative totals have their own reasons (C-6, B6).
+    nm = NM_TOTAL_NEGATIVE if isinstance(total, Decimal) and total < 0 else NM_TOTAL
     rows: list[CreditorRow] = []
     if unranked is not None:
         for f, r in ranked:
             gap = r if isinstance(r, Gap) else unranked
-            rows.append(CreditorRow(f, _ratio(f.principal, total, NM_TOTAL), gap, gap))
+            rows.append(CreditorRow(f, _ratio(f.principal, total, nm), gap, gap))
         return tuple(rows), unranked
     ranks = {f.facility_id: r for f, r in ranked if not isinstance(r, Gap)}
-    for f in sorted(ordered, key=lambda f: (ranks[f.facility_id], f.maturity_date, f.facility_id)):
+    for f in sorted(ordered, key=lambda f: (ranks[f.facility_id], *_wall_key(f))):
         own = ranks[f.facility_id]
         claims = _total(g.principal for g in ordered if ranks[g.facility_id] <= own)
-        share = _ratio(f.principal, total, NM_TOTAL)
+        share = _ratio(f.principal, total, nm)
         rows.append(CreditorRow(f, share, claims, _ratio(claims, ebitda, NM_EBITDA)))
     # The most junior facility's claims are those of the last rank: every facility.
     return tuple(rows), rows[-1].claims_at_or_ahead if rows else Gap(NO_FACILITY)
@@ -623,7 +661,7 @@ def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refin
     if len(set(ids)) != len(ids):
         raise ValueError("CP-3C: a facility_id repeats")
     with localcontext(_CONTEXT):
-        ordered = tuple(sorted(o.facilities, key=lambda f: (f.maturity_date, f.facility_id)))
+        ordered = tuple(sorted(o.facilities, key=_wall_key))
         unmatched = tuple(sorted(o.unmatched, key=lambda u: u.facility_id))
         # Undated in CP-3C's view, so after every dated facility (2D-c); every total needs it.
         extra = tuple(Gap(u.reason) for u in unmatched)
@@ -639,19 +677,24 @@ def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refin
         paid = _op(o.cash_interest_paid, "cash interest paid")
         rows = _maturity_rows(base, flow, ordered, extra)
         total = none or _total((*(f.principal for f in ordered), *extra))
-        if isinstance(total, Decimal) and total < 0:
-            raise ValueError("CP-3C: total facility principal is negative (not pinned)")
         creditors, junior = _creditor_rows(ordered, extra, total, ebitda)
         payable = none or _total((*(r.principal_payable for r in rows), *extra))
         # Without a matched facility there is no row; the resources operands still come first.
         pool = none or _first(base, flow)
         applied = pool or _total((*(r.applied for r in rows), *extra))
         need = pool or _total((*(r.need for r in rows), *extra))
-        after = (r.principal_payable for r in rows if not r.facility.inside_horizon)
+        # Outside the horizon needs each position: an unknown one is that facility's gap.
+        after = [
+            r.facility.inside_horizon
+            if isinstance(r.facility.inside_horizon, Gap)
+            else r.principal_payable
+            for r in rows
+            if r.facility.inside_horizon is not True
+        ]
         step: Num = Gap(REASON_STEP_UP) if step_up_bps is None else Decimal(step_up_bps)
         added = _repriced(payable, step)
         pro_forma = _total((paid, added))
-        undated = none or _first(*extra)
+        undated = none or _first(*(f.maturity_date for f in ordered), *extra)
         return Refinancing(
             operands=o,
             step_up_bps=None if isinstance(step, Gap) else step,
@@ -701,56 +744,72 @@ def _cp2d_amount(fact: Cp2dFact, want: str = _MILLIONS) -> Decimal | None:
     return _amount(fact.fact_id, fact.status, fact.amount, fact.unit, want)
 
 
-def _known_text(what: str, status: Status, text: str | None) -> str:
-    if status != "known" or text is None:
-        raise ValueError(f"CP-3C {what}: missing, and no wording is pinned for it (not pinned)")
+def _stated_text(what: str, status: Status, text: str | None) -> str | None:
+    """A text fact's text, or None when it is missing; a known fact without text is refused."""
+    if status == "missing":
+        return None
+    if text is None:
+        raise ValueError(f"CP-3C {what}: expected a text fact")
     return text
 
 
 def _cp1_text(name: str, fact: Cp1Fact) -> str | None:
-    return None if fact.status == "missing" else _known_text(name, fact.status, fact.text)
+    return _stated_text(name, fact.status, fact.text)
 
 
-def _whole_months(fact: Cp2dFact) -> int:
+def _whole_months(fact: Cp2dFact) -> int | None:
+    """A CP-2D count of months, or None when the cell is missing."""
     months = _cp2d_amount(fact, "months")
-    if months is None or months != months.to_integral_value():
-        raise ValueError(f"CP-3C {fact.fact_id}: needs a known whole number of months (not pinned)")
-    return int(months)
+    if months is not None and months != months.to_integral_value():
+        raise ValueError(f"CP-3C {fact.fact_id}: needs a whole number of months")
+    return None if months is None else int(months)
+
+
+def _flag(fact: Cp2dFact) -> bool | None:
+    """CP-2D's inside-horizon flag, or None when the cell is missing."""
+    flag = _stated_text(fact.fact_id, fact.status, fact.text)
+    if flag not in (None, "Yes", "No"):
+        raise ValueError(f"CP-3C {fact.fact_id}: inside-horizon flag {flag!r}")
+    return None if flag is None else flag == "Yes"
 
 
 def _facility(
-    row: WallRow, terms: FacilityTerms, *, balance_date: date, horizon: int, currency: str
+    row: WallRow, terms: FacilityTerms, *, balance_date: date, horizon: int | Gap, currency: str
 ) -> FacilityOperand:
     fid = row.facility_id
     principal: Num
-    if terms.currency != currency:  # ruling C-6 with 2D5's reason; the currency per A5
+    if terms.currency is None:  # round 8 B6 (2D-c); the currency per A5
+        principal = Gap(CURRENCY_UNSTATED.format(fid=fid))
+    elif terms.currency != currency:  # ruling C-6 with 2D5's reason
         principal = Gap(FX_REASON.format(fid=fid, ccy=terms.currency, base=currency))
     else:
         amount = _cp2d_amount(row.principal)
-        if amount is None:
-            raise ValueError(f"CP-3C {fid}: wall principal missing (not pinned)")
-        principal = amount
-    maturity = date.fromisoformat(
-        _known_text(row.maturity_date.fact_id, row.maturity_date.status, row.maturity_date.text)
+        unstated = Gap(NOT_STATED.format(fid=fid, term="principal"))  # round 8 B6 (2D-c)
+        principal = unstated if amount is None else amount
+    stated = _stated_text(
+        row.maturity_date.fact_id, row.maturity_date.status, row.maturity_date.text
     )
-    months = _whole_months(row.months)
-    flag = _known_text(
-        row.inside_horizon.fact_id, row.inside_horizon.status, row.inside_horizon.text
-    )
-    if flag not in ("Yes", "No"):
-        raise ValueError(f"CP-3C {row.inside_horizon.fact_id}: inside-horizon flag {flag!r}")
-    # Ruling C-6 (2D-d): CP-3C uses the recomputed position; the copies show CP-2D's.
-    position = wall_position(balance_date=balance_date, maturity=maturity, horizon_months=horizon)
+    maturity: date | Gap
+    months: int | Gap
+    inside: bool | Gap
+    if stated is None:  # round 8 B6 (2D-c): no position
+        maturity = months = inside = Gap(NOT_STATED.format(fid=fid, term="maturity date"))
+    else:
+        # Ruling C-6 and round 8 B6: CP-3C uses its recomputed position; the copies show CP-2D's.
+        maturity = date.fromisoformat(stated)
+        months = months_from(balance_date, maturity)
+        inside = (
+            horizon if isinstance(horizon, Gap) else maturity <= _add_months(balance_date, horizon)
+        )
     return FacilityOperand(
         facility_id=fid,
         principal=principal,
         maturity_date=maturity,
-        months=position[0],
-        inside_horizon=position[1],
+        months=months,
+        inside_horizon=inside,
         annual_amortisation=_cp1_amount(f"{fid}.annual_amortisation", terms.annual_amortisation),
         secured_status=_cp1_text(f"{fid}.secured_status", terms.secured_status),
         seniority=_cp1_text(f"{fid}.seniority", terms.seniority),
-        wall_differs=position != (months, flag == "Yes"),
     )
 
 
@@ -773,7 +832,8 @@ def compose_operands(
         raise ValueError("CP-3C: cash interest and adjusted EBITDA cover different periods")
     interest = _cp1_amount("cash_interest", cp1.cash_interest)
     terms, wall = _sources(cp1, cp2d)
-    horizon = _whole_months(cp2d.horizon)
+    months = _whole_months(cp2d.horizon)
+    horizon: int | Gap = Gap(HORIZON_MISSING) if months is None else months  # round 8 B6 (2D-b)
     facilities = tuple(
         _facility(
             row,
@@ -1020,12 +1080,11 @@ class _Context:
         return (*matched, *(u.facility_id for u in r.unmatched))
 
     def label(self, facility_id: str) -> str:
-        """'<name> (<id>)'; a facility the CP-1 register lacks has no name, so its id alone."""
+        """'<name> (<id>)'; with no name (not in the register, or missing: round 8 B6) the id."""
         if facility_id not in self.terms:
             return facility_id
-        name = self.terms[facility_id].facility_name
-        text = _known_text(f"{facility_id}.facility_name", name.status, name.text)
-        return f"{text} ({facility_id})"
+        text = _cp1_text(f"{facility_id}.facility_name", self.terms[facility_id].facility_name)
+        return facility_id if text is None else f"{text} ({facility_id})"
 
     def unmatched(self, columns: Sequence[tuple[str | None, ValueClass]]) -> list[Line]:
         """A row per unmatched facility, every cell missing with its reason (ruling C-6)."""
@@ -1382,20 +1441,55 @@ _WALL_LINE = (
     "CP-2D's maturity wall for facility {fid} differs from the position recomputed from its "
     "horizon and maturity date; CP-3C uses the recomputed position and shows both."
 )
+# Round 8 B6: the 2D-c own line (label `Facility <term> (<id>)`, Gap, per D-1), and a wall
+# row that states no months or flag (label `CP-2D maturity wall cross-check (<id>)`).
+_UNSTATED_LINE = (
+    "Facility {fid} {term} is not stated; maturity-wall figures that need it are not calculated."
+)
+_WALL_NONE_LINE = (
+    "CP-2D's maturity wall for facility {fid} states no {what}; CP-3C uses the position "
+    "recomputed from its horizon and maturity date."
+)
+
+
+def _unstated(fid: str, term: str) -> tuple[str, str, str]:
+    return (f"Facility {term} ({fid})", "Gap", _UNSTATED_LINE.format(fid=fid, term=term))
+
+
+def _wall_lines(row: WallRow, f: FacilityOperand) -> list[str]:
+    """CP-2D's months and inside flag against the recomputed position (C-6, round 8 B6). With
+    no maturity date, or no horizon, there is no recomputed value to set beside CP-2D's."""
+    fid = f.facility_id
+    checks: tuple[tuple[str, object, object], ...] = (
+        ("months to maturity", _whole_months(row.months), f.months),
+        ("inside-horizon flag", _flag(row.inside_horizon), f.inside_horizon),
+    )
+    known = [(what, stated, mine) for what, stated, mine in checks if not isinstance(mine, Gap)]
+    lines = [_WALL_NONE_LINE.format(fid=fid, what=w) for w, stated, _ in known if stated is None]
+    if any(stated is not None and stated != mine for _, stated, mine in known):
+        lines.append(_WALL_LINE.format(fid=fid))
+    return lines
 
 
 def _facility_lines(c: _Context) -> list[tuple[str, str, str]]:
+    """Facility by facility in wall order: currency, maturity date, principal, wall row."""
     r = c.refinancing
     lines = [] if r.maturities or r.unmatched else [_NO_FACILITY_LINE]
     for m in r.maturities:
-        fid, ccy = m.facility.facility_id, c.terms[m.facility.facility_id].currency
-        if ccy != c.inputs.currency:
+        f = m.facility
+        fid, ccy = f.facility_id, c.terms[f.facility_id].currency
+        if ccy is None:
+            lines.append(_unstated(fid, "currency"))
+        elif ccy != c.inputs.currency:
             lines.append(
                 (f"Facility currency ({fid})", "Limitation", _FX_LINE.format(fid=fid, ccy=ccy))
             )
-        if m.facility.wall_differs:
-            label = f"CP-2D maturity wall cross-check ({fid})"
-            lines.append((label, "Limitation", _WALL_LINE.format(fid=fid)))
+        if isinstance(f.maturity_date, Gap):
+            lines.append(_unstated(fid, "maturity date"))
+        if ccy == c.inputs.currency and isinstance(f.principal, Gap):
+            lines.append(_unstated(fid, "principal"))
+        label = f"CP-2D maturity wall cross-check ({fid})"
+        lines += [(label, "Limitation", text) for text in _wall_lines(c.wall[fid], f)]
     # The same words as the cells' reason (ruling C-6).
     lines += [
         (f"Facility register and wall ({u.facility_id})", "Gap", u.reason) for u in r.unmatched
@@ -1549,8 +1643,21 @@ class _Claims:
         return ClaimText(claim_id, template, "".join(parts), references, (*names, *references))
 
 
-def _because(cell: Cell) -> str:
-    """A computed gap's reason as a claim's cause (ruling C-3): the reason less its prefix."""
+# Round 8 B2: a currency cause takes the L5/6f frame, never the facility's own reason.
+_FX_CAUSE = "the total needs every facility in USD, and one is not"
+_CURRENCY_CAUSE = "the total needs every facility with its currency stated, and one is not"
+
+
+def _because(c: _Context, cell: Cell) -> str:
+    """A computed gap's reason as a claim's cause (C-3, round 8 B2): the reason less its prefix,
+    or the frame for a facility in another currency or with no currency stated."""
+    for m in c.refinancing.maturities:
+        principal, ccy = m.facility.principal, c.terms[m.facility.facility_id].currency
+        if isinstance(principal, Gap) and principal.reason == cell.reason:
+            if ccy is None:
+                return _CURRENCY_CAUSE
+            if ccy != c.inputs.currency:
+                return _FX_CAUSE
     return (cell.reason or "").removeprefix(_NOT_CALCULABLE)
 
 
@@ -1584,7 +1691,7 @@ def _claims(c: _Context, cells: Mapping[str, Cell]) -> tuple[ClaimText, ...]:
     else:
         tail = (
             f"the refinancing need after resources is {k.chip('T3D.2.r03')}, because "
-            f"{_because(need)}."
+            f"{_because(c, need)}."
         )
     need_names = _names(c, ("annual_amortisation",), ("principal",))
     need_names += ["cash_closing", "undrawn_rcf", "cp2d.run_rate", "cp2d.min_cash"]
@@ -1645,7 +1752,7 @@ def _cost_claim(c: _Context, k: _Claims) -> ClaimText:
 
 def _lme_claim(c: _Context, k: _Claims) -> ClaimText:
     junior = k.cells["T3D.5.r01.c1"]
-    cause = "" if junior.status == "known" else f", because {_because(junior)}"  # ruling C-3
+    cause = "" if junior.status == "known" else f", because {_because(c, junior)}"  # C-3
     return k.claim(
         "CP-3C-LME-01",
         f"Claims at or ahead of the most junior facility are {k.either('T3D.5.r01.c1')} before "

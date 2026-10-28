@@ -25,7 +25,14 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
   Re-pin to round 3: one citation per page, quoting the first input quote. Then switch CP-2H's own citations to the round 3 rule.
 - **CP-2H view tree.** Commit `cases/cp2h-owner/cp2h-view-tree.json`.
 
+- **CP-4C v08.** The refusal cites identity page:1, which is outside the step's scope, so at run level the journal holds a second line: "Cited page not read through read_pages: identity page:1". The oracle `refusal_rules` say the limitations equal the issues. Re-pin to the two-line form. Both test files pin it now.
+- **CP-4C view tree.** Commit `cases/cp4c-owner/cp4c-view-tree.json`.
+
 ## Leases and contract text
+- **CP-4C lease.**
+  - `Claims.from_sources` is `claim_classes` in the core.
+  - `Upstream` gains `inherited`.
+  - Add the TOOL-CONTRACT row.
 - **CP-2H lease.** `TriggerReport` is renamed `RatingTriggersReport`; add the TOOL-CONTRACT row.
 - **CP-2G lease.**
   - :61 should show `Upstream` with `inherited`.

@@ -390,3 +390,4 @@
 - 22:52 Batch 2 CP-2G 165bd0b..8d5d404 (isolation fix; CP-2G connected; 26/26 mutants; connect set 1917 passed). Oracle defect -> close-release.md. Batch 3: CP-1C.
 - 22:54 User: "use multiple agents for connectors". CP-3C, CP-2H, CP-4C in parallel (s2b-<cp> from 8d5d404); CP-1C continues on s2-batch. Round 5 item 16 (CP-4C shock with no period).
 - 23:45 Parallel CP-2H done (s2b-cp2h 8f7929e; 29/29 mutants; connect set 2033 passed). Round 5 item 17 (frozen multi-quote citations until release).
+- 23:46 Parallel CP-4C done (s2b-cp4c 5ae21cc; 57/57 mutants; connect set 2033 passed). v08 oracle gap -> close release. Expected conflict in test_connect_cp3.py spec-less list with CP-3C.

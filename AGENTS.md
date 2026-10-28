@@ -115,6 +115,18 @@ current routing until it closes.
 - These Fable uses are the only exception to the stop on Fable (user,
   2026-10-28); LEAD's lane still dispatches none.
 
+Stage closure (user, 2026-10-28):
+- Stage 1 is closed at `codex/checkpoint` e89b2a2. Rounds 12 and 13 already
+  dispatched finish, and are re-reviewed only for a High or Medium finding.
+- Only a High or Medium defect reopens a module in a closed stage. Everything
+  else (Lows, wording, new defect classes, LEAD hardening follow-ups such as 0d
+  and B10, re-pins) goes to `work/build/stage2-backlog.md`, which each module
+  applies once, as the first task of its next stage.
+- LEAD does not originate module tasks. It answers the questions files and
+  releases oracle and lease changes only when a stage closes.
+- Modules starts Stage 2 now. The same rule closes each later stage when its
+  end-of-stage review passes.
+
 ## Tool and data rules
 
 - Use fixed supported source search/read/extraction and bounded frozen-upstream

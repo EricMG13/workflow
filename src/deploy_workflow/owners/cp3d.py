@@ -180,7 +180,10 @@ _CUT_BEFORE = re.compile(
     rf"(?:[0-9.]|[0-9], ?|{_MINUS} ?)\Z"
 )  # round 11 B1: the page figure starts earlier
 _CUT_AFTER = re.compile(r"[0-9]|[.,][0-9]|, [0-9]")  # round 11 B1: the page figure goes on
-_EDGE_AFTER = ("", ".")  # nothing or only a full stop after a figure at the quote end
+# Round 13 addendum 4 (CP-1D H2 mirror): a quote that ends `<figure>,` ends at an edge, and one that
+# starts `,<figure>` or `, <figure>` starts at one, so `_cut` sees the page's comma run.
+_EDGE_AFTER = ("", ".", ",")  # nothing, a full stop or a comma after a figure at the quote end
+_EDGE_BEFORE = ("", ",", ", ")  # nothing, a comma or a comma and a space before a figure
 
 
 def _parenthesised(before: str, after: str) -> bool:
@@ -258,7 +261,7 @@ def _whole_on_page(value_text: str, quote: str, page: str) -> bool:
     after it (`_EDGE_AFTER`)."""
     for needle in _readings(quote):
         for m in _tokens(value_text, needle):
-            at_start = m.start() == 0
+            at_start = needle[: m.start()] in _EDGE_BEFORE
             at_end = needle[m.end() :] in _EDGE_AFTER
             if not (at_start or at_end):
                 continue

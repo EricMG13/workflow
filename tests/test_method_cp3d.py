@@ -1894,6 +1894,39 @@ def test_r13_item8_a_page_comma_run_cuts_an_edge_figure(
     assert (_MARGIN_25 not in issues) is accepted
 
 
+@pytest.mark.parametrize(
+    ("page", "quote", "value", "accepted"),
+    (  # CP-3D M1: a quote edge at the page's `,` or `, ` beside the figure is an edge
+        ("a fee of 1,250 per year.", "fee of 1,", "1", False),
+        ("a fee of 1, 250 per year.", "fee of 1,", "1", False),
+        ("a fee of 1,\n250 per year.", "fee of 1,", "1", False),
+        ("a fee of 1,250 per year.", ",250 per year", "250", False),
+        ("a fee of 1, 250 per year.", ", 250 per year", "250", False),
+        ("a margin of 25,5 bps.", "margin of 25,", "25", False),
+        ("a fee of 1, payable yearly.", "fee of 1,", "1", True),
+        ("a fee of up, 250 per year.", ", 250 per year", "250", True),
+    ),
+    ids=(
+        "end-comma-page-digit",
+        "end-comma-page-space-digit",
+        "end-comma-page-wrap-digit",
+        "start-comma-page-digit",
+        "start-comma-space-page-digit",
+        "end-comma-margin",
+        "end-comma-twin",
+        "start-comma-space-twin",
+    ),
+)
+def test_r13_m1_a_quote_edge_at_a_comma_beside_the_figure_is_an_edge(
+    page: str, quote: str, value: str, accepted: bool
+) -> None:
+    """`_whole_on_page`: a quote ending `<figure>,` (end edge) or starting `,<figure>` /
+    `, <figure>` (start edge) is checked against the page's `<digit>,` / `<digit>, ` before the
+    figure and `,<digit>` / `, <digit>` after it; each refused case has an accepted twin."""
+    issues = _MARGIN_CLASS(page, quote, value)
+    assert (f"margin: bps_text {value} does not occur in the quote" not in issues) is accepted
+
+
 # --- LEAD round 13 addendum: rule W's minus is no round 11 B3 wrap split ---
 
 

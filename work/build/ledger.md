@@ -379,3 +379,4 @@
 - 20:31 Batch brief written (work/build/stage2/batch-brief.md). Waits on the integration merge and the CP-1D review (CP-2G consumes CP-1D).
 - 20:35 Integration stopped at merge 6 (CP-3): 2 branch-local registration assertions. Ruled (a): test-side rewrite (base prefix + appended rows; dynamic spec-less ids), same rule for later merges. Integrator resumed.
 - 20:40 CP-1D review: REQUEST CHANGES (M1 view shown spelling breaks deferred runs; M2 FP02 restated-leverage title vs oracle; L1-L6). Under the no-per-module rule: parked pending user decision (CP-2G consumes CP-1D).
+- 20:40 User: CP-1D folded into the batch (M1, M2, L4 fixed by first batch builder; whole-stage review checks). Lows to end batch.

@@ -9,3 +9,9 @@
 - **Shared defect test Info.** `test_a_verbatim_pattern_needs_only_one_accepted_value_on_one_path` (`test_defect_classes_selfcheck.py:529`) repeats `:519`; it never shows a second refusing path excused. End batch. Source: defect-classes/fix2-review.md.
 - **CP-8 L-a.** `test_identity_is_outside_the_host_scope` asserts only `status != "ok"`; pin `refused`/`not_permitted` (`<S>/cp8-s2-rereview/p14_run_level_refusals.py`).
 - **CP-8 L-b.** The `not_permitted`/`stale_binding` tests do not assert "neither consumes an attempt; both recorded in the receipt"; the stale test uses `interrupt`, which consumes the attempt itself. Test gap only (p14 exit 0).
+- **CP-1D L1.** The 32-char ordinal window is cut before Cf/Mn/Me are skipped; `2`+31 marks+`nd` reads 2. Skip over the whole tail first (`<S>/cp1d-s2-review/p4_ordinal_identifier_edges.py`). Fails closed under the Source quotes freeze as a guard limit if not fixed.
+- **CP-1D L2.** Surviving mutants: constant upstream status, `attempt.inputs` for `current_inputs`, the view's `known` filter removed (`p7_review_mutants.py`).
+- **CP-1D L3.** The deferred tamper test does not show the verifier reaching `_PROBES["CP-1D"]`; add a `monkeypatch.setitem` spy as CP-2A does; no edited step output case.
+- **CP-1D L5.** `type: ignore` 0 → 3 in tests (`test_connect_cp1d.py:623,625`, `test_owner_cp1d.py:100`); suppressions may only fall.
+- **CP-1D L6 (predates).** CP-1 references refused in assessment rationales while `cp1_facts_note` admits them; align the note or the core (`p9_cp1_ref_in_assessment.py`).
+- **CP-1D I1.** `context_block` docstring overstates `inherited_limitations` (computed with own=()).

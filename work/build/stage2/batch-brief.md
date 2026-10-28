@@ -11,6 +11,17 @@ Ruling (user, 2026-10-28): "no more per module work from stage 2 onwards". The f
 | Backlog | `work/build/stage2-backlog.md`, your module's rows | applied first |
 | Shared helpers | `tests/defect_classes.py` (`assert_hostile_refused`, `model_text_failures`, `path_matches`) | the stage-level class test |
 
+## CP-1D folded in (user, 2026-10-28)
+CP-1D joins the batch at 8a5d3d9. Before CP-2G, the first builder fixes CP-1D's two Mediums, test-first. The review is `work/build/stage2/cp1d/review.md`. The probes are in `<S>/cp1d-s2-review/`.
+- **M1:** the view's `shown` is the cell spelling (`fact_spelling(fact, None)[2]`), not `spelled(fact)`.
+  - Add a fast test that runs `tests/cp1d_runs.py` `fig_bindings` over a fast settled store.
+  - `p11_driver_fig_bindings.py` and `p10_view_shown_vs_oracle.py` must exit 0.
+- **M2:** the FP02 `restated-leverage` `_Spec` title and the T1D.6 binding and tab labels must equal `expected.json` FP02.
+  - Add a fast test that compares `report_view.build` over the fast module with the oracle FP02 titles and tab labels.
+  - `p5_fp02_render_vs_oracle.py` must exit 0.
+- **Also:** move `OWNER_SPECS["CP-1D"]` after CP-MODEL (L4). Record round 5 item 12's `1.5-Q` and `1.5-\nnd` readings in `methods/cp1d.md`.
+- CP-1D's other Lows go to the end batch.
+
 ## Branch and order
 - Branch `claude/s2-batch` in worktree `../s2-batch`. One builder runs at a time; each one commits on top of the last.
 - Build order follows the dependencies (plan-draft §2):

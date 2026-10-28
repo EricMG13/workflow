@@ -25,6 +25,7 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-L10"
 STEP_ID = "change_screen"
@@ -990,7 +991,7 @@ def _text_issues(sub: ChangeScreenSubmission, bound: Mapping[str, Fact], issuer:
     for path, text in texts:
         issues += [f"{path}: {i}" for i in prose_issues(text, bound, names=(issuer,))]
         issues += [f"{path}: prohibited conclusion: {w}" for w in PROHIBITED if w in text.lower()]
-        if not text.strip():
+        if is_blank(text):
             issues.append(f"{path}: empty")
     return issues
 
@@ -1008,7 +1009,7 @@ def _overall_issues(overall: Overall) -> list[str]:
         issues.append(
             "overall.limitation: only an Insufficient Information overall carries a limitation"
         )
-    if overall.limitation is not None and not overall.limitation.strip():
+    if overall.limitation is not None and is_blank(overall.limitation):
         issues.append("overall.limitation: empty")
     return issues
 
@@ -1022,10 +1023,10 @@ def _gap_issues(gaps: tuple[Gap, ...]) -> list[str]:
         path = f"gaps[{i}]"
         if g.affected_analysis not in (*TOPIC_IDS, OVERALL):
             issues.append(f"{path}.affected_analysis: must name a topic of the view or overall")
-        if not g.gap.strip():
+        if is_blank(g.gap):
             issues.append(f"{path}.gap: empty")
         for field in ("why_it_matters", "action"):
-            if not getattr(g, field).strip():
+            if is_blank(getattr(g, field)):
                 issues.append(f"{path}.{field}: empty")
         for field in ("gap", "why_it_matters", "affected_analysis", "action"):
             if _DIGIT.search(getattr(g, field)):

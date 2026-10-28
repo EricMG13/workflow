@@ -128,6 +128,8 @@ def test_round_13_wrap_cases_follow_the_w_exemption() -> None:
     for cid, twin in (
         ("b3-letter-wrap-text", "b3-letter-joined-text"),
         ("b3-no-digit-wrap-text", "b3-no-digit-joined-text"),
+        ("b3-index-0-letter-wrap-text", "b3-index-0-letter-joined-text"),
+        ("b3-index-0-digit-wrap-text", "b3-index-0-digit-joined-text"),
     ):
         c = case(cid, TEXT_CASES)
         assert not c.accepted and c.twin == twin and "- " in normalise(c.value)

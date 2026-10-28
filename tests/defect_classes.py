@@ -321,6 +321,8 @@ _WRAP_PAGE = "The Northbridge first-\npriority Term Loan is quoted by dealers."
 _W_MINUS_PAGE = "The level is -\n1.25 percent over the reference rate."
 _LETTER_WRAP_PAGE = "The Term Loan A-\n25 notes are quoted."
 _NO_DIGIT_WRAP_PAGE = "The rate a -\nb applies."
+_INDEX0_LETTER_PAGE = "The Term Loan A-\n1.25 notes are quoted."
+_INDEX0_DIGIT_PAGE = "In 2024-\n2025 notes held."
 
 TEXT_CASES: tuple[QuoteCase, ...] = (
     QuoteCase(
@@ -425,6 +427,48 @@ TEXT_CASES: tuple[QuoteCase, ...] = (
         _NO_DIGIT_WRAP_PAGE,
         "The rate a -b applies",
         "a -b",
+        accepted=True,
+        ruling=R11_B3,
+    ),
+    QuoteCase(
+        "b3-index-0-letter-wrap-text",
+        "wrap",
+        "text",
+        _INDEX0_LETTER_PAGE,
+        "The Term Loan A-\n1.25 notes",
+        "- 1.25 notes",
+        accepted=False,
+        ruling=R11_B3,
+        twin="b3-index-0-letter-joined-text",
+    ),
+    QuoteCase(
+        "b3-index-0-letter-joined-text",
+        "wrap",
+        "text",
+        _INDEX0_LETTER_PAGE,
+        "The Term Loan A-1.25 notes",
+        "-1.25 notes",
+        accepted=True,
+        ruling=R11_B3,
+    ),
+    QuoteCase(
+        "b3-index-0-digit-wrap-text",
+        "wrap",
+        "text",
+        _INDEX0_DIGIT_PAGE,
+        "In 2024-\n2025 notes",
+        "- 2025 notes",
+        accepted=False,
+        ruling=R11_B3,
+        twin="b3-index-0-digit-joined-text",
+    ),
+    QuoteCase(
+        "b3-index-0-digit-joined-text",
+        "wrap",
+        "text",
+        _INDEX0_DIGIT_PAGE,
+        "In 2024-2025 notes",
+        "-2025 notes",
         accepted=True,
         ruling=R11_B3,
     ),

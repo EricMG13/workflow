@@ -1906,6 +1906,7 @@ def test_r13_item8_a_page_comma_run_cuts_an_edge_figure(
         ("In 2024-\n2025 it held.", "In 2024-\n2025 it held.", "2024- 2025", False),
         ("The rate a -\nb applies.", "The rate a -\nb applies.", "a - b", False),
         ("Term Loan A-\n1.25 notes.", "Term Loan A-\n1.25 notes.", "- 1.25 notes", False),
+        ("In 2024-\n2025 notes.", "In 2024-\n2025 notes.", "- 2025 notes", False),
         ("The rate is -\n1.25 notes.", "is -\n1.25 notes.", "is - 1.25 notes", True),
         (
             "Term -\n1.25 notes, first-\npriority",
@@ -1921,6 +1922,7 @@ def test_r13_item8_a_page_comma_run_cuts_an_edge_figure(
         "digit-wrap",
         "no-digit",
         "index-0",
+        "index-0-digit",
         "w-minus-edge",
         "w-minus-plus-real-wrap",
     ),

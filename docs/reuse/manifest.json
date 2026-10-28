@@ -1019,10 +1019,10 @@
     {
       "destination": "src/deploy_vii/live/tools.py",
       "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
-      "project_commit": "8adbd4104918ef7ccaeee1e8d234c0e2d7ae71f9",
-      "sha256": "d4071e59bde16648ab9175e529cce47a5b5e0f456da3a4692e831d0b346b1e48",
-      "reason": "Atomic read/search evidence publication after complete SOURCE rendering; preserve prior successes.",
-      "review": "docs/handoffs/source-tools.md"
+      "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
+      "sha256": "2d607ea225693f3a8c651de84657eca81e9c101e52f80cd86ffc451d0667a681",
+      "reason": "Atomic read/search evidence publication after complete SOURCE rendering; preserve prior successes. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload.",
+      "review": "work/lead/product-defects-0d/"
     },
     {
       "destination": "src/deploy_vii/report_view.py",
@@ -1072,10 +1072,10 @@
       "destination": "src/deploy_vii/live/submission.py",
       "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
       "prior_project_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
-      "project_commit": "266440a5fb050ccdaadca8ab0c4183ec15b4efc5",
-      "sha256": "a6b8919e5f10b9dfd541d469a930fd153c3074bbd64ff35f755aed3c9d5a2799",
-      "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas.",
-      "review": "docs/reviews/cp1b-access-registration-contract.md"
+      "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
+      "sha256": "1d92f7d53c7ecc6880054cb40904e0136cd1c2724ba63a0cda3ea47894661963",
+      "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload.",
+      "review": "work/lead/product-defects-0d/"
     },
     {
       "destination": "src/deploy_vii/report_view.py",
@@ -1139,6 +1139,14 @@
       "sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
       "reason": "Serialised methodology change: CP-L10 requires CP-1 (D4); CP-L10 registers TL10.5; CP-1C owns T1C.1-T1C.8 and drops the T4.x ids (D8); CP-1D drops the T1E.1-T1E.6 ids; CP-2A drops the T5.1-T5.7 ids that collide with CP-5.",
       "review": "work/lead/methodology-serialised/review.md"
+    },
+    {
+      "destination": "src/deploy_vii/live/schema.py",
+      "imported_sha256": "c63744196066a9046e1d3331ee5191f8dc30b2d7f08644ca816c7ae2955e56cb",
+      "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
+      "sha256": "68fb91b0db05bdd35a38bda5a590a674498a8a9de7e706bf2de4a6174a4195a9",
+      "reason": "0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload.",
+      "review": "work/lead/product-defects-0d/"
     }
   ],
   "local_patch_lineage": [

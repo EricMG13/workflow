@@ -52,6 +52,7 @@ relaxations applied (`schema_relaxations`).
 
 import copy
 import json
+import re
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from decimal import Decimal
@@ -807,18 +808,47 @@ def too_deep(payload: str) -> bool:
     return False
 
 
-def json_object(payload: str) -> dict[str, Any] | None:
-    """`payload` parsed as a JSON object, floats as Decimal (`exact_json` keeps their digits);
-    None for anything else: invalid or truncated JSON, NaN or Infinity, a non-object, or nesting
-    deeper than `MAX_NESTING` (fail closed: `normalise` leaves it unchanged and Pydantic refuses
-    it as ill-shaped)."""
+_LONE = re.compile("[\ud800-\udfff]")
+
+
+def _storable(node: object) -> bool:
+    """True when every string in `node`, dict keys included, encodes as UTF-8."""
+    if isinstance(node, str):
+        return _LONE.search(node) is None
+    if isinstance(node, dict):
+        return all(_storable(k) and _storable(v) for k, v in node.items())
+    if isinstance(node, list):
+        return all(_storable(item) for item in node)
+    return True
+
+
+def payload_document(payload: str, *, exact: bool) -> dict[str, Any] | None:
+    """The one parse of model text in `live/`: `payload` as a JSON object, or None (fail closed)
+    for invalid or truncated JSON, a non-object, nesting deeper than `MAX_NESTING`, or any string
+    (key or value) that cannot be stored as UTF-8. `json.loads` joins valid surrogate pairs, so
+    a code point in U+D800-DFFF is a lone half; Pydantic refuses such an escape as invalid JSON,
+    so no valid payload is lost, and no rule can quote a string that no record can hold. With
+    `exact`, floats are Decimal (`exact_json` keeps their digits) and NaN/Infinity are refused."""
     if too_deep(payload):
         return None
     try:
-        document = json.loads(payload, parse_float=Decimal, parse_constant=_refuse_constant)
+        if exact:
+            document = json.loads(payload, parse_float=Decimal, parse_constant=_refuse_constant)
+        else:
+            document = json.loads(payload)
     except ValueError:
         return None
-    return document if isinstance(document, dict) else None
+    if not isinstance(document, dict) or not _storable(document):
+        return None
+    return document
+
+
+def json_object(payload: str) -> dict[str, Any] | None:
+    """`payload` parsed as a JSON object, floats as Decimal (`exact_json` keeps their digits);
+    None for anything else: invalid or truncated JSON, NaN or Infinity, a non-object, nesting
+    deeper than `MAX_NESTING`, or a string that cannot be stored as UTF-8 (a lone surrogate
+    escape). Fail closed: `normalise` leaves it unchanged and Pydantic refuses it as ill-shaped."""
+    return payload_document(payload, exact=True)
 
 
 def exact_json(value: object) -> str:
@@ -835,8 +865,10 @@ def exact_json(value: object) -> str:
 def normalise(model: type[BaseModel], payload: str) -> tuple[str, tuple[str, ...]]:
     """Resolve nulls that stand for omitted defaulted fields; return the payload and the paths.
 
-    Unchanged (same string, no paths) when nothing needed resolving or the text is not a JSON
-    object; Pydantic then reports whatever is wrong with it."""
+    Unchanged (same string, no paths) when nothing needed resolving, or when `json_object` returns
+    None: the text is not a JSON object, is nested deeper than `MAX_NESTING`, holds NaN or
+    Infinity, or holds a string that cannot be stored as UTF-8 (a lone surrogate). Pydantic then
+    reports whatever is wrong with it."""
     document = json_object(payload)
     if document is None:
         return payload, ()
@@ -844,9 +876,4 @@ def normalise(model: type[BaseModel], payload: str) -> tuple[str, tuple[str, ...
     walker.fill(model.model_json_schema(), document, "")
     if not walker.paths:
         return payload, ()
-    resolved = exact_json(document)
-    try:
-        resolved.encode()
-    except UnicodeEncodeError:  # a lone surrogate cannot be stored: leave it for Pydantic to refuse
-        return payload, ()
-    return resolved, tuple(walker.paths)
+    return exact_json(document), tuple(walker.paths)

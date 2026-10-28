@@ -71,3 +71,9 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
 - The ledger line `agent=mx-feature fix-rounds=0 gates-first-pass=<y|n|n/a>`.
 
 Each commit ends with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
+
+## Rulings that bind every module (Stage 2 round 3, lane cherry-pick of 8c8f557)
+- **Citations:** a sourced fact quotes its own field; a derived fact gets one Citation per page quoting the first of its own input quotes on that page, in input order; never invent a quote. Kill both first-quote and last-quote mutants. State the derived rule in `methods/<cp>.md`.
+- **Model text:** the validator checks each model-text field with the type the step later builds (`RunText` through a `TypeAdapter` built once), journaling `<path>: <msg>` with `include_input=False`, bounded by `listed_issues`/`clipped`. Nothing may raise after the binding write. The shared class test in `tests/defect_classes.py` runs over your positive payload.
+- **Synthetic limitation:** own = oracle list then "Synthetic case; not real issuer qualification", deduplicated; inherited = `inherited_limitations`' output. Readers return the settled own list and say so. Pin with a head built by `settle`.
+- **Aliases** canonicalise (no create refusal); receipts and MODULES.csv count no alias completion.

@@ -60,7 +60,14 @@ from deploy_vii.execution import (
 )
 from deploy_vii.live.tools import Seen, cited_locators
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.report_view import _RELATIVE_VALUE, _spec_of, build, fact_spelling, pathways
+from deploy_vii.report_view import (
+    _RELATIVE_VALUE,
+    _spec_of,
+    _unit_class,
+    build,
+    fact_spelling,
+    pathways,
+)
 from deploy_workflow import host
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow.financial_workflow import _FrozenExecution
@@ -1201,6 +1208,22 @@ def test_bindings_place_every_fp03_table_exactly_once(case: str) -> None:
     assert set(by_table) == {t.table_id for t in module.tables}
     assert all(e.cell_slot.startswith("cp1c-") for e in cp1c_map.entries)
     assert all(e.fact_coord.module_id == MODULE for e in cp1c_map.entries)
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_binding_unit_class_is_the_one_class_its_table_displays(case: str) -> None:
+    """The bindings' rule (bindings/cp1c.py): a table whose facts all display in one unit class
+    is bound with it; a table mixing classes, or holding exact-text units, is bound as text."""
+    module = _module(case)
+    facts = {f.fact_id: f for f in module.facts}
+    tables = {t.table_id: t for t in module.tables}
+    cp1c_map = next(m for m in SHIPPED_MAPS if m.module_id == MODULE)
+    for entry in cp1c_map.entries:
+        assert entry.fact_coord.table_id is not None
+        table = tables[entry.fact_coord.table_id]
+        shown = {_unit_class(facts[f].unit) for row in table.rows for f in row.fact_ids}
+        want = next(iter(shown)) if len(shown) == 1 and None not in shown else "text"
+        assert entry.unit_class == want, table.table_id
 
 
 @pytest.mark.parametrize("case", CASES)

@@ -7,6 +7,7 @@ oracle's own literals (`submissions.json`), pinned pages (`manifest.json`,
 
 import copy
 import json
+import re
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -289,20 +290,6 @@ def test_quoted_reference_rate_level_reaches_the_yield_cells_and_claim() -> None
     assert "[" not in claim.text
 
 
-def test_a_numeric_fact_without_a_page_period_fails_closed() -> None:
-    base = _context("positive")
-    published = {k: v for k, v in base.published.items() if k != ("financial", "page:5")}
-    ctx = cp3d.MarketContext(
-        pages=base.pages,
-        names=base.names,
-        third_party=base.third_party,
-        published=published,
-        run_as_of=base.run_as_of,
-    )
-    with pytest.raises(ValueError, match="No publication date on financial page:5"):
-        cp3d.market_implied_result(submission=_submission(SUBMISSIONS["positive"]), context=ctx)
-
-
 # --- fix round 1 (mx-adversary on a80aa23) -----------------------------------------------------
 
 
@@ -324,35 +311,6 @@ def test_lvl_claim_date_is_the_bid_offer_quotation_date_not_the_talk_date() -> N
         c for c in EXPECTED["cases"]["positive"]["claims"] if c["claim_id"] == "CP-3D-LVL-01"
     )
     assert lvl.text == expected["text"]
-
-
-@pytest.mark.parametrize("drop", (["offer"], ["bid"], ["bid", "offer"]), ids=lambda d: "+".join(d))
-def test_partial_quotation_fails_closed(drop: list[str]) -> None:
-    """Bid-only, offer-only and talk-only are valid submissions, but the lease pins no wording for
-    LVL-01 or the T3E.7 row of a partial quotation, so the composer refuses rather than invent it."""
-    raw = copy.deepcopy(SUBMISSIONS["positive"])
-    raw["observations"] = [o for o in raw["observations"] if o["kind"] not in drop]
-    sub, ctx = _submission(raw), _context("positive")
-    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
-    with pytest.raises(ValueError, match="partial quotation"):
-        cp3d.market_implied_result(submission=sub, context=ctx)
-
-
-def test_default_measures_not_meaningful_fail_closed_in_the_pd_claim() -> None:
-    """Above par: the margin is known and the default measures are not_applicable; no PD-01
-    wording is pinned for that state."""
-    page = (
-        "Published January 10, 2026.\nDealer quotation on January 9, 2026: bid 100.50 and "
-        "offer 101.00, expressed as a percentage of par."
-    )
-    ctx = _with_page(_context("positive"), "market", "page:9", page)
-    raw = copy.deepcopy(SUBMISSIONS["positive"])
-    for obs, level in ((raw["observations"][0], "100.50"), (raw["observations"][1], "101.00")):
-        obs.update(locator="page:9", quote=page.split("\n")[1], level_text=level)
-    sub = _submission(raw)
-    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
-    with pytest.raises(ValueError, match="not meaningful"):
-        cp3d.market_implied_result(submission=sub, context=ctx)
 
 
 _DIGIT_EDITS = [
@@ -429,11 +387,11 @@ def test_every_oracle_literal_still_validates() -> None:
 def test_stored_values_round_half_up_at_a_tie() -> None:
     # lease-literal: CP3D-OWNER-LEASE.md:71 "Stored to 0.1 bp" and :67 (expected.json#arithmetic
     # decimal_context "stored outputs are quantised ROUND_HALF_UP"); a 365-day year makes
-    # (100 - price) / years x 100 exact, so 99.9995 is a 0.05 bp tie and 99.995 with a 4 percent
-    # level is a 0.04005 yield tie.
+    # (100 - price) / years x 100 exact, so an offer of 99.9995 is a 0.05 bp tie and a bid of
+    # 99.995 with a 4 percent level is a 0.04005 yield tie (bid below offer: not crossed).
     inputs = cp3d.MarketInputs(
-        bid=Decimal("99.9995"),
-        offer=Decimal("99.995"),
+        bid=Decimal("99.995"),
+        offer=Decimal("99.9995"),
         talk=None,
         quotation_date=date(2026, 1, 1),
         maturity=date(2027, 1, 1),
@@ -442,28 +400,300 @@ def test_stored_values_round_half_up_at_a_tie() -> None:
         recovery=Decimal(0),
         reference_rate_level=Decimal("0.04"),
     )
+    assert inputs.bid is not None and inputs.offer is not None and inputs.bid < inputs.offer
     stored = cp3d.compose(inputs=inputs).stored()
-    assert (stored["disc_bid"], stored["dm_bid"], stored["lam_bid"]) == ("0.1", "0.1", "0.1")
-    assert stored["yield_offer"] == "0.0401"
+    assert (stored["disc_offer"], stored["dm_offer"], stored["lam_offer"]) == ("0.1", "0.1", "0.1")
+    assert stored["yield_bid"] == "0.0401"
 
 
-def test_margin_row_does_not_blame_the_margin_when_only_the_maturity_is_missing() -> None:
-    """Maturity absent, margin and zero amortisation cited: the builder's T3E.7 row would blame the
-    margin; no wording is pinned for this cause, so the composer refuses."""
-    raw = _edited(
-        SUBMISSIONS["positive"],
-        [
-            [
-                "terms.maturity",
-                {
-                    "quote": None,
-                    "date_text": None,
-                    "absence": {"reason": "Not stated", "follow_up": "Ask"},
-                },
-            ]
-        ],
+# --- LEAD rulings (docs/rulings/2026-10-28-stage1.md: CP-3D D1-D3, Round 2 X1) -----------------
+
+
+def _claim_texts(raw: dict[str, Any], ctx: cp3d.MarketContext | None = None) -> dict[str, str]:
+    ctx = ctx or _context("positive")
+    sub = _submission(raw)
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    result = cp3d.market_implied_result(submission=sub, context=ctx)
+    return {c.claim_id: c.text for c in result.claims}
+
+
+def _without(kinds: tuple[str, ...]) -> dict[str, Any]:
+    raw: dict[str, Any] = copy.deepcopy(SUBMISSIONS["positive"])
+    raw["observations"] = [o for o in raw["observations"] if o["kind"] not in kinds]
+    return raw
+
+
+_POSITIVE_CLAIMS = {c["claim_id"]: c["text"] for c in EXPECTED["cases"]["positive"]["claims"]}
+_NO_MARKET_CLAIMS = {c["claim_id"]: c["text"] for c in EXPECTED["cases"]["gap_no_market"]["claims"]}
+
+
+def test_d1_period_without_a_published_line_is_stated_not_refused() -> None:
+    # ruling D1: "Without that line, do not fail closed: use `…, publication date not stated`"
+    base = _context("positive")
+    dropped = {("financial", "page:5"), ("market", "page:2")}
+    ctx = cp3d.MarketContext(
+        pages=base.pages,
+        names=base.names,
+        third_party=base.third_party,
+        published={k: v for k, v in base.published.items() if k not in dropped},
+        run_as_of=base.run_as_of,
     )
+    result = cp3d.market_implied_result(
+        submission=_submission(SUBMISSIONS["positive"]), context=ctx
+    )
+    cells = {c.fact_id: c for t in result.tables for r in t.rows for c in r.facts}
+    terms = "Facility terms in the financial source, publication date not stated"
+    assert cells["T3E.3.r02.mid"].period == terms
+    assert cells["T3E.1.r03.level"].period == "Commentary, publication date not stated"
+    assert cells["T3E.2.r04.value"].period == (
+        "Commentary, publication date not stated and quotation of 2026-01-09"
+    )
+
+
+def test_d1_published_line_needs_its_full_stop() -> None:
+    # ruling D1: the cited page's `Published <Month D, YYYY>.` line
+    pages = {
+        "market": {
+            "page:1": "Published January 10, 2026 by the desk",
+            "page:2": "Published January 10, 2026.",
+        }
+    }
+    assert cp3d.publication_dates(pages) == {("market", "page:2"): date(2026, 1, 10)}
+
+
+def test_x1_i_bid_only() -> None:
+    texts = _claim_texts(_without(("offer",)))
+    assert texts["CP-3D-LVL-01"] == (  # ruling X1 (i)
+        "On January 9, 2026 the dealer quotation was {T3E.1.r01.level|%} bid; no offer was "
+        "submitted, so the mid is not calculated: [T3E.2.r01.value]."
+    )
+    assert texts["CP-3D-DM-01"] == _NO_MARKET_CLAIMS["CP-3D-DM-01"]
+    assert texts["CP-3D-YLD-01"] == _POSITIVE_CLAIMS["CP-3D-YLD-01"]
+    assert texts["CP-3D-PD-01"] == _NO_MARKET_CLAIMS["CP-3D-PD-01"]
+
+
+def test_x1_ii_offer_only() -> None:
+    texts = _claim_texts(_without(("bid",)))
+    assert texts["CP-3D-LVL-01"] == (  # ruling X1 (ii)
+        "On January 9, 2026 the dealer quotation was {T3E.1.r02.level|%} offer; no bid was "
+        "submitted, so the mid is not calculated: [T3E.2.r01.value]."
+    )
+    assert texts["CP-3D-DM-01"] == _NO_MARKET_CLAIMS["CP-3D-DM-01"]
+    assert texts["CP-3D-PD-01"] == _NO_MARKET_CLAIMS["CP-3D-PD-01"]
+
+
+@pytest.mark.parametrize("dated", (False, True), ids=("undated", "dated"))
+def test_x1_iii_talk_only_never_uses_the_talk_date(dated: bool) -> None:
+    raw = _without(("bid", "offer"))
+    if dated:
+        raw["observations"][0]["quote"] = (
+            "Published January 10, 2026.\nDealers describe the indicative fair value of the "
+            "Northbridge Term Loan as around 99.75."
+        )
+        raw["observations"][0]["as_of_text"] = "January 10, 2026"
+    texts = _claim_texts(raw)
+    assert texts["CP-3D-LVL-01"] == (  # ruling X1 (iii)
+        "No dealer quotation was submitted: [T3E.1.r01.level] and [T3E.1.r02.level] are not stated; "
+        "indicative talk of {T3E.1.r03.level|%} of par is shown as context only."
+    )
+
+
+def test_d2_lvl_date_is_the_bid_as_of_text_verbatim() -> None:
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    talk = raw["observations"].pop(2)
+    talk["quote"] = (
+        "Published January 10, 2026.\nDealers describe the indicative fair value of the "
+        "Northbridge Term Loan as around 99.75."
+    )
+    talk["as_of_text"] = "January 10, 2026"
+    raw["observations"].insert(0, talk)
+    assert _claim_texts(raw)["CP-3D-LVL-01"] == _POSITIVE_CLAIMS["CP-3D-LVL-01"]
+
+
+def test_x1_iv_mid_above_par() -> None:
+    page = (
+        "Published January 10, 2026.\nDealer quotation on January 9, 2026: bid 100.50 and "
+        "offer 101.00, expressed as a percentage of par."
+    )
+    ctx = _with_page(_context("positive"), "market", "page:9", page)
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    for obs, level in ((raw["observations"][0], "100.50"), (raw["observations"][1], "101.00")):
+        obs.update(locator="page:9", quote=page.split("\n")[1], level_text=level)
+    sub = _submission(raw)
+    assert cp3d.submission_issues(submission=sub, context=ctx) == ()
+    result = cp3d.market_implied_result(submission=sub, context=ctx)
+    texts = {c.claim_id: c.text for c in result.claims}
+    assert texts["CP-3D-DM-01"] == _POSITIVE_CLAIMS["CP-3D-DM-01"]  # known form, negative margin
+    assert texts["CP-3D-PD-01"] == (  # ruling X1 (iv)
+        "The market-implied default probability is not meaningful: [T3E.5.r01.mid] and "
+        "[T3E.5.r02.mid] need a positive simple discount margin, and at the mid the margin is "
+        "{T3E.3.r03.mid|bp}."
+    )
+    cells = {c.fact_id: c for t in result.tables for r in t.rows for c in r.facts}
+    dm = cells["T3E.3.r03.mid"]
+    assert dm.status == "known" and dm.amount is not None and dm.amount < 0
+    assert format(dm.amount, "f") == EXPECTED["fixtures"]["fixture_above_par"]["stored"]["dm_mid"]
+    assert (
+        cells["T3E.5.r01.mid"].limitation
+        == "Not meaningful: the simple discount margin is not positive"
+    )
+
+
+_NO_MATURITY = [
+    [
+        "terms.maturity",
+        {"quote": None, "date_text": None, "absence": {"reason": "Not stated", "follow_up": "Ask"}},
+    ]
+]
+
+
+def test_x1_v_maturity_absent_without_a_level() -> None:
+    texts = _claim_texts(_edited(SUBMISSIONS["positive"], _NO_MATURITY))
+    assert texts["CP-3D-DM-01"] == (  # ruling X1 (v)
+        "The simple discount margin is not calculated: [T3E.3.r03.mid] is not available."
+    )
+    assert texts["CP-3D-YLD-01"] == _POSITIVE_CLAIMS["CP-3D-YLD-01"]
+    assert texts["CP-3D-PD-01"] == _NO_MARKET_CLAIMS["CP-3D-PD-01"]
+
+
+def test_x1_v_maturity_absent_with_a_quoted_level() -> None:
+    page = "Published January 10, 2026.\nThe SOFR reference rate is 4.30 percent."
+    ctx = _with_page(_context("positive"), "financial", "page:9", page)
+    raw = _edited(SUBMISSIONS["positive"], _NO_MATURITY)
+    raw["terms"]["reference_rate"]["absence"] = None
+    quote = {"source_id": "financial", "locator": "page:9", "quote": page.split("\n")[1]}
+    raw["terms"]["reference_rate"]["level"] = {"quote": quote, "percent_text": "4.30"}
+    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (  # ruling X1 (v)
+        "The all-in yield is not calculated: [T3E.3.r05.mid] needs a final maturity date, which no "
+        "source in the pack states."
+    )
+
+
+def test_x1_talk_only_with_a_level_and_a_stated_maturity_does_not_blame_the_maturity() -> None:
+    """mx-precise M1 on 9b871a7: with no quotation date `days` is missing although the maturity
+    is stated; YLD-01 must not say that no source states a final maturity date."""
+    page = "Published January 10, 2026.\nThe SOFR reference rate is 4.30 percent."
+    ctx = _with_page(_context("positive"), "financial", "page:9", page)
+    raw = _without(("bid", "offer"))
+    raw["terms"]["reference_rate"]["absence"] = None
+    quote = {"source_id": "financial", "locator": "page:9", "quote": page.split("\n")[1]}
+    raw["terms"]["reference_rate"]["level"] = {"quote": quote, "percent_text": "4.30"}
+    assert raw["terms"]["maturity"]["date_text"]
+    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (  # ruling round 4 (g)
+        "The all-in yield is not calculated: [T3E.3.r05.mid] needs the simple discount margin at "
+        "the mid, which is not calculated: [T3E.3.r03.mid]."
+    )
+
+
+def test_g_bid_only_with_a_level_and_a_stated_maturity() -> None:
+    page = "Published January 10, 2026.\nThe SOFR reference rate is 4.30 percent."
+    ctx = _with_page(_context("positive"), "financial", "page:9", page)
+    raw = _without(("offer",))
+    raw["terms"]["reference_rate"]["absence"] = None
+    quote = {"source_id": "financial", "locator": "page:9", "quote": page.split("\n")[1]}
+    raw["terms"]["reference_rate"]["level"] = {"quote": quote, "percent_text": "4.30"}
+    assert _claim_texts(raw, ctx)["CP-3D-YLD-01"] == (  # ruling round 4 (g)
+        "The all-in yield is not calculated: [T3E.3.r05.mid] needs the simple discount margin at "
+        "the mid, which is not calculated: [T3E.3.r03.mid]."
+    )
+
+
+_NO_MARGIN = [
+    [
+        "terms.margin",
+        {"quote": None, "bps_text": None, "absence": {"reason": "Not stated", "follow_up": "Ask"}},
+    ]
+]
+
+
+@pytest.mark.parametrize(
+    ("label", "kinds_dropped", "edits", "reason"),
+    (  # ruling round 4 (h): first missing cause in formula order (years, mid, margin)
+        ("maturity absent", (), _NO_MATURITY, "Needs a quotation date and a final maturity date"),
+        ("talk only", ("bid", "offer"), [], "Needs a quotation date and a final maturity date"),
+        (
+            "talk only, no margin",
+            ("bid", "offer"),
+            _NO_MARGIN,
+            "Needs a quotation date and a final maturity date",
+        ),
+        ("bid only", ("offer",), [], "Needs both an observed bid and an observed offer"),
+        (
+            "offer only, no margin",
+            ("bid",),
+            _NO_MARGIN,
+            "Needs both an observed bid and an observed offer",
+        ),
+        ("no margin", (), _NO_MARGIN, "Needs a contractual margin and stated zero amortisation"),
+    ),
+    ids=lambda x: x if isinstance(x, str) and not x.startswith("Needs") else "",
+)
+def test_h_t3e7_discount_margin_row_names_the_first_missing_cause(
+    label: str, kinds_dropped: tuple[str, ...], edits: list[list[Any]], reason: str
+) -> None:
+    raw = _edited(_without(kinds_dropped), edits)
     sub, ctx = _submission(raw), _context("positive")
     assert cp3d.submission_issues(submission=sub, context=ctx) == ()
-    with pytest.raises(ValueError, match="want of a final maturity"):
-        cp3d.market_implied_result(submission=sub, context=ctx)
+    t7 = next(
+        t
+        for t in cp3d.market_implied_result(submission=sub, context=ctx).tables
+        if t.table_id == "T3E.7"
+    )
+    rows = {r.label: [c.text for c in r.facts] for r in t7.rows}
+    assert rows["Simple discount margin"] == ["Simple discount margin", reason], label
+
+
+def _variants() -> list[tuple[str, dict[str, Any], bool]]:
+    """Every combination of observed kinds, recovery, maturity, margin and a quoted level."""
+    out = []
+    kinds = ("bid", "offer", "indicative_talk")
+    for mask in range(1, 8):
+        keep = tuple(k for i, k in enumerate(kinds) if mask >> i & 1)
+        for recovery in (True, False):
+            for maturity in (True, False):
+                for margin in (True, False):
+                    for level in (True, False):
+                        raw = _without(tuple(k for k in kinds if k not in keep))
+                        if not recovery:
+                            raw["recovery"] = None
+                            raw["recovery_absence"] = {"reason": "Not assessed", "follow_up": "Ask"}
+                        if not maturity:
+                            raw = _edited(raw, _NO_MATURITY)
+                        if not margin:
+                            absent = {"reason": "Not stated", "follow_up": "Ask"}
+                            raw["terms"]["margin"] = {
+                                "quote": None,
+                                "bps_text": None,
+                                "absence": absent,
+                            }
+                        if level:
+                            raw["terms"]["reference_rate"]["absence"] = None
+                            q = {
+                                "source_id": "financial",
+                                "locator": "page:9",
+                                "quote": "The SOFR reference rate is 4.30 percent.",
+                            }
+                            raw["terms"]["reference_rate"]["level"] = {
+                                "quote": q,
+                                "percent_text": "4.30",
+                            }
+                        label = f"{'+'.join(keep)}|rec={recovery}|mat={maturity}|mg={margin}|lvl={level}"
+                        out.append((label, raw, level))
+    return out
+
+
+@pytest.mark.parametrize(
+    ("label", "raw", "level"), _variants(), ids=lambda x: x if isinstance(x, str) else ""
+)
+def test_x1_nothing_that_validates_raises(label: str, raw: dict[str, Any], level: bool) -> None:
+    page = "Published January 10, 2026.\nThe SOFR reference rate is 4.30 percent."
+    ctx = _with_page(_context("positive"), "financial", "page:9", page)
+    sub = _submission(raw)
+    assert cp3d.submission_issues(submission=sub, context=ctx) == (), label
+    result = cp3d.market_implied_result(submission=sub, context=ctx)
+    cells = {c.fact_id: c for t in result.tables for r in t.rows for c in r.facts}
+    for claim in result.claims:
+        for ref in re.findall(r"\{([^|{}]+)\|", claim.text):
+            assert cells[ref].status == "known", (label, claim.claim_id, ref)
+        for ref in re.findall(r"\[([^\[\]]+)\]", claim.text):
+            assert cells[ref].amount is None, (label, claim.claim_id, ref)  # chip names no figure

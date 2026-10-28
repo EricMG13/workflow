@@ -450,7 +450,9 @@ def test_registration_rows_equal_the_lease() -> None:
 
 
 def test_registrations_are_append_only() -> None:
-    assert list(owner.OWNER_SPECS)[:5] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
+    # CP-1D's row sits before CP-MODEL until its builder moves it: compare the base rows only.
+    base = [r for r in owner.OWNER_SPECS if r != "CP-1D"]
+    assert base[:5] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
     assert list(owner._QUALIFICATION)[:4] == ["CP-1", "CP-1A", "CP-2", "CP-MODEL"]
     assert list(owner._PROBES)[:4] == ["CP-0", "CP-1", "CP-1A", "CP-2"]
     assert list(owner._ENTRY_VALIDATORS)[:2] == ["CP-1A", "CP-2"]

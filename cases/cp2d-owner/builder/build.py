@@ -179,8 +179,9 @@ def add_months(d, n):
 
 
 def months_between(d0, d1):
+    """The largest whole number of months n with add_months(d0, n) on or before d1 (A1, round 6)."""
     n = (d1.year - d0.year) * 12 + (d1.month - d0.month)
-    return n - 1 if d1.day < d0.day else n
+    return n - 1 if add_months(d0, n) > d1 else n
 
 
 # --- the method (lease section "Method"): Decimal, Python-owned -------------------------------
@@ -957,7 +958,7 @@ expected = {
         "missing_rule": "any missing operand makes the dependent value missing with a limitation; nothing defaults to 0; cash_only_headroom (excludes the revolver) is the only value that stays known when the revolver is missing",
         "horizon_bound": "1..60 months (near-term)",
         "table_signs": "`derived` values are magnitudes; tables show cash outflows (amortisation, maturities) and negative balances in brackets, so a 50 maturity is shown (50); display rounds half away from zero (display.py ROUND_HALF_UP on the exact decimal), so fixture_burn's monthly (0.5) outflow is shown (1)",
-        "months_between": "whole calendar months from the balance date; one less if the later day-of-month is earlier",
+        "months_between": "largest whole number of months n with balance date + n months (end of month clamped) on or before the date",
     },
     "cases": EXPECTED_CASES,
     "cp0_with_cp2d": {

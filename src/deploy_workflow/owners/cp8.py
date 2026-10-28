@@ -130,6 +130,8 @@ _DECIMAL = re.compile(rf"(?:{_SIGN} ?)?[0-9]+\.[0-9]+|\( ?[0-9]+\.[0-9]+ ?\)")
 # rule W: a minus one space before its figure, with a character of the value before it (the
 # lookbehind must not pass at index 0, where the page character before the "-" is unseen)
 _W_MINUS = re.compile(rf"(?<=.){_SIGN} (?=[0-9])")
+_NUMERAL_RUN = re.compile(r"\.?[0-9](?:[0-9]|[.,][0-9])*")
+_PLAIN_NUMBER = re.compile(r"[0-9]+(?:\.[0-9]+)?")
 _REFERENCE = re.compile(r"[{}\[\]]")
 _SUBJECT = re.compile(r"default|restructuring")
 _PROHIBITED = re.compile(  # r14 prohibited conclusions (lease, analyst text)
@@ -403,10 +405,12 @@ def _only_date(at: str, quote: str) -> bool:
 
 def _whole(value: str) -> re.Pattern[str]:
     """``value`` as a whole unsigned number: a minus-signed or parenthesised printing is another
-    figure (round 10 item 1), with the sign directly or one space away (round 12 rule W)."""
+    figure (round 10 item 1), with the sign directly or one space away (round 12 rule W). A digit
+    and a comma (with or without one space) join the run, before and after (round 13 item 8)."""
     v = re.escape(value)
     return re.compile(
-        rf"(?<![0-9.])(?<!{_SIGN})(?<!{_SIGN} )(?!(?:(?<=\()|(?<=\( )){v} ?\)){v}(?![0-9]|\.[0-9])"
+        rf"(?<![0-9.])(?<![0-9],)(?<![0-9], )(?<!{_SIGN})(?<!{_SIGN} )"
+        rf"(?!(?:(?<=\()|(?<=\( )){v} ?\)){v}(?![0-9]|[.,][0-9]|, [0-9])"
     )
 
 
@@ -460,8 +464,18 @@ def _labelled(metric: str, value: str, quote: str) -> bool:
     at = text.lower().find(label)
     if at < 0:
         return False
-    match = figure.search(text, at + len(label))
-    return match is not None and match.group(0) == shown
+    start = at + len(label)
+    match = figure.search(text, start)
+    if match is None:
+        return False
+    for run in _NUMERAL_RUN.finditer(text, start):
+        # round 13 item 7: a run that starts before the match and is not a plain number or
+        # decimal (`.75`, `1.2.5`, `1,250`) ends the search; plain integer runs are skipped
+        if run.start() >= match.start():
+            break
+        if not _PLAIN_NUMBER.fullmatch(run.group(0)):
+            return False
+    return match.group(0) == shown
 
 
 def _parts(metric: str) -> tuple[str, ...]:

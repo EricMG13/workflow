@@ -1231,6 +1231,18 @@ HIDDEN_RUN_LINES = [
     "A saving of 1.2.5",
     # Accepted cost (also refused at d2cb626): a "Month D, YYYY" date holds a joined comma run.
     "Signed on March 5, 2025 for a saving of 2.5.",
+    # Owner ruling (fail closed): a digit outside ASCII 0-9 is a second figure the grammar cannot
+    # read, and a run touching a letter is not whole.
+    "A saving of 2.5 and \uff11\uff12 more.",  # fullwidth 12
+    "A saving of 2.5 and \u0661\u0662 more.",  # Arabic-Indic 12
+    "A saving of 2.5 and \u00b9\u00b2 more.",  # superscript 12
+    "In Q2 a saving of 2.5.",
+    "Tranche A1 saves 2.5.",
+    "The 2nd saving is 2.5.",
+    "The 2nd saving.",  # the only figure touches a letter
+    "A saving of Q2.",  # the only figure touches a letter before it
+    "A saving of 2.5m.",  # accepted cost: a unit letter attached to the figure
+    "A saving of 25bps.",  # accepted cost: a unit letter attached to the figure
 ]
 
 
@@ -1258,6 +1270,18 @@ def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
         ("a saving of 25 and 30", False),  # two runs
         ("a saving of one", False),  # no run
         ("a saving of 1-\n2.5", False),  # two runs across a wrapped hyphen
+        ("A saving of 2.5.", True),
+        ("A saving of 2.5%.", True),
+        ("A saving of (2.5).", True),
+        ("A saving of -2.5.", True),
+        ("a saving of 2.5, a rise", True),
+        ("a saving of \uff12", False),  # a non-ASCII digit
+        ("a saving of 2 and \u0662", False),
+        ("a saving of 2 and \u00b2", False),
+        ("Q2 and 2.5", False),  # a run touching a letter before it
+        ("2nd", False),  # a run touching a letter after it
+        ("Q2", False),  # a run touching a letter before it, nothing else
+        ("a saving of 2.5m", False),
     ],
 )
 def test_one_whole_run_is_the_single_rule(quote: str, whole: bool) -> None:

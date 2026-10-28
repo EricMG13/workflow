@@ -15,6 +15,7 @@ No I/O, store, host, session or render call happens here (Stage 2 adds those).
 """
 
 import re
+import unicodedata
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -556,10 +557,21 @@ def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
 
 def _one_whole_run(quote: str) -> bool:
     """Addendum 4: each reading of the quote (`_readings`) holds exactly one numeral run and
-    it is whole."""
+    it is whole. Owner ruling (fail closed): a digit character outside ASCII 0-9 fails, and a run
+    with a letter directly before or after it is not whole (`Q2`, `2nd`, `2.5m`, `25bps`)."""
     for reading_text in _readings(quote):
-        runs = _NUMERAL_RUN.findall(reading_text)
-        if len(runs) != 1 or _WHOLE_RUN.fullmatch(runs[0]) is None:
+        if any(
+            not ("0" <= char <= "9")
+            and (char.isdigit() or unicodedata.digit(char, None) is not None)
+            for char in reading_text
+        ):
+            return False
+        runs = list(_NUMERAL_RUN.finditer(reading_text))
+        if len(runs) != 1 or _WHOLE_RUN.fullmatch(runs[0].group()) is None:
+            return False
+        before = reading_text[: runs[0].start()][-1:]
+        after = reading_text[runs[0].end() :][:1]
+        if before.isalpha() or after.isalpha():
             return False
     return True
 

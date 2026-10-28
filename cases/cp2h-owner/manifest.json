@@ -6,7 +6,7 @@
  "pins": {
   "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
   "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-  "cases/cp2g-owner/manifest.json": "d9348f987382792c62ae000c345423db8d4d45b8c50f6f1d425c2be467479afb",
+  "cases/cp2g-owner/manifest.json": "ccf17834ec2800153d1b0648ddeac6add0debc64682e525cb6dd548162795daa",
   "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
   "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
   "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6"
@@ -138,7 +138,7 @@
    "The issuer ratings in this source coexist with CP-3D's unrated instrument: CP-3D's \"No rating agency has assigned a rating to the instrument\" concerns the quoted bond, while these are issuer ratings of the group; neither statement contradicts the other",
    "Asserted by the builder: page:2 Reported EBITDA FY 30.0; page:3 Cash interest paid FY 5.00 and Levered free cash flow FY 9.00; page:4 Total debt FY 50.00 and Cash and cash equivalents FY 20.00; identity page:1 'Fiscal year end: December 31.'; the recomputed FY2025 ratios (50/30, (50-20)/30, 30/5, 9/50) equal the CP-2G gap T2H.6.a25 facts; no threshold of a non-boundary source equals a FY2025 metric"
   ],
-  "parse_rule": "page:1 register after the header 'Agency  Instrument  Rating  Outlook  Date' (consecutive five-field lines), page:2 scale after 'Position  Alder Ratings  Brook Credit', page:3 terms after 'Agency  Direction  Metric  Comparison  Threshold'; fields split on two or more spaces; threshold 'N.NNx' (multiple), 'N.N%' (percent, stored as a fraction) or 'Not stated'; a line of two or more fields with another field count makes the source invalid; a missing header is an invalid attempt returned alone (s01, s02); a rating of Withdrawn or Not rated has no position (not_applicable), any other rating must be on the scale or the source is invalid ('Rating not on the scale: <agency> <rating>')"
+  "parse_rule": "page:1 register after the header 'Agency  Instrument  Rating  Outlook  Date' (consecutive five-field lines), page:2 scale after 'Position  Alder Ratings  Brook Credit', page:3 terms after 'Agency  Direction  Metric  Comparison  Threshold'; fields split on two or more spaces; threshold 'N.NNx' (multiple), 'N.N%' (percent, stored as a fraction) or 'Not stated'; a line of two or more fields with another field count makes the source invalid; after a block ends at a line of zero or one field, a later line of two or more fields on that page makes the source invalid; a missing header is an invalid attempt returned alone (s01, s02); a rating of Withdrawn or Not rated has no position (not_applicable), any other rating must be on the scale or the source is invalid ('Rating not on the scale: <agency> <rating>')"
  },
  "edges": {
   "decision": "D4: methodology.json as is. CP-2H required CP-0, CP-1, CP-2G (rule block); optional CP-1D (rule restricted); no edge_rules entry. CP-2A is not an edge of CP-2H: it is in the plan only because CP-2G requires it.",

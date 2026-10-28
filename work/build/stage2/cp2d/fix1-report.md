@@ -79,3 +79,7 @@ This runs the store runs, receipt verification and tamper tests. They need a rea
 Not verified: `tests/test_financial_render.py` (run was unfinished); the 9 store-run tests in `tests/test_owner_cp2d.py`, which have never executed; the tamper test's use of `ow._verify_audit` and `ow._verify_calls_reads` in the same file, whose signatures were not checked; my own 77-mutant run, which I did not repeat after the M1/M2 edits; the full pytest set after the R8 test was added; the lane brief's binding rulings (citations, `RunText`, synthetic limitation, aliases) beyond the fix items; and the hand-written new facility cases, which have no Hypothesis or property test.
 
 Ledger: `agent=mx-feature fix-rounds=1 gates-first-pass=n`
+
+## Supplement
+- `tests/test_financial_render.py`: 22 passed in 3865 s (1h04m).
+- `tests/test_method_cp3c.py` and `cases/cp3c-owner/*` also name liquidity-runway, maturity-wall and funding-gap. They are for the CP-3C batch builder to check.

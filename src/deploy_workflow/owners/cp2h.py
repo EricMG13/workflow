@@ -16,18 +16,22 @@ CP-2G ratio passes its own status and reason on (round 7 (f)), and a CP-2G known
 known zero. The states no frozen case reaches follow LEAD round 7
 (`docs/rulings/2026-10-28-stage1.md`).
 
-No I/O, store, host, session or render call happens here; the G1-X seams (`Upstream`, the
-reader, `RULES`, `view`, `probe`, `submit`) are added to this file in later stages.
+The Stage 1 core does no I/O and touches no store, host, session or renderer. The Stage 2
+section at the end connects it (G1-X protocol section 2): one store adapter (`cp2h_upstream`,
+then `_adapted`) for submit, probe and view, the step validator, `RULES`, the exact
+`read_inputs` view and the probe. CP-2H declares no reader of its own (lease Public API).
 """
 
+import hashlib
+import json
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
 from deploy_vii import prose
 from deploy_vii.business_context import (
@@ -36,22 +40,47 @@ from deploy_vii.business_context import (
     Severity,
     prohibited_issues,
     referencable,
+    spelled,
 )
 from deploy_vii.contracts import (
     Citation,
     Contract,
     Fact,
+    Hash,
     Input,
     InputStatus,
+    Module,
     ReportTable,
+    Run,
+    RunText,
     Source,
     TableColumn,
     TableRow,
+    Text,
 )
+from deploy_vii.contracts import Claim as ModuleClaim
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Qualification,
+    StepValidation,
+    bounded_issues,
+    clipped,
+    current_inputs,
+    head_of,
+    inherited_limitations,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
+from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.model._cells import CONTEXT
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
-from deploy_vii.report_view import fact_spelling
+from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.cp2g import cp2g_reader
 
 MODULE_ID = "CP-2H"
 STEP_ID = "rating_triggers"
@@ -321,7 +350,7 @@ def _register(
             continue
         placed = positions.get(agency, {}).get(rating)
         if placed is None:
-            raise SourceIssue(f"Rating not on the scale: {agency} {rating}")
+            raise SourceIssue(clipped(("Rating not on the scale: ", agency, " ", rating)))
         position, scale_line = placed
         out.append(
             RegisterRow(agency, instrument, rating, outlook, dated, position, line, scale_line)
@@ -351,7 +380,7 @@ def _terms(rows: list[tuple[str, list[str]]]) -> tuple[TriggerTerm, ...]:
             raise SourceIssue(TERMS_NOT_FOUND)
         known = METRICS.get(metric)
         if known is None:
-            raise SourceIssue(f"Unrecognised trigger metric: {metric}")
+            raise SourceIssue(clipped(("Unrecognised trigger metric: ", metric)))
         term = TriggerTerm(
             agency=agency,
             direction="Downgrade" if direction == "Downgrade" else "Upgrade",
@@ -1474,14 +1503,40 @@ def phrase_issues(path: str, text: str) -> tuple[str, ...]:
     return (*prohibited_issues(path, text), *core)
 
 
-def _prose(path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str]) -> list[str]:
-    """A rationale or gap field: run text against the bound facts, then the phrase guard."""
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _run_text_issues(path: str, text: str) -> list[str]:
+    """Stage 2 round 3 item 2: text built as `Claim.text` is checked with that very type
+    (`RunText`, one `TypeAdapter` built once), so a malformed reference is a journaled issue and
+    composition never raises after the binding write. The message never echoes the input."""
+    try:
+        _RUN_TEXT.validate_python(text)
+    except ValidationError as error:
+        found = error.errors(include_input=False, include_url=False, include_context=False)
+        return [clipped((path, ": ", item["msg"])) for item in found]
+    return []
+
+
+def _prose(
+    path: str,
+    text: str,
+    bound: Mapping[str, Fact],
+    names: Sequence[str],
+    *,
+    claim: bool = False,
+) -> list[str]:
+    """A rationale or gap field: run text against the bound facts, then the phrase guard. A
+    `prose.issues` line can quote the analyst's text, so it is clipped (protocol section 6).
+    `claim`: the text becomes `Claim.text`, so when `prose.issues` passes it, it is also checked
+    as `RunText`."""
     if is_blank(text):
         return [f"{path}: empty text"]
-    return [
-        *(f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)),
-        *phrase_issues(path, text),
-    ]
+    found = prose.issues(text, bound, names=names)
+    issues = [clipped((path, ": ", issue)) for issue in found]
+    if claim and not found:
+        issues += _run_text_issues(path, text)
+    return [*issues, *phrase_issues(path, text)]
 
 
 def _limitation(path: str, text: str | None, names: Sequence[str]) -> list[str]:
@@ -1492,7 +1547,7 @@ def _limitation(path: str, text: str | None, names: Sequence[str]) -> list[str]:
     if is_blank(text):  # round 11 B3, round 12 B10: a blank limitation is not a limitation
         return [f"{path}: empty text"]
     return [
-        *(f"{path}: {issue}" for issue in prose.check(text, refs=(), gaps=(), names=names)),
+        *(clipped((path, ": ", x)) for x in prose.check(text, refs=(), gaps=(), names=names)),
         *phrase_issues(path, text),
     ]
 
@@ -1512,20 +1567,28 @@ def _view_issues(
     for i, v in ranked:
         path = f"views[{i}]"
         if v.agency not in order:
-            issues.append(f"{path}.agency: not an agency in the rating register: {v.agency}")
+            issues.append(
+                clipped((path, ".agency: not an agency in the rating register: ", v.agency))
+            )
         elif v.agency in seen:
-            issues.append(f"{path}.agency: duplicate agency {v.agency}")
+            issues.append(clipped((path, ".agency: duplicate agency ", v.agency)))
         seen.add(v.agency)
         if v.confidence == "High":
             issues.append(f"{path}.confidence: {HIGH}")
-        issues += _prose(f"{path}.rationale", v.rationale, bound, pack.names)
+        issues += _prose(f"{path}.rationale", v.rationale, bound, pack.names, claim=True)
         for j, citation in enumerate(v.evidence):
+            where = f"{path}.evidence[{j}]"
+            if is_blank(citation.quote):  # round 13 addendum 3: before the page-occurrence check
+                issues.append(f"{where}.quote: empty text")
+                continue
             issues += (
-                f"{path}.evidence[{j}]: {x}" for x in citation_issues((citation,), pack.sources)
+                clipped((where, ": ", x)) for x in citation_issues((citation,), pack.sources)
             )
         issues += _limitation(f"{path}.limitation", v.limitation, pack.names)
     issues += (
-        f"views: no view for agency {r.agency}" for r in source.register if r.agency not in seen
+        clipped(("views: no view for agency ", r.agency))
+        for r in source.register
+        if r.agency not in seen
     )
     return issues
 
@@ -1534,7 +1597,7 @@ def _overall_issues(
     sub: TriggerSubmission, bound: Mapping[str, Fact], names: Sequence[str]
 ) -> list[str]:
     o = sub.overall
-    issues = _prose("overall.rationale", o.rationale, bound, names)
+    issues = _prose("overall.rationale", o.rationale, bound, names, claim=True)
     if o.confidence == "High":
         issues.append(f"overall.confidence: {HIGH}")
     return issues + _limitation("overall.limitation", o.limitation, names)
@@ -1553,7 +1616,7 @@ def _gap_issues(
 def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> tuple[str, ...]:
     """Every bound upstream that changed, in the `cp2_synthesis._stale_issues` form."""
     if isinstance(current, str):
-        return (f"Stale inputs: {current}",)
+        return (clipped(("Stale inputs: ", current)),)
     was = {item.input_id: item for item in bound}
     now = {item.input_id: item for item in current}
 
@@ -1622,13 +1685,27 @@ def validate(inputs: TriggerInputs) -> tuple[str, ...]:
     return tuple(dict.fromkeys(issues))
 
 
+def _parsed(payload: str) -> tuple[TriggerSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue (the frozen r06 frame),
+    and is refused even if Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            TriggerSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return TriggerSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
 def payload_issues(payload: str, *, pack: PackScope, upstream: TriggerUpstream) -> tuple[str, ...]:
     """Shape issues alone (a payload that does not parse gets no content check), else the
     calculation-level issues of `validate`."""
-    try:
-        submission = TriggerSubmission.model_validate_json(payload)
-    except ValidationError as error:
-        return shape_issues(error)
+    submission, shape = _parsed(payload)
+    if submission is None:
+        return shape
     return validate(TriggerInputs(pack=pack, upstream=upstream, submission=submission))
 
 
@@ -1792,7 +1869,7 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
     raises ValueError on any issue."""
     issues = validate(inputs)
     if issues:
-        raise ValueError("; ".join(issues))
+        raise ValueError("; ".join(bounded_issues(issues)))
     up, sub = inputs.upstream, inputs.submission
     ratings = ratings_source(inputs.pack)
     source = parse_ratings(source_pages(ratings))
@@ -1819,3 +1896,458 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
         outcomes=mechanics.outcomes,
         totals=mechanics.totals,
     )
+
+
+# =============================================================================================
+# Stage 2: the connection (docs/CP2H-OWNER-LEASE.md Public API; docs/G1X-OWNER-CORE-PROTOCOL.md).
+# Everything above is the Stage 1 calculation; what follows reads the store and journals.
+# =============================================================================================
+
+STEP_IDS = (STEP_ID,)
+QUALIFICATION = Qualification(implementation="implemented")
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: TriggerSubmission}
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+# The fixed H1 mapping (`host._OWNER_SCOPES[("CP-2H", "rating_triggers")]`, lease :36): identity,
+# financial and ratings; a held source stays in scope in pack order.
+SCOPE = frozenset({"identity", "financial", RATINGS_SOURCE_ID})
+CP1, CP2G = "CP-1", "CP-2G"
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-2H attempt binds, read once from the journal (`cp2h_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp1` the facts of the bound CP-1 head; `cp2g` the 28 T2H.6 facts selected by
+    literal id (`Cp2gMetrics.select`) from `owners.cp2g.cp2g_reader` over the bound CP-2G head
+    (rulings stage2 Q6: the consumer selects into its own Stage 1 type); `inherited` what
+    settlement will carry from the bound heads (`execution.inherited_limitations`)."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp1: tuple[Fact, ...]
+    cp2g: Cp2gMetrics
+    inherited: tuple[str, ...] = ()
+
+    def status(self, input_id: str) -> InputStatus | None:
+        return next((item.status for item in self.bound if item.input_id == input_id), None)
+
+
+def _bound_module(store: Execution, attempt: Attempt, module_id: str) -> Module:
+    item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+    if item is None:
+        raise ValueError(f"The CP-2H attempt binds no {module_id} input")
+    module = store.result(item.sha256)
+    if module.module_id != module_id:
+        raise ValueError(f"The CP-2H attempt's {module_id} input is a {module.module_id} module")
+    return module
+
+
+def cp2h_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-1 and CP-2G heads, the current input set and the inherited limitations. The
+    CP-2G facts are read through `cp2g_reader` on the head of the bound blob (its hash is the
+    bound Input's), so a later CP-2G head is never read in its place. A refusal of
+    `current_inputs` (an upstream gone stale, unrun or blocked, or CP-0 no longer authorizing
+    CP-2H) is kept as text: the validator reports it as a staleness issue. A bound input whose
+    blob is another module's raises."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+    cp1 = _bound_module(store, attempt, CP1)
+    head = cp2g_reader(store, head_of(_bound_module(store, attempt, CP2G)))
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp1=cp1.facts,
+        cp2g=Cp2gMetrics.select(head.facts),
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def _adapted(pack: PreparedPack, upstream: Upstream) -> tuple[PackScope, TriggerUpstream]:
+    """The one store adapter: the host-scope sources in pack order and the issuer name, and the
+    bound inputs, the CP-1 head's four selected reported ratios (`select_cp1`, in the head's
+    order) and the CP-2G metrics, as the Stage 1 types the core reads. Submit, probe and view
+    reach the core only through this."""
+    chosen = {f.fact_id for f in select_cp1(upstream.cp1).values()}
+    scope = PackScope(
+        sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
+        names=(pack.run.issuer_name,),
+    )
+    trigger = TriggerUpstream(
+        bound=upstream.bound,
+        current=upstream.current,
+        cp1_facts=tuple(f for f in upstream.cp1 if f.fact_id in chosen),
+        cp2g=upstream.cp2g,
+    )
+    return scope, trigger
+
+
+def _inputs(pack: PreparedPack, submission: TriggerSubmission, upstream: Upstream) -> TriggerInputs:
+    scope, trigger = _adapted(pack, upstream)
+    return TriggerInputs(pack=scope, upstream=trigger, submission=submission)
+
+
+def validate_triggers(
+    *, pack: PreparedPack, submission: TriggerSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Every issue of `submission` over the bound `upstream` (`validate`): staleness alone when a
+    bound upstream changed, then an agency source that does not parse alone, else the content
+    issues in their pinned order; empty when it composes."""
+    return validate(_inputs(pack, submission, upstream))
+
+
+class RatingTriggersReport(Contract):
+    """The retained step output (the lease's `TriggerReport`; Stage 1 keeps that name for the
+    pure composer's result): the composed content bound to the pack and the submission."""
+
+    schema_version: Literal["rating-triggers/1"] = "rating-triggers/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[ModuleClaim, ...]
+    limitations: tuple[Text, ...]
+
+
+_UPSTREAM_REF = ("cp1:", "cp2g:")
+_VALUE_COLUMN = (TableColumn(field="value", label="Value"),)
+
+
+def _with_upstream_citations(
+    cells: Sequence[Cell], upstream: Mapping[str, Fact]
+) -> tuple[Fact, ...]:
+    """`expected.json cell_notation`: the citations of the `cp1:` and `cp2g:` facts a fact derives
+    from, directly or through its own derived facts, are appended at run time after its own
+    (frozen) citations. The appended part follows the derived-fact rule (rulings stage2 round 3
+    item 3): one Citation per cited (source, page) not already cited, the first upstream quote on
+    that page in `derives_from` order. A lineage entry that names no fact fails closed."""
+    by_id = {c.fact.fact_id: c for c in cells}
+    done: dict[str, tuple[Citation, ...]] = {}
+
+    def appended(fact_id: str) -> tuple[Citation, ...]:
+        if fact_id not in done:
+            found: list[Citation] = []
+            for ref in by_id[fact_id].derives_from:
+                if ref.startswith(_UPSTREAM_REF):
+                    if ref not in upstream:
+                        raise ValueError(f"CP-2H: lineage {ref} names no bound upstream fact")
+                    found += upstream[ref].citations
+                elif ref in by_id:
+                    found += appended(ref)
+                else:
+                    raise ValueError(f"CP-2H: lineage {ref} names no fact of the module")
+            done[fact_id] = tuple(found)
+        return done[fact_id]
+
+    out: list[Fact] = []
+    for cell in cells:
+        pages = {(c.source_id, c.locator) for c in cell.fact.citations}
+        extra: list[Citation] = []
+        for citation in appended(cell.fact.fact_id):
+            if (citation.source_id, citation.locator) not in pages:
+                pages.add((citation.source_id, citation.locator))
+                extra.append(citation)
+        cites = (*cell.fact.citations, *extra)
+        out.append(cell.fact.model_copy(update={"citations": cites}) if extra else cell.fact)
+    return tuple(out)
+
+
+def _moved(fact: Fact, table_id: str, row_id: str) -> Fact:
+    """An upstream fact verbatim under its own id, placed in a reference table's cell: only the
+    table, row and field coordinates change."""
+    return fact.model_copy(update={"table_id": table_id, "row_id": row_id, "field": "value"})
+
+
+def _reference_table(
+    spec: tuple[str, str, str], rows: Sequence[tuple[str, str, str]]
+) -> ReportTable:
+    table_id, title, header = spec
+    return ReportTable(
+        table_id=table_id,
+        title=title,
+        columns=_VALUE_COLUMN,
+        rows=tuple(TableRow(row_id=r, label=label, fact_ids=(fid,)) for r, label, fid in rows),
+        row_header=header,
+    )
+
+
+def rating_triggers(
+    *, pack: PreparedPack, submission: TriggerSubmission, upstream: Upstream
+) -> RatingTriggersReport:
+    """The composed report of a valid submission; raises ValueError on any issue."""
+    issues = validate_triggers(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        raise ValueError("; ".join(bounded_issues(issues)))
+    inputs = _inputs(pack, submission, upstream)
+    result = compute(inputs)
+    up = inputs.upstream
+    lineage = {f"cp1:{m}": f for m, f in select_cp1(up.cp1_facts).items()}
+    lineage |= {f"cp2g:{f.fact_id}": f for f in up.cp2g.facts}
+    cp1_rows = [(r.row_id, r.label, r.fact.fact_id) for r in result.cp1_references]
+    cp2g_rows = [(r.row_id, r.fact.label, r.fact.fact_id) for r in result.cp2g_references]
+    return RatingTriggersReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=(
+            *result.tables,
+            _reference_table(CP1_REFERENCES, cp1_rows),
+            _reference_table(CP2G_REFERENCES, cp2g_rows),
+        ),
+        facts=(
+            *_with_upstream_citations(result.cells, lineage),
+            *(_moved(r.fact, CP1_REFERENCES[0], r.row_id) for r in result.cp1_references),
+            *(_moved(r.fact, CP2G_REFERENCES[0], r.row_id) for r in result.cp2g_references),
+        ),
+        claims=tuple(
+            ModuleClaim(
+                claim_id=c.claim_id, text=c.text, citations=c.citations, limitation=c.limitation
+            )
+            for c in result.claims
+        ),
+        limitations=result.own_limitations,
+    )
+
+
+def cp2h_module(report: RatingTriggersReport, *, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-2H candidate: the report's tables and claims bound to `inputs`, then the
+    submission's content hash (the owner-only settled tail, protocol section 2 `SCHEMAS`)."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+# --- the exact `read_inputs` view (lease Tool use; manifest.json tool_use.view_tree_draft) -----
+
+
+def _parsed_source(scope: PackScope) -> tuple[Source | None, RatingsSource | None]:
+    """The ready agency source and its parse; None for an absent or unready source, and a parse
+    of None for a source the parse rule refuses (the validator reports either)."""
+    try:
+        ratings = ratings_source(scope)
+    except SourceIssue:
+        return None, None
+    try:
+        return ratings, parse_ratings(source_pages(ratings))
+    except SourceIssue:
+        return ratings, None
+
+
+def _metric_cell(fact: Fact) -> dict[str, object]:
+    known = fact.status == "known"
+    return {
+        "ref": fact.fact_id,
+        "shown": fact_spelling(fact, None)[2] if known else None,
+        "status": fact.status,
+        "limitation": fact.limitation,
+    }
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """What `read_inputs` returns, all Python's (lease Tool use, the draft key tree): the
+    upstream statuses, the agency register and the published trigger terms as the parse rule
+    reads them (terms, never a quote), each threshold as the fact a reference may name, the 28
+    CP-2G metrics, the CP-1 reported ratios a reference may name and the limitations settlement
+    will inherit. No quote, citation or record key at any depth."""
+    scope, trigger = _adapted(pack, upstream)
+    ratings, source = _parsed_source(scope)
+    thresholds: dict[str, Cell] = {}
+    if ratings is not None and source is not None:
+        book, _ = _compose(ratings, source, trigger, None)
+        thresholds = {
+            c.fact.row_id: c
+            for c in book.cells
+            if (c.fact.table_id, c.fact.field) == ("T2R.3", "threshold")
+        }
+    register = () if source is None else source.register
+    triggers = () if source is None else source.triggers
+
+    def threshold(row: str) -> dict[str, object]:
+        fact = thresholds[row].fact
+        known = fact.status == "known"
+        return {
+            "ref": fact.fact_id if known else None,
+            "shown": thresholds[row].shown if known else None,
+            "status": fact.status,
+        }
+
+    cp1 = referencable(select_cp1(trigger.cp1_facts).values())
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id.startswith("CP-")
+        ],
+        "register": {
+            "state": "absent" if ratings is None else "present",
+            "source_id": None if ratings is None else ratings.source_id,
+            "pages": [] if ratings is None else [span.locator for span in ratings.spans],
+            "agencies": [
+                {
+                    "row": f"r{n:02d}",
+                    "agency": r.agency,
+                    "rating": r.rating,
+                    "outlook": r.outlook,
+                    "date": r.date,
+                    "position": r.position,
+                }
+                for n, r in enumerate(register, 1)
+            ],
+        },
+        "triggers": [
+            {
+                "row": f"t{n:02d}",
+                "agency": t.agency,
+                "direction": t.direction,
+                "metric": t.metric,
+                "comparison": t.comparison,
+                "threshold": threshold(f"t{n:02d}"),
+            }
+            for n, t in enumerate(triggers, 1)
+        ],
+        "cp2g": {
+            "status": upstream.status(CP2G),
+            "rows": [
+                {
+                    "row": row,
+                    "metrics": {f: _metric_cell(upstream.cp2g.fact(row, f)) for f in CP2G_FIELDS},
+                }
+                for row in CP2G_ROWS
+            ],
+        },
+        "cp1_facts": [
+            {
+                "ref": f.fact_id,
+                "label": f.label,
+                "period": f.period,
+                "unit": figure_unit(f) or f.unit,
+                "shown": spelled(f),
+            }
+            for f in cp1
+        ],
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the one `read_inputs` record, as compact JSON (S1a lease rev 2, M4)."""
+    upstream = cp2h_upstream(store=historical, attempt=attempt)
+    block = context_block(pack=historical.pack(), upstream=upstream)
+    body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the tool-use rule, the validator, submit and the verifier probe ---------------------------
+
+
+def RULES(text: str, seen: Seen) -> tuple[str, ...]:
+    """The tool-use evidence rule (protocol section 2): every cited page was returned by
+    `read_pages` in the step. The schema holds no absence marker, so the product's cited-page
+    rule (`live.tools.unread_citation_issues`, bounded and sorted) is the only one; it adds
+    nothing else (lease Public API)."""
+    return unread_citation_issues(text, seen)
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands the journal and the verifier replays (its last step is
+    the one under validation)."""
+    submission, shape = _parsed(store.payload(attempt.steps[-1].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    upstream = cp2h_upstream(store=store, attempt=attempt)
+    issues = validate_triggers(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = rating_triggers(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    return cp2h_module(
+        RatingTriggersReport.model_validate_json(output),
+        inputs=attempt.inputs,
+        attempt=attempt.number,
+    )
+
+
+def _with_rules(
+    validate: Callable[[PreparedPack, Attempt], StepValidation],
+    rules: Callable[[str], tuple[str, ...]],
+    payload: str,
+) -> Callable[[PreparedPack, Attempt], StepValidation]:
+    """`validate`, then the tool-use rule issues of the retained payload appended (as
+    `live.submission._with_rules` composes them, which the verifier replays)."""
+
+    def run(pack: PreparedPack, attempt: Attempt) -> StepValidation:
+        outcome = validate(pack, attempt)
+        found = rules(payload)
+        if not found:
+            return outcome
+        return StepValidation(
+            output=outcome.output, issues=tuple(dict.fromkeys((*outcome.issues, *found)))
+        )
+
+    return run
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one `rating_triggers` step (null resolution through `SCHEMAS`, the rule issues
+    appended) and, when it is valid, settle CP-2H with the Python candidate. An invalid step
+    finishes the attempt rejected (blocked on the repair): there is no within-attempt repair."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-2H has one step, {STEP_ID}")
+    normal, resolved = normalise(TriggerSubmission, payload)
+
+    def validate(pack: PreparedPack, current: Attempt) -> StepValidation:
+        return _validate_step(store, pack, current)
+
+    checked: Callable[[PreparedPack, Attempt], StepValidation] = validate
+    if rules is not None and rules(normal):
+        checked = _with_rules(validate, rules, normal)
+    attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, step_id, normal, checked)
+    if (
+        attempt.status == "pending"
+        and len(attempt.steps) == 1
+        and attempt.steps[0].status == "valid"
+    ):
+        outcome = _validate_step(store, store.pack(), attempt)
+        if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+            raise ValueError("Retained CP-2H output differs from trusted validation")
+        candidate = _candidate(outcome.output or "", attempt)
+        attempt = store.finish(
+            ticket_id,
+            candidate.model_dump_json(),
+            lambda supplied: () if supplied == candidate else ("CP-2H candidate differs",),
+            qualification=QUALIFICATION,
+        )
+    return Submitted(attempt, normal, resolved, (), (), None)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Rerun the step validator and settlement over the settled snapshot (nothing is written);
+    `WorkflowError("identity_mismatch")` unless the head rebuilds exactly (lease Public API)."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)

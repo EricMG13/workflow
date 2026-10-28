@@ -67,6 +67,17 @@ reviews rather than add approval chains. Stop inventing policy at unclear semant
 name the exact requirement and have LEAD resolve it from the adopted source.
 LEAD's rulings are applied to a draft before its first independent review.
 
+Module builds (user, 2026-10-28):
+- A module's first task lists its open semantic questions (signs, bases,
+  fail-closed cases). LEAD rules on all of them in one batch and the module's
+  oracle is frozen before any code is written.
+- LEAD rules only on questions that cross modules or change an oracle. The
+  Modules controller decides questions that affect one module only, from its
+  lease, and records each decision in the lane ledger.
+- LEAD releases oracle and lease changes at fixed points (once per stage), not
+  continuously. Modules merges `codex/checkpoint` at each point instead of
+  cherry-picking or holding individual LEAD commits.
+
 ## Tool and data rules
 
 - Use fixed supported source search/read/extraction and bounded frozen-upstream

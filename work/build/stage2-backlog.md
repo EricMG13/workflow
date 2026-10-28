@@ -66,3 +66,5 @@ Stage 1 is closed at `codex/checkpoint` e89b2a2. Only a High or Medium defect re
   - **Non-ASCII digits.** A second figure written in fullwidth, Arabic-Indic or superscript digits is not seen by `[0-9]`, so a two-figure quote composes. Probe: `<S>/cp1d-r13-fix1-review/p4_unicode_digits.py`.
   - **Digits inside a word.** A run inside a word (`Q2`, `A1`, `2nd`) is read as the basis. Probe: `p9_run_in_word.py`.
   - The owner decides the severity. Neither is ruled.
+- **[CP-1D] Low (owner fix re-review L3; LEAD).** Non-ASCII ordinal suffixes still read: `2ⁿᵈ`, `1ˢᵗ`, `2ｎｄ`, `2​nd`, `2́nd`, `2n​d`. Remedy option: NFKC-fold the suffix window, skip Cf/Mn/Me. Also I2: an Mc vowel sign before the run and circled letters (So) compose. Source: stage1/cp1d/owner-fix1-review.md; `<S>/cp1d-owner-fix-review/a7_r1_ordinal_identifier.py`.
+- **[CP-1D] Low (L4).** Test comments contradict addendum 5: `tests/test_method_cp1d.py:1279` docstring ("`2nd` reads 2") and :1321 ("an ordinal suffix is a whole run"). Rides with CP-1D's Stage 2 task.

@@ -29,7 +29,7 @@ from deploy_vii.display import UnitClass, format_value
 from deploy_vii.financial_contracts import Number
 from deploy_vii.prose import Run, bind, tokenize
 from deploy_vii.prose import issues as prose_issues
-from deploy_vii.quotes import normalise
+from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues
 from deploy_vii.report_view import scale_label
 
@@ -509,16 +509,94 @@ def _accepts(assessment: Assessment) -> bool:
     return assessment.achievability in _ACCEPTING and assessment.recurrence != "Recurring"
 
 
-def _basis_amounts(citation: Citation) -> list[str]:
+def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
     """The signed amounts in the quote as `citation_issues` matched it (`quotes.normalise`:
     U+00AD removed, so a soft hyphen inside a figure does not split it; U+2212 and the dashes
-    read as "-"), each as a decimal string (round 10, `_SIGNED_AMOUNT`)."""
-    return [
-        f"-{match['parenthesised']}"
-        if match["parenthesised"] is not None
-        else f"{match['sign'] or ''}{match['digits']}"
-        for match in _SIGNED_AMOUNT.finditer(normalise(citation.quote))
-    ]
+    read as "-"), each as a decimal string (round 10, `_SIGNED_AMOUNT`).
+
+    Round 11 B1: an amount at an edge of the normalised quote (nothing or only "-" before its
+    digits, nothing or only "." after them) is not counted when an occurrence of the quote on its
+    cited page shows it cut from a longer or signed figure (`_edge_cut`); step 5's exactly-one
+    rule then refuses the quote. A quote that is not on its page has no occurrence to show a cut:
+    the citation check refuses it."""
+    needle = normalise(citation.quote)
+    page = _cited_text(citation, sources)
+    amounts: list[str] = []
+    for match in _SIGNED_AMOUNT.finditer(needle):
+        if match["parenthesised"] is not None:
+            amounts.append(f"-{match['parenthesised']}")
+            continue
+        start, end = match.span("digits")
+        at_start, at_end = needle[:start] in ("", "-"), needle[end:] in ("", ".")
+        edge = at_start or at_end
+        if (
+            edge
+            and page is not None
+            and _edge_cut(citation.quote, page, (start, end), at_start=at_start, at_end=at_end)
+        ):
+            continue  # round 11 B1: cut from a longer or signed page figure, so not counted
+        amounts.append(f"{match['sign'] or ''}{match['digits']}")
+    return amounts
+
+
+def _cited_text(citation: Citation, sources: Sequence[Source]) -> str | None:
+    """The raw text of the span the citation names, found as `citation_issues` finds it (the
+    last source with that id, its first span with that locator); None when the pack has none."""
+    source = {item.source_id: item for item in sources}.get(citation.source_id)
+    if source is None:
+        return None
+    return next((span.text for span in source.spans if span.locator == citation.locator), None)
+
+
+def _readings(raw: str) -> tuple[str, ...]:
+    """The readings `quotes.quoted` compares: `normalise(raw)` and, when `raw` holds a hyphen
+    wrap, the reading with its wraps joined (round 11 B1)."""
+    plain = normalise(raw)
+    return (plain, reading(raw, join_wraps=True).text) if hyphen_wrapped(raw) else (plain,)
+
+
+_ROUND10_MINUS = re.compile(r"(?<![A-Za-z0-9])-")
+_DIGIT_OR_POINT = re.compile(r"[0-9.]")
+_CONTINUES = re.compile(r"[0-9]|\.[0-9]")
+
+
+def _edge_cut(
+    quote: str, page: str, digits: tuple[int, int], *, at_start: bool, at_end: bool
+) -> bool:
+    """Round 11 B1: whether, at some occurrence of the quote (as written, and with its wraps
+    joined) in some reading of its page, the edge figure at `digits` of `normalise(quote)` is
+    not the same unsigned whole figure on the page.
+
+    Start edge: the page character before the digits is a digit, ".", a minus by the round 10
+    rule, or an accounting "(" that a ")" right after the digits closes. End edge: the page text
+    after the digits is a digit, "." plus a digit, or a ")" closing a "(" right before them. A
+    start-edge figure keeps its offsets in the joined quote and an end-edge one its offsets from
+    the end, since a join only removes the spaces after a wrapped hyphen."""
+    plain = normalise(quote)
+    for needle in _readings(quote):
+        shift = 0 if at_start else len(needle) - len(plain)
+        start, end = digits[0] + shift, digits[1] + shift
+        for text in _readings(page):
+            at = text.find(needle)
+            while at >= 0:
+                before, after = text[at + start - 1 : at + start], text[at + end : at + end + 2]
+                if _cut(text, at + start, before, after, at_start=at_start, at_end=at_end):
+                    return True
+                at = text.find(needle, at + 1)
+    return False
+
+
+def _cut(text: str, start: int, before: str, after: str, *, at_start: bool, at_end: bool) -> bool:
+    """B1's page test at one occurrence: `before` is the reading's character before the digits
+    at `start` ("" at its start), `after` the two characters after them."""
+    if before == "(" and after[:1] == ")":
+        return True
+    if at_start and (
+        _DIGIT_OR_POINT.fullmatch(before) is not None
+        or (before == "-" and _ROUND10_MINUS.match(text, start - 1) is not None)
+    ):
+        return True
+    return at_end and _CONTINUES.match(after) is not None
 
 
 @dataclass(frozen=True)
@@ -537,7 +615,7 @@ class _Outcome:
         return _TREATMENT[self.assessment.achievability]
 
 
-def _outcome(item: BridgeItem, assessment: Assessment) -> _Outcome:
+def _outcome(item: BridgeItem, assessment: Assessment, sources: Sequence[Source]) -> _Outcome:
     """Applied fraction and accepted amount of a shape-valid assessment (lease recipe table).
 
     Recurring forces f = 0 on any achievability (ruling 1D2); a cited basis amount is kept as
@@ -545,7 +623,7 @@ def _outcome(item: BridgeItem, assessment: Assessment) -> _Outcome:
     """
     cited = assessment.accepted_basis
     if not _accepts(assessment):
-        kept = None if cited is None else Decimal(_basis_amounts(cited)[0])
+        kept = None if cited is None else Decimal(_basis_amounts(cited, sources)[0])
         return _Outcome(item, assessment, "rule", Decimal(0), kept, Decimal(0))
     claimed = item.amount
     if claimed is None:
@@ -553,7 +631,7 @@ def _outcome(item: BridgeItem, assessment: Assessment) -> _Outcome:
     if assessment.achievability == "Supported":
         return _Outcome(item, assessment, "rule", Decimal(1), None, _EXACT.multiply(claimed, 1))
     if cited is not None:
-        basis = Decimal(_basis_amounts(cited)[0])
+        basis = Decimal(_basis_amounts(cited, sources)[0])
         return _Outcome(item, assessment, "source", _quotient(basis, claimed), basis, basis)
     if assessment.accepted_fraction is None:
         raise ValueError(f"Partly supported without basis or fraction: {item.label}")
@@ -562,7 +640,7 @@ def _outcome(item: BridgeItem, assessment: Assessment) -> _Outcome:
     return _Outcome(item, assessment, "judgment", fraction, None, accepted)
 
 
-def _shape_issue(item: BridgeItem, assessment: Assessment) -> str | None:
+def _shape_issue(item: BridgeItem, assessment: Assessment, sources: Sequence[Source]) -> str | None:
     """The first failing basis/fraction shape rule (`refusal_rules.basis_fraction_order`)."""
     label = item.label
     basis, fraction = assessment.accepted_basis, assessment.accepted_fraction
@@ -582,7 +660,7 @@ def _shape_issue(item: BridgeItem, assessment: Assessment) -> str | None:
             f"{label}"
         )
     if basis is not None:
-        amounts = _basis_amounts(basis)
+        amounts = _basis_amounts(basis, sources)
         if len(amounts) != 1:
             return f"Accepted basis quote must contain exactly one amount: {label}"
         amount = Decimal(amounts[0])
@@ -1556,9 +1634,9 @@ def _bridge_issues(inputs: EarningsQualityInputs, source: Source, bridge: Bridge
     citations, prose), then the overall confidence rule."""
     submission, currency = inputs.submission, inputs.cp1.adjusted_ebitda.currency
     label_issues, pairs = _assessments_by_item(bridge, submission.assessments)
-    shapes = {item.label: _shape_issue(item, a) for item, a in pairs}
+    shapes = {item.label: _shape_issue(item, a, inputs.sources) for item, a in pairs}
     composed = [
-        _outcome(item, a)
+        _outcome(item, a, inputs.sources)
         for item, a in pairs
         if shapes[item.label] is None and _composable(item, a)
     ]
@@ -1592,9 +1670,34 @@ def _bridge_issues(inputs: EarningsQualityInputs, source: Source, bridge: Bridge
     return found
 
 
+_GAP_TEXTS = ("gap", "why_it_matters", "affected_analysis", "action")
+
+
+def _blank_issues(submission: EarningsQualitySubmission) -> list[str]:
+    """LEAD round 11 (blank text is one defect class): every analyst text field refuses
+    whitespace-only text. CP-1D pins no empty-text frame, so the issue is `<path>: empty text`.
+    A `Text` field's "" is already the schema's `min_length` refusal (controller decision); a
+    `limitation` of "" gets the frame. `addback` is a bridge label, not text: a blank one is
+    `Unknown add-back`."""
+    texts: list[tuple[str, str | None]] = []
+    for index, a in enumerate(submission.assessments):
+        texts += [
+            (f"assessments[{index}].rationale", a.rationale),
+            (f"assessments[{index}].limitation", a.limitation),
+        ]
+    texts += [
+        ("overall.rationale", submission.overall.rationale),
+        ("overall.limitation", submission.overall.limitation),
+    ]
+    for index, gap in enumerate(submission.gaps):
+        texts += [(f"gaps[{index}].{name}", getattr(gap, name)) for name in _GAP_TEXTS]
+    return [f"{path}: empty text" for path, text in texts if text is not None and not text.strip()]
+
+
 def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
     """Every calculation-level issue of the submission against the pack and the bridge, in
-    ruling 1D10's order: bridge, assessment set, each assessment, overall (gaps have no rule).
+    ruling 1D10's order: bridge, assessment set, each assessment, overall (gaps have no rule);
+    then each blank analyst text field in submission order (round 11, `_blank_issues`).
 
     A bridge source CP-0 did not mark ready (ruling 1D-x) or an unreadable bridge table gives
     `Bridge table not found` alone. Tool-use rules (cited page read) are Stage 2; the overall
@@ -1618,6 +1721,7 @@ def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
             return ("Bridge table not found",)
         found = _bridge_issues(inputs, source, bridge)
     found += citation_issues(submission.overall.evidence, inputs.sources)
+    found += _blank_issues(submission)
     return tuple(dict.fromkeys(found))
 
 
@@ -1653,7 +1757,11 @@ def compute(inputs: EarningsQualityInputs) -> EarningsQualityResult:
     source = _bridge_source(inputs.sources)
     bridge = parse_bridge(_pages(source)) if source is not None else None
     by_label = {a.addback: a for a in submission.assessments}
-    outcomes = [_outcome(item, by_label[item.label]) for item in bridge.items] if bridge else []
+    outcomes = (
+        [_outcome(item, by_label[item.label], inputs.sources) for item in bridge.items]
+        if bridge
+        else []
+    )
     out = _compose(inputs, bridge, source, outcomes)
     totals = _totals(bridge, outcomes, cp1)
     available = {

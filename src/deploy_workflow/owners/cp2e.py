@@ -18,6 +18,7 @@ from typing import Any, Literal
 from deploy_vii.contracts import Fact
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-2E"
 SOURCE_ID = "financial"  # the only source the CP-2E step may cite (fixed host scope)
@@ -497,15 +498,19 @@ _FX_PERCENT = (1, 50)
 def _unsigned(token: str, text: str) -> set[tuple[int, int]]:
     """The spans where ``token`` is a whole, unsigned number in ``text`` (a normalised reading).
 
-    Round 10: a figure is the signed numeral the text prints. A ``-`` directly before the first
-    digit is a minus when it starts the text or follows a character that is neither a letter nor
-    a digit, and a numeral in accounting parentheses reads as negative; such a printed figure is
-    not an occurrence of the unsigned token. A ``+`` is ignored."""
-    pattern = r"(?<![0-9.])(?<!(?<![A-Za-z0-9])-)" + re.escape(token) + r"(?![0-9]|\.[0-9])"
+    Round 10: a figure is the signed numeral the text prints. A ``-`` before the first digit is a
+    minus when it starts the text or follows a character that is neither a letter nor a digit,
+    and a numeral in accounting parentheses reads as negative; such a printed figure is not an
+    occurrence of the unsigned token. A ``+`` is ignored. Round 12 rule W: whitespace never
+    separates a sign from its figure, so the minus may stand one space before the first digit
+    (``normalise`` makes any whitespace run, a line break included, one space), and each
+    accounting parenthesis may hold one space inside it."""
+    minus = r"(?<![A-Za-z0-9])-"
+    pattern = rf"(?<![0-9.])(?<!{minus})(?<!{minus} )" + re.escape(token) + r"(?![0-9]|\.[0-9])"
     return {
         m.span()
         for m in re.finditer(pattern, text)
-        if not (text[m.start() - 1 : m.start()] == "(" and text[m.end() : m.end() + 1] == ")")
+        if not (text.endswith(("(", "( "), 0, m.start()) and text.startswith((")", " )"), m.end()))
     }
 
 
@@ -555,8 +560,9 @@ class _Check:
         self.issues.append(issue)
 
     def empty(self, path: str, text: str | None) -> None:
-        """Round 11: analyst text that is present but blank (whitespace only, or "") is refused."""
-        if text is not None and not text.strip():
+        """Round 11: analyst text that is present but blank is refused; round 12 B10: blank is
+        ``blank.is_blank`` (whitespace and Unicode format characters only, or "")."""
+        if text is not None and is_blank(text):
             self.add(f"{path}: empty text")
 
     def digit_free(self, path: str, text: str | None) -> None:
@@ -711,8 +717,10 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
         chk.prose(f"{p}.text", a["text"])
         if _PROHIBITED.search(a["text"]):
             chk.add(f"{p}.text: text carries a prohibited conclusion")
-        chk.empty(f"{p}.limitation", a.get("limitation"))
-        if (a["category"] == "Insufficient Information") != bool(a.get("limitation")):
+        limitation = a.get("limitation")
+        chk.empty(f"{p}.limitation", limitation)
+        stated = limitation is not None and not is_blank(limitation)  # blank states none
+        if (a["category"] == "Insufficient Information") != stated:
             chk.add(f"{p}: limitation is required for Insufficient Information and only for it")
         if a["category"] == "Documentary Fact" and not a["basis"]:
             chk.add(f"{p}: a Documentary Fact needs at least one basis quote")

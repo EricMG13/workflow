@@ -833,6 +833,48 @@ def test_round10_signed_labelled_operand_does_not_occur() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("sentence", "accepted"),
+    [
+        ("The margin is spread - 25 basis points over the reference rate.", False),
+        ("The margin is spread -\n25 basis points over the reference rate.", False),
+        ("The margin is spread 25 basis points over the reference rate.", True),
+        ("The margin is spread\n25 basis points over the reference rate.", True),
+    ],
+    ids=["minus-space", "minus-wrap", "minus-space-twin", "minus-wrap-twin"],
+)
+def test_round12_w_labelled_operand(sentence: str, accepted: bool) -> None:
+    """Rule W in the labelled reader: a minus one space (or a line break) before the operand
+    signs it, so it does not occur; its twin without the minus is a labelled operand."""
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["spread"] = {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": sentence,
+        "bps_text": "25",
+    }
+    expected = (
+        () if accepted else ("rate_exposure.spread: bps_text 25 does not occur in the quote",)
+    )
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == expected
+
+
+@pytest.mark.parametrize(
+    "printed",
+    ["( 25)", "(25 )", "( 25 )", "(\n25\n)", "(25\n)"],
+    ids=["open-space", "close-space", "both-spaces", "both-breaks", "close-break"],
+)
+def test_round12_w_spaced_parentheses(printed: str) -> None:
+    """Rule W: an accounting negative may hold one space inside each parenthesis; the twin is
+    round 10's `parenthesised_words`, `(25 percent)`, which validates."""
+    sub, pages = _share_submission(f"Earnings abroad were {printed} percent of EBITDA.", "25")
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
+        "fx.foreign_ebitda_share: percent_text 25 does not occur in the quote",
+    )
+
+
 def test_round10_on_page_uses_the_product_quote_match() -> None:
     """An en dash in a quote of a page that prints a hyphen matches, as citation_issues does."""
     sub = copy.deepcopy(SUBMISSIONS["positive"])
@@ -983,12 +1025,13 @@ def _does_not_occur(path: str, key: str, value: str) -> str:
 
 
 def test_class_cases_cover_the_bounds() -> None:
-    """Only the two figures above the share's bound and the one off the operand shape are left
-    out, so every edge, sign, dash, NBSP and soft-hyphen family is judged."""
+    """Only the three figures above the share's bound and the two off the operand shape (each
+    2025, four digits) are left out, so every edge, sign, dash, NBSP and soft-hyphen family is
+    judged."""
     left = {c.case_id for c in dc.FIGURE_CASES} - {c.case_id for c in _SHARE_CASES}
-    assert left == {"sign-2024-2025", "sign-s-350"}
+    assert left == {"sign-2024-2025", "sign-s-350", "w-2024-2025-wrap"}
     left = {c.case_id for c in dc.FIGURE_CASES} - {c.case_id for c in _SPREAD_FIGURE_CASES}
-    assert left == {"sign-2024-2025"}
+    assert left == {"sign-2024-2025", "w-2024-2025-wrap"}
 
 
 @pytest.mark.parametrize("c", _SHARE_CASES, ids=_ids)
@@ -1143,19 +1186,42 @@ def test_class_blank_text(
     assert dc.blank_failure(c, _set_text(keys, prep), expected) is None
 
 
-@pytest.mark.parametrize("value", ["", "  "], ids=["empty", "spaces"])
+_ONLY_II = "limitation is required for Insufficient Information and only for it"
+
+
+@pytest.mark.parametrize("value", dc.BLANK_VALUES, ids=lambda v: repr(v))
 def test_class_blank_limitation_off_insufficient_information(value: str) -> None:
-    """A blank limitation on an Analyst Interpretation assessment gets the empty-text frame too;
-    whitespace also breaks the "only for Insufficient Information" rule, `""` does not."""
+    """Round 12 Info (the `bool()` asymmetry): a blank limitation is no limitation, so on an
+    Analyst Interpretation assessment every blank value, `""` and whitespace alike, gets only the
+    empty-text frame, not the "only for Insufficient Information" issue."""
     raw = copy.deepcopy(SUBMISSIONS["positive"])
     assert raw["assessments"][0]["category"] != "Insufficient Information"
     raw["assessments"][0]["limitation"] = value
-    only = "assessments[0]: limitation is required for Insufficient Information and only for it"
+    assert _issues_with(raw) == ("assessments[0].limitation: empty text",)
+
+
+@pytest.mark.parametrize("value", dc.BLANK_VALUES, ids=lambda v: repr(v))
+def test_class_blank_limitation_on_insufficient_information(value: str) -> None:
+    """Round 12 Info (confirmed): a blank limitation on an Insufficient Information assessment
+    gets the empty-text frame and then the "required" issue, for `""` and whitespace alike."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    assert raw["assessments"][2]["category"] == "Insufficient Information"
+    raw["assessments"][2]["limitation"] = value
     assert _issues_with(raw) == (
-        ("assessments[0].limitation: empty text",)
-        if value == ""
-        else ("assessments[0].limitation: empty text", only)
+        "assessments[2].limitation: empty text",
+        f"assessments[2]: {_ONLY_II}",
     )
+
+
+@pytest.mark.parametrize("value", ["a limit", "a\u200b"], ids=["plain", "cf-bearing"])
+def test_class_non_blank_limitation_off_insufficient_information(value: str) -> None:
+    """Round 12 M1: the "only for it" half. A non-blank, digit-free limitation on an assessment
+    that is not Insufficient Information gets exactly that issue. The Cf-bearing twin (a zero
+    width space after a letter) is non-blank, so it pins `not is_blank`."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    assert raw["assessments"][0]["category"] != "Insufficient Information"
+    raw["assessments"][0]["limitation"] = value
+    assert _issues_with(raw) == (f"assessments[0]: {_ONLY_II}",)
 
 
 # --- round 11 B1 and B3 beyond the shared cases: every quote occurrence in every reading --------

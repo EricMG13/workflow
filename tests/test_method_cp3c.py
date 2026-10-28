@@ -1365,9 +1365,35 @@ def test_b1_a_maturity_before_the_balance_date_is_a_gap() -> None:
 
 
 def test_b1_a_maturity_on_the_balance_date_is_zero_months() -> None:
+    """The boundary: D0 itself is not before D0, so no B1 line or reason anywhere."""
     on_d0 = _dated(_positive_row(), "2025-12-31", 0, "Yes")
-    (m,) = cp3c.compute(_positive_with(_positive_terms(), wall=(on_d0,))).refinancing.maturities
+    result = cp3c.compute(_positive_with(_positive_terms(), wall=(on_d0,)))
+    (m,) = result.refinancing.maturities
     assert m.facility.months == 0
+    assert ("Facility maturity date (term-loan)", "Limitation") not in [
+        (label, kind) for label, kind in result.gaps_ledger.rows
+    ]
+    assert not [x for x in result.own_limitations if "before the balance date" in x]
+    reasons = {c.reason for t in result.tables for r in t.rows for c in r.cells}
+    assert PRE_D0.format(fid="term-loan") not in reasons
+
+
+@pytest.mark.parametrize("horizon_missing", [False, True])
+def test_b1_the_day_before_the_balance_date_is_a_gap(horizon_missing: bool) -> None:
+    """D0 - 1 day is before D0 (not the 1st of D0's month), with or without a CP-2D horizon."""
+    inputs = _positive_with(
+        _positive_terms(), wall=(_dated(_positive_row(), "2025-12-30", -1, "Yes"),)
+    )
+    if horizon_missing:
+        horizon = _gone(inputs.cp2d.horizon, "Horizon not given (test)")
+        inputs = replace(inputs, cp2d=replace(inputs.cp2d, horizon=horizon))
+    result = cp3c.compute(inputs)
+    gap = cp3c.Gap(PRE_D0.format(fid="term-loan"))
+    (m,) = result.refinancing.maturities
+    assert (m.facility.months, m.facility.inside_horizon) == (gap, gap)
+    assert ("Facility maturity date (term-loan)", "Limitation") in [
+        (label, kind) for label, kind in result.gaps_ledger.rows
+    ]
 
 
 def test_q3_causes_carry_no_facility_id() -> None:
@@ -1617,7 +1643,7 @@ def test_b2_a_pre_d0_line_comes_before_the_principal_line() -> None:
 def test_b5_a_blank_insufficient_information_limitation_is_refused(blank: str) -> None:
     payload = json.loads(json.dumps(SUBMISSIONS["cp3c"]["positive"]))
     (lme,) = (p for p in payload["paths"] if p["kind"] == "liability_management")
-    lme["limitation"] = blank or None
+    lme["limitation"] = blank
     issues = cp3c.submission_issues(submission=_submission(payload), offered=OFFERED)
     pinned = (
         "paths[liability_management].limitation: an Insufficient Information assessment states "

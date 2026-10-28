@@ -1112,3 +1112,16 @@ def test_run_driver_assembles_the_oracle_run() -> None:
     consumers = json.loads(drive.cp0_text(pack))["consumers"]
     assert consumers[-1]["module_id"] == "CP-2D" and len(consumers) >= 2
     assert drive.CASES == tm.PACK_CASES
+
+
+@pytest.mark.parametrize("currency", ["EUR", None])
+def test_adapter_reads_the_facility_currency_as_stated_or_not_stated(
+    tmp_path: Path, currency: str | None
+) -> None:
+    loan = replace(tm.LOAN, currency=currency)
+    operands = replace(tm._base_operands(), facilities=(loan,))
+    store = make_store(tmp_path, cp1_module(operands))
+    attempt = store.begin("CP-2D")
+    submission = tm._submission(tm.SUBMISSIONS["cp2d"]["positive"])
+    got = cp2d._inputs(store, attempt, submission).operands.facilities
+    assert got == (loan,) and got[0].currency == currency

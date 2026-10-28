@@ -1,14 +1,14 @@
-"""CP-L10 Stage 1: the change-screen calculation against the frozen oracle.
+"""CP-L10 Stage 1: the change-screen calculation against the frozen oracle (amendment 1).
 
 Inputs are built from the oracle's own source facts (``cases.*.view_topics``, ``cases.*.topics``)
-and the manifest's fact selection rule, never from the module. Items that LEAD amendment 1
-(F1-F5) changes are left out until the oracle is re-frozen: TL10.2 ``total``, TL10.3 ``overall``,
-TL10.1 ``source_ref`` / ``scope_status``, the summary and overall claims, gap limitation lines,
-overall and gaps validation, and claim citations.
+and the manifest's fact selection rule, never from the module. The run-bound markers of the
+oracle (head result sha256, status word, CP-1 calculation ids and citations) are bound here to
+this test's upstream values; Stage 2 binds them from the store.
 """
 
 import hashlib
 import json
+from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 from fractions import Fraction
@@ -18,7 +18,7 @@ from typing import Any
 import pytest
 
 from deploy_vii import prose
-from deploy_vii.contracts import Fact
+from deploy_vii.contracts import Citation, Fact, ReportTable, TableColumn, TableRow, validate_tables
 from deploy_workflow.owners import cpl10
 
 CASE = Path(__file__).resolve().parents[1] / "cases" / "cpl10-owner"
@@ -26,20 +26,21 @@ EXPECTED: dict[str, Any] = json.loads((CASE / "expected.json").read_text())
 SUBMISSIONS: dict[str, Any] = json.loads((CASE / "submissions.json").read_text())
 MANIFEST: dict[str, Any] = json.loads((CASE / "manifest.json").read_text())
 CP1_MARKER = "{{CP1_CALCULATION_ID}}"
+CITATIONS_MARKER = "{{CP1_CITATIONS:"
 GAP = "G1"  # the report-wide G# is bound at run time; any valid gap id spells the same pattern
-
-# Pending LEAD amendment 1 (not asserted until the re-freeze).
-PENDING_ROWS = {("TL10.2", "total"), ("TL10.3", "overall")}
-PENDING_FIELDS = {("TL10.1", "source_ref"), ("TL10.1", "scope_status")}
-PENDING_CLAIMS = {"TL10.2.summary", "TL10.3.overall"}
+FINANCIAL_SHA = "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
 
 
-def _calculation_id(label: str) -> str:
-    return "canonical-kpi:" + hashlib.sha256(label.encode()).hexdigest()
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 def _cp1_facts() -> list[Fact]:
-    """The 28 CP-1 T4.10 operands, from the oracle's view values and observed value classes."""
+    """The 28 CP-1 T4.10 operands, from the oracle's view values and observed value classes.
+
+    Each carries what a real T4.10 fact carries and the copy must handle: a citation, a
+    calculation id, a formula and CP-1's own 0 dp ``decimals``.
+    """
     rule = MANIFEST["fact_selection_rule"]
     column = {c["period"]: c["label"] for c in rule["columns"].values()}
     value_class: dict[str, Any] = {}
@@ -48,14 +49,14 @@ def _cp1_facts() -> list[Fact]:
             for end in ("from", "to"):
                 value_class[topic[end]["label"]] = topic[end]["value_class"]
     facts = []
-    for topic in EXPECTED["cases"]["positive"]["view_topics"]:
+    for page, topic in enumerate(EXPECTED["cases"]["positive"]["view_topics"], 2):
         money = topic["unit"] == "US$ m"
         for value in topic["values"]:
             label = f"{column[value['period']]} · {topic['cp1_metric']}"
             known = value["status"] == "known"
             facts.append(
                 Fact(
-                    fact_id="interface-fact:" + hashlib.sha256(label.encode()).hexdigest(),
+                    fact_id="interface-fact:" + _digest(label),
                     label=label,
                     table_id="T4.10",
                     row_id=topic["cp1_metric"],
@@ -65,9 +66,19 @@ def _cp1_facts() -> list[Fact]:
                     unit="MILLIONS" if money else "MULTIPLE",
                     currency="USD" if money else None,
                     scale=Decimal(1000000) if money else Decimal(1),
+                    decimals=0,
                     period=value["period"],
-                    calculation_id=_calculation_id(label),
+                    citations=(
+                        Citation(
+                            source_id="financial",
+                            source_sha256=FINANCIAL_SHA,
+                            locator=f"page:{page}",
+                            quote=label,
+                        ),
+                    ),
+                    calculation_id="canonical-kpi:" + _digest(label),
                     value_class=value_class[label],
+                    formula=f"canonical KPI {topic['cp1_metric']}",
                     limitation=value["limitation"],
                 )
             )
@@ -75,27 +86,43 @@ def _cp1_facts() -> list[Fact]:
     return facts
 
 
-def _upstream() -> cpl10.Upstream:
+def _upstream(facts: list[Fact] | None = None) -> cpl10.Upstream:
     run = MANIFEST["run"]
     return cpl10.Upstream(
         issuer_name=run["issuer_name"],
         as_of=date.fromisoformat(run["as_of"]),
         cp0_status_word="With limitations",
-        cp0_result_sha256="0" * 64,
+        cp0_result_sha256=_digest("cp0 head"),
         cp1_status_word="With limitations",
-        cp1_result_sha256="1" * 64,
-        cp1_facts=cpl10.bind_operands(_cp1_facts()),
+        cp1_result_sha256=_digest("cp1 head"),
+        cp1_facts=cpl10.bind_operands(_cp1_facts() if facts is None else facts),
     )
 
 
 UPSTREAM = _upstream()
+RUN_MARKERS = {
+    "{{CP0_RESULT_SHA256}}": UPSTREAM.cp0_result_sha256,
+    "{{CP1_RESULT_SHA256}}": UPSTREAM.cp1_result_sha256,
+    "{{CP0_STATUS_WORD}}": UPSTREAM.cp0_status_word,
+    "{{CP1_STATUS_WORD}}": UPSTREAM.cp1_status_word,
+}
+
+
+def _bind_run(text: str) -> str:
+    for marker, value in RUN_MARKERS.items():
+        text = text.replace(marker, value)
+    return text
 
 
 def _payload(name: str) -> str:
     return json.dumps(SUBMISSIONS[name])
 
 
-# --- composer fixtures and rank -----------------------------------------------------------
+def _issues(sub: dict[str, Any], upstream: cpl10.Upstream = UPSTREAM) -> list[str]:
+    return list(cpl10.validate_screen(submission=json.dumps(sub), upstream=upstream))
+
+
+# --- arithmetic: composer fixtures, rank, rounding ------------------------------------------
 
 
 @pytest.mark.parametrize("name", sorted(EXPECTED["fixtures"]["composer"]))
@@ -129,6 +156,14 @@ def test_rank_fixture() -> None:
     assert [name for _, name in sorted(keys)] == EXPECTED["fixtures"]["rank"]["expected_order"]
 
 
+def test_quantisation_is_half_even_at_38_digits() -> None:
+    # 0.111...1125 (39 significant digits) is a tie at the 38th: half-even keeps the even 2.
+    tie = Fraction(int("1" * 37 + "25"), 10**39)
+    assert cpl10._q38(tie) == Decimal("0." + "1" * 37 + "2")
+    odd = Fraction(int("1" * 37 + "35"), 10**39)  # ...13|5 rounds up to the even 4
+    assert cpl10._q38(odd) == Decimal("0." + "1" * 37 + "4")
+
+
 # --- operands --------------------------------------------------------------------------------
 
 
@@ -142,6 +177,57 @@ def test_operand_binding_refuses_missing_and_duplicate_labels() -> None:
     operands.pop(facts[0].label)
     with pytest.raises(ValueError, match="unbound CP-1 operand"):
         cpl10.Upstream(**{**UPSTREAM.__dict__, "cp1_facts": operands})
+
+
+def test_operand_unit_and_scale_must_match_the_topic() -> None:
+    facts = _cp1_facts()
+    close = cpl10.QUARTERS[3].column + " · cash_closing"
+    thousands = [
+        f.model_copy(update={"unit": "THOUSANDS", "scale": Decimal(1000)})
+        if f.label == close
+        else f
+        for f in facts
+    ]
+    with pytest.raises(ValueError, match="unit THOUSANDS is not MILLIONS"):
+        _upstream(thousands)
+    rescaled = [
+        f.model_copy(update={"scale": Decimal(1000)}) if f.label == close else f for f in facts
+    ]
+    with pytest.raises(ValueError, match="cash differ in scale"):
+        _upstream(rescaled)
+
+
+@pytest.mark.parametrize(
+    ("missing_end", "ends"), [("close", "the closing quarter"), ("start", "the starting quarter")]
+)
+def test_missing_end_limitation_is_taken_first(missing_end: str, ends: str) -> None:
+    """The missing end's CP-1 limitation is cited even when the known end carries a note."""
+    q1, q4 = cpl10.QUARTERS[0], cpl10.QUARTERS[3]
+    start, close = f"{q1.column} · cash_closing", f"{q4.column} · cash_closing"
+    gap, known = (close, start) if missing_end == "close" else (start, close)
+    facts = []
+    for f in _cp1_facts():
+        if f.label == known:
+            f = f.model_copy(update={"limitation": "known end note"})
+        elif f.label == gap:
+            f = f.model_copy(update={"status": "missing", "amount": None, "limitation": "end gap"})
+        facts.append(f)
+    upstream = _upstream(facts)
+    sub = deepcopy(SUBMISSIONS["positive"])
+    sub["assessments"] = [sub["assessments"][1]]  # cash is now Not assessed
+    result = cpl10.change_screen(submission=json.dumps(sub), upstream=upstream)
+    cells = {c.fact.fact_id: c.fact for c in result.cells}
+    want = f"Not calculable: CP-1 carries no known value for {ends} (end gap)"
+    assert cells["TL10.2.cash.change"].limitation == want
+    assert cells["TL10.4.cash.required_source"].text == (
+        "A CP-1 known value for each quarter compared (CP-1: end gap)"
+    )
+
+
+def test_prohibited_conclusions_ignore_case() -> None:
+    # L10-b: substring match in v1, so an operating "Recovery" is refused (a recorded limit).
+    sub = _with(("overall", "rationale"), "An earnings Recovery is visible in the screen.")
+    assert _issues(sub) == ["overall.rationale: prohibited conclusion: recovery"]
 
 
 # --- read_inputs view content -------------------------------------------------------------
@@ -200,16 +286,17 @@ def test_view_topics_and_pair_screens() -> None:
 # --- composed cases ---------------------------------------------------------------------------
 
 
-def _pending(fact_id: str) -> bool:
-    table, row, field = fact_id.split(".")[0] + "." + fact_id.split(".")[1], *fact_id.split(".")[2:]
-    return (table, row) in PENDING_ROWS or (table, field) in PENDING_FIELDS
+def _citations(labels: Any) -> tuple[Citation, ...]:
+    return tuple(dict.fromkeys(c for label in labels for c in UPSTREAM.cp1_facts[label].citations))
 
 
 def _assert_cell(cell: cpl10.Cell, want: dict[str, Any]) -> None:
     fact = cell.fact
     calculation_id = want.get("calculation_id")
+    copied: str | None = want.get("copied_from_cp1")
     if calculation_id == CP1_MARKER:
-        calculation_id = UPSTREAM.cp1_facts[want["copied_from_cp1"]].calculation_id
+        assert copied is not None
+        calculation_id = UPSTREAM.cp1_facts[copied].calculation_id
     got = {
         "coordinates": (fact.table_id, fact.row_id, fact.field),
         "label": fact.label,
@@ -227,6 +314,7 @@ def _assert_cell(cell: cpl10.Cell, want: dict[str, Any]) -> None:
         "scale": fact.scale,
         "derives_from": cell.derives_from,
         "copied_from_cp1": cell.copied_from_cp1,
+        "citations": fact.citations,
         "shown": cpl10.shown_text(fact, GAP),
     }
     expected = {
@@ -236,17 +324,19 @@ def _assert_cell(cell: cpl10.Cell, want: dict[str, Any]) -> None:
         "unit": want.get("unit"),
         "period": want.get("period"),
         "amount": None if want.get("amount_exact") is None else Decimal(want["amount_exact"]),
-        "text": want.get("text"),
+        "text": None if want.get("text") is None else _bind_run(want["text"]),
         "decimals": want.get("decimals"),
         "value_class": want.get("value_class"),
         "calculation_id": calculation_id,
-        "formula": want.get("formula"),
+        "formula": want.get("formula"),  # a copied cell omits CP-1's formula (L10-c)
         "limitation": want.get("limitation"),
         "currency": want.get("currency"),
         "scale": Decimal(want.get("scale", "1")),
-        "derives_from": tuple(want.get("derives_from", ())),
-        "copied_from_cp1": want.get("copied_from_cp1"),
-        "shown": want["shown"].replace("G#", GAP),
+        "derives_from": tuple(want.get("derives_from") or ()),
+        "copied_from_cp1": copied,
+        # F5: a copied cell carries its CP-1 fact's citations; a calculated one its derives_from's.
+        "citations": _citations([copied] if copied else want.get("derives_from") or ()),
+        "shown": _bind_run(want["shown"]).replace("G#", GAP),
     }
     assert got == expected, fact.fact_id
 
@@ -266,6 +356,10 @@ def test_topic_screens(composed: tuple[dict[str, Any], cpl10.ScreenResult]) -> N
         expected["pair"]["from_period"],
         expected["pair"]["to_period"],
     )
+
+    def dec(value: str | None) -> Decimal | None:
+        return None if value is None else Decimal(value)
+
     got = [
         {
             "topic_id": t.topic.topic_id,
@@ -282,10 +376,6 @@ def test_topic_screens(composed: tuple[dict[str, Any], cpl10.ScreenResult]) -> N
         }
         for t in result.topics
     ]
-
-    def dec(value: str | None) -> Decimal | None:
-        return None if value is None else Decimal(value)
-
     want = [
         {
             "topic_id": t["topic_id"],
@@ -321,11 +411,35 @@ def test_cells_equal_oracle(composed: tuple[dict[str, Any], cpl10.ScreenResult])
     expected, result = composed
     cells = {c.fact.fact_id: c for c in result.cells}
     assert len(cells) == len(result.cells)
-    want = {f["fact_id"]: f for f in expected["facts"] if not _pending(f["fact_id"])}
-    produced = {i for i in cells if not _pending(i)}
-    assert produced == set(want)
+    want = {f["fact_id"]: f for f in expected["facts"]}
+    assert set(cells) == set(want)
     for fact_id, fact in want.items():
         _assert_cell(cells[fact_id], fact)
+
+
+def test_copied_cells_keep_cp1_lineage_but_not_its_formula(
+    composed: tuple[dict[str, Any], cpl10.ScreenResult],
+) -> None:
+    _, result = composed
+    copied = [c for c in result.cells if c.copied_from_cp1 is not None]
+    assert len(copied) == 14
+    for cell in copied:
+        source = UPSTREAM.cp1_facts[cell.copied_from_cp1 or ""]
+        assert source.formula and source.citations and source.decimals == 0
+        fact = cell.fact
+        assert (fact.citations, fact.limitation, fact.calculation_id, fact.value_class) == (
+            source.citations,
+            source.limitation,
+            source.calculation_id,
+            source.value_class,
+        )
+        assert (fact.status, fact.amount, fact.period) == (
+            source.status,
+            source.amount,
+            source.period,
+        )
+        assert fact.formula is None
+        assert fact.decimals == (2 if fact.unit == "MILLIONS" and fact.status == "known" else None)
 
 
 def test_tables_equal_oracle(composed: tuple[dict[str, Any], cpl10.ScreenResult]) -> None:
@@ -334,22 +448,27 @@ def test_tables_equal_oracle(composed: tuple[dict[str, Any], cpl10.ScreenResult]
         {
             "table_id": t.table_id,
             "title": t.title,
+            "columns": list(t.columns),
             "rows": [
-                {"row_id": r.row_id, "label": r.label, "fact_ids": list(r.fact_ids)}
-                for r in t.rows
-                if (t.table_id, r.row_id) not in PENDING_ROWS
+                {"row_id": r.row_id, "label": r.label, "fact_ids": list(r.fact_ids)} for r in t.rows
             ],
         }
         for t in result.tables
     ]
-    want = [
-        {
-            **t,
-            "rows": [r for r in t["rows"] if (t["table_id"], r["row_id"]) not in PENDING_ROWS],
-        }
-        for t in expected["tables"]
-    ]
-    assert got == want
+    assert got == expected["tables"]
+    # F1: the records form valid product tables (column labels are the product's, L3).
+    tables = tuple(
+        ReportTable(
+            table_id=t.table_id,
+            title=t.title,
+            columns=tuple(TableColumn(field=f, label=f) for f in t.columns),
+            rows=tuple(
+                TableRow(row_id=r.row_id, label=r.label, fact_ids=r.fact_ids) for r in t.rows
+            ),
+        )
+        for t in result.tables
+    )
+    validate_tables(tables, tuple(c.fact for c in result.cells))
 
 
 def test_claims_equal_oracle(composed: tuple[dict[str, Any], cpl10.ScreenResult]) -> None:
@@ -360,30 +479,29 @@ def test_claims_equal_oracle(composed: tuple[dict[str, Any], cpl10.ScreenResult]
             "limitation": c.limitation,
             "refs": list(c.refs),
             "text": c.text,
+            "citations": c.citations,
         }
         for c in result.claims
-        if c.claim_id not in PENDING_CLAIMS
     ]
-    want = [
-        {k: c[k] for k in ("claim_id", "limitation", "refs", "text")}
-        for c in expected["claims"]
-        if c["claim_id"] not in PENDING_CLAIMS
-    ]
+    want = []
+    for claim in expected["claims"]:
+        labels = []
+        for marker in claim["citations"]:
+            assert marker.startswith(CITATIONS_MARKER) and marker.endswith("}}")
+            labels.append(marker[len(CITATIONS_MARKER) : -2])
+        want.append(
+            {**{k: claim[k] for k in ("claim_id", "limitation", "refs", "text")}}
+            | {"citations": _citations(labels)}
+        )
     assert got == want
     bound = prose.bind(c.fact for c in result.cells)
-    names = (UPSTREAM.issuer_name,)
     for claim in result.claims:
-        if claim.claim_id not in PENDING_CLAIMS:
-            assert prose.issues(claim.text, bound, names=names) == (), claim.claim_id
+        assert prose.issues(claim.text, bound, names=(UPSTREAM.issuer_name,)) == (), claim.claim_id
 
 
 def test_own_limitations(composed: tuple[dict[str, Any], cpl10.ScreenResult]) -> None:
     expected, result = composed
-
-    def kept(items: Any) -> list[str]:
-        return [i for i in items if not i.startswith("Gap (")]
-
-    assert kept(result.limitations) == kept(expected["own_limitations"])
+    assert list(result.limitations) == expected["own_limitations"]
 
 
 # --- refusals (calculation-level validator issues) ----------------------------------------
@@ -392,7 +510,84 @@ def test_own_limitations(composed: tuple[dict[str, Any], cpl10.ScreenResult]) ->
 @pytest.mark.parametrize("refusal", SUBMISSIONS["refusals"], ids=lambda r: r["id"])
 def test_refusal(refusal: dict[str, Any]) -> None:
     expected = {r["id"]: r for r in EXPECTED["refusals"]}[refusal["id"]]
-    issues = cpl10.validate_screen(submission=json.dumps(refusal["payload"]), upstream=UPSTREAM)
-    assert list(issues) == expected["expected_issues"]
+    assert _issues(refusal["payload"]) == expected["expected_issues"]
     with pytest.raises(ValueError):
         cpl10.change_screen(submission=json.dumps(refusal["payload"]), upstream=UPSTREAM)
+
+
+def test_refusals_cover_r01_to_r19() -> None:
+    ids = [r["id"] for r in SUBMISSIONS["refusals"]]
+    assert ids == [f"r{i:02d}" for i in range(1, 20)] == [r["id"] for r in EXPECTED["refusals"]]
+
+
+def _with(path: tuple[Any, ...], value: Any) -> dict[str, Any]:
+    sub: dict[str, Any] = deepcopy(SUBMISSIONS["positive"])
+    target: Any = sub
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    return sub
+
+
+def test_text_check_binds_every_python_built_fact() -> None:
+    # L10-a: the settlement prose path against every Python-built fact of the module.
+    for ref in (
+        "[TL10.4.cash.blocking_for_full_decision]",
+        "[TL10.1.cp1.topics_supported]",
+        "{TL10.5.total.material|topics}",
+        "{TL10.2.cash.change|US$ m}",
+    ):
+        assert _issues(_with(("overall", "rationale"), f"See {ref} for the screen.")) == [], ref
+    # an analyst cell is not a Python-built fact
+    sub = _with(("overall", "rationale"), "See [TL10.3.cash.assessment] for the screen.")
+    assert _issues(sub) == ["overall.rationale: Unresolved reference: TL10.3.cash.assessment"]
+
+
+@pytest.mark.parametrize(
+    ("text", "issue"),
+    [
+        (
+            "Cash moved by {TL10.2.cash.change|%} over the span.",
+            "Unit % differs from the fact's unit US$ m: TL10.2.cash.change",
+        ),
+        (
+            "Leverage moved by {TL10.2.total_leverage.change|x} over the span.",
+            "Figure reference names a gap: TL10.2.total_leverage.change",
+        ),
+        (
+            "See [TL10.2.cash.change] for the move.",
+            "A numeric fact needs a figure reference {TL10.2.cash.change|unit}",
+        ),
+    ],
+)
+def test_reference_kind_refusals_use_the_product_text(text: str, issue: str) -> None:
+    assert _issues(_with(("assessments", 0, "assessment"), text)) == [
+        f"assessments[0].assessment: {issue}"
+    ]
+
+
+def test_assessment_order_not_assessable_before_repeated() -> None:
+    sub = deepcopy(SUBMISSIONS["positive"])
+    ebitda = {**sub["assessments"][0], "topic_id": "ebitda"}
+    sub["assessments"] += [ebitda, deepcopy(ebitda)]
+    assert _issues(sub) == [
+        "assessments[2].topic_id: not assessable: ebitda is rated Stable",
+        "assessments[3].topic_id: not assessable: ebitda is rated Stable",
+    ]
+
+
+def test_overall_issue_order() -> None:
+    # L2: High, then pairing, then limitation required (keyed on the category, L1).
+    sub = _with(("overall", "category"), "Insufficient Information")
+    sub["overall"]["confidence"] = "High"
+    assert _issues(sub) == [
+        "overall.confidence: High is not allowed in a screen",
+        "overall.confidence: must be Insufficient Information exactly when the category is",
+        "overall.limitation: an Insufficient Information overall states its limitation",
+    ]
+    sub = _with(("overall", "confidence"), "Insufficient Information")
+    sub["overall"]["limitation"] = "Two quarters only."
+    assert _issues(sub) == [
+        "overall.confidence: must be Insufficient Information exactly when the category is",
+        "overall.limitation: only an Insufficient Information overall carries a limitation",
+    ]

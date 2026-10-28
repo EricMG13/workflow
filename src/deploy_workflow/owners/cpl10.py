@@ -1,11 +1,13 @@
 """CP-L10 financial change screen: Stage 1 calculation (pure; no store, host or render call).
 
 Python rates seven topics for their relative change between two quarters of the settled CP-1
-head (lease `docs/CPL10-OWNER-LEASE.md`, oracle `cases/cpl10-owner/expected.json`). Arithmetic is
-exact on Fractions, quantised once to Decimal (38 digits, half-even); a missing operand is never 0.
+head (lease `docs/CPL10-OWNER-LEASE.md`, oracle `cases/cpl10-owner/expected.json`, amendment 1).
+Arithmetic is exact on Fractions, quantised once to Decimal (38 digits, half-even); a missing
+operand is never 0.
 """
 
 import json
+import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
@@ -16,9 +18,10 @@ from typing import Literal
 from pydantic import ValidationError
 
 from deploy_vii.business_context import Category, Confidence, Severity
-from deploy_vii.contracts import Contract, Fact, Text
+from deploy_vii.contracts import Citation, Contract, Fact, Text
 from deploy_vii.display import UnitClass, format_value
-from deploy_vii.prose import bind, check
+from deploy_vii.prose import bind
+from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling
@@ -42,8 +45,10 @@ DISPOSITION: dict[str, str] = {
     "Not assessed": "Evidence needed",
 }
 PROHIBITED = ("recommend", "recovery", "covenant")  # CP-1A's prohibited conclusions
-SCREEN_CONFIDENCE = ("Medium", "Low")
+INSUFFICIENT = "Insufficient Information"
+OVERALL = "overall"  # the gap target that is not a topic
 _MONEY = {"currency": "USD", "scale": Decimal(1000000)}
+_DIGIT = re.compile(r"\d")
 
 
 @dataclass(frozen=True)
@@ -104,8 +109,61 @@ TOPICS = (
         "CP-2A",
     ),
 )
-_TOPIC = {t.topic_id: t for t in TOPICS}
+TOPIC_IDS = tuple(t.topic_id for t in TOPICS)
 OPERAND_LABELS = tuple(f"{q.column} · {t.cp1_metric}" for t in TOPICS for q in QUARTERS)
+
+# Column field order per table (amendment 1 F1; column labels are the product's, L3).
+COLUMNS: dict[str, tuple[str, ...]] = {
+    "TL10.1": (
+        "subject_identity",
+        "source_ref",
+        "source_owner_module",
+        "as_of_or_period",
+        "scope_status",
+        "topics_supported",
+        "limitation",
+    ),
+    "TL10.2": (
+        "from_value",
+        "to_value",
+        "change",
+        "change_pct",
+        "materiality",
+        "evidence_status",
+        "disposition",
+        "priority_rank",
+        "source_owner_modules",
+        "source_refs",
+        "upgrade_module_ids",
+    ),
+    "TL10.3": (
+        "screen_item",
+        "assessment",
+        "evidence",
+        "credit_transmission",
+        "screening_implication",
+        "confidence",
+        "source_refs",
+    ),
+    "TL10.4": (
+        "topic_id",
+        "trigger",
+        "missing_inputs",
+        "decision_impact",
+        "required_source",
+        "target_full_module_id",
+        "expected_owned_object",
+        "blocking_for_full_decision",
+    ),
+    "TL10.5": ("material", "watch", "stable", "not_assessed"),
+}
+TITLES = {
+    "TL10.1": "Scope and sources",
+    "TL10.2": "Topic screen",
+    "TL10.3": "Screen items",
+    "TL10.4": "Upgrade triggers",
+    "TL10.5": "Screen totals",
+}
 
 OWN_LIMITATIONS = (
     (
@@ -135,6 +193,7 @@ OWN_LIMITATIONS = (
     ),
 )
 _INHERITED = "Inherited limitations of the CP-0 and CP-1 heads apply; see the limitations rail."
+_NOT_FOR_OVERALL = "Not applicable to the overall row"
 
 
 # --- submission schema (reference and judgment only; every field required) ---------------------
@@ -209,12 +268,20 @@ class Upstream:
     cp1_facts: Mapping[str, Fact]  # '<column> · <metric>' -> CP-1 T4.10 fact
 
     def __post_init__(self) -> None:
-        for label in OPERAND_LABELS:
-            fact = self.cp1_facts.get(label)
-            if fact is None or fact.label != label:
-                raise ValueError(f"unbound CP-1 operand: {label}")
-            if fact.status == "known" and fact.amount is None:
-                raise ValueError(f"CP-1 operand without an amount: {label}")
+        for topic in TOPICS:
+            scales = set()
+            for quarter in QUARTERS:
+                label = f"{quarter.column} · {topic.cp1_metric}"
+                fact = self.cp1_facts.get(label)
+                if fact is None or fact.label != label:
+                    raise ValueError(f"unbound CP-1 operand: {label}")
+                if fact.status == "known" and fact.amount is None:
+                    raise ValueError(f"CP-1 operand without an amount: {label}")
+                if fact.unit != topic.unit:
+                    raise ValueError(f"CP-1 operand unit {fact.unit} is not {topic.unit}: {label}")
+                scales.add(fact.scale)
+            if len(scales) != 1:
+                raise ValueError(f"CP-1 operands of {topic.topic_id} differ in scale")
 
     def operand(self, topic: Topic, period: str) -> Fact:
         return self.cp1_facts[f"{QUARTERS[PERIODS.index(period)].column} · {topic.cp1_metric}"]
@@ -283,10 +350,6 @@ class TopicResult:
     close: Fact
     screen: TopicScreen
     rank: int
-
-
-def _offered(period: str) -> bool:
-    return period in PERIODS
 
 
 def screen_pair(upstream: Upstream, from_period: str, to_period: str) -> tuple[TopicResult, ...]:
@@ -393,6 +456,7 @@ class RowRecord:
 class TableRecord:
     table_id: str
     title: str
+    columns: tuple[str, ...]  # field order; labels are the product's (L3)
     rows: tuple[RowRecord, ...]
 
 
@@ -402,6 +466,7 @@ class ClaimRecord:
     text: str
     refs: tuple[str, ...]
     limitation: str | None
+    citations: tuple[Citation, ...]
 
 
 @dataclass(frozen=True)
@@ -418,11 +483,15 @@ class ScreenResult:
     status: Literal["restricted"] = "restricted"
 
 
-class _Cells:
-    """Collects cells of one table row and keeps their order."""
+def _unique(citations: Iterable[Citation]) -> tuple[Citation, ...]:
+    return tuple(dict.fromkeys(citations))
 
-    def __init__(self, table: str, row: str) -> None:
-        self.table, self.row_id, self.cells = table, row, list[Cell]()
+
+class _Cells:
+    """Collects the cells of one table row, in column order."""
+
+    def __init__(self, table: str, row: str, cp1: Mapping[str, Fact]) -> None:
+        self.table, self.row_id, self.cp1, self.cells = table, row, cp1, list[Cell]()
 
     def add(self, field: str, label: str, *, derives: tuple[str, ...] = (), **kw: object) -> None:
         coordinates = {"table_id": self.table, "row_id": self.row_id, "field": field}
@@ -430,8 +499,16 @@ class _Cells:
             kw.setdefault("calculation_id", f"calc:{self.table}.{self.row_id}.{field}")
         if kw.get("unit") == "MILLIONS":
             kw.update(_MONEY)
+        # F5 (CP-1C L3): a calculated fact cites what its derives_from cites, ordered, de-duplicated.
+        cites = _unique(c for d in derives for c in self.cp1[d].citations)
         fact = Fact.model_validate(
-            {"fact_id": f"{self.table}.{self.row_id}.{field}", "label": label, **coordinates, **kw}
+            {
+                "fact_id": f"{self.table}.{self.row_id}.{field}",
+                "label": label,
+                **coordinates,
+                "citations": cites,
+                **kw,
+            }
         )
         self.cells.append(Cell(fact, derives))
 
@@ -445,21 +522,37 @@ class _Cells:
     ) -> None:
         self.add(field, label, text=value, value_class=vclass, derives=derives)
 
+    def not_applicable(self, field: str, label: str, reason: str) -> None:
+        self.add(field, label, status="not_applicable", limitation=reason)
+
     def copied(self, field: str, label: str, cp1: Fact) -> None:
+        """The CP-1 value with its value_class, status, limitation, citations and calculation_id
+        verbatim (lease :121); CP-1's formula is not copied (L10-c). Shown at 2 dp."""
         known_money = cp1.status == "known" and cp1.unit == "MILLIONS"
-        coordinates = {"table_id": self.table, "row_id": self.row_id, "field": field}
-        fact = Fact.model_validate(
-            {
-                **dict(cp1),
-                "fact_id": f"{self.table}.{self.row_id}.{field}",
-                "label": label,
-                **coordinates,
-                "decimals": 2 if known_money else None,
-            }
+        fact = Fact(
+            fact_id=f"{self.table}.{self.row_id}.{field}",
+            label=label,
+            table_id=self.table,
+            row_id=self.row_id,
+            field=field,
+            amount=cp1.amount,
+            status=cp1.status,
+            unit=cp1.unit,
+            currency=cp1.currency,
+            scale=cp1.scale,
+            decimals=2 if known_money else None,
+            period=cp1.period,
+            citations=cp1.citations,
+            calculation_id=cp1.calculation_id,
+            value_class=cp1.value_class,
+            limitation=cp1.limitation,
         )
         self.cells.append(Cell(fact, (), cp1.label))
 
     def row(self, label: str) -> RowRecord:
+        fields = tuple(c.fact.field for c in self.cells)
+        if fields != COLUMNS[self.table]:  # one fact per column, in column order (F1)
+            raise ValueError(f"{self.table}.{self.row_id} cells {fields} differ from its columns")
         return RowRecord(self.row_id, label, tuple(c.fact.fact_id for c in self.cells))
 
 
@@ -470,13 +563,15 @@ def _ends(r: TopicResult) -> str:
 
 
 def _cp1_limitation(r: TopicResult) -> str | None:
-    return r.start.limitation or r.close.limitation
+    """CP-1's own limitation of the missing end (the starting end when both are missing)."""
+    missing = r.start if r.start.status != "known" else r.close
+    return missing.limitation
 
 
-def _topic_row(r: TopicResult, pair_period: str) -> _Cells:
+def _topic_row(r: TopicResult, pair_period: str, cp1: Mapping[str, Fact]) -> _Cells:
     """TL10.2: the copied CP-1 cells, the exact change, its rating, rank and pointers."""
     t, s = r.topic, r.screen
-    cells = _Cells("TL10.2", t.topic_id)
+    cells = _Cells("TL10.2", t.topic_id, cp1)
     cells.copied("from_value", f"{t.label} · Starting value", r.start)
     cells.copied("to_value", f"{t.label} · Closing value", r.close)
     derives = (r.start.label, r.close.label)
@@ -554,9 +649,9 @@ _COUNTS: tuple[tuple[str, Materiality], ...] = (
 )
 
 
-def _total_row(counts: Mapping[str, int], pair_period: str) -> _Cells:
-    """Topic counts per materiality (TL10.2 `total` today; TL10.5 after amendment 1 F1)."""
-    cells = _Cells("TL10.2", "total")
+def _total_row(counts: Mapping[str, int], pair_period: str, cp1: Mapping[str, Fact]) -> _Cells:
+    """TL10.5 screen totals: topic counts per materiality."""
+    cells = _Cells("TL10.5", "total", cp1)
     for key, word in _COUNTS:
         cells.add(
             key,
@@ -573,8 +668,8 @@ def _total_row(counts: Mapping[str, int], pair_period: str) -> _Cells:
 
 def _scope_rows(
     upstream: Upstream, rows: tuple[TopicResult, ...], pair_period: str
-) -> list[_Cells]:
-    """TL10.1: one row per upstream head (source_ref and scope_status per amendment 1 F3)."""
+) -> list[tuple[str, _Cells]]:
+    """TL10.1: one row per upstream head; source_ref and scope_status are run-bound (F3)."""
     supported = ", ".join(r.topic.label for r in rows if r.screen.evidence == "Complete")
     out = []
     for rid, module, sha, word, period, topics in (
@@ -595,7 +690,7 @@ def _scope_rows(
             supported,
         ),
     ):
-        cells = _Cells("TL10.1", rid)
+        cells = _Cells("TL10.1", rid, upstream.cp1_facts)
         cells.text("subject_identity", "Subject identity", upstream.issuer_name)
         cells.text("source_ref", "Source reference", f"{module}:{sha}")
         cells.text("source_owner_module", "Source owner module", module)
@@ -605,23 +700,14 @@ def _scope_rows(
             "topics_supported", "Topics supported", topics, "calculated" if rid == "cp1" else None
         )
         cells.text("limitation", "Limitation", _INHERITED)
-        out.append(cells)
+        out.append((module, cells))
     return out
 
 
-def _python_cells(
-    upstream: Upstream, rows: tuple[TopicResult, ...], pair_period: str
-) -> tuple[list[_Cells], _Cells, list[_Cells], dict[str, int]]:
-    counts = {key: sum(1 for r in rows if r.screen.materiality == word) for key, word in _COUNTS}
-    scope = _scope_rows(upstream, rows, pair_period)
-    topics = [_topic_row(r, pair_period) for r in rows]
-    return scope, _total_row(counts, pair_period), topics, counts
-
-
 def _item_rows(
-    rows: tuple[TopicResult, ...], sub: ChangeScreenSubmission
+    rows: tuple[TopicResult, ...], sub: ChangeScreenSubmission, cp1: Mapping[str, Fact]
 ) -> list[tuple[str, _Cells]]:
-    """TL10.3: one row per assessed topic (register order), then the overall judgment."""
+    """TL10.3: one row per assessed topic (register order), then the overall row (F1)."""
     analyst = {a.topic_id: a for a in sub.assessments}
     out = []
     for r in rows:
@@ -629,7 +715,7 @@ def _item_rows(
         if a is None:
             continue
         tid = r.topic.topic_id
-        cells = _Cells("TL10.3", tid)
+        cells = _Cells("TL10.3", tid, cp1)
         refs = (r.start.label, r.close.label)
         cells.text("screen_item", "Screen item", r.topic.label)
         cells.text("assessment", "Assessment", a.assessment, "analyst_judgment")
@@ -652,9 +738,14 @@ def _item_rows(
             "source_refs", "Source references", f"CP-1 {r.start.label}; CP-1 {r.close.label}"
         )
         out.append((r.topic.label, cells))
-    overall = _Cells("TL10.3", "overall")  # amendment 1 F1 makes this a full row; pending re-freeze
+    overall = _Cells("TL10.3", "overall", cp1)
+    overall.text("screen_item", "Screen item", "Overall")
     overall.text("assessment", "Assessment", sub.overall.rationale, "analyst_judgment")
+    overall.not_applicable("evidence", "Evidence", _NOT_FOR_OVERALL)
+    overall.not_applicable("credit_transmission", "Credit transmission", _NOT_FOR_OVERALL)
+    overall.not_applicable("screening_implication", "Screening implication", _NOT_FOR_OVERALL)
     overall.text("confidence", "Confidence", sub.overall.confidence, "analyst_judgment")
+    overall.not_applicable("source_refs", "Source references", _NOT_FOR_OVERALL)
     out.append(("Overall", overall))
     return out
 
@@ -667,7 +758,7 @@ _TRIGGER = {
 
 
 def _trigger_rows(
-    rows: tuple[TopicResult, ...], sub: ChangeScreenSubmission
+    rows: tuple[TopicResult, ...], sub: ChangeScreenSubmission, cp1: Mapping[str, Fact]
 ) -> list[tuple[str, _Cells]]:
     """TL10.4: every topic not rated Stable, register order."""
     analyst = {a.topic_id: a for a in sub.assessments}
@@ -677,7 +768,7 @@ def _trigger_rows(
         if r.screen.materiality == "Stable":
             continue
         tid, complete = r.topic.topic_id, r.screen.evidence == "Complete"
-        cells = _Cells("TL10.4", tid)
+        cells = _Cells("TL10.4", tid, cp1)
         cells.text("topic_id", "Topic", tid)
         cells.text("trigger", "Trigger", _TRIGGER[r.screen.materiality], "calculated")
         missing = "None" if complete else "A CP-1 value for each quarter compared"
@@ -710,8 +801,23 @@ def _trigger_rows(
     return out
 
 
+def _claim(
+    claim_id: str,
+    text: str,
+    refs: tuple[str, ...],
+    limitation: str | None,
+    facts: Mapping[str, Fact],
+) -> ClaimRecord:
+    """F5: citations are the referenced facts' citations, first-reference order, de-duplicated."""
+    cites = _unique(c for ref in refs for c in facts[ref.split("|")[0]].citations)
+    return ClaimRecord(claim_id, text, refs, limitation, cites)
+
+
 def _claims(
-    rows: tuple[TopicResult, ...], sub: ChangeScreenSubmission, span: str
+    rows: tuple[TopicResult, ...],
+    sub: ChangeScreenSubmission,
+    span: str,
+    facts: Mapping[str, Fact],
 ) -> list[ClaimRecord]:
     out = []
     for r in rows:
@@ -721,7 +827,7 @@ def _claims(
                 f"{r.topic.label}: the change {span} cannot be screened; [{base}.change] is not "
                 f"calculable because CP-1 carries no known value for {_ends(r)}."
             )
-            out.append(ClaimRecord(base, text, (f"{base}.change",), None))
+            out.append(_claim(base, text, (f"{base}.change",), None, facts))
             continue
         refs = [f"{base}.from_value|{u}", f"{base}.to_value|{u}", f"{base}.change|{u}"]
         if r.screen.pct_status == "known":
@@ -734,20 +840,21 @@ def _claims(
             f"{span}, a change of {{{base}.change|{u}}}{tail}; the screen rates it "
             f"{r.screen.materiality}."
         )
-        out.append(ClaimRecord(base, text, tuple(refs), None))
-    totals = tuple(f"TL10.2.total.{key}|topics" for key, _ in _COUNTS)
+        out.append(_claim(base, text, tuple(refs), None, facts))
+    totals = tuple(f"TL10.5.total.{key}|topics" for key, _ in _COUNTS)
     m, w, s, n = (f"{{{ref}}}" for ref in totals)
     summary = (
         f"Of seven screened topics, {m} rate Material, {w} Watch, {s} Stable and {n} cannot be "
         f"assessed {span}."
     )
-    out.append(ClaimRecord("TL10.2.summary", summary, totals, None))
+    out.append(_claim("TL10.2.summary", summary, totals, None, facts))
     analyst = {a.topic_id: a for a in sub.assessments}
     for r in rows:
         a = analyst.get(r.topic.topic_id)
         if a is not None:
-            out.append(ClaimRecord(f"TL10.3.{r.topic.topic_id}", a.assessment, (), None))
-    out.append(ClaimRecord("TL10.3.overall", sub.overall.rationale, (), sub.overall.limitation))
+            out.append(_claim(f"TL10.3.{r.topic.topic_id}", a.assessment, (), None, facts))
+    ov = sub.overall
+    out.append(_claim("TL10.3.overall", ov.rationale, (), ov.limitation, facts))
     return out
 
 
@@ -760,6 +867,36 @@ def _limitations(rows: tuple[TopicResult, ...], sub: ChangeScreenSubmission) -> 
     ]
     own += [f"Gap ({g.severity}): {g.gap}" for g in sub.gaps]
     return tuple(own)
+
+
+@dataclass(frozen=True)
+class _Composed:
+    rows: tuple[TopicResult, ...]
+    counts: dict[str, int]
+    tables: tuple[tuple[str, list[tuple[str, _Cells]]], ...]  # (table id, [(row label, cells)])
+    span: str
+
+    @property
+    def cells(self) -> tuple[Cell, ...]:
+        return tuple(c for _, rows in self.tables for _, group in rows for c in group.cells)
+
+
+def _compose(upstream: Upstream, sub: ChangeScreenSubmission) -> _Composed:
+    """Every table of the module for the submitted (offered, ordered) pair."""
+    a, b = sub.comparison.from_period, sub.comparison.to_period
+    rows = screen_pair(upstream, a, b)
+    pair_period = f"{a} -> {b}"
+    cp1 = upstream.cp1_facts
+    counts = {key: sum(1 for r in rows if r.screen.materiality == word) for key, word in _COUNTS}
+    words = {q.period: q.words for q in QUARTERS}
+    tables = (
+        ("TL10.1", _scope_rows(upstream, rows, pair_period)),
+        ("TL10.2", [(r.topic.label, _topic_row(r, pair_period, cp1)) for r in rows]),
+        ("TL10.3", _item_rows(rows, sub, cp1)),
+        ("TL10.4", _trigger_rows(rows, sub, cp1)),
+        ("TL10.5", [("Total", _total_row(counts, pair_period, cp1))]),
+    )
+    return _Composed(rows, counts, tables, f"between {words[a]} and {words[b]}")
 
 
 # --- validation (one stated order) and composition --------------------------------------------
@@ -782,29 +919,33 @@ def _comparison_issues(comparison: Comparison) -> list[str]:
             ("from_period", comparison.from_period),
             ("to_period", comparison.to_period),
         )
-        if not _offered(period)
+        if period not in PERIODS
     ]
     if not issues and PERIODS.index(comparison.to_period) <= PERIODS.index(comparison.from_period):
         issues.append("comparison: to_period must come after from_period")
     return issues
 
 
+def _high(path: str, confidence: str) -> list[str]:
+    return [f"{path}.confidence: High is not allowed in a screen"] if confidence == "High" else []
+
+
 def _assessment_issues(sub: ChangeScreenSubmission, rated: Mapping[str, Materiality]) -> list[str]:
+    """Step (3): per assessment unknown topic, not assessable, repeated, confidence; then missing."""
     issues: list[str] = []
     seen: set[str] = set()
     for i, a in enumerate(sub.assessments):
         path = f"assessments[{i}]"
         if a.topic_id not in rated:
             issues.append(f"{path}.topic_id: unknown topic: {a.topic_id}")
-        elif a.topic_id in seen:
-            issues.append(f"{path}.topic_id: repeated: {a.topic_id}")
         elif rated[a.topic_id] not in ("Material", "Watch"):
             issues.append(
                 f"{path}.topic_id: not assessable: {a.topic_id} is rated {rated[a.topic_id]}"
             )
+        elif a.topic_id in seen:
+            issues.append(f"{path}.topic_id: repeated: {a.topic_id}")
         seen.add(a.topic_id)
-        if a.confidence not in SCREEN_CONFIDENCE:
-            issues.append(f"{path}.confidence: {a.confidence} is not allowed in a screen")
+        issues += _high(path, a.confidence)
     issues += [
         f"assessments: missing assessment for {tid} ({rating})"
         for tid, rating in rated.items()
@@ -813,48 +954,82 @@ def _assessment_issues(sub: ChangeScreenSubmission, rated: Mapping[str, Material
     return issues
 
 
-def _text_issues(sub: ChangeScreenSubmission, refs: Iterable[str], issuer: str) -> list[str]:
+def _text_issues(sub: ChangeScreenSubmission, bound: Mapping[str, Fact], issuer: str) -> list[str]:
+    """Step (4): the settlement prose path (`prose.issues`, L10-a) against the module's bound
+    facts, then prohibited words (substring match, the v1 limit of L10-b), then empty text."""
     texts = [
         (f"assessments[{i}].{field}", getattr(a, field))
         for i, a in enumerate(sub.assessments)
         for field in ("assessment", "credit_transmission")
     ]
     texts.append(("overall.rationale", sub.overall.rationale))
-    known = frozenset(refs)
     issues: list[str] = []
     for path, text in texts:
-        issues += [f"{path}: {i}" for i in check(text, refs=known, gaps=(), names=(issuer,))]
+        issues += [f"{path}: {i}" for i in prose_issues(text, bound, names=(issuer,))]
         issues += [f"{path}: prohibited conclusion: {w}" for w in PROHIBITED if w in text.lower()]
         if not text.strip():
             issues.append(f"{path}: empty")
     return issues
 
 
-def _overall_issues(sub: ChangeScreenSubmission) -> list[str]:
-    # Amendment 1 F4 adds the Insufficient Information and limitation rules; pending re-freeze.
-    if sub.overall.confidence == "High":
-        return ["overall.confidence: High is not allowed in a screen"]
-    return []
+def _overall_issues(overall: Overall) -> list[str]:
+    """Step (5), in the L2 order: High, pairing, limitation required, limitation forbidden."""
+    issues = _high("overall", overall.confidence)
+    insufficient = overall.category == INSUFFICIENT
+    if (overall.confidence == INSUFFICIENT) != insufficient:
+        issues.append(
+            "overall.confidence: must be Insufficient Information exactly when the category is"
+        )
+    if insufficient and overall.limitation is None:
+        issues.append(
+            "overall.limitation: an Insufficient Information overall states its limitation"
+        )
+    if not insufficient and overall.limitation is not None:  # keyed on the category (L1)
+        issues.append(
+            "overall.limitation: only an Insufficient Information overall carries a limitation"
+        )
+    return issues
+
+
+def _gap_issues(gaps: tuple[Gap, ...]) -> list[str]:
+    """Step (6), per gap in order: topic, missing item, digits (field order), repeat."""
+    issues: list[str] = []
+    seen: set[tuple[str, str]] = set()
+    for i, g in enumerate(gaps):
+        path = f"gaps[{i}]"
+        if g.affected_analysis not in (*TOPIC_IDS, OVERALL):
+            issues.append(f"{path}.affected_analysis: must name a topic of the view or overall")
+        if not g.gap.strip():
+            issues.append(f"{path}.gap: empty")
+        for field in ("gap", "why_it_matters", "affected_analysis", "action"):
+            if _DIGIT.search(getattr(g, field)):
+                issues.append(f"{path}.{field}: must not contain a digit")
+        key = (g.affected_analysis, g.gap)
+        if key in seen:
+            issues.append(f"{path}: repeated gap")
+        seen.add(key)
+    return issues
 
 
 def validate_screen(
     *, submission: str | bytes | Mapping[str, object], upstream: Upstream
 ) -> tuple[str, ...]:
-    """Issues in the lease's order: shape (alone); comparison (ends); assessments; text; overall."""
+    """Issues in the lease's order: shape (alone); comparison (ends); assessments; text;
+    overall; gaps."""
     sub = _parse(submission)
     if isinstance(sub, tuple):
         return sub
     issues = _comparison_issues(sub.comparison)
     if issues:
         return tuple(issues)
-    rows = screen_pair(upstream, sub.comparison.from_period, sub.comparison.to_period)
-    rated = {r.topic.topic_id: r.screen.materiality for r in rows}
+    composed = _compose(upstream, sub)
+    rated = {r.topic.topic_id: r.screen.materiality for r in composed.rows}
     issues += _assessment_issues(sub, rated)
-    pair_period = f"{sub.comparison.from_period} -> {sub.comparison.to_period}"
-    scope, total, topics, _ = _python_cells(upstream, rows, pair_period)
-    bound = bind(c.fact for group in (*scope, total, *topics) for c in group.cells)
-    issues += _text_issues(sub, bound.keys(), upstream.issuer_name)
-    issues += _overall_issues(sub)
+    # Step (4) binds every Python-built fact of the module for this pair (not the analyst's).
+    python = (c.fact for c in composed.cells if c.fact.value_class != "analyst_judgment")
+    issues += _text_issues(sub, bind(python), upstream.issuer_name)
+    issues += _overall_issues(sub.overall)
+    issues += _gap_issues(sub.gaps)
     return tuple(issues)
 
 
@@ -867,31 +1042,27 @@ def change_screen(
         raise ValueError("; ".join(issues))
     sub = _parse(submission)
     assert not isinstance(sub, tuple)  # validated above
-    a, b = sub.comparison.from_period, sub.comparison.to_period
-    rows = screen_pair(upstream, a, b)
-    pair_period = f"{a} -> {b}"
-    scope, total, topics, counts = _python_cells(upstream, rows, pair_period)
-    items, triggers = _item_rows(rows, sub), _trigger_rows(rows, sub)
-    t1 = [c.row(m) for c, m in zip(scope, ("CP-0", "CP-1"), strict=True)]
-    t2 = [c.row(r.topic.label) for c, r in zip(topics, rows, strict=True)] + [total.row("Total")]
-    groups = [*scope, *topics, total, *(c for _, c in items), *(c for _, c in triggers)]
-    words = {q.period: q.words for q in QUARTERS}
-    span = f"between {words[a]} and {words[b]}"
+    composed = _compose(upstream, sub)
+    cells = composed.cells
+    facts = {c.fact.fact_id: c.fact for c in cells}
     return ScreenResult(
-        from_period=a,
-        to_period=b,
-        topics=rows,
+        from_period=sub.comparison.from_period,
+        to_period=sub.comparison.to_period,
+        topics=composed.rows,
         required_assessments=tuple(
-            r.topic.topic_id for r in rows if r.screen.materiality in ("Material", "Watch")
+            r.topic.topic_id for r in composed.rows if r.screen.materiality in ("Material", "Watch")
         ),
-        counts=counts,
-        cells=tuple(c for g in groups for c in g.cells),
-        tables=(
-            TableRecord("TL10.1", "Scope and sources", tuple(t1)),
-            TableRecord("TL10.2", "Topic screen", tuple(t2)),
-            TableRecord("TL10.3", "Screen items", tuple(c.row(label) for label, c in items)),
-            TableRecord("TL10.4", "Upgrade triggers", tuple(c.row(label) for label, c in triggers)),
+        counts=composed.counts,
+        cells=cells,
+        tables=tuple(
+            TableRecord(
+                table_id,
+                TITLES[table_id],
+                COLUMNS[table_id],
+                tuple(group.row(label) for label, group in rows),
+            )
+            for table_id, rows in composed.tables
         ),
-        claims=tuple(_claims(rows, sub, span)),
-        limitations=_limitations(rows, sub),
+        claims=tuple(_claims(composed.rows, sub, composed.span, facts)),
+        limitations=_limitations(composed.rows, sub),
     )

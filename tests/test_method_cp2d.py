@@ -152,7 +152,10 @@ def _inputs(case: str) -> cp2d.Cp2dInputs:
     amount = None if submission.minimum_cash is None else submission.minimum_cash.amount
     assert amount == _minimum_cash(case)
     return cp2d.Cp2dInputs(
-        operands=_operands(case), balance_date=BALANCE_DATE, submission=submission
+        operands=_operands(case),
+        balance_date=BALANCE_DATE,
+        submission=submission,
+        offered_refs=OFFERED,
     )
 
 
@@ -288,10 +291,58 @@ def test_undisclosed_revolver_tables_fail_closed() -> None:
     case = "fixture_rcf_undisclosed"
     payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
     inputs = cp2d.Cp2dInputs(
-        operands=_operands(case), balance_date=BALANCE_DATE, submission=_submission(payload)
+        operands=_operands(case),
+        balance_date=BALANCE_DATE,
+        submission=_submission(payload),
+        offered_refs=OFFERED,
     )
     with pytest.raises(ValueError, match="rcf_commitment"):
         cp2d.compute(inputs)
+
+
+def test_sources_and_uses_difference_composes_restricted() -> None:
+    """Lease Method 6: a non-zero difference is a known value with its own limitation, never a
+    refusal; the T2E.7 label is the builder's (build.py limitations())."""
+    inputs = replace(_inputs("positive"), operands=_operands("fixture_burn"))
+    result = cp2d.compute(inputs)
+    assert result.status == "restricted"
+    assert list(result.own_limitations) == CASES["fixture_burn"]["own_limitations"]
+    assert ("Sources and uses difference", "Limitation") in result.gaps_ledger.rows
+    assert [label for label, _ in result.gaps_ledger.rows] == [
+        "Run-rate basis",
+        "Minimum cash",
+        "Runway basis",
+        "Sources and uses difference",
+    ]
+    t1 = result.tables[0]
+    difference = t1.rows[-1].cells[0]
+    want = CASES["fixture_burn"]["derived"]["sources_and_uses_difference"]
+    assert difference.state == "known" and difference.amount == _d(want)
+    assert difference.shown == "(6)"
+
+
+def test_unknown_basis_ref_refuses_in_compute() -> None:
+    payload = SUBMISSIONS["refusal_inputs"]["unknown_basis_ref"]["payload"]
+    inputs = replace(_inputs("positive"), submission=_submission(payload))
+    with pytest.raises(ValueError, match=EXPECTED["refusals"]["unknown_basis_ref"]):
+        cp2d.compute(inputs)
+
+
+def test_liquidity_to_debt_cross_check_uses_the_cp1_division() -> None:
+    """CP-1 divides with deploy_vii.model._cells.CONTEXT (38 digits, half-even); 20/30 is not
+    exact, so the cross-check must divide the same way to agree exactly."""
+    from deploy_vii.model._cells import CONTEXT
+
+    inputs = _inputs("positive")
+    operands = replace(
+        inputs.operands,
+        total_debt_bs=Decimal(30),
+        total_debt=Decimal(30),
+        liquidity_to_debt=CONTEXT.divide(Decimal(20), Decimal(30)),
+    )
+    tampered = replace(inputs, operands=operands)
+    assert cp2d.check_cp1_totals(operands=operands, bridge=cp2d.bridge_of(tampered)) == ()
+    cp2d.compute(tampered)
 
 
 def test_compute_refuses_an_invalid_submission() -> None:
@@ -331,3 +382,188 @@ def test_blocked_attempts_produce_oracle_issues(attempt: str) -> None:
     submission = _submission(SUBMISSIONS["cp2d_blocked"][attempt])
     want = EXPECTED["negative_cases"]["blocked_cp2d"][attempt]["issues"]
     assert list(cp2d.submission_issues(submission=submission, offered_refs=OFFERED)) == want
+
+
+@pytest.mark.parametrize(
+    "probe",
+    [
+        "An LME is likely.",
+        "We recommend the bonds.",
+        "The recovery outcome is weak.",
+        "Liability management is likely.",
+    ],
+)
+def test_prohibited_conclusion_stems_refuse(probe: str) -> None:
+    """Stems pinned by the oracle builder's FORBIDDEN list (manifest analyst_judgment_policy)."""
+    payload = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))
+    payload["assessments"][2]["credit_implication"] += " " + probe
+    issues = cp2d.submission_issues(submission=_submission(payload), offered_refs=OFFERED)
+    assert issues == (EXPECTED["refusals"]["figure_free_text_forbidden_word"],)
+
+
+# --- missing schedule and total debt --------------------------------------------------------
+
+
+def _compose(operands: cp2d.Operands, horizon: int, minimum: str | None) -> cp2d.Bridge:
+    return cp2d.compose_bridge(
+        operands=operands,
+        horizon_months=horizon,
+        minimum_cash=None if minimum is None else Decimal(minimum),
+        balance_date=BALANCE_DATE,
+    )
+
+
+def test_empty_facility_schedule_is_missing_not_zero() -> None:
+    operands = replace(_base_operands(), facilities=())
+    b = _compose(operands, 24, "10")
+    for key in (
+        "maturity_inside_horizon",
+        "maturities_in_horizon",
+        "amortisation_in_horizon",
+        "cash_at_horizon_end_before_refinancing",
+        "resources_at_horizon_end",
+        "cash_only_headroom",
+        "headroom",
+        "funding_gap",
+        "undrawn_term_commitment",
+    ):
+        assert getattr(b, key) is None, key
+    assert b.wall == ()
+    inputs = replace(_inputs("positive"), operands=operands)
+    with pytest.raises(ValueError, match="T4.18 facilities"):
+        cp2d.compute(inputs)
+
+
+@pytest.mark.parametrize("total_debt", [None, Decimal(0)])
+def test_missing_total_debt_keeps_wall_terms_known(total_debt: Decimal | None) -> None:
+    b = _compose(replace(_base_operands(), total_debt_bs=total_debt), 24, "10")
+    (row,) = b.wall
+    assert row.months_to_maturity == CASES["positive"]["derived"]["months_to_maturity"]
+    assert row.inside_horizon is False
+    assert row.share_of_total_debt is None and row.cumulative_share is None
+    assert b.liquidity_to_total_debt is None
+
+
+# --- lease-literal branch cases (controller-authorised, fix round 1) --------------------------
+
+
+def test_amortisation_scaled_to_horizon() -> None:
+    # lease-literal: CP2D lease Method 3 (min(annual amortisation x H / 12, principal))
+    loan = _base_operands().facilities[0]
+    operands = replace(
+        _base_operands(), facilities=(replace(loan, annual_amortisation=Decimal(6)),)
+    )
+    b = _compose(operands, 24, "10")
+    assert b.amortisation_in_horizon == Decimal(12)  # 6 x 24 / 12
+    assert b.maturities_in_horizon == 0
+    assert b.cash_at_horizon_end_before_refinancing == Decimal(8)  # 20 + 0 - 12 - 0
+
+
+def test_amortisation_capped_at_principal() -> None:
+    # lease-literal: CP2D lease Method 3 (min(30 x 24 / 12 = 60, principal 50) = 50)
+    loan = _base_operands().facilities[0]
+    operands = replace(
+        _base_operands(), facilities=(replace(loan, annual_amortisation=Decimal(30)),)
+    )
+    b = _compose(operands, 24, "10")
+    assert b.amortisation_in_horizon == Decimal(50)
+    assert b.cash_at_horizon_end_before_refinancing == Decimal(-30)
+
+
+def test_runway_months_round_half_up_and_count_the_revolver() -> None:
+    # lease-literal: CP2D lease Method 3. F = -29 - 10 - 4 - 5 = -48; undrawn = 71 - 0 = 71;
+    # start = 20 + 71 - 10 = 81; months = 81 / (48 / 12) = 20.25 -> 20.3 (1 dp half-up)
+    operands = replace(_base_operands(), cfo=Decimal(-29), rcf_commitment=Decimal(71))
+    b = _compose(operands, 24, "10")
+    assert b.run_rate_net_cash_flow_annual == Decimal(-48)
+    assert b.undrawn_revolver == Decimal(71)
+    assert b.available_liquidity == Decimal(91)
+    assert b.runway_state == "months"
+    assert str(b.months_to_minimum_cash) == "20.3"
+
+
+def test_runway_negative_start_with_burn_is_zero_months() -> None:
+    # lease-literal: CP2D lease Method 3. F = -6 < 0; start = 20 + 0 - 30 = -10;
+    # max(0, start) / (6 / 12) = 0.0
+    b = _compose(replace(_base_operands(), cfo=Decimal(13)), 24, "30")
+    assert b.runway_state == "months"
+    assert str(b.months_to_minimum_cash) == "0.0"
+
+
+def test_runway_negative_start_without_burn_is_zero_months() -> None:
+    # lease-literal: CP2D lease Method 3. F = 0 >= 0 and start = 20 - 30 < 0 -> 0 months
+    b = _compose(_base_operands(), 24, "30")
+    assert b.runway_state == "months"
+    assert str(b.months_to_minimum_cash) == "0.0"
+
+
+def test_runway_revolver_missing_with_burn_is_missing() -> None:
+    # lease-literal: CP2D lease Method 3. "Not reached" only when F >= 0 and cash clears the
+    # minimum; F = -6 here, so missing ("Not calculable: revolver undisclosed")
+    operands = replace(_operands("fixture_rcf_undisclosed"), cfo=Decimal(13))
+    b = _compose(operands, 24, "10")
+    assert b.runway_state == "missing"
+    assert b.runway_reason == "Not calculable: revolver undisclosed"
+    assert b.months_to_minimum_cash is None
+
+
+def test_fixture_runway_reason_is_the_lease_text() -> None:
+    b = _bridge("fixture_rcf_undisclosed_min_above_cash")
+    assert b.runway_reason == "Not calculable: revolver undisclosed"
+
+
+def test_maturity_on_the_horizon_end_is_inside() -> None:
+    # lease-literal: CP2D lease Method 3/4 (maturity_date <= horizon end; 2025-12-31 + 48 months
+    # = 2029-12-31 = maturity)
+    b = _compose(_base_operands(), 48, "10")
+    assert b.horizon_end == date(2029, 12, 31)
+    assert b.maturity_inside_horizon is True and b.wall[0].inside_horizon is True
+    assert b.maturities_in_horizon == Decimal(50)
+    assert b.cash_at_horizon_end_before_refinancing == Decimal(-30)
+
+
+def test_two_facilities_cumulative_share_in_maturity_order() -> None:
+    # lease-literal: CP2D lease Method 4 (share of total debt and cumulative share); maturity
+    # order is this implementation's reading (one facility in every oracle case)
+    loan = _base_operands().facilities[0]
+    early = replace(
+        loan,
+        facility_id="a-loan",
+        principal=Decimal(20),
+        commitment=Decimal(20),
+        drawn_amount=Decimal(20),
+        maturity_date=date(2027, 6, 30),
+    )
+    late = replace(
+        loan,
+        facility_id="b-loan",
+        principal=Decimal(30),
+        commitment=Decimal(30),
+        drawn_amount=Decimal(30),
+    )
+    b = _compose(replace(_base_operands(), facilities=(late, early)), 24, "10")
+    assert [r.facility.facility_id for r in b.wall] == ["a-loan", "b-loan"]
+    assert [r.share_of_total_debt for r in b.wall] == [Decimal("0.4"), Decimal("0.6")]
+    assert [r.cumulative_share for r in b.wall] == [Decimal("0.4"), Decimal("1.0")]
+    assert b.maturities_in_horizon == Decimal(20)  # 2027-06-30 <= 2027-12-31
+
+
+def test_drawn_revolver_undrawn_is_commitment_less_drawn() -> None:
+    # lease-literal: CP2D lease Method 2/5. undrawn = 30 - 10 = 20; available = 20 + 20 = 40;
+    # resources = 20 + 20 = 40; headroom = 40 - 10 = 30; gap = max(0, 10 - 40) = 0
+    operands = replace(_base_operands(), rcf_commitment=Decimal(30), rcf_drawn=Decimal(10))
+    b = _compose(operands, 24, "10")
+    assert b.undrawn_revolver == Decimal(20)
+    assert b.available_liquidity == Decimal(40)
+    assert b.resources_at_horizon_end == Decimal(40)
+    assert b.headroom == Decimal(30)
+    assert b.funding_gap == 0
+
+
+def test_undrawn_term_commitment_is_commitment_less_drawn() -> None:
+    # lease-literal: CP2D lease Method 2 (T4.18 commitment - drawn = 60 - 50 = 10, not counted)
+    loan = _base_operands().facilities[0]
+    operands = replace(_base_operands(), facilities=(replace(loan, commitment=Decimal(60)),))
+    b = _compose(operands, 24, "10")
+    assert b.undrawn_term_commitment == Decimal(10)
+    assert b.available_liquidity == Decimal(20)

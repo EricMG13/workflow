@@ -8,6 +8,7 @@ stays ``None`` and is never read as zero. No I/O, store, host, session or render
 connections, the read view and the G1 seams are later stages.
 """
 
+import re
 from calendar import monthrange
 from dataclasses import dataclass, replace
 from datetime import date
@@ -16,6 +17,7 @@ from typing import Literal
 
 from deploy_vii.contracts import Contract, Identifier, Text
 from deploy_vii.display import UnitClass, format_date, format_value
+from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
 
 MODULE_ID = "CP-2D"
 HORIZON_BOUNDS = (1, 60)
@@ -124,6 +126,8 @@ class Cp2dInputs:
     operands: Operands
     balance_date: date
     submission: LiquidityBridgeSubmission
+    # The CP-1 fact ids the read view offers (Stage 2 fills it from the view).
+    offered_refs: frozenset[str]
 
 
 # --- the bridge (derived values) --------------------------------------------------------------
@@ -134,8 +138,8 @@ class WallRow:
     facility: Facility
     months_to_maturity: int
     inside_horizon: bool
-    share_of_total_debt: Decimal
-    cumulative_share: Decimal
+    share_of_total_debt: Decimal | None
+    cumulative_share: Decimal | None
 
 
 @dataclass(frozen=True)
@@ -194,7 +198,8 @@ def months_between(start: date, end: date) -> int:
 
 
 def _facilities_known(facilities: tuple[Facility, ...]) -> bool:
-    return all(
+    """Every term of every facility is known; an empty schedule is missing, not zero debt."""
+    return bool(facilities) and all(
         f.principal is not None
         and f.maturity_date is not None
         and f.commitment is not None
@@ -234,26 +239,33 @@ def _wall(
     horizon_end: date,
     total_debt: Decimal | None,
 ) -> tuple[WallRow, ...]:
-    """Rows in maturity order with running share; empty when an operand is missing."""
-    if not _facilities_known(facilities) or total_debt is None or total_debt == 0:
+    """Rows in maturity order with running share; the shares are missing without a positive
+    total debt, and there are no rows while a facility term is missing."""
+    if not _facilities_known(facilities):
         return ()
     ordered = sorted(facilities, key=lambda f: (f.maturity_date or date.max, f.facility_id))
     rows: list[WallRow] = []
     cumulative = _ZERO
     for f in ordered:
         assert f.principal is not None and f.maturity_date is not None
-        share = f.principal / total_debt
-        cumulative += share
+        share = None if total_debt is None or total_debt == 0 else f.principal / total_debt
+        if share is not None:
+            cumulative += share
         rows.append(
             WallRow(
                 facility=f,
                 months_to_maturity=months_between(balance_date, f.maturity_date),
                 inside_horizon=f.maturity_date <= horizon_end,
                 share_of_total_debt=share,
-                cumulative_share=cumulative,
+                cumulative_share=None if share is None else cumulative,
             )
         )
     return tuple(rows)
+
+
+# Runway gap reasons fixed by lease Method 3 (expected.json for the first).
+RUNWAY_NO_MINIMUM = "Not calculable: minimum cash not assessed"
+RUNWAY_NO_REVOLVER = "Not calculable: revolver undisclosed"
 
 
 def _runway(
@@ -265,14 +277,14 @@ def _runway(
 ) -> tuple[RunwayState, str | None, Decimal | None]:
     """Months until cash reaches minimum cash from run-rate cash flow alone (Method 3)."""
     if minimum_cash is None:
-        return "missing", "minimum cash not assessed", None
+        return "missing", RUNWAY_NO_MINIMUM, None
     if annual is None or cash is None:
-        return "missing", "run-rate cash flow or cash missing", None
+        return "missing", None, None
     if undrawn is None:
         # A revolver is never negative, so cash alone clearing the minimum is enough.
         if annual >= 0 and cash - minimum_cash >= 0:
             return "not_reached", None, None
-        return "missing", "revolver undisclosed", None
+        return "missing", RUNWAY_NO_REVOLVER, None
     start = cash + undrawn - minimum_cash
     if annual >= 0:
         if start >= 0:
@@ -324,7 +336,9 @@ def compose_bridge(
         to_debt = (
             None
             if available is None or o.total_debt_bs is None or o.total_debt_bs == 0
-            else available / o.total_debt_bs
+            # CP-1 divides with the model context (38 digits, half-even); the cross-check
+            # against T4.10 liquidity_to_debt is exact only on the same division.
+            else CP1_CONTEXT.divide(available, o.total_debt_bs)
         )
         resources = _total(end_cash, undrawn)
         cash_only = _diff(end_cash, minimum_cash)
@@ -469,10 +483,10 @@ _UNPINNED_WHEN_MISSING = (
 
 def _missing(operands: Operands, names: tuple[str, ...]) -> list[str]:
     missing = [n for n in names if getattr(operands, n) is None]
-    if not _facilities_known(operands.facilities):
-        missing.append("T4.18 facility terms")
     if not operands.facilities:
         missing.append("T4.18 facilities")
+    elif not _facilities_known(operands.facilities):
+        missing.append("T4.18 facility terms")
     return missing
 
 
@@ -497,9 +511,13 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
         out.append(("Interest after maturity", "Limitation", INTEREST_AFTER_MATURITY))
     difference = bridge.sources_and_uses_difference
     if difference is not None and difference != 0:
-        # The lease fixes this text but no T2E.7 label for it (left to LEAD; see compute).
+        # Label as the oracle builder pins it (cases/cp2d-owner/builder/build.py limitations()).
         out.append(
-            ("", "Limitation", SOURCES_AND_USES_DIFFER.format(amount=amount_text(difference)))
+            (
+                "Sources and uses difference",
+                "Limitation",
+                SOURCES_AND_USES_DIFFER.format(amount=amount_text(difference)),
+            )
         )
     if bridge.undrawn_revolver is None:
         out.append(("Funding gap on cash alone", "Limitation", FUNDING_GAP_ON_CASH_ALONE))
@@ -727,9 +745,9 @@ def _runway_cell(b: Bridge) -> Cell:
     if b.runway_state == "months":
         months = _required(b.months_to_minimum_cash)
         return Cell("", "known", _months_text(months), months, "months", "calculated")
-    if b.runway_reason == "minimum cash not assessed":
-        return _gap(NOT_ASSESSED, "months")
-    raise ValueError(f"CP-2D has no fixed runway gap wording for: {b.runway_reason}")
+    if b.runway_reason in (RUNWAY_NO_MINIMUM, RUNWAY_NO_REVOLVER):
+        return _gap(b.runway_reason, "months")
+    raise ValueError("CP-2D has no fixed runway gap wording for a missing cash flow or cash")
 
 
 def _runway_table(b: Bridge) -> Table:
@@ -792,8 +810,9 @@ def _wall_table(b: Bridge) -> Table:
                         "calculated",
                     ),
                     _text("Yes" if w.inside_horizon else "No", "calculated"),
-                    _num(w.share_of_total_debt, "PERCENT", "calculated"),
-                    _num(w.cumulative_share, "PERCENT", "calculated"),
+                    # compute refuses a missing or zero total debt, so the shares are known.
+                    _num(_required(w.share_of_total_debt), "PERCENT", "calculated"),
+                    _num(_required(w.cumulative_share), "PERCENT", "calculated"),
                 ],
             )
         )
@@ -942,8 +961,8 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
     """Tables T2E.1-T2E.7, own limitations, claims and status for a valid submission.
 
     Fails closed (ValueError) where the lease or oracle fixes no wording: an undisclosed
-    revolver, any other missing operand, a non-USD facility, an unlabelled T2E.7 row, or a
-    recomputation that disagrees with CP-1's settled T4.10 metrics.
+    revolver, any other missing operand, a non-USD facility, a zero total debt, an invalid
+    submission, or a recomputation that disagrees with CP-1's settled T4.10 metrics.
     """
     o = inputs.operands
     unpinned = _missing(o, _UNPINNED_WHEN_MISSING + _REVOLVER)
@@ -954,11 +973,7 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
     if o.total_debt_bs == 0:
         raise ValueError("CP-2D has no fixed wording for shares of a zero total debt")
     submission = inputs.submission
-    # Basis references are checked against the read view in Stage 2; every other rule here.
-    used = frozenset(r for a in submission.assessments for r in a.basis_refs)
-    if submission.minimum_cash is not None:
-        used |= frozenset(submission.minimum_cash.basis_refs)
-    issues = submission_issues(submission=submission, offered_refs=used)
+    issues = submission_issues(submission=submission, offered_refs=inputs.offered_refs)
     if issues:
         raise ValueError("; ".join(issues))
     bridge = bridge_of(inputs)
@@ -966,9 +981,6 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
     if mismatches:
         raise ValueError("; ".join(mismatches))
     limitations = _limitations(operands=o, bridge=bridge)
-    unlabelled = [text for label, _, text in limitations if not label]
-    if unlabelled:
-        raise ValueError(f"CP-2D has no fixed T2E.7 label for: {unlabelled}")
     tables = (
         _sources_and_uses(o, bridge),
         _position(o, bridge),
@@ -1003,15 +1015,26 @@ BASIS_ISSUE = "basis_refs names a fact the view does not offer"
 INSUFFICIENT_ISSUE = "an Insufficient Information assessment states its limitation"
 LIMITATION_ISSUE = "only an Insufficient Information assessment carries a limitation"
 
-# Only the phrases the lease spells out. The lease also names LME, recommendation and recovery
-# outcome as prohibited categories without fixing their wording (left to LEAD).
-PROHIBITED_PHRASES = (
-    "refinancing path",
+# The stems the oracle pins (manifest analyst_judgment_policy; builder FORBIDDEN list), each
+# matched from a word boundary so a stem also catches its inflections ("refinancing").
+PROHIBITED_STEMS = (
+    "refinanc",
+    "recommend",
+    "buy",
+    "sell",
+    "overweight",
+    "underweight",
+    "fulcrum",
+    "recovery",
     "covenant breach",
     "covenant test is met",
     "in compliance with",
     "covenant compliance",
+    "default will",
+    "lme",
+    "liability management",
 )
+_PROHIBITED = re.compile(r"\b(?:" + "|".join(re.escape(s) for s in PROHIBITED_STEMS) + ")")
 
 
 def _texts(submission: LiquidityBridgeSubmission) -> list[str]:
@@ -1048,7 +1071,7 @@ def submission_issues(
     texts = _texts(s)
     if any(ch.isdigit() for t in texts for ch in t):
         issues.append(DIGIT_ISSUE)
-    if any(p in t.casefold() for t in texts for p in PROHIBITED_PHRASES):
+    if any(_PROHIBITED.search(t.casefold()) for t in texts):
         issues.append(CONCLUSION_ISSUE)
     refs = [r for a in s.assessments for r in a.basis_refs]
     if s.minimum_cash is not None:

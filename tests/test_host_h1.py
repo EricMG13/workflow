@@ -3,7 +3,7 @@
 
 Expectations come from the leases, never from the code under test:
 - rows (`docs/CP3-OWNER-LEASE.md:53-65`, `docs/CP3D-OWNER-LEASE.md:46,87`,
-  `docs/CPDR-OWNER-LEASE.md:31`, `docs/CP1D-OWNER-LEASE.md:30` and
+  `docs/CPDR-OWNER-LEASE.md:33`, `docs/CP1D-OWNER-LEASE.md:30` and
   `cases/cp1d-owner/manifest.json` "fixed H1 mapping"): CP-3 `relative_value` keeps the
   registry's scope; CP-3D `market_implied` reads market and financial only; CP-DR `research`
   every source the pack holds (rulings round 10 item 5); CP-1D `earnings_quality` identity,
@@ -331,22 +331,36 @@ def test_fixed_rows_name_each_leased_step() -> None:
         "CP-3D": ("market_implied",),
         "CP-DR": ("research",),
         "CP-1D": ("earnings_quality",),
+        "CP-1C": ("peer_benchmark",),
+        "CP-2E": ("macro_fx",),
+        "CP-2H": ("rating_triggers",),
+        "CP-4C": ("restructuring_fulcrum",),
+        "CP-8": ("decision_ledger",),
     }
     # CP-3 is a live-contract module: its scope stays the registry's (CP-3 lease :65); the
     # three others are owner-only and take the fixed host scope.
     assert "relative_value" in step_chain("CP-3").pack_sources
-    for module in ("CP-3D", "CP-DR", "CP-1D"):
+    for module in ("CP-3D", "CP-DR", "CP-1D", "CP-1C", "CP-2E", "CP-2H", "CP-4C", "CP-8"):
         with pytest.raises(ValueError, match="has no live step contract"):
             step_chain(module)
     assert set(host._OWNER_SCOPES) == {
         ("CP-3D", "market_implied"),
         ("CP-DR", "research"),
         ("CP-1D", "earnings_quality"),
+        ("CP-1C", "peer_benchmark"),
+        ("CP-2E", "macro_fx"),
+        ("CP-2H", "rating_triggers"),
+        ("CP-4C", "restructuring_fulcrum"),
+        ("CP-8", "decision_ledger"),
     }
 
 
-def _source(source_id: str, *, ready: bool = True) -> Source:
+def _source(source_id: str, *, ready: bool = True, unreadable: bool = False) -> Source:
     """A pack source for the scope functions only (no run reads it)."""
+    if unreadable:
+        return Source(
+            source_id=source_id, name=source_id, status="unreadable", limitation="unreadable"
+        )
     if not ready:
         return Source(source_id=source_id, name=source_id, status="missing", limitation="absent")
     return Source(
@@ -387,6 +401,82 @@ def test_owner_scopes_are_the_leased_sources_in_pack_order() -> None:
     assert _scope("CP-3D", "market_implied", "financial", missing=("market",)) == (
         "financial",
         "market",
+    )
+
+
+def _row_session_checks(
+    module: str, step: str, leased: tuple[str, ...], outside: tuple[str, ...]
+) -> None:
+    """One leased row, from its lease and never from the code: the step is the module's only
+    sourced step; the scope is the leased sources in pack order (the pack lists them reversed,
+    with sources the lease does not name interleaved); a held leased source that is not ready
+    stays named and answers `unavailable`; a source outside the scope answers `not_permitted`."""
+    assert host._SOURCE_STEPS[module] == (step,)
+    pack = runs.make_pack("positive")
+    held = (
+        *(_source(s, ready=s != leased[0]) for s in reversed(leased)),
+        *(_source(s) for s in outside),
+    )
+    prepared = PreparedPack(run=pack.run, sources=held)
+    scope = host._OWNER_SCOPES[(module, step)](prepared)
+    assert scope == tuple(reversed(leased))
+    tools = SourceTools(prepared, scope, extraction=False)
+    for name, arguments in (
+        ("read_pages", {"source_id": leased[0], "first_page": 1, "last_page": 1}),
+        ("search_pack", {"query": leased[0], "source_id": leased[0]}),
+    ):
+        with pytest.raises(SourceError) as caught:
+            tools.stage(name, arguments)
+        assert caught.value.code == "unavailable", name
+    for source in leased[1:]:
+        tools.stage("read_pages", {"source_id": source, "first_page": 1, "last_page": 1})
+    for source in outside:
+        for name, arguments in (
+            ("read_pages", {"source_id": source, "first_page": 1, "last_page": 1}),
+            ("search_pack", {"query": source, "source_id": source}),
+        ):
+            with pytest.raises(SourceError) as caught:
+                tools.stage(name, arguments)
+            assert caught.value.code == "not_permitted", (source, name)
+    # A leased source the pack does not hold is simply not in scope.
+    partial_pack = PreparedPack(run=pack.run, sources=(_source(leased[-1]), *map(_source, outside)))
+    assert host._OWNER_SCOPES[(module, step)](partial_pack) == (leased[-1],)
+
+
+def test_cp1c_peer_benchmark_scope() -> None:
+    """CP-1C lease :31: identity, financial and, when held, peers."""
+    _row_session_checks(
+        "CP-1C", "peer_benchmark", ("identity", "financial", "peers"), ("market", "ratings")
+    )
+
+
+def test_cp2e_macro_fx_scope() -> None:
+    """CP-2E lease :40: the financial source only, never identity."""
+    _row_session_checks("CP-2E", "macro_fx", ("financial",), ("identity", "peers"))
+
+
+def test_cp2h_rating_triggers_scope() -> None:
+    """CP-2H lease :36: identity, financial and ratings."""
+    _row_session_checks(
+        "CP-2H", "rating_triggers", ("identity", "financial", "ratings"), ("peers", "market")
+    )
+
+
+def test_cp4c_restructuring_fulcrum_scope() -> None:
+    """CP-4C lease :46, :85: financial and legal-covenants, never identity."""
+    _row_session_checks(
+        "CP-4C", "restructuring_fulcrum", ("financial", "legal-covenants"), ("identity", "market")
+    )
+
+
+def test_cp8_decision_ledger_scope() -> None:
+    """CP-8 lease :35: prior_case, update and market_update; the cases' `board_minutes` and
+    identity are outside it."""
+    _row_session_checks(
+        "CP-8",
+        "decision_ledger",
+        ("prior_case", "update", "market_update"),
+        ("board_minutes", "identity"),
     )
 
 
@@ -833,6 +923,12 @@ def _forged_owner_tails() -> dict[str, Callable[[Note], tuple[Input, ...]]]:
     def other(note: Note) -> tuple[Input, ...]:
         return (Input(input_id="research-submission", sha256=note.content_hash()),)
 
+    def prefixed(note: Note) -> tuple[Input, ...]:
+        return (Input(input_id="market-implied-x-submission", sha256=note.content_hash()),)
+
+    def suffixed(note: Note) -> tuple[Input, ...]:
+        return (Input(input_id="x-" + MARKET_TAIL, sha256=note.content_hash()),)
+
     def two(note: Note) -> tuple[Input, ...]:
         extra = Input(input_id="extra-submission", sha256=note.content_hash())
         return (*_genuine_owner_tail(note), extra)
@@ -841,6 +937,8 @@ def _forged_owner_tails() -> dict[str, Callable[[Note], tuple[Input, ...]]]:
         "tail digest": digest,
         "tail id": identifier,
         "another -submission id": other,
+        "id with the owner id as a prefix": prefixed,
+        "id with the owner id as a suffix": suffixed,
         "two tails": two,
         "no tail": _no_tail,
     }
@@ -916,6 +1014,28 @@ def test_unsourced_settled_producer_refuses_before_any_payload_read(
     assert host._SUBMISSION_VERIFIED == {}
 
 
+def test_schema_source_is_chosen_before_the_tail_checks(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """L1: a producer with no schema source and a failing two-input tail (the shape of CP-1B's
+    real tail) answers `not_permitted`, never a tail `False` (`identity_mismatch`): the schema
+    source is read first."""
+
+    def two_inputs(note: Note) -> tuple[Input, ...]:
+        return (
+            *_genuine_owner_tail(note),
+            Input(input_id="extra-submission", sha256=note.content_hash()),
+        )
+
+    store, snapshot, producer = _owner_head(monkeypatch, tmp_path, two_inputs)
+    assert host._producer_inputs(store, snapshot, producer) is False
+    monkeypatch.delitem(owner._CORES, "CP-3D")
+    with pytest.raises(SourceError) as caught:
+        host._producer_inputs(store, snapshot, producer)
+    assert caught.value.code == "not_permitted"
+    assert host._SUBMISSION_VERIFIED == {}
+
+
 def test_live_cp1a_head_still_passes_under_the_schema_source(tmp_path: Path) -> None:
     store, snapshot, producer = _cp1a_run(tmp_path, valid=True)
     assert host._producer_inputs(store, snapshot, producer) is True
@@ -940,3 +1060,22 @@ def test_cpdr_held_missing_source_answers_unavailable() -> None:
     with pytest.raises(SourceError) as caught:
         outside.stage("read_pages", {"source_id": "late", "first_page": 1, "last_page": 1})
     assert caught.value.code == "not_permitted"
+
+
+def test_cpdr_held_unreadable_source_answers_unavailable() -> None:
+    """L3: an `unreadable` held source stays in CP-DR's scope as a `missing` one does, and its
+    tools answer `unavailable`, never its bytes."""
+    pack = runs.make_pack("positive")
+    held = PreparedPack(
+        run=pack.run, sources=(*pack.sources, _source("late", unreadable=True), _source("tail"))
+    )
+    scope = host._OWNER_SCOPES[("CP-DR", "research")](held)
+    assert scope == ("identity", "financial", "business", "late", "tail")
+    tools = SourceTools(held, scope, extraction=False)
+    for name, arguments in (
+        ("read_pages", {"source_id": "late", "first_page": 1, "last_page": 1}),
+        ("search_pack", {"query": "late", "source_id": "late"}),
+    ):
+        with pytest.raises(SourceError) as caught:
+            tools.stage(name, arguments)
+        assert caught.value.code == "unavailable", name

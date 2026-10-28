@@ -46,7 +46,8 @@ from deploy_workflow.tools.source import SourceError, SourceTools
 # The steps that may open a source session, per module. CP-0, CP-1, CP-1A, CP-3 and CP-4 have a
 # live step contract and keep the registry's scope (`declared_sources`/`readable_sources`; CP-3:
 # the CP-0 `third_party` sources, docs/CP3-OWNER-LEASE.md:65). CP-1D, CP-3D and CP-DR are
-# owner-only (G1-X §1): their scope is `_OWNER_SCOPES`, their step order their G1-X core's.
+# owner-only (G1-X §1): CP-1D, CP-1C, CP-2E, CP-2H, CP-3D, CP-4C, CP-8 and CP-DR. Their scope is
+# `_OWNER_SCOPES`, their step order their G1-X core's.
 _SOURCE_STEPS = {
     "CP-0": ("source_readiness",),
     "CP-1": ("source_context", "financials"),
@@ -56,6 +57,11 @@ _SOURCE_STEPS = {
     "CP-1D": ("earnings_quality",),
     "CP-3D": ("market_implied",),
     "CP-DR": ("research",),
+    "CP-1C": ("peer_benchmark",),
+    "CP-2E": ("macro_fx",),
+    "CP-2H": ("rating_triggers",),
+    "CP-4C": ("restructuring_fulcrum",),
+    "CP-8": ("decision_ledger",),
 }
 
 
@@ -89,6 +95,16 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-3D", "market_implied"): _held("market", "financial"),
             # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
             ("CP-DR", "research"): _every_held,
+            # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers.
+            ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
+            # docs/CP2E-OWNER-LEASE.md:40: the financial source only, never identity.
+            ("CP-2E", "macro_fx"): _held("financial"),
+            # docs/CP2H-OWNER-LEASE.md:36: identity, financial and ratings.
+            ("CP-2H", "rating_triggers"): _held("identity", "financial", "ratings"),
+            # docs/CP4C-OWNER-LEASE.md:46, :85: financial and legal-covenants, never identity.
+            ("CP-4C", "restructuring_fulcrum"): _held("financial", "legal-covenants"),
+            # docs/CP8-OWNER-LEASE.md:35: prior_case, update and market_update.
+            ("CP-8", "decision_ledger"): _held("prior_case", "update", "market_update"),
         }
     )
 )

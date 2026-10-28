@@ -35,6 +35,12 @@ CP-1D joins the batch at 8a5d3d9. Before CP-2G, the first builder fixes CP-1D's 
 ## Builder (user, 2026-10-28: "use opus for batch connection")
 Each batch builder is an Opus implementer (`general-purpose`, `model: opus`), one fresh agent per module, run in sequence on the batch branch. Commits end `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
+## Parallel connectors (user, 2026-10-28: "use multiple agents for connectors")
+- CP-1C builds on `claude/s2-batch`. CP-3C, CP-2H and CP-4C build in parallel, each on its own branch `claude/s2b-<cp>` in worktree `../s2b-<cp>`, cut at batch 8d5d404, which holds CP-2G, CP-2D, CP-4 and CP-2A.
+- Parallel builders do not touch `docs/reuse/manifest.json`. The integration pass adds and chains the D12 records when it merges.
+- Registration-order assertions use a base prefix plus "after its dependencies", so parallel appends merge cleanly.
+- An integration pass then merges the three onto `claude/s2-batch`. The stage-level class test comes last.
+
 ## Process differences from brief.md
 - There is no review after your module. Write your report as text; the controller saves it to `work/build/stage2/batch/<cp>-report.md`.
 - Source quotes rule (b): never read a figure from a model quote. CP-4C `source_row` complies (Q-SQ1). Model-typed judgements are outside the rule.

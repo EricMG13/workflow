@@ -1271,3 +1271,43 @@ def test_reads_accept_what_the_normalised_quote_states(edits: list[list[Any]]) -
     expected = EXPECTED["cases"]["positive"]
     assert [_table_dict(t) for t in result.tables] == expected["tables"]
     assert [c.text for c in result.claims] == [c["text"] for c in expected["claims"]]
+
+
+# --- round 6h (the CP-3D 6g readings) ----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("percent", "issues"),
+    (
+        ("070", ["recovery: percent_text 070 must have no leading zero"]),
+        ("0100", ["recovery: percent_text 0100 must have no leading zero"]),  # before the bound
+        ("0.5", []),
+    ),
+)
+def test_6h_recovery_percent_text_gets_the_leading_zero_check(
+    percent: str, issues: list[str]
+) -> None:
+    raw = _edited(SUBMISSIONS["positive"], [["recovery.percent_text", percent]])
+    got = cp3d.submission_issues(submission=_submission(raw), context=_context("positive"))
+    assert list(got) == issues
+
+
+@pytest.mark.parametrize(
+    ("index", "level", "issue"),
+    (  # a shape check, so it comes before the label check: neither token is labelled as quoted
+        (0, "0200", "observations[0]: level_text 0200 must have no leading zero"),
+        (2, "0098.50", "observations[2]: level_text 0098.50 must have no leading zero"),
+    ),
+    ids=("bid-at-the-offer", "talk-at-the-bid"),
+)
+def test_6h_leading_zero_comes_before_the_label_check(index: int, level: str, issue: str) -> None:
+    raw = _edited(
+        SUBMISSIONS["positive"],
+        [
+            [f"observations.{index}.locator", "page:9"],
+            [f"observations.{index}.quote", _LZ_PAGE.split("\n")[1]],
+            [f"observations.{index}.level_text", level],
+        ],
+    )
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_lz_context())
+    assert list(issues) == [issue]

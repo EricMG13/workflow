@@ -594,7 +594,9 @@ def _check_recovery(sub: MarketImpliedSubmission, out: _Issues) -> None:
     elif rec is not None:
         out.analyst_text("recovery.rationale", rec.rationale)
         ok = _RECOVERY.match(rec.percent_text) is not None
-        if not ok or not Decimal(0) <= Decimal(rec.percent_text) < PAR:
+        if _LEADING_ZERO.match(rec.percent_text):  # ruling 6h: before the shape and bound
+            out.add(f"recovery: percent_text {rec.percent_text} {_NO_LEADING_ZERO}")
+        elif not ok or not Decimal(0) <= Decimal(rec.percent_text) < PAR:
             out.add("recovery: percent must be at least 0 and below 100")
 
 

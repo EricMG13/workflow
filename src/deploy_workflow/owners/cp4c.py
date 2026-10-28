@@ -43,6 +43,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-4C"
 STEP_ID = "restructuring_fulcrum"
@@ -670,11 +671,16 @@ HIGH_ISSUE = (
 
 
 FieldKind = Literal["name", "run", "plain"]
+# The reference delimiters of composed claim text (`{fact_id|token}`, `[fact_id]`): a claim name or
+# valuation label holding one does not compose, so it is refused (round 12 B7). `|` is no
+# delimiter outside a reference.
+_RESERVED = re.compile(r"[{}\[\]]")
 
 
 def _text_fields(sub: RestructuringSubmission) -> list[tuple[str, str | None, FieldKind]]:
     """(path, text, kind) of every text field, in the pinned order: a class name or valuation
-    label (one line, not empty: round 8 A-2 #9), run text (the rationales) or plain text."""
+    label (one line, no bare figure, no reference syntax: round 8 A-2 #9, round 11 B3, round 12
+    B7), run text (the rationales) or plain text. No kind may be blank (`blank.is_blank`)."""
     out: list[tuple[str, str | None, FieldKind]] = []
     for i, c in enumerate(sub.claims):
         out += [(f"claims[{i}].name", c.name, "name")]
@@ -926,22 +932,22 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
     for path, text, kind in _text_fields(sub):
         if text is None:
             continue
+        if is_blank(text):  # round 11 blank class and round 12 B10, every kind (R3 M2)
+            issues.append(f"{path}: empty text")
+            continue
         if kind == "name":  # a name or label is no run text and is not guarded (round 8 A-2 #9)
-            if not text.strip():
-                issues.append(f"{path}: empty text")
-            elif text.splitlines() != [text]:
+            if text.splitlines() != [text]:
                 issues.append(f"{path}: one line only")
             else:  # round 11 B3: as the claims spell it (a valuation label in lower case)
                 spelt = text.lower() if path.startswith("valuation") else text
                 issues += [
                     f"{path}: Bare figure: {t}" for t in prose.bare_figures(spelt, names=names)
                 ]
+                if _RESERVED.search(text):  # round 12 B7: CP-8's pinned frame
+                    issues.append(f"{path}: reference syntax is not allowed")
             continue
         if kind == "run":
-            if not text.strip():
-                issues.append(f"{path}: empty text")
-            else:
-                issues += [f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)]
+            issues += [f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)]
         issues += guard_issues(path, text)
     return tuple(issues)
 

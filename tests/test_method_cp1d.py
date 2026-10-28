@@ -6,12 +6,14 @@ expected value.
 """
 
 import copy
+import dataclasses
 import json
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from deploy_vii.contracts import Source, Span
 from deploy_workflow.owners import cp1d
@@ -81,11 +83,14 @@ def _cp1() -> cp1d.Cp1Operands:
 
 
 def _inputs(
-    pack: str, payload: dict[str, Any], cp1b: cp1d.Cp1bState = "unbound"
+    pack: str,
+    payload: dict[str, Any],
+    cp1b: cp1d.Cp1bState = "unbound",
+    cp1: cp1d.Cp1Operands | None = None,
 ) -> cp1d.EarningsQualityInputs:
     return cp1d.EarningsQualityInputs(
         sources=_pack_sources(pack),
-        cp1=_cp1(),
+        cp1=_cp1() if cp1 is None else cp1,
         submission=cp1d.EarningsQualitySubmission.model_validate_json(json.dumps(payload)),
         cp1b=cp1b,
     )
@@ -102,7 +107,7 @@ def _citation(c: Any) -> dict[str, str]:
 def _assert_fact(mine: cp1d.CellFact, want: dict[str, Any]) -> None:
     record = mine.record()
     for key, value in want.items():
-        got = record[key]
+        got: Any = record[key]
         if key == "citations":
             got = [_citation(c) for c in got]
         if key == "derives_from":
@@ -325,6 +330,103 @@ def test_bridge_table_rule() -> None:
     assert gap is not None
     assert gap.items[-1].amount is None
     assert gap.proposed_total is None and gap.management_ebitda is None
+
+
+A03_BASIS = "They were 0.20 in each of the four quarters"
+
+
+@pytest.mark.parametrize("given", ["fraction", "basis"])
+def test_partly_supported_recurring_composes_as_zero(given: str) -> None:
+    """Lease recipe: Recurring forces f = 0, and accepted is a known 0 from applied_fraction.
+
+    In the positive case a03 (Supported, Recurring) already has f = 0, so every fact, table,
+    claim and limitation equals the oracle except a03's achievability text."""
+    payload = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    a03 = payload["assessments"][2]
+    a03["achievability"] = "Partly supported"
+    if given == "fraction":
+        a03["accepted_fraction"] = "0.50"
+    else:
+        a03["accepted_basis"] = {**a03["evidence"][0], "quote": A03_BASIS}
+    inputs = _inputs("positive", payload)
+    assert cp1d.validation_issues(inputs) == ()
+    result = cp1d.compute(inputs)
+    base = EXPECTED["cases"]["positive"]
+    achievability = {"text": "Partly supported", "shown": "Partly supported"}
+    want = [
+        {**f, **achievability} if f["fact_id"] == "T1D.2.a03.achievability" else f
+        for f in base["facts"]
+    ]
+    _assert_facts(result, want)
+    assert _tables(result) == base["tables"]
+    assert _claims(result) == base["claims"]
+    assert list(result.limitations) == base["own_limitations"]
+    assert _operands(result) == base["operands"]
+
+
+def _with_adjusted_ebitda(amount: Decimal) -> cp1d.Cp1Operands:
+    cp1 = _cp1()
+    return dataclasses.replace(
+        cp1, adjusted_ebitda=dataclasses.replace(cp1.adjusted_ebitda, amount=amount)
+    )
+
+
+def test_nonpositive_ebitda_fails_closed_alike_for_every_pack() -> None:
+    """Until LEAD rules: no issue from validation, one ValueError text from compute, any pack."""
+    messages = set()
+    for case in CASES:
+        inputs = _inputs(
+            case, SUBMISSIONS[case]["earnings_quality"], cp1=_with_adjusted_ebitda(Decimal(-5))
+        )
+        assert cp1d.validation_issues(inputs) == ()
+        with pytest.raises(ValueError) as raised:
+            cp1d.compute(inputs)
+        messages.add(str(raised.value))
+    assert len(messages) == 1, messages
+
+
+@pytest.mark.parametrize(
+    ("where", "value"),
+    [
+        ("confidence", "high"),
+        ("confidence", "HIGH"),
+        ("confidence", "Very high"),
+        ("category", "Whatever"),
+        ("severity", "Whatever"),
+    ],
+)
+def test_judgment_enums_are_the_product_literals(where: str, value: str) -> None:
+    payload = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    if where == "severity":
+        payload["gaps"][0]["severity"] = value
+    elif where == "category":
+        payload["assessments"][0]["category"] = value
+    else:
+        payload["overall"]["confidence"] = value
+    with pytest.raises(ValidationError):
+        cp1d.EarningsQualitySubmission.model_validate_json(json.dumps(payload))
+
+
+def test_partial_composition_resolves_module_totals_only() -> None:
+    """r03 fails a01's shape; a02 naming a module total is not an issue, an unknown id is."""
+    refusal = _submitted_refusal("r03")
+    payload = copy.deepcopy(refusal["payload"])
+    payload["assessments"][1]["rationale"] += " Supported EBITDA is {T1D.3.supported.value|US$ m}."
+    issues = cp1d.validation_issues(_inputs("positive", payload))
+    assert list(issues) == refusal["expected_issues"]
+    payload["assessments"][1]["rationale"] += " Nothing is {T1D.9.none.value|US$ m}."
+    issues = cp1d.validation_issues(_inputs("positive", payload))
+    assert list(issues) == [*refusal["expected_issues"], "Unresolved reference: T1D.9.none.value"]
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_module_ids_equal_a_full_composition(case: str) -> None:
+    inputs = _case_inputs(case)
+    result = cp1d.compute(inputs)
+    source = next((s for s in inputs.sources if s.source_id == "bridge"), None)
+    bridge = None if source is None else cp1d.parse_bridge([p.text for p in source.spans])
+    ids = cp1d.module_fact_ids(bridge, len(inputs.submission.gaps))
+    assert ids == frozenset(f.fact_id for f in result.facts)
 
 
 @pytest.mark.skip(reason="Stage 2/4: needs a store, a CP-1 promotion and G1 execution")

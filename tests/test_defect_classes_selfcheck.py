@@ -20,6 +20,7 @@ from defect_classes import (
     NBSP,
     SOFT_HYPHEN,
     TEXT_CASES,
+    Adapter,
     BlankCase,
     QuoteCase,
     blank_failure,
@@ -27,6 +28,7 @@ from defect_classes import (
     label_cases,
     quote_failure,
 )
+from pydantic import ValidationError
 
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted
 
@@ -56,15 +58,38 @@ def test_case_is_well_formed(c: QuoteCase) -> None:
         assert any(ch.isdigit() for ch in c.value) and c.value == c.value.strip()
 
 
+def _same(a: str, b: str) -> bool:
+    """Equal under `quotes.quoted`: each is a contiguous normalised substring of the other."""
+    return quoted(a, b) and quoted(b, a)
+
+
 @pytest.mark.parametrize("c", REFUSED, ids=lambda c: c.case_id)
 def test_refused_case_differs_from_its_accepted_twin(c: QuoteCase) -> None:
+    """Proves only that the refused case is not a normalisation-equal spelling of an accepted
+    case (refusing it does not contradict its twin under `quotes.quoted`). It does not prove the
+    expected outcome itself: a case wrongly marked refused can still differ from its twin."""
     assert c.twin is not None
     twin = case(c.twin, _group(c))
     assert twin.accepted and twin.twin is None and twin.kind == c.kind
     assert quoted(twin.quote, twin.page)
-    same_page = quoted(twin.quote, c.page)
-    same_value = quoted(twin.value, c.value) and quoted(c.value, twin.value)
-    assert not (same_page and same_value), "refusing it would contradict its twin"
+    assert not (
+        _same(c.page, twin.page) and _same(c.quote, twin.quote) and _same(c.value, twin.value)
+    )
+    assert (c.value == twin.value) == (c.defect != "wrap"), "a twin keeps the value, except B3's"
+
+
+def test_edge_cut_twins_are_the_nearest_accepted_edge_case() -> None:
+    for c in REFUSED:
+        if c.defect != "edge_cut":
+            continue
+        twin = case(str(c.twin), FIGURE_CASES)
+        assert twin.defect == "edge_cut" and twin.case_id.startswith(("edge-start-", "edge-end-"))
+        starts = normalise(c.quote).startswith(c.value)
+        assert twin.case_id.startswith("edge-start-" if starts else "edge-end-"), c.case_id
+    for cid in ("edge-prefix-25", "edge-minus-1.25", "edge-10", "edge-minus-0.25"):
+        c = case(cid, FIGURE_CASES)
+        twin = case(str(c.twin), FIGURE_CASES)
+        assert c.quote == twin.quote and not _same(c.page, twin.page), "only the page differs"
 
 
 @pytest.mark.parametrize("c", REFUSED, ids=lambda c: c.case_id)
@@ -121,10 +146,12 @@ def test_label_needs_two_letters_and_a_family_figure() -> None:
         label_cases("bid", "0.25")
 
 
-def test_blank_cases_are_whitespace_only() -> None:
+def test_blank_cases_split_empty_from_whitespace_only() -> None:
     assert [c.value for c in BLANK_CASES] == list(BLANK_VALUES)
     for c in BLANK_CASES:
         assert not c.value.strip() and quoted(c.quote, c.page)
+        assert c.whitespace_only == (c.value != "")
+    assert [c.value for c in BLANK_CASES if not c.whitespace_only] == [""]
 
 
 # --- the assertion helpers, against plain readers written here (no owner) ----------------------
@@ -149,8 +176,57 @@ def test_quote_failure_reports_a_wrong_outcome() -> None:
     assert quote_failure(shy, _naive, refusal) == f"shy-name: expected accepted, got {[refusal]}"
 
 
+def _schema_refuses_empty(page: str, quote: str, value: str) -> Sequence[str]:
+    """A `Text` field: pydantic's min_length refusal of "" stands; whitespace gets the frame."""
+    if value == "":
+        raise ValidationError.from_exception_data(
+            "Text",
+            [
+                {
+                    "type": "string_too_short",
+                    "loc": ("text",),
+                    "input": value,
+                    "ctx": {"min_length": 1},
+                }
+            ],
+        )
+    return ("text: empty text",) if not value.strip() else ()
+
+
+def _issue_refuses_empty(page: str, quote: str, value: str) -> Sequence[str]:
+    """A validator that reports the schema refusal of "" as an issue (CP-L10's shape step)."""
+    if value == "":
+        return ("text: String should have at least 1 character",)
+    return _empty_frame(page, quote, value)
+
+
 def test_blank_failure_needs_the_frame() -> None:
     blank: BlankCase = BLANK_CASES[1]
     assert blank_failure(blank, _empty_frame, "text: empty text") is None
     message = blank_failure(blank, _naive, "text: empty text")
     assert message is not None and "expected 'text: empty text'" in message
+
+
+@pytest.mark.parametrize("adapter", [_schema_refuses_empty, _issue_refuses_empty, _empty_frame])
+def test_empty_text_may_keep_an_existing_refusal(adapter: Adapter) -> None:
+    """Controller decision (library fix 1): "" passes with any refusal; whitespace needs the frame."""
+    for c in BLANK_CASES:
+        assert blank_failure(c, adapter, "text: empty text") is None, c.case_id
+
+
+def test_empty_text_still_needs_a_refusal() -> None:
+    def accepts_empty(page: str, quote: str, value: str) -> Sequence[str]:
+        return () if value == "" else _empty_frame(page, quote, value)
+
+    empty = next(c for c in BLANK_CASES if not c.whitespace_only)
+    message = blank_failure(empty, accepts_empty, "text: empty text")
+    assert message is not None and "expected a refusal" in message
+
+
+def test_whitespace_only_text_does_not_accept_a_schema_refusal() -> None:
+    def schema_everywhere(page: str, quote: str, value: str) -> Sequence[str]:
+        return ("text: String should have at least 1 character",) if not value.strip() else ()
+
+    for c in BLANK_CASES:
+        failed = blank_failure(c, schema_everywhere, "text: empty text") is not None
+        assert failed == c.whitespace_only, c.case_id

@@ -21,11 +21,20 @@ Rules encoded (`docs/rulings/2026-10-28-stage1.md`):
   soft hyphen, mapped dash or NBSP reads as the page shows it.
 - `R11_BLANK`: round 11 "Blank text is one defect class". Every analyst text field refuses
   whitespace-only text with the module's pinned empty-text frame, or `<path>: empty text`.
+  Controller decision (library fix 1): for `""` an existing refusal stands, such as a `Text`
+  field's pydantic `min_length=1` (raised, or reported as an issue); the frame is required only
+  for whitespace-only text (`value != ""` and `value.strip() == ""`).
 
 Outcomes. A refused case expects the field's pinned refusal (passed in by the module, usually its
 "does not occur in the quote" frame) among the issues. An accepted case expects that refusal to be
 absent; other issues the field's own bounds or shape raise for the value are outside these classes.
-Every refused case names an accepted twin with the same value whose page prints it plainly.
+Every refused case names an accepted twin, its nearest accepted counterpart: the same value
+(except `wrap-split`, whose twin holds the joined spelling) on a page that prints the figure or
+name plainly. An edge cut's twin is the accepted edge case with the same or nearest quote
+(`edge-start-<f>` or `edge-end-<f>`), so the pair differs mainly in the page. The self-check proves
+only that a refused case is not a normalisation-equal spelling of its twin (page, quote and value
+are not all equal under `quotes.quoted`); it does not prove the expected outcome, which rests on
+the rulings.
 
 Cases the rulings do not pin are not here (listed in the inventory report), for example a value
 carrying its own soft hyphen, or a joined value against a wrapped quote.
@@ -34,6 +43,8 @@ carrying its own soft hyphen, or a joined value against a wrapped quote.
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from typing import Literal
+
+from pydantic import ValidationError
 
 Defect = Literal["genuine", "soft_hyphen", "dashes", "nbsp", "signs", "edge_cut", "wrap"]
 # figure: an unlabelled figure read from the quote; label: a figure read after a label the module
@@ -69,7 +80,7 @@ class QuoteCase:
     value: str
     accepted: bool
     ruling: str
-    twin: str | None = None  # an accepted case with the same value (refused cases only)
+    twin: str | None = None  # the nearest accepted counterpart (refused cases only)
 
 
 @dataclass(frozen=True)
@@ -78,6 +89,7 @@ class BlankCase:
     value: str
     page: str  # a genuine page and quote, for a field whose text must sit beside a quote
     quote: str
+    whitespace_only: bool  # False for "": an existing refusal stands, the frame is not required
     ruling: str = R11_BLANK
 
 
@@ -117,8 +129,9 @@ FIGURES = ("25", "1.25")
 
 
 def _family(f: str) -> tuple[QuoteCase, ...]:
-    """The cases built the same way for figure `f`; ids end in `-<f>`, twins are `genuine-<f>`."""
-    twin = f"genuine-{f}"
+    """The cases built the same way for figure `f`; ids end in `-<f>`; twins are `genuine-<f>`, and
+    `edge-start-<f>` or `edge-end-<f>` for an edge cut."""
+    twin, start, end = f"genuine-{f}", f"edge-start-{f}", f"edge-end-{f}"
     rest = " percent over the reference rate."
     return (
         _genuine(f),
@@ -154,10 +167,10 @@ def _family(f: str) -> tuple[QuoteCase, ...]:
         ),
         # Edge cut (round 11 B1): the figure touches an edge of the normalised quote.
         _figure(
-            f"edge-prefix-{f}", "edge_cut", _level(f"4{f}"), f, R11_B1, quote=f + rest, twin=twin
+            f"edge-prefix-{f}", "edge_cut", _level(f"4{f}"), f, R11_B1, quote=f + rest, twin=start
         ),
         _figure(
-            f"edge-minus-{f}", "edge_cut", _level(f"-{f}"), f, R11_B1, quote=f + rest, twin=twin
+            f"edge-minus-{f}", "edge_cut", _level(f"-{f}"), f, R11_B1, quote=f + rest, twin=start
         ),
         _figure(
             f"edge-close-paren-{f}",
@@ -166,7 +179,7 @@ def _family(f: str) -> tuple[QuoteCase, ...]:
             f,
             R11_B1,
             quote=f"{f}){rest}",
-            twin=twin,
+            twin=start,
         ),
         _figure(
             f"edge-open-paren-{f}",
@@ -175,7 +188,7 @@ def _family(f: str) -> tuple[QuoteCase, ...]:
             f,
             R11_B1,
             quote=f"The level is ({f}",
-            twin=twin,
+            twin=end,
         ),
         _figure(
             f"edge-end-digit-{f}",
@@ -184,7 +197,7 @@ def _family(f: str) -> tuple[QuoteCase, ...]:
             f,
             R11_B1,
             quote=f"The level is {f}",
-            twin=twin,
+            twin=end,
         ),
         _figure(f"edge-start-{f}", "edge_cut", _level(f), f, R11_B1, quote=f + rest),
         _figure(f"edge-end-{f}", "edge_cut", _level(f), f, R11_B1, quote=f"The level is {f}"),
@@ -216,7 +229,18 @@ FIGURE_CASES: tuple[QuoteCase, ...] = (
     _figure("sign-2024-2025", "signs", "The level is fixed for 2024-2025.", "2025", R10_SIGN),
     _figure("sign-95-96", "signs", _level("95-96"), "96", R10_SIGN),
     _figure("sign-s-350", "signs", "The level is S-350 over the reference rate.", "350", R10_SIGN),
-    # The round 11 B1 examples with their own figures.
+    # The round 11 B1 examples with their own figures, and their accepted edge twins.
+    *(
+        _figure(
+            f"edge-start-{v}",
+            "edge_cut",
+            _level(v),
+            v,
+            R11_B1,
+            quote=f"{v} percent over the reference rate.",
+        )
+        for v in ("0", "0.25")
+    ),
     _figure(
         "edge-10",
         "edge_cut",
@@ -224,7 +248,7 @@ FIGURE_CASES: tuple[QuoteCase, ...] = (
         "0",
         R11_B1,
         quote="0 percent over the reference rate.",
-        twin="genuine-0",
+        twin="edge-start-0",
     ),
     _figure(
         "edge-minus-0.25",
@@ -233,7 +257,7 @@ FIGURE_CASES: tuple[QuoteCase, ...] = (
         "0.25",
         R11_B1,
         quote="0.25 percent over the reference rate.",
-        twin="genuine-0.25",
+        twin="edge-start-0.25",
     ),
     _figure(
         "edge-end-decimal",
@@ -242,7 +266,7 @@ FIGURE_CASES: tuple[QuoteCase, ...] = (
         "25",
         R11_B1,
         quote="The level is 25",
-        twin="genuine-25",
+        twin="edge-end-25",
     ),
 )
 
@@ -358,7 +382,7 @@ def label_cases(label: str, figure: str = FIGURES[0]) -> tuple[QuoteCase, ...]:
 
 BLANK_VALUES = ("", "   ", "\n", " ", "\t ")
 BLANK_CASES: tuple[BlankCase, ...] = tuple(
-    BlankCase(f"blank-{i}", value, f"The {NAME} is quoted by dealers.", NAME)
+    BlankCase(f"blank-{i}", value, f"The {NAME} is quoted by dealers.", NAME, value != "")
     for i, value in enumerate(BLANK_VALUES)
 )
 
@@ -384,10 +408,25 @@ def quote_failure(c: QuoteCase, adapter: Adapter, refusal: str) -> str | None:
     return None
 
 
+def _min_length_refusal(error: ValidationError) -> bool:
+    return all(item["type"] == "string_too_short" for item in error.errors())
+
+
 def blank_failure(c: BlankCase, adapter: Adapter, expected: str) -> str | None:
-    """None when the module refuses the blank value with `expected` (its pinned empty-text frame
-    filled for the field, or `EMPTY_TEXT`); else what it did."""
-    issues = tuple(adapter(c.page, c.quote, c.value))
-    if expected in issues:
-        return None
-    return f"{c.case_id} {c.value!r}: expected {expected!r}, got {list(issues)}"
+    """None when the module refuses the blank value as round 11 and fix 1 require; else what it
+    did. Whitespace-only text needs `expected` (the pinned empty-text frame filled for the field,
+    or `EMPTY_TEXT`). `""` needs any refusal: an issue, or the schema's `min_length` refusal
+    raised as a `ValidationError` (only that error type is taken as the refusal; any other
+    error propagates)."""
+    if c.whitespace_only:
+        issues = tuple(adapter(c.page, c.quote, c.value))
+        if expected in issues:
+            return None
+        return f"{c.case_id} {c.value!r}: expected {expected!r}, got {list(issues)}"
+    try:
+        issues = tuple(adapter(c.page, c.quote, c.value))
+    except ValidationError as error:
+        if _min_length_refusal(error):
+            return None  # the existing schema refusal of "" stands (controller, library fix 1)
+        raise
+    return None if issues else f"{c.case_id} {c.value!r}: expected a refusal, got []"

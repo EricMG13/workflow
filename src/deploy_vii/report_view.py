@@ -1159,6 +1159,17 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         "documents-structure": _Spec(
             "Documents and structure", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
         ),
+        # CP-2D (docs/CP2D-OWNER-LEASE.md, Rendered sections). `liquidity-runway` is also a block
+        # of distressed_restructuring; `_spec_of` is by block id, so this row serves both.
+        "liquidity-runway": _Spec(
+            "Liquidity and cash runway", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
+        ),
+        "maturity-wall": _Spec(
+            "Maturity wall", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
+        ),
+        "funding-gap": _Spec(
+            "Funding gap", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
+        ),
     }
 )
 # Heads and owner codes as FP 03 prints them (``rbot-fp-03-relative-value.dc.html``). CP-3D owns

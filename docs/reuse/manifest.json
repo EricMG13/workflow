@@ -1248,6 +1248,15 @@
       "review": "docs/CP3D-OWNER-LEASE.md"
     },
     {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
+      "sha256": "0b74f88e8ab98a21e43a675335121a27a88cf0badac8e699f8cf7281dbf1f48b",
+      "reason": "Register the CP-2D binding map after CP-2 (docs/CP2D-OWNER-LEASE.md, Files); new bindings/cp2d.py holds FP block bindings only.",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
       "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
@@ -1300,6 +1309,15 @@
       "sha256": "09ab059d832204059f454e4c9077e0c2d02493717080580a80ab44fcb080acba",
       "reason": "Add the CP-2A _DISTRESSED composition (two _Spec rows), its _spec_of entry and the two block ids in the distressed_restructuring preset (D12 registration, rows only); retains the CP-3D _RELATIVE_VALUE composition.",
       "review": "docs/CP2A-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
+      "sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
+      "reason": "Add the three CP-2D _Spec rows (liquidity-runway, maturity-wall, funding-gap) to _COVENANT_REFINANCING (docs/CP2D-OWNER-LEASE.md, Rendered sections).",
+      "review": "docs/CP2D-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

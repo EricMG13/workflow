@@ -572,20 +572,12 @@ def _grid() -> list[tuple[str, cp2e.MacroFxInputs]]:
 
 
 def test_valid_inputs_settle_with_clean_claims() -> None:
-    """Every grid combination composes with prose-clean claims (A3 retires the coverage raise),
-    except a fixed-rate facility whose floor is above zero: A4's limitation text says the shocks
-    are not calculated, which is false when nothing floats, so it fails closed for LEAD."""
-    raised = 0
+    """Every grid combination composes with prose-clean claims: A3 retired the coverage raise and
+    round 6i the fixed-rate floor raise."""
     for label, inputs in _grid():
-        try:
-            result = cp2e.compute(inputs)
-        except ValueError as error:
-            assert label.startswith("fixed/25/"), (label, error)
-            assert str(error).startswith("Floor limitation:"), (label, error)
-            raised += 1
-            continue
+        result = cp2e.compute(inputs)
+        assert result.claims, label
         _assert_prose_clean(result)
-    assert raised == 108  # fixed rate, floor 25: 3 interest x 3 EBITDA x 3 currency x 2 x 2
 
 
 @pytest.mark.parametrize("token", ["(5", "5)"])
@@ -734,9 +726,33 @@ def test_a4_floor_above_zero_limitation() -> None:
     assert result.limitations == tuple(r.cells[0].text for r in result.tables[8].rows)
 
 
-def test_a4_fixed_rate_with_a_floor_above_zero_fails_closed() -> None:
-    inputs = _floor(_inputs("positive"), "25")
+def _fixed(inputs: cp2e.MacroFxInputs) -> cp2e.MacroFxInputs:
     assert inputs.facility is not None
-    fixed = copy.replace(inputs.facility.basis, rate_type="FIXED")
-    with pytest.raises(ValueError, match="Floor limitation"):
-        cp2e.compute(copy.replace(inputs, facility=copy.replace(inputs.facility, basis=fixed)))
+    basis = copy.replace(inputs.facility.basis, rate_type="FIXED")
+    return copy.replace(inputs, facility=copy.replace(inputs.facility, basis=basis))
+
+
+@pytest.mark.parametrize("floor", ["0", "25"])
+def test_round6i_no_floor_limitation_on_fixed_rate_debt(floor: str) -> None:
+    """Round 6i: a floor does not bind a fixed coupon, so neither floor line is emitted; every
+    other limitation stays as built (the positive case's own limitations without its floor line)."""
+    result = cp2e.compute(_fixed(_floor(_inputs("positive"), floor)))
+    positive = EXPECTED["cases"]["positive"]["own_limitations"]
+    floor_line = positive[2]
+    assert floor_line.startswith("The reference rate level is not in any source, so a floor")
+    assert _A4_ABOVE not in result.limitations
+    assert list(result.limitations) == [t for t in positive if t != floor_line]
+    _assert_prose_clean(result)
+
+
+@pytest.mark.parametrize("phrase", ["fixed rates", "prefixed rate"])
+def test_e8_word_boundaries_are_pinned(phrase: str) -> None:
+    """The ruled \\b anchors: "fixed rates" and "prefixed rate" carry no rate phrase."""
+    sentence = f"The facility has a {phrase} coupon on the SOFR reference rate"
+    pages = dict(_pages("positive"))
+    pages["page:5"] += "\n" + sentence
+    sub = copy.deepcopy(SUBMISSIONS["positive"])
+    sub["rate_exposure"]["rate_basis"].update(quote=sentence, rate_type="FIXED")
+    assert cp2e.validate_macro_fx(submission=sub, pages=pages) == (
+        "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
+    )

@@ -22,3 +22,4 @@
 - 2026-10-28 cpl10-stage1 review (mx-adversary) on f4f3f8f: CHANGES REQUIRED (prose.check vs settlement prose.issues -> LEAD; half-even untested; missing-end limitation; operand unit/scale). Fix round 1 folded into the amendment-1 rebase.
 - 2026-10-28 cp1c-stage1 review (mx-adversary) on d1103da: CHANGES REQUIRED (post-validation raises; prohibited scope; sheet basis constants; parser strictness; untested own behaviour). Fix round 1 folded into the amendment-1 follow-up.
 - 2026-10-28 cp3d-stage1 re-review (mx-adversary) on 5f4a87b: APPROVE. Low A (tie test uses a crossed quote) carried to the Stage 1 Fable review; Low B (five valid shapes raise after validation) to LEAD.
+- 2026-10-28 cp2d-stage1-fix1 `pytest tests/test_method_cp2d.py` exit 0, 64 passed 0 failed (0.21 s), branch worktree-agent-a69f2394899aee6d5 c8338f9, 15/16 mutants killed (M11 S&U formula with LEAD), mypy both files 0, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n

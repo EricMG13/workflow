@@ -9,11 +9,22 @@ import copy
 import dataclasses
 import hashlib
 import json
+import re
+from collections.abc import Sequence
 from decimal import ROUND_HALF_EVEN, Context, Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
+from defect_classes import (
+    BLANK_CASES,
+    EMPTY_TEXT,
+    FIGURE_CASES,
+    BlankCase,
+    QuoteCase,
+    blank_failure,
+    quote_failure,
+)
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -819,17 +830,43 @@ def test_hyphen_after_a_letter_or_digit_is_not_a_sign(line: str, issues: tuple[s
         ("a saving of \u22121.80", ["-1.80"]),
         ("a saving of \u20141.80", ["-1.80"]),
         ("a saving of 1.80 and 2.40", ["1.80", "2.40"]),
+        # Round 10 review Low: the "(" side is required; ")" alone after the digits is unsigned.
+        ("saving 1.80)", ["1.80"]),
     ],
 )
 def test_basis_amounts_read_the_printed_sign(quote: str, amounts: list[str]) -> None:
-    """Step 5 counts signed tokens; counts on unsigned text do not change."""
+    """Step 5 counts signed tokens; counts on unsigned text do not change. These quotes are not
+    on the cited page, so no occurrence can show an edge cut (round 11 B1): the citation check
+    refuses them instead."""
     citation = Citation.model_validate(
         {
             **SUBMISSIONS["positive"]["earnings_quality"]["assessments"][0]["accepted_basis"],
             "quote": quote,
         }
     )
-    assert cp1d._basis_amounts(citation) == amounts
+    assert cp1d._basis_amounts(citation, _pack_sources("positive")) == amounts
+
+
+@pytest.mark.parametrize("amount", ["-1.80", "(1.80)", "0"])
+def test_unstated_amount_rule_precedes_the_bounds_text(amount: str) -> None:
+    """Round 10 review Low (ruling 1D7 ahead of round 10's "above 0"): an accepting row that is
+    not Recurring, on an unstated proposed amount, gets `Cannot accept an unstated amount` and no
+    bounds text, whatever the sign of its basis."""
+    payload = copy.deepcopy(SUBMISSIONS["gap"]["earnings_quality"])
+    a04 = payload["assessments"][3]
+    assert a04["recurrence"] == "Not applicable"
+    a04["achievability"] = "Partly supported"
+    a04["accepted_basis"] = {
+        **SUBMISSIONS["positive"]["earnings_quality"]["assessments"][0]["evidence"][0],
+        "quote": f"a saving of {amount}",
+    }
+    issues = cp1d.validation_issues(_inputs("gap", payload))
+    label = _label("gap", 3)
+    assert issues[:2] == (
+        f"Evidence required for an accepted add-back: {label}",
+        f"Cannot accept an unstated amount: {label}",
+    )
+    assert not [issue for issue in issues if issue.startswith(BOUNDS)]
 
 
 @pytest.mark.parametrize(("numerator", "denominator"), [("2.5", "30"), ("1", "30"), ("-1", "30")])
@@ -995,6 +1032,238 @@ def test_partial_composition_checks_like_the_full_module(ref: str) -> None:
     full_issues = list(cp1d.validation_issues(_inputs("positive", full)))
     partial_issues = list(cp1d.validation_issues(_inputs("positive", partial)))
     assert partial_issues == [*refusal["expected_issues"], *full_issues]
+
+
+# --- shared defect classes (AGENTS.md rules 3 and 4; LEAD round 11) -------------------------
+# Quote cases: CP-1D reads one figure, the accepted basis amount, from the basis quote. It has no
+# analyst figure, so a case's value is the amount its page states. The cases run on the gap
+# pack's a04 made Partly supported + Recurring: its proposed amount is unstated, so only "above
+# 0" bounds the basis (LEAD round 10) and any positive amount is accepted. Accepted cases there
+# also get `Recurrence does not fit the add-back type`, which is outside the classes.
+
+DEFECT_ROW = 3
+DEFECT_LABEL = _label("gap", DEFECT_ROW)
+DEFECT_BOUNDS = f"{BOUNDS}{DEFECT_LABEL}"
+DEFECT_EXACTLY_ONE = f"{EXACTLY_ONE}{DEFECT_LABEL}"
+
+
+def _defect_inputs(page: str, quote: str) -> cp1d.EarningsQualityInputs:
+    """a04's basis cites `quote` on page:1 of a one-span source `defect` printing `page`."""
+    sha = hashlib.sha256(page.encode()).hexdigest()
+    payload = copy.deepcopy(SUBMISSIONS["gap"]["earnings_quality"])
+    payload["assessments"][DEFECT_ROW].update(
+        achievability="Partly supported",
+        recurrence="Recurring",
+        accepted_basis={
+            "source_id": "defect",
+            "source_sha256": sha,
+            "locator": "page:1",
+            "quote": quote,
+        },
+    )
+    inputs = _inputs("gap", payload)
+    page_source = _source("defect", "Defect-class page", [{"locator": "page:1", "text": page}], sha)
+    return dataclasses.replace(inputs, sources=(*inputs.sources, page_source))
+
+
+def _basis_adapter(page: str, quote: str, value: str) -> Sequence[str]:
+    """The library `Adapter`; `value` is not placed anywhere (CP-1D has no analyst figure)."""
+    return cp1d.validation_issues(_defect_inputs(page, quote))
+
+
+_FIGURE = re.compile(r"[0-9]+(?:\.[0-9]+)?")
+
+
+def _not_applicable(c: QuoteCase) -> str:
+    """Why a figure case cannot be expressed in CP-1D ("" when it can)."""
+    if c.accepted and Decimal(c.value) <= 0:
+        return "an amount of 0 is the bounds refusal by design"
+    if not c.accepted and c.defect == "soft_hyphen":
+        return "no analyst figure to contradict: CP-1D composes the page's figure itself"
+    if c.accepted and len(_FIGURE.findall(quotes.normalise(c.quote))) != 1:
+        return "the quote prints two figures: the pinned exactly-one rule refuses it by design"
+    return ""
+
+
+QUOTE_CASES = [c for c in FIGURE_CASES if not _not_applicable(c)]
+
+
+def test_defect_class_cases_not_applicable() -> None:
+    """The cases CP-1D cannot express are exactly these (so a library change is seen here)."""
+    assert {c.case_id for c in FIGURE_CASES if _not_applicable(c)} == {
+        "genuine-0",
+        "edge-start-0",
+        *(
+            f"{kind}-{f}"
+            for kind in ("shy-prefix", "en-inside", "em-inside")
+            for f in ("25", "1.25")
+        ),
+        "minus-inside-25",
+        "minus-inside-1.25",
+        "sign-2024-2025",
+        "sign-95-96",
+    }
+
+
+@pytest.mark.parametrize("c", QUOTE_CASES, ids=lambda c: c.case_id)
+def test_defect_class_basis_quote(c: QuoteCase) -> None:
+    """Round 10 signs and parentheses, round 9 M1 normalisation, round 11 B1 edge cut. An edge
+    cut is not counted, so the pinned exactly-one text fires (B1); a sign or accounting
+    parentheses read as negative, so the pinned bounds text fires (round 10). An accepted case
+    reads exactly the page's figure and gets neither."""
+    refusal = DEFECT_EXACTLY_ONE if c.defect == "edge_cut" else DEFECT_BOUNDS
+    assert quote_failure(c, _basis_adapter, refusal) is None
+    inputs = _defect_inputs(c.page, c.quote)
+    if c.accepted:
+        issues = cp1d.validation_issues(inputs)
+        assert DEFECT_BOUNDS not in issues
+        assert DEFECT_EXACTLY_ONE not in issues
+    basis = inputs.submission.assessments[DEFECT_ROW].accepted_basis
+    assert basis is not None
+    read = [c.value] if c.accepted else [] if c.defect == "edge_cut" else [f"-{c.value}"]
+    assert cp1d._basis_amounts(basis, inputs.sources) == read
+
+
+@pytest.mark.parametrize(
+    ("page", "quote"),
+    [
+        # A page minus at a line end: the plain page reading holds "- 25", the joined one "-25".
+        ("The level is -\n25 percent over the reference rate.", "25 percent over the reference"),
+        # A wrapped quote found only with its wrap joined, cut at its end edge (250 on the page).
+        ("The first-priority level is 250 percent.", "The first-\npriority level is 25"),
+        # The same at its start edge (425 on the page): the joined quote keeps the offsets
+        # from its start.
+        ("The level is 425 first-priority points.", "25 first-\npriority points."),
+    ],
+)
+def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
+    """Round 11 B1: every occurrence of the quote (as written and with its wraps joined) in every
+    reading of the page (normalised, and with its wraps joined)."""
+    inputs = _defect_inputs(page, quote)
+    basis = inputs.submission.assessments[DEFECT_ROW].accepted_basis
+    assert basis is not None
+    assert citation_issues((basis,), inputs.sources) == ()
+    assert DEFECT_EXACTLY_ONE in cp1d.validation_issues(inputs)
+    assert cp1d._basis_amounts(basis, inputs.sources) == []
+
+
+@pytest.mark.parametrize(
+    ("page", "quote"),
+    [
+        ("The first-priority level is 25 percent.", "The first-\npriority level is 25"),
+        ("The level is - 25 percent; it was 425 before.", "25 percent;"),
+        ("The level is 25 first-priority points.", "25 first-\npriority points."),
+        # Accounting parentheses need both sides: "(" before a start-edge figure whose ")" is
+        # not right after it, or ")" after an end-edge figure with no "(" right before it.
+        ("The level (25 percent over) holds.", "25 percent over) holds."),
+        ("The level is 25) percent.", "The level is 25"),
+    ],
+)
+def test_edge_figure_whole_on_the_page_is_counted(page: str, quote: str) -> None:
+    """The twins: the same unsigned whole figure at every occurrence composes as the amount."""
+    inputs = _defect_inputs(page, quote)
+    basis = inputs.submission.assessments[DEFECT_ROW].accepted_basis
+    assert basis is not None
+    assert cp1d._basis_amounts(basis, inputs.sources) == ["25"]
+    assert DEFECT_EXACTLY_ONE not in cp1d.validation_issues(inputs)
+
+
+@pytest.mark.parametrize(
+    ("page", "quote", "read", "refusal"),
+    [
+        # Start edge after a page ".": 25 is cut from 0.25.
+        ("The level is 0.25 percent.", "25 percent.", [], DEFECT_EXACTLY_ONE),
+        # End edge with only "." after the digits: 25.5 on the page is cut to "25.".
+        ("The level is 25.5 percent.", "The level is 25.", [], DEFECT_EXACTLY_ONE),
+        ("The level is 25. It holds.", "The level is 25.", ["25"], None),
+        # Start edge with only a sign before the digits: the page character before them is the
+        # quote's "-". A minus there (round 10) is not the unsigned whole figure, so it is not
+        # counted; after a digit it is not a sign, and the quote's own -25 is read.
+        ("The level is -25 percent over the rate.", "-25 percent over the", [], DEFECT_EXACTLY_ONE),
+        (
+            "The level is 4-25 percent over the rate.",
+            "-25 percent over the",
+            ["-25"],
+            DEFECT_BOUNDS,
+        ),
+    ],
+)
+def test_edge_with_a_stop_or_a_sign(
+    page: str, quote: str, read: list[str], refusal: str | None
+) -> None:
+    inputs = _defect_inputs(page, quote)
+    basis = inputs.submission.assessments[DEFECT_ROW].accepted_basis
+    assert basis is not None
+    assert citation_issues((basis,), inputs.sources) == ()
+    assert cp1d._basis_amounts(basis, inputs.sources) == read
+    issues = cp1d.validation_issues(inputs)
+    refusals = [issue for issue in issues if issue in (DEFECT_BOUNDS, DEFECT_EXACTLY_ONE)]
+    assert refusals == ([] if refusal is None else [refusal])
+
+
+def test_edge_cut_at_any_occurrence_is_not_counted() -> None:
+    """Every occurrence is checked: one whole and one cut (from 425) is not counted."""
+    page = "The level is 25 percent; it was 425 percent."
+    inputs = _defect_inputs(page, "25 percent")
+    basis = inputs.submission.assessments[DEFECT_ROW].accepted_basis
+    assert basis is not None
+    assert cp1d._basis_amounts(basis, inputs.sources) == []
+
+
+# Blank text (round 11): every analyst text field. No CP-1D empty-text frame is pinned, so the
+# fallback `<path>: empty text` applies. A `Text` field's "" is the schema's `min_length`
+# refusal (controller decision, library fix 1); a `limitation` of "" gets the frame.
+TEXT_FIELDS: dict[str, tuple[str, tuple[str | int, ...]]] = {
+    "assessments[0].rationale": ("positive", ("assessments", 0, "rationale")),
+    "assessments[0].limitation": ("positive", ("assessments", 0, "limitation")),
+    "assessments[3].rationale": ("positive", ("assessments", 3, "rationale")),
+    "assessments[2].limitation": ("positive", ("assessments", 2, "limitation")),
+    "overall.rationale": ("positive", ("overall", "rationale")),
+    "overall.limitation": ("positive", ("overall", "limitation")),
+    "gaps[0].gap": ("gap", ("gaps", 0, "gap")),
+    "gaps[0].why_it_matters": ("gap", ("gaps", 0, "why_it_matters")),
+    "gaps[0].affected_analysis": ("gap", ("gaps", 0, "affected_analysis")),
+    "gaps[0].action": ("gap", ("gaps", 0, "action")),
+    "gaps[1].gap": ("gap", ("gaps", 1, "gap")),
+    "gaps[1].action": ("gap", ("gaps", 1, "action")),
+    "assessments[1].rationale": ("positive", ("assessments", 1, "rationale")),
+    "assessments[1].limitation": ("gap", ("assessments", 1, "limitation")),
+    "statements_only overall.rationale": ("statements_only", ("overall", "rationale")),
+}
+
+
+def _text_inputs(path: str, text: str) -> cp1d.EarningsQualityInputs:
+    case, keys = TEXT_FIELDS[path]
+    payload = copy.deepcopy(SUBMISSIONS[case]["earnings_quality"])
+    if keys[:2] == ("gaps", 1):  # the fixtures hold one gap; a second copy of it
+        payload["gaps"].append(copy.deepcopy(payload["gaps"][0]))
+    target: Any = payload
+    for key in keys[:-1]:
+        target = target[key]
+    target[keys[-1]] = text
+    return _inputs(case, payload)
+
+
+def _frame(path: str) -> str:
+    return EMPTY_TEXT.format(path=path.split(" ")[-1])
+
+
+@pytest.mark.parametrize("c", BLANK_CASES, ids=lambda c: c.case_id)
+@pytest.mark.parametrize("path", TEXT_FIELDS)
+def test_defect_class_blank_text(path: str, c: BlankCase) -> None:
+    """Whitespace-only text gets `<path>: empty text` and nothing else on a valid case."""
+
+    def adapter(page: str, quote: str, value: str) -> Sequence[str]:
+        return cp1d.validation_issues(_text_inputs(path, value))
+
+    assert blank_failure(c, adapter, _frame(path)) is None
+    if c.whitespace_only:
+        assert adapter(c.page, c.quote, c.value) == (_frame(path),)
+
+
+def test_blank_text_is_refused_by_compute() -> None:
+    with pytest.raises(ValueError, match=re.escape(_frame("gaps[0].action"))):
+        cp1d.compute(_text_inputs("gaps[0].action", " \n"))
 
 
 @pytest.mark.skip(reason="Stage 2/4: needs a store, a CP-1 promotion and G1 execution")

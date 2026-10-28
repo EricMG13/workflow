@@ -457,8 +457,10 @@ def _edited(case: str, page: int, old: str, new: str) -> tuple[Source, ...]:
     return (*frozen, peers.model_copy(update={"spans": spans}))
 
 
-def _with_sources(case: str, edited: tuple[Source, ...], payload: Any = None) -> Any:
-    base = inputs(case, payload=payload)
+def _with_sources(
+    case: str, edited: tuple[Source, ...], payload: Any = None, cp1: dict[str, Fact] | None = None
+) -> Any:
+    base = inputs(case, payload=payload, cp1=cp1)
     return cp1c.PeerBenchmarkInputs(
         issuer_name=base.issuer_name,
         sources=edited,
@@ -666,7 +668,7 @@ def test_round4_b_frozen_no_peers_keeps_its_wording() -> None:
 # not_applicable). Ellsworth stays excluded.
 
 
-def _coinciding() -> cp1c.PeerBenchmarkResult:
+def _coinciding(cp1: dict[str, Fact] | None = None) -> cp1c.PeerBenchmarkResult:
     edited = sources("positive")
     for old, new in (
         (
@@ -693,7 +695,7 @@ def _coinciding() -> cp1c.PeerBenchmarkResult:
         edited = (*frozen, peers.model_copy(update={"spans": spans}))
     body = json.loads(json.dumps(submissions()["positive"]["peer_benchmark"]))
     body["overall"]["rationale"] = "The peer set is described in the tables."
-    return cp1c.compute(_with_sources("positive", edited, payload=body))
+    return cp1c.compute(_with_sources("positive", edited, payload=body, cp1=cp1))
 
 
 def test_1c1_value_not_meaningful_comes_before_a_zero_median() -> None:
@@ -920,7 +922,15 @@ def _cp1_not_known() -> dict[str, Fact]:
     metrics = cp1_metrics()
     coverage = metrics["interest_coverage_adjusted"]
     metrics["interest_coverage_adjusted"] = coverage.model_copy(
-        update={"amount": None, "status": "not_applicable", "limitation": COVERAGE_NA}
+        update={
+            "amount": None,
+            "status": "not_applicable",
+            "limitation": COVERAGE_NA,
+            "unit": "PERCENT",
+            "currency": "USD",
+            "scale": Decimal(1_000_000),
+            "decimals": 2,
+        }
     )
     margin = metrics["adjusted_ebitda_margin"]
     metrics["adjusted_ebitda_margin"] = margin.model_copy(
@@ -959,20 +969,25 @@ def test_b1_copies_carry_cp1_status_and_limitation(
     metric: str, status: str, reason: str, unit: str
 ) -> None:
     facts = _facts(_b1("positive"))
-    source = cp1_metrics()[metric]
+    source = _cp1_not_known()[metric]
     for fact_id in (f"T1C.3.issuer.{metric}", f"T1C.6.{metric}.cp1"):
         fact = facts[fact_id]
-        assert (fact.status, fact.limitation, fact.unit, fact.amount) == (
-            status,
-            reason,
-            unit,
-            None,
-        )
-        assert (fact.period, fact.citations, fact.calculation_id, fact.value_class) == (
+        # round 6g: an unsettled copy takes the metric's unit, currency and scale (a ratio has
+        # no currency and scale 1, as T1C.3's own ratios); every other key stays verbatim
+        assert (fact.status, fact.limitation, fact.amount) == (status, reason, None)
+        assert (fact.unit, fact.currency, fact.scale) == (unit, None, Decimal(1)), fact_id
+        assert (
+            fact.period,
+            fact.citations,
+            fact.calculation_id,
+            fact.value_class,
+            fact.decimals,
+        ) == (
             source.period,
             source.citations,
             source.calculation_id,
             source.value_class,
+            source.decimals,
         ), fact_id
 
 
@@ -1074,8 +1089,8 @@ def test_b1_own_lines_follow_the_peer_source_lines_in_metrics_order() -> None:
         "compared."
     )
     assert limitations[2:4] == [
-        f"The issuer's Adjusted EBITDA margin is not available in CP-1 ({MARGIN_MISSING}), {tail}",
-        f"The issuer's Interest coverage (adjusted) is not available in CP-1 ({COVERAGE_NA}), {tail}",
+        f"The issuer's adjusted EBITDA margin is not available in CP-1 ({MARGIN_MISSING}), {tail}",
+        f"The issuer's interest coverage (adjusted) is not available in CP-1 ({COVERAGE_NA}), {tail}",
     ]
     assert limitations[4:] == frozen[2:]
 
@@ -1108,5 +1123,93 @@ def test_b1_known_cp1_fact_with_the_wrong_unit_still_raises() -> None:
     metrics["total_leverage_adjusted"] = metrics["total_leverage_adjusted"].model_copy(
         update={"unit": "PERCENT"}
     )
+    with pytest.raises(ValueError, match="CP-1 fact unavailable for total_leverage_adjusted"):
+        cp1c.calculation_issues(inputs("positive", cp1=metrics))
+
+
+B1_SENTENCE = (
+    " The outlier test does not apply to the issuer on this metric because its CP-1 value is not "
+    "available."
+)
+
+
+def test_b1_claim_comes_before_the_zero_median_sentence() -> None:
+    """Review M1: the 1C1 order puts the issuer's unknown value ahead of a zero median."""
+    found = _coinciding(cp1=_cp1_not_known())
+    facts = _facts(found)
+    assert facts["T1C.4.adjusted_ebitda_margin.median"].amount == 0
+    assert facts["T1C.3.issuer.adjusted_ebitda_margin"].status == "missing"
+    text = {c.claim_id: c.text for c in found.claims}["T1C.4.adjusted_ebitda_margin"]
+    assert text.endswith(B1_SENTENCE)
+    assert "peer median is zero" not in text
+
+
+def test_b1_claim_sentence_skipped_when_the_median_is_missing_or_no_peer_source() -> None:
+    """Review L1 / round 6g: the median-missing and no-peer-source reasons come first."""
+    for case in ("gap", "no_peers"):
+        frozen = {c["claim_id"]: c["text"] for c in expected()["cases"][case]["claims"]}
+        claims = {c.claim_id: c.text for c in _b1(case).claims}
+        k = "interest_coverage_adjusted"
+        want = frozen[f"T1C.4.{k}"].replace(f"{{T1C.3.issuer.{k}|x}}", f"[T1C.3.issuer.{k}]")
+        assert claims[f"T1C.4.{k}"] == want, case
+        assert B1_SENTENCE not in claims[f"T1C.4.{k}"], case
+
+
+CONFLICTING = "Conflicting: CP-1's reconciliation does not agree"
+
+
+def _cp1_conflicting() -> dict[str, Fact]:
+    metrics = cp1_metrics()
+    leverage = metrics["total_leverage_adjusted"]
+    metrics["total_leverage_adjusted"] = leverage.model_copy(
+        update={"amount": None, "status": "conflicting", "limitation": CONFLICTING}
+    )
+    return metrics
+
+
+def test_6g_conflicting_cp1_fact_takes_the_b1_path() -> None:
+    found = inputs("positive", payload=_plain("positive"), cp1=_cp1_conflicting())
+    assert cp1c.calculation_issues(found) == ()
+    result_ = cp1c.compute(found)
+    facts = _facts(result_)
+    k, source = "total_leverage_adjusted", cp1_metrics()["total_leverage_adjusted"]
+    for fact_id in (f"T1C.3.issuer.{k}", f"T1C.6.{k}.cp1"):
+        fact = facts[fact_id]
+        assert (fact.status, fact.limitation, fact.amount, fact.unit) == (
+            "conflicting",
+            CONFLICTING,
+            None,
+            "MULTIPLE",
+        ), fact_id
+        assert (fact.period, fact.calculation_id) == (source.period, source.calculation_id)
+    for fact_id in (
+        f"T1C.4.{k}.difference",
+        f"T1C.4.{k}.position",
+        f"T1C.4.{k}.of",
+        f"T1C.6.{k}.difference",
+        f"T1C.5.issuer.{k}_deviation",
+        f"T1C.5.issuer.{k}_flag",
+    ):
+        fact = facts[fact_id]
+        assert (fact.status, fact.limitation) == ("missing", NOT_COMPARED), fact_id
+    assert facts[f"T1C.6.{k}.result"].text == "Not compared"
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["positive"]["facts"]}
+    for name in ("n", "median", "outlier_count"):
+        fact_id = f"T1C.4.{k}.{name}"
+        assert _exact(facts[fact_id].amount) == frozen[fact_id]["amount_exact"], fact_id
+    claim = {c.claim_id: c.text for c in result_.claims}[f"T1C.4.{k}"]
+    assert claim.endswith(B1_SENTENCE)
+    tail = (
+        "so its difference from the peer median, its position and its outlier flag are not "
+        "compared."
+    )
+    assert result_.limitations[2] == (
+        f"The issuer's total leverage (adjusted) is not available in CP-1 ({CONFLICTING}), {tail}"
+    )
+
+
+def test_6g_absent_cp1_fact_still_raises() -> None:
+    metrics = cp1_metrics()
+    del metrics["total_leverage_adjusted"]
     with pytest.raises(ValueError, match="CP-1 fact unavailable for total_leverage_adjusted"):
         cp1c.calculation_issues(inputs("positive", cp1=metrics))

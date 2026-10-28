@@ -337,9 +337,12 @@ class Known:
     status: Literal["known"] = "known"
 
 
+Status = Literal["missing", "not_applicable", "conflicting"]  # conflicting: CP-1's only (6g)
+
+
 @dataclass(frozen=True)
 class Unsettled:
-    status: Literal["missing", "not_applicable"]
+    status: Status
     reason: str
 
 
@@ -565,7 +568,7 @@ class _Composer:
         *,
         unit: str | None,
         period: str | None,
-        status: Literal["missing", "not_applicable"] = "missing",
+        status: Status = "missing",
     ) -> None:
         table, row, name = ref
         self._add(
@@ -733,15 +736,18 @@ class _Cp1Cell:
 
 def _cp1_facts(inputs: PeerBenchmarkInputs) -> dict[str, _Cp1Cell]:
     """The CP-1 T4.10 fact per metric. A known one is numeric, in the metric's unit, with a
-    period. A missing or not_applicable one is carried with CP-1's limitation, and a unit of
-    None takes the metric's unit (round 6 B1, round 4 (f)). Anything else is an invariant."""
+    period. A missing, not_applicable or conflicting one is carried with CP-1's limitation and
+    takes the metric's unit, currency and scale (round 6 B1, round 6g). An absent fact, or a
+    known one breaking those rules, is an invariant."""
     found: dict[str, _Cp1Cell] = {}
     for metric in METRICS:
         fact = inputs.cp1_metrics.get(metric.key)
         if fact is None:
             raise ValueError(f"CP-1 fact unavailable for {metric.key}")
-        if (fact.status == "missing" or fact.status == "not_applicable") and fact.limitation:
-            unsettled = fact.model_copy(update={"unit": fact.unit or metric.unit})
+        if fact.status != "known" and fact.limitation:
+            # a ratio has no currency and scale 1, as T1C.3's own ratios
+            metric_basis = {"unit": metric.unit, "currency": None, "scale": Decimal(1)}
+            unsettled = fact.model_copy(update=metric_basis)
             found[metric.key] = _Cp1Cell(unsettled, Unsettled(fact.status, fact.limitation))
             continue
         if fact.status != "known" or fact.unit != metric.unit:
@@ -938,6 +944,8 @@ def _flag_operands(
     if stat.median is None:
         return Unsettled("missing", NO_MEDIAN)
     if isinstance(value, Unsettled):  # the issuer (peer None) has its own wording (round 6 B1)
+        if value.status == "conflicting":  # only the issuer's CP-1 value (round 6g)
+            return Unsettled("missing", NOT_COMPARED)
         if value.status == "missing":
             why = (
                 ISSUER_NOT_STATED
@@ -1159,8 +1167,9 @@ def _limitations(
             f"{absent}: no peer universe, median, position or outlier flag can be formed."
         )
     out += [  # round 6 B1
-        f"The issuer's {m.label} is not available in CP-1 ({own.reason}), so its difference "
-        "from the peer median, its position and its outlier flag are not compared."
+        f"The issuer's {m.label[0].lower()}{m.label[1:]} is not available in CP-1 "
+        f"({own.reason}), so its difference from the peer median, its position and its "
+        "outlier flag are not compared."
         for m in METRICS
         if isinstance(own := cp1[m.key].value, Unsettled)
     ]

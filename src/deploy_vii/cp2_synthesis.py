@@ -481,7 +481,7 @@ def validate_credit_synthesis(
         issues.extend(_basis_issues(path, row, bound))
         for name, text in _texts(row):
             where = f"{path}.{name}"
-            if not text.strip():
+            if prose.is_blank(text):
                 issues.append(f"{where}: empty text")
                 continue
             issues.extend(f"{where}: {issue}" for issue in prose.issues(text, bound, names=names))

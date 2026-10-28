@@ -10,6 +10,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import AfterValidator, Field, model_validator
 
+from deploy_vii import prose
 from deploy_vii.contracts import PREFILLED_MARKER, Contract, Hash, Identifier, Text
 
 Lineage = Literal[
@@ -51,7 +52,7 @@ CEILINGS: dict[LineageBasis, Lineage] = {
 
 
 def _nonblank(value: str) -> str:
-    if not value.strip():
+    if prose.is_blank(value):
         raise ValueError("QA explanations must be nonblank")
     return value
 

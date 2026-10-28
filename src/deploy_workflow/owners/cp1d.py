@@ -556,24 +556,33 @@ def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
 
 
 def _one_whole_run(quote: str) -> bool:
-    """Addendum 4: each reading of the quote (`_readings`) holds exactly one numeral run and
-    it is whole. Owner ruling (fail closed): a digit character outside ASCII 0-9 fails, and a run
-    with a letter directly before or after it is not whole (`Q2`, `2nd`, `2.5m`, `25bps`)."""
+    """Addendum 4 and 5: each reading of the quote (`_readings`) holds exactly one numeral run
+    and it is whole and readable. Fail closed: a numeric character (`isnumeric`) outside ASCII
+    0-9 fails; a run a letter or a Cf/Mn/Me character touches on its left is an identifier
+    (`Q2`, `FY25`); a run directly followed by an ordinal suffix is an ordinal (`2nd`). Other
+    letters after a run leave it readable (`2.5m`, `25bps`)."""
     for reading_text in _readings(quote):
-        if any(
-            not ("0" <= char <= "9")
-            and (char.isdigit() or unicodedata.digit(char, None) is not None)
-            for char in reading_text
-        ):
+        if any(not ("0" <= char <= "9") and char.isnumeric() for char in reading_text):
             return False
         runs = list(_NUMERAL_RUN.finditer(reading_text))
         if len(runs) != 1 or _WHOLE_RUN.fullmatch(runs[0].group()) is None:
             return False
         before = reading_text[: runs[0].start()][-1:]
-        after = reading_text[runs[0].end() :][:1]
-        if before.isalpha() or after.isalpha():
+        if _touches_before(before):  # the one seam for the before-rule
+            return False
+        if _ORDINAL_AFTER.match(reading_text, runs[0].end()):
             return False
     return True
+
+
+# Addendum 5: a run directly followed by st, nd, rd or th (any case) and then no letter is an
+# ordinal; it counts toward exactly-one but cannot be read.
+_ORDINAL_AFTER = re.compile(r"(?:st|nd|rd|th)(?![^\W\d_])", re.IGNORECASE)
+
+
+def _touches_before(char: str) -> bool:
+    """A letter, or a Cf/Mn/Me character, directly before a run touches it (`Q2`, `FY25`)."""
+    return char.isalpha() or unicodedata.category(char) in ("Cf", "Mn", "Me") if char else False
 
 
 def _cited_text(citation: Citation, sources: Sequence[Source]) -> str | None:

@@ -1239,11 +1239,49 @@ HIDDEN_RUN_LINES = [
     "In Q2 a saving of 2.5.",
     "Tranche A1 saves 2.5.",
     "The 2nd saving is 2.5.",
-    "The 2nd saving.",  # the only figure touches a letter
     "A saving of Q2.",  # the only figure touches a letter before it
-    "A saving of 2.5m.",  # accepted cost: a unit letter attached to the figure
-    "A saving of 25bps.",  # accepted cost: a unit letter attached to the figure
+    # Round 13 addendum 5: an ordinal run (st, nd, rd, th in any case, no letter after) counts
+    # but cannot be read.
+    "The 2nd saving.",
+    "The 21ST saving.",
+    "The 3rd saving.",
+    "The 4Th saving.",
+    "The 2nd.",
+    # Round 1 (M1): numerals with no digit value are still a figure the grammar cannot read.
+    "A saving of 2\u00bd.",
+    "A saving of 1.5 and \u00bd more.",
+    "A saving of 1.5 and \u2469 more.",
+    "A saving of 1.5 in \u216b.",
+    "A saving of 1.5 and \u3007 more.",
+    "A saving of 1.5 and \u4e00\u4e8c more.",
+    # Round 1 (L1): an invisible or combining character next to the run counts as touching it.
+    "The Q\u200b1.5 saving",
+    "The Q\u200d1.5 saving",
+    "The Q\u20601.5 saving",
+    "The Q\ufeff1.5 saving",
+    "The Qu\u03011.5 saving",
+    "The \u20dd1.5 saving",  # Me
+    # Round 1 (L2): the letter test is case-blind.
+    "A saving of x2.5.",
 ]
+
+
+@pytest.mark.parametrize(
+    ("line", "amount"),
+    [
+        ("a saving of 2.5m", "2.5"),
+        ("a saving of 25bps", "25"),
+        ("A saving of 2.5M.", "2.5"),
+    ],
+)
+def test_basis_quote_with_a_letter_after_the_figure_reads_it(line: str, amount: str) -> None:
+    """LEAD addendum 4 clarification: a letter after the run is admitted by the round 13
+    trailing guard, so the quote holds one whole run and composes (`2nd` reads 2)."""
+    inputs = _a01_on_page1(line)
+    assert f"{EXACTLY_ONE}{A01_LABEL}" not in cp1d.validation_issues(inputs)  # 25 may fail bounds
+    accepted = inputs.submission.assessments[0].accepted_basis
+    assert accepted is not None
+    assert cp1d._basis_amounts(accepted, inputs.sources) == [amount]
 
 
 @pytest.mark.parametrize("line", HIDDEN_RUN_LINES)
@@ -1279,9 +1317,30 @@ def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
         ("a saving of 2 and \u0662", False),
         ("a saving of 2 and \u00b2", False),
         ("Q2 and 2.5", False),  # a run touching a letter before it
-        ("2nd", False),  # a run touching a letter after it
+        # LEAD addendum 4 clarification: a letter AFTER a run does not break it (the round 13
+        # trailing guard admits one), so a unit letter or an ordinal suffix is a whole run.
+        ("2nd", False),  # ordinal: counts, cannot be read
+        ("21ST", False),
+        ("3rd", False),
+        ("4Th", False),
+        ("1st", False),
+        ("2nds", True),  # a letter after the suffix leaves it readable
+        ("2.5x", True),
+        ("2.5th", False),
+        ("2.5m", True),
+        ("25bps", True),
+        ("2.5M", True),
+        ("The 1.5\u200bnd", True),
+        ("The 1.5\u0304", True),
         ("Q2", False),  # a run touching a letter before it, nothing else
-        ("a saving of 2.5m", False),
+        ("a saving of 2\u00bd", False),  # numeric with no digit value
+        ("a saving of \u2469 and 2.5", False),
+        ("a saving of \u216b and 2.5", False),
+        ("a saving of \u3007 and 2.5", False),
+        ("a saving of \u4e00\u4e8c and 2.5", False),
+        ("The Q\u200b1.5", False),  # Cf before the run
+        ("The Qu\u03011.5", False),  # Mn before the run
+        ("x2.5", False),
     ],
 )
 def test_one_whole_run_is_the_single_rule(quote: str, whole: bool) -> None:

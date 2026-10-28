@@ -2860,3 +2860,21 @@ unreferenced. B1 had no earlier fix round, so this is round 1 of 2 (`fix-1-brief
 the reviewer's probes. The public verifier is read-only and takes 347 s; recorded as a cost for
 the A4 IntegrityWorkflow task, which also carries the A4 transport's sequence-before-argument
 validation ordering noted in the same review.
+
+LEAD takeover (2026-10-28T08:00Z, session `review-wip-worktrees-0145fe`; user decision). The
+previous LEAD session stopped at 04:37Z on the usage limit. Lost and redone:
+- B1 mx-adversary re-review of fix-1 died before reporting; re-dispatched unchanged. The
+  queued B1 full-file run (`full-file-2.log`) was killed at about 38% with no ledger line; it
+  now runs only after that review approves, so a 6 h run does not hold the lock ahead of the
+  L2 and G1 GREEN runs or precede a further B1 fix.
+- L2 fix round 1 died after its RED run (03:56Z); re-dispatched as the same round, resuming
+  from the uncommitted edits in `coordinator-1-source-host`.
+- G1 mx-adversary review after fix-1 had finished; saved from the hand-back as
+  `coordinator-1-owner/work/owner-workflow-g1/review-adversary-1.md`. No HIGH; M1, L2, L3
+  fixed. LEAD rulings: F1 (run keeps caller-owned specs after `create`; L1 not closed at its
+  cause) and F2 (deterministic specs unpinned; `publish()` picks the publisher by mapping
+  order) are fixed in round 2 of 2 (`fix-2-brief.md`): bind the run to `OWNER_SPECS`
+  (a `MappingProxyType`), pin every planned spec, take the publisher from the plan, and have
+  `write_receipt` verify exactly as `verify_owner_run_receipt`. I6's bare
+  `pytest.raises(WorkflowError)` gain code checks; I1–I5 and I7 need no change; I8 is covered
+  by the line-cap waiver.

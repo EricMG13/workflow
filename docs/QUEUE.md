@@ -3068,3 +3068,5 @@ LEAD (2026-10-28): S1a integrated into the LEAD branch at fix round 4 (record `d
 LEAD (2026-10-28): CP-2G owner lease frozen (`docs/CP2G-OWNER-LEASE.md`). CP-1C amended (T1C.1 totals row → new table T1C.8; D8 T1C.1-T1C.8; header in `docs/CP1C-OWNER-LEASE.md`). Every oracle table must now hold one fact per column (`work/lead/owner-preparation-brief.md`); a scan of every owner oracle found only CP-1C (fixed) and CP-L10 (amendment running).
 
 LEAD (2026-10-28): CP-8 (revision 4) and CP-3C (revision 3) owner leases frozen (`docs/CP8-OWNER-LEASE.md`, `docs/CP3C-OWNER-LEASE.md`). Re-pin pass additions: the CP-8 builder gains the one-fact-per-column assertion; CP-3C also re-pins whenever `business_context.py` changes.
+
+LEAD (2026-10-28): CP-L10 amendment 1 re-frozen (`docs/CPL10-OWNER-LEASE.md` header: TL10.5 totals table, full TL10.3 overall row, run-bound TL10.1 markers, r13-r19, ordered citations; L1-L4 rulings binding until the CP-L10 rebuild in the serialised methodology change). The serialised change is now unblocked: D4 + TL10.5 + CP-1C D8 (T1C.1-T1C.8), one re-pin pass. Later CP-L10 revision: lineage of the missing `change` cell.

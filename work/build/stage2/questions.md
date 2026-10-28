@@ -32,6 +32,10 @@ These replace the controller decisions and LEAD questions below where they diffe
   - **Modules' recommendation: it complies; keep it as frozen.** Moving to a row id would change the frozen oracle (90 submissions) and the CP-4C lease.
   - CP-4C's Stage 2 connection waits on CP-2G anyway, so nothing is blocked yet.
 - **Info (model-typed judgements).** Modules reads (b) as not covering these: CP-2G scenario values, CP-2G minimum liquidity, and the CP-4C valuation `multiple` (`cp4c.py:62`, `:98`). They are analyst inputs typed against strict patterns, never parsed from prose or quotes, and labelled as model judgements. Confirm.
+- **Answers (user, via the LEAD multi-round session, 2026-10-28):**
+  - **Q-SQ1: CP-4C `source_row` complies.** The model's quote only selects a page line, by an exact match on its leading cells. Python reads the figure from the page text, never from model-written text. Keep `_row_amount` and its frozen oracle as they are. There is no row-id migration.
+  - **Judgements are outside rule (b).** Rule (b) covers figures taken from sources. It does not cover the model's own pattern-checked judgements: CP-2G scenario `values` and `MinimumLiquidity.amount`, and the CP-4C valuation `multiple`.
+  - **CP-1D round 5 item 12 is confirmed.** The two fail-closed refusals stand, the two readings are recorded as guard limits, and there will be no further CP-1D reading rulings.
 - **CP-1D round 5 item 12** was ruled before the policy. Its two refusals fail closed, so they stand. Its two readings are recorded as guard limits. No further CP-1D reading rulings will be made.
 
 ## Controller decisions (superseded where the rulings differ)

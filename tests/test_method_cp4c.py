@@ -813,7 +813,7 @@ def test_guard_kinds_are_the_pinned_ones() -> None:
     assert cp4c.guard_issues("p", "The recommendations of nobody.") == ()
 
 
-# --- fail-closed points (no wording pinned by the lease, the rulings or the oracle) -------------
+# --- helpers for the round 8 states ---------------------------------------------------------------
 def _ctx_with(case: str, **changes: Any) -> cp4c.Cp4cContext:
     return replace(_context(case), **changes)
 
@@ -822,46 +822,246 @@ def _compute_with(ctx: cp4c.Cp4cContext, payload: dict[str, Any]) -> cp4c.Restru
     return cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_submission(payload)))
 
 
-def test_bound_cp3c_fails_closed() -> None:
-    ctx = _ctx_with("positive", cp3c_status="restricted")
-    with pytest.raises(ValueError, match="CP-3C"):
-        cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs("positive").submission))
+def _payload_issues(
+    payload: dict[str, Any], ctx: cp4c.Cp4cContext | None = None
+) -> tuple[str, ...]:
+    return cp4c.payload_issues(json.dumps(payload), ctx or _context("positive"))
 
 
-def test_term_loan_not_secured_senior_fails_closed() -> None:
-    ctx = _context("positive")
-    unsecured = ctx.cp1.secured_status.model_copy(update={"text": "UNSECURED"})
-    bad = _ctx_with("positive", cp1=replace(ctx.cp1, secured_status=unsecured))
-    with pytest.raises(ValueError, match="SECURED and SENIOR"):
-        cp4c.payload_issues(json.dumps(_bind_all(_payload("positive"))), bad)
+def _records(result: cp4c.RestructuringResult) -> dict[str, dict[str, Any]]:
+    return {c.fact.fact_id: _record(c) for c in result.cells}
 
 
-def test_other_balance_sheet_column_fails_closed() -> None:
-    payload = _bind_all(_payload("positive"))
-    payload["claims"][1]["period_column"] = "Q3 2025-09-30"
-    assert cp4c.payload_issues(json.dumps(payload), _context("positive")) == ()
-    with pytest.raises(ValueError, match="Q4 2025-12-31"):
-        _compute_with(_context("positive"), payload)
+def _oracle_records(case: str) -> dict[str, dict[str, Any]]:
+    return {r["fact_id"]: r for r in EXPECTED["cases"][case]["facts"]}
 
 
-def test_zero_claim_rank_fails_closed() -> None:
-    payload = _bind_all(_payload("positive"))
+def _refact(f: Fact, **changes: Any) -> Fact:
+    return Fact.model_validate({**f.model_dump(), **changes})
+
+
+def _with_cp1(ctx: cp4c.Cp4cContext, metric: str, **changes: Any) -> cp4c.Cp4cContext:
+    t410 = tuple(_refact(f, **changes) if f.row_id == metric else f for f in ctx.cp1.t410)
+    return replace(ctx, cp1=replace(ctx.cp1, t410=t410))
+
+
+def _with_cp2g(ctx: cp4c.Cp4cContext, fact: Fact) -> cp4c.Cp4cContext:
+    ebitda = tuple(
+        replace(e, fact=fact) if e.fact.fact_id == fact.fact_id else e for e in ctx.cp2g.ebitda
+    )
+    return replace(ctx, cp2g=replace(ctx.cp2g, ebitda=ebitda))
+
+
+def _zero_rank_payload() -> dict[str, Any]:
+    """The positive payload plus a rank-3 class reading the statement's Unsecured debt row (0)."""
+    payload: dict[str, Any] = _bind_all(_payload("positive"))
     zero = copy.deepcopy(payload["claims"][2])
     zero.update(class_id="c04", rank="3", name="Unsecured debt")
     zero["amount_quote"]["quote"] = _page_line("page:4", "Unsecured debt  ")
     payload["claims"].append(zero)
     for plan in payload["plan"]:
         plan["treatments"].insert(3, {"class_id": "c04", "treatment": "No recovery"})
-    with pytest.raises(ValueError, match="rank 3"):
-        cp4c.payload_issues(json.dumps(payload), _context("positive"))
+    return payload
 
 
-def test_negative_enterprise_value_fails_closed() -> None:
-    with pytest.raises(ValueError, match="negative"):
-        cp4c.waterfall(
-            classes=(cp4c.ClassClaim("c01", "Loan", 1, cp4c.Val(D(10))),),
-            enterprise_value=cp4c.Val(D(-1)),
+LTM = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+FACILITY = str(T418["facility_id"])
+
+
+# --- round 8 A-2: the 13 states no frozen case pins (docs/rulings/2026-10-28-stage1.md) ----------
+def test_a2_1_bound_cp3c_shows_its_input_status() -> None:
+    ctx = _ctx_with("positive", cp3c_status="restricted")
+    result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs("positive").submission))
+    got, want = _records(result), _oracle_records("positive")
+    assert want["T4E.1.u_cp3c.status"]["text"] == "not part of this run"
+    assert got["T4E.1.u_cp3c.status"]["text"] == "restricted"
+    assert {k for k in want if got[k] != want[k]} == {"T4E.1.u_cp3c.status"}
+    assert list(result.own_limitations) == EXPECTED["cases"]["positive"]["own_limitations"]
+
+
+def test_a2_2_term_loan_not_secured_senior_is_a_validator_issue() -> None:
+    ctx = _context("positive")
+    issue = (
+        f"claims[0].kind: CP-1 T4.18 does not show {FACILITY} SECURED and SENIOR, so no class can "
+        "be secured_debt"
+    )
+    variants = (
+        replace(ctx.cp1, secured_status=_refact(ctx.cp1.secured_status, text="UNSECURED")),
+        replace(ctx.cp1, seniority=_refact(ctx.cp1.seniority, text="SUBORDINATED")),
+        replace(
+            ctx.cp1,
+            secured_status=_refact(
+                ctx.cp1.secured_status, status="missing", text=None, limitation="Not stated"
+            ),
+        ),
+    )
+    payload = _bind_all(_payload("positive"))
+    for cp1 in variants:
+        assert _payload_issues(payload, replace(ctx, cp1=cp1)) == (issue,)
+    # after the v02 kind/source check of the same class
+    payload["claims"][0]["amount_source"] = "not_stated"
+    v02 = next(r for r in EXPECTED["refusals"] if r["id"] == "v02")["expected_issues"][0]
+    assert _payload_issues(payload, replace(ctx, cp1=variants[0])) == (v02, issue)
+
+
+def test_a2_3_other_period_column_is_a_validator_issue() -> None:
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["period_column"] = "Q3 2025-09-30"
+    assert _payload_issues(payload) == (
+        "claims[1].period_column: claims are the 31 December 2025 balances; use Q4 2025-12-31",
+    )
+    payload["claims"][1]["period_column"] = "Q5 2026-03-31"  # the v05 check comes first
+    assert _payload_issues(payload) == (
+        "claims[1].period_column: not a column of the quoted statement: Q5 2026-03-31",
+    )
+
+
+def test_a2_4_other_cp4_rating_or_conditions_stays_fail_closed() -> None:
+    ctx = _context("positive")
+    for fid, text in (
+        ("T4.13.rating.rating", "Moderate"),
+        ("T4.10.r02.conditions", "Consent of the majority lenders"),
+    ):
+        facts = tuple(_refact(f, text=text) if f.fact_id == fid else f for f in ctx.cp4.facts)
+        bad = replace(ctx, cp4=replace(ctx.cp4, facts=facts))
+        with pytest.raises(ValueError, match=r"round 8 A-2 #4") as raised:
+            cp4c.compute(cp4c.Cp4cInputs(context=bad, submission=_inputs("positive").submission))
+        assert "LEAD to" not in str(raised.value)
+
+
+CP1_EBITDA_MISSING = f"Not calculable: EBITDA is missing in CP-1 for {LTM}"
+CP1_EBITDA_NOT_POSITIVE = (
+    f"Not calculable: EBITDA is zero or negative in CP-1 for {LTM} (ZERO_OR_NEGATIVE_DENOMINATOR)"
+)
+
+
+@pytest.mark.parametrize(
+    ("changes", "reason"),
+    [
+        (
+            {"status": "missing", "amount": None, "calculation_id": None, "limitation": "Gone"},
+            CP1_EBITDA_MISSING,
+        ),
+        (
+            {"status": "conflicting", "amount": None, "calculation_id": None, "limitation": "Two"},
+            CP1_EBITDA_MISSING,
+        ),
+        ({"amount": D(0)}, CP1_EBITDA_NOT_POSITIVE),
+        ({"amount": D(-3)}, CP1_EBITDA_NOT_POSITIVE),
+    ],
+    ids=["missing", "conflicting", "zero", "negative"],
+)
+def test_a2_5_cp1_ebitda_not_a_known_positive(changes: dict[str, Any], reason: str) -> None:
+    ctx = _with_cp1(_context("positive"), "ebitda", **changes)
+    result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs("positive").submission))
+    got, want = _records(result), _oracle_records("positive")
+    implied = {f"T4E.3.v0{n}.implied_ltm_multiple" for n in (1, 2, 3)}
+    for fid in implied:
+        assert (got[fid]["status"], got[fid]["limitation"]) == ("missing", reason)
+        assert got[fid]["period"] == want[fid]["period"] == LTM
+    assert {k for k in want if got[k] != want[k]} == implied
+    assert list(result.own_limitations) == EXPECTED["cases"]["positive"]["own_limitations"]
+
+
+def test_a2_6_conflicting_total_debt_is_a_missing_claim() -> None:
+    case = "fixture_debt_missing"
+    base = _context(case)
+    debt = next(f for f in base.cp1.t410 if f.row_id == "total_debt")
+    assert debt.status == "missing"
+    ctx = _with_cp1(base, "total_debt", status="conflicting")
+    result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs(case).submission))
+    old = f"total debt is missing in CP-1 for {LTM}"
+    new = f"total debt is conflicting in CP-1 for {LTM}"
+    exp = EXPECTED["cases"][case]
+    assert any(old in line for line in exp["own_limitations"])
+    want_facts = json.loads(json.dumps(exp["facts"]).replace(old, new))
+    assert [_record(c) for c in result.cells] == want_facts
+    assert list(result.own_limitations) == json.loads(
+        json.dumps(exp["own_limitations"]).replace(old, new)
+    )
+    ref = result.references[0].rows[0].fact  # the copy keeps CP-1's state verbatim (6g)
+    assert (ref.status, ref.limitation) == ("conflicting", debt.limitation)
+
+
+def test_a2_6_total_debt_of_another_period_stays_an_invariant() -> None:
+    ctx = _context("positive")
+    with pytest.raises(ValueError, match="not for LTM"):
+        cp4c.select_cp1(_with_cp1(ctx, "total_debt", period="FY 2025").cp1.t410)
+
+
+def test_a2_7_negative_cp2g_ebitda_makes_the_enterprise_value_missing() -> None:
+    case = "fixture_ebitda_missing"
+    base = _context(case)
+    gone = next(e.fact for e in base.cp2g.ebitda if e.fact.status == "missing")
+    recs = {f["fact_id"]: f for f in CP2G_EXP["cases"]["gap"]["facts"]}
+    ctx = _with_cp2g(base, _fact(recs[gone.fact_id], amount=D(-5)))
+    result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs(case).submission))
+    got = _records(result)
+    reason = "Not calculable: downside FY2026 EBITDA is negative in CP-2G"
+    for v in ("v02", "v03"):
+        assert got[f"T4E.3.{v}.ebitda"]["amount_exact"] == "-5"
+        assert (got[f"T4E.3.{v}.ev"]["status"], got[f"T4E.3.{v}.ev"]["limitation"]) == (
+            "missing",
+            reason,
         )
+        for c in ("c01", "c02", "c03"):
+            assert got[f"T4E.5.{v}{c}.recovery"]["limitation"] == reason
+    old = str(gone.limitation).removeprefix("Not calculable: ")
+    assert old.startswith("downside FY2026 EBITDA is missing in CP-2G")
+    exp = EXPECTED["cases"][case]["own_limitations"]
+    assert list(result.own_limitations) == [
+        line.replace(old, "downside FY2026 EBITDA is negative in CP-2G") for line in exp
+    ]
+
+
+def test_a2_7_claim_not_above_zero_is_a_validator_issue() -> None:
+    assert _payload_issues(_zero_rank_payload()) == (
+        "claims[3]: a claim class needs a claim above zero; Unsecured debt reads 0",
+    )
+    payload = _bind_all(_payload("positive"))
+    ctx = _with_cp1(_context("positive"), "total_debt", amount=D(0))
+    name = payload["claims"][0]["name"]
+    assert _payload_issues(payload, ctx) == (
+        f"claims[0]: a claim class needs a claim above zero; {name} reads 0",
+    )
+
+
+def test_a2_9_blank_or_multiline_names_are_text_issues() -> None:
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["name"] = "  "
+    payload["valuation"][0]["label"] = "Base\ncase"
+    payload["assessment"]["confidence"] = "High"
+    high = next(r for r in EXPECTED["refusals"] if r["id"] == "v13")["expected_issues"][0]
+    assert _payload_issues(payload) == (
+        high,
+        "claims[1].name: empty text",
+        "valuation[0].label: one line only",
+    )
+
+
+def test_a2_11_quoted_row_without_a_number_is_a_validator_issue() -> None:
+    payload = _bind_all(_payload("positive"))
+    payload["claims"][1]["amount_quote"]["quote"] = "Period end  Opening 2024-12-31"
+    assert _payload_issues(payload) == (
+        "claims[1].amount_quote: the quoted row has no number under Q4 2025-12-31",
+    )
+
+
+def test_a2_13_more_than_38_digits_is_a_value_error_naming_the_operation() -> None:
+    for claims, ev, operation in (
+        (((1, "1E+37"), (1, "0.1")), "1", "the claims of rank 1"),
+        (((1, "1E+37"), (2, "0.1")), "1", "the claims through rank 2"),
+        (((1, "0.1"),), "1E+38", "the value left after rank 1"),
+    ):
+        with pytest.raises(ValueError, match=f"{operation}: the exact value needs more than 38"):
+            _w(*claims, ev=ev)
+    ctx = _context("positive")
+    b26 = next(e.fact for e in ctx.cp2g.ebitda if e.fact.fact_id == "T2H.4.b26.ebitda")
+    wide = _with_cp2g(ctx, _refact(b26, amount=D("3." + "3" * 37)))
+    with pytest.raises(
+        ValueError, match="the enterprise value of v01: the exact value needs more than 38"
+    ):
+        _payload_issues(_bind_all(_payload("positive")), wide)
 
 
 def test_lender_protection_other_than_insufficient_fails_closed() -> None:
@@ -884,10 +1084,87 @@ def test_cp1_selection_needs_exactly_one_fact() -> None:
         cp4c.select_cp1((*ctx.cp1.t410, dup))
 
 
-def test_unconserved_waterfall_fails_closed() -> None:
-    """Three equal classes sharing a partial payment: each 38-digit quotient rounds the same way,
-    so creditor distributions plus the residual miss the enterprise value in the last digit. The
-    lease states exact conservation (T4E.9 balance = 0) and pins no other balance; LEAD to rule."""
+def test_negative_enterprise_value_stays_an_invariant() -> None:
+    with pytest.raises(ValueError, match="negative"):
+        cp4c.waterfall(
+            classes=(cp4c.ClassClaim("c01", "Loan", 1, cp4c.Val(D(10))),),
+            enterprise_value=cp4c.Val(D(-1)),
+        )
+
+
+# --- round 8 A-4: unknown upstream copies keep their status, conflicting included ----------------
+def test_a4_conflicting_copies_keep_their_status() -> None:
+    case = "fixture_ebitda_missing"
+    base = _context(case)
+    gone = next(e.fact for e in base.cp2g.ebitda if e.fact.status == "missing")
+    ctx = _with_cp2g(base, _refact(gone, status="conflicting"))
+    result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=_inputs(case).submission))
+    got, want = _records(result), _oracle_records(case)
+    copies = {f"T4E.3.{v}.ebitda" for v in ("v02", "v03")}  # the downside FY2026 copies
+    for fid in copies:
+        assert want[fid]["status"] == "missing"
+        assert got[fid] == dict(want[fid], status="conflicting")
+    assert {k for k in want if got[k] != want[k]} == copies
+    assert list(result.own_limitations) == EXPECTED["cases"][case]["own_limitations"]
+
+
+# --- round 8 A-1: exact largest-remainder allocation ----------------------------------------------
+def _w(*claims: tuple[int, str], ev: str) -> cp4c.Waterfall:
+    classes = tuple(
+        cp4c.ClassClaim(f"c{i:02d}", f"Class {i}", rank, cp4c.Val(D(amount)))
+        for i, (rank, amount) in enumerate(claims, 1)
+    )
+    return cp4c.waterfall(classes=classes, enterprise_value=cp4c.Val(D(ev)))
+
+
+def _shares(w: cp4c.Waterfall, *ids: str) -> list[str]:
+    return [str(w.classes[i].distribution.amount) for i in ids]
+
+
+BIG = "9999999999999999999999999999999999999.9"
+SMALL = "5000000000000000000000000000000000000.1"
+
+
+def test_a1_worked_example_three_equal_classes_share_100() -> None:
+    w = _w((1, "50"), (2, "50"), (2, "50"), (2, "50"), ev="150")
+    floor = "33." + "3" * 35
+    assert _shares(w, "c02", "c03", "c04") == [floor, floor, "33." + "3" * 34 + "4"]
+    assert sum(Fraction(s) for s in _shares(w, "c01", "c02", "c03", "c04")) == 150
+    assert w.residual.amount == 0
+
+
+def test_a1_leftover_unit_goes_to_the_largest_remainder() -> None:
+    w = _w((1, "10"), (1, "20"), ev="10")
+    assert _shares(w, "c01", "c02") == ["3." + "3" * 36, "6." + "6" * 35 + "7"]
+
+
+def test_a1_fully_paid_rank_pays_each_claim_exactly() -> None:
+    w = _w((1, BIG), (1, SMALL), ev="2E+37")
+    assert _shares(w, "c01", "c02") == [BIG, SMALL]
+    assert w.classes["c01"].recovery.amount == 1
+
+
+def test_a1_unpaid_rank_pays_zero() -> None:
+    w = _w((1, "1E-40"), ev="0")  # a claim finer than any 38-digit quantum of a payment
+    a = w.classes["c01"]
+    assert a.distribution.amount == 0 and a.recovery.amount == 0
+
+
+def test_a1_state_14_claim_not_a_multiple_of_the_rank_quantum() -> None:
+    with pytest.raises(ValueError, match="state 14"):
+        _w((1, "1"), (2, BIG), (2, SMALL), ev="12000000000000000000000000000000000001")
+
+
+def test_a1_exact_sum_is_never_rounded() -> None:
+    thirds = "0." + "3" * 37
+    assert cp4c._exact_sum([D("1E+10"), D(thirds)]) == D("10000000000." + "3" * 37)
+    wide = cp4c._exact_sum([D("9E+50"), D("1E+50"), D("1E-40")])  # 92 digits, past the floor
+    assert Fraction(wide) == 10**51 + Fraction(1, 10**40)
+
+
+def test_a1_t4e9_balances_exactly_with_three_equal_classes() -> None:
+    """Three equal classes share 5.62 in v02: two floors and the tie unit to the last class; the
+    distributions plus the residual are the enterprise value exactly (T4E.9 balance 0)."""
     payload = _bind_all(_payload("positive"))
     other = payload["claims"][2]  # other current liabilities, 10 at rank 2
     payload["claims"][1:] = [dict(copy.deepcopy(other), class_id=c) for c in ("c02", "c03", "c04")]
@@ -895,12 +1172,24 @@ def test_unconserved_waterfall_fails_closed() -> None:
         treatment = plan["treatments"][2]["treatment"]
         plan["treatments"].insert(3, {"class_id": "c04", "treatment": treatment})
     payload["fulcrum"][1]["class_ids"] = ["c02", "c03", "c04"]
-    assert cp4c.payload_issues(json.dumps(payload), _context("positive")) == ()
-    with pytest.raises(ValueError, match="balance"):
-        _compute_with(_context("positive"), payload)
+    assert _payload_issues(payload) == ()
+    cells = {c.fact.fact_id: c.fact for c in _compute_with(_context("positive"), payload).cells}
+
+    def x(fid: str) -> Fraction:
+        amount = cells[fid].amount
+        assert amount is not None, fid
+        return Fraction(amount)
+
+    shares = [x(f"T4E.4.v02{c}.distribution") for c in ("c02", "c03", "c04")]
+    assert x("T4E.4.v02c02.value_available") == Fraction("5.62") == sum(shares)
+    assert shares[0] == shares[1] == shares[2] - Fraction(1, 10**37)
+    assert cells["T4E.9.v02.balance"].status == "known" and x("T4E.9.v02.balance") == 0
+    for v in ("v01", "v02", "v03"):
+        paid, residual = x(f"T4E.9.{v}.creditor_distributions"), x(f"T4E.9.{v}.equity_residual")
+        assert paid + residual == x(f"T4E.9.{v}.ev")
 
 
-# --- property tests (expected.json property_tests) ----------------------------------------------
+# --- property tests (expected.json property_tests; round 8 A-1) -----------------------------------
 _amount = st.integers(1, 10**6).map(lambda n: D(n).scaleb(-2))
 _classes = st.lists(st.tuples(st.integers(1, 4), _amount), min_size=1, max_size=6).map(
     lambda xs: tuple(
@@ -922,30 +1211,59 @@ def _round38(x: Fraction) -> Decimal:
     return Context(prec=38, rounding=ROUND_HALF_EVEN).divide(D(x.numerator), D(x.denominator))
 
 
-@settings(max_examples=200, deadline=None)
-@given(classes=_classes, ev=_ev)
+_fine = st.one_of(
+    _amount,
+    st.integers(1, 10**12).map(lambda n: D(n).scaleb(-7)),
+    st.sampled_from([D(10), D(50), D("33.3")]),  # ties
+)
+_mixed = st.lists(st.tuples(st.integers(1, 3), _fine), min_size=1, max_size=6).map(
+    lambda xs: tuple(
+        cp4c.ClassClaim(f"c{i + 1:02d}", f"Class {i + 1}", r, cp4c.Val(a))
+        for i, (r, a) in enumerate(xs)
+    )
+)
+_mixed_ev = st.one_of(_ev, st.integers(0, 10**13).map(lambda n: D(n).scaleb(-7)))
+
+
+@settings(max_examples=400, deadline=None)
+@given(classes=_mixed, ev=_mixed_ev)
 def test_property_conservation(classes: tuple[cp4c.ClassClaim, ...], ev: Decimal) -> None:
-    """Each distribution is the correctly rounded claim x paid / group (one division); the exact
-    rationals conserve the enterprise value, and the stored values do whenever every quotient is
-    exact."""
+    """Round 8 A-1: each rank's shares sum to `paid` exactly; a partly paid rank floors each exact
+    share to its quantum q = 10^(paid.adjusted() - 37) and hands the leftover units to the
+    largest remainders (ties to the later class), so each share is within q of its exact value,
+    never negative and never above its claim; a fully or un-paid rank pays the exact share. The
+    distributions plus the residual are the enterprise value exactly."""
     w = cp4c.waterfall(classes=classes, enterprise_value=cp4c.Val(ev))
-    exact = Fraction(0)
-    all_exact = True
-    for c in classes:
-        a = w.classes[c.class_id]
-        group = _f(a.group)
-        paid = min(_f(a.available), group)
-        share = _f(c.claim) * paid / group
-        assert _f(a.distribution) == Fraction(_round38(share))
-        assert _f(a.recovery) == Fraction(_round38(paid / group))
-        exact += share
-        all_exact = all_exact and Fraction(_round38(share)) == share
-    residual = _f(w.residual)
-    assert exact + residual == Fraction(ev)
-    if all_exact:
-        assert sum(
-            (_f(w.classes[c.class_id].distribution) for c in classes), Fraction(0)
-        ) + residual == Fraction(ev)
+    total = Fraction(0)
+    for rank in sorted({c.rank for c in classes}):
+        members = [c for c in classes if c.rank == rank]
+        first = w.classes[members[0].class_id]
+        assert first.available.amount is not None and first.group.amount is not None
+        paid_d = min(first.available.amount, first.group.amount)
+        group, paid = _f(first.group), Fraction(paid_d)
+        shares = [_f(w.classes[c.class_id].distribution) for c in members]
+        exact = [_f(c.claim) * paid / group for c in members]
+        assert sum(shares) == paid
+        for c, share in zip(members, shares, strict=True):
+            a = w.classes[c.class_id]
+            assert 0 <= share <= _f(c.claim)
+            assert _f(a.recovery) == Fraction(_round38(paid / group))
+            assert a.shortfall.amount == _round38(_f(c.claim) - share)
+        if 0 < paid < group:
+            q = Fraction(10) ** (paid_d.adjusted() - 37)
+            floors = [(e // q) * q for e in exact]
+            assert all(s in (f, f + q) for s, f in zip(shares, floors, strict=True))
+            assert all(abs(s - e) < q for s, e in zip(shares, exact, strict=True))
+            ups = [i for i, (s, f) in enumerate(zip(shares, floors, strict=True)) if s != f]
+            assert len(ups) == (paid - sum(floors)) / q
+            order = sorted(
+                range(len(members)), key=lambda i: (exact[i] - floors[i], i), reverse=True
+            )
+            assert sorted(ups) == sorted(order[: len(ups)])
+        else:
+            assert shares == exact
+        total += paid
+    assert total + _f(w.residual) == Fraction(ev)
 
 
 @settings(max_examples=200, deadline=None)

@@ -8,20 +8,24 @@ three valuations, the strict-priority waterfall by claim rank, recovery per clas
 and detachment multiples, the value break and totals, and composes tables T4E.1-T4E.10, the four
 reference tables, the claims and the own limitations.
 
-Missing is never 0: every value is known, missing (with its root reason) or not applicable. Sums,
-products and differences of exact values run in the 38-digit half-even context with the Inexact
-trap (exact); each ratio is one division in that context (the correctly rounded rational). Where
-neither the lease, the rulings nor the oracle pins the wording an outcome needs, the code fails
-closed with ValueError (Stage 1 report).
+Missing is never 0: every value is known, missing (with its root reason), not applicable or
+conflicting. Sums, products and differences of exact values run in the 38-digit half-even context
+with the Inexact trap (exact; more digits fail closed, round 8 A-2 #13); each ratio is one
+division in that context (the correctly rounded rational). A partly paid rank shares its payment
+by exact largest remainder (round 8 A-1) and T4E.9 adds exactly. Where neither the lease, the
+rulings nor the oracle pins the wording an outcome needs, the code fails closed with ValueError.
 
 Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
 orchestration seams (G1-X protocol section 2) are added to this file in later stages.
 """
 
+import math
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal, Inexact, InvalidOperation, localcontext
+from fractions import Fraction
 from typing import Annotated, Literal
 
 from pydantic import Field, ValidationError
@@ -150,7 +154,8 @@ def _exact(x: Decimal) -> Decimal:
     if x == 0:
         return Decimal(0)
     with localcontext() as ctx:
-        ctx.prec = 80  # normalize() rounds to the context: keep every digit the value has
+        # normalize() rounds to the context: keep every digit the value has
+        ctx.prec = max(80, len(x.as_tuple().digits))
         return Decimal(format(x.normalize(), "f"))
 
 
@@ -179,6 +184,63 @@ def _div(a: Decimal, b: Decimal) -> Decimal:
 def _sub38(a: Decimal, b: Decimal) -> Decimal:
     with localcontext(_RATIO):
         return _exact(a - b)
+
+
+@contextmanager
+def _exactly(operation: str) -> Iterator[None]:
+    """The 38-digit context with the Inexact trap; a sum, difference or product that needs more
+    digits fails closed as a ValueError naming the operation (round 8 A-2 #13)."""
+    try:
+        with localcontext(_EXACT):
+            yield
+    except Inexact:
+        raise ValueError(
+            f"CP-4C: {operation}: the exact value needs more than 38 significant digits "
+            "(round 8 A-2 #13)"
+        ) from None
+
+
+def _exact_sum(values: Sequence[Decimal]) -> Decimal:
+    """The exact sum at the precision it needs, never under 80 digits (round 8 A-1 #5): shares
+    of different scales add without rounding, so no residue can hide in a rounded total."""
+    if not values:
+        return Decimal(0)
+    span = max(v.adjusted() for v in values) - min(int(v.as_tuple().exponent) for v in values)
+    ctx = _EXACT.copy()
+    ctx.prec = max(80, span + len(values) + 1)
+    with localcontext(ctx):
+        return _exact(sum(values, Decimal(0)))
+
+
+def _allocate(rank: int, claims: Sequence[Decimal], paid: Decimal, group: Decimal) -> list[Decimal]:
+    """The shares of `paid` among one rank's claims, in claims order (round 8 A-1).
+
+    Paid in full, each share is its claim; paid nothing, each is 0. Partly paid, each exact share
+    claim x paid / group is floored to the rank quantum q = 10^(paid.adjusted() - 37), the 38th
+    significant digit of paid, and the (paid - sum of floors) / q leftover units go one each to
+    the largest remainders, ties to the later class. The shares sum to paid exactly, each lies
+    within q of its exact value, and none is negative or above its claim. A paid amount or a
+    claim that is not a multiple of q needs over 38 digits: fail-closed state 14."""
+    if paid == group:
+        return list(claims)
+    if paid == 0:
+        return [Decimal(0)] * len(claims)
+    exponent = paid.adjusted() - 37
+    q = Fraction(10) ** exponent
+    if any(Fraction(x) % q for x in (paid, *claims)):
+        raise ValueError(
+            f"CP-4C: rank {rank} shares {paid} among claims that are not multiples of its quantum "
+            f"1E{exponent}; the allocation needs over 38 digits (round 8 A-1 fail-closed state 14)"
+        )
+    exact = [Fraction(c) * Fraction(paid) / Fraction(group) for c in claims]
+    units = [math.floor(share / q) for share in exact]
+    leftover = int(Fraction(paid) / q) - sum(units)
+    by_remainder = sorted(
+        range(len(claims)), key=lambda i: (exact[i] / q - units[i], i), reverse=True
+    )
+    for i in by_remainder[:leftover]:
+        units[i] += 1
+    return [_exact(Decimal(f"{u}E{exponent}")) for u in units]
 
 
 # --- the waterfall (lease "Decimal composer and missing rules"; expected.waterfall_rules) -------
@@ -211,11 +273,11 @@ class Waterfall:
     total_claims: Val
 
 
-def _plus(a: Val, b: Val) -> Val:
+def _plus(a: Val, b: Val, operation: str) -> Val:
     """a + b exactly; the first missing operand when either is missing."""
     if a.amount is None or b.amount is None:
         return a if a.amount is None else b
-    with localcontext(_EXACT):
+    with _exactly(operation):
         return _known(a.amount + b.amount)
 
 
@@ -224,33 +286,29 @@ def _rank_total(rank: int, members: Sequence[ClassClaim]) -> Val:
     missing = next((c.claim for c in members if c.claim.amount is None), None)
     if missing is not None:
         return missing
-    with localcontext(_EXACT):
+    with _exactly(f"the claims of rank {rank}"):
         total = sum((c.claim.amount for c in members if c.claim.amount is not None), Decimal(0))
-    if total <= 0:
-        raise ValueError(
-            f"CP-4C: the claims of rank {rank} total zero; the lease pins no recovery for a rank "
-            "with no claim (LEAD to rule)"
-        )
+    if total <= 0:  # every known claim is above zero (validator, round 8 A-2 #7)
+        raise ValueError(f"CP-4C: the claims of rank {rank} total {total}; invariant broken")
     return _known(total)
 
 
 def waterfall(*, classes: Sequence[ClassClaim], enterprise_value: Val) -> Waterfall:
     """Absolute priority by rank number (lowest first); classes of one rank share pro rata.
 
-    paid = min(available, group); recovery = paid / group and distribution = claim x paid / group
-    (one division each); shortfall = claim - distribution. A missing claim blocks its rank, every
-    lower rank and the residual; a missing enterprise value blocks every allocation. Nothing
-    becomes 0. A negative enterprise value, a negative claim or a rank whose claims total zero
-    or less has no pinned outcome and fails closed."""
+    paid = min(available, group); recovery = paid / group, one 38-digit division; the
+    distributions are `_allocate`'s exact shares of paid (round 8 A-1); shortfall = claim -
+    distribution at 38 digits (so claim = distribution + shortfall is not an invariant; only the
+    T4E.9 balance is). A missing claim blocks its rank, every lower rank and the residual; a
+    missing enterprise value blocks every allocation. Nothing becomes 0. The composer makes a
+    negative enterprise value missing and the validator refuses a claim at or below zero, so
+    either one here is a broken invariant (round 8 A-2 #7)."""
     ev = enterprise_value.amount
     if ev is not None and ev < 0:
-        raise ValueError(
-            "CP-4C: the enterprise value is negative; the lease pins no waterfall for it "
-            "(LEAD to rule)"
-        )
+        raise ValueError("CP-4C: the enterprise value is negative; invariant broken")
     for c in classes:
         if c.claim.amount is not None and c.claim.amount < 0:
-            raise ValueError(f"CP-4C: the claim of {c.class_id} is negative; LEAD to rule")
+            raise ValueError(f"CP-4C: the claim of {c.class_id} is negative; invariant broken")
     out: dict[str, ClassAllocation] = {}
     available, ahead = enterprise_value, Val(Decimal(0))
     found = False
@@ -260,7 +318,7 @@ def waterfall(*, classes: Sequence[ClassClaim], enterprise_value: Val) -> Waterf
     for rank in sorted({c.rank for c in classes}):
         members = [c for c in classes if c.rank == rank]
         group = _rank_total(rank, members)
-        through = _plus(ahead, group)
+        through = _plus(ahead, group, f"the claims through rank {rank}")
         a, g = available.amount, group.amount
         if a is None or g is None:  # blocked: every share, the break and the residual
             cut = available if a is None else group
@@ -280,12 +338,9 @@ def waterfall(*, classes: Sequence[ClassClaim], enterprise_value: Val) -> Waterf
         else:
             paid = min(a, g)
             recovery = Val(_div(paid, g))
-            for c in members:
-                claim = c.claim.amount
-                assert claim is not None  # a known rank total has no missing claim
-                with localcontext(_EXACT):
-                    owed = claim * paid
-                share = _div(owed, g)
+            claims = [c.claim.amount for c in members if c.claim.amount is not None]
+            shares = _allocate(rank, claims, paid, g)  # a known rank total has no missing claim
+            for c, claim, share in zip(members, claims, shares, strict=True):
                 out[c.class_id] = ClassAllocation(
                     ahead=ahead,
                     through=through,
@@ -301,7 +356,7 @@ def waterfall(*, classes: Sequence[ClassClaim], enterprise_value: Val) -> Waterf
                     tuple(c.class_id for c in members),
                     through.amount,
                 )
-            with localcontext(_EXACT):
+            with _exactly(f"the value left after rank {rank}"):
                 available = _known(a - paid)
         ahead = through
     if not found:
@@ -454,28 +509,35 @@ def _header(page: str) -> tuple[str, ...]:
     return ()
 
 
-def _row_amount(page: str, quote: str, column: str) -> Decimal:
-    """The amount under `column` on the statement line the quote's first cell labels."""
+def _row_amount(page: str, quote: str, column: str) -> Decimal | None:
+    """The amount under `column` on the statement line the quote's first cell labels, or None
+    when that line has no number there (round 8 A-2 #11)."""
     label = quote.split("  ")[0]
     line = next((x for x in page.split("\n") if x.startswith(label + "  ")), None)
     header = _header(page)
     if line is None or column not in header[1:]:
-        raise ValueError(f"CP-4C: the quoted row {label!r} has no {column!r} cell")
+        return None
     cells = _CELLS.split(line)
     index = header.index(column)
     if index >= len(cells):
-        raise ValueError(f"CP-4C: the quoted row {label!r} has no {column!r} cell")
+        return None
     try:
         amount = Decimal(cells[index])
-    except InvalidOperation:
-        raise ValueError(f"CP-4C: the {column!r} cell of {label!r} is not a number") from None
-    if not amount.is_finite():
-        raise ValueError(f"CP-4C: the {column!r} cell of {label!r} is not a number")
-    return amount
+    except InvalidOperation:  # a word, not a figure: the row states no number (A-2 #11)
+        return None
+    return amount if amount.is_finite() else None
 
 
-def _cp1_reason() -> str:
-    return f"Not calculable: total debt is missing in CP-1 for {LTM_PERIOD}"
+def _debt_claim(debt: Fact) -> Val:
+    """CP-1 total debt as the secured class's claim (round 8 A-2 #6)."""
+    if debt.status == "known" and debt.amount is not None:
+        return _known(debt.amount)
+    if debt.status in ("missing", "conflicting"):
+        return Val(None, f"Not calculable: total debt is {debt.status} in CP-1 for {LTM_PERIOD}")
+    raise ValueError(
+        f"CP-4C: CP-1 total debt has status {debt.status}; round 8 A-2 #6 words the missing and "
+        "conflicting states only"
+    )
 
 
 def claim_classes(
@@ -488,19 +550,15 @@ def claim_classes(
     out: list[ClassClaim] = []
     for c in submission.claims:
         if c.amount_source == "cp1_total_debt":
-            if debt.status == "known" and debt.amount is not None:
-                claim = _known(debt.amount)
-            elif debt.status == "missing":
-                claim = Val(None, _cp1_reason())
-            else:
-                raise ValueError(
-                    f"CP-4C: CP-1 total debt has status {debt.status}; only missing is pinned"
-                )
+            claim = _debt_claim(debt)
         elif c.amount_source == "source_row":
-            if c.amount_quote is None or c.period_column is None:
-                raise ValueError(f"CP-4C: {c.class_id} reads a row it does not cite")
-            q = c.amount_quote
-            claim = _known(_row_amount(pages[(q.source_id, q.locator)], q.quote, c.period_column))
+            q, column = c.amount_quote, c.period_column
+            amount = None
+            if q is not None and column is not None:
+                amount = _row_amount(pages[(q.source_id, q.locator)], q.quote, column)
+            if amount is None:  # the validator refuses an uncited row or one with no number
+                raise ValueError(f"CP-4C: {c.class_id} reads no number; invariant broken")
+            claim = _known(amount)
         else:
             claim = Val(None, f"Not calculable: no supplied source states the claim of {c.name}")
         out.append(ClassClaim(c.class_id, c.name, int(c.rank), claim))
@@ -529,20 +587,25 @@ class _Value:
 def _valuation(v: Valuation, cp2g: Cp2gHead) -> _Value:
     source = cp2g.of(v.ebitda_case, v.ebitda_year)
     f = source.fact
-    if f.status == "known" and f.amount is not None:
-        ebitda = _known(f.amount)
-    elif f.status in ("missing", "not_applicable"):
+    if f.status != "known":  # missing, not applicable or conflicting: its own limitation (A-4)
         ebitda = Val(None, _upstream_reason(f))
+    elif f.amount is None:
+        raise ValueError(f"CP-4C: CP-2G {f.fact_id} is known without an amount")
     else:
-        raise ValueError(f"CP-4C: CP-2G {f.fact_id} has status {f.status}")
+        ebitda = _known(f.amount)
     multiple = None if v.multiple == NOT_ASSESSED else Decimal(v.multiple)
     if ebitda.amount is None:
         ev = ebitda
     elif multiple is None:
         ev = Val(None, R_EV_NA)
     else:
-        with localcontext(_EXACT):
-            ev = _known(ebitda.amount * multiple)
+        with _exactly(f"the enterprise value of {v.case_id}"):
+            product = ebitda.amount * multiple
+        if product < 0:  # negative EBITDA (round 8 A-2 #7)
+            case = f"{CASE_WORD[v.ebitda_case]} {v.ebitda_year}"
+            ev = Val(None, f"Not calculable: {case} EBITDA is negative in CP-2G")
+        else:
+            ev = _known(product)
     return _Value(source=source, ebitda=ebitda, multiple=multiple, ev=ev)
 
 
@@ -596,12 +659,17 @@ HIGH_ISSUE = (
 )
 
 
-def _text_fields(sub: RestructuringSubmission) -> list[tuple[str, str | None, bool]]:
-    """(path, text, is run text) of every text field, in the pinned order."""
-    out: list[tuple[str, str | None, bool]] = []
+FieldKind = Literal["name", "run", "plain"]
+
+
+def _text_fields(sub: RestructuringSubmission) -> list[tuple[str, str | None, FieldKind]]:
+    """(path, text, kind) of every text field, in the pinned order: a class name or valuation
+    label (one line, not empty: round 8 A-2 #9), run text (the rationales) or plain text."""
+    out: list[tuple[str, str | None, FieldKind]] = []
     for i, c in enumerate(sub.claims):
-        out += [(f"claims[{i}].rationale", c.rationale, True)]
-        out += [(f"claims[{i}].limitation", c.limitation, False)]
+        out += [(f"claims[{i}].name", c.name, "name")]
+        out += [(f"claims[{i}].rationale", c.rationale, "run")]
+        out += [(f"claims[{i}].limitation", c.limitation, "plain")]
     rows: tuple[tuple[str, Sequence[Valuation | FulcrumJudgment | PlanJudgment]], ...] = (
         ("valuation", sub.valuation),
         ("fulcrum", sub.fulcrum),
@@ -609,46 +677,89 @@ def _text_fields(sub: RestructuringSubmission) -> list[tuple[str, str | None, bo
     )
     for key, items in rows:
         for i, x in enumerate(items):
-            out += [(f"{key}[{i}].rationale", x.rationale, True)]
-            out += [(f"{key}[{i}].limitation", x.limitation, False)]
+            if isinstance(x, Valuation):
+                out += [(f"{key}[{i}].label", x.label, "name")]
+            out += [(f"{key}[{i}].rationale", x.rationale, "run")]
+            out += [(f"{key}[{i}].limitation", x.limitation, "plain")]
     a = sub.assessment
     out += [
-        ("assessment.rationale", a.rationale, True),
-        ("assessment.limitation", a.limitation, False),
+        ("assessment.rationale", a.rationale, "run"),
+        ("assessment.limitation", a.limitation, "plain"),
     ]
     for i, g in enumerate(sub.gaps):
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
-            out.append((f"gaps[{i}].{name}", getattr(g, name), False))
+            out.append((f"gaps[{i}].{name}", getattr(g, name), "plain"))
     return out
 
 
-def _claim_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], str]) -> list[str]:
+def _term_loan_secured(cp1: Cp1Head) -> bool:
+    """CP-1 T4.18 shows the secured facility SECURED and SENIOR (lease; round 8 A-2 #2)."""
+    secured, senior = cp1.secured_status, cp1.seniority
+    return (secured.status, secured.text, senior.status, senior.text) == (
+        "known",
+        SECURED,
+        "known",
+        SENIOR,
+    )
+
+
+def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], str]) -> list[str]:
+    """A source_row class's cited row: v03, v04, v05, then round 8 A-2 #3, #11 and #7."""
+    q = c.amount_quote
+    if q is None:
+        return [f"claims[{i}].amount_quote: a source_row class cites the row it reads"]
+    page = pages.get(("financial", q.locator), "")
+    if q.source_id != "financial" or q.quote not in page:
+        return [f"claims[{i}].amount_quote: quote not found under {q.source_id} {q.locator}"]
+    column = c.period_column
+    if column not in _header(page)[1:]:
+        return [f"claims[{i}].period_column: not a column of the quoted statement: {column}"]
+    if column != _PINNED_COLUMN:
+        return [
+            (
+                f"claims[{i}].period_column: claims are the 31 December 2025 balances; use "
+                f"{_PINNED_COLUMN}"
+            )
+        ]
+    amount = _row_amount(page, q.quote, column)
+    if amount is None:
+        return [f"claims[{i}].amount_quote: the quoted row has no number under {column}"]
+    return _claim_above_zero(i, c, amount)
+
+
+def _claim_above_zero(i: int, c: ClaimClass, amount: Decimal) -> list[str]:
+    if amount > 0:
+        return []
+    return [f"claims[{i}]: a claim class needs a claim above zero; {c.name} reads {_exact(amount)}"]
+
+
+def _claim_issues(
+    i: int, c: ClaimClass, pages: Mapping[tuple[str, str], str], ctx: Cp4cContext
+) -> list[str]:
     issues: list[str] = []
-    if (c.kind == "secured_debt") != (c.amount_source == "cp1_total_debt"):
+    mismatch = (c.kind == "secured_debt") != (c.amount_source == "cp1_total_debt")
+    if mismatch:
         issues.append(
             f"claims[{i}].amount_source: cp1_total_debt is the secured_debt class's source and "
             "no other class's"
         )
+    if c.kind == "secured_debt" and not _term_loan_secured(ctx.cp1):
+        issues.append(
+            f"claims[{i}].kind: CP-1 T4.18 does not show {ctx.cp1.facility_id} SECURED and "
+            "SENIOR, so no class can be secured_debt"
+        )
+    if mismatch:
+        pass
     elif c.amount_source == "source_row":
-        q = c.amount_quote
-        if q is None:
-            issues.append(f"claims[{i}].amount_quote: a source_row class cites the row it reads")
-        else:
-            page = pages.get(("financial", q.locator), "")
-            if q.source_id != "financial" or q.quote not in page:
-                issues.append(
-                    f"claims[{i}].amount_quote: quote not found under {q.source_id} {q.locator}"
-                )
-            elif c.period_column not in _header(page)[1:]:
-                issues.append(
-                    f"claims[{i}].period_column: not a column of the quoted statement: "
-                    f"{c.period_column}"
-                )
+        issues += _source_row_issues(i, c, pages)
     else:
         if c.amount_quote is not None:
             issues.append(f"claims[{i}].amount_quote: only a source_row class cites an amount row")
         if c.period_column is not None:
             issues.append(f"claims[{i}].period_column: only a source_row class names a column")
+        if c.amount_source == "cp1_total_debt":
+            debt = select_cp1(ctx.cp1.t410)["total_debt"].amount
+            issues += [] if debt is None else _claim_above_zero(i, c, debt)
     for j, q in enumerate(c.support):
         if q.source_id not in SCOPE:
             issues.append(
@@ -744,22 +855,6 @@ def _plan_issues(
     return issues
 
 
-def _check_term_loan(cp1: Cp1Head) -> None:
-    """The secured class rests on CP-1 showing the term loan SECURED and SENIOR. The lease calls
-    any other state a validator issue but pins no issue text, and no payload exercises it."""
-    secured, senior = cp1.secured_status, cp1.seniority
-    if (secured.status, secured.text, senior.status, senior.text) != (
-        "known",
-        SECURED,
-        "known",
-        SENIOR,
-    ):
-        raise ValueError(
-            f"CP-4C: CP-1 T4.18 does not show {cp1.facility_id} SECURED and SENIOR; the lease "
-            "makes it a validator issue but pins no wording (LEAD to word)"
-        )
-
-
 def _reference_facts(sub: RestructuringSubmission, ctx: Cp4cContext) -> tuple[Fact, ...]:
     """The upstream facts the module carries in its reference tables, which is what its prose
     resolves through at settlement (expected.references_rule)."""
@@ -771,7 +866,6 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
     fulcrum and plan case ids, fulcrum and plan against the waterfall (only when claims and
     valuation are structurally valid), assessment, then per text field prose and guard issues."""
     sub, ctx = inputs.submission, inputs.context
-    _check_term_loan(ctx.cp1)
     pages = _pages(ctx.pack)
     issues: list[str] = []
     ids: list[str] = []
@@ -781,7 +875,7 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
         if c.class_id in ids:
             issues.append(f"claims[{i}].class_id: duplicate class {c.class_id}")
         ids.append(c.class_id)
-        issues += _claim_issues(i, c, pages)
+        issues += _claim_issues(i, c, pages, ctx)
         structural = structural and len(issues) == before
     secured = [i for i, c in enumerate(sub.claims) if c.kind == "secured_debt"]
     if len(secured) != 1:
@@ -819,10 +913,16 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
         issues.append(HIGH_ISSUE)
     bound = prose.bind(_reference_facts(sub, ctx))
     names = (ctx.pack.run.issuer_name,)
-    for path, text, run_text in _text_fields(sub):
+    for path, text, kind in _text_fields(sub):
         if text is None:
             continue
-        if run_text:
+        if kind == "name":  # a name or label is no run text and is not guarded (round 8 A-2 #9)
+            if not text.strip():
+                issues.append(f"{path}: empty text")
+            elif text.splitlines() != [text]:
+                issues.append(f"{path}: one line only")
+            continue
+        if kind == "run":
             if not text.strip():
                 issues.append(f"{path}: empty text")
             else:
@@ -869,7 +969,7 @@ _UNIT: Mapping[UnitKind, str] = {
 }
 _MILLIONS = Decimal(1000000)
 ValueClass = Literal["source", "normalized", "calculated", "analyst_judgment"]
-CellStatus = Literal["known", "missing", "not_applicable"]
+CellStatus = Literal["known", "missing", "not_applicable", "conflicting"]
 _UPSTREAM = ("cp1:", "cp2a:", "cp2g:", "cp4:")
 
 
@@ -1141,9 +1241,11 @@ class _Book:
 
 
 def _copy_status(f: Fact) -> CellStatus:
-    if f.status not in ("missing", "not_applicable"):
-        raise ValueError(f"CP-4C: upstream fact {f.fact_id} has status {f.status}")
-    return "not_applicable" if f.status == "not_applicable" else "missing"
+    """An unsettled upstream fact's status, kept by its copy: missing, not applicable or
+    conflicting (round 8 A-4; round 6g)."""
+    if f.status == "known":
+        raise ValueError(f"CP-4C: upstream fact {f.fact_id} is known; invariant broken")
+    return f.status
 
 
 def _citation(pack: PreparedPack, quote: Quote) -> Citation:
@@ -1205,43 +1307,21 @@ def _upstream_map(ctx: Cp4cContext, cp1: Mapping[str, Fact]) -> dict[str, Fact]:
     return out
 
 
-def _check_pinned_state(
-    sub: RestructuringSubmission, ctx: Cp4cContext, cp1: Mapping[str, Fact]
-) -> None:
-    """States the composer's fixed wording does not cover fail closed (Stage 1 report)."""
-    if ctx.cp3c_status is not None:
-        raise ValueError(
-            "CP-4C: a bound CP-3C head needs its own T4E.1 row and limitation; the lease pins "
-            "only the unread optional edge (LEAD to word)"
-        )
-    for c in sub.claims:
-        if c.amount_source == "source_row" and c.period_column != _PINNED_COLUMN:
-            raise ValueError(
-                f"CP-4C: {c.class_id} reads column {c.period_column}; the claim period and the "
-                f"balance-date limitation are pinned only for {_PINNED_COLUMN} (LEAD to word)"
-            )
-    ebitda = cp1["ebitda"]
-    if ebitda.status != "known" or ebitda.amount is None or ebitda.amount <= 0:
-        raise ValueError(
-            "CP-4C: CP-1 EBITDA is not a known positive figure; no reason is pinned for the "
-            "implied multiple (LEAD to word)"
-        )
+def _check_cp4_head(ctx: Cp4cContext) -> None:
+    """The own limitations state the frozen CP-4 head: rating Insufficient Information and the
+    every-lender consent. Any other head stays fail-closed until Stage 2 words it (round 8 A-2
+    #4)."""
     rating, conditions = ctx.cp4.fact(CP4_RATING), ctx.cp4.fact(CP4_CONDITIONS)
     if rating.text != _PINNED_RATING:
         raise ValueError(
-            f"CP-4C: the CP-4 lender protection rating is {rating.text!r}; the own limitation is "
-            f"pinned only for {_PINNED_RATING} (LEAD to word)"
+            f"CP-4C: the CP-4 lender protection rating is {rating.text!r}; the own limitation "
+            f"states {_PINNED_RATING}, so another rating fails closed (round 8 A-2 #4)"
         )
     if conditions.text != _PINNED_CONDITIONS:
         raise ValueError(
             "CP-4C: the CP-4 additional-debt conditions differ from the every-lender consent the "
-            "new-money limitation states (LEAD to word)"
+            "new-money limitation states, so they fail closed (round 8 A-2 #4)"
         )
-    for name in (*(c.name for c in sub.claims), *(v.label for v in sub.valuation)):
-        if not name.strip() or "\n" in name:
-            raise ValueError(
-                f"CP-4C: class name or valuation label {name!r} is blank or multi-line"
-            )
 
 
 def _resolve(inputs: Cp4cInputs) -> _Run:
@@ -1250,7 +1330,7 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
     if found:
         raise ValueError("CP-4C submission has issues: " + "; ".join(found))
     cp1 = select_cp1(ctx.cp1.t410)
-    _check_pinned_state(sub, ctx, cp1)
+    _check_cp4_head(ctx)
     classes = claim_classes(sub, ctx)
     values = {v.case_id: _valuation(v, ctx.cp2g) for v in sub.valuation}
     falls = {k: waterfall(classes=classes, enterprise_value=v.ev) for k, v in values.items()}
@@ -1311,7 +1391,14 @@ def _t4e1(b: _Book, run: _Run) -> None:
                 "are not supplied."
             ),
         ),
-        ("u_cp3c", "CP-3C", "not part of this run", "Not applicable", "Nothing read", CP3C_UNREAD),
+        (  # a bound CP-3C shows its Input status and is still not read (round 8 A-2 #1)
+            "u_cp3c",
+            "CP-3C",
+            ctx.cp3c_status or "not part of this run",
+            "Not applicable",
+            "Nothing read",
+            CP3C_UNREAD,
+        ),
     )
     for row, *values in rows:
         for name, value in zip(_FIELDS_T4E1, values, strict=True):
@@ -1352,7 +1439,7 @@ def _t4e2(b: _Book, run: _Run) -> None:
         b.text(("T4E.2", r, "rank"), "Rank", c.rank, value_class="analyst_judgment")
         if c.kind == "secured_debt":
             secured = cp1h.secured_status
-            assert secured.text is not None  # _check_term_loan
+            assert secured.text is not None  # _term_loan_secured (validator)
             b.text(
                 ("T4E.2", r, "security"),
                 "Security",
@@ -1439,12 +1526,25 @@ _FIELDS_T4E3 = (
 NO_SCENARIO = "The base valuation uses no CP-2A scenario"
 
 
+def _cp1_ebitda(f: Fact) -> Val:
+    """CP-1 EBITDA as the implied multiple's denominator: a known positive amount, else missing
+    with the round 8 A-2 #5 reason (no own line)."""
+    if f.status != "known" or f.amount is None:
+        return Val(None, f"Not calculable: EBITDA is missing in CP-1 for {LTM_PERIOD}")
+    if f.amount <= 0:
+        return Val(
+            None,
+            f"Not calculable: EBITDA is zero or negative in CP-1 for {LTM_PERIOD} "
+            "(ZERO_OR_NEGATIVE_DENOMINATOR)",
+        )
+    return _known(f.amount)
+
+
 def _t4e3(b: _Book, run: _Run) -> None:
     row = run.scenario_row
     name = run.ctx.cp2a.fact(f"T2B.1.{row}.name")
     decline = run.ctx.cp2a.fact(f"T2B.1.{row}.ebitda_decline")
-    cp1_ebitda = run.cp1["ebitda"].amount
-    assert cp1_ebitda is not None  # _check_pinned_state
+    cp1_ebitda = _cp1_ebitda(run.cp1["ebitda"])
     for v in run.sub.valuation:
         r, val = v.case_id, run.values[v.case_id]
         f = val.source.fact
@@ -1496,7 +1596,10 @@ def _t4e3(b: _Book, run: _Run) -> None:
             (f"T4E.3.{r}.ebitda", f"T4E.3.{r}.multiple"),
             period=period,
         )
-        implied = val.ev if val.ev.amount is None else Val(_div(val.ev.amount, cp1_ebitda))
+        if val.ev.amount is None or cp1_ebitda.amount is None:
+            implied = val.ev if val.ev.amount is None else cp1_ebitda
+        else:
+            implied = Val(_div(val.ev.amount, cp1_ebitda.amount))
         b.value(
             ("T4E.3", r, "implied_ltm_multiple"),
             "Implied multiple of CP-1 EBITDA",
@@ -1910,10 +2013,8 @@ def _fulcrum_and_totals(b: _Book, run: _Run) -> None:
         b.row("T4E.7", r, v.label, _FIELDS_T4E7)
         dists = [w.classes[i].distribution for i in ids]
         blocked = next((d for d in dists if d.amount is None), None)
-        if blocked is None:
-            with localcontext(_RATIO):  # 38-digit sum of the rounded shares (expected sum38)
-                total_paid = sum((a for d in dists if (a := d.amount) is not None), Decimal(0))
-                paid = Val(_exact(total_paid))
+        if blocked is None:  # summed exactly, never in the rounding context (round 8 A-1 #5)
+            paid = Val(_exact_sum([a for d in dists if (a := d.amount) is not None]))
         else:
             paid = blocked
         b.value(
@@ -1952,16 +2053,16 @@ def _fulcrum_and_totals(b: _Book, run: _Run) -> None:
             (f"T4E.4.{r}eq.distribution",),
             period=period,
         )
-        if ev.amount is None or paid.amount is None or w.residual.amount is None:
-            balance = ev if ev.amount is None else w.residual
+        e, dsum, left = ev.amount, paid.amount, w.residual.amount
+        if e is None or left is None:
+            balance = ev if e is None else w.residual
+        elif dsum is None:  # a blocked share blocks the residual too
+            raise ValueError(f"CP-4C: {r} has a residual but a missing share; invariant broken")
         else:
-            balance = Val(_sub38(_sub38(ev.amount, paid.amount), w.residual.amount))
-            if balance.amount != 0:
-                raise ValueError(
-                    f"CP-4C: in {r} creditor distributions plus the residual miss the enterprise "
-                    f"value by {balance.amount} (38-digit rounding of the shares); the lease "
-                    "states an exact balance of 0 and pins no other (LEAD to rule)"
-                )
+            gap = _exact_sum([e, dsum.copy_negate(), left.copy_negate()])
+            if gap != 0:  # the exact allocation conserves the enterprise value (round 8 A-1 #5)
+                raise AssertionError(f"CP-4C: T4E.9 of {r} is off by {gap}; conservation broken")
+            balance = Val(gap)
         b.value(
             ("T4E.9", r, "balance"),
             "Balance",
@@ -2195,9 +2296,9 @@ def _own_limitations(run: _Run) -> tuple[str, ...]:
 
 
 def compute(inputs: Cp4cInputs) -> RestructuringResult:
-    """The restructuring waterfall of one valid submission. Raises ValueError on any issue or
-    unpinned state, and decimal.Inexact when a sum or product needs more than 38 digits (the
-    oracle's exact context traps it too)."""
+    """The restructuring waterfall of one valid submission. Raises ValueError on any issue, on a
+    fail-closed state (round 8 A-2 #4, #13, A-1 state 14) or a broken invariant, and
+    AssertionError if T4E.9 does not balance exactly."""
     run = _resolve(inputs)
     b = _Book()
     _t4e1(b, run)
@@ -2215,9 +2316,9 @@ def compute(inputs: Cp4cInputs) -> RestructuringResult:
         found = prose.issues(claim.text, bound, names=names)
         if found:
             raise ValueError(
-                f"CP-4C: claim {claim.claim_id} is not valid run text ({'; '.join(found)}); a "
-                "class name or valuation label carries a figure or a reserved character, and the "
-                "lease pins no refusal for it (LEAD to word)"
+                f"CP-4C: claim {claim.claim_id} is not valid run text ({'; '.join(found)}): a "
+                "class name or valuation label carries a figure or a reserved character; an "
+                "invariant raise (round 8 A-2 #9)"
             )
     return RestructuringResult(
         cells=cells,

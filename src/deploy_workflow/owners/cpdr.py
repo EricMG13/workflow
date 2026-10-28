@@ -1090,7 +1090,9 @@ def _gap_head(gap_id: str, fact: Callable[[str], Fact], count: Callable[[str], i
     unresolved count and answered share, which must be there and agree with the others."""
     questions, answered = count(f"TDR.1.{gap_id}.questions"), count(f"TDR.1.{gap_id}.answered")
     if count(f"TDR.1.{gap_id}.unresolved") != questions - answered:
-        raise ValueError(f"CP-DR TDR.1 unresolved differs from questions less answered: {clipped((gap_id,))}")
+        raise ValueError(
+            f"CP-DR TDR.1 unresolved differs from questions less answered: {clipped((gap_id,))}"
+        )
     share = fact(f"TDR.1.{gap_id}.answered_share")
     if share.status != "known" or share.amount is None:
         raise ValueError(f"CP-DR TDR.1 answered share is not known: {clipped((gap_id,))}")

@@ -1,0 +1,272 @@
+{
+ "schema_version": "cp1d-owner-cases/1",
+ "scope": "CP-1D (alias CP-1E) Earnings quality: CP-0 to CP-1 to CP-1D over the frozen financial pack, alone and with one new synthetic management bridge source",
+ "status": "DRAFT by the cp1d-owner preparation task, 2026-10-28; independent review pending; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+ },
+ "financial_baseline": {
+  "path": "cases/financial/manifest.json",
+  "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "sources": [
+   {
+    "source_id": "identity",
+    "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   },
+   {
+    "source_id": "financial",
+    "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   }
+  ]
+ },
+ "frozen_finding": "The frozen financial pack carries NO add-back bridge: page:1 states 'No EBITDA adjustments or add-backs occurred in any quarter or FY2025; this disclosure is complete.', page:2 Adjusted EBITDA equals Reported EBITDA (30.0) and page:5 says 'Adjusted EBITDA equals reported EBITDA because there are no adjustments'. A promoted CP-1 head over it has an empty T4.17 (probe: 0 facts) and CP-1 refuses a partial or undisclosed add-back disclosure (financial_adapter._addbacks), so an empty T4.17 on a promoted head means a complete, zero bridge.",
+ "synthetic_source": {
+  "source_id": "bridge",
+  "name": "Management financing-case EBITDA bridge",
+  "status": "ready",
+  "media_type": "text/plain",
+  "extractor": "supplied-representation",
+  "extraction_status": "complete",
+  "pack_limitation_positive": "Management-supplied proposals; unaudited and not recorded in the statements.",
+  "pack_limitation_gap": "Management-supplied proposals; unaudited and not recorded in the statements. No supporting schedule is supplied.",
+  "positive": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer.\nBasis: FY2025 (January 1-December 31, 2025); USD; amounts in millions; unaudited management presentation.\nReported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment.\nThe items below are management's proposed financing-case adjustments. None is recorded in the statements. These proposals are not pro-forma adjustments to the statements. Costs and savings are shown as positive add-backs.\nItem  Type  Status  Amount\nProcurement programme savings  Saving  Unrealised  3.00\nHead-office reorganisation savings  Saving  Unrealised  1.20\nLegal and advisory fees  Cost  Incurred  0.80\nInsurance and facilities savings  Saving  Unrealised  1.00\nTotal proposed adjustments  6.00\nManagement financing-case EBITDA  36.00"
+    },
+    {
+     "locator": "page:2",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge: supporting schedule\nPublished January 10, 2026.\nProcurement programme savings: the annualised saving of 3.00 is identified across ten supplier categories. Signed supplier contracts cover an annualised saving of 1.80. Contracts covering the remaining 1.20 are under negotiation. One-time costs to achieve the saving are expected in 2026.\nHead-office reorganisation savings: the reorganisation is a management proposal under review. No board approval has been given and no notice has been issued to employees.\nLegal and advisory fees: the fees were incurred in FY2025 and are included in selling, general and administrative expenses in the statements. They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026.\nInsurance and facilities savings: no supporting schedule, contract or quotation is supplied for this item."
+    }
+   ],
+   "sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1"
+  },
+  "gap": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer.\nBasis: FY2025 (January 1-December 31, 2025); USD; amounts in millions; unaudited management presentation.\nReported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment.\nThe items below are management's proposed financing-case adjustments. None is recorded in the statements. These proposals are not pro-forma adjustments to the statements. Costs and savings are shown as positive add-backs.\nItem  Type  Status  Amount\nProcurement programme savings  Saving  Unrealised  3.00\nHead-office reorganisation savings  Saving  Unrealised  1.20\nLegal and advisory fees  Cost  Incurred  0.80\nInsurance and facilities savings  Saving  Unrealised  Not stated\nTotal proposed adjustments  Not stated\nManagement financing-case EBITDA  Not stated"
+    }
+   ],
+   "sha256": "d57dca87312485016fed4abb3d7ac2afee714687cfa9813a398be822f7ff9129",
+   "derivation": "page:1 equals the positive page:1 except the Insurance and facilities amount and both totals read 'Not stated'; the supporting-schedule page:2 is absent"
+  },
+  "fixtures": {
+   "bridge_table_not_found": {
+    "pages": [
+     {
+      "locator": "page:1",
+      "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer.\nBasis: FY2025 (January 1-December 31, 2025); USD; amounts in millions; unaudited management presentation.\nReported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment.\nThe items below are management's proposed financing-case adjustments. None is recorded in the statements. These proposals are not pro-forma adjustments to the statements. Costs and savings are shown as positive add-backs.\nProcurement programme savings  Saving  Unrealised  3.00\nHead-office reorganisation savings  Saving  Unrealised  1.20\nLegal and advisory fees  Cost  Incurred  0.80\nInsurance and facilities savings  Saving  Unrealised  1.00\nTotal proposed adjustments  6.00\nManagement financing-case EBITDA  36.00"
+     }
+    ],
+    "sha256": "d942edd444b20afed0de9f889bb2f7da2a95496f9c8aa18792e8f71d736ddedf",
+    "derivation": "the positive page:1 without its 'Item  Type  Status  Amount' header line; used only by refusal r14 (no run)"
+   }
+  },
+  "why": "No frozen source carries an add-back to challenge. The source adds management's PROPOSED financing-case adjustments, not recorded in the statements.",
+  "consistency_with_frozen_figures": [
+   "Reported and statement Adjusted EBITDA for FY2025 are restated as 30.0 each (frozen page:2 rows 'Reported EBITDA' and 'Adjusted EBITDA', FY column 30.0); the source says the statements record no adjustment, as frozen page:1 and page:5 do",
+   "FY2025 is January 1-December 31, 2025, the twelve months of CP-1's LTM Q4 25 column",
+   "The items are proposals, not occurrences: no acquisition, disposal, pro-forma adjustment, subsequent event or exceptional item (all frozen as nil) is claimed",
+   "Legal and advisory fees 0.20 per quarter (0.80) sit inside frozen selling, general and administrative expenses (8.75 per quarter) and change no frozen figure",
+   "Item amounts sum to 6.00 and 30.0 + 6.00 = 36.00 (asserted by the builder); contracted 1.80 + under negotiation 1.20 = 3.00",
+   "No frozen figure (cash flow, debt, interest, balance sheet) is restated or contradicted"
+  ]
+ },
+ "cases": {
+  "positive": {
+   "run": {
+    "run_id": "cp1d-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "earnings_update",
+    "requested_modules": [
+     "CP-1D"
+    ]
+   },
+   "pack": "identity + financial + bridge (positive)",
+   "submission": "submissions.json positive",
+   "expected": "expected.json cases.positive",
+   "execution": "closed run: CP-0, CP-1 (five stages, source_context literal with the bridge source), CP-1D"
+  },
+  "statements_only": {
+   "run": {
+    "run_id": "cp1d-owner-statements-only",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "earnings_update",
+    "requested_modules": [
+     "CP-1D"
+    ]
+   },
+   "pack": "identity + financial, as tests/test_financial_workflow.py make_pack()",
+   "submission": "submissions.json statements_only",
+   "expected": "expected.json cases.statements_only",
+   "execution": "closed run; no bridge source: add-backs are a known zero from the statements, the management basis is not_applicable"
+  },
+  "gap": {
+   "run": {
+    "run_id": "cp1d-owner-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "earnings_update",
+    "requested_modules": [
+     "CP-1D"
+    ]
+   },
+   "pack": "identity + financial + bridge (gap: no supporting page, one amount and both totals 'Not stated')",
+   "submission": "submissions.json gap",
+   "expected": "expected.json cases.gap",
+   "execution": "closed run: unstated amount is missing (never 0), every item Insufficient evidence, supported EBITDA equals the statements'"
+  },
+  "refused": {
+   "run": {
+    "run_id": "cp1d-owner-refused",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "earnings_update",
+    "requested_modules": [
+     "CP-1D"
+    ]
+   },
+   "pack": "financial source missing (cases/financial/manifest.json negative_case); identity only",
+   "submission": "submissions.json refused",
+   "expected": "expected.json cases.refused",
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1D never begun"
+  }
+ },
+ "cp1_fact_selection_rule": {
+  "table_id": "T4.10",
+  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+  "predicate": "fact.table_id == 'T4.10' and fact.period == period and fact.label == '<column> \u00b7 <metric>' with column 'LTM Q4 25 (2025-01-01 to 2025-12-31)'; exactly one match, zero or several fail",
+  "metrics": {
+   "adjusted_ebitda_ltm": "adjusted_ebitda",
+   "ebitda_ltm": "ebitda",
+   "cfo_ltm": "cfo_adjusted",
+   "total_debt_ltm": "total_debt",
+   "net_debt_ltm": "net_debt",
+   "total_leverage_adjusted": "total_leverage_adjusted",
+   "net_leverage_adjusted": "net_leverage_adjusted"
+  },
+  "probe": "S1 positive promoted CP-1 head, read-only copy, 2026-10-28: ebitda 30.0, adjusted_ebitda 30.0, cfo_adjusted 19.00, total_debt 50.00, net_debt 30.00, total_leverage_adjusted 1.6666666666666666666666666666666666667 (1.67x), net_leverage_adjusted 1.0 (1.00x); all known, value_class calculated except total_debt (source); T4.17 has 0 facts"
+ },
+ "figures": {
+  "adjusted_ebitda_ltm": {
+   "metric": "adjusted_ebitda",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 adjusted_ebitda",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "30",
+   "spelled": "30",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "ebitda_ltm": {
+   "metric": "ebitda",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 ebitda",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "30",
+   "spelled": "30",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "cfo_ltm": {
+   "metric": "cfo_adjusted",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 cfo_adjusted",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "19",
+   "spelled": "19",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "total_debt_ltm": {
+   "metric": "total_debt",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_debt",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "50",
+   "spelled": "50",
+   "value_class": "source",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "net_debt_ltm": {
+   "metric": "net_debt",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 net_debt",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "30",
+   "spelled": "30",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "total_leverage_adjusted": {
+   "metric": "total_leverage_adjusted",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_leverage_adjusted",
+   "unit": "MULTIPLE",
+   "unit_token": "x",
+   "amount_exact": "1.6666666666666666666666666666666666667",
+   "spelled": "1.67x",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "net_leverage_adjusted": {
+   "metric": "net_leverage_adjusted",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 net_leverage_adjusted",
+   "unit": "MULTIPLE",
+   "unit_token": "x",
+   "amount_exact": "1",
+   "spelled": "1.00x",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  }
+ },
+ "plan": {
+  "requested_modules": [
+   "CP-1D"
+  ],
+  "plan_order": [
+   "CP-0",
+   "CP-1",
+   "CP-1D"
+  ],
+  "cp_model": "not requested in these cases. registry.plan(('CP-MODEL','CP-1D')) = (CP-0, CP-1, CP-1D, CP-MODEL), so CP-MODEL would follow CP-1D; it precedes CP-1D only when CP-1B is also planned (plan(('CP-MODEL','CP-1D','CP-1B')) = CP-0, CP-1, CP-1B, CP-MODEL, CP-1D), which G1 refuses (analytical module after the deterministic one) until a lease supports it",
+  "host_scope": {
+   "CP-1D": "fixed H1 mapping, never caller-supplied: the pack sources identity, financial and bridge that the prepared pack holds (statements_only: identity, financial)",
+   "protocol": "docs/G1X-OWNER-CORE-PROTOCOL.md section 3: an owner-only step may combine a module_context view with pack sources"
+  }
+ }
+}

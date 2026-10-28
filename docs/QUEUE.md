@@ -3036,3 +3036,5 @@ User (2026-10-28, "Commit it"): the AGENTS.md heavy-job lock rule removal (10454
 the PR manager) fast-forwarded onto codex/checkpoint locally (bb8ccef → 10454c8, no push) and merged into
 the LEAD branch (00f22cd). Test runs need no lock now; the user's build-first rule (all test runs in the
 final phase) still applies.
+
+LEAD (2026-10-28): CP-3D and CP-1D owner leases frozen (`docs/CP3D-OWNER-LEASE.md`, `docs/CP1D-OWNER-LEASE.md`; oracles `cases/cp3d-owner`, `cases/cp1d-owner`). Each is built only after S1a and G1-X integrate; CP-3D also needs the H1 host scope (market + financial).

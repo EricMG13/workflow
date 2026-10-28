@@ -1,0 +1,1142 @@
+{
+ "schema_version": "cp3d-owner-submissions/1",
+ "note": "Literal analyst submissions for the CP-3D step market_implied. Levels, dates and terms are quoted: every *_text value must occur in its own verbatim quote, which the core parses with Python (analyst never supplies a computed number). The recovery percent is the one uncited analyst assumption (D11). No bound run-time values appear, except the readiness pack_sha256 placeholder.",
+ "readiness_review": {
+  "positive": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Market-implied credit risk and trading technicals",
+   "reporting_period": "Dealer quotation as of January 9, 2026 and the FY2025 facility terms",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "market",
+     "document_family": "Loan market quotation sheet",
+     "authority": "third_party",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Standalone third-party dealer quotation sheet",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "market",
+       "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+       "locator": "page:1",
+       "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+      }
+     ],
+     "limitations": []
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-3D",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located dated third-party market quotations and the facility pricing terms",
+     "source_ids": [
+      "financial",
+      "market"
+     ],
+     "rationale": "The market-implied assessment can run on the located dealer quotation and the stated facility margin, with source limitations.",
+     "citations": [
+      {
+       "source_id": "market",
+       "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+       "locator": "page:1",
+       "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:5",
+       "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "The located statements and the dealer quotation sheet support a market-implied assessment with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "market",
+       "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+       "locator": "page:1",
+       "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "gap_no_recovery": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Market-implied credit risk and trading technicals",
+   "reporting_period": "Dealer quotation as of January 9, 2026 and the FY2025 facility terms",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "market",
+     "document_family": "Loan market quotation sheet",
+     "authority": "third_party",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Standalone third-party dealer quotation sheet",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "market",
+       "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+       "locator": "page:1",
+       "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+      }
+     ],
+     "limitations": []
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-3D",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located dated third-party market quotations and the facility pricing terms",
+     "source_ids": [
+      "financial",
+      "market"
+     ],
+     "rationale": "The market-implied assessment can run on the located dealer quotation and the stated facility margin, with source limitations.",
+     "citations": [
+      {
+       "source_id": "market",
+       "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+       "locator": "page:1",
+       "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:5",
+       "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "The located statements and the dealer quotation sheet support a market-implied assessment with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "market",
+       "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+       "locator": "page:1",
+       "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "gap_no_market": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Market-implied credit risk and trading technicals",
+   "reporting_period": "Dealer quotation as of January 9, 2026 and the FY2025 facility terms",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-3D",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Facility pricing terms; no third-party market quotation is available",
+     "source_ids": [
+      "financial"
+     ],
+     "rationale": "The assessment can run on the stated facility terms and records the absence of market levels.",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:5",
+       "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "No third-party market quotation source in the pack, so CP-3D market levels are absent"
+     ]
+    }
+   ],
+   "gaps": [
+    {
+     "gap_id": "missing-market-source",
+     "kind": "source",
+     "severity": "material",
+     "description": "No third-party market quotation source in the pack, so CP-3D market levels are absent",
+     "affected_modules": [
+      "CP-3D"
+     ],
+     "remediation": "Supply a dated dealer quotation or trade record",
+     "citations": []
+    }
+   ],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "The located statements support only the facility terms; no market quotation is available.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  }
+ },
+ "positive": {
+  "instrument": {
+   "name": "Northbridge Term Loan",
+   "quote": {
+    "source_id": "market",
+    "locator": "page:1",
+    "quote": "Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029."
+   }
+  },
+  "observations": [
+   {
+    "kind": "bid",
+    "source_id": "market",
+    "locator": "page:1",
+    "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.",
+    "level_text": "98.50",
+    "as_of_text": "January 9, 2026"
+   },
+   {
+    "kind": "offer",
+    "source_id": "market",
+    "locator": "page:1",
+    "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.",
+    "level_text": "99.25",
+    "as_of_text": "January 9, 2026"
+   },
+   {
+    "kind": "indicative_talk",
+    "source_id": "market",
+    "locator": "page:2",
+    "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75.",
+    "level_text": "99.75",
+    "as_of_text": null
+   }
+  ],
+  "market_absence": null,
+  "terms": {
+   "maturity": {
+    "quote": {
+     "source_id": "market",
+     "locator": "page:1",
+     "quote": "Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029."
+    },
+    "date_text": "December 31, 2029",
+    "absence": null
+   },
+   "margin": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "spread 0 basis points"
+    },
+    "bps_text": "0",
+    "absence": null
+   },
+   "amortisation": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "Mandatory annual amortisation is 0"
+    },
+    "value_text": "0",
+    "absence": null
+   },
+   "reference_rate": {
+    "name": "SOFR",
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "SOFR reference rate"
+    },
+    "level": null,
+    "absence": {
+     "reason": "No reference rate level or forward curve appears in any source of the pack",
+     "follow_up": "Supply a dated reference rate fixing or forward curve source"
+    }
+   }
+  },
+  "recovery": {
+   "percent_text": "70",
+   "rationale": "Analyst assumption following the first-lien loan CDS convention; not a source figure and not a view on the recovery outcome"
+  },
+  "recovery_absence": null,
+  "technicals": [
+   {
+    "aspect": "quote_quality",
+    "category": "Analyst Interpretation",
+    "text": "The observed level is one dealer quotation, so it indicates the market and is not a consensus level.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:1",
+      "quote": "The quotation comes from one dealer."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "aspect": "trading_activity",
+    "category": "Documentary Fact",
+    "text": "The sheet reports no trade in the instrument in the period to the quotation date.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:1",
+      "quote": "No trade in the instrument was reported in the 30 days to January 9, 2026."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "aspect": "talk_versus_quote",
+    "category": "Analyst Interpretation",
+    "text": "Dealer talk is shown beside the quotation for context only; it is not a quotation or a trade and no calculation uses it.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:2",
+      "quote": "This is talk and not a quotation or a trade."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "aspect": "rating",
+    "category": "Insufficient Information",
+    "text": "No rating is available to compare with the market level.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:2",
+      "quote": "No rating agency has assigned a rating to the instrument."
+     }
+    ],
+    "limitation": "No rating agency has assigned a rating to the instrument"
+   }
+  ],
+  "summary": {
+   "text": "On the observed quotation the loan is priced close to par, so the market-implied credit risk is low on a spread basis; the evidence is one dealer quotation, so the read is indicative and not a market consensus."
+  }
+ },
+ "gap_no_recovery": {
+  "instrument": {
+   "name": "Northbridge Term Loan",
+   "quote": {
+    "source_id": "market",
+    "locator": "page:1",
+    "quote": "Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029."
+   }
+  },
+  "observations": [
+   {
+    "kind": "bid",
+    "source_id": "market",
+    "locator": "page:1",
+    "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.",
+    "level_text": "98.50",
+    "as_of_text": "January 9, 2026"
+   },
+   {
+    "kind": "offer",
+    "source_id": "market",
+    "locator": "page:1",
+    "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.",
+    "level_text": "99.25",
+    "as_of_text": "January 9, 2026"
+   },
+   {
+    "kind": "indicative_talk",
+    "source_id": "market",
+    "locator": "page:2",
+    "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75.",
+    "level_text": "99.75",
+    "as_of_text": null
+   }
+  ],
+  "market_absence": null,
+  "terms": {
+   "maturity": {
+    "quote": {
+     "source_id": "market",
+     "locator": "page:1",
+     "quote": "Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029."
+    },
+    "date_text": "December 31, 2029",
+    "absence": null
+   },
+   "margin": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "spread 0 basis points"
+    },
+    "bps_text": "0",
+    "absence": null
+   },
+   "amortisation": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "Mandatory annual amortisation is 0"
+    },
+    "value_text": "0",
+    "absence": null
+   },
+   "reference_rate": {
+    "name": "SOFR",
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "SOFR reference rate"
+    },
+    "level": null,
+    "absence": {
+     "reason": "No reference rate level or forward curve appears in any source of the pack",
+     "follow_up": "Supply a dated reference rate fixing or forward curve source"
+    }
+   }
+  },
+  "recovery": null,
+  "recovery_absence": {
+   "reason": "No recovery assumption was assessed for this run",
+   "follow_up": "Supply an analyst recovery assumption for the instrument"
+  },
+  "technicals": [
+   {
+    "aspect": "quote_quality",
+    "category": "Analyst Interpretation",
+    "text": "The observed level is one dealer quotation, so it indicates the market and is not a consensus level.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:1",
+      "quote": "The quotation comes from one dealer."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "aspect": "trading_activity",
+    "category": "Documentary Fact",
+    "text": "The sheet reports no trade in the instrument in the period to the quotation date.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:1",
+      "quote": "No trade in the instrument was reported in the 30 days to January 9, 2026."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "aspect": "talk_versus_quote",
+    "category": "Analyst Interpretation",
+    "text": "Dealer talk is shown beside the quotation for context only; it is not a quotation or a trade and no calculation uses it.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:2",
+      "quote": "This is talk and not a quotation or a trade."
+     }
+    ],
+    "limitation": null
+   },
+   {
+    "aspect": "rating",
+    "category": "Insufficient Information",
+    "text": "No rating is available to compare with the market level.",
+    "basis": [
+     {
+      "source_id": "market",
+      "locator": "page:2",
+      "quote": "No rating agency has assigned a rating to the instrument."
+     }
+    ],
+    "limitation": "No rating agency has assigned a rating to the instrument"
+   }
+  ],
+  "summary": {
+   "text": "On the observed quotation the loan is priced close to par, so the market-implied credit risk is low on a spread basis; the evidence is one dealer quotation, so the read is indicative and not a market consensus."
+  }
+ },
+ "gap_no_market": {
+  "instrument": {
+   "name": "Northbridge Term Loan",
+   "quote": {
+    "source_id": "financial",
+    "locator": "page:5",
+    "quote": "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+   }
+  },
+  "observations": [],
+  "market_absence": {
+   "reason": "The pack holds no third-party market quotation source",
+   "follow_up": "Supply a dated dealer quotation or trade record"
+  },
+  "terms": {
+   "maturity": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "final maturity is December 31, 2029"
+    },
+    "date_text": "December 31, 2029",
+    "absence": null
+   },
+   "margin": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "spread 0 basis points"
+    },
+    "bps_text": "0",
+    "absence": null
+   },
+   "amortisation": {
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "Mandatory annual amortisation is 0"
+    },
+    "value_text": "0",
+    "absence": null
+   },
+   "reference_rate": {
+    "name": "SOFR",
+    "quote": {
+     "source_id": "financial",
+     "locator": "page:5",
+     "quote": "SOFR reference rate"
+    },
+    "level": null,
+    "absence": {
+     "reason": "No reference rate level or forward curve appears in any source of the pack",
+     "follow_up": "Supply a dated reference rate fixing or forward curve source"
+    }
+   }
+  },
+  "recovery": {
+   "percent_text": "70",
+   "rationale": "Analyst assumption following the first-lien loan CDS convention; not a source figure and not a view on the recovery outcome"
+  },
+  "recovery_absence": null,
+  "technicals": [
+   {
+    "aspect": "quote_quality",
+    "category": "Insufficient Information",
+    "text": "No market level is available to assess.",
+    "basis": [],
+    "limitation": "The pack holds no third-party market quotation source"
+   }
+  ],
+  "summary": {
+   "text": "No market level is available, so the market-implied credit risk cannot be assessed from this pack."
+  }
+ },
+ "refusal_mutations": {
+  "base": "positive",
+  "entries": [
+   {
+    "id": "level_not_in_quote",
+    "edits": [
+     [
+      "observations.0.level_text",
+      "98.60"
+     ]
+    ],
+    "issue": "observations[0]: level_text 98.60 does not occur in the quote",
+    "all_issues": [
+     "observations[0]: level_text 98.60 does not occur in the quote"
+    ]
+   },
+   {
+    "id": "level_not_numeric",
+    "edits": [
+     [
+      "observations.0.level_text",
+      "ninety"
+     ]
+    ],
+    "issue": "observations[0]: level_text ninety is not a decimal number",
+    "all_issues": [
+     "observations[0]: level_text ninety is not a decimal number"
+    ]
+   },
+   {
+    "id": "quote_off_page",
+    "edits": [
+     [
+      "observations.0.locator",
+      "page:2"
+     ]
+    ],
+    "issue": "observations[0]: quote not found on market page:2",
+    "all_issues": [
+     "observations[0]: quote not found on market page:2"
+    ]
+   },
+   {
+    "id": "source_not_third_party",
+    "edits": [
+     [
+      "observations.0.source_id",
+      "financial"
+     ],
+     [
+      "observations.0.locator",
+      "page:5"
+     ]
+    ],
+    "issue": "observations[0]: source financial is not a third_party source (CP-0 T3)",
+    "all_issues": [
+     "observations[0]: source financial is not a third_party source (CP-0 T3)"
+    ]
+   },
+   {
+    "id": "duplicate_kind",
+    "edits": [
+     [
+      "observations.1.kind",
+      "bid"
+     ],
+     [
+      "observations.1.level_text",
+      "98.50"
+     ]
+    ],
+    "issue": "observations: kind bid appears more than once",
+    "all_issues": [
+     "observations: kind bid appears more than once"
+    ]
+   },
+   {
+    "id": "bid_level_is_the_offer",
+    "edits": [
+     [
+      "observations.0.level_text",
+      "99.25"
+     ]
+    ],
+    "issue": "observations[0]: bid level_text 99.25 is not labelled bid in the quote",
+    "all_issues": [
+     "observations[0]: bid level_text 99.25 is not labelled bid in the quote"
+    ]
+   },
+   {
+    "id": "talk_cites_bid_offer_sentence",
+    "edits": [
+     [
+      "observations.2.locator",
+      "page:1"
+     ],
+     [
+      "observations.2.quote",
+      "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+     ],
+     [
+      "observations.2.level_text",
+      "99.25"
+     ]
+    ],
+    "issue": "observations[2]: indicative_talk level_text 99.25 is a bid or offer level in the quote",
+    "all_issues": [
+     "observations[2]: indicative_talk level_text 99.25 is a bid or offer level in the quote"
+    ]
+   },
+   {
+    "id": "as_of_not_in_quote",
+    "edits": [
+     [
+      "observations.0.as_of_text",
+      "January 8, 2026"
+     ]
+    ],
+    "issue": "observations[0]: as_of_text January 8, 2026 does not occur in the quote",
+    "all_issues": [
+     "observations[0]: as_of_text January 8, 2026 does not occur in the quote"
+    ]
+   },
+   {
+    "id": "margin_not_in_quote",
+    "edits": [
+     [
+      "terms.margin.bps_text",
+      "25"
+     ]
+    ],
+    "issue": "margin: bps_text 25 does not occur in the quote",
+    "all_issues": [
+     "margin: bps_text 25 does not occur in the quote"
+    ]
+   },
+   {
+    "id": "recovery_out_of_range",
+    "edits": [
+     [
+      "recovery.percent_text",
+      "100"
+     ]
+    ],
+    "issue": "recovery: percent must be at least 0 and below 100",
+    "all_issues": [
+     "recovery: percent must be at least 0 and below 100"
+    ]
+   },
+   {
+    "id": "recovery_both",
+    "edits": [
+     [
+      "recovery_absence",
+      {
+       "reason": "Not assessed",
+       "follow_up": "Assess it"
+      }
+     ]
+    ],
+    "issue": "recovery: exactly one of recovery and recovery_absence is required",
+    "all_issues": [
+     "recovery: exactly one of recovery and recovery_absence is required"
+    ]
+   },
+   {
+    "id": "reference_level_not_in_quote",
+    "edits": [
+     [
+      "terms.reference_rate.absence",
+      null
+     ],
+     [
+      "terms.reference_rate.level",
+      {
+       "quote": {
+        "source_id": "financial",
+        "locator": "page:5",
+        "quote": "SOFR reference rate"
+       },
+       "percent_text": "4.30"
+      }
+     ]
+    ],
+    "issue": "reference_rate: level percent_text 4.30 does not occur in the quote",
+    "all_issues": [
+     "reference_rate: level percent_text 4.30 does not occur in the quote"
+    ]
+   },
+   {
+    "id": "reference_rate_neither",
+    "edits": [
+     [
+      "terms.reference_rate.absence",
+      null
+     ]
+    ],
+    "issue": "reference_rate: exactly one of level and absence is required",
+    "all_issues": [
+     "reference_rate: exactly one of level and absence is required"
+    ]
+   },
+   {
+    "id": "digit_in_text",
+    "edits": [
+     [
+      "technicals.0.text",
+      "The observed level is one dealer quotation of 1 dealer."
+     ]
+    ],
+    "issue": "technicals[0].text: digits are not allowed",
+    "all_issues": [
+     "technicals[0].text: digits are not allowed"
+    ]
+   },
+   {
+    "id": "prohibited_conclusion",
+    "edits": [
+     [
+      "summary.text",
+      "The loan looks cheap, so buy it."
+     ]
+    ],
+    "issue": "summary.text: text carries a prohibited conclusion",
+    "all_issues": [
+     "summary.text: text carries a prohibited conclusion"
+    ]
+   },
+   {
+    "id": "insufficient_without_limitation",
+    "edits": [
+     [
+      "technicals.3.limitation",
+      null
+     ]
+    ],
+    "issue": "technicals[3]: limitation is required for Insufficient Information and only for it",
+    "all_issues": [
+     "technicals[3]: limitation is required for Insufficient Information and only for it"
+    ]
+   },
+   {
+    "id": "observations_and_absence",
+    "edits": [
+     [
+      "market_absence",
+      {
+       "reason": "None",
+       "follow_up": "None"
+      }
+     ]
+    ],
+    "issue": "observations: exactly one of observations and market_absence is required",
+    "all_issues": [
+     "observations: exactly one of observations and market_absence is required"
+    ]
+   },
+   {
+    "id": "maturity_before_quotation",
+    "edits": [
+     [
+      "terms.maturity.quote",
+      {
+       "source_id": "market",
+       "locator": "page:1",
+       "quote": "Published January 10, 2026. Quotations are as of the close on January 9, 2026."
+      }
+     ],
+     [
+      "terms.maturity.date_text",
+      "January 9, 2026"
+     ]
+    ],
+    "issue": "maturity: date is not after the quotation date",
+    "all_issues": [
+     "maturity: date is not after the quotation date"
+    ]
+   },
+   {
+    "id": "amortisation_nonzero",
+    "edits": [
+     [
+      "terms.amortisation.quote",
+      {
+       "source_id": "financial",
+       "locator": "page:5",
+       "quote": "Mandatory annual amortisation is 0; final maturity is December 31, 2029"
+      }
+     ],
+     [
+      "terms.amortisation.value_text",
+      "31"
+     ]
+    ],
+    "issue": "amortisation: the simple margin convention requires zero amortisation",
+    "all_issues": [
+     "amortisation: the simple margin convention requires zero amortisation"
+    ],
+    "note": "value_text 31 is the day-of-month numeral of 'December 31' in the quote, not an amortisation figure; the quote's other numerals are the zero and the year"
+   }
+  ]
+ },
+ "blocked": {
+  "attempt_0": {
+   "edits": [
+    [
+     "technicals.0.text",
+     "The observed level is one dealer quotation of 1 dealer."
+    ]
+   ],
+   "issue": "technicals[0].text: digits are not allowed"
+  },
+  "attempt_1": {
+   "edits": [
+    [
+     "observations.0.level_text",
+     "98.60"
+    ]
+   ],
+   "issue": "observations[0]: level_text 98.60 does not occur in the quote"
+  }
+ },
+ "tool_use_refusals": [
+  {
+   "id": "unread_market_page_1",
+   "reads": [
+    [
+     "market",
+     "page:2"
+    ],
+    [
+     "financial",
+     "page:5"
+    ]
+   ],
+   "searches": 1,
+   "issues": [
+    "Cited page not read through read_pages: market page:1"
+   ],
+   "issue": "Cited page not read through read_pages: market page:1"
+  },
+  {
+   "id": "unread_financial_page_5",
+   "reads": [
+    [
+     "market",
+     "page:1"
+    ],
+    [
+     "market",
+     "page:2"
+    ]
+   ],
+   "searches": 1,
+   "issues": [
+    "Cited page not read through read_pages: financial page:5"
+   ],
+   "issue": "Cited page not read through read_pages: financial page:5"
+  },
+  {
+   "id": "unread_two_pages_sorted",
+   "reads": [
+    [
+     "market",
+     "page:2"
+    ]
+   ],
+   "searches": 1,
+   "issues": [
+    "Cited page not read through read_pages: financial page:5",
+    "Cited page not read through read_pages: market page:1"
+   ],
+   "issue": "Cited page not read through read_pages: financial page:5"
+  },
+  {
+   "id": "absence_without_search",
+   "reads": [
+    [
+     "market",
+     "page:1"
+    ],
+    [
+     "market",
+     "page:2"
+    ],
+    [
+     "financial",
+     "page:5"
+    ]
+   ],
+   "searches": 0,
+   "issues": [
+    "Absence claim without a recorded search"
+   ],
+   "issue": "Absence claim without a recorded search"
+  },
+  {
+   "id": "term_absence_without_search",
+   "edits": [
+    [
+     "terms.margin",
+     {
+      "quote": null,
+      "bps_text": null,
+      "absence": {
+       "reason": "No contractual margin is stated",
+       "follow_up": "Supply the facility pricing terms"
+      }
+     }
+    ]
+   ],
+   "note": "the reference rate absence also holds in every pack case, so this case shows the term absence is reached, not that it alone fires",
+   "reads": [
+    [
+     "market",
+     "page:1"
+    ],
+    [
+     "market",
+     "page:2"
+    ],
+    [
+     "financial",
+     "page:5"
+    ]
+   ],
+   "searches": 0,
+   "issues": [
+    "Absence claim without a recorded search"
+   ],
+   "issue": "Absence claim without a recorded search"
+  }
+ ]
+}

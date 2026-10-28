@@ -1,0 +1,186 @@
+{
+ "schema_version": "cp3d-owner-cases/1",
+ "scope": "CP-3D market implied risk owner inputs: a two-module run CP-0 then CP-3D over a pack with the frozen third-party market quotation sheet",
+ "status": "DRAFT revision 2 (fix round 1) by owner-preparation task cp3d-owner, 2026-10-28; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+  "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+ },
+ "market_source_pin": {
+  "file_read": "cases/cp3-cp6-owner/manifest.json",
+  "file_pinned": false,
+  "why": "that file belongs to another preparation and may be revised; the two page bytes are pinned by the source sha256",
+  "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+  "source_id": "market",
+  "name": "Third-party loan market quotation sheet",
+  "pages": [
+   {
+    "locator": "page:1",
+    "text": "SYNTHETIC LOAN MARKET DESK\nSecondary loan quotation sheet\nPublished January 10, 2026. Quotations are as of the close on January 9, 2026.\nThis invented case is test data, not evidence about a real issuer.\nInstrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029.\nDealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.\nThe quotation comes from one dealer. No trade in the instrument was reported in the 30 days to January 9, 2026."
+   },
+   {
+    "locator": "page:2",
+    "text": "SYNTHETIC LOAN MARKET DESK\nDealer commentary\nPublished January 10, 2026.\nDealers describe the indicative fair value of the Northbridge Term Loan as around 99.75. This is talk and not a quotation or a trade.\nThe commentary does not describe the security package, guarantees or covenants of the instrument.\nNo rating agency has assigned a rating to the instrument."
+   }
+  ]
+ },
+ "reuse": {
+  "identity": "cases/financial/manifest.json source identity, bytes unchanged",
+  "financial": "cases/financial/manifest.json source financial, bytes unchanged",
+  "market": "cases/cp3-cp6-owner/manifest.json market_source, bytes unchanged (the CP-3 preparation's frozen third-party sheet)"
+ },
+ "no_new_source": "No second market source is added. The method needs no content the sheet and the financial schedule lack, except a reference rate level, which is deliberately absent so the all-in yield is shown Not calculable (see expected.json#arithmetic.reference_rate)",
+ "run": {
+  "requested_modules": [
+   "CP-3D"
+  ],
+  "plan_order": [
+   "CP-0",
+   "CP-3D"
+  ],
+  "live_consumers_of_cp0": [
+   "CP-3D"
+  ],
+  "pathway": "relative_value",
+  "optional_cp2h": "CP-2H is not built: treated as unbound, not selected, not read"
+ },
+ "cases": [
+  {
+   "case_id": "positive",
+   "run": {
+    "run_id": "slice-cp3d-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-3D"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "status": "ready"
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+     "status": "ready"
+    },
+    {
+     "source_id": "market",
+     "name": "Third-party loan market quotation sheet",
+     "sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+     "status": "ready"
+    }
+   ],
+   "clone_of": null,
+   "submission": "submissions.json#positive"
+  },
+  {
+   "case_id": "gap_no_recovery",
+   "run": {
+    "run_id": "slice-cp3d-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-3D"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "status": "ready"
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+     "status": "ready"
+    },
+    {
+     "source_id": "market",
+     "name": "Third-party loan market quotation sheet",
+     "sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+     "status": "ready"
+    }
+   ],
+   "clone_of": "positive",
+   "submission": "submissions.json#gap_no_recovery"
+  },
+  {
+   "case_id": "gap_no_market",
+   "run": {
+    "run_id": "slice-cp3d-gap-no-market",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "relative_value",
+    "requested_modules": [
+     "CP-3D"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "name": "Issuer identity and reporting scope note",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "status": "ready"
+    },
+    {
+     "source_id": "financial",
+     "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+     "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+     "status": "ready"
+    }
+   ],
+   "clone_of": null,
+   "submission": "submissions.json#gap_no_market"
+  }
+ ],
+ "table_ids": {
+  "CP-3D": [
+   "T3E.1",
+   "T3E.10",
+   "T3E.2",
+   "T3E.3",
+   "T3E.4",
+   "T3E.5",
+   "T3E.6",
+   "T3E.7",
+   "T3E.8",
+   "T3E.9"
+  ],
+  "used": [
+   "T3E.1",
+   "T3E.2",
+   "T3E.3",
+   "T3E.4",
+   "T3E.5",
+   "T3E.6",
+   "T3E.7",
+   "T3E.8",
+   "T3E.9"
+  ],
+  "unused": [
+   "T3E.10"
+  ]
+ }
+}

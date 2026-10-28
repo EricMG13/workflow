@@ -65,7 +65,7 @@ CP-3/CP-6 (`registry.py:45-49`).
 | CP-2H ratings | trigger headroom on CP-2G | ratings, thresholds, migration view | req CP-0, CP-1, CP-2G; opt CP-1D | FP05 rating-triggers |
 | CP-3B fit | sizing against limits | mandate fit | alias only | FP01/05/06 portfolio-fit |
 | CP-3C refi/LME | refinancing need/cost, LME capacity from CP-4 | path, LME likelihood | req CP-0, CP-1, CP-2D; opt CP-1A, CP-2A, CP-4, CP-3D | FP04 refinancing-paths, lme-creditor-exposure |
-| CP-3D market | spread/yield, implied default probability | technicals | req CP-0; opt CP-2H | FP03 instrument-levels, market-against-fundamentals |
+| CP-3D market | spread/yield, implied default probability | technicals | req CP-0; opt CP-2H | FP03 market-against-fundamentals (instrument-levels is CP-3's; LEAD 2026-10-28, CP-3D lease) |
 | CP-4C fulcrum | waterfall by class, recovery %, fulcrum | EV multiple, distressed EBITDA | req CP-0, CP-1, CP-2G, CP-4, CP-2A; opt CP-3C | FP05 recovery-by-class, value-allocation-claims |
 | CP-6A recommendation | sizing | portfolio call | alias only | FP06 portfolio-recommendation, instrument-decision |
 | CP-8 ledger | diff against prior decision record | post-mortem | req CP-0; opt CP-6 (block) | what-changed (`report_view.py:1099`) |

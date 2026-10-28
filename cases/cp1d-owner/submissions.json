@@ -1,0 +1,3326 @@
+{
+ "schema_version": "cp1d-owner-submissions/1",
+ "note": "Literal analyst submissions for the earnings_quality step. {{FIG:name|token}} is replaced mechanically by {<CP-1 fact_id>|<token>} after the CP-1 head is inspected (manifest cp1_fact_selection_rule); unreplaced it is malformed run text and fails closed. {T1D.x.y.z|token} references name the module's own facts and are literal. A Partly supported add-back gives either accepted_basis (a citation whose quote holds exactly one source amount; Python computes the share as that amount over the proposed amount) or accepted_fraction (an analyst judgment without a source amount, recorded as analyst_judgment with a limitation). tool_calls.<case> is the literal tool sequence of the earnings_quality attempt: one read_inputs, then read_pages covering every cited page. CP-0 readiness and CP-1 source_context are derived from cases/snapshot/submissions.json (pinned) with the business source replaced by the bridge source; the later CP-1 stages are those of the financial case, unchanged.",
+ "figures": {
+  "adjusted_ebitda_ltm": {
+   "metric": "adjusted_ebitda",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 adjusted_ebitda",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "30",
+   "spelled": "30",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "ebitda_ltm": {
+   "metric": "ebitda",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 ebitda",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "30",
+   "spelled": "30",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "cfo_ltm": {
+   "metric": "cfo_adjusted",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 cfo_adjusted",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "19",
+   "spelled": "19",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "total_debt_ltm": {
+   "metric": "total_debt",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_debt",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "50",
+   "spelled": "50",
+   "value_class": "source",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "net_debt_ltm": {
+   "metric": "net_debt",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 net_debt",
+   "unit": "MILLIONS",
+   "unit_token": "US$ m",
+   "amount_exact": "30",
+   "spelled": "30",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "total_leverage_adjusted": {
+   "metric": "total_leverage_adjusted",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_leverage_adjusted",
+   "unit": "MULTIPLE",
+   "unit_token": "x",
+   "amount_exact": "1.6666666666666666666666666666666666667",
+   "spelled": "1.67x",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  },
+  "net_leverage_adjusted": {
+   "metric": "net_leverage_adjusted",
+   "table_id": "T4.10",
+   "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 net_leverage_adjusted",
+   "unit": "MULTIPLE",
+   "unit_token": "x",
+   "amount_exact": "1",
+   "spelled": "1.00x",
+   "value_class": "calculated",
+   "fact_id": "interface-fact:<sha256>; bound at run time, never literal"
+  }
+ },
+ "positive": {
+  "readiness_review": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Historical financial foundation and earnings quality",
+   "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "bridge",
+     "document_family": "Management financing-case bridge",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Management presentation accompanying the statements",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "limitations": [
+      "Management-supplied proposals; unaudited and not recorded in the statements."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-1",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "module_id": "CP-1D",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Settled CP-1 earnings and cash flow, and the management add-back bridge with its supporting schedule",
+     "source_ids": [
+      "identity",
+      "financial",
+      "bridge"
+     ],
+     "rationale": "The add-back challenge can run on settled CP-1 figures and the located bridge with explicit limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+      "Management-supplied proposals; unaudited and not recorded in the statements."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "Located statements and the management bridge support historical and earnings-quality analysis with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "cp1_source_context": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "entities": [
+    {
+     "entity_id": "issuer",
+     "name": "Northbridge Synthetic Group",
+     "entity_type": "group",
+     "roles": [
+      "issuer"
+     ],
+     "fiscal_year_end": "December 31",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "classification": "nonfinancial",
+     "document_type": "Identity note",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Identity only",
+     "analytical_use": "Issuer identity",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "Identity is not event evidence"
+    },
+    {
+     "source_id": "financial",
+     "classification": "financial",
+     "document_type": "Quarterly statements",
+     "published_on": "2026-01-10",
+     "evidence_class": "unaudited_without_auditor",
+     "evidence_rationale": "No auditor report",
+     "analytical_use": "Historical financial analysis",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "scopes": [
+      {
+       "scope_id": "opening-2024",
+       "entity_id": "issuer",
+       "period_label": "opening-2024",
+       "period_kind": "period_end",
+       "start_date": null,
+       "end_date": "2024-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q1-2025",
+       "entity_id": "issuer",
+       "period_label": "q1-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-03-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q2-2025",
+       "entity_id": "issuer",
+       "period_label": "q2-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-04-01",
+       "end_date": "2025-06-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q3-2025",
+       "entity_id": "issuer",
+       "period_label": "q3-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-07-01",
+       "end_date": "2025-09-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q4-2025",
+       "entity_id": "issuer",
+       "period_label": "q4-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-10-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "fy-2025",
+       "entity_id": "issuer",
+       "period_label": "fy-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      }
+     ],
+     "event_scan": "no_events_identified",
+     "event_scan_explanation": "Explicit no-event disclosure through as-of",
+     "event_scan_citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "bridge",
+     "classification": "nonfinancial",
+     "document_type": "Management financing-case bridge",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Management presentation without auditor or filing status",
+     "analytical_use": "Add-back bridge for CP-1D",
+     "citations": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "A financing presentation is not event evidence"
+    }
+   ],
+   "limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   ]
+  },
+  "cp1_readiness": {
+   "step": "readiness",
+   "replaces": "the S1 literal {\"consumers\": []}; the run requests the consumer CP-1D (inputs.requested_consumers = (\"CP-1D\",), inputs.consumers = _requests((\"CP-1D\",)))",
+   "payload": {
+    "inputs_sha256": "{{PREFILLED:inputs_sha256}}",
+    "consumers": [
+     {
+      "entry": "CP-1D",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{KPI:adjusted_ebitda|FY-2025}}",
+         "{{KPI:ebitda|FY-2025}}",
+         "{{KPI:cfo_adjusted|FY-2025}}",
+         "{{KPI:total_debt|FY-2025}}",
+         "{{KPI:net_debt|FY-2025}}"
+        ],
+        "rationale": "Settled adjusted EBITDA, EBITDA, adjusted operating cash flow, total debt and net debt support the add-back challenge; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the add-back challenge."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{GAP_IDS}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source-context and audit warning bears on the reliability of the statement earnings CP-1D restates."
+       }
+      ]
+     }
+    ]
+   },
+   "run_time_bindings": {
+    "{{PREFILLED:inputs_sha256}}": "inputs.content_hash() of the readiness step inputs (prefilled; never literal)",
+    "{{KPI:<key>|FY-2025}}": "evidence_id of the first record of inputs.narrative.inputs.catalogue with kind 'kpi' and record.key == <key> whose record.value.observation_ids contains an id ending '-fy-2025'; keys in order adjusted_ebitda, ebitda, cfo_adjusted, total_debt, net_debt; none or an unexpected shape fails closed",
+    "{{GAP_IDS}}": "every inputs.narrative.gaps[*].gap_id in order (replaces the placeholder element)"
+   },
+   "validated_on": "copy of the S1 positive CP-1 head (read-only copy, 2026-10-28, 1132 gaps all WARN): validate_downstream_review() returns no issues; _assess_consumers gives status ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gaps",
+   "expected_assessment": {
+    "CP-1D": {
+     "status": "ready_with_limitations",
+     "unassessed_requirements": 0,
+     "unassessed_gaps": 0,
+     "blocking_gaps": [],
+     "requirement_status": "limited"
+    }
+   },
+   "negatives": [
+    "no gap scope: CP-1D is not_ready",
+    "empty evidence_ids: validate_downstream_review refuses ('Sufficiency requires prior evidence...' / '...register evidence...')",
+    "requirement status sufficient without actions also validates (the product recommends limited)"
+   ]
+  },
+  "earnings_quality": {
+   "assessments": [
+    {
+     "addback": "Procurement programme savings",
+     "achievability": "Partly supported",
+     "recurrence": "Not applicable",
+     "accepted_fraction": null,
+     "accepted_basis": {
+      "source_id": "bridge",
+      "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+      "locator": "page:2",
+      "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+     },
+     "category": "Analyst Interpretation",
+     "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+     "evidence": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      }
+     ],
+     "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+    },
+    {
+     "addback": "Head-office reorganisation savings",
+     "achievability": "Not supported",
+     "recurrence": "Not applicable",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+     "evidence": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "No board approval has been given and no notice has been issued to employees."
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "addback": "Legal and advisory fees",
+     "achievability": "Supported",
+     "recurrence": "Recurring",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+     "evidence": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+      }
+     ],
+     "limitation": null
+    },
+    {
+     "addback": "Insurance and facilities savings",
+     "achievability": "Insufficient evidence",
+     "recurrence": "Not applicable",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+     "evidence": [],
+     "limitation": null
+    }
+   ],
+   "overall": {
+    "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+    "category": "Analyst Interpretation",
+    "confidence": "Medium",
+    "limitation": "Add-back evidence is limited to management-supplied schedules.",
+    "evidence": []
+   },
+   "gaps": [
+    {
+     "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+     "why_it_matters": "The accepted share rests on management's own schedule.",
+     "affected_analysis": "Add-back assessment",
+     "severity": "Material",
+     "action": "Obtain signed contract copies and board minutes."
+    }
+   ]
+  },
+  "tool_calls": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "bridge",
+     "first_page": 2,
+     "last_page": 2
+    },
+    "expect_spans": [
+     {
+      "source_id": "bridge",
+      "locator": "page:2"
+     }
+    ]
+   }
+  ]
+ },
+ "statements_only": {
+  "readiness_review": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Historical financial foundation and earnings quality",
+   "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-1",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "module_id": "CP-1D",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Settled CP-1 earnings and cash flow and the statements' add-back disclosure",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The statements record no adjustment and no bridge is supplied; the challenge reduces to confirming that.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "Located statements support historical analysis; no management bridge is supplied.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "cp1_source_context": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "entities": [
+    {
+     "entity_id": "issuer",
+     "name": "Northbridge Synthetic Group",
+     "entity_type": "group",
+     "roles": [
+      "issuer"
+     ],
+     "fiscal_year_end": "December 31",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "classification": "nonfinancial",
+     "document_type": "Identity note",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Identity only",
+     "analytical_use": "Issuer identity",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "Identity is not event evidence"
+    },
+    {
+     "source_id": "financial",
+     "classification": "financial",
+     "document_type": "Quarterly statements",
+     "published_on": "2026-01-10",
+     "evidence_class": "unaudited_without_auditor",
+     "evidence_rationale": "No auditor report",
+     "analytical_use": "Historical financial analysis",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "scopes": [
+      {
+       "scope_id": "opening-2024",
+       "entity_id": "issuer",
+       "period_label": "opening-2024",
+       "period_kind": "period_end",
+       "start_date": null,
+       "end_date": "2024-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q1-2025",
+       "entity_id": "issuer",
+       "period_label": "q1-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-03-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q2-2025",
+       "entity_id": "issuer",
+       "period_label": "q2-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-04-01",
+       "end_date": "2025-06-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q3-2025",
+       "entity_id": "issuer",
+       "period_label": "q3-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-07-01",
+       "end_date": "2025-09-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q4-2025",
+       "entity_id": "issuer",
+       "period_label": "q4-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-10-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "fy-2025",
+       "entity_id": "issuer",
+       "period_label": "fy-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      }
+     ],
+     "event_scan": "no_events_identified",
+     "event_scan_explanation": "Explicit no-event disclosure through as-of",
+     "event_scan_citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   ]
+  },
+  "cp1_readiness": {
+   "step": "readiness",
+   "replaces": "the S1 literal {\"consumers\": []}; the run requests the consumer CP-1D (inputs.requested_consumers = (\"CP-1D\",), inputs.consumers = _requests((\"CP-1D\",)))",
+   "payload": {
+    "inputs_sha256": "{{PREFILLED:inputs_sha256}}",
+    "consumers": [
+     {
+      "entry": "CP-1D",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{KPI:adjusted_ebitda|FY-2025}}",
+         "{{KPI:ebitda|FY-2025}}",
+         "{{KPI:cfo_adjusted|FY-2025}}",
+         "{{KPI:total_debt|FY-2025}}",
+         "{{KPI:net_debt|FY-2025}}"
+        ],
+        "rationale": "Settled adjusted EBITDA, EBITDA, adjusted operating cash flow, total debt and net debt support the add-back challenge; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the add-back challenge."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{GAP_IDS}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source-context and audit warning bears on the reliability of the statement earnings CP-1D restates."
+       }
+      ]
+     }
+    ]
+   },
+   "run_time_bindings": {
+    "{{PREFILLED:inputs_sha256}}": "inputs.content_hash() of the readiness step inputs (prefilled; never literal)",
+    "{{KPI:<key>|FY-2025}}": "evidence_id of the first record of inputs.narrative.inputs.catalogue with kind 'kpi' and record.key == <key> whose record.value.observation_ids contains an id ending '-fy-2025'; keys in order adjusted_ebitda, ebitda, cfo_adjusted, total_debt, net_debt; none or an unexpected shape fails closed",
+    "{{GAP_IDS}}": "every inputs.narrative.gaps[*].gap_id in order (replaces the placeholder element)"
+   },
+   "validated_on": "copy of the S1 positive CP-1 head (read-only copy, 2026-10-28, 1132 gaps all WARN): validate_downstream_review() returns no issues; _assess_consumers gives status ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gaps",
+   "expected_assessment": {
+    "CP-1D": {
+     "status": "ready_with_limitations",
+     "unassessed_requirements": 0,
+     "unassessed_gaps": 0,
+     "blocking_gaps": [],
+     "requirement_status": "limited"
+    }
+   },
+   "negatives": [
+    "no gap scope: CP-1D is not_ready",
+    "empty evidence_ids: validate_downstream_review refuses ('Sufficiency requires prior evidence...' / '...register evidence...')",
+    "requirement status sufficient without actions also validates (the product recommends limited)"
+   ]
+  },
+  "earnings_quality": {
+   "assessments": [],
+   "overall": {
+    "rationale": "The statements record no adjustment and no management bridge is supplied, so there is nothing to challenge: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}.",
+    "category": "Analyst Interpretation",
+    "confidence": "Medium",
+    "limitation": "No management bridge is in the pack.",
+    "evidence": [
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "No EBITDA adjustments or add-backs occurred in any quarter or FY2025; this disclosure is complete."
+     }
+    ]
+   },
+   "gaps": []
+  },
+  "tool_calls": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 1,
+     "last_page": 1
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     }
+    ]
+   }
+  ]
+ },
+ "gap": {
+  "readiness_review": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "objective": "Historical financial foundation and earnings quality",
+   "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+   "issuer_confirmed": true,
+   "sources": [
+    {
+     "source_id": "identity",
+     "document_family": "Identity note",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Accompanying identity note",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": []
+    },
+    {
+     "source_id": "financial",
+     "document_family": "Quarterly financial statements",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "Four quarters in 2025",
+     "version_relationship": "Unaudited quarterly source",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "bridge",
+     "document_family": "Management financing-case bridge",
+     "authority": "issuer",
+     "entity": "Northbridge Synthetic Group",
+     "period": "January 2026",
+     "version_relationship": "Management presentation accompanying the statements",
+     "fidelity": "verified",
+     "citations": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "d57dca87312485016fed4abb3d7ac2afee714687cfa9813a398be822f7ff9129",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "limitations": [
+      "Management-supplied proposals; unaudited and not recorded in the statements. No supporting schedule is supplied."
+     ]
+    }
+   ],
+   "consumers": [
+    {
+     "module_id": "CP-1",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+     "source_ids": [
+      "identity",
+      "financial"
+     ],
+     "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "module_id": "CP-1D",
+     "readiness": "READY_WITH_LIMITATIONS",
+     "evidence_demand": "Settled CP-1 earnings and cash flow, and the management add-back bridge with its supporting schedule",
+     "source_ids": [
+      "identity",
+      "financial",
+      "bridge"
+     ],
+     "rationale": "The add-back challenge can run on settled CP-1 figures and the located bridge with explicit limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "bridge",
+       "source_sha256": "d57dca87312485016fed4abb3d7ac2afee714687cfa9813a398be822f7ff9129",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "missing_source": null,
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+      "Management-supplied proposals; unaudited and not recorded in the statements. No supporting schedule is supplied."
+     ]
+    }
+   ],
+   "gaps": [],
+   "analysis": [
+    {
+     "claim_id": "source-assessment",
+     "text": "Located statements and the management bridge support historical and earnings-quality analysis with limitations.",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      },
+      {
+       "source_id": "bridge",
+       "source_sha256": "d57dca87312485016fed4abb3d7ac2afee714687cfa9813a398be822f7ff9129",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    }
+   ]
+  },
+  "cp1_source_context": {
+   "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+   "entities": [
+    {
+     "entity_id": "issuer",
+     "name": "Northbridge Synthetic Group",
+     "entity_type": "group",
+     "roles": [
+      "issuer"
+     ],
+     "fiscal_year_end": "December 31",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "classification": "nonfinancial",
+     "document_type": "Identity note",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Identity only",
+     "analytical_use": "Issuer identity",
+     "citations": [
+      {
+       "source_id": "identity",
+       "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+       "locator": "page:1",
+       "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "Identity is not event evidence"
+    },
+    {
+     "source_id": "financial",
+     "classification": "financial",
+     "document_type": "Quarterly statements",
+     "published_on": "2026-01-10",
+     "evidence_class": "unaudited_without_auditor",
+     "evidence_rationale": "No auditor report",
+     "analytical_use": "Historical financial analysis",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "Currency: USD; amounts in millions."
+      }
+     ],
+     "scopes": [
+      {
+       "scope_id": "opening-2024",
+       "entity_id": "issuer",
+       "period_label": "opening-2024",
+       "period_kind": "period_end",
+       "start_date": null,
+       "end_date": "2024-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q1-2025",
+       "entity_id": "issuer",
+       "period_label": "q1-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-03-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q2-2025",
+       "entity_id": "issuer",
+       "period_label": "q2-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-04-01",
+       "end_date": "2025-06-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q3-2025",
+       "entity_id": "issuer",
+       "period_label": "q3-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-07-01",
+       "end_date": "2025-09-30",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "q4-2025",
+       "entity_id": "issuer",
+       "period_label": "q4-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-10-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      },
+      {
+       "scope_id": "fy-2025",
+       "entity_id": "issuer",
+       "period_label": "fy-2025",
+       "period_kind": "historical_duration",
+       "start_date": "2025-01-01",
+       "end_date": "2025-12-31",
+       "currency": "USD",
+       "unit": "MILLIONS",
+       "accounting_basis": "IFRS",
+       "entity_perimeter": "consolidated group",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The opening balance is December 31, 2024."
+        }
+       ]
+      }
+     ],
+     "event_scan": "no_events_identified",
+     "event_scan_explanation": "Explicit no-event disclosure through as-of",
+     "event_scan_citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "limitations": [
+      "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     ]
+    },
+    {
+     "source_id": "bridge",
+     "classification": "nonfinancial",
+     "document_type": "Management financing-case bridge",
+     "published_on": "2026-01-10",
+     "evidence_class": "internal",
+     "evidence_rationale": "Management presentation without auditor or filing status",
+     "analytical_use": "Add-back bridge for CP-1D",
+     "citations": [
+      {
+       "source_id": "bridge",
+       "source_sha256": "d57dca87312485016fed4abb3d7ac2afee714687cfa9813a398be822f7ff9129",
+       "locator": "page:1",
+       "quote": "Reported EBITDA and statement Adjusted EBITDA for FY2025 are 30.0 each, as in the unaudited statements, which record no adjustment."
+      }
+     ],
+     "event_scan": "unassessed",
+     "event_scan_explanation": "A financing presentation is not event evidence"
+    }
+   ],
+   "limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   ]
+  },
+  "cp1_readiness": {
+   "step": "readiness",
+   "replaces": "the S1 literal {\"consumers\": []}; the run requests the consumer CP-1D (inputs.requested_consumers = (\"CP-1D\",), inputs.consumers = _requests((\"CP-1D\",)))",
+   "payload": {
+    "inputs_sha256": "{{PREFILLED:inputs_sha256}}",
+    "consumers": [
+     {
+      "entry": "CP-1D",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{KPI:adjusted_ebitda|FY-2025}}",
+         "{{KPI:ebitda|FY-2025}}",
+         "{{KPI:cfo_adjusted|FY-2025}}",
+         "{{KPI:total_debt|FY-2025}}",
+         "{{KPI:net_debt|FY-2025}}"
+        ],
+        "rationale": "Settled adjusted EBITDA, EBITDA, adjusted operating cash flow, total debt and net debt support the add-back challenge; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the add-back challenge."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{GAP_IDS}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source-context and audit warning bears on the reliability of the statement earnings CP-1D restates."
+       }
+      ]
+     }
+    ]
+   },
+   "run_time_bindings": {
+    "{{PREFILLED:inputs_sha256}}": "inputs.content_hash() of the readiness step inputs (prefilled; never literal)",
+    "{{KPI:<key>|FY-2025}}": "evidence_id of the first record of inputs.narrative.inputs.catalogue with kind 'kpi' and record.key == <key> whose record.value.observation_ids contains an id ending '-fy-2025'; keys in order adjusted_ebitda, ebitda, cfo_adjusted, total_debt, net_debt; none or an unexpected shape fails closed",
+    "{{GAP_IDS}}": "every inputs.narrative.gaps[*].gap_id in order (replaces the placeholder element)"
+   },
+   "validated_on": "copy of the S1 positive CP-1 head (read-only copy, 2026-10-28, 1132 gaps all WARN): validate_downstream_review() returns no issues; _assess_consumers gives status ready_with_limitations, 0 unassessed requirements, 0 unassessed gaps, no blocking gaps",
+   "expected_assessment": {
+    "CP-1D": {
+     "status": "ready_with_limitations",
+     "unassessed_requirements": 0,
+     "unassessed_gaps": 0,
+     "blocking_gaps": [],
+     "requirement_status": "limited"
+    }
+   },
+   "negatives": [
+    "no gap scope: CP-1D is not_ready",
+    "empty evidence_ids: validate_downstream_review refuses ('Sufficiency requires prior evidence...' / '...register evidence...')",
+    "requirement status sufficient without actions also validates (the product recommends limited)"
+   ]
+  },
+  "earnings_quality": {
+   "assessments": [
+    {
+     "addback": "Procurement programme savings",
+     "achievability": "Insufficient evidence",
+     "recurrence": "Not applicable",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "The bridge source supplies no supporting schedule, so the proposed saving of {T1D.1.a01.claimed|US$ m} cannot be tested.",
+     "evidence": [],
+     "limitation": null
+    },
+    {
+     "addback": "Head-office reorganisation savings",
+     "achievability": "Insufficient evidence",
+     "recurrence": "Not applicable",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "The bridge source supplies no supporting schedule, so the proposed saving of {T1D.1.a02.claimed|US$ m} cannot be tested.",
+     "evidence": [],
+     "limitation": null
+    },
+    {
+     "addback": "Legal and advisory fees",
+     "achievability": "Insufficient evidence",
+     "recurrence": "Not assessable",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "The bridge source supplies no schedule of the fees by quarter, so recurrence cannot be assessed.",
+     "evidence": [],
+     "limitation": null
+    },
+    {
+     "addback": "Insurance and facilities savings",
+     "achievability": "Insufficient evidence",
+     "recurrence": "Not applicable",
+     "accepted_fraction": null,
+     "accepted_basis": null,
+     "category": "Analyst Interpretation",
+     "rationale": "The proposed saving has no stated amount and no schedule.",
+     "evidence": [],
+     "limitation": null
+    }
+   ],
+   "overall": {
+    "rationale": "The bridge source supplies no supporting schedule and states no amount for one item, so no add-back is accepted and leverage is shown on the statements' earnings of {{FIG:adjusted_ebitda_ltm|US$ m}} only.",
+    "category": "Analyst Interpretation",
+    "confidence": "Low",
+    "limitation": "No add-back could be tested against evidence.",
+    "evidence": []
+   },
+   "gaps": [
+    {
+     "gap": "The bridge source has no supporting schedule and omits one amount.",
+     "why_it_matters": "No add-back can be tested, so management leverage cannot be compared with supported leverage.",
+     "affected_analysis": "Add-back assessment",
+     "severity": "Material",
+     "action": "Request the supporting schedule and the missing amount from management."
+    }
+   ]
+  },
+  "tool_calls": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "bridge",
+     "first_page": 1,
+     "last_page": 1
+    },
+    "expect_spans": [
+     {
+      "source_id": "bridge",
+      "locator": "page:1"
+     }
+    ]
+   }
+  ]
+ },
+ "refused": {
+  "note": "Literal CP-0 review for the refused case = tests/test_financial_workflow.py readiness(pack, gap=True) with these two consumer rows appended and this gap row",
+  "cp0_consumer_row_cp1d": {
+   "module_id": "CP-1D",
+   "readiness": "CONDITIONAL",
+   "evidence_demand": "Settled CP-1 figures",
+   "source_ids": [
+    "identity"
+   ],
+   "rationale": "Quarterly financial statements were not supplied.",
+   "citations": [
+    {
+     "source_id": "identity",
+     "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "locator": "page:1",
+     "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+    }
+   ],
+   "missing_source": "Quarterly financial statements",
+   "limitations": [
+    "Quarterly financial statements were not supplied."
+   ]
+  },
+  "gap_row": {
+   "gap_id": "missing-financial",
+   "kind": "source",
+   "severity": "material",
+   "description": "Quarterly financial statements were not supplied.",
+   "affected_modules": [
+    "CP-1",
+    "CP-1D"
+   ],
+   "remediation": "Supply quarterly financial statements"
+  }
+ },
+ "refusals": [
+  {
+   "id": "r01",
+   "class": "unknown add-back",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Pricing programme savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Unknown add-back: Pricing programme savings",
+    "Assess each bridge add-back exactly once: Head-office reorganisation savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "note": "Renaming a row leaves the real row unassessed, so both issues appear"
+  },
+  {
+   "id": "r02",
+   "class": "add-back not assessed",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Assess each bridge add-back exactly once: Insurance and facilities savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r03",
+   "class": "fraction and basis both missing on Partly supported",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Accepted basis or accepted fraction required for Partly supported: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r04",
+   "class": "fraction on another achievability",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": "0.50",
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Accepted fraction only applies to Partly supported: Head-office reorganisation savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r05",
+   "class": "fraction out of range",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": "1.50",
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Accepted fraction must be a decimal above 0 and below 1 with at most two places: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r06",
+   "class": "evidence required for an accepted add-back",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Evidence required for an accepted add-back: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r07",
+   "class": "recurrence does not fit the type",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Recurrence does not fit the add-back type: Head-office reorganisation savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r08",
+   "class": "not assessable without insufficient evidence",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Not assessable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Recurrence can be not assessable only with insufficient evidence: Legal and advisory fees"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r09",
+   "class": "bare figure in rationale",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of 1.2 cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Bare figure: 1.2"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r10",
+   "class": "quote not in the located page",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 2.00."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Quote/locator mismatch: quote not found under bridge page:2 ("
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r11",
+   "class": "confidence High on the management basis",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "High",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Confidence cannot be High: the add-back evidence is management-supplied"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r12",
+   "class": "accepting an unstated amount",
+   "base_case": "gap",
+   "pack": "gap",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The bridge source supplies no supporting schedule, so the proposed saving of {T1D.1.a01.claimed|US$ m} cannot be tested.",
+      "evidence": [],
+      "limitation": null
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The bridge source supplies no supporting schedule, so the proposed saving of {T1D.1.a02.claimed|US$ m} cannot be tested.",
+      "evidence": [],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not assessable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The bridge source supplies no schedule of the fees by quarter, so recurrence cannot be assessed.",
+      "evidence": [],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": "0.50",
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The proposed saving has no stated amount and no schedule.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "d57dca87312485016fed4abb3d7ac2afee714687cfa9813a398be822f7ff9129",
+        "locator": "page:1",
+        "quote": "Insurance and facilities savings  Saving  Unrealised  Not stated"
+       }
+      ],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The bridge source supplies no supporting schedule and states no amount for one item, so no add-back is accepted and leverage is shown on the statements' earnings of {{FIG:adjusted_ebitda_ltm|US$ m}} only.",
+     "category": "Analyst Interpretation",
+     "confidence": "Low",
+     "limitation": "No add-back could be tested against evidence.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "The bridge source has no supporting schedule and omits one amount.",
+      "why_it_matters": "No add-back can be tested, so management leverage cannot be compared with supported leverage.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Request the supporting schedule and the missing amount from management."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Cannot accept an unstated amount: Insurance and facilities savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r13",
+   "class": "assessment with no bridge in the pack",
+   "base_case": "statements_only",
+   "pack": "statements_only",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No bridge is supplied.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment and no management bridge is supplied, so there is nothing to challenge: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "No management bridge is in the pack.",
+     "evidence": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "No EBITDA adjustments or add-backs occurred in any quarter or FY2025; this disclosure is complete."
+      }
+     ]
+    },
+    "gaps": []
+   },
+   "expected_issues": [
+    "Assessment given without a bridge in the pack: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r14",
+   "class": "bridge table not found",
+   "base_case": "statements_only",
+   "pack": "unparseable",
+   "payload": {
+    "assessments": [],
+    "overall": {
+     "rationale": "The statements record no adjustment and no management bridge is supplied, so there is nothing to challenge: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "No management bridge is in the pack.",
+     "evidence": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "No EBITDA adjustments or add-backs occurred in any quarter or FY2025; this disclosure is complete."
+      }
+     ]
+    },
+    "gaps": []
+   },
+   "expected_issues": [
+    "Bridge table not found"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue",
+   "note": "manifest synthetic_source.fixtures.bridge_table_not_found: a bridge source whose page:1 has no 'Item  Type  Status  Amount' header; the issue returns alone"
+  },
+  {
+   "id": "r15",
+   "class": "evidence required when no bridge is supplied",
+   "base_case": "statements_only",
+   "pack": "statements_only",
+   "payload": {
+    "assessments": [],
+    "overall": {
+     "rationale": "The statements record no adjustment and no management bridge is supplied, so there is nothing to challenge: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "No management bridge is in the pack.",
+     "evidence": []
+    },
+    "gaps": []
+   },
+   "expected_issues": [
+    "Evidence required when no bridge is supplied: the statements' add-back disclosure"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r16",
+   "class": "fraction and basis both given",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": "0.60",
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Give either an accepted basis or an accepted fraction, not both: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r17",
+   "class": "basis amount not below the proposed amount",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "the annualised saving of 3.00 is identified across ten supplier categories"
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Accepted basis must be above 0 and below the proposed amount: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r18",
+   "class": "basis quote without exactly one amount",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80. Contracts covering the remaining 1.20 are under negotiation."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Accepted basis quote must contain exactly one amount: Procurement programme savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  },
+  {
+   "id": "r19",
+   "class": "basis on another achievability",
+   "base_case": "positive",
+   "pack": "positive",
+   "payload": {
+    "assessments": [
+     {
+      "addback": "Procurement programme savings",
+      "achievability": "Partly supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "Signed supplier contracts cover {T1D.2.a01.basis|US$ m} of the proposed saving of {T1D.1.a01.claimed|US$ m} and the remainder is still under negotiation, so only the contracted amount is accepted.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+       }
+      ],
+      "limitation": "The accepted amount is the contracted amount; contracts may not be delivered in full."
+     },
+     {
+      "addback": "Head-office reorganisation savings",
+      "achievability": "Not supported",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": {
+       "source_id": "bridge",
+       "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+       "locator": "page:2",
+       "quote": "Signed supplier contracts cover an annualised saving of 1.80."
+      },
+      "category": "Analyst Interpretation",
+      "rationale": "The reorganisation is a proposal under review without approval, so the saving of {T1D.1.a02.claimed|US$ m} cannot be treated as achievable on the evidence.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "No board approval has been given and no notice has been issued to employees."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Legal and advisory fees",
+      "achievability": "Supported",
+      "recurrence": "Recurring",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "The fees were incurred in every quarter of the year and are expected again, so they are a recurring cost of the business and not an add-back.",
+      "evidence": [
+       {
+        "source_id": "bridge",
+        "source_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+        "locator": "page:2",
+        "quote": "They were 0.20 in each of the four quarters of 2025, and similar fees are expected in 2026."
+       }
+      ],
+      "limitation": null
+     },
+     {
+      "addback": "Insurance and facilities savings",
+      "achievability": "Insufficient evidence",
+      "recurrence": "Not applicable",
+      "accepted_fraction": null,
+      "accepted_basis": null,
+      "category": "Analyst Interpretation",
+      "rationale": "No schedule, contract or quotation supports the proposed saving of {T1D.1.a04.claimed|US$ m}.",
+      "evidence": [],
+      "limitation": null
+     }
+    ],
+    "overall": {
+     "rationale": "The statements record no adjustment: adjusted EBITDA is {{FIG:adjusted_ebitda_ltm|US$ m}} and total leverage is {{FIG:total_leverage_adjusted|x}}. Only the contracted part of the procurement saving is supported, so leverage on supported earnings is lower than on the statements and higher than in the management case.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Add-back evidence is limited to management-supplied schedules.",
+     "evidence": []
+    },
+    "gaps": [
+     {
+      "gap": "No independent evidence of contract delivery or board approval is in the pack.",
+      "why_it_matters": "The accepted share rests on management's own schedule.",
+      "affected_analysis": "Add-back assessment",
+      "severity": "Material",
+      "action": "Obtain signed contract copies and board minutes."
+     }
+    ]
+   },
+   "expected_issues": [
+    "Accepted basis only applies to Partly supported: Head-office reorganisation savings"
+   ],
+   "issue_match": "each expected issue appears (prefix match where the text ends in an open parenthesis); no other issue"
+  }
+ ],
+ "tool_refusals": [
+  {
+   "id": "t01",
+   "class": "cited_page_not_read",
+   "base_case": "positive",
+   "payload": "submissions.json positive earnings_quality (valid)",
+   "calls_before_submit": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    }
+   ],
+   "disposition": "invalid attempt 0 (journaled rule unread_citation_issues against Seen); re-begun as attempt 1 with repair_of set; a valid attempt 1 with tool_calls.positive yields a verifying receipt",
+   "expected_issues": [
+    "Cited page not read through read_pages: bridge page:2"
+   ]
+  },
+  {
+   "id": "t02",
+   "class": "non-pack invoke",
+   "base_case": "positive",
+   "call": {
+    "tool": "web_search",
+    "arguments": {
+     "query": "Northbridge Synthetic Group procurement contracts"
+    }
+   },
+   "expected_receipt": {
+    "status": "refused",
+    "reason": "not_permitted"
+   },
+   "journal": "refused receipt recorded; no step journaled; no attempt consumed"
+  },
+  {
+   "id": "t03",
+   "class": "submit before read_inputs",
+   "base_case": "positive",
+   "calls_before_submit": [],
+   "expected_error": "not_permitted",
+   "journal": "a raised WorkflowError(\"not_permitted\"); nothing written; no attempt consumed"
+  }
+ ],
+ "blocked": {
+  "attempt_0": "refusals r06",
+  "attempt_1": "refusals r06",
+  "note": "Both attempts invalid with the same issue; the CP-1D head settles blocked (S1a A3b pattern)"
+ }
+}

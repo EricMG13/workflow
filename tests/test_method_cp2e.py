@@ -227,35 +227,52 @@ def _operands(raw: dict[str, Any]) -> cp2e.Operands:
     )
 
 
-@pytest.mark.parametrize("name", sorted(EXPECTED["fixtures"]))
-def test_composer_fixture(name: str) -> None:
-    fixture = EXPECTED["fixtures"][name]
-    raw = fixture["inputs"]
-    got = cp2e.derive_sensitivity(
+_E4A_XFAIL = pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "oracle-disagreement E4a: fixture_no_rate_terms stores 'the currency of the debt is not "
+        "stated'; ruling E4a gives 'the facility balance is not stated'; LEAD amendment pending"
+    ),
+)
+
+
+def _fixture_result(name: str) -> cp2e.Sensitivity:
+    raw = EXPECTED["fixtures"][name]["inputs"]
+    return cp2e.derive_sensitivity(
         operands=_operands(raw),
         rate_shocks_bp=tuple(Decimal(x) for x in raw["rate_shocks"]),
         fx_shocks=tuple(Decimal(x) for x in raw["fx_shocks"]),
         hedge_ratio=None if raw["hedge"] is None else Decimal(raw["hedge"]),
     )
-    want = copy.deepcopy(fixture["stored"])
-    if name == "fixture_no_rate_terms":
-        _apply_e4a(want)
-    assert _stored_all(got) == want
 
 
-_E4A_FROM = "the currency of the debt is not stated"
-_E4A_TO = "the facility balance is not stated"
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param(name, marks=_E4A_XFAIL) if name == "fixture_no_rate_terms" else name
+        for name in sorted(EXPECTED["fixtures"])
+    ],
+)
+def test_composer_fixture(name: str) -> None:
+    assert _stored_all(_fixture_result(name)) == EXPECTED["fixtures"][name]["stored"]
 
 
-def _apply_e4a(stored: dict[str, Any]) -> None:
-    """Ruling E4a over the frozen fixture: the currency of the debt is stated and no facility
-    balance is given, so the debt values' reason is the ruled one. No oracle amendment exists for
-    it yet; only these values differ from expected.json."""
-    targets = [stored["foreign_debt"], stored["foreign_debt_share"]]
-    targets += [r[k] for r in stored["fx"] for k in ("debt_change", "debt_after", "lev_after")]
-    for value in targets:
-        assert value == {"state": "missing", "reason": _E4A_FROM}, value
-        value["reason"] = _E4A_TO
+def test_e4a_currency_stated_without_balance_in_the_composer() -> None:
+    """Ruling E4a, live: the five debt values of fixture_no_rate_terms carry the ruled reason;
+    every other value equals the frozen fixture."""
+    got = _stored_all(_fixture_result("fixture_no_rate_terms"))
+    want = EXPECTED["fixtures"]["fixture_no_rate_terms"]["stored"]
+    ruled = {"state": "missing", "reason": "the facility balance is not stated"}
+    debt_keys = ("debt_change", "debt_after", "lev_after")
+    assert got["foreign_debt"] == ruled
+    assert got["foreign_debt_share"] == ruled
+    assert [r[k] for r in got["fx"] for k in debt_keys] == [ruled] * (3 * len(got["fx"]))
+    top = set(got) - {"foreign_debt", "foreign_debt_share", "fx"}
+    assert {k: got[k] for k in top} == {k: want[k] for k in top}
+    for g, w in zip(got["fx"], want["fx"], strict=True):
+        assert {k: v for k, v in g.items() if k not in debt_keys} == {
+            k: v for k, v in w.items() if k not in debt_keys
+        }
 
 
 def test_partial_facility_adds_its_own_limitation() -> None:

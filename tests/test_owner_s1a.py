@@ -307,6 +307,8 @@ def _selection(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
 
 def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) -> None:
     pack = runs.make_pack("positive")
+    # On this branch CP-5 has no OWNER_SPECS row; once registered, round 2's rule refuses it
+    # through the CP-5 -> CP-MODEL fan-in (DC-5 open on the CP-MODEL row).
     with pytest.raises(WorkflowError) as selected:
         OwnerWorkflow.create(
             tmp_path / "store",
@@ -314,6 +316,7 @@ def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) 
             publication_directory=tmp_path / "model",
         )
     assert selected.value.code == "not_permitted"
+    assert list(tmp_path.iterdir()) == []
     cp1a, cp2 = OWNER_SPECS["CP-1A"], OWNER_SPECS["CP-2"]
     overrides = {
         "cp1a rules off": {

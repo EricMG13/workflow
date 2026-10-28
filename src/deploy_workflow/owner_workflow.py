@@ -630,6 +630,18 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
             raise WorkflowError("not_permitted")
 
 
+def _upstream(graph: Mapping[str, set[str]], module_id: str) -> set[str]:
+    """Every producer `module_id` requires, directly or through other producers."""
+    found: set[str] = set()
+    pending = [module_id]
+    while pending:
+        for producer in graph.get(pending.pop(), ()):
+            if producer not in found:
+                found.add(producer)
+                pending.append(producer)
+    return found
+
+
 def _check_specs(
     pack: PreparedPack,
     specs: Mapping[str, OwnerSpec],
@@ -642,6 +654,7 @@ def _check_specs(
     except ValueError:
         raise WorkflowError("not_permitted") from None
     seen_deterministic = False
+    graph = dependencies(pack.run.requested_modules)
     for module_id, extra in specs.items():
         if module_id not in planned and (
             module_id not in OWNER_SPECS or extra != OWNER_SPECS[module_id]
@@ -661,8 +674,14 @@ def _check_specs(
                 raise WorkflowError("not_permitted")
             seen_deterministic = True
             continue
-        if seen_deterministic or module_id not in SUPPORTED_ANALYTICAL or spec.publish:
+        if module_id not in SUPPORTED_ANALYTICAL or spec.publish:
             raise WorkflowError("not_permitted")
+        if seen_deterministic:
+            # An analytical module may follow the deterministic one only when neither consumes
+            # the other, directly or through the producer graph (rulings 2026-10-28, round 2).
+            publisher = next(m for m in planned if OWNER_SPECS[m].kind == "deterministic")
+            if publisher in _upstream(graph, module_id) or module_id in _upstream(graph, publisher):
+                raise WorkflowError("not_permitted")
         _check_steps(module_id, spec)
     if any(OWNER_SPECS[m].kind == "deterministic" for m in planned):
         out = publication_directory

@@ -51,6 +51,8 @@ BASE_LIMITATION = (
 )
 # Ruling R4 (round 5): a gap text with more than one candidate consumer split settles not stated.
 AMBIGUOUS_LIMITATION = "Not stated: the CP-0 gap text names its consumers ambiguously"
+# Round 6e: a gap whose "affects" list is empty settles with this reason on named_consumers.
+NO_CONSUMER_LIMITATION = "Not stated: the CP-0 gap names no consumer"
 AFFECTS = "; affects "
 _KINDS = frozenset(get_args(GapKind))
 _SEVERITIES = frozenset(get_args(GapSeverity))
@@ -479,15 +481,14 @@ def _agenda_cells(build: _Builder, gap: AgendaGap) -> tuple[str, str, str]:
         kind_severity = build.text("TDR.1", row, "kind_severity", gap.kind_severity)
         consumers = build.missing("TDR.1", row, "named_consumers", AMBIGUOUS_LIMITATION, None)
         return description, kind_severity, consumers
-    if not gap.named_consumers:
-        raise ValueError(
-            f"CP-0 gap {row} names no consumer; no wording is pinned for its consumers cell"
-        )
-    return (
-        build.text("TDR.1", row, "description", gap.description),
-        build.text("TDR.1", row, "kind_severity", gap.kind_severity),
-        build.text("TDR.1", row, "named_consumers", ", ".join(gap.named_consumers)),
-    )
+    # facts are added in column order (the result's fact order)
+    description = build.text("TDR.1", row, "description", gap.description)
+    kind_severity = build.text("TDR.1", row, "kind_severity", gap.kind_severity)
+    if gap.named_consumers:
+        consumers = build.text("TDR.1", row, "named_consumers", ", ".join(gap.named_consumers))
+    else:  # round 6e: a gap naming no consumer settles not stated, with no own line
+        consumers = build.missing("TDR.1", row, "named_consumers", NO_CONSUMER_LIMITATION, None)
+    return description, kind_severity, consumers
 
 
 def _evidence(citations: tuple[Citation, ...]) -> str:
@@ -606,17 +607,14 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
         raise ValueError("A gap appears twice in the submission")
     bk = bookkeeping(submission=inputs.submission)
     build = _Builder(inputs.as_of.isoformat())
-    questions = [(g.gap_id, q) for g in inputs.submission.gaps for q in g.questions]
+    # ruling C4 (rounds 6b and 6e): every per-gap sequence (TDR.1, TDR.2, claims, "Unresolved:"
+    # lines, consumption facts) follows agenda order, with submission order inside a gap
+    asked = {gap.gap_id: gap.questions for gap in inputs.submission.gaps}
+    questions = [(gap.gap_id, q) for gap in inputs.agenda for q in asked[gap.gap_id]]
     tables: list[ReportTable] = []
     if inputs.agenda:  # an empty agenda emits neither TDR.1 nor TDR.2 (Method 5)
         gap_rows = _gap_rows(build, inputs, bk.gaps)
-        # ruling C4: grouped by gap in agenda order, submission order within each gap
-        asked = {gap.gap_id: gap.questions for gap in inputs.submission.gaps}
-        question_rows = [
-            (q.question_id, _question_row(build, gap.gap_id, q))
-            for gap in inputs.agenda
-            for q in asked[gap.gap_id]
-        ]
+        question_rows = [(q.question_id, _question_row(build, g, q)) for g, q in questions]
         tables += [
             _table("TDR.1", "Research agenda and gap status", "Gap", TDR1_COLUMNS, gap_rows),
             _table(
@@ -658,7 +656,7 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
         if q.outcome == "answered" and q.answer is not None
     ]
     consumed = (
-        *(f"TDR.1.{g.gap_id}.{field}" for g in bk.gaps for field in PER_GAP_CONSUMED),
+        *(f"TDR.1.{g.gap_id}.{field}" for g in inputs.agenda for field in PER_GAP_CONSUMED),
         *(f"TDR.3.total.{field}" for field in TOTAL_FIELDS),
         *(f"TDR.2.{q.question_id}.answer" for q in unresolved),
     )

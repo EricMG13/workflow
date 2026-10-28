@@ -24,10 +24,10 @@ CASE = ROOT / "cases" / "cp1c-owner"
 CASES = ("positive", "gap", "no_peers")
 # CP-1's own calculation id is bound at run time; the oracle writes this placeholder for it.
 CP1_PLACEHOLDER = "{{CP1_CALCULATION_ID}}"
-# Oracle pins: docs/CP1C-OWNER-LEASE.md amendment 1 header (LEAD 2026-10-28).
+# Oracle pins: docs/CP1C-OWNER-LEASE.md:3, the serialised methodology re-pin (LEAD 2026-10-28).
 PINS = {
     "cases/cp1c-owner/manifest.json": (
-        "121a0ab9306beffb49fb33c53870d6d86f5525d647afb1d63b46bd2baaee44fd"
+        "0b4d4f046a085fc9be91c6ef051d5db3dd1ea46335bfea71ea851b188cb62db3"
     ),
     "cases/cp1c-owner/submissions.json": (
         "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912"
@@ -36,7 +36,7 @@ PINS = {
         "e786acb384007d8a4111a7d572b50744cbcd70ee44954a3730b8703f6752fded"
     ),
     "cases/cp1c-owner/builder/build.py": (
-        "e32c8b834c1637401cc1c23bd990ce850fc67cb6eb9a11c95da0892f615e2b8f"
+        "6c7018dcb31ca1d8abd6e324e7d9048fcfc20ab27501cfb4b4b239dd65fca8b0"
     ),
 }
 

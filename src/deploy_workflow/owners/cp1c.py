@@ -287,7 +287,7 @@ def _basis_lines(source: Source) -> dict[str, BasisLine]:
         parts = _split(line)
         if len(parts) != 4:
             break  # free-text notes follow the table
-        if parts[0] in basis:  # provisional (not ruled): a repeated page:2 label
+        if parts[0] in basis:  # round 4 (a): a repeated page:2 label
             raise PeerTableError(TABLE_NOT_FOUND)
         basis[parts[0]] = BasisLine(parts[1], parts[2], parts[3], line)
     return basis

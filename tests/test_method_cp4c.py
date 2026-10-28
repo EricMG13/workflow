@@ -1332,3 +1332,148 @@ def test_property_missing_never_zero(
             for v in (a.distribution, a.recovery, a.shortfall):
                 assert v.amount is None and v.reason
     assert w.residual.amount is None
+
+
+# --- fix round 1 (review-adversary.md; questions.md Q1-Q4) ----------------------------------------
+NO_NUMBER = "claims[2].amount_quote: the quoted row has no number under Q4 2025-12-31"
+
+
+def _with_page4(ctx: cp4c.Cp4cContext, extra: str) -> cp4c.Cp4cContext:
+    """The context with lines appended to the financial page:4 statement."""
+    fin = next(s for s in ctx.pack.sources if s.source_id == "financial")
+    spans = tuple(
+        sp.model_copy(update={"text": sp.text + "\n" + extra}) if sp.locator == "page:4" else sp
+        for sp in fin.spans
+    )
+    sources = tuple(
+        fin.model_copy(update={"spans": spans}) if s.source_id == "financial" else s
+        for s in ctx.pack.sources
+    )
+    return replace(ctx, pack=ctx.pack.model_copy(update={"sources": sources}))
+
+
+def _quoting(quote: str) -> dict[str, Any]:
+    payload: dict[str, Any] = _bind_all(_payload("positive"))
+    payload["claims"][2]["amount_quote"]["quote"] = quote
+    return payload
+
+
+def test_m1_source_row_reads_the_cited_line_not_the_first_label_match() -> None:
+    ctx = _with_page4(_context("positive"), "Other  1  1  1  1  5  5\nOther  9  9  9  9  9  9")
+    payload = _quoting("Other  9  9  9  9  9  9")
+    assert _payload_issues(payload, ctx) == ()
+    cells = {c.fact.fact_id: c.fact for c in _compute_with(ctx, payload).cells}
+    claim = cells["T4E.2.c03.claim"]
+    assert claim.amount == 9 and claim.citations[0].quote == "Other  9  9  9  9  9  9"
+
+
+def test_m1_a_quote_no_line_starts_with_is_refused() -> None:
+    ctx = _with_page4(
+        _context("positive"), "Provisions  1  2  3  4  5  6\nOther Provisions  7  8  9  10  11  12"
+    )
+    assert _payload_issues(_quoting("Provisions  7  8  9  10  11  12"), ctx) == (NO_NUMBER,)
+
+
+def test_m1_a_quote_starting_two_different_lines_is_refused() -> None:
+    ctx = _with_page4(_context("positive"), "Other  9  1  1  1  1  1\nOther  9  2  2  2  2  2")
+    assert _payload_issues(_quoting("Other  9"), ctx) == (NO_NUMBER,)
+
+
+def test_l1_a_row_whose_cells_do_not_match_the_header_has_no_number() -> None:
+    row = "Deferred items  1  1    1  5.00  7.00"
+    assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row)) == (NO_NUMBER,)
+
+
+@pytest.mark.parametrize(
+    "cell", ["(5.00)", "−5.00", "1,234.00", "1E+1", "1_000", "٥", "Infinity", "NaN", "5."]
+)
+def test_q4_a_cell_outside_the_ascii_grammar_has_no_number(cell: str) -> None:
+    row = f"Deferred items  1  1  1  1  {cell}  1"
+    assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row)) == (NO_NUMBER,)
+
+
+def test_q4_a_signed_ascii_cell_is_read() -> None:
+    row = "Deferred items  1  1  1  1  -5.00  1"
+    assert _payload_issues(_quoting(row), _with_page4(_context("positive"), row)) == (
+        "claims[2]: a claim class needs a claim above zero; Other current liabilities reads -5",
+    )
+
+
+def test_l2_known_cp1_ebitda_without_an_amount_is_an_invariant() -> None:
+    ctx = _with_cp1(
+        _context("positive"), "ebitda", amount=None, text="see note 7", calculation_id=None
+    )
+    with pytest.raises(ValueError, match="invariant"):
+        _compute_with(ctx, _bind_all(_payload("positive")))
+
+
+def test_l3_state_14_on_a_payment_over_38_digits() -> None:
+    with pytest.raises(ValueError, match="state 14"):
+        _w((1, "10"), (1, "20"), ev="1.0000000000000000000000000000000000000001")
+
+
+def test_l4_claims_through_carry_the_first_missing_rank() -> None:
+    v = cp4c.Val
+    classes = (
+        cp4c.ClassClaim("c01", "a", 1, v(D(10))),
+        cp4c.ClassClaim("c02", "b", 2, v(None, "Not calculable: r2")),
+        cp4c.ClassClaim("c03", "c", 3, v(None, "Not calculable: r3")),
+    )
+    w = cp4c.waterfall(classes=classes, enterprise_value=v(D(5)))
+    assert w.classes["c03"].through.reason == "Not calculable: r2"
+
+
+def test_l4_a_rank_carries_its_first_missing_claim() -> None:
+    v = cp4c.Val
+    classes = (
+        cp4c.ClassClaim("c01", "a", 1, v(D(10))),
+        cp4c.ClassClaim("c02", "b", 2, v(None, "Not calculable: a")),
+        cp4c.ClassClaim("c03", "c", 2, v(None, "Not calculable: b")),
+    )
+    w = cp4c.waterfall(classes=classes, enterprise_value=v(D(50)))
+    assert w.classes["c03"].distribution.reason == "Not calculable: a"
+
+
+def test_l4_a_zero_rank_total_or_negative_claim_is_an_invariant() -> None:
+    with pytest.raises(ValueError, match="invariant broken"):
+        _w((1, "0"), ev="5")
+    with pytest.raises(ValueError, match="negative; invariant broken"):
+        _w((1, "10"), (1, "-3"), ev="5")
+
+
+def test_l4_partial_equity_for_a_zero_recovery_does_not_fit() -> None:
+    payload = _bind_all(_payload("positive"))
+    payload["plan"][2]["treatments"][1]["treatment"] = "Receives reorganised equity"
+    assert _payload_issues(payload) == (
+        (
+            "plan[2].treatments[1]: Receives reorganised equity does not fit the waterfall result of "
+            "c02 in v03"
+        ),
+    )
+
+
+def test_l4_cp2g_ebitda_of_another_period_is_an_invariant() -> None:
+    ctx = _context("positive")
+    b26 = next(e.fact for e in ctx.cp2g.ebitda if e.fact.fact_id == "T2H.4.b26.ebitda")
+    bad = _with_cp2g(ctx, _refact(b26, period="FY2027: 2027-01-01 to 2027-12-31"))
+    with pytest.raises(ValueError, match="is not T2H.4.b26.ebitda of FY2026"):
+        _compute_with(bad, _bind_all(_payload("positive")))
+
+
+def test_l4_a_downside_year_on_another_cp2a_scenario_is_an_invariant() -> None:
+    ctx = _context("positive")
+    payload = _bind_all(_payload("positive"))
+    payload["valuation"][2]["ebitda_year"] = "FY2027"
+    d27 = next(e for e in ctx.cp2g.ebitda if e.fact.fact_id == "T2H.4.d27.ebitda")
+    other = replace(
+        d27,
+        derives_from=tuple(
+            x.replace("T2B.1.", "T2B.1.zz", 1) if x.startswith("cp2a:T2B.1.") else x
+            for x in d27.derives_from
+        ),
+    )
+    ebitda = tuple(other if e is d27 else e for e in ctx.cp2g.ebitda)
+    bad = replace(ctx, cp2g=replace(ctx.cp2g, ebitda=ebitda))
+    with pytest.raises(ValueError, match="applies another CP-2A scenario"):
+        if not _payload_issues(payload, bad):
+            _compute_with(bad, payload)

@@ -24,7 +24,7 @@ import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from decimal import Decimal, Inexact, InvalidOperation, localcontext
+from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
 from typing import Annotated, Literal
 
@@ -509,23 +509,23 @@ def _header(page: str) -> tuple[str, ...]:
     return ()
 
 
+_FIGURE = re.compile(r"-?[0-9]+(\.[0-9]+)?")  # the ASCII cell grammar (round 10; fix 1 Q4)
+
+
 def _row_amount(page: str, quote: str, column: str) -> Decimal | None:
-    """The amount under `column` on the statement line the quote's first cell labels, or None
-    when that line has no number there (round 8 A-2 #11)."""
-    label = quote.split("  ")[0]
-    line = next((x for x in page.split("\n") if x.startswith(label + "  ")), None)
+    """The amount under `column` on the cited row: the one page line that starts with the quote
+    (fix 1 Q1). None, the round 8 A-2 #11 outcome, when no line or several different lines start
+    with the quote, when the row's cells do not line up with the header's (Q2), or when the cell
+    is not an ASCII decimal figure (Q4)."""
+    lines = {x for x in page.split("\n") if x.startswith(quote)}
     header = _header(page)
-    if line is None or column not in header[1:]:
+    if len(lines) != 1 or column not in header[1:]:
         return None
-    cells = _CELLS.split(line)
-    index = header.index(column)
-    if index >= len(cells):
+    cells = _CELLS.split(lines.pop())
+    if len(cells) != len(header):
         return None
-    try:
-        amount = Decimal(cells[index])
-    except InvalidOperation:  # a word, not a figure: the row states no number (A-2 #11)
-        return None
-    return amount if amount.is_finite() else None
+    cell = cells[header.index(column)]
+    return Decimal(cell) if _FIGURE.fullmatch(cell) else None
 
 
 def _debt_claim(debt: Fact) -> Val:
@@ -1529,8 +1529,10 @@ NO_SCENARIO = "The base valuation uses no CP-2A scenario"
 def _cp1_ebitda(f: Fact) -> Val:
     """CP-1 EBITDA as the implied multiple's denominator: a known positive amount, else missing
     with the round 8 A-2 #5 reason (no own line)."""
-    if f.status != "known" or f.amount is None:
+    if f.status != "known":
         return Val(None, f"Not calculable: EBITDA is missing in CP-1 for {LTM_PERIOD}")
+    if f.amount is None:  # an upstream contract break, as for total debt (fix 1 Q3)
+        raise ValueError(f"CP-4C: CP-1 EBITDA {f.fact_id} is known without an amount; invariant")
     if f.amount <= 0:
         return Val(
             None,

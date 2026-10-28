@@ -1019,7 +1019,7 @@
     {
       "destination": "src/deploy_vii/live/tools.py",
       "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
-      "project_commit": "lead/0d-b (uncommitted)",
+      "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
       "sha256": "2d607ea225693f3a8c651de84657eca81e9c101e52f80cd86ffc451d0667a681",
       "reason": "Atomic read/search evidence publication after complete SOURCE rendering; preserve prior successes. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload.",
       "review": "work/lead/product-defects-0d/"
@@ -1072,7 +1072,7 @@
       "destination": "src/deploy_vii/live/submission.py",
       "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
       "prior_project_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
-      "project_commit": "lead/0d-b (uncommitted)",
+      "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
       "sha256": "1d92f7d53c7ecc6880054cb40904e0136cd1c2724ba63a0cda3ea47894661963",
       "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload.",
       "review": "work/lead/product-defects-0d/"
@@ -1143,7 +1143,7 @@
     {
       "destination": "src/deploy_vii/live/schema.py",
       "imported_sha256": "c63744196066a9046e1d3331ee5191f8dc30b2d7f08644ca816c7ae2955e56cb",
-      "project_commit": "lead/0d-b (uncommitted)",
+      "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
       "sha256": "68fb91b0db05bdd35a38bda5a590a674498a8a9de7e706bf2de4a6174a4195a9",
       "reason": "0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload.",
       "review": "work/lead/product-defects-0d/"

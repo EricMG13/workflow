@@ -1,10 +1,10 @@
 # Module-builder lane: resume point (2026-10-28, session 3)
 
-Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 1008 passed, 2 skipped History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
+Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 10 on it). Fast tests 1056 passed, 2 skipped. History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
 
 ## Merged into the lane
 - **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3.
-- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed).
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01).
 - **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
 - **LEAD docs:** 8483de4 (E6), 3674158 (round 6 oracle batch), rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
@@ -14,25 +14,31 @@ Lane `claude/module-dev-status-review-0981b6` at b76128f or later. Fast tests 10
 | LEAD 40e529c (B1 integration) | Stage 2 |
 | LEAD 2682310 (CP-5 lease frozen; cp3-cp6 R6 and CP-8 re-pins) | the CP-3 and CP-8 re-pin branches |
 
-## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Cap 10.
+## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Cap 10; 10 running.
 | Work | Base | Agent | Next |
 |---|---|---|---|
-| G1-X fix 2 (remove `_fill` TypeError mapping; lane + 31aeee0) | lane | a1095e3383256490c (worktree g1x-fill) | scoped mx-adversary review |
-| CP-2G re-review of fix 1 + 2 (mx-adversary) | 5002b6d | see ledger (impl a4377a7580e8e70db) | round 9, then merge; budget spent |
-| CP-2H first mx-adversary review | cc1d0fb | see ledger (impl a52b5ec0919986ddb) | fix round if needed, merge |
-| CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
-| CP-4C first mx-adversary review (money) | bdde577 | see ledger (impl a2c15c441717ec41c) | fix round if needed, merge |
-| CP-5 first mx-adversary review | 4e2d687 | see ledger (impl a490ed6228f4da606, worktree cp5-stage1) | merge with CP-3 and CP-8 |
+| G1-X fix 2 scoped mx-adversary review | 857081c | impl a1095e3383256490c (worktree g1x-fill) | merge |
+| CP-2H first mx-adversary review | cc1d0fb | impl a52b5ec0919986ddb | fix round if needed, merge |
+| CP-4C first mx-adversary review (money) | bdde577 | impl a2c15c441717ec41c | fix round + round 10 ASCII cell grammar, merge |
+| CP-5 first mx-adversary review | 4e2d687 | impl a490ed6228f4da606 (worktree cp5-stage1) | merge with CP-3 and CP-8 |
+| CP-2G round 9 (brief cp2g/round9-brief.md); fixes 1+2 APPROVED | 5002b6d | a4377a7580e8e70db | scoped mx-feature review, merge |
+| CP-3C fix 1 (brief cp3c/fix1-brief.md) | adf826a | aa5a4817fa00cd287 | mx-adversary re-review by finding id, merge |
+| CP-8 round 10 signs (round10-brief.md) | fa55df5 | a3cc9818386e8861a | mx-precise, merge with CP-3 and CP-5 |
+| CP-2E round 10 signs + on_page + floor Low | aed93b3 | a219254fe68cc1c2d | mx-precise, merge |
+| CP-1D round 10 signs | lane (worktree cp1d-stage1) | a0a6113941ee95350 | mx-precise, merge |
+| CP-3D round 10 signs | lane (worktree cp3d-stage1) | ab7a2e1b59e1c8f90 | mx-precise, merge |
 
-Built, waiting to merge with CP-5 (all carry 2682310): CP-3 re-pin 6c6ea02 (worktree cp3-stage1, pin-only diff checked); CP-8 fa55df5 (approved through round 9).
+Built, waiting to merge with CP-5 (all carry 2682310): CP-3 re-pin 6c6ea02 (worktree cp3-stage1, pin-only diff checked); CP-8 (approved through round 9 at fa55df5; round 10 running).
 
-## Built, waiting on LEAD round 9
-CP-2D 6f (e) and D-1; CP-2A choice 5; CP-8 items 1–5; CP-2G L1–L3 and Info. Also with LEAD: H1 F1, I1, I2, open points 1 and 6; signs never read (CP-1D `_AMOUNT`, CP-3D `_token_once`).
+## Next when a slot frees
+- H1 fix round 2: round 10 items 2 and 5 (F1 `_submission_schema`, CP-DR held-source scope) plus the I1 docstring; round 2 of 2; mx-adversary re-review by finding id. Impl a69f811059171c714. Also apply the I2 prose to `work/build/h1/q6-source.md`.
+- H1b: the five leased `_SOURCE_STEPS`/`_OWNER_SCOPES` rows (round 10 item 6), one test per row, own review.
+- G1-side guards (round 10 item 6 follow-ups) ride with the next G1-X change.
 
 ## Queued
-- Riding Lows: CP-3D name wrap-join (quote-6h-review Low 1); CP-2E negative-floor raise test (6i review); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
+- Riding Lows: CP-3D name wrap-join (quote-6h-review Low 1; needs a public joined-reading helper in deploy_vii.quotes, with LEAD); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
 - Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
 - Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 
 ## Stage 2 notes collected
-In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor.
+In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor; round 10 sign rule in methods/cp1d, cp3d, cp8, cp2e; unsigned-grammar limitation in methods/cp8 and cp3d; CP-3C facility ids as prose names at MC-2; CP-8 item 2 guard-limit note.

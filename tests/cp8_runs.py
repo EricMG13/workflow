@@ -8,6 +8,7 @@ Stage 2 (deferred to Stage 5; see the report's command list).
 
 import hashlib
 import json
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -90,14 +91,43 @@ def literal(case: str, name: str, pack: PreparedPack | None = None) -> str:
     return text if pack is None else text.replace(base.PACK_PLACEHOLDER, pack.content_hash())
 
 
-def cp8_closed(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
-    """CP-0 valid, then CP-8: read every cited page, one search, submit the literal. The returned
-    workflow holds the settled run (write its receipt to verify it)."""
+def start(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+    """Create the store and settle CP-0 with the case's readiness literal; the workflow is then
+    at CP-8's `decision_ledger` step, or at the end of the walk when CP-0 refuses CP-8."""
     pack = make_pack(case)
     workflow = OwnerWorkflow.create(root / "store", pack)
     review = literal(case, "readiness_review", pack)
     base.read_cited(workflow, review)
     base.submit_valid(workflow, review)
+    return workflow, pack
+
+
+def read_pages(workflow: OwnerWorkflow, pages: Iterable[Iterable[str]]) -> None:
+    """One ok `read_pages` call per (source, `page:N`) pair."""
+    for source, locator in pages:
+        number = int(locator.split(":")[1])
+        call = workflow.invoke(
+            "read_pages", {"source_id": source, "first_page": number, "last_page": number}
+        )
+        if call["status"] != "ok":
+            raise RuntimeError(f"read_pages {source} {locator}: {call['error_code']}")
+
+
+def submit(
+    workflow: OwnerWorkflow, payload: str, *, read: Iterable[Iterable[str]], searched: bool = True
+) -> dict[str, Any]:
+    """Read exactly `read`, search once when `searched`, then submit; the outcome as returned
+    (valid or invalid, never required to be valid)."""
+    read_pages(workflow, read)
+    if searched:
+        base.search(workflow, "prior_case", SEARCH_QUERY)
+    return workflow.submit_review(payload)
+
+
+def cp8_closed(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+    """CP-0 valid, then CP-8: read every cited page, one search, submit the literal. The returned
+    workflow holds the settled run (write its receipt to verify it)."""
+    workflow, pack = start(case, root)
     submission = literal(case, "submission", pack)
     base.read_cited(workflow, submission)
     base.search(workflow, "prior_case", SEARCH_QUERY)

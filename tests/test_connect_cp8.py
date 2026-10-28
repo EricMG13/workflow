@@ -15,7 +15,7 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import pytest
 from defect_classes import BLANK_VALUES
@@ -26,7 +26,7 @@ from deploy_vii.bindings.cp8 import CP8
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Fact, Input, Module, ModuleView, Run, View
 from deploy_vii.cp6_committee import ACTION_BIAS_FACT, CONFIDENCE_FACT
-from deploy_vii.execution import Attempt, Head, Qualification
+from deploy_vii.execution import Attempt, Execution, Head, Qualification, StepValidation
 from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen
 from deploy_vii.registry import plan, step_chain
 from deploy_vii.report_view import _spec_of
@@ -650,3 +650,351 @@ def test_rules_each_absence_site_alone_needs_a_search(path: tuple[str, ...]) -> 
     node[path[-1]] = absence if path == ("outcome_absence",) else {"absence": absence}
     assert cp8.RULES(json.dumps(payload), _seen(read, False)) == (UNBACKED_ABSENCE,)
     assert cp8.RULES(json.dumps(payload), _seen(read, True)) == ()
+
+
+# --- model text and citations (Stage 2 round 3 rulings that bind every module) ------------------------
+
+HOSTILE_TEXT = (
+    "{",
+    "}",
+    "[",
+    "]",
+    "a {b|c} d",
+    "see [T7.1.d01.action_bias]",
+    "{T7.1.d01.action_bias|MULTIPLE}",
+    "tab\there",
+    "nul\x00here",
+    "line\nbreak",
+    "\u202ertl",
+    "x" * 20000,
+    "² squared",
+    "Ⅻ numeral",
+    "￾",
+)
+
+
+def _text_paths(node: Any, path: str = "") -> Iterator[str]:
+    """The JSON path of every analyst-text string of a submission (not a quote object field and
+    not a vocabulary or id field)."""
+    names = {"basis", "lesson", "gap", "missing_item", "why_it_matters", "impact_on_output"}
+    names |= {"follow_up", "reason", "text"}
+    if isinstance(node, dict):
+        for key, value in node.items():
+            here = f"{path}.{key}" if path else key
+            if key in names and isinstance(value, str) and not path.startswith("decision."):
+                yield here
+            else:
+                yield from _text_paths(value, here)
+    elif isinstance(node, list):
+        for i, value in enumerate(node):
+            yield from _text_paths(value, f"{path}[{i}]")
+
+
+TEXT_SITES = [p for p in _text_paths(POSITIVE) if not p.startswith("decision.")]
+
+
+def _set(document: Any, path: str, value: str) -> None:
+    parts = re.findall(r"[^.\[\]]+", path)
+    for part in parts[:-1]:
+        document = document[int(part)] if part.isdigit() else document[part]
+    document[parts[-1]] = value
+
+
+def test_text_sites_are_inventoried() -> None:
+    assert "synthesis.text" in TEXT_SITES
+    assert any(s.startswith("attributions[") and s.endswith(".basis") for s in TEXT_SITES)
+    assert any(s.startswith("lessons[") for s in TEXT_SITES)
+    assert any(s.endswith(".absence.reason") or s == "outcome_absence.reason" for s in TEXT_SITES)
+
+
+@pytest.mark.parametrize("value", HOSTILE_TEXT, ids=lambda v: repr(v[:12]))
+@pytest.mark.parametrize("site", TEXT_SITES)
+def test_hostile_model_text_is_an_issue_or_composes_never_raises(site: str, value: str) -> None:
+    """Nothing raises after the binding write: a text the step's RunText would refuse is a
+    validator issue; one the validator admits composes into a Module."""
+    payload = copy.deepcopy(POSITIVE)
+    _set(payload, site, value)
+    submission = DecisionLedgerSubmission.model_validate_json(json.dumps(payload))
+    found = validate_ledger(submission=submission, upstream=_upstream(), pack=_pack())
+    if not found:
+        report = cp8.decision_ledger(pack=_pack(), submission=submission, upstream=_upstream())
+        Module(
+            run_id="r",
+            issuer_id="i",
+            as_of=date(2026, 4, 30),
+            module_id="CP-8",
+            facts=report.facts,
+            tables=report.tables,
+            claims=report.claims,
+        )
+
+
+def _positive_report() -> Any:
+    from test_method_cp8 import report_of
+
+    return report_of("positive")
+
+
+def _all_quotes() -> set[tuple[str, str, str]]:
+    return {
+        (
+            _at(POSITIVE, site)["source_id"],
+            _at(POSITIVE, site)["locator"],
+            _at(POSITIVE, site)["quote"],
+        )
+        for site in SITES
+    }
+
+
+def test_a_fact_carries_one_citation_per_page_and_never_invents_a_quote() -> None:
+    quotes = _all_quotes()
+    for fact in _positive_report().facts:
+        pages = [(c.source_id, c.locator) for c in fact.citations]
+        assert len(pages) == len(set(pages)), fact.fact_id
+        for c in fact.citations:
+            assert (c.source_id, c.locator, c.quote) in quotes, fact.fact_id
+
+
+def test_a_derived_fact_quotes_the_first_of_its_input_quotes_on_each_page() -> None:
+    facts = {f.fact_id: f for f in _positive_report().facts}
+    thesis = POSITIVE["thesis"]
+    evidence = {(c.source_id, c.locator): c.quote for c in facts["T7.2.t01.evidence_id"].citations}
+    assert evidence == {
+        ("prior_case", "page:1"): thesis["thesis"]["quote"]["quote"],
+        ("prior_case", "page:2"): thesis["downside_paths"]["quote"]["quote"],
+    }
+    observed = {(o["side"], o["metric"]): o["quote"]["quote"] for o in POSITIVE["observations"]}
+    window = {
+        (c.source_id, c.locator): c.quote for c in facts["T7.3.window.realized_value"].citations
+    }
+    assert window == {
+        ("prior_case", "page:1"): POSITIVE["decision"]["decision_date"]["quote"]["quote"],
+        ("update", "page:1"): observed[("realized", "total_leverage")],
+        ("market_update", "page:1"): observed[("realized", "loan_bid")],
+    }
+    as_of = {(c.source_id, c.locator): c.quote for c in facts["T7.3.window.as_of"].citations}
+    assert as_of == {k: v for k, v in window.items() if k[0] != "prior_case"}
+
+
+def test_a_sourced_fact_quotes_its_own_field() -> None:
+    facts = {f.fact_id: f for f in _positive_report().facts}
+    own = POSITIVE["decision"]["decision_date"]["quote"]
+    (cite,) = facts["T7.1.d01.decision_date"].citations
+    assert (cite.source_id, cite.locator, cite.quote) == (
+        own["source_id"],
+        own["locator"],
+        own["quote"],
+    )
+
+
+# --- fix round 1 (review.md L1): pins for the mutants the first pass left alive -------------------
+
+
+def _store_of(module: Module) -> Any:
+    return SimpleNamespace(head_module=lambda head: module)
+
+
+def test_reader_refuses_a_head_without_a_whole_count() -> None:
+    """R2: a missing or fractional count is never read as 0."""
+    for amount, status in ((None, "missing"), (Decimal("1.5"), "known")):
+        module = _head_module("positive")
+        facts = tuple(
+            f.model_copy(
+                update={
+                    "amount": amount,
+                    "status": status,
+                    "limitation": None if status == "known" else "Not calculable",
+                }
+            )
+            if f.fact_id == "T7.6.gate.decisions_recorded"
+            else f
+            for f in module.facts
+        )
+        head = Head(
+            module_id="CP-8", status="restricted", result_sha256=module.content_hash(), inputs=()
+        )
+        store = _store_of(module.model_copy(update={"facts": facts}))
+        with pytest.raises(ValueError, match="no whole count"):
+            cp8.cp8_reader(cast(Any, store), head)
+
+
+def test_reader_refuses_a_head_without_an_overall_attribution() -> None:
+    """R3: the overall label and process are stated cells."""
+    for fact_id in ("T7.5.overall.label", "T7.5.overall.process_sound"):
+        module = _head_module("positive")
+        facts = tuple(
+            f.model_copy(update={"text": None, "status": "missing", "limitation": "gap"})
+            if f.fact_id == fact_id
+            else f
+            for f in module.facts
+        )
+        head = Head(
+            module_id="CP-8", status="restricted", result_sha256=module.content_hash(), inputs=()
+        )
+        store = _store_of(module.model_copy(update={"facts": facts}))
+        with pytest.raises(ValueError, match="no overall attribution"):
+            cp8.cp8_reader(cast(Any, store), head)
+
+
+@pytest.mark.parametrize("status", ["accepted", "restricted", "stale"])
+def test_reader_passes_the_heads_status_through(
+    status: Literal["accepted", "restricted", "stale"],
+) -> None:
+    """R4: the status is the head's (a stale head reads stale)."""
+    module = _head_module("positive")
+    head = Head(
+        module_id="CP-8",
+        status=status,
+        result_sha256=module.content_hash(),
+        inputs=(),
+    )
+    got = cp8.cp8_reader(cast(Any, SimpleNamespace(head_module=lambda h: module)), head)
+    assert got.status == status
+
+
+def _only_absence_at(site: tuple[str, ...]) -> dict[str, Any]:
+    """The positive payload with every absence replaced by a cited field and one absence at
+    ``site`` (any field, including a required one)."""
+    payload: dict[str, Any] = copy.deepcopy(POSITIVE)
+    cited = {"quote": payload["thesis"]["thesis"]["quote"]}
+    for name in ("posture", "size"):
+        payload["decision"][name] = {"text": "x", "quote": cited["quote"]}
+    for name in ("exit_trigger", "expected_spread_return", "expected_rating_path", "expected_hold"):
+        payload["thesis"][name] = cited
+    payload["outcome_absence"] = None
+    node: Any = payload
+    for part in site[:-1]:
+        node = node[part]
+    node[site[-1]] = {"absence": {"reason": "r", "follow_up": "f"}}
+    return payload
+
+
+@pytest.mark.parametrize(
+    "site",
+    [
+        ("decision", "action_bias"),
+        ("decision", "confidence"),
+        ("decision", "instrument"),
+        ("decision", "decision_date"),
+        ("decision", "decision_maker_role"),
+        ("thesis", "thesis"),
+        ("thesis", "greatest_uncertainty"),
+        ("thesis", "downside_paths"),
+    ],
+    ids=".".join,
+)
+def test_rules_count_an_absence_only_on_the_optional_fields(site: tuple[str, ...]) -> None:
+    """U1/U2: a required field claiming absence is the validator's refusal, not a search rule."""
+    read = EXPECTED["cases"]["positive"]["tool_use_required"]["read_pages_cover"]
+    got = cp8.RULES(json.dumps(_only_absence_at(site)), _seen(read, False))
+    assert got == ()
+
+
+@pytest.mark.parametrize(
+    ("source_id", "locator", "expected"),
+    [
+        (
+            "identity",
+            "page:1",
+            "decision.action_bias.quote: source identity is outside the CP-8 scope",
+        ),
+        ("board_minutes", "page:1", "Unavailable or changed source: board_minutes"),
+        ("update", "page:1", "decision.action_bias.quote: must cite prior_case"),
+    ],
+)
+def test_a_blank_quote_is_judged_after_the_pack_scope_and_source_rule(
+    source_id: str, locator: str, expected: str
+) -> None:
+    """B1/B2: the blank check sits after the pack, scope and must-cite checks."""
+    payload = copy.deepcopy(POSITIVE)
+    payload["decision"]["action_bias"]["quote"] = {
+        "source_id": source_id,
+        "locator": locator,
+        "quote": "   ",
+    }
+    found = _issues(payload)
+    assert found == (expected,)
+
+
+def test_a_blank_quote_is_judged_after_the_realized_source_rule() -> None:
+    payload = copy.deepcopy(POSITIVE)
+    realized = next(o for o in payload["observations"] if o["side"] == "realized")
+    realized["quote"] = {"source_id": "prior_case", "locator": "page:1", "quote": "   "}
+    found = _issues(payload)
+    assert [i for i in found if "empty text" in i] == []
+    assert any("cannot cite prior_case" in i for i in found)
+
+
+def test_a_payload_that_is_not_an_object_is_one_shape_issue() -> None:
+    """P1: ``_parse`` gives ``NOT_AN_OBJECT`` for text ``json_object`` refuses."""
+    for text in ("[]", "null", "not json", "NaN", '{"a": NaN}', "[" * 1000):
+        assert cp8._parse(text) == (cp8.NOT_AN_OBJECT,), text
+    parsed = cp8._parse(json.dumps(POSITIVE))
+    assert isinstance(parsed, DecisionLedgerSubmission)
+    shape = cp8._parse(json.dumps({"decision": POSITIVE["decision"]}))
+    assert isinstance(shape, tuple) and shape != (cp8.NOT_AN_OBJECT,)
+
+
+def test_the_entry_validator_turns_a_non_object_payload_into_an_issue() -> None:
+    step = SimpleNamespace(payload_sha256="p")
+    store = SimpleNamespace(payload=lambda sha: "[]")
+    outcome = cp8._validate_step(
+        cast(Any, store), cast(Any, None), cast(Any, SimpleNamespace(steps=(step,)))
+    )
+    assert outcome.issues == (cp8.NOT_AN_OBJECT,) and outcome.output is None
+
+
+# --- fix round 1: submit and the settled head, through the store (about a second each) ---------------
+
+
+def test_the_reader_returns_the_own_limitations_settle_wrote(tmp_path: Path) -> None:
+    """M1/R1: a head built by ``settle``; for a synthetic run the own list ends with the
+    synthetic line, which the oracle's own list does not hold."""
+    import cp8_runs as runs
+
+    runs.cp8_closed("positive", tmp_path)
+    store = Execution(tmp_path / "store")
+    head = next(h for h in store.read().heads if h.module_id == "CP-8")
+    module = store.head_module(head)
+    oracle = EXPECTED["cases"]["positive"]
+    synthetic = "Synthetic case; not real issuer qualification"
+    want = (*oracle["own_limitations"], synthetic)
+    assert module.limitations == want
+    assert synthetic not in module.inherited_limitations
+    assert cp8.cp8_reader(store, head).limitations == want
+
+
+def test_submit_journals_validator_then_rules_issues_without_deduplicating(tmp_path: Path) -> None:
+    """S1: r42 is journaled twice (rules wrap only when RULES adds an issue)."""
+    import cp8_runs as runs
+
+    workflow, _ = runs.start("positive", tmp_path)
+    entry = next(e for e in SUBMISSIONS["refusal_mutations"]["entries"] if e["id"] == "r42")
+    read = EXPECTED["cases"]["positive"]["tool_use_required"]["read_pages_cover"]
+    outcome = runs.submit(workflow, json.dumps(entry["literal"]), read=read)
+    assert outcome["issues"] == entry["issues"] and len(entry["issues"]) == 2
+
+
+def test_submit_revalidates_the_retained_step_before_it_settles(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """S2: a trusted re-validation that differs from the retained output is refused."""
+    import cp8_runs as runs
+    import s1a_runs as base
+
+    workflow, pack = runs.start("positive", tmp_path)
+    real = cp8._validate_step
+    calls: list[int] = []
+
+    def drifting(store: Any, pk: Any, attempt: Any) -> Any:
+        calls.append(1)
+        if len(calls) == 1:
+            return real(store, pk, attempt)
+        return StepValidation(output="{}")
+
+    monkeypatch.setattr(cp8, "_validate_step", drifting)
+    payload = runs.literal("positive", "submission", pack)
+    base.read_cited(workflow, payload)
+    base.search(workflow, "prior_case", runs.SEARCH_QUERY)
+    with pytest.raises(ValueError, match="differs from trusted validation"):
+        workflow.submit_review(payload)

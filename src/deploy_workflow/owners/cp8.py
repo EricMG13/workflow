@@ -1343,13 +1343,15 @@ class _Cells:
         ids.append(fact_id)
 
     def citations(self, refs: Iterable[QuoteRef]) -> tuple[Citation, ...]:
-        out: dict[tuple[str, str, str], Citation] = {}
+        """A sourced fact quotes its own field. A derived fact gets one citation per page, quoting
+        the first of its own input quotes on that page, in input order (Stage 2 round 3)."""
+        out: dict[tuple[str, str], Citation] = {}
         for ref in refs:
             sha = self.sources[ref.source_id].sha256
             if sha is None:
                 raise ValueError(f"Cited source is not ready: {ref.source_id}")
             out.setdefault(
-                (ref.source_id, ref.locator, ref.quote),
+                (ref.source_id, ref.locator),
                 Citation(
                     source_id=ref.source_id, source_sha256=sha, locator=ref.locator, quote=ref.quote
                 ),
@@ -2302,8 +2304,8 @@ def _bound(store: Execution, attempt: Attempt, module_id: str) -> Module:
 
 def cp8_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
     """The store adapter: the bound CP-0 head (authority per source from its T3 facts), the run's
-    as-of date and, when CP-6 is bound, its settled final bias. One adapter for submit, probe
-    and the reader."""
+    as-of date and, when CP-6 is bound, its settled final bias. One adapter for ``submit``,
+    ``probe`` and the entry validator (the reader reads the settled head only and does not use it)."""
     cp6 = None
     if any(i.input_id == "CP-6" for i in attempt.inputs):
         call = settled_call(_bound(store, attempt, "CP-6"))
@@ -2431,7 +2433,9 @@ class Cp8Head:
     hit_rate_absence: str | None
     decisions_recorded: int
     decisions_required: int
-    limitations: tuple[str, ...]  # CP-8's own, not the inherited set
+    # The settled module's own list, as ``execution.settle`` wrote it: a synthetic run's
+    # "Synthetic case; not real issuer qualification" line is included. Not the inherited set.
+    limitations: tuple[str, ...]
 
 
 def _fact(facts: Mapping[str, Fact], fact_id: str) -> Fact:
@@ -2447,7 +2451,9 @@ def _count(fact: Fact) -> int:
 
 
 def cp8_reader(store: Execution, head: Head) -> Cp8Head:
-    """Read a settled CP-8 head. A cell the head states as missing reads as None (never 0)."""
+    """Read a settled CP-8 head. A cell the head states as missing reads as None (never 0).
+    ``limitations`` is the settled own list: the oracle's own list, then, for a synthetic run,
+    "Synthetic case; not real issuer qualification" (deduplicated); never the inherited set."""
     if head.module_id != MODULE_ID:
         raise ValueError(f"{head.module_id} is not a CP-8 head")
     module = store.head_module(head)

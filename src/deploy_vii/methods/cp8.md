@@ -77,3 +77,10 @@ quote" or "is not labelled" issue, never a wrong figure. `tests/test_connect_cp8
   would otherwise block it (279 of 563 frozen labelled checks). So `Total leverage as of March 31,
   2026 is 1.80x` reads 1.80x, and `Total leverage 1,250 and 1.80x` is refused (a run that is not
   a plain number ends the search). Plain integer runs are skipped.
+
+## Citations on a derived fact
+
+A sourced fact (a cell read from one field) cites the quote of its own field. A derived fact (an
+evidence id, the observation window, a variance) gets one citation per page, quoting the first of
+its own input quotes on that page, in input order; a quote is never invented. So a derived fact
+that draws on two lines of one page cites that page once, with the first line.

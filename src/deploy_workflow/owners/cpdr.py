@@ -170,7 +170,12 @@ def validate_research(
     *, submission: ResearchSubmission, upstream: tuple[AgendaGap, ...], pack: tuple[Source, ...]
 ) -> tuple[str, ...]:
     """Content issues of a submission against the CP-0 agenda (``upstream``) and the pack
-    sources (``pack``), in the lease's order."""
+    sources (``pack``).
+
+    Order (ruling R2): rule 1 per submitted gap; rule 2 per agenda gap; then per question in
+    submission order rule 3, 4, 5 per searched source in listed order, 6 per citation in order,
+    and 7. G1-X appends the de-duplicated RULES issues after these (Stage 2).
+    """
     agenda_ids = {gap.gap_id for gap in upstream}
     issues: list[str] = []
     counted: dict[str, int] = {}
@@ -234,7 +239,10 @@ def _status(answered: int, total: int) -> GapStatus:
 
 
 def bookkeeping(*, submission: ResearchSubmission) -> Bookkeeping:
-    """Counts, statuses and shares of a submission, gap by gap in submission order."""
+    """Counts, statuses and shares of a submission, gap by gap in submission order.
+
+    Ruling R1: call it only on a submission ``validate_research`` returned no issue for.
+    """
     gaps = []
     for gap in submission.gaps:
         total = len(gap.questions)
@@ -312,7 +320,8 @@ TOTAL_FIELDS = (
     "unresolved_total",
     "answered_share",
 )
-TDR3_COLUMNS = tuple((field, field.replace("_", " ")) for field in TOTAL_FIELDS)
+TDR3_COLUMNS = tuple((field, field.replace("_", " ")) for field in TOTAL_FIELDS)  # ruling R3
+TOTAL_ROW_LABEL = "All gaps"  # ruling R3; row_kind stays the default "row"
 PER_GAP_CONSUMED = ("questions", "answered", "unresolved", "answered_share", "status")
 
 
@@ -404,13 +413,15 @@ def _table(
     row_header: str,
     columns: tuple[tuple[str, str], ...],
     rows: list[tuple[str, tuple[str, ...]]],
+    row_label: str | None = None,
 ) -> ReportTable:
+    """A declared table; each row is labelled with its id unless ``row_label`` names it."""
     return ReportTable(
         table_id=table_id,
         title=title,
         row_header=row_header,
         columns=tuple(TableColumn(field=f, label=label) for f, label in columns),
-        rows=tuple(TableRow(row_id=r, label=r, fact_ids=ids) for r, ids in rows),
+        rows=tuple(TableRow(row_id=r, label=row_label or r, fact_ids=ids) for r, ids in rows),
     )
 
 
@@ -548,7 +559,14 @@ def compose(inputs: CpdrInputs) -> CpdrResult:
         ]
     total = _total_row(build, bk)
     tables.append(
-        _table("TDR.3", "Research coverage totals", "Total", TDR3_COLUMNS, [("total", total)])
+        _table(
+            "TDR.3",
+            "Research coverage totals",
+            "Total",
+            TDR3_COLUMNS,
+            [("total", total)],
+            row_label=TOTAL_ROW_LABEL,  # ruling R3
+        )
     )
 
     unresolved = [q for _, q in questions if q.outcome == "not_found"]

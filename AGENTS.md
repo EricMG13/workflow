@@ -60,20 +60,15 @@ name the exact requirement and have LEAD resolve it from the adopted source.
 - Live/paid/provider testing remains paused. Local implementation and offline
   checks are permitted; no credential discovery or provider calls. Product model
   and effort choices remain distinct from coding-agent routes.
-- Use at most one heavy local job. Active implementation has no numerical lane
-  cap, by the user's2026-10-27 instruction. Every lane still needs an exact exclusive
-  lease and disjoint files/interfaces. Since the 2026-10-27 Claude handover a test
-  run needs no per-run LEAD admission record: run it only as
-  `mkdir /tmp/deploy-workflow-heavy-job.lock && { <run>; rc=$?; rmdir /tmp/deploy-workflow-heavy-job.lock; exit $rc; }`
-  so the lock is removed only by the run that created it; if `mkdir` fails, wait
-  with Monitor until the lock is gone and retry. A test file whose last ledgered
-  full run took under 60 s is light and runs without the lock; a light run that
-  passes 60 s is heavy from then on. Then append one line to the lane's
-  `work/<lane>/ledger.md`: UTC time, run name, command, exit code, pass/fail counts,
+- Active implementation has no numerical lane cap, by the user's 2026-10-27
+  instruction. Every lane still needs an exact exclusive lease and disjoint
+  files/interfaces. The heavy-job lock is removed (user, 2026-10-28): test runs
+  need no lock and no per-run LEAD admission record, and may run concurrently.
+  After each run append one line to the lane's `work/<lane>/ledger.md`: UTC time,
+  run name, command, exit code, pass/fail counts,
   `agent=<name> fix-rounds=<n> gates-first-pass=<y|n>`. LEAD still admits new leases
-  and commits for integration in docs/QUEUE.md. Do not
-  freeze a run's source while another writer edits it, restart quiet tests, or kill
-  unrelated processes. Static checks (ruff, mypy) need no lock.
+  and commits for integration in docs/QUEUE.md. Do not freeze a run's source while
+  another writer edits it, restart quiet tests, or kill unrelated processes.
 
 ## Ownership and reuse
 

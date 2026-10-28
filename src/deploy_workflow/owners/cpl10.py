@@ -47,7 +47,8 @@ DISPOSITION: dict[str, str] = {
 PROHIBITED = ("recommend", "recovery", "covenant")  # CP-1A's prohibited conclusions
 INSUFFICIENT = "Insufficient Information"
 OVERALL = "overall"  # the gap target that is not a topic
-_MONEY = {"currency": "USD", "scale": Decimal(1000000)}
+_USD, _MILLION = "USD", Decimal(1000000)
+_MONEY = {"currency": _USD, "scale": _MILLION}
 _DIGIT = re.compile(r"\d")
 
 
@@ -485,6 +486,13 @@ class ScreenResult:
     status: Literal["restricted"] = "restricted"
 
 
+def _topic_unit(topic: Topic) -> tuple[str, str | None, Decimal]:
+    """The topic's unit, currency and scale: MILLIONS in USD at 1,000,000; MULTIPLE plain."""
+    if topic.unit == "MILLIONS":
+        return topic.unit, _USD, _MILLION
+    return topic.unit, None, Decimal(1)
+
+
 def _unique(citations: Iterable[Citation]) -> tuple[Citation, ...]:
     return tuple(dict.fromkeys(citations))
 
@@ -527,13 +535,16 @@ class _Cells:
     def not_applicable(self, field: str, label: str, reason: str) -> None:
         self.add(field, label, status="not_applicable", limitation=reason)
 
-    def copied(self, field: str, label: str, cp1: Fact, twin: Fact) -> None:
+    def copied(self, field: str, label: str, cp1: Fact, topic: Topic) -> None:
         """The CP-1 value with its value_class, status, limitation, citations and calculation_id
-        verbatim (lease :121); CP-1's formula is not copied (L10-c). Shown at 2 dp. An unsettled
-        fact without a unit takes the unit (with its currency and scale) of the other end of the
-        pair (ruling (f))."""
-        known_money = cp1.status == "known" and cp1.unit == "MILLIONS"
-        unit_of = twin if cp1.status != "known" and cp1.unit is None else cp1
+        verbatim (lease :121); CP-1's formula is not copied (L10-c). Shown at 2 dp. A known value
+        keeps CP-1's unit, currency and scale (checked against the topic at binding); a value
+        that is not known takes the topic's (round 5 (f))."""
+        known = cp1.status == "known"
+        if known:
+            unit, currency, scale = cp1.unit, cp1.currency, cp1.scale
+        else:
+            unit, currency, scale = _topic_unit(topic)
         fact = Fact(
             fact_id=f"{self.table}.{self.row_id}.{field}",
             label=label,
@@ -542,10 +553,10 @@ class _Cells:
             field=field,
             amount=cp1.amount,
             status=cp1.status,
-            unit=unit_of.unit,
-            currency=unit_of.currency,
-            scale=unit_of.scale,
-            decimals=2 if known_money else None,
+            unit=unit,
+            currency=currency,
+            scale=scale,
+            decimals=2 if known and unit == "MILLIONS" else None,
             period=cp1.period,
             citations=cp1.citations,
             calculation_id=cp1.calculation_id,
@@ -577,8 +588,8 @@ def _topic_row(r: TopicResult, pair_period: str, cp1: Mapping[str, Fact]) -> _Ce
     """TL10.2: the copied CP-1 cells, the exact change, its rating, rank and pointers."""
     t, s = r.topic, r.screen
     cells = _Cells("TL10.2", t.topic_id, cp1)
-    cells.copied("from_value", f"{t.label} · Starting value", r.start, r.close)
-    cells.copied("to_value", f"{t.label} · Closing value", r.close, r.start)
+    cells.copied("from_value", f"{t.label} · Starting value", r.start, t)
+    cells.copied("to_value", f"{t.label} · Closing value", r.close, t)
     derives = (r.start.label, r.close.label)
     pct_label = f"{t.label} · Change on starting level"
     if s.change is None:

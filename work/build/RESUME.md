@@ -1,58 +1,43 @@
-# Module-builder lane: resume point (2026-10-28, usage limit)
+# Module-builder lane: resume point (2026-10-28, session 3)
 
-Lane branch `claude/module-dev-status-review-0981b6`. Plan: `docs/superpowers/plans/2026-10-28-verified-module-builds.md` (§Rulings rounds). Log: `work/build/ledger.md`. Rulings: `docs/rulings/2026-10-28-stage1.md` (rounds 1–3, all merged).
+Lane `claude/module-dev-status-review-0981b6` at 6ba071b or later. Fast tests: 990 passed, 2 skipped. History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
 
-## Merged into the lane (Stage 1)
-CP-2E, CP-DR, CP-3D, CP-4 (including the 4-1 re-pin), CP-1D (fix 1).
+## Merged into the lane
+- **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3.
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d).
+- **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
+- **LEAD docs:** 8483de4 (E6), 3674158 (round 6 oracle batch), rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
-## Paused work (every agent finished and committed on its own branch; nothing is running)
-| Module / task | Branch | Worktree (`.claude/worktrees/…`) | Next step |
+## Held (lane stays green)
+| Commit | Lands with |
+|---|---|
+| LEAD 40e529c (B1 integration) | Stage 2 |
+| LEAD 2682310 (CP-5 lease frozen; cp3-cp6 R6 and CP-8 re-pins) | the CP-3 and CP-8 re-pin branches |
+
+## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Cap 10: full.
+| Work | Base | Agent | Next |
 |---|---|---|---|
-| G1-X (Stage 2): **done d36b5ab** (build-only; gates 0; light probes pass; report `work/build/g1x/report.md`) | `worktree-agent-a3179638c813adbe7` | agent-a3179638c813adbe7 | mx-adversary review (ordering and replay), then H1. Send LEAD the 5 open items in the report (validator seam needs a §2 amendment) |
-| CP-8 Stage 1: **done 1cf8b93** (102 passed, gates 0; report `work/build/stage1/cp8/report.md`) | `worktree-agent-a3cc9818386e8861a` | agent-a3cc9818386e8861a | LEAD rules the 12 raising states and points 13–23 first, then a rulings round, then adversary review |
-| CP-2G Stage 1: **done 53816b7** (147 passed, gates 0; report `work/build/stage1/cp2g/report.md`) | `worktree-agent-a4377a7580e8e70db` | agent-a4377a7580e8e70db | LEAD rules the 9 raising states and the decisions to confirm, then a rulings round, then adversary review. The methodology merge re-pins its builder and manifest |
-| CP-3C Stage 1: **done 09d9ee7** (96 passed, gates 0; report `work/build/stage1/cp3c/report.md`) | `worktree-agent-aa5a4817fa00cd287` | agent-aa5a4817fa00cd287 | LEAD rules points 1–8 (COST-01 at 0 bp first), then a rulings round, then adversary review. The methodology merge re-pins its builder and manifest |
-| CP-1C fix 1 + amendment 1 + rulings: **done 190eae7** (98 passed, gates 0, 15/15 reviewer mutants killed; probe1 exits 1 only because ruled refusals now refuse its inputs) | `worktree-cp1c-stage1` | cp1c-stage1 | adversary re-review. Send LEAD: page:2 duplicate label (provisional `Peer table not found`); peers source not `ready` refused before parse (agent's extension); C1 gap-field order gap by gap; 1C2 cell choices (period, unit, value class) |
-| CP-L10 fix 1 + amendment 1 + L10-a/c: **done 394fdc3** (55 passed, gates 0, 14/14 mutants in adapted `l10_mutate_r1.py`; test-first not followed, made up for by 23 failures against f4f3f8f) | `worktree-agent-aa6ef474a0f78ec9e` | agent-aa6ef474a0f78ec9e | adversary re-review. Send LEAD: assessment confidence Insufficient Information accepted (Rule says Medium or Low; step 5 refuses only High); B6 unit check may refuse real missing facts whose unit is None |
-| CP-1D rulings (1D1–1D10, 1D2 follow-up, 1D-x, L-a/L-b): **done 85a2095** (71 passed 1 skipped, gates 0; probe7 exits 1 only because 1D9 now refuses its zero-item bridge) | `claude/cp1d-stage1` | cp1d-stage1 | adversary review of the ruling diff, merge. Send LEAD: 1D3 label choice (T1D.3 row labels); 1D2 limitation position; the agent's own 38-digit bound on amounts; partial-mode residuals (a chip to a would-be-known full-only fact is not flagged) |
-| CP-2D rulings (2D1–2D9, 2D-a–d, N2/N3): **done c8660ab** (100 passed, gates 0, probes 0, 25/25 re-targeted mutants killed in `scratchpad/mutate_r3.py`; nothing valid raises; test-first not followed, red was only a collection error) | `worktree-agent-a69f2394899aee6d5` | agent-a69f2394899aee6d5 | adversary re-review (N1 settled by 2D-a), merge. Send LEAD: unruled T2E.7 labels; inferred GAP-01 wordings and their precedence; facility-term and empty-schedule reasons; negative debt reuses the "zero" reason; no refusal for a maturity-wall assessment without the date ref; amend-and-extend and distressed exchange not on the list |
-| CP-2A rulings (A1–A8) + M4: **done fe44e52** (86 passed 1 skipped, gates 0; report `work/build/stage1/cp2a/rulings-report.md`; the branch copy of report.md is stale) | `worktree-agent-a34fec3e9469279cd` | agent-a34fec3e9469279cd | adversary re-review of M4 and the ruling diff; a third fix goes to mx-autonomous plus a fresh implementer. On merge, keep the lane's report |
-| CP-3D rulings (D1–D3, X1, Low A): **done 9b871a7** (174 passed, gates 0, probes 0; nothing valid raises) | `claude/cp3d-stage1` | cp3d-stage1 | mx-precise review of the ruling diff, merge. Send LEAD: YLD-01 with a quoted level, known maturity and missing mid margin uses an unruled neutral form `The all-in yield is not calculated: [T3E.3.r05.mid] is not available.`; T3E.7 "Simple discount margin" row names the wrong cause for bid/offer/talk-only and absent maturity (builder parity) |
+| H1 mx-adversary review | 2bd61a7 | a72eed029a03a38bf (impl a69f811059171c714) | H1 open points 1–6 to LEAD with the reviewer's reading |
+| CP-8 fix round 1 (M1 raw quote, L1 mutants) | a5c4011 | a3cc9818386e8861a | Opus re-review; then 6h split-and-missing + 2682310 re-pin |
+| CP-2G fix round 1 (M1–M3, L4, L5; merge, oracle batch, re-pin) | 0e28916 | a4377a7580e8e70db | Opus re-review; then round 8 A-3 citations (test-first); merge |
+| CP-1D raw-quote check | lane | a65eff1d9057df7d0 (worktree cp1d-stage1) | scoped review if code changed |
+| CP-3D raw-quote check | lane | a5aa3f0ca842029cd (worktree cp3d-stage1) | scoped review if code changed; then 6h percent_text leading zero |
+| CP-2H round 7 | 5d91e7b | a52b5ec0919986ddb | first mx-adversary review, a killed mutant per refusal (29) |
+| CP-2E round 6i + E8 anchors | af23f7f | a219254fe68cc1c2d | scoped mx-feature review, merge |
+| CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
+| CP-4C round 8 Part A (money: A-1) | 0284eca | a2c15c441717ec41c | first mx-adversary review (property test, mutants) |
+| CP-1C round 6h (a) | lane | ad161c52418d5cb9a (worktree cp1c-stage1) | scoped review, merge |
 
-If an agent stopped mid-task, its worktree holds the uncommitted work: inspect it with `git status` and `git diff` before re-dispatching.
+## Built, waiting on LEAD round 9
+CP-2D 6f (e) and D-1; CP-2A choice 5; CP-8 items 1–5; CP-2G L1–L3 and Info. H1 points follow its review.
 
-## Not started
-- Rulings rounds for CP-2E (E1–E5) and CP-DR (R1–R3), on their branches `worktree-agent-a219254fe68cc1c2d` and `claude/cpdr-stage1`.
-- CP-3 waits for the Stage 1 review.
-- Stage 1 review (mx-architect, once all Stage 1 modules are merged). It carries the CP-4 casefold test and the merged modules' Low notes.
-
-## Methodology change (landed, not merged into the lane)
-`lead/methodology-serialised` at a48990d (ede9ffe is the change; mx-precise COMMIT). Merge it before any Stage 2 build. It re-pins the builder and manifest of CP-1C, CP-1D, CP-2E, CP-2G, CP-3, CP-3C, CP-3D, CP-8, CP-DR, CP-L10 and CP-OS, plus CP-L10 expected (L2/L3 text only). Every module test that pins those hashes needs a re-pin in the same merge: one mechanical batch, checked by the controller running the affected Stage 1 tests. Next from LEAD: the CP-1D 1D1 amendment and the CP-2G, CP-2H and CP-4C re-pins.
+## Queued
+- CP-3 re-pin to 2682310 (worktree cp3-stage1; cp3-cp6 manifest 525c5f1b…, submissions eaecbcd0…, expected 8ca60c96…, builder 67db9815…).
+- CP-5 Stage 1 build (lease `docs/CP5-OWNER-LEASE.md`, oracle `cases/cp5-owner/` in 2682310), one Opus implementer, when a slot frees.
+- G1-X `_fill` TypeError mapping stays until LEAD says 0d is integrated.
+- Riding Lows: CP-2E E8 `\b` anchors test; CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
+- Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
+- Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 
 ## Stage 2 notes collected
-- `methods/<cp>.md` notes: cp1d (1D4), cpl10 (L10-b), cp2d (the 2D-a stem list).
-- CP-2A `validate` raises on CP-1 head integrity, which needs a G1-X precheck.
-- CP-4 T4C.7 display is open in QUEUE (engine-side; the owner decides).
-
-## LEAD state
-LEAD is paused too. The G1-X open items and the open Stage 1 points for CP-1C, CP-L10, CP-3D and CP-1D are queued for rulings in LEAD's `work/lead/RESUME.md`. Until then each case keeps failing closed or composing as now.
-
-## Session 2 (resumed 2026-10-28): steps 2–4 dispatched; step 1 moved to after the Stage 1 merges, so the re-pin batch touches each test once
-1. Merge `lead/methodology-serialised` (a48990d), or LEAD's branch tip, which carries it as 2b58105 (methodology.json 1bb6c0bc), into the lane, with one re-pin batch for module tests whose builder or manifest hashes changed. Verify it by running the affected Stage 1 tests.
-2. Send LEAD the open points it doesn't yet hold: CP-8 (12 raising states plus points 13–23), CP-2G (9 plus 8 decisions), CP-3C (1–8), CP-2D (the inferred wordings in the CP-2D row above), CP-2A (M4 wording and the items in `work/build/stage1/cp2a/rulings-report.md`). Each module report lists them.
-3. Reviews, as slots allow:
-   - adversary re-reviews of CP-1C, CP-L10, CP-2D and CP-2A;
-   - adversary reviews of the CP-1D ruling diff and of G1-X;
-   - mx-precise review of the CP-3D ruling diff.
-
-   Merge each approved branch.
-4. Rulings rounds for CP-2E (E1–E5) and CP-DR (R1–R3).
-
-## Round 4 (LEAD e86a192, cherry-picked as f606dbf; methodology still unmerged): apply after each current review
-- CP-1C (a)–(d). (b) reverses the agent's not-ready refusal: compose no-peers with `No ready peer source is in the pack`.
-- CP-L10 (e) and (f). (e) refuses an assessment with confidence Insufficient Information unless its category matches.
-- CP-1D (i)–(k). (k) uses the `financial_contracts.Number` bound, not 38 digits.
-- CP-3D (g) and (h): folded into the running fix round 2.
-- G1-X: the protocol amendments, including create-time refusal for a spec without an `_ENTRY_VALIDATORS` row.
-
-Merged in session 2: CP-DR rulings (facb8ea), verified on the lane (47 passed).
+In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor.

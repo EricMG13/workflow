@@ -38,9 +38,17 @@ FINANCIAL_SHA = next(
 )
 LTM = "LTM Q4 25: 2025-01-01 to 2025-12-31"
 Q3 = "Q3 25: 2025-07-01 to 2025-09-30"
+Q4 = "Q4 25: 2025-10-01 to 2025-12-31"
 ISSUER = "Northbridge Synthetic Group"
 RATIO_METRICS = ("total_leverage_reported", "net_leverage_reported", "interest_coverage_reported")
-COMPOSED = ("positive", "gap", "interest_undisclosed")
+COMPOSED = ("positive", "gap", "interest_undisclosed", "fixture_quarter_known")
+# The other base-period columns of the same CP-1 head construction, per case.
+OTHER_COLUMNS = {
+    "positive": ("gap",),
+    "gap": ("positive",),
+    "interest_undisclosed": ("gap",),
+    "fixture_quarter_known": ("positive", "gap"),
+}
 
 
 # --- fixtures: CP-1 facts from the oracle's own records ---------------------------------------
@@ -64,7 +72,7 @@ def cp1_fact(metric: str, record: dict[str, Any], index: int) -> Fact:
         "label": record["label"],
         "table_id": "T4.10",
         "row_id": metric,
-        "field": "ltm" if record["period"] == LTM else "q3",
+        "field": {LTM: "ltm", Q3: "q3", Q4: "q4"}[record["period"]],
         "unit": unit,
         "currency": currency,
         "scale": scale,
@@ -92,8 +100,8 @@ def cp1_facts(case: str) -> tuple[Fact, ...]:
     """The CP-1 facts the module reads for a case: the case's own base period records plus the
     other offered base period of the same CP-1 head construction."""
     own = EXPECTED["cases"][case]["cp1_inputs"]
-    other = EXPECTED["cases"]["gap" if case != "gap" else "positive"]["cp1_inputs"]
-    records = [*own.items(), *other.items()]
+    others = [EXPECTED["cases"][c]["cp1_inputs"] for c in OTHER_COLUMNS[case]]
+    records = [*own.items(), *(item for other in others for item in other.items())]
     return tuple(cp1_fact(metric, record, n) for n, (metric, record) in enumerate(records, 1))
 
 
@@ -126,7 +134,7 @@ def inputs_for(case: str, payload: Any, facts: tuple[Fact, ...] | None = None) -
     facts = cp1_facts(case) if facts is None else facts
     submission = cp2a.DownsideSubmission.model_validate_json(json.dumps(payload))
     return cp2a.Inputs(
-        submission=submission, cp1_facts=facts, offered_periods=(LTM, Q3), names=(ISSUER,)
+        submission=submission, cp1_facts=facts, offered_periods=(LTM, Q3, Q4), names=(ISSUER,)
     )
 
 
@@ -559,16 +567,23 @@ def test_positive_cp1_cash_interest_is_negated() -> None:
     assert [p.break_id for p in result.ranking] == ["b01", "b03", "b04"]
 
 
-def _base(**values: Decimal | None) -> cp2a.BaseOperands:
-    start: dict[str, Decimal | None] = {
-        "ebitda": Decimal(30),
-        "interest": Decimal(5),
-        "fcf": Decimal(9),
-        "total_debt": Decimal(50),
-        "cash": Decimal(20),
-    }
-    start.update(values)
-    return cp2a.BaseOperands(period=LTM, **start, gates={}, sources={})
+def _base(
+    *,
+    interest: Decimal = Decimal(5),
+    total_debt: Decimal = Decimal(50),
+    cash: Decimal = Decimal(20),
+) -> cp2a.BaseOperands:
+    """Positive-case operands (EBITDA 30, FCF 9), with interest, debt and cash as given."""
+    return cp2a.BaseOperands(
+        period=LTM,
+        ebitda=Decimal(30),
+        interest=interest,
+        fcf=Decimal(9),
+        total_debt=total_debt,
+        cash=cash,
+        gates={},
+        sources={},
+    )
 
 
 WATCHES = (
@@ -718,6 +733,244 @@ def test_names_and_labels_are_guarded() -> None:
         'thresholds[0].label: prohibited conclusion (instrument recommendation): "we recommend"',
         "thresholds[1].label: empty text",
     ]
+
+
+def _positive_payload(facts: tuple[Fact, ...]) -> Any:
+    return bind_payload(SUBMISSIONS["positive"]["downside_pathway"], fig_ids(facts))
+
+
+def test_round5_names_line_breaks_reserved_base_label_and_duplicate_labels() -> None:
+    """Round 5 Names: a line break or control character is refused; the s00 label is reserved;
+    a threshold label used twice is reported once with the pinned wording."""
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["scenarios"][0]["name"] = "Deep\ndownturn"
+    payload["scenarios"][1]["name"] = "Base (no stress)"
+    payload["scenarios"][2]["name"] = "Severe downturn\u0007"
+    payload["thresholds"][0]["label"] = "Watch level"
+    payload["thresholds"][1]["label"] = "Watch level"
+    payload["thresholds"][2]["label"] = "Coverage\twatch"
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        "scenarios[0].name: contains a line break or control character",
+        "scenarios[1].name: Base (no stress) is reserved for the unstressed row",
+        "scenarios[2].name: contains a line break or control character",
+        "thresholds[2].label: contains a line break or control character",
+        "thresholds: Watch level appears more than once",
+    ]
+
+
+def test_round5_pipe_in_a_name_or_label_composes() -> None:
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["scenarios"][0]["name"] = "Downturn | volumes"
+    payload["thresholds"][0]["label"] = "Leverage | watch"
+    result = cp2a.compute(inputs_for("positive", payload, facts))
+    assert next(r for r in result.tables if r.table_id == "T2B.1").rows[0].label == (
+        "Downturn | volumes"
+    )
+
+
+def test_round5_limitation_references_are_stored_spelled() -> None:
+    """Round 5 limitation refs: each {ref|unit} in a stored limitation is spelled as rendered
+    (shown value plus unit); the fact stays in cp1_references."""
+    facts = cp1_facts("positive")
+    ids = fig_ids(facts)
+    payload = json.loads(json.dumps(SUBMISSIONS["positive"]["downside_pathway"]))
+    payload["scenarios"][2]["limitation"] = (
+        "Debt of {{FIG:total_debt_ltm|US$ m}} is held at its closing balance."
+    )
+    payload["assessment"]["limitation"] = (
+        "Total leverage of {{FIG:total_leverage_reported|x}} is CP-1's twelve-month figure."
+    )
+    result = cp2a.compute(inputs_for("positive", bind_payload(payload, ids), facts))
+    claims = {c.claim_id: c for c in result.claims}
+    assert claims["T2B.1.s03"].limitation == "Debt of 50 US$ m is held at its closing balance."
+    assert claims["T2B.1.assessment"].limitation == (
+        "Total leverage of 1.67x is CP-1's twelve-month figure."
+    )
+    assert not any("{" in (c.limitation or "") for c in result.claims)
+    copied = {
+        r.fact_ids[0] for t in result.tables if t.table_id == "cp1_references" for r in t.rows
+    }
+    assert ids["total_debt_ltm"] in copied
+
+
+AT_BASE_LINE = (
+    "Free cash flow at or below zero is already reached at the base period, before any EBITDA "
+    "decline."
+)
+
+
+def test_round6_a2_already_reached_at_base_with_a_later_break() -> None:
+    """Round 6 A2: the at-base break keeps a true (negative) s*, ranks first, and the claim
+    names it without a figure, then the first break reached by a decline."""
+    facts = cp1_facts("positive")
+    fcf = EXPECTED["cases"]["positive"]["cp1_inputs"]["fcf"]["label"]
+    edited = _edit(facts, fcf, amount=Decimal(-3))
+    result = cp2a.compute(inputs_for("positive", _positive_payload(facts), edited))
+    by_id = {f.fact_id: f for f in result.facts}
+    b01 = result.breaks[0]
+    assert (b01.outcome, b01.required_decline, b01.ebitda_at_break) == (
+        "Already reached at base",
+        Decimal("-0.1"),
+        Decimal(33),
+    )
+    decline = by_id["T2B.6.b01.required_decline"]
+    assert (decline.status, decline.value_class, _percent(decline.amount)) == (
+        "known",
+        "calculated",
+        "(10.0)%",
+    )
+    assert [p.break_id for p in result.ranking] == ["b01", "b03", "b04", "b05", "b02"]
+    first = next(c for c in result.claims if c.claim_id == "T2B.7.first")
+    assert first.text == (
+        "The first test reached is Free cash flow at or below zero, already reached at base "
+        "before any EBITDA decline. The first test reached by a decline is Total leverage watch "
+        "level at an EBITDA decline of {T2B.7.r02.required_decline|%}."
+    )
+    assert prose.issues(first.text, prose.bind(result.facts), names=(ISSUER,)) == ()
+    assert result.limitations.count(AT_BASE_LINE) == 1
+
+
+def test_round6_a2_already_reached_at_base_alone() -> None:
+    """No break is reached by a decline: the claim has the first sentence only."""
+    facts = cp1_facts("interest_undisclosed")
+    fcf = EXPECTED["cases"]["interest_undisclosed"]["cp1_inputs"]["fcf"]["label"]
+    edited = _edit(facts, fcf, amount=Decimal(-3))
+    payload = SUBMISSIONS["interest_undisclosed"]["downside_pathway"]
+    result = cp2a.compute(inputs_for("interest_undisclosed", payload, edited))
+    first = next(c for c in result.claims if c.claim_id == "T2B.7.first")
+    assert first.text == (
+        "The first test reached is Free cash flow at or below zero, already reached at base "
+        "before any EBITDA decline."
+    )
+    assert AT_BASE_LINE in result.limitations
+
+
+P1W = "Not meaningful: the base period is a single quarter, and ratios need a twelve-month base"
+P1W_LINE = (
+    "Ratios are not calculated on a single-quarter base: CP-1 reads each ratio from the twelve "
+    "months ending that quarter, while CP-2A's base operands are one quarter's flows."
+)
+
+
+def test_p1w_mixed_quarter_base() -> None:
+    """P1-W on a mixed quarter base: a CP-1 ratio that is not known keeps A6's missing text
+    byte for byte; a known one is not meaningful; both own lines are present."""
+    facts = cp1_facts("fixture_quarter_known")
+    cells = EXPECTED["cases"]["fixture_quarter_known"]["cp1_inputs"]
+    gap_text = EXPECTED["cases"]["gap"]["cp1_inputs"]["total_leverage_reported"]["limitation"]
+    edited = _edit(facts, cells["total_leverage_reported"]["label"], **MISSING, limitation=gap_text)
+    payload = SUBMISSIONS["fixture_quarter_known"]["downside_pathway"]
+    result = cp2a.compute(inputs_for("fixture_quarter_known", payload, edited))
+    by_id = {f.fact_id: f for f in result.facts}
+    a6 = f"Not calculable: CP-1 has no twelve-month basis for this period ({gap_text})"
+    total, net = by_id["T2B.4.s01.total_leverage"], by_id["T2B.4.s01.net_leverage"]
+    assert (total.status, total.limitation) == ("missing", a6)
+    assert (net.status, net.limitation) == ("not_applicable", P1W)
+    assert [(p.break_id, p.outcome, p.reason) for p in result.breaks[1:]] == [
+        ("b02", "Not meaningful on a single-quarter base", P1W),
+        ("b03", "Not calculable", a6),
+    ]
+    assert by_id["T2B.8.s01-b03.result"].text == "Not calculable"
+    assert by_id["T2B.8.s01-b02.result"].text == "Not meaningful on a single-quarter base"
+    twelve = f"Twelve-month ratios are not calculable on the base period {Q4}: {a6[16:]}"
+    assert result.limitations[-3:-1] == (twelve, P1W_LINE)
+
+
+def _quarter_base(
+    *, interest: Decimal = Decimal("1.25"), total_debt: Decimal = Decimal(50)
+) -> cp2a.BaseOperands:
+    """A quarter base whose four CP-1 ratios are known (P1-W gates every ratio)."""
+    return cp2a.BaseOperands(
+        period=Q4,
+        ebitda=Decimal("7.5"),
+        interest=interest,
+        fcf=Decimal("2.25"),
+        total_debt=total_debt,
+        cash=Decimal(20),
+        gates={},
+        sources={},
+        not_meaningful=frozenset(cp2a.REPORTED),
+    )
+
+
+def test_p1w_gate_precedes_the_short_circuits_and_the_zero_check() -> None:
+    """P1-W item 2 (A8 order): missing operands, then A6, then P1-W, then the short-circuits
+    (breaks) or the zero-denominator check (stressed ratios)."""
+    # breaks: interest <= 0 and debt / net debt <= 0 would short-circuit; P1-W comes first
+    for base in (_quarter_base(interest=Decimal(-1)), _quarter_base(total_debt=Decimal(0))):
+        points = cp2a.break_points(base=base, thresholds=WATCHES)
+        assert [(p.outcome, p.reason) for p in points[1:]] == [
+            ("Not meaningful on a single-quarter base", P1W)
+        ] * 4
+    # stressed ratios: a 100% decline gives E' = 0, a negative interest I' < 0 and zero debt
+    # D = 0; each zero check comes after P1-W
+    zero_ebitda = cp2a.stress(base=_quarter_base(), decline=Decimal(1), increase=Decimal(0))
+    negative = cp2a.stress(
+        base=_quarter_base(interest=Decimal(-1), total_debt=Decimal(0)),
+        decline=Decimal(0),
+        increase=Decimal(0),
+    )
+    for row in (zero_ebitda, negative):
+        assert row.not_applicable == frozenset(cp2a.RATIOS)
+        assert {name: row.why[name] for name in cp2a.RATIOS} == dict.fromkeys(cp2a.RATIOS, P1W)
+
+
+def test_p1w_own_line_from_rows_alone() -> None:
+    """The P1-W own line is emitted when only T2B.4 rows show the reason: cash interest
+    missing (b02 is the operand's Not calculable) and no leverage watch level."""
+    facts = cp1_facts("fixture_quarter_known")
+    cells = EXPECTED["cases"]["fixture_quarter_known"]["cp1_inputs"]
+    edited = _edit(
+        facts, cells["cash_interest"]["label"], **MISSING, limitation="Fixture: withheld"
+    )
+    payload = json.loads(json.dumps(SUBMISSIONS["fixture_quarter_known"]["downside_pathway"]))
+    payload["thresholds"] = []
+    result = cp2a.compute(inputs_for("fixture_quarter_known", payload, edited))
+    assert [(p.break_id, p.outcome) for p in result.breaks] == [
+        ("b01", "Reached at the stated decline"),
+        ("b02", "Not calculable"),
+    ]
+    assert result.stressed["s00"].not_applicable == frozenset(
+        ("total_leverage", "net_leverage", "fcf_to_debt")
+    )
+    assert result.limitations.count(P1W_LINE) == 1
+
+
+def test_round5_names_line_separators_and_padded_reserved_label() -> None:
+    """Round 5 Names, confirmed choices: U+2028 (Zl) and U+2029 (Zp) are line breaks; the
+    reserved base label is matched after stripping."""
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["scenarios"][0]["name"] = "Deep\u2028downturn"
+    payload["scenarios"][1]["name"] = " Base (no stress) "
+    payload["scenarios"][2]["name"] = "Severe\u2029downturn"
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        "scenarios[0].name: contains a line break or control character",
+        "scenarios[1].name: Base (no stress) is reserved for the unstressed row",
+        "scenarios[2].name: contains a line break or control character",
+    ]
+
+
+def test_blank_threshold_labels_are_not_reported_as_duplicates() -> None:
+    """Two blank labels give their two empty-text issues only, as the scenario-name duplicate
+    check skips a blank name."""
+    facts = cp1_facts("positive")
+    payload = _positive_payload(facts)
+    payload["thresholds"][0]["label"] = " "
+    payload["thresholds"][1]["label"] = " "
+    assert list(cp2a.validate(inputs_for("positive", payload, facts))) == [
+        "thresholds[0].label: empty text",
+        "thresholds[1].label: empty text",
+    ]
+
+
+def test_new_strings_pass_the_prose_rules() -> None:
+    """Round 5/6 process: every new stored string passes prose.issues and bare_figures."""
+    for text in (P1W, P1W_LINE, AT_BASE_LINE, cp2a.QUARTER_OUTCOME, cp2a.QUARTER_NOT_COMPARED):
+        assert prose.issues(text, {}) == (), text
+        assert prose.bare_figures(text) == (), text
 
 
 def test_v17_stale_input_is_stage_2() -> None:

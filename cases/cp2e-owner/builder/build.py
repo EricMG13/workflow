@@ -630,8 +630,10 @@ def derive(inp):
             r["share_of_ebitda"] = ratio(gross, ebitda, "EBITDA is zero")
             o["rate"].append(r)
         df = inp.get("debt_foreign")
-        if df is None or bal is None:
+        if df is None:
             foreign_debt = MISS("the currency of the debt is not stated")
+        elif bal is None:
+            foreign_debt = MISS("the facility balance is not stated")
         else:
             foreign_debt = K(bal if df else D(0))
         o["foreign_debt"] = foreign_debt
@@ -1561,7 +1563,7 @@ def main():
             "fcf_after": "levered free cash flow - gross increase (no tax shield, no repricing date)",
             "share_of_ebitda": "gross increase / EBITDA; EBITDA zero is not_applicable",
             "leverage": "total debt / EBITDA",
-            "foreign_debt": "term loan balance if the quoted currency of the debt differs from the quoted reporting currency, zero if equal, missing when the currency of the debt is not stated",
+            "foreign_debt": "term loan balance if the quoted currency of the debt differs from the quoted reporting currency, zero if equal, missing when the currency of the debt is not stated, and the facility balance is not stated when the currency is stated without a balance",
             "fx_shock": "the foreign currency strengthens by m percent against the reporting currency: change in debt = foreign-currency debt x m; change in EBITDA = EBITDA x share earned in other currencies x m (missing when the share is not stated); leverage after = (debt + change in debt) / (EBITDA + change in EBITDA), missing when either change is missing",
             "operand_bounds": "a sentence operand (facility balance, spread, floor) is accepted only as 1 to 3 digits with at most 4 decimals (NUM_RE, at most 999.9999), so a balance of 1000 or more cannot be quoted by this step; stated, not a source limit",
             "facility_balance_vs_total_debt": "validator rule (LEAD ruling 9): when the balance and total debt both parse, a balance above total debt is the issue 'rate_exposure.facility_balance: value_text <balance> exceeds total debt <total debt text>', raised after the earnings rows. A balance below total debt is valid: the shock figures cover the quoted facility alone, the floating share stays known (balance / total debt), and the own limitation 'fixture_partial_facility.own_limitation_added' names the remainder whose rate type is not stated. Equal is the frozen case",

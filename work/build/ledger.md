@@ -310,3 +310,4 @@
 - 2026-10-28 CP-8 r13 review APPROVE (mx-precise), no findings; no quote-edge comma gap in CP-8. Merge waits on CP-3D fix1 approval (branch contains claude/r13-cp3d a212da3)
 - 2026-10-28 CP-2D r13 fix1 re-review APPROVE (mx-precise); 2 Lows to backlog. Merged 36d3746 into the lane
 - 2026-10-28 CP-3D r13 fix1 done: 543376c (_EDGE_BEFORE/_EDGE_AFTER take commas; 18/18 mutants; fuzz 0 violations). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped
+- 2026-10-28 Lane merged codex/checkpoint b570399 (d6b138d). Stage 2 plan draft saved (work/build/stage2/plan-draft.md, Plan agent); brief work/build/stage2/brief.md; decisions + LEAD questions work/build/stage2/questions.md (Q1 close at _Spec, Q6 producer owns reader type, Q10 named creator makes composition, Q11 no shared reader). Dispatching: G1-X ride-along (round 10 G1-side guards), then cohort 1 CP-2D, CP-2A, CP-DR (mx-feature). CP-4 waits Q3/Q4; CP-3D waits r13 merge

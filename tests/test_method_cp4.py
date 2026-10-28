@@ -610,6 +610,45 @@ def test_semantic_gate_normalises_case_and_whitespace_in_page_text() -> None:
     assert list(cp4.semantic_issues(pack=pack, submission=variant)) == refusal["issues"]
 
 
+def test_semantic_gate_case_folds_rather_than_lowercases_page_text() -> None:
+    """Match rule (lease: "case-folded substring"). Case folding maps the sharp s to "ss", so a
+    cited page that writes "aßigned" still matches 'has the meaning assigned in'; `str.lower`
+    leaves "ß" alone and would miss it (Stage 1 review: the lower_not_casefold mutant). Every
+    marker-bearing quote is dropped, so only the page text can match; the second marker stays
+    verbatim on the page, so the frozen two-marker refusal string is unchanged."""
+    inputs = make_inputs_object("gap_false_same_definition")
+    (covenant,) = inputs.submission.covenants
+    markers = EXPECTED["semantic_gate"]["markers"]
+    kept = tuple(q for q in covenant.citations if not any(m in q.quote for m in markers))
+    assert 0 < len(kept) < len(covenant.citations)
+    assert {(q.source_id, q.locator) for q in kept} == {("legal-covenants", "page:2")}
+    folded_text = (
+        "Covenant EBITDA has the meaning aßigned in Schedule A. "
+        "Schedule A is not supplied with this copy."
+    )
+    first, second = markers
+    assert first not in folded_text.lower() and first in folded_text.casefold()
+    assert second in folded_text
+    legal = next(s for s in inputs.pack.sources if s.source_id == "legal-covenants")
+    spans = tuple(
+        span.model_copy(update={"text": folded_text}) if span.locator == "page:2" else span
+        for span in legal.spans
+    )
+    pack = inputs.pack.model_copy(
+        update={
+            "sources": tuple(
+                s.model_copy(update={"spans": spans}) if s is legal else s
+                for s in inputs.pack.sources
+            )
+        }
+    )
+    variant = inputs.submission.model_copy(
+        update={"covenants": (covenant.model_copy(update={"citations": kept}),)}
+    )
+    refusal = EXPECTED["gap_false_same_definition"]["CP-4"]["refusal"]
+    assert list(cp4.semantic_issues(pack=pack, submission=variant)) == refusal["issues"]
+
+
 def test_semantic_gate_quote_of_page_absent_from_pack_is_scanned() -> None:
     """Scope rule (controller ruling 4): a citation whose locator is not a pack page contributes
     only its quote. The marker quote alone, cited at a locator absent from the pack, still

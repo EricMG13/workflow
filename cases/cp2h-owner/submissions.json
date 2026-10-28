@@ -33,7 +33,7 @@
   "CP-2A": {
    "source": {
     "file": "cases/cp2a-owner/submissions.json",
-    "sha256": "191180c2596c38fad13a9b190c6b0fb0103de21ff43b08d175c0f4cf38003a81",
+    "sha256": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
     "path": "positive.downside_pathway"
    },
    "downside_pathway": {
@@ -277,7 +277,7 @@
   "CP-2G": {
    "source": {
     "file": "cases/cp2g-owner/submissions.json",
-    "sha256": "aaa8ea0eeb563064cc944c69ec0e7b3dbc54032243fa72d07d6a735be49da86f",
+    "sha256": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
     "path": "cases.gap"
    },
    "forward_credit_model": {

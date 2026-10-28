@@ -1213,6 +1213,17 @@ def test_class_blank_limitation_on_insufficient_information(value: str) -> None:
     )
 
 
+@pytest.mark.parametrize("value", ["a limit", "a\u200b"], ids=["plain", "cf-bearing"])
+def test_class_non_blank_limitation_off_insufficient_information(value: str) -> None:
+    """Round 12 M1: the "only for it" half. A non-blank, digit-free limitation on an assessment
+    that is not Insufficient Information gets exactly that issue. The Cf-bearing twin (a zero
+    width space after a letter) is non-blank, so it pins `not is_blank`."""
+    raw = copy.deepcopy(SUBMISSIONS["positive"])
+    assert raw["assessments"][0]["category"] != "Insufficient Information"
+    raw["assessments"][0]["limitation"] = value
+    assert _issues_with(raw) == (f"assessments[0]: {_ONLY_II}",)
+
+
 # --- round 11 B1 and B3 beyond the shared cases: every quote occurrence in every reading --------
 @pytest.mark.parametrize(
     ("page", "quote", "accepted"),

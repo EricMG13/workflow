@@ -1310,7 +1310,14 @@
      "value_class": "source",
      "formula": "Bridge source amount",
      "calculation_id": null,
-     "derives_from": []
+     "derives_from": [],
+     "citations": [
+      {
+       "source_id": "bridge",
+       "locator": "page:1",
+       "quote": "Total proposed adjustments  6.00"
+      }
+     ]
     },
     {
      "fact_id": "T1D.4.proposed_total.recomputed",
@@ -1383,7 +1390,14 @@
      "value_class": "source",
      "formula": "Bridge source amount",
      "calculation_id": null,
-     "derives_from": []
+     "derives_from": [],
+     "citations": [
+      {
+       "source_id": "bridge",
+       "locator": "page:1",
+       "quote": "Management financing-case EBITDA  36.00"
+      }
+     ]
     },
     {
      "fact_id": "T1D.4.mgmt_ebitda.recomputed",

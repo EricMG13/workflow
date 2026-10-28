@@ -17,7 +17,16 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
   - CP-2E blocked wording;
   - the CP-2D stale-head oracle wording (round 5 item 15).
 
+- **CP-2H `expected.json` citations (round 5 item 17).** Several derived facts carry more than one quote from the same page:
+  - positive: T2R.8.p01.notches, T2R.8.p01.lower_rated, T2R.8.p01.outlook_match, T2R.9.total.triggers, T2R.9.total.downgrade_down;
+  - gap: T2R.9.total.triggers;
+  - fixtures: the same facts, plus not_calculable_down.
+
+  Re-pin to round 3: one citation per page, quoting the first input quote. Then switch CP-2H's own citations to the round 3 rule.
+- **CP-2H view tree.** Commit `cases/cp2h-owner/cp2h-view-tree.json`.
+
 ## Leases and contract text
+- **CP-2H lease.** `TriggerReport` is renamed `RatingTriggersReport`; add the TOOL-CONTRACT row.
 - **CP-2G lease.**
   - :61 should show `Upstream` with `inherited`.
   - The scenario name comes from `T2B.1.<row>.name`.

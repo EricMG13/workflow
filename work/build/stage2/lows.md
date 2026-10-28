@@ -15,3 +15,4 @@
 - **CP-1D L5.** `type: ignore` 0 → 3 in tests (`test_connect_cp1d.py:623,625`, `test_owner_cp1d.py:100`); suppressions may only fall.
 - **CP-1D L6 (predates).** CP-1 references refused in assessment rationales while `cp1_facts_note` admits them; align the note or the core (`p9_cp1_ref_in_assessment.py`).
 - **CP-1D I1.** `context_block` docstring overstates `inherited_limitations` (computed with own=()).
+- **CP-2G Info (batch).** `cp2g_reader` uses `next(...)` without a default on T2H.7; a head without the table raises StopIteration, not ValueError. Source: batch/cp2h-report.md release 3.

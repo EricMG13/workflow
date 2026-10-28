@@ -1417,6 +1417,21 @@ def test_r11_blank_text_twin_is_not_refused_as_empty(path: str, adapter: Adapter
     assert EMPTY_TEXT.format(path=path) not in issues
 
 
+@pytest.mark.parametrize(
+    "blank",
+    [c for c in BLANK_CASES if c.whitespace_only],
+    ids=[c.case_id for c in BLANK_CASES if c.whitespace_only],
+)
+def test_r12_b10_blank_limitation_is_not_stated(blank: BlankCase) -> None:
+    """Round 12 B10: a blank limitation (whitespace or `Cf` only) on the Insufficient Information
+    assessment is not stated, so it gets the empty-text issue and then the insufficient one."""
+    adapter = _blank_adapter("gap_minimum_cash", ("assessments", 2, "limitation"))
+    assert adapter(blank.page, blank.quote, blank.value) == (
+        "assessments[2].limitation: empty text",
+        EXPECTED["refusals"]["insufficient_without_limitation"],
+    )
+
+
 def test_r11_blank_fields_cover_every_analyst_text_field() -> None:
     """Every path CP-2D reads as analyst text (2D-a's list) is in BLANK_FIELDS, by field name."""
     positive = json.loads(json.dumps(SUBMISSIONS["cp2d"]["positive"]))

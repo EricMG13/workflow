@@ -20,6 +20,7 @@ from typing import Literal
 from deploy_vii.contracts import Contract, Identifier, Text
 from deploy_vii.display import UnitClass, format_date, format_value
 from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
+from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-2D"
 HORIZON_BOUNDS = (1, 60)
@@ -1432,7 +1433,8 @@ FORBIDDEN = (
 
 EMPTY_TEXT = "{path}: empty text"
 """Round 11 (LEAD rulings, "Blank text is one defect class"): no CP-2D frame is pinned, so the
-fallback frame. A `Text` field's schema refusal of "" stands; this catches whitespace-only text."""
+fallback frame. A `Text` field's schema refusal of "" stands; this catches whitespace-only text,
+where round 12 B10 counts Unicode format (`Cf`) characters as blank (`owners.blank.is_blank`)."""
 
 
 def analyst_text_fields(submission: LiquidityBridgeSubmission) -> list[tuple[str, str]]:
@@ -1477,7 +1479,7 @@ def submission_issues(
     if sorted(sections) != sorted(SECTIONS):
         issues.append(SECTION_ISSUE)
     fields = analyst_text_fields(s)
-    issues += [EMPTY_TEXT.format(path=path) for path, text in fields if not text.strip()]
+    issues += [EMPTY_TEXT.format(path=path) for path, text in fields if is_blank(text)]
     texts = [text for _, text in fields]
     if any(ch.isdigit() for t in texts for ch in t):
         issues.append(DIGIT_ISSUE)
@@ -1493,7 +1495,7 @@ def submission_issues(
             issues.append(WALL_DATE_ISSUE)
     for a in s.assessments:
         carried = a.limitation is not None
-        stated = a.limitation is not None and a.limitation.strip() != ""
+        stated = a.limitation is not None and not is_blank(a.limitation)
         insufficient = a.category == "Insufficient Information"
         if insufficient and not stated:
             issues.append(INSUFFICIENT_ISSUE)

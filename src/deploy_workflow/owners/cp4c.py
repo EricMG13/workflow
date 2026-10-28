@@ -28,7 +28,7 @@ from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
 from typing import Annotated, Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
 from deploy_vii import prose
 from deploy_vii.business_context import (
@@ -38,7 +38,9 @@ from deploy_vii.business_context import (
     Severity,
     prohibited_issues,
 )
-from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus
+from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus, RunText
+from deploy_vii.execution import bounded_issues, clipped
+from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
@@ -460,13 +462,17 @@ class Cp2aHead:
         return found[0]
 
     def base_period(self, row: str) -> str:
-        """The one period the row's `ebitda_decline` and `interest_increase` facts share
-        (round 13 item 5, R1 L2)."""
-        periods = {self.fact(f"T2B.1.{row}.{name}").period for name in _SHOCKS}
-        (period,) = periods if len(periods) == 1 else (None,)
-        if period is None:
+        """The one period the row's `ebitda_decline` and `interest_increase` facts state
+        (round 13 item 5, R1 L2). A shock with no period is not a period conflict (Stage 2
+        round 5 item 16): only stated periods are compared. Two stated periods that differ raise,
+        and so does a row that states none (fail closed, never a default)."""
+        facts = (self.fact(f"T2B.1.{row}.{name}") for name in _SHOCKS)
+        stated = tuple(dict.fromkeys(f.period for f in facts if f.period is not None))
+        if len(stated) > 1:
             raise ValueError("CP-4C: CP-2A T2B.1 facts differ in period")
-        return period
+        if not stated:
+            raise ValueError("CP-4C: CP-2A T2B.1 facts state no period")
+        return stated[0]
 
 
 @dataclass(frozen=True)
@@ -740,10 +746,12 @@ def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], st
         return [f"claims[{i}].amount_quote.quote: empty text"]
     page = pages.get(("financial", q.locator), "")
     if q.source_id != "financial" or q.quote not in page:
-        return [f"claims[{i}].amount_quote: quote not found under {q.source_id} {q.locator}"]
+        where = (f"claims[{i}].amount_quote: quote not found under ", q.source_id, " ", q.locator)
+        return [clipped(where)]
     column = c.period_column
     if column not in _header(page)[1:]:
-        return [f"claims[{i}].period_column: not a column of the quoted statement: {column}"]
+        what = f"claims[{i}].period_column: not a column of the quoted statement: "
+        return [clipped((what, str(column)))]
     if column != _PINNED_COLUMN:
         return [
             (
@@ -760,7 +768,8 @@ def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], st
 def _claim_above_zero(i: int, c: ClaimClass, amount: Decimal) -> list[str]:
     if amount > 0:
         return []
-    return [f"claims[{i}]: a claim class needs a claim above zero; {c.name} reads {_exact(amount)}"]
+    parts = (f"claims[{i}]: a claim class needs a claim above zero; ", c.name, " reads ")
+    return [clipped((*parts, str(_exact(amount))))]
 
 
 def _claim_issues(
@@ -794,14 +803,11 @@ def _claim_issues(
         if is_blank(q.quote):  # round 13 addendum 3: before the page-occurrence check
             issues.append(f"claims[{i}].support[{j}].quote: empty text")
         elif q.source_id not in SCOPE:
-            issues.append(
-                f"claims[{i}].support[{j}].source_id: not in this step's source scope: "
-                f"{q.source_id}"
-            )
+            what = f"claims[{i}].support[{j}].source_id: not in this step's source scope: "
+            issues.append(clipped((what, q.source_id)))
         elif q.quote not in pages.get((q.source_id, q.locator), ""):
-            issues.append(
-                f"claims[{i}].support[{j}]: quote not found under {q.source_id} {q.locator}"
-            )
+            what = f"claims[{i}].support[{j}]: quote not found under "
+            issues.append(clipped((what, q.source_id, " ", q.locator)))
     return issues
 
 
@@ -861,9 +867,8 @@ def _plan_issues(
         seen: list[str] = []
         for j, t in enumerate(p.treatments):
             if t.class_id not in known:
-                issues.append(
-                    f"plan[{i}].treatments[{j}].class_id: not a claim class: {t.class_id}"
-                )
+                what = f"plan[{i}].treatments[{j}].class_id: not a claim class: "
+                issues.append(clipped((what, t.class_id)))
                 bad = True
             elif t.class_id in seen:
                 issues.append(f"plan[{i}].treatments[{j}].class_id: duplicate class {t.class_id}")
@@ -957,24 +962,57 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
             else:  # round 11 B3: as the claims spell it (a valuation label in lower case)
                 spelt = text.lower() if path.startswith("valuation") else text
                 issues += [
-                    f"{path}: Bare figure: {t}" for t in prose.bare_figures(spelt, names=names)
+                    clipped((path, ": Bare figure: ", t))
+                    for t in prose.bare_figures(spelt, names=names)
                 ]
                 if _RESERVED.search(text):  # round 12 B7: CP-8's pinned frame
                     issues.append(f"{path}: reference syntax is not allowed")
             continue
-        if kind == "run":
-            issues += [f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)]
+        if kind == "run":  # a rationale becomes `Claim.text` (Stage 2 round 3 item 2)
+            found = prose.issues(text, bound, names=names)
+            issues += [clipped((path, ": ", issue)) for issue in found]
+            if not found:
+                issues += _run_text_issues(path, text)
         issues += guard_issues(path, text)
     return tuple(issues)
+
+
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _run_text_issues(path: str, text: str) -> list[str]:
+    """Stage 2 round 3 item 2: text built as `Claim.text` is checked with that very type
+    (`RunText`, one `TypeAdapter` built once), so a malformed reference is a journaled issue and
+    composition never raises after the binding write. The message never echoes the input."""
+    try:
+        _RUN_TEXT.validate_python(text)
+    except ValidationError as error:
+        found = error.errors(include_input=False, include_url=False, include_context=False)
+        return [clipped((path, ": ", item["msg"])) for item in found]
+    return []
+
+
+def _parsed(payload: str) -> tuple[RestructuringSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue (the frozen r12 frame),
+    and is refused even if Pydantic would parse it (the CP-2G precedent)."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            RestructuringSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return RestructuringSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
 
 
 def payload_issues(payload: str, context: Cp4cContext) -> tuple[str, ...]:
     """Shape issues alone (a payload that does not parse gets no content check), else the
     content issues."""
-    try:
-        submission = RestructuringSubmission.model_validate_json(payload)
-    except ValidationError as error:
-        return shape_issues(error)
+    submission, shape = _parsed(payload)
+    if submission is None:
+        return shape
     return content_issues(Cp4cInputs(context=context, submission=submission))
 
 
@@ -982,7 +1020,7 @@ def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> t
     """Every bound upstream that changed (CP-2G precedent), in the `cp2_synthesis._stale_issues`
     form; returned alone, like shape issues (rulings round 5, G-decisions)."""
     if isinstance(current, str):
-        return (f"Stale inputs: {current}",)
+        return (clipped(("Stale inputs: ", current)),)
     was = {item.input_id: item for item in bound}
     now = {item.input_id: item for item in current}
 
@@ -1368,7 +1406,7 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
     sub, ctx = inputs.submission, inputs.context
     found = content_issues(inputs)
     if found:
-        raise ValueError("CP-4C submission has issues: " + "; ".join(found))
+        raise ValueError("CP-4C submission has issues: " + "; ".join(bounded_issues(found)))
     cp1 = select_cp1(ctx.cp1.t410)
     _check_cp4_head(ctx)
     classes = claim_classes(sub, ctx)

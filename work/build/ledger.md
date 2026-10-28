@@ -230,3 +230,4 @@
 - 2026-10-28 CP-DR class round 3b30a98: blank 12 red to 0 (fallback frame, after rule 6 and before rule 7), 8/8 mutants killed, gates 0. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-feature
 - 2026-10-28 16:08Z LEAD pointer sent (one batch): wrap-minus question (CP-3D, CP-8, CP-2E, CP-1D), CP-1D (a), cp2h B7-B10, cp4c B7, Info confirmations, owner items
 - 2026-10-28 CP-L10 class round d7a9a9c: blank fixed for overall.limitation and gaps[i].why_it_matters/.action, 6/6 mutants, gates 0. Controller decision: the brief's 'module's pinned empty-text frame' is module-wide, so CP-L10's pinned `<path>: empty` applies to these three fields too (one spelling per module); the fallback is only for modules with no pinned frame. Sent back as a rulings adjustment (fix-rounds=0)
+- 2026-10-28 CP-DR class review (mx-feature): APPROVE, Info only (probe_cases 0, 8/8 mutants). Merged (b6cad16)

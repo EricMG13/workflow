@@ -14,8 +14,10 @@ import hashlib
 import json
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Literal
+from types import SimpleNamespace
+from typing import Any, Literal, cast
 
+import cp1c_runs as runs
 import pytest
 import test_method_cp1c as stage1
 from defect_classes import (
@@ -28,9 +30,22 @@ from defect_classes import (
     with_text,
 )
 
+from deploy_vii import registry
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Citation, Fact, Input, InputStatus, Module, ModuleView, Run, View
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Fact,
+    Input,
+    InputStatus,
+    Module,
+    ModuleView,
+    ReportTable,
+    Run,
+    View,
+    validate_tables,
+)
 from deploy_vii.execution import (
     MAX_ISSUE_CHARS,
     MAX_ISSUES,
@@ -563,17 +578,30 @@ def test_model_text_is_refused_or_stored_verbatim() -> None:
 # --- the composed report and the module ------------------------------------------------------------
 
 
-def _literal_cites(fact: Fact, want: dict[str, Any]) -> None:
-    got = [(c.source_id, c.locator, c.quote) for c in fact.citations]
-    assert got == [(c["source_id"], c["locator"], c["quote"]) for c in want.get("citations", [])]
+def _cites(citations: Any) -> list[tuple[str, str, str]]:
+    return [
+        (c["source_id"], c["locator"], c["quote"])
+        if isinstance(c, dict)
+        else (c.source_id, c.locator, c.quote)
+        for c in citations
+    ]
 
 
-@pytest.mark.parametrize("case", CASES)
-def test_report_facts_tables_claims_and_limitations_equal_the_oracle(case: str) -> None:
+def assert_equals_oracle(
+    case: str,
+    facts: tuple[Fact, ...],
+    tables: tuple[ReportTable, ...],
+    claims: tuple[Claim, ...],
+    cp1: dict[str, Fact],
+) -> None:
+    """Facts, tables and claims against `expected.json cases.<case>`. `cp1` is the selected CP-1
+    T4.10 fact of each metric: a copied cell equals it (amount, unit, value class, calculation id,
+    citations), and the CP-1 citations a derived fact carries at run time are set aside before
+    the literal comparison (`expected.lineage_rule`)."""
     want = stage1.expected()["cases"][case]
-    report = _report(case)
-    assert [f.fact_id for f in report.facts] == [f["fact_id"] for f in want["facts"]]
-    for fact, expect in zip(report.facts, want["facts"], strict=True):
+    cp1_cites = {c for fact in cp1.values() for c in fact.citations}
+    assert [f.fact_id for f in facts] == [f["fact_id"] for f in want["facts"]]
+    for fact, expect in zip(facts, want["facts"], strict=True):
         assert (fact.status, fact.unit, fact.period, fact.text, fact.value_class) == (
             expect["status"],
             expect.get("unit"),
@@ -583,22 +611,36 @@ def test_report_facts_tables_claims_and_limitations_equal_the_oracle(case: str) 
         ), fact.fact_id
         assert stage1._exact(fact.amount) == expect.get("amount_exact"), fact.fact_id
         assert fact.limitation == expect.get("limitation"), fact.fact_id
-        if not expect.get("copied_from_cp1"):
-            _literal_cites(fact, expect)
+        if expect.get("copied_from_cp1"):
+            parts = fact.fact_id.split(".")
+            source = cp1[parts[3] if parts[1] == "3" else parts[2]]
+            assert fact.model_dump(include=COPIED) == source.model_dump(include=COPIED), (
+                fact.fact_id
+            )
+        else:
+            literal = [c for c in fact.citations if c not in cp1_cites]
+            assert _cites(literal) == _cites(expect.get("citations", [])), fact.fact_id
             assert fact.calculation_id == expect.get("calculation_id"), fact.fact_id
-    assert [t.table_id for t in report.tables] == [t["table_id"] for t in want["tables"]]
-    for table, expect_t in zip(report.tables, want["tables"], strict=True):
+    assert [t.table_id for t in tables] == [t["table_id"] for t in want["tables"]]
+    for table, expect_t in zip(tables, want["tables"], strict=True):
         assert table.title == expect_t["title"]
         assert [(r.row_id, r.label, list(r.fact_ids)) for r in table.rows] == [
             (r["row_id"], r["label"], r["fact_ids"]) for r in expect_t["rows"]
         ]
-    assert [c.claim_id for c in report.claims] == [c["claim_id"] for c in want["claims"]]
-    for claim, expect_c in zip(report.claims, want["claims"], strict=True):
+    assert [c.claim_id for c in claims] == [c["claim_id"] for c in want["claims"]]
+    for claim, expect_c in zip(claims, want["claims"], strict=True):
         assert (claim.text, claim.limitation) == (expect_c["text"], expect_c["limitation"])
-        assert [(c.source_id, c.locator, c.quote) for c in claim.citations] == [
-            (c["source_id"], c["locator"], c["quote"]) for c in expect_c.get("evidence", [])
-        ]
-    assert list(report.limitations) == want["own_limitations"]
+        assert _cites(claim.citations) == _cites(expect_c.get("evidence", []))
+
+
+COPIED = {"amount", "unit", "value_class", "calculation_id", "citations"}
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_report_facts_tables_claims_and_limitations_equal_the_oracle(case: str) -> None:
+    report = _report(case)
+    assert_equals_oracle(case, report.facts, report.tables, report.claims, _metrics())
+    assert list(report.limitations) == stage1.expected()["cases"][case]["own_limitations"]
     assert report.submission_sha256 == _submission(case).content_hash()
     assert report.pack_sha256 == _pack(case).content_hash()
 
@@ -1187,7 +1229,12 @@ def test_fp03_heads_and_tab_labels_equal_the_oracle(case: str) -> None:
 
 @pytest.mark.parametrize("case", CASES)
 def test_fp03_cells_are_the_settled_spellings(case: str) -> None:
-    module = _module(case)
+    assert_fp03_cells(case, _module(case))
+
+
+def assert_fp03_cells(case: str, module: Module) -> None:
+    """Every FP03 tab row and cell of the case: row ids, labels, fact ids, spelled state, and the
+    shown text of a known cell (`expected.json cases.<case>.FP03`)."""
     facts = {f.fact_id: f for f in module.facts}
     tables = {t.table_id: t for t in module.tables}
     for tab in stage1.expected()["cases"][case]["FP03"]["blocks"][BLOCK]["tabs"]:
@@ -1278,6 +1325,20 @@ def test_reader_refuses_another_module_and_a_stale_head(tmp_path: Path) -> None:
         cp1c.cp1c_reader(store, stale)
 
 
+@pytest.mark.parametrize("fact_id", ["T1C.4.ffo_to_debt.outlier_count", "T1C.8.total.included"])
+def test_reader_refuses_a_head_without_a_pinned_fact(fact_id: str, tmp_path: Path) -> None:
+    store, ticket = _settled_store(tmp_path, "positive")
+    _submit(store, ticket, json.dumps(_payload()))
+    head = _head(store)
+    module = store.head_module(head)
+    forged = module.model_copy(  # the tables go too: a cell may not name an unknown fact
+        update={"facts": tuple(f for f in module.facts if f.fact_id != fact_id), "tables": ()}
+    )
+    digest = store._store(Module.model_validate(forged.model_dump()).model_dump_json())
+    with pytest.raises(ValueError, match=f"the head has no fact {fact_id}$"):
+        cp1c.cp1c_reader(store, head.model_copy(update={"result_sha256": digest}))
+
+
 def test_d3_stays_open_and_no_consumer_reads_cp1c() -> None:
     """Lease D3: no consumer exists. The shipped CP-3 and CP-6 cores do not read CP-1C, no other
     owner core calls the reader, and the oracle's consumption status is open."""
@@ -1289,3 +1350,100 @@ def test_d3_stays_open_and_no_consumer_reads_cp1c() -> None:
     readers = [p.name for p in owners_dir.glob("*.py") if "cp1c_reader" in p.read_text()]
     assert readers == ["cp1c.py"]
     assert stage1.expected()["execution"]["consumption"]["status"].startswith("open")
+
+
+# --- D8 table ids (lease Acceptance A7; the methodology register has landed) ---------------------
+
+
+def test_d8_t1c_table_ids_are_registered_once_and_every_case_validates() -> None:
+    ids = [t for m in registry.modules() for t in m.table_ids]
+    mine = next(m for m in registry.modules() if m.module_id == MODULE).table_ids
+    assert sorted(mine) == stage1.expected()["d8_table_ids"]["proposed_ids"]
+    assert all(ids.count(t) == 1 for t in mine)
+    for case in CASES:
+        module = _module(case)
+        validate_tables(module.tables, module.facts)  # raises on a layout mismatch
+        assert {t.table_id for t in module.tables} <= set(mine)
+
+
+# --- the run driver's non-promotion helpers (`tests/cp1c_runs.py`; its runs are Stage 5) ---------
+
+
+@pytest.mark.parametrize("case", runs.CASES)
+def test_driver_pack_is_the_case_run_over_the_hash_checked_sources(case: str) -> None:
+    pack = runs.make_pack(case)
+    base = "positive" if case == "blocked" else case
+    assert pack.run.run_id == stage1.manifest()["cases"][base]["run"]["run_id"]
+    by_id = {s.source_id: s for s in pack.sources}
+    assert set(by_id) == (
+        {"identity", "financial", "peers"} if base in runs.PEERS else {"identity", "financial"}
+    )
+    assert (by_id["financial"].status == "missing") == (case == "refused")
+    if "peers" in by_id:
+        synthetic = stage1.manifest()["synthetic_source"]
+        assert by_id["peers"].sha256 == synthetic[base]["sha256"]
+        assert by_id["peers"].limitation == synthetic["pack_limitation"]
+
+
+def test_driver_cp0_literals_bind_the_pack_and_the_refused_row() -> None:
+    pack = runs.make_pack("positive")
+    text = runs.cp0_review(pack, "positive")
+    assert (
+        runs.PACK_PLACEHOLDER not in text and json.loads(text)["pack_sha256"] == pack.content_hash()
+    )
+    refused = json.loads(runs.cp0_review(runs.make_pack("refused"), "refused"))
+    rows = stage1.submissions()["refused"]
+    assert [c["module_id"] for c in refused["consumers"]] == ["CP-1", "CP-1C"]
+    assert refused["consumers"][-1] == rows["cp0_consumer_row_cp1c"]
+    assert refused["gaps"] == [rows["gap_row"]]
+
+
+def _catalogue(rules: dict[str, str], *, doubled: str | None = None) -> Any:
+    """Readiness inputs with one record per `{{EVID:*}}` predicate (twice for `doubled`) and a
+    decoy of each kind whose field values differ."""
+    records = []
+    for marker, rule in rules.items():
+        match = runs.BINDING.match(rule)
+        if match is None:
+            continue
+        fields = dict(runs.CONDITION.findall(match[2]))
+        decoy = {k: f"{v}-other" for k, v in fields.items()}
+        name = marker.strip("{}")  # an id of the record, not a marker
+        for evidence_id, values in ((f"ev-{name}", fields), (f"decoy-{name}", decoy)):
+            records.append(
+                SimpleNamespace(
+                    evidence_id=evidence_id, kind=match[1], record_json=json.dumps(values)
+                )
+            )
+        if marker == doubled:
+            records.append(records[-2])
+    gaps = (SimpleNamespace(gap_id="gap-a"), SimpleNamespace(gap_id="gap-b"))
+    inputs = SimpleNamespace(catalogue=tuple(records))
+    return SimpleNamespace(narrative=SimpleNamespace(inputs=inputs, gaps=gaps))
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_driver_binds_every_readiness_marker_by_its_oracle_predicate(
+    case: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    readiness = stage1.submissions()[case]["cp1_readiness"]
+    rules = readiness["run_time_bindings"]
+    evid = [m for m in rules if m.startswith("{{EVID:")]
+    assert all(runs.BINDING.match(rules[m]) for m in evid)
+    monkeypatch.setattr(
+        runs._driver("cp1d_runs"), "downstream_inputs", lambda _w: _catalogue(rules)
+    )
+    bound = json.loads(runs.readiness_literal(cast(Any, None), case))
+    assert "inputs_sha256" not in bound and "{{" not in json.dumps(bound)
+    literal = readiness["payload"]["consumers"]
+    for got, want in zip(bound["consumers"], literal, strict=True):
+        for g, w in zip(got["requirements"], want["requirements"], strict=True):
+            assert g["evidence_ids"] == [f"ev-{m.strip('{}')}" for m in w["evidence_ids"]]
+        assert [s["gap_ids"] for s in got["gaps"]] == [["gap-a", "gap-b"]] * len(want["gaps"])
+    monkeypatch.setattr(
+        runs._driver("cp1d_runs"),
+        "downstream_inputs",
+        lambda _w: _catalogue(rules, doubled=evid[0]),
+    )
+    with pytest.raises(RuntimeError, match="2 catalogue records, expected exactly one"):
+        runs.readiness_literal(cast(Any, None), case)

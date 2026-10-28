@@ -163,7 +163,7 @@ def _cp2g_fact(r: dict[str, Any]) -> Fact:
 
 def cp2g_metrics(cp2g_case: str) -> cp2h.Cp2gMetrics:
     head = CP2G["cases"][cp2g_case]
-    return cp2h.Cp2gMetrics.select(head["module_status"], (_cp2g_fact(r) for r in head["facts"]))
+    return cp2h.Cp2gMetrics.select(_cp2g_fact(r) for r in head["facts"])
 
 
 def _input(input_id: str, status: Any) -> Input:
@@ -176,12 +176,11 @@ BOUND = (
     _input("CP-1", "restricted"),
     _input("CP-2G", "restricted"),
 )
-CP1_STATUS = EXPECTED["execution"]["statuses"]["CP-1"].split()[0]
 
 
 def upstream(
     cp2g_case: str,
-    current: tuple[Input, ...] | None = None,
+    current: tuple[Input, ...] | str | None = None,
     cp1: tuple[Fact, ...] | None = None,
     bound: tuple[Input, ...] = BOUND,
 ) -> cp2h.TriggerUpstream:
@@ -189,7 +188,6 @@ def upstream(
         bound=bound,
         current=BOUND if current is None else current,
         cp1_facts=cp1_facts(cp2g_case) if cp1 is None else cp1,
-        cp1_status=CP1_STATUS,
         cp2g=cp2g_metrics(cp2g_case),
     )
 
@@ -305,6 +303,9 @@ def test_facts(case: str) -> None:
     got = report(case)
     assert [c.fact.fact_id for c in got.cells] == [f["fact_id"] for f in want]
     for cell, expected in zip(got.cells, want, strict=True):
+        if (case, cell.fact.fact_id) == ("fixture_total_loss", "T2R.1.u_cp2g.status"):
+            # B5: the bound Input's status; the frozen `composer_only` is a strict xfail below
+            expected = {**expected, "text": BOUND[3].status, "shown": BOUND[3].status}
         _assert_cell(cell, expected)
 
 
@@ -766,8 +767,7 @@ def _with_cp2g(case: str, changes: Mapping[str, str]) -> cp2h.TriggerInputs:
         bound=BOUND,
         current=BOUND,
         cp1_facts=cp1_facts(cp2g_case),
-        cp1_status=CP1_STATUS,
-        cp2g=cp2h.Cp2gMetrics(status=metrics.status, facts=facts),
+        cp2g=cp2h.Cp2gMetrics(facts=facts),
     )
     body = bind(raw_payload(case), fig_ids(stream.cp1_facts))
     submission = cp2h.TriggerSubmission.model_validate_json(json.dumps(body))
@@ -1211,9 +1211,9 @@ def test_input_selection_fails_closed() -> None:
         )
     metrics = cp2g_metrics("gap")
     with pytest.raises(ValueError, match="exactly one"):
-        cp2h.Cp2gMetrics.select("restricted", metrics.facts[1:])
+        cp2h.Cp2gMetrics.select(metrics.facts[1:])
     with pytest.raises(ValueError, match="28 T2H.6 facts"):
-        cp2h.Cp2gMetrics(status="restricted", facts=tuple(reversed(metrics.facts)))
+        cp2h.Cp2gMetrics(facts=tuple(reversed(metrics.facts)))
 
 
 # --- fix round 1 (review-adversary F1-F4) -----------------------------------------------------------
@@ -1350,10 +1350,143 @@ def test_input_invariants() -> None:
         for f in metrics.facts
     )
     with pytest.raises(ValueError, match="unexpected unit or period"):
-        cp2h.Cp2gMetrics(status=metrics.status, facts=wrong)
+        cp2h.Cp2gMetrics(facts=wrong)
     facts = cp1_facts("gap")
     other = facts[0].model_copy(update={"fact_id": "interface-fact:other", "table_id": "T4.9"})
     assert cp2h.select_cp1((*facts, other))[facts[0].row_id] == facts[0]
+
+
+# --- fix round 1 part b (LEAD round 11 B2, B3; controller B5, B6) -------------------------------
+
+FCF_ROW = "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
+BLOCK_BREACHES: dict[str, tuple[list[tuple[int, str, str]], str]] = {
+    "terms_four_fields": (
+        [(2, FCF_ROW, "Alder Ratings  Downgrade  Free cash flow to total debt  Below")],
+        "Trigger terms not found",
+    ),
+    "terms_six_fields": ([(2, FCF_ROW, FCF_ROW + "  sustained")], "Trigger terms not found"),
+    "terms_split_metric": (
+        [(2, FCF_ROW, "Alder Ratings  Downgrade  Free cash flow  to total debt  Below  10.0%")],
+        "Trigger terms not found",
+    ),
+    "terms_first_line": (
+        [(2, TERMS + "\n", TERMS + "\nNo terms  this year\n")],
+        "Trigger terms not found",
+    ),
+    "register_four_fields": (
+        [(0, ALDER_ROW, "Alder Ratings  Issuer rating  BB  Negative")],
+        "Rating register not found",
+    ),
+    "scale_two_fields": ([(1, "11  BB  Ba2", "11  BB")], "Rating scale not found"),
+    # item 8 order: the scale rows step before the register rows, the register before the terms
+    "scale_breach_before_register_breach": (
+        [
+            (1, "11  BB  Ba2", "11  BB"),
+            (0, ALDER_ROW, "Alder Ratings  Issuer rating  BB  Negative"),
+        ],
+        "Rating scale not found",
+    ),
+    "register_breach_before_terms_breach": (
+        [
+            (0, ALDER_ROW, "Alder Ratings  Issuer rating  BB  Negative"),
+            (2, FCF_ROW, FCF_ROW + "  x"),
+        ],
+        "Rating register not found",
+    ),
+    "off_scale_before_terms_breach": (
+        [(0, "BB  Negative", "CCC  Negative"), (2, FCF_ROW, FCF_ROW + "  x")],
+        "Rating not on the scale: Alder Ratings CCC",
+    ),
+}
+
+
+@pytest.mark.parametrize("breach", BLOCK_BREACHES)
+def test_block_row_breach_refuses(breach: str) -> None:
+    """Round 11 B2: after a header, a line of two or more fields that is not the block's width
+    makes the source invalid with that block's text alone, at the block's rows step; a later
+    published term is never dropped silently."""
+    edits, issue = BLOCK_BREACHES[breach]
+    pages = _edited("positive", edits)
+    with pytest.raises(cp2h.SourceIssue, match=f"^{re.escape(issue)}$"):
+        cp2h.parse_ratings(pages)
+    assert cp2h.validate(_over(inputs("positive"), pages)) == (issue,)
+
+
+def test_one_field_line_ends_a_block() -> None:
+    """Round 11 B2: a line of zero or one field ends the block (gap page:1's withdrawal note)."""
+    pages = _edited("positive", [(1, "\n12  BB-  Ba3", "\n\n12  BB-  Ba3")])
+    with pytest.raises(cp2h.SourceIssue, match="^Rating not on the scale: Brook Credit Ba3$"):
+        cp2h.parse_ratings(pages)  # the blank line ends the scale before Ba3's position
+    assert len(cp2h.parse_ratings(_pages("gap")).register) == 2
+
+
+def test_blank_limitation_is_refused() -> None:
+    """Round 11 B3: a non-null blank limitation gets the v10 frame; null is no limitation."""
+    payload = copy.deepcopy(raw_payload("positive"))
+    payload["views"][0]["limitation"] = "  \n"
+    payload["views"][1]["limitation"] = None
+    payload["overall"]["limitation"] = ""
+    assert cp2h.validate(inputs("positive", payload)) == (
+        "views[0].limitation: empty text",
+        "overall.limitation: empty text",
+    )
+
+
+def test_upstream_statuses_are_the_bound_inputs() -> None:
+    """B5 (lease :123, round 7 item 1): every T2R.1 status is its bound Input's status."""
+    bound = (*BOUND[:2], _input("CP-1", "accepted"), _input("CP-2G", "blocked"))
+    got = cp2h.compute(inputs("positive", bound=bound, current=bound))
+    cells = {c.fact.fact_id: c.fact for c in got.cells}
+    assert [cells[f"T2R.1.{r}.status"].text for r in ("u_cp1", "u_cp2g", "u_cp1d")] == [
+        "accepted",
+        "blocked",
+        "not part of this run",
+    ]
+
+
+@pytest.mark.xfail(
+    strict=True, reason="B5: the frozen composer-only fixture pins CP-2G's head status"
+)
+def test_frozen_composer_only_cp2g_status() -> None:
+    """`cases.fixture_total_loss` pins `T2R.1.u_cp2g.status` as `composer_only` (CP-2G's head
+    status); under B5 the status is the bound CP-2G Input's, which cannot be `composer_only`."""
+    want = next(
+        f
+        for f in EXPECTED["cases"]["fixture_total_loss"]["facts"]
+        if f["fact_id"] == "T2R.1.u_cp2g.status"
+    )
+    got = next(c for c in report("fixture_total_loss").cells if c.fact.fact_id == want["fact_id"])
+    assert got.fact.text == want["text"]
+
+
+def test_upstream_status_needs_a_bound_input() -> None:
+    with pytest.raises(ValueError, match="CP-2G is not bound"):
+        cp2h.compute(inputs("positive", bound=BOUND[:3], current=BOUND[:3]))
+
+
+def test_stale_issue_order_and_wording() -> None:
+    """B6 (lease :107): every changed input in bound order, then those only current; an unbound
+    or vanished input reads `absent`; a refused current binding is its text."""
+    changed_cp0, changed_cp1 = (
+        _input("CP-0", "blocked"),
+        Input(input_id="CP-1", sha256=_digest("new CP-1"), status="restricted"),
+    )
+    cp1d = _input("CP-1D", "accepted")
+    current = (cp1d, changed_cp1, BOUND[0], changed_cp0)  # CP-2G vanished; CP-1D appeared
+    sha = {i.input_id: i.sha256[:12] for i in (*BOUND, cp1d)}
+    sha["new"] = changed_cp1.sha256[:12]
+    assert cp2h.stale_issues(bound=BOUND, current=current) == (
+        f"Stale input CP-0: bound restricted {sha['CP-0']}, current blocked {sha['CP-0']}",
+        f"Stale input CP-1: bound restricted {sha['CP-1']}, current restricted {sha['new']}",
+        f"Stale input CP-2G: bound restricted {sha['CP-2G']}, current absent",
+        f"Stale input CP-1D: bound absent, current accepted {sha['CP-1D']}",
+    )
+    refused = "the CP-2G head is not settled"
+    assert cp2h.stale_issues(bound=BOUND, current=refused) == (f"Stale inputs: {refused}",)
+    stream = upstream("gap", current=refused)
+    case_inputs = inputs("positive")
+    late = cp2h.TriggerInputs(case_inputs.pack, stream, case_inputs.submission)
+    assert cp2h.validate(late) == (f"Stale inputs: {refused}",)
 
 
 # --- property tests (expected.json property_tests) -------------------------------------------------

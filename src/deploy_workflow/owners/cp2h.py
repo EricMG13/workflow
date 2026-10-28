@@ -217,8 +217,21 @@ def _fields(line: str) -> list[str]:
     return _FIELDS.split(line.strip())
 
 
-def _block(text: str, header: str, width: int) -> list[tuple[str, list[str]]] | None:
-    """The consecutive lines of exactly `width` fields after the header line; None without it."""
+@dataclass(frozen=True)
+class _Rows:
+    rows: list[tuple[str, list[str]]]
+    breached: bool  # a line of two or more fields that is not the block's width
+
+    @property
+    def empty(self) -> bool:
+        """No row and no breach: reads as no header (s01, s02, round 7 item 3)."""
+        return not self.rows and not self.breached
+
+
+def _block(text: str, header: str, width: int) -> _Rows | None:
+    """The lines of exactly `width` fields after the header line, up to a line of zero or one
+    field (or the page end); a line of two or more fields of another count breaches the block
+    (round 11 B2). None without the header."""
     lines = text.split("\n")
     if header not in lines:
         return None
@@ -226,9 +239,9 @@ def _block(text: str, header: str, width: int) -> list[tuple[str, list[str]]] | 
     for line in lines[lines.index(header) + 1 :]:
         fields = _fields(line)
         if len(fields) != width:
-            break
+            return _Rows(rows, breached=len(fields) > 1)
         rows.append((line, fields))
-    return rows
+    return _Rows(rows, breached=False)
 
 
 PUBLICATION_NOT_STATED, PUBLICATION_UNCLEAR = "not stated", "unclear"
@@ -349,28 +362,36 @@ def _terms(rows: list[tuple[str, list[str]]]) -> tuple[TriggerTerm, ...]:
     return tuple(out)
 
 
+def _rows(block: _Rows, breach: str) -> list[tuple[str, list[str]]]:
+    """A block's rows at its rows step; a breached block is invalid (round 11 B2)."""
+    if block.breached:
+        raise SourceIssue(breach)
+    return block.rows
+
+
 def parse_ratings(pages: Sequence[str]) -> RatingsSource:
     """The parse rule: page:1 register, page:2 scale, page:3 trigger terms, each after its exact
     header line (consecutive lines of five, three and five fields split on two or more spaces).
 
     Every breach raises `SourceIssue` with one pinned text, the first in the round 7 item 8
     order: the register, scale and terms headers (an empty block reads as no header), the scale
-    rows, the register rows, the terms rows, then the agency rule (items 6 and (h)): every
-    trigger agency is a rated register agency. An absent page reads as empty.
+    rows, the register rows, the terms rows (each with its block's breach, round 11 B2), then
+    the agency rule (items 6 and (h)): every trigger agency is a rated register agency. An
+    absent page reads as empty.
     """
     page = [pages[n] if n < len(pages) else "" for n in range(3)]
-    register_rows = _block(page[0], REGISTER_HEADER, 5)
-    if not register_rows:
+    register_block = _block(page[0], REGISTER_HEADER, 5)
+    if register_block is None or register_block.empty:
         raise SourceIssue(REGISTER_NOT_FOUND)
-    scale_rows = _block(page[1], SCALE_HEADER, 3)
-    if not scale_rows:
+    scale_block = _block(page[1], SCALE_HEADER, 3)
+    if scale_block is None or scale_block.empty:
         raise SourceIssue(SCALE_NOT_FOUND)
-    terms_rows = _block(page[2], TERMS_HEADER, 5)
-    if not terms_rows:
+    terms_block = _block(page[2], TERMS_HEADER, 5)
+    if terms_block is None or terms_block.empty:
         raise SourceIssue(TERMS_NOT_FOUND)
-    scale = _scale(scale_rows)
-    register = _register(register_rows, scale)
-    triggers = _terms(terms_rows)
+    scale = _scale(_rows(scale_block, SCALE_NOT_FOUND))
+    register = _register(_rows(register_block, REGISTER_NOT_FOUND), scale)
+    triggers = _terms(_rows(terms_block, TERMS_NOT_FOUND))
     rated = {r.agency for r in register if r.position is not None}
     if any(t.agency not in rated for t in triggers):
         raise SourceIssue(TERMS_NOT_FOUND)
@@ -435,9 +456,8 @@ def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
 @dataclass(frozen=True)
 class Cp2gMetrics:
     """CP-2G's settled T2H.6 credit metrics: rows a25, b26-b28, d26-d28 x the four ratios (28
-    facts, canonical order), and the head's status text."""
+    facts, canonical order)."""
 
-    status: str
     facts: tuple[Fact, ...]
 
     def __post_init__(self) -> None:
@@ -449,11 +469,9 @@ class Cp2gMetrics:
                 raise ValueError(f"CP-2G fact {fact.fact_id} has an unexpected unit or period")
             if fact.status not in ("known", "missing", "not_applicable"):
                 raise ValueError(f"CP-2G fact {fact.fact_id} is {fact.status}")
-        if not self.status:
-            raise ValueError("CP-2G status is required")
 
     @classmethod
-    def select(cls, status: str, facts: Iterable[Fact]) -> "Cp2gMetrics":
+    def select(cls, facts: Iterable[Fact]) -> "Cp2gMetrics":
         """The 28 facts by literal id from a CP-2G head's facts; exactly one each."""
         facts = tuple(facts)
         chosen: list[Fact] = []
@@ -464,7 +482,7 @@ class Cp2gMetrics:
                 if len(found) != 1:
                     raise ValueError(f"CP-2G head needs exactly one fact {fact_id}")
                 chosen.append(found[0])
-        return cls(status=status, facts=tuple(chosen))
+        return cls(facts=tuple(chosen))
 
     def fact(self, row: str, field: str) -> Fact:
         return self.facts[CP2G_ROWS.index(row) * len(CP2G_FIELDS) + CP2G_FIELDS.index(field)]
@@ -473,23 +491,31 @@ class Cp2gMetrics:
 @dataclass(frozen=True)
 class TriggerUpstream:
     """What the attempt binds: its inputs and the current ones (or the refusal text), CP-1's
-    four reported ratios and status, and CP-2G's 28 metrics and status."""
+    four reported ratios and CP-2G's 28 metrics. Every upstream status is its bound Input's
+    (round 7 item 1, B5)."""
 
     bound: tuple[Input, ...]
     current: tuple[Input, ...] | str
     cp1_facts: tuple[Fact, ...]
-    cp1_status: str
     cp2g: Cp2gMetrics
 
     def __post_init__(self) -> None:
         select_cp1(self.cp1_facts)
-        if not self.cp1_status:
-            raise ValueError("CP-1 status is required")
+
+    def status(self, input_id: str) -> InputStatus | None:
+        """The bound Input's status; None when it is not bound."""
+        return next((i.status for i in self.bound if i.input_id == input_id), None)
+
+    def required_status(self, input_id: str) -> InputStatus:
+        status = self.status(input_id)
+        if status is None:
+            raise ValueError(f"CP-2H: {input_id} is not bound")
+        return status
 
     @property
     def cp1d_status(self) -> InputStatus | None:
         """The bound CP-1D Input's status; None when CP-1D is not bound (optional, never read)."""
-        return next((i.status for i in self.bound if i.input_id == "CP-1D"), None)
+        return self.status("CP-1D")
 
 
 @dataclass(frozen=True)
@@ -835,7 +861,7 @@ def _upstream_register(b: _Book, up: TriggerUpstream) -> None:
         (
             "u_cp1",
             "CP-1",
-            up.cp1_status,
+            up.required_status("CP-1"),
             f"Base period {LTM_PERIOD}",
             "T4.10 reported leverage, coverage and free cash flow to debt",
             "Inherits CP-1's own limitations.",
@@ -843,7 +869,7 @@ def _upstream_register(b: _Book, up: TriggerUpstream) -> None:
         (
             "u_cp2g",
             "CP-2G",
-            up.cp2g.status,
+            up.required_status("CP-2G"),
             f"Forecast {FY[0]}-{FY[-1]} on the base period {LTM_PERIOD}",
             "T2H.6 credit metrics for the FY2025 actual, base case and downside case",
             "Forecast on analyst-assumed drivers.",
@@ -1457,6 +1483,8 @@ def _limitation(path: str, text: str | None, names: Sequence[str]) -> list[str]:
     it, so a figure or reference is refused; then the phrase guard (round 7 (d), CP-2A A3)."""
     if text is None:
         return []
+    if not text.strip():  # round 11 B3: a blank limitation is not a limitation
+        return [f"{path}: empty text"]
     return [
         *(f"{path}: {issue}" for issue in prose.check(text, refs=(), gaps=(), names=names)),
         *phrase_issues(path, text),

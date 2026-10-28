@@ -1,0 +1,621 @@
+{
+ "_note": "S1a rev 2 (LEAD, 2026-10-28, amendment M4): key tree of module_context(store, attempt, 'credit_synthesis'), observed by S1a task 1 (work/lead/s1a-task1/report.md) on product-settled heads. Shape only, not values. The gap tree was observed on the flagged substitution (gap CP-1A over the positive CP-1 head); its keys were cross-checked on a real gap-pack CP-1A.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "cp1_facts",
+   "cp1_facts_note",
+   "cp1a_rows",
+   "cp1a_rows_note",
+   "cp1a_signals",
+   "cp1a_signals_note",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1_facts_note": "str",
+   "cp1a_rows_note": "str",
+   "cp1a_signals": [],
+   "cp1a_signals_note": "str",
+   "inherited_limitations": [
+    "str"
+   ],
+   "cp1a_rows": [
+    {
+     "ref": "str",
+     "register": "str",
+     "row": "str",
+     "cells": "per register below"
+    }
+   ]
+  },
+  "cp1a_registers": [
+   {
+    "register": "Source classification",
+    "ref_prefix": "source_classification",
+    "cells": [
+     "source_class",
+     "quality",
+     "use",
+     "limitation"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Source register",
+    "ref_prefix": "T2D.1",
+    "cells": [
+     "source_document_name",
+     "source_quality",
+     "period",
+     "entity_covered",
+     "data_supplied",
+     "limitation",
+     "downstream_use"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Company description",
+    "ref_prefix": "company_description",
+    "cells": [
+     "issuer",
+     "business_description",
+     "country",
+     "sector"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Transaction summary",
+    "ref_prefix": "transaction_summary",
+    "cells": [
+     "transaction",
+     "status",
+     "credit_relevance",
+     "source"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Revenue and business mix",
+    "ref_prefix": "revenue_business_mix",
+    "cells": [
+     "revenue_mix",
+     "period",
+     "status",
+     "limitation"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Ownership register",
+    "ref_prefix": "ownership_register",
+    "cells": [
+     "control",
+     "economic_interest",
+     "credit_relevance",
+     "source"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Operating model",
+    "ref_prefix": "operating_model",
+    "cells": [
+     "measure",
+     "period",
+     "status",
+     "credit_relevance"
+    ],
+    "rows": 7
+   },
+   {
+    "register": "Events timeline",
+    "ref_prefix": "events_timeline",
+    "cells": [
+     "date_window",
+     "event",
+     "credit_relevance",
+     "status",
+     "source"
+    ],
+    "rows": 4
+   },
+   {
+    "register": "Credit translation",
+    "ref_prefix": "credit_translation",
+    "cells": [
+     "evidence",
+     "risk_mechanic",
+     "credit_implication",
+     "confidence",
+     "limitation"
+    ],
+    "rows": 5
+   },
+   {
+    "register": "Gaps ledger",
+    "ref_prefix": "gaps_ledger",
+    "cells": [
+     "affected_analysis",
+     "severity",
+     "action",
+     "status"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Ownership and control register",
+    "ref_prefix": "T2D.2",
+    "cells": [
+     "source_supported_fact",
+     "evidence_quality",
+     "source_trace",
+     "credit_mechanic",
+     "credit_implication",
+     "limitation"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Governance register",
+    "ref_prefix": "T2D.3",
+    "cells": [
+     "source_supported_fact",
+     "risk_direction",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Behaviour flag register",
+    "ref_prefix": "T2D.4",
+    "cells": [
+     "behavior_type",
+     "documented_action",
+     "behavior_category",
+     "amount_funding_source",
+     "legal_capacity_link",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Capital allocation risk table",
+    "ref_prefix": "T2D.5",
+    "cells": [
+     "source_supported_fact",
+     "direction",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Disclosure quality log",
+    "ref_prefix": "T2D.7",
+    "cells": [
+     "available",
+     "source_supported_detail",
+     "credit_relevance",
+     "severity",
+     "source_trace",
+     "required_follow_up"
+    ],
+    "rows": 5
+   },
+   {
+    "register": "Governance and sponsor score",
+    "ref_prefix": "T2D.8",
+    "cells": [
+     "assessment",
+     "evidence",
+     "risk_mechanic",
+     "credit_implication",
+     "score",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 10
+   },
+   {
+    "register": "Sponsor risk-level drivers",
+    "ref_prefix": "T2D.9",
+    "cells": [
+     "evidence",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "countervailing_evidence",
+     "limitation"
+    ],
+    "rows": 5
+   },
+   {
+    "register": "Downstream readiness",
+    "ref_prefix": "downstream_readiness",
+    "cells": [
+     "status",
+     "gap",
+     "required_action"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Cross-module handoff register",
+    "ref_prefix": "T2D.10",
+    "cells": [
+     "handoff_tag",
+     "handoff_item",
+     "why_it_matters",
+     "required_consumer_action",
+     "source_flag_link",
+     "limitation"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Governance gaps ledger",
+    "ref_prefix": "T2D.11",
+    "cells": [
+     "missing_data",
+     "why_it_matters",
+     "affected_section_flag_export_record",
+     "consequence_for_confidence",
+     "required_follow_up_source"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "CP-MODEL snapshot fields",
+    "ref_prefix": "cp1a.cp_model_snapshot_fields",
+    "cells": [
+     "value",
+     "status",
+     "source_id",
+     "source_locator",
+     "as_of"
+    ],
+    "rows": 6
+   }
+  ],
+  "cp1a_rows": 70,
+  "cp1a_signals": 0,
+  "task1_saved_file_sha256": "12547833d1fd89375a4adc7601c03edd436887cbd41ef792161478b7e09e5ac4"
+ },
+ "gap": {
+  "top_level_keys": [
+   "upstream",
+   "cp1_facts",
+   "cp1_facts_note",
+   "cp1a_rows",
+   "cp1a_rows_note",
+   "cp1a_signals",
+   "cp1a_signals_note",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1_facts_note": "str",
+   "cp1a_rows_note": "str",
+   "cp1a_signals": [
+    {
+     "ref": "str",
+     "source": "str",
+     "status": "str",
+     "restate": "bool",
+     "limits": "bool"
+    }
+   ],
+   "cp1a_signals_note": "str",
+   "inherited_limitations": [
+    "str"
+   ],
+   "cp1a_rows": [
+    {
+     "ref": "str",
+     "register": "str",
+     "row": "str",
+     "cells": "per register below"
+    }
+   ]
+  },
+  "cp1a_registers": [
+   {
+    "register": "Source classification",
+    "ref_prefix": "source_classification",
+    "cells": [
+     "source_class",
+     "quality",
+     "use",
+     "limitation"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Source register",
+    "ref_prefix": "T2D.1",
+    "cells": [
+     "source_document_name",
+     "source_quality",
+     "period",
+     "entity_covered",
+     "data_supplied",
+     "limitation",
+     "downstream_use"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Company description",
+    "ref_prefix": "company_description",
+    "cells": [
+     "issuer",
+     "business_description",
+     "country",
+     "sector"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Transaction summary",
+    "ref_prefix": "transaction_summary",
+    "cells": [
+     "transaction",
+     "status",
+     "credit_relevance",
+     "source"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Revenue and business mix",
+    "ref_prefix": "revenue_business_mix",
+    "cells": [
+     "revenue_mix",
+     "period",
+     "status",
+     "limitation"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Ownership register",
+    "ref_prefix": "ownership_register",
+    "cells": [
+     "control",
+     "economic_interest",
+     "credit_relevance",
+     "source"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Operating model",
+    "ref_prefix": "operating_model",
+    "cells": [
+     "measure",
+     "period",
+     "status",
+     "credit_relevance"
+    ],
+    "rows": 7
+   },
+   {
+    "register": "Credit translation",
+    "ref_prefix": "credit_translation",
+    "cells": [
+     "evidence",
+     "risk_mechanic",
+     "credit_implication",
+     "confidence",
+     "limitation"
+    ],
+    "rows": 5
+   },
+   {
+    "register": "Gaps ledger",
+    "ref_prefix": "gaps_ledger",
+    "cells": [
+     "affected_analysis",
+     "severity",
+     "action",
+     "status"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Ownership and control register",
+    "ref_prefix": "T2D.2",
+    "cells": [
+     "source_supported_fact",
+     "evidence_quality",
+     "source_trace",
+     "credit_mechanic",
+     "credit_implication",
+     "limitation"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Governance register",
+    "ref_prefix": "T2D.3",
+    "cells": [
+     "source_supported_fact",
+     "risk_direction",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Behaviour flag register",
+    "ref_prefix": "T2D.4",
+    "cells": [
+     "behavior_type",
+     "documented_action",
+     "behavior_category",
+     "amount_funding_source",
+     "legal_capacity_link",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 1
+   },
+   {
+    "register": "Capital allocation risk table",
+    "ref_prefix": "T2D.5",
+    "cells": [
+     "source_supported_fact",
+     "direction",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Disclosure quality log",
+    "ref_prefix": "T2D.7",
+    "cells": [
+     "available",
+     "source_supported_detail",
+     "credit_relevance",
+     "severity",
+     "source_trace",
+     "required_follow_up"
+    ],
+    "rows": 3
+   },
+   {
+    "register": "Governance and sponsor score",
+    "ref_prefix": "T2D.8",
+    "cells": [
+     "assessment",
+     "evidence",
+     "risk_mechanic",
+     "credit_implication",
+     "score",
+     "evidence_quality",
+     "source_trace",
+     "limitation"
+    ],
+    "rows": 10
+   },
+   {
+    "register": "Sponsor risk-level drivers",
+    "ref_prefix": "T2D.9",
+    "cells": [
+     "evidence",
+     "risk_mechanic",
+     "credit_implication",
+     "evidence_quality",
+     "source_trace",
+     "countervailing_evidence",
+     "limitation"
+    ],
+    "rows": 5
+   },
+   {
+    "register": "Downstream readiness",
+    "ref_prefix": "downstream_readiness",
+    "cells": [
+     "status",
+     "gap",
+     "required_action"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Cross-module handoff register",
+    "ref_prefix": "T2D.10",
+    "cells": [
+     "handoff_tag",
+     "handoff_item",
+     "why_it_matters",
+     "required_consumer_action",
+     "source_flag_link",
+     "limitation"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "Governance gaps ledger",
+    "ref_prefix": "T2D.11",
+    "cells": [
+     "missing_data",
+     "why_it_matters",
+     "affected_section_flag_export_record",
+     "consequence_for_confidence",
+     "required_follow_up_source"
+    ],
+    "rows": 2
+   },
+   {
+    "register": "CP-MODEL snapshot fields",
+    "ref_prefix": "cp1a.cp_model_snapshot_fields",
+    "cells": [
+     "value",
+     "status",
+     "source_id",
+     "source_locator",
+     "as_of"
+    ],
+    "rows": 6
+   }
+  ],
+  "cp1a_rows": 62,
+  "cp1a_signals": 3,
+  "task1_saved_file_sha256": "d7a971138ac43f3feee6ea2779a2ae2580a34c3268d0b34d620ee645cb514194"
+ }
+}

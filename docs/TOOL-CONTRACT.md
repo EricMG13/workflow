@@ -194,7 +194,7 @@ claim is authorized. Do not implement another arithmetic engine.
 | CP-0 source_readiness | none | explicitly declared ready/missing sources; search/read only |
 | CP-1 source_context | none | explicitly declared sources; search/read only |
 | CP-1 financials | validated earlier source_context by existing step projection | explicitly declared sources; search/read/extract |
-| CP-2 credit_synthesis | bound CP-1 known cited/calculated numeric facts allowed by referencable; CP-1A catalogue only under a later exact view lease | none |
+| CP-2 credit_synthesis | exactly `module_context("credit_synthesis")`: bound CP-1 referencable facts (`ref`, `label`, `period`, `unit`, `shown`), the CP-1A catalogue rows and signals, upstream statuses and inherited limitations, with the per-case key tree frozen in `cases/snapshot/cp2-view-tree.json` (S1a lease rev 2; a D2 exception that counts as tool use) | none |
 | CP-5 integrity_review | explicitly granted bound CP-1 canonical fact/status view; includes missing facts; single-producer no-claim integrity scope | none |
 
 All other source/upstream view pairs refuse until explicitly leased. CP-1 narrative/
@@ -206,6 +206,8 @@ V1 projected keys are fact_id, label, table_id, row_id, field, amount, text, sta
 unit, currency, scale, period, basis, denominator, limitation, calculation_id,
 value_class, calculation_status and citation_handles. Grants may narrow these.
 Formula/source_amount/stated_amount/record_json/citations/quote are not exposed.
+The CP-2 view above is not the V1 projection: its keys are only those in its frozen tree,
+and it carries no quote, citations or record_json at any depth.
 The matrix grants citation handle metadata explicitly for these two upstream views;
 it never grants citation quote fields. Tables/rows/canonical fields must be a subset
 of the trusted view index (not arbitrary trusted strings). CP-5 income/value and the

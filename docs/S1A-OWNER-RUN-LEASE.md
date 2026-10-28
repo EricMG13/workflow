@@ -284,3 +284,34 @@ adopted.
   `cp1_facts`/consumers (Q6 deferred); model blocks (`model-chart-strip`, `capital-structure`,
   `financials-credit-metrics`) render but are outside the S1 oracle. LEAD updates
   `docs/MODULES.csv` when S1a and G2 verify.
+
+## Rev 2 amendments (LEAD, 2026-10-28) — task 1 answers, override the body and rev 1
+
+From S1a task 1 (`work/lead/s1a-task1/report.md` in the LEAD worktree), run on a real promoted
+CP-1 head over the S1 positive pack.
+- **M2 frozen predicate.** For each FIG name in `submissions.json` `figures` (the names are the
+  T4.10 metric names: `total_leverage_reported`, `net_leverage_reported`,
+  `interest_coverage_reported`, `fcf_to_debt`), select from
+  `store.head_module(<CP-1 head>).facts` the facts with `table_id == "T4.10"`,
+  `period == "LTM Q4 25: 2025-01-01 to 2025-12-31"` and
+  `label == "LTM Q4 25 (2025-01-01 to 2025-12-31) · <metric>"` (U+00B7 with one space each
+  side). Exactly one must match; zero or several fail the test. The FY25 fact with the same
+  dates has period `FY25: …` and is never selected. Then assert the selected `fact_id` is a
+  `ref` in the CP-2 read body's `cp1_facts` whose `unit` equals the figure's `unit_token` and
+  whose `shown` equals its `spelled`. This replaces body line 99 (`cp1_facts` carries no
+  `table_id`, so the body alone cannot select).
+- **M4 frozen view tree.** `cases/snapshot/cp2-view-tree.json` (added beside the pinned oracle;
+  the three pinned hashes are unchanged) freezes, per case, the top-level keys in order, every
+  element shape, and the ordered CP-1A registers with their `cells` fields and row counts
+  (positive 70 rows over 21 registers, no signals; gap 62 rows over 20 registers, no
+  `events_timeline`, three five-key signals). The test asserts the observed body's shape equals
+  the frozen one for its case, that no key is `quote`, `citations` or `record_json`, and that no
+  `quote` string from `submissions.json` occurs in the body. The tree is a shape observed on
+  product-settled heads, not a value oracle. Caveat: the gap tree was observed with the gap
+  CP-1A over the positive CP-1 head (no gap CP-1 promotion under build-first); its register
+  keys were cross-checked on a real gap-pack CP-1A, and code argues CP-1 cannot change keys.
+- **TOOL-CONTRACT.md :197 and :205-208** are amended in the same commit: CP-2 credit_synthesis
+  is granted exactly `module_context("credit_synthesis")` with the frozen tree, as a D2
+  exception that counts as tool use.
+- **Deferred (build-first):** the gap CP-1 promotion and every S1a test run move to LEAD's final
+  verification phase.

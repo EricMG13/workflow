@@ -1,10 +1,10 @@
 # Module-builder lane: resume point (2026-10-28, session 3)
 
-Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 10 on it). Fast tests 1797 passed, 2 skipped (fast set now includes tests/test_schema_normalise_escapes.py). History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
+Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 10 on it). Fast tests 1982 passed, 2 skipped, 1 xfailed (fast set now includes tests/test_schema_normalise_escapes.py). History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
 
 ## Merged into the lane
-- **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3, CP-2G, CP-8, CP-5, CP-4C.
-- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01); CP-3D r10 (a1de97d); G1-X fix 2 + LEAD 0d (857081c; G1/S1a deferred); CP-1D r10 (b7cd02e); CP-2G Stage 1 + fixes 1-2 + r9 (947a57d); CP-2E r10 + fix 1 (a1b50c8); CP-3 re-pin (6c6ea02), CP-8 through r10 (dae85ed), CP-5 + fix 1 (81e8c0b), with LEAD 2682310; H1 fix 2 (38f0f46; deferred suites pending); CP-4C + r8 + fix 1 (3b9c3dc).
+- **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3, CP-2G, CP-8, CP-5, CP-4C, CP-2H.
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d); CP-2E r5-6 (40a3dc6), CP-2A r5-6 + fix 1 (7276630), CP-2D r5/6/6f (b09c33d); CP-1D raw-quote fix (7c88a98); CP-2E 6i (aed93b3); CP-1C 6h (0ef2dc8); CP-3D quote fix + 6h (0b0835f); CP-2D r9 (e3e1277); H1 + fix 1 (278f0aa; F1 fails closed); CP-2A r9 (aa4ab01); CP-3D r10 (a1de97d); G1-X fix 2 + LEAD 0d (857081c; G1/S1a deferred); CP-1D r10 (b7cd02e); CP-2G Stage 1 + fixes 1-2 + r9 (947a57d); CP-2E r10 + fix 1 (a1b50c8); CP-3 re-pin (6c6ea02), CP-8 through r10 (dae85ed), CP-5 + fix 1 (81e8c0b), with LEAD 2682310; H1 fix 2 (38f0f46; deferred suites pending); CP-4C + r8 + fix 1 (3b9c3dc); CP-2H + r7 + fix 1 (f843772; B7 strict xfail).
 - **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
 - **LEAD docs:** 8483de4 (E6), 3674158 (round 6 oracle batch), rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
@@ -16,7 +16,6 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 ## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Opus cap 6 (LEAD AGENTS.md proposal); ruling-text diffs reviewed by mx-feature.
 | Work | Base | Agent | Next |
 |---|---|---|---|
-| CP-2H fix 1 + 1b mx-adversary re-review | f843772 | impl a52b5ec0919986ddb | merge |
 | CP-4C round 11 (cp4c/round11-brief.md) | lane | a2c15c441717ec41c | mx-adversary by ruling id, merge |
 | H1b mx-adversary review | 0717fad (worktree h1b) | impl mx-feature ab8d695f66c635633 | merge |
 | CP-3C fix 1 + 1b mx-adversary re-review | b9972fd | impl aa5a4817fa00cd287 | merge |
@@ -28,7 +27,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 - Ride with the next change: CP-2D pre-D0 gap (round 11); CP-2G I1 explicit raise (round 11); per-module quote-edge (B1) and wrap (B3) fixes and blank-text fixes from the defect-class inventory.
 
 ## Queued
-- Riding Lows: CP-8 r10 (lowercase guard; close-only parenthesis); CP-2E r10 L1 (in fix 1); CP-3D r10 L1 (parenthesis tested at match start, `(-425)`); CP-1D r10 (1D7-before-≤0 unpinned; `(` side untested); CP-3D name wrap-join (quote-6h-review Low 1; needs a public joined-reading helper in deploy_vii.quotes, with LEAD); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
+- Riding Lows: CP-2H fix 1 N1 (`Below  10.00x` unit case), N2 (`.75x`, `.5%`, `-10.0%`); CP-4C N1/N2 (in round 11); H1b none yet; CP-8 r10 (lowercase guard; close-only parenthesis); CP-2E r10 L1 (in fix 1); CP-3D r10 L1 (parenthesis tested at match start, `(-425)`); CP-1D r10 (1D7-before-≤0 unpinned; `(` side untested); CP-3D name wrap-join (quote-6h-review Low 1; needs a public joined-reading helper in deploy_vii.quotes, with LEAD); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
 - Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
 - Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 

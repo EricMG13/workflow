@@ -2997,6 +2997,9 @@ Defect (PM full-file run of tests/test_source_tools.py on the integrated L2 code
 failures (10x `test_cp4_cached_cp1_authentication_rereads_every_touched_blob[blocked-*]` IndexError at
 test :1276; `test_cp4_forged_pending_ticket_with_cp0_authority_is_admitted` SourceError
 identity_mismatch). Diagnosis dispatched; fix lands after the L2 speedup reviews.
+Correction (diagnosis, 2026-10-28): not a base defect. The run collected an intermediate test file written
+by an earlier fix agent (host lines match base; test lines do not); both tests pass on the base files by
+probe. No fix; the deferred runs re-run them. The L2 speedup HIGH (pinned store dropped) is fix round 1.
 
 S1a mx-adversary review-adversary-1: CHANGES REQUIRED (blocked heads unauthenticated and consumed by
 CP-2; CP-2 invalid-step issues not replayed). Lease Rev 4 (R4-1..R4-4); fix round 2 dispatched.

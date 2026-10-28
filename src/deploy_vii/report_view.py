@@ -1187,6 +1187,10 @@ _RELATIVE_VALUE: Mapping[str, _Spec] = MappingProxyType(
             ("CP-3D",),
             route_label="Full analysis",
         ),
+        # CP-1C (docs/CP1C-OWNER-LEASE.md, D7): tables only, the Fig. RV.3 range strip is not drawn.
+        "peer-positioning": _Spec(
+            "Peer positioning", "CP-1C", "dense", ("CP-1C",), route_label="Full analysis"
+        ),
     }
 )
 # Heads and owner codes of the Distressed & Restructuring Front Page (``rbot-fp-05-*.dc.html``).

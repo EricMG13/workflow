@@ -17,7 +17,7 @@ from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Context, Decimal, localcontext
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from defect_classes import BLANK_CASES, EMPTY_TEXT, Adapter, BlankCase, blank_failure
@@ -107,6 +107,7 @@ def _cp1_fact(name: str) -> cp3c.Cp1Fact:
         text=None if numeric else observed,
         unit="MILLIONS" if numeric else None,
         value_class=_CP1_CLASS[b["table_id"]],
+        currency=CURRENCY if numeric else None,
     )
 
 
@@ -167,6 +168,7 @@ def _cp2d_fact(cp2d_case: str, name: str) -> cp3c.Cp2dFact:
         amount=Decimal(cell["amount"]) if numeric else None,
         text=None if numeric else cell["shown"],
         unit=cell.get("unit"),
+        currency=CURRENCY if cell.get("unit") == "MILLIONS" else None,
         # manifest.json#fact_copy_rule: the CP-2D head fact's period at the balance date.
         period=BALANCE_DATE.isoformat() if numeric else None,
         value_class=cell["value_class"],
@@ -1712,3 +1714,157 @@ def test_blank_fields_cover_every_text_field() -> None:
         if not path.endswith(".limitation")
     }
     assert read == {path for _, path, _ in BLANK_FIELDS}, read
+
+
+# Round 13 items 4 and 5 (R1 L1, R1 L2 currency)
+
+_UNSETTLED = ("conflicting", "not_applicable")
+_WORD = {"conflicting": "conflicting", "not_applicable": "not applicable"}
+_SHOWN = {"conflicting": "∅ G#", "not_applicable": "∅ G# n.m."}
+_LIMIT = "CP-1 limitation, verbatim"
+
+
+def _unsettled(fact: Any, status: str) -> Any:
+    """The head fact as CP-1 or CP-2D states it when it is not settled: no value, its limitation."""
+    return replace(fact, status=status, amount=None, text=None, reason=_LIMIT)
+
+
+@pytest.mark.parametrize("status", _UNSETTLED)
+@pytest.mark.parametrize("kind", ["cp1", "cp2d"])
+def test_r13_check_value_requires_a_reason_and_no_value_for_every_unknown_status(
+    status: str, kind: str
+) -> None:
+    base = _cp1_fact("cash_closing") if kind == "cp1" else _cp2d_fact("positive", "cp2d.run_rate")
+    unsettled = _unsettled(base, status)
+    assert unsettled.reason == _LIMIT
+    for bad in ({"reason": None}, {"amount": Decimal(1)}, {"text": "x"}):
+        with pytest.raises(ValueError, match="carries a reason and no value"):
+            replace(unsettled, **bad)
+
+
+@pytest.mark.parametrize("status", _UNSETTLED)
+def test_r13_an_unknown_status_gives_no_amount_or_text_and_does_not_raise(status: str) -> None:
+    fact = _unsettled(_cp1_fact("cash_closing"), status)
+    assert cp3c._cp1_amount("cash_closing", fact) is None
+    text = _unsettled(_cp1_fact("term-loan.secured_status"), status)
+    assert cp3c._cp1_text("term-loan.secured_status", text) is None
+    flag = _unsettled(_cp2d_fact("positive", "cp2d.term-loan.inside_horizon"), status)
+    assert cp3c._flag(flag) is None
+
+
+_OPERAND_CASES = [
+    ("cash_closing", "cash and cash equivalents", "base_resources"),
+    ("undrawn_rcf", "undrawn revolver", "base_resources"),
+    ("adjusted_ebitda", "adjusted EBITDA", "payable_over_ebitda"),
+    ("cash_interest", "cash interest paid", "cash_interest_paid"),
+    ("cp2d.run_rate", "CP-2D run-rate annual flow", "total_need"),
+]
+
+
+@pytest.mark.parametrize("status", _UNSETTLED)
+@pytest.mark.parametrize(("name", "label", "attr"), _OPERAND_CASES)
+def test_r13_op_names_the_state_of_an_unsettled_operand_in_the_c2_frame(
+    status: str, name: str, label: str, attr: str
+) -> None:
+    inputs = _inputs("positive")
+    if name.startswith("cp2d."):
+        fact = _unsettled(inputs.cp2d.run_rate, status)
+        inputs = replace(inputs, cp2d=replace(inputs.cp2d, run_rate=fact))
+    else:
+        fact = _unsettled(getattr(inputs.cp1, name), status)
+        inputs = replace(inputs, cp1=replace(inputs.cp1, **{name: fact}))
+    gap = getattr(cp3c.compute(inputs).refinancing, attr)
+    assert isinstance(gap, cp3c.Gap) and gap.applicable
+    assert gap.reason == f"Not calculable: {label} is {_WORD[status]}"
+
+
+@pytest.mark.parametrize("status", _UNSETTLED)
+def test_r13_copies_keep_the_status_with_the_limitation_verbatim(status: str) -> None:
+    inputs = _inputs("positive")
+    ebitda = _unsettled(inputs.cp1.adjusted_ebitda, status)
+    cells = _cells_of(
+        cp3c.compute(replace(inputs, cp1=replace(inputs.cp1, adjusted_ebitda=ebitda)))
+    )
+    copy = cells["T3D.2.r07"]
+    assert (copy.status, copy.reason, copy.shown) == (status, _LIMIT, _SHOWN[status])
+    assert copy.amount is None and copy.value_class == ebitda.value_class
+    minimum = _unsettled(inputs.cp2d.minimum_cash, status)
+    cp2d = replace(inputs.cp2d, minimum_cash=minimum)
+    copy = _cells_of(cp3c.compute(replace(inputs, cp2d=cp2d)))["T3D.2.r11"]
+    assert (copy.status, copy.reason, copy.shown) == (status, _LIMIT, _SHOWN[status])
+
+
+@pytest.mark.parametrize("status", _UNSETTLED)
+def test_r13_the_trace_spells_an_unsettled_upstream_fact_as_a_gap(status: str) -> None:
+    inputs = _inputs("positive")
+    ebitda = _unsettled(inputs.cp1.adjusted_ebitda, status)
+    result = cp3c.compute(replace(inputs, cp1=replace(inputs.cp1, adjusted_ebitda=ebitda)))
+    (row,) = (r for r in result.trace.rows if r[0] == "adjusted_ebitda")
+    assert row[3] == _SHOWN[status]
+
+
+def test_r13_cell_status_holds_the_four_product_statuses() -> None:
+    four = {"known", "missing", "conflicting", "not_applicable"}
+    assert set(get_args(cp3c.CellStatus)) == four
+    assert set(get_args(cp3c.Status)) == four
+    assert set(cp3c.GAP_SHOWN) == four - {"known"}
+
+
+def test_r13_currency_is_cash_closings_and_must_be_set() -> None:
+    inputs = _inputs("positive")
+    for unset in (None, "", " "):
+        cash = replace(inputs.cp1.cash_closing, currency=unset)
+        with pytest.raises(ValueError, match=r"^CP-3C cash_closing: currency is not set$"):
+            cp3c.compute(replace(inputs, cp1=replace(inputs.cp1, cash_closing=cash)))
+
+
+def test_r13_the_reporting_currency_is_the_cash_closing_currency() -> None:
+    with pytest.raises(
+        ValueError, match=r"^CP-3C: reporting currency 'EUR' is not cash_closing's 'USD'$"
+    ):
+        cp3c.compute(replace(_inputs("positive"), currency="EUR"))
+
+
+@pytest.mark.parametrize("name", ["undrawn_rcf", "adjusted_ebitda", "cash_interest"])
+def test_r13_every_millions_cp1_fact_read_has_the_same_currency(name: str) -> None:
+    inputs = _inputs("positive")
+    for currency in (None, "EUR"):
+        fact = replace(getattr(inputs.cp1, name), currency=currency)
+        with pytest.raises(
+            ValueError, match=rf"^CP-3C {name}: currency {currency!r} is not 'USD'$"
+        ):
+            cp3c.compute(replace(inputs, cp1=replace(inputs.cp1, **{name: fact})))
+
+
+def test_r13_every_millions_facility_and_cp2d_fact_read_has_the_same_currency() -> None:
+    inputs = _inputs("positive")
+    (terms,) = inputs.cp1.facilities
+    amort = replace(terms.annual_amortisation, currency="EUR")
+    cp1 = replace(inputs.cp1, facilities=(replace(terms, annual_amortisation=amort),))
+    with pytest.raises(
+        ValueError, match=r"^CP-3C term-loan.annual_amortisation: currency 'EUR' is not 'USD'$"
+    ):
+        cp3c.compute(replace(inputs, cp1=cp1))
+    (row,) = inputs.cp2d.wall
+    for what, cp2d in (
+        (
+            inputs.cp2d.run_rate.fact_id,
+            replace(inputs.cp2d, run_rate=replace(inputs.cp2d.run_rate, currency="EUR")),
+        ),
+        (
+            row.principal.fact_id,
+            replace(
+                inputs.cp2d, wall=(replace(row, principal=replace(row.principal, currency=None)),)
+            ),
+        ),
+    ):
+        with pytest.raises(ValueError, match=rf"^CP-3C {what}: currency .* is not 'USD'$"):
+            cp3c.compute(replace(inputs, cp2d=cp2d))
+
+
+def test_r13_a_missing_cash_closing_needs_no_currency() -> None:
+    base = cp3c.compute(
+        _with_cp1(cash_closing=_missing_cp1("cash_closing"))
+    ).refinancing.base_resources
+    assert isinstance(base, cp3c.Gap)
+    assert base.reason == "Not calculable: cash and cash equivalents is missing"

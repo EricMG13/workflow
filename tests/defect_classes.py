@@ -25,6 +25,9 @@ Rules encoded (`docs/rulings/2026-10-28-stage1.md`):
   accounting `(` before it; end edge: not a digit, `.` plus a digit, or closing `)` after it).
 - `R11_B3`: round 11 Quote readers B3. When `quotes.hyphen_wrapped(quote)` holds and `"- "` occurs
   in `normalise(value)`, a name or text value does not occur in the quote.
+  Round 13 addendum: a `"- "` that is rule W's minus (`(?<![A-Za-z0-9])- (?=[0-9])`) is no wrap
+  split, so `is -\n1.25` occurs (the figure readers then read it signed), while `A-\n25` and
+  `a - b` stay refused.
 - `R9_M1`: round 9 CP-8 heading ("M1's normalised quote applies to every new check") with round 11
   "Shared class test": a figure, label or name is read on the text `quotes.quoted` matched, so a
   soft hyphen, mapped dash or NBSP reads as the page shows it.
@@ -315,6 +318,9 @@ FIGURE_CASES: tuple[QuoteCase, ...] = (
 
 NAME = "Northbridge Term Loan"
 _WRAP_PAGE = "The Northbridge first-\npriority Term Loan is quoted by dealers."
+_W_MINUS_PAGE = "The level is -\n1.25 percent over the reference rate."
+_LETTER_WRAP_PAGE = "The Term Loan A-\n25 notes are quoted."
+_NO_DIGIT_WRAP_PAGE = "The rate a -\nb applies."
 
 TEXT_CASES: tuple[QuoteCase, ...] = (
     QuoteCase(
@@ -367,6 +373,60 @@ TEXT_CASES: tuple[QuoteCase, ...] = (
         accepted=False,
         ruling=R11_B3,
         twin="wrap-joined",
+    ),
+    # Round 13 addendum: W's minus (`- ` not after a letter or digit, a digit next) is no wrap
+    # split, so B3 does not refuse it; every other `- ` still does.
+    QuoteCase(
+        "w-minus-wrap-text",
+        "wrap",
+        "text",
+        _W_MINUS_PAGE,
+        "The level is -\n1.25 percent over the reference rate.",
+        "is - 1.25",
+        accepted=True,
+        ruling=R12_W,
+    ),
+    QuoteCase(
+        "b3-letter-wrap-text",
+        "wrap",
+        "text",
+        _LETTER_WRAP_PAGE,
+        "The Term Loan A-\n25 notes",
+        "A- 25",
+        accepted=False,
+        ruling=R11_B3,
+        twin="b3-letter-joined-text",
+    ),
+    QuoteCase(
+        "b3-letter-joined-text",
+        "wrap",
+        "text",
+        _LETTER_WRAP_PAGE,
+        "The Term Loan A-25 notes",
+        "A-25",
+        accepted=True,
+        ruling=R11_B3,
+    ),
+    QuoteCase(
+        "b3-no-digit-wrap-text",
+        "wrap",
+        "text",
+        _NO_DIGIT_WRAP_PAGE,
+        "The rate a -\nb applies",
+        "a - b",
+        accepted=False,
+        ruling=R11_B3,
+        twin="b3-no-digit-joined-text",
+    ),
+    QuoteCase(
+        "b3-no-digit-joined-text",
+        "wrap",
+        "text",
+        _NO_DIGIT_WRAP_PAGE,
+        "The rate a -b applies",
+        "a -b",
+        accepted=True,
+        ruling=R11_B3,
     ),
 )
 

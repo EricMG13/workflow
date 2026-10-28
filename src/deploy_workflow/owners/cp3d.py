@@ -269,10 +269,22 @@ def _whole_on_page(value_text: str, quote: str, page: str) -> bool:
     return True
 
 
+_WRAP_SPLIT = re.compile(r"- ")
+_W_SIGN = re.compile(r"(?<![A-Za-z0-9])- (?=[0-9])")  # rule W's minus, `_MINUS` plus a digit
+
+
 def _name_occurs(name: str, quote: str) -> bool:
     """`name` is in the normalised quote. Round 11 B3: when the quote has a hyphenated line wrap,
-    a name holding `- ` (the wrap as `normalise` prints it) does not occur."""
-    return name in normalise(quote) and not (hyphen_wrapped(quote) and "- " in normalise(name))
+    a name holding `- ` (the wrap as `normalise` prints it) does not occur. Round 13 addendum: a
+    `- ` that is rule W's minus (not after a letter or digit, a digit next) is no wrap split. A
+    `- ` at index 0 cannot see the page character before it, so it stays a wrap split."""
+    if name not in normalise(quote):
+        return False
+    if not hyphen_wrapped(quote):
+        return True
+    plain = normalise(name)
+    exempt = {m.start() for m in _W_SIGN.finditer(plain) if m.start() > 0}
+    return all(m.start() in exempt for m in _WRAP_SPLIT.finditer(plain))
 
 
 def publication_dates(pages: Mapping[str, Mapping[str, str]]) -> dict[tuple[str, str], date]:

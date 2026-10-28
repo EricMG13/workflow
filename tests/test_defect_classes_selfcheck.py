@@ -121,6 +121,19 @@ def test_wrap_cases_follow_b3() -> None:
     assert split.page == joined.page and hyphen_wrapped(split.page)
 
 
+def test_round_13_wrap_cases_follow_the_w_exemption() -> None:
+    """Round 13 addendum: W's minus before a digit is no B3 wrap split; `A-\\n25` and `a - b` are."""
+    signed = case("w-minus-wrap-text", TEXT_CASES)
+    assert signed.accepted and "- 1.25" in normalise(signed.value) and hyphen_wrapped(signed.quote)
+    for cid, twin in (
+        ("b3-letter-wrap-text", "b3-letter-joined-text"),
+        ("b3-no-digit-wrap-text", "b3-no-digit-joined-text"),
+    ):
+        c = case(cid, TEXT_CASES)
+        assert not c.accepted and c.twin == twin and "- " in normalise(c.value)
+        assert hyphen_wrapped(c.quote) and not hyphen_wrapped(case(twin, TEXT_CASES).quote)
+
+
 def test_class_characters_are_present() -> None:
     by_defect = {d: [c for c in ALL if c.defect == d] for d in {c.defect for c in ALL}}
     assert all(SOFT_HYPHEN in c.page for c in by_defect["soft_hyphen"])

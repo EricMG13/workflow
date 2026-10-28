@@ -227,12 +227,40 @@ def test_fixture_stored_values(fixture: str) -> None:
 MUTATIONS = SUBMISSIONS["refusal_mutations"]
 
 
+# Round 13 addendum 2 (item 8): the frozen quote reads `December 31, 2029`, and `31, 2029` is one
+# run, so `31` is no figure. Mutation id -> its issue now. Remove the delta at the Stage 2 re-pin.
+STAGE2_REFUSAL_DELTA = {
+    "amortisation_nonzero": "amortisation: value_text 31 does not occur in the quote",
+}
+
+
 @pytest.mark.parametrize("entry", MUTATIONS["entries"], ids=lambda e: e["id"])
 def test_refusal_mutation_yields_exactly_its_issue(entry: dict[str, Any]) -> None:
     raw = _edited(SUBMISSIONS[MUTATIONS["base"]], entry["edits"])
     ctx = _context(MUTATIONS["base"])
     issues = cp3d.submission_issues(submission=_submission(raw), context=ctx)
-    assert list(issues) == entry["all_issues"] == [entry["issue"]]
+    expected = STAGE2_REFUSAL_DELTA.get(entry["id"], entry["issue"])
+    assert list(issues) == [expected]
+    if entry["id"] not in STAGE2_REFUSAL_DELTA:
+        assert entry["all_issues"] == [entry["issue"]]
+
+
+def test_stage2_refusal_delta_is_still_pending() -> None:
+    """Remove the delta at the Stage 2 re-pin: this fails once `cases/` is re-pinned, because the
+    frozen `amortisation_nonzero` issue then equals the delta table's and the table has no job."""
+    frozen = {e["id"]: e["issue"] for e in MUTATIONS["entries"]}
+    assert all(frozen[k] != v for k, v in STAGE2_REFUSAL_DELTA.items())
+
+
+def test_amortisation_above_zero_is_refused_on_a_page_without_a_date() -> None:
+    """The nonzero-amortisation branch, on a page of its own that holds no `Month D, YYYY`."""
+    lines = tuple(
+        "Mandatory annual amortisation is 5 percent." if i == 4 else x
+        for i, x in enumerate(_sign_lines("ascii"))
+    )
+    raw = _edited(_POSITIVE, _sign_edits(lines, "amortisation", "5"))
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_sign_context(lines))
+    assert list(issues) == ["amortisation: the simple margin convention requires zero amortisation"]
 
 
 def test_refusal_list_matches_the_mutations() -> None:
@@ -1864,3 +1892,40 @@ def test_r13_item8_a_page_comma_run_cuts_an_edge_figure(
     hyphen wraps (accepted), `-\\n25` is a minus (refused)."""
     issues = _MARGIN_CLASS(page, quote, "25")
     assert (_MARGIN_25 not in issues) is accepted
+
+
+# --- LEAD round 13 addendum: rule W's minus is no round 11 B3 wrap split ---
+
+
+@pytest.mark.parametrize(
+    ("page", "quote", "name", "occurs"),
+    (
+        ("The rate is -\n1.25 percent.", "The rate is -\n1.25 percent.", "is - 1.25", True),
+        ("The rate is -\n1.25 percent.", "The rate is -\n1.25 percent.", "is -1.25", False),
+        ("Term Loan A-\n25 notes.", "Term Loan A-\n25 notes.", "A- 25", False),
+        ("In 2024-\n2025 it held.", "In 2024-\n2025 it held.", "2024- 2025", False),
+        ("The rate a -\nb applies.", "The rate a -\nb applies.", "a - b", False),
+        ("Term Loan A-\n1.25 notes.", "Term Loan A-\n1.25 notes.", "- 1.25 notes", False),
+        ("The rate is -\n1.25 notes.", "is -\n1.25 notes.", "is - 1.25 notes", True),
+        (
+            "Term -\n1.25 notes, first-\npriority",
+            "Term -\n1.25 notes, first-\npriority",
+            "Term - 1.25 notes, first- priority",
+            False,
+        ),
+    ),
+    ids=(
+        "w-minus",
+        "no-space-minus",
+        "letter-wrap",
+        "digit-wrap",
+        "no-digit",
+        "index-0",
+        "w-minus-edge",
+        "w-minus-plus-real-wrap",
+    ),
+)
+def test_r13_w_minus_is_no_b3_wrap_split(page: str, quote: str, name: str, occurs: bool) -> None:
+    """`_name_occurs`: a `- ` matching W's minus, with something before it in the value, occurs;
+    `A-\\n25`, `2024-\\n2025`, `a - b`, a `- ` at index 0 and any other `- ` stay B3 refusals."""
+    assert cp3d._name_occurs(name, quote) is occurs

@@ -1318,6 +1318,24 @@
       "sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
       "reason": "Add the three CP-2D _Spec rows (liquidity-runway, maturity-wall, funding-gap) to _COVENANT_REFINANCING (docs/CP2D-OWNER-LEASE.md, Rendered sections).",
       "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
+      "sha256": "f51954d7b2cd4569f1e1ffbe06713a8d2c5c04f828ce8bf8df3737da4583b48a",
+      "reason": "Merged registration tail: CP-2D directly after CP-2 per its lease; CP-3D, CP-DR, CP-2E, CP-8 and CP-2A rows all retained.",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
+      "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
+      "sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
+      "reason": "Merged CP-2D covenant/refinancing _Spec rows with the CP-3D _RELATIVE_VALUE and CP-2A _DISTRESSED compositions (D12 registration, rows only).",
+      "review": "docs/CP2D-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

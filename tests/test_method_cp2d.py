@@ -902,3 +902,25 @@ def test_valid_submissions_never_raise(index: int) -> None:
     assert result.status == "restricted", label
     for cell in _cells(result).values():
         assert cell.state == "known" or cell.reason, (label, cell.fact_id)
+
+
+# --- Stage 1 layer review: ledger Low L4 (first-missing precedence) ----------------------------
+
+
+def test_first_missing_operand_in_formula_order_wins() -> None:
+    """Ruling 2D-b: a dependant carries the reason of the first missing operand in formula
+    order. Cash at horizon end = cash_bs + F over horizon - amortisation - maturities, so with
+    cash_bs and cfo both missing every dependant names cash; F's own cell, which does not read
+    cash, names operating cash flow. With cfo and investing both missing, F = cfo + investing +
+    financing - net debt issuance names operating cash flow."""
+    inputs = _inputs("positive")
+    o = inputs.operands
+    cash = "Not calculable: Cash and cash equivalents is missing"
+    cfo = "Not calculable: Operating cash flow is missing"
+    cells = _cells(cp2d.compute(replace(inputs, operands=replace(o, cash_bs=None, cfo=None))))
+    for fact_id in ("T2E.3.r08", "T2E.3.r09", "T2E.5.r01", "T2E.5.r03", "T2E.5.r07", "T2E.2.r07"):
+        assert cells[fact_id].reason == cash, fact_id
+    assert cells["T2E.3.r01"].reason == cfo
+    cells = _cells(cp2d.compute(replace(inputs, operands=replace(o, cfo=None, investing=None))))
+    for fact_id in ("T2E.1.r09", "T2E.3.r01", "T2E.3.r08", "T2E.3.r09", "T2E.5.r07"):
+        assert cells[fact_id].reason == cfo, fact_id

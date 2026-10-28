@@ -9,11 +9,13 @@ import copy
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import defect_classes as dc
 import pytest
 
 from deploy_workflow.owners import cp3d
@@ -1431,3 +1433,274 @@ def test_r10_signed_analyst_text_keeps_its_refusal(reader: str, text: str, issue
     raw = _edited(_POSITIVE, _sign_edits(lines, reader, text))
     issues = cp3d.submission_issues(submission=_submission(raw), context=_sign_context(lines))
     assert list(issues) == [issue]
+
+
+# --- LEAD round 11: the shared defect classes (tests/defect_classes.py; AGENTS.md rules 3, 4) ---
+
+_CLASS_LOC = "page:9"  # a fresh locator of the cited source carries the case page
+_CLASS_TAIL = " Quoted on January 9, 2026."  # a bid needs its as_of_text in the quote
+_Edits = Callable[[dict[str, str], str], list[list[Any]]]
+
+
+def _class_adapter(case: str, source_id: str, edits: _Edits) -> dc.Adapter:
+    """The frozen `case` submission with one field set to the value against the case quote,
+    which sits on the case page at `source_id` `page:9`."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        ref = {"source_id": source_id, "locator": _CLASS_LOC, "quote": quote}
+        raw = _edited(SUBMISSIONS[case], edits(ref, value))
+        ctx = _with_page(_context(case), source_id, _CLASS_LOC, page)
+        return cp3d.submission_issues(submission=_submission(raw), context=ctx)
+
+    return adapter
+
+
+def _obs_edits(index: int) -> _Edits:
+    return lambda ref, value: [
+        [f"observations.{index}.locator", ref["locator"]],
+        [f"observations.{index}.quote", ref["quote"]],
+        [f"observations.{index}.level_text", value],
+    ]
+
+
+_CLASS_FIGURES: tuple[tuple[str, dc.Adapter, str], ...] = (  # (reader, adapter, pinned refusal)
+    (
+        "margin",
+        _class_adapter(
+            "positive",
+            "financial",
+            lambda r, v: [["terms.margin", {"quote": r, "bps_text": v, "absence": None}]],
+        ),
+        "margin: bps_text {} does not occur in the quote",
+    ),
+    (
+        "amortisation",
+        _class_adapter(
+            "positive",
+            "financial",
+            lambda r, v: [["terms.amortisation", {"quote": r, "value_text": v, "absence": None}]],
+        ),
+        "amortisation: value_text {} does not occur in the quote",
+    ),
+    (
+        "reference_rate.level",
+        _class_adapter(
+            "positive",
+            "financial",
+            lambda r, v: [
+                ["terms.reference_rate.absence", None],
+                ["terms.reference_rate.level", {"quote": r, "percent_text": v}],
+            ],
+        ),
+        "reference_rate: level percent_text {} does not occur in the quote",
+    ),
+    (
+        "talk",
+        _class_adapter("positive", "market", _obs_edits(2)),
+        "observations[2]: level_text {} does not occur in the quote",
+    ),
+)
+
+
+@pytest.mark.parametrize("c", dc.FIGURE_CASES, ids=[c.case_id for c in dc.FIGURE_CASES])
+@pytest.mark.parametrize(
+    ("reader", "adapter", "refusal"), _CLASS_FIGURES, ids=[r[0] for r in _CLASS_FIGURES]
+)
+def test_r11_class_figure_cases(
+    reader: str, adapter: dc.Adapter, refusal: str, c: dc.QuoteCase
+) -> None:
+    """Soft hyphen, dashes, NBSP, signs and parentheses (round 10) and the edge cut (round 11 B1)
+    through every unlabelled figure reader (`_token_once`)."""
+    assert dc.quote_failure(c, adapter, refusal.format(c.value)) is None
+
+
+_BID = _class_adapter("positive", "market", _obs_edits(0))
+
+
+def _bid(page: str, quote: str, value: str) -> tuple[str, ...]:
+    return tuple(_BID(page + _CLASS_TAIL, quote + _CLASS_TAIL, value))
+
+
+_LABEL_CASES = tuple(c for f in dc.FIGURES for c in dc.label_cases("bid", f))
+
+
+@pytest.mark.parametrize("c", _LABEL_CASES, ids=[f"{c.case_id}-{c.value}" for c in _LABEL_CASES])
+def test_r11_class_label_cases(c: dc.QuoteCase) -> None:
+    """The bid reader (`_token_once`, then `_labelled`): an accepted case gets neither refusal."""
+    labelled = f"observations[0]: bid level_text {c.value} is not labelled bid in the quote"
+    assert dc.quote_failure(c, _bid, labelled) is None
+    if c.accepted:
+        occurs = f"observations[0]: level_text {c.value} does not occur in the quote"
+        assert dc.quote_failure(c, _bid, occurs) is None
+
+
+_CLASS_TEXTS: tuple[tuple[str, dc.Adapter, str], ...] = (
+    (
+        "instrument.name",
+        _class_adapter(
+            "positive", "market", lambda r, v: [["instrument", {"name": v, "quote": r}]]
+        ),
+        "instrument: name does not occur in the quote",
+    ),
+    (
+        "reference_rate.name",
+        _class_adapter(
+            "positive",
+            "financial",
+            lambda r, v: [["terms.reference_rate.name", v], ["terms.reference_rate.quote", r]],
+        ),
+        "reference_rate: name does not occur in the quote",
+    ),
+)
+
+
+@pytest.mark.parametrize("c", dc.TEXT_CASES, ids=[c.case_id for c in dc.TEXT_CASES])
+@pytest.mark.parametrize(
+    ("reader", "adapter", "refusal"), _CLASS_TEXTS, ids=[r[0] for r in _CLASS_TEXTS]
+)
+def test_r11_class_text_cases(
+    reader: str, adapter: dc.Adapter, refusal: str, c: dc.QuoteCase
+) -> None:
+    """Soft hyphen, NBSP and the wrap refusal (round 11 B3) through both name readers."""
+    assert dc.quote_failure(c, adapter, refusal) is None
+
+
+def _blank_adapter(case: str, path: str, absent: str | None = None) -> dc.Adapter:
+    """The frozen `case` submission with the text at `path` set to the value (the frozen quotes
+    stay); `absent` first records that term as absent instead of quoted."""
+
+    def adapter(page: str, quote: str, value: str) -> tuple[str, ...]:
+        edits: list[list[Any]] = []
+        if absent is not None:
+            absence = {"reason": "Not stated in the pack", "follow_up": "Supply the term"}
+            edits.append([f"terms.{absent}", {"quote": None, "absence": absence}])
+        raw = _edited(SUBMISSIONS[case], [*edits, [path, value]])
+        return cp3d.submission_issues(submission=_submission(raw), context=_context(case))
+
+    return adapter
+
+
+_CLASS_BLANKS: tuple[tuple[str, dc.Adapter], ...] = (  # (issue path, adapter): every text field
+    ("instrument.name", _blank_adapter("positive", "instrument.name")),
+    ("reference_rate.name", _blank_adapter("positive", "terms.reference_rate.name")),
+    *(
+        (
+            f"reference_rate.absence.{f}",
+            _blank_adapter("positive", f"terms.reference_rate.absence.{f}"),
+        )
+        for f in ("reason", "follow_up")
+    ),
+    *(
+        (f"{t}.absence.{f}", _blank_adapter("positive", f"terms.{t}.absence.{f}", t))
+        for t in ("maturity", "margin", "amortisation")
+        for f in ("reason", "follow_up")
+    ),
+    ("recovery.rationale", _blank_adapter("positive", "recovery.rationale")),
+    *(
+        (f"{k}.{f}", _blank_adapter(case, f"{k}.{f}"))
+        for k, case in (
+            ("recovery_absence", "gap_no_recovery"),
+            ("market_absence", "gap_no_market"),
+        )
+        for f in ("reason", "follow_up")
+    ),
+    *(
+        (f"technicals[{i}].text", _blank_adapter("positive", f"technicals.{i}.text"))
+        for i in range(len(SUBMISSIONS["positive"]["technicals"]))
+    ),
+    ("technicals[3].limitation", _blank_adapter("positive", "technicals.3.limitation")),
+    ("summary.text", _blank_adapter("positive", "summary.text")),
+)
+
+
+@pytest.mark.parametrize("c", dc.BLANK_CASES, ids=[c.case_id for c in dc.BLANK_CASES])
+@pytest.mark.parametrize(("path", "adapter"), _CLASS_BLANKS, ids=[b[0] for b in _CLASS_BLANKS])
+def test_r11_class_blank_text(path: str, adapter: dc.Adapter, c: dc.BlankCase) -> None:
+    """Round 11 blank text: CP-3D pins no empty-text frame, so `<path>: empty text`."""
+    assert dc.blank_failure(c, adapter, dc.EMPTY_TEXT.format(path=path)) is None
+
+
+_MARGIN_CLASS = _CLASS_FIGURES[0][1]
+_MARGIN_25 = "margin: bps_text 25 does not occur in the quote"
+_R11_QUOTE = "25 percent over the reference rate."
+
+
+@pytest.mark.parametrize(
+    ("page", "accepted"),
+    (  # round 11 B1 beyond the shared cases: the quote "25 percent ..." at the start edge
+        ("Its level moved by -\n25 percent over the reference rate.", False),  # joined reading
+        ("Its level moved by\n25 percent over the reference rate.", True),
+        (f"The cap is 4{_R11_QUOTE} The level is {_R11_QUOTE}", False),  # one of two is cut
+        (f"The cap is {_R11_QUOTE} The level is {_R11_QUOTE}", True),
+        ("The level is 0.25 percent over the reference rate.", False),  # `.` before the figure
+        ("The level is 0. 25 percent over the reference rate.", True),
+    ),
+    ids=("wrapped-minus", "wrapped-plain", "one-of-two-cut", "both-whole", "dot", "dot-space"),
+)
+def test_r11_b1_every_occurrence_in_every_page_reading(page: str, accepted: bool) -> None:
+    """The figure occurs only if each occurrence of the quote, in `normalise(page)` and in the
+    joined reading of a wrapped page, has the same unsigned whole figure on the page."""
+    issues = _MARGIN_CLASS(page, _R11_QUOTE, "25")
+    assert (_MARGIN_25 not in issues) is accepted
+
+
+@pytest.mark.parametrize(("page", "accepted"), (("250", False), ("25", True)), ids=("cut", "whole"))
+def test_r11_b1_a_wrapped_quote_is_read_joined_on_the_page(page: str, accepted: bool) -> None:
+    """The quote's joined reading (`quotes.reading(quote, join_wraps=True).text`) is a needle too:
+    only it is on the page, and the figure at its end edge is checked there."""
+    line = f"Margin on the first-priority {page} basis points."
+    issues = _MARGIN_CLASS(line, "first-\npriority 25", "25")
+    assert (_MARGIN_25 not in issues) is accepted
+
+
+@pytest.mark.parametrize(
+    ("reader", "line", "text", "issue"),
+    (  # round 11 B2 (Modules): a signed text inside accounting parentheses keeps the shape issue
+        (
+            "margin",
+            "Facility margin is (-425) basis points.",
+            "-425",
+            f"margin: bps_text -425 {cp3d._SHAPE}",
+        ),
+        (
+            "margin",
+            "Facility margin is (425) basis points.",
+            "425",
+            "margin: bps_text 425 does not occur in the quote",
+        ),
+        (
+            "reference_rate",
+            "The SOFR reference rate is (-4.30) percent.",
+            "-4.30",
+            f"reference_rate: level percent_text -4.30 {cp3d._SHAPE}",
+        ),
+        (
+            "amortisation",
+            "Mandatory annual amortisation is (-0).",
+            "-0",
+            f"amortisation: value_text -0 {cp3d._SHAPE}",
+        ),
+    ),
+    ids=("margin-signed", "margin-unsigned", "reference_rate-signed", "amortisation-signed"),
+)
+def test_r11_b2_parentheses_read_only_around_a_digit(
+    reader: str, line: str, text: str, issue: str
+) -> None:
+    index = {"margin": 3, "amortisation": 4, "reference_rate": 5}[reader]
+    lines = tuple(line if i == index else x for i, x in enumerate(_sign_lines("ascii")))
+    raw = _edited(_POSITIVE, _sign_edits(lines, reader, text))
+    issues = cp3d.submission_issues(submission=_submission(raw), context=_sign_context(lines))
+    assert list(issues) == [issue]
+
+
+@pytest.mark.parametrize(
+    ("page", "accepted"),
+    (("The level is 25.5 percent.", False), ("The level is 25. It holds.", True)),
+    ids=("decimal-cut", "full-stop"),
+)
+def test_r11_b1_a_full_stop_after_the_figure_is_still_its_end_edge(
+    page: str, accepted: bool
+) -> None:
+    """`The level is 25.`: only `.` follows the figure, so the page must not go on with a digit."""
+    issues = _MARGIN_CLASS(page, "The level is 25.", "25")
+    assert (_MARGIN_25 not in issues) is accepted

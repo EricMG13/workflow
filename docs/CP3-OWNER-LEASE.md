@@ -1,6 +1,8 @@
-# CP-3 (relative value) owner run lease - CP-3 half FROZEN by LEAD 2026-10-28 (draft rev 3); CP-6 half DRAFT rev 0, not frozen
+# CP-3 (relative value) owner run lease - CP-3 half FROZEN by LEAD 2026-10-28 (draft rev 3); CP-6 half FROZEN by LEAD 2026-10-28 (draft rev 0 with the freeze restatements)
 
-Pin consumers: `cases/cp3d-owner/builder/build.py` reads `manifest.json` without a pin (through `MARKET_FILE`); `cases/cp5-owner/builder/build.py` pins `expected.json`, `manifest.json`, `submissions.json`; `cases/cp8-owner/builder/build.py` pins `manifest.json`. Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
+Frozen by LEAD 2026-10-28 (CP-6 half; `work/lead/cp6-freeze/review-precise-cp6-freeze-1.md` and its LEAD rulings, `work/lead/cp6-freeze/report.md`). The CP-3 half is unchanged except the shared lines the restatements name. Oracle hashes, old → new sha256: manifest 525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10 → 893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b; submissions eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b (unchanged); expected 8ca60c96ac443282ac49a0ded495b751cf3b5457b9491f419a26ca59c0b3c310 → 7428c9340cae7221157657bdc628e43717b3f61716c86d6b6775c5b46b162a3e; builder 67db98157b66a0861696cf25482a7aba63576025c9e25b9ada976d344ae6d952 → b89348028edc0de91309c7177c71f4eae0cad7efb82050a55225bf86ce96c0ec. The oracle changes are: `execution.tool_use.CP-6` (the Q5 assertion, `view` and `view_key_tree`, 102 paths, identical for both cases), the `execution.consumption.CP-2` text (D3 in R6 terms), the `cp6-read-before-submit` rule cite, `table_id_check` (`T6-FINAL` moves from the unregistered composed ids to CP-6, ruling Q7) and the manifest `status`; every R3 and CP-3 path is otherwise byte-identical. `T6-FINAL` joins CP-6 `table_ids` in the serialised `methodology.json` change 1bb6c0bc… → 0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8 (`docs/reuse/manifest.json` `post_import_patches`); every builder that pins it is re-pinned, and the batch releases at Stage 2 close. The CP-6 half builds only after the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row).
+
+Pin consumers: `cases/cp3d-owner/builder/build.py` reads `manifest.json` without a pin (through `MARKET_FILE`); `cases/cp5-owner/builder/build.py` pins `expected.json`, `manifest.json`, `submissions.json`; `cases/cp8-owner/builder/build.py` pins `manifest.json`. Every builder except cp2a, cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
 
 Amended by LEAD 2026-10-28 for the CP-5 owner lease freeze (`docs/CP5-OWNER-LEASE.md`; `work/lead/cp5-owner-preparation/report.md` ruling 1 and `review-precise-1.md` L3). The change is in the CP-6 half only. R6 drops CP-MODEL so that CP-5 can begin: `requested_modules` is CP-1, CP-1A, CP-2, CP-3, CP-5, CP-6; `plan_order` and the CP-0 `plan_order` follow; `cp1a_consumers` is CP-2, CP-3, CP-5, CP-6. `runs.R6.note` records that the shared `upstream.statuses.CP-MODEL`, `execution.statuses` and `execution.consumption.CP-MODEL` hold for R3 only. Every R3 path is byte-identical: a key-path diff against the previous commit puts all 180 changed leaves under R6. Hashes move as follows: manifest e3cb2217… → 525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10; submissions 9f8c10e9… → eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b; expected 3c6ff67f… → 8ca60c96ac443282ac49a0ded495b751cf3b5457b9491f419a26ca59c0b3c310; builder 6dac614f… → 67db98157b66a0861696cf25482a7aba63576025c9e25b9ada976d344ae6d952. The CP-6 half stays draft.
 
@@ -9,7 +11,7 @@ Re-pinned by LEAD 2026-10-28 in the serialised `methodology.json` change (branch
 **Revision 3 (CP-3 half only; revisions 1 and 2 below, then `review-precise-r3-2.md` findings 1 and 2 and the Info note).** Revised after `review-precise-r3-1.md` and the LEAD rulings in `report.md` (M1 `column` of
 front-table facts, M2 tamper, M3 scope refusal, M4 CP-2 view counts, L1 blocked CP-1A, L2 pinned methodology, L3, L4). Awaiting a
 scoped re-review. The CP-6 half is unchanged draft rev 0 except where the generic M1 builder fix moved its front-fact `column`
-values (listed in the revision report); it is frozen only after S1b. CP-3 is a **live-contract module** under
+values (listed in the revision report); it is frozen by LEAD 2026-10-28 and builds only after the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row). CP-3 is a **live-contract module** under
 `docs/G1X-OWNER-CORE-PROTOCOL.md` §1: this lease cites that protocol for every G1 seam (spec registration, `OWNER_SPECS`,
 `_QUALIFICATION`, probes, receipt and verifier) and adds no seam of its own.
 
@@ -41,13 +43,12 @@ What the cores really read (checked in code, asserted in the oracle):
 **Consumption (D3).** CP-6 is the consumer that proves CP-2 and CP-3 consumption: its basis cells name `CP-2 <ref>
 (<label>)` and `CP-3 <ref> (<label>)` rows, its challenge table has one row per challenged CP-2 row, and in the gap
 case the CP-3 head's T3.3/T3.4 cells force the CP-6 action bias to Insufficient Information. CP-3 itself consumes
-CP-2 (basis cells, confidence cap). CP-5 is not claimed as consumer of CP-2 or CP-3 until its own lease extends the
-integrity scope (D3). **CP-6 has no consumer inside the product** (only the call band and rails render it); say so
+CP-2 (basis cells, confidence cap). In R6, CP-5 consumes CP-1, CP-1A, CP-2 and CP-3 under `docs/CP5-OWNER-LEASE.md` D3 (inputs bind each head, T5B.1 cites its facts, the probe re-runs `cp5_integrity._validate_step`). CP-6 consumes CP-2 (T6A.4 `CP-2 row`, T6-FINAL basis), CP-3 (basis cells `CP-3 <ref> (<label>)`; in the gap case the T3.3/T3.4 cells force Insufficient Information) and CP-5 (inputs bind CP-5; `cp5_review` reads T5.9 and T5B.2/3/4/6/7/8; own limitation `CP-5 handoff caps the confidence below High: CP-5 is restricted` and cap `CP-5 is restricted`). The verifier probe re-runs `cp6_committee._validate_step` on `_FrozenExecution`. D3 for CP-1, CP-1A, CP-2, CP-3 and CP-5 closes only when the R6 run verifies. **CP-6 has no consumer inside the product** (only the call band and rails render it); say so
 in the receipt notes.
 
 **CP-6 cannot run without CP-5.** `registry.edge_rule("CP-6","CP-5")` is `block` and `plan(("CP-6",))` is
 `CP-0, CP-1, CP-1A, CP-2, CP-3, CP-5, CP-6`. G1 `create` refuses a plan with a module lacking a spec, so the CP-6
-run needs the CP-5 owner (S1b). See Q1.
+run needs the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row). See Q1.
 
 ## Prerequisites (base)
 
@@ -58,23 +59,24 @@ run needs the CP-5 owner (S1b). See Q1.
    CP-1A and CP-2 heads as producers (S1a lease: the one-line `_SOURCE_STEPS` entry sufficed only because CP-1A bound
    CP-0/CP-1; CP-3 binds CP-2, whose module carries a `credit-synthesis-submission` tail).
 3. The manifest adoption of this oracle after independent `mx-precise` review.
-4. For the CP-6 part only: the CP-5 owner (S1b: `owners/cp5.py`, A4 integrated) and a D3 lease extending the CP-5
-   integrity scope to CP-2 and CP-3. The CP-3 part does not need it (R3 run).
+4. For the CP-6 part only: the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row). The CP-3 part does not need it (R3 run).
 
 ## Files
 
 - New `src/deploy_workflow/owners/cp3.py`, `owners/cp6.py` (probes; CP-6 view). `owners/__init__.py` exists after S1a.
 - `src/deploy_workflow/owner_workflow.py`: `OWNER_SPECS` +CP-3 +CP-6; `SUPPORTED_ANALYTICAL`, `_QUALIFICATION`
-  (`cp3_relative_value.PROMOTED`, `cp6_committee.PROMOTED`), `_PROBES` +2. Registrations admitted under D12.
+  (`cp3_relative_value.PROMOTED`, `cp6_committee.PROMOTED`), `_PROBES` +2, `_VIEWS["committee_challenge"] = owners.cp6.view` and
+  `_ENTRY_VALIDATORS["CP-6"] = owners.cp6.ENTRY_VALIDATOR` (no `_CORES` row). Without the last two `_check_steps` refuses CP-6 at create.
+  Registrations admitted under D12.
 - No `host.py` edit in this lease: H1 (the generic `*-submission` producer rule plus `_SOURCE_STEPS["CP-3"]`) is its own task after
   L2 and S1a (ruling Q6; its code is saved in `review-precise-r3-1.md`). CP-6 opens no session. The session scope is already
   `readable_sources(store, attempt, step_id)`, which for CP-3 is the CP-0 `third_party` sources only (`live/context.py:115-151`).
-- `src/deploy_vii/methodology.json`: optionally add `T6-FINAL` to CP-6 `table_ids` (Q7). No other `src/deploy_vii` edit.
+- `src/deploy_vii/methodology.json`: add `T6-FINAL` to CP-6 `table_ids` (ruling Q7, serialised change, done by the CP-6 freeze). No other `src/deploy_vii` edit.
 - New `tests/test_owner_cp3.py`, `tests/test_owner_cp6.py`, run driver `tests/cp3_cp6_runs.py` exporting
   `cp3_closed(case, root)` and `cp6_closed(case, root)` -> `(store_dir, receipt_path, publication_dir)`; G2 imports it.
-- No edit of `src/`, `tests/` or `docs/` by this preparation; LEAD amends `docs/TOOL-CONTRACT.md` when the lease freezes (Q5).
+- No edit of `src/`, `tests/` or `docs/` by this preparation; LEAD added the CP-3 and CP-6 rows of `docs/TOOL-CONTRACT.md` with this freeze (Q5).
 
-## Public API additions (keyword arguments only)
+## Public API additions (positional, per G1-X §2; live-contract, `entry="model_payload"`)
 
 ```
 OWNER_SPECS += "CP-3": OwnerSpec(module_id="CP-3",
@@ -85,9 +87,12 @@ OWNER_SPECS += "CP-3": OwnerSpec(module_id="CP-3",
                  steps=(StepSpec(step_id="committee_challenge", schema=CommitteeSubmission, sources=False,
                                  extract=False, upstream_grant=None, inputs="module_context", rules="none"),),
                  entry="model_payload", kind="analytical", publish=None)
-owners.cp3.probe(store=..., snapshot=..., attempt=...) -> None
-owners.cp6.probe(store=..., snapshot=..., attempt=...) -> None
-owners.cp6.view(store=..., attempt=...) -> tuple[str, str]   # (sha256, body)
+owners.cp3.probe(store=..., snapshot=..., attempt=...) -> None          # CP-3 part, as frozen
+owners.cp6.QUALIFICATION = cp6_committee.PROMOTED
+owners.cp6.probe(store, snapshot, attempt) -> None   # probe_one_step(validate=ENTRY_VALIDATOR, build=_candidate)
+owners.cp6.view(historical, attempt) -> tuple[str, str]   # (sha256, body)
+owners.cp6.ENTRY_VALIDATOR = cp6_committee._validate_step   # no adapter: it already has (store, pack, attempt)
+_candidate(output, attempt) = cp6_module(CommitteeReport.model_validate_json(output), attempt.inputs, attempt.number)
 ```
 
 Receipt schema, JSON-lines operations and return shapes do not change.
@@ -134,8 +139,8 @@ preference with no evidence, a fabricated market quote when CP-0 classes no sour
 confidence, a bias despite no market evidence, non-challengeable thesis ref, duplicate challenge, recovery view without
 CP-4 evidence, trade term, unknown CP-3 row, bias/confidence mismatch. Plus: unread cited page (`Cited page not read
 through read_pages: market page:2`) -> invalid attempt 0 re-begun as attempt 1; CP-3 read of a source outside the session scope (positive `financial page:1`; gap any source) -> refused receipt `not_permitted`
-(`tools/source.py:46-47`; gap evidence of scope only, not of completion); CP-6 submit before a read, CP-6 pack tool call, stale
-snapshot. Spec override, an alias in `requested_modules` (CP-3B, CP-6A), CP-4C/CP-3D/CP-2D/CP-3C in a
+(`tools/source.py:46-47`; gap evidence of scope only, not of completion); CP-6 submit before a read, CP-6 pack tool call, CP-3 stale
+snapshot. Spec override, CP-4C/CP-3D/CP-2D/CP-3C in a
 CP-3 run and any request that plans CP-5 without a CP-5 spec refuse at `create` and write nothing.
 
 ## Tool use (D2, TOOL-CONTRACT)
@@ -148,14 +153,18 @@ CP-3 run and any request that plans CP-5 without a CP-5 spec refuse at `create` 
   (review M3).** The session scope is market-only (`SOURCE_SCOPES`, `live/context.py:127-130`; host `_execution_state`): a
   `read_pages financial page:1` in the positive CP-3 session is refused `not_permitted`; in the gap session (empty scope) any
   `read_pages` is refused the same way. Oracle: `refusals.tool_use_refusals` `cp3-out-of-scope-read`, `cp3-out-of-scope-read-gap`.
-- **CP-6 (submit-only step).** No pack tool. One `read_inputs` per attempt before the submit, body =
-  `module_context("committee_challenge")` with `heads[*].claims[*].citations` removed (narrower than the live CONTEXT,
-  D2; Q5). The TOOL-CONTRACT matrix has no CP-3 or CP-6 row; LEAD adds both when this lease freezes.
+- **CP-6 (submit-only step).** No pack tool. One `read_inputs` per attempt before the submit. Exact view (Q5):
+  `owners.cp6.view(historical, attempt)`: (1) `context = module_context(historical, attempt, "committee_challenge")`; `None` raises
+  `WorkflowError("identity_mismatch")`; (2) delete `citations` from every `heads[*].claims[*]`; (3) `body = json.dumps(context, ensure_ascii=False,
+  separators=(",", ":"), allow_nan=False)`; return `(sha256(body.encode()).hexdigest(), body)`. The key tree is frozen in `expected.json`
+  `execution.tool_use.CP-6.view_key_tree` (102 paths, identical for both cases). Assertions: the body's key tree equals `view_key_tree`; no `quote` key occurs
+  at any depth except `cp3_rows[*].cells.quote`, which holds CP-3's own T3.3 settled market-evidence quote facts (not citations; the same exemption as CP-5 F1);
+  no citation quote string of a bound head, and no pack quote, occurs outside those cells; the recorded digest equals the body's sha256. The TOOL-CONTRACT
+  matrix carries the CP-3 and CP-6 rows (added by LEAD with this freeze).
 - Upstream chain tool use (CP-0, CP-1, CP-1A, CP-2): S1a counts plus `read_pages market page:1` in CP-0, CP-1 and CP-1A
   (positive case). **CP-2 read body (review M4).** Not "unchanged": the S1a assertion on `cases/snapshot/cp2-view-tree.json` is
   parameterised by the oracle (`execution.tool_use.CP-2.register_counts_by_case_and_run`; the file is sha256-pinned in the builder).
-  R3: positive `source_classification` 4, `T2D.1` 4, `downstream_readiness` 3, `T2D.10` 3, `cp1a_rows` 74; gap 3, 3, 3, 3, 72. R6 (CP-6
-  half, draft): positive 4, 4, 5, 5, 78; gap 3, 3, 5, 5, 76. Every other register count, the key tree and the status list equal the S1
+  R3: positive `source_classification` 4, `T2D.1` 4, `downstream_readiness` 3, `T2D.10` 3, `cp1a_rows` 74; gap 3, 3, 3, 3, 72. R6: positive 4, 4, 4, 4, 76; gap 3, 3, 4, 4, 74. Every other register count, the key tree and the status list equal the S1
   positive tree; `cp1a_rows` length equals `catalogue_size`. This covers normal R3 runs only; the blocked-CP-1A variant's empty CP-1A
   catalogue belongs to S1a A3b (review 2 Info).
 
@@ -177,7 +186,7 @@ CP-3 run and any request that plans CP-5 without a CP-5 spec refuse at `create` 
   tables and claims as the positive case. The CP-3 session must authenticate the blocked producer, which is H1's failed-producer
   branch, so this also exercises that branch.
 - D3 proof for CP-2 and CP-3 is the CP-6 head (cells named above) in the R6 run. CP-3's consumption is therefore open
-  until the CP-6 lease run verifies.
+  until the CP-6 lease run verifies, and CP-5 (above).
 
 ## Rendered sections (D7: no new block; D7 owners stay)
 
@@ -204,7 +213,7 @@ shared by every module. CP-0's `T3` and `T6` ids are different strings from `T3.
 For each case (`positive`, `gap`) and run (`R3` for CP-3, `R6` for CP-6), one closed run:
 - **Upstream.** CP-0 facts, limitations and commands equal `upstream.CP-0.<run>` (the builder checks this transcription
   against the frozen S1 CP-0 section); CP-1A tables equal the S1 positive tables except the listed `replace_table` /
-  `append_row` deltas and `catalogue_size` (74, 78 positive; 72, 76 gap); CP-1 `source_context` per the literal; CP-2 equals
+  `append_row` deltas and `catalogue_size` (74, 76 positive; 72, 74 gap); CP-1 `source_context` per the literal; CP-2 equals
   S1 positive CP-2; every head restricted.
 - **CP-3.** All five tables, the `cp3.relative_value` table and `cp1_references` (cell text, status, `[source, locator]`
   cites, value class, limitation), claims, own and settled limitations, inherited list (`literal_head` + CP-1 bind +
@@ -214,8 +223,8 @@ For each case (`positive`, `gap`) and run (`R3` for CP-3, `R6` for CP-6), one cl
 - **Rendering.** `render` blocks and rails as in `CP-3.render` / `CP-6.render`. Front-table facts (`cp3.relative_value`, and the CP-6 front tables) carry the **row label** as
   `column` (`cp3_relative_value.py:928`; review M1), for example `cp3.relative_value.preference.value` -> "Preference" and
   `cp3.relative_value.i01.value` -> "Northbridge Term Loan".
-- **Receipt.** `verify_owner_run_receipt` passes; store and publication bytes unchanged; CP-MODEL published (its inputs
-  contain none of CP-3, CP-5, CP-6).
+- **Receipt.** `verify_owner_run_receipt` passes; store and publication bytes unchanged; CP-MODEL published in R3 only (its inputs
+  contain none of CP-3, CP-5, CP-6); R6 has no CP-MODEL head (`runs.R6.note`).
 - **A4 tamper (review M2; S1a lease A4 pattern, `docs/S1A-OWNER-RUN-LEASE.md` A4).** On clones of the closed R3 positive run, (oracle
   `refusals.tamper_refusals`; review 2 finding 1): (a) forge a consistent CP-3 call: a receipt copy whose `read_pages market page:2`
   OwnerCall has an edited `body`, the audit `calls` file rewritten under the edited call's content hash, `receipt.sha256` rewritten;
@@ -244,10 +253,10 @@ R6 only (Q1), two promotions.
 ## Open questions for LEAD (with recommendations)
 
 1. **CP-5 dependency and sequencing.** CP-6 requires CP-5 (block edge). Recommend: freeze and run the CP-3 part on R3 now;
-   freeze the CP-6 part only after the CP-5 owner and its D3 scope lease are integrated; CP-3 consumption (D3) closes only
-   with the R6 run. Alternative (single R6 lease for both) saves two promotions but delays CP-3 behind S1b. No honest bypass
+   the CP-6 part is frozen (2026-10-28) and builds only after the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row); CP-3 consumption (D3) closes only
+   with the R6 run. Alternative (single R6 lease for both) saves two promotions but delays CP-3 behind the CP-5 lease and its Stage 2 connection. No honest bypass
    of the CP-5 edge exists.
-2. **CP-5 premise.** The oracle fixes only what CP-6 reads of CP-5 (`submissions.json` `cp5_premise`): restricted, zero
+2. **CP-5 premise (ruled: met, CP-5 lease ruling 9).** On product-built heads the CP-5 head from the frozen cp5 literal settles restricted with 0 T5B.2 rows, 0 T5B.3 rows, no flagged or unreadable claim, no CP-4 rows and no findings, so `{{CP5_FINDINGS_SUFFIX}}` = '' in both cases. The CP-0 and CP-1A consumer literals already list CP-5 and CP-6. No CP-6 expected value changes. Original question: the oracle fixes only what CP-6 reads of CP-5 (`submissions.json` `cp5_premise`): restricted, zero
    unsupported and contradiction rows, nothing flagged, no CP-4 rows; findings and limitations are bound at run time. The
    CP-5 lease must produce a head satisfying it, or the CP-6 expected values for caps change. Also reconcile the CP-5 and
    CP-6 consumer entries this oracle authored in the CP-0 and CP-1A literals with the CP-5 lease's own.
@@ -259,13 +268,13 @@ R6 only (Q1), two promotions.
    cross-instrument relative value is untestable; adding a second instrument would contradict frozen figures. Recommend
    accept and record as a limitation; do not edit the frozen source.
 5. **CP-6 view (D2).** `module_context("committee_challenge")` includes every bound head's claims with citation quotes
-   (including CP-3's market quotes), which the TOOL-CONTRACT upstream-only scope forbids. Recommend the narrower view above
-   (citations removed), frozen as CP-6's exact view, a probe task to report its key tree, and the test that no pack quote
-   string occurs in the body. CP-3 has no view (pack-tool step).
+   (including CP-3's market quotes), which the TOOL-CONTRACT upstream-only scope forbids. Ruled: the narrower view above (citations removed), frozen as CP-6's exact view with
+   its key tree in `expected.json` (`view_key_tree`), and the test that no `quote` key occurs outside `cp3_rows[*].cells.quote` (CP-3's own T3.3 settled
+   market-evidence quote facts, not citations) and no pack or citation quote string occurs outside those cells. CP-3 has no view (pack-tool step).
 6. **Host (ruled).** `_SOURCE_STEPS["CP-3"]` needs the full H1 rule (prerequisite 2). Ruling Q6: H1 is its own `host.py` task after L2 and
    S1a; the reviewed host code is in `review-precise-r3-1.md`. This lease carries no host edit.
-7. **`T6-FINAL`.** Composed by the core but absent from `methodology.json` `table_ids`. Recommend a one-line D12
-   registration under CP-6 (no collision).
+7. **`T6-FINAL`.** Composed by the core but absent from `methodology.json` `table_ids`. Ruled (Q7): registered under CP-6 `table_ids` in one serialised
+   `methodology.json` change with the CP-6 freeze (D12; D8: no collision, CP-0's `T6` is a different string; no product code reads `table_ids`).
 8. **CP-3 CONTEXT for a JSON-lines participant.** No `read_inputs` view exists for `cp1_facts` / `cp2_rows`. Recommend defer
    (S1a Q6 analogue); the literals use run-time substitution.
 9. **Third case.** A talk-only market source (confidence cap and the level-wording rule) is covered by the refusal
@@ -274,8 +283,9 @@ R6 only (Q1), two promotions.
     Insufficient Information), not `CONDITIONAL / DO NOT RUN` (that path, a `RefusedBegin`, is the financial precedent).
     Recommend keep.
 11. **D1.** This lease registers CP-3 and CP-6 only. `requested_modules` containing `CP-3B` or `CP-6A` canonicalises to
-    CP-3/CP-6 (`registry.canonical`); the lease test asserts receipts and `docs/MODULES.csv` count no completion for the
-    aliases. Recommend LEAD keeps the two rows unregistered until their own lease.
+    CP-3/CP-6 (`registry.canonical`); both aliases canonicalise. G1 does not refuse an alias: `create` plans CP-3 or CP-6. Receipts and `docs/MODULES.csv` count no CP-3B or CP-6A completion, and the
+    CP-3B and CP-6A rows stay unverified. The CP-6 test asserts that `plan(R6 with CP-6A)` equals the R6 plan and that the receipt heads name CP-6 only. The CP-3 test asserts that the plan of a selection naming CP-3B equals the plan of the same selection naming CP-3, and that the receipt heads name CP-3 only. The two rows stay
+    unregistered until their own lease. (Ruled; CP-3B by LEAD Stage 2 round 3 item 1.)
 
 Not verified: no end-to-end run (a genuine CP-1 promotion and the owner harness) and no pytest; CP-1's `narrative`,
 `readiness` and `quality` stages were assumed unaffected by the extra source and the larger `requested_modules`, as S1
@@ -295,4 +305,9 @@ Frozen after review-precise-r3-1, revision 2, review-precise-r3-2 and revision 3
 80450c52d4ae878ca091c4fdde992cf79b71168533a609c2a8d295368f393e37. Verifier line numbers cite the LEAD
 branch at 41c08cb and move when S1a integrates; tests assert refusal codes. G1 seams follow
 `docs/G1X-OWNER-CORE-PROTOCOL.md` (CP-3 live-contract). Build after S1a, G1-X and H1 integrate. The
-CP-6 half is not frozen: it waits for S1b (CP-5) and its D3 scope lease.
+CP-6 half is frozen below.
+
+## LEAD freeze of the CP-6 half (2026-10-28)
+Frozen after `work/lead/cp6-freeze/review-precise-cp6-freeze-1.md` (F1-F9, Q2/Q5/Q7/Q11 and the exact restatements, as ruled by LEAD). Oracle hashes
+(manifest, submissions, expected, builder): see the "Frozen by LEAD 2026-10-28 (CP-6 half)" paragraph at the top of this file. Scratch rebuilds of
+`cases` and `src` from two fresh copies were byte-identical to the tree. The CP-6 half builds after the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row).

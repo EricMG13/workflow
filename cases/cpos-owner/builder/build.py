@@ -22,7 +22,7 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
     # Text-checked only (the literal tables below are asserted to appear in them). A changed pin is the
     # prompt to re-run these checks and move the pin in the same commit; D12 registrations touch the first.
     "src/deploy_vii/report_view.py": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",

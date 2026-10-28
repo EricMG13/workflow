@@ -42,7 +42,7 @@ from deploy_vii.execution import (
 )
 from deploy_vii.live.tools import cited_locators
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.registry import plan, step_chain
+from deploy_vii.registry import modules, plan, step_chain
 from deploy_vii.render import empty_view
 from deploy_vii.report_view import _spec_of, build, pathways
 from deploy_workflow import owner_workflow as ow
@@ -80,16 +80,21 @@ def test_owner_spec_row_equals_the_lease() -> None:
 
 
 def test_registration_rows_are_appended_and_complete() -> None:
-    assert list(ow.OWNER_SPECS) == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL", "CP-3"]
-    assert ow.SUPPORTED_ANALYTICAL == {"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3"}
+    rows = list(ow.OWNER_SPECS)
+    assert rows[:5] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
+    assert "CP-3" in rows[5:]
+    assert {"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3"} <= ow.SUPPORTED_ANALYTICAL
     assert ow._QUALIFICATION["CP-3"] is cp3_relative_value.PROMOTED
     assert ow._QUALIFICATION["CP-3"] is cp3.QUALIFICATION
     assert ow._PROBES["CP-3"] is cp3.probe
     assert ow._ENTRY_VALIDATORS["CP-3"] is cp3.ENTRY_VALIDATOR
     assert cp3.ENTRY_VALIDATOR is cp3_relative_value._validate_step
-    assert list(ow._PROBES) == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-3"]
-    assert list(ow._ENTRY_VALIDATORS) == ["CP-1A", "CP-2", "CP-3"]
-    assert list(ow._QUALIFICATION) == ["CP-1", "CP-1A", "CP-2", "CP-MODEL", "CP-3"]
+    assert list(ow._PROBES)[:4] == ["CP-0", "CP-1", "CP-1A", "CP-2"]
+    assert "CP-3" in list(ow._PROBES)[4:]
+    assert list(ow._ENTRY_VALIDATORS)[:2] == ["CP-1A", "CP-2"]
+    assert "CP-3" in list(ow._ENTRY_VALIDATORS)[2:]
+    assert list(ow._QUALIFICATION)[:4] == ["CP-1", "CP-1A", "CP-2", "CP-MODEL"]
+    assert "CP-3" in list(ow._QUALIFICATION)[4:]
 
 
 def test_live_contract_module_takes_no_owner_core_parts() -> None:
@@ -482,7 +487,15 @@ def test_control_selection_is_created(tmp_path: Path) -> None:
     assert (tmp_path / "store").exists()
 
 
-@pytest.mark.parametrize("extra", ["CP-4C", "CP-3D", "CP-2D", "CP-3C"])
+def _specless_modules() -> list[str]:
+    """Canonical module ids that have no owner spec in the current registration (never a fixed
+    id: a later module gains a spec)."""
+    found = [m.module_id for m in modules() if m.module_id not in ow.OWNER_SPECS]
+    assert found, "every canonical module has an owner spec: this refusal test has no subject"
+    return found
+
+
+@pytest.mark.parametrize("extra", ["CP-4C", "CP-2D", "CP-3C", *_specless_modules()])
 def test_a_module_without_a_spec_in_a_cp3_run_refuses_and_writes_nothing(
     extra: str, tmp_path: Path
 ) -> None:

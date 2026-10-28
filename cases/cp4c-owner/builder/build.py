@@ -36,9 +36,9 @@ PINS = {
     "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
     "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
     "cases/cp4-owner/expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
-    "cases/cp3c-owner/manifest.json": "7a0056a1145f9a92efd11f18fd6512e8c86e508b25176d457f0fe07394ad8a5a",
+    "cases/cp3c-owner/manifest.json": "06e39efb3994fe44859a055f9a7436a29890989ee33ab8b1a27d12764d38c6b2",
     "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
-    "src/deploy_vii/business_context.py": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
+    "src/deploy_vii/business_context.py": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
 }
 
 

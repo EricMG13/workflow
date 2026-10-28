@@ -29,7 +29,7 @@ PINS = {
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
     "cases/cp2d-owner/expected.json": "0f07bc75d4123a10c9360a5e800bd0727a5625cbaf214c08bb8f3a7a0f2d430c",
     "cases/cp2d-owner/builder/build.py": "c274ce84e12541855b8dbe4bd66bada4a7f34298869b0901d47a2e10517c6b04",
-    "src/deploy_vii/business_context.py": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
+    "src/deploy_vii/business_context.py": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
 }
 for rel, want in PINS.items():
     got = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()

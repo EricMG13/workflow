@@ -1264,6 +1264,15 @@
       "sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
       "reason": "Register the CP-2E rails binding map (D12 one-line registration, appended last) with the CP-2E owner core.",
       "review": "docs/CP2E-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
+      "project_commit": "b48a3c5be974bdebbd9f0213e2d589e8ffd456ce",
+      "sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
+      "reason": "Merged registration tail: CP-2E appended after CP-DR in SHIPPED_MAPS (CP-3D, CP-DR, CP-2E rows all retained).",
+      "review": "docs/CP2E-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

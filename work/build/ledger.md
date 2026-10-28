@@ -352,3 +352,4 @@
 - 20:03 Shared defect-class test built (6e89f6e). Controller: remove the 3 new noqa BLE001 (suppressions may only fall); CP-0 verbatim free-text accepted (require_issue=False) is Info. Then mx-precise review.
 - 20:05 CP-2E fix1 done (5761df4, 2b58c89; 1033 passed). Round 5 item 8 rulings. Scoped re-review dispatched (check p3 follow-up invalid).
 - 20:06 Shared defect test follow-up 8c5bf8b (no new suppressions; noqa 13). mx-precise review dispatched.
+- 20:06 CP-4 review: REQUEST CHANGES (M1 acceptance tests; M2 probe never exercised). Fix round 1.

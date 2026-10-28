@@ -1282,6 +1282,24 @@
       "sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
       "reason": "Register the CP-8 binding map (D12 one-line registration, appended last after CP-2E) with the CP-8 owner core; merged tail retains CP-3D, CP-DR and CP-2E.",
       "review": "docs/CP8-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
+      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
+      "sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "reason": "Register the CP-2A binding map (D12 one-line registration, SHIPPED_MAPS += CP2A, appended last after CP-8); merged tail retains CP-3D, CP-DR, CP-2E and CP-8.",
+      "review": "docs/CP2A-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
+      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
+      "sha256": "09ab059d832204059f454e4c9077e0c2d02493717080580a80ab44fcb080acba",
+      "reason": "Add the CP-2A _DISTRESSED composition (two _Spec rows), its _spec_of entry and the two block ids in the distressed_restructuring preset (D12 registration, rows only); retains the CP-3D _RELATIVE_VALUE composition.",
+      "review": "docs/CP2A-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

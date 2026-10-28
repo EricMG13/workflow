@@ -51,3 +51,4 @@
 - 2026-10-28T12:59Z cp2e-stage1-rulings `pytest tests/test_method_cp2e.py` exit 0, 75 passed, branch worktree-agent-a219254fe68cc1c2d 737191f (E1-E5); E4a conflicts with fixture_no_rate_terms (sent to LEAD; test restructured as strict xfail), one unruled raise (cov_after n.m.), agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
 - 2026-10-28 cp1d-stage1 rulings review (mx-adversary) on 85a2095: CHANGES REQUIRED (N1 basis quote raises Inexact in validation_issues; N2 CP-1 ratios below 0.1x rejected by the 38-digit bound). Fix round 2 + round 4 (i)-(k) dispatched
 - 2026-10-28 cp3d-stage1 re-review (mx-precise) on b36cdb3: APPROVE; merged into lane, 182 passed on lane
+- 2026-10-28T13:05Z cp2e-stage1-rulings test restructure `pytest tests/test_method_cp2e.py` exit 0, 75 passed 1 xfailed (strict, E4a oracle disagreement), branch worktree-agent-a219254fe68cc1c2d 900dce4; mx-precise review dispatched

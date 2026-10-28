@@ -77,3 +77,4 @@ one-line registrations, following `bindings/cp4.py`. `src/deploy_vii` never impo
 - **`_check_steps` refuses `not_permitted` at create** in two cases (rulings round 10 item 6; rides with the next G1-X change):
   - an owner-only step whose `sources` disagrees with the H1 `_OWNER_SCOPES` row;
   - a core whose `STEP_IDS` is not a tuple of str.
+- **A core reads model payload text only through `deploy_vii.live.schema.json_object` or `payload_document`.** This covers its `RULES`, its `_PRECHECKS` gate and its `submit`. Those are the bounded, storable parse that 0d-b (1a1a140) installed; no raw `json.loads` of model text is allowed. Because of this, a payload cannot raise after the binding audit write (LEAD amendment 2026-10-28, 0d-b plan §3).

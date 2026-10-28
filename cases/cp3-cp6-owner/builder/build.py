@@ -163,10 +163,12 @@ RUNS = {
         "cp1a_consumers": ["CP-2", "CP-3", "CP-MODEL"],
     },
     "R6": {
-        "requested_modules": [*BASE_REQUEST, "CP-3", "CP-5", "CP-6"],
-        "plan_order": ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL", "CP-3", "CP-5", "CP-6"],
+        # Rev 1 (LEAD ruling 1, CP-5 owner preparation): R6 does not request CP-MODEL. CP-5 follows every selected analyst,
+        # CP-MODEL included, and G1 publishes CP-MODEL last, so a run that requests it could never begin CP-5.
+        "requested_modules": [m for m in BASE_REQUEST if m != "CP-MODEL"] + ["CP-3", "CP-5", "CP-6"],
+        "plan_order": ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-3", "CP-5", "CP-6"],
         "live_consumers": ["CP-1", "CP-1A", "CP-2", "CP-3", "CP-5", "CP-6"],
-        "cp1a_consumers": ["CP-2", "CP-3", "CP-5", "CP-6", "CP-MODEL"],
+        "cp1a_consumers": ["CP-2", "CP-3", "CP-5", "CP-6"],
     },
 }
 # Cross-check the hand-derived plan and consumer lists against the methodology data file (data
@@ -209,7 +211,7 @@ for _name, _run in RUNS.items():
     _cons = [
         m
         for m in METH_ORDER
-        if m == "CP-MODEL" or (m in _sel and "CP-1A" in (*_cat[m]["required"], *_cat[m]["optional"]))
+        if m in _sel and (m == "CP-MODEL" or "CP-1A" in (*_cat[m]["required"], *_cat[m]["optional"]))
     ]
     assert _cons == _run["cp1a_consumers"], (_name, _cons)
 
@@ -1639,7 +1641,7 @@ def main():
             run: {
                 "requested_modules": RUNS[run]["requested_modules"], "plan_order": RUNS[run]["plan_order"],
                 "live_consumers_of_cp0": RUNS[run]["live_consumers"], "cp1a_consumers": RUNS[run]["cp1a_consumers"],
-                "note": ("CP-3 lease run (CP-5 and CP-6 not selected)" if run == "R3" else "CP-6 lease run; CP-5 is required by CP-6 (methodology.json) and CP-3 is its second consumer"),
+                "note": ("CP-3 lease run (CP-5 and CP-6 not selected)" if run == "R3" else "CP-6 lease run; CP-5 is required by CP-6 (methodology.json) and CP-3 is its second consumer; CP-MODEL is not requested (rev 1: CP-5 follows every selected analyst and G1 publishes CP-MODEL last, so CP-5 could not begin; CP-MODEL publication is proved by S1a). The shared upstream.statuses.CP-MODEL, execution.statuses and execution.consumption.CP-MODEL hold for R3 only: R6 has no CP-MODEL head"),
             } for run in RUNS
         },
         "cases": [

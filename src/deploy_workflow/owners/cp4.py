@@ -2,17 +2,26 @@
 
 CP-4 writes no new analytical core: `cp4_legal.covenant_interpretation` composes the 31 tables
 and owns every number. This module adds the lease's semantic gate (LEAD ruling Q1 = A) and a pure
-`compute` that runs the gate, then the engine's validator, then its composer. Connection
-(`cp4_upstream` over the bound heads), `view`, `probe` and the core `precheck` hook are later
-stages and are not here.
+`compute` that runs the gate, then the engine's validator, then its composer.
+
+Stage 2 connects it to G1 (rulings stage2 Q3, Q4): the entry validator, the exact `step_context`
+view, the verifier probe and the `precheck` hook that runs the semantic gate. `cp4_legal` reads
+the bound CP-0/CP-1 heads itself (`upstream_of`), so there is no further store adapter.
 """
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass
 
+from pydantic import ValidationError
+
 from deploy_vii import cp4_legal
-from deploy_vii.contracts import Input
+from deploy_vii.contracts import Input, Module
+from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot
+from deploy_vii.live.schema import json_object
 from deploy_vii.preparation import PreparedPack
+from deploy_workflow.owners.cp1a import probe_one_step
 
 # Closed list, frozen from the gap legal source (Clause 2.3) and absent from every positive legal,
 # identity and financial page. Never "defined in", "as defined in" or the bare "incorporated".
@@ -98,3 +107,44 @@ def compute(inputs: Cp4Inputs) -> Cp4Result:
         inputs.pack, inputs.submission, inputs.upstream, inputs.inputs
     )
     return Cp4Result(issues=(), report=report)
+
+
+# --- Stage 2: the plug-in parts of docs/G1X-OWNER-CORE-PROTOCOL.md section 2 ------------------
+
+# The validator CP-4's own entry hands `Execution.submit_step` (R4-2: the verifier replays an
+# invalid step through it at the historical snapshot). The signature already matches: no adapter.
+ENTRY_VALIDATOR = cp4_legal._validate_step
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of CP-4's one read: `cp4_legal.context_block` over the pack and the CP-0 and
+    CP-1 heads `attempt` binds, as compact JSON (lease Public API, `inputs="step_context"`)."""
+    block = cp4_legal.context_block(historical.pack(), cp4_legal.upstream_of(historical, attempt))
+    body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = cp4_legal.CovenantInterpretationReport.model_validate_json(output)
+    return cp4_legal.cp4_module(report, attempt.inputs, attempt.number)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """The verifier probe: the engine's `_validate_step` and settlement rebuild the head."""
+    probe_one_step(store, snapshot, attempt, validate=cp4_legal._validate_step, build=_candidate)
+
+
+def precheck(store: Execution, binding: object, stored: str) -> tuple[str, ...]:
+    """The Q1 gate over the filled payload (protocol section 4): the `Same definition` refusals.
+
+    The text is read only through the bounded `json_object` parse (protocol section 6), then as
+    the engine's schema. Text that is not an object, or does not fit the schema, gets no issue
+    here: it is the step validator's to refuse as a shape error when the journal runs it, so
+    this gate never raises after the binding write and never accepts such text on its own."""
+    if json_object(stored) is None:
+        return ()
+    try:
+        submission = cp4_legal.CovenantInterpretationSubmission.model_validate_json(stored)
+    except ValidationError:
+        return ()
+    return semantic_issues(pack=store.pack(), submission=submission)

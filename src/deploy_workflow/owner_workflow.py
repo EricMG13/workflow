@@ -5,11 +5,11 @@ adapter owns finite capabilities, immutable participation evidence and the recei
 It generalises `financial_workflow` (which stays the reference and is imported, never
 edited): the walk follows `registry.plan`, each module's steps come from a declared
 `OwnerSpec`, and paths are supplied by trusted setup, never by a message.
-G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 (their probes and the CP-2
-read view live in `deploy_workflow.owners`). G1-X (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves
+G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 and Stage 2 adds CP-4 (their
+probes and views live in `deploy_workflow.owners`). G1-X (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves
 owner cores: an owner-only module (no live step contract) is entered through its registered
 core (`_CORES`), any module may register a precheck gate (`_PRECHECKS`), and every module with
-a `_VIEWS` entry may be read through `module_context`. No durable resume exists (an
+a `_VIEWS` entry may be read through `module_context` or `step_context`. No durable resume exists (an
 interrupted run is refused and a new run starts).
 """
 
@@ -33,6 +33,7 @@ from deploy_vii.cp0_workflow import _validate_review as cp0_validate_review
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_workflow import PROMOTED, _quality_stage, validate_cp1_stage
 from deploy_vii.cp2_synthesis import PROMOTED as CP2_PROMOTED
+from deploy_vii.cp4_legal import PROMOTED as CP4_PROMOTED
 from deploy_vii.cp5_integrity import PROMOTED as CP5_PROMOTED
 from deploy_vii.cp_model_workflow import (
     PUBLISHED,
@@ -94,7 +95,7 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2, cp2a, cp2d, cp2e, cp3, cp3d, cp5, cp8, cpdr
+from deploy_workflow.owners import cp1a, cp2, cp2a, cp2d, cp2e, cp3, cp3d, cp4, cp5, cp8, cpdr
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
@@ -113,6 +114,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-8",
         "CP-2A",
         "CP-2D",
+        "CP-4",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
@@ -140,6 +142,7 @@ _QUALIFICATION = {
     "CP-8": cp8.QUALIFICATION,
     "CP-2A": cp2a.QUALIFICATION,
     "CP-2D": cp2d.QUALIFICATION,
+    "CP-4": CP4_PROMOTED,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -154,15 +157,18 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-8": cp8.probe,
     "CP-2A": cp2a.probe,
     "CP-2D": cp2d.probe,
+    "CP-4": cp4.probe,
 }
-# The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4; G1-X §3: any
-# step with an entry here may declare `inputs="module_context"`).
+# The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
+# M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
+# `inputs="step_context"`, rulings stage2 Q4). Both are served as `_VIEWS[step](historical, attempt)`.
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
     "research": cpdr.view,
     "integrity_review": cp5.view,
     "downside_pathway": cp2a.view,
     "liquidity_bridge": cp2d.view,
+    "legal_covenants": cp4.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -178,6 +184,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-8": cp8.ENTRY_VALIDATOR,
     "CP-2A": cp2a.ENTRY_VALIDATOR,
     "CP-2D": cp2d.ENTRY_VALIDATOR,
+    "CP-4": cp4.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -188,7 +195,7 @@ class StepSpec:
     """One journal step. `sources`: pack tools (SourceSession); `extract`: statement
     extraction is offered; `upstream_grant`: frozen-upstream grant (none yet);
     `inputs`: `projection` lets `read_inputs` return the adopted CP-1 view and
-    `module_context` the step's exact view (its `_VIEWS` entry); any `inputs` other than
+    `module_context` and `step_context` the step's exact view (its `_VIEWS` entry); any `inputs` other than
     `none` must be read before the step is submitted, with or without a source session;
     `rules`: `precheck` applies the evidence rules of `financial_workflow._evidence_issues`
     before the journal (a failing submit is refused and writes nothing; CP-0 and CP-1 only);
@@ -201,7 +208,7 @@ class StepSpec:
     sources: bool
     extract: bool
     upstream_grant: Mapping[str, Any] | None
-    inputs: Literal["none", "projection", "module_context"]
+    inputs: Literal["none", "projection", "module_context", "step_context"]
     rules: Literal["none", "precheck", "journaled"]
 
 
@@ -219,6 +226,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.cp1_workflow import FinancialSubmission
     from deploy_vii.cp2_synthesis import CreditSynthesisSubmission
     from deploy_vii.cp3_relative_value import RelativeValueSubmission
+    from deploy_vii.cp4_legal import CovenantInterpretationSubmission
     from deploy_vii.cp5_integrity import IntegritySubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
@@ -237,7 +245,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
         *,
         sources: bool = False,
         extract: bool = False,
-        inputs: Literal["none", "projection", "module_context"] = "none",
+        inputs: Literal["none", "projection", "module_context", "step_context"] = "none",
         rules: Literal["none", "precheck", "journaled"] = "none",
     ) -> StepSpec:
         return StepSpec(
@@ -396,6 +404,21 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="analytical",
             publish=None,
         ),
+        "CP-4": OwnerSpec(
+            module_id="CP-4",
+            steps=(
+                step(
+                    "legal_covenants",
+                    CovenantInterpretationSubmission,
+                    sources=True,
+                    inputs="step_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
     }
 
 
@@ -419,7 +442,9 @@ class OwnerBinding(Contract):
 # G1-X §4: a module's optional precheck gate, `precheck(store, binding, stored)` over the filled
 # payload. Issues refuse the submission before any rule and before the journal; the verifier
 # recomputes it for every submission. Module tasks add their rows (live-contract or owner-only).
-_PRECHECKS: dict[str, Callable[[Execution, OwnerBinding, str], tuple[str, ...]]] = {}
+_PRECHECKS: dict[str, Callable[[Execution, OwnerBinding, str], tuple[str, ...]]] = {
+    "CP-4": cp4.precheck,
+}
 
 
 class OwnerCall(Contract):
@@ -645,9 +670,12 @@ def _inputs(store: Execution, binding: OwnerBinding, spec: StepSpec) -> tuple[st
     """The (sha256, body) `read_inputs` returns for `spec`, recomputed from the journal."""
     if spec.inputs == "projection":
         return _projection(store, _fin(binding))
-    if spec.inputs == "module_context":
+    if spec.inputs in ("module_context", "step_context"):
+        view = _VIEWS.get(spec.step_id)
+        if view is None:
+            raise WorkflowError("not_permitted")
         historical = _owner_historical(store, binding)
-        return _VIEWS[spec.step_id](historical, _attempt_of(historical.read(), binding.ticket_id))
+        return view(historical, _attempt_of(historical.read(), binding.ticket_id))
     raise WorkflowError("not_permitted")
 
 
@@ -713,7 +741,8 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
     when a step is journaled. Its step ids stay outside `live.submission.STEPS` (so `_fill`
     reads the core's `SCHEMAS`), it offers no statement extraction, a step has pack sources exactly when `host._OWNER_SCOPES`
     has its row, and a `journaled` step has pack sources (`RULES` judges the session's `Seen`). Every step: no upstream grant, some
-    evidence (pack sources or a read), `module_context` only with a `_VIEWS` entry, and the
+    evidence (pack sources or a read), `module_context` or `step_context` only with a `_VIEWS`
+    entry, and the
     financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
     take."""
     core = _CORES.get(module_id)
@@ -770,7 +799,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
             not served
             or item.upstream_grant is not None  # grant calls are not verifiable in G1
             or (not item.sources and item.inputs == "none")
-            or (item.inputs == "module_context" and item.step_id not in _VIEWS)
+            or (item.inputs in ("module_context", "step_context") and item.step_id not in _VIEWS)
             or (
                 module_id not in _FINANCIAL_MODULES
                 and (item.rules == "precheck" or item.inputs == "projection")

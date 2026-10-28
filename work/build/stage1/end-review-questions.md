@@ -1,0 +1,3 @@
+# Stage 1 end review: questions for LEAD (one batch, sent after R1-R3)
+
+- **R2 L1 (CP-L10 `change` exactness).** `cpl10.py:296-300` (`_q38`) stores `b - a` rounded to 38 digits HALF_EVEN with no Inexact trap, but lease :114 says "one exact subtraction". Two CP-1 38-digit ratios with different exponents need 39 digits (5/3 against 100/7: stored ...619047, exact ...6190473). The design note (stage1/cpl10/design-notes.md:9) chose 38 digits; no ruling amends the lease. Either amend the lease to 38 digits, or store exactly (or trap Inexact, as cp4c `_exactly` does). No frozen case is affected. Probe: stage1-end-R2/probes/p_r2_cpl10_change_exact.py (exit 1).

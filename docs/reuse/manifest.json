@@ -1273,6 +1273,15 @@
       "sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
       "reason": "Merged registration tail: CP-2E appended after CP-DR in SHIPPED_MAPS (CP-3D, CP-DR, CP-2E rows all retained).",
       "review": "docs/CP2E-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
+      "project_commit": "fb7819b4986b38cbf77665420ae44b1ba02ff4e1",
+      "sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
+      "reason": "Register the CP-8 binding map (D12 one-line registration, appended last after CP-2E) with the CP-8 owner core; merged tail retains CP-3D, CP-DR and CP-2E.",
+      "review": "docs/CP8-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

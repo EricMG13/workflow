@@ -290,9 +290,6 @@ def test_facts(case: str) -> None:
     got = report(case)
     assert [c.fact.fact_id for c in got.cells] == [f["fact_id"] for f in want]
     for cell, expected in zip(got.cells, want, strict=True):
-        if (case, cell.fact.fact_id) == ("fixture_total_loss", "T2R.1.u_cp2g.status"):
-            # B5: the bound Input's status; the frozen `composer_only` is a strict xfail below
-            expected = {**expected, "text": BOUND[3].status, "shown": BOUND[3].status}
         _assert_cell(cell, expected)
 
 
@@ -1431,19 +1428,17 @@ def test_upstream_statuses_are_the_bound_inputs() -> None:
     ]
 
 
-@pytest.mark.xfail(
-    strict=True, reason="B5: the frozen composer-only fixture pins CP-2G's head status"
-)
 def test_frozen_composer_only_cp2g_status() -> None:
-    """`cases.fixture_total_loss` pins `T2R.1.u_cp2g.status` as `composer_only` (CP-2G's head
-    status); under B5 the status is the bound CP-2G Input's, which cannot be `composer_only`."""
+    """B7 (round 12): `cases.fixture_total_loss` pins `T2R.1.u_cp2g.status` as the bound CP-2G
+    Input's status, `restricted`, no longer CP-2G's head status `composer_only`."""
     want = next(
         f
         for f in EXPECTED["cases"]["fixture_total_loss"]["facts"]
         if f["fact_id"] == "T2R.1.u_cp2g.status"
     )
+    assert want["text"] == want["shown"] == "restricted"
     got = next(c for c in report("fixture_total_loss").cells if c.fact.fact_id == want["fact_id"])
-    assert got.fact.text == want["text"]
+    _assert_cell(got, want)
 
 
 def test_upstream_status_needs_a_bound_input() -> None:

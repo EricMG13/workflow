@@ -27,8 +27,8 @@ PINS = {
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/cp2d-owner/manifest.json": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
-    "cases/cp2d-owner/expected.json": "7e998cb88b0923ca85ff2c5a3ee684525ec8a8f4445b8a5ecb2ed6aeea92950c",
-    "cases/cp2d-owner/builder/build.py": "0182af3b264292745ac77509926c167eb91aa0126c62ff9dc7b6e56c3ad0613e",
+    "cases/cp2d-owner/expected.json": "0f07bc75d4123a10c9360a5e800bd0727a5625cbaf214c08bb8f3a7a0f2d430c",
+    "cases/cp2d-owner/builder/build.py": "c274ce84e12541855b8dbe4bd66bada4a7f34298869b0901d47a2e10517c6b04",
     "src/deploy_vii/business_context.py": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
 }
 for rel, want in PINS.items():
@@ -204,8 +204,9 @@ def add_months(d, n):
 
 
 def months_between(d0, d1):
+    """The largest whole number of months n with add_months(d0, n) on or before d1 (A1, round 6)."""
     n = (d1.year - d0.year) * 12 + (d1.month - d0.month)
-    return n - 1 if d1.day < d0.day else n
+    return n - 1 if add_months(d0, n) > d1 else n
 
 
 def r4(x):

@@ -365,7 +365,7 @@ def test_prohibited_word_in_question_text() -> None:
 
 @pytest.mark.parametrize("word", ["Recommend", "REFINANCING", "covenant", "Recovery"])
 def test_each_prohibited_word_case_insensitive(word: str) -> None:
-    # lease-literal: :117 case-insensitive substrings "recommend", "refinanc", "covenant", "recovery"
+    # lease-literal: :117 case-insensitive "recommend", "refinanc", "covenant", "recovery"
     limitation = f"No prepared source names the {word} terms."
     sub = one_gap(TRANSACTIONS, DISTRIBUTIONS, edited(OWNER, limitation=limitation))
     assert check(sub) == ("text carries a prohibited conclusion: owner-identity",)
@@ -398,8 +398,8 @@ def _t5(text: str) -> Fact:
 
 
 def test_gap_description_containing_a_semicolon() -> None:
-    # lease-literal: :46 kind/severity before the first ": "; consumers between the last
-    # "; affects " and the next "; "; remediation the rest (T5 text form: readiness.py:500)
+    # lease-literal: :46, as amended by ruling R4 (round 5): kind/severity before the first ": ";
+    # the one "; affects " whose segment is a list of methodology ids splits the rest
     (gap,) = parse_agenda(
         (
             _t5(
@@ -525,3 +525,210 @@ def test_tdr3_layout() -> None:
     assert tdr3.row_header == "Total"
     (row,) = tdr3.rows
     assert (row.row_id, row.label, row.row_kind) == ("total", "All gaps", "row")
+
+
+# --- rulings round 5 (docs/rulings/2026-10-28-stage1.md "# Round 5" section CP-DR) --------------
+AMBIGUOUS = "Not stated: the CP-0 gap text names its consumers ambiguously"  # ruling-literal: R4
+
+
+def test_r4_a_later_affects_that_names_no_module_is_not_a_split() -> None:
+    # ruling-literal: R4 a candidate split is a "; affects " whose segment up to the next "; "
+    # is a ", "-list of methodology ids; exactly one candidate is used
+    (gap,) = parse_agenda((_t5("scope/material: Desc; affects CP-DR; Ask; affects nothing"),))
+    assert (gap.kind_severity, gap.description) == ("scope/material", "Desc")
+    assert gap.named_consumers == ("CP-DR",)
+    assert gap.remediation == "Ask; affects nothing"
+
+
+def test_r4_an_earlier_affects_that_names_no_module_is_not_a_split() -> None:
+    # ruling-literal: R4 (the "valuation" segment is not a methodology id)
+    (gap,) = parse_agenda((_t5("scope/material: Note; affects valuation; affects CP-DR; Ask"),))
+    assert gap.description == "Note; affects valuation"
+    assert gap.named_consumers == ("CP-DR",)
+    assert gap.remediation == "Ask"
+
+
+AMBIGUOUS_TEXT = (
+    "scope/material: Content that affects CP-DR; affects CP-DR; Supply; affects CP-DR; documents"
+)
+
+
+def test_r4_two_candidate_splits_parse_as_not_stated() -> None:
+    # ruling-literal: R4 more than one candidate: description, consumers and remediation are
+    # not stated; kind and severity still come before the first ": "
+    (gap,) = parse_agenda((_t5(AMBIGUOUS_TEXT),))
+    assert gap.kind_severity == "scope/material"
+    assert (gap.description, gap.named_consumers, gap.remediation) == (None, None, None)
+    assert gap.text == AMBIGUOUS_TEXT
+
+
+def test_r4_two_candidate_splits_settle_with_missing_cells_and_the_own_line() -> None:
+    # ruling-literal: R4 nothing is refused; the cells are missing with the pinned reason and the
+    # own line names the gap
+    gaps = parse_agenda((_t5(AMBIGUOUS_TEXT),))
+    sub = submission(SUBMISSIONS["cpdr"]["partial"])
+    assert validate_research(submission=sub, upstream=gaps, pack=sources()) == ()
+    result = compose(CpdrInputs(agenda=gaps, submission=sub, as_of=AS_OF))
+    facts = {f.fact_id: f for f in result.facts}
+    for field in ("description", "named_consumers"):
+        fact = facts[f"TDR.1.{GAP_ID}.{field}"]
+        assert (fact.status, fact.text, fact.limitation) == ("missing", None, AMBIGUOUS)
+        assert fact.value_class is None
+        assert fact_spelling(fact, GAP_REF)[1:] == ("gap", f"∅ {GAP_REF}")
+    assert facts[f"TDR.1.{GAP_ID}.kind_severity"].text == "scope/material"
+    own_line = (
+        f"CP-0 gap {GAP_ID} cannot be split into description, consumers and remediation; "
+        "its full text is the gap."
+    )
+    partial = EXPECTED["cases"]["partial"]["own_limitations"]
+    assert result.limitations == (partial[0], own_line, *partial[1:])
+    validate_tables(result.tables, result.facts)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        pytest.param("unknown/material: Desc; affects CP-DR; Ask", id="kind-outside-vocabulary"),
+        pytest.param("scope/severe: Desc; affects CP-DR; Ask", id="severity-outside-vocabulary"),
+        pytest.param("scope/material: Desc; affects nobody; Ask", id="no-candidate-split"),
+    ],
+)
+def test_r4_text_outside_the_readiness_form_fails_closed(text: str) -> None:
+    # R4 rules one and several candidates; none, or a head outside readiness.GapKind /
+    # GapSeverity, is not CP-0's T5 form and stays an invariant raise (listed for LEAD)
+    with pytest.raises(ValueError, match="not in the readiness form"):
+        parse_agenda((_t5(text),))
+
+
+def test_r5_row_labels() -> None:
+    # ruling-literal: R5 the row id with "-" and "_" as spaces and the first letter upper-cased
+    sub = submission(SUBMISSIONS["cpdr"]["partial"])
+    result = compose(CpdrInputs(agenda=agenda(empty=False), submission=sub, as_of=AS_OF))
+    labels = {t.table_id: [(r.row_id, r.label) for r in t.rows] for t in result.tables}
+    assert labels["TDR.1"] == [(GAP_ID, "Missing ownership transaction")]
+    assert labels["TDR.2"] == [
+        ("transactions", "Transactions"),
+        ("distributions", "Distributions"),
+        ("owner-identity", "Owner identity"),
+    ]
+    assert labels["TDR.3"] == [("total", "All gaps")]
+
+
+def test_a_gap_naming_no_consumer_settles() -> None:
+    # ruling-literal: round 6e CP-DR, a gap that names no consumer settles: named_consumers is
+    # missing with the pinned reason, description is parsed as usual, and no own line is added
+    gaps = parse_agenda((_t5("scope/material: Ownership is absent; affects ; Supply it"),))
+    sub = submission(SUBMISSIONS["cpdr"]["partial"])
+    result = compose(CpdrInputs(agenda=gaps, submission=sub, as_of=AS_OF))
+    validate_tables(result.tables, result.facts)
+    facts = {f.fact_id: f for f in result.facts}
+    consumers = facts[f"TDR.1.{GAP_ID}.named_consumers"]
+    reason = "Not stated: the CP-0 gap names no consumer"
+    assert (consumers.status, consumers.text, consumers.limitation) == ("missing", None, reason)
+    assert consumers.value_class is None
+    assert fact_spelling(consumers, GAP_REF)[1:] == ("gap", f"∅ {GAP_REF}")
+    description = facts[f"TDR.1.{GAP_ID}.description"]
+    assert (description.status, description.text) == ("known", "Ownership is absent")
+    assert result.limitations == tuple(EXPECTED["cases"]["partial"]["own_limitations"])
+
+
+def test_r4_description_containing_a_colon() -> None:
+    # ruling-literal: R4 kind and severity come before the FIRST ": " (reviewer L2, round 6e)
+    (gap,) = parse_agenda((_t5("scope/material: Note: register absent; affects CP-DR; Ask"),))
+    assert (gap.kind_severity, gap.description) == ("scope/material", "Note: register absent")
+    assert (gap.named_consumers, gap.remediation) == (("CP-DR",), "Ask")
+
+
+def test_r5_row_label_with_underscores_and_capitals() -> None:
+    # ruling-literal: R5 "_" is a space too, and only the first letter changes case
+    sub = one_gap(edited(TRANSACTIONS, question_id="share_register-UK"), DISTRIBUTIONS, OWNER)
+    result = compose(CpdrInputs(agenda=agenda(empty=False), submission=sub, as_of=AS_OF))
+    (tdr2,) = (t for t in result.tables if t.table_id == "TDR.2")
+    assert tdr2.rows[0].label == "Share register UK"
+
+
+# --- ruling C4 (round 6b): TDR.1 and TDR.2 row order -------------------------------------------
+
+
+def test_c4_rows_follow_the_agenda_order() -> None:
+    # ruling-literal: C4 TDR.1 rows follow agenda order (CP-0's T5 order); TDR.2 rows are grouped
+    # by gap in agenda order and keep submission order within each gap
+    def t5(gap_id: str) -> Fact:
+        text = "scope/material: Something is absent; affects CP-DR; Supply it"
+        return Fact(
+            fact_id=f"T5.{gap_id}.gap",
+            label="gap",
+            table_id="T5",
+            row_id=gap_id,
+            field="gap",
+            text=text,
+        )
+
+    gaps = parse_agenda((t5("gap-a"), t5("gap-b")))
+    sub = submission(
+        {
+            "gaps": [
+                {"gap_id": "gap-b", "questions": [OWNER]},
+                {"gap_id": "gap-a", "questions": [DISTRIBUTIONS, TRANSACTIONS]},
+            ]
+        }
+    )
+    assert validate_research(submission=sub, upstream=gaps, pack=sources()) == ()
+    result = compose(CpdrInputs(agenda=gaps, submission=sub, as_of=AS_OF))
+    rows = {t.table_id: [r.row_id for r in t.rows] for t in result.tables}
+    assert rows["TDR.1"] == ["gap-a", "gap-b"]
+    assert rows["TDR.2"] == ["distributions", "transactions", "owner-identity"]
+    validate_tables(result.tables, result.facts)
+
+
+def test_c4_every_per_gap_sequence_follows_the_agenda() -> None:
+    # ruling-literal: round 6e C4 extended: TDR.1, TDR.2, the answered-question claims, the
+    # "Unresolved:" lines and the consumption facts follow agenda order, submission order inside
+    # a gap ("Unresolved: <question> <limitation>" is lease Method 8, :53)
+    def t5(gap_id: str) -> Fact:
+        text = "scope/material: Something is absent; affects CP-DR; Supply it"
+        return Fact(
+            fact_id=f"T5.{gap_id}.gap",
+            label="gap",
+            table_id="T5",
+            row_id=gap_id,
+            field="gap",
+            text=text,
+        )
+
+    gaps = parse_agenda((t5("gap-a"), t5("gap-b")))
+    sub = submission(
+        {
+            "gaps": [
+                {"gap_id": "gap-b", "questions": [TRANSACTIONS, POLICY]},
+                {"gap_id": "gap-a", "questions": [DISTRIBUTIONS, OWNER]},
+            ]
+        }
+    )
+    assert validate_research(submission=sub, upstream=gaps, pack=sources()) == ()
+    result = compose(CpdrInputs(agenda=gaps, submission=sub, as_of=AS_OF))
+    rows = {t.table_id: [r.row_id for r in t.rows] for t in result.tables}
+    assert rows["TDR.1"] == ["gap-a", "gap-b"]
+    assert rows["TDR.2"] == [
+        "distributions",
+        "owner-identity",
+        "transactions",
+        "distribution-policy",
+    ]
+    assert [c.claim_id for c in result.claims] == [
+        "CPDR-SUM-01",
+        "CPDR-ANS-distributions",
+        "CPDR-ANS-transactions",
+    ]
+    assert result.limitations[1:] == (
+        f"Unresolved: {OWNER['text']} {OWNER['limitation']}",
+        f"Unresolved: {POLICY['text']} {POLICY['limitation']}",
+    )
+    per_gap = ("questions", "answered", "unresolved", "answered_share", "status")
+    assert result.consumption_facts == (
+        *(f"TDR.1.{g}.{f}" for g in ("gap-a", "gap-b") for f in per_gap),
+        *(f"TDR.3.total.{f}" for f in (*TOTAL_KEYS, "answered_share")),
+        "TDR.2.owner-identity.answer",
+        "TDR.2.distribution-policy.answer",
+    )
+    validate_tables(result.tables, result.facts)

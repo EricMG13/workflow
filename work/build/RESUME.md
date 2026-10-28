@@ -1,56 +1,40 @@
 # Module-builder lane: resume point (2026-10-28, session 3)
 
-Lane `claude/module-dev-status-review-0981b6` at f0e4a6d or later. Module tests: 781 passed, 2 skipped, 1 xfailed. History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
+Lane `claude/module-dev-status-review-0981b6` at 4c7b6a3 or later. Fast tests: 924 passed, 2 skipped, 1 xfailed (the CP-2E E4a xfail, live once CP-2E merges). History is in `work/build/ledger.md`; the plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md`.
 
 ## Merged into the lane
-- **Stage 1:**
-  - nine modules: CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D;
-  - the methodology change (301fd90) and the CP-1C re-pin.
-- **LEAD docs:**
-  - rulings rounds 1–5 and 5b;
-  - the G1-X protocol §2, §3 and §5 amendments;
-  - the CP-2H and CP-4C leases and oracles.
-- **Stage 1 layer review:**
-  - group A merged (6b20407), report in `stage1/review-A.md`;
-  - group B made no commit, report in `stage1/review-B.md`;
-  - group C merged with CP-3 (b97c735), report in `stage1/review-C.md`.
-- **CP-L10 round 5** (6e63383) is approved and merged.
+- **Stage 1 modules:** CP-2E, CP-DR, CP-3D, CP-4, CP-1C, CP-2D, CP-L10, CP-2A, CP-1D, CP-3.
+- **Rounds since:** CP-L10 r5 (6e63383); CP-1D r5b + 1D1 (7e29075); G1-X fix 1 (29c0819; G1/S1a suites deferred, so built, not done); CP-3D 6b (f72a8bf) and 6e/6g (fc8c505); CP-DR r5 (5b25007) and 6e (e4de446); CP-1C r6 + fix 1 (e4a0a4d).
+- **Layer reviews:** A (6b20407), B (no commit), C (bb79483); reports `stage1/review-{A,B,C}.md`.
+- **LEAD docs:** rulings rounds 1–6g, the owner ruling, the CP-2H/4C freeze (658a489), G1-X protocol amendments.
 
 ## Held (lane stays green)
 | Commit | Lands with |
 |---|---|
-| LEAD 8483de4 (CP-2E E6 oracle) | the CP-2E follow-up: re-pin, and the strict xfail becomes the live E4a test |
-| LEAD 2ae589b (CP-1D 1D1 oracle, CP-2G/2H/4C re-pins) | the CP-1D follow-up. Merge CP-1D before CP-2G, CP-2H and CP-4C |
+| LEAD 8483de4 (E6) + 3674158 (round 6 oracle batch) | the CP-2A and CP-2E follow-ups, merged together |
 | LEAD 40e529c (B1 integration) | Stage 2 |
 
-## In flight (resume an agent by SendMessage to its id; worktree = `.claude/worktrees/agent-<id>` unless noted)
-| Work | Agent | Next |
-|---|---|---|
-| CP-DR round 5 R4 (parsing fallback), R5 (worktree `cpdr-stage1`) | a3c578c73e0bfdae5 | scoped re-review |
-| G1-X fix 1 (M1, round-4 Part A, L1, L2, L4) | a3179638c813adbe7 | scoped mx-adversary re-review on M1 and Part A |
-| CP-8 rulings round 5 | a3cc9818386e8861a | first mx-adversary review |
-| CP-2G rulings round 5 (plus the 2ae589b re-pin) | a4377a7580e8e70db | first mx-adversary review |
-| CP-3C rulings round 5 | aa5a4817fa00cd287 | first mx-adversary review |
-| CP-2H Stage 1 build (plus the 2ae589b re-pin) | a52b5ec0919986ddb | first review |
-| CP-4C Stage 1 build (plus the 2ae589b re-pin) | a2c15c441717ec41c | first review |
-| CP-1D round 5b + 1D1 review (7e29075) | ad69efc5b0d8a17d4 (mx-precise) | merge CP-1D first, then CP-2G/2H/4C |
-| CP-2D round 5 D-1..D-6, L1..L5 | a69f2394899aee6d5 | scoped re-review |
+## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>`)
+| Work | Commit | Agent | Next |
+|---|---|---|---|
+| H1 mx-adversary review | 2bd61a7 | a72eed029a03a38bf (impl a69f811059171c714) | then H1 open points 1–6 to LEAD with the reviewer's reading |
+| CP-8 first adversary review | a5c4011 | af64c7b718d678452 (impl a3cc9818386e8861a) | small round for the split-plus-missing case once LEAD rules |
+| CP-2G first adversary review | 0e28916 | af5c5ac1e28b12e3e (impl a4377a7580e8e70db) | merge after APPROVE, with the 3674158 re-pin (manifest b0c8c4bc…, submissions 25a96ebb…) |
+| CP-2A fix round 1 (M1 + L1-L3) | 7ba456e | a34fec3e9469279cd | scoped re-review, then merge CP-2A + CP-2E + CP-2D with the oracle batch |
+| CP-2E approved (E6–E8, A3, A4) | af23f7f | impl a219254fe68cc1c2d | merge with CP-2A; Low (E8 anchors) rides with the next fix |
+| CP-2D approved (r5 + r6/6f) | 3e099de | impl a69f2394899aee6d5 | merge with CP-2A and CP-2E; Lows L1-L6 ride with the next fix |
 
-## Queued (subagent cap 10)
-- **LEAD round 6 is pending.** Group C's C-3D-1 (Medium), C-3D-2, C-3D-3, C-DR-1 and C-3-3 were sent for it, and the CP-3D follow-up waits on them. It rules group A A1–A5, group B B1–B4 and the CP-2A P1 statuses, and a CP-2A oracle amendment adds `fixture_quarter_known`. The CP-2E, CP-2A and CP-1C follow-ups wait for it so each lands in one round. CP-2D takes A1 and A5 in a round after its round 5 work.
-- **Owner ruling on CP-2A P1 (option 1).** On a quarter base, every ratio and every ratio-based break is not calculated. Flows and the FCF break stay. Hold the code change until round 6 and the oracle amendment land. No Stage 2 run on a quarter base before then.
-- CP-2E follow-up: E6 cherry-pick 8483de4, re-pin, xfail flip; E7, E8. Implementer a219254fe68cc1c2d.
-- CP-2A follow-up: names, limitation refs. Implementer a34fec3e9469279cd.
-- CP-1C follow-up: P1 plus B1, once LEAD rules B1. Worktree `cp1c-stage1`.
-- With LEAD:
-  - B1 and B2 (group B);
-  - the group A Lows (CP-2D months, CP-2A already-reached, CP-2E negative denominators and floor limitation);
-  - CP-2D facility currency (C-7 applies?).
-- H1 after the G1-X re-review. It also guards `host._execution_state` (protocol §5).
+## Built, waiting on LEAD (outbox `work/build/outbox-lead.md` plus the 4c7b6a3 message)
+- **CP-3C** 9e78d63 (impl aa5a4817fa00cd287): round 5 choices 1–7 → small round → first mx-adversary review. Merges after CP-2A/2E.
+- **CP-4C** 0284eca (impl a2c15c441717ec41c): 13 fail-closed states, conservation, citations, choices → rulings round → first adversary review. Merges after CP-2A/2E.
+- **CP-2H** 5d91e7b (impl a52b5ec0919986ddb): LEAD round 7 (8 states, 3674158 re-pin) → first adversary review showing a killed mutant per refusal (29).
+- **CP-2E A4:** fixed rate with a floor above zero fails closed; floor-not-stated has no Stage 1 path.
+- **CP-3D:** leading-zero vs label check order (Info).
+
+## Queued
+- CP-1D B2 (invariant raise) rides with the next CP-1D change.
+- Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
+- Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 
 ## Stage 2 notes collected
-These are in the plan and the review files:
-- CP-1D B3 (prose-check `overall.rationale` in the validator);
-- the CP-2D Facility binding;
-- CP-2A L6 (`base_periods[*].kind`);
-- the `methods/<cp>.md` entries named in round 5.
+In the plan and review files: CP-1D B3; the CP-2D Facility binding; CP-2A L6; the `methods/<cp>.md` entries from round 5; the T4.18 currency/name reader (A5, CP-2D and CP-3C; a row with no currency fails closed); A4 floor-not-stated if the schema allows a missing floor.

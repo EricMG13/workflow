@@ -2988,3 +2988,22 @@ claim-referenced cells; `Claim.text` equals the template). CP-2A revision 2 re-r
 REQUIRED (v17 stale-input refusal is validator-only; definition-constant value class); revision 3
 queued. L2 source-host speedup built (parse cache keyed by blob digest; warm CP-1 memo fixture for
 19 cases); review queued. CP-DR and CP-1D preps done, independent reviews running; CP-L10 prep running.
+
+Defect (CP-DR review-precise-1 M6, 2026-10-28): with a `requested_modules` override slice,
+`report_view.build` shows blocks of excluded preset modules as "Not in this Pathway: <CP-x> is not part
+of <pathway>", which is false (they are in the preset, excluded by the override). Own task, test-first
+(report_view only).
+Defect (PM full-file run of tests/test_source_tools.py on the integrated L2 code, 2026-10-28): 11
+failures (10x `test_cp4_cached_cp1_authentication_rereads_every_touched_blob[blocked-*]` IndexError at
+test :1276; `test_cp4_forged_pending_ticket_with_cp0_authority_is_admitted` SourceError
+identity_mismatch). Diagnosis dispatched; fix lands after the L2 speedup reviews.
+
+S1a mx-adversary review-adversary-1: CHANGES REQUIRED (blocked heads unauthenticated and consumed by
+CP-2; CP-2 invalid-step issues not replayed). Lease Rev 4 (R4-1..R4-4); fix round 2 dispatched.
+B1 fix-3 adversary: source approved, two test gaps plus a pre-existing crash-recovery gap (P-1,
+ruled: replay-verified recovery of the last begin edge); fix round 4 (mx-escalate) dispatched.
+L2 speedup review: HIGH (cache rewrap drops the caller's pinned `Execution` subclass, breaking
+historical receipt replay); fix round waits for the adversary review and the base-failure diagnosis.
+Wording note (CP-OS revision 2): Front Page "Full analysis" on relative-value, committee-challenge and
+what-changed lands on a "not part of this Pathway" page in credit_snapshot; resolves, but the label
+overstates; joins the override-slice wording task.

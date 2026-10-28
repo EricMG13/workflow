@@ -342,3 +342,21 @@ CP-1 head over the S1 positive pack.
   store's own blob hash check, recorded as a limitation.
 - **R3-4 pin (LEAD, 2026-10-28, from S1a fix-1).** `cases/snapshot/cp2-blocked-cp1a-submission.json`
   sha256 `0616a4a278104665122a474b434d3122637934845c0593290ddc68317cdb06e3` (file bytes).
+
+## Rev 4 amendments (LEAD, 2026-10-28, from S1a review-adversary-1)
+- **R4-1 (blocked heads authenticated).** For every blocked head the verifier requires
+  `attempt.number == 1`, `repair_of` naming a finished attempt 0 of the same module with equal
+  `inputs` and non-empty `issues`, and `attempt.repair_issues == previous.issues`; it rebuilds every
+  invalid-step settlement (rejected attempt 0, blocked attempt 1) as `execution.py:831-850` does
+  (empty Module payload hash, `settle` with the unbounded issues) and requires the stored attempt and
+  result to come back exactly. `_expected_step_issues` returns the unbounded list; the bound applies
+  at comparison.
+- **R4-2 (invalid steps replayed).** For every invalid step of every analytical module (CP-0, CP-1,
+  CP-1A, CP-2) the verifier replays the entry validator at the historical snapshot and requires
+  `step.issues == bounded_issues(...)` exactly (no dedupe, `execution.py:814`). This supersedes
+  `docs/OWNER-WORKFLOW-LEASE.md:153` ("It does not replay submissions") from S1a onward. Valid steps
+  stay covered by the settle probes.
+- **R4-3 (read rule).** `read_inputs` before submit is required for every non-refused submission of a
+  session-less step, valid or invalid.
+- **R4-4 (deferred to G1-X).** Verifier exception mapping: tamper causes map to `identity_mismatch`,
+  programming errors propagate (as B1 N2).

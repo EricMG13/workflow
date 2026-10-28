@@ -63,7 +63,9 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
   (CP-2D runs without CP-MODEL). Add when a lease does.
 - An owner-only `sources=True` step opens a real `SourceSession` only through the H1 fixed host
   mapping; until H1 lands, such steps are exercised by test-only sessions and no Stage 2 run of
-  them is admitted (rulings round 4 A5; build order unchanged).
+  them is admitted (rulings round 4 A5; build order unchanged). A `_SOURCE_STEPS` row alone is not
+  enough. H1 must also stop `host._execution_state` (host.py:645) from calling `step_chain` for owner-only
+  modules, which have none (LEAD amendment 2026-10-28, G1-X review-adversary L3).
 
 ## 6. D12 amendment
 A new `src/deploy_vii/bindings/<cp>.py` holding only FP block bindings (no arithmetic, reads

@@ -1033,13 +1033,20 @@ def cpdr_reader(store: Execution, head: Head) -> CpdrHead:
 
     def count(fact_id: str) -> int:
         found = fact(fact_id)
-        if found.status != "known" or found.amount is None:
+        if (
+            found.status != "known"
+            or found.amount is None
+            or found.amount != found.amount.to_integral_value()
+            or found.amount < 0
+        ):
             raise ValueError(f"CP-DR TDR fact is not a known count: {clipped((fact_id,))}")
         return int(found.amount)
 
     share = fact("TDR.3.total.answered_share")
     if share.status not in ("known", "not_applicable"):  # a share is known, or has no denominator
         raise ValueError("CP-DR TDR.3 answered share is neither known nor not applicable")
+    if share.status == "known" and share.amount is None:
+        raise ValueError("CP-DR TDR.3 answered share is known but carries no amount")
     total = {name: count(f"TDR.3.total.{name}") for name in TOTAL_FIELDS[:-1]}
     totals = CpdrTotals(
         gaps_total=total["gaps_total"],
@@ -1052,15 +1059,7 @@ def cpdr_reader(store: Execution, head: Head) -> CpdrHead:
         answered_share=share.amount,
     )
     table = next((t for t in module.tables if t.table_id == "TDR.1"), None)
-    gaps = tuple(
-        CpdrGapHead(
-            row.row_id,
-            _gap_status(fact(f"TDR.1.{row.row_id}.status").text),
-            count(f"TDR.1.{row.row_id}.questions"),
-            count(f"TDR.1.{row.row_id}.answered"),
-        )
-        for row in (table.rows if table is not None else ())
-    )
+    gaps = tuple(_gap_head(row.row_id, fact, count) for row in (table.rows if table else ()))
     if len(gaps) != totals.gaps_total:
         raise ValueError("CP-DR TDR.1 rows differ from the TDR.3 gap total")
     answers = next((t for t in module.tables if t.table_id == "TDR.2"), None)
@@ -1084,3 +1083,17 @@ def _gap_status(text: str | None) -> GapStatus:
     if status is None:
         raise ValueError("CP-DR TDR.1 status is not a gap status")
     return status
+
+
+def _gap_head(gap_id: str, fact: Callable[[str], Fact], count: Callable[[str], int]) -> CpdrGapHead:
+    """One TDR.1 row as the lease lists it for consumption: status, questions, answered, and the
+    unresolved count and answered share, which must be there and agree with the others."""
+    questions, answered = count(f"TDR.1.{gap_id}.questions"), count(f"TDR.1.{gap_id}.answered")
+    if count(f"TDR.1.{gap_id}.unresolved") != questions - answered:
+        raise ValueError(f"CP-DR TDR.1 unresolved differs from questions less answered: {clipped((gap_id,))}")
+    share = fact(f"TDR.1.{gap_id}.answered_share")
+    if share.status != "known" or share.amount is None:
+        raise ValueError(f"CP-DR TDR.1 answered share is not known: {clipped((gap_id,))}")
+    return CpdrGapHead(
+        gap_id, _gap_status(fact(f"TDR.1.{gap_id}.status").text), questions, answered
+    )

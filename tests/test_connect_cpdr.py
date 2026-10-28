@@ -36,7 +36,7 @@ from deploy_vii import report_view
 from deploy_vii.bindings import RAIL_DESTINATIONS, validate_bindings
 from deploy_vii.bindings.cpdr import CPDR
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Fact, Input, Module, ModuleView, Run, View
+from deploy_vii.contracts import Fact, Input, Module, ModuleView, Run, Source, View
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.execution import (
     Attempt,
@@ -293,8 +293,16 @@ def test_rules_put_absence_before_unread_pages() -> None:
 class Store(Execution):
     """A read-only `Execution` double (tests only): no directory is touched."""
 
-    def __init__(self, pack: PreparedPack, modules: dict[str, Module], payloads: dict[str, str]):
+    def __init__(
+        self,
+        pack: PreparedPack,
+        modules: dict[str, Module],
+        payloads: dict[str, str],
+        *,
+        head_only: bool = False,
+    ):
         super().__init__(Path("/nonexistent-cpdr-store"))
+        self._head_only = head_only
         self._pack = pack
         self._modules = modules
         self._payloads = payloads
@@ -307,10 +315,12 @@ class Store(Execution):
         return self._pack
 
     def result(self, sha256: str) -> Module:
+        if self._head_only:  # a head is read through `head_module` (its live status), not the blob
+            raise AssertionError("result() read where head_module() is the contract")
         return self._modules[sha256]
 
     def head_module(self, head: Head) -> Module:
-        return self._modules[head.result_sha256]
+        return self._modules[head.result_sha256].model_copy(update={"status": head.status})
 
     def payload(self, sha256: str) -> str:
         return self._payloads[sha256]
@@ -333,14 +343,20 @@ def cp0_module(*, empty: bool, status: str = "restricted") -> Module:
     )
 
 
-def attempt_of(cp0: Module | None, payload: str | None = None) -> tuple[Attempt, Store]:
-    """A CP-DR attempt binding the pack and `cp0` (`prepared-pack`, `CP-0`), and its store."""
-    pack = prepared_pack()
+def attempt_of(
+    cp0: Module | None,
+    payload: str | None = None,
+    *,
+    cp0_status: str = "restricted",
+    pack: PreparedPack | None = None,
+) -> tuple[Attempt, Store]:
+    """A CP-DR attempt binding the pack and `cp0` (`prepared-pack`, `CP-0` at `cp0_status`)."""
+    pack = prepared_pack() if pack is None else pack
     modules = {} if cp0 is None else {cp0.content_hash(): cp0}
     payloads = {} if payload is None else {hashlib.sha256(payload.encode()).hexdigest(): payload}
     bound = [Input(input_id="prepared-pack", sha256=pack.content_hash())]
     if cp0 is not None:
-        bound.append(Input(input_id="CP-0", sha256=cp0.content_hash(), status="restricted"))
+        bound.append(Input(input_id="CP-0", sha256=cp0.content_hash(), status=cp0_status))  # type: ignore[arg-type]
     steps = (
         ()
         if payload is None
@@ -535,8 +551,13 @@ def test_research_module_carries_the_attempt_number() -> None:
 
 def settled(module: Module, status: str = "restricted") -> tuple[Store, Head]:
     final = module.model_copy(update={"status": status})
-    head = head_of(final)
-    return Store(prepared_pack(), {head.result_sha256: final}, {}), head
+    if status == "stale":  # staleness is the head's, never the blob's
+        head = head_of(final.model_copy(update={"status": "restricted"})).model_copy(
+            update={"status": "stale", "notes": ("CP-0 changed",)}
+        )
+    else:
+        head = head_of(final)
+    return Store(prepared_pack(), {head.result_sha256: final}, {}, head_only=True), head
 
 
 @pytest.mark.parametrize("case", ["partial", "unresolved", "empty_agenda"])
@@ -951,3 +972,114 @@ def test_entry_validator_names_text_the_journal_cannot_store(text: str) -> None:
     attempt, store = attempt_of(cp0_module(empty=False), text)
     outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
     assert outcome.issues == ("(root): payload is not a JSON object the journal can store",)
+
+
+# --- fixtures that vary what the oracle holds constant (review L1) -----------------------------
+
+
+def test_upstream_and_view_carry_the_status_the_attempt_bound_cp0_at() -> None:
+    attempt, store = attempt_of(cp0_module(empty=False, status="accepted"), cp0_status="accepted")
+    assert cpdr.cpdr_upstream(store=store, attempt=attempt).cp0_status == "accepted"
+    assert json.loads(cpdr.view(store, attempt)[1])["upstream"] == {"CP-0": "accepted"}
+
+
+def test_adapter_reads_the_as_of_of_whatever_run_the_store_holds() -> None:
+    base = prepared_pack()
+    other = Run.model_validate_json(json.dumps({**MANIFEST["run"], "as_of": "2026-02-02"}))
+    pack = PreparedPack(run=other, sources=base.sources)
+    attempt, store = attempt_of(cp0_module(empty=False), pack=pack)
+    got = cpdr._inputs(store, attempt, submission(SUBMISSIONS["cpdr"]["partial"]))
+    assert got.as_of == date(2026, 2, 2)
+
+
+def test_upstream_and_view_carry_the_status_of_every_pack_source() -> None:
+    missing = Source(
+        source_id="registry", name="Register", status="missing", limitation="Not supplied."
+    )
+    base = prepared_pack()
+    pack = PreparedPack(run=base.run, sources=(*base.sources, missing))
+    attempt, store = attempt_of(cp0_module(empty=False), pack=pack)
+    got = cpdr.cpdr_upstream(store=store, attempt=attempt)
+    assert got.sources[-1] == ("registry", "missing")
+    assert json.loads(cpdr.view(store, attempt)[1])["sources"][-1] == {
+        "source_id": "registry",
+        "status": "missing",
+    }
+
+
+def test_reader_status_is_the_heads_not_a_constant_and_reads_through_head_module() -> None:
+    module = _partial_module()
+    for status in ("accepted", "stale"):
+        served, head = settled(module, status)
+        assert cpdr.cpdr_reader(served, head).status == status
+
+
+# --- cpdr_reader fails closed on a forged result (review L2) -----------------------------------
+
+
+def _forged(module: Module, fact_id: str, **update: Any) -> Module:
+    return module.model_copy(
+        update={
+            "facts": tuple(
+                Fact.model_validate({**f.model_dump(), **update}) if f.fact_id == fact_id else f
+                for f in module.facts
+            )
+        }
+    )
+
+
+def test_reader_refuses_a_known_share_carried_as_text() -> None:
+    module = _forged(
+        _partial_module(),
+        "TDR.3.total.answered_share",
+        amount=None,
+        text="0.6667",
+        unit=None,
+        period=None,
+    )
+    served, head = settled(module)
+    with pytest.raises(ValueError, match="share"):
+        cpdr.cpdr_reader(served, head)
+
+
+def test_reader_refuses_a_non_integral_count() -> None:
+    module = _forged(_partial_module(), "TDR.3.total.questions_total", amount=Decimal("3.9"))
+    served, head = settled(module)
+    with pytest.raises(ValueError, match="not a known count"):
+        cpdr.cpdr_reader(served, head)
+
+
+@pytest.mark.parametrize("field", ["unresolved", "answered_share"])
+def test_reader_refuses_a_result_without_the_per_gap_consumption_facts(field: str) -> None:
+    module = _partial_module()
+    gone = f"TDR.1.{GAP_ID}.{field}"
+    trimmed = module.model_copy(
+        update={"facts": tuple(f for f in module.facts if f.fact_id != gone)}
+    )
+    trimmed = trimmed.model_copy(
+        update={
+            "tables": tuple(
+                t.model_copy(
+                    update={
+                        "rows": tuple(
+                            r.model_copy(
+                                update={"fact_ids": tuple(i for i in r.fact_ids if i != gone)}
+                            )
+                            for r in t.rows
+                        )
+                    }
+                )
+                for t in module.tables
+            )
+        }
+    )
+    served, head = settled(trimmed)
+    with pytest.raises(ValueError, match="TDR"):
+        cpdr.cpdr_reader(served, head)
+
+
+def test_reader_refuses_per_gap_counts_that_do_not_add_up() -> None:
+    module = _forged(_partial_module(), f"TDR.1.{GAP_ID}.unresolved", amount=Decimal(2))
+    served, head = settled(module)
+    with pytest.raises(ValueError, match="unresolved"):
+        cpdr.cpdr_reader(served, head)

@@ -8,6 +8,7 @@ files are read, never derived.
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -72,9 +73,28 @@ def start(root: Path, *, empty: bool = False) -> tuple[OwnerWorkflow, PreparedPa
     return workflow, pack
 
 
+SOURCE_HEAD = re.compile(r"^<<<SOURCE id=(\S+) sha256=[0-9a-f]{64}>>>$")
+SPAN_HEAD = re.compile(r"^locator=(page:\d+) \| ")
+
+
+def spans_of(body: str) -> list[dict[str, str]]:
+    """The (source, locator) pairs a pack tool's body shows, in order."""
+    found: list[dict[str, str]] = []
+    source = ""
+    for line in body.split("\n"):
+        head = SOURCE_HEAD.match(line)
+        if head:
+            source = head[1]
+            continue
+        span = SPAN_HEAD.match(line)
+        if span:
+            found.append({"source_id": source, "locator": span[1]})
+    return found
+
+
 def replay(workflow: OwnerWorkflow, calls: list[dict[str, Any]]) -> None:
-    """The recorded tool-call sequence: the one `read_inputs`, then each pack call, each ok and
-    (for a search) carrying the oracle's header."""
+    """The recorded tool-call sequence: the one `read_inputs`, then each pack call, each ok,
+    carrying the oracle's header and the oracle's spans (`expect_spans`, `expect_matching_spans`)."""
     for call in calls:
         if call["tool"] == "read_inputs":
             workflow.read_inputs()
@@ -83,8 +103,12 @@ def replay(workflow: OwnerWorkflow, calls: list[dict[str, Any]]) -> None:
         if outcome["status"] != "ok":
             raise RuntimeError(f"{call['tool']}: {outcome['error_code']}")
         header = call.get("expect_header")
-        if header is not None and header not in (outcome["body"] or ""):
+        body = outcome["body"] or ""
+        if header is not None and header not in body:
             raise RuntimeError(f"{call['tool']}: header {header!r} not in the body")
+        for key in ("expect_spans", "expect_matching_spans"):
+            if key in call and spans_of(body) != call[key]:
+                raise RuntimeError(f"{call['tool']}: {key} differ from the body")
 
 
 def calls_of(name: str | list[dict[str, Any]]) -> list[dict[str, Any]]:

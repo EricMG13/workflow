@@ -19,6 +19,7 @@ under a second.
 import hashlib
 import importlib
 import json
+import re
 import shutil
 from collections.abc import Callable, Iterator
 from dataclasses import replace
@@ -38,6 +39,7 @@ from deploy_vii.execution import (
     ExecutionSnapshot,
     Qualification,
     StepValidation,
+    bounded_issues,
     settle,
 )
 from deploy_vii.live.schema import normalise
@@ -785,9 +787,10 @@ def test_verifier_requires_the_read_of_a_sourced_view_step(
 # --- §4 precheck gate ---------------------------------------------------------------------------
 
 
-def _refused_then_sealed(root: Path) -> Any:
+def _refused_then_sealed(root: Path, issues: tuple[str, ...] = (GATE_ISSUE,)) -> Any:
     """A gate refusal on the sourced step (before any rule: the cited page is unread too), then a
-    corrected resubmission on the same ticket, then the rest of the run, sealed."""
+    corrected resubmission on the same ticket, then the rest of the run, sealed. `issues` is the
+    refusal the gate is expected to show."""
     workflow = _start(root)
     workflow.read_inputs()
     store = Execution(root / "store")
@@ -796,7 +799,7 @@ def _refused_then_sealed(root: Path) -> Any:
     outcome = workflow.submit_review(_sourced(GATE_MARK))
     assert (outcome["status"], outcome["issues"], outcome["next_step"]) == (
         "refused",
-        [GATE_ISSUE],
+        list(issues),
         SOURCED,
     )
     after = store.read()
@@ -806,7 +809,7 @@ def _refused_then_sealed(root: Path) -> Any:
     record = workflow._submissions[-1]
     assert (record.disposition, record.issues, record.step_sha256) == (
         "refused",
-        (GATE_ISSUE,),
+        issues,
         None,
     )
     _read_page(workflow)
@@ -823,6 +826,28 @@ def test_precheck_refusal_consumes_no_attempt_then_corrected_resubmission(
 ) -> None:
     receipt = _refused_then_sealed(tmp_path)
     assert [s.disposition for s in receipt.submissions] == ["valid", "refused", "valid", "valid"]
+    assert _verdict(tmp_path, receipt) == "accepted"
+
+
+def test_precheck_gate_issues_are_bounded_and_replayed(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """0d-c M1: a gate that returns 500 long lines is cut to 20 lines plus a count, at submit and
+    alike in the verifier's replay."""
+    long_lines = tuple(f"{i:03d} " + "x" * 996 for i in range(500))
+    g1x.monkeypatch.setitem(
+        owner._PRECHECKS,
+        MODULE,
+        lambda store, binding, stored: long_lines if GATE_MARK in stored else (),
+    )
+    shown = bounded_issues(long_lines)
+    assert len(shown) == 21 and re.fullmatch(r"\d+ further issues not listed", shown[-1])
+    receipt = _refused_then_sealed(tmp_path, shown)
+    refused = next(s for s in receipt.submissions if s.disposition == "refused")
+    assert len(refused.issues) == 21
+    assert re.fullmatch(r"\d+ further issues not listed", refused.issues[-1])
+    assert all(len(line) <= 600 for line in refused.issues)
+    assert len(refused.model_dump_json()) <= 64 * 1024
     assert _verdict(tmp_path, receipt) == "accepted"
 
 

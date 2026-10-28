@@ -485,7 +485,7 @@ def _gate(
     issues: tuple[str, ...] = ()
     if precheck is not None:
         frozen = _FrozenExecution(store, _snapshot(store, binding.snapshot_sha256))
-        issues = tuple(precheck(frozen, binding, stored))
+        issues = bounded_issues(tuple(precheck(frozen, binding, stored)))
     if not issues and spec.rules == "precheck":
         issues = _evidence_issues(store, _fin(binding), stored, evidence)
     return issues
@@ -1484,9 +1484,10 @@ def _entry_outcome(
 def _unbounded_step_issues(
     spec: StepSpec, validator_issues: tuple[str, ...], journaled: tuple[str, ...]
 ) -> tuple[str, ...]:
-    """The issues the core hands `settle` for an invalid step, before any bound (R4-1, R4-2): the
-    entry validator's, with the journaled rule issues appended and de-duplicated exactly as
-    `live.submission._with_rules` composes them (no dedupe when no rule found anything)."""
+    """The issues the core hands `settle` for an invalid step, before the journal's bound (rule
+    issues arrive capped, 0d-c) (R4-1, R4-2): the entry validator's, with the journaled rule
+    issues appended and de-duplicated exactly as `live.submission._with_rules` composes them (no
+    dedupe when no rule found anything)."""
     if spec.rules == "journaled" and journaled:
         return tuple(dict.fromkeys((*validator_issues, *journaled)))
     return tuple(validator_issues)

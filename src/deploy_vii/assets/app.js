@@ -667,7 +667,7 @@
   };
 
   // ---- routing, rail, navigator ------------------------------------------------------------
-  const routeOf = () => { const route = location.hash.slice(1) || "front"; return route === "overview" ? "front" : route; };
+  const routeOf = () => { const route = location.hash.slice(1) || "front"; return route === "overview" || route === "workbench" ? "front" : route; };
   const moduleFor = (route) => report.modules.find(item => item.module_id === route || item.aliases.includes(route));
   const DEST = [["front", "Front Page", "#front"], ["analysis", "Analysis", "#analysis"], ["model", "Model", "#CP-1"],
     ["fit", "Portfolio Fit", "#FIT"], ["evidence", "Evidence", "#evidence"], ["limits", "Limitations", "#limitations"]];
@@ -821,6 +821,12 @@
     if (inspector.trigger && $("inspector").contains(document.activeElement)) { closeInspector(); return; }
     if ($("module-filter") === document.activeElement && $("module-filter").value) { $("module-filter").value = ""; renderNavigation(routeOf()); return; }
     if ($("navigator").classList.contains("open")) { showNavigator(false); $("toggle-nav").focus(); }
+  });
+  // The skip link moves focus to the main region (tabindex="-1" in the shell) and stops there:
+  // its "#workbench" is not a route, so the default navigation would reach the hash router.
+  document.querySelector("a.skip")?.addEventListener("click", event => {
+    event.preventDefault();
+    $("workbench").focus();
   });
   window.addEventListener("hashchange", render);
   render();

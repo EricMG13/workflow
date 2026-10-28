@@ -1215,17 +1215,30 @@ def _honest_state(
             f"Blocked: {codes} is blocked{quoted}; the reasons are listed under Limitations.",
         )
     outside = [code for code, status in seen.items() if status == "not_in_pathway"]
-    if len(outside) == len(seen):
+    # A module of the preset or its required producers that the run's ``requested_modules``
+    # override left out is in this Pathway; it was only not requested. Only a module outside
+    # both is "not part of" the Pathway.
+    from deploy_vii.registry import dependencies
+
+    in_pathway = dependencies(pathway.requested_modules)
+    not_requested = [code for code in outside if code in in_pathway]
+    foreign = [code for code in outside if code not in not_requested]
+    if len(foreign) == len(seen):
         return "not_in_pathway", f"Not in this Pathway: {codes} is not part of {pathway.title}."
+    if len(not_requested) == len(seen):
+        return "not_run", f"Not run: {codes} was not requested in this run."
     if any(status == "stale" for status in seen.values()):
         return "not_run", f"Not run: {codes} is stale and must be rerun."
-    if outside:  # both words: some producers have not run, others are not part of the Pathway
+    if outside:  # some producers have not run, others were not requested or are not in the Pathway
         pending = " · ".join(code for code in seen if code not in outside)
-        return (
-            "not_run",
-            f"Not run · Not in this Pathway: {pending} has not run; "
-            f"{' · '.join(outside)} is not part of {pathway.title}.",
-        )
+        parts = [
+            (pending, "has not run"),
+            (" · ".join(not_requested), "was not requested in this run"),
+            (" · ".join(foreign), f"is not part of {pathway.title}"),
+        ]
+        said = "; ".join(f"{who} {what}" for who, what in parts if who)
+        lead = "Not run · Not in this Pathway" if foreign else "Not run"
+        return "not_run", f"{lead}: {said}."
     return "not_run", f"Not run: {codes} has not run."
 
 

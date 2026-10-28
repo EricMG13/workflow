@@ -1085,6 +1085,24 @@
       "sha256": "19705fb05aa84a92f6d321a1afc68de7d3dd6cdd99399ac96e0e7c055fb50073",
       "reason": "Add the admitted typed CP4/FP04 report projection while preserving the imported baseline and earlier CP1/CP1B local patch history.",
       "review": "docs/reviews/cp4-fp04-contract.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "19705fb05aa84a92f6d321a1afc68de7d3dd6cdd99399ac96e0e7c055fb50073",
+      "project_commit": "085ae419607442b5eaf707c22319281dfa4bf147",
+      "sha256": "a1fc47cd8affd47cddb42b429dc1764a2870b9f888afd41c32ef871e53d17a08",
+      "reason": "Say a module of the Pathway preset (or its required producers) left out by a requested_modules override was not requested in this run, not 'Not in this Pathway'; no reachable block-route defect exists, so routes are unchanged.",
+      "review": "docs/reviews/0d-product-defects.md"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.js",
+      "imported_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "prior_project_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "project_commit": "085ae419607442b5eaf707c22319281dfa4bf147",
+      "sha256": "1d7f0c606b52ca7718df2b3a70f7d7dfa86c5d9218aff577285ccaa74693be86",
+      "reason": "Skip link focuses the main region and cancels its default jump so the hash router never sees #workbench; loading the shell at #workbench is the default Front Page view.",
+      "review": "docs/reviews/0d-product-defects.md"
     }
   ],
   "local_patch_lineage": [

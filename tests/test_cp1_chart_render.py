@@ -465,3 +465,82 @@ def test_all_gap_figure_names_canonical_limitations(chart_case, provided_reason)
     payload = _payload(render(view, report))
     strip = next(b for b in payload["report"]["blocks"] if b["block_id"] == "model-chart-strip")
     assert reason in strip["figures"][0]["chart"]["svg"]
+
+
+def test_override_excluded_preset_module_reads_not_requested_not_outside_pathway():
+    """A preset module left out by ``requested_modules`` was not requested; it is not outside."""
+    run = Run(
+        run_id="override-slice",
+        issuer_id="northbridge-synthetic",
+        issuer_name="Northbridge Synthetic Group",
+        as_of=date(2026, 1, 10),
+        case_kind="synthetic",
+        pathway="credit_snapshot",
+        requested_modules=("CP-1",),
+    )
+    pathway = next(item for item in pathways() if item.id == "credit_snapshot")
+    assert "CP-3" in pathway.requested_modules
+    blocks = {b.block_id: b for b in build(empty_view(run), pathway, SHIPPED_MAPS).blocks}
+    excluded = blocks["relative-value"]  # CP-3 is in the preset, omitted by the override
+    assert excluded.state == "not_run"
+    assert excluded.note == "Not run: CP-3 was not requested in this run."
+    assert "Not in this Pathway" not in excluded.note
+    assert excluded.full_analysis_route is None  # documents behaviour; it also holds on HEAD
+    # A producer outside the preset keeps the Pathway wording.
+    foreign = _spec_pathway_foreign()
+    assert foreign.note == "Not in this Pathway: CP-9 is not part of Credit Snapshot."
+
+
+def _spec_pathway_foreign():
+    from deploy_vii.report_view import _honest_state, _Spec
+
+    pathway = next(item for item in pathways() if item.id == "credit_snapshot")
+    assert "CP-9" not in pathway.requested_modules
+    state, note = _honest_state(
+        _Spec("X", "CP-9", "prose", ("CP-9",)), {"CP-9": "not_in_pathway"}, pathway
+    )
+    assert state == "not_in_pathway"
+    # CP-1A is not in the relative_value preset list but is in its dependency closure: an
+    # override that drops it left it unrequested, not outside the Pathway.
+    closure = next(item for item in pathways() if item.id == "relative_value")
+    assert "CP-1A" not in closure.requested_modules
+    _, closure_note = _honest_state(
+        _Spec("Y", "CP-1A", "prose", ("CP-1A",)), {"CP-1A": "not_in_pathway"}, closure
+    )
+    assert closure_note == "Not run: CP-1A was not requested in this run."
+    return SimpleNamespace(note=note)
+
+
+def test_skip_link_focuses_main_without_reaching_the_hash_router():
+    """``href="#workbench"`` is not a route: the default jump set the hash and routed to
+    "Unknown destination", so the skip link needs a handler that focuses and stops there."""
+    run = Run(
+        run_id="skip-link",
+        issuer_id="northbridge-synthetic",
+        issuer_name="Northbridge Synthetic Group",
+        as_of=date(2026, 1, 10),
+        case_kind="synthetic",
+    )
+    html = render(empty_view(run))
+    assert '<a class="skip" href="#workbench">' in html
+    assert '<main id="workbench" class="workbench" tabindex="-1">' in html
+    marker = 'document.querySelector("a.skip")?.addEventListener("click"'
+    assert marker in html
+    handler = html.split(marker, 1)[1]
+    handler = handler.split("});", 1)[0]
+    assert "event.preventDefault()" in handler
+    assert '$("workbench").focus()' in handler
+
+
+def test_loading_the_shell_at_the_skip_link_hash_is_the_default_view():
+    """A URL ending in ``#workbench`` (the skip link without JS) must not route to
+    "Unknown destination": the router maps it to the Front Page like ``#overview``."""
+    run = Run(
+        run_id="skip-hash",
+        issuer_id="northbridge-synthetic",
+        issuer_name="Northbridge Synthetic Group",
+        as_of=date(2026, 1, 10),
+        case_kind="synthetic",
+    )
+    html = render(empty_view(run))
+    assert 'return route === "overview" || route === "workbench" ? "front" : route;' in html

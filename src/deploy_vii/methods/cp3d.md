@@ -36,6 +36,11 @@ is quoted, and the market-implied annual default intensity and cumulative defaul
 when a recovery assumption exists. A missing operand makes each dependent value missing with a
 stated reason, never 0. The status is always restricted (own limitations are non-empty).
 
+Citations. A sourced fact (a quoted level, term, name or date) cites its own quote. A derived
+fact (a margin, price metric, default measure or yield) rests on several quotes and gets one
+Citation per page, quoting the first of its own input quotes on that page, in input order. A
+quote is never invented.
+
 ## Guard limits (accepted costs, recorded at Stage 2)
 
 These are the quote-reading guards of the validator. Each refuses a genuine reading to stay

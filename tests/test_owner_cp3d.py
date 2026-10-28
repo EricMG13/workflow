@@ -176,7 +176,8 @@ def test_reader_over_the_settled_head_exposes_the_pinned_values(
     else:
         assert got.intensity_mid.amount is None and got.probability_mid.amount is None
     own = ORACLE["expected"]["cases"][case]["own_limitations"]
-    assert list(got.own_limitations)[: len(own)] == own
+    synthetic = "Synthetic case; not real issuer qualification"
+    assert list(got.own_limitations) == list(dict.fromkeys([*own, synthetic]))
 
 
 def test_copy_of_a_closed_store_keeps_the_run_verifiable(
@@ -245,4 +246,32 @@ def test_probe_refuses_a_consistently_forged_step_output(
     )
     with pytest.raises(WorkflowError) as caught:
         cp3d.probe(store, snapshot, tampered)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_probe_refuses_a_consistently_forged_head(
+    closed: dict[str, tuple[Execution, Path]], tmp_path: Path
+) -> None:
+    """Lease Acceptance 6, head half: a module with one changed limitation is stored under its
+    own hash and the head names it, so the store accepts it and only `probe` refuses."""
+    shutil.copytree(closed["positive"][0].directory, tmp_path / "store")
+    store = Execution(tmp_path / "store")
+    snapshot = store.read()
+    head = runs.head_of_module(store, "CP-3D")
+    attempt = next(a for a in snapshot.attempts if a.result_sha256 == head.result_sha256)
+    module = store.result(head.result_sha256)
+    last = module.limitations[-1]
+    forged = module.model_copy(
+        update={"limitations": (*module.limitations[:-1], last + " (forged)")}
+    )
+    raw = forged.model_dump_json().encode()
+    digest = hashlib.sha256(raw).hexdigest()
+    (tmp_path / "store" / "blobs" / digest).write_bytes(raw)
+    fhead = head.model_copy(update={"result_sha256": digest})
+    fsnap = snapshot.model_copy(
+        update={"heads": tuple(fhead if h == head else h for h in snapshot.heads)}
+    )
+    assert store.head_module(fhead) == forged  # the store accepts the forged head
+    with pytest.raises(WorkflowError) as caught:
+        cp3d.probe(store, fsnap, attempt)
     assert caught.value.code == "identity_mismatch"

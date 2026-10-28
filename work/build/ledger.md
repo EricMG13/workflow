@@ -282,3 +282,4 @@
 - 2026-10-28 CP-L10 r13 review APPROVE (mx-feature): Low exact subtract may store -0 / exponent form (cpl10-r13-review/edge.py), rides with next CP-L10 change, check render at Stage 2. Merged d688c6b into claude/round12
 - 2026-10-28 CP-2E r12 fix1 re-review APPROVE (mx-precise). Merged cfd6e3e into claude/round12. CP-2E r13 (item 8) held until LEAD rules the CP-3D date block
 - 2026-10-28 CP-1D r13 done: 80cccb1 (items 7, 8 LEAD join, \Z anchor Low; 12/12 mutants). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-adversary (watch: '1, 2 and 3' reads ['3'] -> exactly-one may accept)
+- 2026-10-28 CP-3C r13 done: 6373602 (item 4 statuses, item 5 currency invariant; 16/16 mutants). agent=mx-feature fix-rounds=0 gates-first-pass=y. Review: mx-precise (judge: missing cash_closing leaves currency unchecked)

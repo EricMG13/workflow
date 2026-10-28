@@ -160,3 +160,44 @@ Not verified:
 - The lease-literal cases rest on my reading of lease lines :46, :47 and :112-:117. The description-with-"; " and empty-consumer cases also rest on the T5 text form at readiness.py:500. None of these values is in expected.json.
 
 `2026-10-28 cpdr-stage1-fix1 pytest tests/test_method_cpdr.py exit 0, 45 passed 0 failed, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n`
+
+## Rulings round (docs/rulings/2026-10-28-stage1.md §CP-DR; merged lane tip a5dcb18 first)
+
+- **R1.** `bookkeeping(*, submission)` is unchanged. Its docstring now states that it runs only after `validate_research` returns no issue. No behaviour changed.
+- **R2.** The existing order already matched the ruling, so `test_issue_order_with_many_defects` passed on its first run.
+  - The test covers rule 1, rule 2, a defect on a question inside an unknown gap, then a duplicate question id carrying rule 4, two rule 5 sources, two rule 6 citations and rule 7, then a later rule 5.
+  - Its strength comes from `scratchpad/cpdr/mutate_r2_order.py`. All 6 mutants are killed: rule 6 before rule 5, sources reversed, citations reversed, rule 3 moved after the question checks, rule 2 before rule 1, and the TDR.3 row label.
+- **R3.** The TDR.3 row label is now `All gaps` (`TOTAL_ROW_LABEL`). `test_tdr3_layout` failed first (label `total`) and passes now. Column labels, `row_header` "Total" and `row_kind` "row" were already as ruled.
+
+**Test.** 47 passed in 0.39 s.
+
+**Gates.** All exit 0:
+- ruff check
+- ruff format --check
+- `MYPYPATH=src mypy --strict` on cpdr.py and the test file
+
+**Reviewer probes (scratchpad/cpdr/):**
+
+| Probe | Exit | Detail |
+|---|---|---|
+| `mutate.py` | 1 | Stale anchor: `ready_filter_removed` still names `sources`, renamed `pack` in fix 1. `mutate_r1.py` supersedes it. The 4 mutants that ran before the stale anchor were all killed. |
+| `mutate_r1.py` | 0 | 14 of 14 killed. |
+| `mutate_r1_audit.py` | 0 | 16 of 17 killed. `empty_line_from_submission` survives (see below). |
+| `probe1.py` | 1 | Checks 1-3 pass (strict failures 0; empty affects gives `()`; description with "; " parses). Check 4 raises `ValueError` (see below). |
+| `lease_call.py` (mypy --strict) | 1 | `pack` is typed `tuple[Source, ...]`, not `PreparedPack` (see below). |
+
+- **`empty_line_from_submission` is an equivalent mutant.** compose's fail-closed checks make an empty agenda equivalent to an empty submission, so no input tells `not inputs.agenda` from `not bk.gaps`.
+- **`probe1.py` check 4.** A remediation containing "; affects " stops matching the lease's "last '; affects '" rule, and the parser fails closed rather than misparsing. For LEAD: CP-0 remediation is free text, so such a gap would make CP-DR refuse its upstream.
+- **`lease_call.py`.** Lease :99 reads `readiness.citation_issues(citations, pack.sources)`, which suggests a `PreparedPack`. I kept the fix-1 semantics ("keep the semantics"). Open for the controller.
+
+**Confidence-review.** No new defect found. Open points:
+- the `PreparedPack` type for `pack`;
+- a remediation containing "; affects ";
+- TDR.1/TDR.2 row labels are still their row ids (not covered by a ruling).
+
+Not verified:
+- RULES/tool use, store and attempt behaviour, settled and inherited limitations, module status, blocked status, rendering and tamper (Stages 2-4).
+- The R2 order for RULES de-duplication (Stage 2).
+- Lease-literal values are my reading of the lease and the rulings.
+
+`2026-10-28 cpdr-stage1-rulings pytest tests/test_method_cpdr.py exit 0, 47 passed 0 failed, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y`

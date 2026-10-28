@@ -849,6 +849,25 @@ def test_hyphen_after_a_letter_or_digit_is_not_a_sign(line: str, issues: tuple[s
         ("contract A-\n350", ["350"]),
         ("the 95- 96 range", ["95", "96"]),
         ("the 95 - 96 range", ["95", "-96"]),
+        # Round 13 item 7: a figure is a whole numeral run. None starts after a digit or a
+        # point, and none ends before a digit or a point and a digit.
+        ("a saving of .25", []),
+        ("a saving of -.25", []),
+        ("a saving of (.25)", []),
+        ("a saving of 1.2.5", []),
+        ("A saving of -1.80", ["-1.80"]),
+        # Round 13 item 8, with the LEAD comma-space join: `<digit>,` and `<digit>, ` join
+        # the run, so no figure is read after either, nor before `,<digit>` or `, <digit>`.
+        ("a saving of 1,250", []),
+        ("a saving of 1, 250", []),
+        ("a saving of 1,\n250", []),
+        ("a saving of -1,250", []),
+        ("a saving of (1,250)", []),
+        # Unaffected: a list of words, a comma after a word, and a figure before a plain stop.
+        ("a saving of 25, and 30", ["25", "30"]),
+        ("savings, 250 a year", ["250"]),
+        ("a saving of 25, which holds", ["25"]),
+        ("a saving of 25. It holds", ["25"]),
     ],
 )
 def test_basis_amounts_read_the_printed_sign(quote: str, amounts: list[str]) -> None:
@@ -1159,6 +1178,27 @@ def test_defect_class_basis_quote(c: QuoteCase) -> None:
         ("The level is (25 ) percent.", "25 ) percent."),
         ("The level is ( 25 ) percent.", "25 ) percent."),
         ("The level is ( 25 ) percent.", "The level is ( 25"),
+        # Round 13 item 8: the page's `<digit>,` or `<digit>, ` before a start-edge figure, and
+        # `,<digit>` or `, <digit>` after an end-edge one, join it to a longer run.
+        ("The level is 1,250 per year.", "250 per year."),
+        ("The level is 1, 250 per year.", "250 per year."),
+        ("The level is 1,\n250 per year.", "250 per year."),
+        ("The level is 25,250 per year.", "The level is 25"),
+        ("The level is 25, 250 per year.", "The level is 25"),
+        # A point-led page run (existing guard, kept).
+        ("The level is 4.2.1 per year.", "1 per year."),
+        # Round 13 fix round 1 H2: a quote that starts or ends at the page's comma is an edge
+        # too, so the comma arms of `_cut` run for it.
+        ("Cover an annualised saving of 2,750 a year.", "an annualised saving of 2,"),
+        ("Cover an annualised saving of 2, 750 a year.", "an annualised saving of 2,"),
+        ("Cover an annualised saving of 2,\n750 a year.", "an annualised saving of 2,"),
+        ("Cover an annualised saving of 1,2.5 a year.", ",2.5 a year."),
+        ("Cover an annualised saving of 1, 2.5 a year.", ", 2.5 a year."),
+        ("Cover an annualised saving of 1,\n2.5 a year.", ", 2.5 a year."),
+        ("The level is 1,250 per year.", ",250 per year."),
+        ("The level is 1,\n250 per year.", ", 250 per year."),
+        ("The level is 25,250 per year.", "The level is 25,"),
+        ("The level is 25, 250 per year.", "The level is 25,"),
     ],
 )
 def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
@@ -1170,6 +1210,77 @@ def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
     assert citation_issues((basis,), inputs.sources) == ()
     assert DEFECT_EXACTLY_ONE in cp1d.validation_issues(inputs)
     assert cp1d._basis_amounts(basis, inputs.sources) == []
+
+
+HIDDEN_RUN_LINES = [
+    "Rates of 1, 2 and 2.5 cover the saving.",
+    "Fees of 1,25 and 2.5",
+    "A saving of 1, 250 or 2.5",
+    "In 2025, 250 basis points gave a saving of 2.5.",
+    "-1,250 or 2.5",
+    "(1,250) or 2.5",
+    "( 1, 250 ) or 2.5",
+    "2.5 against 1,\n250 last year",
+    "Rates of 1, 2 and 3 percent",
+    "A saving of .25 million, or 2.5 in total.",
+    # LEAD addendum 4: any second numeral run, a point run and a thousands-style run included.
+    "A saving of 1.2.5 or 2.5 is signed.",
+    "section 4.2.1 a saving of 25",
+    "A saving of 1.250.000",
+    "A saving of 1,250",
+    "A saving of 1.2.5",
+    # Accepted cost (also refused at d2cb626): a "Month D, YYYY" date holds a joined comma run.
+    "Signed on March 5, 2025 for a saving of 2.5.",
+]
+
+
+@pytest.mark.parametrize("line", HIDDEN_RUN_LINES)
+def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
+    """Round 13 addendum 4 (fail closed): a numeral run is a maximal run of digits joined by
+    ".", "," or ", " (a leading point included). The quote must hold exactly one run and it
+    must be whole (`1.80`, not `1,250`, `1.2.5` or `.25`); otherwise the pinned exactly-one
+    issue applies, whatever figure is left over. Nothing composes."""
+    inputs = _a01_on_page1(line)
+    assert cp1d.validation_issues(inputs) == (f"{EXACTLY_ONE}{A01_LABEL}",)
+
+
+@pytest.mark.parametrize(
+    ("quote", "whole"),
+    [
+        ("a saving of 25, a rise", True),
+        ("a saving of -1.80", True),
+        ("a saving of 1,250", False),  # joins ","
+        ("a saving of 1, 250", False),  # joins ", "
+        ("a saving of 1,\n250", False),  # joins ", " across a line break
+        ("a saving of 1.2.5", False),  # joins "." beyond one decimal
+        ("a saving of .25", False),  # a leading point
+        ("a saving of (.25)", False),
+        ("a saving of 25 and 30", False),  # two runs
+        ("a saving of one", False),  # no run
+        ("a saving of 1-\n2.5", False),  # two runs across a wrapped hyphen
+    ],
+)
+def test_one_whole_run_is_the_single_rule(quote: str, whole: bool) -> None:
+    """Addendum 4's rule on its own, so each clause (the joins, the leading point, whole,
+    exactly one) is pinned apart from the figure grammar that also refuses these."""
+    assert cp1d._one_whole_run(quote) is whole
+
+
+@pytest.mark.parametrize(
+    ("line", "read"),
+    [
+        ("A saving of 25, a rise", ["25"]),
+        ("A saving of 2.5, a rise", ["2.5"]),
+        ("A saving of -1.80", ["-1.80"]),
+    ],
+)
+def test_basis_quote_without_a_joined_run_is_read(line: str, read: list[str]) -> None:
+    """The twins: a comma before a letter is no join, so the one whole run is the amount."""
+    inputs = _a01_on_page1(line)
+    basis = inputs.submission.assessments[0].accepted_basis
+    assert basis is not None
+    assert cp1d._basis_amounts(basis, inputs.sources) == read
+    assert f"{EXACTLY_ONE}{A01_LABEL}" not in cp1d.validation_issues(inputs)
 
 
 @pytest.mark.parametrize(
@@ -1185,6 +1296,15 @@ def test_edge_cut_is_read_in_every_reading(page: str, quote: str) -> None:
         ("The level ( 25 percent over) holds.", "25 percent over) holds."),
         ("The level is 25) percent.", "The level is 25"),
         ("The level is 25 ) percent.", "The level is 25"),
+        # Round 13 Low (round 12 review): `_W_MINUS` and `_OPEN_PAREN` end at the digits (`\\Z`),
+        # so a letter between the sign or parenthesis and the digits makes neither a sign.
+        ("The level is -a25 percent.", "25 percent."),
+        ("The level is (a25) percent.", "25) percent."),
+        # Round 13 item 8: a comma that is no part of a numeral run cuts nothing.
+        ("The level is 25, a rise.", "The level is 25"),
+        # The comma join ends at the digits: a letter between "<digit>," and the figure.
+        ("The level is 1,a25 percent.", "25 percent."),
+        ("The level is 2025, up from 25 percent.", "25 percent."),
     ],
 )
 def test_edge_figure_whole_on_the_page_is_counted(page: str, quote: str) -> None:

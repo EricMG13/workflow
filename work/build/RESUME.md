@@ -36,6 +36,8 @@ Lane `claude/module-dev-status-review-0981b6` at f0e4a6d or later. Module tests:
 | CP-2D round 5 D-1..D-6, L1..L5 | a69f2394899aee6d5 | scoped re-review |
 
 ## Queued (subagent cap 10)
+- **LEAD round 6 is pending.** It rules group A A1–A5, group B B1–B4 and the CP-2A P1 statuses, and a CP-2A oracle amendment adds `fixture_quarter_known`. The CP-2E, CP-2A and CP-1C follow-ups wait for it so each lands in one round. CP-2D takes A1 and A5 in a round after its round 5 work.
+- **Owner ruling on CP-2A P1 (option 1).** On a quarter base, every ratio and every ratio-based break is not calculated. Flows and the FCF break stay. Hold the code change until round 6 and the oracle amendment land. No Stage 2 run on a quarter base before then.
 - CP-2E follow-up: E6 cherry-pick 8483de4, re-pin, xfail flip; E7, E8. Implementer a219254fe68cc1c2d.
 - CP-2A follow-up: names, limitation refs. Implementer a34fec3e9469279cd.
 - CP-1C follow-up: P1 plus B1, once LEAD rules B1. Worktree `cp1c-stage1`.

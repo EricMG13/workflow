@@ -10,7 +10,7 @@ import copy
 import hashlib
 import json
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, Inexact, getcontext
 from pathlib import Path
 from typing import Any
 
@@ -21,8 +21,10 @@ from pydantic import ValidationError
 
 from deploy_vii import prose
 from deploy_vii.contracts import Fact, Source, Span, validate_tables
+from deploy_vii.display import format_date
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.owners import cp8 as cp8_module
 from deploy_workflow.owners.cp8 import (
     METRICS,
     DecisionLedgerSubmission,
@@ -285,6 +287,8 @@ def test_decision_line_reads_the_cp6_call(name: str) -> None:
         assert (line.status, line.text, line.limitation) == ("known", fx["text"], None)
     else:
         assert (line.status, line.text, line.limitation) == ("missing", None, fx["text"])
+    # a comparable CP-6 call leaves no current_decision gap row (8-20 adds it for Insufficient)
+    assert ("current_decision" in row_ids(report, "T7.8")) == (fx["kind"] != "known")
 
 
 POSITIVE_PACK_IDS = tuple(s["source_id"] for s in EXPECTED["cases"]["positive"]["pack_sources"])
@@ -372,6 +376,9 @@ def test_an_unready_pack_source_is_unavailable_before_the_scope_rule() -> None:
 # --- LEAD rulings round 5 (docs/rulings/2026-10-28-stage1.md, "CP-8") ---------------------------
 # Expected strings are the rulings' own wording; inputs are the oracle's literals with stated edits.
 
+# Code points, not literals (as in deploy_vii.quotes): the characters are easy to misread.
+SOFT_HYPHEN, NO_BREAK_SPACE, EN_DASH = chr(0x00AD), chr(0x00A0), chr(0x2013)
+SUPERSCRIPT_TWO, ONE_HALF = chr(0x00B2), chr(0x00BD)
 NOT_CALCULABLE = "Not calculable: needs an expected and a realized value"  # pinned (no_outcome)
 NOT_ASSESSED = "Not assessed: the measure is not compared"  # pinned (no_outcome)
 POSITIVE_LIMITS = tuple(EXPECTED["cases"]["positive"]["own_limitations"])
@@ -871,7 +878,7 @@ def test_8_17_exit_trigger_stating_a_figure() -> None:
 def test_8_17_a_footnote_mark_is_not_a_figure() -> None:
     # round 6c (f): only an ASCII digit states a threshold; a superscript mark keeps LIM_EXIT
     old = "Exit trigger recorded: a sharp move in the quotation. No threshold was recorded."
-    new = old.replace("quotation.", "quotation.²")
+    new = old.replace("quotation.", "quotation." + SUPERSCRIPT_TWO)
     lit = positive()
     assert lit["thesis"]["exit_trigger"]["quote"]["quote"] == old
     lit["thesis"]["exit_trigger"]["quote"]["quote"] = new
@@ -970,3 +977,178 @@ def test_invalid_submission_does_not_compose() -> None:
             submission=submission(entry["literal"]),
             upstream=upstream("positive"),
         )
+
+
+# --- fix round 1 (work/build/stage1/cp8/fix1-brief.md; review-adversary.md M1, L1) --------------
+# readiness.citation_issues matches a quote through deploy_vii.quotes' normalisation, so every
+# figure, date, label and text cp8 reads from a quote is read from that same normalised text.
+
+
+def issues_over(lit: dict[str, Any], packed: tuple[Source, ...]) -> tuple[str, ...]:
+    return validate_ledger(submission=submission(lit), upstream=upstream("positive"), pack=packed)
+
+
+def requote(lit: dict[str, Any], at: int, old: str, new: str) -> dict[str, Any]:
+    quote = lit["observations"][at]["quote"]
+    assert quote["quote"] == old
+    quote["quote"] = new
+    return lit
+
+
+Q_REALIZED_LEVERAGE = "Total leverage for the twelve months to March 31, 2026 is reported as 1.80x."
+
+
+def test_m1_soft_hyphen_inside_a_quoted_figure() -> None:
+    # p01: the matcher deletes U+00AD, so "bid 9-8.00" (soft hyphen) is the page's 98.00
+    lit = positive()
+    bid = lit["observations"][6]
+    bid["quote"]["quote"] = bid["quote"]["quote"].replace("bid 98.00", f"bid 9{SOFT_HYPHEN}8.00")
+    bid["value_text"] = "8.00"
+    assert validator_issues(lit) == (
+        "observations[6]: value_text 8.00 does not occur in the quote",
+    )
+
+
+def test_m1_whitespace_inside_a_quoted_date() -> None:
+    # a no-break space the matcher collapses: the as-of date is read where the page states it
+    new = Q_REALIZED_LEVERAGE.replace("March 31, 2026", f"March 31,{NO_BREAK_SPACE}2026")
+    report = settle(requote(positive(), 4, Q_REALIZED_LEVERAGE, new))
+    assert stored(report.derived) == EXPECTED["cases"]["positive"]["derived"]
+
+
+def test_m1_mapped_dash_inside_a_quoted_designation() -> None:
+    # an en dash the matcher maps to "-": the decision text is read from the normalised quote
+    old = "on the Northbridge Term Loan."
+    packed = edited_pack("prior_case", old, "on the Northbridge Term Loan B-2.")
+    lit = positive()
+    for field in ("action_bias", "confidence", "instrument"):
+        quote = lit["decision"][field]["quote"]
+        quote["quote"] = quote["quote"].replace(old, f"on the Northbridge Term Loan B{EN_DASH}2.")
+    lit["decision"]["instrument"]["text"] = "Northbridge Term Loan B-2"
+    report = settle(lit, packed=packed)
+    assert cells(report, "T7.1", "d01")["instrument"].text == "Northbridge Term Loan B-2"
+
+
+def test_m1_soft_hyphen_inside_a_quoted_size_level() -> None:
+    # the level is read from the normalised quote, as the statement and span checks already were
+    lit = positive()
+    size = lit["thesis"]["downside_sizes"][0]["quote"]
+    size["quote"] = size["quote"].replace("1.75x", f"1.7{SOFT_HYPHEN}5x")
+    settle(lit)
+
+
+def test_m1_whitespace_inside_a_quoted_default_date() -> None:
+    lit = positive()
+    statement = lit["default_restructuring"]["quote"]
+    statement["quote"] = statement["quote"].replace(
+        "April 30, 2026", f"April{NO_BREAK_SPACE}30, 2026"
+    )
+    settle(lit)
+
+
+def test_8_15_the_first_figure_after_the_label() -> None:
+    # p09: two frozen spans reach the rule; a later figure after the label is not the value
+    page = next(s for s in pack("positive") if s.source_id == "update").spans[0].text
+    span = page[page.index("Total leverage for the twelve months to February 28") :]
+    span = span[: span.index(Q_REALIZED_LEVERAGE) + len(Q_REALIZED_LEVERAGE)]
+    offer_as_bid = positive()
+    offer_as_bid["observations"][6]["value_text"] = "98.75"
+    assert validator_issues(offer_as_bid) == (
+        "observations[6]: loan_bid value_text 98.75 is not labelled loan_bid in the quote",
+    )
+    assert validator_issues(requote(positive(), 4, Q_REALIZED_LEVERAGE, span)) == (
+        (
+            "observations[4]: total_leverage value_text 1.80 is not labelled total_leverage in "
+            "the quote"
+        ),
+    )
+
+
+def test_8_15_a_figure_is_quoted_as_n_nn() -> None:
+    new = Q_REALIZED_LEVERAGE.replace("1.80x", "1.8x")
+    lit = requote(positive(), 4, Q_REALIZED_LEVERAGE, new)
+    lit["observations"][4]["value_text"] = "1.8"
+    assert issues_over(lit, edited_pack("update", Q_REALIZED_LEVERAGE, new)) == (
+        "observations[4]: value_text 1.8 does not occur in the quote",
+    )
+
+
+def test_a_value_quoted_twice_is_refused() -> None:
+    new = Q_REALIZED_LEVERAGE.replace("1.80x.", "1.80x, as it was a quarter earlier at 1.80x.")
+    lit = requote(positive(), 4, Q_REALIZED_LEVERAGE, new)
+    assert issues_over(lit, edited_pack("update", Q_REALIZED_LEVERAGE, new)) == (
+        "observations[4]: value_text 1.80 does not occur in the quote",
+    )
+
+
+def test_a_realized_figure_dated_on_the_decision_day_is_refused() -> None:
+    new = Q_REALIZED_LEVERAGE.replace("March 31, 2026", "January 10, 2026")
+    lit = requote(positive(), 4, Q_REALIZED_LEVERAGE, new)
+    lit["observations"][4]["as_of_text"] = "January 10, 2026"
+    assert issues_over(lit, edited_pack("update", Q_REALIZED_LEVERAGE, new)) == (
+        "observations[4]: realized as_of January 10, 2026 is not after the decision date",
+    )
+
+
+def test_a_default_statement_dated_on_the_decision_day_is_refused() -> None:
+    old = "No default or restructuring has occurred as of April 30, 2026."
+    new = old.replace("April 30, 2026", "January 10, 2026")
+    lit = positive()
+    assert lit["default_restructuring"]["quote"]["quote"] == old
+    lit["default_restructuring"]["quote"]["quote"] = new
+    lit["default_restructuring"]["as_of_text"] = "January 10, 2026"
+    assert issues_over(lit, edited_pack("update", old, new)) == (
+        "default_restructuring: as_of January 10, 2026 is not after the decision date",
+    )
+
+
+def test_a_blank_flag_quote_is_refused() -> None:
+    lit = positive()
+    lit["attributions"][0]["flag_quote"] = "   "
+    assert validator_issues(lit) == ("attributions[0]: Flagged Risk Materialized needs flag_quote",)
+
+
+def test_a_numeric_character_counts_as_a_digit_in_analyst_text() -> None:
+    lit = positive()
+    lit["synthesis"]["text"] = f"About {ONE_HALF} of the measures moved"  # numeric, not isdigit
+    assert validator_issues(lit) == ("synthesis.text: digits are not allowed",)
+
+
+def test_derive_runs_under_the_exact_context() -> None:
+    fx = EXPECTED["fixtures"]["fixture_partial"]["inputs"]
+    inputs = LedgerInputs(
+        expected={"total_leverage": Decimal("1.0000000000000000000000000001")},
+        expected_as_of={"total_leverage": DECIDED},
+        realized={"total_leverage": Decimal(10)},  # 10 - that needs 29 digits
+        realized_as_of={"total_leverage": date(2026, 3, 31)},
+        decision_date=DECIDED,
+        downside_sizes={},
+        overall_label=fx["overall_label"],
+        metric_labels=tuple(fx["metric_labels"]),
+        pack_source_ids=POSITIVE_PACK_IDS,
+    )
+    with pytest.raises(Inexact):
+        derive(inputs=inputs)
+
+
+def test_composition_runs_under_the_exact_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    traps: list[bool] = []
+
+    def spy(day: date) -> str:  # cp8 calls format_date only inside composition
+        traps.append(bool(getcontext().traps[Inexact]))
+        return format_date(day)
+
+    monkeypatch.setattr(cp8_module, "format_date", spy)
+    report_of("positive")
+    assert traps and all(traps)
+
+
+def test_8_7_realized_split_beside_a_missing_expected_fails_closed() -> None:
+    # not ruled (with LEAD): the other direction of the split-plus-missing state
+    lit = without(split(positive(), "realized"), "expected", "loan_bid", "loan_offer")
+    sub = submission(uncompared(lit, "loan_mid"))
+    assert (
+        validate_ledger(submission=sub, upstream=upstream("positive"), pack=pack("positive")) == ()
+    )
+    with pytest.raises(ValueError, match="no pinned wording"):
+        decision_ledger(pack=pack("positive"), submission=sub, upstream=upstream("positive"))

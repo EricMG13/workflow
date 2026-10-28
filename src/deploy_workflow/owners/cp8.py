@@ -43,6 +43,7 @@ from deploy_vii.contracts import (
 from deploy_vii.cp6_committee import ACTION_BIASES, CONFIDENCES
 from deploy_vii.display import format_date
 from deploy_vii.prose import bind, issues, tokenize
+from deploy_vii.quotes import normalise
 from deploy_vii.readiness import citation_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, figure_unit
@@ -376,11 +377,15 @@ def _date(text: str) -> date:
 
 
 def _norm(text: str) -> str:
-    return re.sub(r"\s+", " ", text)
+    """A quote as ``readiness.citation_issues`` matches it (``deploy_vii.quotes``: soft hyphens
+    removed, quote marks, dashes and minus mapped, whitespace runs collapsed). Every figure,
+    date, label and text read from a quote reads this form, so a figure the matcher accepts is
+    the figure the page states (fix 1, M1)."""
+    return normalise(text)
 
 
 def _token_once(value: str, quote: str) -> bool:
-    """``value`` occurs exactly once in ``quote`` as a whole number."""
+    """``value`` occurs exactly once in the normalised ``quote`` as a whole number."""
     pattern = r"(?<![0-9.])" + re.escape(value) + r"(?![0-9]|\.[0-9])"
     return len(re.findall(pattern, quote)) == 1
 
@@ -552,7 +557,7 @@ class _Checker:
             self.found += found
         elif vocabulary is not None and text not in vocabulary:
             self.found.append(f"{path}: {text} is not one of {', '.join(vocabulary)}")
-        elif text not in quote.quote:
+        elif text not in _norm(quote.quote):
             self.found.append(f"{path}: text {text} does not occur in the quote")
         elif name == "decision_date":
             self.decision_date = parse_date(text)
@@ -591,7 +596,7 @@ class _Checker:
             )
             return None
         found = self._cite(f"{path}.quote", size.quote, DECISION_SOURCE)
-        quote, level = size.quote.quote, size.level_text
+        quote, level = _norm(size.quote.quote), size.level_text
         statement = f"{MEASURE_LABEL[size.metric_id]} {size.comparator} {level}x"
         if found:
             self.found += found
@@ -644,7 +649,7 @@ class _Checker:
 
     def _observation(self, path: str, obs: ObservationEntry) -> list[str]:
         found = self._observation_source(path, obs)
-        value, quote = obs.value_text, obs.quote.quote
+        value, quote = obs.value_text, _norm(obs.quote.quote)
         as_of = parse_date(obs.as_of_text) if obs.as_of_text in quote else None
         if found:
             return found
@@ -709,7 +714,7 @@ class _Checker:
         found = self._cite("default_restructuring.quote", statement.quote)
         source_id, quote, at = (
             statement.quote.source_id,
-            statement.quote.quote,
+            _norm(statement.quote.quote),
             statement.as_of_text,
         )
         as_of = parse_date(at) if at in quote else None
@@ -2046,7 +2051,7 @@ class _Composer:
         exit_trigger = th.exit_trigger.quote
         if exit_trigger is None:  # 8-17
             out.append(LIM_NO_EXIT)
-        elif re.search(r"[0-9]", exit_trigger.quote) is None:  # 6c (f): ASCII, as prose tokenises
+        elif re.search(r"[0-9]", _norm(exit_trigger.quote)) is None:  # 6c (f): ASCII digits
             out.append(LIM_EXIT)
         out.append(LIM_NO_OUTCOME if self.absent is not None else LIM_INTERIM)
         uncompared = [_name(m) for m in METRICS if m not in self.d.compared]

@@ -26,6 +26,7 @@ from deploy_vii import prose
 from deploy_vii.business_context import prohibited_issues
 from deploy_vii.contracts import Contract, Fact, Identifier, Text
 from deploy_vii.display import format_date
+from deploy_vii.execution import bounded_issues, clipped
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners.blank import is_blank
 
@@ -270,7 +271,8 @@ class Cp1Fact:
     currency: str | None = None  # the head fact's own currency (round 13 item 5)
 
     def __post_init__(self) -> None:
-        _check_value(f"CP-1 {self.table_id}", self.status, self.amount, self.text, self.reason)
+        # Stage 2 round 5 item 7 (Info 3): the module's own frame, not its producer's.
+        _check_value(f"CP-3C {self.table_id}", self.status, self.amount, self.text, self.reason)
 
 
 @dataclass(frozen=True)
@@ -288,7 +290,7 @@ class Cp2dFact:
     currency: str | None = None  # the cell's own currency (round 13 item 5)
 
     def __post_init__(self) -> None:
-        _check_value(f"CP-2D {self.fact_id}", self.status, self.amount, self.text, self.reason)
+        _check_value(f"CP-3C {self.fact_id}", self.status, self.amount, self.text, self.reason)
 
 
 @dataclass(frozen=True)
@@ -404,8 +406,15 @@ _PRE_D0_CAUSE = (
 _FX_CAUSE = "the total needs every facility in USD, and one is not"
 
 
-def _unstated_gap(fid: str, term: str) -> Gap:
-    return Gap(NOT_STATED.format(fid=fid, term=term), cause=_UNSTATED_CAUSE.format(term=term))
+def _unstated_gap(fid: str, term: str, status: Status = "missing") -> Gap:
+    """Round 8 B6: a term that is missing (or a NOT_STATED flag) is not stated. Stage 2 round 5
+    item 7 (Info 2): a conflicting or not applicable term names its status in the same frame."""
+    reason = (
+        NOT_STATED.format(fid=fid, term=term)
+        if status == "missing"
+        else f"{_NOT_CALCULABLE}facility {fid} {term} is {_STATE_WORD[status]}"
+    )
+    return Gap(reason, cause=_UNSTATED_CAUSE.format(term=term))
 
 
 NM_TOTAL_NEGATIVE = "Not meaningful: total facility principal is negative" + _NM
@@ -473,6 +482,9 @@ class FacilityOperand:
     annual_amortisation: Decimal | None  # None: not stated
     secured_status: str | None  # SECURED, UNSECURED or NOT_STATED; None is missing
     seniority: str | None
+    # The status of each unsettled term above ("annual amortisation", "secured status",
+    # "seniority"), from the head fact; one absent here is missing (Stage 2 round 5 item 7).
+    statuses: Mapping[str, Status] = _field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -588,9 +600,12 @@ def _rank(f: FacilityOperand) -> tuple[int, int] | Gap:
         ("seniority", f.seniority, _SENIORITY_RANK),
     ):
         if value is None or value == "NOT_STATED":
-            return _unstated_gap(f.facility_id, term)
+            status = f.statuses.get(term, "missing") if value is None else "missing"
+            return _unstated_gap(f.facility_id, term, status)
         if value not in table:  # CP-1's ranking vocabulary is closed (ruling C-6): an invariant
-            raise ValueError(f"CP-3C {f.facility_id}: unknown ranking flag {value!r}")
+            raise ValueError(
+                clipped(("CP-3C ", f.facility_id, ": unknown ranking flag ", repr(value)))
+            )
         ranks.append(table[value])
     return ranks[0], ranks[1]
 
@@ -617,7 +632,8 @@ def _earlier(a: int | Gap, b: int | Gap) -> int | Gap:
 def _amortised(f: FacilityOperand, months: int | Gap) -> Num:
     """min(annual amortisation x months / 12, principal), the operands in formula order."""
     if f.annual_amortisation is None:
-        return _unstated_gap(f.facility_id, "annual amortisation")
+        term = "annual amortisation"
+        return _unstated_gap(f.facility_id, term, f.statuses.get(term, "missing"))
     if isinstance(months, Gap):
         return months
     if isinstance(f.principal, Gap):
@@ -720,7 +736,15 @@ def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refin
         extra = tuple(Gap(u.reason, cause=_UNMATCHED_CAUSE) for u in unmatched)
         # No facility at all: each facility-dependent value takes this one reason (C-6).
         none = None if ordered or unmatched else Gap(NO_FACILITY)
-        minimum: Num = Gap(REASON_MINIMUM_CASH) if o.minimum_cash is None else o.minimum_cash
+        # The oracle's reason for a minimum cash that is missing; Stage 2 round 5 item 7
+        # (Info 2): a conflicting or not applicable one names its status in the C-2 frame.
+        minimum: Num
+        if o.minimum_cash is not None:
+            minimum = o.minimum_cash
+        elif o.status("minimum_cash") == "missing":
+            minimum = Gap(REASON_MINIMUM_CASH)
+        else:
+            minimum = _op(None, "minimum cash", o.status("minimum_cash"))
         cash_and_revolver = _total(
             (
                 _op(o.cash, "cash and cash equivalents", o.status("cash")),
@@ -825,23 +849,19 @@ def _flag(fact: Cp2dFact) -> bool | None:
     """CP-2D's inside-horizon flag, or None when the cell is missing."""
     flag = _stated_text(fact.fact_id, fact.status, fact.text)
     if flag not in (None, "Yes", "No"):
-        raise ValueError(f"CP-3C {fact.fact_id}: inside-horizon flag {flag!r}")
+        raise ValueError(clipped(("CP-3C ", fact.fact_id, ": inside-horizon flag ", repr(flag))))
     return None if flag is None else flag == "Yes"
 
 
-def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> None:
-    """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
-    currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
-    A missing cash_closing states none, so the reporting currency stands unchecked then."""
-    cash = cp1.cash_closing
-    if cash.status == "known":
-        if cash.currency is None or is_blank(cash.currency):
-            raise ValueError("CP-3C cash_closing: currency is not set")
-        if cash.currency != currency:
-            raise ValueError(
-                f"CP-3C: reporting currency {currency!r} is not cash_closing's {cash.currency!r}"
-            )
-    read: list[tuple[str, Cp1Fact | Cp2dFact]] = [
+UNSOURCED_CURRENCY = (
+    "CP-3C: the reporting currency is not sourced: cash_closing is not known and no known "
+    "US$ m fact states a currency"
+)
+
+
+def _millions_read(cp1: Cp1Operands, cp2d: Cp2dOperands) -> list[tuple[str, Cp1Fact | Cp2dFact]]:
+    """Every US$ m fact CP-3C reads besides cash_closing, in reading order, by its name."""
+    return [
         ("undrawn_rcf", cp1.undrawn_rcf),
         ("adjusted_ebitda", cp1.adjusted_ebitda),
         ("cash_interest", cp1.cash_interest),
@@ -849,7 +869,44 @@ def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> No
         *((f.fact_id, f) for f in (cp2d.run_rate, cp2d.minimum_cash, cp2d.funding_gap)),
         *((r.principal.fact_id, r.principal) for r in cp2d.wall),
     ]
-    for name, fact in read:
+
+
+def _cash_currency(cash: Cp1Fact) -> str:
+    if cash.currency is None or is_blank(cash.currency):
+        raise ValueError("CP-3C cash_closing: currency is not set")
+    return cash.currency
+
+
+def reporting_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands) -> str:
+    """The currency every summed amount is in (round 13 item 5; Stage 2 round 5 item 7, Info 1):
+    CP-1 T4.10 ``cash_closing``'s own currency when that fact is known (it must be set);
+    otherwise the currency the first known US$ m fact read states (``check_currency`` then holds
+    every other one to it). When cash_closing is not known and no known US$ m fact states a
+    currency (none is known, or every one is blank), the currency is unsourced: an invariant
+    raise, never a stamped default."""
+    if cp1.cash_closing.status == "known":
+        return _cash_currency(cp1.cash_closing)
+    for _, fact in _millions_read(cp1, cp2d):
+        stated = fact.currency
+        if fact.status == "known" and fact.unit == _MILLIONS and stated and not is_blank(stated):
+            return stated
+    raise ValueError(UNSOURCED_CURRENCY)
+
+
+def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> None:
+    """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
+    currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
+    A cash_closing that is not known states none: the currency is then the one the known
+    US$ m facts state, and an unsourced one raises (``reporting_currency``)."""
+    cash = cp1.cash_closing
+    if cash.status == "known":
+        if _cash_currency(cash) != currency:
+            raise ValueError(
+                f"CP-3C: reporting currency {currency!r} is not cash_closing's {cash.currency!r}"
+            )
+    else:
+        reporting_currency(cp1=cp1, cp2d=cp2d)
+    for name, fact in _millions_read(cp1, cp2d):
         if fact.status == "known" and fact.unit == _MILLIONS and fact.currency != currency:
             raise ValueError(f"CP-3C {name}: currency {fact.currency!r} is not {currency!r}")
 
@@ -868,8 +925,10 @@ def _facility(
         principal = Gap(fx, cause=_FX_CAUSE)
     else:
         amount = _cp2d_amount(row.principal)
-        unstated = _unstated_gap(fid, "principal")  # round 8 B6 (2D-c)
-        principal = unstated if amount is None else amount
+        # Round 8 B6 (2D-c); Stage 2 round 5 item 7: an unsettled principal names its status.
+        principal = (
+            _unstated_gap(fid, "principal", row.principal.status) if amount is None else amount
+        )
     stated = _stated_text(
         row.maturity_date.fact_id, row.maturity_date.status, row.maturity_date.text
     )
@@ -877,7 +936,7 @@ def _facility(
     months: int | Gap
     inside: bool | Gap
     if stated is None:  # round 8 B6 (2D-c): no position
-        maturity = months = inside = _unstated_gap(fid, "maturity date")
+        maturity = months = inside = _unstated_gap(fid, "maturity date", row.maturity_date.status)
     elif (maturity := date.fromisoformat(stated)) < balance_date:
         # Round 11 B1: the date stays known; the position takes the unstated date's slot.
         months = inside = Gap(PRE_D0.format(fid=fid), cause=_PRE_D0_CAUSE)
@@ -896,6 +955,15 @@ def _facility(
         annual_amortisation=_cp1_amount(f"{fid}.annual_amortisation", terms.annual_amortisation),
         secured_status=_cp1_text(f"{fid}.secured_status", terms.secured_status),
         seniority=_cp1_text(f"{fid}.seniority", terms.seniority),
+        statuses={
+            term: fact.status
+            for term, fact in (
+                ("annual amortisation", terms.annual_amortisation),
+                ("secured status", terms.secured_status),
+                ("seniority", terms.seniority),
+            )
+            if fact.status != "known"
+        },
     )
 
 
@@ -948,6 +1016,7 @@ def compose_operands(
             ("run_rate_annual", cp2d.run_rate),
             ("adjusted_ebitda", cp1.adjusted_ebitda),
             ("cash_interest_paid", cp1.cash_interest),
+            ("minimum_cash", cp2d.minimum_cash),
         )
         if fact.status != "known"
     }
@@ -1735,15 +1804,17 @@ class _Claims:
     def fig(self, fact_id: str) -> str:
         cell = self.cells[fact_id]
         if cell.status != "known" or cell.amount is None or cell.value_class == "analyst_judgment":
-            raise ValueError(f"CP-3C claim figure {fact_id}: not a known computed figure")
+            raise ValueError(
+                clipped(("CP-3C claim figure ", fact_id, ": not a known computed figure"))
+            )
         unit = figure_unit(cell.fact())
         if unit is None:
-            raise ValueError(f"CP-3C claim figure {fact_id}: no figure unit")
+            raise ValueError(clipped(("CP-3C claim figure ", fact_id, ": no figure unit")))
         return "{" + fact_id + "|" + unit + "}"
 
     def chip(self, fact_id: str) -> str:
         if self.cells[fact_id].status == "known":
-            raise ValueError(f"CP-3C claim chip {fact_id}: a chip names a gap")
+            raise ValueError(clipped(("CP-3C claim chip ", fact_id, ": a chip names a gap")))
         return "[" + fact_id + "]"
 
     def either(self, fact_id: str) -> str:
@@ -1753,7 +1824,7 @@ class _Claims:
         gaps = {k for k, v in self.cells.items() if v.status != "known"}
         found = prose.check(template, refs=self.cells.keys() - gaps, gaps=gaps)
         if found:
-            raise ValueError(f"CP-3C {claim_id}: {'; '.join(found)}")
+            raise ValueError(clipped(("CP-3C ", claim_id, ": ", "; ".join(bounded_issues(found)))))
         parts, refs = [], []
         for run in prose.tokenize(template, gaps=gaps):
             if run.kind == "text":
@@ -1895,7 +1966,7 @@ def compute(inputs: Cp3cInputs) -> Cp3cResult:
     """CP-3C's tables, ledgers, claims and own limitations for a valid submission."""
     issues = submission_issues(submission=inputs.submission, offered=inputs.offered)
     if issues:
-        raise ValueError("CP-3C submission is invalid: " + "; ".join(issues))
+        raise ValueError("CP-3C submission is invalid: " + "; ".join(bounded_issues(issues)))
     check_currency(cp1=inputs.cp1, cp2d=inputs.cp2d, currency=inputs.currency)
     operands = compose_operands(
         cp1=inputs.cp1, cp2d=inputs.cp2d, balance_date=inputs.balance_date, currency=inputs.currency

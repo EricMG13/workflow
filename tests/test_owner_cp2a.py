@@ -29,6 +29,7 @@ import pytest
 from cp2a_runs import bound_literal, cp2a_closed, oracle, promoted
 from s1a_runs import clone_workflow
 
+from deploy_vii.downstream_readiness import ConsumerRequest, ConsumerRow, DownstreamReport
 from deploy_vii.execution import Execution
 from deploy_vii.report_view import fact_spelling
 from deploy_workflow import owner_workflow as ow
@@ -108,7 +109,9 @@ def _assert_head_equals_oracle(store: Execution, case: str) -> None:
     # Claims carry the CP-1 fact ids bound at run time (the manifest's selection rule).
     cp1 = store.head_module(_head(store, "CP-1")).facts
     ids = {
-        name: next(f.fact_id for f in cp1 if f.label == figure["cp1_label"])
+        name: next(
+            f.fact_id for f in cp1 if f.table_id == "T4.10" and f.label == figure["cp1_label"]
+        )
         for name, figure in SUBMISSIONS["figures"].items()
     }
     assert [c.claim_id for c in module.claims] == [c["claim_id"] for c in want["claims"]]
@@ -194,20 +197,39 @@ def test_a2d_blocked_run_leaves_a_blocked_head_and_a_verifying_receipt(blocked: 
     assert [h.status for h in _receipt(blocked).heads if h.module_id == "CP-2A"] == ["blocked"]
 
 
-def _find_rows(value: Any, entry: str) -> list[dict[str, Any]]:
-    if isinstance(value, dict):
-        own = [value] if value.get("entry") == entry else []
-        return own + [r for v in value.values() for r in _find_rows(v, entry)]
-    if isinstance(value, list):
-        return [r for v in value for r in _find_rows(v, entry)]
-    return []
+def cp2a_consumer_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
+    """The `consumers` rows of a CP-1 readiness `DownstreamReport` whose canonical module is
+    CP-2A. The same entry also appears in `inputs.consumers` (the request) and in
+    `review.consumers` (the assessment), neither of which carries a `status`."""
+    rows: list[dict[str, Any]] = report["consumers"]
+    return [r for r in rows if r["canonical_module"] == "CP-2A"]
+
+
+def test_cp2a_consumer_rows_ignore_the_request_and_the_assessment() -> None:
+    """Fast: the selector over the report's three places that name CP-2A (shape from the oracle
+    review literal and the real model field sets) returns only the one `consumers` row."""
+    review = SUBMISSIONS["cp1_downstream_review"]["consumers"]
+    assert {"entry"} <= set(ConsumerRequest.model_fields) & set(ConsumerRow.model_fields)
+    assert {"inputs", "review", "consumers"} <= set(DownstreamReport.model_fields)
+    shape = {
+        "inputs": {"consumers": [{"entry": "CP-2A", "canonical_module": "CP-2A"}]},
+        "review": {"consumers": review},
+        "consumers": [
+            {"entry": "CP-2A", "canonical_module": "CP-2A", "status": "ready_with_limitations"},
+            {"entry": "CP-9", "canonical_module": "CP-9", "status": "ready"},
+        ],
+    }
+    rows = cp2a_consumer_rows(shape)
+    assert [r["status"] for r in rows] == ["ready_with_limitations"]
 
 
 def test_a2e_cp1_readiness_row_for_cp2a_is_ready_with_limitations(positive: Closed) -> None:
     store = _verify(positive)
     attempt = next(a for a in store.read().attempts if a.module_id == "CP-1")
     step = next(s for s in attempt.steps if s.step_id == "readiness")
-    rows = _find_rows(json.loads(store.step_output(step.output_sha256 or "")), "CP-2A")
+    output = store.step_output(step.output_sha256 or "")
+    DownstreamReport.model_validate_json(output)  # the real report shape, not a guess
+    rows = cp2a_consumer_rows(json.loads(output))
     row = EXPECTED["cp1_readiness"]["consumer_row"]
     assert len(rows) == 1
     assert (rows[0]["canonical_module"], rows[0]["status"]) == (
@@ -259,7 +281,8 @@ def test_a3_unreplaced_figure_is_invalid(ready: OwnerWorkflow, tmp_path: Path) -
     workflow = clone_workflow(ready, tmp_path)
     workflow.read_inputs()
     outcome = workflow.submit_review(json.dumps(SUBMISSIONS["positive"]["downside_pathway"]))
-    assert outcome["status"] == "invalid" and outcome["issues"]
+    assert outcome["status"] == "invalid"
+    assert any("Malformed run text" in issue for issue in outcome["issues"]), outcome["issues"]
 
 
 # --- A4 tamper at the verifier ------------------------------------------------------------------

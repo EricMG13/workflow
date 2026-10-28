@@ -923,7 +923,8 @@ def test_a3_an_unreplaced_figure_is_invalid(tmp_path: Path) -> None:
     workflow.read_inputs()
     text = json.dumps(SUBMISSIONS["positive"]["downside_pathway"])
     outcome = workflow.submit_review(text)
-    assert outcome["status"] == "invalid" and outcome["issues"]
+    assert outcome["status"] == "invalid"
+    assert any("Malformed run text" in issue for issue in outcome["issues"]), outcome["issues"]
 
 
 def test_the_settled_head_follows_the_run_not_the_oracle_constants(tmp_path: Path) -> None:

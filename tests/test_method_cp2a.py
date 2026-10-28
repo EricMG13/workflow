@@ -910,6 +910,54 @@ def test_p1w_mixed_quarter_base() -> None:
     assert result.limitations[-3:-1] == (twelve, P1W_LINE)
 
 
+# Release batch item 1 (fb371d5; round 6 batch review L1): the break-at-base own line.
+BREAK_AT_BASE = (
+    "Break points hold cash interest at the base period level (no interest increase). The break "
+    "at which EBITDA no longer covers cash interest compares same-period flows but is gated like "
+    "a ratio: it is Not calculable wherever CP-1 has no twelve-month basis for the base period."
+)
+BREAK_AT_BASE_NA = BREAK_AT_BASE[:-1] + ", and it is not calculated on a single-quarter base."
+
+
+@pytest.mark.parametrize("case", COMPOSED)
+def test_break_at_base_line_names_the_single_quarter_gate(case: str) -> None:
+    """L1: the single-quarter clause is added exactly where the ratio gate holds (a quarter base
+    whose CP-1 ratios are known, the builder's gate_na); a quarter base without a twelve-month
+    basis (gap) and the FY/LTM bases keep the old line byte for byte."""
+    want, other = (
+        (BREAK_AT_BASE_NA, BREAK_AT_BASE)
+        if case == "fixture_quarter_known"
+        else (BREAK_AT_BASE, BREAK_AT_BASE_NA)
+    )
+    assert want in EXPECTED["cases"][case]["own_limitations"]
+    result, _, _ = composed(case)
+    assert want in result.limitations
+    assert other not in result.limitations
+
+
+@pytest.mark.parametrize(
+    ("metric", "line"),
+    [
+        ("total_leverage_reported", BREAK_AT_BASE_NA),
+        ("interest_coverage_reported", BREAK_AT_BASE),
+    ],
+    ids=["coverage-not-meaningful", "coverage-no-twelve-month-basis"],
+)
+def test_break_at_base_line_follows_the_coverage_break_gate(metric: str, line: str) -> None:
+    """On a mixed quarter base the clause follows the gate of the break it describes, the one
+    at which EBITDA no longer covers cash interest (gated by interest coverage): not meaningful
+    there adds it, no twelve-month basis there keeps the old line."""
+    facts = cp1_facts("fixture_quarter_known")
+    cells = EXPECTED["cases"]["fixture_quarter_known"]["cp1_inputs"]
+    gap_text = EXPECTED["cases"]["gap"]["cp1_inputs"][metric]["limitation"]
+    edited = _edit(facts, cells[metric]["label"], **MISSING, limitation=gap_text)
+    payload = SUBMISSIONS["fixture_quarter_known"]["downside_pathway"]
+    result = cp2a.compute(inputs_for("fixture_quarter_known", payload, edited))
+    assert line in result.limitations
+    other = BREAK_AT_BASE if line == BREAK_AT_BASE_NA else BREAK_AT_BASE_NA
+    assert other not in result.limitations
+
+
 def _quarter_base(
     *, interest: Decimal = Decimal("1.25"), total_debt: Decimal = Decimal(50)
 ) -> cp2a.BaseOperands:

@@ -25,13 +25,9 @@ from deploy_workflow.owners import cp4
 
 ROOT = Path(__file__).parents[1]
 CASE = ROOT / "cases/cp4-owner"
-PINNED = {
-    "manifest.json": "2c12bf6836f54b704201af217866002d279b51cd8f1ed6094154aec9198f6b23",
-    "submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
-    # Amendment 1 (ruling 4-1, docs/CP4-OWNER-LEASE.md:3): expected and builder re-pinned.
-    "expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
-    "builder/build.py": "71cf075839362058f6be70140995bfb363a19228151842414200f4d961755446",
-}
+# Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
+PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+PINNED = ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
 EXPECTED = json.loads((CASE / "expected.json").read_text())
 MANIFEST = json.loads((CASE / "manifest.json").read_text())
 SUBMISSIONS = json.loads((CASE / "submissions.json").read_text())
@@ -56,8 +52,9 @@ CP1_QUOTE = "Reporting basis: IFRS; entity perimeter: consolidated group."
 
 
 def test_oracle_files_are_the_pinned_revision() -> None:
-    for name, digest in PINNED.items():
-        assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == digest, name
+    for name in PINNED:
+        digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()
+        assert digest == PINS[f"cases/cp4-owner/{name}"], name
 
 
 # --- inputs from the frozen manifests -------------------------------------------------------

@@ -30,8 +30,8 @@ PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
-    "cases/cp2a-owner/expected.json": "ad5531da7cff4eca8e9c8e9a23cef6526a982537597e6830610877bec994ff89",
-    "cases/cp2g-owner/manifest.json": "b0c8c4bcdf3c0e00e33c41cc124d8ca86c47db14c82077c7d40504cc2bf6eee7",
+    "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
+    "cases/cp2g-owner/manifest.json": "ccf17834ec2800153d1b0648ddeac6add0debc64682e525cb6dd548162795daa",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
     "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
     "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
@@ -155,10 +155,15 @@ TOKEN = {"amount": "US$ m", "multiple": "x", "percent": "%"}
 # --- 2. CP-1 operands and source rows ----------------------------------------------------------
 
 
-def row_cells(page_text, label):
+def row_cells(page_text, label, quote=None, width=None):
+    """Cells of the row whose line starts with `quote` (default: the label and two spaces). Round 11 B1: when `width`
+    is given, the row must have exactly that many cells (the header cell-count rule)."""
+    start = quote if quote is not None else label + "  "
     for line in page_text.split("\n"):
-        if line.startswith(label + "  "):
-            return re.split(r"  +", line)
+        if line.startswith(start):
+            cells = re.split(r"  +", line)
+            assert width is None or len(cells) == width, (label, len(cells))
+            return cells
     raise AssertionError(label)
 
 
@@ -167,7 +172,7 @@ assert BS_HEADER[5] == "Q4 2025-12-31"
 
 
 def bs_value(label, column):
-    cells = row_cells(PAGE["page:4"], label)
+    cells = row_cells(PAGE["page:4"], label, width=len(BS_HEADER))
     return D(cells[BS_HEADER.index(column)])
 
 
@@ -573,7 +578,7 @@ def build_case(name):
             amt = D(s["amount_exact"]) if s["status"] == "known" else None
             why = None if amt is not None else "Not calculable: total debt is missing in CP-1 for " + LTM_PERIOD
         elif c["amount_source"] == "source_row":
-            cells = row_cells(PAGE["page:4"], c["amount_quote"]["quote"].split("  ")[0])
+            cells = row_cells(PAGE["page:4"], c["amount_quote"]["quote"].split("  ")[0], c["amount_quote"]["quote"], len(BS_HEADER))
             assert c["amount_quote"]["quote"] in PAGE["page:4"]
             amt, why = D(cells[BS_HEADER.index(c["period_column"])]), None
             amount_cite[c["class_id"]] = [dict(c["amount_quote"])]
@@ -1429,7 +1434,7 @@ def main():
         "waterfall_rules": {
             "order": "classes by the analyst's rank number, lowest first; classes of one rank share pro rata; the secured_debt class must rank strictly first",
             "distributable": "enterprise value only (EBITDA x multiple); cash is not added, costs are not deducted",
-            "recipe": "paid = min(available, group total); recovery = paid / group total (one division); distribution = claim x paid / group total (one division of an exact product); shortfall = claim - distribution; next available = available - paid; equity residual = what remains (a known 0 when creditors absorb all value)",
+            "recipe": "paid = min(available, group total); recovery = paid / group total (one division, 38 digits half-even); when paid = group total each distribution is its claim; when 0 < paid < group total the distributions are allocated by exact largest remainder at the rank quantum q = 10^(paid.adjusted() - 37), ties to the later class in claims order, and sum to paid exactly (rulings round 8 A-1); shortfall = claim - distribution (38 digits); next available = available - paid; equity residual = what remains (a known 0 when creditors absorb all value); T4E.9 balances exactly",
             "missing": "a missing claim blocks its rank group and every lower rank and the equity residual; a missing or unassessed EV blocks everything; a known EV of 0 gives known 0 recoveries; nothing becomes 0",
             "value_break": "the first rank group whose paid < total; if none, equity; not determinable (missing with the root reason) when an earlier group is blocked",
             "attachment": "claims ahead / EBITDA and claims through the class / EBITDA (the multiple at which the class is covered in full); missing when EBITDA is missing, zero or negative",

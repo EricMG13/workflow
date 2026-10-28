@@ -498,7 +498,12 @@ def better(a, b, direction):
     return a > b if direction == "Higher is better" else a < b
 
 
-def build_case(name):
+def build_case(name, peer_state="absent"):
+    """peer_state "not_ready" (round 4 (b), no frozen case): a peers source that is not ready composes the no-peers design
+    with `No ready peer source is in the pack` for every peer reason and for the universe claim."""
+    assert peer_state in ("absent", "not_ready"), f"unknown peer_state {peer_state!r}"
+    assert peer_state == "absent" or name == "no_peers", "peer_state not_ready composes the no-peers design: the case must have no peer sheet"
+    missing_peer = "No ready peer source is in the pack" if peer_state == "not_ready" else MISSING_PEER
     sub = SUBMISSION[name]
     sheet = parse_sheet(SHEET[name]) if name != "no_peers" else None
     issuer_row, peers, _basis = sheet if sheet else (None, [], {})
@@ -568,10 +573,10 @@ def build_case(name):
     else:
         for f_, l_ in (("period_end", "Period end"), ("reporting_basis", "Reporting basis"), ("segments", "Operating segments"),
                        ("fiscal_year_end", "Fiscal year end"), ("comparability", "Comparability"), ("included", "Universe"), ("evidence", "Evidence")):
-            gapf("T1C.1", "none", f_, l_, "amount", MISSING_PEER, unit=None, period=None)
+            gapf("T1C.1", "none", f_, l_, "amount", missing_peer, unit=None, period=None)
         reg("T1C.1", "none", "No peer source", ["period_end", "reporting_basis", "segments", "fiscal_year_end", "comparability", "included", "evidence"])
         for f_, l_ in (("sheet", "Peers in the source"), ("included", "Peers included"), ("excluded", "Peers excluded")):
-            gapf("T1C.8", "total", f_, l_, "amount", MISSING_PEER, unit="peers", period=None)
+            gapf("T1C.8", "total", f_, l_, "amount", missing_peer, unit="peers", period=None)
         reg("T1C.8", "total", "Total", ["sheet", "included", "excluded"])
 
     # ---- T1C.2 peer source figures (issuer line, then peers)
@@ -588,7 +593,7 @@ def build_case(name):
         reg("T1C.2", r, e["label"], [f for f, _ in FIELDS])
     if not sheet:
         for f_, l_ in FIELDS:
-            gapf("T1C.2", "none", f_, l_, "amount", MISSING_PEER, period=None)
+            gapf("T1C.2", "none", f_, l_, "amount", missing_peer, period=None)
         reg("T1C.2", "none", "No peer source", [f for f, _ in FIELDS])
 
     # ---- T1C.3 normalised metrics
@@ -619,7 +624,7 @@ def build_case(name):
         reg("T1C.3", r, p["label"], MKEY)
     if not sheet:
         for k, lab, uc, *_ in METRICS:
-            gapf("T1C.3", "none", k, lab, uc, MISSING_PEER, period=None)
+            gapf("T1C.3", "none", k, lab, uc, missing_peer, period=None)
         reg("T1C.3", "none", "No peer source", MKEY)
 
     # ---- T1C.4 statistics, T1C.5 outliers
@@ -633,7 +638,7 @@ def build_case(name):
         if not sheet:
             for f_, l_ in (("n", "Included peers with a value"), ("median", "Peer median"), ("difference", "Issuer minus median"),
                            ("position", "Issuer position"), ("of", "Entities compared"), ("outlier_count", "Peers flagged as outliers")):
-                gapf("T1C.4", k, f_, l_, uc, MISSING_PEER, unit=gap_unit[f_], period=None)
+                gapf("T1C.4", k, f_, l_, uc, missing_peer, unit=gap_unit[f_], period=None)
             reg("T1C.4", k, lab, ["direction", "n", "median", "difference", "position", "of", "outlier_count"])
             stats[k] = None
             continue
@@ -687,6 +692,10 @@ def build_case(name):
                     why = "Not calculable: the peer's value is not stated"
                     gapf("T1C.5", r, f"{k}_deviation", f"{lab} · Deviation from median", "percent", why, period=MIXED_PERIOD)
                     gapf("T1C.5", r, f"{k}_flag", f"{lab} · Flag", "percent", why, unit=None, period=MIXED_PERIOD)
+                elif v == "na":  # 1C1: checked after "value missing" and before "median zero"
+                    why = "Not meaningful: the peer's own ratio is not meaningful"
+                    gapf("T1C.5", r, f"{k}_deviation", f"{lab} · Deviation from median", "percent", why, "not_applicable", period=MIXED_PERIOD)
+                    gapf("T1C.5", r, f"{k}_flag", f"{lab} · Flag", "percent", why, "not_applicable", unit=None, period=MIXED_PERIOD)
                 elif st["median"] == 0:
                     why = "Not meaningful: the peer median is zero"
                     gapf("T1C.5", r, f"{k}_deviation", f"{lab} · Deviation from median", "percent", why, "not_applicable", period=MIXED_PERIOD)
@@ -704,13 +713,17 @@ def build_case(name):
             reg("T1C.5", r, label if p else f"{ISSUER}", [f"{k}_{x}" for k in MKEY for x in ("deviation", "flag")])
     else:
         for f_ in [f"{k}_{x}" for k in MKEY for x in ("deviation", "flag")]:
-            gapf("T1C.5", "none", f_, f_, "percent", MISSING_PEER, unit=None if f_.endswith("_flag") else "auto", period=None)
+            gapf("T1C.5", "none", f_, f_, "percent", missing_peer, unit=None if f_.endswith("_flag") else "auto", period=None)
         reg("T1C.5", "none", "No peer source", [f"{k}_{x}" for k in MKEY for x in ("deviation", "flag")])
     # outlier_count facts of T1C.4 (peers flagged), needs the register
     if sheet:
         for k, lab, uc, *_ in METRICS:
             st = stats[k]
             if st["median"] is None:
+                continue
+            if st["median"] == 0:  # C2: not a known 0
+                gapf("T1C.4", k, "outlier_count", "Peers flagged as outliers", uc, "Not meaningful: the peer median is zero", "not_applicable",
+                     unit="peers", period=MIXED_PERIOD)
                 continue
             tested = [p["row"] for p in inc if p["row"] in st.get("flags", {})]
             flagged = [r for r in tested if st["flags"][r]]
@@ -722,17 +735,32 @@ def build_case(name):
     for k, lab, uc, direction, nm, dn in METRICS:
         if not sheet:
             # CP-1 is in the pack: its cell is the same known copy as T1C.3.issuer.<metric>; only the peer-source side is missing
-            gapf("T1C.6", k, "sheet", "Issuer line on the peer source", uc, MISSING_PEER, period=None)
+            gapf("T1C.6", k, "sheet", "Issuer line on the peer source", uc, missing_peer, period=None)
             cv = q38(CP1_FIGS[k][0])
             fact("T1C.6", k, "cp1", "CP-1", status="known", unit=UNIT[uc], period=LTM_PERIOD, amount_exact=norm(cv), shown=show(cv, uc), value_class=CP1_FIGS[k][1],
                  copied_from_cp1=f"{LTM_COLUMN} · {k}", calculation_id="{{CP1_CALCULATION_ID}}", derives_from=[],
                  lineage="the CP-1 fact verbatim: its own calculation_id and citations are bound at run time")
-            gapf("T1C.6", k, "difference", "Difference", uc, MISSING_PEER, unit="pp" if uc == "percent" else "auto", period=None)
+            gapf("T1C.6", k, "difference", "Difference", uc, missing_peer, unit="pp" if uc == "percent" else "auto", period=None)
+            text("T1C.6", k, "result", "Result", "Not compared")
+        elif issuer_row[nm] is None or issuer_row[dn] is None or issuer_row[dn] <= 0:
+            # round 4 (d), 1C2: the issuer line cannot be recomputed; the CP-1 copy stays known
+            if issuer_row[nm] is None or issuer_row[dn] is None:
+                gapf("T1C.6", k, "sheet", "Issuer line on the peer source", uc,
+                     f"Not calculable: {dict(FIELDS)[nm if issuer_row[nm] is None else dn].lower()} is not stated on the issuer line of the peer source",
+                     period=pend(issuer_row))
+            else:
+                gapf("T1C.6", k, "sheet", "Issuer line on the peer source", uc, f"Not meaningful: {dict(FIELDS)[dn].lower()} is not positive",
+                     "not_applicable", period=pend(issuer_row))
+            cv = q38(CP1_FIGS[k][0])
+            fact("T1C.6", k, "cp1", "CP-1", status="known", unit=UNIT[uc], period=LTM_PERIOD, amount_exact=norm(cv), shown=show(cv, uc), value_class=CP1_FIGS[k][1],
+                 copied_from_cp1=f"{LTM_COLUMN} · {k}", calculation_id="{{CP1_CALCULATION_ID}}", derives_from=[],
+                 lineage="the CP-1 fact verbatim: its own calculation_id and citations are bound at run time")
+            gapf("T1C.6", k, "difference", "Difference", uc, "Not compared: one side is not available", unit="pp" if uc == "percent" else "auto", period=None)
             text("T1C.6", k, "result", "Result", "Not compared")
         else:
             sv = div(issuer_row[nm], issuer_row[dn])
             cv = q38(CP1_FIGS[k][0])
-            num("T1C.6", k, "sheet", "Issuer line on the peer source", sv, uc, f"{dict(FIELDS)[nm]} / {dict(FIELDS)[dn]} from the issuer line", (f"T1C.2.issuer.{nm}", f"T1C.2.issuer.{dn}"), period="Twelve months to 2025-12-31")
+            num("T1C.6", k, "sheet", "Issuer line on the peer source", sv, uc, f"{dict(FIELDS)[nm]} / {dict(FIELDS)[dn]} from the issuer line", (f"T1C.2.issuer.{nm}", f"T1C.2.issuer.{dn}"), period=pend(issuer_row))
             fact("T1C.6", k, "cp1", "CP-1", status="known", unit=UNIT[uc], period=LTM_PERIOD, amount_exact=norm(cv), shown=show(cv, uc), value_class=CP1_FIGS[k][1],
                  copied_from_cp1=f"{LTM_COLUMN} · {k}", calculation_id="{{CP1_CALCULATION_ID}}", derives_from=[],
                  lineage="the CP-1 fact verbatim: its own calculation_id and citations are bound at run time")
@@ -758,7 +786,7 @@ def build_case(name):
         limits.append("Peer figures come from the peer summary source, which is supplied by a data desk and unaudited; no peer is restated to the issuer's basis.")
         limits.append("Peer ratios use the definitions stated in the peer summary; the issuer line on the same summary is tied to CP-1 in the definition alignment table.")
     else:
-        limits.append("No peer source is in the pack: no peer universe, median, position or outlier flag can be formed.")
+        limits.append(f"{missing_peer}: no peer universe, median, position or outlier flag can be formed.")
     for p in pr:
         if p["a"]["comparability"] == "Partly comparable":
             limits.append(f"Partly comparable peer included: {p['label']}: {p['a']['limitation']}")
@@ -816,13 +844,15 @@ def build_case(name):
         claims.append({"claim_id": f"T1C.1.{p['row']}", "text": p["a"]["rationale"], "limitation": p["a"]["limitation"], "evidence": p["a"]["evidence"]})
     claims.append({"claim_id": "T1C.1.universe", "limitation": None,
                    "text": (f"The peer source lists {ref('T1C.8.total.sheet', 'peers')} and {ref('T1C.8.total.included', 'peers')} are included in the universe."
-                            if sheet else f"No peer source is in the pack, so no universe is formed {ref('T1C.8.total.sheet', 'peers')}.")})
+                            if sheet else f"{missing_peer}, so no universe is formed {ref('T1C.8.total.sheet', 'peers')}.")})
     for k, lab, uc, direction, nm, dn in METRICS:
         tk = TOKEN[uc]
         t = (f"{lab} of the issuer is {ref(f'T1C.3.issuer.{k}', tk)} against a peer median of {ref(f'T1C.4.{k}.median', tk)} "
              f"across {ref(f'T1C.4.{k}.n', 'peers')}.")
-        if sheet and stats[k]["median"] is not None:
-            t += " The issuer is flagged an outlier on this metric." if stats[k].get("flags", {}).get("issuer") else " The issuer is not flagged an outlier on this metric."
+        if sheet and stats[k]["median"] == 0:  # C2: no test, no "not flagged"
+            t += " The outlier test does not apply to this metric because the peer median is zero."
+        elif sheet and stats[k]["median"] is not None and "issuer" in stats[k].get("flags", {}):  # only when the issuer's flag is known
+            t += " The issuer is flagged an outlier on this metric." if stats[k]["flags"]["issuer"] else " The issuer is not flagged an outlier on this metric."
         claims.append({"claim_id": f"T1C.4.{k}", "limitation": None, "text": t})
     o = sub["overall"]
     claims.append({"claim_id": "T1C.1.assessment", "text": o["rationale"], "limitation": o["limitation"], "evidence": o["evidence"]})

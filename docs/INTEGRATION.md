@@ -966,7 +966,8 @@ Integrated C1's exact six-file commit
 `266440a5fb050ccdaadca8ab0c4183ec15b4efc5` (parent
 `dfbb4c9fec84e51c0cc9b8c1262dd1e07daebd9d`). The source pins are
 `src/deploy_vii/registry.py` `adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc`,
-`src/deploy_vii/methodology.json` `348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45`,
+`src/deploy_vii/methodology.json` `348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45`
+(the pin at this integration; the serialised change ede9ffe has since replaced it with `1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6`),
 `src/deploy_vii/live/submission.py` `a6b8919e5f10b9dfd541d469a930fd153c3074bbd64ff35f755aed3c9d5a2799`, and
 `src/deploy_workflow/tools/upstream.py` `7d2b71955ad2d0a59c89822d9d37db659cc7d96a4155fbe78f35381ddcf907cc`.
 The test pins are `tests/test_cp1b_registration.py`

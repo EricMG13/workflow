@@ -11137,8 +11137,8 @@
      "field": "status",
      "label": "Status",
      "status": "known",
-     "text": "composer_only",
-     "shown": "composer_only",
+     "text": "restricted",
+     "shown": "restricted",
      "value_class": null
     },
     {

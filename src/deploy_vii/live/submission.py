@@ -112,7 +112,7 @@ from deploy_vii.live.schema import (
     json_object,
     marked_fields,
     normalise,
-    too_deep,
+    payload_document,
 )
 from deploy_vii.narrative import NarrativeReview
 from deploy_vii.preparation import PreparedPack
@@ -436,10 +436,7 @@ def compose(pack: PreparedPack, submission: ReadinessSubmission) -> Composition:
 
 def compose_payload(pack: PreparedPack, payload: str) -> Composition:
     """Parse a (null-resolved) model payload as a `ReadinessSubmission` and compose it."""
-    try:
-        document = None if too_deep(payload) else json.loads(payload)
-    except ValueError:
-        document = None
+    document = payload_document(payload, exact=False)
     if isinstance(document, dict) and "pack_sha256" in document:
         # The model returned the stored contract (it binds the pack itself): pre-0008 shape.
         return Composition(None, (SUPERSEDED_SHAPE,))
@@ -850,10 +847,6 @@ def prefill(model: type[BaseModel], payload: str, known: Known, kinds: frozenset
     `kinds` raises ValueError (nothing fills it)."""
     document = json_object(payload)
     if document is None:
-        return Prefill(payload)
-    try:
-        exact_json(document).encode()
-    except UnicodeEncodeError:
         return Prefill(payload)
     marked = marked_fields(model, document)
     unknown = sorted({item.kind for item in marked} - kinds)

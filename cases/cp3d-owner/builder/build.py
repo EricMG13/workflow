@@ -842,8 +842,11 @@ def compose_case(case, sub, d):
     if sub.get("recovery_absence"):
         miss.append(("recovery", "Annual default intensity and cumulative default probability",
                      sub["recovery_absence"]["reason"]))
-    if s["dm_mid"] is None and not mk_absent:
-        miss.append(("discount_margin", "Simple discount margin", "Needs a contractual margin and stated zero amortisation"))
+    if s["dm_mid"] is None and not mk_absent:  # 6e (h): the first missing cause in formula order
+        miss.append(("discount_margin", "Simple discount margin",
+                     "Needs a quotation date and a final maturity date" if d["days"] is None
+                     else "Needs both an observed bid and an observed offer" if s["mid"] is None
+                     else "Needs a contractual margin and stated zero amortisation"))
     t7 = [(f"r{i:02d}", name, [T(aff), T(why)]) for i, (_, name, _w) in enumerate(miss, 1)
           for aff, why in [(miss[i - 1][1], miss[i - 1][2])]]
     if not t7:
@@ -918,8 +921,22 @@ def compose_claims(case, sub, d, tables):
         add("CP-3D-LVL-01", f"No market level is available: [{bidf}] and [{offf}] are not stated because the pack holds no "
             "third-party market quotation source.", [bidf, offf])
     else:
-        add("CP-3D-LVL-01", f"On {sub['observations'][0]['as_of_text']} the dealer quotation was {{{bidf}|%}} bid and "
-            f"{{{offf}|%}} offer, a mid of {{{midf}|%}} of par.", [bidf, offf, midf])
+        # X1 (i)-(iii): the claim follows the observations that were submitted, never observations[0]
+        by_kind = {o["kind"]: o for o in sub["observations"]}
+        talkf = fid("T3E.1", "r03", "level")
+        if "bid" in by_kind and "offer" in by_kind:
+            add("CP-3D-LVL-01", f"On {by_kind['bid']['as_of_text']} the dealer quotation was {{{bidf}|%}} bid and "
+                f"{{{offf}|%}} offer, a mid of {{{midf}|%}} of par.", [bidf, offf, midf])
+        elif "bid" in by_kind:
+            add("CP-3D-LVL-01", f"On {by_kind['bid']['as_of_text']} the dealer quotation was {{{bidf}|%}} bid; no offer was "
+                f"submitted, so the mid is not calculated: [{midf}].", [bidf, midf])
+        elif "offer" in by_kind:
+            add("CP-3D-LVL-01", f"On {by_kind['offer']['as_of_text']} the dealer quotation was {{{offf}|%}} offer; no bid was "
+                f"submitted, so the mid is not calculated: [{midf}].", [offf, midf])
+        else:
+            assert "indicative_talk" in by_kind, "no observation and no market absence: the rulings settle 1..3 observations"
+            add("CP-3D-LVL-01", f"No dealer quotation was submitted: [{bidf}] and [{offf}] are not stated; indicative talk of "
+                f"{{{talkf}|%}} of par is shown as context only.", [bidf, offf, talkf])
     yrs = fid("T3E.2", "r06", "value")
     dmm = fid("T3E.3", "r03", "mid")
     mgf = fid("T3E.3", "r02", "mid")
@@ -933,6 +950,12 @@ def compose_claims(case, sub, d, tables):
     if s["yield_mid"] is not None:
         add("CP-3D-YLD-01", f"At the mid the all-in yield is {{{yld}|%}}, the reference rate level plus the simple "
             f"discount margin of {{{dmm}|bp}}.", [yld, dmm])
+    elif sub["terms"]["reference_rate"].get("level") and d["days"] is None:  # X1 (v): a level is quoted, no final maturity date
+        add("CP-3D-YLD-01", f"The all-in yield is not calculated: [{yld}] needs a final maturity date, which no source in "
+            "the pack states.", [yld])
+    elif sub["terms"]["reference_rate"].get("level"):  # 6e (g): maturity known, the margin at the mid is missing
+        add("CP-3D-YLD-01", f"The all-in yield is not calculated: [{yld}] needs the simple discount margin at the mid, "
+            f"which is not calculated: [{dmm}].", [yld, dmm])
     else:
         add("CP-3D-YLD-01", f"The all-in yield is not calculated: [{yld}] needs a reference rate level that no source in "
             "the pack states.", [yld])
@@ -941,6 +964,9 @@ def compose_claims(case, sub, d, tables):
         add("CP-3D-PD-01", f"At the analyst recovery assumption the mid spread implies an annual default intensity of "
             f"{{{lam}|bp}} and a cumulative default probability to final maturity of {{{pdm}|%}}; both are "
             "risk-neutral measures.", [lam, pdm])
+    elif s["pd_state_mid"] == "not_applicable":  # X1 (iv): the mid margin is known and not positive
+        add("CP-3D-PD-01", f"The market-implied default probability is not meaningful: [{lam}] and [{pdm}] need a positive "
+            f"simple discount margin, and at the mid the margin is {{{dmm}|bp}}.", [lam, pdm, dmm])
     else:
         needs = "simple discount margin" if sub.get("recovery") else "simple discount margin and a recovery assumption"
         add("CP-3D-PD-01", f"The market-implied default probability is not calculated: [{lam}] and [{pdm}] need a "

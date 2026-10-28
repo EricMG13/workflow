@@ -1,5 +1,7 @@
 # CP-5 (integrity review) owner run lease — FROZEN by LEAD 2026-10-28 (preparation revision 2)
 
+Pin consumers: none (no other builder pins or reads this module's files). Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
+
 Frozen after these reviews:
 - `work/lead/cp5-owner-preparation/review-precise-1.md`: CHANGES REQUIRED, with F1 and F2 Medium and L1 to L3 Low, all fixed in revision 2.
 - `review-precise-2.md`: PASS on F1 and F2. Its Lows L-a and L-b were applied in the freeze batch (`revision-2.md`) and checked against `scratchpad/cp5-review1/r2_checks.py` (rc 0) with no review round.

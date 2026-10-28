@@ -716,16 +716,16 @@ OPERAND_WORDS = {  # G-1
 }
 
 
-def _with_cp1(case: str, metric: str, status: str) -> cp2g.ForwardContext:
+def _with_cp1(case: str, *metrics: str) -> cp2g.ForwardContext:
     ctx = _context(case)
     unknown = {
-        "status": status,
+        "status": "missing",
         "amount": None,
         "citations": (),
         "calculation_id": None,
         "limitation": "not disclosed",
     }
-    facts = tuple(f.model_copy(update=unknown) if f.row_id == metric else f for f in ctx.cp1_facts)
+    facts = tuple(f.model_copy(update=unknown) if f.row_id in metrics else f for f in ctx.cp1_facts)
     return dataclasses.replace(ctx, cp1_facts=facts)
 
 
@@ -757,7 +757,7 @@ def _gap_of(f: Fact) -> tuple[str, str | None]:
 @pytest.mark.parametrize("key", OPERAND_WORDS)
 def test_g1_missing_operand_words(key: str) -> None:
     word = OPERAND_WORDS[key]
-    ctx = _with_cp1("gap", cp2g.OPERAND_METRIC[key], "missing")
+    ctx = _with_cp1("gap", cp2g.OPERAND_METRIC[key])
     ops = cp2g.Operands.from_cp1(ctx.cp1_facts)
     assert getattr(ops, key) == cp2g.Val(
         None, f"Not calculable: base {word} is missing in CP-1 ({LTM})"
@@ -771,7 +771,7 @@ def test_g1_missing_operand_words(key: str) -> None:
 
 @pytest.mark.parametrize("key,row", [("ebitda", "b03"), ("debt", "b03"), ("interest", "b05")])
 def test_g1_unverified_cause_words(key: str, row: str) -> None:
-    ctx = _with_cp1("positive", cp2g.OPERAND_METRIC[key], "missing")
+    ctx = _with_cp1("positive", cp2g.OPERAND_METRIC[key])
     payload = _plain(_payload("positive"))
     assert cp2g.payload_issues(json.dumps(payload), ctx) == ()
     cause = f"base {OPERAND_WORDS[key]} is missing in CP-1 for {LTM}"
@@ -819,8 +819,8 @@ def test_g4_margin_on_non_positive_revenue() -> None:
         assert _gap_of(cells[f"T2H.4.{row}.margin"]) == ("missing", reason)
 
 
-def _unknown_shock(field: str) -> cp2g.ForwardContext:
-    ctx = _context("positive")
+def _unknown_shock(*fields: str, case: str = "positive") -> cp2g.ForwardContext:
+    ctx = _context(case)
     unknown = {
         "status": "missing",
         "amount": None,
@@ -830,7 +830,7 @@ def _unknown_shock(field: str) -> cp2g.ForwardContext:
         "limitation": "Not stated by CP-2A",
     }
     scenarios = tuple(
-        dataclasses.replace(s, **{field: getattr(s, field).model_copy(update=unknown)})
+        dataclasses.replace(s, **{f: getattr(s, f).model_copy(update=unknown) for f in fields})
         if s.row == "s03"
         else s
         for s in ctx.cp2a.scenarios
@@ -989,8 +989,13 @@ _CP1D_DEPENDENT = (
 
 @pytest.mark.parametrize("status", ["missing", "not_applicable"])
 def test_g9_cp1d_supported_not_known(status: str) -> None:
-    ctx = _cp1d_with(
-        "supported", status=status, amount=None, calculation_id=None, limitation="Not in CP-1D"
+    ctx = _cp1d_with(  # not known on another period: not known is the reason (G-9 order)
+        "supported",
+        status=status,
+        amount=None,
+        calculation_id=None,
+        limitation="Not in CP-1D",
+        period="FY2025: 2025-01-01 to 2025-12-31",
     )
     result = _compose(ctx, _bind_all(_payload("positive")))
     cells = _cells(result)
@@ -1084,6 +1089,340 @@ def test_selection_rule_needs_exactly_one_fact() -> None:
         cp2g.select_cp1(facts[1:])
     with pytest.raises(ValueError, match="exactly one"):
         cp2g.select_cp1((*facts, facts[0].model_copy(update={"fact_id": "interface-fact:dup"})))
+
+
+# --- fix round 1 (work/build/stage1/cp2g/review-adversary.md) -------------------------------------
+def test_selection_ignores_other_tables() -> None:
+    """Lease selection rule: only T4.10 facts are selected; a same-label fact elsewhere is not."""
+    facts = _context("gap").cp1_facts
+    other = facts[0].model_copy(update={"fact_id": "interface-fact:t49", "table_id": "T4.9"})
+    assert cp2g.select_cp1((*facts, other)) == cp2g.select_cp1(facts)
+
+
+def test_m1_cp1_figure_named_by_calculation_id() -> None:
+    """M1: a CP-1 figure named by its calculation id resolves to that fact (prose.bind), in the
+    claim's references and the CP-1 reference table, so the composed claim resolves."""
+    ctx = _context("positive")
+    revenue = cp2g.select_cp1(ctx.cp1_facts)["revenue"]
+    assert revenue.calculation_id is not None
+    text = json.dumps(_bind_all(_payload("positive"))).replace(
+        "{" + revenue.fact_id + "|", "{" + revenue.calculation_id + "|"
+    )
+    assert revenue.calculation_id in text
+    assert cp2g.payload_issues(text, ctx) == ()
+    result = _compose(ctx, json.loads(text))
+    claim = next(c for c in result.claims if c.claim_id == "T2H.3.revenue_growth")
+    assert claim.references == (revenue.fact_id,)
+    assert revenue in [r.fact for r in result.references[0].rows]
+    bound = prose.bind(_facts_by_id(result).values())
+    assert prose.issues(claim.text, bound, names=(ISSUER,)) == ()
+
+
+@pytest.mark.parametrize(
+    "update",
+    [{"unit": "THOUSANDS", "scale": D(1000)}, {"currency": "EUR"}, {"scale": D(1000)}],
+)
+def test_m2_cp1_amount_must_be_usd_millions(update: dict[str, Any]) -> None:
+    """M2: lease "All amounts USD, unit MILLIONS"; another book fails closed (an invariant)."""
+    ctx = _context("positive")
+    facts = tuple(
+        f.model_copy(update=update) if f.row_id == "revenue" else f for f in ctx.cp1_facts
+    )
+    ctx = dataclasses.replace(ctx, cp1_facts=facts)
+    with pytest.raises(ValueError, match="USD MILLIONS"):
+        cp2g.payload_issues(json.dumps(_bind_all(_payload("positive"))), ctx)
+
+
+def test_l4_unitless_unmapped_level_fails_closed() -> None:
+    """L4: a G-7 row whose unsettled CP-2A level states no unit is an invariant failure."""
+    ctx = _other_definition("Cash flow negative")
+    b01 = next(b for b in ctx.cp2a.breaks if b.row == "b01")
+    level = Fact(
+        fact_id=b01.level.fact_id,
+        label=b01.level.label,
+        table_id="T2B.6",
+        row_id="b01",
+        field="level",
+        status="missing",
+        limitation="Not stated by CP-2A",
+    )
+    breaks = tuple(
+        dataclasses.replace(b, level=level) if b.row == "b01" else b for b in ctx.cp2a.breaks
+    )
+    ctx = dataclasses.replace(ctx, cp2a=dataclasses.replace(ctx.cp2a, breaks=breaks))
+    with pytest.raises(ValueError, match="T2B.6.b01.level"):
+        _compose(ctx, _bind_all(_payload("positive")))
+
+
+def test_m3_accessible_liquidity_adds_undrawn_revolver() -> None:
+    """M3 (A10): accessible liquidity = closing cash + CP-1 undrawn revolver, held flat."""
+    ctx = _context("positive")
+    facts = tuple(
+        f.model_copy(update={"amount": D(5)}) if f.row_id == "undrawn_rcf" else f
+        for f in ctx.cp1_facts
+    )
+    cells = _cells(
+        _compose(dataclasses.replace(ctx, cp1_facts=facts), _bind_all(_payload("positive")))
+    )
+    for row in ("b26", "b27", "b28", "d26", "d27", "d28"):
+        cash = cells[f"T2H.5.{row}.closing_cash"].amount
+        assert cash is not None and cells[f"T2H.5.{row}.undrawn_revolver"].amount == 5
+        assert cells[f"T2H.5.{row}.accessible_liquidity"].amount == cash + 5
+
+
+@pytest.mark.parametrize(
+    "metric,row",
+    [
+        ("fcf", "fcf"),
+        ("total_leverage_reported", "total_leverage"),
+        ("net_leverage_reported", "net_leverage"),
+    ],
+)
+def test_m3_t2h2_check_differs_from_cp1(metric: str, row: str) -> None:
+    """M3 (A22): a recomputed figure that does not equal CP-1's reads "Differs from CP-1"."""
+    ctx = _context("positive")
+    facts = tuple(
+        f.model_copy(update={"amount": (f.amount or D(0)) + 1}) if f.row_id == metric else f
+        for f in ctx.cp1_facts
+    )
+    payload = _plain(_payload("positive"))
+    cells = _cells(_compose(dataclasses.replace(ctx, cp1_facts=facts), payload))
+    assert cells[f"T2H.2.{row}.check"].text == "Differs from CP-1"
+    assert _cells(_compose(ctx, payload))[f"T2H.2.{row}.check"].text == "Reconciled to CP-1"
+
+
+def test_m3_zero_leverage_change_is_flat() -> None:
+    """M3 (A18): a FY2028 total leverage equal to FY2025's is "Flat" (lease sign rule)."""
+    payload = _bind_all(_payload("positive"))
+    drivers = payload["base_drivers"]
+    drivers["revenue_growth"]["values"] = ["0", "0", "0"]
+    drivers["ebitda_margin"]["values"] = ["0.25", "0.25", "0.25"]  # CP-1 EBITDA 30 / revenue 120
+    drivers["debt_repayment"]["values"] = ["0", "0", "0"]
+    result = _compose(_context("positive"), payload)
+    assert result.trajectory["base"].change == 0
+    assert _cells(result)["T2H.8.base.trajectory"].text == "Flat"
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_amounts_are_canonical(case: str) -> None:
+    """A23: every stored amount is in the canonical form (no trailing zeros, no exponent)."""
+    for cell in _result(case).cells:
+        amount, text = cell.fact.amount, _norm(cell.fact.amount)
+        if amount is not None and text is not None:
+            assert amount.as_tuple() == D(text).as_tuple(), cell.fact.fact_id
+
+
+def test_ratio_reason_is_the_numerator_first() -> None:
+    """A13, B13: lease "first operand in formula order": with CP-1 EBITDA and cash interest both
+    missing, coverage E / I and the coverage break's cause name EBITDA."""
+    ctx = _with_cp1("positive", "ebitda", "cash_interest")
+    result = _compose(ctx, _plain(_payload("positive")))
+    assert _gap_of(_cells(result)["T2H.6.a25.interest_coverage"]) == (
+        "missing",
+        f"Not calculable: base EBITDA is missing in CP-1 ({LTM})",
+    )
+    assert _unverified("b05", f"base EBITDA is missing in CP-1 for {LTM}") in result.own_limitations
+
+
+def test_net_leverage_cause_follows_formula_order() -> None:
+    """B14: net leverage (L x E - (D - C)) / (L x E): with debt and cash missing, debt is named."""
+    result = _compose(
+        _with_cp1("positive", "total_debt", "cash_closing"), _plain(_payload("positive"))
+    )
+    assert (
+        _unverified("b04", f"base total debt is missing in CP-1 for {LTM}")
+        in result.own_limitations
+    )
+
+
+def test_g8_ebitda_cause_before_level_cause() -> None:
+    """B10: ruling G-8 order, base EBITDA before the CP-2A level."""
+    ctx = _context("positive")
+    facts = tuple(
+        f.model_copy(update={"amount": D(0)}) if f.row_id == "ebitda" else f for f in ctx.cp1_facts
+    )
+    breaks = tuple(
+        dataclasses.replace(b, level=b.level.model_copy(update={"amount": D(0)}))
+        if b.row == "b03"
+        else b
+        for b in ctx.cp2a.breaks
+    )
+    ctx = dataclasses.replace(
+        ctx, cp1_facts=facts, cp2a=dataclasses.replace(ctx.cp2a, breaks=breaks)
+    )
+    cause = f"base EBITDA is zero or negative in CP-1 for {LTM} (ZERO_OR_NEGATIVE_DENOMINATOR)"
+    lines = _compose(ctx, _bind_all(_payload("positive"))).own_limitations
+    assert _unverified("b03", cause) in lines
+
+
+def test_g8_level_cause_is_for_leverage_only() -> None:
+    """B15: round 6d, coverage divides by E, so a coverage level of 0 is checked, not unverified."""
+    ctx = _context("positive")
+    breaks = tuple(
+        dataclasses.replace(b, level=b.level.model_copy(update={"amount": D(0)}))
+        if b.row == "b05"
+        else b
+        for b in ctx.cp2a.breaks
+    )
+    ctx = dataclasses.replace(ctx, cp2a=dataclasses.replace(ctx.cp2a, breaks=breaks))
+    issue = (
+        "break_metrics[2]: metric interest_coverage does not reproduce the CP-2A required decline"
+    )
+    assert cp2g.payload_issues(json.dumps(_bind_all(_payload("positive"))), ctx) == (
+        f"{issue} of b05",
+    )
+
+
+def test_g5_fy26_comparison_names_the_forecast_first() -> None:
+    """A26: forecast EBITDA - CP-1D supported EBITDA, first operand in formula order: with the
+    shock unknown and CP-1D not part of the run, the downside comparison carries the G-5 reason."""
+    ctx = _unknown_shock("decline", case="gap")
+    cells = _cells(_compose(ctx, _bind_all(_payload("gap"))))
+    assert _gap_of(cells["T2H.8.down.ebitda_fy26_vs_supported"]) == (
+        "missing",
+        "Not calculable: CP-2A scenario s03 states no known EBITDA decline",
+    )
+    assert _gap_of(cells["T2H.8.base.ebitda_fy26_vs_supported"]) == (
+        "missing",
+        cp2g.CP1D_WHY[ctx.cp1d.state],
+    )
+
+
+def test_g5_decline_named_before_increase() -> None:
+    """R01: ruling G-5, the first unknown shock in the order decline, increase."""
+    cells = _cells(_compose(_unknown_shock("decline", "increase"), _bind_all(_payload("positive"))))
+    assert _gap_of(cells["T2H.4.d26.ebitda"]) == (
+        "missing",
+        "Not calculable: CP-2A scenario s03 states no known EBITDA decline",
+    )
+
+
+_OWN_ORDER = (  # round 6d: the own-line order, as a sequence of line kinds
+    (
+        "Driver values",
+        "The forecast is",
+        "Cash interest is",
+        "Cash taxes",
+        "No new borrowing",
+        "The downside applies",
+        "The break tests",
+        "Accessible liquidity",
+        "Debt maturities",
+    ),
+    ("CP-1D's supported EBITDA",),
+    ("CP-1D is bound but",),
+    ("CP-2D (liquidity",),
+    ("Minimum liquidity",),
+    ("Base ",),
+    ("CP-2A stressed the base period",),
+    ("CP-2A scenario",),
+    ("The metric named for",),
+    ("CP-2A definition break",),
+    ("In the base case closing cash", "In the downside case closing cash"),
+    ("A break test whose metric",),
+    ("A leverage trajectory",),
+    ("Gap (",),
+)
+
+
+def test_own_line_order_round_6d() -> None:
+    """R04, R05b, R06: every kind of own line at once, in the round 6d order."""
+    unmapped = _other_definition("Free cash flow below zero").cp2a  # G-7
+    cp2a = dataclasses.replace(
+        unmapped,
+        base_period="FY2025: 2025-01-01 to 2025-12-31",  # period line, unverified breaks
+        scenarios=_unknown_shock("decline").cp2a.scenarios,  # G-5
+    )
+    ctx = dataclasses.replace(
+        _context("positive"),
+        cp1_facts=_with_cp1("positive", "total_debt").cp1_facts,  # operand line
+        cp2a=cp2a,
+        cp1d=_cp1d_with("total_leverage", period="FY2025").cp1d,  # G-9
+        cp2d_status="restricted",  # G-6
+    )
+    lines = _compose(ctx, _plain(_payload("positive"))).own_limitations
+
+    def kind(line: str) -> int:
+        return next(n for n, starts in enumerate(_OWN_ORDER) if line.startswith(starts))
+
+    kinds = [kind(line) for line in lines]
+    assert kinds == sorted(kinds)
+    assert set(kinds) == set(range(len(_OWN_ORDER))) - {10}  # cash stays positive without debt
+
+
+L11_PHRASES = (  # the lease's listed phrases, literal here so a dropped phrase is caught
+    "probability-weighted",
+    "probability weighted",
+    "probability of",
+    "weighted by probability",
+    "expected value",
+    "likelihood-weighted",
+)
+
+
+def test_probability_phrases_are_the_lease_list() -> None:
+    assert cp2g.PROBABILITY_PHRASES == L11_PHRASES
+
+
+@pytest.mark.parametrize("phrase", L11_PHRASES)
+def test_probability_guard_every_phrase_any_case(phrase: str) -> None:
+    """V03-V05, ruling L11: each listed phrase, matched case-insensitively, quoted as listed."""
+    payload = _bind_all(_payload("positive"))
+    payload["downside"]["rationale"] = f"The downside is not a {phrase.upper()} view."
+    assert cp2g.payload_issues(json.dumps(payload), _context("positive")) == (
+        f'downside.rationale: prohibited conclusion (probability weighting): "{phrase}"',
+    )
+
+
+def test_whitespace_prose_is_empty() -> None:
+    """V08: a prose field of whitespace alone is empty text."""
+    payload = _bind_all(_payload("positive"))
+    payload["downside"]["rationale"] = "   "
+    assert cp2g.payload_issues(json.dumps(payload), _context("positive")) == (
+        "downside.rationale: empty text",
+    )
+
+
+@pytest.mark.parametrize(
+    "path", [("minimum_liquidity", "rationale"), ("gaps", 0, "action"), ("assessment", "rationale")]
+)
+def test_prose_paths_are_checked(path: tuple[Any, ...]) -> None:
+    """V12, V13: every prose field is checked, including minimum_liquidity.rationale and
+    gaps[].action (lease "Refusals")."""
+    payload = _bind_all(_payload("positive"))
+    target: Any = payload
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = "A buffer of 7 is held."
+    where = ".".join(str(p) for p in path).replace("gaps.0", "gaps[0]")
+    assert cp2g.payload_issues(json.dumps(payload), _context("positive")) == (
+        f"{where}: Bare figure: 7",
+    )
+
+
+def test_issue_order_within_a_driver_and_the_assessment() -> None:
+    """V06, V11 (G-decisions): the value issue before the rationale issue within a driver, and
+    the assessment's rationale issues before the High issue."""
+    payload = _bind_all(_payload("positive"))
+    payload["base_drivers"]["debt_repayment"]["values"] = ["60", "0", "0"]
+    payload["base_drivers"]["debt_repayment"]["rationale"] = "Repay 7 early."
+    payload["assessment"]["rationale"] = "Leverage of 7 is held."
+    payload["assessment"]["confidence"] = "High"
+    assert cp2g.payload_issues(json.dumps(payload), _context("positive")) == (
+        "base_drivers.debt_repayment.values[0]: repayment exceeds the opening debt balance",
+        "base_drivers.debt_repayment.rationale: Bare figure: 7",
+        "assessment.rationale: Bare figure: 7",
+        cp2g.HIGH_ISSUE,
+    )
+
+
+def test_stale_input_compares_status_too() -> None:
+    """V09: an upstream whose status changed under the same digest is stale (ruling 10)."""
+    was, now = _input("CP-2A", "restricted"), _input("CP-2A", "accepted")
+    digest = was.sha256[:12]
+    assert cp2g.stale_issues(bound=(was,), current=(now,)) == (
+        f"Stale input CP-2A: bound restricted {digest}, current accepted {digest}",
+    )
 
 
 # --- property tests (lease A-section; expected.json property_tests) ------------------------------

@@ -306,6 +306,16 @@ def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
     return out
 
 
+def _usd_millions(metric: str, fact: Fact) -> None:
+    """Lease "All amounts USD, unit MILLIONS": another CP-1 book fails closed (an invariant;
+    carrying the book's unit through would be a lease change)."""
+    if (fact.currency, fact.unit, fact.scale) != ("USD", "MILLIONS", Decimal(1000000)):
+        raise ValueError(
+            f"CP-2G: CP-1 {metric} must be USD MILLIONS (scale 1000000), found "
+            f"{fact.currency} {fact.unit} (scale {fact.scale})"
+        )
+
+
 def _operand_reason(key: str) -> str:
     return f"Not calculable: base {_OPERAND_WORDS[key]} is missing in CP-1 ({LTM_PERIOD})"
 
@@ -334,6 +344,7 @@ class Operands:
             if fact.status != "known" or fact.amount is None:
                 vals[key] = Val(None, _operand_reason(key))
             else:
+                _usd_millions(metric, fact)
                 vals[key] = _known(-fact.amount if key in _OUTFLOWS else fact.amount)
         return cls(**vals)
 
@@ -1096,6 +1107,7 @@ class _Run:
     supported: Val  # CP-1D supported EBITDA as an operand of the comparisons (ruling G-9)
     tl0: Val
     a25_fcf: Val
+    bound: Mapping[str, Fact]  # the validator's reference map (prose.bind of the prose facts)
 
 
 def _a25(ops: Operands) -> tuple[Val, Val]:
@@ -1181,6 +1193,7 @@ def _resolve(inputs: ForwardInputs) -> _Run:
         supported=_supported(cp1d, why),
         tl0=_ratio(ops.debt, ops.ebitda, NC_EBITDA),
         a25_fcf=_a25(ops)[1],
+        bound=prose.bind(ctx.prose_facts()),
     )
 
 
@@ -1865,6 +1878,11 @@ def _t2h7(
         if test.kind is None:  # ruling G-7: the copies stay, the metric is missing
             assert test.level_reason is not None
             b.missing_text(("T2H.7", r, "metric"), "Metric", test.level_reason)
+            if breaks[r].level.unit not in _UNIT_KIND:  # the copy's unit comes from CP-2A
+                raise ValueError(
+                    f"CP-2G: CP-2A level {breaks[r].level.fact_id} states no unit CP-2G maps "
+                    f"({breaks[r].level.unit})"
+                )
             unit = _UNIT_KIND[str(breaks[r].level.unit)]
         else:
             b.text(("T2H.7", r, "metric"), "Metric", KIND_METRIC[test.kind])
@@ -2055,17 +2073,20 @@ def _prose_texts(sub: ForwardSubmission) -> list[str]:
     return texts
 
 
-def _figures(text: str) -> list[str]:
-    return [run.text for run in prose.tokenize(text) if run.figure]
+def _named(text: str, bound: Mapping[str, Fact]) -> list[Fact]:
+    """The upstream facts a valid prose text names by figure reference, in reading order,
+    resolved through `prose.bind` as the validator resolves them (a fact id, or a calculation id
+    one fact alone carries; the CP-2A `_figure_refs` pattern)."""
+    return [bound[run.text] for run in prose.tokenize(text) if run.figure and run.text in bound]
 
 
 def _references(run: _Run) -> tuple[RefTable, RefTable, RefTable]:
     metric_of = {f.fact_id: m for m, f in run.cp1.items()}
     named = [
-        metric_of[fid]
+        metric_of[f.fact_id]
         for text in _prose_texts(run.sub)
-        for fid in _figures(text)
-        if fid in metric_of
+        for f in _named(text, run.bound)
+        if f.fact_id in metric_of
     ]
     metrics = dict.fromkeys([*named, "fcf", "total_leverage_reported", "net_leverage_reported"])
     cp1_rows = tuple(
@@ -2145,13 +2166,11 @@ def _claims(
     results: Mapping[str, Sequence[BreakResult]],
     traj: Mapping[str, Trajectory],
 ) -> tuple[Claim, ...]:
-    upstream = {f.fact_id for f in run.ctx.prose_facts()}
-
     def ref(fid: str, token: str) -> str:
         return "{" + fid + "|" + token + "}" if b.status(fid) == "known" else f"[{fid}]"
 
     def analyst(cid: str, text: str, limitation: str | None) -> Claim:
-        return Claim(cid, text, limitation, tuple(f for f in _figures(text) if f in upstream))
+        return Claim(cid, text, limitation, tuple(f.fact_id for f in _named(text, run.bound)))
 
     def forecast_claim(cid: str, text: str) -> Claim:  # ruling L12
         return Claim(cid, text, FORECAST_LIMITATION, ())

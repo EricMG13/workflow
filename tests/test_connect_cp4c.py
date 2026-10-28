@@ -1314,6 +1314,22 @@ def test_cp4c_reader_follows_the_head_and_refuses_others(tmp_path: Path) -> None
         cp4c.cp4c_reader(store, stale)
 
 
+def test_cp4c_reader_status_is_the_heads_own(tmp_path: Path) -> None:
+    """Every CP-4C payload carries own limitations, so the core settles restricted; a head with
+    none (a private run, upstream without notes, the composed module bound without them)
+    settles accepted, and the reader reports that status, never a constant."""
+    store, pack, attempt = seed(tmp_path, case_kind="private", notes=False)
+    report = cp4c.restructuring(
+        pack=pack, submission=_submission(), upstream=_upstream(store, attempt)
+    )
+    module = cp4c.cp4c_module(report, inputs=attempt.inputs, attempt=attempt.number)
+    bare = module.model_copy(update={"limitations": ()})
+    store.finish(attempt.ticket_id, bare.model_dump_json(), lambda _m: ())
+    head = _head(store, MODULE)
+    assert head.status == "accepted"
+    assert cp4c.cp4c_reader(store, head).status == "accepted"
+
+
 def test_consumer_readers_read_the_cp2a_and_cp4_heads(tmp_path: Path) -> None:
     store, _, _ = seed(tmp_path)
     assert cp4c.cp2a_reader(store, _head(store, "CP-2A")) == stage1._cp2a("positive")

@@ -7,10 +7,9 @@ each variance, breach, count and status in exact Decimal; the analyst supplies o
 quotes and judgments. The G1-X seams (store, RULES, submit, probe, reader) come in later stages.
 
 Wording beyond the lease and the oracle comes from LEAD's rulings
-(``docs/rulings/2026-10-28-stage1.md``: round 5 "CP-8", 8-1 to 8-20, and round 6c, 8-24). Where
-nothing pins one (a quotation split on one side and missing on the other), composition fails
-closed with ``ValueError``; each such point is listed for LEAD. A ``ValueError`` starting "invariant:" marks a state no validated submission
-reaches (8-8 and 8-12 among them).
+(``docs/rulings/2026-10-28-stage1.md``: round 5 "CP-8", 8-1 to 8-20; round 6c, 8-24; round 6h,
+a quotation split on one side and missing on the other). A ``ValueError`` starting
+"invariant:" marks a state no validated submission reaches (8-8 and 8-12 among them).
 """
 
 import re
@@ -157,10 +156,6 @@ LIM_CP6_INSUFFICIENT = (  # 8-20
 LIM_NOT_COMPARED = (  # 8-1
     "Measures not compared: {}; their variance and attribution are not shown."
 )
-
-
-def _unpinned(point: str) -> str:
-    return f"{point}: no pinned wording in lease rev 4 or the oracle; fails closed for LEAD"
 
 
 def _name(metric: str) -> str:
@@ -1138,6 +1133,10 @@ _NOT_COMPARED: Mapping[tuple[str, ...], tuple[str, str, str]] = {  # 8-1, 8-24
     ),
 }
 COMPARED_ONLY = "Variance and attribution are shown only for the compared measures"
+_SAME_DAY_THEN: Mapping[str, str] = {  # round 6h: the missing side -> the follow-up's 2nd clause
+    "realized": "supply a dated post-decision source that states the quotation",
+    "expected": "cite the expected quotation from the Prior Case record",
+}
 _EXPECTATIONS = (  # T7.8 rows of the unrecorded expectations: (field, item, impact)
     (
         "expected_spread_return",
@@ -1830,9 +1829,18 @@ class _Composer:
             f"{METRIC_NAME[metric]} not compared",
             _name(metric),
         )
-        if split and lacking:  # no ruled row says both a split and a missing side
-            raise ValueError(_unpinned(f"a {metric} row with a split and a missing side"))
-        if split:
+        if split and lacking:  # round 6h: one side split, the other side has no quotation
+            (cut,), (absent,) = split, lacking
+            self._gap_row(
+                row_id,
+                gap,
+                f"Same-day {cut} bid and offer, and a {absent} quotation",
+                f"The {cut} bid and offer are quoted on different dates and no {absent} quotation "
+                "is recorded, so no mid level is calculated and its variance cannot be measured",
+                COMPARED_ONLY,
+                "Cite a bid and an offer quoted on the same day; " + _SAME_DAY_THEN[absent],
+            )
+        elif split:
             sides = _listed(split)
             self._gap_row(
                 row_id,

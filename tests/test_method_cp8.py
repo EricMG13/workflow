@@ -732,15 +732,61 @@ def test_8_7_both_sides_split_take_one_row() -> None:
     assert report.derived.window_end == date(2026, 4, 30)  # the latest realized as-of date
 
 
-def test_8_7_split_beside_a_missing_side_fails_closed() -> None:
-    # not ruled: a split expected quotation and no realized quotation; neither row says both
-    lit = without(split(positive(), "expected"), "realized", "loan_bid", "loan_offer")
-    sub = submission(uncompared(lit, "loan_mid"))
+MID_SPLIT = "Not calculable: the {} bid and offer are quoted on different dates ({})"
+MID_ABSENT = {
+    "realized": (
+        "Not stated: no realized mid level of the term loan quotation is recorded from a "
+        "post-decision source"
+    ),
+    "expected": (
+        "Not stated: no expected mid level of the term loan quotation is recorded from the "
+        "Prior Case record"
+    ),
+}
+FOLLOW_UP_6H = {  # round 6h: the follow-up's second clause names the missing side's source
+    "realized": "supply a dated post-decision source that states the quotation",
+    "expected": "cite the expected quotation from the Prior Case record",
+}
+
+
+@pytest.mark.parametrize(
+    ("split_side", "missing_side", "dates"),
+    [
+        ("expected", "realized", "2026-01-09 and 2026-01-10"),
+        ("realized", "expected", "2026-04-29 and 2026-04-30"),
+    ],
+)
+def test_6h_one_side_split_and_the_other_missing(
+    split_side: str, missing_side: str, dates: str
+) -> None:
+    lit = without(split(positive(), split_side), missing_side, "loan_bid", "loan_offer")
+    report = settle(uncompared(lit, "loan_mid"))
+    assert texts(report, "T7.8", "not_compared_loan_mid") == {
+        "gap": "Mid level of the term loan quotation not compared",
+        "missing_item": f"Same-day {split_side} bid and offer, and a {missing_side} quotation",
+        "why_it_matters": (
+            f"The {split_side} bid and offer are quoted on different dates and no {missing_side} "
+            "quotation is recorded, so no mid level is calculated and its variance cannot be "
+            "measured"
+        ),
+        "impact_on_output": "Variance and attribution are shown only for the compared measures",
+        "follow_up": "Cite a bid and an offer quoted on the same day; "
+        + FOLLOW_UP_6H[missing_side],
+    }
+    t74 = cells(report, "T7.4", "loan_mid")  # 8-7 and 8-1/8-2, each side as before
+    assert missing(t74[split_side], MID_SPLIT.format(split_side, dates))
+    assert missing(t74[missing_side], MID_ABSENT[missing_side])
+    assert missing(t74["direction"], NOT_CALCULABLE)
     assert (
-        validate_ledger(submission=sub, upstream=upstream("positive"), pack=pack("positive")) == ()
-    )
-    with pytest.raises(ValueError, match="no pinned wording"):
-        decision_ledger(pack=pack("positive"), submission=sub, upstream=upstream("positive"))
+        "Measures not compared: mid level of the term loan quotation; their variance and "
+        "attribution are not shown."
+    ) in report.limitations
+    bid = cells(report, "T7.3", "loan_bid")["realized_value"]  # 6c (a): the row names itself
+    if missing_side == "realized":
+        reason = "Not stated: no realized dealer bid is recorded from a post-decision source"
+        assert missing(bid, reason)
+    else:
+        assert bid.status == "known"
 
 
 def test_8_7_bid_and_offer_dated_differently() -> None:
@@ -1141,14 +1187,3 @@ def test_composition_runs_under_the_exact_context(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(cp8_module, "format_date", spy)
     report_of("positive")
     assert traps and all(traps)
-
-
-def test_8_7_realized_split_beside_a_missing_expected_fails_closed() -> None:
-    # not ruled (with LEAD): the other direction of the split-plus-missing state
-    lit = without(split(positive(), "realized"), "expected", "loan_bid", "loan_offer")
-    sub = submission(uncompared(lit, "loan_mid"))
-    assert (
-        validate_ledger(submission=sub, upstream=upstream("positive"), pack=pack("positive")) == ()
-    )
-    with pytest.raises(ValueError, match="no pinned wording"):
-        decision_ledger(pack=pack("positive"), submission=sub, upstream=upstream("positive"))

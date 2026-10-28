@@ -320,3 +320,4 @@
 - 2026-10-28 USER: treat the two predating CP-1D fail-opens (non-ASCII second figure; digits inside a word) as Medium and fix now, fail closed. Dispatch mx-feature (worktree cp1d-owner-fix), review mx-adversary
 - 2026-10-28 GOAL (user /goal): complete all stages. Stage 2 cohort 2 dispatched: CP-2E, CP-8, CP-L10 (mx-feature) at 3f3eba4
 - 19:23 LEAD Stage 2 round 1 rulings cherry-picked (80a93a6); brief, questions and backlog updated per Q1/Q5/Q6/Q8/Q10.
+- 19:24 Stage 2 dispatched: CP-4 (Q3/Q4), CP-3 (Q2, R3 only) (mx-feature) at 2cb5a7e.

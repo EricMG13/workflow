@@ -21,10 +21,20 @@ from typing import Any
 
 import pytest
 
-from deploy_vii.contracts import Fact, Input, Module, ReportTable, Run, Span, TableColumn, TableRow
+from deploy_vii.contracts import (
+    Fact,
+    Input,
+    Module,
+    ReportTable,
+    Run,
+    Source,
+    Span,
+    TableColumn,
+    TableRow,
+)
 from deploy_vii.cp3_relative_value import RelativeValueSubmission
 from deploy_vii.cp6_committee import cp3_catalogue
-from deploy_vii.preparation import PreparedPack, Source
+from deploy_vii.preparation import PreparedPack
 from deploy_workflow.owners.cp3 import CP3Inputs, CP3Result, candidate, compute, context
 
 ROOT = Path(__file__).parents[1]
@@ -40,6 +50,21 @@ CASE_IDS = {"positive": "cp3-cp6-positive", "gap": "cp3-cp6-gap"}
 CP2_REGISTERS = ("T2.1", "T2.7", "T2.10", "T2.11", "T2.12")
 FIG_RE = re.compile(r"\{\{FIG:([a-z_]+)\}\}")
 PLACEHOLDER_RE = re.compile(r"<label and period of FIG:([a-z_]+)>")
+
+
+# The LEAD freeze of the CP-3 half (docs/CP3-OWNER-LEASE.md, header): expected and submissions
+# from the freeze line; builder and manifest from the serialised methodology re-pin line.
+PINNED = {
+    "manifest.json": "e3cb221737a3930278924eb16ad67208d9967cad455043565a79b24dcfae25c6",
+    "submissions.json": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
+    "expected.json": "3c6ff67f22e7c1d0cf843050610cb3fe67c01814d6851360fcd6e385ec04d0a0",
+    "builder/build.py": "6dac614feb4fbd1a9a0fa7aa6b6c59ec5234f1b25c1829e3f555a2cba3bbcf7a",
+}
+
+
+def test_oracle_files_are_the_pinned_revision() -> None:
+    for name, digest in PINNED.items():
+        assert hashlib.sha256((CASE / name).read_bytes()).hexdigest() == digest, name
 
 
 # --- inputs from the oracle's sources ------------------------------------------------------------
@@ -212,7 +237,8 @@ def _instantiate(value: Any) -> str:
 
     def ref(match: re.Match[str]) -> str:
         name = match[1]
-        return "{" + FIGS[name].fact_id + "|" + SUBMISSIONS["figures"][name]["unit_token"] + "}"
+        unit = str(SUBMISSIONS["figures"][name]["unit_token"])
+        return "{" + FIGS[name].fact_id + "|" + unit + "}"
 
     return FIG_RE.sub(ref, json.dumps(value))
 
@@ -302,7 +328,7 @@ def _actual_tables(result: CP3Result) -> list[dict[str, Any]]:
 
 
 def _expected_tables(case: str) -> list[dict[str, Any]]:
-    tables = copy.deepcopy(EXPECTED[case]["CP-3"]["tables"])
+    tables: list[dict[str, Any]] = copy.deepcopy(EXPECTED[case]["CP-3"]["tables"])
     for table in tables:
         for row in table["rows"]:
             row["label"] = _bound_text(row["label"])
@@ -392,8 +418,15 @@ def test_module_inputs(settled: tuple[str, CP3Inputs, CP3Result]) -> None:
     assert module.module_id == "CP-3"
 
 
-def _upstream_statuses(block: dict[str, Any]) -> dict[str, str]:
-    return {u["module_id"]: u["status"] for u in block["upstream"]}
+def _rows(block: dict[str, object], key: str) -> list[dict[str, Any]]:
+    """A list-valued CONTEXT entry, typed for the comparisons below."""
+    value = block[key]
+    assert isinstance(value, list)
+    return value
+
+
+def _upstream_statuses(block: dict[str, object]) -> dict[str, str]:
+    return {u["module_id"]: u["status"] for u in _rows(block, "upstream")}
 
 
 def test_context_block_checks(settled: tuple[str, CP3Inputs, CP3Result]) -> None:
@@ -401,15 +434,15 @@ def test_context_block_checks(settled: tuple[str, CP3Inputs, CP3Result]) -> None
     checks = EXPECTED[case]["CP-3"]["context_block_checks"]
     block = context(inputs)
     assert _upstream_statuses(block) == checks["upstream_statuses"]
-    assert [(f["facility_id"], f["name"]) for f in block["cp1_facilities"]] == [
+    assert [(f["facility_id"], f["name"]) for f in _rows(block, "cp1_facilities")] == [
         (f["facility_id"], f["name"]) for f in checks["cp1_facilities"]
     ]
-    assert [r["ref"] for r in block["cp2_rows"]] == checks["cp2_rows"]
+    assert [r["ref"] for r in _rows(block, "cp2_rows")] == checks["cp2_rows"]
     assert block["optional_upstream"] == checks["optional_upstream"]
     assert block["market_evidence_sources"] == checks["market_evidence_sources"]
     assert block["market_evidence_note"] == checks["market_evidence_note"]
     assert block["confidence_caps"] == checks["confidence_caps"]
-    authority = {s["source_id"]: s["authority"] for s in block["pack_sources"]}
+    authority = {s["source_id"]: s["authority"] for s in _rows(block, "pack_sources")}
     assert authority == checks["pack_source_authority"]
 
 
@@ -431,7 +464,7 @@ def test_blocked_cp1a_variant() -> None:
     checks = variant["context_block_checks"]
     block = context(inputs)
     assert _upstream_statuses(block) == checks["upstream_statuses"]
-    assert [(o["module_id"], o["status"]) for o in block["optional_upstream"]] == [
+    assert [(o["module_id"], o["status"]) for o in _rows(block, "optional_upstream")] == [
         (o["module_id"], o["status"]) for o in checks["optional_upstream"]
     ]
     assert block["confidence_caps"] == checks["confidence_caps"]

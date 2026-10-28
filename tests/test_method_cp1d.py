@@ -9,7 +9,7 @@ import copy
 import dataclasses
 import hashlib
 import json
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Context, Decimal
 from pathlib import Path
 from typing import Any
 
@@ -407,7 +407,7 @@ def _not_meaningful(label: str) -> str:
     return f"Not meaningful: {label} is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
 
 
-@pytest.mark.parametrize("amount", ["-5", "0"])
+@pytest.mark.parametrize("amount", ["-5", "0", "-10"])
 @pytest.mark.parametrize("case", CASES)
 def test_nonpositive_ebitda_settles(case: str, amount: str) -> None:
     """Ruling 1D3: ratios and shares on a basis whose EBITDA is <= 0 are not meaningful; the
@@ -442,6 +442,13 @@ def test_nonpositive_ebitda_settles(case: str, amount: str) -> None:
             "Not compared: one side is not available",
         )
         assert facts[f"T1D.4.{row}.result"].text == "Not compared"
+    management = facts["T1D.3.mgmt.value"]
+    if management.amount is not None and management.amount <= 0:
+        # Round 4 (i): a T1D.5 share uses its own denominator's label.
+        want = _not_meaningful("Management financing-case EBITDA")
+        share = facts["T1D.5.management.value"]
+        assert (share.status, share.limitation) == ("not_applicable", want)
+        assert facts["T1D.6.management.net_leverage"].limitation == want
     supported = facts["T1D.3.supported.value"]
     assert supported.amount is not None
     if supported.amount <= 0:
@@ -549,6 +556,12 @@ UNUSABLE_PAGES = {
     "1D5 non-decimal": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  1,00"),
     "1D9 no rows": POSITIVE_PAGE1.split(HEADER)[0] + HEADER,
     "digits": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  1." + "0" * 250 + "1"),
+    # Round 4 (k): the product `financial_contracts.Number` bound.
+    "(k) 11 places": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  1.00000000001"),
+    "(k) 1e18": POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  1" + "0" * 18 + ".00"),
+    "(k) 30 digits": POSITIVE_PAGE1.replace(
+        "Unrealised  1.00", "Unrealised  " + "9" * 17 + ".1234567890123"
+    ),
 }
 
 
@@ -560,6 +573,57 @@ def test_unusable_bridge_table_is_not_found(ruling: str) -> None:
     assert cp1d.validation_issues(inputs) == ("Bridge table not found",)
     with pytest.raises(ValueError):
         cp1d.compute(inputs)
+
+
+def test_amount_inside_the_product_bound_composes() -> None:
+    """Round 4 (k): 18 whole digits and 10 places is still a bridge amount."""
+    page1 = POSITIVE_PAGE1.replace("Unrealised  1.00", "Unrealised  " + "9" * 17 + ".0123456789")
+    inputs = _bridge_inputs(page1, SUBMISSIONS["positive"]["earnings_quality"])
+    assert cp1d.validation_issues(inputs) == ()
+    claimed = {f.fact_id: f for f in cp1d.compute(inputs).facts}["T1D.1.a04.claimed"]
+    assert claimed.amount_exact == "9" * 17 + ".0123456789"
+
+
+LONG_DECIMAL = "0." + "0" * 250 + "1"
+
+
+@pytest.mark.parametrize("row", [0, 2])
+def test_basis_amount_outside_the_product_bound_is_an_issue(row: int) -> None:
+    """Fix round 2 N1: a quoted basis amount outside `financial_contracts.Number` is refused with
+    the bounds wording (step 6) and never reaches composition; a03 also covers Recurring."""
+    payload = copy.deepcopy(SUBMISSIONS["positive"]["earnings_quality"])
+    assessment = payload["assessments"][row]
+    assessment["achievability"] = "Partly supported"
+    assessment["accepted_basis"] = {
+        **assessment["evidence"][0],
+        "quote": f"a saving of {LONG_DECIMAL}",
+    }
+    label = assessment["addback"]
+    issues = cp1d.validation_issues(_inputs("positive", payload))
+    assert issues == (f"Accepted basis must be above 0 and below the proposed amount: {label}",)
+
+
+@pytest.mark.parametrize(("numerator", "denominator"), [("2.5", "30"), ("1", "30"), ("-1", "30")])
+def test_cp1_ratio_at_cp1_precision_binds(numerator: str, denominator: str) -> None:
+    """Fix round 2 N2: CP-1's own 38-digit quotients below 0.1x are CP-1 facts and bind."""
+    value = Context(prec=38, rounding=ROUND_HALF_EVEN).divide(
+        Decimal(numerator), Decimal(denominator)
+    )
+    cp1 = _cp1()
+    cp1 = dataclasses.replace(cp1, net_leverage=dataclasses.replace(cp1.net_leverage, amount=value))
+    payload = SUBMISSIONS["positive"]["earnings_quality"]
+    facts = {f.fact_id: f for f in cp1d.compute(_inputs("positive", payload, cp1=cp1)).facts}
+    assert facts["T1D.4.cp1_net_leverage.reported"].amount == value
+    assert facts["T1D.4.cp1_net_leverage.result"].text == "Differs"
+
+
+@pytest.mark.parametrize("figure", ["total_debt", "adjusted_ebitda"])
+def test_cp1_amount_outside_the_product_bound_is_refused_at_input(figure: str) -> None:
+    cp1 = _cp1()
+    with pytest.raises(ValueError):
+        dataclasses.replace(
+            cp1, **{figure: dataclasses.replace(getattr(cp1, figure), amount=Decimal("1E-38"))}
+        )
 
 
 @pytest.mark.parametrize("sha256", [None, MANIFEST["synthetic_source"]["positive"]["sha256"]])

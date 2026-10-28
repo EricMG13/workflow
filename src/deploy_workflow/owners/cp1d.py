@@ -21,9 +21,12 @@ from dataclasses import dataclass, field
 from decimal import ROUND_HALF_EVEN, Context, Decimal, Inexact, InvalidOperation, Rounded
 from typing import Literal
 
+from pydantic import TypeAdapter, ValidationError
+
 from deploy_vii.business_context import Category, Confidence, Severity
 from deploy_vii.contracts import Citation, Contract, Fact, Source, Text
 from deploy_vii.display import UnitClass, format_value
+from deploy_vii.financial_contracts import Number
 from deploy_vii.prose import Run, bind, tokenize
 from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import citation_issues
@@ -98,8 +101,12 @@ class Cp1Figure:
             raise ValueError(f"CP-1 figure {self.figure}: a known figure has an amount")
         if self.status != "known" and not self.limitation:
             raise ValueError(f"CP-1 figure {self.figure}: an unsettled figure needs a limitation")
-        if self.amount is not None and not _bounded(self.amount):
-            raise ValueError(f"CP-1 figure {self.figure}: amount outside {_DIGITS} digits")
+        if self.amount is None:
+            return
+        if self.unit == "MULTIPLE" and not _is_cp1_ratio(self.amount):
+            raise ValueError(f"CP-1 figure {self.figure}: not a CP-1 quotient of product Numbers")
+        if self.unit != "MULTIPLE" and not _is_number(self.amount):
+            raise ValueError(f"CP-1 figure {self.figure}: outside financial_contracts.Number")
 
     @property
     def value(self) -> Decimal:
@@ -329,19 +336,29 @@ _MANAGEMENT_EBITDA = "Management financing-case EBITDA"
 _NOT_STATED = "Not stated"
 _AMOUNT = re.compile(r"[0-9]+(?:\.[0-9]+)?")
 _TYPES = ("Saving", "Cost")
-# Every amount the module handles has at most this many significant digits and decimal places,
-# so sums stay exact and every value spells exactly (`display.format_value`).
-_DIGITS = 38
+# Round 4 (k): an amount is the product `financial_contracts.Number` (-1e18 < x < 1e18, 28
+# digits, 10 places). Bridge amounts, quoted basis amounts and CP-1 amount operands hold it, so
+# every sum and product here is exact and every value spells exactly (`display.format_value`).
+_NUMBER: TypeAdapter[Decimal] = TypeAdapter(Number)
+# A CP-1 ratio is CP-1's own 38-digit quotient of two such Numbers, so its magnitude lies
+# between 1e-29 and 1e29 (or it is 0); the T1D.4 difference against it stays exact.
+_RATIO_DIGITS = 38
+_RATIO_ADJUSTED = 29
 
 
-def _bounded(value: Decimal) -> bool:
-    exponent = value.as_tuple().exponent
+def _is_number(value: Decimal) -> bool:
+    try:
+        _NUMBER.validate_python(value)
+    except ValidationError:
+        return False
+    return True
+
+
+def _is_cp1_ratio(value: Decimal) -> bool:
     return (
         value.is_finite()
-        and isinstance(exponent, int)
-        and len(value.as_tuple().digits) <= _DIGITS
-        and -_DIGITS <= exponent
-        and value.adjusted() < _DIGITS
+        and len(value.as_tuple().digits) <= _RATIO_DIGITS
+        and (value == 0 or -_RATIO_ADJUSTED <= value.adjusted() < _RATIO_ADJUSTED)
     )
 
 
@@ -372,7 +389,7 @@ class _Unparseable(ValueError):
 def _bridge_amount(token: str) -> Decimal | None:
     if token == _NOT_STATED:
         return None
-    if not _AMOUNT.fullmatch(token) or not _bounded(amount := Decimal(token)):
+    if not _AMOUNT.fullmatch(token) or not _is_number(amount := Decimal(token)):
         raise _Unparseable(token)
     return amount
 
@@ -534,8 +551,11 @@ def _shape_issue(item: BridgeItem, assessment: Assessment) -> str | None:
         amounts = _basis_amounts(basis)
         if len(amounts) != 1:
             return f"Accepted basis quote must contain exactly one amount: {label}"
-        # An unstated proposed amount is the content rule `Cannot accept an unstated amount`.
-        if item.amount is not None and not 0 < Decimal(amounts[0]) < item.amount:
+        amount = Decimal(amounts[0])
+        if item.amount is None and _accepts(assessment):
+            return None  # ruling 1D7: the content rule `Cannot accept an unstated amount`
+        # Fix round 2 N1: an amount outside the product bound can never be accepted.
+        if not _is_number(amount) or (item.amount is not None and not 0 < amount < item.amount):
             return f"Accepted basis must be above 0 and below the proposed amount: {label}"
     return None
 

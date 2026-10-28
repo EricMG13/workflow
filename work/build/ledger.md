@@ -269,3 +269,4 @@
 - 2026-10-28 CP-4C r12 implementer done: babfd53 (B10 every field incl plain R3 M2, B7 reserved {}[] after Bare figure; 9/9 mutants killed; gates y). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-adversary
 - 2026-10-28 CP-4C r12 review dispatched: mx-adversary on babfd53
 - 2026-10-28 CP-3D r12 review APPROVE (mx-precise): Low L-cp3d-r12 _CUT_BEFORE space-arm guard unpinned (R/p_review_mutants.py mutant 2) rides with round 13; Info signed value_text plain-only. Merged 504d084 into claude/round12
+- 2026-10-28 CP-8 r12 implementer done: 8cecd09 (W, B10 incl flag_quote; _wrap_split ignores a W minus before a digit = unruled derivation, to reviewer + LEAD). agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. Review: mx-precise

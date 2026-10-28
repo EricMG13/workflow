@@ -3031,3 +3031,8 @@ PM full suite on codex/checkpoint bb8ccef (2026-10-28; `-m "not live and not bro
 662 passed, 2 failed — only `tests/test_cp1b_registration.py::test_fresh_public_source_upstream_import_orders[False|True]`
 (child-process `ModuleNotFoundError`), the harness defect fixed on the LEAD branch in 41c08cb (its deferred
 run stays in the final phase). Live/browser tests paused; ruff/mypy not run by PM.
+
+User (2026-10-28, "Commit it"): the AGENTS.md heavy-job lock rule removal (10454c8, user's edit committed by
+the PR manager) fast-forwarded onto codex/checkpoint locally (bb8ccef → 10454c8, no push) and merged into
+the LEAD branch (00f22cd). Test runs need no lock now; the user's build-first rule (all test runs in the
+final phase) still applies.

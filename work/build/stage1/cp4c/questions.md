@@ -20,3 +20,7 @@
 
 ## Ruled by LEAD round 11 (d60035b)
 See `docs/rulings/2026-10-28-stage1.md` `# Round 11`, `## CP-4C`. Modules-decides items are recorded in the ledger (2026-10-28 round 11 line).
+
+## Open for LEAD (after round 11)
+- **B7.** A claim name or valuation label holding reserved prose characters (`A {x}`, `A [y]`, `A}`) passes `payload_issues`, then `compute` raises an invariant. This is the same reachability class as A-2 #9 before B3. Should it get a refusal, and with which wording? See probe cp4c-r11/probe_names_compose.py.
+- **Info.** Q6's whole-cells rule also refuses three cases with the #11 text: a cell-boundary quote with an empty last cell (`Other  9  `), a line whose last cell has one trailing space, and a quote that carries a CR on a CRLF page. All three fail closed.

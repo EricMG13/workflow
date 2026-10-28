@@ -8,10 +8,27 @@ the tables, assigns every identifier, spells every figure and sets the status. T
 transport; the analytical responsibilities below are unchanged.
 
 ## Adaptation record
-- Tables (D8 ids; `T2G.1-8` stay registered and unproduced): `T2F.1` sourced operands, `T2F.2`
-  baseline exposure, `T2F.3` interest rate shock (one row per shock), `T2F.4` currency shock,
-  `T2F.5` hedging, `T2F.6` assessments, `T2F.7` missing inputs, `T2F.8` evidence, `T2F.9`
-  limitations. Titles and columns are this module's choice, not r14's.
+- Tables (D8 ids; `T2G.1-8` stay registered and unproduced). Titles, row headers and columns are
+  this module's choice, not r14's:
+  - `T2F.1` Sourced operands (row header Operand): Value, Basis.
+  - `T2F.2` Baseline exposure (Measure): Value, Convention.
+  - `T2F.3` Interest rate shock (Shock; one row per shock): Rate shock, Added annual interest
+    before hedges, Added annual interest after hedges, Cash interest after the shock, Interest
+    coverage after the shock, Change in interest coverage, Free cash flow after the shock, Added
+    interest as share of EBITDA.
+  - `T2F.4` Currency shock (Shock): Currency move, Change in debt, Total debt after the move,
+    Change in EBITDA, Total leverage after the move.
+  - `T2F.5` Hedging (Item): Value, Convention.
+  - `T2F.6` Assessments (Section): Category, Assessment.
+  - `T2F.7` Missing inputs (Input): Not calculated, Reason.
+  - `T2F.8` Evidence (Page): Source, Locator.
+  - `T2F.9` Limitations (Limitation): Limitation.
+- Citations: every fact and claim cites the page it was read from, with a verbatim quote of that
+  page. A sourced fact (T2F.1 value and basis cells) quotes the submission field it was read
+  from. A derived fact (T2F.2 to T2F.5, the T2F.6 assessment cells and the claims) carries one
+  citation per page, and its quote is the first of its own input quotes on that page, in the
+  order of its inputs. Page-level cites are the oracle's; the quote never comes from a field the
+  fact did not read.
 - Shock conventions: a static, parallel, upward rate move applied once to closing balances and
   FY flows; computed only when the quoted floor is 0 (no reference rate level is sourced); a
   fixed-rate facility is a known zero; a missing term is a gap, never 0. A currency move is the
@@ -53,6 +70,8 @@ or more cannot be quoted by this step; that is stated, not a source limit.
   with `<path>.quote: empty text` before the page check. U+2800 and control or default-ignorable
   blanks wait on the shared `is_blank` batch; the re-export inherits it.
 - `reference_rate` is compared normalised with the normalised quote, so a U+2212 name occurs
-  where the page prints `-`.
+  where the page prints `-`; the normalised name is what T2F.1 stores and shows.
+- The summary becomes a claim, so it must be valid run text (no unbalanced `[` or `{`) and must
+  hold no reference: either is a journaled issue at `summary.text`.
 - Open with LEAD, not built here: the label-decimal question (`spread 25.5` is accepted by the
   labelled reader) and the `fx.` paths item.

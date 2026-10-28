@@ -331,7 +331,7 @@ def _assert_prose_clean(result: cp2e.MacroFxResult) -> None:
         assert prose.issues(claim.text, bound) == (), (claim.claim_id, claim.text)
 
 
-_SHARE = cp2e.Sourced(value=Decimal("0.2"), cite=("financial", "page:2"))
+_SHARE = cp2e.Sourced(value=Decimal("0.2"), cite=cp2e.Cite("financial", "page:2"))
 _NO_TERMS = cp2e.Absence(reason="Not stated", follow_up="Supply it")
 
 

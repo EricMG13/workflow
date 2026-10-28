@@ -15,9 +15,9 @@ import re
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, replace
 from decimal import ROUND_HALF_EVEN, Decimal, localcontext
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from deploy_vii.contracts import (
     Citation,
@@ -29,6 +29,7 @@ from deploy_vii.contracts import (
     Module,
     ReportTable,
     Run,
+    RunText,
     TableColumn,
     TableRow,
 )
@@ -39,12 +40,14 @@ from deploy_vii.execution import (
     Head,
     Qualification,
     StepValidation,
+    clipped,
 )
 from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.live.schema import normalise as normalise_payload
 from deploy_vii.live.submission import Submitted, _with_rules
 from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
@@ -55,7 +58,21 @@ from deploy_workflow.workflow import WorkflowError
 MODULE_ID = "CP-2E"
 SOURCE_ID = "financial"  # the only source the CP-2E step may cite (fixed host scope)
 
-Cite = tuple[str, str]  # (source_id, locator)
+
+class Cite(tuple[str, str]):
+    """A page cite, (source_id, locator), that also remembers the quote of the submission field
+    it was read from. It equals and hashes as the plain pair (so every page-level comparison and
+    ``_dedupe`` are unchanged); ``_dedupe`` keeps the first instance of a page, which is the first
+    of a derived fact's own input quotes on that page (fix round 1, M1)."""
+
+    quote: str
+
+    def __new__(cls, source_id: str, locator: str, quote: str = "") -> Self:
+        self = super().__new__(cls, (source_id, locator))
+        self.quote = quote
+        return self
+
+
 State = Literal["known", "missing", "not_applicable"]
 RateType = Literal["FLOATING", "FIXED"]
 
@@ -413,7 +430,7 @@ def _row_decimal(token: str) -> Decimal:
 
 
 def _cite(ref: Mapping[str, Any]) -> Cite:
-    return (str(ref["source_id"]), str(ref["locator"]))
+    return Cite(str(ref["source_id"]), str(ref["locator"]), str(ref["quote"]))
 
 
 def _absence(raw: Mapping[str, Any] | None) -> Absence | None:
@@ -441,7 +458,7 @@ def inputs_from_submission(
             balance=Sourced(
                 Decimal(r["facility_balance"]["value_text"]), _cite(r["facility_balance"])
             ),
-            basis=RateBasis(basis["rate_type"], basis["reference_rate"], _cite(basis)),
+            basis=RateBasis(basis["rate_type"], normalise(basis["reference_rate"]), _cite(basis)),
             spread_bp=Sourced(Decimal(r["spread"]["bps_text"]), _cite(r["spread"])),
             floor_bp=Sourced(Decimal(r["floor"]["bps_text"]), _cite(r["floor"])),
         )
@@ -589,6 +606,9 @@ def _once(token: str, quote: str, page: str) -> bool:
     return True
 
 
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
 class _Check:
     """Accumulates the validator's issues in rule order over one pack's financial pages."""
 
@@ -613,6 +633,21 @@ class _Check:
         """An analyst text field: not blank, and digit-free."""
         self.empty(path, text)
         self.digit_free(path, text)
+
+    def run_text(self, path: str, text: str) -> None:
+        """Text that becomes ``Claim.text``: checked with the very type the report builder uses
+        (``RunText``, one ``TypeAdapter`` built once), so a malformed reference is a journaled
+        issue and the builder never raises after the binding write (protocol section 6). The
+        message never echoes the input. A well-formed reference is refused too: the summary claim
+        names no fact, so settle would reject the module after a valid step."""
+        try:
+            _RUN_TEXT.validate_python(text)
+        except ValidationError as error:
+            for item in error.errors(include_input=False, include_url=False, include_context=False):
+                self.add(clipped((path, ": ", item["msg"])))
+            return
+        if any(run.kind != "text" for run in tokenize(text)):
+            self.add(f"{path}: text carries a reference")
 
     def on_page(self, ref: Mapping[str, Any], path: str) -> bool:
         sid, loc = ref["source_id"], ref["locator"]
@@ -781,6 +816,7 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
         if s not in sections:
             chk.add(f"assessments: section {s} is missing")
     chk.prose("summary.text", sub["summary"]["text"])
+    chk.run_text("summary.text", sub["summary"]["text"])
     if _PROHIBITED.search(sub["summary"]["text"]):
         chk.add("summary.text: text carries a prohibited conclusion")
 
@@ -1787,42 +1823,19 @@ def _inputs(pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxInputs:
 
 
 # --- the report: Stage 1 cells with their quotes ----------------------------------------------------
-def _quotes(submission: MacroFxSubmission) -> dict[Cite, str]:
-    """The first quote the submission gives for each page, in submission order. A fact's page
-    cite is bound to it, so the citation is a verbatim span of the page it names."""
-    refs: list[QuoteRef] = [submission.reporting_currency]
-    if (r := submission.rate_exposure) is not None:
-        refs += [r.facility_balance, r.rate_basis, r.spread, r.floor]
-    e, fx = submission.earnings, submission.fx
-    refs += [e.ebitda, e.interest, e.fcf, e.total_debt, fx.fx_cash_effect]
-    refs += [x for x in (fx.debt_currency, fx.foreign_ebitda_share) if x is not None]
-    for assessment in submission.assessments:
-        refs += assessment.basis
-    quotes: dict[Cite, str] = {}
-    for ref in refs:
-        quotes.setdefault((ref.source_id, ref.locator), ref.quote)
-    return quotes
-
-
 def macro_fx(*, pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxReport:
     """The composed records of a submission that ``validate_macro_fx`` accepted."""
     result = compute(_inputs(pack, submission))
-    quotes = _quotes(submission)
     hashes = {source.source_id: source.sha256 for source in pack.sources}
 
     def cite(refs: Iterable[Cite]) -> tuple[Citation, ...]:
         out = []
-        for source_id, locator in refs:
-            digest = hashes.get(source_id)
-            if digest is None or (source_id, locator) not in quotes:
-                raise ValueError(f"CP-2E: no quote or source hash for {source_id} {locator}")
+        for ref in refs:
+            digest = hashes.get(ref[0])
+            if digest is None or not ref.quote:
+                raise ValueError(f"CP-2E: no quote or source hash for {ref[0]} {ref[1]}")
             out.append(
-                Citation(
-                    source_id=source_id,
-                    source_sha256=digest,
-                    locator=locator,
-                    quote=quotes[(source_id, locator)],
-                )
+                Citation(source_id=ref[0], source_sha256=digest, locator=ref[1], quote=ref.quote)
             )
         return tuple(out)
 

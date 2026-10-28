@@ -12,7 +12,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from cp2e_runs import make_pack
+from cp2e_runs import drive_cp0, make_pack, start
 from test_method_cp2e import (
     CASES,
     EXPECTED,
@@ -29,7 +29,7 @@ from deploy_vii import prose
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.cp2e import CP2E
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Module, ModuleView, View
+from deploy_vii.contracts import Claim, Fact, Module, ModuleView, View
 from deploy_vii.execution import Execution, StepValidation, head_of
 from deploy_vii.live.tools import Seen
 from deploy_vii.preparation import PreparedPack
@@ -547,14 +547,81 @@ def test_no_schema_class_carries_a_custom_validator() -> None:
 
 
 # --- mutation pins: citation quote choice, attempt, reader fact coordinates ------------------------
-def test_a_page_citation_carries_the_first_quote_the_submission_gives_for_it() -> None:
+_OWN_FIELD = {  # T2F.1 row -> the submission field the row was read from
+    "r01": ("reporting_currency",),
+    "r02": ("earnings", "total_debt"),
+    "r03": ("rate_exposure", "facility_balance"),
+    "r04": ("rate_exposure", "rate_basis"),
+    "r05": ("rate_exposure", "spread"),
+    "r06": ("rate_exposure", "floor"),
+    "r07": ("earnings", "ebitda"),
+    "r08": ("earnings", "interest"),
+    "r09": ("earnings", "fcf"),
+    "r10": ("fx", "fx_cash_effect"),
+    "r11": ("fx", "debt_currency"),
+}
+
+
+def _positive_report() -> cp2e.MacroFxReport:
     store, pack = _store("positive"), _pack("positive")
     outcome = cp2e.ENTRY_VALIDATOR(cast(Execution, store), pack, _attempt(store))
     assert outcome.output is not None
-    report = cp2e.MacroFxReport.model_validate_json(outcome.output)
-    first = SUBMISSIONS["positive"]["rate_exposure"]["facility_balance"]["quote"]
-    fact = next(f for f in report.facts if f.fact_id == "T2F.1.r03.value")
-    assert [(c.locator, c.quote) for c in fact.citations] == [("page:5", first)]
+    return cp2e.MacroFxReport.model_validate_json(outcome.output)
+
+
+@pytest.mark.parametrize("row", sorted(_OWN_FIELD))
+@pytest.mark.parametrize("column", ["value", "basis"])
+def test_a_sourced_fact_cites_the_quote_of_the_field_it_was_read_from(
+    row: str, column: str
+) -> None:
+    """Fix round 1, M1: a T2F.1 fact carries its own field's quote, not the first quote given
+    for its page."""
+    node: Any = SUBMISSIONS["positive"]
+    for key in _OWN_FIELD[row]:
+        node = node[key]
+    fact = next(f for f in _positive_report().facts if f.fact_id == f"T2F.1.{row}.{column}")
+    assert [c.quote for c in fact.citations] == [node["quote"]]
+    assert [(c.source_id, c.locator) for c in fact.citations] == [
+        (node["source_id"], node["locator"])
+    ]
+
+
+def test_a_derived_fact_cites_the_first_of_its_own_input_quotes_on_each_page() -> None:
+    sub = SUBMISSIONS["positive"]
+    facts = {f.fact_id: f for f in _positive_report().facts}
+    balance = sub["rate_exposure"]["facility_balance"]["quote"]
+    ebitda, interest = sub["earnings"]["ebitda"]["quote"], sub["earnings"]["interest"]["quote"]
+    # added interest reads the balance, the rate basis and the floor (all page:5): the balance is
+    # the first of them in formula order
+    assert [(c.locator, c.quote) for c in facts["T2F.3.r01.gross"].citations] == [
+        ("page:5", balance)
+    ]
+    # interest cover reads EBITDA (page:2) and cash interest (page:3), not the page:5 quotes
+    assert [(c.locator, c.quote) for c in facts["T2F.2.r03.value"].citations] == [
+        ("page:2", ebitda),
+        ("page:3", interest),
+    ]
+
+
+def test_every_citation_quote_is_a_quote_the_submission_gave_for_that_page() -> None:
+    sub = json.dumps(SUBMISSIONS["positive"])
+    report = _positive_report()
+    given: dict[tuple[str, str], set[str]] = {}
+    for found in cp2e_quote_refs(json.loads(sub)):
+        given.setdefault((found["source_id"], found["locator"]), set()).add(found["quote"])
+    records: tuple[Fact | Claim, ...] = (*report.facts, *report.claims)
+    for record in records:
+        for c in record.citations:
+            assert c.quote in given[(c.source_id, c.locator)]
+
+
+def cp2e_quote_refs(node: Any) -> list[dict[str, str]]:
+    if isinstance(node, dict):
+        here = [node] if {"source_id", "locator", "quote"} <= node.keys() else []
+        return here + [x for v in node.values() for x in cp2e_quote_refs(v)]
+    if isinstance(node, list):
+        return [x for v in node for x in cp2e_quote_refs(v)]
+    return []
 
 
 def test_the_module_carries_the_attempt_number() -> None:
@@ -579,3 +646,216 @@ def test_the_reader_takes_each_value_from_its_own_fact() -> None:
     read = cp2e.cp2e_reader(cast(Execution, other), head)
     assert read.foreign_debt.amount == Decimal(7)
     assert (read.hedge_ratio.state, read.hedge_ratio.amount) == ("known", Decimal("0.4"))
+
+
+# --- fix round 1, H1: a summary that is not valid run text is a journaled issue --------------------
+_MALFORMED = "summary.text: Value error, Malformed run text: unbalanced or empty reference"
+
+
+@pytest.mark.parametrize("summary", ["Rates matter [a lot", "Exposure is {low", "Outlook [", "{}"])
+def test_a_malformed_summary_is_a_journaled_issue_not_a_raise(summary: str) -> None:
+    raw = _set(_positive(), ("summary", "text"), summary)
+    assert cp2e.validate_macro_fx(submission=raw, pages=_pages("positive")) == (_MALFORMED,)
+    out = _validate(raw)
+    assert out.output is None
+    assert out.issues == (_MALFORMED,)
+
+
+@pytest.mark.parametrize("summary", ["Watch [abc] closely", "Watch {abc|x} closely", "See [a]"])
+def test_a_summary_reference_is_a_journaled_issue(summary: str) -> None:
+    """A reference in the summary names no fact of the module, so settle would reject the
+    module after a valid step; it is refused with the step instead."""
+    raw = _set(_positive(), ("summary", "text"), summary)
+    assert _validate(raw).issues == ("summary.text: text carries a reference",)
+
+
+def test_a_plain_summary_still_passes() -> None:
+    assert _validate(_positive()).issues == ()
+
+
+# --- fix round 1, M2: acceptance 1 compares every Fact field of every cell -------------------------
+def _amount(text: str | None) -> Decimal | None:
+    return None if text is None else Decimal(text)
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_every_fact_equals_its_expected_cell_field_for_field(case: str) -> None:
+    store, pack = _store(case), _pack(case)
+    outcome = cp2e.ENTRY_VALIDATOR(cast(Execution, store), pack, _attempt(store))
+    assert outcome.output is not None
+    report = cp2e.MacroFxReport.model_validate_json(outcome.output)
+    cells = [f for t in EXPECTED["cases"][case]["tables"] for r in t["rows"] for f in r["facts"]]
+    assert len(report.facts) == len(cells)
+    for fact, cell in zip(report.facts, cells, strict=True):
+        table_id, row_id, field = cell["fact_id"].rsplit(".", 2)
+        assert (fact.fact_id, fact.table_id, fact.row_id, fact.field) == (
+            cell["fact_id"],
+            table_id,
+            row_id,
+            field,
+        )
+        assert fact.label == cell["column"]
+        assert (fact.amount, fact.scale) == (_amount(cell["amount"]), Decimal(cell["scale"]))
+        assert (fact.text, fact.status, fact.unit, fact.currency) == (
+            cell["text"],
+            cell["status"],
+            cell["unit"],
+            cell["currency"],
+        )
+        assert (fact.decimals, fact.period) == (cell["decimals"], cell["period"])
+        assert (fact.calculation_id, fact.value_class, fact.formula) == (
+            cell["calculation_id"],
+            cell["value_class"],
+            cell["formula"],
+        )
+        assert fact.limitation == cell["limitation"]
+        # nothing the oracle does not list is set
+        assert (fact.basis, fact.denominator, fact.source_amount, fact.stated_amount) == (
+            None,
+            None,
+            None,
+            None,
+        )
+        assert fact.calculation_status is None
+
+
+# --- fix round 1, L2: the stored reference rate is the normalised name the page prints -----------
+def test_the_stored_reference_rate_is_normalised() -> None:
+    raw = _positive()
+    raw["rate_exposure"]["rate_basis"]["reference_rate"] = "Term− SOFR"
+    inputs = cp2e.inputs_from_submission(raw, source_names=_names("positive"))
+    assert inputs.facility is not None
+    assert inputs.facility.basis.reference_rate == "Term- SOFR"
+    cell = next(
+        c
+        for t in cp2e.compute(inputs).tables
+        for r in t.rows
+        for c in r.cells
+        if c.fact_id == "T2F.1.r04.value"
+    )
+    assert cell.text == "Floating rate, Term- SOFR reference rate"
+
+
+def test_the_frozen_reference_rate_is_unchanged() -> None:
+    assert _inputs("positive").facility is not None
+    assert _inputs("positive").facility.basis.reference_rate == "SOFR"  # type: ignore[union-attr]
+
+
+@pytest.mark.parametrize("bad", ["Rates [a lot", "{low", "{}", "[]"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        ("shock_rationale",),
+        ("assessments", 0, "text"),
+        ("assessments", 2, "limitation"),
+        ("hedge_absence", "reason"),
+        ("hedge_absence", "follow_up"),
+        ("fx", "operating_fx_absence", "reason"),
+        ("fx", "operating_fx_absence", "follow_up"),
+    ],
+    ids=lambda p: ".".join(map(str, p)) if isinstance(p, tuple) else p,
+)
+def test_no_other_free_text_field_can_raise_the_report_builder(
+    path: tuple[str | int, ...], bad: str
+) -> None:
+    """Fix round 1, H1 class: every model text field is tried with hostile bracket text. Those
+    that become ``Fact.text`` or ``limitation`` are plain strings, so the validator returns a
+    result (never raises); only the summary is ``RunText``."""
+    out = _validate(_set(_positive(), path, bad))
+    assert out.output is not None or out.issues
+
+
+def test_the_summary_is_the_only_run_text() -> None:
+    claims = [c for c in _positive_report().claims]
+    texts = {c.claim_id: c.text for c in claims}
+    assert texts["CP-2E-VIEW-01"] == SUBMISSIONS["positive"]["summary"]["text"]
+    assert not any(SUBMISSIONS["positive"]["shock_rationale"] in t for t in texts.values())
+
+
+# --- fix round 1, L3: submit over a real store, the parse path, the RULES guard, reader status ---
+def _ready_store(tmp_path: Any) -> tuple[Execution, str]:
+    """CP-0 settled through the public workflow; the CP-2E ticket is open and untouched."""
+    workflow, pack = start("positive", tmp_path)
+    drive_cp0(workflow, pack, "positive")
+    return Execution(tmp_path / "store"), workflow._binding.ticket_id
+
+
+def test_submit_journals_the_step_and_settles_the_module(tmp_path: Any) -> None:
+    store, ticket = _ready_store(tmp_path)
+    payload = json.dumps(SUBMISSIONS["positive"])
+    out = cp2e.submit(store, ticket, "macro_fx", payload, None)
+    assert out.journal.status == "finished" and not out.journal.issues
+    assert (out.nulls_resolved, out.prefilled, out.prefilled_kinds) == ((), (), ())
+    assert json.loads(out.payload) == SUBMISSIONS["positive"]
+    head = next(h for h in store.read().heads if h.module_id == "CP-2E")
+    assert head.status == "restricted"
+    assert head.qualification == cp2e.QUALIFICATION
+    assert head.result_sha256 == out.journal.result_sha256
+    module = store.head_module(head)
+    assert [i.input_id for i in module.inputs] == ["prepared-pack", "CP-0", "macro-fx-submission"]
+    step = out.journal.steps[0]
+    assert (step.step_id, step.status) == ("macro_fx", "valid")
+
+
+def test_submit_serves_only_its_one_step(tmp_path: Any) -> None:
+    store, ticket = _ready_store(tmp_path)
+    with pytest.raises(ValueError, match="one step"):
+        cp2e.submit(store, ticket, "other_step", json.dumps(SUBMISSIONS["positive"]), None)
+    assert not [a for a in store.read().attempts if a.module_id == "CP-2E" and a.steps]
+
+
+def test_submit_adds_the_journaled_rule_issues_to_the_step(tmp_path: Any) -> None:
+    store, ticket = _ready_store(tmp_path)
+    out = cp2e.submit(
+        store, ticket, "macro_fx", json.dumps(SUBMISSIONS["positive"]), lambda _t: ("Rule says no",)
+    )
+    assert out.journal.status == "finished"
+    assert out.journal.steps[0].status == "invalid"
+    assert "Rule says no" in out.journal.issues
+    assert not [h for h in store.read().heads if h.module_id == "CP-2E" and h.status != "blocked"]
+
+
+def test_submit_journals_a_validator_issue_without_raising(tmp_path: Any) -> None:
+    store, ticket = _ready_store(tmp_path)
+    raw = _set(_positive(), ("summary", "text"), "Rates matter [a lot")
+    out = cp2e.submit(store, ticket, "macro_fx", json.dumps(raw), None)
+    assert out.journal.steps[0].status == "invalid"
+    assert out.journal.issues == (_MALFORMED,)
+
+
+@pytest.mark.parametrize(
+    "text", ["{" * 400, '{"summary": {"text": "\\ud800"}}', '{"a": NaN}', "not json"]
+)
+def test_the_parse_path_is_the_bounded_storable_one(text: str) -> None:
+    """Protocol section 6: model text is parsed by `json_object`, which refuses what a record
+    cannot store; a plain `model_validate_json` would report these as shape errors instead."""
+    assert cp2e._parsed(text) == (None, ("payload: not a JSON object",))
+
+
+@pytest.mark.parametrize("text", ['{"fx": 5}', '{"fx": null}', '{"fx": []}'])
+def test_rules_read_a_non_object_branch_as_no_absence(text: str) -> None:
+    seen = _seen(EXPECTED["cases"]["positive"]["tool_use_required"]["read_pages_cover"], 0)
+    assert cp2e.RULES(text, seen) == ()
+
+
+def test_the_no_search_case_can_hold_one_more_line_than_the_listed_bound() -> None:
+    """RULES = the fixed absence line + at most 20 listed unread-page lines, each <= 600."""
+    raw = _positive()
+    raw["assessments"][0]["basis"] = [
+        {"source_id": "financial", "locator": f"page:{n}", "quote": "q"} for n in range(50)
+    ]
+    out = cp2e.RULES(json.dumps(raw), _seen([], 0))
+    assert out[0] == "Absence claim without a recorded search"
+    assert len(out) <= 21
+    assert all(len(line) <= 600 for line in out)
+
+
+@pytest.mark.parametrize("status", ["accepted", "restricted"])
+def test_the_reader_reports_the_head_status(status: str) -> None:
+    head, store = _head_and_store("positive")
+    module = store.head_module(head).model_copy(update={"status": status, "limitations": ()})
+    if status == "restricted":
+        module = module.model_copy(update={"limitations": ("a limit",)})
+    head = head_of(module)
+    other = SimpleNamespace(head_module=lambda h: module)
+    assert cp2e.cp2e_reader(cast(Execution, other), head).status == status

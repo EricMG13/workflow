@@ -52,3 +52,5 @@
 - 2026-10-28 cp1d-stage1 rulings review (mx-adversary) on 85a2095: CHANGES REQUIRED (N1 basis quote raises Inexact in validation_issues; N2 CP-1 ratios below 0.1x rejected by the 38-digit bound). Fix round 2 + round 4 (i)-(k) dispatched
 - 2026-10-28 cp3d-stage1 re-review (mx-precise) on b36cdb3: APPROVE; merged into lane, 182 passed on lane
 - 2026-10-28T13:05Z cp2e-stage1-rulings test restructure `pytest tests/test_method_cp2e.py` exit 0, 75 passed 1 xfailed (strict, E4a oracle disagreement), branch worktree-agent-a219254fe68cc1c2d 900dce4; mx-precise review dispatched
+- 2026-10-28 cp1c-stage1 re-review (mx-adversary) on 190eae7: APPROVE; merged into lane. Low (1C1 order untested on coinciding conditions) rides with the round-4 rulings round, dispatched
+- 2026-10-28 cp2d-stage1 re-review (mx-adversary) on c8660ab: APPROVE; merged into lane (198 passed for cp1c+cp2d on lane 4679948). Lows L1 (GAP-01 says revolver undisclosed when only drawings are missing), L2 (negative debt "zero" reason), L3 (0 dp lines difference), L4 (first-missing precedence untested) ride with the round-5 round

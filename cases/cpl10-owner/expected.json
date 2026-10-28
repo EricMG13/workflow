@@ -8,7 +8,10 @@
     "amount_exact": "canonical exact decimal; null means unsettled",
     "status": "known | missing | not_applicable",
     "value_class_basis": "observed on the real CP-1 head for every copied cell (manifest.fact_selection_rule); a missing ratio fact keeps value_class `calculated`",
-    "derives_from": "the CP-1 T4.10 labels a calculated fact derives from"
+    "derives_from": "the CP-1 T4.10 labels a calculated fact derives from",
+    "table_shape": "every table of every case has one fact per column in every row, fact id <table>.<row>.<field> in column order (contracts.py:270-272, validate_tables); `tables[].columns` pins the order of the field names only; column labels are the product's and are not pinned; the builder asserts the shape for every table of both cases",
+    "not_applicable_text_cell": "a text cell with no meaning for its row (the TL10.3 overall row's evidence, credit_transmission, screening_implication and source_refs): status not_applicable, shown `∅ G# n.m.`, limitation `Not applicable to the overall row`, no value class, no calculation id",
+    "run_bound_cells": "TL10.1 scope_status and source_ref carry a marker, never a literal (manifest.run_time_bindings.tl10_1_scope_status, tl10_1_source_ref)"
   },
   "rules": {
     "thresholds": {
@@ -84,6 +87,23 @@
     },
     "sign": "change = closing - starting (signed); change_pct = change / |starting| (signed)",
     "assessment_rule": "exactly one analyst assessment for each topic Python rates Material or Watch; none for Stable or Not assessed",
+    "overall_rule": {
+      "confidence_high": "High is refused for every confidence, the overall's included (r07 pins the assessments[0] spelling `<path>.confidence: High is not allowed in a screen`)",
+      "insufficient_information_pairing": "overall.confidence is Insufficient Information iff overall.category is Insufficient Information (r13; issue `overall.confidence: must be Insufficient Information exactly when the category is`)",
+      "limitation": "an Insufficient Information overall (category) carries a non-null limitation (r14; `overall.limitation: an Insufficient Information overall states its limitation`); a category other than Insufficient Information forbids one (r15; `overall.limitation: only an Insufficient Information overall carries a limitation`); the CP-3C precedent, keyed on the category",
+      "issue_order": "confidence High, then pairing, then limitation required, then limitation forbidden",
+      "literal_consequence": "cases.limited.overall.limitation is null (it was a sentence on a Low-confidence Analyst Interpretation overall, which the forbidden-limitation rule now refuses)"
+    },
+    "gaps_rule": {
+      "topic": "each gap's `affected_analysis` equals a topic_id of the view or `overall` (r16; `gaps[<i>].affected_analysis: must name a topic of the view or overall`)",
+      "missing_item": "each gap's `gap` (the missing item) is non-empty after trimming (r17; `gaps[<i>].gap: empty`)",
+      "no_digit": "no gap text field (gap, why_it_matters, affected_analysis, action) contains a digit (r18; `gaps[<i>].<field>: must not contain a digit`)",
+      "duplicates": "a gap with the same `affected_analysis` and `gap` text as an earlier gap is refused (r19; `gaps[<i>]: repeated gap`)",
+      "issue_order": "per gap in order: topic, missing item, digit (field order gap, why_it_matters, affected_analysis, action), repeat",
+      "literal_consequence": "the positive gap's affected_analysis is `overall` (it was `Earnings and cash generation topics`, which the topic rule now refuses; r16 reuses that text)"
+    },
+    "claim_citations": "Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim references, transitively through derives_from and the copied CP-1 cells (the CP-1C L3 rule: a calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the facts in derives_from; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none",
+    "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell has none either, so a claim that references only counts or only a missing change carries no citations as the facts stand (a derives_from on those cells would be a fact-value change outside amendment 1)",
     "submission_types": {
       "note": "the field types decide shape versus content; pinned here, frozen with the lease",
       "comparison.from_period, to_period": "Text (contracts.Text: str, min_length 1)",
@@ -99,8 +119,8 @@
       "comparison (an issue here ENDS validation: the ratings depend on the pair)",
       "assessments[] in submission order, then the missing-assessment check",
       "analyst text of every assessment and overall: bare figures and references through the product prose path against the module's bound facts (fact ids and unique calculation ids), prohibited conclusions, empty text",
-      "overall",
-      "gaps"
+      "overall (rules.overall_rule)",
+      "gaps (rules.gaps_rule)"
     ]
   },
   "cases": {
@@ -1849,8 +1869,8 @@
           "value_class": null
         },
         {
-          "fact_id": "TL10.2.total.material",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.material",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "material",
           "label": "Topics rated Material",
@@ -1862,12 +1882,12 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.material",
+          "calculation_id": "calc:TL10.5.total.material",
           "derives_from": []
         },
         {
-          "fact_id": "TL10.2.total.watch",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.watch",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "watch",
           "label": "Topics rated Watch",
@@ -1879,12 +1899,12 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.watch",
+          "calculation_id": "calc:TL10.5.total.watch",
           "derives_from": []
         },
         {
-          "fact_id": "TL10.2.total.stable",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.stable",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "stable",
           "label": "Topics rated Stable",
@@ -1896,12 +1916,12 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.stable",
+          "calculation_id": "calc:TL10.5.total.stable",
           "derives_from": []
         },
         {
-          "fact_id": "TL10.2.total.not_assessed",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.not_assessed",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "not_assessed",
           "label": "Topics rated Not assessed",
@@ -1913,7 +1933,7 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.not_assessed",
+          "calculation_id": "calc:TL10.5.total.not_assessed",
           "derives_from": []
         },
         {
@@ -1934,8 +1954,8 @@
           "field": "source_ref",
           "label": "Source reference",
           "status": "known",
-          "text": "CP-0 settled head (result_sha256 bound at run time)",
-          "shown": "CP-0 settled head (result_sha256 bound at run time)",
+          "text": "CP-0:{{CP0_RESULT_SHA256}}",
+          "shown": "CP-0:{{CP0_RESULT_SHA256}}",
           "value_class": null
         },
         {
@@ -1967,8 +1987,8 @@
           "field": "scope_status",
           "label": "Scope status",
           "status": "known",
-          "text": "bound at run time: the CP-0 head status",
-          "shown": "bound at run time: the CP-0 head status",
+          "text": "{{CP0_STATUS_WORD}}",
+          "shown": "{{CP0_STATUS_WORD}}",
           "value_class": null
         },
         {
@@ -2011,8 +2031,8 @@
           "field": "source_ref",
           "label": "Source reference",
           "status": "known",
-          "text": "CP-1 settled head (result_sha256 bound at run time)",
-          "shown": "CP-1 settled head (result_sha256 bound at run time)",
+          "text": "CP-1:{{CP1_RESULT_SHA256}}",
+          "shown": "CP-1:{{CP1_RESULT_SHA256}}",
           "value_class": null
         },
         {
@@ -2044,8 +2064,8 @@
           "field": "scope_status",
           "label": "Scope status",
           "status": "known",
-          "text": "bound at run time: the CP-1 head status",
-          "shown": "bound at run time: the CP-1 head status",
+          "text": "{{CP1_STATUS_WORD}}",
+          "shown": "{{CP1_STATUS_WORD}}",
           "value_class": null
         },
         {
@@ -2237,6 +2257,17 @@
           "value_class": null
         },
         {
+          "fact_id": "TL10.3.overall.screen_item",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "screen_item",
+          "label": "Screen item",
+          "status": "known",
+          "text": "Overall",
+          "shown": "Overall",
+          "value_class": null
+        },
+        {
           "fact_id": "TL10.3.overall.assessment",
           "table_id": "TL10.3",
           "row_id": "overall",
@@ -2248,6 +2279,36 @@
           "value_class": "analyst_judgment"
         },
         {
+          "fact_id": "TL10.3.overall.evidence",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "evidence",
+          "label": "Evidence",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
+        },
+        {
+          "fact_id": "TL10.3.overall.credit_transmission",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "credit_transmission",
+          "label": "Credit transmission",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
+        },
+        {
+          "fact_id": "TL10.3.overall.screening_implication",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "screening_implication",
+          "label": "Screening implication",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
+        },
+        {
           "fact_id": "TL10.3.overall.confidence",
           "table_id": "TL10.3",
           "row_id": "overall",
@@ -2257,6 +2318,16 @@
           "text": "Medium",
           "shown": "Medium",
           "value_class": "analyst_judgment"
+        },
+        {
+          "fact_id": "TL10.3.overall.source_refs",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "source_refs",
+          "label": "Source references",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
         },
         {
           "fact_id": "TL10.4.cash.topic_id",
@@ -2651,6 +2722,15 @@
         {
           "table_id": "TL10.1",
           "title": "Scope and sources",
+          "columns": [
+            "subject_identity",
+            "source_ref",
+            "source_owner_module",
+            "as_of_or_period",
+            "scope_status",
+            "topics_supported",
+            "limitation"
+          ],
           "rows": [
             {
               "row_id": "cp0",
@@ -2683,6 +2763,19 @@
         {
           "table_id": "TL10.2",
           "title": "Topic screen",
+          "columns": [
+            "from_value",
+            "to_value",
+            "change",
+            "change_pct",
+            "materiality",
+            "evidence_status",
+            "disposition",
+            "priority_rank",
+            "source_owner_modules",
+            "source_refs",
+            "upgrade_module_ids"
+          ],
           "rows": [
             {
               "row_id": "ebitda",
@@ -2802,22 +2895,21 @@
                 "TL10.2.interest_coverage.source_refs",
                 "TL10.2.interest_coverage.upgrade_module_ids"
               ]
-            },
-            {
-              "row_id": "total",
-              "label": "Total",
-              "fact_ids": [
-                "TL10.2.total.material",
-                "TL10.2.total.watch",
-                "TL10.2.total.stable",
-                "TL10.2.total.not_assessed"
-              ]
             }
           ]
         },
         {
           "table_id": "TL10.3",
           "title": "Screen items",
+          "columns": [
+            "screen_item",
+            "assessment",
+            "evidence",
+            "credit_transmission",
+            "screening_implication",
+            "confidence",
+            "source_refs"
+          ],
           "rows": [
             {
               "row_id": "cash",
@@ -2849,8 +2941,13 @@
               "row_id": "overall",
               "label": "Overall",
               "fact_ids": [
+                "TL10.3.overall.screen_item",
                 "TL10.3.overall.assessment",
-                "TL10.3.overall.confidence"
+                "TL10.3.overall.evidence",
+                "TL10.3.overall.credit_transmission",
+                "TL10.3.overall.screening_implication",
+                "TL10.3.overall.confidence",
+                "TL10.3.overall.source_refs"
               ]
             }
           ]
@@ -2858,6 +2955,16 @@
         {
           "table_id": "TL10.4",
           "title": "Upgrade triggers",
+          "columns": [
+            "topic_id",
+            "trigger",
+            "missing_inputs",
+            "decision_impact",
+            "required_source",
+            "target_full_module_id",
+            "expected_owned_object",
+            "blocking_for_full_decision"
+          ],
           "rows": [
             {
               "row_id": "cash",
@@ -2916,6 +3023,28 @@
               ]
             }
           ]
+        },
+        {
+          "table_id": "TL10.5",
+          "title": "Screen totals",
+          "columns": [
+            "material",
+            "watch",
+            "stable",
+            "not_assessed"
+          ],
+          "rows": [
+            {
+              "row_id": "total",
+              "label": "Total",
+              "fact_ids": [
+                "TL10.5.total.material",
+                "TL10.5.total.watch",
+                "TL10.5.total.stable",
+                "TL10.5.total.not_assessed"
+              ]
+            }
+          ]
         }
       ],
       "claims": [
@@ -2928,7 +3057,11 @@
             "TL10.2.ebitda.change|US$ m",
             "TL10.2.ebitda.change_pct|%"
           ],
-          "text": "EBITDA moved from {TL10.2.ebitda.from_value|US$ m} to {TL10.2.ebitda.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.ebitda.change|US$ m} or {TL10.2.ebitda.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "EBITDA moved from {TL10.2.ebitda.from_value|US$ m} to {TL10.2.ebitda.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.ebitda.change|US$ m} or {TL10.2.ebitda.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · ebitda}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · ebitda}}"
+          ]
         },
         {
           "claim_id": "TL10.2.fcf",
@@ -2939,7 +3072,11 @@
             "TL10.2.fcf.change|US$ m",
             "TL10.2.fcf.change_pct|%"
           ],
-          "text": "Free cash flow moved from {TL10.2.fcf.from_value|US$ m} to {TL10.2.fcf.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.fcf.change|US$ m} or {TL10.2.fcf.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "Free cash flow moved from {TL10.2.fcf.from_value|US$ m} to {TL10.2.fcf.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.fcf.change|US$ m} or {TL10.2.fcf.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · fcf}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · fcf}}"
+          ]
         },
         {
           "claim_id": "TL10.2.cash",
@@ -2950,7 +3087,11 @@
             "TL10.2.cash.change|US$ m",
             "TL10.2.cash.change_pct|%"
           ],
-          "text": "Cash moved from {TL10.2.cash.from_value|US$ m} to {TL10.2.cash.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.cash.change|US$ m} or {TL10.2.cash.change_pct|%} of the starting level; the screen rates it Material."
+          "text": "Cash moved from {TL10.2.cash.from_value|US$ m} to {TL10.2.cash.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.cash.change|US$ m} or {TL10.2.cash.change_pct|%} of the starting level; the screen rates it Material.",
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · cash_closing}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · cash_closing}}"
+          ]
         },
         {
           "claim_id": "TL10.2.total_debt",
@@ -2961,7 +3102,11 @@
             "TL10.2.total_debt.change|US$ m",
             "TL10.2.total_debt.change_pct|%"
           ],
-          "text": "Total debt moved from {TL10.2.total_debt.from_value|US$ m} to {TL10.2.total_debt.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.total_debt.change|US$ m} or {TL10.2.total_debt.change_pct|%} of the starting level; the screen rates it Watch."
+          "text": "Total debt moved from {TL10.2.total_debt.from_value|US$ m} to {TL10.2.total_debt.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.total_debt.change|US$ m} or {TL10.2.total_debt.change_pct|%} of the starting level; the screen rates it Watch.",
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · total_debt}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · total_debt}}"
+          ]
         },
         {
           "claim_id": "TL10.2.net_debt",
@@ -2972,7 +3117,11 @@
             "TL10.2.net_debt.change|US$ m",
             "TL10.2.net_debt.change_pct|%"
           ],
-          "text": "Net debt moved from {TL10.2.net_debt.from_value|US$ m} to {TL10.2.net_debt.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.net_debt.change|US$ m} or {TL10.2.net_debt.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "Net debt moved from {TL10.2.net_debt.from_value|US$ m} to {TL10.2.net_debt.to_value|US$ m} between the first quarter of 2025 and the fourth quarter of 2025, a change of {TL10.2.net_debt.change|US$ m} or {TL10.2.net_debt.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · net_debt}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · net_debt}}"
+          ]
         },
         {
           "claim_id": "TL10.2.total_leverage",
@@ -2980,7 +3129,8 @@
           "refs": [
             "TL10.2.total_leverage.change"
           ],
-          "text": "Total leverage: the change between the first quarter of 2025 and the fourth quarter of 2025 cannot be screened; [TL10.2.total_leverage.change] is not calculable because CP-1 carries no known value for the starting quarter."
+          "text": "Total leverage: the change between the first quarter of 2025 and the fourth quarter of 2025 cannot be screened; [TL10.2.total_leverage.change] is not calculable because CP-1 carries no known value for the starting quarter.",
+          "citations": []
         },
         {
           "claim_id": "TL10.2.interest_coverage",
@@ -2988,36 +3138,41 @@
           "refs": [
             "TL10.2.interest_coverage.change"
           ],
-          "text": "Interest coverage: the change between the first quarter of 2025 and the fourth quarter of 2025 cannot be screened; [TL10.2.interest_coverage.change] is not calculable because CP-1 carries no known value for the starting quarter."
+          "text": "Interest coverage: the change between the first quarter of 2025 and the fourth quarter of 2025 cannot be screened; [TL10.2.interest_coverage.change] is not calculable because CP-1 carries no known value for the starting quarter.",
+          "citations": []
         },
         {
           "claim_id": "TL10.2.summary",
           "limitation": null,
           "refs": [
-            "TL10.2.total.material|topics",
-            "TL10.2.total.watch|topics",
-            "TL10.2.total.stable|topics",
-            "TL10.2.total.not_assessed|topics"
+            "TL10.5.total.material|topics",
+            "TL10.5.total.watch|topics",
+            "TL10.5.total.stable|topics",
+            "TL10.5.total.not_assessed|topics"
           ],
-          "text": "Of seven screened topics, {TL10.2.total.material|topics} rate Material, {TL10.2.total.watch|topics} Watch, {TL10.2.total.stable|topics} Stable and {TL10.2.total.not_assessed|topics} cannot be assessed between the first quarter of 2025 and the fourth quarter of 2025."
+          "text": "Of seven screened topics, {TL10.5.total.material|topics} rate Material, {TL10.5.total.watch|topics} Watch, {TL10.5.total.stable|topics} Stable and {TL10.5.total.not_assessed|topics} cannot be assessed between the first quarter of 2025 and the fourth quarter of 2025.",
+          "citations": []
         },
         {
           "claim_id": "TL10.3.cash",
           "text": "Cash built up while borrowings also rose, so the larger balance reflects drawing rather than retained earnings alone.",
           "limitation": null,
-          "refs": []
+          "refs": [],
+          "citations": []
         },
         {
           "claim_id": "TL10.3.total_debt",
           "text": "Borrowing grew in step with cash, leaving net debt unchanged, so the increase does not by itself weaken credit capacity.",
           "limitation": null,
-          "refs": []
+          "refs": [],
+          "citations": []
         },
         {
           "claim_id": "TL10.3.overall",
           "text": "The screen finds balance sheet growth funded by debt, with earnings and cash generation unchanged between the two quarters.",
           "limitation": null,
-          "refs": []
+          "refs": [],
+          "citations": []
         }
       ],
       "own_limitations": [
@@ -4995,8 +5150,8 @@
           "value_class": null
         },
         {
-          "fact_id": "TL10.2.total.material",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.material",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "material",
           "label": "Topics rated Material",
@@ -5008,12 +5163,12 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.material",
+          "calculation_id": "calc:TL10.5.total.material",
           "derives_from": []
         },
         {
-          "fact_id": "TL10.2.total.watch",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.watch",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "watch",
           "label": "Topics rated Watch",
@@ -5025,12 +5180,12 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.watch",
+          "calculation_id": "calc:TL10.5.total.watch",
           "derives_from": []
         },
         {
-          "fact_id": "TL10.2.total.stable",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.stable",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "stable",
           "label": "Topics rated Stable",
@@ -5042,12 +5197,12 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.stable",
+          "calculation_id": "calc:TL10.5.total.stable",
           "derives_from": []
         },
         {
-          "fact_id": "TL10.2.total.not_assessed",
-          "table_id": "TL10.2",
+          "fact_id": "TL10.5.total.not_assessed",
+          "table_id": "TL10.5",
           "row_id": "total",
           "field": "not_assessed",
           "label": "Topics rated Not assessed",
@@ -5059,7 +5214,7 @@
           "decimals": 0,
           "value_class": "calculated",
           "formula": "count of topics by materiality",
-          "calculation_id": "calc:TL10.2.total.not_assessed",
+          "calculation_id": "calc:TL10.5.total.not_assessed",
           "derives_from": []
         },
         {
@@ -5080,8 +5235,8 @@
           "field": "source_ref",
           "label": "Source reference",
           "status": "known",
-          "text": "CP-0 settled head (result_sha256 bound at run time)",
-          "shown": "CP-0 settled head (result_sha256 bound at run time)",
+          "text": "CP-0:{{CP0_RESULT_SHA256}}",
+          "shown": "CP-0:{{CP0_RESULT_SHA256}}",
           "value_class": null
         },
         {
@@ -5113,8 +5268,8 @@
           "field": "scope_status",
           "label": "Scope status",
           "status": "known",
-          "text": "bound at run time: the CP-0 head status",
-          "shown": "bound at run time: the CP-0 head status",
+          "text": "{{CP0_STATUS_WORD}}",
+          "shown": "{{CP0_STATUS_WORD}}",
           "value_class": null
         },
         {
@@ -5157,8 +5312,8 @@
           "field": "source_ref",
           "label": "Source reference",
           "status": "known",
-          "text": "CP-1 settled head (result_sha256 bound at run time)",
-          "shown": "CP-1 settled head (result_sha256 bound at run time)",
+          "text": "CP-1:{{CP1_RESULT_SHA256}}",
+          "shown": "CP-1:{{CP1_RESULT_SHA256}}",
           "value_class": null
         },
         {
@@ -5190,8 +5345,8 @@
           "field": "scope_status",
           "label": "Scope status",
           "status": "known",
-          "text": "bound at run time: the CP-1 head status",
-          "shown": "bound at run time: the CP-1 head status",
+          "text": "{{CP1_STATUS_WORD}}",
+          "shown": "{{CP1_STATUS_WORD}}",
           "value_class": null
         },
         {
@@ -5301,6 +5456,17 @@
           "value_class": null
         },
         {
+          "fact_id": "TL10.3.overall.screen_item",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "screen_item",
+          "label": "Screen item",
+          "status": "known",
+          "text": "Overall",
+          "shown": "Overall",
+          "value_class": null
+        },
+        {
           "fact_id": "TL10.3.overall.assessment",
           "table_id": "TL10.3",
           "row_id": "overall",
@@ -5312,6 +5478,36 @@
           "value_class": "analyst_judgment"
         },
         {
+          "fact_id": "TL10.3.overall.evidence",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "evidence",
+          "label": "Evidence",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
+        },
+        {
+          "fact_id": "TL10.3.overall.credit_transmission",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "credit_transmission",
+          "label": "Credit transmission",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
+        },
+        {
+          "fact_id": "TL10.3.overall.screening_implication",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "screening_implication",
+          "label": "Screening implication",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
+        },
+        {
           "fact_id": "TL10.3.overall.confidence",
           "table_id": "TL10.3",
           "row_id": "overall",
@@ -5321,6 +5517,16 @@
           "text": "Low",
           "shown": "Low",
           "value_class": "analyst_judgment"
+        },
+        {
+          "fact_id": "TL10.3.overall.source_refs",
+          "table_id": "TL10.3",
+          "row_id": "overall",
+          "field": "source_refs",
+          "label": "Source references",
+          "status": "not_applicable",
+          "shown": "∅ G# n.m.",
+          "limitation": "Not applicable to the overall row"
         },
         {
           "fact_id": "TL10.4.cash.topic_id",
@@ -5619,6 +5825,15 @@
         {
           "table_id": "TL10.1",
           "title": "Scope and sources",
+          "columns": [
+            "subject_identity",
+            "source_ref",
+            "source_owner_module",
+            "as_of_or_period",
+            "scope_status",
+            "topics_supported",
+            "limitation"
+          ],
           "rows": [
             {
               "row_id": "cp0",
@@ -5651,6 +5866,19 @@
         {
           "table_id": "TL10.2",
           "title": "Topic screen",
+          "columns": [
+            "from_value",
+            "to_value",
+            "change",
+            "change_pct",
+            "materiality",
+            "evidence_status",
+            "disposition",
+            "priority_rank",
+            "source_owner_modules",
+            "source_refs",
+            "upgrade_module_ids"
+          ],
           "rows": [
             {
               "row_id": "ebitda",
@@ -5770,22 +5998,21 @@
                 "TL10.2.interest_coverage.source_refs",
                 "TL10.2.interest_coverage.upgrade_module_ids"
               ]
-            },
-            {
-              "row_id": "total",
-              "label": "Total",
-              "fact_ids": [
-                "TL10.2.total.material",
-                "TL10.2.total.watch",
-                "TL10.2.total.stable",
-                "TL10.2.total.not_assessed"
-              ]
             }
           ]
         },
         {
           "table_id": "TL10.3",
           "title": "Screen items",
+          "columns": [
+            "screen_item",
+            "assessment",
+            "evidence",
+            "credit_transmission",
+            "screening_implication",
+            "confidence",
+            "source_refs"
+          ],
           "rows": [
             {
               "row_id": "cash",
@@ -5804,8 +6031,13 @@
               "row_id": "overall",
               "label": "Overall",
               "fact_ids": [
+                "TL10.3.overall.screen_item",
                 "TL10.3.overall.assessment",
-                "TL10.3.overall.confidence"
+                "TL10.3.overall.evidence",
+                "TL10.3.overall.credit_transmission",
+                "TL10.3.overall.screening_implication",
+                "TL10.3.overall.confidence",
+                "TL10.3.overall.source_refs"
               ]
             }
           ]
@@ -5813,6 +6045,16 @@
         {
           "table_id": "TL10.4",
           "title": "Upgrade triggers",
+          "columns": [
+            "topic_id",
+            "trigger",
+            "missing_inputs",
+            "decision_impact",
+            "required_source",
+            "target_full_module_id",
+            "expected_owned_object",
+            "blocking_for_full_decision"
+          ],
           "rows": [
             {
               "row_id": "cash",
@@ -5857,6 +6099,28 @@
               ]
             }
           ]
+        },
+        {
+          "table_id": "TL10.5",
+          "title": "Screen totals",
+          "columns": [
+            "material",
+            "watch",
+            "stable",
+            "not_assessed"
+          ],
+          "rows": [
+            {
+              "row_id": "total",
+              "label": "Total",
+              "fact_ids": [
+                "TL10.5.total.material",
+                "TL10.5.total.watch",
+                "TL10.5.total.stable",
+                "TL10.5.total.not_assessed"
+              ]
+            }
+          ]
         }
       ],
       "claims": [
@@ -5869,7 +6133,11 @@
             "TL10.2.ebitda.change|US$ m",
             "TL10.2.ebitda.change_pct|%"
           ],
-          "text": "EBITDA moved from {TL10.2.ebitda.from_value|US$ m} to {TL10.2.ebitda.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.ebitda.change|US$ m} or {TL10.2.ebitda.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "EBITDA moved from {TL10.2.ebitda.from_value|US$ m} to {TL10.2.ebitda.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.ebitda.change|US$ m} or {TL10.2.ebitda.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · ebitda}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · ebitda}}"
+          ]
         },
         {
           "claim_id": "TL10.2.fcf",
@@ -5880,7 +6148,11 @@
             "TL10.2.fcf.change|US$ m",
             "TL10.2.fcf.change_pct|%"
           ],
-          "text": "Free cash flow moved from {TL10.2.fcf.from_value|US$ m} to {TL10.2.fcf.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.fcf.change|US$ m} or {TL10.2.fcf.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "Free cash flow moved from {TL10.2.fcf.from_value|US$ m} to {TL10.2.fcf.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.fcf.change|US$ m} or {TL10.2.fcf.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · fcf}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · fcf}}"
+          ]
         },
         {
           "claim_id": "TL10.2.cash",
@@ -5891,7 +6163,11 @@
             "TL10.2.cash.change|US$ m",
             "TL10.2.cash.change_pct|%"
           ],
-          "text": "Cash moved from {TL10.2.cash.from_value|US$ m} to {TL10.2.cash.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.cash.change|US$ m} or {TL10.2.cash.change_pct|%} of the starting level; the screen rates it Watch."
+          "text": "Cash moved from {TL10.2.cash.from_value|US$ m} to {TL10.2.cash.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.cash.change|US$ m} or {TL10.2.cash.change_pct|%} of the starting level; the screen rates it Watch.",
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · cash_closing}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · cash_closing}}"
+          ]
         },
         {
           "claim_id": "TL10.2.total_debt",
@@ -5902,7 +6178,11 @@
             "TL10.2.total_debt.change|US$ m",
             "TL10.2.total_debt.change_pct|%"
           ],
-          "text": "Total debt moved from {TL10.2.total_debt.from_value|US$ m} to {TL10.2.total_debt.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.total_debt.change|US$ m} or {TL10.2.total_debt.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "Total debt moved from {TL10.2.total_debt.from_value|US$ m} to {TL10.2.total_debt.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.total_debt.change|US$ m} or {TL10.2.total_debt.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · total_debt}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · total_debt}}"
+          ]
         },
         {
           "claim_id": "TL10.2.net_debt",
@@ -5913,7 +6193,11 @@
             "TL10.2.net_debt.change|US$ m",
             "TL10.2.net_debt.change_pct|%"
           ],
-          "text": "Net debt moved from {TL10.2.net_debt.from_value|US$ m} to {TL10.2.net_debt.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.net_debt.change|US$ m} or {TL10.2.net_debt.change_pct|%} of the starting level; the screen rates it Stable."
+          "text": "Net debt moved from {TL10.2.net_debt.from_value|US$ m} to {TL10.2.net_debt.to_value|US$ m} between the second quarter of 2025 and the third quarter of 2025, a change of {TL10.2.net_debt.change|US$ m} or {TL10.2.net_debt.change_pct|%} of the starting level; the screen rates it Stable.",
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · net_debt}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · net_debt}}"
+          ]
         },
         {
           "claim_id": "TL10.2.total_leverage",
@@ -5921,7 +6205,8 @@
           "refs": [
             "TL10.2.total_leverage.change"
           ],
-          "text": "Total leverage: the change between the second quarter of 2025 and the third quarter of 2025 cannot be screened; [TL10.2.total_leverage.change] is not calculable because CP-1 carries no known value for either quarter."
+          "text": "Total leverage: the change between the second quarter of 2025 and the third quarter of 2025 cannot be screened; [TL10.2.total_leverage.change] is not calculable because CP-1 carries no known value for either quarter.",
+          "citations": []
         },
         {
           "claim_id": "TL10.2.interest_coverage",
@@ -5929,30 +6214,34 @@
           "refs": [
             "TL10.2.interest_coverage.change"
           ],
-          "text": "Interest coverage: the change between the second quarter of 2025 and the third quarter of 2025 cannot be screened; [TL10.2.interest_coverage.change] is not calculable because CP-1 carries no known value for either quarter."
+          "text": "Interest coverage: the change between the second quarter of 2025 and the third quarter of 2025 cannot be screened; [TL10.2.interest_coverage.change] is not calculable because CP-1 carries no known value for either quarter.",
+          "citations": []
         },
         {
           "claim_id": "TL10.2.summary",
           "limitation": null,
           "refs": [
-            "TL10.2.total.material|topics",
-            "TL10.2.total.watch|topics",
-            "TL10.2.total.stable|topics",
-            "TL10.2.total.not_assessed|topics"
+            "TL10.5.total.material|topics",
+            "TL10.5.total.watch|topics",
+            "TL10.5.total.stable|topics",
+            "TL10.5.total.not_assessed|topics"
           ],
-          "text": "Of seven screened topics, {TL10.2.total.material|topics} rate Material, {TL10.2.total.watch|topics} Watch, {TL10.2.total.stable|topics} Stable and {TL10.2.total.not_assessed|topics} cannot be assessed between the second quarter of 2025 and the third quarter of 2025."
+          "text": "Of seven screened topics, {TL10.5.total.material|topics} rate Material, {TL10.5.total.watch|topics} Watch, {TL10.5.total.stable|topics} Stable and {TL10.5.total.not_assessed|topics} cannot be assessed between the second quarter of 2025 and the third quarter of 2025.",
+          "citations": []
         },
         {
           "claim_id": "TL10.3.cash",
           "text": "Cash edged up over the quarter with no sign of a break in the pattern.",
           "limitation": null,
-          "refs": []
+          "refs": [],
+          "citations": []
         },
         {
           "claim_id": "TL10.3.overall",
           "text": "Nothing in the two middle quarters calls for a closer look beyond a small build in cash.",
-          "limitation": "Leverage and coverage cannot be compared because the financial foundation has no twelve-month basis for either quarter.",
-          "refs": []
+          "limitation": null,
+          "refs": [],
+          "citations": []
         }
       ],
       "own_limitations": [
@@ -6477,6 +6766,69 @@
       "expected_issues": [
         "comparison.from_period: Field required"
       ]
+    },
+    {
+      "id": "r13",
+      "class": "overall confidence is Insufficient Information exactly when its category is (category Insufficient Information, confidence Medium)",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "overall.confidence: must be Insufficient Information exactly when the category is"
+      ]
+    },
+    {
+      "id": "r14",
+      "class": "Insufficient Information overall without its limitation",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "overall.limitation: an Insufficient Information overall states its limitation"
+      ]
+    },
+    {
+      "id": "r15",
+      "class": "limitation on an overall that is not Insufficient Information",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "overall.limitation: only an Insufficient Information overall carries a limitation"
+      ]
+    },
+    {
+      "id": "r16",
+      "class": "gap names no topic of the view and not `overall`",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "gaps[0].affected_analysis: must name a topic of the view or overall"
+      ]
+    },
+    {
+      "id": "r17",
+      "class": "gap with a whitespace-only missing item (passes the product Text type; a content refusal)",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "gaps[0].gap: empty"
+      ]
+    },
+    {
+      "id": "r18",
+      "class": "gap text with a digit",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "gaps[0].gap: must not contain a digit"
+      ]
+    },
+    {
+      "id": "r19",
+      "class": "gap repeated",
+      "issue_kind": "content",
+      "issue_spelling": "this draft",
+      "expected_issues": [
+        "gaps[1]: repeated gap"
+      ]
     }
   ],
   "refusal_rules": {
@@ -6586,6 +6938,9 @@
       "TL10.3",
       "TL10.4"
     ],
+    "added_by_the_serialised_methodology_change": [
+      "TL10.5"
+    ],
     "other_registered_in_entry": [
       "TL40.1",
       "TL40.2",
@@ -6604,13 +6959,15 @@
       "TL20.3",
       "TL20.4"
     ],
-    "collision": "none: no other module's table_ids lists a TL10.x id (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
+    "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is unused anywhere (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
     "produced": [
       "TL10.1",
       "TL10.2",
       "TL10.3",
-      "TL10.4"
-    ]
+      "TL10.4",
+      "TL10.5"
+    ],
+    "placement": "TL10.5 (Screen totals) joins the evidence rail block of TL10.2 (D7)"
   },
   "rendered": {
     "block": null,
@@ -6618,6 +6975,7 @@
       "evidence": [
         "TL10.1",
         "TL10.2",
+        "TL10.5",
         "TL10.3"
       ],
       "limitations": [
@@ -6967,6 +7325,8 @@
     "the issue wording other than r08 and r09 is this draft's proposal",
     "the blocked-CP-1 RefusedBegin is a lease statement read from owner_workflow.py, not walked",
     "the CP-L10 rail population and the settled CP-L10 render states are not probed",
-    "thresholds and the Material/Watch/Not assessed ranking are screening policy not stated in any source; LEAD confirms"
+    "thresholds and the Material/Watch/Not assessed ranking are screening policy not stated in any source; LEAD confirms",
+    "amendment 1: the issue wording of r13-r19 is this draft's proposal (the CP-3C pairing and limitation spellings adapted); the overall.confidence High spelling is pinned only for assessments[0] (r07)",
+    "amendment 1: the run-bound markers (head result_sha256, status word, CP-1 citations) are bound by the test, not by this oracle; citation order across a claim's referenced facts is this draft's reading of first-reference order"
   ]
 }

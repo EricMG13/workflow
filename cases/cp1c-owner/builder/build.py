@@ -36,7 +36,7 @@ def pinned(path, sha):
 
 FIN_SHA = "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
 SNAP_SUB_SHA = "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
-METH_SHA = "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+METH_SHA = "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6"
 FIN = pinned("cases/financial/manifest.json", FIN_SHA)
 SNAP = pinned("cases/snapshot/submissions.json", SNAP_SUB_SHA)
 METH = pinned("src/deploy_vii/methodology.json", METH_SHA)
@@ -66,11 +66,21 @@ TABLES = {
     "T1C.8": "Peer universe totals",
 }
 ENTRY = {m["module_id"]: m for m in METH}
+# The serialised methodology.json change replaced CP-1C's table_ids (the eleven T4.x ids) with T1C.1-T1C.8.
+# The registry pinned above is the landed state: assert it, and rebuild the pre-change ownership from the
+# landed registry plus the replaced list, so the recorded D8 evidence is unchanged.
+CP1C_REPLACED = ["T4.1", "T4.10", "T4.11", "T4.2", "T4.3", "T4.4", "T4.5", "T4.6", "T4.7", "T4.8", "T4.9"]
+assert ENTRY["CP-1C"]["table_ids"] == list(TABLES), "landed state: CP-1C owns exactly T1C.1-T1C.8"
+OWNERS_LANDED = {}
 OWNERS = {}
 for _m in METH:
     for _t in _m.get("table_ids") or []:
+        OWNERS_LANDED.setdefault(_t, []).append(_m["module_id"])
+    for _t in (CP1C_REPLACED if _m["module_id"] == "CP-1C" else _m.get("table_ids") or []):
         OWNERS.setdefault(_t, []).append(_m["module_id"])
-CP1C_CURRENT = ENTRY["CP-1C"]["table_ids"]
+assert not [t for t in TABLES if len(OWNERS_LANDED[t]) > 1], "landed state: no T1C id is shared"
+assert not [t for t in CP1C_REPLACED if "CP-1C" in OWNERS_LANDED.get(t, [])], "landed state: CP-1C no longer owns a T4.x id"
+CP1C_CURRENT = CP1C_REPLACED
 D8 = {
     "cp1c_table_ids_today": CP1C_CURRENT,
     "collisions_today": {t: OWNERS[t] for t in CP1C_CURRENT if len(OWNERS[t]) > 1},

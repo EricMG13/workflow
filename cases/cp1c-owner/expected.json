@@ -19,7 +19,7 @@
   "inclusion": "Comparable and Partly comparable are included; Not comparable is excluded",
   "position": "1 + number of entities strictly better than the issuer; ties share the position; direction per metric",
   "difference": "multiples: issuer minus median, unit MULTIPLE ('x'); percent metrics: percentage points, unit pp, the unit and formula follow CP-4 (cp4_legal.py:970-972); the amount is (issuer - median) in the 38-digit context, then .scaleb(2), not CP-4's amount * 100 (which would give '1.00 pp' and a 28-digit cell); shown is exact text, compared as a string; spelled by report_view.fact_spelling as exact text + ' pp' (unit_class none); the same rule applies to every percent-minus-percent difference, including T1C.6.<percent metric>.difference",
-  "period_of_derived_facts": "Mixed: issuer LTM Q4 25, each peer's own twelve months (T1C.1 counts, T1C.4, T1C.5); each peer's own period stays on its T1C.2 and T1C.3 cells",
+  "period_of_derived_facts": "Mixed: issuer LTM Q4 25, each peer's own twelve months (T1C.8 counts, T1C.4, T1C.5); each peer's own period stays on its T1C.2 and T1C.3 cells",
   "status": "LEAD to confirm (open questions 2-4)"
  },
  "d8_table_ids": {
@@ -93,10 +93,11 @@
    "T1C.4",
    "T1C.5",
    "T1C.6",
-   "T1C.7"
+   "T1C.7",
+   "T1C.8"
   ],
   "proposed_ids_collisions": [],
-  "register": "Proposal, applied nowhere in this preparation (LEAD ruling 8): T1C.1-T1C.7 replace CP-1C's table_ids in the serialised methodology.json change (CP-L10 D4, CP-1C D8), in which METH_SHA (builder pin) is re-pinned. T4.7 (the only unshared id) is dropped with them: nothing produces or reads it",
+  "register": "Proposal, applied nowhere in this preparation (LEAD ruling 8): T1C.1-T1C.8 replace CP-1C's table_ids in the serialised methodology.json change (CP-L10 D4, CP-1C D8), in which METH_SHA (builder pin) is re-pinned. T4.7 (the only unshared id) is dropped with them: nothing produces or reads it",
   "repo_grep": "T1C. occurs nowhere under src, tests, docs or cases before this preparation; table_ids is read only by registry.Responsibility and tests/test_cp1b_registration.py (CP-1B ids)",
   "module_tables_besides": []
  },
@@ -133,7 +134,7 @@
     "T1C.4.<metric>.difference",
     "T1C.4.<metric>.position",
     "T1C.4.<metric>.outlier_count",
-    "T1C.1.total.included"
+    "T1C.8.total.included"
    ],
    "proof": "a consumer's attempt inputs bind Input('CP-1C', head.result_sha256, status) and a consumer fact or claim derives from those T1C.4 facts, read through the CP-1C head",
    "edges": "methodology.json lists CP-1C optional for CP-2, CP-3 and CP-5 only (registry.edge_rule restricted); cp3_relative_value.READ_OPTIONAL = CP-1A, CP-4; methods/cp3.md, cp6.md and cp2.md name CP-1C as the owner of peer ranking and forbid it in their own text; CP-5 counts only after a lease extends its integrity scope"
@@ -1527,8 +1528,8 @@
      "value_class": null
     },
     {
-     "fact_id": "T1C.1.total.sheet",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.sheet",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "sheet",
      "label": "Peers in the source",
@@ -1539,12 +1540,12 @@
      "shown": "5 peers",
      "value_class": "calculated",
      "formula": "count of peer rows",
-     "calculation_id": "calc:T1C.1.total.sheet",
+     "calculation_id": "calc:T1C.8.total.sheet",
      "derives_from": []
     },
     {
-     "fact_id": "T1C.1.total.included",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.included",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "included",
      "label": "Peers included",
@@ -1555,7 +1556,7 @@
      "shown": "4 peers",
      "value_class": "calculated",
      "formula": "count by universe flag",
-     "calculation_id": "calc:T1C.1.total.included",
+     "calculation_id": "calc:T1C.8.total.included",
      "derives_from": [
       "T1C.1.p01.included",
       "T1C.1.p02.included",
@@ -1565,8 +1566,8 @@
      ]
     },
     {
-     "fact_id": "T1C.1.total.excluded",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.excluded",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "excluded",
      "label": "Peers excluded",
@@ -1577,7 +1578,7 @@
      "shown": "1 peers",
      "value_class": "calculated",
      "formula": "count by universe flag",
-     "calculation_id": "calc:T1C.1.total.excluded",
+     "calculation_id": "calc:T1C.8.total.excluded",
      "derives_from": [
       "T1C.1.p01.included",
       "T1C.1.p02.included",
@@ -6238,15 +6239,6 @@
         "T1C.1.p05.included",
         "T1C.1.p05.evidence"
        ]
-      },
-      {
-       "row_id": "total",
-       "label": "Total",
-       "fact_ids": [
-        "T1C.1.total.sheet",
-        "T1C.1.total.included",
-        "T1C.1.total.excluded"
-       ]
       }
      ]
     },
@@ -6599,6 +6591,21 @@
        ]
       }
      ]
+    },
+    {
+     "table_id": "T1C.8",
+     "title": "Peer universe totals",
+     "rows": [
+      {
+       "row_id": "total",
+       "label": "Total",
+       "fact_ids": [
+        "T1C.8.total.sheet",
+        "T1C.8.total.included",
+        "T1C.8.total.excluded"
+       ]
+      }
+     ]
     }
    ],
    "claims": [
@@ -6670,7 +6677,7 @@
     {
      "claim_id": "T1C.1.universe",
      "limitation": null,
-     "text": "The peer source lists {T1C.1.total.sheet|peers} and {T1C.1.total.included|peers} are included in the universe."
+     "text": "The peer source lists {T1C.8.total.sheet|peers} and {T1C.8.total.included|peers} are included in the universe."
     },
     {
      "claim_id": "T1C.4.adjusted_ebitda_margin",
@@ -7047,25 +7054,31 @@
             "state": "known"
            }
           ]
-         },
+         }
+        ]
+       },
+       {
+        "table_id": "T1C.8",
+        "label": "Peer universe totals",
+        "rows": [
          {
           "row_id": "total",
           "label": "Total",
           "cells": [
            {
-            "fact_id": "T1C.1.total.sheet",
+            "fact_id": "T1C.8.total.sheet",
             "field": "sheet",
             "shown": "5 peers",
             "state": "known"
            },
            {
-            "fact_id": "T1C.1.total.included",
+            "fact_id": "T1C.8.total.included",
             "field": "included",
             "shown": "4 peers",
             "state": "known"
            },
            {
-            "fact_id": "T1C.1.total.excluded",
+            "fact_id": "T1C.8.total.excluded",
             "field": "excluded",
             "shown": "1 peers",
             "state": "known"
@@ -8202,8 +8215,8 @@
      "value_class": null
     },
     {
-     "fact_id": "T1C.1.total.sheet",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.sheet",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "sheet",
      "label": "Peers in the source",
@@ -8214,12 +8227,12 @@
      "shown": "3 peers",
      "value_class": "calculated",
      "formula": "count of peer rows",
-     "calculation_id": "calc:T1C.1.total.sheet",
+     "calculation_id": "calc:T1C.8.total.sheet",
      "derives_from": []
     },
     {
-     "fact_id": "T1C.1.total.included",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.included",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "included",
      "label": "Peers included",
@@ -8230,7 +8243,7 @@
      "shown": "3 peers",
      "value_class": "calculated",
      "formula": "count by universe flag",
-     "calculation_id": "calc:T1C.1.total.included",
+     "calculation_id": "calc:T1C.8.total.included",
      "derives_from": [
       "T1C.1.p01.included",
       "T1C.1.p02.included",
@@ -8238,8 +8251,8 @@
      ]
     },
     {
-     "fact_id": "T1C.1.total.excluded",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.excluded",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "excluded",
      "label": "Peers excluded",
@@ -8250,7 +8263,7 @@
      "shown": "0 peers",
      "value_class": "calculated",
      "formula": "count by universe flag",
-     "calculation_id": "calc:T1C.1.total.excluded",
+     "calculation_id": "calc:T1C.8.total.excluded",
      "derives_from": [
       "T1C.1.p01.included",
       "T1C.1.p02.included",
@@ -11362,15 +11375,6 @@
         "T1C.1.p03.included",
         "T1C.1.p03.evidence"
        ]
-      },
-      {
-       "row_id": "total",
-       "label": "Total",
-       "fact_ids": [
-        "T1C.1.total.sheet",
-        "T1C.1.total.included",
-        "T1C.1.total.excluded"
-       ]
       }
      ]
     },
@@ -11653,6 +11657,21 @@
        ]
       }
      ]
+    },
+    {
+     "table_id": "T1C.8",
+     "title": "Peer universe totals",
+     "rows": [
+      {
+       "row_id": "total",
+       "label": "Total",
+       "fact_ids": [
+        "T1C.8.total.sheet",
+        "T1C.8.total.included",
+        "T1C.8.total.excluded"
+       ]
+      }
+     ]
     }
    ],
    "claims": [
@@ -11698,7 +11717,7 @@
     {
      "claim_id": "T1C.1.universe",
      "limitation": null,
-     "text": "The peer source lists {T1C.1.total.sheet|peers} and {T1C.1.total.included|peers} are included in the universe."
+     "text": "The peer source lists {T1C.8.total.sheet|peers} and {T1C.8.total.included|peers} are included in the universe."
     },
     {
      "claim_id": "T1C.4.adjusted_ebitda_margin",
@@ -11981,25 +12000,31 @@
             "state": "known"
            }
           ]
-         },
+         }
+        ]
+       },
+       {
+        "table_id": "T1C.8",
+        "label": "Peer universe totals",
+        "rows": [
          {
           "row_id": "total",
           "label": "Total",
           "cells": [
            {
-            "fact_id": "T1C.1.total.sheet",
+            "fact_id": "T1C.8.total.sheet",
             "field": "sheet",
             "shown": "3 peers",
             "state": "known"
            },
            {
-            "fact_id": "T1C.1.total.included",
+            "fact_id": "T1C.8.total.included",
             "field": "included",
             "shown": "3 peers",
             "state": "known"
            },
            {
-            "fact_id": "T1C.1.total.excluded",
+            "fact_id": "T1C.8.total.excluded",
             "field": "excluded",
             "shown": "0 peers",
             "state": "known"
@@ -12673,8 +12698,8 @@
      "limitation": "No peer source is in the pack"
     },
     {
-     "fact_id": "T1C.1.total.sheet",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.sheet",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "sheet",
      "label": "Peers in the source",
@@ -12686,8 +12711,8 @@
      "limitation": "No peer source is in the pack"
     },
     {
-     "fact_id": "T1C.1.total.included",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.included",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "included",
      "label": "Peers included",
@@ -12699,8 +12724,8 @@
      "limitation": "No peer source is in the pack"
     },
     {
-     "fact_id": "T1C.1.total.excluded",
-     "table_id": "T1C.1",
+     "fact_id": "T1C.8.total.excluded",
+     "table_id": "T1C.8",
      "row_id": "total",
      "field": "excluded",
      "label": "Peers excluded",
@@ -13656,15 +13681,6 @@
         "T1C.1.none.included",
         "T1C.1.none.evidence"
        ]
-      },
-      {
-       "row_id": "total",
-       "label": "Total",
-       "fact_ids": [
-        "T1C.1.total.sheet",
-        "T1C.1.total.included",
-        "T1C.1.total.excluded"
-       ]
       }
      ]
     },
@@ -13852,13 +13868,28 @@
        ]
       }
      ]
+    },
+    {
+     "table_id": "T1C.8",
+     "title": "Peer universe totals",
+     "rows": [
+      {
+       "row_id": "total",
+       "label": "Total",
+       "fact_ids": [
+        "T1C.8.total.sheet",
+        "T1C.8.total.included",
+        "T1C.8.total.excluded"
+       ]
+      }
+     ]
     }
    ],
    "claims": [
     {
      "claim_id": "T1C.1.universe",
      "limitation": null,
-     "text": "No peer source is in the pack, so no universe is formed [T1C.1.total.sheet]."
+     "text": "No peer source is in the pack, so no universe is formed [T1C.8.total.sheet]."
     },
     {
      "claim_id": "T1C.4.adjusted_ebitda_margin",
@@ -14033,25 +14064,31 @@
             "state": "gap"
            }
           ]
-         },
+         }
+        ]
+       },
+       {
+        "table_id": "T1C.8",
+        "label": "Peer universe totals",
+        "rows": [
          {
           "row_id": "total",
           "label": "Total",
           "cells": [
            {
-            "fact_id": "T1C.1.total.sheet",
+            "fact_id": "T1C.8.total.sheet",
             "field": "sheet",
             "shown": null,
             "state": "gap"
            },
            {
-            "fact_id": "T1C.1.total.included",
+            "fact_id": "T1C.8.total.included",
             "field": "included",
             "shown": null,
             "state": "gap"
            },
            {
-            "fact_id": "T1C.1.total.excluded",
+            "fact_id": "T1C.8.total.excluded",
             "field": "excluded",
             "shown": null,
             "state": "gap"

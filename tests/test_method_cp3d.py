@@ -1565,6 +1565,30 @@ def test_r11_class_text_cases(
     assert dc.quote_failure(c, adapter, refusal) is None
 
 
+@pytest.mark.parametrize(
+    ("reader", "adapter", "refusal"), _CLASS_TEXTS, ids=[r[0] for r in _CLASS_TEXTS]
+)
+def test_r11_b3_names_the_wrap_refusal_accepts(
+    reader: str, adapter: dc.Adapter, refusal: str
+) -> None:
+    """Round 11 B3 refuses a name with `- ` only in a wrapped quote. An unwrapped quote that
+    prints `- ` keeps the name, and a wrapped quote keeps a name with a plain hyphen (whose
+    digit takes its own refusal)."""
+    page = "The Acme first- priority Term Loan is quoted."
+    assert adapter(page, page, "Acme first- priority Term Loan") == ()
+    wrapped = "The Acme Term Loan B-2 first-\npriority tranche is quoted."
+    issues = tuple(adapter(wrapped, wrapped, "Acme Term Loan B-2"))
+    assert refusal not in issues
+    assert issues == (f"{reader}: digits are not allowed",)
+
+
+def test_r11_b1_an_overlapping_occurrence_is_read() -> None:
+    """Every occurrence of the quote on the page is read, one that overlaps the one before it
+    included: the second `5 .5` in `x 5 .5 .5` starts inside `.5`, so its figure is cut."""
+    assert cp3d._whole_on_page("5", "5 .5", "x 5 .5")
+    assert not cp3d._whole_on_page("5", "5 .5", "x 5 .5 .5")
+
+
 def _blank_adapter(case: str, path: str, absent: str | None = None) -> dc.Adapter:
     """The frozen `case` submission with the text at `path` set to the value (the frozen quotes
     stay); `absent` first records that term as absent instead of quoted."""

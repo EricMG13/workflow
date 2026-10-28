@@ -20,10 +20,8 @@ Lane `claude/module-dev-status-review-0981b6` at 6ba071b or later. Fast tests: 9
 | H1 mx-adversary review | 2bd61a7 | a72eed029a03a38bf (impl a69f811059171c714) | H1 open points 1–6 to LEAD with the reviewer's reading |
 | CP-8 fix round 1 (M1 raw quote, L1 mutants) | a5c4011 | a3cc9818386e8861a | Opus re-review; then 6h split-and-missing + 2682310 re-pin |
 | CP-2G fix round 1 (M1–M3, L4, L5; merge, oracle batch, re-pin) | 0e28916 | a4377a7580e8e70db | Opus re-review; then round 8 A-3 citations (test-first); merge |
-| CP-1D raw-quote fix review | 7c88a98 | aa7fe668e36cb82b8 (worktree cp1d-stage1) | merge after APPROVE; signed-basis defect to LEAD |
 | CP-3D raw-quote check | lane | a5aa3f0ca842029cd (worktree cp3d-stage1) | scoped review if code changed; then 6h percent_text leading zero |
 | CP-2H round 7 | 5d91e7b | a52b5ec0919986ddb | first mx-adversary review, a killed mutant per refusal (29) |
-| CP-2E round 6i review (mx-feature) | aed93b3 | see ledger (impl a219254fe68cc1c2d) | merge |
 | CP-3C round 8 Part B | 9e78d63 | aa5a4817fa00cd287 | first mx-adversary review |
 | CP-4C round 8 Part A (money: A-1) | 0284eca | a2c15c441717ec41c | first mx-adversary review (property test, mutants) |
 | CP-1C round 6h (a) | lane | ad161c52418d5cb9a (worktree cp1c-stage1) | scoped review, merge |
@@ -35,7 +33,7 @@ CP-2D 6f (e) and D-1; CP-2A choice 5; CP-8 items 1–5; CP-2G L1–L3 and Info. 
 - CP-3 re-pin to 2682310 (worktree cp3-stage1; cp3-cp6 manifest 525c5f1b…, submissions eaecbcd0…, expected 8ca60c96…, builder 67db9815…).
 - CP-5 Stage 1 build (lease `docs/CP5-OWNER-LEASE.md`, oracle `cases/cp5-owner/` in 2682310), one Opus implementer, when a slot frees.
 - G1-X `_fill` TypeError mapping stays until LEAD says 0d is integrated.
-- Riding Lows: CP-2E E8 `\b` anchors test; CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
+- Riding Lows: CP-2E negative-floor raise test (6i review); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).
 - Whole-branch review: B4 conventions; CP-L10 not_applicable value_class; CP-8 and CP-3C size; earlier surviving-mutant counts.
 - Stage 4: refused-record known gap; 0d `normalise` root fix (then remove the G1-X `_fill` mapping); CP-8 `∅ G#` binding.
 

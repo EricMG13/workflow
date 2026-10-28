@@ -1,0 +1,4386 @@
+{
+  "schema_version": "cp3c-owner-expected/1",
+  "claims_note": "Claim templates are run text (decision 0005 MC-2, execution.py:296): a figure is a {<fact_id>|<unit>} reference (unit US$ m or x) to a known numeric cell of CP-3C's own tables that carries a citation or a calculation id; a missing value is a [<fact_id>] chip naming a gap cell; the date is a period label. `text` is the resolved spelling (a chip resolves to the gap spelling, shown here as the pattern '∅ G#'); `references` lists the cell fact_ids.",
+  "derivation_note": "Every value is a Decimal derived by cases/cp3c-owner/builder/build.py from pages 2-5 of the frozen financial source (parsed as text), the pinned CP-2D oracle cells and the method in the lease. Comparison is numeric Decimal equality; ratios are stored to 4 dp half-up; `shown` is the exact display spelling (display.py: amounts 0 dp half-up, negatives in brackets, multiples 2 dp with x, percent 1 dp, basis points and months as exact text with their unit). Entity: Northbridge Synthetic Group, IFRS consolidated group; currency USD; unit MILLIONS (US$ m); balance date 2025-12-31; flows the twelve months 2025-01-01 to 2025-12-31 (LTM Q4 25 = FY25).",
+  "source_facts": {
+    "cash": {
+      "amount": "20",
+      "source": "financial page:4 Cash and cash equivalents (Q4); CP-1 T4.10 cash_closing"
+    },
+    "undrawn_revolver": {
+      "amount": "0",
+      "source": "financial page:4 RCF commitment and RCF drawings (explicit zeros); CP-1 T4.10 undrawn_rcf"
+    },
+    "adjusted_ebitda_ltm": {
+      "amount": "30",
+      "derivation": "7.5 x 4",
+      "source": "financial page:2 Adjusted EBITDA (FY column 30.0 agrees); CP-1 T4.10 adjusted_ebitda"
+    },
+    "cash_interest_paid_ltm": {
+      "amount": "5",
+      "derivation": "1.25 x 4; CP-1 shows the outflow as -5.00",
+      "source": "financial page:3 Cash interest paid; CP-1 T4.10 cash_interest"
+    },
+    "run_rate_annual": {
+      "amount": "0",
+      "derivation": "19 + (10) + (4) - 5 = 0 (CP-2D rule)",
+      "source": "financial page:3; equals cases/cp2d-owner/expected.json positive T2E.3.r01"
+    },
+    "term_loan": {
+      "facility_id": "term-loan",
+      "principal": "50",
+      "maturity_date": "2029-12-31",
+      "annual_amortisation": "0",
+      "secured_status": "SECURED",
+      "seniority": "SENIOR",
+      "rate": "floating, SOFR, spread 0 bp, floor 0 bp",
+      "source": "financial page:5"
+    },
+    "reference_rate_level": {
+      "state": "missing",
+      "source": "no source states a reference rate level; the all-in cost of a refinancing is never calculated"
+    }
+  },
+  "method_rules": {
+    "balance_date": "2025-12-31",
+    "facility_order": "ascending months from the balance date (CP-2D's whole-month rule), ties by facility_id",
+    "amortisation_before_maturity": "min(annual amortisation x months / 12, principal)",
+    "principal_payable_at_maturity": "principal - amortisation before maturity",
+    "base_resources": "cash + undrawn committed revolver - minimum cash (CP-2D's analyst assumption, read from CP-2D)",
+    "resources_at_maturity": "base resources + run-rate annual flow x months / 12 - amortisation of all facilities up to that date (each to min(date, its own maturity)) - principal paid from resources at earlier maturities",
+    "resources_applied": "min(principal payable at maturity, max(0, resources at maturity))",
+    "refinancing_need": "principal payable at maturity - resources applied; a computed 0 is 'no need', distinct from missing",
+    "cover": "resources applied / principal payable at maturity (not_applicable when the principal payable is 0)",
+    "currency": "every cell in unit MILLIONS, amount or gap, carries currency USD (report_view.figure_unit; CP-2D lease acceptance 1)",
+    "revolver_availability": "the undrawn committed revolver at the balance date is counted at every maturity date, including a date after the revolver's own maturity (not read); an own limitation",
+    "run_rate_beyond_horizon": "the CP-2D annual flow is held flat to each maturity date, including dates after the CP-2D horizon (own limitation)",
+    "added_annual_cash_interest": "total principal payable at maturity x margin step-up (bp) / 10000; 0 bp is a known 0, an unassessed step-up is missing",
+    "interest_cover": "adjusted EBITDA / cash interest paid; pro forma: / (cash interest paid + added annual cash interest); a zero interest is not_applicable, a zero EBITDA gives a known 0",
+    "leverage_type_ratios": "amount / adjusted EBITDA; a non-positive EBITDA is not_applicable (shown n.m.), a missing operand is missing",
+    "ranking": "(secured_status: SECURED 0, UNSECURED 1; seniority: SUPER_SENIOR 0, SENIOR 1, SENIOR_SUBORDINATED 2, SUBORDINATED 3, JUNIOR 4) compared lexicographically; claims at or ahead = principal of facilities with rank <= the facility's rank; any NOT_STATED flag makes every claims cell missing",
+    "lme_capacity": "CP-4 is not read: the LME and Stress columns of T3D.5 are gaps in every case; the Base column is the largest claims at or ahead",
+    "missing_rule": "any missing operand makes each dependent value missing with a stated reason; nothing defaults to 0; not_applicable (a defined ratio with a non-positive denominator) is distinct from missing; blocked is the module-level state"
+  },
+  "cases": {
+    "positive": {
+      "case_kind": "pack_run_clone",
+      "consumes_cp2d_case": "positive",
+      "horizon_months": 24,
+      "minimum_cash": "10",
+      "margin_step_up_bps": "400",
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "10",
+            "resources_applied": "10",
+            "refinancing_need": "40",
+            "cover": "0.2"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "10",
+        "total_refinancing_need": "40",
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": "1.3333",
+        "added_annual_cash_interest": "2",
+        "pro_forma_cash_interest": "7",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "4.2857",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": [],
+      "own_limitations": [
+        "Run-rate basis: the annual cash flow of the liquidity analysis is held flat to each maturity date, including dates after its horizon; no forecast, growth, seasonality or new borrowing is assumed.",
+        "Resources at a maturity are cash and undrawn committed revolver at the balance date plus the held run-rate flow, less amortisation to that date, earlier principal paid from resources and the minimum cash; the refinancing of an earlier shortfall is not modelled.",
+        "Any undrawn committed revolver is assumed to be available at every maturity date, even where it matures earlier; its own maturity is not read.",
+        "Minimum cash is an analyst assumption, not a source figure.",
+        "The margin step-up is an analyst assumption applied to all principal payable at maturity; it is not a source or market figure.",
+        "No reference rate level is stated in any source, so the all-in cost of a refinancing is not calculated; only a margin step-up over the current terms is shown.",
+        "No market pricing or lender-appetite evidence is read, so feasibility judgments rest on the credit metrics alone.",
+        "Liability-management capacity is not calculated: the legal covenant analysis is not read, and it does not yet quantify basket amounts.",
+        "No stressed case is shown: the downside analysis is not read.",
+        "Business and ownership context is not read, so owner support and asset-sale routes are not weighed.",
+        "Ranking follows the secured and seniority flags of each facility; guarantees, collateral value and structural subordination are not assessed.",
+        "Business and ownership context is not read in this version, and no source describes disposable assets or owner support.",
+        "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+      ],
+      "tables": {
+        "T3D.1": {
+          "title": "Refinancing need by maturity",
+          "row_header": "Facility",
+          "columns": [
+            "Principal (US$ m)",
+            "Maturity date",
+            "Months from 2025-12-31",
+            "Inside CP-2D horizon",
+            "Amortisation before maturity (US$ m)",
+            "Principal payable at maturity (US$ m)",
+            "Resources at maturity (US$ m)",
+            "Resources applied (US$ m)",
+            "Refinancing need (US$ m)",
+            "Resources cover of principal at maturity"
+          ],
+          "rows": [
+            [
+              "Northbridge Term Loan (term-loan)",
+              [
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c1",
+                  "fact_id": "T3D.1.r01.c1"
+                },
+                {
+                  "shown": "2029-12-31",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c2",
+                  "fact_id": "T3D.1.r01.c2"
+                },
+                {
+                  "shown": "48 months",
+                  "state": "known",
+                  "amount": "48",
+                  "unit": "months",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "cp2d_operand": "T2E.4.r01.c3",
+                  "fact_id": "T3D.1.r01.c3"
+                },
+                {
+                  "shown": "No",
+                  "state": "known",
+                  "value_class": "calculated",
+                  "cp2d_operand": "T2E.4.r01.c4",
+                  "fact_id": "T3D.1.r01.c4"
+                },
+                {
+                  "shown": "0",
+                  "state": "known",
+                  "amount": "0",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "min(annual amortisation x months / 12, principal)",
+                  "fact_id": "T3D.1.r01.c5"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal - amortisation before maturity",
+                  "fact_id": "T3D.1.r01.c6"
+                },
+                {
+                  "shown": "10",
+                  "state": "known",
+                  "amount": "10",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "cash + undrawn revolver - minimum cash + run-rate flow x months / 12 - amortisation to the date - earlier principal paid from resources",
+                  "fact_id": "T3D.1.r01.c7"
+                },
+                {
+                  "shown": "10",
+                  "state": "known",
+                  "amount": "10",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "min(principal payable at maturity, max(0, resources at maturity))",
+                  "fact_id": "T3D.1.r01.c8"
+                },
+                {
+                  "shown": "40",
+                  "state": "known",
+                  "amount": "40",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal payable at maturity - resources applied",
+                  "fact_id": "T3D.1.r01.c9"
+                },
+                {
+                  "shown": "20.0%",
+                  "state": "known",
+                  "amount": "0.2",
+                  "unit": "PERCENT",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "resources applied / principal payable at maturity",
+                  "fact_id": "T3D.1.r01.c10"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.2": {
+          "title": "Refinancing burden",
+          "row_header": "Line",
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            [
+              "Principal payable at maturity, all facilities",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity",
+                "fact_id": "T3D.2.r01"
+              }
+            ],
+            [
+              "Resources applied at the maturity dates",
+              {
+                "shown": "10",
+                "state": "known",
+                "amount": "10",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of resources applied",
+                "fact_id": "T3D.2.r02"
+              }
+            ],
+            [
+              "Refinancing need after resources",
+              {
+                "shown": "40",
+                "state": "known",
+                "amount": "40",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of refinancing need",
+                "fact_id": "T3D.2.r03"
+              }
+            ],
+            [
+              "Principal maturing after the CP-2D horizon",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity of facilities outside the CP-2D horizon",
+                "fact_id": "T3D.2.r04"
+              }
+            ],
+            [
+              "Nearest maturity date",
+              {
+                "shown": "2029-12-31",
+                "state": "known",
+                "value_class": "calculated",
+                "formula": "earliest maturity date",
+                "fact_id": "T3D.2.r05"
+              }
+            ],
+            [
+              "Months to the nearest maturity",
+              {
+                "shown": "48 months",
+                "state": "known",
+                "amount": "48",
+                "unit": "months",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "months from the balance date to the earliest maturity",
+                "fact_id": "T3D.2.r06"
+              }
+            ],
+            [
+              "LTM adjusted EBITDA",
+              {
+                "shown": "30",
+                "state": "known",
+                "amount": "30",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "adjusted_ebitda",
+                "fact_id": "T3D.2.r07"
+              }
+            ],
+            [
+              "Principal payable at maturity / LTM adjusted EBITDA",
+              {
+                "shown": "1.67x",
+                "state": "known",
+                "amount": "1.6667",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "principal payable at maturity / adjusted EBITDA",
+                "fact_id": "T3D.2.r08"
+              }
+            ],
+            [
+              "Refinancing need / LTM adjusted EBITDA",
+              {
+                "shown": "1.33x",
+                "state": "known",
+                "amount": "1.3333",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "refinancing need / adjusted EBITDA",
+                "fact_id": "T3D.2.r09"
+              }
+            ],
+            [
+              "CP-2D funding gap at its horizon end",
+              {
+                "shown": "0",
+                "state": "known",
+                "amount": "0",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "cp2d_operand": "T2E.5.r07",
+                "fact_id": "T3D.2.r10"
+              }
+            ],
+            [
+              "Minimum cash applied (analyst assumption set in CP-2D)",
+              {
+                "shown": "10",
+                "state": "known",
+                "amount": "10",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "analyst_judgment",
+                "cp2d_operand": "T2E.5.r04",
+                "fact_id": "T3D.2.r11"
+              }
+            ],
+            [
+              "CP-2D horizon (analyst judgment)",
+              {
+                "shown": "24 months",
+                "state": "known",
+                "amount": "24",
+                "unit": "months",
+                "period": "2025-12-31",
+                "value_class": "analyst_judgment",
+                "cp2d_operand": "T2E.3.r03",
+                "fact_id": "T3D.2.r12"
+              }
+            ]
+          ]
+        },
+        "T3D.3": {
+          "title": "Refinancing cost sensitivity",
+          "row_header": "Line",
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            [
+              "Cash interest paid, LTM",
+              {
+                "shown": "5",
+                "state": "known",
+                "amount": "5",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "cash_interest",
+                "formula": "negation of the CP-1 cash interest outflow",
+                "fact_id": "T3D.3.r01"
+              }
+            ],
+            [
+              "LTM adjusted EBITDA",
+              {
+                "shown": "30",
+                "state": "known",
+                "amount": "30",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "adjusted_ebitda",
+                "fact_id": "T3D.3.r02"
+              }
+            ],
+            [
+              "Interest cover, LTM",
+              {
+                "shown": "6.00x",
+                "state": "known",
+                "amount": "6",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "adjusted EBITDA / cash interest paid",
+                "fact_id": "T3D.3.r03"
+              }
+            ],
+            [
+              "Margin step-up (analyst assumption)",
+              {
+                "shown": "400 bp",
+                "state": "known",
+                "amount": "400",
+                "unit": "basis_points",
+                "period": "2026-01-10",
+                "value_class": "analyst_judgment",
+                "fact_id": "T3D.3.r04"
+              }
+            ],
+            [
+              "Principal repriced (all principal payable at maturity)",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity",
+                "fact_id": "T3D.3.r05"
+              }
+            ],
+            [
+              "Added annual cash interest",
+              {
+                "shown": "2",
+                "state": "known",
+                "amount": "2",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "principal repriced x margin step-up / 10000",
+                "fact_id": "T3D.3.r06"
+              }
+            ],
+            [
+              "Pro forma annual cash interest",
+              {
+                "shown": "7",
+                "state": "known",
+                "amount": "7",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "cash interest paid + added annual cash interest",
+                "fact_id": "T3D.3.r07"
+              }
+            ],
+            [
+              "Pro forma interest cover",
+              {
+                "shown": "4.29x",
+                "state": "known",
+                "amount": "4.2857",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "adjusted EBITDA / pro forma annual cash interest",
+                "fact_id": "T3D.3.r08"
+              }
+            ]
+          ]
+        },
+        "T3D.4": {
+          "title": "Creditor position",
+          "row_header": "Facility",
+          "columns": [
+            "Security",
+            "Seniority",
+            "Principal (US$ m)",
+            "Share of total principal",
+            "Claims at or ahead (US$ m)",
+            "Claims at or ahead / LTM adjusted EBITDA"
+          ],
+          "rows": [
+            [
+              "Northbridge Term Loan (term-loan)",
+              [
+                {
+                  "shown": "SECURED",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp1_operand": "T4.18 term-loan secured_status",
+                  "fact_id": "T3D.4.r01.c1"
+                },
+                {
+                  "shown": "SENIOR",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp1_operand": "T4.18 term-loan seniority",
+                  "fact_id": "T3D.4.r01.c2"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c1",
+                  "fact_id": "T3D.4.r01.c3"
+                },
+                {
+                  "shown": "100.0%",
+                  "state": "known",
+                  "amount": "1",
+                  "unit": "PERCENT",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal / total facility principal",
+                  "fact_id": "T3D.4.r01.c4"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "sum of principal of facilities ranking at or ahead (secured before unsecured, then seniority)",
+                  "fact_id": "T3D.4.r01.c5"
+                },
+                {
+                  "shown": "1.67x",
+                  "state": "known",
+                  "amount": "1.6667",
+                  "unit": "MULTIPLE",
+                  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "claims at or ahead / adjusted EBITDA",
+                  "fact_id": "T3D.4.r01.c6"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.5": {
+          "title": "LME capacity",
+          "row_header": "Measure",
+          "columns": [
+            "Base",
+            "LME",
+            "Stress"
+          ],
+          "rows": [
+            [
+              "Claims at or ahead of the most junior facility (US$ m)",
+              [
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "largest claims at or ahead among the facilities",
+                  "fact_id": "T3D.5.r01.c1"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: liability-management capacity evidence is not bound",
+                  "currency": "USD",
+                  "fact_id": "T3D.5.r01.c2"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: no stressed case is bound",
+                  "currency": "USD",
+                  "fact_id": "T3D.5.r01.c3"
+                }
+              ]
+            ],
+            [
+              "Claims at or ahead of the most junior facility / LTM adjusted EBITDA",
+              [
+                {
+                  "shown": "1.67x",
+                  "state": "known",
+                  "amount": "1.6667",
+                  "unit": "MULTIPLE",
+                  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "claims at or ahead of the most junior facility / adjusted EBITDA",
+                  "fact_id": "T3D.5.r02.c1"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MULTIPLE",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: liability-management capacity evidence is not bound",
+                  "fact_id": "T3D.5.r02.c2"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MULTIPLE",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: no stressed case is bound",
+                  "fact_id": "T3D.5.r02.c3"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.6": {
+          "title": "Refinancing paths",
+          "row_header": "Path",
+          "columns": [
+            "Feasibility",
+            "Assessment",
+            "Credit implication",
+            "Basis"
+          ],
+          "rows": [
+            [
+              "Repay from internal resources",
+              [
+                {
+                  "shown": "Low",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c1"
+                },
+                {
+                  "shown": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c2"
+                },
+                {
+                  "shown": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c3"
+                },
+                {
+                  "shown": "cash_closing, undrawn_rcf, cp2d.run_rate, cp2d.min_cash",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c4"
+                }
+              ]
+            ],
+            [
+              "Amend and extend",
+              [
+                {
+                  "shown": "Medium",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c1"
+                },
+                {
+                  "shown": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c2"
+                },
+                {
+                  "shown": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c3"
+                },
+                {
+                  "shown": "adjusted_ebitda, cash_interest, term-loan.secured_status",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c4"
+                }
+              ]
+            ],
+            [
+              "Market refinancing",
+              [
+                {
+                  "shown": "Medium",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c1"
+                },
+                {
+                  "shown": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c2"
+                },
+                {
+                  "shown": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c3"
+                },
+                {
+                  "shown": "adjusted_ebitda, cash_interest, cp2d.term-loan.principal",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c4"
+                }
+              ]
+            ],
+            [
+              "Asset sale or equity support",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c1"
+                },
+                {
+                  "shown": "No owner support or asset-sale evidence is bound to this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c2"
+                },
+                {
+                  "shown": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c3"
+                },
+                {
+                  "shown": "none",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c4"
+                }
+              ]
+            ],
+            [
+              "Liability-management exercise",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c1"
+                },
+                {
+                  "shown": "Document capacity for a liability-management exercise is not available to this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c2"
+                },
+                {
+                  "shown": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c3"
+                },
+                {
+                  "shown": "none",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c4"
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "T3D.7_rows": [
+        [
+          "Margin step-up",
+          "400 bp (analyst assumption)"
+        ],
+        [
+          "Repay from internal resources",
+          "Analyst Interpretation"
+        ],
+        [
+          "Amend and extend",
+          "Analyst Interpretation"
+        ],
+        [
+          "Market refinancing",
+          "Analyst Interpretation"
+        ],
+        [
+          "Asset sale or equity support",
+          "Insufficient Information"
+        ],
+        [
+          "Liability-management exercise",
+          "Insufficient Information"
+        ]
+      ],
+      "T3D.8_rows": [
+        [
+          "Run-rate basis",
+          "Limitation"
+        ],
+        [
+          "Resources basis",
+          "Limitation"
+        ],
+        [
+          "Revolver availability",
+          "Limitation"
+        ],
+        [
+          "Minimum cash",
+          "Limitation"
+        ],
+        [
+          "Margin step-up",
+          "Limitation"
+        ],
+        [
+          "Reference rate level",
+          "Limitation"
+        ],
+        [
+          "Market access",
+          "Limitation"
+        ],
+        [
+          "Liability-management capacity",
+          "Limitation"
+        ],
+        [
+          "Stress case",
+          "Limitation"
+        ],
+        [
+          "Business context",
+          "Limitation"
+        ],
+        [
+          "Ranking basis",
+          "Limitation"
+        ],
+        [
+          "Asset sale or equity support",
+          "Gap"
+        ],
+        [
+          "Liability-management exercise",
+          "Gap"
+        ]
+      ],
+      "T3D.9_rows": [
+        [
+          "cash_closing",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "20"
+        ],
+        [
+          "undrawn_rcf",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "0"
+        ],
+        [
+          "adjusted_ebitda",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "30"
+        ],
+        [
+          "cash_interest",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "(5)"
+        ],
+        [
+          "term-loan.facility_name",
+          "CP-1",
+          "T4.18 q4-2025",
+          "Northbridge Term Loan"
+        ],
+        [
+          "term-loan.secured_status",
+          "CP-1",
+          "T4.18 q4-2025",
+          "SECURED"
+        ],
+        [
+          "term-loan.seniority",
+          "CP-1",
+          "T4.18 q4-2025",
+          "SENIOR"
+        ],
+        [
+          "term-loan.annual_amortisation",
+          "CP-1",
+          "T4.18 q4-2025",
+          "0"
+        ],
+        [
+          "cp2d.horizon",
+          "CP-2D",
+          "T2E.3.r03",
+          "24 months"
+        ],
+        [
+          "cp2d.run_rate",
+          "CP-2D",
+          "T2E.3.r01",
+          "0"
+        ],
+        [
+          "cp2d.min_cash",
+          "CP-2D",
+          "T2E.5.r04",
+          "10"
+        ],
+        [
+          "cp2d.funding_gap",
+          "CP-2D",
+          "T2E.5.r07",
+          "0"
+        ],
+        [
+          "cp2d.term-loan.principal",
+          "CP-2D",
+          "T2E.4.r01.c1",
+          "50"
+        ],
+        [
+          "cp2d.term-loan.maturity_date",
+          "CP-2D",
+          "T2E.4.r01.c2",
+          "2029-12-31"
+        ],
+        [
+          "cp2d.term-loan.months",
+          "CP-2D",
+          "T2E.4.r01.c3",
+          "48 months"
+        ],
+        [
+          "cp2d.term-loan.inside_horizon",
+          "CP-2D",
+          "T2E.4.r01.c4",
+          "No"
+        ]
+      ],
+      "claims": [
+        {
+          "claim_id": "CP-3C-NEED-01",
+          "template": "Principal payable at maturity totals {T3D.2.r01|US$ m}; after the resources available at each maturity date the refinancing need is {T3D.2.r03|US$ m}.",
+          "text": "Principal payable at maturity totals 50 US$ m; after the resources available at each maturity date the refinancing need is 40 US$ m.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.2.r01",
+            "T3D.2.r03"
+          ],
+          "cites_from": [
+            "term-loan.annual_amortisation",
+            "cp2d.term-loan.principal",
+            "cash_closing",
+            "undrawn_rcf",
+            "cp2d.run_rate",
+            "cp2d.min_cash",
+            "T3D.2.r01",
+            "T3D.2.r03"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-HORIZON-01",
+          "template": "The liquidity analysis reports a funding gap of {T3D.2.r10|US$ m} at its horizon end, while {T3D.2.r04|US$ m} falls due after that horizon.",
+          "text": "The liquidity analysis reports a funding gap of 0 US$ m at its horizon end, while 50 US$ m falls due after that horizon.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.2.r10",
+            "T3D.2.r04"
+          ],
+          "cites_from": [
+            "cp2d.funding_gap",
+            "cp2d.horizon",
+            "cp2d.term-loan.inside_horizon",
+            "T3D.2.r10",
+            "T3D.2.r04"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-BURDEN-01",
+          "template": "Principal payable at maturity is {T3D.2.r08|x} of adjusted EBITDA for the twelve months to 31 Dec 2025; the refinancing need is {T3D.2.r09|x} of the same earnings.",
+          "text": "Principal payable at maturity is 1.67x of adjusted EBITDA for the twelve months to 31 Dec 2025; the refinancing need is 1.33x of the same earnings.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.2.r08",
+            "T3D.2.r09"
+          ],
+          "cites_from": [
+            "adjusted_ebitda",
+            "T3D.2.r08",
+            "T3D.2.r09"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-COST-01",
+          "template": "An assumed margin step-up on the principal payable at maturity adds {T3D.3.r06|US$ m} to annual cash interest and lowers interest cover from {T3D.3.r03|x} to {T3D.3.r08|x}.",
+          "text": "An assumed margin step-up on the principal payable at maturity adds 2 US$ m to annual cash interest and lowers interest cover from 6.00x to 4.29x.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.3.r06",
+            "T3D.3.r03",
+            "T3D.3.r08"
+          ],
+          "cites_from": [
+            "cash_interest",
+            "adjusted_ebitda",
+            "T3D.3.r06",
+            "T3D.3.r03",
+            "T3D.3.r08"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-LME-01",
+          "template": "Claims at or ahead of the most junior facility are {T3D.5.r01.c1|US$ m} before any liability-management exercise; the position after such an exercise is [T3D.5.r01.c2] because the legal capacity evidence is not bound.",
+          "text": "Claims at or ahead of the most junior facility are 50 US$ m before any liability-management exercise; the position after such an exercise is ∅ G# because the legal capacity evidence is not bound.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.5.r01.c1",
+            "T3D.5.r01.c2"
+          ],
+          "cites_from": [
+            "term-loan.secured_status",
+            "term-loan.seniority",
+            "cp2d.term-loan.principal",
+            "T3D.5.r01.c1",
+            "T3D.5.r01.c2"
+          ]
+        }
+      ],
+      "status": "restricted"
+    },
+    "gap_minimum_cash": {
+      "case_kind": "pack_run_clone",
+      "consumes_cp2d_case": "gap_minimum_cash",
+      "horizon_months": 24,
+      "minimum_cash": null,
+      "margin_step_up_bps": "400",
+      "derived": {
+        "base_resources_before_flows": null,
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": null,
+            "resources_applied": null,
+            "refinancing_need": null,
+            "cover": null
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": null,
+        "total_refinancing_need": null,
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": null,
+        "added_annual_cash_interest": "2",
+        "pro_forma_cash_interest": "7",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "4.2857",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": [
+        "base_resources_before_flows",
+        "total_resources_applied",
+        "total_refinancing_need",
+        "need_over_ebitda"
+      ],
+      "own_limitations": [
+        "Run-rate basis: the annual cash flow of the liquidity analysis is held flat to each maturity date, including dates after its horizon; no forecast, growth, seasonality or new borrowing is assumed.",
+        "Resources at a maturity are cash and undrawn committed revolver at the balance date plus the held run-rate flow, less amortisation to that date, earlier principal paid from resources and the minimum cash; the refinancing of an earlier shortfall is not modelled.",
+        "Any undrawn committed revolver is assumed to be available at every maturity date, even where it matures earlier; its own maturity is not read.",
+        "Minimum cash was not assessed, so resources at maturity and the refinancing need are not calculated.",
+        "The margin step-up is an analyst assumption applied to all principal payable at maturity; it is not a source or market figure.",
+        "No reference rate level is stated in any source, so the all-in cost of a refinancing is not calculated; only a margin step-up over the current terms is shown.",
+        "No market pricing or lender-appetite evidence is read, so feasibility judgments rest on the credit metrics alone.",
+        "Liability-management capacity is not calculated: the legal covenant analysis is not read, and it does not yet quantify basket amounts.",
+        "No stressed case is shown: the downside analysis is not read.",
+        "Business and ownership context is not read, so owner support and asset-sale routes are not weighed.",
+        "Ranking follows the secured and seniority flags of each facility; guarantees, collateral value and structural subordination are not assessed.",
+        "The minimum cash assumption of the liquidity analysis is not assessed, so resources at maturity and the refinancing need are not calculated.",
+        "Business and ownership context is not read in this version, and no source describes disposable assets or owner support.",
+        "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+      ],
+      "tables": {
+        "T3D.1": {
+          "title": "Refinancing need by maturity",
+          "row_header": "Facility",
+          "columns": [
+            "Principal (US$ m)",
+            "Maturity date",
+            "Months from 2025-12-31",
+            "Inside CP-2D horizon",
+            "Amortisation before maturity (US$ m)",
+            "Principal payable at maturity (US$ m)",
+            "Resources at maturity (US$ m)",
+            "Resources applied (US$ m)",
+            "Refinancing need (US$ m)",
+            "Resources cover of principal at maturity"
+          ],
+          "rows": [
+            [
+              "Northbridge Term Loan (term-loan)",
+              [
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c1",
+                  "fact_id": "T3D.1.r01.c1"
+                },
+                {
+                  "shown": "2029-12-31",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c2",
+                  "fact_id": "T3D.1.r01.c2"
+                },
+                {
+                  "shown": "48 months",
+                  "state": "known",
+                  "amount": "48",
+                  "unit": "months",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "cp2d_operand": "T2E.4.r01.c3",
+                  "fact_id": "T3D.1.r01.c3"
+                },
+                {
+                  "shown": "No",
+                  "state": "known",
+                  "value_class": "calculated",
+                  "cp2d_operand": "T2E.4.r01.c4",
+                  "fact_id": "T3D.1.r01.c4"
+                },
+                {
+                  "shown": "0",
+                  "state": "known",
+                  "amount": "0",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "min(annual amortisation x months / 12, principal)",
+                  "fact_id": "T3D.1.r01.c5"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal - amortisation before maturity",
+                  "fact_id": "T3D.1.r01.c6"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: minimum cash not assessed",
+                  "currency": "USD",
+                  "fact_id": "T3D.1.r01.c7"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: minimum cash not assessed",
+                  "currency": "USD",
+                  "fact_id": "T3D.1.r01.c8"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: minimum cash not assessed",
+                  "currency": "USD",
+                  "fact_id": "T3D.1.r01.c9"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "PERCENT",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: minimum cash not assessed",
+                  "fact_id": "T3D.1.r01.c10"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.2": {
+          "title": "Refinancing burden",
+          "row_header": "Line",
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            [
+              "Principal payable at maturity, all facilities",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity",
+                "fact_id": "T3D.2.r01"
+              }
+            ],
+            [
+              "Resources applied at the maturity dates",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MILLIONS",
+                "value_class": "calculated",
+                "reason": "Not calculable: minimum cash not assessed",
+                "currency": "USD",
+                "fact_id": "T3D.2.r02"
+              }
+            ],
+            [
+              "Refinancing need after resources",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MILLIONS",
+                "value_class": "calculated",
+                "reason": "Not calculable: minimum cash not assessed",
+                "currency": "USD",
+                "fact_id": "T3D.2.r03"
+              }
+            ],
+            [
+              "Principal maturing after the CP-2D horizon",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity of facilities outside the CP-2D horizon",
+                "fact_id": "T3D.2.r04"
+              }
+            ],
+            [
+              "Nearest maturity date",
+              {
+                "shown": "2029-12-31",
+                "state": "known",
+                "value_class": "calculated",
+                "formula": "earliest maturity date",
+                "fact_id": "T3D.2.r05"
+              }
+            ],
+            [
+              "Months to the nearest maturity",
+              {
+                "shown": "48 months",
+                "state": "known",
+                "amount": "48",
+                "unit": "months",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "months from the balance date to the earliest maturity",
+                "fact_id": "T3D.2.r06"
+              }
+            ],
+            [
+              "LTM adjusted EBITDA",
+              {
+                "shown": "30",
+                "state": "known",
+                "amount": "30",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "adjusted_ebitda",
+                "fact_id": "T3D.2.r07"
+              }
+            ],
+            [
+              "Principal payable at maturity / LTM adjusted EBITDA",
+              {
+                "shown": "1.67x",
+                "state": "known",
+                "amount": "1.6667",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "principal payable at maturity / adjusted EBITDA",
+                "fact_id": "T3D.2.r08"
+              }
+            ],
+            [
+              "Refinancing need / LTM adjusted EBITDA",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MULTIPLE",
+                "value_class": "calculated",
+                "reason": "Not calculable: minimum cash not assessed",
+                "fact_id": "T3D.2.r09"
+              }
+            ],
+            [
+              "CP-2D funding gap at its horizon end",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MILLIONS",
+                "value_class": "calculated",
+                "reason": "Not calculable: minimum cash not assessed",
+                "currency": "USD",
+                "cp2d_operand": "T2E.5.r07",
+                "fact_id": "T3D.2.r10"
+              }
+            ],
+            [
+              "Minimum cash applied (analyst assumption set in CP-2D)",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MILLIONS",
+                "value_class": "analyst_judgment",
+                "reason": "Minimum cash not assessed",
+                "currency": "USD",
+                "cp2d_operand": "T2E.5.r04",
+                "fact_id": "T3D.2.r11"
+              }
+            ],
+            [
+              "CP-2D horizon (analyst judgment)",
+              {
+                "shown": "24 months",
+                "state": "known",
+                "amount": "24",
+                "unit": "months",
+                "period": "2025-12-31",
+                "value_class": "analyst_judgment",
+                "cp2d_operand": "T2E.3.r03",
+                "fact_id": "T3D.2.r12"
+              }
+            ]
+          ]
+        },
+        "T3D.3": {
+          "title": "Refinancing cost sensitivity",
+          "row_header": "Line",
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            [
+              "Cash interest paid, LTM",
+              {
+                "shown": "5",
+                "state": "known",
+                "amount": "5",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "cash_interest",
+                "formula": "negation of the CP-1 cash interest outflow",
+                "fact_id": "T3D.3.r01"
+              }
+            ],
+            [
+              "LTM adjusted EBITDA",
+              {
+                "shown": "30",
+                "state": "known",
+                "amount": "30",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "adjusted_ebitda",
+                "fact_id": "T3D.3.r02"
+              }
+            ],
+            [
+              "Interest cover, LTM",
+              {
+                "shown": "6.00x",
+                "state": "known",
+                "amount": "6",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "adjusted EBITDA / cash interest paid",
+                "fact_id": "T3D.3.r03"
+              }
+            ],
+            [
+              "Margin step-up (analyst assumption)",
+              {
+                "shown": "400 bp",
+                "state": "known",
+                "amount": "400",
+                "unit": "basis_points",
+                "period": "2026-01-10",
+                "value_class": "analyst_judgment",
+                "fact_id": "T3D.3.r04"
+              }
+            ],
+            [
+              "Principal repriced (all principal payable at maturity)",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity",
+                "fact_id": "T3D.3.r05"
+              }
+            ],
+            [
+              "Added annual cash interest",
+              {
+                "shown": "2",
+                "state": "known",
+                "amount": "2",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "principal repriced x margin step-up / 10000",
+                "fact_id": "T3D.3.r06"
+              }
+            ],
+            [
+              "Pro forma annual cash interest",
+              {
+                "shown": "7",
+                "state": "known",
+                "amount": "7",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "cash interest paid + added annual cash interest",
+                "fact_id": "T3D.3.r07"
+              }
+            ],
+            [
+              "Pro forma interest cover",
+              {
+                "shown": "4.29x",
+                "state": "known",
+                "amount": "4.2857",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "adjusted EBITDA / pro forma annual cash interest",
+                "fact_id": "T3D.3.r08"
+              }
+            ]
+          ]
+        },
+        "T3D.4": {
+          "title": "Creditor position",
+          "row_header": "Facility",
+          "columns": [
+            "Security",
+            "Seniority",
+            "Principal (US$ m)",
+            "Share of total principal",
+            "Claims at or ahead (US$ m)",
+            "Claims at or ahead / LTM adjusted EBITDA"
+          ],
+          "rows": [
+            [
+              "Northbridge Term Loan (term-loan)",
+              [
+                {
+                  "shown": "SECURED",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp1_operand": "T4.18 term-loan secured_status",
+                  "fact_id": "T3D.4.r01.c1"
+                },
+                {
+                  "shown": "SENIOR",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp1_operand": "T4.18 term-loan seniority",
+                  "fact_id": "T3D.4.r01.c2"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c1",
+                  "fact_id": "T3D.4.r01.c3"
+                },
+                {
+                  "shown": "100.0%",
+                  "state": "known",
+                  "amount": "1",
+                  "unit": "PERCENT",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal / total facility principal",
+                  "fact_id": "T3D.4.r01.c4"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "sum of principal of facilities ranking at or ahead (secured before unsecured, then seniority)",
+                  "fact_id": "T3D.4.r01.c5"
+                },
+                {
+                  "shown": "1.67x",
+                  "state": "known",
+                  "amount": "1.6667",
+                  "unit": "MULTIPLE",
+                  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "claims at or ahead / adjusted EBITDA",
+                  "fact_id": "T3D.4.r01.c6"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.5": {
+          "title": "LME capacity",
+          "row_header": "Measure",
+          "columns": [
+            "Base",
+            "LME",
+            "Stress"
+          ],
+          "rows": [
+            [
+              "Claims at or ahead of the most junior facility (US$ m)",
+              [
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "largest claims at or ahead among the facilities",
+                  "fact_id": "T3D.5.r01.c1"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: liability-management capacity evidence is not bound",
+                  "currency": "USD",
+                  "fact_id": "T3D.5.r01.c2"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: no stressed case is bound",
+                  "currency": "USD",
+                  "fact_id": "T3D.5.r01.c3"
+                }
+              ]
+            ],
+            [
+              "Claims at or ahead of the most junior facility / LTM adjusted EBITDA",
+              [
+                {
+                  "shown": "1.67x",
+                  "state": "known",
+                  "amount": "1.6667",
+                  "unit": "MULTIPLE",
+                  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "claims at or ahead of the most junior facility / adjusted EBITDA",
+                  "fact_id": "T3D.5.r02.c1"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MULTIPLE",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: liability-management capacity evidence is not bound",
+                  "fact_id": "T3D.5.r02.c2"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MULTIPLE",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: no stressed case is bound",
+                  "fact_id": "T3D.5.r02.c3"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.6": {
+          "title": "Refinancing paths",
+          "row_header": "Path",
+          "columns": [
+            "Feasibility",
+            "Assessment",
+            "Credit implication",
+            "Basis"
+          ],
+          "rows": [
+            [
+              "Repay from internal resources",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c1"
+                },
+                {
+                  "shown": "No minimum cash level is assessed upstream, so the resources available to repay principal at maturity cannot be sized.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c2"
+                },
+                {
+                  "shown": "Without a sized remainder the external refinancing need stays unquantified, which weakens the refinancing view.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c3"
+                },
+                {
+                  "shown": "cash_closing, undrawn_rcf",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c4"
+                }
+              ]
+            ],
+            [
+              "Amend and extend",
+              [
+                {
+                  "shown": "Medium",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c1"
+                },
+                {
+                  "shown": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c2"
+                },
+                {
+                  "shown": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c3"
+                },
+                {
+                  "shown": "adjusted_ebitda, cash_interest, term-loan.secured_status",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c4"
+                }
+              ]
+            ],
+            [
+              "Market refinancing",
+              [
+                {
+                  "shown": "Medium",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c1"
+                },
+                {
+                  "shown": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c2"
+                },
+                {
+                  "shown": "The cost of a new placement is the main sensitivity and is shown as a margin step-up.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c3"
+                },
+                {
+                  "shown": "adjusted_ebitda, cash_interest, cp2d.term-loan.principal",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c4"
+                }
+              ]
+            ],
+            [
+              "Asset sale or equity support",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c1"
+                },
+                {
+                  "shown": "No owner support or asset-sale evidence is bound to this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c2"
+                },
+                {
+                  "shown": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c3"
+                },
+                {
+                  "shown": "none",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c4"
+                }
+              ]
+            ],
+            [
+              "Liability-management exercise",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c1"
+                },
+                {
+                  "shown": "Document capacity for a liability-management exercise is not available to this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c2"
+                },
+                {
+                  "shown": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c3"
+                },
+                {
+                  "shown": "none",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c4"
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "T3D.7_rows": [
+        [
+          "Margin step-up",
+          "400 bp (analyst assumption)"
+        ],
+        [
+          "Repay from internal resources",
+          "Insufficient Information"
+        ],
+        [
+          "Amend and extend",
+          "Analyst Interpretation"
+        ],
+        [
+          "Market refinancing",
+          "Analyst Interpretation"
+        ],
+        [
+          "Asset sale or equity support",
+          "Insufficient Information"
+        ],
+        [
+          "Liability-management exercise",
+          "Insufficient Information"
+        ]
+      ],
+      "T3D.8_rows": [
+        [
+          "Run-rate basis",
+          "Limitation"
+        ],
+        [
+          "Resources basis",
+          "Limitation"
+        ],
+        [
+          "Revolver availability",
+          "Limitation"
+        ],
+        [
+          "Minimum cash",
+          "Gap"
+        ],
+        [
+          "Margin step-up",
+          "Limitation"
+        ],
+        [
+          "Reference rate level",
+          "Limitation"
+        ],
+        [
+          "Market access",
+          "Limitation"
+        ],
+        [
+          "Liability-management capacity",
+          "Limitation"
+        ],
+        [
+          "Stress case",
+          "Limitation"
+        ],
+        [
+          "Business context",
+          "Limitation"
+        ],
+        [
+          "Ranking basis",
+          "Limitation"
+        ],
+        [
+          "Repay from internal resources",
+          "Gap"
+        ],
+        [
+          "Asset sale or equity support",
+          "Gap"
+        ],
+        [
+          "Liability-management exercise",
+          "Gap"
+        ]
+      ],
+      "T3D.9_rows": [
+        [
+          "cash_closing",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "20"
+        ],
+        [
+          "undrawn_rcf",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "0"
+        ],
+        [
+          "adjusted_ebitda",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "30"
+        ],
+        [
+          "cash_interest",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "(5)"
+        ],
+        [
+          "term-loan.facility_name",
+          "CP-1",
+          "T4.18 q4-2025",
+          "Northbridge Term Loan"
+        ],
+        [
+          "term-loan.secured_status",
+          "CP-1",
+          "T4.18 q4-2025",
+          "SECURED"
+        ],
+        [
+          "term-loan.seniority",
+          "CP-1",
+          "T4.18 q4-2025",
+          "SENIOR"
+        ],
+        [
+          "term-loan.annual_amortisation",
+          "CP-1",
+          "T4.18 q4-2025",
+          "0"
+        ],
+        [
+          "cp2d.horizon",
+          "CP-2D",
+          "T2E.3.r03",
+          "24 months"
+        ],
+        [
+          "cp2d.run_rate",
+          "CP-2D",
+          "T2E.3.r01",
+          "0"
+        ],
+        [
+          "cp2d.min_cash",
+          "CP-2D",
+          "T2E.5.r04",
+          "∅ G#"
+        ],
+        [
+          "cp2d.funding_gap",
+          "CP-2D",
+          "T2E.5.r07",
+          "∅ G#"
+        ],
+        [
+          "cp2d.term-loan.principal",
+          "CP-2D",
+          "T2E.4.r01.c1",
+          "50"
+        ],
+        [
+          "cp2d.term-loan.maturity_date",
+          "CP-2D",
+          "T2E.4.r01.c2",
+          "2029-12-31"
+        ],
+        [
+          "cp2d.term-loan.months",
+          "CP-2D",
+          "T2E.4.r01.c3",
+          "48 months"
+        ],
+        [
+          "cp2d.term-loan.inside_horizon",
+          "CP-2D",
+          "T2E.4.r01.c4",
+          "No"
+        ]
+      ],
+      "claims": [
+        {
+          "claim_id": "CP-3C-NEED-01",
+          "template": "Principal payable at maturity totals {T3D.2.r01|US$ m}; the refinancing need after resources is [T3D.2.r03], because the minimum cash has not been assessed.",
+          "text": "Principal payable at maturity totals 50 US$ m; the refinancing need after resources is ∅ G#, because the minimum cash has not been assessed.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.2.r01",
+            "T3D.2.r03"
+          ],
+          "cites_from": [
+            "term-loan.annual_amortisation",
+            "cp2d.term-loan.principal",
+            "cash_closing",
+            "undrawn_rcf",
+            "cp2d.run_rate",
+            "cp2d.min_cash",
+            "T3D.2.r01",
+            "T3D.2.r03"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-HORIZON-01",
+          "template": "The liquidity analysis reports a funding gap of [T3D.2.r10] at its horizon end, while {T3D.2.r04|US$ m} falls due after that horizon.",
+          "text": "The liquidity analysis reports a funding gap of ∅ G# at its horizon end, while 50 US$ m falls due after that horizon.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.2.r10",
+            "T3D.2.r04"
+          ],
+          "cites_from": [
+            "cp2d.funding_gap",
+            "cp2d.horizon",
+            "cp2d.term-loan.inside_horizon",
+            "T3D.2.r10",
+            "T3D.2.r04"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-BURDEN-01",
+          "template": "Principal payable at maturity is {T3D.2.r08|x} of adjusted EBITDA for the twelve months to 31 Dec 2025; the refinancing need is [T3D.2.r09] of the same earnings.",
+          "text": "Principal payable at maturity is 1.67x of adjusted EBITDA for the twelve months to 31 Dec 2025; the refinancing need is ∅ G# of the same earnings.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.2.r08",
+            "T3D.2.r09"
+          ],
+          "cites_from": [
+            "adjusted_ebitda",
+            "T3D.2.r08",
+            "T3D.2.r09"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-COST-01",
+          "template": "An assumed margin step-up on the principal payable at maturity adds {T3D.3.r06|US$ m} to annual cash interest and lowers interest cover from {T3D.3.r03|x} to {T3D.3.r08|x}.",
+          "text": "An assumed margin step-up on the principal payable at maturity adds 2 US$ m to annual cash interest and lowers interest cover from 6.00x to 4.29x.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.3.r06",
+            "T3D.3.r03",
+            "T3D.3.r08"
+          ],
+          "cites_from": [
+            "cash_interest",
+            "adjusted_ebitda",
+            "T3D.3.r06",
+            "T3D.3.r03",
+            "T3D.3.r08"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-LME-01",
+          "template": "Claims at or ahead of the most junior facility are {T3D.5.r01.c1|US$ m} before any liability-management exercise; the position after such an exercise is [T3D.5.r01.c2] because the legal capacity evidence is not bound.",
+          "text": "Claims at or ahead of the most junior facility are 50 US$ m before any liability-management exercise; the position after such an exercise is ∅ G# because the legal capacity evidence is not bound.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.5.r01.c1",
+            "T3D.5.r01.c2"
+          ],
+          "cites_from": [
+            "term-loan.secured_status",
+            "term-loan.seniority",
+            "cp2d.term-loan.principal",
+            "T3D.5.r01.c1",
+            "T3D.5.r01.c2"
+          ]
+        }
+      ],
+      "status": "restricted"
+    },
+    "gap_no_repricing": {
+      "case_kind": "pack_run_clone",
+      "consumes_cp2d_case": "positive",
+      "horizon_months": 24,
+      "minimum_cash": "10",
+      "margin_step_up_bps": null,
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "10",
+            "resources_applied": "10",
+            "refinancing_need": "40",
+            "cover": "0.2"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "10",
+        "total_refinancing_need": "40",
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": "1.3333",
+        "added_annual_cash_interest": null,
+        "pro_forma_cash_interest": null,
+        "interest_cover": "6",
+        "pro_forma_interest_cover": null,
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": [
+        "added_annual_cash_interest",
+        "pro_forma_cash_interest",
+        "pro_forma_interest_cover"
+      ],
+      "own_limitations": [
+        "Run-rate basis: the annual cash flow of the liquidity analysis is held flat to each maturity date, including dates after its horizon; no forecast, growth, seasonality or new borrowing is assumed.",
+        "Resources at a maturity are cash and undrawn committed revolver at the balance date plus the held run-rate flow, less amortisation to that date, earlier principal paid from resources and the minimum cash; the refinancing of an earlier shortfall is not modelled.",
+        "Any undrawn committed revolver is assumed to be available at every maturity date, even where it matures earlier; its own maturity is not read.",
+        "Minimum cash is an analyst assumption, not a source figure.",
+        "No margin step-up was assessed, so the cost effect of a refinancing is not calculated.",
+        "No reference rate level is stated in any source, so the all-in cost of a refinancing is not calculated; only a margin step-up over the current terms is shown.",
+        "No market pricing or lender-appetite evidence is read, so feasibility judgments rest on the credit metrics alone.",
+        "Liability-management capacity is not calculated: the legal covenant analysis is not read, and it does not yet quantify basket amounts.",
+        "No stressed case is shown: the downside analysis is not read.",
+        "Business and ownership context is not read, so owner support and asset-sale routes are not weighed.",
+        "Ranking follows the secured and seniority flags of each facility; guarantees, collateral value and structural subordination are not assessed.",
+        "Business and ownership context is not read in this version, and no source describes disposable assets or owner support.",
+        "The legal covenant and basket evidence is not bound, so liability-management capacity is not assessed."
+      ],
+      "tables": {
+        "T3D.1": {
+          "title": "Refinancing need by maturity",
+          "row_header": "Facility",
+          "columns": [
+            "Principal (US$ m)",
+            "Maturity date",
+            "Months from 2025-12-31",
+            "Inside CP-2D horizon",
+            "Amortisation before maturity (US$ m)",
+            "Principal payable at maturity (US$ m)",
+            "Resources at maturity (US$ m)",
+            "Resources applied (US$ m)",
+            "Refinancing need (US$ m)",
+            "Resources cover of principal at maturity"
+          ],
+          "rows": [
+            [
+              "Northbridge Term Loan (term-loan)",
+              [
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c1",
+                  "fact_id": "T3D.1.r01.c1"
+                },
+                {
+                  "shown": "2029-12-31",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c2",
+                  "fact_id": "T3D.1.r01.c2"
+                },
+                {
+                  "shown": "48 months",
+                  "state": "known",
+                  "amount": "48",
+                  "unit": "months",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "cp2d_operand": "T2E.4.r01.c3",
+                  "fact_id": "T3D.1.r01.c3"
+                },
+                {
+                  "shown": "No",
+                  "state": "known",
+                  "value_class": "calculated",
+                  "cp2d_operand": "T2E.4.r01.c4",
+                  "fact_id": "T3D.1.r01.c4"
+                },
+                {
+                  "shown": "0",
+                  "state": "known",
+                  "amount": "0",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "min(annual amortisation x months / 12, principal)",
+                  "fact_id": "T3D.1.r01.c5"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal - amortisation before maturity",
+                  "fact_id": "T3D.1.r01.c6"
+                },
+                {
+                  "shown": "10",
+                  "state": "known",
+                  "amount": "10",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "cash + undrawn revolver - minimum cash + run-rate flow x months / 12 - amortisation to the date - earlier principal paid from resources",
+                  "fact_id": "T3D.1.r01.c7"
+                },
+                {
+                  "shown": "10",
+                  "state": "known",
+                  "amount": "10",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "min(principal payable at maturity, max(0, resources at maturity))",
+                  "fact_id": "T3D.1.r01.c8"
+                },
+                {
+                  "shown": "40",
+                  "state": "known",
+                  "amount": "40",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal payable at maturity - resources applied",
+                  "fact_id": "T3D.1.r01.c9"
+                },
+                {
+                  "shown": "20.0%",
+                  "state": "known",
+                  "amount": "0.2",
+                  "unit": "PERCENT",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "resources applied / principal payable at maturity",
+                  "fact_id": "T3D.1.r01.c10"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.2": {
+          "title": "Refinancing burden",
+          "row_header": "Line",
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            [
+              "Principal payable at maturity, all facilities",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity",
+                "fact_id": "T3D.2.r01"
+              }
+            ],
+            [
+              "Resources applied at the maturity dates",
+              {
+                "shown": "10",
+                "state": "known",
+                "amount": "10",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of resources applied",
+                "fact_id": "T3D.2.r02"
+              }
+            ],
+            [
+              "Refinancing need after resources",
+              {
+                "shown": "40",
+                "state": "known",
+                "amount": "40",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of refinancing need",
+                "fact_id": "T3D.2.r03"
+              }
+            ],
+            [
+              "Principal maturing after the CP-2D horizon",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity of facilities outside the CP-2D horizon",
+                "fact_id": "T3D.2.r04"
+              }
+            ],
+            [
+              "Nearest maturity date",
+              {
+                "shown": "2029-12-31",
+                "state": "known",
+                "value_class": "calculated",
+                "formula": "earliest maturity date",
+                "fact_id": "T3D.2.r05"
+              }
+            ],
+            [
+              "Months to the nearest maturity",
+              {
+                "shown": "48 months",
+                "state": "known",
+                "amount": "48",
+                "unit": "months",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "months from the balance date to the earliest maturity",
+                "fact_id": "T3D.2.r06"
+              }
+            ],
+            [
+              "LTM adjusted EBITDA",
+              {
+                "shown": "30",
+                "state": "known",
+                "amount": "30",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "adjusted_ebitda",
+                "fact_id": "T3D.2.r07"
+              }
+            ],
+            [
+              "Principal payable at maturity / LTM adjusted EBITDA",
+              {
+                "shown": "1.67x",
+                "state": "known",
+                "amount": "1.6667",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "principal payable at maturity / adjusted EBITDA",
+                "fact_id": "T3D.2.r08"
+              }
+            ],
+            [
+              "Refinancing need / LTM adjusted EBITDA",
+              {
+                "shown": "1.33x",
+                "state": "known",
+                "amount": "1.3333",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "refinancing need / adjusted EBITDA",
+                "fact_id": "T3D.2.r09"
+              }
+            ],
+            [
+              "CP-2D funding gap at its horizon end",
+              {
+                "shown": "0",
+                "state": "known",
+                "amount": "0",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "cp2d_operand": "T2E.5.r07",
+                "fact_id": "T3D.2.r10"
+              }
+            ],
+            [
+              "Minimum cash applied (analyst assumption set in CP-2D)",
+              {
+                "shown": "10",
+                "state": "known",
+                "amount": "10",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "analyst_judgment",
+                "cp2d_operand": "T2E.5.r04",
+                "fact_id": "T3D.2.r11"
+              }
+            ],
+            [
+              "CP-2D horizon (analyst judgment)",
+              {
+                "shown": "24 months",
+                "state": "known",
+                "amount": "24",
+                "unit": "months",
+                "period": "2025-12-31",
+                "value_class": "analyst_judgment",
+                "cp2d_operand": "T2E.3.r03",
+                "fact_id": "T3D.2.r12"
+              }
+            ]
+          ]
+        },
+        "T3D.3": {
+          "title": "Refinancing cost sensitivity",
+          "row_header": "Line",
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            [
+              "Cash interest paid, LTM",
+              {
+                "shown": "5",
+                "state": "known",
+                "amount": "5",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "cash_interest",
+                "formula": "negation of the CP-1 cash interest outflow",
+                "fact_id": "T3D.3.r01"
+              }
+            ],
+            [
+              "LTM adjusted EBITDA",
+              {
+                "shown": "30",
+                "state": "known",
+                "amount": "30",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "cp1_operand": "adjusted_ebitda",
+                "fact_id": "T3D.3.r02"
+              }
+            ],
+            [
+              "Interest cover, LTM",
+              {
+                "shown": "6.00x",
+                "state": "known",
+                "amount": "6",
+                "unit": "MULTIPLE",
+                "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                "value_class": "calculated",
+                "formula": "adjusted EBITDA / cash interest paid",
+                "fact_id": "T3D.3.r03"
+              }
+            ],
+            [
+              "Margin step-up (analyst assumption)",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "basis_points",
+                "value_class": "analyst_judgment",
+                "reason": "Margin step-up not assessed",
+                "fact_id": "T3D.3.r04"
+              }
+            ],
+            [
+              "Principal repriced (all principal payable at maturity)",
+              {
+                "shown": "50",
+                "state": "known",
+                "amount": "50",
+                "unit": "MILLIONS",
+                "currency": "USD",
+                "period": "2025-12-31",
+                "value_class": "calculated",
+                "formula": "sum of principal payable at maturity",
+                "fact_id": "T3D.3.r05"
+              }
+            ],
+            [
+              "Added annual cash interest",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MILLIONS",
+                "value_class": "calculated",
+                "reason": "Not calculable: margin step-up not assessed",
+                "currency": "USD",
+                "fact_id": "T3D.3.r06"
+              }
+            ],
+            [
+              "Pro forma annual cash interest",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MILLIONS",
+                "value_class": "calculated",
+                "reason": "Not calculable: margin step-up not assessed",
+                "currency": "USD",
+                "fact_id": "T3D.3.r07"
+              }
+            ],
+            [
+              "Pro forma interest cover",
+              {
+                "shown": "∅ G#",
+                "shown_pattern": "∅ G<n>",
+                "state": "gap",
+                "unit": "MULTIPLE",
+                "value_class": "calculated",
+                "reason": "Not calculable: margin step-up not assessed",
+                "fact_id": "T3D.3.r08"
+              }
+            ]
+          ]
+        },
+        "T3D.4": {
+          "title": "Creditor position",
+          "row_header": "Facility",
+          "columns": [
+            "Security",
+            "Seniority",
+            "Principal (US$ m)",
+            "Share of total principal",
+            "Claims at or ahead (US$ m)",
+            "Claims at or ahead / LTM adjusted EBITDA"
+          ],
+          "rows": [
+            [
+              "Northbridge Term Loan (term-loan)",
+              [
+                {
+                  "shown": "SECURED",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp1_operand": "T4.18 term-loan secured_status",
+                  "fact_id": "T3D.4.r01.c1"
+                },
+                {
+                  "shown": "SENIOR",
+                  "state": "known",
+                  "value_class": "source",
+                  "cp1_operand": "T4.18 term-loan seniority",
+                  "fact_id": "T3D.4.r01.c2"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "source",
+                  "cp2d_operand": "T2E.4.r01.c1",
+                  "fact_id": "T3D.4.r01.c3"
+                },
+                {
+                  "shown": "100.0%",
+                  "state": "known",
+                  "amount": "1",
+                  "unit": "PERCENT",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "principal / total facility principal",
+                  "fact_id": "T3D.4.r01.c4"
+                },
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "sum of principal of facilities ranking at or ahead (secured before unsecured, then seniority)",
+                  "fact_id": "T3D.4.r01.c5"
+                },
+                {
+                  "shown": "1.67x",
+                  "state": "known",
+                  "amount": "1.6667",
+                  "unit": "MULTIPLE",
+                  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "claims at or ahead / adjusted EBITDA",
+                  "fact_id": "T3D.4.r01.c6"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.5": {
+          "title": "LME capacity",
+          "row_header": "Measure",
+          "columns": [
+            "Base",
+            "LME",
+            "Stress"
+          ],
+          "rows": [
+            [
+              "Claims at or ahead of the most junior facility (US$ m)",
+              [
+                {
+                  "shown": "50",
+                  "state": "known",
+                  "amount": "50",
+                  "unit": "MILLIONS",
+                  "currency": "USD",
+                  "period": "2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "largest claims at or ahead among the facilities",
+                  "fact_id": "T3D.5.r01.c1"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: liability-management capacity evidence is not bound",
+                  "currency": "USD",
+                  "fact_id": "T3D.5.r01.c2"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MILLIONS",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: no stressed case is bound",
+                  "currency": "USD",
+                  "fact_id": "T3D.5.r01.c3"
+                }
+              ]
+            ],
+            [
+              "Claims at or ahead of the most junior facility / LTM adjusted EBITDA",
+              [
+                {
+                  "shown": "1.67x",
+                  "state": "known",
+                  "amount": "1.6667",
+                  "unit": "MULTIPLE",
+                  "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+                  "value_class": "calculated",
+                  "formula": "claims at or ahead of the most junior facility / adjusted EBITDA",
+                  "fact_id": "T3D.5.r02.c1"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MULTIPLE",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: liability-management capacity evidence is not bound",
+                  "fact_id": "T3D.5.r02.c2"
+                },
+                {
+                  "shown": "∅ G#",
+                  "shown_pattern": "∅ G<n>",
+                  "state": "gap",
+                  "unit": "MULTIPLE",
+                  "value_class": "calculated",
+                  "reason": "Not calculable: no stressed case is bound",
+                  "fact_id": "T3D.5.r02.c3"
+                }
+              ]
+            ]
+          ]
+        },
+        "T3D.6": {
+          "title": "Refinancing paths",
+          "row_header": "Path",
+          "columns": [
+            "Feasibility",
+            "Assessment",
+            "Credit implication",
+            "Basis"
+          ],
+          "rows": [
+            [
+              "Repay from internal resources",
+              [
+                {
+                  "shown": "Low",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c1"
+                },
+                {
+                  "shown": "Cash held at the balance date, with no revolving facility and a flat run rate, covers only part of the principal payable at maturity.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c2"
+                },
+                {
+                  "shown": "Repayment from internal resources alone would leave a large remainder to be refinanced from external lenders.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c3"
+                },
+                {
+                  "shown": "cash_closing, undrawn_rcf, cp2d.run_rate, cp2d.min_cash",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r01.c4"
+                }
+              ]
+            ],
+            [
+              "Amend and extend",
+              [
+                {
+                  "shown": "Medium",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c1"
+                },
+                {
+                  "shown": "The whole debt stack is one senior secured term loan, so an extension would be negotiated on a single instrument.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c2"
+                },
+                {
+                  "shown": "Moderate leverage and comfortable interest cover give existing lenders a basis to extend, subject to a higher margin.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c3"
+                },
+                {
+                  "shown": "adjusted_ebitda, cash_interest, term-loan.secured_status",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r02.c4"
+                }
+              ]
+            ],
+            [
+              "Market refinancing",
+              [
+                {
+                  "shown": "Medium",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c1"
+                },
+                {
+                  "shown": "Leverage on the adjusted earnings base is moderate and interest cover is comfortable, which supports access to new term debt.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c2"
+                },
+                {
+                  "shown": "The cost of a new placement is the main sensitivity and is not sized in this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c3"
+                },
+                {
+                  "shown": "adjusted_ebitda, cash_interest, cp2d.term-loan.principal",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r03.c4"
+                }
+              ]
+            ],
+            [
+              "Asset sale or equity support",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c1"
+                },
+                {
+                  "shown": "No owner support or asset-sale evidence is bound to this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c2"
+                },
+                {
+                  "shown": "Support from owners or disposal proceeds cannot be weighed against the principal payable at maturity.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c3"
+                },
+                {
+                  "shown": "none",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r04.c4"
+                }
+              ]
+            ],
+            [
+              "Liability-management exercise",
+              [
+                {
+                  "shown": "Insufficient Information",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c1"
+                },
+                {
+                  "shown": "Document capacity for a liability-management exercise is not available to this analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c2"
+                },
+                {
+                  "shown": "Whether creditors could be primed or excluded cannot be judged without the legal covenant analysis.",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c3"
+                },
+                {
+                  "shown": "none",
+                  "state": "known",
+                  "value_class": "analyst_judgment",
+                  "fact_id": "T3D.6.r05.c4"
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "T3D.7_rows": [
+        [
+          "Margin step-up",
+          "not assessed"
+        ],
+        [
+          "Repay from internal resources",
+          "Analyst Interpretation"
+        ],
+        [
+          "Amend and extend",
+          "Analyst Interpretation"
+        ],
+        [
+          "Market refinancing",
+          "Analyst Interpretation"
+        ],
+        [
+          "Asset sale or equity support",
+          "Insufficient Information"
+        ],
+        [
+          "Liability-management exercise",
+          "Insufficient Information"
+        ]
+      ],
+      "T3D.8_rows": [
+        [
+          "Run-rate basis",
+          "Limitation"
+        ],
+        [
+          "Resources basis",
+          "Limitation"
+        ],
+        [
+          "Revolver availability",
+          "Limitation"
+        ],
+        [
+          "Minimum cash",
+          "Limitation"
+        ],
+        [
+          "Margin step-up",
+          "Gap"
+        ],
+        [
+          "Reference rate level",
+          "Limitation"
+        ],
+        [
+          "Market access",
+          "Limitation"
+        ],
+        [
+          "Liability-management capacity",
+          "Limitation"
+        ],
+        [
+          "Stress case",
+          "Limitation"
+        ],
+        [
+          "Business context",
+          "Limitation"
+        ],
+        [
+          "Ranking basis",
+          "Limitation"
+        ],
+        [
+          "Asset sale or equity support",
+          "Gap"
+        ],
+        [
+          "Liability-management exercise",
+          "Gap"
+        ]
+      ],
+      "T3D.9_rows": [
+        [
+          "cash_closing",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "20"
+        ],
+        [
+          "undrawn_rcf",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "0"
+        ],
+        [
+          "adjusted_ebitda",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "30"
+        ],
+        [
+          "cash_interest",
+          "CP-1",
+          "T4.10 LTM Q4 25",
+          "(5)"
+        ],
+        [
+          "term-loan.facility_name",
+          "CP-1",
+          "T4.18 q4-2025",
+          "Northbridge Term Loan"
+        ],
+        [
+          "term-loan.secured_status",
+          "CP-1",
+          "T4.18 q4-2025",
+          "SECURED"
+        ],
+        [
+          "term-loan.seniority",
+          "CP-1",
+          "T4.18 q4-2025",
+          "SENIOR"
+        ],
+        [
+          "term-loan.annual_amortisation",
+          "CP-1",
+          "T4.18 q4-2025",
+          "0"
+        ],
+        [
+          "cp2d.horizon",
+          "CP-2D",
+          "T2E.3.r03",
+          "24 months"
+        ],
+        [
+          "cp2d.run_rate",
+          "CP-2D",
+          "T2E.3.r01",
+          "0"
+        ],
+        [
+          "cp2d.min_cash",
+          "CP-2D",
+          "T2E.5.r04",
+          "10"
+        ],
+        [
+          "cp2d.funding_gap",
+          "CP-2D",
+          "T2E.5.r07",
+          "0"
+        ],
+        [
+          "cp2d.term-loan.principal",
+          "CP-2D",
+          "T2E.4.r01.c1",
+          "50"
+        ],
+        [
+          "cp2d.term-loan.maturity_date",
+          "CP-2D",
+          "T2E.4.r01.c2",
+          "2029-12-31"
+        ],
+        [
+          "cp2d.term-loan.months",
+          "CP-2D",
+          "T2E.4.r01.c3",
+          "48 months"
+        ],
+        [
+          "cp2d.term-loan.inside_horizon",
+          "CP-2D",
+          "T2E.4.r01.c4",
+          "No"
+        ]
+      ],
+      "claims": [
+        {
+          "claim_id": "CP-3C-NEED-01",
+          "template": "Principal payable at maturity totals {T3D.2.r01|US$ m}; after the resources available at each maturity date the refinancing need is {T3D.2.r03|US$ m}.",
+          "text": "Principal payable at maturity totals 50 US$ m; after the resources available at each maturity date the refinancing need is 40 US$ m.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.2.r01",
+            "T3D.2.r03"
+          ],
+          "cites_from": [
+            "term-loan.annual_amortisation",
+            "cp2d.term-loan.principal",
+            "cash_closing",
+            "undrawn_rcf",
+            "cp2d.run_rate",
+            "cp2d.min_cash",
+            "T3D.2.r01",
+            "T3D.2.r03"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-HORIZON-01",
+          "template": "The liquidity analysis reports a funding gap of {T3D.2.r10|US$ m} at its horizon end, while {T3D.2.r04|US$ m} falls due after that horizon.",
+          "text": "The liquidity analysis reports a funding gap of 0 US$ m at its horizon end, while 50 US$ m falls due after that horizon.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.2.r10",
+            "T3D.2.r04"
+          ],
+          "cites_from": [
+            "cp2d.funding_gap",
+            "cp2d.horizon",
+            "cp2d.term-loan.inside_horizon",
+            "T3D.2.r10",
+            "T3D.2.r04"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-BURDEN-01",
+          "template": "Principal payable at maturity is {T3D.2.r08|x} of adjusted EBITDA for the twelve months to 31 Dec 2025; the refinancing need is {T3D.2.r09|x} of the same earnings.",
+          "text": "Principal payable at maturity is 1.67x of adjusted EBITDA for the twelve months to 31 Dec 2025; the refinancing need is 1.33x of the same earnings.",
+          "text_is_pattern": false,
+          "references": [
+            "T3D.2.r08",
+            "T3D.2.r09"
+          ],
+          "cites_from": [
+            "adjusted_ebitda",
+            "T3D.2.r08",
+            "T3D.2.r09"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-COST-01",
+          "template": "The cost of a margin step-up on the principal payable at maturity is not calculated: added annual cash interest is [T3D.3.r06] because no step-up was assessed.",
+          "text": "The cost of a margin step-up on the principal payable at maturity is not calculated: added annual cash interest is ∅ G# because no step-up was assessed.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.3.r06"
+          ],
+          "cites_from": [
+            "T3D.3.r06"
+          ]
+        },
+        {
+          "claim_id": "CP-3C-LME-01",
+          "template": "Claims at or ahead of the most junior facility are {T3D.5.r01.c1|US$ m} before any liability-management exercise; the position after such an exercise is [T3D.5.r01.c2] because the legal capacity evidence is not bound.",
+          "text": "Claims at or ahead of the most junior facility are 50 US$ m before any liability-management exercise; the position after such an exercise is ∅ G# because the legal capacity evidence is not bound.",
+          "text_is_pattern": true,
+          "references": [
+            "T3D.5.r01.c1",
+            "T3D.5.r01.c2"
+          ],
+          "cites_from": [
+            "term-loan.secured_status",
+            "term-loan.seniority",
+            "cp2d.term-loan.principal",
+            "T3D.5.r01.c1",
+            "T3D.5.r01.c2"
+          ]
+        }
+      ],
+      "status": "restricted"
+    },
+    "fixture_two_facilities": {
+      "case_kind": "composer_fixture",
+      "note": "two synthetic facilities (a second, amortising secured loan and unsecured notes) exercise ordering, amortisation, earlier principal paid from resources and the ranking walk; minimum cash 0 is a known zero",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": "6",
+            "secured_status": "SECURED",
+            "seniority": "SENIOR"
+          },
+          {
+            "id": "notes",
+            "principal": "30",
+            "maturity": "2028-07-31",
+            "annual_amortisation": "0",
+            "secured_status": "UNSECURED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "0",
+        "minimum_cash": "0",
+        "adjusted_ebitda": "30",
+        "cash_interest": "5",
+        "margin_step_up_bps": "400",
+        "cp2d_horizon_months": 24
+      },
+      "derived": {
+        "base_resources_before_flows": "20",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "notes",
+            "months": 31,
+            "inside_horizon": false,
+            "principal": "30",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "30",
+            "resources_at_maturity": "4.5",
+            "resources_applied": "4.5",
+            "refinancing_need": "25.5",
+            "cover": "0.15"
+          },
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "24",
+            "principal_payable_at_maturity": "26",
+            "resources_at_maturity": "-8.5",
+            "resources_applied": "0",
+            "refinancing_need": "26",
+            "cover": "0"
+          }
+        ],
+        "total_principal": "80",
+        "total_principal_payable_at_maturity": "56",
+        "total_resources_applied": "4.5",
+        "total_refinancing_need": "51.5",
+        "principal_after_cp2d_horizon": "56",
+        "nearest_maturity": "2028-07-31",
+        "months_to_nearest_maturity": 31,
+        "principal_payable_over_ebitda": "1.8667",
+        "need_over_ebitda": "1.7167",
+        "added_annual_cash_interest": "2.24",
+        "pro_forma_cash_interest": "7.24",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "4.1436",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "0.625",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          },
+          {
+            "id": "notes",
+            "secured": "UNSECURED",
+            "seniority": "SENIOR",
+            "principal": "30",
+            "share": "0.375",
+            "claims_at_or_ahead": "80",
+            "claims_over_ebitda": "2.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "80",
+        "junior_over_ebitda": "2.6667"
+      },
+      "missing_not_zero": []
+    },
+    "fixture_burn": {
+      "case_kind": "composer_fixture",
+      "note": "negative run-rate flow (CP-2D fixture_burn annual flow): resources at maturity negative, nothing paid from resources",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": "0",
+            "secured_status": "SECURED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "-6",
+        "minimum_cash": "10",
+        "adjusted_ebitda": "30",
+        "cash_interest": "5",
+        "margin_step_up_bps": "400",
+        "cp2d_horizon_months": 24
+      },
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "-6",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "-14",
+            "resources_applied": "0",
+            "refinancing_need": "50",
+            "cover": "0"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "0",
+        "total_refinancing_need": "50",
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": "1.6667",
+        "added_annual_cash_interest": "2",
+        "pro_forma_cash_interest": "7",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "4.2857",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": []
+    },
+    "fixture_long_horizon": {
+      "case_kind": "composer_fixture",
+      "note": "CP-2D long_horizon (horizon 60, maturity inside it): the net refinancing need equals the CP-2D funding gap",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": "0",
+            "secured_status": "SECURED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "0",
+        "minimum_cash": "10",
+        "adjusted_ebitda": "30",
+        "cash_interest": "5",
+        "margin_step_up_bps": "400",
+        "cp2d_horizon_months": 60
+      },
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": true,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "10",
+            "resources_applied": "10",
+            "refinancing_need": "40",
+            "cover": "0.2"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "10",
+        "total_refinancing_need": "40",
+        "principal_after_cp2d_horizon": "0",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": "1.3333",
+        "added_annual_cash_interest": "2",
+        "pro_forma_cash_interest": "7",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "4.2857",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": []
+    },
+    "fixture_rank_not_stated": {
+      "case_kind": "composer_fixture",
+      "note": "secured status NOT_STATED: ranking unknown, so every claims-at-or-ahead cell is missing",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": "0",
+            "secured_status": "NOT_STATED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "0",
+        "minimum_cash": "10",
+        "adjusted_ebitda": "30",
+        "cash_interest": "5",
+        "margin_step_up_bps": "400",
+        "cp2d_horizon_months": 24
+      },
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "10",
+            "resources_applied": "10",
+            "refinancing_need": "40",
+            "cover": "0.2"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "10",
+        "total_refinancing_need": "40",
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": "1.3333",
+        "added_annual_cash_interest": "2",
+        "pro_forma_cash_interest": "7",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "4.2857",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "NOT_STATED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": null,
+            "claims_over_ebitda": null
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": null,
+        "junior_over_ebitda": null
+      },
+      "missing_not_zero": [
+        "claims_at_or_ahead_of_most_junior"
+      ]
+    },
+    "fixture_zero_ebitda": {
+      "case_kind": "composer_fixture",
+      "note": "adjusted EBITDA 0 (a known zero): leverage-type ratios are not_applicable, interest cover is a known 0",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": "0",
+            "secured_status": "SECURED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "0",
+        "minimum_cash": "10",
+        "adjusted_ebitda": "0",
+        "cash_interest": "5",
+        "margin_step_up_bps": "400",
+        "cp2d_horizon_months": 24
+      },
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "10",
+            "resources_applied": "10",
+            "refinancing_need": "40",
+            "cover": "0.2"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "10",
+        "total_refinancing_need": "40",
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "nm",
+        "need_over_ebitda": "nm",
+        "added_annual_cash_interest": "2",
+        "pro_forma_cash_interest": "7",
+        "interest_cover": "0",
+        "pro_forma_interest_cover": "0",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "nm"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "nm"
+      },
+      "missing_not_zero": []
+    },
+    "fixture_zero_step_up": {
+      "case_kind": "composer_fixture",
+      "note": "margin step-up 0 bp is a known zero, distinct from an unassessed step-up",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": "0",
+            "secured_status": "SECURED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "0",
+        "minimum_cash": "10",
+        "adjusted_ebitda": "30",
+        "cash_interest": "5",
+        "margin_step_up_bps": "0",
+        "cp2d_horizon_months": 24
+      },
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": "0",
+            "principal_payable_at_maturity": "50",
+            "resources_at_maturity": "10",
+            "resources_applied": "10",
+            "refinancing_need": "40",
+            "cover": "0.2"
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": "50",
+        "total_resources_applied": "10",
+        "total_refinancing_need": "40",
+        "principal_after_cp2d_horizon": "50",
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": "1.6667",
+        "need_over_ebitda": "1.3333",
+        "added_annual_cash_interest": "0",
+        "pro_forma_cash_interest": "5",
+        "interest_cover": "6",
+        "pro_forma_interest_cover": "6",
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": []
+    },
+    "fixture_amortisation_missing": {
+      "case_kind": "composer_fixture",
+      "note": "annual amortisation missing for the only facility: principal known, balloon, resources-dependent values and totals missing",
+      "inputs": {
+        "facilities": [
+          {
+            "id": "term-loan",
+            "principal": "50",
+            "maturity": "2029-12-31",
+            "annual_amortisation": null,
+            "secured_status": "SECURED",
+            "seniority": "SENIOR"
+          }
+        ],
+        "cash": "20",
+        "undrawn_revolver": "0",
+        "run_rate_annual": "0",
+        "minimum_cash": "10",
+        "adjusted_ebitda": "30",
+        "cash_interest": "5",
+        "margin_step_up_bps": "400",
+        "cp2d_horizon_months": 24
+      },
+      "derived": {
+        "base_resources_before_flows": "10",
+        "run_rate_annual": "0",
+        "facilities": [
+          {
+            "id": "term-loan",
+            "months": 48,
+            "inside_horizon": false,
+            "principal": "50",
+            "amortisation_before_maturity": null,
+            "principal_payable_at_maturity": null,
+            "resources_at_maturity": null,
+            "resources_applied": null,
+            "refinancing_need": null,
+            "cover": null
+          }
+        ],
+        "total_principal": "50",
+        "total_principal_payable_at_maturity": null,
+        "total_resources_applied": null,
+        "total_refinancing_need": null,
+        "principal_after_cp2d_horizon": null,
+        "nearest_maturity": "2029-12-31",
+        "months_to_nearest_maturity": 48,
+        "principal_payable_over_ebitda": null,
+        "need_over_ebitda": null,
+        "added_annual_cash_interest": null,
+        "pro_forma_cash_interest": null,
+        "interest_cover": "6",
+        "pro_forma_interest_cover": null,
+        "creditor_position": [
+          {
+            "id": "term-loan",
+            "secured": "SECURED",
+            "seniority": "SENIOR",
+            "principal": "50",
+            "share": "1",
+            "claims_at_or_ahead": "50",
+            "claims_over_ebitda": "1.6667"
+          }
+        ],
+        "claims_at_or_ahead_of_most_junior": "50",
+        "junior_over_ebitda": "1.6667"
+      },
+      "missing_not_zero": [
+        "total_principal_payable_at_maturity",
+        "total_resources_applied",
+        "total_refinancing_need",
+        "principal_after_cp2d_horizon",
+        "principal_payable_over_ebitda",
+        "need_over_ebitda",
+        "added_annual_cash_interest",
+        "pro_forma_cash_interest",
+        "pro_forma_interest_cover"
+      ]
+    }
+  },
+  "cp0_with_cp3c": {
+    "status": "restricted",
+    "live_consumers": [
+      "CP-1",
+      "CP-1A",
+      "CP-2",
+      "CP-2D",
+      "CP-3C"
+    ],
+    "plan_order": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2",
+      "CP-2D",
+      "CP-3C"
+    ],
+    "exact_commands": {
+      "CP-1": "Run CP-1",
+      "CP-1A": "Run CP-1A",
+      "CP-2": "Run CP-2",
+      "CP-2D": "Run CP-2D",
+      "CP-3C": "Run CP-3C"
+    },
+    "added_facts_cp3c": [
+      {
+        "fact_id": "T4.CP-3C.demand",
+        "text": "Settled CP-1 facility terms and cash flow facts and the CP-2D liquidity bridge",
+        "cites": [
+          [
+            "identity",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:5"
+          ]
+        ]
+      },
+      {
+        "fact_id": "T4.CP-3C.readiness",
+        "text": "READY_WITH_LIMITATIONS",
+        "cites": []
+      },
+      {
+        "fact_id": "T4.CP-3C.rationale",
+        "text": "The refinancing assessment can run on settled upstream facts with explicit source and scope limitations.",
+        "cites": [
+          [
+            "identity",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:1"
+          ],
+          [
+            "financial",
+            "page:5"
+          ]
+        ]
+      },
+      {
+        "fact_id": "T8.CP-3C.candidate_command",
+        "text": "Run CP-3C",
+        "cites": []
+      },
+      {
+        "fact_id": "T8.CP-3C.exact_command",
+        "text": "Run CP-3C",
+        "cites": []
+      },
+      {
+        "fact_id": "T8.CP-3C.sources",
+        "text": "identity, financial",
+        "cites": []
+      },
+      {
+        "fact_id": "T8.CP-3C.limits",
+        "text": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+        "cites": []
+      },
+      {
+        "fact_id": "T8.CP-3C.upstream",
+        "text": "CP-0 slice-cp3c-positive; analytical dependencies checked separately",
+        "cites": []
+      }
+    ],
+    "added_facts_cp2d": "as cases/cp2d-owner/expected.json#cp0_with_cp2d.added_facts",
+    "note": "Fact ids and texts probed 2026-10-28 with the product build_readiness on a scratch pack of this run (identical to the CP-2D pattern); never settled by a product CP-0 submit."
+  },
+  "upstream_asserted_only": {
+    "statuses": {
+      "CP-0": "restricted",
+      "CP-1": "restricted",
+      "CP-1A": "restricted",
+      "CP-2": "restricted",
+      "CP-2D": "restricted"
+    },
+    "cp2d_tables_equal": "the CP-2D head of the positive case has tables equal to cases/cp2d-owner/expected.json cases.positive; of gap_minimum_cash to cases.gap_minimum_cash (the CP-0 delta adds a CP-3C consumer only; CP-0 limitations are unchanged)",
+    "cp1_facts_equal_source": "each fact bound by manifest.fact_bindings has the amount/status/text in source_facts",
+    "cross_checks_not_read": {
+      "interest_coverage_adjusted": "6 (equals T3D.3 interest cover)",
+      "total_leverage_adjusted": "1.6667 (equals T3D.5 Base multiple, 4 dp)",
+      "note": "CP-1 T4.10 facts the core does not read; the test reads them from the CP-1 head and asserts equality, observed on a promoted head"
+    }
+  },
+  "cp3c_module": {
+    "module_id": "CP-3C",
+    "status_rule": "restricted: own limitations are non-empty and CP-0, CP-1 and CP-2D heads are restricted",
+    "attempt_inputs": [
+      "prepared-pack",
+      "CP-0",
+      "CP-1",
+      "CP-2D"
+    ],
+    "settled_module_adds_input": "refinancing-risk-submission",
+    "inherited_limitations_rule": "CP-0 head + CP-1 head + CP-2D head, each its limitations then inherited, de-duplicated, own findings removed (execution.py:345-366); the CP-2D own limitation strings 'Minimum cash is an analyst assumption, not a source figure.' (and its other lines) arrive as inherited where CP-3C does not repeat them; CP-3C repeats the first so it appears once, as own; bound at run time",
+    "table_ids": [
+      "T3D.1",
+      "T3D.2",
+      "T3D.3",
+      "T3D.4",
+      "T3D.5",
+      "T3D.6",
+      "T3D.7",
+      "T3D.8",
+      "T3D.9"
+    ],
+    "table_titles": {
+      "T3D.1": "Refinancing need by maturity",
+      "T3D.2": "Refinancing burden",
+      "T3D.3": "Refinancing cost sensitivity",
+      "T3D.4": "Creditor position",
+      "T3D.5": "LME capacity",
+      "T3D.6": "Refinancing paths",
+      "T3D.7": "Analyst judgments",
+      "T3D.8": "Gaps ledger",
+      "T3D.9": "Upstream trace"
+    },
+    "T3D.7": {
+      "title": "Analyst judgments",
+      "rows": "expected.cases.<case>.T3D.7_rows"
+    },
+    "T3D.8": {
+      "title": "Gaps ledger",
+      "rows": "expected.cases.<case>.T3D.8_rows (one row per own limitation, same order as own_limitations)"
+    },
+    "T3D.9": {
+      "title": "Upstream trace",
+      "rule": "rows [name, source module, table or stable id, shown or gap spelling] for each name read; fact ids bound at run time are not recorded; the CP-2D head hash is run-time and asserted in attempt.inputs"
+    },
+    "unused_registered": [
+      "T3D.10",
+      "T3D.11"
+    ],
+    "evidence_rail": [
+      "T3D.7",
+      "T3D.9"
+    ],
+    "limitations_rail": [
+      "T3D.8"
+    ]
+  },
+  "refusals": {
+    "step_up_negative": "repricing.bps: must be between 0 and 1000",
+    "step_up_over_limit": "repricing.bps: must be between 0 and 1000",
+    "step_up_and_absence": "repricing: give repricing or repricing_absence, not both",
+    "neither_step_up_nor_absence": "repricing: give repricing or repricing_absence",
+    "path_missing": "paths: must hold exactly one row per kind",
+    "path_repeated": "paths: must hold exactly one row per kind",
+    "digit_in_text": "paths[repay_from_resources].text: must not contain a figure",
+    "digit_in_rationale": "repricing.rationale: must not contain a figure",
+    "prohibited_recommendation": "paths[market_refinancing].credit_implication: prohibited conclusion (instrument recommendation): \"we recommend\"",
+    "prohibited_recovery": "paths[amend_and_extend].text: prohibited conclusion (recovery conclusion): \"expected recovery\"",
+    "covenant_compliance_wording": "paths[repay_from_resources].credit_implication: prohibited conclusion (covenant compliance): \"met\"",
+    "unknown_basis_ref": "paths[repay_from_resources].basis_refs: names a fact the view does not offer",
+    "feasibility_without_basis": "paths[amend_and_extend].basis_refs: a High, Medium or Low feasibility cites at least one fact",
+    "insufficient_without_limitation": "paths[asset_sale_or_equity].limitation: an Insufficient Information assessment states its limitation",
+    "limitation_without_insufficient": "paths[amend_and_extend].limitation: only an Insufficient Information assessment carries a limitation",
+    "feasibility_category_mismatch": "paths[repay_from_resources].feasibility: must be Insufficient Information exactly when the category is",
+    "lme_judged_without_capacity_evidence": "paths[liability_management].feasibility: needs legal covenant capacity evidence, which is not bound; state Insufficient Information"
+  },
+  "refusal_order": "issues are returned in the oracle's order: (1) repricing presence, (2) bps range, (3) one row per kind, (4) for each text field in order (the repricing text fields, then per submitted path its text, credit_implication and limitation) the figure issue and then the guard issues, for all paths, (5) per submitted path its basis_refs, feasibility/category, limitation, cites-a-fact and liability-management issues; each literal refusal payload yields exactly one issue",
+  "prohibited_guard": {
+    "product": "deploy_vii.business_context.prohibited_issues(path, text) with its default kinds (peer ranking, instrument recommendation, recovery conclusion; ACTIONS are not a default kind), transcribed in build.py (BC_PROHIBITED, BC_NEAR, BC_NOUN) with src/deploy_vii/business_context.py sha256-pinned; also used by CP-2 (cp2_synthesis.py:489)",
+    "core_local": "one core-local check with three kinds: 'covenant compliance' (complies, complied, complying, compliant, compliance, breach, breaches, breached, met, satisfied within four words of covenant/covenants; and 'headroom is sufficient'), 'recovery conclusion' (the word fulcrum, in the product's issue form) and 'refinancing outcome' (will be refinanced, will refinance, refinancing is assured, refinancing is certain, will default)",
+    "issue_form": "<path>: prohibited conclusion (<kind>): \"<phrase>\" , one issue per matching phrase, the product's issues first (guard table order), then the core-local ones",
+    "dropped_from_revision_1": "the home-made list (recommend/buy/sell words, fulcrum, a bare 'recovery', guarantee): buy and sell as words and guarantee are no longer refused; 'fulcrum' is not held by the product guard and was not carried in revision 2; revision 3 carries it in the core-local check as kind 'recovery conclusion'"
+  },
+  "prohibited_probe": [
+    {
+      "class": "refusal_literal",
+      "text": "We recommend this path.",
+      "issues": [
+        "probe: prohibited conclusion (instrument recommendation): \"we recommend\""
+      ],
+      "origin": [
+        "product"
+      ]
+    },
+    {
+      "class": "refusal_literal",
+      "text": "The expected recovery is high.",
+      "issues": [
+        "probe: prohibited conclusion (recovery conclusion): \"expected recovery\""
+      ],
+      "origin": [
+        "product"
+      ]
+    },
+    {
+      "class": "refusal_literal",
+      "text": "The covenant test is met.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"met\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Expected recoveries are high.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Lenders would recover par.",
+      "issues": [
+        "probe: prohibited conclusion (recovery conclusion): \"recover par\"",
+        "probe: prohibited conclusion (recovery conclusion): \"would recover\""
+      ],
+      "origin": [
+        "product"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "The group complies with its covenants.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"complies\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "The group is compliant with the leverage covenant.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"compliant\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "There is no breach of the covenant.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"breach\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "The covenant is met.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"met\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "The issuer will be refinanced.",
+      "issues": [
+        "probe: prohibited conclusion (refinancing outcome): \"will be refinanced\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "We advise lenders to extend.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Investors should buy the loan.",
+      "issues": [
+        "probe: prohibited conclusion (instrument recommendation): \"should buy\""
+      ],
+      "origin": [
+        "product"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Holders should avoid this credit.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "The recovery rate is high.",
+      "issues": [
+        "probe: prohibited conclusion (recovery conclusion): \"recovery rate\""
+      ],
+      "origin": [
+        "product"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "A covenant breach is unlikely.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"breach\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Refinancing is assured.",
+      "issues": [
+        "probe: prohibited conclusion (refinancing outcome): \"refinancing is assured\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Default is likely.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "We suggest an amend and extend.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "missed_by_revision_1",
+      "text": "Lenders should extend the maturity.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "false_positive_in_revision_1",
+      "text": "The group could sell non-core assets to repay principal.",
+      "issues": [],
+      "origin": []
+    },
+    {
+      "class": "false_positive_in_revision_1",
+      "text": "No parent guarantee is bound to this analysis.",
+      "issues": [],
+      "origin": []
+    },
+    {
+      "class": "false_positive_in_revision_1",
+      "text": "Asset sale proceeds are not evidenced.",
+      "issues": [],
+      "origin": []
+    },
+    {
+      "class": "false_positive_in_revision_1",
+      "text": "A buyer for the division is not identified.",
+      "issues": [],
+      "origin": []
+    },
+    {
+      "class": "false_positive_in_revision_1",
+      "text": "The loan is held in compliance with no stated covenant evidence.",
+      "issues": [
+        "probe: prohibited conclusion (covenant compliance): \"compliance\""
+      ],
+      "origin": [
+        "core-local"
+      ],
+      "note": "a compliance word within four words of the word covenant; the guard cannot tell a negated or empty statement from a conclusion, so it refuses (a phrase guard, not a semantic review)"
+    },
+    {
+      "class": "product_permitted",
+      "text": "The recovery is high.",
+      "issues": [],
+      "origin": [],
+      "note": "permitted by the product guard: a mention of recovery prospects as a credit mechanic is not a recovery outcome (business_context.py, PROHIBITED comment)"
+    },
+    {
+      "class": "added_in_revision_3",
+      "text": "The term loan is the fulcrum security.",
+      "issues": [
+        "probe: prohibited conclusion (recovery conclusion): \"fulcrum\""
+      ],
+      "origin": [
+        "core-local"
+      ]
+    },
+    {
+      "class": "added_in_revision_3",
+      "text": "Refinancing is likely.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    },
+    {
+      "class": "added_in_revision_3",
+      "text": "The issuer is in breach.",
+      "issues": [],
+      "origin": [],
+      "guard_limit": "states a conclusion no guard phrase names; valid text under a phrase guard"
+    }
+  ],
+  "cp1_downstream_readiness": {
+    "requested_consumers": [
+      "CP-1A",
+      "CP-2",
+      "CP-2D",
+      "CP-3C"
+    ],
+    "requirements": {
+      "CP-1A": [
+        "consumer_specific_cp1_sufficiency"
+      ],
+      "CP-2": [
+        "kpi_dashboard",
+        "calculation_register",
+        "fcf_build"
+      ],
+      "CP-2D": [
+        "earnings_quality_metrics"
+      ],
+      "CP-3C": [
+        "debt_schedule",
+        "maturity_profile"
+      ]
+    },
+    "validate_downstream_review": [],
+    "consumer_status": {
+      "CP-1A": "not_ready",
+      "CP-2": "not_ready",
+      "CP-2D": "ready_with_limitations",
+      "CP-3C": "ready_with_limitations"
+    },
+    "t4_13": "T4.13 carries one row per consumer: [entry, status, relevant gap ids (every retained gap), actions]; the CP-3C row status is ready_with_limitations and the CP-2D row status is ready_with_limitations; CP-1A and CP-2 stay not_ready (unassessed, as in S1). CP-1 T4.13 is a CP-1 output; this oracle pins only the statuses.",
+    "refused_variants": {
+      "kpi_evidence_for_debt_schedule": [
+        "Incompatible or unavailable dependency evidence: CP-3C debt_schedule"
+      ],
+      "unknown_requirement_key_covenant_metrics_on_facility_evidence": [
+        "Duplicate or unknown requirement: CP-3C covenant_metrics",
+        "Incompatible or unavailable dependency evidence: CP-3C covenant_metrics"
+      ]
+    },
+    "observed_on_s1_store": {
+      "facility_observation_records": 42,
+      "ebitda_kpi_records": 12,
+      "retained_gaps": 1132,
+      "note": "counts on the S1 promoted CP-1 store; the selectors, not these counts, are the literal"
+    },
+    "does_not_gate_begin": "CP-3C begin is gated by the edge rule (CP-0, CP-1, CP-2D settled), not by T4.13 (execution.py:236-245)",
+    "probed": "2026-10-28 on a scratch copy of the S1 promoted CP-1 store (DownstreamInputs with requested consumers set to this run's four): validate_downstream_review and _assess_consumers; a promotion of THIS pack was not run"
+  },
+  "tamper": {
+    "case": "positive (closed run: CP-0, CP-1, CP-1A, CP-2, CP-2D and CP-3C settled, receipt sealed)",
+    "target_fact": "T3D.2.r02",
+    "from": "10",
+    "to": "11",
+    "why_this_fact": "a computed fact lives only in the CP-3C result Module: the table cell holds the fact id, the step output holds the judgment submission (no computed fact), no claim references it and no other computed fact derives from it (builder-asserted against DERIVES_FROM and the claims), so the forged Module stays internally consistent and only the probe's rebuild (the Python composer over the journaled payload and the bound CP-0, CP-1 and CP-2D heads, which gives resources applied 10) contradicts it",
+    "recipe": [
+      "1. Copy the closed positive store directory (blobs, snapshots, current, audit) to a scratch path.",
+      "2. Load the CP-3C head's result Module; replace only the amount of fact T3D.2.r02 (Decimal 10 -> 11; unit, currency, period, value_class, calculation_id and formula unchanged); leave every other fact (T3D.2.r03 need 40, T3D.1.r01.c8 and c9, every claim, table and limitation) unchanged.",
+      "3. Serialise the forged Module as Execution._store does (model_dump_json); its sha256 R2 must equal Module.content_hash(); write blobs/R2.",
+      "4. Build a new ExecutionSnapshot equal to the current one with the CP-3C Attempt.result_sha256 and Head.result_sha256 set to R2 (status, inputs and commands unchanged, so head_of(forged Module) equals the Head) and the same parent; write snapshots/<its sha256>.json and rewrite current to that digest.",
+      "5. In the retained receipt: set the CP-3C SettledHead.result_sha256 to R2; set receipt.snapshot_sha256 and every coordinate that named the old final snapshot (the CP-3C settling OwnerSubmission.snapshot_after_sha256: owner_workflow.py _advance -> _finish_walk; its record is retained as audit/submissions/<content_hash> by _retain) to the new digest; delete audit/submissions/<old record hash> and write the edited OwnerSubmission as audit/submissions/<its content_hash> (model_dump_json bytes); rewrite audit/receipt.sha256 with the forged receipt's content_hash (the CP-DR / CP-3 A4 / S1a R3-5 pattern: the audit file travels under its new hash). CP-3C is the last analytical module of the run and no deterministic module follows, so the CP-3C settling submission is the final one."
+    ],
+    "expect": {
+      "passes": "everything upstream of the probe: audit inventory, blob and snapshot hashes, ancestor walk, head_of equality, begin and publication records, call and read replay (the retained read_inputs body is untouched), journaled-step replay (the payload and step are untouched)",
+      "refuses": "cp3c.probe raises WorkflowError('identity_mismatch'); verify_owner_run_receipt raises identity_mismatch",
+      "test_asserts": "on the forged copy, _verify_audit and every check before _PROBES pass (as CP-3 A4 (a)); then cp3c.probe raises identity_mismatch. A test asserting identity_mismatch alone would never show that the probe was reached."
+    },
+    "step_output_edit": "an edited CP-3C step output is caught by the store's own blob hash check, not by the probe's output comparison (recorded limitation, S1a R3-5); an edited retained read_inputs body is caught by the call and read replay, not by the probe"
+  },
+  "negative_cases": {
+    "blocked_cp3c": {
+      "attempt_0": {
+        "step": "invalid",
+        "issues": [
+          "repricing.bps: must be between 0 and 1000"
+        ]
+      },
+      "attempt_1": {
+        "step": "invalid",
+        "issues": [
+          "repricing.bps: must be between 0 and 1000"
+        ],
+        "repair_of": "attempt 0"
+      },
+      "module_status": "blocked",
+      "tables": "none; a blocked head carries no T3D table and no claims",
+      "head": "a blocked CP-3C head is published; cp3c_reader(store, head) on it exposes the status and no figures",
+      "receipt": "verify_owner_run_receipt accepts the blocked head and every recomputed issue appears in the step issues"
+    },
+    "begin_refused_cp2d_blocked": {
+      "setup": "clone of the settled upstream (CP-0, CP-1, CP-1A, CP-2); CP-2D attempt 0 and attempt 1 both submit the frozen cp2d_blocked literals (cases/cp2d-owner/submissions.json#cp2d_blocked). There is no separate CP-3C begin call and no CP-3C submission.",
+      "mechanism": "CP-2D attempt 1 invalid -> _advance('CP-2D') (owner_workflow.py:657, :482-487) -> _begin('CP-3C') -> the store refuses the begin with BLOCKED_EDGE after a blocked producer -> the walk retains it as RefusedBegin with _refusal_kind 'blocked' (owner_workflow.py:448-478) and finishes",
+      "cp2d_attempt_1_submit_outcome": {
+        "status": "invalid",
+        "refusal": "cp3c_blocked",
+        "next_step": null
+      },
+      "receipt_refusals": [
+        {
+          "module_id": "CP-3C",
+          "reason": "starts with 'Required upstream is unrun, stale or blocked' (owner_workflow.BLOCKED_EDGE)",
+          "snapshot_sha256": "the snapshot after CP-2D settled blocked (the final snapshot of the run)"
+        }
+      ],
+      "attempt_consumed": false,
+      "cp3c_attempt": "none: the snapshot holds no CP-3C attempt and no CP-3C head",
+      "verifier": "verify_owner_run_receipt accepts the receipt: exactly one refusal, for the first analytical module without a head, and no later head (owner_workflow.py:855-892)",
+      "scope": "this case pins only a blocked CP-2D producer. A blocked or stale CP-0 or CP-1 head is not retained as a refusal by the same path and is not pinned here."
+    }
+  },
+  "tool_use": {
+    "CP-3C": "zero ok pack calls (every invoke is a refused not_permitted receipt); exactly one read_inputs per attempt before submit; its body equals the frozen view tree (manifest.view_tree_draft after freeze); a submit without that read is not_permitted; a snapshot change between read and submit is stale_binding"
+  },
+  "consumption": {
+    "cp2d_consumed_by_cp3c": {
+      "consumer": "owners.cp3c (the CP-3C core reads the settled CP-2D head through cp2d_reader(store, head))",
+      "proof": [
+        "CP-3C attempt.inputs carries CP-2D with sha256 equal to the final CP-2D head result_sha256, and the settled CP-3C module adds refinancing-risk-submission",
+        "T3D.1 columns 1-4, T3D.2 rows 10-12 and T3D.4 column 3 are copies carrying cp2d_operand ids (expected cells) with the CP-2D cell's value and value_class",
+        "the claim CP-3C-HORIZON-01 references the CP-2D funding gap copy",
+        "in gap_minimum_cash the CP-2D missing minimum cash and funding gap arrive as gaps (never 0) and the dependent CP-3C values are gaps"
+      ],
+      "reads_beyond_the_cp2d_lease_pins": [
+        "T2E.3.r01"
+      ],
+      "pin_extension_needed": "cp2d_reader must also expose the run-rate annual flow (T2E.3.r01); the other reads are the CP-2D lease's pins (horizon, minimum cash or absence, wall rows, funding gap or missing, head hash, status)"
+    },
+    "cp3c_consumed_by": {
+      "consumer": "none today; CP-4C lists CP-3C optional and has no core; CP-3 and CP-6 never read CP-3C",
+      "reader_contract": "owners.cp3c.cp3c_reader(store, head) returns the settled CP-3C head's total principal payable at maturity, refinancing need or missing, per-facility need rows, added annual cash interest or missing, claims at or ahead of the most junior facility (Base), the path feasibility judgments, own limitations, the head hash and status",
+      "status": "OPEN: acceptance of consumption waits for a CP-4C lease (or a D3 CP-5 scope lease); this oracle pins only what the reader must expose"
+    }
+  },
+  "fp04_render": {
+    "pathway": "covenant_refinancing",
+    "design_reference": "rbot-fp-04-covenant-refinancing.dc.html: 'Refinancing paths' (CP-3C, path / feasibility chip / impact, ILLUSTRATIVE tag), 'LME capacity and creditor exposure' (CP-3C, collapsed, Base / LME / Stress); 'Funding gap' is headed CP-3C there but is registered to CP-2D by the frozen CP-2D lease (open question)",
+    "blocks": {
+      "refinancing-paths": {
+        "owner": "CP-3C",
+        "kind": "dense",
+        "primary_tab": "T3D.6",
+        "tabs": [
+          "T3D.1",
+          "T3D.2",
+          "T3D.3"
+        ],
+        "state": "populated"
+      },
+      "lme-creditor-exposure": {
+        "owner": "CP-3C",
+        "kind": "dense",
+        "collapsed": true,
+        "primary_tab": "T3D.5",
+        "tabs": [
+          "T3D.4"
+        ],
+        "state": "populated"
+      }
+    },
+    "rails": {
+      "evidence": [
+        "T3D.7",
+        "T3D.9"
+      ],
+      "limitations": [
+        "T3D.8"
+      ]
+    },
+    "cells": "block cell text equals the `shown` strings of expected.cases.<case>.tables; gap cells render '∅ G<n>' with n assigned in report order, not_applicable cells '∅ G<n> n.m.' (the expected shown is the pattern '∅ G#' / '∅ G# n.m.', an A7 exception)",
+    "other_FP04_blocks": "CP-4 blocks (CP-4 not requested), CP-2D blocks (asserted by the CP-2D lease) and funding-gap ownership are not asserted here"
+  },
+  "table_id_collision_check": "T3D.1-T3D.11 appear in src/deploy_vii/methodology.json only under CP-3C (asserted by this builder against the pinned file); a grep of src, tests, docs and cases on 2026-10-28 found them in methodology.json alone before this preparation; T3D.10 and T3D.11 are registered and unused",
+  "not_verified": [
+    "no product CP-3C core exists, so no expected value has been compared with product output",
+    "the CP-0 consumer entries were probed with the product validate_review and build_readiness on a scratch pack (accepted; the added fact ids match this oracle) and never settled by a CP-0 submit",
+    "the CP-1 head facts were observed (read-only) on a CP-2D probe store; the CP-1 promotion for the CP-3C run pack (new run id, requested modules) was never run",
+    "the CP-2D cells are the CP-2D oracle's, not product output; the CP-2D oracle itself is unexecuted",
+    "claim references: probed read-only with deploy_vii.prose.bare_figures only; no product module has resolved the references; the T3D cell fact_ids are this oracle's proposal; whether a copied cell of a calculated CP-2D fact carries its calculation_id is a core requirement",
+    "the multi-facility ordering, amortisation, ranking and missing-amortisation rules are exercised only by composer fixtures with synthetic vectors, no pack case",
+    "table titles, columns, path kinds and claim wording are this preparation's design: no r14 CP-3C SKILL.md is in the repository",
+    "the blocked_cp3c and begin_refused_cp2d_blocked expectations follow owner_workflow.py as read and were never run",
+    "the CP-1 readiness literal was validated (validate_downstream_review, _assess_consumers) on a scratch copy of the S1 promoted CP-1 store with this run's four requested consumers; a CP-1 promotion of THIS pack was never run, so the evidence selectors and the statuses are not observed on it",
+    "the tamper recipe follows owner_workflow.py and execution.py as read and was never executed; that every check before the probe passes on the forged copy is unobserved",
+    "the transcribed prohibited-conclusion phrase tables are compared with business_context.prohibited_issues by a read-only probe only, not by a test"
+  ]
+}

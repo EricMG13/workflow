@@ -1,0 +1,33 @@
+# Build lane ledger
+
+- 2026-10-28 cpdr-stage1 `PYTHONPATH=src .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_method_cpdr.py` exit 0, 27 passed 0 failed (0.24 s), branch claude/cpdr-stage1 59aea17, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28T10:38Z cp2e-stage1 `pytest tests/test_method_cp2e.py` exit 0, 58 passed 0 failed (0.25 s), branch worktree-agent-a219254fe68cc1c2d 5b012e7, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28 cp3-stage1 `pytest tests/test_method_cp3.py` exit 0, 31 passed 0 failed (0.37 s), branch claude/cp3-stage1 6ce4dd1, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28 cp3d-stage1 `pytest tests/test_method_cp3d.py` exit 0, 46 passed 0 failed (0.23 s), branch claude/cp3d-stage1 a80aa23, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28 cp2a-stage1 `pytest tests/test_method_cp2a.py` exit 0, 70 passed 1 skipped (v17, Stage 2) (1.10 s), branch worktree-agent-a34fec3e9469279cd 5626b90, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28T10:42Z cp1d-stage1 `pytest tests/test_method_cp1d.py` exit 0, 39 passed 1 skipped (0.29 s), branch claude/cp1d-stage1 b6d83ae, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28 cp4-stage1 `pytest tests/test_method_cp4.py` exit 0, 20 passed 0 failed (0.35 s), branch worktree-agent-a137244cd727ee164 4c6fa03, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28 cpl10-stage1 `pytest tests/test_method_cpl10.py` exit 0, 34 passed 0 failed (0.26 s), branch worktree-agent-aa6ef474a0f78ec9e f4f3f8f, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n
+- 2026-10-28 cp2d-stage1 `pytest tests/test_method_cp2d.py` exit 0, 43 passed 0 failed (0.18 s), branch worktree-agent-a69f2394899aee6d5 44c919c, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n (RED run not observed)
+- 2026-10-28 cp1c-stage1 `pytest tests/test_method_cp1c.py` exit 0, 61 passed 0 failed (0.38 s), branch worktree-cp1c-stage1 d1103da, agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n (RED run not observed)
+- 2026-10-28 cpdr-stage1-fix1 `pytest tests/test_method_cpdr.py` exit 0, 45 passed 0 failed (0.24 s), branch claude/cpdr-stage1 618b527, 14/14 mutants killed, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
+- 2026-10-28T10:49Z cp2e-stage1-fix1 `pytest tests/test_method_cp2e.py` exit 0, 63 passed 0 failed (0.25 s), branch worktree-agent-a219254fe68cc1c2d 6d0b7b4, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y
+- CP-2E Stage 1 merged into lane (adversary APPROVE on 6d0b7b4)
+- CP-DR Stage 1 merged into lane (adversary APPROVE on 618b527)
+- 2026-10-28 cp3d-stage1-fix1 `pytest tests/test_method_cp3d.py` exit 0, 58 passed 0 failed (0.23 s), branch claude/cp3d-stage1 5f4a87b, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y (mypy run on src only; test-file mypy to confirm in re-review)
+- 2026-10-28 cp4-stage1-fix1 `pytest tests/test_method_cp4.py` exit 0, 22 passed 0 failed (0.34 s), branch worktree-agent-a137244cd727ee164 b658bc1, 5/5 gate mutants killed, mypy both files 0, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
+- 2026-10-28 cp2d-stage1 review (mx-adversary) on 44c919c: CHANGES REQUIRED (S&U difference raises; cross-check precision; prohibited words; empty facilities; 11/16 mutants survive). Fix round 1 dispatched.
+- 2026-10-28 cp2a-stage1-fix1 `pytest tests/test_method_cp2a.py` exit 0, 74 passed 1 skipped (v17) 1 xfailed (v02 strict, oracle defect) (1.19 s), branch worktree-agent-a34fec3e9469279cd 22115a8, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
+- 2026-10-28T10:56Z cp1d-stage1-fix1 `pytest tests/test_method_cp1d.py` exit 0, 51 passed 1 skipped (0.34 s), branch claude/cp1d-stage1 3b080c9, mypy both files 0, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y
+- 2026-10-28 cpl10-stage1 review (mx-adversary) on f4f3f8f: CHANGES REQUIRED (prose.check vs settlement prose.issues -> LEAD; half-even untested; missing-end limitation; operand unit/scale). Fix round 1 folded into the amendment-1 rebase.
+- 2026-10-28 cp1c-stage1 review (mx-adversary) on d1103da: CHANGES REQUIRED (post-validation raises; prohibited scope; sheet basis constants; parser strictness; untested own behaviour). Fix round 1 folded into the amendment-1 follow-up.
+- 2026-10-28 cp3d-stage1 re-review (mx-adversary) on 5f4a87b: APPROVE. Low A (tie test uses a crossed quote) carried to the Stage 1 Fable review; Low B (five valid shapes raise after validation) to LEAD.
+- 2026-10-28 cp2d-stage1-fix1 `pytest tests/test_method_cp2d.py` exit 0, 64 passed 0 failed (0.21 s), branch worktree-agent-a69f2394899aee6d5 c8338f9, 15/16 mutants killed (M11 S&U formula with LEAD), mypy both files 0, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
+- 2026-10-28 LEAD rulings 2d27e50 merged into lane (638faf7); rulings rounds queued per module (plan §Rulings rounds)
+- 2026-10-28 LEAD ae9f1f1 merged into lane (ad96d2d): CP-4 oracle 4-1 at 7328203; AGENTS.md review-round rules from codex/checkpoint 963ef62
+- 2026-10-28 LEAD rulings round 2 (842c911) merged into lane (d9cada2)
+- 2026-10-28 cp4-stage1 re-review (mx-adversary) on b658bc1: APPROVE; merged into lane (056b355). Info: engine cp4_legal.py:546-554 shows threshold_value as typed (predates the lane; owner)
+- 2026-10-28 cp1d-stage1 re-review (mx-adversary) on 3b080c9: APPROVE; merged into lane. Lows L-a/L-b and two pre-existing validation raises ride with the rulings round
+- 2026-10-28 cp2d-stage1 re-review (mx-adversary) on c8338f9: CHANGES REQUIRED (N1 Medium, prohibited-word over-match; settled by ruling 2D1). Rulings round 2D1-2D9 dispatched with N2/N3; round-3 questions 2D-a..d, 1C-x, 1D-x sent to LEAD
+- 2026-10-28 cp4-stage1-rulings `pytest tests/test_method_cp4.py` exit 0, 22 passed (0.38 s), branch worktree-agent-a137244cd727ee164 8395cc7 (test-only re-pin to 7328203), probes exit 0, controller-verified on lane 9c123a0 (22 passed), merged. agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y. Carried to Stage 1 review: casefold vs lower mutant survives (lease says "case-folded")
+- 2026-10-28 LEAD rulings round 3 (f5ee633) merged into lane (2b4b393); forwarded to CP-2D, CP-1C, CP-1D running rounds

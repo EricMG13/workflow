@@ -172,7 +172,7 @@ def _requested(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
     return PreparedPack(run=run, sources=pack.sources)
 
 
-@pytest.mark.parametrize("modules", [("CP-1", "CP-2", "CP-MODEL"), ("CP-NOT-A-MODULE",)])
+@pytest.mark.parametrize("modules", [("CP-1", "CP-5", "CP-MODEL"), ("CP-NOT-A-MODULE",)])
 def test_unsupported_and_unknown_selection_write_nothing(
     tmp_path: Path, modules: tuple[str, ...]
 ) -> None:

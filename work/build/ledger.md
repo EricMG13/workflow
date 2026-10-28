@@ -210,3 +210,4 @@
 - 2026-10-28 CP-1C class round ad3825e: blank 40/40 fixed (`<path>: empty text` fallback in the `_prohibited_fields` loop), B1/B3 n/a (no quote reader), 4/4 mutants killed, gates 0. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-feature
 - 2026-10-28 CP-2D class round dispatched (Opus, worktree agent-a69f2394899aee6d5): blank + round 11 pre-D0 rule
 - 2026-10-28 CP-1C class review (mx-feature): APPROVE, Info only (p_all_cases_fields.py 0: 136 blank combinations across positive/gap/no_peers; mutants 4/4). Merged (05d3bbe); fast tests 2360 passed, 2 skipped, 1 xfailed
+- 2026-10-28 CP-3D class round eb4b3cb: B1/B3/blank fixed (158 red to 0), B2 riding applied, 22/22 mutants killed, gates 0. Start edge simplified to 'nothing before' (claims no outcome change); unpinned: a quote wrapping right after a minus. agent=general-purpose(opus) fix-rounds=0 gates-first-pass=y. Review: mx-precise

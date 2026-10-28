@@ -898,7 +898,7 @@ RUN_LEVEL = [rid for rid in stage1.REFUSALS if rid not in stage1.STALE]
 def test_each_refusal_is_a_journaled_invalid_step_with_the_oracle_issues(
     rid: str, tmp_path: Path
 ) -> None:
-    store, _, attempt = seed(tmp_path)
+    store, _, attempt = seed(tmp_path, stage1.REFUSALS[rid].get("against", "positive"))
     _submit(store, attempt, stage1._refusal_text(rid), _every_cited_read)
     finished = _finished(store, attempt)
     want = stage1._expected_issues(rid)
@@ -1408,3 +1408,28 @@ def test_d3_cp4c_consumes_the_genuine_cp2g_head_and_the_cp4_and_cp2a_heads(tmp_p
     assert lineage["T4E.2.c01.facility"] == ("cp4:T4C.11.r01.facility",)
     assert lineage["T4E.2.c01.lender_protection"] == ("cp4:T4.13.rating.rating",)
     assert lineage["T4E.2.c01.additional_debt"] == ("cp4:T4.10.r02.conditions",)
+
+
+# --- the method note (methods/cp4c.md) ------------------------------------------------------------
+
+METHOD = Path(__file__).resolve().parents[1] / "src" / "deploy_vii" / "methods" / "cp4c.md"
+
+
+def test_method_note_names_each_limit_and_connection_rule() -> None:
+    """The lease's guard limits ("Cannot catch") and the Stage 2 connection rules are recorded."""
+    text = METHOD.read_text(encoding="utf-8")
+    for needle in (
+        "## Guard limits",
+        "Holders should avoid this credit",
+        "The term loan is certain to be repaid",
+        "probability of",
+        "## Connection notes (Stage 2)",
+        "**One adapter.**",
+        "**T4.18 terms.**",
+        "**CP-2G head.**",
+        "**Statement rows.**",
+        "**Cited pages.**",
+        "v08",
+        "cases/cp4c-owner/cp4c-view-tree.json",
+    ):
+        assert needle in text, needle

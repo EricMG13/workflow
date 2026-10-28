@@ -167,6 +167,14 @@ class BaseOperands:
             return fact.amount if fact.status == "known" else None
 
         cash_interest = amount("cash_interest")
+        if cash_interest is not None and cash_interest > 0:
+            # The lease reads I = -cash_interest; the manifest says "magnitude". They agree only
+            # for CP-1's sign-normalised negative outflow, so a positive amount is refused
+            # until LEAD rules.
+            raise ValueError(
+                f"CP-1 cash interest for {period} is positive ({cash_interest}); "
+                "CP-2A reads only a negative (outflow) amount"
+            )
         gates = {
             ratio: f"CP-1 has no twelve-month basis for this period ({sources[metric].limitation})"
             for ratio, metric in REPORTED.items()
@@ -175,7 +183,7 @@ class BaseOperands:
         return cls(
             period=period,
             ebitda=amount("ebitda"),
-            # CP-1 stores cash interest as a (negative) outflow; the operand is its magnitude.
+            # CP-1 stores cash interest as a negative (outflow) amount; I = -cash_interest.
             interest=None if cash_interest is None else -cash_interest,
             fcf=amount("fcf"),
             total_debt=amount("total_debt"),
@@ -537,6 +545,8 @@ def _scenario_issues(inputs: Inputs, bound: Mapping[str, Fact]) -> list[str]:
             issues.append(f"{path}.name: duplicate scenario name: {sc.name}")
         seen.add(sc.name)
         issues += _prose_issues(f"{path}.rationale", sc.rationale, bound, inputs.names)
+        if sc.limitation is not None:
+            issues += _prose_issues(f"{path}.limitation", sc.limitation, bound, inputs.names)
     return issues
 
 
@@ -572,9 +582,12 @@ def validate(inputs: Inputs) -> tuple[str, ...]:
     bound = prose.bind(referencable(inputs.cp1_facts))
     issues += _scenario_issues(inputs, bound)
     issues += _threshold_issues(inputs, bound)
-    issues += _prose_issues("assessment.rationale", sub.assessment.rationale, bound, inputs.names)
-    if sub.assessment.confidence == "High":
+    a = sub.assessment
+    issues += _prose_issues("assessment.rationale", a.rationale, bound, inputs.names)
+    if a.confidence == "High":
         issues.append(HIGH_ISSUE)
+    if a.limitation is not None:
+        issues += _prose_issues("assessment.limitation", a.limitation, bound, inputs.names)
     for n, gap in enumerate(sub.gaps):
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
             path = f"gaps[{n}].{name}"
@@ -596,6 +609,13 @@ TABLES = {
     "T2B.9": "Gaps ledger",
 }
 CP1_REFERENCES = "cp1_references"
+# T2B.7 is the one table that can be empty (no break ranks), so its columns are fixed.
+FIXED_COLUMNS: Mapping[str, tuple[TableColumn, ...]] = {
+    "T2B.7": (
+        TableColumn(field="break_point", label="Break point"),
+        TableColumn(field="required_decline", label="Required EBITDA decline"),
+    ),
+}
 UnitClass = Literal["amount", "multiple", "percent"]
 _UNITS: Mapping[UnitClass, str] = {
     "amount": "MILLIONS",
@@ -819,9 +839,15 @@ class _Composer:
         out = []
         for table, title in TABLES.items():
             rows = self.rows[table]
-            columns = tuple(
-                TableColumn(field=labels[fid][0], label=labels[fid][1]) for fid in rows[0].fact_ids
-            )
+            if table in FIXED_COLUMNS:
+                columns = FIXED_COLUMNS[table]
+            elif rows:
+                columns = tuple(
+                    TableColumn(field=labels[fid][0], label=labels[fid][1])
+                    for fid in rows[0].fact_ids
+                )
+            else:
+                raise ValueError(f"{table} has no row to take its columns from")
             out.append(ReportTable(table_id=table, title=title, columns=columns, rows=tuple(rows)))
         return out
 
@@ -1007,8 +1033,8 @@ def _ranking(out: _Composer, ranked: Sequence[BreakPoint]) -> None:
     for n, p in enumerate(ranked, 1):
         r = f"r{n:02d}"
         assert p.required_decline is not None
-        out.text("T2B.7", r, "break_point", "Break point", p.test, False)
-        coordinate = ("T2B.7", r, "required_decline", "Required EBITDA decline")
+        out.text("T2B.7", r, "break_point", FIXED_COLUMNS["T2B.7"][0].label, p.test, False)
+        coordinate = ("T2B.7", r, "required_decline", FIXED_COLUMNS["T2B.7"][1].label)
         formula = f"= T2B.6.{p.break_id}.required_decline"
         out.calc(coordinate, p.required_decline, "percent", formula, BREAK_DECLINE[p.kind])
         out.register("T2B.7", r, f"Rank {n}", ("break_point", "required_decline"))

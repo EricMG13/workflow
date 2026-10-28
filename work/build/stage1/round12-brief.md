@@ -40,7 +40,7 @@ Every module replaces its blank test (`not x.strip()` or its equivalent) with `b
 | CP-8 | `agent-a3cc9818386e8861a` | Rule W: `_SIGN` in `_MULTIPLE`/`_DECIMAL`, the parenthesised arms, `_whole`. | mx-precise |
 | CP-2E | `agent-a219254fe68cc1c2d` | Rule W in `_unsigned`, and the labelled reader. The `bool()` asymmetry at cp2e.py:715 (round 12 Info). | mx-precise |
 | CP-2H | `agent-a52b5ec0919986ddb` | B8: `_block` sets `breached=True`; every case listed under "The lane today" is refused. B9 stays as built. B7's plain test waits for the release merge, so skip it here. | mx-precise |
-| CP-4C | `agent-a2c15c441717ec41c` | B7: refuse `{ } [ ]` in a claim name or valuation label with `<path>: reference syntax is not allowed`, at the #9 per-field step after `Bare figure`. Run LEAD's `p_cp4c_b7.py`. | mx-adversary |
+| CP-4C | `agent-a2c15c441717ec41c` | Round 11 blank class on the `plain` fields (end review R3 M2: `cp4c.py:926-945`, `<path>: empty text`, `""` included). B7: refuse `{ } [ ]` in a claim name or valuation label with `<path>: reference syntax is not allowed`, at the #9 per-field step after `Bare figure`. Run LEAD's `p_cp4c_b7.py`. | mx-adversary |
 | CP-2D | `agent-a69f2394899aee6d5` | B10 only. | mx-feature |
 
 CP-3D, CP-8, CP-2E, CP-2H, CP-4C and CP-2D start after the riding-Lows batch (`stage1-lows`) is merged into the lane, and the lane is merged into `claude/round12`, because they edit the same test files.

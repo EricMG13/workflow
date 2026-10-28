@@ -1,21 +1,51 @@
 """Task0 v1 single-writer source host; no submission validation or settlement."""
 
 import json
+from collections.abc import Callable
 from hashlib import sha256
+from pathlib import Path
 from threading import Lock
 from typing import Any, cast
 from uuid import uuid4
 
 from deploy_vii.contracts import Input, Module
-from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot, current_inputs, settle
+from deploy_vii.cp1_quality import cp1_quality_inputs
+from deploy_vii.cp1_workflow import (
+    CP1_PROMOTION,
+    PROMOTED,
+    CP1Handoff,
+    cp1_registers,
+    promote_cp1,
+    validate_cp1_stage,
+)
+from deploy_vii.envelope import Envelope, envelope_issues, read_envelope, write_envelope
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepSubmission,
+    StepValidation,
+    bounded_issues,
+    current_inputs,
+    head_of,
+    settle,
+    text_sha256,
+)
 from deploy_vii.live.context import declared_sources, readable_sources
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
 from deploy_workflow.tools.source import SourceError, SourceTools
 
-_SOURCE_STEPS = {"CP-0": ("source_readiness",), "CP-1": ("source_context", "financials")}
+_SOURCE_STEPS = {
+    "CP-0": ("source_readiness",),
+    "CP-1": ("source_context", "financials"),
+    "CP-4": ("legal_covenants",),
+}
 
 
 def _detached(value: dict[str, Any]) -> dict[str, Any]:
@@ -30,9 +60,434 @@ def _step_inputs(attempt: Attempt, preceding: tuple[Any, ...]) -> tuple[Input, .
     )
 
 
+def _checked_cp1_step(store: Execution, step: StepSubmission, outcome: StepValidation) -> None:
+    """Match Execution.submit_step's normalization and the exact retained output bytes."""
+    outcome = StepValidation.model_validate_json(outcome.model_dump_json())
+    if (
+        step.status != ("invalid" if outcome.issues else "valid")
+        or step.issues != bounded_issues(outcome.issues)
+        or not outcome.retained_as(step)
+        or (not outcome.issues and outcome.output is None)
+    ):
+        raise ValueError("CP1 retained validation differs")
+    if step.output_sha256 is not None and store.step_output(step.output_sha256) != outcome.output:
+        raise ValueError("CP1 retained output bytes differ")
+
+
+def _cp1_failed_result(
+    store: Execution,
+    snapshot: ExecutionSnapshot,
+    attempt: Attempt,
+    outcome: StepValidation,
+) -> Module:
+    """Reproduce the core's empty candidate and independently derived failure settlement."""
+    if not outcome.issues or attempt.payload_sha256 is None:
+        raise ValueError("CP1 failure lacks retained candidate or validation")
+    empty = Module(
+        run_id=snapshot.run.run_id,
+        issuer_id=snapshot.run.issuer_id,
+        as_of=snapshot.run.as_of,
+        module_id="CP-1",
+        inputs=attempt.inputs,
+        attempt=attempt.number,
+    ).model_dump_json()
+    if store.payload(attempt.payload_sha256) != empty:
+        raise ValueError("CP1 failure candidate differs from core")
+    finished, result = settle(
+        snapshot,
+        attempt,
+        empty,
+        lambda _: outcome.issues,
+        pack=store.pack(snapshot),
+        load=store.head_module,
+    )
+    if finished != attempt or store.result(attempt.result_sha256 or "") != result:
+        raise ValueError("CP1 failure settlement differs")
+    return result
+
+
+class _CP1Verification:
+    """Historical public validation view; composition gives it no inherited writer paths.
+
+    Only the retained CP1 attempt is presented as pending. Real bytes remain in the
+    original Execution, and finish/submit_step are narrowly scoped pure callbacks.
+    """
+
+    def __init__(self, store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+        # `_origin` is the real store and is reachable by name (Python cannot hide it). No
+        # public CP-1 API (`promote_cp1`, `cp1_registers`) touches it; `__getattr__` refuses
+        # every other name, and the facade's own methods only read through it.
+        self._origin = store
+        self._snapshot = snapshot
+        self._attempt = attempt
+        self._active = False
+        self.candidate: Module | None = None
+        self.outcome: StepValidation | None = None
+        self.result_module: Module | None = None
+        steps = attempt.steps
+        if steps and steps[-1].step_id == "quality" and steps[-1].status == "invalid":
+            steps = (
+                *steps[:-1],
+                steps[-1].model_copy(
+                    update={
+                        "status": "pending",
+                        "issues": (),
+                        "output_sha256": None,
+                    }
+                ),
+            )
+        pending = attempt.model_copy(
+            update={
+                "status": "pending",
+                "issues": (),
+                "result_sha256": None,
+                "payload_sha256": None if attempt.issues else attempt.payload_sha256,
+                "steps": steps,
+            }
+        )
+        self._view = snapshot.model_copy(
+            update={
+                "attempts": tuple(
+                    pending if a.ticket_id == attempt.ticket_id else a for a in snapshot.attempts
+                ),
+            }
+        )
+
+    def __getattr__(self, _name: str) -> Any:
+        raise ValueError("Historical verification has no mutating or export capability")
+
+    def read(self) -> ExecutionSnapshot:
+        return self._view
+
+    def pack(self, snapshot: ExecutionSnapshot | None = None) -> PreparedPack:
+        if snapshot is not None and snapshot != self._view and snapshot != self._snapshot:
+            raise ValueError("Foreign historical snapshot")
+        return self._origin.pack(self._snapshot)
+
+    def payload(self, digest: str) -> str:
+        return self._origin.payload(digest)
+
+    def step_output(self, digest: str) -> str:
+        return self._origin.step_output(digest)
+
+    def result(self, digest: str) -> Module:
+        return self._origin.result(digest)
+
+    def head_module(self, head: Head) -> Module:
+        return self._origin.head_module(head)
+
+    def replay(self) -> None:
+        if self._active or self.result_module is not None:
+            raise ValueError("Historical promotion already replayed")
+        self._active = True
+        try:
+            returned = promote_cp1(
+                cast(Execution, self),
+                self._attempt.ticket_id,
+                self.payload(self._attempt.steps[-1].payload_sha256),
+            )
+            if returned != self._attempt or self.result_module is None:
+                raise ValueError("Historical promotion did not settle its retained attempt")
+        finally:
+            self._active = False
+
+    def finish(
+        self,
+        ticket_id: str,
+        payload: str,
+        validator: Callable[[Module], tuple[str, ...]],
+        *,
+        interruption: str | None = None,
+        qualification: Qualification | None = None,
+    ) -> Attempt:
+        attempt = self._attempt
+        if (
+            not self._active
+            or self.result_module is not None
+            or attempt.issues
+            or ticket_id != attempt.ticket_id
+            or interruption is not None
+            or qualification != PROMOTED
+            or attempt.payload_sha256 is None
+            or payload != self.payload(attempt.payload_sha256)
+        ):
+            raise ValueError("Unexpected historical finish callback")
+        candidate = Module.model_validate_json(payload)
+        finished, result = settle(
+            self._snapshot,
+            attempt,
+            payload,
+            validator,
+            pack=self.pack(),
+            load=self.head_module,
+        )
+        if finished != attempt or result != self.result(attempt.result_sha256 or ""):
+            raise ValueError("CP1 promoted settlement differs")
+        self.candidate, self.result_module = candidate, result
+        return finished
+
+    def submit_step(
+        self,
+        ticket_id: str,
+        module_id: str,
+        sequence: tuple[str, ...],
+        step_id: str,
+        payload: str,
+        validator: Callable[[PreparedPack, Attempt], StepValidation],
+    ) -> Attempt:
+        attempt = self._attempt
+        retained = attempt.steps[-1]
+        if (
+            not self._active
+            or self.result_module is not None
+            or ticket_id != attempt.ticket_id
+            or module_id != "CP-1"
+            or sequence != CP1_PROMOTION
+            or step_id != "quality"
+            or retained.step_id != "quality"
+            or retained.status != "invalid"
+            or payload != self.payload(retained.payload_sha256)
+        ):
+            raise ValueError("Unexpected historical quality callback")
+        pending = next(a for a in self._view.attempts if a.ticket_id == ticket_id)
+        outcome = validator(self.pack(), pending)
+        _checked_cp1_step(self._origin, retained, outcome)
+        self.result_module = _cp1_failed_result(self._origin, self._snapshot, attempt, outcome)
+        self.outcome = outcome
+        return attempt
+
+
+def _cp1_history(
+    store: Execution,
+    snapshot: ExecutionSnapshot,
+    attempt: Attempt,
+) -> StepValidation | None:
+    """Authenticate ordered prefixes and every retained invalid within-attempt repair."""
+    chain = step_chain("CP-1")
+    steps = attempt.steps
+    if (
+        not steps
+        or tuple(s.step_id for s in steps) != chain.steps[: len(steps)]
+        or len(steps) > len(chain.steps)
+    ):
+        raise ValueError("CP1 retained chain differs")
+    repair_indices = [
+        chain.steps.index(s.step_id) for s in attempt.step_repairs if s.step_id in chain.repairable
+    ]
+    if len(repair_indices) != len(attempt.step_repairs) or repair_indices != sorted(
+        set(repair_indices)
+    ):
+        raise ValueError("CP1 repair order differs")
+    pack = store.pack(snapshot)
+    for repair in attempt.step_repairs:
+        index = chain.steps.index(repair.step_id)
+        if index >= len(steps) or repair.inputs != _step_inputs(attempt, steps[:index]):
+            raise ValueError("CP1 repair prefix differs")
+        store.payload(repair.payload_sha256)
+        replay = attempt.model_copy(update={"steps": (*steps[:index], repair)})
+        _checked_cp1_step(store, repair, validate_cp1_stage(store, pack, replay))
+    invalid = None
+    for index, step in enumerate(steps):
+        if step.inputs != _step_inputs(attempt, steps[:index]) or step.status not in (
+            "valid",
+            "invalid",
+        ):
+            raise ValueError("CP1 step prefix differs")
+        if step.status == "invalid" and index != len(steps) - 1:
+            raise ValueError("CP1 invalid stage is not final")
+        store.payload(step.payload_sha256)
+        if step.output_sha256 is not None:
+            store.step_output(step.output_sha256)
+        if step.step_id == "quality":
+            continue  # promote_cp1 rederives its exact public quality callback below.
+        replay = attempt.model_copy(update={"steps": steps[: index + 1]})
+        outcome = validate_cp1_stage(store, pack, replay)
+        _checked_cp1_step(store, step, outcome)
+        if step.status == "invalid":
+            if step.step_id in chain.repairable and step.step_id not in {
+                r.step_id for r in attempt.step_repairs
+            }:
+                raise ValueError("CP1 invalid repairable stage has no first rejection")
+            invalid = outcome
+    return invalid
+
+
+def _verify_cp1_attempt(
+    store: Execution,
+    snapshot: ExecutionSnapshot,
+    attempt: Attempt,
+    producer: Module,
+) -> None:
+    """Re-enter existing public CP1 promotion or its exact retained core failure route."""
+    run = snapshot.run
+    if (
+        attempt.module_id != "CP-1"
+        or attempt.status != "finished"
+        or attempt.interruption is not None
+        or attempt.number != producer.attempt
+        or attempt.result_sha256 != producer.content_hash()
+        or attempt.inputs != current_inputs(snapshot, "CP-1")
+        or len({i.input_id for i in attempt.inputs}) != len(attempt.inputs)
+        or (producer.run_id, producer.issuer_id, producer.as_of, producer.method_version)
+        != (run.run_id, run.issuer_id, run.as_of, run.method_version)
+    ):
+        raise ValueError("CP1 finished identity differs")
+    related = tuple(
+        a for a in snapshot.attempts if a.module_id == "CP-1" and a.inputs == attempt.inputs
+    )
+    if attempt.number == 0:
+        if (
+            attempt.repair_of is not None
+            or attempt.repair_issues
+            or not related
+            or related[0] != attempt
+        ):
+            raise ValueError("CP1 first attempt ancestry differs")
+    else:
+        previous = [a for a in snapshot.attempts if a.ticket_id == attempt.repair_of]
+        if (
+            len(previous) != 1
+            or len(related) != 2
+            or related != (previous[0], attempt)
+            or previous[0].number != 0
+            or not previous[0].issues
+            or attempt.repair_issues != previous[0].issues
+        ):
+            raise ValueError("CP1 repair ancestry differs")
+        prior = store.result(previous[0].result_sha256 or "")
+        if prior.status != "rejected":
+            raise ValueError("CP1 repair predecessor is not rejected")
+        _verify_cp1_attempt(store, snapshot, previous[0], prior)
+    invalid = _cp1_history(store, snapshot, attempt)
+    if attempt.issues:
+        if (
+            producer.status != ("rejected" if attempt.number == 0 else "blocked")
+            or attempt.steps[-1].status != "invalid"
+        ):
+            raise ValueError("CP1 failure status differs")
+        if attempt.steps[-1].step_id == "quality":
+            probe = _CP1Verification(store, snapshot, attempt)
+            probe.replay()
+            if probe.result_module != producer:
+                raise ValueError("CP1 quality failure differs")
+        elif invalid is None or _cp1_failed_result(store, snapshot, attempt, invalid) != producer:
+            raise ValueError("CP1 retained failure differs")
+        return
+    if (
+        producer.status not in ("accepted", "restricted")
+        or tuple(s.step_id for s in attempt.steps) != CP1_PROMOTION
+        or any(s.status != "valid" for s in attempt.steps)
+    ):
+        raise ValueError("CP1 producer is not promoted")
+    probe = _CP1Verification(store, snapshot, attempt)
+    registers = cp1_registers(cast(Execution, probe), attempt.ticket_id)
+    tail = registers.module.inputs
+    expected = (*attempt.inputs, *tail)
+    if (
+        tuple(i.input_id for i in tail)
+        != ("pack", "financial-review", "downstream-report", "statement-history")
+        or any(i.status != "accepted" for i in tail)
+        or producer.inputs != expected
+        or len({i.input_id for i in expected}) != len(expected)
+    ):
+        raise ValueError("CP1 canonical provenance differs")
+    probe.replay()
+    handoff = CP1Handoff.model_validate_json(
+        store.step_output(attempt.steps[-1].output_sha256 or "")
+    )
+    quality = assess_quality(
+        cp1_quality_inputs(registers),
+        QualityReview.model_validate_json(store.payload(attempt.steps[-1].payload_sha256)),
+    )
+    ledger = registers.downstream.inputs.narrative.inputs.ledger
+    if (
+        probe.candidate is None
+        or probe.result_module != producer
+        or handoff.registers_sha256 != registers.content_hash()
+        or handoff.quality != quality
+        or quality.confidence.qa_status == "Blocked"
+        or handoff.gap_limitations != ledger.limitations
+        or handoff.candidate_sha256 != probe.candidate.content_hash()
+    ):
+        raise ValueError("CP1 handoff differs")
+    envelope = Envelope(
+        run=run,
+        module=probe.candidate,
+        registers_sha256=registers.content_hash(),
+        gap_limitations=ledger.limitations,
+        quality=quality,
+        journal=attempt.inputs,
+    )
+    markdown, sidecar = write_envelope(envelope)
+    if (
+        text_sha256(markdown) != handoff.envelope_sha256
+        or text_sha256(sidecar) != handoff.sidecar_sha256
+        or envelope_issues(markdown, sidecar)
+        or read_envelope(markdown, sidecar) != envelope
+    ):
+        raise ValueError("CP1 envelope differs")
+
+
+class _RecordingExecution(Execution):
+    """Same store directory; remembers every blob digest read (and hash-checked) through it."""
+
+    def __init__(self, directory: Path) -> None:
+        super().__init__(directory)
+        self.touched: set[str] = set()
+
+    def _load(self, sha256: str) -> bytes:
+        raw = super()._load(sha256)
+        self.touched.add(sha256)
+        return raw
+
+
+# In-process only, never persisted. Key: (snapshot content hash, producer result hash). Value:
+# the blob digests the full verification read. A hit re-reads and hash-checks each of them, so
+# tampered (SH-R16) or missing (SH-R12) bytes still refuse; a different snapshot always misses.
+# No store or writer handle is cached.
+_CP1_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
+_CP1_VERIFIED_LIMIT = 16
+_CP1_VERIFIED_LOCK = Lock()
+
+
+def _verify_cp1_attempt_memoised(
+    store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt, producer: Module
+) -> None:
+    key = (sha256(snapshot.model_dump_json().encode()).hexdigest(), producer.content_hash())
+    with _CP1_VERIFIED_LOCK:
+        touched = _CP1_VERIFIED.get(key)
+    if touched is not None:
+        for digest in sorted(touched):
+            store._load(digest)  # raises ValueError for missing or tampered bytes
+        return
+    recorder = _RecordingExecution(store.directory)
+    _verify_cp1_attempt(recorder, snapshot, attempt, producer)
+    with _CP1_VERIFIED_LOCK:
+        while len(_CP1_VERIFIED) >= _CP1_VERIFIED_LIMIT:
+            del _CP1_VERIFIED[next(iter(_CP1_VERIFIED))]
+        _CP1_VERIFIED[key] = frozenset(recorder.touched)
+
+
+def _cp1_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
+    selected = [
+        a
+        for a in snapshot.attempts
+        if a.module_id == "CP-1" and a.result_sha256 == producer.content_hash()
+    ]
+    if len(selected) != 1:
+        return False
+    _verify_cp1_attempt_memoised(store, snapshot, selected[0], producer)
+    qualification = PROMOTED if producer.status in ("accepted", "restricted") else None
+    return tuple(h for h in snapshot.heads if h.module_id == "CP-1") == (
+        head_of(producer, qualification),
+    )
+
+
 def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
-    """Recognize only CP0's authenticated final canonical-review provenance tail."""
+    """Authenticate CP0 canonical readiness and CP1's actual promotion/failure history."""
     expected = current_inputs(snapshot, producer.module_id)
+    if producer.module_id == "CP-1":
+        return _cp1_producer_inputs(store, snapshot, producer)
     if producer.module_id != "CP-0":
         return producer.inputs == expected
     selected = [
@@ -200,6 +655,7 @@ def _execution_state(
                 or previous[0].module_id != attempt.module_id
                 or previous[0].number != 0
                 or previous[0].inputs != attempt.inputs
+                or (attempt.module_id == "CP-4" and attempt.repair_issues != previous[0].issues)
             ):
                 raise SourceError("identity_mismatch")
         ids = tuple(s.source_id for s in pack.sources)
@@ -208,6 +664,8 @@ def _execution_state(
         if not declared <= set(ids) or not readable <= set(ids):
             raise SourceError("identity_mismatch")
         sources = tuple(ident for ident in ids if ident in declared and ident in readable)
+        if attempt.module_id == "CP-4" and not sources:
+            raise SourceError("not_permitted")
         if store.read().content_hash() != snapshot.content_hash():
             raise SourceError("stale_binding")
         return snapshot, attempt, pack, sources

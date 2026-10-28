@@ -2920,3 +2920,12 @@ new FP05 blocks downside-stress and break-points; static single-period stress re
 adaptation for review) and CP-3/CP-6 (one synthetic market source; CP-3 freezes on R3 now, CP-6
 after S1b/CP-5; CP-6 view narrowed to drop claim citations; H1 is its own host.py task). Rulings
 are at the end of each report.md. Independent reviews: CP-4 and CP-2A running; CP-3 (R3) queued.
+
+L2 integrated build-only (2026-10-28): `src/deploy_workflow/host.py` (sha256 a1596717…) and
+`tests/test_source_tools.py` from `coordinator-1-source-host` after fix rounds 1 and 2
+(mx-adversary review 1: no production defect; mx-feature review 2 APPROVE; the key mutant and
+the no-reread mutant are killed by the new tests in probes). Static gates exit 0 on the
+checkpoint base; the test file is a deferred run. CP-4 owner oracle review 1: arithmetic and
+positive/gap oracles match the product cell for cell; H1 (false-same case must be a refusal
+expectation) and H2 (gate marker list frozen as ["has the meaning assigned in", "is not
+supplied with this copy"], verifier replay, tamper) plus M1/M2/L1–L6 go to revision 2.

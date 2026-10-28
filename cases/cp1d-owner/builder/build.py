@@ -608,7 +608,8 @@ def build_case(name, sub=None):
                        ("accepted", "Accepted add-backs"), ("supported", "Supported adjusted EBITDA"), ("unsupported", "Add-backs not accepted")):
         reg("T1D.3", row, label, ["value"])
     # T1D.4 tie-out
-    def tie(row, label, stated, recomputed, source_fact):
+    def tie(row, label, stated, recomputed, source_fact, line=None):
+        cit = [{"source_id": "bridge", "locator": "page:1", "quote": line}] if line else None
         if not bridge:
             for f_, l_ in (("reported", "Stated"), ("recomputed", "Recomputed"), ("difference", "Difference")):
                 gapf("T1D.4", row, f_, l_, "amount", na, "not_applicable")
@@ -618,17 +619,19 @@ def build_case(name, sub=None):
                 if v is None:
                     gapf("T1D.4", row, f_, l_, "amount", "Not stated in the bridge source" if f_ == "reported" else "Not calculable: a proposed amount is not stated")
                 else:
-                    num("T1D.4", row, f_, l_, v, "amount", "Bridge source amount" if f_ == "reported" else "Recomputed", (source_fact,) if f_ == "recomputed" else (), "source" if f_ == "reported" else "calculated")
+                    num("T1D.4", row, f_, l_, v, "amount", "Bridge source amount" if f_ == "reported" else "Recomputed", (source_fact,) if f_ == "recomputed" else (), "source" if f_ == "reported" else "calculated", cit if f_ == "reported" else None)
             gapf("T1D.4", row, "difference", "Difference", "amount", "Not compared: one side is not available")
             text("T1D.4", row, "result", "Result", "Not compared")
         else:
-            num("T1D.4", row, "reported", "Stated", stated, "amount", "Bridge source amount", (), "source")
+            num("T1D.4", row, "reported", "Stated", stated, "amount", "Bridge source amount", (), "source", cit)
             num("T1D.4", row, "recomputed", "Recomputed", recomputed, "amount", "Recomputed from the rows", (source_fact,))
             num("T1D.4", row, "difference", "Difference", recomputed - stated, "amount", "Recomputed minus stated", (f"T1D.4.{row}.recomputed", f"T1D.4.{row}.reported"))
             text("T1D.4", row, "result", "Result", "Reconciled" if recomputed == stated else "Differs")
         reg("T1D.4", row, label, ["reported", "recomputed", "difference", "result"])
-    tie("proposed_total", "Proposed add-backs: stated total against rows", totals.get(TOTAL_LABEL, {}).get("amount") if bridge else None, claimed, "T1D.3.claimed.value")
-    tie("mgmt_ebitda", "Management EBITDA: stated against statement EBITDA plus rows", totals.get(MGMT_LABEL, {}).get("amount") if bridge else None, mgmt, "T1D.3.mgmt.value")
+    tie("proposed_total", "Proposed add-backs: stated total against rows", totals.get(TOTAL_LABEL, {}).get("amount") if bridge else None, claimed, "T1D.3.claimed.value",
+        totals.get(TOTAL_LABEL, {}).get("line"))
+    tie("mgmt_ebitda", "Management EBITDA: stated against statement EBITDA plus rows", totals.get(MGMT_LABEL, {}).get("amount") if bridge else None, mgmt, "T1D.3.mgmt.value",
+        totals.get(MGMT_LABEL, {}).get("line"))
     for row, label, key, fn, uc in (("cp1_total_leverage", "Statement total leverage against CP-1", "total_leverage_adjusted", debt, "multiple"),
                                      ("cp1_net_leverage", "Statement net leverage against CP-1", "net_leverage_adjusted", ndebt, "multiple")):
         rec = div(fn, start)

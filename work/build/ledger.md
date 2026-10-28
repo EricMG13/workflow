@@ -326,3 +326,4 @@
 - 19:29 LEAD clarification (addendum 4): letter after a run is whole (2.5m, 25bps read); fixer redirected. Asked LEAD: letter-before refusal (held fail-closed), ordinals (2nd reads 2 pending).
 - 19:30 Addendum 5 cherry-picked (01f114f): identifier runs refused, ordinal runs refused, unit suffixes readable; fixer told.
 - 19:36 CP-3 built (fc380d6); R3 create refuses not_permitted (CP-MODEL deterministic planned before CP-3) — asked LEAD. CP-4 sent back to finish brief parts (driver, D3, adapter/bindings tests).
+- 19:36 CP-L10 built (3b3ad2b+e0bb540), CP-2D built (545a8a7..1ec1b40), CP-1D owner fix round 1 (a1aa19d, frozen moved 0, gates 0).

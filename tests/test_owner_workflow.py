@@ -205,6 +205,9 @@ def _requested(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
     return PreparedPack(run=run, sources=pack.sources)
 
 
+# CP-5 has no `OWNER_SPECS` row on this branch (unregistered), so create refuses it. Once it is
+# registered it still refuses: CP-5 requires CP-MODEL (registry fan-in), and an analytical module
+# after CP-MODEL is admitted only when neither consumes the other (rulings 2026-10-28, round 2).
 @pytest.mark.parametrize("modules", [("CP-1", "CP-5", "CP-MODEL"), ("CP-NOT-A-MODULE",)])
 def test_unsupported_and_unknown_selection_write_nothing(
     tmp_path: Path, modules: tuple[str, ...]

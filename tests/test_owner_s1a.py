@@ -307,6 +307,10 @@ def _selection(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
 
 def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) -> None:
     pack = runs.make_pack("positive")
+    # CP-5 is unregistered on this branch (no `OWNER_SPECS` row), so create refuses it. Once it is
+    # registered it still refuses: CP-5 requires CP-MODEL (registry fan-in), and an analytical
+    # module after CP-MODEL is admitted only when neither consumes the other (rulings 2026-10-28,
+    # round 2).
     with pytest.raises(WorkflowError) as selected:
         OwnerWorkflow.create(
             tmp_path / "store",

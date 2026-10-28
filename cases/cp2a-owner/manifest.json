@@ -108,6 +108,14 @@
    "submission": "submissions.json interest_undisclosed",
    "expected": "expected.json interest_undisclosed",
    "execution": "composer only: the positive CP-1 module's facts with the base cash-interest fact and CP-1's coverage fact set to status missing (limitation 'Cash interest is not disclosed in the supplied statements.'); no store, no run (a promoted head cannot be edited)"
+  },
+  "fixture_quarter_known": {
+   "run": null,
+   "pack": null,
+   "base_period": "Q4 25: 2025-10-01 to 2025-12-31",
+   "submission": "submissions.json fixture_quarter_known",
+   "expected": "expected.json fixture_quarter_known",
+   "execution": "composer only (round 6 P1-W item 7): the Q4 25 quarter base with CP-1 facts for the quarter flows (7.5, -1.25, 2.25), the closing balances (50, 20) and the four LTM Q4 25 ratios, all known; every ratio and ratio-based break is not_applicable on a single-quarter base; no store, no run"
   }
  },
  "refusal_cases": "submissions.json refusals (payloads) and expected.json refusals (exact issues); each is one journaled invalid step of CP-2A attempt 0 on the positive CP-1 head",

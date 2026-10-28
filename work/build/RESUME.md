@@ -19,7 +19,7 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 | CP-4C round 11 (cp4c/round11-brief.md) | lane | a2c15c441717ec41c | mx-adversary by ruling id, merge |
 | H1b mx-adversary review | 0717fad (worktree h1b) | impl mx-feature ab8d695f66c635633 | merge |
 | CP-3C fix 2, tests only (cp3c/fix2-brief.md; round 2 of 2) | b9972fd | aa5a4817fa00cd287 | mx-precise re-review, merge |
-| Shared defect-class library + inventory (stage1/defect-classes-brief.md) | lane | see ledger (worktree defect-classes) | per-module fix rounds from the inventory |
+| Defect-class library mx-feature review | c032752 (worktree defect-classes) | impl a0170223c25fb1f60 | merge, then class rounds (stage1/class-round-brief.md): quote readers CP-3D, CP-8, CP-2E, CP-1D first, then blank-only CP-1C, CP-2D, CP-2G, CP-DR, CP-L10; at most 6 Opus at once |
 
 
 ## Next when a slot frees

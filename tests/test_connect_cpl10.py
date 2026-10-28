@@ -14,6 +14,7 @@ import json
 import shutil
 from collections.abc import Iterator
 from dataclasses import fields, replace
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -57,7 +58,19 @@ def _cp1_with_real_citations(pack: PreparedPack) -> list[Fact]:
     cite = Citation(
         source_id="financial", source_sha256=financial.sha256, locator=span.locator, quote=quote
     )
-    return [f.model_copy(update={"citations": (cite,)}) for f in _cp1_facts()]
+    return [
+        f.model_copy(update={"citations": (cite,), "amount": _padded(f.amount)})
+        for f in _cp1_facts()
+    ]
+
+
+def _padded(amount: Decimal | None) -> Decimal | None:
+    """A genuine CP-1 stores `17.50` where the oracle spells `17.5` (M1): pad to two places
+    whenever that is lossless, so the view must write the canonical text, not the stored one."""
+    if amount is None:
+        return None
+    padded = amount.quantize(Decimal("0.01"))
+    return padded if padded == amount else amount
 
 
 def _settle(store: Execution, module_id: str, facts: list[Fact], limitation: str | None) -> None:
@@ -98,6 +111,25 @@ def settled(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
     store = Execution.create(root / "store", pack)
     _settle(store, "CP-0", [_t8("CP-1"), _t8("CP-L10")], CP0_LIMIT)
     _settle(store, "CP-1", _cp1_with_real_citations(pack), CP1_LIMIT)
+    yield root / "store"
+
+
+@pytest.fixture(scope="module")
+def varied(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
+    """A public run of another issuer and as_of, CP-0 restricted and CP-1 accepted, so no
+    constant equal to the oracle's run or statuses can pass (L1)."""
+    root = tmp_path_factory.mktemp("cpl10-varied")
+    run = RUN.model_copy(
+        update={
+            "case_kind": "public",
+            "issuer_name": "Other Issuer plc",
+            "as_of": date(2027, 3, 31),
+        }
+    )
+    pack = PreparedPack(run=run, sources=financial.make_pack().sources)
+    store = Execution.create(root / "store", pack)
+    _settle(store, "CP-0", [_t8("CP-1"), _t8("CP-L10")], CP0_LIMIT)
+    _settle(store, "CP-1", _cp1_with_real_citations(pack), None)
     yield root / "store"
 
 
@@ -582,3 +614,243 @@ def test_the_totals_binding_is_an_amount_slot() -> None:
         "TL10.3": "text",
         "TL10.4": "text",
     }
+
+
+# --- M1: the view writes CP-1's canonical exact decimal ---------------------------------------
+
+
+def _oracle_amounts() -> list[str]:
+    return [
+        v["amount_exact"]
+        for case in ("positive", "limited")
+        for t in EXPECTED["cases"][case]["view_topics"]
+        for v in t["values"]
+        if v["amount_exact"] is not None
+    ]
+
+
+@pytest.mark.parametrize("text", sorted(set(_oracle_amounts())))
+def test_every_oracle_amount_exact_round_trips_whatever_the_stored_padding(text: str) -> None:
+    value = Decimal(text)
+    variants = {
+        value,
+        value.quantize(Decimal("0.01")) if value == value.quantize(Decimal("0.01")) else value,
+    }
+    variants.add(Decimal(f"{text}0") if "." in text else Decimal(f"{text}.00"))
+    for variant in variants:
+        assert cpl10._plain_text(variant) == text, variant
+
+
+def test_the_fixture_really_stores_padded_amounts(settled: Path) -> None:
+    store = Execution(settled)
+    cp1 = store.head_module(_heads(store)["CP-1"])
+    stored = {str(f.amount) for f in cp1.facts if f.amount is not None}
+    assert {"17.50", "20.00", "47.50", "50.00", "30.00"} <= stored
+
+
+# --- L1: the adapter, the view and the reader vary with the run ------------------------------
+
+
+def test_adapter_reads_the_run_and_each_heads_own_status(varied: Path) -> None:
+    store = Execution(varied)
+    heads = _heads(store)
+    assert (heads["CP-0"].status, heads["CP-1"].status) == ("restricted", "accepted")
+    got = cpl10.cpl10_upstream(store, _unbegun(varied))
+    assert got.issuer_name == "Other Issuer plc" and got.as_of == date(2027, 3, 31)
+    assert (got.cp0_status_word, got.cp1_status_word) == ("With limitations", "Pass")
+    assert got.inherited_limitations == (CP0_LIMIT,)
+    assert (got.cp0_result_sha256, got.cp1_result_sha256) == (
+        heads["CP-0"].result_sha256,
+        heads["CP-1"].result_sha256,
+    )
+
+
+def test_a_screen_over_another_issuer_names_it_and_settles(varied: Path, tmp_path: Path) -> None:
+    store = _fork(varied, tmp_path)
+    _submit(store, _positive())
+    module = store.head_module(_heads(store)["CP-L10"])
+    cells = {f.fact_id: f for f in module.facts}
+    assert cells["TL10.1.cp1.scope_status"].text == "Pass"
+    assert cells["TL10.1.cp0.scope_status"].text == "With limitations"
+    assert module.as_of == date(2027, 3, 31)
+    assert module.inherited_limitations == (CP0_LIMIT,)
+    assert "Synthetic case; not real issuer qualification" not in module.limitations
+
+
+def test_reader_follows_the_head_it_is_given(settled: Path, tmp_path: Path) -> None:
+    store = _fork(settled, tmp_path)
+    _submit(store, json.dumps(SUBMISSIONS["limited"]))
+    got = cpl10.cpl10_reader(store, _heads(store)["CP-L10"])
+    want = EXPECTED["cases"]["limited"]
+    assert dict(got.counts) == want["counts"] != POSITIVE["counts"]
+    assert {t.topic_id: t.rank for t in got.topics} == {
+        t["topic_id"]: t["rank"] for t in want["topics"]
+    }
+    assert {t.topic_id: t.materiality for t in got.topics} == {
+        t["topic_id"]: t["materiality"] for t in want["topics"]
+    }
+    assert any(t.change is None for t in got.topics)  # a missing change stays a gap, not 0
+
+
+def test_reader_on_a_blocked_head_returns_status_and_hash_only(
+    settled: Path, tmp_path: Path
+) -> None:
+    store = _fork(settled, tmp_path)
+    by_id = {r["id"]: r for r in SUBMISSIONS["refusals"]}
+    _submit(store, json.dumps(by_id["r01"]["payload"]))
+    _submit(store, json.dumps(by_id["r08"]["payload"]))
+    head = _heads(store)["CP-L10"]
+    got = cpl10.cpl10_reader(store, head)
+    assert (got.status, got.result_sha256) == ("blocked", head.result_sha256)
+    assert got.topics == () and dict(got.counts) == {}
+
+
+# --- L3: only a bind failure is an analyst-visible issue --------------------------------------
+
+
+def test_a_store_integrity_failure_propagates_from_the_validator(
+    settled: Path, tmp_path: Path
+) -> None:
+    store = _fork(settled, tmp_path)
+    ticket = store.begin("CP-L10")
+    pending = store.submit_step(
+        ticket.ticket_id,
+        "CP-L10",
+        cpl10.STEP_IDS,
+        STEP,
+        _positive(),
+        lambda _pack, _attempt: StepValidation(output="{}"),
+    )
+    cp1 = next(i for i in pending.inputs if i.input_id == "CP-1")
+    blob = store.directory / "blobs" / cp1.sha256
+    blob.write_bytes(blob.read_bytes() + b" ")
+    with pytest.raises(ValueError, match="hash"):
+        cpl10._validate_step(store, store.pack(), pending)
+    with pytest.raises(ValueError, match="hash"):
+        cpl10.view(store, pending)
+
+
+# --- model text: nothing raises after the binding write ---------------------------------------
+
+HOSTILE = ("Rates matter [a lot", "{low", "{}", "x }")
+
+
+def _free_text_paths() -> list[tuple[Any, ...]]:
+    sub = json.loads(_positive())
+    paths: list[tuple[Any, ...]] = []
+    for i in range(len(sub["assessments"])):
+        paths += [("assessments", i, "assessment"), ("assessments", i, "credit_transmission")]
+    paths.append(("overall", "rationale"))
+    for i in range(len(sub["gaps"])):
+        paths += [("gaps", i, f) for f in ("gap", "why_it_matters", "action")]
+    return paths
+
+
+@pytest.mark.parametrize("bad", HOSTILE)
+@pytest.mark.parametrize("path", _free_text_paths(), ids=lambda p: ".".join(map(str, p)))
+def test_hostile_text_in_any_free_text_field_never_raises_after_the_write(
+    settled: Path, tmp_path: Path, path: tuple[Any, ...], bad: str
+) -> None:
+    sub = json.loads(_positive())
+    target: Any = sub
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = bad
+    store = _fork(settled, tmp_path)
+    _, submitted = _submit(store, json.dumps(sub))  # must not raise
+    journal = submitted.journal
+    assert journal.status == "finished"
+    # a journaled issue, or plain data the settled module holds as sent
+    assert journal.issues or "CP-L10" in _heads(store)
+
+
+# --- M2: the run driver binds the readiness markers from the read's own spelling -------------
+
+
+def _readiness_body(period: str = "Q{n} 25") -> str:
+    lines = ['kind=kpi entries=20 columns=["evidence_id","key","period","amount"]']
+    for n in range(1, 5):
+        for k in ("ebitda", "fcf", "cash_closing", "total_debt", "net_debt"):
+            lines.append(json.dumps([f"ev-{k}-{n}", k, period.format(n=n), "1"]))
+            lines.append(json.dumps([f"late-{k}-{n}", k, "LTM Q4 25", "1"]))
+    lines.append('kind=gap entries=2 columns=["evidence_id","gap_id","text"]')
+    lines += ['["g-1","gap-a","x"]', '["g-2","gap-b","y"]']
+    return "\n".join(lines)
+
+
+def test_readiness_literal_binds_markers_from_the_short_period_spelling() -> None:
+    runs: Any = importlib.import_module("cpl10_runs")
+    document = json.loads(runs.readiness_literal(_readiness_body()))
+    (consumer,) = document["consumers"]
+    ids = consumer["requirements"][0]["evidence_ids"]
+    assert ids[:5] == [
+        f"ev-{k}-1" for k in ("ebitda", "fcf", "cash_closing", "total_debt", "net_debt")
+    ]
+    assert ids[-1] == "ev-net_debt-4" and len(ids) == 20
+    assert consumer["gaps"][0]["gap_ids"] == ["gap-a", "gap-b"]
+    assert "inputs_sha256" not in document
+
+
+def test_readiness_literal_fails_loudly_on_an_unmatched_period() -> None:
+    runs: Any = importlib.import_module("cpl10_runs")
+    with pytest.raises(RuntimeError, match="no kpi evidence for ebitda, quarter 1"):
+        runs.readiness_literal(_readiness_body("Quarter {n}"))
+
+
+# --- acceptance 6: the navigator states (D4 is applied; the Front Page blocks need G2) --------
+
+NAVIGATOR = EXPECTED["rendered"]["front_page_states"]["navigator"]["states"]
+
+
+def _navigator_state(view: View) -> dict[str, Any]:
+    rows = report_view.navigator(view)
+    footer: dict[str, list[str]] = {}
+    for row in rows:
+        if row.number is None:
+            footer.setdefault(row.word, []).append(row.module_id)
+    return {
+        "rows": [
+            {"number": r.number, "module_id": r.module_id, "word": r.word, "glyph": r.glyph}
+            for r in rows
+            if r.number is not None
+        ],
+        "footer": footer,
+        "row_count": len(rows),
+    }
+
+
+def test_navigator_with_cp1_unrun_equals_the_oracle_state(tmp_path: Path) -> None:
+    store = Execution.create(tmp_path / "store", _pack())
+    got = _navigator_state(store.view())
+    want = NAVIGATOR["d4_cp1_unrun"]
+    assert got == {"rows": want["rows"], "footer": want["footer"], "row_count": 25}
+
+
+def test_navigator_with_cp1_settled_equals_the_oracle_state(settled: Path) -> None:
+    got = _navigator_state(Execution(settled).view())
+    want = NAVIGATOR["d4_cp1_settled"]
+    assert got == {"rows": want["rows"], "footer": want["footer"], "row_count": 25}
+
+
+def test_the_settled_screen_gets_its_own_navigator_row(settled: Path, tmp_path: Path) -> None:
+    store = _fork(settled, tmp_path)
+    _submit(store, _positive())
+    rows = {r["module_id"]: r for r in _navigator_state(store.view())["rows"]}
+    assert (rows["CP-L10"]["number"], rows["CP-L10"]["word"]) == (3, "With limitations")
+
+
+@pytest.mark.skip(
+    reason="blocked on G2 (Stage 3): Front Page blocks, call band and rail population"
+)
+def test_front_page_blocks_and_rails_render_from_the_delivery_scope() -> None:
+    raise AssertionError("G2 owner_rendering does not exist yet")
+
+
+def test_reader_reports_the_status_of_the_head_it_is_given(settled: Path, tmp_path: Path) -> None:
+    store = _fork(settled, tmp_path)
+    _submit(store, _positive())
+    head = _heads(store)["CP-L10"]
+    stale = head.model_copy(update={"status": "stale", "notes": ("Input changed: CP-1",)})
+    got = cpl10.cpl10_reader(store, stale)
+    assert got.status == "stale" and got.result_sha256 == head.result_sha256
+    assert dict(got.counts) == POSITIVE["counts"]

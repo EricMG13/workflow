@@ -281,6 +281,11 @@ SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: ChangeScreenSubmission}
 # --- inputs -------------------------------------------------------------------------------------
 
 
+class UpstreamError(ValueError):
+    """The bound upstream cannot be read as the screen's operands (an unbound input or operand).
+    Only this is reported to the analyst as an issue; a store-integrity failure is not."""
+
+
 def bind_operands(facts: Iterable[Fact]) -> dict[str, Fact]:
     """The 28 T4.10 operands by label; zero or several matches refuse (never zero, never first)."""
     found: dict[str, list[Fact]] = {}
@@ -291,7 +296,7 @@ def bind_operands(facts: Iterable[Fact]) -> dict[str, Fact]:
     for label in OPERAND_LABELS:
         matches = found.get(label, [])
         if len(matches) != 1:
-            raise ValueError(f"unbound CP-1 operand: {label} ({len(matches)} matches)")
+            raise UpstreamError(f"unbound CP-1 operand: {label} ({len(matches)} matches)")
         bound[label] = matches[0]
     return bound
 
@@ -316,16 +321,18 @@ class Upstream:
                 label = f"{quarter.column} · {topic.cp1_metric}"
                 fact = self.cp1_facts.get(label)
                 if fact is None or fact.label != label:
-                    raise ValueError(f"unbound CP-1 operand: {label}")
+                    raise UpstreamError(f"unbound CP-1 operand: {label}")
                 if fact.status != "known":
                     continue  # ruling (f): units and scales are checked on known operands only
                 if fact.amount is None:
-                    raise ValueError(f"CP-1 operand without an amount: {label}")
+                    raise UpstreamError(f"CP-1 operand without an amount: {label}")
                 if fact.unit != topic.unit:
-                    raise ValueError(f"CP-1 operand unit {fact.unit} is not {topic.unit}: {label}")
+                    raise UpstreamError(
+                        f"CP-1 operand unit {fact.unit} is not {topic.unit}: {label}"
+                    )
                 scales.add(fact.scale)
             if len(scales) > 1:
-                raise ValueError(f"CP-1 operands of {topic.topic_id} differ in scale")
+                raise UpstreamError(f"CP-1 operands of {topic.topic_id} differ in scale")
 
     def operand(self, topic: Topic, period: str) -> Fact:
         return self.cp1_facts[f"{QUARTERS[PERIODS.index(period)].column} · {topic.cp1_metric}"]
@@ -1196,7 +1203,7 @@ class ScreenReport(Contract):
 def _bound(store: Execution, attempt: Attempt, module_id: str) -> tuple[Input, Module]:
     item = next((i for i in attempt.inputs if i.input_id == module_id), None)
     if item is None:
-        raise ValueError(f"The CP-L10 attempt binds no {module_id} input")
+        raise UpstreamError(f"The CP-L10 attempt binds no {module_id} input")
     return item, store.result(item.sha256)
 
 
@@ -1220,7 +1227,8 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
 
 
 def _plain_text(amount: Decimal | None) -> str | None:
-    return None if amount is None else format(amount, "f")
+    """CP-1's canonical exact decimal: no trailing zeros, no exponent (`17.50` reads `17.5`)."""
+    return None if amount is None else format(amount.normalize(_EXACT), "f")
 
 
 def context_block(*, upstream: Upstream) -> dict[str, object]:
@@ -1271,7 +1279,7 @@ def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
     adapter cannot bind is an identity failure of the read, never a partial view."""
     try:
         upstream = cpl10_upstream(historical, attempt)
-    except ValueError as error:
+    except UpstreamError as error:
         raise WorkflowError("identity_mismatch") from error
     body = json.dumps(
         context_block(upstream=upstream), ensure_ascii=False, separators=(",", ":"), allow_nan=False
@@ -1341,7 +1349,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
         return StepValidation(issues=parsed)
     try:
         upstream = cpl10_upstream(store, attempt)
-    except ValueError as error:
+    except UpstreamError as error:  # an integrity failure of the store is not caught here
         return StepValidation(issues=(f"CP-L10: {error}",))
     issues = validate_screen(submission=payload, upstream=upstream)
     if issues:
@@ -1437,6 +1445,8 @@ def cpl10_reader(store: Execution, head: Head) -> Cpl10Head:
     if head.module_id != MODULE_ID:
         raise ValueError(f"{head.module_id} is not a CP-L10 head")
     module = store.head_module(head)
+    if module.status == "blocked":  # a blocked head carries no tables: status and hash only
+        return Cpl10Head(module.status, head.result_sha256, (), {})
     facts = {f.fact_id: f for f in module.facts}
 
     def fact(table: str, row: str, field: str) -> Fact:

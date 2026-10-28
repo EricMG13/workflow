@@ -62,9 +62,9 @@ def readiness_literal(read_body: str) -> str:
     the FIRST kpi catalogue row of each (key, quarter column), and every narrative gap id."""
     fw = _fw()
     rows = fw.parsed_evidence(read_body)
-    columns = {
-        str(n): q["column"] for n, q in enumerate(_quarters(), 1)
-    }  # '1' -> 'Q1 25 (2025-01-01 to 2025-03-31)'
+    # the readiness read spells a kpi period by its short label (`Q1 25`), the T4.10 column
+    # label (`Q1 25 (2025-01-01 to 2025-03-31)`) up to its date range
+    columns = {str(n): label.split(" (")[0] for n, label in enumerate(_quarter_labels(), 1)}
     text = json.dumps(oracle()["submissions"]["cp1_downstream_review"])
 
     def evidence(match: re.Match[str]) -> str:
@@ -82,20 +82,15 @@ def readiness_literal(read_body: str) -> str:
     for consumer in document["consumers"]:
         for gap in consumer["gaps"]:
             gap["gap_ids"] = [g for i in gap["gap_ids"] for g in (gaps if i == ALL_GAPS else [i])]
-    try:
-        inputs = json.loads(read_body)["inputs_sha256"]
-    except (ValueError, KeyError, TypeError):
-        inputs = None  # the step pre-fills the hash binding when the read does not state it
-    if inputs is None:
-        document.pop("inputs_sha256", None)
-    else:
-        document["inputs_sha256"] = inputs
+    # the read body is line text, so it states no `inputs_sha256`: the step pre-fills the hash
+    # binding and checks it, and the literal leaves the key out
+    document.pop("inputs_sha256", None)
     return json.dumps(document)
 
 
-def _quarters() -> list[dict[str, str]]:
+def _quarter_labels() -> list[str]:
     columns = oracle()["manifest"]["fact_selection_rule"]["columns"]
-    return [columns[f"Q{n}"] for n in range(1, 5)]
+    return [columns[f"Q{n}"]["label"] for n in range(1, 5)]
 
 
 def start(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:

@@ -448,3 +448,64 @@ def test_compose_refuses_a_repeated_gap() -> None:
     sub = submission(SUBMISSIONS["refusal_inputs"]["gap_repeated"]["payload"])
     with pytest.raises(ValueError, match="appears twice"):
         compose(CpdrInputs(agenda=agenda(empty=False), submission=sub, as_of=AS_OF))
+
+
+# --- rulings round (docs/rulings/2026-10-28-stage1.md section CP-DR) -----------------------------
+
+
+def test_issue_order_with_many_defects() -> None:
+    # ruling R2: rule 1 per submitted gap; rule 2 per agenda gap; then per question in submission
+    # order: 3, 4, 5 per searched source in listed order, 6 per citation in order, 7. The strings
+    # are lease-literal (:111-:117) or pinned in expected.json#refusals for the same citation.
+    web = SUBMISSIONS["refusal_inputs"]["citation_outside_pack"]["payload"]["gaps"][0]
+    web_citation = web["questions"][0]["citations"][0]
+    forged = SUBMISSIONS["refusal_inputs"]["quote_not_verbatim"]["payload"]["gaps"][0]
+    forged_citation = forged["questions"][0]["citations"][0]
+    defective = edited(
+        TRANSACTIONS,
+        limitation="Asked about 2025.",
+        searched_sources=["web", "registry"],
+        citations=[web_citation, forged_citation],
+    )
+    payload = {
+        "gaps": [
+            {"gap_id": "invented-gap", "questions": [edited(OWNER, limitation=None)]},
+            {
+                "gap_id": GAP_ID,
+                "questions": [
+                    TRANSACTIONS,
+                    DISTRIBUTIONS,
+                    defective,
+                    POLICY,
+                    edited(OWNER, question_id="owner-two", searched_sources=[]),
+                ],
+            },
+        ]
+    }
+    quote_issue = EXPECTED["refusals"]["quote_not_verbatim"]["step_issues"][0]
+    assert check(submission(payload)) == (
+        "gap_id is not in the CP-0 agenda: invented-gap",
+        "a gap takes 1 to 4 research questions: missing-ownership-transaction",
+        "a not_found question states its limitation: owner-identity",
+        "question_id appears twice: transactions",
+        "an answered question carries no limitation: transactions",
+        "searched source is not a ready prepared source: transactions web",
+        "searched source is not a ready prepared source: transactions registry",
+        "Unavailable or changed source: web",
+        quote_issue,
+        "text must not contain a figure: transactions",
+        "searched_sources must name at least one prepared source: owner-two",
+    )
+
+
+def test_tdr3_layout() -> None:
+    # ruling R3: labels field.replace("_", " "), row header "Total", row label "All gaps", row kind
+    sub = submission(SUBMISSIONS["cpdr"]["partial"])
+    result = compose(CpdrInputs(agenda=agenda(empty=False), submission=sub, as_of=AS_OF))
+    (tdr3,) = (t for t in result.tables if t.table_id == "TDR.3")
+    assert [(c.field, c.label) for c in tdr3.columns] == [
+        (field, field.replace("_", " ")) for field in [*TOTAL_KEYS, "answered_share"]
+    ]
+    assert tdr3.row_header == "Total"
+    (row,) = tdr3.rows
+    assert (row.row_id, row.label, row.row_kind) == ("total", "All gaps", "row")

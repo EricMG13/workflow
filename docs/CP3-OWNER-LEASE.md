@@ -1,5 +1,7 @@
 # CP-3 (relative value) owner run lease - CP-3 half FROZEN by LEAD 2026-10-28 (draft rev 3); CP-6 half DRAFT rev 0, not frozen
 
+Re-pinned by LEAD 2026-10-28 in the serialised `methodology.json` change (branch `lead/methodology-serialised`; `work/lead/methodology-serialised/review.md` COMMIT): `methodology.json` 348fbc4b… → 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 (CP-L10 required + CP-1 and TL10.5; CP-1C T1C.1-T1C.8; CP-1D drops T1E.*; CP-2A drops T5.*); two scratch rebuilds identical. builder 80450c52… → 6dac614feb4fbd1a9a0fa7aa6b6c59ec5234f1b25c1829e3f555a2cba3bbcf7a; manifest 2cb324be… → e3cb221737a3930278924eb16ad67208d9967cad455043565a79b24dcfae25c6; expected unchanged; submissions unchanged. Pins elsewhere in this file are superseded where they differ.
+
 **Revision 3 (CP-3 half only; revisions 1 and 2 below, then `review-precise-r3-2.md` findings 1 and 2 and the Info note).** Revised after `review-precise-r3-1.md` and the LEAD rulings in `report.md` (M1 `column` of
 front-table facts, M2 tamper, M3 scope refusal, M4 CP-2 view counts, L1 blocked CP-1A, L2 pinned methodology, L3, L4). Awaiting a
 scoped re-review. The CP-6 half is unchanged draft rev 0 except where the generic M1 builder fix moved its front-fact `column`

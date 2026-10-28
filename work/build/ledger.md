@@ -309,3 +309,4 @@
 - 2026-10-28 CP-2E r13 review APPROVE (mx-precise); no quote-edge comma gap in CP-2E (span check over the page). Infos to backlog. Merge waits: claude/r13-cp2e contains claude/r13-cp3d a212da3, so merge CP-3D (after its fix1 approval) first, then CP-2E
 - 2026-10-28 CP-8 r13 review APPROVE (mx-precise), no findings; no quote-edge comma gap in CP-8. Merge waits on CP-3D fix1 approval (branch contains claude/r13-cp3d a212da3)
 - 2026-10-28 CP-2D r13 fix1 re-review APPROVE (mx-precise); 2 Lows to backlog. Merged 36d3746 into the lane
+- 2026-10-28 CP-3D r13 fix1 done: 543376c (_EDGE_BEFORE/_EDGE_AFTER take commas; 18/18 mutants; fuzz 0 violations). agent=mx-feature fix-rounds=1 gates-first-pass=y. Re-review: mx-precise scoped

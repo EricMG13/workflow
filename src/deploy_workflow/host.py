@@ -428,7 +428,58 @@ def _verify_cp1_attempt(
         raise ValueError("CP1 envelope differs")
 
 
-class _RecordingExecution(Execution):
+# In-process parse cache, never persisted. Key: a blob's SHA-256. Every `result`/`pack` call below
+# still re-reads the blob and checks its bytes against that digest (`Execution._load`), so a
+# missing (SH-R12) or tampered (SH-R16) blob refuses exactly as before; only the pydantic parse
+# of bytes already proven identical to a previously parsed and canonical-hash-checked blob is
+# skipped. The cached models are frozen with tuple fields. No store or writer handle is cached.
+# ponytail: the ceiling is an entry count, not bytes: 4 entries is one history's working set, and a
+# cached CP-1 result can keep ~200 MiB alive (44 MB blob), so the worst case is ~800 MiB. Upgrade
+# path if that matters: cap by the summed blob size instead of the entry count.
+_PARSED_LIMIT = 4
+_PARSED_LOCK = Lock()
+_PARSED_MODULES: dict[str, Module] = {}
+_PARSED_PACKS: dict[str, PreparedPack] = {}
+
+
+def _remember(cache: dict[str, Any], digest: str, value: Any) -> None:
+    with _PARSED_LOCK:
+        while len(cache) >= _PARSED_LIMIT:
+            del cache[next(iter(cache))]
+        cache[digest] = value
+
+
+class _ParsedExecution(Execution):
+    """Same store directory; `result` and `pack` skip re-parsing blobs proven byte-identical."""
+
+    def result(self, sha256: str) -> Module:
+        raw = self._load(sha256)  # reads and hash-checks the bytes on every call
+        with _PARSED_LOCK:
+            cached = _PARSED_MODULES.get(sha256)
+        if cached is not None:
+            return cached
+        module = Module.model_validate_json(raw)
+        if module.content_hash() != sha256:
+            raise ValueError("Execution result blob is not the canonical module")
+        _remember(_PARSED_MODULES, sha256, module)
+        return module
+
+    def pack(self, snapshot: ExecutionSnapshot | None = None) -> PreparedPack:
+        snapshot = self.read() if snapshot is None else snapshot
+        raw = self._load(snapshot.pack_sha256)
+        with _PARSED_LOCK:
+            pack = _PARSED_PACKS.get(snapshot.pack_sha256)
+        if pack is None:
+            pack = PreparedPack.model_validate_json(raw)
+            if pack.content_hash() != snapshot.pack_sha256:
+                raise ValueError("Execution pack blob is not the canonical pack of this snapshot")
+            _remember(_PARSED_PACKS, snapshot.pack_sha256, pack)
+        if pack.run != snapshot.run:
+            raise ValueError("Execution pack blob is not the canonical pack of this snapshot")
+        return pack
+
+
+class _RecordingExecution(_ParsedExecution):
     """Same store directory; remembers every blob digest read (and hash-checked) through it."""
 
     def __init__(self, directory: Path) -> None:
@@ -469,10 +520,9 @@ def _verify_cp1_attempt_memoised(
 
 
 def _cp1_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
+    produced = producer.content_hash()
     selected = [
-        a
-        for a in snapshot.attempts
-        if a.module_id == "CP-1" and a.result_sha256 == producer.content_hash()
+        a for a in snapshot.attempts if a.module_id == "CP-1" and a.result_sha256 == produced
     ]
     if len(selected) != 1:
         return False
@@ -567,6 +617,14 @@ def _execution_state(
 ) -> tuple[ExecutionSnapshot, Attempt, PreparedPack, tuple[str, ...]]:
     """Check authority and every selected blob before exposing any source capability."""
     try:
+        # Only an exact Execution is swapped: a subclass (e.g. a read()-pinned historical view)
+        # keeps its own reads, and then the pack hash is checked explicitly below.
+        # ponytail: an exact Execution is swapped for the cached store, so instance or class patches
+        # on it are bypassed (the authentic on-disk state is read); check vars(store) if a caller
+        # ever patches one.
+        substituted = type(store) is Execution
+        if substituted:
+            store = _ParsedExecution(store.directory)
         snapshot = store.read()
         tickets = [a for a in snapshot.attempts if a.ticket_id == ticket_id]
         if len(tickets) != 1:
@@ -602,8 +660,10 @@ def _execution_state(
             raise SourceError("identity_mismatch")
         if len({i.input_id for i in attempt.inputs}) != len(attempt.inputs):
             raise SourceError("identity_mismatch")
-        pack = store.pack(snapshot)
-        if pack.run != snapshot.run or pack.content_hash() != snapshot.pack_sha256:
+        pack = store.pack(snapshot)  # re-read, hash-checked and canonical for this snapshot
+        if not substituted and pack.content_hash() != snapshot.pack_sha256:
+            raise SourceError("identity_mismatch")
+        if pack.run != snapshot.run:
             raise SourceError("identity_mismatch")
         heads = {h.module_id: h for h in snapshot.heads}
         if len(heads) != len(snapshot.heads):

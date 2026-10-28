@@ -9,13 +9,16 @@ import hashlib
 import importlib
 import json
 import re
+from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
+from typing import Any
 
 import pytest
 
 from deploy_vii.contracts import Fact, Module, Run, Source, Span
-from deploy_vii.execution import Execution, StepValidation
+from deploy_vii.execution import Execution, ExecutionSnapshot, StepValidation
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.live.tools import PackTools, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
@@ -124,7 +127,7 @@ def test_extraction_preserves_literal_zero_negative_and_missing(pack):
     ]
 
 
-def source_api():
+def source_api() -> Any:
     assert importlib.util.find_spec("deploy_workflow.host") is not None, "Task1 host is absent"
     return importlib.import_module("deploy_workflow.host")
 
@@ -133,9 +136,13 @@ def source_api():
 def fresh_cp1_cache(monkeypatch):
     """The host's in-process CP-1 memo must never carry across tests (copied histories repeat)."""
     monkeypatch.setattr(source_api(), "_CP1_VERIFIED", {}, raising=False)
+    monkeypatch.setattr(source_api(), "_PARSED_MODULES", {}, raising=False)
+    monkeypatch.setattr(source_api(), "_PARSED_PACKS", {}, raising=False)
 
 
-def make_store(tmp_path, pack, module="CP-0", step=None):
+def make_store(
+    tmp_path: Path, pack: PreparedPack, module: str = "CP-0", step: str | None = None
+) -> tuple[Execution, str]:
     step = step or ("source_readiness" if module == "CP-0" else "source_context")
     store = Execution.create(tmp_path / "execution", pack)
     if module == "CP-1":
@@ -179,6 +186,72 @@ def session(tmp_path, pack, step="source_readiness"):
         tmp_path, pack, "CP-0" if step == "source_readiness" else "CP-1", step
     )
     return api.SourceSession.from_execution(store, ticket, step), store, ticket
+
+
+def test_store_subclass_read_override_authenticates_against_its_own_snapshot(
+    tmp_path: Path, pack: PreparedPack
+) -> None:
+    """A store whose read() is pinned to a historical snapshot (financial replay) keeps that view."""
+    api = source_api()
+    store, ticket = make_store(tmp_path, pack)
+    historical = store.read()
+    attempt = next(a for a in historical.attempts if a.ticket_id == ticket)
+    assert attempt.status == "pending"
+    candidate = Module(
+        run_id=pack.run.run_id,
+        issuer_id=pack.run.issuer_id,
+        as_of=pack.run.as_of,
+        module_id="CP-0",
+        inputs=attempt.inputs,
+        facts=(),
+    )
+    store.finish(ticket, candidate.model_dump_json(), lambda _: ())  # live ticket is now finished
+    with pytest.raises(api.SourceError) as live:
+        api.SourceSession.from_execution(store, ticket, "source_readiness")
+    assert live.value.code == "not_permitted"
+
+    class Pinned(Execution):
+        def read(self) -> ExecutionSnapshot:
+            return historical
+
+    pinned = api.SourceSession.from_execution(Pinned(store.directory), ticket, "source_readiness")
+    receipt = pinned.invoke("read_pages", {"source_id": "fin", "first_page": 1, "last_page": 1})
+    assert receipt["status"] == "ok"
+    assert receipt["binding"]["snapshot_sha256"] == historical.content_hash()
+
+    class Overridden(Execution):
+        def read(self) -> ExecutionSnapshot:
+            raise RuntimeError("override reached")
+
+    with pytest.raises(RuntimeError, match="override reached"):
+        api.SourceSession.from_execution(Overridden(store.directory), ticket, "source_readiness")
+
+
+def test_store_subclass_with_forged_same_run_pack_is_refused(
+    tmp_path: Path, pack: PreparedPack
+) -> None:
+    """A subclass is not swapped, so its pack() is hash-checked against the snapshot pin."""
+    api = source_api()
+    store, ticket = make_store(tmp_path, pack)
+    good = store.pack()
+    fin = good.sources[0]
+    forged = good.model_copy(
+        update={
+            "sources": (
+                fin.model_copy(update={"spans": (Span(locator="page:1", text="FORGED"),)}),
+                *good.sources[1:],
+            )
+        }
+    )
+    assert forged.run == good.run and forged.content_hash() != good.content_hash()
+
+    class Forger(Execution):
+        def pack(self, snapshot: ExecutionSnapshot | None = None) -> PreparedPack:
+            return forged
+
+    with pytest.raises(api.SourceError) as refused:
+        api.SourceSession.from_execution(Forger(store.directory), ticket, "source_readiness")
+    assert refused.value.code == "identity_mismatch"
 
 
 def test_factory_receipt_and_submission_are_real_immutable_snapshots(tmp_path, pack):
@@ -856,6 +929,59 @@ def cp4_store(tmp_path, legal_histories, name="positive"):
     return store, store.begin("CP-4")
 
 
+@pytest.fixture(scope="module")
+def started_cp4(
+    tmp_path_factory: pytest.TempPathFactory, legal_histories: Callable[[str], Path]
+) -> Callable[[str], Path]:
+    """One history copy per name with its CP-4 ticket already begun (identical snapshot bytes)."""
+    import shutil
+
+    result: dict[str, Path] = {}
+
+    def load(name: str) -> Path:
+        if name not in result:
+            directory = tmp_path_factory.mktemp("started-" + name) / "execution"
+            shutil.copytree(legal_histories(name), directory)
+            Execution(directory).begin("CP-4")
+            result[name] = directory
+        return result[name]
+
+    return load
+
+
+@pytest.fixture(scope="module")
+def warm_cp1_memo() -> dict[tuple[str, str], frozenset[str]]:
+    return {}
+
+
+@pytest.fixture
+def warm_cp4_store(
+    tmp_path: Path,
+    started_cp4: Callable[[str], Path],
+    warm_cp1_memo: dict[tuple[str, str], frozenset[str]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> Callable[[str], tuple[Execution, Any]]:
+    """Copy of a begun CP-4 history sharing one module-level CP-1 memo across opting-in tests.
+
+    Only for tests about the session facade that do not tamper with CP-1 bytes or watch the cold
+    verification: the first test per history still authenticates cold, later ones hit the memo
+    (which re-reads and hash-checks every touched blob). All other tests keep a per-test empty memo.
+    """
+    import shutil
+
+    monkeypatch.setattr(source_api(), "_CP1_VERIFIED", warm_cp1_memo)
+
+    def make(name: str = "positive") -> tuple[Execution, Any]:
+        directory = tmp_path / "execution"
+        shutil.copytree(started_cp4(name), directory)
+        store = Execution(directory)
+        pending = [a for a in store.read().attempts if a.status == "pending"]
+        assert len(pending) == 1 and pending[0].module_id == "CP-4" and pending[0].number == 0
+        return store, pending[0]
+
+    return make
+
+
 def tree_bytes(directory):
     return {
         str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob("*") if p.is_file()
@@ -970,12 +1096,12 @@ def test_cp4_cached_history_matches_freshly_built_history(tmp_path, legal_histor
 
 @pytest.mark.parametrize("history", ["blocked", "blocked-quality"])
 def test_cp4_authentic_blocked_repair_degrades_without_financial_disclosure(
-    tmp_path, legal_histories, history
+    warm_cp4_store, history
 ):
     from deploy_vii.cp4_legal import upstream_of
 
     api = source_api()
-    store, attempt = cp4_store(tmp_path, legal_histories, history)
+    store, attempt = warm_cp4_store(history)
     upstream = upstream_of(store, attempt)
     assert upstream.blocked and upstream.facts == () and upstream.facilities == {}
     assert upstream.cp1_gaps and upstream.legal_sources == ("legal-covenants",)
@@ -1326,9 +1452,9 @@ def test_cp4_warm_cache_does_not_admit_a_changed_cp1_snapshot(
     assert len(verifications) > warm
 
 
-def test_cp4_fresh_epoch_and_retained_step_end_old_capability(tmp_path, legal_histories):
+def test_cp4_fresh_epoch_and_retained_step_end_old_capability(warm_cp4_store):
     api = source_api()
-    store, attempt = cp4_store(tmp_path, legal_histories)
+    store, attempt = warm_cp4_store()
     host = api.SourceSession.from_execution(store, attempt.ticket_id, "legal_covenants")
     assert (
         host.invoke(
@@ -1353,9 +1479,9 @@ def test_cp4_fresh_epoch_and_retained_step_end_old_capability(tmp_path, legal_hi
 
 
 @pytest.mark.parametrize("code", ["finished", "wrong-step", "unknown-ticket"])
-def test_cp4_factory_ticket_precedence(tmp_path, legal_histories, code):
+def test_cp4_factory_ticket_precedence(warm_cp4_store, code):
     api = source_api()
-    store, attempt = cp4_store(tmp_path, legal_histories, "blocked")
+    store, attempt = warm_cp4_store("blocked")
     step, ticket = "legal_covenants", attempt.ticket_id
     if code == "wrong-step":
         step = "financials"
@@ -1433,9 +1559,9 @@ def test_cp4_direct_finish_cp1_stub_is_not_promotion(tmp_path):
         ("search_pack", {"query": float("nan")}),
     ],
 )
-def test_cp4_malformed_arguments_preserve_prior_evidence(tmp_path, legal_histories, tool, args):
+def test_cp4_malformed_arguments_preserve_prior_evidence(warm_cp4_store, tool, args):
     api = source_api()
-    store, attempt = cp4_store(tmp_path, legal_histories, "blocked")
+    store, attempt = warm_cp4_store("blocked")
     host = api.SourceSession.from_execution(store, attempt.ticket_id, "legal_covenants")
     read = host.invoke(
         "read_pages", {"source_id": "legal-covenants", "first_page": 1, "last_page": 1}
@@ -1555,12 +1681,10 @@ def test_cp4_forged_pending_ticket_with_cp0_authority_is_admitted(tmp_path, lega
 
 
 @pytest.mark.parametrize("payload", [b"{}", None, 7, ["{}"], "\ud800 lone surrogate"])
-def test_cp4_bind_rejects_nonstring_or_nonutf8_payload_without_binding(
-    tmp_path, legal_histories, payload
-):
+def test_cp4_bind_rejects_nonstring_or_nonutf8_payload_without_binding(warm_cp4_store, payload):
     """SH-R21: bad_arguments, no binding, and earlier evidence is untouched."""
     api = source_api()
-    store, attempt = cp4_store(tmp_path, legal_histories, "blocked")
+    store, attempt = warm_cp4_store("blocked")
     host = api.SourceSession.from_execution(store, attempt.ticket_id, "legal_covenants")
     read = host.invoke(
         "read_pages", {"source_id": "legal-covenants", "first_page": 1, "last_page": 1}
@@ -1646,13 +1770,13 @@ def test_cp4_relabelled_historical_cp1_is_not_proof_for_a_new_legal_run(tmp_path
 
 
 def test_cp4_bind_is_truthful_evidence_not_a_rule_pass_for_unreturned_cites_or_absence(
-    tmp_path, legal_histories
+    warm_cp4_store,
 ):
     """SH-S08 / SH-R25: search snippets are not reads; existing caller ToolRules judge the Seen."""
     from deploy_vii.live.tools import Seen, absence_issues, absence_markers
 
     api = source_api()
-    store, attempt = cp4_store(tmp_path, legal_histories, "blocked")
+    store, attempt = warm_cp4_store("blocked")
     host = api.SourceSession.from_execution(store, attempt.ticket_id, "legal_covenants")
     name, value = absence_markers("legal_covenants")[0]
     absent = json.dumps({"rows": [{name: value}]})

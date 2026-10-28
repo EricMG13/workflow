@@ -1787,3 +1787,80 @@ def test_r12_w_spaced_parentheses_and_a_leading_minus(
     minus. Each refused case has an accepted twin."""
     issues = _MARGIN_CLASS(page, page if quote is None else quote, "25")
     assert (_MARGIN_25 not in issues) is accepted
+
+
+# --- LEAD round 13 item 8: a digit-comma(-space)-digit sequence joins one run ---
+
+
+@pytest.mark.parametrize(
+    ("page", "accepted"),
+    (  # whole quotes (`_tokens`): the figure is part of a comma run
+        ("Facility margin is 1,25 basis points.", False),
+        ("Facility margin is 1, 25 basis points.", False),
+        ("Facility margin is 1,\n25 basis points.", False),
+        ("Facility margin is 25,5 basis points.", False),
+        ("Facility margin is 25, 5 basis points.", False),
+        ("Facility margin is 25,\n5 basis points.", False),
+        ("Facility margin is 25, a basis point rate.", True),
+        ("Facility margin is 25,a basis point rate.", True),
+        ("Facility margin is up, 25 basis points.", True),
+        ("Facility margin is 25 basis points, 5 times.", True),
+    ),
+    ids=(
+        "before-comma",
+        "before-comma-space",
+        "before-comma-wrap",
+        "after-comma",
+        "after-comma-space",
+        "after-comma-wrap",
+        "after-comma-letter",
+        "after-comma-nospace-letter",
+        "before-word-comma",
+        "words-between",
+    ),
+)
+def test_r13_item8_a_whole_quote_figure_in_a_comma_run_does_not_occur(
+    page: str, accepted: bool
+) -> None:
+    """`_tokens`: `1,25`, `1, 25`, `25,5` and `25, 5` are one run, so `25` is no token of it; each
+    refused case has an accepted twin."""
+    issues = _MARGIN_CLASS(page, page, "25")
+    assert (_MARGIN_25 not in issues) is accepted
+
+
+@pytest.mark.parametrize(
+    ("page", "quote", "accepted"),
+    (  # edge quotes (`_cut`): the page's comma run cuts the figure at the edge
+        ("The level is 1,25 percent over the reference rate.", _R11_QUOTE, False),
+        ("The level is 1, 25 percent over the reference rate.", _R11_QUOTE, False),
+        ("The level is 1,\n25 percent over the reference rate.", _R11_QUOTE, False),
+        ("The level is up, 25 percent over the reference rate.", _R11_QUOTE, True),
+        ("The level is 25,5 percent.", "The level is 25", False),
+        ("The level is 25, 5 percent.", "The level is 25", False),
+        ("The level is 25, a percent.", "The level is 25", True),
+        # the spaced-minus arm keeps its guard: a hyphen after a letter or digit is a wrap
+        ("Its level moved by A-\n25 percent over the reference rate.", _R11_QUOTE, True),
+        ("Its level moved in 2024-\n25 percent over the reference rate.", _R11_QUOTE, True),
+        ("Its level moved by -\n25 percent over the reference rate.", _R11_QUOTE, False),
+    ),
+    ids=(
+        "start-comma",
+        "start-comma-space",
+        "start-comma-wrap",
+        "start-word-comma",
+        "end-comma",
+        "end-comma-space",
+        "end-comma-letter",
+        "hyphen-after-letter",
+        "hyphen-after-digit",
+        "minus-after-space",
+    ),
+)
+def test_r13_item8_a_page_comma_run_cuts_an_edge_figure(
+    page: str, quote: str, accepted: bool
+) -> None:
+    """`_CUT_BEFORE` takes `<digit>,` and `<digit>, `, `_CUT_AFTER` takes `,<digit>` and
+    `, <digit>`. The riding Low pins the `_CUT_BEFORE` minus guard: `A-\\n25` and `2024-\\n25` are
+    hyphen wraps (accepted), `-\\n25` is a minus (refused)."""
+    issues = _MARGIN_CLASS(page, quote, "25")
+    assert (_MARGIN_25 not in issues) is accepted

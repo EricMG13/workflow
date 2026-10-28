@@ -336,3 +336,4 @@
 - 19:45 G1-X plan-order built (0cb0ec6); controller combo check: R3 create succeeds with real CP-3. Review queue (Opus cap): g1x-order, CP-4, CP-5.
 - 19:46 CP-DR fix round 1 done (28b2dce). Opus queue: CP-DR re-review, g1x-order, CP-4, CP-5.
 - 19:46 LEAD: CP-1D L3/I2 remedy (backlog); CP-5 selection 'still refused, consumes' confirmed; comments cite round 2 + CP-5->CP-MODEL edge, DC-5 open. 0d-d held to Stage 2 close.
+- 19:47 G1-X order follow-up 3218b49 (comments per LEAD, nothing-written assertion). Queued for mx-adversary.

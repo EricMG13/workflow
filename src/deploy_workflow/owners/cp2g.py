@@ -9,15 +9,15 @@ the three reference tables, the claims and the own limitations.
 
 Missing is never 0: every value is known, missing (with its root reason) or not applicable. All
 sums and products run in the 38-digit half-even context with the Inexact trap (exact), each ratio
-is one division in that context (the correctly rounded rational). Where neither the lease nor the
-oracle pins the wording an outcome needs, the code fails closed with ValueError (Stage 1 report).
+is one division in that context (the correctly rounded rational). Wording the lease and the
+oracle leave open is LEAD's round 5 rulings G-1 to G-9 (docs/rulings/2026-10-28-stage1.md).
 
 Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
 orchestration seams (G1-X protocol section 2) are added to this file in later stages.
 """
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
 from typing import Annotated, Literal
@@ -192,6 +192,7 @@ NC_EBITDA = "Not calculable: EBITDA is zero or negative (ZERO_OR_NEGATIVE_DENOMI
 NC_INTEREST = "Not calculable: cash interest is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
 NC_DEBT = "Not calculable: debt is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
 NC_LIQUIDITY = "Not calculable: minimum liquidity was not assessed"
+NC_REVENUE = "Not calculable: revenue is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)"  # G-4
 
 
 def _exact(x: Decimal) -> Decimal:
@@ -274,9 +275,20 @@ OPERAND_METRIC = {
     "undrawn": "undrawn_rcf",
 }
 _OUTFLOWS = frozenset({"interest", "taxes", "wc", "capex"})  # CP-1 stores them negative
-# The only missing-operand wording the oracle pins (fixture_cash_missing). Any other missing
-# operand fails closed until LEAD words it (Stage 1 report).
-_OPERAND_WORDS = {"cash": "cash and cash equivalents"}
+# The name of each base operand in the missing-operand frames (cash pinned by
+# fixture_cash_missing, the rest LEAD ruling G-1).
+_OPERAND_WORDS = {
+    "revenue": "revenue",
+    "ebitda": "EBITDA",
+    "interest": "cash interest",
+    "taxes": "cash taxes",
+    "wc": "working capital change",
+    "capex": "capital expenditure",
+    "fcf": "free cash flow",
+    "debt": "total debt",
+    "undrawn": "undrawn revolver",
+    "cash": "cash and cash equivalents",
+}
 
 
 def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
@@ -294,19 +306,8 @@ def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
     return out
 
 
-def _word(key: str) -> str:
-    """The pinned name of a missing base operand; any other operand fails closed."""
-    word = _OPERAND_WORDS.get(key)
-    if word is None:
-        raise ValueError(
-            f"CP-2G: base {key} ({OPERAND_METRIC[key]}) is missing in CP-1 and no wording is "
-            "pinned for it (only cash is); LEAD to word"
-        )
-    return word
-
-
 def _operand_reason(key: str) -> str:
-    return f"Not calculable: base {_word(key)} is missing in CP-1 ({LTM_PERIOD})"
+    return f"Not calculable: base {_OPERAND_WORDS[key]} is missing in CP-1 ({LTM_PERIOD})"
 
 
 @dataclass(frozen=True)
@@ -488,7 +489,7 @@ def _tested(kind: BreakKind, year: Year) -> Val:
 @dataclass(frozen=True)
 class BreakTest:
     row: str
-    kind: BreakKind
+    kind: BreakKind | None  # None: CP-2G maps no metric to CP-2A's wording (ruling G-7)
     test: str
     level: Decimal | None
     level_reason: str | None  # why the level is unknown (the root reason of every result)
@@ -526,13 +527,17 @@ def _hit(kind: BreakKind, value: Decimal, level: Decimal) -> bool:
 def test_breaks(*, tests: Sequence[BreakTest], forecast: CaseForecast) -> tuple[BreakResult, ...]:
     out: list[BreakResult] = []
     for test in tests:
-        vals = [_tested(test.kind, y) for y in forecast.years]
+        kind = test.kind
+        vals = [
+            Val(None, test.level_reason) if kind is None else _tested(kind, y)
+            for y in forecast.years
+        ]
         hits: list[bool | None] = []
         for v in vals:
-            if v.amount is None or test.level is None:
+            if kind is None or v.amount is None or test.level is None:
                 hits.append(None)
             else:
-                hits.append(_hit(test.kind, v.amount, test.level))
+                hits.append(_hit(kind, v.amount, test.level))
         first = first_result(hits)
         reason = None
         if first == NOT_CALCULABLE:
@@ -545,23 +550,21 @@ def test_breaks(*, tests: Sequence[BreakTest], forecast: CaseForecast) -> tuple[
 
 
 def break_decline(*, kind: BreakKind, level: Decimal, operands: Operands) -> Fraction | None:
-    """The EBITDA decline that reaches `level` on the CP-1 base (the CP-2A recipe), exact."""
+    """The EBITDA decline that reaches `level` on the CP-1 base (the CP-2A recipe), exact; None
+    when an operand is missing or the denominator (E, or L x E for leverage) is not positive."""
     e, i, d, c = (
         None if v.amount is None else Fraction(v.amount)
         for v in (operands.ebitda, operands.interest, operands.debt, operands.cash)
     )
     lvl = Fraction(level)
-    if e is None or e <= 0:
-        return None
-    if kind == "total_leverage":
-        return None if d is None else (lvl * e - d) / (lvl * e)
-    if kind == "net_leverage":
-        if d is None or c is None or d - c <= 0:
-            return None
-        return (lvl * e - (d - c)) / (lvl * e)
     if kind == "coverage":
-        return None if i is None else (e - lvl * i) / e
-    raise ValueError(f"CP-2G: break_decline has no recipe for {kind}")
+        return None if e is None or e <= 0 or i is None else (e - lvl * i) / e
+    if kind not in ("total_leverage", "net_leverage"):
+        raise ValueError(f"CP-2G: break_decline has no recipe for {kind}")
+    debt = d if kind == "total_leverage" else None if d is None or c is None else d - c
+    if e is None or e <= 0 or lvl <= 0 or debt is None:
+        return None
+    return (lvl * e - debt) / (lvl * e)
 
 
 def _round38(x: Fraction) -> Decimal:
@@ -596,6 +599,11 @@ class Cp2aHead:
 
 
 Cp1dState = Literal["bound", "unbound", "blocked"]
+CP1D_IDS = (
+    "T1D.3.supported.value",
+    "T1D.6.supported.total_leverage",
+    "T1D.6.supported.net_leverage",
+)
 
 
 @dataclass(frozen=True)
@@ -663,6 +671,9 @@ UNVERIFIED_PERIOD = (
     "so its required decline is not comparable"
 )
 UNVERIFIED_CP2A = "CP-2A has no known level or required decline for it (missing or not applicable)"
+UNVERIFIED_EBITDA = (  # ruling G-8
+    f"base EBITDA is zero or negative in CP-1 for {LTM_PERIOD} (ZERO_OR_NEGATIVE_DENOMINATOR)"
+)
 _OPERAND_ORDER: Mapping[BreakKind, tuple[str, ...]] = {
     "total_leverage": ("ebitda", "debt"),
     "net_leverage": ("ebitda", "debt", "cash"),
@@ -686,23 +697,16 @@ def _text_issues(
     return issues
 
 
-def _break_kind(b: Cp2aBreak) -> BreakKind | None:
-    """A definition row's fixed kind; None for a row whose metric the analyst names."""
-    if b.origin != "Definition":
-        return None
-    kind = _DEFINITION_KIND.get(b.test)
-    if kind is None:
-        raise ValueError(
-            f"CP-2G: CP-2A definition break {b.row} has the test {b.test!r}; the lease makes "
-            "other definition wording a validator error but pins no issue text; LEAD to word"
-        )
-    return kind
+def _is_definition(b: Cp2aBreak) -> bool:
+    return b.origin == "Definition"
 
 
 def _metric_check(
     b: Cp2aBreak, kind: BreakKind, operands: Operands, base_period: str
 ) -> tuple[bool, str | None]:
-    """(reproduces, unverified cause): the analyst's metric against CP-2A's required decline."""
+    """(reproduces, unverified cause): the analyst's metric against CP-2A's required decline.
+    Causes in order: base period, CP-2A unknown, first missing operand, then (ruling G-8) the
+    non-positive denominator, base EBITDA before the CP-2A level."""
     if base_period != LTM_PERIOD:
         return True, UNVERIFIED_PERIOD
     lvl, rd = b.level, b.required_decline
@@ -712,10 +716,13 @@ def _metric_check(
     if s_star is None:
         missing = [k for k in _OPERAND_ORDER[kind] if getattr(operands, k).amount is None]
         if missing:  # the first operand in formula order names the cause
-            return True, f"base {_word(missing[0])} is missing in CP-1 for {LTM_PERIOD}"
-        raise ValueError(
-            f"CP-2G: the metric of CP-2A break {b.row} cannot be checked on a non-positive "
-            "denominator, which is not one of the lease's three causes; LEAD to word"
+            return True, f"base {_OPERAND_WORDS[missing[0]]} is missing in CP-1 for {LTM_PERIOD}"
+        e = operands.ebitda.amount
+        if e is not None and e <= 0:
+            return True, UNVERIFIED_EBITDA
+        return (
+            True,
+            f"the CP-2A level of {b.row} is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)",
         )
     return _round38(s_star) == rd.amount, None
 
@@ -729,7 +736,7 @@ def _break_issues(metrics: Sequence[BreakMetric], cp2a: Cp2aHead, operands: Oper
         where = f"break_metrics[{i}]"
         if b is None:
             issues.append(f"{where}.break_id: not a CP-2A break: {bm.break_id}")
-        elif _break_kind(b) is not None:
+        elif _is_definition(b):
             issues.append(
                 f"{where}.break_id: {bm.break_id} is a definition break with a fixed metric"
             )
@@ -746,7 +753,7 @@ def _break_issues(metrics: Sequence[BreakMetric], cp2a: Cp2aHead, operands: Oper
     issues.extend(
         f"break_metrics: no metric for CP-2A break {b.row}"
         for b in cp2a.breaks
-        if _break_kind(b) is None and b.row not in seen
+        if not _is_definition(b) and b.row not in seen
     )
     return issues
 
@@ -799,7 +806,9 @@ def payload_issues(payload: str, context: ForwardContext) -> tuple[str, ...]:
 
 
 def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> tuple[str, ...]:
-    """Every bound upstream that changed (ruling 10), in the `cp2_synthesis._stale_issues` form."""
+    """Every bound upstream that changed (ruling 10), in the `cp2_synthesis._stale_issues` form.
+    Returned alone, like shape issues (G-decisions): Stage 2 runs no content check on a stale
+    upstream."""
     if isinstance(current, str):
         return (f"Stale inputs: {current}",)
     was = {item.input_id: item for item in bound}
@@ -817,6 +826,7 @@ def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> t
 
 # --- cells, tables, references, claims -------------------------------------------------------
 _UNIT: Mapping[UnitKind, str] = {"amount": "MILLIONS", "multiple": "MULTIPLE", "percent": "PERCENT"}
+_UNIT_KIND: Mapping[str, UnitKind] = {unit: kind for kind, unit in _UNIT.items()}
 _MILLIONS = Decimal(1000000)
 ValueClass = Literal["source", "normalized", "calculated", "analyst_judgment"]
 CellStatus = Literal["known", "missing", "not_applicable"]
@@ -872,7 +882,7 @@ class Claim:
 @dataclass(frozen=True)
 class BreakRow:
     row: str
-    kind: BreakKind
+    kind: BreakKind | None
     test: str
     base: BreakResult
     down: BreakResult
@@ -1075,11 +1085,12 @@ class _Run:
     ops: Operands
     drivers: Drivers
     scenario: Cp2aScenario
-    shock: tuple[Decimal, Decimal]
+    shock_reason: str | None  # why the downside is not calculated (ruling G-5)
     path: Mapping[str, CaseForecast]
     min_liq: Decimal | None
     cp1d: tuple[Fact, Fact, Fact] | None
     cp1d_why: str | None
+    supported: Val  # CP-1D supported EBITDA as an operand of the comparisons (ruling G-9)
     tl0: Val
     a25_fcf: Val
 
@@ -1090,45 +1101,65 @@ def _a25(ops: Operands) -> tuple[Val, Val]:
     return cfo, _apply(lambda a, k: a - k, cfo, ops.capex)
 
 
-def _shock(scenario: Cp2aScenario) -> tuple[Decimal, Decimal]:
-    decline, increase = scenario.decline, scenario.increase
-    if decline.status != "known" or increase.status != "known":
-        raise ValueError(
-            f"CP-2G: CP-2A scenario {scenario.row} has no known shock; the lease pins no reason "
-            "for a downside on an unknown shock; LEAD to word"
+def _known_fact(f: Fact) -> bool:
+    return f.status == "known" and f.amount is not None
+
+
+def _shock_reason(scenario: Cp2aScenario) -> str | None:
+    """Ruling G-5: the first CP-2A shock that is not known (decline, then increase)."""
+    for fact, words in (
+        (scenario.decline, "EBITDA decline"),
+        (scenario.increase, "interest increase"),
+    ):
+        if not _known_fact(fact):
+            return f"Not calculable: CP-2A scenario {scenario.row} states no known {words}"
+    return None
+
+
+def _not_calculated(reason: str) -> CaseForecast:
+    """A case that cannot be forecast: every value of every year missing with `reason`."""
+    gap = Val(None, reason)
+    year = Year(**{f.name: gap for f in fields(Year)})
+    return CaseForecast(years=(year, year, year))
+
+
+def _supported(cp1d: tuple[Fact, Fact, Fact] | None, why: str | None) -> Val:
+    """CP-1D supported EBITDA for the adjustment and the FY2026 comparison (ruling G-9)."""
+    if cp1d is None:
+        return Val(None, why)
+    f = cp1d[0]
+    if not _known_fact(f):
+        return Val(None, f"Not calculable: CP-1D supported {f.label} is not available")
+    if f.period != LTM_PERIOD:
+        return Val(
+            None, f"Not compared: CP-1D supported earnings are for {f.period}, not {LTM_PERIOD}"
         )
-    assert decline.amount is not None and increase.amount is not None
-    return decline.amount, increase.amount
+    return _known(_amount(f))
 
 
 def _resolve(inputs: ForwardInputs) -> _Run:
     sub, ctx = inputs.submission, inputs.context
-    if ctx.cp2d_status is not None:
-        raise ValueError(
-            "CP-2G: a bound CP-2D head needs the own line 'CP-2D … is bound but its liquidity "
-            "bridge is not read in this version', whose full wording the lease does not pin"
-        )
     found = content_issues(inputs)
     if found:
         raise ValueError("CP-2G submission has issues: " + "; ".join(found))
     ops = Operands.from_cp1(ctx.cp1_facts)
     drivers = Drivers.from_submission(sub.base_drivers)
     scenario = next(s for s in ctx.cp2a.scenarios if s.row == sub.downside.scenario)
-    shock = _shock(scenario)
+    shock_reason = _shock_reason(scenario)
     path = {
         "base": forecast(operands=ops, drivers=drivers, shock=None),
-        "down": forecast(operands=ops, drivers=drivers, shock=shock),
+        "down": _not_calculated(shock_reason)
+        if shock_reason is not None
+        else forecast(
+            operands=ops,
+            drivers=drivers,
+            shock=(_amount(scenario.decline), _amount(scenario.increase)),
+        ),
     }
     amount = sub.minimum_liquidity.amount
     cp1d = ctx.cp1d.facts()
-    if cp1d is not None:
-        for f in cp1d:
-            if f.status != "known" or f.amount is None or f.period != LTM_PERIOD:
-                raise ValueError(
-                    f"CP-2G: bound CP-1D fact {f.fact_id} is not a known {LTM_PERIOD} figure; "
-                    "the lease pins no wording for it; LEAD to word"
-                )
     state = ctx.cp1d.state
+    why = None if state == "bound" else CP1D_WHY[state]
     return _Run(
         sub=sub,
         ctx=ctx,
@@ -1136,11 +1167,12 @@ def _resolve(inputs: ForwardInputs) -> _Run:
         ops=ops,
         drivers=drivers,
         scenario=scenario,
-        shock=shock,
+        shock_reason=shock_reason,
         path=path,
         min_liq=None if amount == NOT_ASSESSED else Decimal(amount),
         cp1d=cp1d,
-        cp1d_why=None if state == "bound" else CP1D_WHY[state],
+        cp1d_why=why,
+        supported=_supported(cp1d, why),
         tl0=_ratio(ops.debt, ops.ebitda, NC_EBITDA),
         a25_fcf=_a25(ops)[1],
     )
@@ -1183,7 +1215,7 @@ def _t2h1(b: _Book, run: _Run) -> None:
         (
             "u_cp2d",
             "CP-2D",
-            "not part of this run",
+            run.ctx.cp2d_status or "not part of this run",  # bound: recorded, never read (G-6)
             "Not applicable",
             "Nothing read",
             "CP-2D (liquidity bridge) is an optional input that this version never reads.",
@@ -1271,20 +1303,33 @@ def _t2h2(b: _Book, run: _Run) -> None:
     ):
         copy(key, label)
 
-    why = run.cp1d_why
-    sup = Val(None, why) if run.cp1d is None else _known(_amount(run.cp1d[0]))
-    _t2h2_row(
-        b,
+    def cp1d_copy(row: str, label: str, idx: int, unit: UnitKind, basis: str) -> None:
+        """A CP-1D copy keeps CP-1D's status, limitation and period (ruling G-9)."""
+        at = ("T2H.2", row, "value")
+        f = None if run.cp1d is None else run.cp1d[idx]
+        if f is None:
+            assert run.cp1d_why is not None
+            b.gap(at, label, unit, run.cp1d_why)
+        elif not _known_fact(f):
+            b.gap(at, label, unit, _reason(f), status=_copy_status(f))
+        else:
+            assert f.period is not None  # a numeric Fact has a period (contracts.Fact)
+            src = CP1D_IDS[idx]
+            formula = f"Copy of CP-1D {src}"
+            b.num(at, label, _amount(f), unit, formula, period=f.period, derives=[f"cp1d:{src}"])
+        known = f is not None and _known_fact(f)
+        b.text(("T2H.2", row, "basis"), "Basis", basis)
+        b.text(("T2H.2", row, "check"), "Check", "Copied from CP-1D" if known else "Not compared")
+        b.row("T2H.2", row, label, ("value", "basis", "check"))
+
+    cp1d_copy(
         "ebitda_supported",
         "EBITDA supported by CP-1D evidence",
-        sup,
+        0,
         "amount",
-        "Copy of CP-1D T1D.3.supported.value",
-        ["cp1d:T1D.3.supported.value"],
         "CP-1D T1D.3 supported adjusted EBITDA",
-        "Copied from CP-1D" if sup.amount is not None else "Not compared",
     )
-    adj = sup if sup.amount is None else _apply(lambda s, e: s - e, sup, ops.ebitda)
+    adj = _apply(lambda s, e: s - e, run.supported, ops.ebitda)
     _t2h2_row(
         b,
         "ebitda_adjustment",
@@ -1319,32 +1364,11 @@ def _t2h2(b: _Book, run: _Run) -> None:
         "Recomputed against CP-1 net_leverage_reported (cp1_references)",
         _compared(nl0, cp1["net_leverage_reported"]),
     )
-    for row, label, idx, fid in (
-        (
-            "total_leverage_supported",
-            "Total leverage on CP-1D supported EBITDA",
-            1,
-            "T1D.6.supported.total_leverage",
-        ),
-        (
-            "net_leverage_supported",
-            "Net leverage on CP-1D supported EBITDA",
-            2,
-            "T1D.6.supported.net_leverage",
-        ),
+    for row, label, idx in (
+        ("total_leverage_supported", "Total leverage on CP-1D supported EBITDA", 1),
+        ("net_leverage_supported", "Net leverage on CP-1D supported EBITDA", 2),
     ):
-        v = Val(None, why) if run.cp1d is None else _known(_amount(run.cp1d[idx]))
-        _t2h2_row(
-            b,
-            row,
-            label,
-            v,
-            "multiple",
-            f"Copy of CP-1D {fid}",
-            [f"cp1d:{fid}"],
-            "CP-1D T1D.6 supported leverage",
-            "Copied from CP-1D" if v.amount is not None else "Not compared",
-        )
+        cp1d_copy(row, label, idx, "multiple", "CP-1D T1D.6 supported leverage")
 
 
 def _amount(f: Fact) -> Decimal:
@@ -1381,16 +1405,7 @@ def _t2h3(b: _Book, run: _Run) -> None:
         b.text(("T2H.3", row, "case"), "Case", "Downside")
         b.text(("T2H.3", row, "driver"), "Driver", label)
         for t in range(3):  # a copy keeps CP-2A's class; only a calculated copy has lineage
-            b.num(
-                ("T2H.3", row, f"fy{t + 1}"),
-                FY[t],
-                _amount(fact),
-                "percent",
-                f"Copy of CP-2A {fact.fact_id}",
-                value_class=fact.value_class,
-                period=FY_PERIOD[t],
-                derives=[f"cp2a:{fact.fact_id}"],
-            )
+            _cp2a_copy(b, ("T2H.3", row, f"fy{t + 1}"), FY[t], fact, "percent", period=FY_PERIOD[t])
         b.text(("T2H.3", row, "class"), "Class", fact.value_class or "analyst_judgment")
         b.text(("T2H.3", row, "source"), "Source", f"CP-2A {fact.fact_id}")
         b.row("T2H.3", row, label, _T2H3_FIELDS)
@@ -1419,22 +1434,36 @@ def _t2h3(b: _Book, run: _Run) -> None:
     b.row("T2H.3", "m01", "Minimum liquidity", _T2H3_FIELDS)
 
 
+def _cp2a_copy(
+    b: _Book,
+    at: tuple[str, str, str],
+    label: str,
+    f: Fact,
+    unit: UnitKind,
+    *,
+    period: str = LTM_PERIOD,
+    keep_lineage: bool = False,
+) -> None:
+    """A copy of a CP-2A cell: its value and class, or its status and limitation (G-decisions)."""
+    if not _known_fact(f):
+        b.gap(at, label, unit, _reason(f), status=_copy_status(f), period=period)
+        return
+    b.num(
+        at,
+        label,
+        _amount(f),
+        unit,
+        f"Copy of CP-2A {f.fact_id}",
+        value_class=f.value_class,
+        period=period,
+        derives=[f"cp2a:{f.fact_id}"],
+        keep_lineage=keep_lineage,
+    )
+
+
 def _rows(case: str) -> tuple[str, str, str]:
     p = ROW_PREFIX[case]
     return f"{p}26", f"{p}27", f"{p}28"
-
-
-def _margin(e: Val, r: Val) -> Val:
-    if e.amount is None:
-        return e
-    if r.amount is None:
-        return r
-    if r.amount <= 0:
-        raise ValueError(
-            "CP-2G: revenue is zero or negative, so the EBITDA margin is not calculable, and no "
-            "wording is pinned for it; LEAD to word"
-        )
-    return _ratio(e, r, "unreachable")
 
 
 _T2H4_FIELDS = ("revenue", "ebitda", "margin", "cfo", "capex", "fcf")
@@ -1469,7 +1498,7 @@ def _t2h4(b: _Book, run: _Run) -> None:
     put(
         A25,
         "margin",
-        _margin(ops.ebitda, ops.revenue),
+        _ratio(ops.ebitda, ops.revenue, NC_REVENUE),
         "percent",
         "EBITDA / revenue",
         ["cp1:ebitda", "cp1:revenue"],
@@ -1541,7 +1570,7 @@ def _t2h4(b: _Book, run: _Run) -> None:
             put(
                 r,
                 "margin",
-                _margin(y.ebitda, y.revenue),
+                _ratio(y.ebitda, y.revenue, NC_REVENUE),
                 "percent",
                 "EBITDA / revenue",
                 [f"T2H.4.{r}.ebitda", f"T2H.4.{r}.revenue"],
@@ -1609,11 +1638,15 @@ def _t2h5_row(b: _Book, run: _Run, case: str, t: int, y: Year) -> None:
         b.value(at, _T2H5_LABEL[field], v, "amount", formula, derives, period=pr)
 
     def analyst(field: str, v: Val) -> None:
-        at, amount = ("T2H.5", r, field), _amount_of(v)
+        at = ("T2H.5", r, field)
+        if v.amount is None:  # a downside that is not calculated (ruling G-5)
+            assert v.reason is not None
+            b.gap(at, _T2H5_LABEL[field], "amount", v.reason, period=pr)
+            return
         b.num(
             at,
             _T2H5_LABEL[field],
-            amount,
+            v.amount,
             "amount",
             "analyst input",
             value_class="analyst_judgment",
@@ -1669,12 +1702,6 @@ def _t2h5(b: _Book, run: _Run) -> None:
     for case in CASES:
         for t, y in enumerate(run.path[case].years):
             _t2h5_row(b, run, case, t, y)
-
-
-def _amount_of(v: Val) -> Decimal:
-    if v.amount is None:
-        raise ValueError(f"CP-2G: an analyst input has no amount ({v.reason})")
-    return v.amount
 
 
 _T2H6_FIELDS = (
@@ -1779,28 +1806,32 @@ def _t2h6(b: _Book, run: _Run) -> None:
             b.row("T2H.6", r, f"{CASE_LABEL[case]} case {FY[t]}", _T2H6_FIELDS)
 
 
+def _unmapped_reason(b: Cp2aBreak) -> str:
+    return (
+        f"Not calculable: CP-2A definition break {b.row} has a test CP-2G does not map ({b.test})"
+    )
+
+
 def _tests(run: _Run) -> tuple[list[BreakTest], list[tuple[str, str]]]:
     """The CP-2A break rows then m01, and the (row, cause) of each unverified metric."""
     metric_of = {m.break_id: m.metric for m in run.sub.break_metrics}
     tests: list[BreakTest] = []
     unverified: list[tuple[str, str]] = []
     for b in run.ctx.cp2a.breaks:
-        kind = _break_kind(b)
-        if kind is None:
+        level, reason = (
+            (b.level.amount, None) if _known_fact(b.level) else (None, b.level.limitation)
+        )
+        kind: BreakKind | None
+        if _is_definition(b):
+            kind = _DEFINITION_KIND.get(b.test)
+            if kind is None:  # ruling G-7: settles, not a validator error
+                level, reason = None, _unmapped_reason(b)
+        else:
             kind = _METRIC_KIND[metric_of[b.row]]
             _ok, cause = _metric_check(b, kind, run.ops, run.ctx.cp2a.base_period)
             if cause is not None:
                 unverified.append((b.row, cause))
-        known = b.level.status == "known" and b.level.amount is not None
-        tests.append(
-            BreakTest(
-                b.row,
-                kind,
-                b.test,
-                b.level.amount if known else None,
-                None if known else b.level.limitation,
-            )
-        )
+        tests.append(BreakTest(b.row, kind, b.test, level, reason))
     tests.append(
         BreakTest(
             "m01",
@@ -1824,51 +1855,26 @@ def _t2h7(
     for n, test in enumerate(tests):
         r = test.row
         b.text(("T2H.7", r, "test"), "Test", test.test)
-        b.text(("T2H.7", r, "metric"), "Metric", KIND_METRIC[test.kind])
         unit: UnitKind = "amount" if test.kind in ("fcf", "liquidity") else "multiple"
+        if test.kind is None:  # ruling G-7: the copies stay, the metric is missing
+            assert test.level_reason is not None
+            b.missing_text(("T2H.7", r, "metric"), "Metric", test.level_reason)
+            unit = _UNIT_KIND[str(breaks[r].level.unit)]
+        else:
+            b.text(("T2H.7", r, "metric"), "Metric", KIND_METRIC[test.kind])
         lineage: list[str] = []
         if r in breaks:
             src = breaks[r]
             lineage = [f"cp2a:{src.level.fact_id}"]
-            if test.level is not None:
-                b.num(
-                    ("T2H.7", r, "level"),
-                    "Level",
-                    test.level,
-                    unit,
-                    f"Copy of CP-2A {src.level.fact_id}",
-                    value_class=src.level.value_class,
-                    derives=lineage,
-                    keep_lineage=True,
-                )
-            else:
-                b.gap(
-                    ("T2H.7", r, "level"),
-                    "Level",
-                    unit,
-                    _reason(src.level),
-                    status=_copy_status(src.level),
-                )
-            rd = src.required_decline
-            if rd.status == "known" and rd.amount is not None:
-                b.num(
-                    ("T2H.7", r, "static_decline"),
-                    _STATIC,
-                    rd.amount,
-                    "percent",
-                    f"Copy of CP-2A {rd.fact_id}",
-                    value_class=rd.value_class,
-                    derives=[f"cp2a:{rd.fact_id}"],
-                    keep_lineage=True,
-                )
-            else:
-                b.gap(
-                    ("T2H.7", r, "static_decline"),
-                    _STATIC,
-                    "percent",
-                    _reason(rd),
-                    status=_copy_status(rd),
-                )
+            _cp2a_copy(b, ("T2H.7", r, "level"), "Level", src.level, unit, keep_lineage=True)
+            _cp2a_copy(
+                b,
+                ("T2H.7", r, "static_decline"),
+                _STATIC,
+                src.required_decline,
+                "percent",
+                keep_lineage=True,
+            )
         else:  # m01, the analyst's minimum liquidity
             if test.level is None:
                 b.gap(
@@ -1949,7 +1955,6 @@ def _trajectory(run: _Run, case: str) -> tuple[Trajectory, Val, Val, Val, str | 
 
 def _t2h8(b: _Book, run: _Run) -> dict[str, Trajectory]:
     out: dict[str, Trajectory] = {}
-    sup = None if run.cp1d is None else _amount(run.cp1d[0])
     for case in CASES:
         r, rows = case, _rows(case)
         traj, last, change, peak, peak_reason = _trajectory(run, case)
@@ -2002,16 +2007,10 @@ def _t2h8(b: _Book, run: _Run) -> dict[str, Trajectory]:
             b.missing_text(("T2H.8", r, "peak_period"), "Peak year", peak_reason)
         else:
             b.text(("T2H.8", r, "peak_period"), "Peak year", traj.peak_year)
-        e26 = run.path[case].years[0].ebitda
-        if sup is None:
-            assert run.cp1d_why is not None
-            vs = Val(None, run.cp1d_why)
-        else:
-            vs = _apply(lambda e, s: e - s, e26, _known(sup))
         b.value(
             ("T2H.8", r, "ebitda_fy26_vs_supported"),
             f"{FY[0]} EBITDA less CP-1D supported EBITDA",
-            vs,
+            _apply(lambda e, s: e - s, run.path[case].years[0].ebitda, run.supported),
             "amount",
             "Forecast EBITDA - CP-1D supported EBITDA",
             [f"T2H.4.{rows[0]}.ebitda", "cp1d:T1D.3.supported.value"],
@@ -2105,15 +2104,32 @@ def _first_claim(case: str, tests: Sequence[BreakTest], results: Sequence[BreakR
     if reached:
         first = min(FY.index(y) for _t, y in reached)
         names = [t.test for t, y in reached if FY.index(y) == first]
-        if len(names) == 1:
-            raise ValueError(
-                f"CP-2G: one test is first reached in the {lab} case; the oracle pins only the "
-                "plural wording ('The first tests reached ... are'), not the singular; LEAD to word"
-            )
+        if len(names) == 1:  # ruling G-2
+            return f"The first test reached in the {lab} case is {names[0]} in {FY[first]}."
         return f"The first tests reached in the {lab} case are {_joined(names)} in {FY[first]}."
     if all(r.first == NOT_REACHED for r in results):
         return f"No tested break point is reached in the {lab} case through {FY[-1]}."
     return f"In the {lab} case no tested break point is reached, but not every test is calculable."
+
+
+def _leverage_claim(
+    lab: str, peak: str, fy28: str, settled: tuple[bool, bool], year: str | None
+) -> str:
+    """The T2H.8 claim; `peak` and `fy28` are rendered references (a figure, else a chip) and
+    `settled` says which is known (ruling G-3 for the mixed pairs)."""
+    if settled == (True, True):
+        return f"In the {lab} case, total leverage peaks at {peak} in {year} and ends {FY[2]} at {fy28}."
+    if settled == (True, False):
+        return (
+            f"In the {lab} case, total leverage peaks at {peak} in {year}; {FY[2]} leverage is not "
+            f"calculated: {fy28}."
+        )
+    if settled == (False, True):
+        return (
+            f"In the {lab} case, total leverage ends {FY[2]} at {fy28}; the peak is not "
+            f"calculated: {peak}."
+        )
+    return f"In the {lab} case, the leverage path is not fully calculable: peak {peak}, {FY[2]} {fy28}."
 
 
 def _claims(
@@ -2190,24 +2206,15 @@ def _claims(
     for case in CASES:
         out.append(forecast_claim(f"T2H.7.{case}", _first_claim(case, tests, results[case])))
     for case in CASES:
-        lab = CASE_LABEL[case].lower()
         peak, fy28 = f"T2H.8.{case}.peak_total_leverage", f"T2H.8.{case}.total_leverage_fy28"
         settled = (b.status(peak) == "known", b.status(fy28) == "known")
-        if settled == (True, True):
-            text = (
-                f"In the {lab} case, total leverage peaks at {ref(peak, 'x')} in "
-                f"{traj[case].peak_year} and ends {FY[2]} at {ref(fy28, 'x')}."
-            )
-        elif settled == (False, False):
-            text = (
-                f"In the {lab} case, the leverage path is not fully calculable: peak [{peak}], "
-                f"{FY[2]} [{fy28}]."
-            )
-        else:
-            raise ValueError(
-                f"CP-2G: in the {lab} case only one of the peak and the {FY[2]} leverage is "
-                "calculable; the oracle pins no claim wording for it; LEAD to word"
-            )
+        text = _leverage_claim(
+            CASE_LABEL[case].lower(),
+            ref(peak, "x"),
+            ref(fy28, "x"),
+            settled,
+            traj[case].peak_year,
+        )
         out.append(forecast_claim(f"T2H.8.{case}", text))
     if run.ctx.cp1d.state == "bound":
         out.append(
@@ -2283,6 +2290,17 @@ def _own_limitations(
 ) -> tuple[str, ...]:
     out = list(_FIXED_LIMITATIONS)
     out.append(_CP1D_LIMITATION[run.ctx.cp1d.state])
+    out.extend(  # ruling G-9
+        f"CP-1D is bound but its supported {f.label} is not a known {LTM_PERIOD} figure, so "
+        "starting leverage is not restated on it."
+        for f in run.cp1d or ()
+        if not _known_fact(f) or f.period != LTM_PERIOD
+    )
+    if run.ctx.cp2d_status is not None:  # ruling G-6
+        out.append(
+            "CP-2D (liquidity cash flow bridge) is bound but its liquidity bridge is not read in "
+            "this version."
+        )
     out.append(
         "Minimum liquidity was not assessed, so the liquidity break test and liquidity headroom "
         "are not calculated."
@@ -2292,7 +2310,7 @@ def _own_limitations(
     for key, v in run.ops.items():
         if v.amount is None:
             out.append(
-                f"Base {_word(key)} is not available in CP-1 for {LTM_PERIOD}: every "
+                f"Base {_OPERAND_WORDS[key]} is not available in CP-1 for {LTM_PERIOD}: every "
                 "figure that needs it is Not calculable."
             )
     base_period = run.ctx.cp2a.base_period
@@ -2301,10 +2319,21 @@ def _own_limitations(
             f"CP-2A stressed the base period {base_period}; its required declines are shown for "
             "reference and are not comparable with the twelve-month forward path."
         )
+    if run.shock_reason is not None:  # ruling G-5
+        out.append(
+            f"CP-2A scenario {run.scenario.row} has no known shock, so the downside case is not "
+            "calculated."
+        )
     out.extend(
         f"The metric named for CP-2A break {row} could not be checked against its CP-2A required "
         f"decline: {cause}."
         for row, cause in unverified
+    )
+    out.extend(  # ruling G-7
+        f"CP-2A definition break {b.row} has the test {b.test}, which CP-2G does not map; its "
+        "first years are not calculated."
+        for b in run.ctx.cp2a.breaks
+        if _is_definition(b) and b.test not in _DEFINITION_KIND
     )
     for case in CASES:
         negative = [

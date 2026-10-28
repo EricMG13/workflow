@@ -143,6 +143,11 @@ class Sensitivity:
 
 _NO_HEDGE = "no hedge ratio is stated"
 _NO_SHARE = "the share of EBITDA earned in other currencies is not stated"
+_NO_TERMS = "the facility rate terms are not stated"
+_NO_FLOOR = "the floor of the facility is not stated"
+_FLOOR_MAY_BIND = "the reference rate level is not stated, so a floor above zero may bind"
+_NO_DEBT_CURRENCY = "the currency of the debt is not stated"
+_NO_BALANCE = "the facility balance is not stated"  # ruling E4a
 
 
 def _gross(floating: Value, floor_bp: Decimal | None, shock_bp: Decimal) -> Value:
@@ -152,9 +157,9 @@ def _gross(floating: Value, floor_bp: Decimal | None, shock_bp: Decimal) -> Valu
     if floating.amount == 0:
         return _known(Decimal(0))  # nothing floats: a known zero, whatever the floor
     if floor_bp is None:
-        return _missing("the floor of the facility is not stated")
+        return _missing(_NO_FLOOR)
     if floor_bp != 0:
-        return _missing("the reference rate level is not stated, so a floor above zero may bind")
+        return _missing(_FLOOR_MAY_BIND)
     return _known(floating.amount * shock_bp / 10000)
 
 
@@ -226,13 +231,15 @@ def derive_sensitivity(
         fcf = _maybe(op.fcf, "free cash flow not stated")
         balance = op.facility_balance
         if balance is None or op.rate_type is None:
-            floating = _missing("the facility rate terms are not stated")
+            floating = _missing(_NO_TERMS)
         else:
             floating = _known(balance if op.rate_type == "FLOATING" else Decimal(0))
         hedge = _maybe(hedge_ratio, _NO_HEDGE)
         cov_base = _ratio(ebitda, interest, "cash interest is zero")
-        if balance is None or op.debt_foreign is None:
-            foreign_debt = _missing("the currency of the debt is not stated")
+        if op.debt_foreign is None:
+            foreign_debt = _missing(_NO_DEBT_CURRENCY)
+        elif balance is None:
+            foreign_debt = _missing(_NO_BALANCE)
         else:
             foreign_debt = _known(balance if op.debt_foreign else Decimal(0))
         rate = tuple(
@@ -589,8 +596,9 @@ def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
     )
     rb, path = r["rate_basis"], "rate_exposure.rate_basis"
     if chk.on_page(rb, path):
-        low = rb["quote"].lower()
-        said = "FLOATING" if "floating" in low else ("FIXED" if "fixed" in low else None)
+        low = _squash(rb["quote"]).lower()  # ruling E5: exactly one of the two phrases
+        floating, fixed = "floating rate" in low, "fixed rate" in low
+        said = None if floating == fixed else ("FLOATING" if floating else "FIXED")
         if said is None:
             chk.add(f"{path}: the quote states neither a floating nor a fixed rate")
         elif rb["rate_type"] != said:
@@ -1296,96 +1304,157 @@ def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
     return tuple(out)
 
 
-def _claims(i: MacroFxInputs, s: Sensitivity, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
-    cells = {c.fact_id: c for t in tables for r in t.rows for c in r.cells}
-    claims: list[ClaimText] = []
+# Why a missing added-interest value is missing, as claim text (rulings E2 and E4b).
+_GROSS_NEEDS = {
+    _NO_TERMS: "needs the facility rate terms, which the pack does not state",
+    _NO_FLOOR: "needs the floor of the facility, which the pack does not state",
+    _FLOOR_MAY_BIND: (
+        "needs the reference rate level, which no source states, because the floor of the "
+        "facility is above zero"
+    ),
+}
 
-    def add(claim_id: str, text: str, refs: Sequence[str]) -> None:
-        cites = _dedupe([x for ref in refs for x in cells[ref].cites])
-        claims.append(ClaimText(claim_id, text, tuple(refs), cites))
 
-    def fig(ref: str) -> str:
-        unit = figure_unit(cells[ref].fact())
-        if cells[ref].status != "known" or unit is None:
-            raise ValueError(
-                f"Rate claim: {ref} is not a known number and the lease fixes no claim wording "
-                "for this branch"
-            )
+def _gross_needs(gross: Value) -> str:
+    if gross.state != "missing" or gross.reason not in _GROSS_NEEDS:
+        raise ValueError(f"added interest is not missing for a known reason: {gross}")
+    return _GROSS_NEEDS[gross.reason]
+
+
+def rate_gap_claim(n: int, gross: Value) -> str:
+    """CP-2E-RATE-nn text when the added interest of shock n (1-based) is missing (ruling E2)."""
+    return (
+        f"The effect of the {_ORD[n - 1]} rate shock is not calculated: "
+        f"[T2F.3.r{n:02d}.gross] {_gross_needs(gross)}."
+    )
+
+
+class _Claims:
+    """Collects claims whose figures and chips name this module's own cells."""
+
+    def __init__(self, tables: Sequence[Table]) -> None:
+        self.cells = {c.fact_id: c for t in tables for r in t.rows for c in r.cells}
+        self.claims: list[ClaimText] = []
+
+    def add(self, claim_id: str, text: str, refs: Sequence[str]) -> None:
+        cites = _dedupe([x for ref in refs for x in self.cells[ref].cites])
+        self.claims.append(ClaimText(claim_id, text, tuple(refs), cites))
+
+    def known(self, ref: str) -> bool:
+        return self.cells[ref].status == "known"
+
+    def fig(self, ref: str) -> str:
+        """A figure reference; only a known number may be one."""
+        unit = figure_unit(self.cells[ref].fact())
+        if not self.known(ref) or unit is None:
+            raise ValueError(f"Claim figure: {ref} is not a known number")
         return "{" + ref + "|" + unit + "}"
 
+    def ref(self, ref: str) -> str:
+        """A figure reference when the value is known, otherwise a gap chip."""
+        return self.fig(ref) if self.known(ref) else f"[{ref}]"
+
+
+def _rate_claims(out: _Claims, s: Sensitivity) -> None:
     floating, cov = "T2F.2.r01.value", "T2F.2.r03.value"
     for n, r in enumerate(s.rate, 1):
         nth, gross, cov_after = _ORD[n - 1], f"T2F.3.r{n:02d}.gross", f"T2F.3.r{n:02d}.cov_after"
-        if r.gross.state == "known":
-            add(
-                f"CP-2E-RATE-{n:02d}",
-                f"For the {nth} rate shock tested, the floating-rate debt of {fig(floating)} adds "
-                f"{fig(gross)} of annual cash interest before any hedge, which takes interest "
-                f"coverage from {fig(cov)} to {fig(cov_after)}.",
+        claim_id, adds = (
+            f"CP-2E-RATE-{n:02d}",
+            f"For the {nth} rate shock tested, the floating-rate",
+        )
+        if r.gross.state != "known":
+            out.add(claim_id, rate_gap_claim(n, r.gross), [gross])
+        elif out.known(cov):
+            # Coverage after the shock is known whenever coverage at base is known, except when
+            # cash interest is exactly offset by the added interest: no ruling covers that case,
+            # so fig() raises.
+            out.add(
+                claim_id,
+                f"{adds} debt of {out.fig(floating)} adds {out.fig(gross)} of annual cash interest "
+                f"before any hedge, which takes interest coverage from {out.fig(cov)} to "
+                f"{out.fig(cov_after)}.",
                 [floating, gross, cov, cov_after],
             )
-        elif i.facility is not None:
-            raise ValueError(
-                "Rate claim: the lease fixes no wording when the rate terms are stated but the "
-                f"shock is not calculable ({r.gross.reason})"
+        else:  # ruling E3: coverage at base is not meaningful
+            out.add(
+                claim_id,
+                f"{adds} debt of {out.fig(floating)} adds {out.fig(gross)} of annual cash interest "
+                f"before any hedge; interest coverage after the shock is {out.ref(cov_after)}, and "
+                f"no change is stated because coverage at base is not meaningful: [{cov}].",
+                [floating, gross, cov_after, cov],
+            )
+
+
+def _fx_claim(out: _Claims, i: MacroFxInputs, s: Sensitivity) -> None:
+    foreign, debt_after = "T2F.2.r05.value", "T2F.4.r01.debt_after"
+    ebitda_change, lev_after = "T2F.4.r01.ebitda_change", "T2F.4.r01.lev_after"
+    share_stated = i.foreign_ebitda_share is not None
+    if s.fx[0].debt_after.state == "known":
+        if share_stated:  # ruling E1: foreign debt known, share known
+            out.add(
+                "CP-2E-FX-01",
+                f"The debt in a foreign currency is {out.fig(foreign)}, so the first currency move "
+                f"leaves total debt at {out.fig(debt_after)}, changes EBITDA by "
+                f"{out.fig(ebitda_change)} and leaves total leverage at {out.ref(lev_after)}.",
+                [foreign, debt_after, ebitda_change, lev_after],
             )
         else:
-            add(
-                f"CP-2E-RATE-{n:02d}",
-                f"The effect of the {nth} rate shock is not calculated: [{gross}] needs the "
-                "facility rate terms, which the pack does not state.",
-                [gross],
+            out.add(
+                "CP-2E-FX-01",
+                f"The debt in a foreign currency is {out.fig(foreign)}, so the first currency move "
+                f"leaves total debt at {out.fig(debt_after)}; the effect on EBITDA is not "
+                f"calculated: [{ebitda_change}] needs the share of earnings in other currencies, "
+                "which no source states.",
+                [foreign, debt_after, ebitda_change],
             )
-    fx0, foreign = s.fx[0], "T2F.2.r05.value"
-    debt_after, ebitda_change = "T2F.4.r01.debt_after", "T2F.4.r01.ebitda_change"
-    if fx0.debt_after.state == "known":
-        if fx0.ebitda_change.state == "known":
-            raise ValueError(
-                "FX claim: the lease fixes no wording when the share of EBITDA earned in other "
-                "currencies is stated"
-            )
-        add(
+        return
+    # ruling E4a: the currency stated without a facility balance needs the balance
+    needs = "the currency of the debt" if i.debt_currency is None else "the facility balance"
+    if share_stated:  # ruling E1: foreign debt missing, share known
+        out.add(
             "CP-2E-FX-01",
-            f"The debt in a foreign currency is {fig(foreign)}, so the first currency move leaves "
-            f"total debt at {fig(debt_after)}; the effect on EBITDA is not calculated: "
-            f"[{ebitda_change}] needs the share of earnings in other currencies, which no source "
-            "states.",
-            [foreign, debt_after, ebitda_change],
-        )
-    elif i.debt_currency is not None:
-        raise ValueError(
-            "FX claim: the lease fixes no wording when the debt currency is stated but the "
-            f"currency effect on the debt is not calculable ({fx0.debt_after.reason})"
+            f"The first currency move changes EBITDA by {out.fig(ebitda_change)}; the currency "
+            f"effect on the debt is not calculated: [{foreign}] needs {needs}, which the pack "
+            "does not state.",
+            [ebitda_change, foreign],
         )
     else:
-        add(
+        out.add(
             "CP-2E-FX-01",
-            f"The currency effect on the debt is not calculated: [{foreign}] needs the currency "
-            "of the debt, which the pack does not state.",
+            f"The currency effect on the debt is not calculated: [{foreign}] needs {needs}, which "
+            "the pack does not state.",
             [foreign],
         )
-    net = "T2F.3.r01.net"
-    if s.rate[0].net.state == "known":
-        add(
-            "CP-2E-HEDGE-01",
-            f"After the analyst hedge assumption the first rate shock adds {fig(net)} of annual "
-            "cash interest.",
-            [net],
+
+
+def _hedge_claim(out: _Claims, i: MacroFxInputs, s: Sensitivity) -> None:
+    net, first = "T2F.3.r01.net", s.rate[0]
+    if first.net.state == "known":
+        text = (
+            f"After the analyst hedge assumption the first rate shock adds {out.fig(net)} of "
+            "annual cash interest."
         )
-    elif i.hedge_ratio is not None:
-        raise ValueError(
-            "Hedge claim: the lease fixes no wording when a hedge ratio is stated but the effect "
-            f"after hedges is not calculable ({s.rate[0].net.reason})"
-        )
-    else:
-        add(
-            "CP-2E-HEDGE-01",
+    elif i.hedge_ratio is None:
+        text = (
             f"The effect of the first rate shock after hedges is not calculated: [{net}] needs a "
-            "hedge ratio that no source states.",
-            [net],
+            "hedge ratio that no source states."
         )
-    claims.append(ClaimText("CP-2E-VIEW-01", i.summary, (), ()))
-    return tuple(claims)
+    else:  # ruling E4b: a hedge ratio is stated, the added interest before hedges is missing
+        text = (
+            f"The effect of the first rate shock after hedges is not calculated: [{net}] "
+            f"{_gross_needs(first.gross)}."
+        )
+    out.add("CP-2E-HEDGE-01", text, [net])
+
+
+def _claims(i: MacroFxInputs, s: Sensitivity, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
+    out = _Claims(tables)
+    _rate_claims(out, s)
+    _fx_claim(out, i, s)
+    _hedge_claim(out, i, s)
+    out.claims.append(ClaimText("CP-2E-VIEW-01", i.summary, (), ()))
+    return tuple(out.claims)
 
 
 def compute(inputs: MacroFxInputs) -> MacroFxResult:

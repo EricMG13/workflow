@@ -55,7 +55,7 @@ one space away; it does not prove the expected outcome, which rests on the rulin
 
 Two classes of hostile text (`docs/rulings/2026-10-28-stage2.md`):
 - `HOSTILE_JSON` (round 1 Q5): stored text that `schema.model_validate_json` must refuse only with a
-  `ValueError` subclass, because `host._execution_state` maps nothing else. `hostile_failures`.
+  `ValueError` subclass, because `host._execution_state` maps nothing else. `assert_hostile_refused`.
 - `MODEL_TEXT_HOSTILE` (round 3 item 2): model text a step validator may pass although the type the
   step builds from it refuses it after the binding audit write (protocol section 6). The module's
   `test_connect_<cp>` calls `model_text_failures` over a fresh real run per case.
@@ -637,21 +637,15 @@ def hostile_inputs(schema: type[BaseModel]) -> dict[str, str]:
     return texts
 
 
-def hostile_failures(schema: type[BaseModel]) -> list[str]:
-    """The hostile inputs for which `schema.model_validate_json` raises something that is not a
-    `ValueError` subclass, as `<label>: <class>`; `[]` when every raise is a `ValueError`
-    (pydantic's `ValidationError` is one). Accepting a hostile text is not a failure here: only
-    the exception class is the class. `Exception` is caught only to name its class; a
-    `KeyboardInterrupt` or `SystemExit` still propagates."""
-    bad: list[str] = []
-    for label, text in hostile_inputs(schema).items():
+def assert_hostile_refused(schema: type[BaseModel]) -> None:
+    """Run every hostile input through `schema.model_validate_json`. A `ValueError` subclass
+    (pydantic's `ValidationError` is one) is the refusal and an acceptance is not a failure here;
+    any other exception propagates with its own class and traceback."""
+    for text in hostile_inputs(schema).values():
         try:
             schema.model_validate_json(text)
         except ValueError:
             continue
-        except Exception as error:  # noqa: BLE001 - only names the class of a non-ValueError
-            bad.append(f"{label}: {type(error).__name__}")
-    return bad
 
 
 # --- Stage 2 round 3 item 2: model text that passes the validator then fails a build ---------
@@ -744,13 +738,13 @@ def model_text_failures(
     require_issue: bool = True,
 ) -> list[str]:
     """Round 3 item 2: for each free-text path of the module's `positive` payload and each hostile
-    value, on a `fresh()` run at the step: nothing raises; the outcome lists an issue and is not
+    value, on a `fresh()` run at the step: the outcome lists an issue and is not
     `valid` (a `valid` outcome is a failure unless `require_issue` is False, for a field the module
     legitimately takes verbatim); and a following submission of `positive` is `valid`, so the run
     is not wedged on `stale_binding`. `fresh()` returns a run whose `submit_review` does whatever
     the module needs before a submit (reads), since a refused attempt re-activates the step.
-    Returns what failed as `<path>=<value>: <what>`; `[]` when none did. `Exception` is caught
-    only to report its class; the wedge check still runs after a raise."""
+    A raise, from the hostile submit or the follow-up, propagates as the failure. Returns the
+    non-raising failures as `<path>=<value>: <what>` (accepted, no issue, wedged); `[]` when none."""
     payload = json.loads(positive)
     failures: list[str] = []
     for path in free_text_paths(payload, schema):
@@ -758,22 +752,14 @@ def model_text_failures(
             label = f"{_dotted(path)}={value!r}"
             run = fresh()
             text = json.dumps(with_text(payload, path, value), ensure_ascii=False)
-            try:
-                outcome = run.submit_review(text)
-            except Exception as error:  # noqa: BLE001 - reports the class; the wedge check follows
-                failures.append(f"{label}: raised {type(error).__name__}: {str(error)[:80]}")
-            else:
-                if outcome["status"] == "valid":
-                    if require_issue:
-                        failures.append(f"{label}: accepted")
-                    continue  # taken verbatim and the step is done: nothing to wedge
-                if not outcome["issues"]:
-                    failures.append(f"{label}: {outcome['status']} with no issue")
-            try:
-                followed = run.submit_review(positive)["status"]
-            except Exception as error:  # noqa: BLE001 - reports the class as a wedge
-                failures.append(f"{label}: wedged, valid payload raised {type(error).__name__}")
-            else:
-                if followed != "valid":
-                    failures.append(f"{label}: wedged, valid payload was {followed}")
+            outcome = run.submit_review(text)  # a raise propagates: it is the failure
+            if outcome["status"] == "valid":
+                if require_issue:
+                    failures.append(f"{label}: accepted")
+                continue  # taken verbatim and the step is done: nothing to wedge
+            if not outcome["issues"]:
+                failures.append(f"{label}: {outcome['status']} with no issue")
+            followed = run.submit_review(positive)["status"]  # a raise propagates
+            if followed != "valid":
+                failures.append(f"{label}: wedged, valid payload was {followed}")
     return failures

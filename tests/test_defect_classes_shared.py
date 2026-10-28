@@ -48,7 +48,7 @@ def test_registered_schemas_are_found() -> None:
 
 @pytest.mark.parametrize("name", sorted(SCHEMAS))
 def test_hostile_stored_text_raises_only_value_errors(name: str) -> None:
-    assert dc.hostile_failures(SCHEMAS[name]) == []
+    dc.assert_hostile_refused(SCHEMAS[name])
 
 
 class _Cp0Run:

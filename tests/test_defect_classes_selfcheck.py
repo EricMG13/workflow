@@ -36,10 +36,10 @@ from defect_classes import (
     BlankCase,
     QuoteCase,
     ReviewRun,
+    assert_hostile_refused,
     blank_failure,
     case,
     free_text_paths,
-    hostile_failures,
     hostile_inputs,
     label_cases,
     model_text_failures,
@@ -389,28 +389,30 @@ def test_hostile_set_is_the_probes() -> None:
     assert MODEL_TEXT_HOSTILE == ("Rates matter [a lot", "{low", "{}")
 
 
-def test_hostile_failures_is_empty_for_a_pydantic_schema() -> None:
-    assert hostile_failures(Doc) == []
+def test_assert_hostile_refused_passes_a_pydantic_schema() -> None:
+    assert_hostile_refused(Doc)
 
 
-def test_hostile_failures_names_a_type_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_assert_hostile_refused_propagates_a_type_error(monkeypatch: pytest.MonkeyPatch) -> None:
     def broken(*args: object, **kwargs: object) -> None:
         raise TypeError("not a ValueError")
 
     monkeypatch.setattr(Doc, "model_validate_json", broken)
-    failures = hostile_failures(Doc)
-    assert "nan: TypeError" in failures
-    assert len(failures) >= len(HOSTILE_JSON)
+    with pytest.raises(TypeError):
+        assert_hostile_refused(Doc)
 
 
-def test_hostile_failures_names_a_recursion_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_assert_hostile_refused_propagates_a_recursion_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def deep(cls: object, text: str, /, **kwargs: object) -> None:
         if text.startswith("["):
             raise RecursionError("too deep")
         raise ValueError("refused")
 
     monkeypatch.setattr(Doc, "model_validate_json", classmethod(deep))
-    assert hostile_failures(Doc) == ["deep_array: RecursionError"]
+    with pytest.raises(RecursionError):
+        assert_hostile_refused(Doc)
 
 
 def test_hostile_failures_adds_the_per_field_floods() -> None:
@@ -476,11 +478,21 @@ def test_run_text_refuses_a_bracket() -> None:
         TypeAdapter(RunText).validate_python("Rates matter [a lot")
 
 
-def test_model_text_failures_catches_a_validator_that_passes_text_the_build_refuses() -> None:
-    failures = _failures("lax", build=True)
-    assert "summary='Rates matter [a lot': raised ValidationError" in "\n".join(failures)
-    assert any("wedged, valid payload raised RuntimeError" in f for f in failures)
-    assert any("parts.0.note=" in f and "raised ValidationError" in f for f in failures)
+def test_model_text_failures_propagates_a_build_that_raises_after_the_write() -> None:
+    with pytest.raises(ValidationError):
+        _failures("lax", build=True)
+
+
+def test_model_text_failures_propagates_a_wedge_that_raises() -> None:
+    class Once(_Run):
+        def submit_review(self, payload: str) -> Mapping[str, Any]:
+            try:
+                return super().submit_review(payload)
+            finally:
+                self._stale = True  # the binding stays stale after any submit
+
+    with pytest.raises(RuntimeError, match="stale_binding"):
+        model_text_failures(Doc, POSITIVE, lambda: Once("strict", False))
 
 
 def test_model_text_failures_is_empty_when_the_validator_journals_an_issue() -> None:
@@ -498,13 +510,14 @@ def test_model_text_failures_require_issue_off_takes_text_verbatim() -> None:
     assert _failures("lax", build=False) != []
 
 
-def test_model_text_failures_reports_a_wedge_after_a_clean_refusal() -> None:
+def test_model_text_failures_reports_a_wedge_that_refuses() -> None:
     class Wedge(_Run):
         def submit_review(self, payload: str) -> Mapping[str, Any]:
+            if self._stale:
+                return {"status": "refused", "issues": ["stale_binding"]}
             outcome = super().submit_review(payload)
-            if outcome["status"] == "invalid":
-                self._stale = True
+            self._stale = True
             return outcome
 
     failures = model_text_failures(Doc, POSITIVE, lambda: Wedge("strict", False))
-    assert failures and all("wedged, valid payload raised RuntimeError" in f for f in failures)
+    assert failures and all("wedged, valid payload was refused" in f for f in failures)

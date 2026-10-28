@@ -12,7 +12,7 @@ import copy
 import hashlib
 import json
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -39,23 +39,23 @@ CP2G: dict[str, Any] = json.loads(
 FINANCIAL: dict[str, Any] = json.loads(
     (ROOT / "cases" / "financial" / "manifest.json").read_text(encoding="utf-8")
 )
-# Oracle pins: the lease header after the CP-1D 1D1 cascade (docs/CP2H-OWNER-LEASE.md:3), and the
-# upstream files its builder pins.
+# Oracle pins: the lease header after the round 6 oracle batch (3674158; docs/CP2H-OWNER-LEASE.md:3),
+# and the upstream files its builder pins.
 PINS = {
     "cases/cp2h-owner/manifest.json": (
-        "1c0aa69f41c19ff03cc51bc1677d0b2aff02414dd1c0a1cd7422a8d5991a0f8c"
+        "680720d93213f3ff6b0234ecb5d87fd04ccb467e7092180ba7816eaa4a77beb0"
     ),
     "cases/cp2h-owner/submissions.json": (
-        "9484d2a977677244104704479114e1d986a88851c004820409ac204cff5ea647"
+        "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e"
     ),
     "cases/cp2h-owner/expected.json": (
         "59cdb4d1c8d14b554beccc69bf7b59e94c13d5d26f51f0a05d36c7769b010ea5"
     ),
     "cases/cp2h-owner/builder/build.py": (
-        "21c5ca8eb095ec2d3e34958dbd05ead13fdb1907d7662addf3f9d37d000f6e3b"
+        "95d08f984b2bdd7ad788281bd5e3a93c14b00b3cf328270c40033b77b9692ef5"
     ),
     "cases/cp2g-owner/manifest.json": (
-        "1c36928c44a0a69ce9da286db4332f2d8aa8e2fca1b1d9504b9191969d105242"
+        "b0c8c4bcdf3c0e00e33c41cc124d8ca86c47db14c82077c7d40504cc2bf6eee7"
     ),
     "cases/cp2g-owner/expected.json": (
         "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c"
@@ -180,10 +180,13 @@ CP1_STATUS = EXPECTED["execution"]["statuses"]["CP-1"].split()[0]
 
 
 def upstream(
-    cp2g_case: str, current: tuple[Input, ...] | None = None, cp1: tuple[Fact, ...] | None = None
+    cp2g_case: str,
+    current: tuple[Input, ...] | None = None,
+    cp1: tuple[Fact, ...] | None = None,
+    bound: tuple[Input, ...] = BOUND,
 ) -> cp2h.TriggerUpstream:
     return cp2h.TriggerUpstream(
-        bound=BOUND,
+        bound=bound,
         current=BOUND if current is None else current,
         cp1_facts=cp1_facts(cp2g_case) if cp1 is None else cp1,
         cp1_status=CP1_STATUS,
@@ -746,15 +749,16 @@ def test_check_not_compared_when_cp1_missing() -> None:
     assert (check.fact.text, check.derives_from) == ("Not compared", ())
 
 
-def test_unsettled_cp2g_actual_keeps_its_status() -> None:
-    """A CP-2G a25 ratio that is not applicable: the copy keeps CP-2G's status and limitation
-    (rulings G-decisions, the L10-c copy rule); the headroom is missing with that reason."""
-    variant, cp2g_case = spec("positive")
+def _with_cp2g(case: str, changes: Mapping[str, str]) -> cp2h.TriggerInputs:
+    """The case's inputs with the named CP-2G facts unsettled: fact id -> status (the reason is
+    a stand-in per fact)."""
+    variant, cp2g_case = spec(case)
     metrics = cp2g_metrics(cp2g_case)
-    reason = "Not meaningful: a stand-in reason"
     facts = tuple(
-        f.model_copy(update={"status": "not_applicable", "amount": None, "limitation": reason})
-        if f.fact_id == "T2H.6.a25.interest_coverage"
+        f.model_copy(
+            update={"status": changes[f.fact_id], "amount": None, "limitation": _why(f.fact_id)}
+        )
+        if f.fact_id in changes
         else f
         for f in metrics.facts
     )
@@ -765,78 +769,438 @@ def test_unsettled_cp2g_actual_keeps_its_status() -> None:
         cp1_status=CP1_STATUS,
         cp2g=cp2h.Cp2gMetrics(status=metrics.status, facts=facts),
     )
-    body = bind(raw_payload("positive"), fig_ids(stream.cp1_facts))
-    got = cp2h.compute(
-        cp2h.TriggerInputs(
-            pack(variant), stream, cp2h.TriggerSubmission.model_validate_json(json.dumps(body))
-        )
-    )
+    body = bind(raw_payload(case), fig_ids(stream.cp1_facts))
+    submission = cp2h.TriggerSubmission.model_validate_json(json.dumps(body))
+    return cp2h.TriggerInputs(pack(variant), stream, submission)
+
+
+def _why(fact_id: str) -> str:
+    return f"Not meaningful: a stand-in reason for {fact_id}"
+
+
+def test_unsettled_cp2g_actual_keeps_its_status() -> None:
+    """A CP-2G a25 ratio that is not applicable: the copy keeps CP-2G's status, limitation and
+    the metric's unit (G-decisions); round 7 (f): the T2R.4 headroom and status take
+    not_applicable too, with its limitation."""
+    a25 = "T2H.6.a25.interest_coverage"
+    got = cp2h.compute(_with_cp2g("positive", {a25: "not_applicable"}))
     cells = {c.fact.fact_id: c.fact for c in got.cells}
     actual, head = cells["T2R.4.t02.actual"], cells["T2R.4.t02.headroom"]
-    assert (actual.status, actual.unit, actual.limitation) == ("not_applicable", "MULTIPLE", reason)
-    assert (head.status, head.limitation) == ("missing", reason)
+    status = cells["T2R.4.t02.status"]
+    assert (actual.status, actual.unit, actual.limitation) == (
+        "not_applicable",
+        "MULTIPLE",
+        _why(a25),
+    )
+    assert (head.status, head.unit, head.limitation) == ("not_applicable", "MULTIPLE", _why(a25))
+    assert (status.status, status.text, status.limitation) == ("not_applicable", None, _why(a25))
     assert cells["T2R.4.t02.check"].text == "Not compared"
 
 
-UNPINNED = {
-    "cp1d_bound": "CP-1D is bound",
-    "no_gaps": "no gap",
-    "no_triggers": "no trigger term",
-    "one_agency": "one agency",
-    "unrated_with_terms": "unrated agency Brook Credit has a trigger term",
-    "no_published": "page:3 states no single publication date",
-    "no_ratings": "no single ready ratings source",
+def test_unsettled_cp2g_missing_actual_stays_missing() -> None:
+    a25 = "T2H.6.a25.interest_coverage"
+    got = cp2h.compute(_with_cp2g("positive", {a25: "missing"}))
+    cells = {c.fact.fact_id: c.fact for c in got.cells}
+    for field in ("actual", "headroom", "status"):
+        fact = cells[f"T2R.4.t02.{field}"]
+        assert (fact.status, fact.limitation) == ("missing", _why(a25)), field
+
+
+def test_not_applicable_forecast_year() -> None:
+    """Round 7 (f): a not_applicable CP-2G forecast ratio makes its T2R.5 year and the case's
+    tightest not_applicable with its limitation; T2R.6 stays missing (Not calculable) and T2R.9
+    counts it as not calculable."""
+    b27 = "T2H.6.b27.fcf_to_debt"
+    got = cp2h.compute(_with_cp2g("positive", {b27: "not_applicable"}))
+    cells = {c.fact.fact_id: c.fact for c in got.cells}
+    for field, unit in (("y2", "pp"), ("tightest", "pp"), ("tightest_year", None)):
+        fact = cells[f"T2R.5.t03_base.{field}"]
+        assert (fact.status, fact.unit, fact.limitation) == ("not_applicable", unit, _why(b27))
+    assert [cells[f"T2R.5.t03_base.{y}"].status for y in ("y1", "y3")] == ["known", "known"]
+    first = cells["T2R.6.t03.base_first"]
+    assert (first.status, first.limitation) == ("missing", _why(b27))
+    assert got.totals["not_calculable_base"] == ("t03",)
+    assert cells["T2R.9.total.not_calculable_base"].amount == 1
+    assert cp2h.NOT_CALCULABLE_LINE in got.own_limitations
+
+
+# --- round 7 rulings: the states no frozen case reaches ---------------------------------------------
+
+
+def _pages(variant: str) -> list[str]:
+    return [p["text"] for p in _variant(variant)["pages"]]
+
+
+def _ratings(pages: Sequence[str]) -> Source:
+    return Source(
+        source_id="ratings",
+        name="Fixture",
+        status="ready",
+        sha256=_digest("\f".join(pages)),
+        media_type="text/plain",
+        spans=tuple(Span(locator=f"page:{n}", text=t) for n, t in enumerate(pages, 1)),
+        extraction_status="complete",
+    )
+
+
+def _sources(case_inputs: cp2h.TriggerInputs, *ratings: Source) -> cp2h.TriggerInputs:
+    """The inputs with the pack's agency source replaced (or left out)."""
+    frozen = tuple(s for s in case_inputs.pack.sources if s.source_id != "ratings")
+    the_pack = cp2h.PackScope(sources=(*frozen, *ratings), names=case_inputs.pack.names)
+    return cp2h.TriggerInputs(the_pack, case_inputs.upstream, case_inputs.submission)
+
+
+def _over(case_inputs: cp2h.TriggerInputs, pages: Sequence[str]) -> cp2h.TriggerInputs:
+    """The inputs over a changed agency source; the analyst's citations follow its new hash."""
+    old, new = cp2h.ratings_source(case_inputs.pack), _ratings(pages)
+    assert old.sha256 is not None and new.sha256 is not None
+    text = case_inputs.submission.model_dump_json().replace(old.sha256, new.sha256)
+    moved = _sources(case_inputs, new)
+    return cp2h.TriggerInputs(
+        moved.pack, moved.upstream, cp2h.TriggerSubmission.model_validate_json(text)
+    )
+
+
+def _edited(variant: str, edits: Sequence[tuple[int, str, str]]) -> list[str]:
+    pages = _pages(variant)
+    for page, old, new in edits:
+        assert pages[page].count(old) == 1, (page, old)
+        pages[page] = pages[page].replace(old, new)
+    return pages
+
+
+CP1D_BOUND = (
+    "CP-1D (earnings quality) is bound but not read in this version, so no earnings-quality "
+    "adjustment is applied to the reported ratios."
+)
+
+
+@pytest.mark.parametrize("status", ["accepted", "restricted", "blocked"])
+def test_bound_cp1d_settles(status: str) -> None:
+    """Round 7 item 1: T2R.1 u_cp1d shows the bound Input's status, its other cells stay as
+    pinned, and the CP-1D own line takes the bound frame in the same position."""
+    bound = (*BOUND, _input("CP-1D", status))
+    got = cp2h.compute(inputs("positive", bound=bound, current=bound))
+    base = report("positive")
+    changed = [
+        a.fact.fact_id
+        for a, b in zip(got.cells, base.cells, strict=True)
+        if a.record() != b.record()
+    ]
+    assert changed == ["T2R.1.u_cp1d.status"]
+    assert next(c for c in got.cells if c.fact.fact_id == changed[0]).fact.text == status
+    want = list(EXPECTED["cases"]["positive"]["own_limitations"])
+    assert want[7] == (
+        "CP-1D (earnings quality) is not part of this run, so no earnings-quality adjustment is "
+        "applied to the reported ratios."
+    )
+    want[7] = CP1D_BOUND
+    assert list(got.own_limitations) == want
+    assert (got.tables, got.claims) == (base.tables, base.claims)
+
+
+def _not_ready(state: str, real: Source) -> tuple[Source, ...]:
+    if state == "absent":
+        return ()
+    if state == "missing":
+        return (Source(source_id="ratings", name=real.name, status="missing", limitation="Absent"),)
+    unreadable = Source(
+        source_id="ratings",
+        name=real.name,
+        status="unreadable",
+        sha256=real.sha256,
+        spans=real.spans,
+        limitation="The agency source could not be read",
+    )
+    return (unreadable,)
+
+
+@pytest.mark.parametrize("state", ["absent", "missing", "unreadable"])
+def test_no_ready_ratings_source(state: str) -> None:
+    """Round 7 item 2: an absent, missing or unreadable agency source gives `Rating register not
+    found` alone, after the stale issues and before any parse."""
+    case_inputs = inputs("positive")
+    without = _sources(case_inputs, *_not_ready(state, cp2h.ratings_source(case_inputs.pack)))
+    assert cp2h.validate(without) == ("Rating register not found",)
+    with pytest.raises(ValueError, match="^Rating register not found$"):
+        cp2h.compute(without)
+    stale = (*BOUND[:3], _input("CP-2G", "blocked"))
+    late = cp2h.TriggerInputs(without.pack, upstream("gap", current=stale), without.submission)
+    sha = BOUND[3].sha256[:12]
+    assert cp2h.validate(late) == (
+        f"Stale input CP-2G: bound restricted {sha}, current blocked {sha}",
+    )
+    shape = cp2h.payload_issues(
+        SUBMITTED["r06"]["payload_text"], pack=without.pack, upstream=without.upstream
+    )
+    assert shape == ("(root): Invalid JSON: key must be a string at line 1 column 2",)
+
+
+def test_ratings_source_invariants() -> None:
+    """Round 7 item 2: two agency sources, or a ready one without a hash, cannot happen
+    (preparation, contracts); they stay invariant raises of plain ValueError."""
+    case_inputs = inputs("positive")
+    real = cp2h.ratings_source(case_inputs.pack)
+    with pytest.raises(ValueError, match="more than one ratings source") as twice:
+        cp2h.ratings_source(_sources(case_inputs, real, real).pack)
+    unhashed = real.model_copy(update={"sha256": None})
+    with pytest.raises(ValueError, match="ready ratings source has no sha256") as no_hash:
+        cp2h.ratings_source(_sources(case_inputs, unhashed).pack)
+    assert type(twice.value) is ValueError and type(no_hash.value) is ValueError
+
+
+TERMS = "Agency  Direction  Metric  Comparison  Threshold"
+ALDER_ROW = "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
+BROOK_ROW = "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
+SOURCE_BREACHES: dict[str, tuple[list[tuple[int, str, str]], str]] = {
+    # item 3: a terms header with no trigger row
+    "terms_header_only": (
+        [(2, TERMS + "\n", TERMS + "\nNo terms are published.\n")],
+        "Trigger terms not found",
+    ),
+    # item 6: a withdrawn agency with trigger terms
+    "unrated_agency_terms": ([(0, "Ba3  Stable", "Withdrawn  Stable")], "Trigger terms not found"),
+    # (h): a term for an agency not in the register
+    "unregistered_agency_terms": (
+        [(2, "Brook Credit  Upgrade", "Zeta Ratings  Upgrade")],
+        "Trigger terms not found",
+    ),
+    # item 8: the table rules
+    "scale_position_not_whole": ([(1, "11  BB  Ba2", "11.5  BB  Ba2")], "Rating scale not found"),
+    "scale_symbol_twice": ([(1, "13  B+  B1", "13  BB  B1")], "Rating scale not found"),
+    "scale_position_twice": ([(1, "13  B+  B1", "11  B+  B1")], "Rating scale not found"),
+    "register_date_not_iso": (
+        [(0, "Negative  2025-11-14", "Negative  2025/11/14")],
+        "Rating register not found",
+    ),
+    "register_date_not_on_calendar": (
+        [(0, "Negative  2025-11-14", "Negative  2025-13-45")],
+        "Rating register not found",
+    ),
+    "register_agency_twice": (
+        [(0, BROOK_ROW, "Alder Ratings  Issuer rating  BB  Stable  2025-10-02")],
+        "Rating register not found",
+    ),
+    "terms_direction_unknown": (
+        [(2, "Brook Credit  Upgrade", "Brook Credit  Watch")],
+        "Trigger terms not found",
+    ),
+    "terms_comparison_unknown": (
+        [(2, "Total debt to EBITDA  Above", "Total debt to EBITDA  Over")],
+        "Trigger terms not found",
+    ),
+    "threshold_form": ([(2, "Above  2.75x", "Above  2.75 times")], "Trigger terms not found"),
+    "threshold_unit": ([(2, "Below  10.0%", "Below  10.0x")], "Trigger terms not found"),
+    "term_twice": (
+        [
+            (
+                2,
+                "Upgrade  Net debt to EBITDA  Below  0.50x",
+                "Downgrade  Net debt to EBITDA  Above  1.50x",
+            )
+        ],
+        "Trigger terms not found",
+    ),
+    # item 8 order: headers, then scale rows, register rows, terms rows, then the agency rules
+    "headers_before_rows": (
+        [(1, "11  BB  Ba2", "11.5  BB  Ba2"), (2, TERMS, "Agency  Direction  Metric")],
+        "Trigger terms not found",
+    ),
+    "scale_before_register": (
+        [(1, "11  BB  Ba2", "11.5  BB  Ba2"), (0, "Negative  2025-11-14", "Negative  2025-13-45")],
+        "Rating scale not found",
+    ),
+    "register_before_terms": (
+        [
+            (0, "Negative  2025-11-14", "Negative  2025-13-45"),
+            (2, "Brook Credit  Upgrade", "Brook Credit  Watch"),
+        ],
+        "Rating register not found",
+    ),
+    "off_scale_before_terms": (
+        [(0, "BB  Negative", "CCC  Negative"), (2, "Brook Credit  Upgrade", "Brook Credit  Watch")],
+        "Rating not on the scale: Alder Ratings CCC",
+    ),
+    "terms_rows_before_agency_rules": (
+        [
+            (2, "Alder Ratings  Downgrade  Total debt", "Zeta Ratings  Downgrade  Total debt"),
+            (2, "Upgrade  Net debt to EBITDA", "Upgrade  Funds from operations to debt"),
+        ],
+        "Unrecognised trigger metric: Funds from operations to debt",
+    ),
 }
 
 
-@pytest.mark.parametrize("mutate", UNPINNED)
-def test_unpinned_states_fail_closed(mutate: str) -> None:
+@pytest.mark.parametrize("breach", SOURCE_BREACHES)
+def test_source_breaches_refuse_alone(breach: str) -> None:
+    """Round 7 items 3, 6, 8 and (h): each breach gives its table's pinned text alone, at parse,
+    the first failure in the ruled order; the attempt gets that one issue."""
+    edits, issue = SOURCE_BREACHES[breach]
+    pages = _edited("positive", edits)
+    with pytest.raises(cp2h.SourceIssue, match=f"^{re.escape(issue)}$"):
+        cp2h.parse_ratings(pages)
+    assert cp2h.validate(_over(inputs("positive"), pages)) == (issue,)
+
+
+def test_term_block_ends_at_the_first_short_line() -> None:
+    """The pinned parse rule: a block ends at the first line without the full field count, so a
+    breach after it is not read (gap page:1 relies on it)."""
+    pages = _edited(
+        "positive", [(2, "Below  0.50x", "Below  0.50x\nEnd of terms.\nZeta  Watch  X  Over  1x")]
+    )
+    assert len(cp2h.parse_ratings(pages).triggers) == 5
+
+
+T2R8_COLUMNS = [
+    ("first_agency", "First agency"),
+    ("second_agency", "Second agency"),
+    ("notches", "Notches apart"),
+    ("lower_rated", "Lower rated"),
+    ("outlook_match", "Outlooks"),
+]
+T2R10_COLUMNS = [
+    ("id", "Gap id"),
+    ("gap", "Gap"),
+    ("why_it_matters", "Why it matters"),
+    ("affected_analysis", "Affected analysis"),
+    ("severity", "Severity"),
+    ("action", "Action"),
+]
+
+
+def _columns(got: cp2h.TriggerReport, table: str) -> list[tuple[str, str]]:
+    found = next(t for t in got.tables if t.table_id == table)
+    return [(c.field, c.label) for c in found.columns]
+
+
+def test_fixed_columns_match_the_facts() -> None:
+    """The fixed T2R.8 and T2R.10 columns are the columns of their facts when rows exist."""
+    got = report("positive")
+    facts = {c.fact.fact_id: c.fact for c in got.cells}
+    for table, want in (("T2R.8", T2R8_COLUMNS), ("T2R.10", T2R10_COLUMNS)):
+        rows = next(t for t in got.tables if t.table_id == table).rows
+        assert [(facts[f].field, facts[f].label) for f in rows[0].fact_ids] == want
+        assert _columns(got, table) == want
+
+
+def test_one_agency_register_settles() -> None:
+    """Round 7 item 4: T2R.8 has zero rows and its fixed columns, no pair claim, and the own line
+    `Only <agency> ...` sits after the withdrawn-agency lines, before NOT_CALCULABLE_LINE."""
+    pages = _edited(
+        "gap", [(0, "Brook Credit  Issuer rating  Withdrawn  Not applicable  2025-12-05\n", "")]
+    )
+    payload = copy.deepcopy(raw_payload("gap"))
+    payload["views"] = [v for v in payload["views"] if v["agency"] == "Alder Ratings"]
+    got = cp2h.compute(_over(inputs("gap", payload), pages))
+    assert next(t for t in got.tables if t.table_id == "T2R.8").rows == ()
+    assert _columns(got, "T2R.8") == T2R8_COLUMNS
+    assert not [c for c in got.cells if c.fact.table_id == "T2R.8"]
+    assert not [c for c in got.claims if c.claim_id.startswith("T2R.8")]
+    validate_tables(got.tables, got.facts)
+    want = list(EXPECTED["cases"]["gap"]["own_limitations"])
+    withdrawn = (
+        "Brook Credit's rating is withdrawn: no notch comparison is made and no trigger terms "
+        "are published."
+    )
+    assert want.index(withdrawn) == want.index(cp2h.NOT_CALCULABLE_LINE) - 1
+    want[want.index(withdrawn)] = (
+        "Only Alder Ratings is in the rating register, so no notch comparison is made."
+    )
+    assert list(got.own_limitations) == want
+
+
+def test_no_gap_settles() -> None:
+    """Round 7 item 5: T2R.10 has zero rows and its fixed columns; nothing else changes and no
+    own line is added."""
     payload = copy.deepcopy(raw_payload("positive"))
+    payload["gaps"] = []
+    got = cp2h.compute(inputs("positive", payload))
+    base = report("positive")
+    assert next(t for t in got.tables if t.table_id == "T2R.10").rows == ()
+    assert _columns(got, "T2R.10") == T2R10_COLUMNS
+    assert [c.record() for c in got.cells] == [
+        c.record() for c in base.cells if c.fact.table_id != "T2R.10"
+    ]
+    assert list(got.own_limitations) == [
+        x for x in base.own_limitations if not x.startswith("Gap (")
+    ]
+    assert got.claims == base.claims
+    validate_tables(got.tables, got.facts)
+
+
+PUBLISHED = "Published January 10, 2026.\n"
+TERMS_PERIOD = "Terms publication date {}, tested at each fiscal year end"
+REGISTER_PERIOD = "As of the rating register, publication date {}"
+PERIOD_STATES = {
+    "terms_not_stated": (2, "", "T2R.3", TERMS_PERIOD.format("not stated")),
+    "terms_twice": (2, PUBLISHED * 2, "T2R.3", TERMS_PERIOD.format("unclear")),
+    "terms_not_on_calendar": (
+        2,
+        "Published February 30, 2026.\n",
+        "T2R.3",
+        TERMS_PERIOD.format("unclear"),
+    ),
+    "register_not_stated": (0, "", "T2R.8", REGISTER_PERIOD.format("not stated")),
+    "register_twice": (0, PUBLISHED * 2, "T2R.8", REGISTER_PERIOD.format("unclear")),
+    "register_not_on_calendar": (
+        0,
+        "Published February 30, 2026.\n",
+        "T2R.8",
+        REGISTER_PERIOD.format("unclear"),
+    ),
+}
+
+
+@pytest.mark.parametrize("state", PERIOD_STATES)
+def test_publication_date_states(state: str) -> None:
+    """Round 7 item 7: an absent Published line gives the `not stated` period frame, two lines
+    or a date not on the calendar the `unclear` frame; no own line is added."""
+    page, line, table, period = PERIOD_STATES[state]
+    got = cp2h.compute(_over(inputs("positive"), _edited("positive", [(page, PUBLISHED, line)])))
+    base = report("positive")
+    field = "threshold" if table == "T2R.3" else "notches"
+    dated = [c.fact for c in got.cells if c.fact.table_id == table and c.fact.field == field]
+    assert dated and all(f.period == period for f in dated)
+    others = [
+        (a.fact.fact_id, a.fact.period)
+        for a, b in zip(got.cells, base.cells, strict=True)
+        if a.fact.period != b.fact.period
+    ]
+    assert sorted(fid for fid, _ in others) == sorted(f.fact_id for f in dated)
+    assert got.own_limitations == base.own_limitations
+
+
+def test_limitations_get_the_prose_check() -> None:
+    """Round 7 (d): a view or overall limitation gets `prose.check` with no resolvable reference
+    and the pack's names, prefixed with its path, then the phrase guard."""
+    payload = copy.deepcopy(raw_payload("positive"))
+    payload["views"][0]["limitation"] = "Headroom of 2.75x is thin."
+    payload["views"][1]["limitation"] = "See {T2R.4.t01.headroom|x}; it will be downgraded."
+    payload["overall"]["limitation"] = "Unbalanced {T2R.4.t01.headroom|x and more."
+    assert cp2h.validate(inputs("positive", payload)) == (
+        "views[0].limitation: Bare figure: 2.75x",
+        "views[1].limitation: Unresolved reference: T2R.4.t01.headroom",
+        'views[1].limitation: prohibited conclusion (rating call): "will be downgraded"',
+        "overall.limitation: Malformed run text: unbalanced or empty reference",
+    )
+
+
+def test_limitation_check_reads_the_pack_names() -> None:
+    payload = copy.deepcopy(raw_payload("positive"))
+    payload["overall"]["limitation"] = "Agency 7 Holdings is not covered."
     case_inputs = inputs("positive", payload)
-    the_pack, stream = case_inputs.pack, case_inputs.upstream
-    pages = [p["text"] for p in _variant("positive")["pages"]]
-    if mutate == "cp1d_bound":
-        stream = cp2h.TriggerUpstream(
-            bound=stream.bound,
-            current=stream.current,
-            cp1_facts=stream.cp1_facts,
-            cp1_status=stream.cp1_status,
-            cp2g=stream.cp2g,
-            cp1d_status="restricted",
-        )
-    elif mutate == "no_gaps":
-        payload["gaps"] = []
-    elif mutate == "no_ratings":
-        the_pack = cp2h.PackScope(sources=the_pack.sources[:2], names=the_pack.names)
-    else:
-        if mutate == "no_triggers":
-            pages[2] = pages[2].split(cp2h.TERMS_HEADER)[0] + cp2h.TERMS_HEADER
-        elif mutate == "one_agency":
-            pages[0] = "\n".join(
-                ln for ln in pages[0].split("\n") if not ln.startswith("Brook Credit  ")
-            )
-            payload["views"].pop()
-        elif mutate == "unrated_with_terms":
-            pages[0] = pages[0].replace(
-                "Issuer rating  Ba3  Stable", "Issuer rating  Withdrawn  Stable"
-            )
-        elif mutate == "no_published":
-            pages[2] = pages[2].replace("Published January 10, 2026.\n", "")
-        joined = "\f".join(pages)
-        ratings = Source(
-            source_id="ratings",
-            name="Fixture",
-            status="ready",
-            sha256=_digest(joined),
-            media_type="text/plain",
-            spans=tuple(Span(locator=f"page:{n}", text=t) for n, t in enumerate(pages, 1)),
-            extraction_status="complete",
-        )
-        the_pack = cp2h.PackScope(sources=(*the_pack.sources[:2], ratings), names=the_pack.names)
-    body = bind(payload, fig_ids(stream.cp1_facts))
-    sub = cp2h.TriggerSubmission.model_validate_json(json.dumps(body))
-    with pytest.raises(cp2h.UnpinnedCase, match=UNPINNED[mutate]):
-        cp2h.validate(cp2h.TriggerInputs(the_pack, stream, sub))
+    named = cp2h.PackScope(case_inputs.pack.sources, (*case_inputs.pack.names, "Agency 7 Holdings"))
+    assert (
+        cp2h.validate(cp2h.TriggerInputs(named, case_inputs.upstream, case_inputs.submission)) == ()
+    )
+    assert cp2h.validate(case_inputs) == ("overall.limitation: Bare figure: 7",)
+
+
+def test_empty_rationale_is_refused_when_blank() -> None:
+    """`empty text` covers a whitespace-only rationale as well as an empty one (v10)."""
+    payload = copy.deepcopy(raw_payload("positive"))
+    payload["views"][1]["rationale"] = "  \n "
+    assert cp2h.validate(inputs("positive", payload)) == ("views[1].rationale: empty text",)
 
 
 def test_input_selection_fails_closed() -> None:

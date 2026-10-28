@@ -11,9 +11,10 @@ gaps (judgment and references only). The oracle is `cases/cp2h-owner/expected.js
 Arithmetic: every headroom is one subtraction in `model/_cells.CONTEXT` (38 digits,
 ROUND_HALF_EVEN), the correctly rounded rational; a percent metric gives percentage points by
 `.scaleb(2)` in that context, never by a multiplication. Zero, missing and not applicable stay
-distinct: an unstated threshold or an unsettled CP-2G ratio makes its dependants missing with the
-root reason, and a CP-2G known zero stays a known zero. Where neither the lease, the oracle nor a
-ruling pins the outcome of a state, the code fails closed with `UnpinnedCase` (Stage 1 report).
+distinct: an unstated threshold makes its dependants missing with the root reason, an unsettled
+CP-2G ratio passes its own status and reason on (round 7 (f)), and a CP-2G known zero stays a
+known zero. The states no frozen case reaches follow LEAD round 7
+(`docs/rulings/2026-10-28-stage1.md`).
 
 No I/O, store, host, session or render call happens here; the G1-X seams (`Upstream`, the
 reader, `RULES`, `view`, `probe`, `submit`) are added to this file in later stages.
@@ -116,11 +117,13 @@ class TriggerSubmission(Contract):
 
 
 class SourceIssue(ValueError):
-    """An agency source the parse rule cannot read: the attempt's single issue (s01, s02)."""
+    """An agency source the parse rule cannot read: the attempt's single issue (s01, s02;
+    round 7 items 2, 3, 6, 8 and (h))."""
 
 
-class UnpinnedCase(ValueError):
-    """A state for which no lease line, oracle case or ruling pins the outcome; fails closed."""
+REGISTER_NOT_FOUND = "Rating register not found"
+SCALE_NOT_FOUND = "Rating scale not found"
+TERMS_NOT_FOUND = "Trigger terms not found"
 
 
 # --- the agency source (manifest.json synthetic_source.parse_rule) ----------------------------
@@ -204,8 +207,8 @@ class TriggerTerm:
 class RatingsSource:
     register: tuple[RegisterRow, ...]
     triggers: tuple[TriggerTerm, ...]
-    register_published: str | None  # ISO date of page:1's `Published ...` line
-    terms_published: str | None  # ISO date of page:3's `Published ...` line
+    register_published: str  # page:1's `Published ...` date (ISO), or a `PUBLICATION_*` state
+    terms_published: str  # the same for page:3
 
 
 def _fields(line: str) -> list[str]:
@@ -226,15 +229,22 @@ def _block(text: str, header: str, width: int) -> list[tuple[str, list[str]]] | 
     return rows
 
 
-def _published(text: str) -> str | None:
+PUBLICATION_NOT_STATED, PUBLICATION_UNCLEAR = "not stated", "unclear"
+
+
+def _published(text: str) -> str:
+    """The ISO date of the page's one `Published <Month D, YYYY>.` line; none is `not stated`,
+    several or a date not on the calendar `unclear` (round 7 item 7, the D1 precedent)."""
     found = [m for line in text.split("\n") if (m := _PUBLISHED.fullmatch(line))]
-    if len(found) != 1:
-        return None
+    if not found:
+        return PUBLICATION_NOT_STATED
+    if len(found) > 1:
+        return PUBLICATION_UNCLEAR
     month, day, year = found[0].groups()
     try:
         return date(int(year), _MONTHS.index(month) + 1, int(day)).isoformat()
-    except ValueError as error:
-        raise UnpinnedCase(f"CP-2H: not a calendar date: {found[0].group(0)}") from error
+    except ValueError:  # the month is valid by the pattern: a day off the month, or year 0
+        return PUBLICATION_UNCLEAR
 
 
 def exact_text(value: Decimal) -> str:
@@ -249,15 +259,29 @@ def _canonical(value: Decimal) -> Decimal:
     return Decimal(exact_text(value))
 
 
+def _calendar_date(text: str) -> bool:
+    if not _ISO_DATE.fullmatch(text):
+        return False
+    try:
+        date.fromisoformat(text)
+    except ValueError:
+        return False
+    return True
+
+
 def _scale(rows: list[tuple[str, list[str]]]) -> dict[str, dict[str, tuple[int, str]]]:
+    """Each row a whole-number position (each position on one row) and one symbol per agency,
+    each symbol once; any breach is `Rating scale not found` (round 7 item 8)."""
     agencies = _fields(SCALE_HEADER)[1:]
     positions: dict[str, dict[str, tuple[int, str]]] = {a: {} for a in agencies}
+    seen: set[int] = set()
     for line, (position, *symbols) in rows:
-        if not re.fullmatch(r"[0-9]+", position):
-            raise UnpinnedCase(f"CP-2H: scale position is not a whole number: {line}")
+        if not re.fullmatch(r"[0-9]+", position) or int(position) in seen:
+            raise SourceIssue(SCALE_NOT_FOUND)
+        seen.add(int(position))
         for agency, symbol in zip(agencies, symbols, strict=True):
             if symbol in positions[agency]:
-                raise UnpinnedCase(f"CP-2H: {agency} symbol {symbol} is on the scale twice")
+                raise SourceIssue(SCALE_NOT_FOUND)
             positions[agency][symbol] = (int(position), line)
     return positions
 
@@ -265,12 +289,12 @@ def _scale(rows: list[tuple[str, list[str]]]) -> dict[str, dict[str, tuple[int, 
 def _register(
     rows: list[tuple[str, list[str]]], positions: Mapping[str, Mapping[str, tuple[int, str]]]
 ) -> tuple[RegisterRow, ...]:
+    """Each row a calendar ISO date and an agency once (else `Rating register not found`,
+    round 7 item 8); a rating that is neither unrated nor on the agency's scale is refused."""
     out: list[RegisterRow] = []
     for line, (agency, instrument, rating, outlook, dated) in rows:
-        if not _ISO_DATE.fullmatch(dated):
-            raise UnpinnedCase(f"CP-2H: register date is not an ISO date: {line}")
-        if any(r.agency == agency for r in out):
-            raise UnpinnedCase(f"CP-2H: agency {agency} is in the register twice")
+        if not _calendar_date(dated) or any(r.agency == agency for r in out):
+            raise SourceIssue(REGISTER_NOT_FOUND)
         if rating in UNRATED:
             out.append(RegisterRow(agency, instrument, rating, outlook, dated, None, line, None))
             continue
@@ -284,35 +308,40 @@ def _register(
     return tuple(out)
 
 
-def _threshold(text: str, metric: Metric, line: str) -> Decimal | None:
+def _threshold(text: str, metric: Metric) -> Decimal | None:
     if text == THRESHOLD_NOT_STATED:
         return None
     m = _THRESHOLD.fullmatch(text)
     if m is None or (m.group(2) == "x") != (metric.unit_class == "multiple"):
-        raise UnpinnedCase(f"CP-2H: threshold does not fit its metric's unit: {line}")
+        raise SourceIssue(TERMS_NOT_FOUND)
     value = Decimal(m.group(1))
     return _canonical(value if metric.unit_class == "multiple" else value.scaleb(-2))
 
 
 def _terms(rows: list[tuple[str, list[str]]]) -> tuple[TriggerTerm, ...]:
+    """Each row a known direction, metric, comparison and a threshold fitting the metric's
+    unit, each (agency, direction, metric, comparison) once; a breach is `Trigger terms not
+    found` (round 7 item 8), an unknown metric its own pinned text."""
     out: list[TriggerTerm] = []
     for line, (agency, direction, metric, comparison, threshold) in rows:
         if direction not in ("Downgrade", "Upgrade") or comparison not in ("Above", "Below"):
-            raise UnpinnedCase(f"CP-2H: trigger direction or comparison not recognised: {line}")
+            raise SourceIssue(TERMS_NOT_FOUND)
         known = METRICS.get(metric)
         if known is None:
             raise SourceIssue(f"Unrecognised trigger metric: {metric}")
-        out.append(
-            TriggerTerm(
-                agency=agency,
-                direction="Downgrade" if direction == "Downgrade" else "Upgrade",
-                metric=metric,
-                comparison="Above" if comparison == "Above" else "Below",
-                threshold_text=threshold,
-                threshold=_threshold(threshold, known, line),
-                line=line,
-            )
+        term = TriggerTerm(
+            agency=agency,
+            direction="Downgrade" if direction == "Downgrade" else "Upgrade",
+            metric=metric,
+            comparison="Above" if comparison == "Above" else "Below",
+            threshold_text=threshold,
+            threshold=_threshold(threshold, known),
+            line=line,
         )
+        key = (agency, term.direction, metric, term.comparison)
+        if any((t.agency, t.direction, t.metric, t.comparison) == key for t in out):
+            raise SourceIssue(TERMS_NOT_FOUND)
+        out.append(term)
     return tuple(out)
 
 
@@ -320,22 +349,30 @@ def parse_ratings(pages: Sequence[str]) -> RatingsSource:
     """The parse rule: page:1 register, page:2 scale, page:3 trigger terms, each after its exact
     header line (consecutive lines of five, three and five fields split on two or more spaces).
 
-    A missing header (or an empty register or scale) raises `SourceIssue` with the pinned text,
-    as does a rated agency off the scale or an unknown metric; an absent page reads as empty.
+    Every breach raises `SourceIssue` with one pinned text, the first in the round 7 item 8
+    order: the register, scale and terms headers (an empty block reads as no header), the scale
+    rows, the register rows, the terms rows, then the agency rule (items 6 and (h)): every
+    trigger agency is a rated register agency. An absent page reads as empty.
     """
     page = [pages[n] if n < len(pages) else "" for n in range(3)]
-    register = _block(page[0], REGISTER_HEADER, 5)
-    if not register:
-        raise SourceIssue("Rating register not found")
-    scale = _block(page[1], SCALE_HEADER, 3)
-    if not scale:
-        raise SourceIssue("Rating scale not found")
-    terms = _block(page[2], TERMS_HEADER, 5)
-    if terms is None:
-        raise SourceIssue("Trigger terms not found")
+    register_rows = _block(page[0], REGISTER_HEADER, 5)
+    if not register_rows:
+        raise SourceIssue(REGISTER_NOT_FOUND)
+    scale_rows = _block(page[1], SCALE_HEADER, 3)
+    if not scale_rows:
+        raise SourceIssue(SCALE_NOT_FOUND)
+    terms_rows = _block(page[2], TERMS_HEADER, 5)
+    if not terms_rows:
+        raise SourceIssue(TERMS_NOT_FOUND)
+    scale = _scale(scale_rows)
+    register = _register(register_rows, scale)
+    triggers = _terms(terms_rows)
+    rated = {r.agency for r in register if r.position is not None}
+    if any(t.agency not in rated for t in triggers):
+        raise SourceIssue(TERMS_NOT_FOUND)
     return RatingsSource(
-        register=_register(register, _scale(scale)),
-        triggers=_terms(terms),
+        register=register,
+        triggers=triggers,
         register_published=_published(page[0]),
         terms_published=_published(page[2]),
     )
@@ -432,19 +469,23 @@ class Cp2gMetrics:
 @dataclass(frozen=True)
 class TriggerUpstream:
     """What the attempt binds: its inputs and the current ones (or the refusal text), CP-1's
-    four reported ratios and status, CP-2G's 28 metrics and status, and CP-1D's binding."""
+    four reported ratios and status, and CP-2G's 28 metrics and status."""
 
     bound: tuple[Input, ...]
     current: tuple[Input, ...] | str
     cp1_facts: tuple[Fact, ...]
     cp1_status: str
     cp2g: Cp2gMetrics
-    cp1d_status: InputStatus | None = None
 
     def __post_init__(self) -> None:
         select_cp1(self.cp1_facts)
         if not self.cp1_status:
             raise ValueError("CP-1 status is required")
+
+    @property
+    def cp1d_status(self) -> InputStatus | None:
+        """The bound CP-1D Input's status; None when CP-1D is not bound (optional, never read)."""
+        return next((i.status for i in self.bound if i.input_id == "CP-1D"), None)
 
 
 @dataclass(frozen=True)
@@ -594,6 +635,24 @@ THRESHOLD_NS = "Not calculable: the trigger threshold is not stated in the agenc
 THRESHOLD_UNSTATED = "The trigger threshold is not stated in the agency source"
 _UNITS = {"multiple": "MULTIPLE", "percent": "PERCENT"}
 NOTCH_UNIT, POSITION_UNIT, COUNT_UNIT = "notches", "scale position", "triggers"
+# The tables that may have zero rows (round 7 items 4, 5; the CP-2A T2B.7 precedent).
+FIXED_COLUMNS: Mapping[str, tuple[TableColumn, ...]] = {
+    "T2R.8": (
+        TableColumn(field="first_agency", label="First agency"),
+        TableColumn(field="second_agency", label="Second agency"),
+        TableColumn(field="notches", label="Notches apart"),
+        TableColumn(field="lower_rated", label="Lower rated"),
+        TableColumn(field="outlook_match", label="Outlooks"),
+    ),
+    "T2R.10": (
+        TableColumn(field="id", label="Gap id"),
+        TableColumn(field="gap", label="Gap"),
+        TableColumn(field="why_it_matters", label="Why it matters"),
+        TableColumn(field="affected_analysis", label="Affected analysis"),
+        TableColumn(field="severity", label="Severity"),
+        TableColumn(field="action", label="Action"),
+    ),
+}
 Status = Literal["known", "missing", "not_applicable"]
 
 
@@ -753,10 +812,13 @@ class _Book:
         out: list[ReportTable] = []
         for table, title in TABLES.items():
             rows = self.rows[table]
-            if not rows:
-                raise UnpinnedCase(f"CP-2H: {table} has no row; no empty form is pinned")
-            first = [self.by_id[fact_id].fact for fact_id in rows[0].fact_ids]
-            columns = tuple(TableColumn(field=f.field, label=f.label) for f in first)
+            if table in FIXED_COLUMNS:
+                columns = FIXED_COLUMNS[table]
+            elif rows:
+                first = [self.by_id[fact_id].fact for fact_id in rows[0].fact_ids]
+                columns = tuple(TableColumn(field=f.field, label=f.label) for f in first)
+            else:
+                raise ValueError(f"CP-2H: {table} has no row to take its columns from")
             out.append(ReportTable(table_id=table, title=title, columns=columns, rows=tuple(rows)))
         return tuple(out)
 
@@ -785,7 +847,7 @@ def _upstream_register(b: _Book, up: TriggerUpstream) -> None:
         (
             "u_cp1d",
             "CP-1D",
-            "not part of this run",
+            up.cp1d_status or "not part of this run",  # round 7 item 1: the bound status
             "Not applicable",
             "Nothing read",
             "CP-1D (earnings quality) is an optional input that this version never reads.",
@@ -844,10 +906,14 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
     return rows
 
 
+_UNDATED = (PUBLICATION_NOT_STATED, PUBLICATION_UNCLEAR)
+
+
 def _terms_period(source: RatingsSource) -> str:
-    if source.terms_published is None:
-        raise UnpinnedCase("CP-2H: page:3 states no single publication date; no period is pinned")
-    return f"Terms published {source.terms_published}, tested at each fiscal year end"
+    published = source.terms_published
+    if published in _UNDATED:  # round 7 item 7
+        return f"Terms publication date {published}, tested at each fiscal year end"
+    return f"Terms published {published}, tested at each fiscal year end"
 
 
 def _trigger_terms(b: _Book, source: RatingsSource) -> list[tuple[str, TriggerTerm]]:
@@ -901,13 +967,6 @@ def _copy_status(fact: Fact) -> Literal["missing", "not_applicable"]:
     raise ValueError(f"CP-2H: CP-2G fact {fact.fact_id} is {fact.status}")
 
 
-def _root(reason: str | None) -> str:
-    """The reason of a value that is not calculable; its absence is an invariant breach."""
-    if not reason:
-        raise ValueError("CP-2H: an unsettled value has no root reason")
-    return reason
-
-
 def _reason(fact: Fact) -> str:
     if not fact.limitation:
         raise ValueError(f"CP-2H: unsettled CP-2G fact {fact.fact_id} has no limitation")
@@ -935,11 +994,12 @@ class _Test:
         base = "(threshold - metric)" if self.term.comparison == "Above" else "(metric - threshold)"
         return base + (" x 100, percentage points" if self.metric.unit_class == "percent" else "")
 
-    def reason(self, fact: Fact) -> str | None:
-        """Why the headroom on this CP-2G fact is not calculable: threshold first."""
+    def reason(self, fact: Fact) -> tuple[str, Literal["missing", "not_applicable"]] | None:
+        """Why the headroom on this CP-2G fact is not calculable, and the status it takes:
+        threshold first (missing); else the CP-2G fact's own reason and status (round 7 (f))."""
         if self.term.threshold is None:
-            return THRESHOLD_NS
-        return None if fact.status == "known" else _reason(fact)
+            return THRESHOLD_NS, "missing"
+        return None if fact.status == "known" else (_reason(fact), _copy_status(fact))
 
     def headroom(self, fact: Fact) -> tuple[Decimal, bool]:
         threshold, value = self.term.threshold, fact.amount
@@ -983,10 +1043,10 @@ def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None
             period=LTM_PERIOD,
             status=_copy_status(a25),
         )
-    reason = test.reason(a25)
+    unsettled = test.reason(a25)
     value: Decimal | None = None
     reached: bool | None = None
-    if reason is None:
+    if unsettled is None:
         value, reached = test.headroom(a25)
         derives = (actual_id, test.threshold_id)
         b.number(
@@ -1000,10 +1060,16 @@ def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None
         )
         b.text((*at, "status"), "Status", "Reached" if reached else "Not reached", derives=derives)
     else:
+        reason, status = unsettled
         b.unsettled(
-            (*at, "headroom"), "Headroom to the trigger", test.unit, reason, period=LTM_PERIOD
+            (*at, "headroom"),
+            "Headroom to the trigger",
+            test.unit,
+            reason,
+            period=LTM_PERIOD,
+            status=status,
         )
-        b.missing_text((*at, "status"), "Status", reason)
+        b.missing_text((*at, "status"), "Status", reason, status=status)
     cp1 = select_cp1(up.cp1_facts)[test.metric.cp1_metric]
     if a25.status == "known" and cp1.status == "known" and cp1.amount is not None:
         check = "Reconciled to CP-1" if a25.amount == cp1.amount else "Differs from CP-1"
@@ -1021,7 +1087,7 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
     rid = f"{test.row}_{case}"
     values: list[Decimal | None] = []
     hits: list[bool | None] = []
-    whys: list[str | None] = []
+    whys: list[tuple[str, Literal["missing", "not_applicable"]]] = []
     for k, row in enumerate(CASE_ROWS[case]):
         fact = up.cp2g.fact(row, test.metric.field)
         at = ("T2R.5", rid, f"y{k + 1}")
@@ -1035,10 +1101,10 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
                 at, FY[k], value, test.unit, test.formula, period=FY_PERIOD[k], derives=derives
             )
         else:
-            b.unsettled(at, FY[k], test.unit, why, period=FY_PERIOD[k])
+            b.unsettled(at, FY[k], test.unit, why[0], period=FY_PERIOD[k], status=why[1])
+            whys.append(why)
         values.append(value)
         hits.append(hit)
-        whys.append(why)
     years = tuple(f"T2R.5.{rid}.y{k + 1}" for k in range(3))
     known = [v for v in values if v is not None]
     if len(known) == len(values):
@@ -1055,12 +1121,17 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
         b.text(
             ("T2R.5", rid, "tightest_year"), "Tightest year", FY[known.index(tight)], derives=years
         )
-    else:
-        why_t = next(w for w in whys if w)
+    else:  # the first unsettled year's reason and status (round 7 (f))
+        why_t, status = whys[0]
         b.unsettled(
-            ("T2R.5", rid, "tightest"), "Tightest headroom", test.unit, why_t, period=FY_SPAN
+            ("T2R.5", rid, "tightest"),
+            "Tightest headroom",
+            test.unit,
+            why_t,
+            period=FY_SPAN,
+            status=status,
         )
-        b.missing_text(("T2R.5", rid, "tightest_year"), "Tightest year", why_t)
+        b.missing_text(("T2R.5", rid, "tightest_year"), "Tightest year", why_t, status=status)
     b.row(
         "T2R.5",
         rid,
@@ -1094,15 +1165,21 @@ def _timing(
             b.text(at, label, outcome.first, derives=derives)
             continue
         unknown = next(f for f, h in zip(facts, outcome.hits, strict=True) if h is None)
-        b.missing_text(at, label, _root(test.reason(unknown)))
+        why = test.reason(unknown)
+        if why is None:
+            raise ValueError(f"CP-2H: {at} is not calculable without a reason")
+        b.missing_text(at, label, why[0])  # stays missing, whatever the year's status (round 7 (f))
     b.row("T2R.6", row, desc, ("trigger", "base_first", "down_first"))
 
 
 def _divergence(b: _Book, source: RatingsSource, rows: Mapping[str, str]) -> list[str]:
-    """T2R.8: every pair of register agencies; the pair row ids."""
-    if source.register_published is None:
-        raise UnpinnedCase("CP-2H: page:1 states no single publication date; no period is pinned")
-    period = f"As of {source.register_published}"
+    """T2R.8: every pair of register agencies (none for a one-agency register, round 7 item 4);
+    the pair row ids."""
+    published = source.register_published
+    if published in _UNDATED:  # round 7 item 7
+        period = f"As of the rating register, publication date {published}"
+    else:
+        period = f"As of {published}"
     register = source.register
     pairs = [
         (register[i], register[j])
@@ -1371,6 +1448,17 @@ def _prose(path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str]
     ]
 
 
+def _limitation(path: str, text: str | None, names: Sequence[str]) -> list[str]:
+    """A view or overall limitation (plain text, `Claim.limitation`): no reference resolves in
+    it, so a figure or reference is refused; then the phrase guard (round 7 (d), CP-2A A3)."""
+    if text is None:
+        return []
+    return [
+        *(f"{path}: {issue}" for issue in prose.check(text, refs=(), gaps=(), names=names)),
+        *phrase_issues(path, text),
+    ]
+
+
 def _view_issues(
     sub: TriggerSubmission, source: RatingsSource, bound: Mapping[str, Fact], pack: PackScope
 ) -> list[str]:
@@ -1397,8 +1485,7 @@ def _view_issues(
             issues += (
                 f"{path}.evidence[{j}]: {x}" for x in citation_issues((citation,), pack.sources)
             )
-        if v.limitation is not None:
-            issues += phrase_issues(f"{path}.limitation", v.limitation)
+        issues += _limitation(f"{path}.limitation", v.limitation, pack.names)
     issues += (
         f"views: no view for agency {r.agency}" for r in source.register if r.agency not in seen
     )
@@ -1412,9 +1499,7 @@ def _overall_issues(
     issues = _prose("overall.rationale", o.rationale, bound, names)
     if o.confidence == "High":
         issues.append(f"overall.confidence: {HIGH}")
-    if o.limitation is not None:
-        issues += phrase_issues("overall.limitation", o.limitation)
-    return issues
+    return issues + _limitation("overall.limitation", o.limitation, names)
 
 
 def _gap_issues(
@@ -1445,12 +1530,16 @@ def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> t
 
 
 def ratings_source(pack: PackScope) -> Source:
-    """The pack's agency source; the host mapping always supplies it ready (H1)."""
+    """The pack's agency source. Absent, missing or unreadable is `Rating register not found`,
+    its hash and spans unread (round 7 item 2, 1D-x/Y2). Two of them, or a ready one without a
+    hash, cannot happen (preparation, contracts) and stay invariant raises."""
     found = [s for s in pack.sources if s.source_id == RATINGS_SOURCE_ID]
-    if len(found) != 1 or found[0].status != "ready" or found[0].sha256 is None:
-        raise UnpinnedCase(
-            "CP-2H: no single ready ratings source in the pack; no outcome is pinned"
-        )
+    if len(found) > 1:
+        raise ValueError("CP-2H: more than one ratings source in the pack")
+    if not found or found[0].status != "ready":
+        raise SourceIssue(REGISTER_NOT_FOUND)
+    if found[0].sha256 is None:
+        raise ValueError("CP-2H: the ready ratings source has no sha256")
     return found[0]
 
 
@@ -1458,24 +1547,6 @@ def source_pages(source: Source) -> tuple[str, str, str]:
     """The texts of page:1-page:3 by locator; an absent page reads as empty."""
     spans = {span.locator: span.text for span in source.spans}
     return (spans.get("page:1", ""), spans.get("page:2", ""), spans.get("page:3", ""))
-
-
-def _require_pinned(source: RatingsSource, up: TriggerUpstream, sub: TriggerSubmission) -> None:
-    """States that no lease line, oracle case or ruling pins: they fail closed (Stage 1 report)."""
-    if up.cp1d_status is not None:
-        raise UnpinnedCase("CP-2H: CP-1D is bound; the lease adds an own line but pins no wording")
-    if not source.triggers:
-        raise UnpinnedCase(
-            "CP-2H: the agency source states no trigger term; no empty form is pinned"
-        )
-    if len(source.register) < 2:
-        raise UnpinnedCase("CP-2H: the register has one agency, so T2R.8 has no pair to compare")
-    if not sub.gaps:
-        raise UnpinnedCase("CP-2H: the submission has no gap; no empty T2R.10 form is pinned")
-    unrated = {r.agency for r in source.register if r.position is None}
-    for t in source.triggers:
-        if t.agency in unrated:  # the pinned own line says such an agency publishes no terms
-            raise UnpinnedCase(f"CP-2H: unrated agency {t.agency} has a trigger term: {t.line}")
 
 
 def _bound(book: _Book, up: TriggerUpstream) -> dict[str, Fact]:
@@ -1488,20 +1559,20 @@ def _bound(book: _Book, up: TriggerUpstream) -> dict[str, Fact]:
 def validate(inputs: TriggerInputs) -> tuple[str, ...]:
     """Every calculation-level issue of a parsed submission; empty when it composes.
 
-    Stale upstream issues are returned alone (ruling G-decisions), then an unreadable agency
-    source alone (s01, s02), then the content issues in the order views, overall, gaps.
-    Shape issues come from `payload_issues`. Tool-use rules (cited page read) are Stage 2.
+    Stale upstream issues are returned alone (ruling G-decisions), then an agency source that
+    is not ready or does not parse alone (s01, s02; round 7 items 2-8), then the content issues
+    in the order views, overall, gaps (round 7 (a)). Shape issues come from `payload_issues`.
+    Tool-use rules (cited page read) are Stage 2.
     """
     up, sub = inputs.upstream, inputs.submission
     stale = stale_issues(bound=up.bound, current=up.current)
     if stale:
         return stale
-    ratings = ratings_source(inputs.pack)
     try:
+        ratings = ratings_source(inputs.pack)
         source = parse_ratings(source_pages(ratings))
     except SourceIssue as issue:
         return (str(issue),)
-    _require_pinned(source, up, sub)
     book, _ = _compose(ratings, source, up, None)
     bound = _bound(book, up)
     names = inputs.pack.names
@@ -1636,6 +1707,10 @@ _FIXED_LIMITATIONS = (
         "applied to the reported ratios."
     ),
 )
+CP1D_BOUND_LINE = (  # round 7 item 1 (the G-6 frame): replaces _FIXED_LIMITATIONS[7]
+    "CP-1D (earnings quality) is bound but not read in this version, so no earnings-quality "
+    "adjustment is applied to the reported ratios."
+)
 NOT_CALCULABLE_LINE = (
     "A trigger whose metric is not calculable in a forecast year is missing, with the reason, "
     "when no earlier year has reached it."
@@ -1643,9 +1718,11 @@ NOT_CALCULABLE_LINE = (
 
 
 def _own_limitations(
-    source: RatingsSource, mechanics: _Mechanics, gaps: Sequence[SynthesisGap]
+    source: RatingsSource, up: TriggerUpstream, mechanics: _Mechanics, gaps: Sequence[SynthesisGap]
 ) -> tuple[str, ...]:
     out = list(_FIXED_LIMITATIONS)
+    if up.cp1d_status is not None:
+        out[7] = CP1D_BOUND_LINE
     out += (
         f"The trigger threshold is not stated for {_trigger_label(t)}: its headroom and timing are "
         "Not calculable."
@@ -1658,6 +1735,11 @@ def _own_limitations(
         for r in source.register
         if r.position is None
     )
+    if len(source.register) == 1:  # round 7 item 4
+        out.append(
+            f"Only {source.register[0].agency} is in the rating register, so no notch "
+            "comparison is made."
+        )
     if any(NOT_CALCULABLE in (o.base.first, o.down.first) for o in mechanics.outcomes):
         out.append(NOT_CALCULABLE_LINE)
     out += (f"Gap ({g.severity}): {g.gap}" for g in gaps)
@@ -1669,7 +1751,7 @@ def _own_limitations(
 
 def compute(inputs: TriggerInputs) -> TriggerReport:
     """The lease's tables, references, claims and own limitations of one valid submission;
-    raises ValueError on any issue (and `UnpinnedCase` on a state nothing pins)."""
+    raises ValueError on any issue."""
     issues = validate(inputs)
     if issues:
         raise ValueError("; ".join(issues))
@@ -1695,7 +1777,7 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
         cp1_references=_cp1_references(up, mechanics.tests, texts),
         cp2g_references=_cp2g_references(up, mechanics.tests),
         claims=_claims(book, mechanics, views, sub.overall, cp1_ids),
-        own_limitations=_own_limitations(source, mechanics, sub.gaps),
+        own_limitations=_own_limitations(source, up, mechanics, sub.gaps),
         outcomes=mechanics.outcomes,
         totals=mechanics.totals,
     )

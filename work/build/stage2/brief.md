@@ -51,7 +51,7 @@ The plan is `docs/superpowers/plans/2026-10-28-verified-module-builds.md` "Stage
    - the reader exposes what the lease pins;
    - the shared hostile-text set in `tests/defect_classes.py` over your `SCHEMAS`, once it lands (rulings stage2 Q5);
    - `tests/test_owner_g1x.py` and `tests/test_host_h1.py` stay green.
-7. **Deferred to Stage 5** (write these, do not run them): store runs `tests/test_owner_<cp>.py`, `tests/<cp>_runs.py` runs, the D3 run assertions, receipts, promotion, `test_owner_workflow.py`, `test_owner_s1a.py`, the source suites and the render runs. List the exact commands in your report for `work/build/deferred-runs.md`.
+7. **Deferred to Stage 5** (write these, do not run them). Write a test for **every** lease acceptance item that needs a store run: tamper at verifier level (audit and pre-`_PROBES` checks pass, then `probe` raises), stale_binding, submit before read_inputs, non-pack tools, the blocked case with receipt and status-only reader, store bytes unchanged, and the D3 reader call on the closed head. A fast one (seconds) is run, not deferred. Fixtures vary statuses, as_of and staleness so a constant equal to the oracle cannot pass (CP-DR review M1/L1). The list: store runs `tests/test_owner_<cp>.py`, `tests/<cp>_runs.py` runs, the D3 run assertions, receipts, promotion, `test_owner_workflow.py`, `test_owner_s1a.py`, the source suites and the render runs. List the exact commands in your report for `work/build/deferred-runs.md`.
 
 ## Gates (all exit 0)
 - `PYTHONPATH=src "/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_connect_<cp>.py tests/test_method_<cp>.py tests/test_owner_g1x.py tests/test_host_h1.py tests/test_defect_classes_selfcheck.py`

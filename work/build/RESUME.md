@@ -47,3 +47,12 @@ LEAD is paused too. The G1-X open items and the open Stage 1 points for CP-1C, C
 
    Merge each approved branch.
 4. Rulings rounds for CP-2E (E1–E5) and CP-DR (R1–R3).
+
+## Round 4 (LEAD e86a192, cherry-picked as f606dbf; methodology still unmerged): apply after each current review
+- CP-1C (a)–(d). (b) reverses the agent's not-ready refusal: compose no-peers with `No ready peer source is in the pack`.
+- CP-L10 (e) and (f). (e) refuses an assessment with confidence Insufficient Information unless its category matches.
+- CP-1D (i)–(k). (k) uses the `financial_contracts.Number` bound, not 38 digits.
+- CP-3D (g) and (h): folded into the running fix round 2.
+- G1-X: the protocol amendments, including create-time refusal for a spec without an `_ENTRY_VALIDATORS` row.
+
+Merged in session 2: CP-DR rulings (facb8ea), verified on the lane (47 passed).

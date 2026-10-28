@@ -44,3 +44,5 @@
 - 2026-10-28T11:21Z cp3c-stage1 `pytest tests/test_method_cp3c.py` exit 0, 96 passed (0.38 s), branch worktree-agent-aa5a4817fa00cd287 09d9ee7, 8 LEAD points (COST-01 at 0 bp raises), agent=general-purpose(opus) fix-rounds=0 gates-first-pass=n. All agents finished; lane paused (usage limit)
 - 2026-10-28 resumed: LEAD sent CP-8/CP-2G/CP-3C/CP-2D/CP-2A open points; dispatched re-reviews CP-1C, CP-L10, CP-2D, CP-2A, CP-1D (adversary), CP-3D (mx-precise), G1-X (adversary), rulings rounds CP-2E, CP-DR. Methodology merge deferred to after Stage 1 merges
 - 2026-10-28 cp3d-stage1 rulings review (mx-precise) on 9b871a7: CHANGES REQUIRED, M1 Medium (YLD-01 says maturity is unstated when only the quotation date is missing). Fix round 2 dispatched
+- 2026-10-28 LEAD round 4 (e86a192) cherry-picked as f606dbf (LEAD-tip merge undone to hold the methodology change)
+- 2026-10-28 cpdr-stage1-rulings `pytest tests/test_method_cpdr.py` exit 0, 47 passed, branch claude/cpdr-stage1 facb8ea (R1-R3), mutate_r2_order 6/6 killed, controller-verified on lane b181464, merged. agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y

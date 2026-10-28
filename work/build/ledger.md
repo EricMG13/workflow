@@ -366,3 +366,4 @@
 - 20:22 Shared defect test fix1 re-review: REQUEST CHANGES (mutant A: a wrongly allowlisted refused path passes). Fix round 2 (last Sonnet round).
 - 20:23 AGENTS.md Source quotes (8a8de7e) applied: brief rulings line; questions.md inventory, Q-SQ1 (CP-4C source_row) + Info to LEAD session.
 - 20:25 Q-SQ1 answered (CP-4C source_row complies; judgements outside (b); CP-1D item 12 confirmed).
+- 20:25 CP-2A fix2 fbe2d3c (M1 consumer rows, A3 pin, T4.10 filter; tests only). Scoped re-review.

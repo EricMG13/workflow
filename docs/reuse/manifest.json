@@ -1345,6 +1345,15 @@
       "sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
       "reason": "Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
       "review": "docs/CPL10-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "project_commit": "ab8917343a7b9a3d002a80a519d7c28d29678cad",
+      "sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
+      "reason": "Merged registration tail: CP-L10 appended last (D12 one-line registration); all earlier rows retained.",
+      "review": "docs/CPL10-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

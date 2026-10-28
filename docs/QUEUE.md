@@ -2838,3 +2838,9 @@ hash-checked on a hit (SH-R12/SH-R16 still refuse); nothing persisted, no writer
 F3 recorded as partial coverage; F4 ruled consistent with lease :209-211 (surfaced = hits of
 the unchanged search); F5 covered by the user's line-cap waiver; F6 docstring note. Fix
 round 1 dispatched (`fix-1-brief.md`).
+
+Leases frozen (2026-10-28): `docs/S1A-OWNER-RUN-LEASE.md` rev 1 and `docs/OWNER-RENDERING-LEASE.md`
+(G2) rev 1, after the independent review `docs/reviews/s1a-g2-lease-review.md` (both FREEZE
+WITH EDITS; every edit adopted as rev 1 amendments). S1a waits for G1 and L2 integration and
+the manifest adoption commit 49801d7; G2 waits for S1a. S1a task 1 reports the LTM fact
+predicate and the CP-2 view key tree for LEAD to freeze before tests are written.

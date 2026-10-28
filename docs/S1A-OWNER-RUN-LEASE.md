@@ -1,10 +1,10 @@
-# S1a credit-snapshot run lease (draft for LEAD)
+# S1a credit-snapshot run lease — rev 1, FROZEN by LEAD 2026-10-28
 
-Read-only draft, 2026-10-28. This contract is written before any code. Implementation starts only after an independent review and PM integration.
+Drafted 2026-10-28 (read-only mx-autonomous), independently reviewed (`docs/reviews/s1a-g2-lease-review.md`), frozen with the amendments at the end of this file, which override the body where they differ. Implementation starts only after the prerequisites below are integrated.
 
 ## Why
 
-S1a is the first run with several owners: CP-0 → CP-1 → CP-1A → CP-2, with CP-MODEL published last. That is the order `registry.plan` gives (checked: `('CP-0','CP-1','CP-1A','CP-2','CP-MODEL')`), and G1 publishes only once the analytical walk is done. The run goes over the frozen S1 oracle (`cases/snapshot/*`, sha256 expected `d1aa1af9…9baa`, manifest `9db0367f…61b1`, submissions `bff9ed18…b35c` on `codex/checkpoint`). S1a ends at verified settled heads plus a verified `OwnerRunReceipt`. FP01, the rails and G# numbering belong to G2.
+S1a is the first run with several owners: CP-0 → CP-1 → CP-1A → CP-2, with CP-MODEL published last. That is the order `registry.plan` gives (checked: `('CP-0','CP-1','CP-1A','CP-2','CP-MODEL')`), and G1 publishes only once the analytical walk is done. The run goes over the frozen S1 oracle (`cases/snapshot/*`, sha256 expected `d1aa1af9…9baa`, manifest `68d591f6…f3f4`, submissions `bff9ed18…b35c`; the adopted manifest needs 49801d7 on `codex/checkpoint`). S1a ends at verified settled heads plus a verified `OwnerRunReceipt`. FP01, the rails and G# numbering belong to G2.
 
 ## Prerequisites (base)
 
@@ -240,3 +240,47 @@ The exact label and period spelling that separates the LTM-Q4 T4.10 fact from th
 - Q6: (b) defer CP-1A `read_inputs`.
 - Q7: (a) probes and views in `src/deploy_workflow/owners/<cp>.py` (D12).
 - Q8: resolved by the pins above.
+
+## Rev 1 amendments (LEAD, 2026-10-28) — override the body
+
+From the independent review (`docs/reviews/s1a-g2-lease-review.md`); every edit it proposed is
+adopted.
+- **Prerequisites:** add a third: the manifest adoption (49801d7) integrated into
+  `codex/checkpoint`.
+- **H1 (terminal publication):** add G1 extension item 9: publication is terminal only when
+  CP-MODEL's required producer (CP-1) has no accepted or restricted head. A refusal or a
+  blocked head at CP-1A or CP-2, with CP-1 settled, publishes and verifies
+  (`owner_workflow.py:1163`, `:1225-1227` change accordingly). Add acceptance A3b: CP-1A
+  attempts 0 and 1 both fail a rule, so the CP-1A head is blocked; CP-2 begins with input
+  CP-1A `status=blocked`; CP-2's inherited limitations carry the `Upstream CP-1A blocked:`
+  prefix (execution.py:361-362); the receipt verifies.
+- **H2:** Files add `tests/test_owner_workflow.py`. A5 becomes: it passes with only the :174
+  parameter changed to `("CP-1","CP-5","CP-MODEL")`, which `_check_specs` still refuses.
+- **M2 (FIG binding):** select from `store.head_module(CP-1 head).facts` the unique fact whose
+  table_id, metric row/field and basis match the oracle `cp1_coordinate` (T4.10, metric,
+  twelve-month (LTM) basis ending Q4 2025); assert its `fact_id` appears as a `ref` in
+  `cp1_facts` with that unit token and `shown`. **Task 1** probes a real CP-1 head and reports
+  the exact predicate strings; LEAD freezes them into this lease before tests are written.
+- **M3 (rule mode):** `StepSpec.rules: Literal["none","precheck","journaled"]`; CP-0 and CP-1
+  `precheck`, CP-1A `journaled`, CP-2 `none`. Item 2 covers every `_fin`/`_filled`/
+  `_projection` call site (`owner_workflow.py:432, 525, 548, 570, 573, 960, 985, 1011, 1012,
+  1031`); item 3 also applies to the verifier's `_filled` replay (:1012).
+- **M4 (CP-2 view):** **Task 1** also reports the exact key tree of
+  `module_context("credit_synthesis")` for both cases. LEAD then amends TOOL-CONTRACT.md:197
+  and :205-208 with that key tree and states the D2 exception (this whole-context projection
+  is CP-2's exact view and counts as tool use). The test asserts the body's key tree equals the
+  frozen tree and that no `quote` string from submissions.json occurs as a substring.
+- **L1:** the A3 "no business page:3 read" case is positive-case only.
+- **L2:** the API block is written with keyword arguments only.
+- **L3:** host references are to L2's host.py (`_assert_current` :697-708, calls :748, :750,
+  :766, :783; `_cp1_producer_inputs` :427-440); the S1a change is one entry in L2's
+  multi-line `_SOURCE_STEPS` dict. L2 now memoises CP-1 authentication per snapshot (its
+  fix round 1), which answers Q5.
+- **Run driver (G2 review M2):** Files add `tests/s1a_runs.py`, exporting
+  `s1a_closed(case, root) -> (store_dir, receipt_path, publication_dir)`; it owns pack assembly,
+  the literal submissions, run-time substitutions and the tool-call sequence. G2 imports it.
+- **Limitations recorded:** CP-2 has no consumer in S1a, so its downstream consumption stays
+  open until S1b (CP-5, D3); a real JSON-lines CP-1A participant has no `read_inputs` for
+  `cp1_facts`/consumers (Q6 deferred); model blocks (`model-chart-strip`, `capital-structure`,
+  `financials-credit-metrics`) render but are outside the S1 oracle. LEAD updates
+  `docs/MODULES.csv` when S1a and G2 verify.

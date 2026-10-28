@@ -1,4 +1,4 @@
-# Generic owner rendering (G2) lease: DRAFT rev 0 for LEAD
+# Generic owner rendering (G2) lease — rev 1, FROZEN by LEAD 2026-10-28
 
 Read-only draft, 2026-10-27. It is pre-code: implementation starts only after independent review, LEAD freeze and PM integration.
 
@@ -157,7 +157,7 @@ No stub or fake value stands in for real behaviour. No catch-all hides a failure
 
 Not verified: no code was run apart from `registry.plan` for the S1a and S1b selections. Unchecked: that the G1 receipt and verifier shape survives fix round 1 and integration; that S1a's G1 extension exists; that the S1 oracle is adopted; that the render is byte-deterministic for S1a views across processes; that the payload's assigned blocks exactly equal the `build()` dumps; that `Binding.matches` placement reproduces `build`'s placement for keyvalue tabs; that the oracle's line and cell notation maps one-to-one onto the payload (for example, the "pen" line kind for key-findings sentences containing figures); and the size of the heavy-test budget.
 
-## LEAD rulings on rev 0 (2026-10-28) — not yet frozen; independent review pending
+## LEAD rulings on rev 0 (2026-10-28)
 
 - Prerequisite 3 is met: the S1 oracle is adopted (a4f966f, 49801d7).
 - Prerequisite 4 (G1 refuses an analytical module after a deterministic one, needed for S1b's
@@ -179,3 +179,22 @@ Not verified: no code was run apart from `registry.plan` for the S1a and S1b sel
     remaining analytical owners remain unqualified."
   - `s1a-credit-snapshot` refused: "Credit snapshot incomplete: an owner was not
     authorized, so later owners did not run."
+
+## Rev 1 amendments (LEAD, 2026-10-28) — override the body and rulings
+
+From the independent review (`docs/reviews/s1a-g2-lease-review.md`).
+- **Prerequisites:** G1 and S1a integrated, and the manifest adoption (49801d7) on
+  `codex/checkpoint` ("prerequisite 3 met" held only on the LEAD branch).
+- **M1 (outcomes):** `s1a-credit-snapshot` supports `complete` only; any S1a receipt with a
+  refusal or blocked head is refused until a slice oracle covers it. The s1a refused banner is
+  dropped. `cp1-model` keeps both outcomes.
+- **M2:** acceptance imports `tests/s1a_runs.py` (owned by S1a) and G1's `promoted_case`; G2
+  never re-implements them.
+- **M3:** store heads equal the receipt on (module_id, result_sha256, status), and
+  `OwnerHeadResult.qualification` is the store `Head.qualification`, which the G1 verifier
+  already checks through `head_of` (`owner_workflow.py:1108`).
+- **L1:** cite `render` at render.py:127 and `build` at :129-131; assigned blocks have no chart
+  and `figures == ()`, asserted.
+- **L2:** the scope matches the Run's exact `requested_modules` tuple.
+- **L3:** model blocks rendered outside any scope section are an S1a scope limitation.
+- **L4:** the "analytical after deterministic" G1 change belongs to the S1b lease.

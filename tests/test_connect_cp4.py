@@ -32,6 +32,10 @@ from deploy_workflow.owners import cp4
 from deploy_workflow.workflow import WorkflowError
 
 stage1: Any = importlib.import_module("test_method_cp4")
+# `hide_row` keeps the shipped registration order on undo (`monkeypatch.delitem` would not).
+hide_row: Callable[[pytest.MonkeyPatch, str, str], None] = importlib.import_module(
+    "test_owner_g1x"
+).hide_row
 
 STEP = "legal_covenants"
 # The lease's Public API literal (docs/CP4-OWNER-LEASE.md), written out here, not read back.
@@ -104,17 +108,17 @@ def _refused(spec: Any) -> None:
 
 
 def test_step_context_without_a_views_row_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(owner._VIEWS, STEP)
+    hide_row(monkeypatch, "_VIEWS", STEP)
     _refused(SPEC)
 
 
 def test_module_context_without_a_views_row_stays_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(owner._VIEWS, STEP)
+    hide_row(monkeypatch, "_VIEWS", STEP)
     _refused(replace(SPEC, steps=(replace(CP4_STEP, inputs="module_context"),)))
 
 
 def test_cp4_without_an_entry_validator_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(owner._ENTRY_VALIDATORS, "CP-4")
+    hide_row(monkeypatch, "_ENTRY_VALIDATORS", "CP-4")
     _refused(SPEC)
 
 
@@ -200,7 +204,7 @@ def test_inputs_still_serves_module_context(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_inputs_refuses_step_context_without_a_views_row(monkeypatch: pytest.MonkeyPatch) -> None:
     _fake_world(monkeypatch)
-    monkeypatch.delitem(owner._VIEWS, STEP, raising=False)
+    hide_row(monkeypatch, "_VIEWS", STEP)
     with pytest.raises(WorkflowError) as caught:
         owner._inputs(STORE, BINDING, CP4_STEP)
     assert caught.value.code == "not_permitted"

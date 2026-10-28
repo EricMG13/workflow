@@ -463,6 +463,38 @@ def _unchanged(m: pytest.MonkeyPatch) -> None:
     pass
 
 
+def hide_row(m: pytest.MonkeyPatch, name: str, key: str) -> None:
+    """Hide one row of the fixed registration dict `owner.<name>` for the patch's lifetime.
+
+    The module attribute is swapped for a copy without the row (G1 looks every registration dict up
+    through the module at call time), so the undo puts back the original dict, its identity and
+    row order intact. `m.delitem` would re-insert the row at the end of the dict and break the
+    order-sensitive registration tests that run later in the same process."""
+    table: dict[str, Any] = getattr(owner, name)
+    m.setattr(owner, name, {k: v for k, v in table.items() if k != key})
+
+
+def test_hiding_a_shipped_row_restores_the_dict_on_undo() -> None:
+    """Test isolation: the undo restores the very dict, rows in the shipped order, so the
+    order-sensitive registration tests that run later in the same process are unaffected."""
+    rows_hidden = (
+        ("_ENTRY_VALIDATORS", "CP-1A"),
+        ("_ENTRY_VALIDATORS", "CP-3"),
+        ("_ENTRY_VALIDATORS", "CP-4"),
+        ("_CORES", "CP-3D"),
+        ("_VIEWS", "legal_covenants"),
+    )
+    for name, key in rows_hidden:
+        table = getattr(owner, name)
+        rows = tuple(table.items())
+        with pytest.MonkeyPatch.context() as m:
+            hide_row(m, name, key)
+            assert key not in getattr(owner, name)
+            assert tuple(getattr(owner, name)) == tuple(k for k, _ in rows if k != key)
+        assert getattr(owner, name) is table, name
+        assert tuple(table.items()) == rows, (name, key)
+
+
 def _refused_at_create(root: Path, variants: dict[str, Variant]) -> None:
     """Each variant (the module requested, the spec standing for its module's row, a registry
     patch) is refused `not_permitted` at create and writes nothing."""
@@ -610,7 +642,7 @@ def test_every_analytical_module_but_cp0_and_cp1_has_an_entry_validator(
             "live-contract module without a validator": (
                 "CP-1A",
                 owner.OWNER_SPECS["CP-1A"],
-                lambda m: m.delitem(owner._ENTRY_VALIDATORS, "CP-1A"),
+                lambda m: hide_row(m, "_ENTRY_VALIDATORS", "CP-1A"),
             ),
         },
     )

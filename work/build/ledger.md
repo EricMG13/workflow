@@ -27,3 +27,4 @@
 - 2026-10-28 LEAD ae9f1f1 merged into lane (ad96d2d): CP-4 oracle 4-1 at 7328203; AGENTS.md review-round rules from codex/checkpoint 963ef62
 - 2026-10-28 LEAD rulings round 2 (842c911) merged into lane (d9cada2)
 - 2026-10-28 cp4-stage1 re-review (mx-adversary) on b658bc1: APPROVE; merged into lane (056b355). Info: engine cp4_legal.py:546-554 shows threshold_value as typed (predates the lane; owner)
+- 2026-10-28 cp1d-stage1 re-review (mx-adversary) on 3b080c9: APPROVE; merged into lane. Lows L-a/L-b and two pre-existing validation raises ride with the rulings round

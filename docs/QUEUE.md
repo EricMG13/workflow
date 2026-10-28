@@ -2895,3 +2895,12 @@ one-round mx-feature budget, fix-n2 (`fix-n2-brief.md`), with Q2 dead-seam remov
 ratifies that an unplanned spec passes only if equal to the reference entry, and closes the
 `{"CP-X": None}` corner. L2 fix round 1 built (static gates clean); its mx-adversary review
 is running. S1a lease rev 2 frozen (12002e4).
+
+G1 integrated build-only (2026-10-28): `src/deploy_workflow/owner_workflow.py` and
+`tests/test_owner_workflow.py` from `coordinator-1-owner` after fix-1, fix-2 and fix-n2
+(mx-adversary review 1, mx-precise review 2, mx-feature review n2 APPROVE). Static gates exit 0
+on the checkpoint base; its test file (13 min) is a deferred run. B1 mx-adversary re-review of
+fix-1 (`coordinator-3/work/cp1b-owner-b1/review-adversary-fix-1.md`): H1–H3 and L1–L3 closed,
+no new HIGH; N1 (audit-root `_put` residue blocks the seal; M1 not closed at its cause), N2
+(`open()` maps B1 programming errors to identity_mismatch), N4 (over-4300-digit integers escape
+`_json_copy`) go to fix round 2 of 2 (`fix-2-brief.md`); N3 ruled in a CP1B-OWNER-LEASE note.

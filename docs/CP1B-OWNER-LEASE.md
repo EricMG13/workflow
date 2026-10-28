@@ -629,3 +629,10 @@ integrates exact reviewed bytes. Author handoff distinguishes pure component
 checks from actual retained source/owner participation and remaining CP5/render.
 
 Not verified: implementation or focused tests, actual source/CP1B participation/settlement, durable recovery, CP5 consumption/final slice, export/native rendering or providers.
+
+LEAD note (2026-10-28, B1 adversary re-review N3): the phase transition "(or
+complete/cp1_not_authorized on actual refusal)" above and `owner-expected.json`
+`real_cp1_begin_denial` describe the negative case, whose genuine-negative outcome
+`cp1_not_authorized` the receipt rules accept. In a positive case an actual CP-1 begin
+denial ends in phase `failed`, which seals no receipt; invoke, read_inputs, submit and
+write_receipt then refuse `not_permitted`, live and after reopen.

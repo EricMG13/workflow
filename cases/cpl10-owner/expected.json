@@ -9,7 +9,7 @@
     "status": "known | missing | not_applicable",
     "value_class_basis": "observed on the real CP-1 head for every copied cell (manifest.fact_selection_rule); a missing ratio fact keeps value_class `calculated`",
     "derives_from": "the CP-1 T4.10 labels a calculated fact derives from",
-    "table_shape": "every table of every case has one fact per column in every row, fact id <table>.<row>.<field> in column order (contracts.py:270-272, validate_tables); `tables[].columns` pins the order; the builder asserts it for every table of both cases",
+    "table_shape": "every table of every case has one fact per column in every row, fact id <table>.<row>.<field> in column order (contracts.py:270-272, validate_tables); `tables[].columns` pins the order of the field names only; column labels are the product's and are not pinned; the builder asserts the shape for every table of both cases",
     "not_applicable_text_cell": "a text cell with no meaning for its row (the TL10.3 overall row's evidence, credit_transmission, screening_implication and source_refs): status not_applicable, shown `∅ G# n.m.`, limitation `Not applicable to the overall row`, no value class, no calculation id",
     "run_bound_cells": "TL10.1 scope_status and source_ref carry a marker, never a literal (manifest.run_time_bindings.tl10_1_scope_status, tl10_1_source_ref)"
   },
@@ -91,7 +91,7 @@
       "confidence_high": "High is refused for every confidence, the overall's included (r07 pins the assessments[0] spelling `<path>.confidence: High is not allowed in a screen`)",
       "insufficient_information_pairing": "overall.confidence is Insufficient Information iff overall.category is Insufficient Information (r13; issue `overall.confidence: must be Insufficient Information exactly when the category is`)",
       "limitation": "an Insufficient Information overall (category) carries a non-null limitation (r14; `overall.limitation: an Insufficient Information overall states its limitation`); a category other than Insufficient Information forbids one (r15; `overall.limitation: only an Insufficient Information overall carries a limitation`); the CP-3C precedent, keyed on the category",
-      "issue_order": "pairing, then limitation required, then limitation forbidden",
+      "issue_order": "confidence High, then pairing, then limitation required, then limitation forbidden",
       "literal_consequence": "cases.limited.overall.limitation is null (it was a sentence on a Low-confidence Analyst Interpretation overall, which the forbidden-limitation rule now refuses)"
     },
     "gaps_rule": {

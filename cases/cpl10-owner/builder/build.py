@@ -27,7 +27,7 @@ CTX = Context(prec=38, rounding=ROUND_HALF_EVEN)
 # --- 0. pinned inputs (every file this builder reads) -------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
 }
 RAW = {}
 for _rel, _sha in PINS.items():
@@ -48,16 +48,17 @@ PAGE = {p["locator"]: p["text"] for p in SRC["financial"]["pages"]}
 
 # --- 0b. methodology facts the lease relies on (asserted, not assumed) ---------------------------
 CPL10 = METH["CP-L10"]
-assert CPL10["required"] == ["CP-0"] and CPL10["optional"] == []  # today; D4 adds CP-1 (below)
-assert CPL10["table_ids"][-4:] == ["TL10.1", "TL10.2", "TL10.3", "TL10.4"]
+assert CPL10["required"] == ["CP-0", "CP-1"] and CPL10["optional"] == []  # landed: D4 added CP-1 (it was ["CP-0"])
+assert CPL10["table_ids"][-5:] == ["TL10.1", "TL10.2", "TL10.3", "TL10.4", "TL10.5"]  # landed: TL10.5 appended after TL10.4
 TL10 = [t for t in CPL10["table_ids"] if t.startswith("TL10.")]
 for _mid, _m in METH.items():  # D8: no other module lists a TL10.x id
     if _mid != "CP-L10":
         assert not set(TL10) & set(_m["table_ids"]), _mid
-# Amendment 1 F1: the totals move to a new table TL10.5, registered in the single serialised methodology change.
+# Amendment 1 F1: the totals live in a new table TL10.5, registered by the single serialised methodology change.
 TL10_NEW = "TL10.5"
-assert not any(TL10_NEW in _m["table_ids"] for _m in METH.values())  # D8: TL10.5 is unused anywhere today
-TL10_PRODUCED = TL10 + [TL10_NEW]
+assert not any(TL10_NEW in _m["table_ids"] for _m in METH.values() if _m is not CPL10)  # D8: TL10.5 belongs to CP-L10 only
+assert TL10[-1] == TL10_NEW
+TL10_PRODUCED = TL10
 assert METH["CP-1"]["required"] == ["CP-0"]
 TARGET_TITLE = {k: METH[k]["title"] for k in ("CP-1D", "CP-2A", "CP-2D")}
 D4_PLAN = ["CP-0", "CP-1", "CP-L10"]  # plan(("CP-L10",)) after D4: CP-0, CP-1 required (block)
@@ -753,12 +754,9 @@ def _methodology_digest(rows):
 
 
 _ROWS = json.loads(RAW["src/deploy_vii/methodology.json"])
-assert _methodology_digest(_ROWS) == "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6"  # today (the test's pin)
-_ROWS_AFTER = deepcopy(_ROWS)
-_L10 = next(r for r in _ROWS_AFTER if r["module_id"] == "CP-L10")
-_L10["required"] = ["CP-0", "CP-1"]  # D4
-_L10["table_ids"] = _L10["table_ids"] + [TL10_NEW]  # amendment 1 F1: appended after TL10.4
-DIGEST_AFTER = _methodology_digest(_ROWS_AFTER)  # D4 and TL10.5 only; the serialised change with CP-1C D8 re-strikes it
+DIGEST_BEFORE = "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6"  # the test's pin before the serialised change (a literal)
+DIGEST_AFTER = _methodology_digest(_ROWS)  # computed from the landed methodology.json bytes pinned above (the whole serialised change)
+assert DIGEST_AFTER != DIGEST_BEFORE
 
 GREP_LOCATE = "locate by grep for the hash 348fbc4b...8d45 at build time (untracked or still moving in this worktree, so no line number is pinned)"
 # Navigator words probed on the committed report_view (sha256 51a6853e...0e12) with the reviewer's rp3 probe
@@ -799,13 +797,14 @@ for _s in NAV_STATES.values():
 
 D4_SIDE_EFFECTS = {
     "methodology_json": {"file": "src/deploy_vii/methodology.json", "sha256_before": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
-                         "change": "CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"] and CP-L10 `table_ids` gains TL10.5 (amendment 1, F1: appended after TL10.4); sha256_after is struck when the edit lands",
+                         "sha256_after": PINS["src/deploy_vii/methodology.json"],
+                         "change": "landed in the serialised change: CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"] and CP-L10 `table_ids` gains TL10.5 (amendment 1, F1: appended after TL10.4); CP-1C `table_ids` become T1C.1-T1C.8 (the eleven T4.x ids dropped); CP-1D drops T1E.1-T1E.6; CP-2A drops T5.1-T5.7 (they stay CP-5's)",
                          "serialised_change": "one methodology.json change carrying CP-L10 D4 (required edge), the CP-L10 table_ids gaining TL10.5 (amendment 1) and CP-1C D8 (T1C.1-T1C.8, CP-1C amendment 1) together, with ONE re-pin pass of every builder that pins methodology.json (methodology_pinning_builders below); neither lands alone"},
     "test_pin": {"file": "tests/test_cp1b_registration.py", "line": 34, "test": "test_only_cp1b_table_ownership_changes",
-                 "digest_before": "0573968460da16ff13f4590b3f65edc4ebe06685c2e2840c8001b229747d86c6",
-                 "digest_after": DIGEST_AFTER, "digest_after_note": "D4 and TL10.5 applied to a scratch copy of the rows; the serialised change also carries CP-1C D8 (T1C.1-T1C.8), which re-strikes it",
-                 "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes only because of the D4 edit and the TL10.5 registration (computed by this builder from the pinned methodology.json)",
-                 "action": "update the pinned digest in the CP-L10 build commit (a deliberate registry change); the test fails otherwise"},
+                 "digest_before": DIGEST_BEFORE,
+                 "digest_after": DIGEST_AFTER, "digest_after_note": "computed by this builder from the landed methodology.json (the whole serialised change: D4, TL10.5, CP-1C D8, the CP-1D and CP-2A id drops); the c19be178... of the pre-landing text covered D4 and TL10.5 only and was not final",
+                 "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes because of the serialised methodology.json change (computed by this builder from the pinned methodology.json)",
+                 "action": "the pin is recomputed from methodology.json after the whole serialised change (not from D4 and TL10.5 alone) and updated in the same commit, a deliberate registry change; the test fails otherwise"},
     "methodology_pinning_builders": {
         "rule": "each asserts the methodology.json sha256 348fbc4b... and refuses after the edit. The build commit updates every pin in ONE re-pin pass (the serialised change with CP-1C D8), rebuilds each builder and compares: expected.json and submissions.json byte-identical; manifest.json differs only in the methodology pin value wherever the builder records it (key-limited diff). Any other output change goes back to LEAD (byte-identical manifest.json cannot hold: each builder writes the pin into it)",
         "files": [{"file": "cases/cp1c-owner/builder/build.py", "locate": GREP_LOCATE, "tracked": "untracked in this worktree (still moving)"},
@@ -883,10 +882,10 @@ def main():
             {"source_id": s, "sha256": SRC[s]["sha256"], "reuse": "Every page text and locator byte-identical; read by reference, never edited"} for s in ("identity", "financial")]},
         "no_new_source": "CP-L10 reads only the settled CP-1 head; the financial pack carries every operand, so no synthetic source and no synthetic peer is added. One issuer is screened for change between periods, not against peers.",
         "d4_edge_change": {"file": "src/deploy_vii/methodology.json", "module": "CP-L10",
-                           "required_before": CPL10["required"], "required_after": ["CP-0", "CP-1"],
+                           "required_before": ["CP-0"], "required_after": CPL10["required"],
                            "optional_after": [], "edge_rule": "CP-1 -> CP-L10 block (registry.edge_rule default for a required producer)",
                            "plan_L10": D4_PLAN, "cp1b": "not added: v1 reads no CP-1B fact (reading nothing would not be consumption); see lease question 3",
-                           "lands_with": "the CP-L10 build commit, together with every side effect below; this preparation edits none of them",
+                           "lands_with": "landed in the serialised methodology.json change, together with every side effect below (re-pin pass, test pin, reuse manifest entry)",
                            "side_effects": D4_SIDE_EFFECTS},
         "run": {"run_id": "cpl10-owner-positive", "issuer_id": "northbridge-synthetic", "issuer_name": "Northbridge Synthetic Group",
                 "as_of": "2026-01-10", "method_version": "deploy-v-r14", "case_kind": "synthetic", "pathway": "credit_snapshot",
@@ -963,7 +962,7 @@ def main():
             "status": "known | missing | not_applicable",
             "value_class_basis": "observed on the real CP-1 head for every copied cell (manifest.fact_selection_rule); a missing ratio fact keeps value_class `calculated`",
             "derives_from": "the CP-1 T4.10 labels a calculated fact derives from",
-            "table_shape": "every table of every case has one fact per column in every row, fact id <table>.<row>.<field> in column order (contracts.py:270-272, validate_tables); `tables[].columns` pins the order; the builder asserts it for every table of both cases",
+            "table_shape": "every table of every case has one fact per column in every row, fact id <table>.<row>.<field> in column order (contracts.py:270-272, validate_tables); `tables[].columns` pins the order of the field names only; column labels are the product's and are not pinned; the builder asserts the shape for every table of both cases",
             "not_applicable_text_cell": "a text cell with no meaning for its row (the TL10.3 overall row's evidence, credit_transmission, screening_implication and source_refs): status not_applicable, shown `\u2205 G# n.m.`, limitation `Not applicable to the overall row`, no value class, no calculation id",
             "run_bound_cells": "TL10.1 scope_status and source_ref carry a marker, never a literal (manifest.run_time_bindings.tl10_1_scope_status, tl10_1_source_ref)",
         },
@@ -981,7 +980,7 @@ def main():
             "overall_rule": {"confidence_high": "High is refused for every confidence, the overall's included (r07 pins the assessments[0] spelling `<path>.confidence: High is not allowed in a screen`)",
                              "insufficient_information_pairing": "overall.confidence is Insufficient Information iff overall.category is Insufficient Information (r13; issue `overall.confidence: must be Insufficient Information exactly when the category is`)",
                              "limitation": "an Insufficient Information overall (category) carries a non-null limitation (r14; `overall.limitation: an Insufficient Information overall states its limitation`); a category other than Insufficient Information forbids one (r15; `overall.limitation: only an Insufficient Information overall carries a limitation`); the CP-3C precedent, keyed on the category",
-                             "issue_order": "pairing, then limitation required, then limitation forbidden",
+                             "issue_order": "confidence High, then pairing, then limitation required, then limitation forbidden",
                              "literal_consequence": "cases.limited.overall.limitation is null (it was a sentence on a Low-confidence Analyst Interpretation overall, which the forbidden-limitation rule now refuses)"},
             "gaps_rule": {"topic": "each gap's `affected_analysis` equals a topic_id of the view or `overall` (r16; `gaps[<i>].affected_analysis: must name a topic of the view or overall`)",
                           "missing_item": "each gap's `gap` (the missing item) is non-empty after trimming (r17; `gaps[<i>].gap: empty`)",
@@ -1038,7 +1037,7 @@ def main():
             "settled_limitations": "cases.<case>.settled_limitations: the candidate's own limitations then `Synthetic case; not real issuer qualification` (execution.py:440-446), de-duplicated; own_limitations is the candidate's list",
         },
         "consumption": "OPEN: no consumer core reads CP-L10. registry.edge_rule('CP-5','CP-L10') is restricted (fan-in) but D3 counts CP-5 only after a lease extends its integrity scope and binds the CP-L10 head hash. cpl10_reader(store, head) pins what a consumer reads: status, per topic id/materiality/evidence/disposition/rank/change, counts.",
-        "d8_table_ids": {"registered": TL10, "added_by_the_serialised_methodology_change": [TL10_NEW], "other_registered_in_entry": [t for t in CPL10["table_ids"] if not t.startswith("TL10.")],
+        "d8_table_ids": {"registered": [t for t in TL10 if t != TL10_NEW], "added_by_the_serialised_methodology_change": [TL10_NEW], "other_registered_in_entry": [t for t in CPL10["table_ids"] if not t.startswith("TL10.")],
                           "collision": "none: no other module's table_ids lists a TL10.x id and TL10.5 is unused anywhere (asserted above); TL20-TL40 belong to the CP-L10 entry too and are left unchanged",
                           "produced": TL10_PRODUCED, "placement": "TL10.5 (Screen totals) joins the evidence rail block of TL10.2 (D7)"},
         "rendered": {"block": None, "rails": {"evidence": ["TL10.1", "TL10.2", "TL10.5", "TL10.3"], "limitations": ["TL10.4"]},

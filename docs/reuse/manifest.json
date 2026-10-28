@@ -1130,6 +1130,15 @@
       "sha256": "0f0fe30bf97384d46ebfba4d6d09bc1b179918d6c36cba03b7ef8ee149bf7706",
       "reason": "Call band sentence for the not-requested state says CP-6 was not requested in this run instead of the Pathway not making the call. The same revision groups the navigator footer's outside rows by status word, one summary per word.",
       "review": "docs/reviews/0d-product-defects.md"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+      "project_commit": "ede9ffeaf99b1800a7f4c0c39a7d46b8d6a3f13c",
+      "sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+      "reason": "Serialised methodology change: CP-L10 requires CP-1 (D4); CP-L10 registers TL10.5; CP-1C owns T1C.1-T1C.8 and drops the T4.x ids (D8); CP-1D drops the T1E.1-T1E.6 ids; CP-2A drops the T5.1-T5.7 ids that collide with CP-5.",
+      "review": "work/lead/methodology-serialised/review.md"
     }
   ],
   "local_patch_lineage": [

@@ -36,10 +36,10 @@ PINS = {
     "cases/cp2a-owner/manifest.json": "96c6644b8151175f3d422ffd2b4a893cbf9ac9b087c3896373495feb49044047",
     "cases/cp2a-owner/submissions.json": "191180c2596c38fad13a9b190c6b0fb0103de21ff43b08d175c0f4cf38003a81",
     "cases/cp2a-owner/expected.json": "457508a0643af8ca6e31bfec6103ae2a0ca9f009dfcc3bf57d29b001e88668b5",
-    "cases/cp1d-owner/manifest.json": "842ced201a3c123f327ad18ec4e24c8834d4ba3712546bce8dd9404458a9abff",
+    "cases/cp1d-owner/manifest.json": "7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585",
     "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
     "cases/cp1d-owner/expected.json": "549d5ef3dad0ceab4486f4ca351dad14051bd2c89841bc3c478d17e978223170",
-    "src/deploy_vii/methodology.json": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
+    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
 }
 
 

@@ -65,6 +65,16 @@ Base: `e8ee084` (the lane branch, fast-forwarded to the LEAD tip). Brief templat
 | CP-L10 Screening | `docs/CPL10-OWNER-LEASE.md` (70ec120) | `cases/cpl10-owner/` | `owners/cpl10.py` | `tests/test_method_cpl10.py` |
 | CP-1C Peer comparison | `docs/CP1C-OWNER-LEASE.md` (70ec120) | `cases/cp1c-owner/` | `owners/cp1c.py` | `tests/test_method_cp1c.py` |
 
+Queued Stage 1 (frozen at 9bfe85e/859b871; dispatch as slots free):
+
+| Module | Lease | Oracle |
+|---|---|---|
+| CP-2G Forward cases | `docs/CP2G-OWNER-LEASE.md` | `cases/cp2g-owner/` |
+| CP-8 Decision ledger | `docs/CP8-OWNER-LEASE.md` (rev 4) | `cases/cp8-owner/` |
+| CP-3C Refinancing and LME | `docs/CP3C-OWNER-LEASE.md` (rev 3) | `cases/cp3c-owner/` |
+
+Plus a CP-1C follow-up: rebase d1103da onto the 9bfe85e oracle (manifest 121a0ab9…, expected e786acb3…, builder e32c8b83…), then assert T1C.1, T1C.8, the universe claim and r13/r14. CP-L10 Stage 2 is held until LEAD freezes its amendment 1.
+
 LEAD amendment 1 (2026-10-28) is running for CP-L10 (F1–F5) and CP-1C (T1C.1 `total` → T1C.8). Until it is re-frozen, Stage 1 tests only the untouched parts: the CP-L10 topic rows and arithmetic, refusals r01–r12, and the CP-1C peer tables T1C.2–T1C.7. A follow-up Stage 1 task adds the amended parts.
 
 For each module:

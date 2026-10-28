@@ -33,6 +33,7 @@ from deploy_vii.cp0_workflow import _validate_review as cp0_validate_review
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_workflow import PROMOTED, _quality_stage, validate_cp1_stage
 from deploy_vii.cp2_synthesis import PROMOTED as CP2_PROMOTED
+from deploy_vii.cp5_integrity import PROMOTED as CP5_PROMOTED
 from deploy_vii.cp_model_workflow import (
     PUBLISHED,
     CpModelRefused,
@@ -93,12 +94,12 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2
+from deploy_workflow.owners import cp1a, cp2, cp5
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
-SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2"})
+SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2", "CP-5"})
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
 # G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
 # raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
@@ -109,17 +110,20 @@ _QUALIFICATION = {
     "CP-1A": CP1A_PROMOTED,
     "CP-2": CP2_PROMOTED,
     "CP-MODEL": PUBLISHED,
+    "CP-5": CP5_PROMOTED,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
     "CP-1": _verify_promotion,
     "CP-1A": cp1a.probe,
     "CP-2": cp2.probe,
+    "CP-5": cp5.probe,
 }
 # The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4; G1-X §3: any
 # step with an entry here may declare `inputs="module_context"`).
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
+    "integrity_review": cp5.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -127,6 +131,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
 _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepValidation]] = {
     "CP-1A": cp1a.ENTRY_VALIDATOR,
     "CP-2": cp2.ENTRY_VALIDATOR,
+    "CP-5": cp5.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -167,6 +172,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.business_context import BusinessContextSubmission
     from deploy_vii.cp1_workflow import FinancialSubmission
     from deploy_vii.cp2_synthesis import CreditSynthesisSubmission
+    from deploy_vii.cp5_integrity import IntegritySubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
     from deploy_vii.quality import QualityReview
@@ -246,6 +252,13 @@ def _default_specs() -> dict[str, OwnerSpec]:
             entry=None,
             kind="deterministic",
             publish=publish_cp_model,
+        ),
+        "CP-5": OwnerSpec(
+            module_id="CP-5",
+            steps=(step("integrity_review", IntegritySubmission, inputs="module_context"),),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
         ),
     }
 

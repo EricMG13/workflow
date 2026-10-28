@@ -9,8 +9,14 @@ journal path builds it with `cp5_integrity.review_scope(store, attempt)`.
 The one new piece is the owner view body (lease, Owner view, construction steps 2 to 6): the
 engine's CONTEXT block over the bound heads, with every fact of each head except CP-1 (whose facts
 `live.context.integrity_projection` trims), no citation quote, and each Python finding reduced to
-its kind label and where. Reading the historical scope (step 1), registration and the probe are
-added in later stages.
+its kind label and where.
+
+Stage 2 adds the G1-X plug-in parts (protocol section 2, all positional): `QUALIFICATION`, `view`
+(the owner view over the historical journal), `ENTRY_VALIDATOR` and `probe`. CP-5 is
+live-contract, so it has no `STEP_IDS`, `SCHEMAS`, `RULES` or `submit`; the core's own
+`submit_cp5_step` settles it. The core reads its operands from the journal through
+`cp5_integrity.review_scope`, so the one store adapter is that function and `view`,
+`ENTRY_VALIDATOR` and `probe` all go through it.
 """
 
 import hashlib
@@ -22,18 +28,26 @@ from typing import Any, cast
 from deploy_vii.contracts import Fact, Module
 from deploy_vii.cp5_integrity import (
     KIND_LABEL,
+    PROMOTED,
     FactProjection,
     IntegrityReport,
     IntegritySubmission,
     ReviewScope,
+    _validate_step,
     context_block,
     cp5_module,
     integrity_review,
     python_checks,
+    review_scope,
     validate_integrity,
 )
+from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot, StepValidation
 from deploy_vii.live.context import integrity_projection
+from deploy_vii.preparation import PreparedPack
+from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.workflow import WorkflowError
+
+QUALIFICATION = PROMOTED
 
 # The head whose facts the view trims (a promoted CP-1 holds tens of thousands of facts).
 PROJECTED_MODULE = "CP-1"
@@ -112,3 +126,26 @@ def view_body(scope: ReviewScope) -> tuple[str, str]:
     ]
     body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
     return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of CP-5's one read, recomputed from the historical journal: the owner view
+    over the review scope of the attempt (a scope with issues raises `identity_mismatch`)."""
+    return view_body(review_scope(historical, attempt))
+
+
+def _entry_validator(execution: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The validator CP-5's entry hands `Execution.submit_step`, in the shared three-argument
+    form. The core's validator reads the pack through the journal, so `pack` is not used."""
+    return _validate_step(execution, attempt)
+
+
+ENTRY_VALIDATOR = _entry_validator
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    return cp5_module(IntegrityReport.model_validate_json(output), attempt.inputs, attempt.number)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    probe_one_step(store, snapshot, attempt, validate=ENTRY_VALIDATOR, build=_candidate)

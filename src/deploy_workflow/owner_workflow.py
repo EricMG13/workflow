@@ -93,23 +93,24 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2, cpdr
+from deploy_workflow.owners import cp1a, cp2, cp3d, cpdr
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
-SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2", "CP-DR"})
+SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2", "CP-3D", "CP-DR"})
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
 # G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
 # raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
 # supplies `STEP_IDS`, `SCHEMAS`, `submit` and, for steps with pack sources, `RULES`.
-_CORES: dict[str, ModuleType] = {"CP-DR": cpdr}
+_CORES: dict[str, ModuleType] = {"CP-DR": cpdr, "CP-3D": cp3d}
 _QUALIFICATION = {
     "CP-1": PROMOTED,
     "CP-1A": CP1A_PROMOTED,
     "CP-2": CP2_PROMOTED,
     "CP-MODEL": PUBLISHED,
     "CP-DR": cpdr.QUALIFICATION,
+    "CP-3D": cp3d.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -117,6 +118,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-1A": cp1a.probe,
     "CP-2": cp2.probe,
     "CP-DR": cpdr.probe,
+    "CP-3D": cp3d.probe,
 }
 # The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4; G1-X §3: any
 # step with an entry here may declare `inputs="module_context"`).
@@ -131,6 +133,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-1A": cp1a.ENTRY_VALIDATOR,
     "CP-2": cp2.ENTRY_VALIDATOR,
     "CP-DR": cpdr.ENTRY_VALIDATOR,
+    "CP-3D": cp3d.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -263,6 +266,17 @@ def _default_specs() -> dict[str, OwnerSpec]:
                     sources=True,
                     inputs="module_context",
                     rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3D": OwnerSpec(
+            module_id="CP-3D",
+            steps=(
+                step(
+                    "market_implied", cp3d.MarketImpliedSubmission, sources=True, rules="journaled"
                 ),
             ),
             entry="owner_core",

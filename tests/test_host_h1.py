@@ -12,7 +12,7 @@ Expectations come from the leases, never from the code under test:
 - the `*-submission` producer rule (Q6 (b)) and its memo per (snapshot hash, producer hash), with
   the schema chosen by the producer's module (rulings round 10 item 2, H1 F1).
 
-The owner cores of CP-3D and CP-DR register in their own Stage 2 tasks, so each session test
+The owner cores register in their own Stage 2 tasks (CP-3D's has), so each session test
 registers a test-only one-step core (`_fake_core`, the G1-X fake-core pattern of
 `tests/test_owner_g1x.py`) exactly where a module task registers a real one. Unlike G1-X, no
 session double is installed: every session here is the real `host.SourceSession`. The fake core
@@ -995,7 +995,9 @@ def test_schema_source_follows_the_producer_module(monkeypatch: pytest.MonkeyPat
     assert _schema_source("CP-1B", "earnings_delta") == "SourceError not_permitted"
     # A live module claiming another module's step.
     assert _schema_source("CP-1A", "credit_synthesis") == "SourceError not_permitted"
-    # An owner-only module without a registered core.
+    # An owner-only module without a registered core (CP-3D's real core is registered since its
+    # Stage 2 task, so it is unregistered here).
+    monkeypatch.delitem(owner._CORES, "CP-3D")
     assert _schema_source("CP-3D", "market_implied") == "SourceError not_permitted"
     core = _register(monkeypatch, "CP-3D", "market_implied")
     assert _schema_source("CP-3D", "market_implied") == "Note"

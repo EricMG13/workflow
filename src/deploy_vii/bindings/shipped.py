@@ -7,13 +7,15 @@ from deploy_vii.bindings.cp1a import CP1A
 from deploy_vii.bindings.cp1b import CP1B
 from deploy_vii.bindings.cp2 import CP2
 from deploy_vii.bindings.cp3 import CP3
+from deploy_vii.bindings.cp3d import CP3D
 from deploy_vii.bindings.cp4 import CP4
 from deploy_vii.bindings.cp5 import CP5
 from deploy_vii.bindings.cp6 import CP6
 from deploy_vii.bindings.cp_model import CP_MODEL
 from deploy_vii.bindings.cpdr import CPDR
 
-# Task 8.6: CP-2, CP-4, CP-3 and CP-5 in registry order after CP-1A; task 8.7: CP-6 after CP-5.
+# Task 8.6: CP-2, CP-4, CP-3 and CP-5 in registry order after CP-1A; task 8.7: CP-6 after CP-5;
+# CP-3D (owner-only, docs/CP3D-OWNER-LEASE.md) directly after CP-3.
 # CP-DR (lease D-C) is appended last: rails only, no Front Page block.
 SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP0,
@@ -24,6 +26,7 @@ SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP2,
     CP4,
     CP3,
+    CP3D,
     CP5,
     CP6,
     CPDR,

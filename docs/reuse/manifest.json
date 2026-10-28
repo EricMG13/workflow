@@ -1399,6 +1399,24 @@
       "sha256": "a073edd7b7fd12af3ce8d8a461151ee58dd459813229906fd9defcc309c5010e",
       "reason": "Add the two CP-2G _Spec rows (forward-credit-path, forward-breakpoints) to CP-2A's _DISTRESSED composition and the two block ids in the distressed_restructuring preset right after the CP-2A pair (D12 registration, rows only); all other rows retained.",
       "review": "docs/CP2G-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "0899560e6ece36d469f5f481de8297d7fb7c60048691bca6ff209d6564f1fd08",
+      "project_commit": "b2f230871aa6574bb0c36a335df83eceef7d9b78",
+      "sha256": "1ba090235415a19c9360e0b8729647210e5c7110efa5b3a2dbfb1a52267cd727",
+      "reason": "Register the CP-1C binding map (D12 one-line registration, SHIPPED_MAPS += CP1C, appended last after CP-2G; the lease names no position); all earlier rows retained.",
+      "review": "docs/CP1C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "a073edd7b7fd12af3ce8d8a461151ee58dd459813229906fd9defcc309c5010e",
+      "project_commit": "b2f230871aa6574bb0c36a335df83eceef7d9b78",
+      "sha256": "3cbf1c08d9117c8282b8f12e271721e24e62aa6c2c06d9ca9a4401a729d18188",
+      "reason": "Add the CP-1C peer-positioning _Spec row to CP-3D's _RELATIVE_VALUE composition after market-against-fundamentals (D12 registration, one row only; _spec_of and the relative_value preset already read the mapping); all other rows retained.",
+      "review": "docs/CP1C-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

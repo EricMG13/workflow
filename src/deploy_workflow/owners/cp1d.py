@@ -358,6 +358,12 @@ _SIGNED_AMOUNT = re.compile(
     r"|(?P<sign>(?<![A-Za-z0-9])- ?)?(?<![0-9.])(?<![0-9],)(?<![0-9], )"
     r"(?P<digits>[0-9]+(?:\.[0-9]+)?)(?![0-9]|[.,][0-9]|, [0-9])"
 )
+# Round 13 addendum 4 (fail closed): a numeral run is a maximal run of digits joined by ".", ","
+# or ", ", with a leading point. Step 5 needs exactly one run in each reading of the quote and
+# that run whole, so a figure hidden inside a longer run (`1,250`, `1.2.5`, `.25`) or a second
+# run beside the one read (a date, a section number) never lets exactly-one vouch for the rest.
+_NUMERAL_RUN = re.compile(r"\.?[0-9]+(?:(?:\.|, ?)[0-9]+)*")
+_WHOLE_RUN = re.compile(r"[0-9]+(?:\.[0-9]+)?")
 _TYPES = ("Saving", "Cost")
 # Round 4 (k): an amount is the product `financial_contracts.Number` (-1e18 < x < 1e18, 28
 # digits, 10 places). Bridge amounts, quoted basis amounts and CP-1 amount operands hold it, so
@@ -535,7 +541,8 @@ def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
             amounts.append(f"-{match['parenthesised']}")
             continue
         start, end = match.span("digits")
-        at_start, at_end = needle[:start] in ("", "-"), needle[end:] in ("", ".")
+        at_start = needle[:start] in ("", "-", ",", ", ")
+        at_end = needle[end:] in ("", ".", ",")
         edge = at_start or at_end
         if (
             edge
@@ -545,6 +552,16 @@ def _basis_amounts(citation: Citation, sources: Sequence[Source]) -> list[str]:
             continue  # round 11 B1: cut from a longer or signed page figure, so not counted
         amounts.append(f"{'-' if match['sign'] else ''}{match['digits']}")
     return amounts
+
+
+def _one_whole_run(quote: str) -> bool:
+    """Addendum 4: each reading of the quote (`_readings`) holds exactly one numeral run and
+    it is whole."""
+    for reading_text in _readings(quote):
+        runs = _NUMERAL_RUN.findall(reading_text)
+        if len(runs) != 1 or _WHOLE_RUN.fullmatch(runs[0]) is None:
+            return False
+    return True
 
 
 def _cited_text(citation: Citation, sources: Sequence[Source]) -> str | None:
@@ -677,7 +694,7 @@ def _shape_issue(item: BridgeItem, assessment: Assessment, sources: Sequence[Sou
         )
     if basis is not None:
         amounts = _basis_amounts(basis, sources)
-        if len(amounts) != 1:
+        if len(amounts) != 1 or not _one_whole_run(basis.quote):
             return f"Accepted basis quote must contain exactly one amount: {label}"
         amount = Decimal(amounts[0])
         if item.amount is None and _accepts(assessment):

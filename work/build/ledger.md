@@ -349,3 +349,4 @@
 - 19:56 CP-3 fix1 done (f5d5bc4, e2669a2; 421 passed; 38 deferred written). Scoped re-review dispatched. CP-5 review dispatched; CP-2D reviewer stopped (report in).
 - 19:57 LEAD Stage 2 round 4 cherry-picked: CP-2D H1 option (a), CP2D_D7_DELTA in render tests until Stage 2 close re-pin.
 - 19:59 USER: LEAD stopped; Modules resolves all issues here. Round 5 (Modules acting for LEAD) appended to stage2 rulings: inventory of LEAD-held work + 7 rulings. CP-3 fix1 APPROVED (merge after g1x-order + shared test).
+- 20:03 Shared defect-class test built (6e89f6e). Controller: remove the 3 new noqa BLE001 (suppressions may only fall); CP-0 verbatim free-text accepted (require_issue=False) is Info. Then mx-precise review.

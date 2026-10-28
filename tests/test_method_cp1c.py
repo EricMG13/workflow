@@ -1158,10 +1158,12 @@ def test_b1_claim_sentence_skipped_when_the_median_is_missing_or_no_peer_source(
 CONFLICTING = "Conflicting: CP-1's reconciliation does not agree"
 
 
-def _cp1_conflicting() -> dict[str, Fact]:
+ISSUER_CONFLICTING = "Not calculable: the issuer's CP-1 value is conflicting"  # round 6h (a)
+
+
+def _cp1_conflicting(metric: str = "total_leverage_adjusted") -> dict[str, Fact]:
     metrics = cp1_metrics()
-    leverage = metrics["total_leverage_adjusted"]
-    metrics["total_leverage_adjusted"] = leverage.model_copy(
+    metrics[metric] = metrics[metric].model_copy(
         update={"amount": None, "status": "conflicting", "limitation": CONFLICTING}
     )
     return metrics
@@ -1187,11 +1189,20 @@ def test_6g_conflicting_cp1_fact_takes_the_b1_path() -> None:
         f"T1C.4.{k}.position",
         f"T1C.4.{k}.of",
         f"T1C.6.{k}.difference",
-        f"T1C.5.issuer.{k}_deviation",
-        f"T1C.5.issuer.{k}_flag",
     ):
         fact = facts[fact_id]
         assert (fact.status, fact.limitation) == ("missing", NOT_COMPARED), fact_id
+    # round 6h (a): the issuer's outlier cells follow the B1 issuer frames, not the 1C2 text
+    for name, unit in (("deviation", "PERCENT"), ("flag", None)):
+        fact = facts[f"T1C.5.issuer.{k}_{name}"]
+        assert (fact.status, fact.limitation, fact.unit, fact.period, fact.value_class) == (
+            "missing",
+            ISSUER_CONFLICTING,
+            unit,
+            cp1c.MIXED_PERIOD,
+            None,
+        ), name
+    assert facts[f"T1C.5.p01.{k}_flag"].status == "known"
     assert facts[f"T1C.6.{k}.result"].text == "Not compared"
     frozen = {f["fact_id"]: f for f in expected()["cases"]["positive"]["facts"]}
     for name in ("n", "median", "outlier_count"):
@@ -1206,6 +1217,23 @@ def test_6g_conflicting_cp1_fact_takes_the_b1_path() -> None:
     assert result_.limitations[2] == (
         f"The issuer's total leverage (adjusted) is not available in CP-1 ({CONFLICTING}), {tail}"
     )
+
+
+def test_6h_conflicting_issuer_cells_keep_the_median_missing_reason_first() -> None:
+    """Round 6h (a): the conflicting reason sits at the value step of the 1C1 order, so a missing
+    median still comes first (the gap case's coverage median is missing)."""
+    k = "interest_coverage_adjusted"
+    found = inputs("gap", payload=_plain("gap"), cp1=_cp1_conflicting(k))
+    assert cp1c.calculation_issues(found) == ()
+    facts = _facts(cp1c.compute(found))
+    assert facts[f"T1C.3.issuer.{k}"].status == "conflicting"
+    frozen = {f["fact_id"]: f for f in expected()["cases"]["gap"]["facts"]}
+    for name in ("deviation", "flag"):
+        fact_id = f"T1C.5.issuer.{k}_{name}"
+        assert (facts[fact_id].status, facts[fact_id].limitation) == (
+            "missing",
+            frozen[fact_id]["limitation"],
+        ), fact_id
 
 
 def test_6g_absent_cp1_fact_still_raises() -> None:

@@ -58,6 +58,7 @@ NOT_COMPARED = "Not compared: one side is not available"  # ruling 1C2
 # Round 6 B1: the issuer's own outlier cells when its CP-1 ratio is not known.
 ISSUER_NOT_STATED = "Not calculable: the issuer's CP-1 value is missing"
 ISSUER_NOT_MEANINGFUL = "Not meaningful: the issuer's CP-1 ratio is not meaningful"
+ISSUER_CONFLICTING = "Not calculable: the issuer's CP-1 value is conflicting"  # round 6h (a)
 # Round 2 C3: page:1 must carry this clause in its Basis line; the clause is what gives a source
 # amount its currency, unit and scale. Any other basis is outside the table rule.
 BASIS_PREFIX = "Basis:"
@@ -938,14 +939,14 @@ def _flag_operands(
     peer: _Peer | None, value: Ratio, stat: _Stat
 ) -> Unsettled | tuple[Decimal, Decimal]:
     """Why the deviation and flag are unsettled, in the ruled order (1C1): excluded, median
-    missing, value missing, value not_applicable, median zero; else (value, median)."""
+    missing, value conflicting, missing or not_applicable, median zero; else (value, median)."""
     if peer is not None and not peer.included:
         return Unsettled("not_applicable", EXCLUDED)
     if stat.median is None:
         return Unsettled("missing", NO_MEDIAN)
     if isinstance(value, Unsettled):  # the issuer (peer None) has its own wording (round 6 B1)
-        if value.status == "conflicting":  # only the issuer's CP-1 value (round 6g)
-            return Unsettled("missing", NOT_COMPARED)
+        if value.status == "conflicting":  # only the issuer's CP-1 value (rounds 6g, 6h (a))
+            return Unsettled("missing", ISSUER_CONFLICTING)
         if value.status == "missing":
             why = (
                 ISSUER_NOT_STATED

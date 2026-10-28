@@ -2827,3 +2827,14 @@ P2/P3 applied); L2 full file 112 passed (78 min); G1 fix-1 RED 2 failed (the M1 
 as predicted) then GREEN 14 passed (13 min). Next, lock-free: mx-adversary final review of B1,
 mx-adversary review of G1 after fix-1, mx-precise first review of L2, and the independent
 review of the S1a and G2 lease drafts. PM integrated the S1 oracle (checkpoint a9b829f).
+
+L2 mx-precise review 1 (2026-10-28, `coordinator-1-source-host/work/cp4-source-host/review-precise-1.md`):
+CHANGES REQUIRED. F1: the SH-R03 test exercised the wrong scenario; the oracle is right
+(no CP-0 authorization → `NotAuthorized` on begin; forged ticket → `identity_mismatch`). F2:
+one CP-1 producer authentication costs about 50 s and every `invoke`/`bind_submission` runs
+two. LEAD amends CP4-SOURCE-HOST-LEASE: authentication may be memoised in process, keyed on
+snapshot content hash plus producer result hash, with every touched blob re-read and
+hash-checked on a hit (SH-R12/SH-R16 still refuse); nothing persisted, no writer cached.
+F3 recorded as partial coverage; F4 ruled consistent with lease :209-211 (surfaced = hits of
+the unchanged search); F5 covered by the user's line-cap waiver; F6 docstring note. Fix
+round 1 dispatched (`fix-1-brief.md`).

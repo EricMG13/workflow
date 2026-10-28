@@ -359,3 +359,5 @@
 - 20:12 CP-2E fix1 APPROVED (p3 follow-up invalid explained: fresh binding needs reads; p3b settles). Merge held for shared test.
 - 20:14 G1-X order review: REQUEST CHANGES (M1 deferred published-path test broken at CP-0 consumers; M2 no two-later case). Fix round 1.
 - 20:17 CP-1D Stage 2 built 8a5d3d9 (gates 0; mutants 40/40). Round 5 items 12-13. Review mx-adversary. CP-5 fix1 750f036 (M1, L1-L3; p8 A4/A7 survive as the review allowed). Re-review mx-adversary.
+- 20:18 CP-8 fix1 1a2887f (M1, M2, L1; citations bug found+fixed; S1 equivalent). Re-review.
+- 20:19 Shared defect test fix1 4871569 (M1 verbatim allowlist, L1, Infos). Re-review.

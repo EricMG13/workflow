@@ -13,3 +13,4 @@
 - 2026-10-28 cpdr-stage1-fix1 `pytest tests/test_method_cpdr.py` exit 0, 45 passed 0 failed (0.24 s), branch claude/cpdr-stage1 618b527, 14/14 mutants killed, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=n
 - 2026-10-28T10:49Z cp2e-stage1-fix1 `pytest tests/test_method_cp2e.py` exit 0, 63 passed 0 failed (0.25 s), branch worktree-agent-a219254fe68cc1c2d 6d0b7b4, agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y
 - CP-2E Stage 1 merged into lane (adversary APPROVE on 6d0b7b4)
+- CP-DR Stage 1 merged into lane (adversary APPROVE on 618b527)

@@ -62,6 +62,9 @@ Base: `e8ee084` (the lane branch, fast-forwarded to the LEAD tip). Brief templat
 | CP-4 Legal (existing engine `deploy_vii/cp4_legal.py`) | `docs/CP4-OWNER-LEASE.md` | `cases/cp4-owner/` | `owners/cp4.py` (semantic gate) | `tests/test_method_cp4.py` |
 | CP-3 Relative value (existing engine `deploy_vii/cp3_relative_value.py`) | `docs/CP3-OWNER-LEASE.md`, CP-3 half | `cases/cp3-cp6-owner/` | `owners/cp3.py` | `tests/test_method_cp3.py` |
 
+| CP-L10 Screening | `docs/CPL10-OWNER-LEASE.md` (70ec120) | `cases/cpl10-owner/` | `owners/cpl10.py` | `tests/test_method_cpl10.py` |
+| CP-1C Peer comparison | `docs/CP1C-OWNER-LEASE.md` (70ec120) | `cases/cp1c-owner/` | `owners/cp1c.py` | `tests/test_method_cp1c.py` |
+
 For each module:
 - [ ] Dispatch the Opus implementer with the brief.
 - [ ] It writes the test from the oracle's `cases` first and confirms it fails.

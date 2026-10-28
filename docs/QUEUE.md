@@ -3038,3 +3038,5 @@ the LEAD branch (00f22cd). Test runs need no lock now; the user's build-first ru
 final phase) still applies.
 
 LEAD (2026-10-28): CP-3D and CP-1D owner leases frozen (`docs/CP3D-OWNER-LEASE.md`, `docs/CP1D-OWNER-LEASE.md`; oracles `cases/cp3d-owner`, `cases/cp1d-owner`). Each is built only after S1a and G1-X integrate; CP-3D also needs the H1 host scope (market + financial).
+
+LEAD (2026-10-28): L2 source-host speedup integrated (build-only) after fix round 2 (mutant kills) scoped APPROVE; host b0bda00c…5b56, tests c564b9b7…116e. Its pytest rows stay deferred to the final phase. H1 may now build on it once S1a integrates.

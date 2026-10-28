@@ -2938,3 +2938,23 @@ instead of identity_mismatch) plus L1 and L2 (pre-existing). Third fix goes to a
 `_verify_begin` ruled, Info ruling: the public verifier, sealed open() and setup try may keep their
 documented refusal mapping (refusal, never valid output, lease line 110). CP-4 oracle revision 2
 done (gate markers pinned, false-same as refusal); scoped re-review running.
+
+Owner-core protocol and prep reviews (2026-10-28): `docs/G1X-OWNER-CORE-PROTOCOL.md` frozen as the
+one G1-X seam contract (live-contract vs owner-only modules; positional `probe`/`view`/`submit`,
+`STEP_IDS`, `SCHEMAS`, `precheck` replayed for every submission; read_inputs before submit for any
+`inputs != "none"` step; analytical-after-CP-MODEL dropped until a lease needs it; D12 admits
+`bindings/<cp>.py`). Reviews saved: CP-2A `review-precise-1` (CHANGES REQUIRED: cp1_references,
+refusal/blocked oracles, readiness literal, state words, G1 seams), CP-2D `review-precise-1` (PASS
+WITH CONDITIONS: value class/unit copies, runway with missing minimum cash, fixture tables), CP-4
+`review-precise-2` (CHANGES REQUIRED: refusal is recorded in the audit and receipt; precheck hook
+and replay; tamper), CP-3 R3 `review-precise-r3-1` (PASS WITH FIXES: front-fact column, tamper,
+scope refusal, R3 view counts; H1 host code recorded). Rulings appended to each `report.md`;
+revisions dispatched (CP-2A rev 2, CP-2D rev 2, CP-4 rev 3, CP-3 half rev 2). S1a build report
+saved (`s1a-build/work/s1a/report.md`); LEAD added `"CP-1A": ("business_context",)` to s1a-build
+`host.py` after L2; S1a mx-precise review running.
+
+CP-4 owner lease frozen (2026-10-28): revision 3 closed F1–F5 (only expected.json changed,
+a60ab627…1423); LEAD scratch rebuild matched byte for byte; `docs/CP4-OWNER-LEASE.md`. S1a
+review-precise-1 (CHANGES REQUIRED: H1 refusal branch cannot verify; journaled-issue subset fails
+under truncation; A4 read tamper passes for the wrong reason) → lease rev 3 amendments R3-1..R3-5;
+S1a fix round 1 dispatched (mx-feature, `s1a-build/work/s1a/fix-1-brief.md`).

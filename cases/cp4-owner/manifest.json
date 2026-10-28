@@ -1,0 +1,189 @@
+{
+  "schema_version": "cp4-owner-cases/1",
+  "scope": "CP-4 (legal and covenants) owner-run inputs: CP-0 -> CP-1 -> CP-4 over the frozen identity and financial sources plus the frozen positive or missing-definition legal source. No new source bytes; no source is edited.",
+  "status": "Preparation draft by cp4-owner (2026-10-28), pre-review; not executed against product code beyond the probes named in the preparation report",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json and cases/legal/manifest.json)",
+  "frozen_inputs": {
+    "cases/financial/manifest.json": {
+      "sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
+    },
+    "cases/legal/manifest.json": {
+      "sha256": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168"
+    },
+    "cases/snapshot/submissions.json": {
+      "sha256": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
+    }
+  },
+  "sources": {
+    "identity": {
+      "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "pointer": "cases/financial/manifest.json#sources[identity]"
+    },
+    "financial": {
+      "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "pointer": "cases/financial/manifest.json#sources[financial]"
+    },
+    "legal-covenants (positive)": {
+      "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+      "pointer": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source"
+    },
+    "legal-covenants (missing definition)": {
+      "sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+      "pointer": "cases/legal/manifest.json#cases[legal-current-missing-ebitda-definition].legal_source"
+    }
+  },
+  "pack_rule": "Source(source_id, name, status ready, sha256, spans = the pages, extraction_status complete, limitation) with no media_type, exactly as tests/test_financial_workflow.py make_pack builds identity and financial; the legal source adds the frozen case limitation. One legal source per pack, never both variants.",
+  "requested_modules": "[CP-4]: the owner run selects CP-4 alone (plan CP-0, CP-1, CP-4). The frozen legal run_template names (CP-4, CP-5); CP-5 has no owner spec in G1 and no integrity scope for CP-4 (D3), so it is a later delta (see the lease draft, question 2)",
+  "cases": [
+    {
+      "case_id": "legal-current-matching-definition",
+      "run": {
+        "run_id": "slice-legal-current-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "covenant_refinancing",
+        "requested_modules": [
+          "CP-4"
+        ]
+      },
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source"
+        }
+      ],
+      "legal_source_pointer": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+      "plan_order": [
+        "CP-0",
+        "CP-1",
+        "CP-4"
+      ],
+      "submissions": "cases/cp4-owner/submissions.json#positive",
+      "expected": "cases/cp4-owner/expected.json#positive"
+    },
+    {
+      "case_id": "legal-current-missing-ebitda-definition",
+      "run": {
+        "run_id": "slice-legal-current-definition-gap",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "covenant_refinancing",
+        "requested_modules": [
+          "CP-4"
+        ]
+      },
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-missing-ebitda-definition].legal_source"
+        }
+      ],
+      "legal_source_pointer": "cases/legal/manifest.json#cases[legal-current-missing-ebitda-definition].legal_source",
+      "plan_order": [
+        "CP-0",
+        "CP-1",
+        "CP-4"
+      ],
+      "submissions": "cases/cp4-owner/submissions.json#gap",
+      "expected": "cases/cp4-owner/expected.json#gap"
+    },
+    {
+      "case_id": "legal-current-missing-ebitda-definition+false-same-definition",
+      "run": {
+        "run_id": "slice-legal-current-definition-gap",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "covenant_refinancing",
+        "requested_modules": [
+          "CP-4"
+        ]
+      },
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-missing-ebitda-definition].legal_source"
+        }
+      ],
+      "legal_source_pointer": "cases/legal/manifest.json#cases[legal-current-missing-ebitda-definition].legal_source",
+      "plan_order": [
+        "CP-0",
+        "CP-1",
+        "CP-4"
+      ],
+      "submissions": "cases/cp4-owner/submissions.json#gap_false_same_definition",
+      "expected": "cases/cp4-owner/expected.json#gap_false_same_definition",
+      "note": "Same pack and run as the gap case; a separate execution that submits the adversarial legal_covenants payload. Not a second source."
+    }
+  ],
+  "consumers_of_cp4_for_this_plan": [],
+  "consumers_note": "Registry edges name CP-3, CP-3C, CP-4C and CP-5 as consumers of CP-4; none is in this plan. CP-5 would sit after CP-4 once selected and once a lease extends its integrity scope to CP-4."
+}

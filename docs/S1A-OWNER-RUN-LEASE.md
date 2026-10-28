@@ -315,3 +315,28 @@ CP-1 head over the S1 positive pack.
   exception that counts as tool use.
 - **Deferred (build-first):** the gap CP-1 promotion and every S1a test run move to LEAD's final
   verification phase.
+
+## Rev 3 amendments (LEAD, 2026-10-28, on S1a build review-precise-1)
+- **R3-1 (H1 refusal branch).** The refusal half of rev 1 H1 stands. `_verify_walk` compares
+  `refusal.snapshot_sha256` with `receipt.publications[0].snapshot_before_sha256` when the receipt
+  holds a publication, otherwise with the final snapshot; `_verify_publications`' chain check
+  stays. Acceptance A3c: a CP-0 review whose T8 does not command CP-1A (CP-1A CONDITIONAL, a valid
+  CP-0 submission; test input, not oracle) refuses CP-1A at begin; CP-2 is refused or blocked as
+  its edge rule gives; CP-MODEL publishes; the receipt seals and verifies. Deferred (one CP-1
+  promotion).
+- **R3-2 (journaled replay is exact).** `_verify_submissions` reruns the module's ruled validator
+  on the historical snapshot with the attempt holding the step and requires
+  `step.issues == bounded_issues(tuple(dict.fromkeys((*validator_issues, *journaled))))`; the
+  subset rule of item 7 is replaced. A forged invalid step with invented issues refuses.
+- **R3-3 (notation).** Front Page (`cp2.*`) facts carry the line's own fact label as `column`;
+  other tables the column label. `<label and period of FIG:x>` binds as `"<label> · <period>"`
+  (`cp2_synthesis.py:853`), a declared run-time binding. The business Source carries
+  `media_type="text/plain"`, `extractor` and `extraction_status` from the manifest `common`;
+  `representation_scope` is not a Source field; the pack hash is a run-time binding.
+- **R3-4 (A3b input).** The blocked-CP-1A CP-2 submission is a reviewed literal fixture
+  `cases/snapshot/cp2-blocked-cp1a-submission.json` with its sha256 pinned here at freeze; the test
+  loads it and checks the hash, never derives it.
+- **R3-5 (A4).** The CP-2 read-body tamper forges a consistent read (receipt copy with edited
+  `read.body` and `inputs_sha256`, audit file under its new hash, `receipt.sha256` rewritten) and
+  must refuse `identity_mismatch` at the view replay. The step-output tamper is caught by the
+  store's own blob hash check, recorded as a limitation.

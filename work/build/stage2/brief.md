@@ -77,3 +77,10 @@ Each commit ends with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 - **Model text:** the validator checks each model-text field with the type the step later builds (`RunText` through a `TypeAdapter` built once), journaling `<path>: <msg>` with `include_input=False`, bounded by `listed_issues`/`clipped`. Nothing may raise after the binding write. The shared class test in `tests/defect_classes.py` runs over your positive payload.
 - **Synthetic limitation:** own = oracle list then "Synthetic case; not real issuer qualification", deduplicated; inherited = `inherited_limitations`' output. Readers return the settled own list and say so. Pin with a head built by `settle`.
 - **Aliases** canonicalise (no create refusal); receipts and MODULES.csv count no alias completion.
+- **Source quotes (user, AGENTS.md "Source quotes", 8a8de7e):**
+  - **Quote reading is frozen** in CP-1D, CP-3D, CP-8 and CP-2E. A new edge case fails closed and is recorded as a guard limit in `methods/<cp>.md`. No new reading rule is written unless a frozen case needs it.
+  - **Not-yet-connected modules** (CP-1C, CP-2G, CP-2H, CP-3C, CP-4C, CP-OS and later) never read a figure from a model quote. A figure comes from one of:
+    - an upstream fact;
+    - a source table or row that Python parses from the pack page;
+    - a Python-addressed figure id.
+  - **Their citations** only check that the quote occurs on the page, plus the blank-quote refusal. Raise any oracle conflict in `questions.md`; never build around it.

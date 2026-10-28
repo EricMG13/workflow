@@ -6,6 +6,7 @@ run-time binding of ``{{FACT:name}}`` to a CP-1 fact id is stood in for by ``cp1
 real ids come from the promoted CP-1 head in Stage 2.
 """
 
+import dataclasses
 import json
 import re
 from calendar import monthrange
@@ -49,33 +50,48 @@ def _cp1_cell_amount(operand: str) -> Decimal:
     raise AssertionError(operand)
 
 
+def _k(name: str, amount: Decimal | str) -> cp2d.Operand:
+    """A known CP-1 operand carrying the period the manifest binds to `name`."""
+    return cp2d.Operand("known", Decimal(amount), MANIFEST["fact_bindings"][name]["period"], None)
+
+
+def _ro(operands: cp2d.Operands, **changes: Any) -> cp2d.Operands:
+    """`replace` for Operands: a Decimal becomes a known operand with the bound period."""
+    wrapped: dict[str, Any] = {
+        k: _k(k, v) if isinstance(v, Decimal) else v for k, v in changes.items()
+    }
+    return replace(operands, **wrapped)
+
+
 def _base_operands() -> cp2d.Operands:
     loan = SF["term_loan"]
     assert SF["net_debt_issuance_ltm"]["derivation"] == "debt issuance 5.00 less repayment 0"
     assert "explicit zeros" in SF["equity_issuance_plus_repurchases_ltm"]["source"]
     assert SF["equity_issuance_plus_repurchases_ltm"]["amount"] == "0"
     return cp2d.Operands(
-        opening_cash=_d(SF["opening_cash_2024_12_31"]["amount"]),
-        cfo=_d(SF["operating_cash_flow_ltm"]["amount"]),
-        investing=_d(SF["net_cash_used_in_investing_ltm"]["amount"]),
-        net_debt_issuance=_d(SF["net_debt_issuance_ltm"]["amount"]),
-        equity_issuance=Decimal(0),
-        equity_repurchases=Decimal(0),
-        dividends_paid=_d(SF["dividends_paid_ltm"]["amount"]),
-        other_investing_financing=_d(SF["other_investing_financing_ltm"]["amount"]),
-        financing=_d(SF["net_cash_used_in_financing_ltm"]["amount"]),
-        fx_effect=_d(SF["fx_effect_ltm"]["amount"]),
-        closing_cash=_d(SF["closing_cash_2025_12_31"]["amount"]),
-        cash_bs=_d(SF["closing_cash_2025_12_31"]["amount"]),
-        restricted_cash=_d(SF["restricted_cash"]["amount"]),
-        rcf_commitment=_d(SF["rcf_commitment"]["amount"]),
-        rcf_drawn=_d(SF["rcf_drawn"]["amount"]),
-        total_debt_bs=_d(SF["total_debt"]["amount"]),
-        cash_closing=_d(SF["closing_cash_2025_12_31"]["amount"]),
-        total_debt=_d(SF["total_debt"]["amount"]),
-        undrawn_rcf=_cp1_cell_amount("undrawn_rcf"),
-        liquidity=_cp1_cell_amount("liquidity"),
-        liquidity_to_debt=_cp1_cell_amount("liquidity_to_debt"),
+        opening_cash=_k("opening_cash", SF["opening_cash_2024_12_31"]["amount"]),
+        cfo=_k("cfo", _d(SF["operating_cash_flow_ltm"]["amount"])),
+        investing=_k("investing", _d(SF["net_cash_used_in_investing_ltm"]["amount"])),
+        net_debt_issuance=_k("net_debt_issuance", _d(SF["net_debt_issuance_ltm"]["amount"])),
+        equity_issuance=_k("equity_issuance", Decimal(0)),
+        equity_repurchases=_k("equity_repurchases", Decimal(0)),
+        dividends_paid=_k("dividends_paid", _d(SF["dividends_paid_ltm"]["amount"])),
+        other_investing_financing=_k(
+            "other_investing_financing", _d(SF["other_investing_financing_ltm"]["amount"])
+        ),
+        financing=_k("financing", _d(SF["net_cash_used_in_financing_ltm"]["amount"])),
+        fx_effect=_k("fx_effect", _d(SF["fx_effect_ltm"]["amount"])),
+        closing_cash=_k("closing_cash", _d(SF["closing_cash_2025_12_31"]["amount"])),
+        cash_bs=_k("cash_bs", _d(SF["closing_cash_2025_12_31"]["amount"])),
+        restricted_cash=_k("restricted_cash", _d(SF["restricted_cash"]["amount"])),
+        rcf_commitment=_k("rcf_commitment", _d(SF["rcf_commitment"]["amount"])),
+        rcf_drawn=_k("rcf_drawn", _d(SF["rcf_drawn"]["amount"])),
+        total_debt_bs=_k("total_debt_bs", _d(SF["total_debt"]["amount"])),
+        cash_closing=_k("cash_closing", _d(SF["closing_cash_2025_12_31"]["amount"])),
+        total_debt=_k("total_debt", _d(SF["total_debt"]["amount"])),
+        undrawn_rcf=_k("undrawn_rcf", _cp1_cell_amount("undrawn_rcf")),
+        liquidity=_k("liquidity", _cp1_cell_amount("liquidity")),
+        liquidity_to_debt=_k("liquidity_to_debt", _cp1_cell_amount("liquidity_to_debt")),
         facilities=(
             cp2d.Facility(
                 facility_id=loan["facility_id"],
@@ -86,6 +102,7 @@ def _base_operands() -> cp2d.Operands:
                 commitment=_d(loan["commitment"]),
                 drawn_amount=_d(loan["drawn"]),
                 annual_amortisation=_d(loan["annual_amortisation"]),
+                period=MANIFEST["fact_bindings"]["T4.18 principal"]["period"],
             ),
         ),
     )
@@ -122,7 +139,7 @@ def _operands(case: str) -> cp2d.Operands:
             "Operating cash flow (LTM Q4 25) replaced by 13.00"
             in (FIXTURES["fixture_burn"]["construction"])
         )
-        return replace(base, cfo=Decimal("13.00"))
+        return _ro(base, cfo=Decimal("13.00"))
     return base
 
 
@@ -238,11 +255,84 @@ def test_compose_bridge_refuses_horizon_outside_bound() -> None:
 # --- tables, claims, ledgers (pack cases) -----------------------------------------------------
 
 
-def _assert_cell(got: cp2d.Cell, want: dict[str, Any]) -> None:
+# --- round 13 item 1 (R1 M1): the declared delta to the frozen oracle -------------------------
+#
+# The frozen oracle (cases/cp2d-owner/expected.json) is NOT re-pinned until the Stage 2 release.
+# Until then this test compares everything exactly as before and adds, as the two named tables
+# below, the one declared delta: the `period` of each known numeric cell and the `value_class` of
+# the five gap cells. Remove both tables at the Stage 2 re-pin (see
+# test_frozen_oracle_still_lacks_the_round13_delta).
+
+_BALANCE = "2025-12-31"
+_LTM = "LTM Q4 25 \u00b7 2025-01-01 to 2025-12-31"
+_Q4_BALANCE = "q4-2025 \u00b7 2025-10-01 to 2025-12-31"
+_T410 = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+# cp1_operand -> the CP-1 fact's own period, verbatim; a numeric cell with no cp1_operand takes
+# the balance date.
+PERIOD_DELTA: dict[str, str] = {
+    **dict.fromkeys(
+        (
+            "opening_cash",
+            "cfo",
+            "investing",
+            "net_debt_issuance",
+            "equity_issuance+equity_repurchases",
+            "dividends_paid",
+            "other_investing_financing",
+            "fx_effect",
+            "closing_cash",
+        ),
+        _LTM,
+    ),
+    **dict.fromkeys(
+        ("cash_bs", "restricted_cash", "rcf_commitment", "rcf_drawn", "total_debt_bs"), _Q4_BALANCE
+    ),
+    **dict.fromkeys(("undrawn_rcf", "liquidity", "liquidity_to_debt"), _T410),
+    **dict.fromkeys(("T4.18 commitment - drawn_amount", "T4.18 principal"), "q4-2025"),
+}
+GAP_VALUE_CLASS_DELTA: dict[tuple[str, str], str] = {
+    ("gap_minimum_cash", "T2E.3.r09"): "calculated",
+    ("gap_minimum_cash", "T2E.5.r04"): "analyst_judgment",
+    ("gap_minimum_cash", "T2E.5.r05"): "calculated",
+    ("gap_minimum_cash", "T2E.5.r06"): "calculated",
+    ("gap_minimum_cash", "T2E.5.r07"): "calculated",
+}
+
+
+def test_period_delta_names_the_manifest_periods() -> None:
+    """The delta table spells each CP-1 period as the manifest binds it."""
+    bindings = MANIFEST["fact_bindings"]
+    for operand, period in PERIOD_DELTA.items():
+        names = [n.strip() for part in operand.split("+") for n in part.split(" - ")]
+        names = [n if n in bindings else f"T4.18 {n}" for n in names]
+        assert {bindings[n]["period"] for n in names} == {period}, operand
+
+
+def test_frozen_oracle_still_lacks_the_round13_delta() -> None:
+    """Remove the delta at the Stage 2 re-pin: this fails once expected.json carries `period`
+    on its known numeric cells and `value_class` on the five gap cells, at which point
+    PERIOD_DELTA, GAP_VALUE_CLASS_DELTA and their use in _assert_cell are deleted."""
+    gap_keys: set[tuple[str, str]] = set()
+    for case in PACK_CASES:
+        for table in CASES[case]["tables"].values():
+            for _, cells in table["rows"]:
+                for cell in cells if isinstance(cells, list) else [cells]:
+                    assert "period" not in cell, (case, cell["fact_id"])
+                    if cell["state"] != "known" and "value_class" not in cell:
+                        gap_keys.add((case, cell["fact_id"]))
+    assert gap_keys == set(GAP_VALUE_CLASS_DELTA)
+
+
+def _assert_cell(got: cp2d.Cell, want: dict[str, Any], case: str) -> None:
     where = want["fact_id"]
     assert got.fact_id == want["fact_id"]
     assert got.state == want["state"], where
-    assert got.value_class == want.get("value_class"), where
+    want_class = want.get("value_class", GAP_VALUE_CLASS_DELTA.get((case, where)))
+    assert got.value_class == want_class, where
+    numeric = want["state"] == "known" and want.get("amount") is not None
+    operand = want.get("cp1_operand")
+    want_period = (_BALANCE if operand is None else PERIOD_DELTA[operand]) if numeric else None
+    assert got.period == want_period, where
     assert got.unit == want.get("unit"), where
     assert _num_equal(got.amount, want.get("amount")), where
     assert got.cp1_operand == want.get("cp1_operand"), where
@@ -273,7 +363,7 @@ def test_tables_equal_oracle(case: str) -> None:
             want_cells = cells if isinstance(cells, list) else [cells]
             assert len(row.cells) == len(want_cells)
             for got_cell, want_cell in zip(row.cells, want_cells, strict=True):
-                _assert_cell(got_cell, want_cell)
+                _assert_cell(got_cell, want_cell, case)
 
 
 @pytest.mark.parametrize("case", PACK_CASES)
@@ -378,7 +468,7 @@ def test_liquidity_to_debt_cross_check_uses_the_cp1_division() -> None:
     from deploy_vii.model._cells import CONTEXT
 
     inputs = _inputs("positive")
-    operands = replace(
+    operands = _ro(
         inputs.operands,
         total_debt_bs=Decimal(30),
         total_debt=Decimal(30),
@@ -400,7 +490,7 @@ def test_cp1_cross_check_mismatch_settles_with_a_limitation() -> None:
     """Ruling 2D-d: CP-2D uses its recomputed value and records the difference."""
     inputs = _inputs("positive")
     assert cp2d.check_cp1_totals(operands=inputs.operands, bridge=cp2d.bridge_of(inputs)) == ()
-    tampered = replace(inputs, operands=replace(inputs.operands, liquidity=Decimal(21)))
+    tampered = replace(inputs, operands=_ro(inputs.operands, liquidity=Decimal(21)))
     result = cp2d.compute(tampered)
     want = (
         "CP-1's liquidity differs from the value recomputed from its line items; CP-2D uses the "
@@ -509,7 +599,7 @@ def test_empty_facility_schedule_is_missing_not_zero() -> None:
 
 @pytest.mark.parametrize("total_debt", [None, Decimal(0)])
 def test_missing_total_debt_keeps_wall_terms_known(total_debt: Decimal | None) -> None:
-    b = _compose(replace(_base_operands(), total_debt_bs=total_debt), 24, "10")
+    b = _compose(_ro(_base_operands(), total_debt_bs=total_debt), 24, "10")
     (row,) = b.wall
     assert row.months_to_maturity == CASES["positive"]["derived"]["months_to_maturity"]
     assert row.inside_horizon is False
@@ -553,7 +643,7 @@ def test_amortisation_capped_at_principal() -> None:
 def test_runway_months_round_half_up_and_count_the_revolver() -> None:
     # lease-literal: CP2D lease Method 3. F = -29 - 10 - 4 - 5 = -48; undrawn = 71 - 0 = 71;
     # start = 20 + 71 - 10 = 81; months = 81 / (48 / 12) = 20.25 -> 20.3 (1 dp half-up)
-    operands = replace(_base_operands(), cfo=Decimal(-29), rcf_commitment=Decimal(71))
+    operands = _ro(_base_operands(), cfo=Decimal(-29), rcf_commitment=Decimal(71))
     b = _compose(operands, 24, "10")
     assert b.run_rate_net_cash_flow_annual == Decimal(-48)
     assert b.undrawn_revolver == Decimal(71)
@@ -565,7 +655,7 @@ def test_runway_months_round_half_up_and_count_the_revolver() -> None:
 def test_runway_negative_start_with_burn_is_zero_months() -> None:
     # lease-literal: CP2D lease Method 3. F = -6 < 0; start = 20 + 0 - 30 = -10;
     # max(0, start) / (6 / 12) = 0.0
-    b = _compose(replace(_base_operands(), cfo=Decimal(13)), 24, "30")
+    b = _compose(_ro(_base_operands(), cfo=Decimal(13)), 24, "30")
     assert b.runway_state == "months"
     assert str(b.months_to_minimum_cash) == "0.0"
 
@@ -580,7 +670,7 @@ def test_runway_negative_start_without_burn_is_zero_months() -> None:
 def test_runway_revolver_missing_with_burn_is_missing() -> None:
     # lease-literal: CP2D lease Method 3. "Not reached" only when F >= 0 and cash clears the
     # minimum; F = -6 here, so missing ("Not calculable: revolver undisclosed")
-    operands = replace(_operands("fixture_rcf_undisclosed"), cfo=Decimal(13))
+    operands = _ro(_operands("fixture_rcf_undisclosed"), cfo=Decimal(13))
     b = _compose(operands, 24, "10")
     assert b.runway_state == "missing"
     assert b.runway_reason == "Not calculable: revolver undisclosed"
@@ -631,7 +721,7 @@ def test_two_facilities_cumulative_share_in_maturity_order() -> None:
 def test_drawn_revolver_undrawn_is_commitment_less_drawn() -> None:
     # lease-literal: CP2D lease Method 2/5. undrawn = 30 - 10 = 20; available = 20 + 20 = 40;
     # resources = 20 + 20 = 40; headroom = 40 - 10 = 30; gap = max(0, 10 - 40) = 0
-    operands = replace(_base_operands(), rcf_commitment=Decimal(30), rcf_drawn=Decimal(10))
+    operands = _ro(_base_operands(), rcf_commitment=Decimal(30), rcf_drawn=Decimal(10))
     b = _compose(operands, 24, "10")
     assert b.undrawn_revolver == Decimal(20)
     assert b.available_liquidity == Decimal(40)
@@ -846,7 +936,7 @@ def test_undated_facility_sorts_after_dated_ones() -> None:
 def test_zero_total_debt_shares_are_not_meaningful() -> None:
     """Ruling 2D5 (zero total debt)."""
     inputs = _inputs("positive")
-    operands = replace(
+    operands = _ro(
         inputs.operands, total_debt_bs=Decimal(0), total_debt=Decimal(0), liquidity_to_debt=None
     )
     result = cp2d.compute(replace(inputs, operands=operands))
@@ -871,7 +961,7 @@ def test_ledger_headers() -> None:
 def test_sources_and_uses_use_the_financing_total() -> None:
     """Ruling 2D9: the financing lines are display rows; a difference is a limitation."""
     inputs = _inputs("positive")
-    operands = replace(inputs.operands, dividends_paid=Decimal(-8))  # lines sum to (3), total (4)
+    operands = _ro(inputs.operands, dividends_paid=Decimal(-8))  # lines sum to (3), total (4)
     result = cp2d.compute(replace(inputs, operands=operands))
     b = result.bridge
     assert b.sources_and_uses_closing_cash_calculated == Decimal(20)  # 15 + 19 - 10 - 4 + 0
@@ -909,15 +999,15 @@ def _no_raise_cases() -> list[tuple[str, cp2d.Cp2dInputs]]:
         ("restricted_cash None", replace(o, restricted_cash=None)),
         ("undrawn_rcf None", replace(o, undrawn_rcf=None)),
         ("liquidity_to_debt None", replace(o, liquidity_to_debt=None)),
-        ("cash_closing differs", replace(o, cash_closing=Decimal(21))),
+        ("cash_closing differs", _ro(o, cash_closing=Decimal(21))),
         ("facility commitment None", replace(o, facilities=(replace(LOAN, commitment=None),))),
-        ("total debt zero", replace(o, total_debt_bs=Decimal(0), total_debt=Decimal(0))),
+        ("total debt zero", _ro(o, total_debt_bs=Decimal(0), total_debt=Decimal(0))),
         ("EUR facility", replace(o, facilities=(replace(LOAN, currency="EUR"),))),
         (
             "negative total debt",
-            replace(o, total_debt_bs=Decimal(-50), total_debt=Decimal(-50), liquidity_to_debt=None),
+            _ro(o, total_debt_bs=Decimal(-50), total_debt=Decimal(-50), liquidity_to_debt=None),
         ),
-        ("tiny burn", replace(o, cfo=Decimal(19) - Decimal("1E-60"))),
+        ("tiny burn", _ro(o, cfo=Decimal(19) - Decimal("1E-60"))),
         ("every operand missing", all_missing),
         ("no facilities", replace(o, facilities=())),
         ("revolver drawn missing only", replace(o, rcf_drawn=None)),
@@ -989,9 +1079,7 @@ def test_d1_d3_empty_schedule_row_and_reason() -> None:
 
 
 def test_d3_empty_schedule_with_zero_total_debt_is_known_zero() -> None:
-    operands = replace(
-        _base_operands(), facilities=(), total_debt_bs=Decimal(0), total_debt=Decimal(0)
-    )
+    operands = _ro(_base_operands(), facilities=(), total_debt_bs=Decimal(0), total_debt=Decimal(0))
     b = _compose(operands, 24, "10")
     assert b.maturities_in_horizon == 0 and b.amortisation_in_horizon == 0
     assert b.cash_at_horizon_end_before_refinancing == Decimal(20)
@@ -1024,7 +1112,7 @@ def test_d3_term_reasons_use_the_not_stated_frame(term: str, field: str, fact_id
 
 
 def test_d4_negative_total_debt_reason() -> None:
-    b = _compose(replace(_base_operands(), total_debt_bs=Decimal(-50)), 24, "10")
+    b = _compose(_ro(_base_operands(), total_debt_bs=Decimal(-50)), 24, "10")
     share = b.wall[0].share_of_total_debt
     assert isinstance(share, cp2d.Gap) and not share.applicable
     assert share.reason == "Not meaningful: total debt is negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
@@ -1134,7 +1222,7 @@ def test_l1_commitment_known_drawings_missing() -> None:
         "Available liquidity not calculable: revolver drawings undisclosed"
     )
     assert result.bridge.runway_reason is None  # F = 0 and cash clears the minimum: not reached
-    burn = replace(inputs.operands, rcf_drawn=None, cfo=Decimal(13))
+    burn = _ro(inputs.operands, rcf_drawn=None, cfo=Decimal(13))
     b = cp2d.compose_bridge(
         operands=burn, horizon_months=24, minimum_cash=Decimal(10), balance_date=BALANCE_DATE
     )
@@ -1155,9 +1243,7 @@ def test_l1_commitment_known_drawings_missing() -> None:
 
 def test_l3_differences_are_spelled_exactly() -> None:
     inputs = _inputs("positive")
-    operands = replace(
-        inputs.operands, closing_cash=Decimal("20.4"), dividends_paid=Decimal("-8.75")
-    )
+    operands = _ro(inputs.operands, closing_cash=Decimal("20.4"), dividends_paid=Decimal("-8.75"))
     result = cp2d.compute(replace(inputs, operands=operands))
     assert "Sources and uses differ from reported closing cash by (0.4) US$ m." in (
         result.own_limitations
@@ -1171,7 +1257,7 @@ def test_l3_differences_are_spelled_exactly() -> None:
 def test_l3_difference_is_not_rounded_to_the_default_context() -> None:
     inputs = _inputs("positive")
     closing = Decimal("20.123456789012345678901234567890123")  # 33 significant digits differ
-    result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, closing_cash=closing)))
+    result = cp2d.compute(replace(inputs, operands=_ro(inputs.operands, closing_cash=closing)))
     assert (
         "Sources and uses differ from reported closing cash by "
         "(0.123456789012345678901234567890123) US$ m."
@@ -1334,7 +1420,7 @@ def test_r9_l4_form4_names_the_first_operand_in_formula_order(
 
 
 def test_r9_l5_only_a_known_zero_debt_makes_an_empty_schedule_known() -> None:
-    b = _compose(replace(_base_operands(), facilities=(), total_debt_bs=Decimal(-50)), 24, "10")
+    b = _compose(_ro(_base_operands(), facilities=(), total_debt_bs=Decimal(-50)), 24, "10")
     assert isinstance(b.maturities_in_horizon, cp2d.Gap)
     assert b.maturities_in_horizon.reason == (
         "Not calculable: the T4.18 facility schedule lists no facility"
@@ -1589,3 +1675,183 @@ def test_r11_a_known_inside_facility_keeps_the_flag_known() -> None:
     assert result.bridge.maturities_in_horizon == cp2d.Gap(reason)
     assert [w.facility.facility_id for w in result.bridge.wall] == ["old-loan", "term-loan"]
     assert not isinstance(result.bridge.wall[1].cumulative_share, cp2d.Gap)
+
+
+# --- round 13 (docs/rulings/2026-10-28-stage1.md "# Round 13", R1 M1 and R1 M3) ----------------
+
+
+def _op_inputs(**changes: Any) -> cp2d.Cp2dInputs:
+    inputs = _inputs("positive")
+    return replace(inputs, operands=_ro(inputs.operands, **changes))
+
+
+def _opd(status: cp2d.OperandStatus, limitation: str | None = None) -> cp2d.Operand:
+    """A non-known CP-1 operand: no amount, no period, the CP-1 limitation."""
+    return cp2d.Operand(status, None, None, limitation or f"CP-1 limitation: {status}")
+
+
+def test_r13_m1_a_copy_keeps_the_cp1_period_verbatim() -> None:
+    """R1 M1: a known numeric copy carries its CP-1 fact's own period, whatever the string."""
+    odd = cp2d.Operand("known", Decimal(19), "an odd CP-1 period string", None)
+    cells = _cells(cp2d.compute(_op_inputs(cfo=odd)))
+    assert cells["T2E.1.r02"].period == "an odd CP-1 period string"
+    assert cells["T2E.1.r03"].period == PERIOD_DELTA["investing"]  # the others keep their own
+    assert cells["T2E.1.r09"].period == _BALANCE  # a computed cell takes the balance date
+
+
+def test_r13_m1_a_sum_takes_the_one_period_its_operands_share() -> None:
+    shared = "LTM shared"
+    inputs = _op_inputs(
+        equity_issuance=cp2d.Operand("known", Decimal(0), shared, None),
+        equity_repurchases=cp2d.Operand("known", Decimal(0), shared, None),
+    )
+    assert _cells(cp2d.compute(inputs))["T2E.1.r05"].period == shared
+
+
+def test_r13_m1_a_sum_of_differing_periods_raises_the_invariant() -> None:
+    inputs = _op_inputs(
+        equity_issuance=cp2d.Operand("known", Decimal(0), "period a", None),
+        equity_repurchases=cp2d.Operand("known", Decimal(0), "period b", None),
+    )
+    with pytest.raises(ValueError, match=r"^CP-2D: operands of T2E\.1\.r05 differ in period$"):
+        cp2d.compute(inputs)
+
+
+def test_r13_m1_a_difference_of_differing_facility_periods_raises_the_invariant() -> None:
+    """T2E.2.r06 is the sum over facilities of commitment less drawn amount."""
+    other = replace(LOAN, facility_id="other-loan", period="a different period")
+    inputs = _with_loan(LOAN)
+    inputs = replace(inputs, operands=replace(inputs.operands, facilities=(LOAN, other)))
+    with pytest.raises(ValueError, match=r"^CP-2D: operands of T2E\.2\.r06 differ in period$"):
+        cp2d.compute(inputs)
+
+
+def test_r13_m1_a_facility_principal_keeps_the_facility_period() -> None:
+    odd = replace(LOAN, period="a facility period")
+    cells = _cells(cp2d.compute(_with_loan(odd)))
+    assert cells["T2E.4.r01.c1"].period == "a facility period"
+    assert cells["T2E.2.r06"].period == "a facility period"
+
+
+def test_r13_m1_gap_not_applicable_and_text_cells_carry_no_period() -> None:
+    missing = _cells(cp2d.compute(_op_inputs(cfo=None)))
+    assert missing["T2E.1.r02"].state == "gap" and missing["T2E.1.r02"].period is None
+    zero_debt = _cells(cp2d.compute(_op_inputs(total_debt_bs=Decimal(0))))
+    assert zero_debt["T2E.2.r09"].state == "not_applicable"
+    assert zero_debt["T2E.2.r09"].period is None
+    positive = _cells(cp2d.compute(_inputs("positive")))
+    assert positive["T2E.3.r04"].period is None  # horizon end date (text)
+    assert positive["T2E.4.r01.c2"].period is None  # maturity date (text)
+    inputs = _inputs("positive")
+    assert all(c.period is None for c in _cells(cp2d.compute(inputs)).values() if c.amount is None)
+
+
+def test_r13_m1_every_cell_carries_a_value_class_and_a_gap_takes_its_twins() -> None:
+    twin = {fid: c.value_class for fid, c in _cells(cp2d.compute(_inputs("positive"))).items()}
+    variants = (
+        _inputs("gap_minimum_cash"),
+        _op_inputs(cfo=None),
+        _op_inputs(total_debt_bs=Decimal(0)),
+        _op_inputs(cash_bs=_opd("conflicting")),
+        replace(_inputs("positive"), operands=_operands("fixture_rcf_undisclosed")),
+    )
+    for inputs in variants:
+        for fid, cell in _cells(cp2d.compute(inputs)).items():
+            assert cell.value_class is not None, fid
+            assert cell.value_class == twin[fid], fid
+
+
+def test_r13_m1_a_copied_gap_keeps_cp1_operand_and_cp1_unit() -> None:
+    cells = _cells(cp2d.compute(_op_inputs(cfo=None, rcf_commitment=None)))
+    cfo = cells["T2E.1.r02"]
+    assert (cfo.state, cfo.cp1_operand, cfo.cp1_unit) == ("gap", "cfo", "currency")
+    commitment = cells["T2E.2.r03"]
+    assert (commitment.value_class, commitment.cp1_operand) == ("source", "rcf_commitment")
+    assert commitment.cp1_unit == "currency"
+    undrawn = cells["T2E.2.r05"]
+    assert (undrawn.value_class, undrawn.cp1_operand) == ("calculated", "undrawn_rcf")
+
+
+def test_r13_m3_operand_shape_is_status_amount_period_limitation() -> None:
+    assert [f.name for f in dataclasses.fields(cp2d.Operand)] == [
+        "status",
+        "amount",
+        "period",
+        "limitation",
+    ]
+    with pytest.raises(ValueError, match=r"^CP-2D: a known operand needs an amount and a period$"):
+        cp2d.Operand("known", Decimal(1), None, None)
+    with pytest.raises(ValueError, match=r"^CP-2D: a missing operand needs a limitation and no "):
+        cp2d.Operand("missing", None, None, None)
+    with pytest.raises(ValueError, match=r"^CP-2D: a conflicting operand needs a limitation"):
+        cp2d.Operand("conflicting", Decimal(1), None, "x")
+
+
+@pytest.mark.parametrize(
+    "status,state,spelled",
+    [
+        ("missing", "gap", "∅ G7"),
+        ("conflicting", "conflicting", "∅ G7"),
+        ("not_applicable", "not_applicable", "∅ G7 n.m."),
+    ],
+)
+def test_r13_m3_a_copy_keeps_the_cp1_status_with_its_limitation(
+    status: cp2d.OperandStatus, state: str, spelled: str
+) -> None:
+    limitation = "CP-1 says: the line items disagree"
+    cells = _cells(cp2d.compute(_op_inputs(cfo=_opd(status, limitation))))
+    copy = cells["T2E.1.r02"]
+    assert (copy.state, copy.reason, copy.amount, copy.period) == (state, limitation, None, None)
+    assert copy.spell(gap_id="G7") == spelled
+    assert (copy.value_class, copy.cp1_operand, copy.cp1_unit) == ("calculated", "cfo", "currency")
+
+
+@pytest.mark.parametrize(
+    "status,word",
+    [
+        ("missing", "missing"),
+        ("conflicting", "conflicting"),
+        ("not_applicable", "not applicable"),
+    ],
+)
+def test_r13_m3_dependants_stay_gaps_with_the_state_word(
+    status: cp2d.OperandStatus, word: str
+) -> None:
+    cells = _cells(cp2d.compute(_op_inputs(cfo=_opd(status))))
+    reason = f"Not calculable: Operating cash flow is {word}"
+    for fact_id in ("T2E.1.r09", "T2E.1.r11", "T2E.3.r01", "T2E.3.r08", "T2E.5.r07"):
+        assert (cells[fact_id].state, cells[fact_id].reason) == ("gap", reason), fact_id
+
+
+@pytest.mark.parametrize(
+    "status,word",
+    [
+        ("missing", "missing"),
+        ("conflicting", "conflicting"),
+        ("not_applicable", "not applicable"),
+    ],
+)
+def test_r13_m3_gap_operand_claim_names_the_status(status: cp2d.OperandStatus, word: str) -> None:
+    result = cp2d.compute(_op_inputs(cfo=_opd(status)))
+    text = _gap_text(result)
+    assert text == (
+        f"The funding gap is not calculated: [T2E.5.r07] needs Operating cash flow, which is "
+        f"{word}."
+    )
+    assert prose.check(text, refs=(), gaps={"T2E.5.r07"}) == ()
+
+
+def test_r13_m3_the_first_gap_in_formula_order_names_the_claim() -> None:
+    both = cp2d.compute(_op_inputs(cash_bs=_opd("not_applicable"), cfo=_opd("conflicting")))
+    assert _gap_text(both).endswith("needs Cash and cash equivalents, which is not applicable.")
+    later = cp2d.compute(_op_inputs(investing=_opd("conflicting"), financing=_opd("missing")))
+    assert _gap_text(later).endswith("needs Net cash used in investing, which is conflicting.")
+
+
+@pytest.mark.parametrize("status", ["missing", "conflicting", "not_applicable"])
+def test_r13_m3_a_non_known_operand_is_never_read_as_zero(status: cp2d.OperandStatus) -> None:
+    inputs = _op_inputs(dividends_paid=_opd(status), rcf_drawn=_opd(status))
+    result = cp2d.compute(inputs)
+    for cell in _cells(result).values():
+        assert cell.state == "known" or cell.reason
+    assert _cells(result)["T2E.1.r06"].amount is None

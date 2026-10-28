@@ -32,7 +32,8 @@ Category = Literal[
     "Documentary Fact", "Management Language", "Analyst Interpretation", "Insufficient Information"
 ]
 RunwayState = Literal["months", "not_reached", "missing"]
-CellState = Literal["known", "gap", "not_applicable"]
+CellState = Literal["known", "gap", "not_applicable", "conflicting"]
+OperandStatus = Literal["known", "missing", "conflicting", "not_applicable"]
 
 _ZERO = Decimal(0)
 _ONE_DP = Decimal("0.1")
@@ -91,11 +92,35 @@ class Facility:
     commitment: Decimal | None
     drawn_amount: Decimal | None
     annual_amortisation: Decimal | None
+    # Round 13 (R1 M1): the row's own CP-1 ``period`` string (one per row: the alias agrees).
+    period: str
+
+
+@dataclass(frozen=True)
+class Operand:
+    """One CP-1 head fact as the Method reads it (round 13, R1 M3): its status, its amount, its
+    own ``period`` string and, when it is not known, CP-1's ``limitation`` verbatim.
+
+    A known operand has an amount and a period; any other status has a limitation and no
+    amount (the product's Fact contract)."""
+
+    status: OperandStatus
+    amount: Decimal | None
+    period: str | None
+    limitation: str | None
+
+    def __post_init__(self) -> None:
+        if self.status == "known":
+            if self.amount is None or self.period is None:
+                raise ValueError("CP-2D: a known operand needs an amount and a period")
+        elif self.amount is not None or self.limitation is None:
+            raise ValueError(f"CP-2D: a {self.status} operand needs a limitation and no amount")
 
 
 @dataclass(frozen=True)
 class Operands:
-    """The CP-1 head facts the Method reads (manifest.fact_bindings names); None is missing.
+    """The CP-1 head facts the Method reads (manifest.fact_bindings names); None is no fact
+    offered, which reads as missing.
 
     T4.5 flows are the twelve months to the balance date in the CP-1 fact's own sign; T4.6
     balances and T4.10 metrics are at the balance date, US$ m. ``liquidity_to_debt`` is a
@@ -103,29 +128,29 @@ class Operands:
     """
 
     # T4.5 statement history, LTM
-    opening_cash: Decimal | None
-    cfo: Decimal | None
-    investing: Decimal | None
-    net_debt_issuance: Decimal | None
-    equity_issuance: Decimal | None
-    equity_repurchases: Decimal | None
-    dividends_paid: Decimal | None
-    other_investing_financing: Decimal | None
-    financing: Decimal | None
-    fx_effect: Decimal | None
-    closing_cash: Decimal | None
+    opening_cash: Operand | None
+    cfo: Operand | None
+    investing: Operand | None
+    net_debt_issuance: Operand | None
+    equity_issuance: Operand | None
+    equity_repurchases: Operand | None
+    dividends_paid: Operand | None
+    other_investing_financing: Operand | None
+    financing: Operand | None
+    fx_effect: Operand | None
+    closing_cash: Operand | None
     # T4.6 balance sheet, Q4
-    cash_bs: Decimal | None
-    restricted_cash: Decimal | None
-    rcf_commitment: Decimal | None
-    rcf_drawn: Decimal | None
-    total_debt_bs: Decimal | None
+    cash_bs: Operand | None
+    restricted_cash: Operand | None
+    rcf_commitment: Operand | None
+    rcf_drawn: Operand | None
+    total_debt_bs: Operand | None
     # T4.10 settled metrics, cross-checked against the recomputation (never a second source)
-    cash_closing: Decimal | None
-    total_debt: Decimal | None
-    undrawn_rcf: Decimal | None
-    liquidity: Decimal | None
-    liquidity_to_debt: Decimal | None
+    cash_closing: Operand | None
+    total_debt: Operand | None
+    undrawn_rcf: Operand | None
+    liquidity: Operand | None
+    liquidity_to_debt: Operand | None
     # T4.18 facility schedule: None when the schedule is absent, () when it lists no facility
     facilities: tuple[Facility, ...] | None
 
@@ -153,6 +178,16 @@ class Gap:
     applicable: bool = True
 
 
+@dataclass(frozen=True)
+class OperandGap(Gap):
+    """A CP-1 operand that is not known (round 13, R1 M3). ``reason`` is the dependants' reason
+    (``Not calculable: <label> is <missing|conflicting|not applicable>``); a copy cell keeps
+    ``status`` and CP-1's own ``limitation``, verbatim, as its reason."""
+
+    status: OperandStatus = "missing"
+    limitation: str | None = None
+
+
 Num = Decimal | Gap
 
 # CP-1 labels of the operands (manifest.fact_bindings labels without the period).
@@ -176,9 +211,23 @@ OPERAND_LABELS = {
 }
 
 
+# The state words of CP-4C's _STATE_WORD (round 13, R1 M3).
+STATE_WORD: dict[OperandStatus, str] = {
+    "known": "known",
+    "missing": "missing",
+    "conflicting": "conflicting",
+    "not_applicable": "not applicable",
+}
+
+
+def state_reason(label: str, status: OperandStatus) -> str:
+    """The reason of an operand that is not known and of every value that depends on it."""
+    return f"Not calculable: {label} is {STATE_WORD[status]}"
+
+
 def missing_reason(label: str) -> str:
     """Ruling 2D-b: the reason of a missing operand and of every value that depends on it."""
-    return f"Not calculable: {label} is missing"
+    return state_reason(label, "missing")
 
 
 # Reasons fixed by the oracle (minimum cash), the lease (runway) and rulings 2D2, 2D5, 2D-c.
@@ -212,9 +261,44 @@ SCHEDULE_MISSING = missing_reason("T4.18 facility schedule")
 SCHEDULE_EMPTY = "Not calculable: the T4.18 facility schedule lists no facility"
 
 
+def _operand(operands: Operands, name: str) -> Operand | None:
+    operand: Operand | None = getattr(operands, name)
+    return operand
+
+
+def _amount(operands: Operands, name: str) -> Decimal | None:
+    """The operand's amount: None unless the CP-1 fact is known."""
+    operand = _operand(operands, name)
+    return None if operand is None else operand.amount
+
+
+def _absent(operands: Operands, name: str) -> bool:
+    """No fact offered, or one CP-1 reports missing (an undisclosed term)."""
+    operand = _operand(operands, name)
+    return operand is None or operand.status == "missing"
+
+
+def _periods(operands: Operands, spec: str) -> tuple[str, ...]:
+    """The CP-1 periods of the known operands named in ``spec`` (names joined by ``+``)."""
+    out: list[str] = []
+    for name in spec.split("+"):
+        operand = _operand(operands, name)
+        if operand is not None and operand.period is not None:
+            out.append(operand.period)
+    return tuple(out)
+
+
 def _op(operands: Operands, name: str) -> Num:
-    value: Decimal | None = getattr(operands, name)
-    return Gap(missing_reason(OPERAND_LABELS[name])) if value is None else value
+    operand = _operand(operands, name)
+    if operand is None:
+        return Gap(missing_reason(OPERAND_LABELS[name]))
+    if operand.amount is not None:
+        return operand.amount
+    return OperandGap(
+        state_reason(OPERAND_LABELS[name], operand.status),
+        status=operand.status,
+        limitation=operand.limitation,
+    )
 
 
 def _total(*values: Num) -> Num:
@@ -336,7 +420,7 @@ def _schedule_gap(operands: Operands) -> Gap | None:
     known zero, when nothing is owed and the schedule totals are a known zero."""
     if operands.facilities is None:
         return Gap(SCHEDULE_MISSING)
-    if operands.facilities or operands.total_debt_bs == 0:
+    if operands.facilities or _amount(operands, "total_debt_bs") == 0:
         return None
     return Gap(SCHEDULE_EMPTY)
 
@@ -531,8 +615,8 @@ def compose_bridge(
     horizon_end = add_months(balance_date, horizon_months)
     ordered = _ordered(o.facilities or ())
     absent = _schedule_gap(o)
-    undisclosed = o.rcf_commitment is None
-    drawings = not undisclosed and o.rcf_drawn is None
+    undisclosed = _absent(o, "rcf_commitment")
+    drawings = not undisclosed and _absent(o, "rcf_drawn")
     with localcontext(_CONTEXT):
         # "Closing cash" in Methods 3 and 5 is T4.6 cash_bs (ruling 2D7).
         cash = _op(o, "cash_bs")
@@ -650,11 +734,15 @@ def check_cp1_totals(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, 
     a missing recomputation is a 2D-b gap and adds nothing here.
     """
     pairs: tuple[tuple[str, Decimal | None, Num], ...] = (
-        ("cash_closing", operands.cash_closing, _op(operands, "cash_bs")),
-        ("total_debt", operands.total_debt, _op(operands, "total_debt_bs")),
-        ("undrawn_rcf", operands.undrawn_rcf, bridge.undrawn_revolver),
-        ("liquidity", operands.liquidity, bridge.available_liquidity),
-        ("liquidity_to_debt", operands.liquidity_to_debt, bridge.liquidity_to_total_debt),
+        ("cash_closing", _amount(operands, "cash_closing"), _op(operands, "cash_bs")),
+        ("total_debt", _amount(operands, "total_debt"), _op(operands, "total_debt_bs")),
+        ("undrawn_rcf", _amount(operands, "undrawn_rcf"), bridge.undrawn_revolver),
+        ("liquidity", _amount(operands, "liquidity"), bridge.available_liquidity),
+        (
+            "liquidity_to_debt",
+            _amount(operands, "liquidity_to_debt"),
+            bridge.liquidity_to_total_debt,
+        ),
     )
     out: list[tuple[str, str]] = []
     for label, settled, mine in pairs:
@@ -848,9 +936,14 @@ class Cell:
     cp1_operand: str | None = None
     cp1_unit: str | None = None
     reason: str | None = None
+    # Round 13 (R1 M1): set in _num for a known numeric cell only. ``differing_periods`` holds
+    # the operand periods of a sum or difference that disagree; _number raises on it (the cell's
+    # fact id is assigned there) and no returned cell carries any.
+    period: str | None = None
+    differing_periods: tuple[str, ...] = ()
 
     def spell(self, *, gap_id: str | None = None) -> str:
-        if self.state == "gap":
+        if self.state in ("gap", "conflicting"):
             return format_value(None, "amount", "gap", gap_id=gap_id)
         if self.state == "not_applicable":
             return format_value(None, "amount", "not_meaningful", gap_id=gap_id)
@@ -915,44 +1008,113 @@ _UNIT_CLASS: dict[str, UnitClass] = {"MILLIONS": "amount", "PERCENT": "percent"}
 _CP1_CURRENCY = "currency"
 
 
-def _gap_cell(gap: Gap, unit: str | None) -> Cell:
+_COPY_STATE: dict[OperandStatus, CellState] = {
+    "known": "known",
+    "missing": "gap",
+    "conflicting": "conflicting",
+    "not_applicable": "not_applicable",
+}
+
+
+def _gap_cell(
+    gap: Gap,
+    unit: str | None,
+    value_class: str,
+    cp1_operand: str | None = None,
+    cp1_unit: str | None = None,
+    *,
+    copied: bool = False,
+) -> Cell:
+    """A gap or not_applicable cell carries its known twin's class, and a copied gap its
+    ``cp1_operand`` and ``cp1_unit`` (round 13, R1 M1). A copy of a CP-1 operand keeps CP-1's
+    status and limitation (R1 M3); every other cell takes the dependants' reason."""
+    if copied and isinstance(gap, OperandGap):
+        return Cell(
+            "",
+            _COPY_STATE[gap.status],
+            None,
+            unit=unit,
+            value_class=value_class,
+            cp1_operand=cp1_operand,
+            cp1_unit=cp1_unit,
+            reason=gap.limitation,
+        )
     state: CellState = "gap" if gap.applicable else "not_applicable"
-    return Cell("", state, None, unit=unit, reason=gap.reason)
+    return Cell(
+        "",
+        state,
+        None,
+        unit=unit,
+        value_class=value_class,
+        cp1_operand=cp1_operand,
+        cp1_unit=cp1_unit,
+        reason=gap.reason,
+    )
 
 
 def _num(
     value: Num,
     unit: str,
     value_class: str,
+    balance: str,
     cp1_operand: str | None = None,
     cp1_unit: str | None = None,
+    periods: tuple[str, ...] = (),
+    *,
+    copied: bool = False,
 ) -> Cell:
+    """A numeric cell. Its ``period`` (round 13, R1 M1): the one period its CP-1 operands share
+    (``periods``; a copy keeps it verbatim), else the balance date ``balance``."""
     if isinstance(value, Gap):
-        return _gap_cell(value, unit)
+        return _gap_cell(value, unit, value_class, cp1_operand, cp1_unit, copied=copied)
     value = _ZERO if value == 0 else value
     shown = format_value(value, _UNIT_CLASS[unit], "known")
-    return Cell("", "known", shown, value, unit, value_class, cp1_operand, cp1_unit)
+    shared = sorted(set(periods))
+    return Cell(
+        "",
+        "known",
+        shown,
+        value,
+        unit,
+        value_class,
+        cp1_operand,
+        cp1_unit,
+        period=shared[0] if len(shared) == 1 else balance if not shared else None,
+        differing_periods=tuple(shared) if len(shared) > 1 else (),
+    )
 
 
-def _money(value: Num, value_class: str = "calculated") -> Cell:
-    return _num(value, "MILLIONS", value_class)
+def _money(value: Num, balance: str, value_class: str = "calculated") -> Cell:
+    return _num(value, "MILLIONS", value_class, balance)
 
 
-def _copy(value: Num, value_class: str, operand: str) -> Cell:
-    """A copied CP-1 T4.5/T4.6 fact: own value class, unit currency normalised to MILLIONS."""
-    return _num(value, "MILLIONS", value_class, operand, _CP1_CURRENCY)
+def _copy(o: Operands, value: Num, value_class: str, operand: str, balance: str) -> Cell:
+    """A copied CP-1 T4.5/T4.6 fact: own value class, unit currency normalised to MILLIONS,
+    CP-1's period (the shared one for a sum), CP-1's status and limitation when not known."""
+    return _num(
+        value,
+        "MILLIONS",
+        value_class,
+        balance,
+        operand,
+        _CP1_CURRENCY,
+        _periods(o, operand),
+        copied=True,
+    )
 
 
 def _text(shown: str | Gap, value_class: str, cp1_operand: str | None = None) -> Cell:
     if isinstance(shown, Gap):
-        return _gap_cell(shown, None)
+        return _gap_cell(shown, None, value_class, cp1_operand)
     return Cell("", "known", shown, value_class=value_class, cp1_operand=cp1_operand)
 
 
-def _months_cell(value: int | Decimal | Gap, value_class: str) -> Cell:
+def _months_cell(value: int | Decimal | Gap, value_class: str, balance: str) -> Cell:
     if isinstance(value, Gap):
-        return _gap_cell(value, "months")
-    return Cell("", "known", _months_text(value), Decimal(value), "months", value_class)
+        return _gap_cell(value, "months", value_class)
+    return Cell(
+        "", "known", _months_text(value), Decimal(value), "months", value_class, period=balance
+    )
 
 
 def _number(table_id: str, rows: list[tuple[str, list[Cell]]]) -> tuple[Row, ...]:
@@ -960,11 +1122,13 @@ def _number(table_id: str, rows: list[tuple[str, list[Cell]]]) -> tuple[Row, ...
     out = []
     for r, (label, cells) in enumerate(rows, 1):
         multi = len(cells) > 1
-        named = tuple(
-            replace(cell, fact_id=f"{table_id}.r{r:02d}" + (f".c{c}" if multi else ""))
-            for c, cell in enumerate(cells, 1)
-        )
-        out.append(Row(label, named))
+        named = []
+        for c, cell in enumerate(cells, 1):
+            fact_id = f"{table_id}.r{r:02d}" + (f".c{c}" if multi else "")
+            if cell.differing_periods:
+                raise ValueError(f"CP-2D: operands of {fact_id} differ in period")
+            named.append(replace(cell, fact_id=fact_id))
+        out.append(Row(label, tuple(named)))
     return tuple(out)
 
 
@@ -976,6 +1140,12 @@ RUNWAY_ROW = (
 )
 
 
+def _t410(o: Operands, value: Num, operand: str, balance: str, unit: str = "MILLIONS") -> Cell:
+    """A cell CP-2D recomputes and tags with the CP-1 T4.10 metric it cross-checks: it keeps
+    that metric's period when CP-1 offers it."""
+    return _num(value, unit, "calculated", balance, operand, periods=_periods(o, operand))
+
+
 def _sources_and_uses(o: Operands, b: Bridge) -> Table:
     d0 = b.balance_date.isoformat()
     opening = add_months(b.balance_date, -12).isoformat()
@@ -983,27 +1153,44 @@ def _sources_and_uses(o: Operands, b: Bridge) -> Table:
     rows: list[tuple[str, list[Cell]]] = [
         (
             f"Opening cash ({opening})",
-            [_copy(_op(o, "opening_cash"), "calculated", "opening_cash")],
+            [_copy(o, _op(o, "opening_cash"), "calculated", "opening_cash", d0)],
         ),
-        ("Operating cash flow", [_copy(_op(o, "cfo"), "calculated", "cfo")]),
-        ("Net cash used in investing", [_copy(_op(o, "investing"), "calculated", "investing")]),
+        ("Operating cash flow", [_copy(o, _op(o, "cfo"), "calculated", "cfo", d0)]),
+        (
+            "Net cash used in investing",
+            [_copy(o, _op(o, "investing"), "calculated", "investing", d0)],
+        ),
         (
             "Net debt issued",
-            [_copy(_op(o, "net_debt_issuance"), "calculated", "net_debt_issuance")],
+            [_copy(o, _op(o, "net_debt_issuance"), "calculated", "net_debt_issuance", d0)],
         ),
         (
             "Equity issuance and repurchases",
-            [_copy(equity, "calculated", "equity_issuance+equity_repurchases")],
+            [_copy(o, equity, "calculated", "equity_issuance+equity_repurchases", d0)],
         ),
-        ("Dividends paid", [_copy(_op(o, "dividends_paid"), "calculated", "dividends_paid")]),
+        (
+            "Dividends paid",
+            [_copy(o, _op(o, "dividends_paid"), "calculated", "dividends_paid", d0)],
+        ),
         (
             "Other investing and financing",
-            [_copy(_op(o, "other_investing_financing"), "calculated", "other_investing_financing")],
+            [
+                _copy(
+                    o,
+                    _op(o, "other_investing_financing"),
+                    "calculated",
+                    "other_investing_financing",
+                    d0,
+                )
+            ],
         ),
-        ("FX effect on cash", [_copy(_op(o, "fx_effect"), "calculated", "fx_effect")]),
-        ("Closing cash (calculated)", [_money(b.sources_and_uses_closing_cash_calculated)]),
-        ("Closing cash (reported)", [_copy(_op(o, "closing_cash"), "calculated", "closing_cash")]),
-        ("Difference (calculated less reported)", [_money(b.sources_and_uses_difference)]),
+        ("FX effect on cash", [_copy(o, _op(o, "fx_effect"), "calculated", "fx_effect", d0)]),
+        ("Closing cash (calculated)", [_money(b.sources_and_uses_closing_cash_calculated, d0)]),
+        (
+            "Closing cash (reported)",
+            [_copy(o, _op(o, "closing_cash"), "calculated", "closing_cash", d0)],
+        ),
+        ("Difference (calculated less reported)", [_money(b.sources_and_uses_difference, d0)]),
     ]
     return Table(
         "T2E.1",
@@ -1015,17 +1202,18 @@ def _sources_and_uses(o: Operands, b: Bridge) -> Table:
 
 
 def _position(o: Operands, b: Bridge) -> Table:
-    undisclosed = o.rcf_commitment is None
+    d0 = b.balance_date.isoformat()
+    undisclosed = _absent(o, "rcf_commitment")
     commitment: Num = Gap(REV_COMMITMENT) if undisclosed else _op(o, "rcf_commitment")
-    drawn: Num = Gap(REV_DRAWN) if undisclosed and o.rcf_drawn is None else _op(o, "rcf_drawn")
+    drawn: Num = Gap(REV_DRAWN) if undisclosed and _absent(o, "rcf_drawn") else _op(o, "rcf_drawn")
     rows: list[tuple[str, list[Cell]]] = [
-        ("Cash and cash equivalents", [_copy(_op(o, "cash_bs"), "source", "cash_bs")]),
-        ("Restricted cash", [_copy(_op(o, "restricted_cash"), "source", "restricted_cash")]),
-        ("Revolver commitment", [_copy(commitment, "source", "rcf_commitment")]),
-        ("Revolver drawn", [_copy(drawn, "source", "rcf_drawn")]),
+        ("Cash and cash equivalents", [_copy(o, _op(o, "cash_bs"), "source", "cash_bs", d0)]),
+        ("Restricted cash", [_copy(o, _op(o, "restricted_cash"), "source", "restricted_cash", d0)]),
+        ("Revolver commitment", [_copy(o, commitment, "source", "rcf_commitment", d0)]),
+        ("Revolver drawn", [_copy(o, drawn, "source", "rcf_drawn", d0)]),
         (
             "Undrawn committed revolver",
-            [_num(b.undrawn_revolver, "MILLIONS", "calculated", "undrawn_rcf")],
+            [_t410(o, b.undrawn_revolver, "undrawn_rcf", d0)],
         ),
         (
             "Undrawn term loan commitment (not counted as liquidity)",
@@ -1034,18 +1222,20 @@ def _position(o: Operands, b: Bridge) -> Table:
                     b.undrawn_term_commitment,
                     "MILLIONS",
                     "calculated",
+                    d0,
                     "T4.18 commitment - drawn_amount",
+                    periods=tuple(f.period for f in b.ordered_facilities),
                 )
             ],
         ),
         (
             "Available liquidity",
-            [_num(b.available_liquidity, "MILLIONS", "calculated", "liquidity")],
+            [_t410(o, b.available_liquidity, "liquidity", d0)],
         ),
-        ("Total debt", [_copy(_op(o, "total_debt_bs"), "source", "total_debt_bs")]),
+        ("Total debt", [_copy(o, _op(o, "total_debt_bs"), "source", "total_debt_bs", d0)]),
         (
             "Liquidity to total debt",
-            [_num(b.liquidity_to_total_debt, "PERCENT", "calculated", "liquidity_to_debt")],
+            [_t410(o, b.liquidity_to_total_debt, "liquidity_to_debt", d0, "PERCENT")],
         ),
     ]
     return Table(
@@ -1058,34 +1248,39 @@ def _position(o: Operands, b: Bridge) -> Table:
 
 
 def _runway_cell(b: Bridge) -> Cell:
+    d0 = b.balance_date.isoformat()
     if b.runway_state == "not_reached":
         return Cell("", "known", "Not reached at run rate", unit="months", value_class="calculated")
     if b.runway_state == "months":
         assert b.months_to_minimum_cash is not None
-        return _months_cell(b.months_to_minimum_cash, "calculated")
+        return _months_cell(b.months_to_minimum_cash, "calculated", d0)
     assert b.runway_reason is not None
-    return _gap_cell(Gap(b.runway_reason), "months")
+    return _gap_cell(Gap(b.runway_reason), "months", "calculated")
 
 
 def _runway_table(b: Bridge) -> Table:
+    d0 = b.balance_date.isoformat()
     rows: list[tuple[str, list[Cell]]] = [
         (
             "Run-rate net cash flow before new borrowing, per year",
-            [_money(b.run_rate_net_cash_flow_annual)],
+            [_money(b.run_rate_net_cash_flow_annual, d0)],
         ),
         (
             "Run-rate net cash flow before new borrowing, per month",
-            [_money(b.run_rate_net_cash_flow_monthly)],
+            [_money(b.run_rate_net_cash_flow_monthly, d0)],
         ),
-        ("Horizon (analyst judgment)", [_months_cell(b.horizon_months, "analyst_judgment")]),
+        ("Horizon (analyst judgment)", [_months_cell(b.horizon_months, "analyst_judgment", d0)]),
         ("Horizon end date", [_text(b.horizon_end.isoformat(), "calculated")]),
-        ("Run-rate net cash flow over the horizon", [_money(b.run_rate_net_cash_flow_horizon)]),
+        ("Run-rate net cash flow over the horizon", [_money(b.run_rate_net_cash_flow_horizon, d0)]),
         # Outflows are shown negative (method_rules.table_signs).
-        ("Scheduled amortisation inside the horizon", [_money(_neg(b.amortisation_in_horizon))]),
-        ("Maturities inside the horizon", [_money(_neg(b.maturities_in_horizon))]),
+        (
+            "Scheduled amortisation inside the horizon",
+            [_money(_neg(b.amortisation_in_horizon), d0)],
+        ),
+        ("Maturities inside the horizon", [_money(_neg(b.maturities_in_horizon), d0)]),
         (
             "Cash at horizon end before refinancing",
-            [_money(b.cash_at_horizon_end_before_refinancing)],
+            [_money(b.cash_at_horizon_end_before_refinancing, d0)],
         ),
         (RUNWAY_ROW, [_runway_cell(b)]),
     ]
@@ -1093,6 +1288,7 @@ def _runway_table(b: Bridge) -> Table:
 
 
 def _wall_table(b: Bridge) -> Table:
+    d0 = b.balance_date.isoformat()
     rows: list[tuple[str, list[Cell]]] = []
     for w in b.wall:
         f = w.facility
@@ -1102,19 +1298,26 @@ def _wall_table(b: Bridge) -> Table:
             (
                 f"{f.name} ({f.facility_id})",
                 [
-                    _num(w.principal, "MILLIONS", "source", "T4.18 principal"),
+                    _num(
+                        w.principal,
+                        "MILLIONS",
+                        "source",
+                        d0,
+                        "T4.18 principal",
+                        periods=(f.period,),
+                    ),
                     _text(
                         dated if isinstance(dated, Gap) else dated.isoformat(),
                         "source",
                         "T4.18 maturity_date",
                     ),
-                    _months_cell(w.months_to_maturity, "calculated"),
+                    _months_cell(w.months_to_maturity, "calculated", d0),
                     _text(
                         inside if isinstance(inside, Gap) else ("Yes" if inside else "No"),
                         "calculated",
                     ),
-                    _num(w.share_of_total_debt, "PERCENT", "calculated"),
-                    _num(w.cumulative_share, "PERCENT", "calculated"),
+                    _num(w.share_of_total_debt, "PERCENT", "calculated", d0),
+                    _num(w.cumulative_share, "PERCENT", "calculated", d0),
                 ],
             )
         )
@@ -1129,25 +1332,26 @@ def _wall_table(b: Bridge) -> Table:
     return Table("T2E.4", "Maturity wall", "Facility", columns, _number("T2E.4", rows))
 
 
-def _funding_table(b: Bridge) -> Table:
+def _funding_table(o: Operands, b: Bridge) -> Table:
+    d0 = b.balance_date.isoformat()
     minimum: Num = Gap(MINIMUM_NOT_ASSESSED_CELL) if b.minimum_cash is None else b.minimum_cash
     rows: list[tuple[str, list[Cell]]] = [
         (
             "Cash at horizon end before refinancing",
-            [_money(b.cash_at_horizon_end_before_refinancing)],
+            [_money(b.cash_at_horizon_end_before_refinancing, d0)],
         ),
         (
             "Undrawn committed revolver",
-            [_num(b.undrawn_revolver, "MILLIONS", "calculated", "undrawn_rcf")],
+            [_t410(o, b.undrawn_revolver, "undrawn_rcf", d0)],
         ),
-        ("Resources at horizon end", [_money(b.resources_at_horizon_end)]),
-        ("Minimum cash (analyst judgment)", [_money(minimum, "analyst_judgment")]),
+        ("Resources at horizon end", [_money(b.resources_at_horizon_end, d0)]),
+        ("Minimum cash (analyst judgment)", [_money(minimum, d0, "analyst_judgment")]),
         (
             "Cash-only headroom over minimum cash (excludes any revolver)",
-            [_money(b.cash_only_headroom)],
+            [_money(b.cash_only_headroom, d0)],
         ),
-        ("Headroom over minimum cash", [_money(b.headroom)]),
-        ("Funding gap", [_money(b.funding_gap)]),
+        ("Headroom over minimum cash", [_money(b.headroom, d0)]),
+        ("Funding gap", [_money(b.funding_gap, d0)]),
     ]
     return Table("T2E.5", "Funding gap", "Line", ("Value (US$ m)",), _number("T2E.5", rows))
 
@@ -1185,7 +1389,10 @@ MAT_CURRENCY = (
 GAP_FACILITY = "The funding gap is not calculated: [T2E.5.r07] needs every facility {cause}."
 # Round 11: the pre-D0 cause in the L5 frame, in the maturity date's slot.
 PRE_D0_CAUSE = "to mature on or after the balance date, and one does not"
-GAP_OPERAND = "The funding gap is not calculated: [T2E.5.r07] needs {label}, which is missing."
+GAP_OPERAND = (
+    "The funding gap is not calculated: [T2E.5.r07] needs {label}, which is "
+    "{state}."  # state: missing, conflicting or not applicable (round 13, R1 M3)
+)
 # Form 4 labels for the schedule itself; no ruling fixes them (reported to LEAD). They omit
 # "T4.18": a claim's literal text may carry no bare figure (prose.bare_figures).
 SCHEDULE_LABELS = {
@@ -1264,11 +1471,13 @@ def _gap_missing(o: Operands, b: Bridge) -> str | None:
         if cause is not None:
             return GAP_FACILITY.format(cause=cause)
     for name in _GAP_OPERANDS:
-        if getattr(o, name) is None:
-            return GAP_OPERAND.format(label=OPERAND_LABELS[name])
+        operand = _operand(o, name)
+        if operand is None or operand.status != "known":
+            status: OperandStatus = "missing" if operand is None else operand.status
+            return GAP_OPERAND.format(label=OPERAND_LABELS[name], state=STATE_WORD[status])
     schedule = b.maturities_in_horizon
     if isinstance(schedule, Gap) and schedule.reason in SCHEDULE_LABELS:
-        return GAP_OPERAND.format(label=SCHEDULE_LABELS[schedule.reason])
+        return GAP_OPERAND.format(label=SCHEDULE_LABELS[schedule.reason], state="missing")
     return None
 
 
@@ -1375,7 +1584,7 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
         _position(o, bridge),
         _runway_table(bridge),
         _wall_table(bridge),
-        _funding_table(bridge),
+        _funding_table(o, bridge),
     )
     return Cp2dResult(
         bridge=bridge,

@@ -327,3 +327,4 @@
 - 19:30 Addendum 5 cherry-picked (01f114f): identifier runs refused, ordinal runs refused, unit suffixes readable; fixer told.
 - 19:36 CP-3 built (fc380d6); R3 create refuses not_permitted (CP-MODEL deterministic planned before CP-3) — asked LEAD. CP-4 sent back to finish brief parts (driver, D3, adapter/bindings tests).
 - 19:36 CP-L10 built (3b3ad2b+e0bb540), CP-2D built (545a8a7..1ec1b40), CP-1D owner fix round 1 (a1aa19d, frozen moved 0, gates 0).
+- 19:37 CP-5 dispatched at 8b46132. CP-1D fix1 scoped re-review (same mx-adversary). Review queue (Opus cap 6): CP-3 (8704e1f, mx-precise), CP-L10 (6e7f5b3, mx-adversary), CP-2D (b47c667, mx-adversary). Asked LEAD on CP-3 R3 create (seen_deterministic).

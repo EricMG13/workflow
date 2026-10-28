@@ -236,3 +236,4 @@
 - 2026-10-28 CP-1D class fix 1 re-review (mx-precise): APPROVE (M1, L1 x2, L2 killed; accepted survivors only). Merged (57ee05a). CP-1D ledger: agent=general-purpose(opus) fix-rounds=1 gates-first-pass=y
 - 2026-10-28 CP-L10 class review (mx-feature): APPROVE (p_blank 0, 6/6 mutants; Low/Info: coverage test hardcodes its model list). Merged (8363b79). All nine class rounds merged; Stage 1 class work complete
 - 2026-10-28 resume 17:56Z: no LEAD round 12 yet (LEAD 998bed7 fixed the CPDR lease body). Stage 1 riding Lows batch: brief stage1/lows-brief.md, worktree stage1-lows (claude/stage1-lows at 76b13f0), one Opus implementer, mx-feature review
+- 2026-10-28 Stage 1 end review dispatched (brief stage1/end-review-brief.md): R1 Stage 2 readiness (mx-autonomous), R2 arithmetic (mx-precise), R3 cross-module consistency and seams (mx-autonomous); read-only, at the lane tip

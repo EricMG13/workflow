@@ -34,6 +34,19 @@ historical records keep their original route names.
   expected results; `mx-adversary` also reviews diffs touching financial,
   ordering/concurrency or security code, and re-reviews only fixes of its own
   High or Medium findings. Opus/architect agents never write code.
+- A re-review brief lists the finding IDs it checks, and the review checks only
+  those. Anything else it notices goes under "Out of scope", never changes the
+  verdict, and LEAD takes it to the user. When only Low or Info findings remain,
+  the verdict is PASS with notes (user, 2026-10-28).
+- When a second round hits the same defect class (for example crash residue
+  between writes, a forgery path through a verifier, refusal mapping), stop
+  patching sites. `mx-autonomous` writes one plan for the whole class (one atomic
+  commit point, verify by replaying the producer's rules), and the lease states the
+  threat model's bounds (which crash points, which forger) that reviews hold to
+  (user, 2026-10-28).
+- A fix round leaves a brief, a report and a commit. Do not save copies of the
+  source or tests per round; the commit holds them. LEAD moves closed entries
+  from docs/QUEUE.md to docs/QUEUE-ARCHIVE.md (user, 2026-10-28).
 - Coordinator sessions plan and dispatch; they do not write product code.
 - User instructions require confidence-review after any code change, before
   declaring completion or committing. Enumerate doubts, trace causes, refute

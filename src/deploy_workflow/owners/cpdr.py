@@ -167,8 +167,9 @@ def parse_agenda(facts: Iterable[Fact]) -> tuple[AgendaGap, ...]:
 
 
 def _question_issues(
-    question: ResearchQuestion, ready: frozenset[str], sources: tuple[Source, ...]
+    question: ResearchQuestion, ready: frozenset[str], sources: tuple[Source, ...], path: str
 ) -> list[str]:
+    """Rules 3-7 for one question; ``path`` is its ``gaps[i].questions[j]`` position (0-based)."""
     qid = question.question_id
     found: list[str] = []
     if question.outcome == "answered":
@@ -191,6 +192,17 @@ def _question_issues(
         if source not in ready
     ]
     found += citation_issues(question.citations, sources)
+    # Round 11 blank text: no CP-DR frame is pinned, so the fallback applies. `""` keeps its
+    # existing refusal (the `Text` schema, or the not_found completeness issue).
+    found += [
+        f"{path}.{field}: empty text"
+        for field, value in (
+            ("text", question.text),
+            ("answer", question.answer),
+            ("limitation", question.limitation),
+        )
+        if value and not value.strip()
+    ]
     texts = [t for t in (question.text, question.answer, question.limitation) if t]
     if any(char.isdigit() for text in texts for char in text):
         found.append(f"text must not contain a figure: {qid}")
@@ -207,7 +219,7 @@ def validate_research(
 
     Order (ruling R2): rule 1 per submitted gap; rule 2 per agenda gap; then per question in
     submission order rule 3, 4, 5 per searched source in listed order, 6 per citation in order,
-    and 7. G1-X appends the de-duplicated RULES issues after these (Stage 2).
+    the round 11 blank-text frames (text, answer, limitation), and 7. G1-X appends the de-duplicated RULES issues after these (Stage 2).
     """
     agenda_ids = {gap.gap_id for gap in upstream}
     issues: list[str] = []
@@ -226,12 +238,12 @@ def validate_research(
     ]
     ready = frozenset(source.source_id for source in pack if source.status == "ready")
     seen: set[str] = set()
-    for gap in submission.gaps:
-        for question in gap.questions:
+    for g, gap in enumerate(submission.gaps):
+        for q, question in enumerate(gap.questions):
             if question.question_id in seen:
                 issues.append(f"question_id appears twice: {question.question_id}")
             seen.add(question.question_id)
-            issues += _question_issues(question, ready, pack)
+            issues += _question_issues(question, ready, pack, f"gaps[{g}].questions[{q}]")
     return tuple(dict.fromkeys(issues))
 
 

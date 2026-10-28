@@ -307,10 +307,9 @@ def _selection(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
 
 def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) -> None:
     pack = runs.make_pack("positive")
-    # CP-5 is unregistered on this branch (no `OWNER_SPECS` row), so create refuses it. Once it is
-    # registered it still refuses: CP-5 requires CP-MODEL (registry fan-in), and an analytical
-    # module after CP-MODEL is admitted only when neither consumes the other (rulings 2026-10-28,
-    # round 2).
+    # Refused by Stage 2 round 2's rule (rulings 2026-10-28): CP-5 follows CP-MODEL in the plan and
+    # consumes it through the registry fan-in (CP-5 -> CP-MODEL), so an analytical module after the
+    # deterministic one is not admitted. DC-5 (CP-5 consuming CP-MODEL) stays open on the CP-MODEL row.
     with pytest.raises(WorkflowError) as selected:
         OwnerWorkflow.create(
             tmp_path / "store",
@@ -318,6 +317,7 @@ def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) 
             publication_directory=tmp_path / "model",
         )
     assert selected.value.code == "not_permitted"
+    assert list(tmp_path.iterdir()) == []
     cp1a, cp2 = OWNER_SPECS["CP-1A"], OWNER_SPECS["CP-2"]
     overrides = {
         "cp1a rules off": {

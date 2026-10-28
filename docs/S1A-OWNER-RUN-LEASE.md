@@ -340,3 +340,5 @@ CP-1 head over the S1 positive pack.
   `read.body` and `inputs_sha256`, audit file under its new hash, `receipt.sha256` rewritten) and
   must refuse `identity_mismatch` at the view replay. The step-output tamper is caught by the
   store's own blob hash check, recorded as a limitation.
+- **R3-4 pin (LEAD, 2026-10-28, from S1a fix-1).** `cases/snapshot/cp2-blocked-cp1a-submission.json`
+  sha256 `0616a4a278104665122a474b434d3122637934845c0593290ddc68317cdb06e3` (file bytes).

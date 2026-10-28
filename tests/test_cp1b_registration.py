@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -66,7 +67,12 @@ def test_fresh_public_source_upstream_import_orders(reverse):
     if reverse:
         names.reverse()
     script = "import importlib; " + "; ".join(f"importlib.import_module({n!r})" for n in names)
-    child = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
+    child = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)},
+    )
     assert child.returncode == 0, child.stderr
     assert not child.stdout
 

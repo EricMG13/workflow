@@ -2958,3 +2958,18 @@ a60ab627…1423); LEAD scratch rebuild matched byte for byte; `docs/CP4-OWNER-LE
 review-precise-1 (CHANGES REQUIRED: H1 refusal branch cannot verify; journaled-issue subset fails
 under truncation; A4 read tamper passes for the wrong reason) → lease rev 3 amendments R3-1..R3-5;
 S1a fix round 1 dispatched (mx-feature, `s1a-build/work/s1a/fix-1-brief.md`).
+
+Full-suite triage on bb8ccef (PR manager, 2026-10-28, run still in progress): the only failures so
+far are `tests/test_cp1b_registration.py::test_fresh_public_source_upstream_import_orders[False|True]`,
+`ModuleNotFoundError: No module named 'deploy_workflow'` in the test's child process (:70), because
+pyproject's pytest `pythonpath` is not inherited and the venv has no editable install. LEAD ruling:
+a test-harness defect, not a product defect, and not blocking integration; the fix passes the
+parent's `sys.path` as the child's `PYTHONPATH` (test file only; no install or env change); queued
+for mx-scaffold, verified in the final phase.
+
+Test env fix written (mx-scaffold, 2026-10-28): `tests/test_cp1b_registration.py` child process gets
+`env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}`; ruff findings on the file fell from 2
+(base) to 1 (pre-existing PLW1510, unchanged); probe reproduced the defect from a plain parent;
+pytest `-k import_orders` deferred. S1a fix round 1 done (R3-1..R3-5; fixture pinned in the lease,
+0616a4a2…06e3); scoped mx-precise re-review running. B1 fix-3 (mx-escalate) done; scoped mx-adversary
+re-review running. User raised the subagent cap to 10 (user settings env).

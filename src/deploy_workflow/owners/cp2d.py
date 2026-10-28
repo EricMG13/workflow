@@ -1,5 +1,6 @@
 """CP-2D (Liquidity) owner core: the Stage 1 calculation (docs/CP2D-OWNER-LEASE.md, Method,
-as amended by docs/rulings/2026-10-28-stage1.md, CP-2D sections of rounds 2 to 6f).
+as amended by docs/rulings/2026-10-28-stage1.md, CP-2D sections of rounds 2 to 9, and round 11's
+maturity before D0 and blank text).
 
 Pure functions over typed inputs. Python owns every figure: sources and uses (T2E.1), the
 liquidity position (T2E.2), the run-rate cash runway (T2E.3), the maturity wall (T2E.4) and
@@ -200,6 +201,9 @@ CURRENCY_UNSTATED = (
 )
 DATE_UNSTATED = "Not calculable: facility {fid} maturity date is not stated"
 PRINCIPAL_UNSTATED = "Not calculable: facility {fid} principal is not stated"
+# Round 11 (LEAD rulings, "CP-2D, a maturity before D0"): the CP-3C B1 rule. The date stays known;
+# its position (months from D0, inside-horizon) and every dependant take this reason.
+PRE_D0 = "Not calculable: facility {fid} maturity date is before the balance date"
 ZERO_DEBT = "Not meaningful: total debt is zero (ZERO_OR_NEGATIVE_DENOMINATOR)"
 NEGATIVE_DEBT = "Not meaningful: total debt is negative (ZERO_OR_NEGATIVE_DENOMINATOR)"
 # An absent T4.18 schedule, and one that lists no facility (ruling D-3).
@@ -286,6 +290,14 @@ def _date_gap(f: Facility) -> Gap | None:
     return Gap(DATE_UNSTATED.format(fid=f.facility_id)) if f.maturity_date is None else None
 
 
+def _position_gap(f: Facility, balance_date: date) -> Gap | None:
+    """Why the facility has no place against D0: its date is unstated, or before D0 (round 11,
+    the CP-3C B1 rule in the unstated date's slot)."""
+    if f.maturity_date is not None and f.maturity_date < balance_date:
+        return Gap(PRE_D0.format(fid=f.facility_id))
+    return _date_gap(f)
+
+
 def _term(f: Facility, value: Decimal | None, term: str) -> Num:
     """Ruling D-3: the 2D-c frame for commitment, drawn amount and annual amortisation."""
     if value is None:
@@ -329,7 +341,11 @@ def _schedule_gap(operands: Operands) -> Gap | None:
 
 
 def _schedule(
-    ordered: tuple[Facility, ...], horizon_months: int, horizon_end: date, absent: Gap | None
+    ordered: tuple[Facility, ...],
+    horizon_months: int,
+    balance_date: date,
+    horizon_end: date,
+    absent: Gap | None,
 ) -> tuple[Num, Num]:
     """(maturities, amortisation) inside the horizon, each missing at its first gap."""
     if absent is not None:
@@ -337,7 +353,7 @@ def _schedule(
     maturities: Num = _ZERO
     amortisation: Num = _ZERO
     for f in ordered:
-        blocked = _currency_gap(f) or _date_gap(f)
+        blocked = _currency_gap(f) or _position_gap(f, balance_date)
         if blocked is not None:
             maturities = _total(maturities, blocked)
             amortisation = _total(amortisation, blocked)
@@ -363,14 +379,18 @@ def _undrawn_term(ordered: tuple[Facility, ...], absent: Gap | None) -> Num:
     return total
 
 
-def _inside(ordered: tuple[Facility, ...], horizon_end: date, absent: Gap | None) -> bool | Gap:
-    """Whether any facility matures inside the horizon; missing while an undated one decides."""
+def _inside(
+    ordered: tuple[Facility, ...], balance_date: date, horizon_end: date, absent: Gap | None
+) -> bool | Gap:
+    """Whether any facility matures inside the horizon; missing while a facility with no
+    position (undated, or dated before D0) decides."""
     if absent is not None:
         return absent
-    if any(f.maturity_date is not None and f.maturity_date <= horizon_end for f in ordered):
+    placed = [f.maturity_date for f in ordered if _position_gap(f, balance_date) is None]
+    if any(d is not None and d <= horizon_end for d in placed):
         return True
-    undated = next((g for f in ordered if (g := _date_gap(f)) is not None), None)
-    return False if undated is None else undated
+    unplaced = next((g for f in ordered if (g := _position_gap(f, balance_date)) is not None), None)
+    return False if unplaced is None else unplaced
 
 
 @dataclass(frozen=True)
@@ -403,11 +423,15 @@ def _wall(
             cumulative = undated
         else:
             cumulative += share
+        unplaced = _position_gap(f, balance_date)
         if f.maturity_date is None:
             assert undated is not None
             dated: date | Gap = undated
             months: int | Gap = undated
             inside: bool | Gap = undated
+        elif unplaced is not None:  # round 11: before D0, the date stays known
+            dated = f.maturity_date
+            months = inside = unplaced
         else:
             dated = f.maturity_date
             months = months_between(balance_date, f.maturity_date)
@@ -517,7 +541,9 @@ def compose_bridge(
         )
         monthly = annual if isinstance(annual, Gap) else annual / 12
         over_horizon = annual if isinstance(annual, Gap) else annual * horizon_months / 12
-        maturities, amortisation = _schedule(ordered, horizon_months, horizon_end, absent)
+        maturities, amortisation = _schedule(
+            ordered, horizon_months, balance_date, horizon_end, absent
+        )
         end_cash = _diff(_total(cash, over_horizon), _total(amortisation, maturities))
         undrawn: Num = _diff(_op(o, "rcf_commitment"), _op(o, "rcf_drawn"))
         available = _total(cash, undrawn)
@@ -577,7 +603,7 @@ def compose_bridge(
         run_rate_net_cash_flow_annual=annual,
         run_rate_net_cash_flow_monthly=monthly,
         run_rate_net_cash_flow_horizon=over_horizon,
-        maturity_inside_horizon=_inside(ordered, horizon_end, absent),
+        maturity_inside_horizon=_inside(ordered, balance_date, horizon_end, absent),
         maturities_in_horizon=maturities,
         amortisation_in_horizon=amortisation,
         cash_at_horizon_end_before_refinancing=end_cash,
@@ -692,6 +718,10 @@ FX_LIMITATION = (
 TERM_LIMITATION = (
     "Facility {fid} {term} is not stated; maturity-wall figures that need it are not calculated."
 )
+PRE_D0_LIMITATION = (
+    "Facility {fid} maturity date is before the balance date; maturity-wall figures that need it "
+    "are not calculated."
+)
 FUNDING_GAP_ON_CASH_ALONE = (
     "The funding gap is not calculated because the revolver is undisclosed; the cash-only "
     "headroom over minimum cash is shown as a lower bound."
@@ -709,7 +739,7 @@ def _known_nonzero(value: Num) -> Decimal | None:
     return value if not isinstance(value, Gap) and value != 0 else None
 
 
-def _facility_limitations(f: Facility) -> list[tuple[str, str, str]]:
+def _facility_limitations(f: Facility, balance_date: date) -> list[tuple[str, str, str]]:
     out: list[tuple[str, str, str]] = []
     fid = f.facility_id
     if f.currency is not None and f.currency != CURRENCY:
@@ -737,6 +767,10 @@ def _facility_limitations(f: Facility) -> list[tuple[str, str, str]]:
                     TERM_LIMITATION.format(fid=fid, term=term),
                 )
             )
+        elif term == "maturity date" and _position_gap(f, balance_date) is not None:
+            # Round 11: a stated date the Method cannot place is a Limitation, in this slot.
+            text = PRE_D0_LIMITATION.format(fid=fid)
+            out.append((f"Facility maturity date ({fid})", "Limitation", text))
     return out
 
 
@@ -779,7 +813,7 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
     ):
         out.append(("Facility schedule", "Gap", SCHEDULE_EMPTY_LIMITATION))
     for f in bridge.ordered_facilities:
-        out += _facility_limitations(f)
+        out += _facility_limitations(f, bridge.balance_date)
     for label, text in check_cp1_totals(operands=operands, bridge=bridge):
         out.append((f"CP-1 {label} cross-check", "Limitation", text))
     if isinstance(bridge.undrawn_revolver, Gap):
@@ -1147,9 +1181,9 @@ MAT_CURRENCY = (
     "every facility with its currency stated, and one is not; no FX conversion is applied."
 )
 # Ruling D-2 forms 3 (with L5) and 4.
-GAP_FACILITY = (
-    "The funding gap is not calculated: [T2E.5.r07] needs every facility {need}, and one is not."
-)
+GAP_FACILITY = "The funding gap is not calculated: [T2E.5.r07] needs every facility {cause}."
+# Round 11: the pre-D0 cause in the L5 frame, in the maturity date's slot.
+PRE_D0_CAUSE = "to mature on or after the balance date, and one does not"
 GAP_OPERAND = "The funding gap is not calculated: [T2E.5.r07] needs {label}, which is missing."
 # Form 4 labels for the schedule itself; no ruling fixes them (reported to LEAD). They omit
 # "T4.18": a claim's literal text may carry no bare figure (prose.bare_figures).
@@ -1201,28 +1235,33 @@ def _currency_facility(b: Bridge) -> Facility | None:
     return next((f for f in b.ordered_facilities if _currency_gap(f) is not None), None)
 
 
-def _facility_need(f: Facility, horizon_end: date) -> str | None:
+def _facility_cause(f: Facility, balance_date: date, horizon_end: date) -> str | None:
     """Ruling D-2 form 3: what a facility lacks for the funding gap, in the ruled order (FX,
-    currency, maturity date, principal; annual amortisation when it matures after the horizon)."""
+    currency, maturity date (unstated, or before D0: round 11), principal; annual amortisation
+    when it matures after the horizon)."""
     if f.currency is not None and f.currency != CURRENCY:
-        return "in USD"
-    if f.currency is None:
-        return "with its currency stated"
-    if f.maturity_date is None:
-        return "with its maturity date stated"
-    if f.principal is None:
-        return "with its principal stated"
-    if f.annual_amortisation is None and f.maturity_date > horizon_end:
-        return "with its annual amortisation stated"
-    return None
+        need = "in USD"
+    elif f.currency is None:
+        need = "with its currency stated"
+    elif f.maturity_date is None:
+        need = "with its maturity date stated"
+    elif f.maturity_date < balance_date:
+        return PRE_D0_CAUSE
+    elif f.principal is None:
+        need = "with its principal stated"
+    elif f.annual_amortisation is None and f.maturity_date > horizon_end:
+        need = "with its annual amortisation stated"
+    else:
+        return None
+    return f"{need}, and one is not"
 
 
 def _gap_missing(o: Operands, b: Bridge) -> str | None:
     """Forms 3 and 4 of ruling D-2 for a missing funding gap, or None for the revolver form."""
     for f in b.ordered_facilities:
-        need = _facility_need(f, b.horizon_end)
-        if need is not None:
-            return GAP_FACILITY.format(need=need)
+        cause = _facility_cause(f, b.balance_date, b.horizon_end)
+        if cause is not None:
+            return GAP_FACILITY.format(cause=cause)
     for name in _GAP_OPERANDS:
         if getattr(o, name) is None:
             return GAP_OPERAND.format(label=OPERAND_LABELS[name])
@@ -1391,18 +1430,29 @@ FORBIDDEN = (
 )
 
 
-def _texts(submission: LiquidityBridgeSubmission) -> list[str]:
-    """The analyst's submitted text fields (the builder's check, build.py:393-401)."""
-    texts: list[str] = []
-    for a in submission.assessments:
-        texts += [a.text, a.credit_implication]
+EMPTY_TEXT = "{path}: empty text"
+"""Round 11 (LEAD rulings, "Blank text is one defect class"): no CP-2D frame is pinned, so the
+fallback frame. A `Text` field's schema refusal of "" stands; this catches whitespace-only text."""
+
+
+def analyst_text_fields(submission: LiquidityBridgeSubmission) -> list[tuple[str, str]]:
+    """(path, text) of the analyst's submitted text fields, in submission order (2D-a: the
+    builder's check, build.py:393-401). Paths are 0-based."""
+    fields: list[tuple[str, str]] = []
+    for i, a in enumerate(submission.assessments):
+        fields.append((f"assessments[{i}].text", a.text))
+        fields.append((f"assessments[{i}].credit_implication", a.credit_implication))
         if a.limitation is not None:
-            texts.append(a.limitation)
+            fields.append((f"assessments[{i}].limitation", a.limitation))
     if submission.minimum_cash is not None:
-        texts.append(submission.minimum_cash.rationale)
-    if submission.minimum_cash_absence is not None:
-        texts += [submission.minimum_cash_absence.reason, submission.minimum_cash_absence.follow_up]
-    return texts
+        fields.append(("minimum_cash.rationale", submission.minimum_cash.rationale))
+    absence = submission.minimum_cash_absence
+    if absence is not None:
+        fields += [
+            ("minimum_cash_absence.reason", absence.reason),
+            ("minimum_cash_absence.follow_up", absence.follow_up),
+        ]
+    return fields
 
 
 def submission_issues(
@@ -1426,7 +1476,9 @@ def submission_issues(
     sections = [a.section for a in s.assessments]
     if sorted(sections) != sorted(SECTIONS):
         issues.append(SECTION_ISSUE)
-    texts = _texts(s)
+    fields = analyst_text_fields(s)
+    issues += [EMPTY_TEXT.format(path=path) for path, text in fields if not text.strip()]
+    texts = [text for _, text in fields]
     if any(ch.isdigit() for t in texts for ch in t):
         issues.append(DIGIT_ISSUE)
     if any(stem in t.lower() for t in texts for stem in FORBIDDEN):

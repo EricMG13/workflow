@@ -1,0 +1,2412 @@
+{
+ "schema_version": "cpdr-owner-submissions/1",
+ "note": "Literal reference-and-judgment payloads. Figures never appear in analyst text; counts and shares are Python's. pack_sha256 token is bound at run time.",
+ "cp0_readiness_review": {
+  "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+  "objective": "Historical financial foundation, business context and credit synthesis",
+  "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+  "issuer_confirmed": true,
+  "sources": [
+   {
+    "source_id": "identity",
+    "document_family": "Identity note",
+    "authority": "issuer",
+    "entity": "Northbridge Synthetic Group",
+    "period": "January 2026",
+    "version_relationship": "Accompanying identity note",
+    "fidelity": "verified",
+    "citations": [
+     {
+      "source_id": "identity",
+      "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+     }
+    ],
+    "limitations": []
+   },
+   {
+    "source_id": "financial",
+    "document_family": "Quarterly financial statements",
+    "authority": "issuer",
+    "entity": "Northbridge Synthetic Group",
+    "period": "Four quarters in 2025",
+    "version_relationship": "Unaudited quarterly source",
+    "fidelity": "verified",
+    "citations": [
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "Currency: USD; amounts in millions."
+     }
+    ],
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+   },
+   {
+    "source_id": "business",
+    "document_family": "Business note",
+    "authority": "issuer",
+    "entity": "Northbridge Synthetic Group",
+    "period": "January 2026",
+    "version_relationship": "Issuer-authored note accompanying the statements",
+    "fidelity": "verified",
+    "citations": [
+     {
+      "source_id": "business",
+      "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+     }
+    ],
+    "limitations": [
+     "Business note supplies no ownership or transaction content"
+    ]
+   }
+  ],
+  "consumers": [
+   {
+    "module_id": "CP-DR",
+    "readiness": "READY_WITH_LIMITATIONS",
+    "evidence_demand": "Located spans in the prepared sources that answer the open readiness gaps",
+    "source_ids": [
+     "identity",
+     "financial",
+     "business"
+    ],
+    "rationale": "Research can run on the located sources; questions the sources cannot answer stay unresolved.",
+    "citations": [
+     {
+      "source_id": "identity",
+      "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+     },
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "Currency: USD; amounts in millions."
+     },
+     {
+      "source_id": "business",
+      "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+     }
+    ],
+    "missing_source": null,
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+     "Business note supplies no ownership or transaction content"
+    ]
+   }
+  ],
+  "gaps": [
+   {
+    "gap_id": "missing-ownership-transaction",
+    "kind": "scope",
+    "severity": "material",
+    "description": "Ownership and transaction content is absent from the business note",
+    "affected_modules": [
+     "CP-DR"
+    ],
+    "remediation": "Supply the ownership and transaction documents",
+    "citations": []
+   }
+  ],
+  "analysis": [
+   {
+    "claim_id": "source-assessment",
+    "text": "Identity, financial and business operating sources are located; ownership and transaction content is absent.",
+    "citations": [
+     {
+      "source_id": "identity",
+      "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+     },
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "Currency: USD; amounts in millions."
+     },
+     {
+      "source_id": "business",
+      "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+     }
+    ],
+    "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   }
+  ]
+ },
+ "cp0_readiness_review_empty_agenda": {
+  "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+  "objective": "Historical financial foundation, business context and credit synthesis",
+  "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+  "issuer_confirmed": true,
+  "sources": [
+   {
+    "source_id": "identity",
+    "document_family": "Identity note",
+    "authority": "issuer",
+    "entity": "Northbridge Synthetic Group",
+    "period": "January 2026",
+    "version_relationship": "Accompanying identity note",
+    "fidelity": "verified",
+    "citations": [
+     {
+      "source_id": "identity",
+      "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+     }
+    ],
+    "limitations": []
+   },
+   {
+    "source_id": "financial",
+    "document_family": "Quarterly financial statements",
+    "authority": "issuer",
+    "entity": "Northbridge Synthetic Group",
+    "period": "Four quarters in 2025",
+    "version_relationship": "Unaudited quarterly source",
+    "fidelity": "verified",
+    "citations": [
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "Currency: USD; amounts in millions."
+     }
+    ],
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+   },
+   {
+    "source_id": "business",
+    "document_family": "Business note",
+    "authority": "issuer",
+    "entity": "Northbridge Synthetic Group",
+    "period": "January 2026",
+    "version_relationship": "Issuer-authored note accompanying the statements",
+    "fidelity": "verified",
+    "citations": [
+     {
+      "source_id": "business",
+      "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+     }
+    ],
+    "limitations": [
+     "Business note supplies no ownership or transaction content"
+    ]
+   }
+  ],
+  "consumers": [
+   {
+    "module_id": "CP-DR",
+    "readiness": "READY_WITH_LIMITATIONS",
+    "evidence_demand": "Located spans in the prepared sources that answer the open readiness gaps",
+    "source_ids": [
+     "identity",
+     "financial",
+     "business"
+    ],
+    "rationale": "Research can run on the located sources; questions the sources cannot answer stay unresolved.",
+    "citations": [
+     {
+      "source_id": "identity",
+      "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+     },
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "Currency: USD; amounts in millions."
+     },
+     {
+      "source_id": "business",
+      "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+     }
+    ],
+    "missing_source": null,
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+     "Business note supplies no ownership or transaction content"
+    ]
+   }
+  ],
+  "gaps": [],
+  "analysis": [
+   {
+    "claim_id": "source-assessment",
+    "text": "Identity, financial and business operating sources are located; ownership and transaction content is absent.",
+    "citations": [
+     {
+      "source_id": "identity",
+      "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+     },
+     {
+      "source_id": "financial",
+      "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "locator": "page:1",
+      "quote": "Currency: USD; amounts in millions."
+     },
+     {
+      "source_id": "business",
+      "source_sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+      "locator": "page:1",
+      "quote": "Northbridge Synthetic Group is an industrial products manufacturer."
+     }
+    ],
+    "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+   }
+  ]
+ },
+ "cpdr": {
+  "partial": {
+   "gaps": [
+    {
+     "gap_id": "missing-ownership-transaction",
+     "questions": [
+      {
+       "question_id": "transactions",
+       "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+       "outcome": "answered",
+       "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+       "category": "Documentary Fact",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+        },
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+        }
+       ],
+       "searched_sources": [
+        "financial"
+       ],
+       "limitation": null
+      },
+      {
+       "question_id": "distributions",
+       "text": "Were distributions paid to the shareholder during the reporting period?",
+       "outcome": "answered",
+       "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+       "category": "Documentary Fact",
+       "citations": [
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:1",
+         "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+        },
+        {
+         "source_id": "financial",
+         "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+         "locator": "page:3",
+         "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+        }
+       ],
+       "searched_sources": [
+        "financial"
+       ],
+       "limitation": null
+      },
+      {
+       "question_id": "owner-identity",
+       "text": "Who owns the issuer and in what proportions?",
+       "outcome": "not_found",
+       "answer": null,
+       "category": null,
+       "citations": [],
+       "searched_sources": [
+        "identity",
+        "financial",
+        "business"
+       ],
+       "limitation": "No prepared source names the owners of the issuer or their holdings."
+      }
+     ]
+    }
+   ]
+  },
+  "unresolved": {
+   "gaps": [
+    {
+     "gap_id": "missing-ownership-transaction",
+     "questions": [
+      {
+       "question_id": "owner-identity",
+       "text": "Who owns the issuer and in what proportions?",
+       "outcome": "not_found",
+       "answer": null,
+       "category": null,
+       "citations": [],
+       "searched_sources": [
+        "identity",
+        "financial",
+        "business"
+       ],
+       "limitation": "No prepared source names the owners of the issuer or their holdings."
+      },
+      {
+       "question_id": "distribution-policy",
+       "text": "Which policy governs distributions to the owners of the issuer?",
+       "outcome": "not_found",
+       "answer": null,
+       "category": null,
+       "citations": [],
+       "searched_sources": [
+        "identity",
+        "financial",
+        "business"
+       ],
+       "limitation": "No prepared source describes a distribution policy; the statements show only the amounts paid."
+      }
+     ]
+    }
+   ]
+  },
+  "empty_agenda": {
+   "gaps": []
+  },
+  "blocked": {
+   "attempt_0": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The group completed an acquisition in the third quarter."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "attempt_1": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "Nothing happened in 2025.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "tool_calls": {
+  "partial": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "acquisition disposal subsequent events",
+     "source_id": "financial"
+    },
+    "expect_header": "2 spans match 'acquisition disposal subsequent events'; showing 2.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:3"
+     }
+    ]
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 1,
+     "last_page": 1
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "dividends paid",
+     "source_id": "financial"
+    },
+    "expect_header": "2 spans match 'dividends paid'; showing 2.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:3"
+     }
+    ]
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 3,
+     "last_page": 3
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:3"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "identity"
+    },
+    "expect_header": "0 spans match 'owner shareholder investor holding'; showing 0.",
+    "expect_matching_spans": []
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "financial"
+    },
+    "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "business"
+    },
+    "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "business",
+      "locator": "page:1"
+     }
+    ]
+   }
+  ],
+  "unresolved": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "identity"
+    },
+    "expect_header": "0 spans match 'owner shareholder investor holding'; showing 0.",
+    "expect_matching_spans": []
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "financial"
+    },
+    "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "business"
+    },
+    "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "business",
+      "locator": "page:1"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "distribution policy",
+     "source_id": "identity"
+    },
+    "expect_header": "0 spans match 'distribution policy'; showing 0.",
+    "expect_matching_spans": []
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "distribution policy",
+     "source_id": "financial"
+    },
+    "expect_header": "0 spans match 'distribution policy'; showing 0.",
+    "expect_matching_spans": []
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "distribution policy",
+     "source_id": "business"
+    },
+    "expect_header": "0 spans match 'distribution policy'; showing 0.",
+    "expect_matching_spans": []
+   }
+  ],
+  "empty_agenda": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   }
+  ],
+  "blocked": [
+   {
+    "tool": "read_inputs",
+    "arguments": null
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "acquisition disposal subsequent events",
+     "source_id": "financial"
+    },
+    "expect_header": "2 spans match 'acquisition disposal subsequent events'; showing 2.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:3"
+     }
+    ]
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 1,
+     "last_page": 1
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "dividends paid",
+     "source_id": "financial"
+    },
+    "expect_header": "2 spans match 'dividends paid'; showing 2.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:1"
+     },
+     {
+      "source_id": "financial",
+      "locator": "page:3"
+     }
+    ]
+   },
+   {
+    "tool": "read_pages",
+    "arguments": {
+     "source_id": "financial",
+     "first_page": 3,
+     "last_page": 3
+    },
+    "expect_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:3"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "identity"
+    },
+    "expect_header": "0 spans match 'owner shareholder investor holding'; showing 0.",
+    "expect_matching_spans": []
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "financial"
+    },
+    "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "financial",
+      "locator": "page:4"
+     }
+    ]
+   },
+   {
+    "tool": "search_pack",
+    "arguments": {
+     "query": "owner shareholder investor holding",
+     "source_id": "business"
+    },
+    "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+    "expect_matching_spans": [
+     {
+      "source_id": "business",
+      "locator": "page:1"
+     }
+    ]
+   }
+  ]
+ },
+ "refusal_inputs": {
+  "gap_unaddressed": {
+   "payload": {
+    "gaps": []
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "gap_with_five_questions": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "extra-0",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       },
+       {
+        "question_id": "extra-1",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       },
+       {
+        "question_id": "extra-2",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       },
+       {
+        "question_id": "extra-3",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       },
+       {
+        "question_id": "extra-4",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "unknown_gap": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     },
+     {
+      "gap_id": "invented-gap",
+      "questions": [
+       {
+        "question_id": "invented-owner",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "gap_repeated": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     },
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions-repeat",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions-repeat",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity-repeat",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "question_id_repeated": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "transactions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "answered_without_citation": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "not_found_with_answer": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": "Held by investors.",
+        "category": "Analyst Interpretation",
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "not_found_without_limitation": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": null
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "answered_with_limitation": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": "Partly covered."
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "no_searched_source": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "searched_source_not_in_pack": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "web"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "searched_source_not_searched": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "acquisition disposal subsequent events",
+      "source_id": "financial"
+     },
+     "expect_header": "2 spans match 'acquisition disposal subsequent events'; showing 2.",
+     "expect_matching_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "financial",
+       "locator": "page:3"
+      }
+     ]
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "financial",
+      "first_page": 1,
+      "last_page": 1
+     },
+     "expect_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      }
+     ]
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "dividends paid",
+      "source_id": "financial"
+     },
+     "expect_header": "2 spans match 'dividends paid'; showing 2.",
+     "expect_matching_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "financial",
+       "locator": "page:3"
+      }
+     ]
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "financial",
+      "first_page": 3,
+      "last_page": 3
+     },
+     "expect_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:3"
+      }
+     ]
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "owner shareholder investor holding",
+      "source_id": "identity"
+     },
+     "expect_header": "0 spans match 'owner shareholder investor holding'; showing 0.",
+     "expect_matching_spans": []
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "owner shareholder investor holding",
+      "source_id": "financial"
+     },
+     "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+     "expect_matching_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:4"
+      }
+     ]
+    }
+   ],
+   "cp0": "cp0_readiness_review"
+  },
+  "cited_page_not_read": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "acquisition disposal subsequent events",
+      "source_id": "financial"
+     },
+     "expect_header": "2 spans match 'acquisition disposal subsequent events'; showing 2.",
+     "expect_matching_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "financial",
+       "locator": "page:3"
+      }
+     ]
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "financial",
+      "first_page": 1,
+      "last_page": 1
+     },
+     "expect_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      }
+     ]
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "dividends paid",
+      "source_id": "financial"
+     },
+     "expect_header": "2 spans match 'dividends paid'; showing 2.",
+     "expect_matching_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:1"
+      },
+      {
+       "source_id": "financial",
+       "locator": "page:3"
+      }
+     ]
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "owner shareholder investor holding",
+      "source_id": "identity"
+     },
+     "expect_header": "0 spans match 'owner shareholder investor holding'; showing 0.",
+     "expect_matching_spans": []
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "owner shareholder investor holding",
+      "source_id": "financial"
+     },
+     "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+     "expect_matching_spans": [
+      {
+       "source_id": "financial",
+       "locator": "page:4"
+      }
+     ]
+    },
+    {
+     "tool": "search_pack",
+     "arguments": {
+      "query": "owner shareholder investor holding",
+      "source_id": "business"
+     },
+     "expect_header": "1 spans match 'owner shareholder investor holding'; showing 1.",
+     "expect_matching_spans": [
+      {
+       "source_id": "business",
+       "locator": "page:1"
+      }
+     ]
+    }
+   ],
+   "cp0": "cp0_readiness_review"
+  },
+  "quote_not_verbatim": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The group completed an acquisition in the third quarter."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "citation_outside_pack": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "web",
+          "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "locator": "page:1",
+          "quote": "Northbridge Synthetic Group announced a new owner."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "digit_in_text": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "Nothing happened in 2025.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "prohibited_conclusion": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "We recommend asking the sponsor."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review"
+  },
+  "submission_against_empty_agenda": {
+   "payload": {
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": [
+       {
+        "question_id": "transactions",
+        "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+        "outcome": "answered",
+        "answer": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "distributions",
+        "text": "Were distributions paid to the shareholder during the reporting period?",
+        "outcome": "answered",
+        "answer": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+        "category": "Documentary Fact",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+         },
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:3",
+          "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+         }
+        ],
+        "searched_sources": [
+         "financial"
+        ],
+        "limitation": null
+       },
+       {
+        "question_id": "owner-identity",
+        "text": "Who owns the issuer and in what proportions?",
+        "outcome": "not_found",
+        "answer": null,
+        "category": null,
+        "citations": [],
+        "searched_sources": [
+         "identity",
+         "financial",
+         "business"
+        ],
+        "limitation": "No prepared source names the owners of the issuer or their holdings."
+       }
+      ]
+     }
+    ]
+   },
+   "calls": "partial",
+   "cp0": "cp0_readiness_review_empty_agenda"
+  }
+ }
+}

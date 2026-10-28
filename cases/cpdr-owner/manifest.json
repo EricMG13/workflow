@@ -1,0 +1,166 @@
+{
+ "schema_version": "cpdr-owner-cases/1",
+ "scope": "CP-DR LOCAL deep research: resolves CP-0 readiness gaps from the prepared pack through pack tools",
+ "status": "Preparation oracle (pre-code); revision 4; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256",
+ "frozen_inputs": [
+  {
+   "path": "cases/financial/manifest.json",
+   "sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
+  },
+  {
+   "path": "cases/snapshot/manifest.json",
+   "sha256": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4"
+  },
+  {
+   "path": "cases/snapshot/submissions.json",
+   "sha256": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
+  },
+  {
+   "path": "cases/snapshot/expected.json",
+   "sha256": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa"
+  },
+  {
+   "path": "src/deploy_vii/methodology.json",
+   "sha256": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45"
+  }
+ ],
+ "sources": [
+  {
+   "source_id": "identity",
+   "ref": "cases/financial/manifest.json#sources[identity]",
+   "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+  },
+  {
+   "source_id": "financial",
+   "ref": "cases/financial/manifest.json#sources[financial]",
+   "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+   "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+  },
+  {
+   "source_id": "business",
+   "ref": "cases/snapshot/manifest.json#business_source.gap",
+   "sha256": "7e256bcf4cbec0e381506a732baa3dd4082e7e1496a903c506052172bd62e1e5",
+   "limitation": "Business note supplies no ownership or transaction content"
+  }
+ ],
+ "run": {
+  "run_id": "slice-cpdr-gap",
+  "issuer_id": "northbridge-synthetic",
+  "issuer_name": "Northbridge Synthetic Group",
+  "as_of": "2026-01-10",
+  "method_version": "deploy-v-r14",
+  "case_kind": "synthetic",
+  "pathway": "credit_snapshot",
+  "requested_modules": [
+   "CP-DR"
+  ]
+ },
+ "run_note": "requested_modules overrides the pathway preset (contracts.Run); plan = CP-0, CP-DR; no CP-1 promotion. One CP-0 settlement is cloned for the partial, unresolved and blocked attempts and for each refusal (attempt 0, own clone); the empty-agenda case has its own CP-0 settlement.",
+ "plan_order_expected": [
+  "CP-0",
+  "CP-DR"
+ ],
+ "cp0_delta": [
+  "consumers: the single CP-1A..CP-2 entries are replaced by one CP-DR entry copied from the CP-1A entry (sources, citations, limitations unchanged; demand and rationale reworded)",
+  "gaps: gap_id, kind, severity and remediation unchanged; description drops the clause naming CP-1A rows; affected_modules = [CP-DR] (a gap may only name selected modules, readiness.py validate_review)",
+  "sources, objective, reporting_period, analysis: unchanged from the snapshot gap literal",
+  "empty agenda variant (submissions.json#cp0_readiness_review_empty_agenda): the same review with gaps = []; validate_review accepts it and build_readiness emits only T5.review.gaps"
+ ],
+ "upstream_facts_read": {
+  "gap_fact": {
+   "fact_id": "T5.missing-ownership-transaction.gap",
+   "text": "scope/material: Ownership and transaction content is absent from the business note; affects CP-DR; Supply the ownership and transaction documents",
+   "parse": "kind/severity = text before ': '; affects = between the last '; affects ' and the next '; '; remediation = rest"
+  },
+  "empty_agenda_fact": {
+   "fact_id": "T5.review.gaps",
+   "text": "No gaps identified by this supplied review",
+   "rule": "the only T5 fact of a review with no gap; no T5.<gap_id>.gap fact exists, so the agenda is empty"
+  },
+  "cp0_limitations": [
+   "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+   "Business note supplies no ownership or transaction content",
+   "Ownership and transaction content is absent from the business note",
+   "Synthetic case; not real issuer qualification"
+  ],
+  "cp0_limitations_empty_agenda": [
+   "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+   "Business note supplies no ownership or transaction content",
+   "Synthetic case; not real issuer qualification"
+  ],
+  "T8.CP-DR.limits": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.; Business note supplies no ownership or transaction content; Ownership and transaction content is absent from the business note",
+  "T8.CP-DR.limits_empty_agenda": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.; Business note supplies no ownership or transaction content"
+ },
+ "view_tree_draft": {
+  "note": "draft proposal, not an observation; no quote, citation or record_json at any depth",
+  "keys": {
+   "gaps": [
+    {
+     "gap_id": "missing-ownership-transaction",
+     "kind": "scope",
+     "severity": "material",
+     "description": "Ownership and transaction content is absent from the business note",
+     "named_consumers": [
+      "CP-DR"
+     ],
+     "remediation": "Supply the ownership and transaction documents"
+    }
+   ],
+   "sources": [
+    {
+     "source_id": "identity",
+     "status": "ready"
+    },
+    {
+     "source_id": "financial",
+     "status": "ready"
+    },
+    {
+     "source_id": "business",
+     "status": "ready"
+    }
+   ],
+   "question_limits": {
+    "min_per_gap": 1,
+    "max_per_gap": 4
+   },
+   "upstream": {
+    "CP-0": "restricted"
+   }
+  },
+  "empty_agenda": "the same keys with gaps = []"
+ },
+ "cases": [
+  {
+   "case_id": "partial",
+   "submission": "submissions.json#cpdr.partial",
+   "kind": "positive"
+  },
+  {
+   "case_id": "unresolved",
+   "submission": "submissions.json#cpdr.unresolved",
+   "kind": "gap"
+  },
+  {
+   "case_id": "empty_agenda",
+   "submission": "submissions.json#cpdr.empty_agenda",
+   "kind": "empty_agenda",
+   "cp0": "submissions.json#cp0_readiness_review_empty_agenda"
+  },
+  {
+   "case_id": "blocked",
+   "submission": "submissions.json#cpdr.blocked",
+   "kind": "blocked"
+  }
+ ],
+ "fixtures": [
+  "fixture_resolved",
+  "fixture_two_gaps"
+ ],
+ "consumer": {
+  "settled_reader": "cpdr_reader(store, head)",
+  "registry_consumer": "CP-5 (edge_rule('CP-5','CP-DR') == restricted; fan-in registry.py)",
+  "consumption": "OPEN: no core reads CP-DR today; CP-5 counts only after a D3 scope lease"
+ }
+}

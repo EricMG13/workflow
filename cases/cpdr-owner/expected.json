@@ -1,0 +1,2205 @@
+{
+ "schema_version": "cpdr-owner-expected/1",
+ "derivation_note": "Python's bookkeeping rules applied by cases/cpdr-owner/builder/build.py to submissions.json; no product code consulted. share = answered / total quantised to 4 dp ROUND_HALF_UP, displayed x100 at 1 dp. Every issue tuple below is also derived by the builder's reference validator and asserted equal to the pinned text.",
+ "method_rules": {
+  "gap_status": "Resolved if every question answered; Unresolved if none; else Partially resolved",
+  "counts": "questions, answered, unresolved per gap and in total (integers, unit questions); gaps by status (unit gaps)",
+  "share": "answered / questions, Decimal, 4 dp half-up, unit decimal_fraction; with zero questions the share is not_applicable (cell '∅ G# n.m.'), never 0",
+  "never": "a not_found question is never filled: its TDR.2 answer and evidence facts are status missing (analyst's limitation), cells spelled '∅ G#', never 0 or N/A",
+  "facts_behind_cells": "every cell of TDR.1-TDR.3 has a fact (cell.fact); formula and calculation_id only on calculated facts"
+ },
+ "cp0_upstream": {
+  "gap_fact_id": "T5.missing-ownership-transaction.gap",
+  "gap_fact_text": "scope/material: Ownership and transaction content is absent from the business note; affects CP-DR; Supply the ownership and transaction documents",
+  "module_limitations": [
+   "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+   "Business note supplies no ownership or transaction content",
+   "Ownership and transaction content is absent from the business note",
+   "Synthetic case; not real issuer qualification"
+  ],
+  "status": "restricted"
+ },
+ "cp0_upstream_empty_agenda": {
+  "gap_facts": [],
+  "review_gaps_fact_id": "T5.review.gaps",
+  "review_gaps_fact_text": "No gaps identified by this supplied review",
+  "module_limitations": [
+   "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+   "Business note supplies no ownership or transaction content",
+   "Synthetic case; not real issuer qualification"
+  ],
+  "status": "restricted (synthetic case_kind; not run)"
+ },
+ "cases": {
+  "partial": {
+   "case_id": "partial",
+   "bookkeeping": {
+    "gaps_total": 1,
+    "gaps_resolved": 0,
+    "gaps_partial": 1,
+    "gaps_unresolved": 0,
+    "questions_total": 3,
+    "answered_total": 2,
+    "unresolved_total": 1,
+    "answered_share": "0.6667",
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": 3,
+      "answered": 2,
+      "unresolved": 1,
+      "answered_share": "0.6667",
+      "status": "Partially resolved"
+     }
+    ]
+   },
+   "tables": {
+    "TDR.1": {
+     "title": "Research agenda and gap status",
+     "row_header": "Gap",
+     "rows": [
+      [
+       "missing-ownership-transaction",
+       {
+        "description": {
+         "fact": "TDR.1.missing-ownership-transaction.description",
+         "shown": "Ownership and transaction content is absent from the business note",
+         "state": "known",
+         "text": "Ownership and transaction content is absent from the business note",
+         "unit": null,
+         "value_class": null
+        },
+        "kind_severity": {
+         "fact": "TDR.1.missing-ownership-transaction.kind_severity",
+         "shown": "scope/material",
+         "state": "known",
+         "text": "scope/material",
+         "unit": null,
+         "value_class": null
+        },
+        "named_consumers": {
+         "fact": "TDR.1.missing-ownership-transaction.named_consumers",
+         "shown": "CP-DR",
+         "state": "known",
+         "text": "CP-DR",
+         "unit": null,
+         "value_class": null
+        },
+        "questions": {
+         "fact": "TDR.1.missing-ownership-transaction.questions",
+         "shown": "3 questions",
+         "state": "known",
+         "amount": "3",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered": {
+         "fact": "TDR.1.missing-ownership-transaction.answered",
+         "shown": "2 questions",
+         "state": "known",
+         "amount": "2",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "unresolved": {
+         "fact": "TDR.1.missing-ownership-transaction.unresolved",
+         "shown": "1 questions",
+         "state": "known",
+         "amount": "1",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_share": {
+         "fact": "TDR.1.missing-ownership-transaction.answered_share",
+         "shown": "66.7%",
+         "state": "known",
+         "amount": "0.6667",
+         "unit": "decimal_fraction",
+         "value_class": "calculated"
+        },
+        "status": {
+         "fact": "TDR.1.missing-ownership-transaction.status",
+         "shown": "Partially resolved",
+         "state": "known",
+         "text": "Partially resolved",
+         "unit": null,
+         "value_class": "calculated"
+        }
+       }
+      ]
+     ]
+    },
+    "TDR.2": {
+     "title": "Research questions and cited answers",
+     "row_header": "Question",
+     "rows": [
+      [
+       "transactions",
+       {
+        "gap": {
+         "fact": "TDR.2.transactions.gap",
+         "shown": "missing-ownership-transaction",
+         "state": "known",
+         "text": "missing-ownership-transaction",
+         "unit": null,
+         "value_class": null
+        },
+        "question": {
+         "fact": "TDR.2.transactions.question",
+         "shown": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+         "state": "known",
+         "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "outcome": {
+         "fact": "TDR.2.transactions.outcome",
+         "shown": "Answered",
+         "state": "known",
+         "text": "Answered",
+         "unit": null,
+         "value_class": "calculated"
+        },
+        "answer": {
+         "fact": "TDR.2.transactions.answer",
+         "shown": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+         "state": "known",
+         "text": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "evidence": {
+         "fact": "TDR.2.transactions.evidence",
+         "shown": "financial page:1",
+         "state": "known",
+         "text": "financial page:1",
+         "unit": null,
+         "value_class": null
+        },
+        "searched": {
+         "fact": "TDR.2.transactions.searched",
+         "shown": "financial",
+         "state": "known",
+         "text": "financial",
+         "unit": null,
+         "value_class": null
+        }
+       }
+      ],
+      [
+       "distributions",
+       {
+        "gap": {
+         "fact": "TDR.2.distributions.gap",
+         "shown": "missing-ownership-transaction",
+         "state": "known",
+         "text": "missing-ownership-transaction",
+         "unit": null,
+         "value_class": null
+        },
+        "question": {
+         "fact": "TDR.2.distributions.question",
+         "shown": "Were distributions paid to the shareholder during the reporting period?",
+         "state": "known",
+         "text": "Were distributions paid to the shareholder during the reporting period?",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "outcome": {
+         "fact": "TDR.2.distributions.outcome",
+         "shown": "Answered",
+         "state": "known",
+         "text": "Answered",
+         "unit": null,
+         "value_class": "calculated"
+        },
+        "answer": {
+         "fact": "TDR.2.distributions.answer",
+         "shown": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+         "state": "known",
+         "text": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "evidence": {
+         "fact": "TDR.2.distributions.evidence",
+         "shown": "financial page:1; financial page:3",
+         "state": "known",
+         "text": "financial page:1; financial page:3",
+         "unit": null,
+         "value_class": null
+        },
+        "searched": {
+         "fact": "TDR.2.distributions.searched",
+         "shown": "financial",
+         "state": "known",
+         "text": "financial",
+         "unit": null,
+         "value_class": null
+        }
+       }
+      ],
+      [
+       "owner-identity",
+       {
+        "gap": {
+         "fact": "TDR.2.owner-identity.gap",
+         "shown": "missing-ownership-transaction",
+         "state": "known",
+         "text": "missing-ownership-transaction",
+         "unit": null,
+         "value_class": null
+        },
+        "question": {
+         "fact": "TDR.2.owner-identity.question",
+         "shown": "Who owns the issuer and in what proportions?",
+         "state": "known",
+         "text": "Who owns the issuer and in what proportions?",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "outcome": {
+         "fact": "TDR.2.owner-identity.outcome",
+         "shown": "Not found",
+         "state": "known",
+         "text": "Not found",
+         "unit": null,
+         "value_class": "calculated"
+        },
+        "answer": {
+         "fact": "TDR.2.owner-identity.answer",
+         "shown": "∅ G#",
+         "state": "gap",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        },
+        "evidence": {
+         "fact": "TDR.2.owner-identity.evidence",
+         "shown": "∅ G#",
+         "state": "gap",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        },
+        "searched": {
+         "fact": "TDR.2.owner-identity.searched",
+         "shown": "identity, financial, business",
+         "state": "known",
+         "text": "identity, financial, business",
+         "unit": null,
+         "value_class": null
+        }
+       }
+      ]
+     ]
+    },
+    "TDR.3": {
+     "title": "Research coverage totals",
+     "row_header": "Total",
+     "rows": [
+      [
+       "total",
+       {
+        "gaps_total": {
+         "fact": "TDR.3.total.gaps_total",
+         "shown": "1 gaps",
+         "state": "known",
+         "amount": "1",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_resolved": {
+         "fact": "TDR.3.total.gaps_resolved",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_partial": {
+         "fact": "TDR.3.total.gaps_partial",
+         "shown": "1 gaps",
+         "state": "known",
+         "amount": "1",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_unresolved": {
+         "fact": "TDR.3.total.gaps_unresolved",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "questions_total": {
+         "fact": "TDR.3.total.questions_total",
+         "shown": "3 questions",
+         "state": "known",
+         "amount": "3",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_total": {
+         "fact": "TDR.3.total.answered_total",
+         "shown": "2 questions",
+         "state": "known",
+         "amount": "2",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "unresolved_total": {
+         "fact": "TDR.3.total.unresolved_total",
+         "shown": "1 questions",
+         "state": "known",
+         "amount": "1",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_share": {
+         "fact": "TDR.3.total.answered_share",
+         "shown": "66.7%",
+         "state": "known",
+         "amount": "0.6667",
+         "unit": "decimal_fraction",
+         "value_class": "calculated"
+        }
+       }
+      ]
+     ]
+    }
+   },
+   "facts": [
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.description",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "description",
+     "label": "description",
+     "text": "Ownership and transaction content is absent from the business note",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.kind_severity",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "kind_severity",
+     "label": "kind severity",
+     "text": "scope/material",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.named_consumers",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "named_consumers",
+     "label": "named consumers",
+     "text": "CP-DR",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.questions",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "questions",
+     "label": "questions",
+     "amount": "3",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-questions",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.answered",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "answered",
+     "label": "answered",
+     "amount": "2",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-answered",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.unresolved",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "unresolved",
+     "label": "unresolved",
+     "amount": "1",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-unresolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.answered_share",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "answered_share",
+     "label": "answered share",
+     "amount": "0.6667",
+     "unit": "decimal_fraction",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-answered_share",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.status",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "status",
+     "label": "status",
+     "text": "Partially resolved",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-missing-ownership-transaction-status",
+     "formula": "Resolved if every question is answered, Unresolved if none is, else Partially resolved"
+    },
+    {
+     "fact_id": "TDR.2.transactions.gap",
+     "table_id": "TDR.2",
+     "row_id": "transactions",
+     "field": "gap",
+     "label": "gap",
+     "text": "missing-ownership-transaction",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.transactions.question",
+     "table_id": "TDR.2",
+     "row_id": "transactions",
+     "field": "question",
+     "label": "question",
+     "text": "Did the group complete an acquisition, a disposal or any other transaction in the reporting period or after its end?",
+     "status": "known",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.transactions.outcome",
+     "table_id": "TDR.2",
+     "row_id": "transactions",
+     "field": "outcome",
+     "label": "outcome",
+     "text": "Answered",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-transactions-outcome",
+     "formula": "the submitted outcome of the question, accepted only when Python's checks pass (answered needs a cited answer)"
+    },
+    {
+     "fact_id": "TDR.2.transactions.answer",
+     "table_id": "TDR.2",
+     "row_id": "transactions",
+     "field": "answer",
+     "label": "answer",
+     "text": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+     "status": "known",
+     "value_class": "analyst_judgment",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ]
+    },
+    {
+     "fact_id": "TDR.2.transactions.evidence",
+     "table_id": "TDR.2",
+     "row_id": "transactions",
+     "field": "evidence",
+     "label": "evidence",
+     "text": "financial page:1",
+     "status": "known",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ]
+    },
+    {
+     "fact_id": "TDR.2.transactions.searched",
+     "table_id": "TDR.2",
+     "row_id": "transactions",
+     "field": "searched",
+     "label": "searched",
+     "text": "financial",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.distributions.gap",
+     "table_id": "TDR.2",
+     "row_id": "distributions",
+     "field": "gap",
+     "label": "gap",
+     "text": "missing-ownership-transaction",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.distributions.question",
+     "table_id": "TDR.2",
+     "row_id": "distributions",
+     "field": "question",
+     "label": "question",
+     "text": "Were distributions paid to the shareholder during the reporting period?",
+     "status": "known",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.distributions.outcome",
+     "table_id": "TDR.2",
+     "row_id": "distributions",
+     "field": "outcome",
+     "label": "outcome",
+     "text": "Answered",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-distributions-outcome",
+     "formula": "the submitted outcome of the question, accepted only when Python's checks pass (answered needs a cited answer)"
+    },
+    {
+     "fact_id": "TDR.2.distributions.answer",
+     "table_id": "TDR.2",
+     "row_id": "distributions",
+     "field": "answer",
+     "label": "answer",
+     "text": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+     "status": "known",
+     "value_class": "analyst_judgment",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:3",
+       "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+      }
+     ]
+    },
+    {
+     "fact_id": "TDR.2.distributions.evidence",
+     "table_id": "TDR.2",
+     "row_id": "distributions",
+     "field": "evidence",
+     "label": "evidence",
+     "text": "financial page:1; financial page:3",
+     "status": "known",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:3",
+       "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+      }
+     ]
+    },
+    {
+     "fact_id": "TDR.2.distributions.searched",
+     "table_id": "TDR.2",
+     "row_id": "distributions",
+     "field": "searched",
+     "label": "searched",
+     "text": "financial",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.gap",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "gap",
+     "label": "gap",
+     "text": "missing-ownership-transaction",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.question",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "question",
+     "label": "question",
+     "text": "Who owns the issuer and in what proportions?",
+     "status": "known",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.outcome",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "outcome",
+     "label": "outcome",
+     "text": "Not found",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-owner-identity-outcome",
+     "formula": "the submitted outcome of the question, accepted only when Python's checks pass (answered needs a cited answer)"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.answer",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "answer",
+     "label": "answer",
+     "status": "missing",
+     "limitation": "No prepared source names the owners of the issuer or their holdings.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.evidence",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "evidence",
+     "label": "evidence",
+     "status": "missing",
+     "limitation": "No prepared source names the owners of the issuer or their holdings.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.searched",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "searched",
+     "label": "searched",
+     "text": "identity, financial, business",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_total",
+     "label": "gaps total",
+     "amount": "1",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_resolved",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_resolved",
+     "label": "gaps resolved",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_resolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_partial",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_partial",
+     "label": "gaps partial",
+     "amount": "1",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_partial",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_unresolved",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_unresolved",
+     "label": "gaps unresolved",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_unresolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.questions_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "questions_total",
+     "label": "questions total",
+     "amount": "3",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-questions_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.answered_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "answered_total",
+     "label": "answered total",
+     "amount": "2",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-answered_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.unresolved_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "unresolved_total",
+     "label": "unresolved total",
+     "amount": "1",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-unresolved_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.answered_share",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "answered_share",
+     "label": "answered share",
+     "amount": "0.6667",
+     "unit": "decimal_fraction",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-answered_share",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    }
+   ],
+   "claims": [
+    {
+     "claim_id": "CPDR-SUM-01",
+     "text": "Research covered {TDR.3.total.questions_total|questions}; local sources answered {TDR.3.total.answered_total|questions} ({TDR.3.total.answered_share|%}) and {TDR.3.total.unresolved_total|questions} remain unresolved.",
+     "citations": [],
+     "spelled": "Research covered 3 questions; local sources answered 2 questions (66.7%) and 1 questions remain unresolved."
+    },
+    {
+     "claim_id": "CPDR-ANS-transactions",
+     "text": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date.",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+      }
+     ],
+     "spelled": "The financial statements report no acquisitions or disposals in any quarter or the full year and no subsequent events up to the publication date."
+    },
+    {
+     "claim_id": "CPDR-ANS-distributions",
+     "text": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends.",
+     "citations": [
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:1",
+       "quote": "The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9)."
+      },
+      {
+       "source_id": "financial",
+       "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+       "locator": "page:3",
+       "quote": "Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)"
+      }
+     ],
+     "spelled": "The statements show dividends paid in every quarter and for the full year, and the equity roll-forward consists only of net profit and those dividends."
+    }
+   ],
+   "own_limitations": [
+    "Research used the prepared local sources only; nothing outside the pack was searched.",
+    "Unresolved: Who owns the issuer and in what proportions? No prepared source names the owners of the issuer or their holdings."
+   ],
+   "settled_limitations": [
+    "Research used the prepared local sources only; nothing outside the pack was searched.",
+    "Unresolved: Who owns the issuer and in what proportions? No prepared source names the owners of the issuer or their holdings.",
+    "Synthetic case; not real issuer qualification"
+   ],
+   "inherited_limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+    "Business note supplies no ownership or transaction content",
+    "Ownership and transaction content is absent from the business note"
+   ],
+   "module_status": "restricted",
+   "module_status_why": "synthetic case_kind and non-empty own limitations (execution.py:441-457)",
+   "consumption_facts": {
+    "per_gap": [
+     "TDR.1.missing-ownership-transaction.questions",
+     "TDR.1.missing-ownership-transaction.answered",
+     "TDR.1.missing-ownership-transaction.unresolved",
+     "TDR.1.missing-ownership-transaction.answered_share",
+     "TDR.1.missing-ownership-transaction.status"
+    ],
+    "totals": [
+     "TDR.3.total.gaps_total",
+     "TDR.3.total.gaps_resolved",
+     "TDR.3.total.gaps_partial",
+     "TDR.3.total.gaps_unresolved",
+     "TDR.3.total.questions_total",
+     "TDR.3.total.answered_total",
+     "TDR.3.total.unresolved_total",
+     "TDR.3.total.answered_share"
+    ],
+    "missing_for_unresolved": [
+     "TDR.2.owner-identity.answer"
+    ]
+   }
+  },
+  "unresolved": {
+   "case_id": "unresolved",
+   "bookkeeping": {
+    "gaps_total": 1,
+    "gaps_resolved": 0,
+    "gaps_partial": 0,
+    "gaps_unresolved": 1,
+    "questions_total": 2,
+    "answered_total": 0,
+    "unresolved_total": 2,
+    "answered_share": "0.0000",
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": 2,
+      "answered": 0,
+      "unresolved": 2,
+      "answered_share": "0.0000",
+      "status": "Unresolved"
+     }
+    ]
+   },
+   "tables": {
+    "TDR.1": {
+     "title": "Research agenda and gap status",
+     "row_header": "Gap",
+     "rows": [
+      [
+       "missing-ownership-transaction",
+       {
+        "description": {
+         "fact": "TDR.1.missing-ownership-transaction.description",
+         "shown": "Ownership and transaction content is absent from the business note",
+         "state": "known",
+         "text": "Ownership and transaction content is absent from the business note",
+         "unit": null,
+         "value_class": null
+        },
+        "kind_severity": {
+         "fact": "TDR.1.missing-ownership-transaction.kind_severity",
+         "shown": "scope/material",
+         "state": "known",
+         "text": "scope/material",
+         "unit": null,
+         "value_class": null
+        },
+        "named_consumers": {
+         "fact": "TDR.1.missing-ownership-transaction.named_consumers",
+         "shown": "CP-DR",
+         "state": "known",
+         "text": "CP-DR",
+         "unit": null,
+         "value_class": null
+        },
+        "questions": {
+         "fact": "TDR.1.missing-ownership-transaction.questions",
+         "shown": "2 questions",
+         "state": "known",
+         "amount": "2",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered": {
+         "fact": "TDR.1.missing-ownership-transaction.answered",
+         "shown": "0 questions",
+         "state": "known",
+         "amount": "0",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "unresolved": {
+         "fact": "TDR.1.missing-ownership-transaction.unresolved",
+         "shown": "2 questions",
+         "state": "known",
+         "amount": "2",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_share": {
+         "fact": "TDR.1.missing-ownership-transaction.answered_share",
+         "shown": "0.0%",
+         "state": "known",
+         "amount": "0.0000",
+         "unit": "decimal_fraction",
+         "value_class": "calculated"
+        },
+        "status": {
+         "fact": "TDR.1.missing-ownership-transaction.status",
+         "shown": "Unresolved",
+         "state": "known",
+         "text": "Unresolved",
+         "unit": null,
+         "value_class": "calculated"
+        }
+       }
+      ]
+     ]
+    },
+    "TDR.2": {
+     "title": "Research questions and cited answers",
+     "row_header": "Question",
+     "rows": [
+      [
+       "owner-identity",
+       {
+        "gap": {
+         "fact": "TDR.2.owner-identity.gap",
+         "shown": "missing-ownership-transaction",
+         "state": "known",
+         "text": "missing-ownership-transaction",
+         "unit": null,
+         "value_class": null
+        },
+        "question": {
+         "fact": "TDR.2.owner-identity.question",
+         "shown": "Who owns the issuer and in what proportions?",
+         "state": "known",
+         "text": "Who owns the issuer and in what proportions?",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "outcome": {
+         "fact": "TDR.2.owner-identity.outcome",
+         "shown": "Not found",
+         "state": "known",
+         "text": "Not found",
+         "unit": null,
+         "value_class": "calculated"
+        },
+        "answer": {
+         "fact": "TDR.2.owner-identity.answer",
+         "shown": "∅ G#",
+         "state": "gap",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        },
+        "evidence": {
+         "fact": "TDR.2.owner-identity.evidence",
+         "shown": "∅ G#",
+         "state": "gap",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        },
+        "searched": {
+         "fact": "TDR.2.owner-identity.searched",
+         "shown": "identity, financial, business",
+         "state": "known",
+         "text": "identity, financial, business",
+         "unit": null,
+         "value_class": null
+        }
+       }
+      ],
+      [
+       "distribution-policy",
+       {
+        "gap": {
+         "fact": "TDR.2.distribution-policy.gap",
+         "shown": "missing-ownership-transaction",
+         "state": "known",
+         "text": "missing-ownership-transaction",
+         "unit": null,
+         "value_class": null
+        },
+        "question": {
+         "fact": "TDR.2.distribution-policy.question",
+         "shown": "Which policy governs distributions to the owners of the issuer?",
+         "state": "known",
+         "text": "Which policy governs distributions to the owners of the issuer?",
+         "unit": null,
+         "value_class": "analyst_judgment"
+        },
+        "outcome": {
+         "fact": "TDR.2.distribution-policy.outcome",
+         "shown": "Not found",
+         "state": "known",
+         "text": "Not found",
+         "unit": null,
+         "value_class": "calculated"
+        },
+        "answer": {
+         "fact": "TDR.2.distribution-policy.answer",
+         "shown": "∅ G#",
+         "state": "gap",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        },
+        "evidence": {
+         "fact": "TDR.2.distribution-policy.evidence",
+         "shown": "∅ G#",
+         "state": "gap",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        },
+        "searched": {
+         "fact": "TDR.2.distribution-policy.searched",
+         "shown": "identity, financial, business",
+         "state": "known",
+         "text": "identity, financial, business",
+         "unit": null,
+         "value_class": null
+        }
+       }
+      ]
+     ]
+    },
+    "TDR.3": {
+     "title": "Research coverage totals",
+     "row_header": "Total",
+     "rows": [
+      [
+       "total",
+       {
+        "gaps_total": {
+         "fact": "TDR.3.total.gaps_total",
+         "shown": "1 gaps",
+         "state": "known",
+         "amount": "1",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_resolved": {
+         "fact": "TDR.3.total.gaps_resolved",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_partial": {
+         "fact": "TDR.3.total.gaps_partial",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_unresolved": {
+         "fact": "TDR.3.total.gaps_unresolved",
+         "shown": "1 gaps",
+         "state": "known",
+         "amount": "1",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "questions_total": {
+         "fact": "TDR.3.total.questions_total",
+         "shown": "2 questions",
+         "state": "known",
+         "amount": "2",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_total": {
+         "fact": "TDR.3.total.answered_total",
+         "shown": "0 questions",
+         "state": "known",
+         "amount": "0",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "unresolved_total": {
+         "fact": "TDR.3.total.unresolved_total",
+         "shown": "2 questions",
+         "state": "known",
+         "amount": "2",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_share": {
+         "fact": "TDR.3.total.answered_share",
+         "shown": "0.0%",
+         "state": "known",
+         "amount": "0.0000",
+         "unit": "decimal_fraction",
+         "value_class": "calculated"
+        }
+       }
+      ]
+     ]
+    }
+   },
+   "facts": [
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.description",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "description",
+     "label": "description",
+     "text": "Ownership and transaction content is absent from the business note",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.kind_severity",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "kind_severity",
+     "label": "kind severity",
+     "text": "scope/material",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.named_consumers",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "named_consumers",
+     "label": "named consumers",
+     "text": "CP-DR",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.questions",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "questions",
+     "label": "questions",
+     "amount": "2",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-questions",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.answered",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "answered",
+     "label": "answered",
+     "amount": "0",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-answered",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.unresolved",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "unresolved",
+     "label": "unresolved",
+     "amount": "2",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-unresolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.answered_share",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "answered_share",
+     "label": "answered share",
+     "amount": "0.0000",
+     "unit": "decimal_fraction",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-missing-ownership-transaction-answered_share",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.1.missing-ownership-transaction.status",
+     "table_id": "TDR.1",
+     "row_id": "missing-ownership-transaction",
+     "field": "status",
+     "label": "status",
+     "text": "Unresolved",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-missing-ownership-transaction-status",
+     "formula": "Resolved if every question is answered, Unresolved if none is, else Partially resolved"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.gap",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "gap",
+     "label": "gap",
+     "text": "missing-ownership-transaction",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.question",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "question",
+     "label": "question",
+     "text": "Who owns the issuer and in what proportions?",
+     "status": "known",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.outcome",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "outcome",
+     "label": "outcome",
+     "text": "Not found",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-owner-identity-outcome",
+     "formula": "the submitted outcome of the question, accepted only when Python's checks pass (answered needs a cited answer)"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.answer",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "answer",
+     "label": "answer",
+     "status": "missing",
+     "limitation": "No prepared source names the owners of the issuer or their holdings.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.evidence",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "evidence",
+     "label": "evidence",
+     "status": "missing",
+     "limitation": "No prepared source names the owners of the issuer or their holdings.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.owner-identity.searched",
+     "table_id": "TDR.2",
+     "row_id": "owner-identity",
+     "field": "searched",
+     "label": "searched",
+     "text": "identity, financial, business",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.distribution-policy.gap",
+     "table_id": "TDR.2",
+     "row_id": "distribution-policy",
+     "field": "gap",
+     "label": "gap",
+     "text": "missing-ownership-transaction",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.2.distribution-policy.question",
+     "table_id": "TDR.2",
+     "row_id": "distribution-policy",
+     "field": "question",
+     "label": "question",
+     "text": "Which policy governs distributions to the owners of the issuer?",
+     "status": "known",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.distribution-policy.outcome",
+     "table_id": "TDR.2",
+     "row_id": "distribution-policy",
+     "field": "outcome",
+     "label": "outcome",
+     "text": "Not found",
+     "status": "known",
+     "value_class": "calculated",
+     "calculation_id": "cpdr-distribution-policy-outcome",
+     "formula": "the submitted outcome of the question, accepted only when Python's checks pass (answered needs a cited answer)"
+    },
+    {
+     "fact_id": "TDR.2.distribution-policy.answer",
+     "table_id": "TDR.2",
+     "row_id": "distribution-policy",
+     "field": "answer",
+     "label": "answer",
+     "status": "missing",
+     "limitation": "No prepared source describes a distribution policy; the statements show only the amounts paid.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.distribution-policy.evidence",
+     "table_id": "TDR.2",
+     "row_id": "distribution-policy",
+     "field": "evidence",
+     "label": "evidence",
+     "status": "missing",
+     "limitation": "No prepared source describes a distribution policy; the statements show only the amounts paid.",
+     "value_class": "analyst_judgment"
+    },
+    {
+     "fact_id": "TDR.2.distribution-policy.searched",
+     "table_id": "TDR.2",
+     "row_id": "distribution-policy",
+     "field": "searched",
+     "label": "searched",
+     "text": "identity, financial, business",
+     "status": "known"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_total",
+     "label": "gaps total",
+     "amount": "1",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_resolved",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_resolved",
+     "label": "gaps resolved",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_resolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_partial",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_partial",
+     "label": "gaps partial",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_partial",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_unresolved",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_unresolved",
+     "label": "gaps unresolved",
+     "amount": "1",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_unresolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.questions_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "questions_total",
+     "label": "questions total",
+     "amount": "2",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-questions_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.answered_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "answered_total",
+     "label": "answered total",
+     "amount": "0",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-answered_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.unresolved_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "unresolved_total",
+     "label": "unresolved total",
+     "amount": "2",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-unresolved_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.answered_share",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "answered_share",
+     "label": "answered share",
+     "amount": "0.0000",
+     "unit": "decimal_fraction",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-answered_share",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    }
+   ],
+   "claims": [
+    {
+     "claim_id": "CPDR-SUM-01",
+     "text": "Research covered {TDR.3.total.questions_total|questions}; local sources answered {TDR.3.total.answered_total|questions} ({TDR.3.total.answered_share|%}) and {TDR.3.total.unresolved_total|questions} remain unresolved.",
+     "citations": [],
+     "spelled": "Research covered 2 questions; local sources answered 0 questions (0.0%) and 2 questions remain unresolved."
+    }
+   ],
+   "own_limitations": [
+    "Research used the prepared local sources only; nothing outside the pack was searched.",
+    "Unresolved: Who owns the issuer and in what proportions? No prepared source names the owners of the issuer or their holdings.",
+    "Unresolved: Which policy governs distributions to the owners of the issuer? No prepared source describes a distribution policy; the statements show only the amounts paid."
+   ],
+   "settled_limitations": [
+    "Research used the prepared local sources only; nothing outside the pack was searched.",
+    "Unresolved: Who owns the issuer and in what proportions? No prepared source names the owners of the issuer or their holdings.",
+    "Unresolved: Which policy governs distributions to the owners of the issuer? No prepared source describes a distribution policy; the statements show only the amounts paid.",
+    "Synthetic case; not real issuer qualification"
+   ],
+   "inherited_limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+    "Business note supplies no ownership or transaction content",
+    "Ownership and transaction content is absent from the business note"
+   ],
+   "module_status": "restricted",
+   "module_status_why": "synthetic case_kind and non-empty own limitations (execution.py:441-457)",
+   "consumption_facts": {
+    "per_gap": [
+     "TDR.1.missing-ownership-transaction.questions",
+     "TDR.1.missing-ownership-transaction.answered",
+     "TDR.1.missing-ownership-transaction.unresolved",
+     "TDR.1.missing-ownership-transaction.answered_share",
+     "TDR.1.missing-ownership-transaction.status"
+    ],
+    "totals": [
+     "TDR.3.total.gaps_total",
+     "TDR.3.total.gaps_resolved",
+     "TDR.3.total.gaps_partial",
+     "TDR.3.total.gaps_unresolved",
+     "TDR.3.total.questions_total",
+     "TDR.3.total.answered_total",
+     "TDR.3.total.unresolved_total",
+     "TDR.3.total.answered_share"
+    ],
+    "missing_for_unresolved": [
+     "TDR.2.owner-identity.answer",
+     "TDR.2.distribution-policy.answer"
+    ]
+   }
+  },
+  "empty_agenda": {
+   "case_id": "empty_agenda",
+   "bookkeeping": {
+    "gaps_total": 0,
+    "gaps_resolved": 0,
+    "gaps_partial": 0,
+    "gaps_unresolved": 0,
+    "questions_total": 0,
+    "answered_total": 0,
+    "unresolved_total": 0,
+    "answered_share": null,
+    "gaps": []
+   },
+   "tables": {
+    "TDR.3": {
+     "title": "Research coverage totals",
+     "row_header": "Total",
+     "rows": [
+      [
+       "total",
+       {
+        "gaps_total": {
+         "fact": "TDR.3.total.gaps_total",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_resolved": {
+         "fact": "TDR.3.total.gaps_resolved",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_partial": {
+         "fact": "TDR.3.total.gaps_partial",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "gaps_unresolved": {
+         "fact": "TDR.3.total.gaps_unresolved",
+         "shown": "0 gaps",
+         "state": "known",
+         "amount": "0",
+         "unit": "gaps",
+         "value_class": "calculated"
+        },
+        "questions_total": {
+         "fact": "TDR.3.total.questions_total",
+         "shown": "0 questions",
+         "state": "known",
+         "amount": "0",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_total": {
+         "fact": "TDR.3.total.answered_total",
+         "shown": "0 questions",
+         "state": "known",
+         "amount": "0",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "unresolved_total": {
+         "fact": "TDR.3.total.unresolved_total",
+         "shown": "0 questions",
+         "state": "known",
+         "amount": "0",
+         "unit": "questions",
+         "value_class": "calculated"
+        },
+        "answered_share": {
+         "fact": "TDR.3.total.answered_share",
+         "shown": "∅ G# n.m.",
+         "state": "not_meaningful",
+         "note": "G# is the report-wide gap number, bound at run time (A7 exception)"
+        }
+       }
+      ]
+     ]
+    }
+   },
+   "facts": [
+    {
+     "fact_id": "TDR.3.total.gaps_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_total",
+     "label": "gaps total",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_resolved",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_resolved",
+     "label": "gaps resolved",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_resolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_partial",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_partial",
+     "label": "gaps partial",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_partial",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.gaps_unresolved",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "gaps_unresolved",
+     "label": "gaps unresolved",
+     "amount": "0",
+     "unit": "gaps",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-gaps_unresolved",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.questions_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "questions_total",
+     "label": "questions total",
+     "amount": "0",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-questions_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.answered_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "answered_total",
+     "label": "answered total",
+     "amount": "0",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-answered_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.unresolved_total",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "unresolved_total",
+     "label": "unresolved total",
+     "amount": "0",
+     "unit": "questions",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "known",
+     "calculation_id": "cpdr-total-unresolved_total",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+    },
+    {
+     "fact_id": "TDR.3.total.answered_share",
+     "table_id": "TDR.3",
+     "row_id": "total",
+     "field": "answered_share",
+     "label": "answered share",
+     "unit": "decimal_fraction",
+     "period": "2026-01-10",
+     "value_class": "calculated",
+     "status": "not_applicable",
+     "calculation_id": "cpdr-total-answered_share",
+     "formula": "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up",
+     "limitation": "No research question was submitted, so an answered share has no denominator."
+    }
+   ],
+   "claims": [
+    {
+     "claim_id": "CPDR-SUM-01",
+     "text": "Research covered {TDR.3.total.questions_total|questions} because the supplied readiness review identified {TDR.3.total.gaps_total|gaps}.",
+     "citations": [],
+     "spelled": "Research covered 0 questions because the supplied readiness review identified 0 gaps."
+    }
+   ],
+   "own_limitations": [
+    "Research used the prepared local sources only; nothing outside the pack was searched.",
+    "No gaps identified by this supplied review; no research question was submitted."
+   ],
+   "settled_limitations": [
+    "Research used the prepared local sources only; nothing outside the pack was searched.",
+    "No gaps identified by this supplied review; no research question was submitted.",
+    "Synthetic case; not real issuer qualification"
+   ],
+   "inherited_limitations": [
+    "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+    "Business note supplies no ownership or transaction content"
+   ],
+   "module_status": "restricted",
+   "module_status_why": "synthetic case_kind and non-empty own limitations (execution.py:441-457)",
+   "consumption_facts": {
+    "per_gap": [],
+    "totals": [
+     "TDR.3.total.gaps_total",
+     "TDR.3.total.gaps_resolved",
+     "TDR.3.total.gaps_partial",
+     "TDR.3.total.gaps_unresolved",
+     "TDR.3.total.questions_total",
+     "TDR.3.total.answered_total",
+     "TDR.3.total.unresolved_total",
+     "TDR.3.total.answered_share"
+    ],
+    "missing_for_unresolved": []
+   }
+  }
+ },
+ "fixtures": {
+  "fixture_resolved": {
+   "note": "composer-only derivation: no run, no tables",
+   "derived": {
+    "gaps_total": 1,
+    "gaps_resolved": 1,
+    "gaps_partial": 0,
+    "gaps_unresolved": 0,
+    "questions_total": 2,
+    "answered_total": 2,
+    "unresolved_total": 0,
+    "answered_share": "1.0000",
+    "answered_share_shown": "100.0%",
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": 2,
+      "answered": 2,
+      "unresolved": 0,
+      "answered_share": "1.0000",
+      "status": "Resolved",
+      "shown": "100.0%"
+     }
+    ]
+   }
+  },
+  "fixture_two_gaps": {
+   "note": "composer-only derivation: no run, no tables",
+   "derived": {
+    "gaps_total": 2,
+    "gaps_resolved": 1,
+    "gaps_partial": 0,
+    "gaps_unresolved": 1,
+    "questions_total": 3,
+    "answered_total": 2,
+    "unresolved_total": 1,
+    "answered_share": "0.6667",
+    "answered_share_shown": "66.7%",
+    "gaps": [
+     {
+      "gap_id": "missing-ownership-transaction",
+      "questions": 2,
+      "answered": 2,
+      "unresolved": 0,
+      "answered_share": "1.0000",
+      "status": "Resolved",
+      "shown": "100.0%"
+     },
+     {
+      "gap_id": "second-gap",
+      "questions": 1,
+      "answered": 0,
+      "unresolved": 1,
+      "answered_share": "0.0000",
+      "status": "Unresolved",
+      "shown": "0.0%"
+     }
+    ]
+   }
+  }
+ },
+ "empty_agenda": {
+  "state": "a valid settled state, not a refusal: the only valid submission is {\"gaps\": []}",
+  "submission": "submissions.json#cpdr.empty_agenda (one read_inputs, no search, no read)",
+  "case": "cases.empty_agenda: TDR.1 and TDR.2 have no rows and are not emitted; TDR.3 holds the total row with counts known 0 and answered_share not_applicable",
+  "limitation": "No gaps identified by this supplied review; no research question was submitted.",
+  "refusal": "refusals.submission_against_empty_agenda (a non-empty submission against the empty agenda)",
+  "pinned_limitation": "an answered share over zero questions is not computed; this is the pinned limitation (NA_LIMITATION on the share fact)",
+  "share_fact_limitation": "No research question was submitted, so an answered share has no denominator."
+ },
+ "blocked": {
+  "attempt_0": {
+   "step": "invalid",
+   "issues": [
+    "Quote/locator mismatch: quote not found under financial page:1 (normalised whitespace, quote marks and dashes): \"The group completed an acquisition in the third quarter.\""
+   ]
+  },
+  "attempt_1": {
+   "step": "invalid",
+   "issues": [
+    "text must not contain a figure: transactions"
+   ],
+   "repair_of": "attempt 0"
+  },
+  "module_status": "blocked",
+  "tables": "none; a blocked head carries no TDR table and no claims",
+  "head": "published; cpdr_reader exposes the status and no counts"
+ },
+ "refusals": {
+  "gap_unaddressed": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "a gap takes 1 to 4 research questions: missing-ownership-transaction"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "a gap takes 1 to 4 research questions: missing-ownership-transaction"
+   ]
+  },
+  "gap_with_five_questions": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "a gap takes 1 to 4 research questions: missing-ownership-transaction"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "a gap takes 1 to 4 research questions: missing-ownership-transaction"
+   ]
+  },
+  "unknown_gap": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "gap_id is not in the CP-0 agenda: invented-gap"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "gap_id is not in the CP-0 agenda: invented-gap"
+   ]
+  },
+  "gap_repeated": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "gap_id appears twice: missing-ownership-transaction"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "gap_id appears twice: missing-ownership-transaction"
+   ]
+  },
+  "question_id_repeated": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "question_id appears twice: transactions"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "question_id appears twice: transactions"
+   ]
+  },
+  "answered_without_citation": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "an answered question needs an answer, a category and at least one citation: transactions"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "an answered question needs an answer, a category and at least one citation: transactions"
+   ]
+  },
+  "not_found_with_answer": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "a not_found question carries no answer, category or citation: owner-identity"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "a not_found question carries no answer, category or citation: owner-identity"
+   ]
+  },
+  "not_found_without_limitation": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "a not_found question states its limitation: owner-identity"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "a not_found question states its limitation: owner-identity"
+   ]
+  },
+  "answered_with_limitation": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "an answered question carries no limitation: transactions"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "an answered question carries no limitation: transactions"
+   ]
+  },
+  "no_searched_source": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "searched_sources must name at least one prepared source: owner-identity"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "searched_sources must name at least one prepared source: owner-identity"
+   ]
+  },
+  "searched_source_not_in_pack": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "searched source is not a ready prepared source: owner-identity web",
+    "Absence claim without a recorded search: owner-identity not_found for web; search_pack that source before claiming it is not found"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "searched source is not a ready prepared source: owner-identity web",
+    "Absence claim without a recorded search: owner-identity not_found for web; search_pack that source before claiming it is not found"
+   ]
+  },
+  "searched_source_not_searched": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "Absence claim without a recorded search: owner-identity not_found for business; search_pack that source before claiming it is not found"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "Absence claim without a recorded search: owner-identity not_found for business; search_pack that source before claiming it is not found"
+   ]
+  },
+  "cited_page_not_read": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "Cited page not read through read_pages: financial page:3"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "Cited page not read through read_pages: financial page:3"
+   ]
+  },
+  "quote_not_verbatim": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "Quote/locator mismatch: quote not found under financial page:1 (normalised whitespace, quote marks and dashes): \"The group completed an acquisition in the third quarter.\""
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "Quote/locator mismatch: quote not found under financial page:1 (normalised whitespace, quote marks and dashes): \"The group completed an acquisition in the third quarter.\""
+   ]
+  },
+  "citation_outside_pack": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "Unavailable or changed source: web",
+    "Cited page not read through read_pages: web page:1"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "Unavailable or changed source: web",
+    "Cited page not read through read_pages: web page:1"
+   ]
+  },
+  "digit_in_text": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "text must not contain a figure: transactions"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "text must not contain a figure: transactions"
+   ]
+  },
+  "prohibited_conclusion": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "text carries a prohibited conclusion: owner-identity"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "text carries a prohibited conclusion: owner-identity"
+   ]
+  },
+  "submission_against_empty_agenda": {
+   "disposition": "invalid",
+   "attempt": 0,
+   "step_issues": [
+    "gap_id is not in the CP-0 agenda: missing-ownership-transaction"
+   ],
+   "result_status": "rejected",
+   "limitations": [
+    "gap_id is not in the CP-0 agenda: missing-ownership-transaction"
+   ]
+  }
+ },
+ "refusal_note": "No precheck (LEAD ruling): every refusal is one journaled invalid CP-DR step on attempt 0 of its own clone of the settled CP-0 store (the 'submission_against_empty_agenda' clone is the empty-agenda CP-0 store). The attempt is consumed, the result is rejected with limitations = the issues, and step_issues is the complete tuple that _verify_submissions replays exactly (S1a R3-2). The tool-use items (cited page read, absence backed by a search) are the core's RULES(text, seen) (G1-X protocol section 2; live/tools.py unread_citation_issues and UNBACKED_ABSENCE, product sorted order), called by G1-X at submit and in the verifier with rules='journaled'; RULES is pure over text and Seen and does not know pack membership: the two out-of-pack classes are one defect with both consequences, the membership issue then the RULES issue, in that order.",
+ "rendering": {
+  "observed_with": "report_view.build(Execution.create(pack).view(), credit_snapshot pathway, SHIPPED_MAPS); modules CP-0 and CP-DR unrun",
+  "call_withheld": "outside_pathway",
+  "blocks": [
+   {
+    "block_id": "key-findings",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-2 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "company-operating-model",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-1A is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "model-chart-strip",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-1 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "capital-structure",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-1 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "financials-credit-metrics",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-1 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "strengths-weaknesses",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-2 · CP-6 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "relative-value",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-3 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "company-profile",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-1A is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "transaction-summary",
+    "state": "absent",
+    "note": "Absent: No module produces this block yet."
+   },
+   {
+    "block_id": "portfolio-fit",
+    "state": "absent",
+    "note": "Absent: No module produces this block yet."
+   },
+   {
+    "block_id": "committee-challenge",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-6 is not part of Credit Snapshot."
+   },
+   {
+    "block_id": "what-changed",
+    "state": "not_in_pathway",
+    "note": "Not in this Pathway: CP-8 is not part of Credit Snapshot."
+   }
+  ],
+  "defect": "the 'not_in_pathway' wording is false for a slice excluded by the requested_modules override (the modules are in the preset); a product defect recorded in docs/QUEUE.md as its own report_view task (LEAD ruling); CP-DR neither fixes nor depends on it",
+  "pin": "today's product output; the pin changes only with that task"
+ },
+ "tamper": {
+  "case": "partial (closed run: CP-0 and CP-DR settled, receipt sealed)",
+  "target_fact": "TDR.1.missing-ownership-transaction.status",
+  "from": "Partially resolved",
+  "to": "Resolved",
+  "why_this_fact": "the table cell holds the fact id and the step output holds the submission references, so the status lives only in the result Module; it is the one fact the probe's rebuild (bookkeeping over the journaled payload) contradicts",
+  "recipe": [
+   "1. Copy the closed partial store directory (blobs, snapshots, current, audit) to a scratch path.",
+   "2. Load the CP-DR head's result Module; replace only the text of fact TDR.1.missing-ownership-transaction.status; leave every other fact (TDR.1 questions 3, answered 2, unresolved 1, share 0.6667; every TDR.3.total.* fact), table, claim and limitation unchanged.",
+   "3. Serialise the forged Module as Execution._store does (model_dump_json); its sha256 R2 must equal Module.content_hash(); write blobs/R2.",
+   "4. Build a new ExecutionSnapshot equal to the current one with the CP-DR Attempt.result_sha256 and Head.result_sha256 set to R2 (status, inputs and commands unchanged, so head_of(forged Module) equals the Head) and the same parent; write snapshots/<its sha256>.json and rewrite current to that digest.",
+   "5. In the retained receipt: set the CP-DR SettledHead.result_sha256 to R2; set receipt.snapshot_sha256 and every coordinate that named the old final snapshot (the CP-DR settling OwnerSubmission.snapshot_after_sha256: owner_workflow.py _advance -> _finish_walk; its record is retained as audit/submissions/<content_hash> by _retain) to the new digest; delete audit/submissions/<old record hash> and write the edited OwnerSubmission as audit/submissions/<its content_hash> (model_dump_json bytes); rewrite audit/receipt.sha256 with the forged receipt's content_hash (S1a R3-5 and CP-3 A4 pattern: the audit file travels under its new hash)."
+  ],
+  "expect": {
+   "passes": "everything upstream of the probe: audit inventory, blob and snapshot hashes, ancestor walk, head_of equality, begin and publication records, call and read replay, journaled-step replay (the payload and step are untouched)",
+   "refuses": "cpdr.probe raises WorkflowError('identity_mismatch'); verify_owner_run_receipt raises identity_mismatch",
+   "test_asserts": "on the forged copy, _verify_audit and every check before _PROBES pass (as CP-3 A4 (a)); then cpdr.probe raises identity_mismatch. A test asserting identity_mismatch alone would never show that the probe was reached."
+  },
+  "step_output_edit": "an edited CP-DR step output is caught by the store's own blob hash check, not by the probe's output comparison (recorded limitation, S1a R3-5)"
+ },
+ "tool_use": {
+  "CP-DR": "exactly one ok read_inputs per attempt before submit; ok search_pack covering every searched source of every question; ok read_pages for every cited locator; zero web or provider calls (no such tool exists); an invoke of any other tool is a refused not_permitted receipt",
+  "search_rule": "a span matches when it contains any query term (case-insensitive substring); header '<n> spans match <query!r>; showing <min(10,n)>.' (live/tools.py search_pack)"
+ },
+ "attempt_inputs": [
+  "prepared-pack",
+  "CP-0"
+ ],
+ "settled_module_adds_input": "research-submission",
+ "inherited_limitations_rule": "CP-0 head limitations, de-duplicated, own (settled) removed (execution.py:345-366); pinned per case in cases.<case>.inherited_limitations",
+ "evidence_rail": [
+  "TDR.1",
+  "TDR.2"
+ ],
+ "limitations_rail": [
+  "TDR.3"
+ ],
+ "table_id_collision_check": "methodology.json: TDR.1-TDR.3 appear only in the CP-DR entry (asserted by the builder); src/ and tests/ scan reported separately",
+ "consumption": {
+  "reader": "cpdr_reader(store, head) exposes: head hash, status, per gap {gap_id, status, questions, answered}, totals, unresolved question ids",
+  "consumer": "none today; CP-5 is the only registry edge (restricted); status OPEN",
+  "future_cp5_binding": "the CP-5 attempt binds the CP-DR head result_sha256 as an Input and its review cites the facts listed in cases.<case>.consumption_facts",
+  "facts_to_cite": "TDR.1.<gap>.{questions,answered,unresolved,answered_share,status}; TDR.3.total.* (gaps_total, gaps_resolved, gaps_partial, gaps_unresolved, questions_total, answered_total, unresolved_total, answered_share); and, for each unresolved item, the missing fact TDR.2.<qid>.answer (its limitation is the unresolved reason)"
+ },
+ "not_verified": [
+  "whether an answering quote actually answers its question is analyst judgment; only verbatim location and tool use are checked",
+  "hit counts follow the documented search rule and were checked against PackTools headers by a revision probe, not by product code under test",
+  "the empty-agenda CP-0 settles restricted is derived from the synthetic case_kind rule, not run; a Module with TDR.1 and TDR.2 absent is not constructed"
+ ]
+}

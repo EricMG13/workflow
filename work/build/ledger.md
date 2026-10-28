@@ -333,3 +333,4 @@
 - 19:41 CP-3D review: REQUEST CHANGES (M1 first-quote-per-page citations attach unsupporting quotes; lease T3E.3 'citing its quote' -> per-cell provenance; M2 Acceptance 5-6 tests). Fix round 1. CP-L10 review dispatched.
 - 19:42 CP-1D owner fix merged (a4eba58); fast set 6394 passed, pins 69.
 - 19:43 CP-4 completion b640f77 (driver, test_owner_cp4, adapter/bindings/spec/D3 tests); CP-5 built 258b9ab. Both queued for mx-adversary review. CP-1D Stage 2 dispatched.
+- 19:45 G1-X plan-order built (0cb0ec6); controller combo check: R3 create succeeds with real CP-3. Review queue (Opus cap): g1x-order, CP-4, CP-5.

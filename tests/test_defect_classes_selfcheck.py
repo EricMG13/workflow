@@ -43,6 +43,7 @@ from defect_classes import (
     hostile_inputs,
     label_cases,
     model_text_failures,
+    path_matches,
     quote_failure,
     with_text,
 )
@@ -375,17 +376,16 @@ POSITIVE = json.dumps(
 
 
 def test_hostile_set_is_the_probes() -> None:
-    assert set(HOSTILE_JSON) == {
-        "deep_array",
-        "deep_object",
-        "huge_int",
-        "nan",
-        "lone_surrogate",
-        "not_object",
-        "dup_keys",
-        "empty",
+    assert HOSTILE_JSON == {
+        "deep_array": "[" * 200_000,
+        "deep_object": '{"a":' * 50_000 + "1" + "}" * 50_000,
+        "huge_int": '{"x":1' + "0" * 200_000 + "}",
+        "nan": '{"x":NaN}',
+        "lone_surrogate": '{"x":"\\ud800"}',
+        "not_object": '"text"',
+        "dup_keys": '{"x":1,"x":2}',
+        "empty": "",
     }
-    assert len(HOSTILE_JSON["huge_int"]) > 200_000
     assert MODEL_TEXT_HOSTILE == ("Rates matter [a lot", "{low", "{}")
 
 
@@ -415,7 +415,7 @@ def test_assert_hostile_refused_propagates_a_recursion_error(
         assert_hostile_refused(Doc)
 
 
-def test_hostile_failures_adds_the_per_field_floods() -> None:
+def test_hostile_inputs_add_the_per_field_floods_of_the_first_string_fields() -> None:
     inputs = [label for label in _labels() if label.startswith("field_summary")]
     assert inputs == ["field_summary_brackets", "field_summary_refs"]
 
@@ -453,7 +453,9 @@ class _Run:
         doc = json.loads(payload)
         texts = [doc["summary"], *(p["note"] for p in doc["parts"] if p.get("note"))]
         hostile = [t for t in texts if "[" in t or "{" in t]
-        if self._check == "strict" and hostile:
+        if self._check == "strict_summary":  # a validator that checks only the summary
+            hostile = [t for t in hostile if t == doc["summary"]]
+        if self._check in {"strict", "strict_summary"} and hostile:
             self._stale = False
             return {"status": "invalid", "issues": [f"summary: bad text {hostile[0]!r}"]}
         if self._check == "silent" and hostile:
@@ -505,9 +507,40 @@ def test_model_text_failures_catches_an_outcome_with_no_issue() -> None:
     assert any("parts.0.note='{}': invalid with no issue" in f for f in failures)
 
 
-def test_model_text_failures_require_issue_off_takes_text_verbatim() -> None:
-    assert _failures("lax", build=False, require_issue=False) == []
+NOTE = ("parts", "*", "note")
+
+
+def test_a_fully_lax_validator_fails_even_with_a_verbatim_set() -> None:
+    failures = _failures("lax", build=False, verbatim=frozenset({NOTE}))
+    assert any("summary='{}': accepted" in f for f in failures)
     assert _failures("lax", build=False) != []
+
+
+def test_a_validator_that_accepts_only_the_verbatim_path_passes() -> None:
+    assert _failures("strict_summary", build=False, verbatim=frozenset({NOTE})) == []
+
+
+def test_a_verbatim_path_is_required_to_be_listed() -> None:
+    failures = _failures("strict_summary", build=False)
+    assert any("parts.0.note='{}': accepted" in f for f in failures)
+    assert not any(f.startswith("summary=") for f in failures)
+
+
+def test_an_unused_verbatim_pattern_is_a_failure() -> None:
+    stale = frozenset({NOTE, ("parts", "*", "gone")})
+    failures = _failures("strict_summary", build=False, verbatim=stale)
+    assert failures == ["parts.*.gone: verbatim pattern names no path of the payload"]
+
+
+def test_a_verbatim_path_does_not_excuse_a_build_that_raises() -> None:
+    with pytest.raises(ValidationError):
+        _failures("strict_summary", build=True, verbatim=frozenset({NOTE}))
+
+
+def test_path_matches_wildcards_only_list_indices() -> None:
+    assert path_matches(("a", "*", "b"), ("a", 3, "b"))
+    assert not path_matches(("a", "*"), ("a", "b"))
+    assert not path_matches(("a",), ("a", 0))
 
 
 def test_model_text_failures_reports_a_wedge_that_refuses() -> None:

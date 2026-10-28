@@ -729,32 +729,53 @@ def _dotted(path: TextPath) -> str:
     return ".".join(str(step) for step in path)
 
 
+def path_matches(pattern: tuple[str | int, ...], path: TextPath) -> bool:
+    """`pattern` names `path`: the same length and keys, with `"*"` standing for any list index."""
+    return len(pattern) == len(path) and all(
+        p == q or (p == "*" and isinstance(q, int)) for p, q in zip(pattern, path, strict=True)
+    )
+
+
 def model_text_failures(
     schema: type[BaseModel],
     positive: str,
     fresh: Callable[[], ReviewRun],
     *,
     values: Sequence[str] = MODEL_TEXT_HOSTILE,
-    require_issue: bool = True,
+    verbatim: frozenset[tuple[str | int, ...]] = frozenset(),
 ) -> list[str]:
-    """Round 3 item 2: for each free-text path of the module's `positive` payload and each hostile
-    value, on a `fresh()` run at the step: the outcome lists an issue and is not
-    `valid` (a `valid` outcome is a failure unless `require_issue` is False, for a field the module
-    legitimately takes verbatim); and a following submission of `positive` is `valid`, so the run
-    is not wedged on `stale_binding`. `fresh()` returns a run whose `submit_review` does whatever
-    the module needs before a submit (reads), since a refused attempt re-activates the step.
-    A raise, from the hostile submit or the follow-up, propagates as the failure. Returns the
-    non-raising failures as `<path>=<value>: <what>` (accepted, no issue, wedged); `[]` when none."""
+    """Round 3 item 2 and round 5 item 10: for each free-text path of the module's `positive`
+    payload and each hostile value, on a `fresh()` run at the step: the outcome lists an issue and
+    is not `valid`, and a following submission of `positive` is `valid`, so the run is not wedged
+    on `stale_binding`.
+
+    `verbatim` is the module's explicit set of path patterns (`"*"` for a list index) whose value
+    is stored as plain text and is never built as `RunText` or `Claim.text` downstream; the module
+    records each path's sink beside the set. Only on those paths is a `valid` outcome allowed (the
+    step is then done, so no wedge check). Every other path must journal an issue. A pattern that
+    names no path of the payload is a failure, so the set cannot rot.
+
+    `fresh()` returns a run whose `submit_review` does whatever the module needs before a submit
+    (reads), since a refused attempt re-activates the step. A raise, from the hostile submit or the
+    follow-up, propagates as the failure. Returns the non-raising failures as
+    `<path>=<value>: <what>` (accepted, no issue, wedged, unused verbatim); `[]` when none."""
     payload = json.loads(positive)
     failures: list[str] = []
-    for path in free_text_paths(payload, schema):
+    paths = free_text_paths(payload, schema)
+    failures.extend(
+        f"{'.'.join(map(str, pattern))}: verbatim pattern names no path of the payload"
+        for pattern in sorted(verbatim, key=str)
+        if not any(path_matches(pattern, path) for path in paths)
+    )
+    for path in paths:
+        allowed = any(path_matches(pattern, path) for pattern in verbatim)
         for value in values:
             label = f"{_dotted(path)}={value!r}"
             run = fresh()
             text = json.dumps(with_text(payload, path, value), ensure_ascii=False)
             outcome = run.submit_review(text)  # a raise propagates: it is the failure
             if outcome["status"] == "valid":
-                if require_issue:
+                if not allowed:
                     failures.append(f"{label}: accepted")
                 continue  # taken verbatim and the step is done: nothing to wedge
             if not outcome["issues"]:

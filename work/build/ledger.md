@@ -65,3 +65,4 @@
 - 2026-10-28 cpl10-stage1 round-4 review (mx-adversary) on ba7f246: APPROVE; merged into lane. All nine merged Stage 1 module tests pass together on the lane. Lows: unsettled twin unit, and an all-unsettled topic untested, to LEAD round 5; the f_known_without_amount_allowed test gap (since f4f3f8f) to the owner
 - 2026-10-28 methodology change (a48990d) merged into lane (301fd90): all merged module tests pass except two CP-1C pin tests; re-pin dispatched to the CP-1C implementer
 - 2026-10-28 Stage 1 layer review (mx-architect) dispatched: group A (CP-2E, CP-2D, CP-2A) and group C (CP-3D, CP-DR, CP-4, CP-3); group B (CP-1C, CP-1D, CP-L10) waits for the CP-1C re-pin
+- 2026-10-28 cp1c re-pin 2524eb4 merged into lane; all merged module tests plus cp1b_registration pass on lane

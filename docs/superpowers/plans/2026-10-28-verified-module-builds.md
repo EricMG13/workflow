@@ -65,6 +65,16 @@ Base: `e8ee084` (the lane branch, fast-forwarded to the LEAD tip). Brief templat
 | CP-L10 Screening | `docs/CPL10-OWNER-LEASE.md` (70ec120) | `cases/cpl10-owner/` | `owners/cpl10.py` | `tests/test_method_cpl10.py` |
 | CP-1C Peer comparison | `docs/CP1C-OWNER-LEASE.md` (70ec120) | `cases/cp1c-owner/` | `owners/cp1c.py` | `tests/test_method_cp1c.py` |
 
+Queued Stage 1 (frozen at 9bfe85e/859b871; dispatch as slots free):
+
+| Module | Lease | Oracle |
+|---|---|---|
+| CP-2G Forward cases | `docs/CP2G-OWNER-LEASE.md` | `cases/cp2g-owner/` |
+| CP-8 Decision ledger | `docs/CP8-OWNER-LEASE.md` (rev 4) | `cases/cp8-owner/` |
+| CP-3C Refinancing and LME | `docs/CP3C-OWNER-LEASE.md` (rev 3) | `cases/cp3c-owner/` |
+
+Plus a CP-1C follow-up: rebase d1103da onto the 9bfe85e oracle (manifest 121a0ab9…, expected e786acb3…, builder e32c8b83…), then assert T1C.1, T1C.8, the universe claim and r13/r14. CP-L10 Stage 2 is held until LEAD freezes its amendment 1.
+
 LEAD amendment 1 (2026-10-28) is running for CP-L10 (F1–F5) and CP-1C (T1C.1 `total` → T1C.8). Until it is re-frozen, Stage 1 tests only the untouched parts: the CP-L10 topic rows and arithmetic, refusals r01–r12, and the CP-1C peer tables T1C.2–T1C.7. A follow-up Stage 1 task adds the amended parts.
 
 For each module:
@@ -74,6 +84,22 @@ For each module:
 - [ ] It runs confidence-review and commits.
 - [ ] `mx-adversary` reviews arithmetic against the lease. Any fix round goes to an Opus agent.
 - [ ] Merge into the lane branch.
+
+**Rulings rounds** (LEAD `docs/rulings/2026-10-28-stage1.md`, 2d27e50; a ruling beats the lease). Each module gets one rulings round after its current review returns. The original implementer merges the lane tip, applies its section test-first and runs the reviewer's probes. The round is not counted as a fix round. Review is scoped to the ruling diff: `mx-adversary` for financial arithmetic (CP-2D, CP-2A, CP-1D, CP-1C), `mx-precise` for wording-only rounds (CP-2E, CP-DR, CP-3D). The merged modules (CP-2E, CP-DR, CP-3D) are reworked on their own branches and merged again.
+
+| Module | Rulings | Notes |
+|---|---|---|
+| CP-2E | E1–E5 | merged; rework on branch |
+| CP-2A | A1–A8 | A5 replaces the v02 strict xfail; A7 removes the positive-interest refusal |
+| CP-3D | D1–D3, X1 (i)–(v) | merged; rework on branch; the five shapes get claim wording, none raises |
+| CP-DR | R1–R3 | merged; rework on branch |
+| CP-2D | 2D1–2D9, 2D-a–d | 2D-a: substring match only over analyst fields; 2D-b/c/d: missing operands, facility terms and cross-check mismatches settle; 2D9 financing total |
+| CP-1C | 1C1–1C6, C1–C3, 1C-x | folded into the running fix 1; C2 overrides the builder |
+| CP-1D | 1D1–1D10, 1D2 follow-up, 1D-x | 1D3 settles (no raise); 1D1 oracle amendment lands after methodology |
+| CP-4 | 4-1 | b658bc1 approved and merged (056b355); re-pin to 7328203 (expected 154fc2d0…, builder 71cf0758…) dispatched |
+| CP-L10 | L10-a, L10-c | folded into the running amendment-1 fix; L10-b `methods/cpl10.md` note goes to Stage 2 |
+
+LEAD round 2 is committed at 842c911 (merged d9cada2), and round 3 at f5ee633 (merged 2b4b393). Stage 2 `methods/<cp>.md` notes: cp1d (1D4), cpl10 (L10-b), cp2d (2D-a stem list). CP-4 T4C.7 `stated_value` display is open in QUEUE for the CP-4 build (engine-side; owner decides). `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
 
 Then:
 - [ ] **Stage 1 review.** Fable checks every module's calculation against its lease, the input-field lists against `manifest.fact_bindings`, and that nothing reaches into a store, the host or a renderer. It fixes and commits, test-first.
@@ -117,6 +143,16 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
 ## Stage 4 — Orchestration
 
 - [ ] **Receipt hardening.** The receipt verifier's tamper and forgery cases (S1a's adversary findings, B1-class hardening) and each module's `tamper`/`refusals`/`tool_use` oracle sections. This stage owns them, if LEAD accepts the deferral proposed on 2026-10-28.
+  - S1a review-adversary-4 (the user ruled these known gaps owned here; LEAD 1879180, `docs/reviews/s1a-owner-run.md`, full report and RED tests in `/Users/ericguei/Documents/Deploy Workflow Sessions/s1a-build/work/s1a/review-adversary-4.md`):
+    - **HIGH 1.** The verifier never replays `Execution.begin`'s rule (`owner_workflow.py` `_verify_begins` :1007-1024, `_verify_attempts` :1427-1429, the :1632 exemption). Replay begin on `before`:
+      - refuse a pending attempt;
+      - take `current_inputs` with an explicit identity_mismatch mapping;
+      - take `previous` as the attempts with the same module and inputs;
+      - refuse if `previous and (len(previous) >= 2 or not previous[-1].issues)`;
+      - require an exact `after.attempts`;
+      - refuse an unfinished attempt in the final snapshot.
+    - **MEDIUM 1.** The CP-MODEL attempt and head `inputs` are unbound. Apply the same replay, plus `current_inputs(final, deterministic) == attempt.inputs`.
+    - **LOW 1.** A sealed receipt can carry a pending attempt; HIGH 1 closes it.
 - [ ] **Stage 4 review.** Fable reviews, then fixes and commits.
 
 ## Stage 5 — Final verification

@@ -1,0 +1,266 @@
+{
+ "schema_version": "cp8-owner-cases/1",
+ "scope": "CP-8 decision ledger and post-mortem owner inputs: a two-module run CP-0 then CP-8 over a pack with a Prior Case record (the D5 prior-report input) and later issuer and dealer sources",
+ "status": "DRAFT revision 3 (fix round 2) by owner-preparation task cp8-owner, 2026-10-28; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "pins": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+  "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+  "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+  "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+  "cases/cp3-cp6-owner/manifest.json": "e3cb221737a3930278924eb16ad67208d9967cad455043565a79b24dcfae25c6"
+ },
+ "method_source": {
+  "path": "/Users/ericguei/Documents/Deploy VI/reference/deploy-v-r14/skills/cp-8-decision-ledger-post-mortem/SKILL.md",
+  "sha256": "1ace999e7224a0f003d09e045c331cadef89ca4a3d64ecfe5ec971029eee2248",
+  "steps_path": "/Users/ericguei/Documents/Deploy VI/reference/deploy-v-r14/skills/cp-8-decision-ledger-post-mortem/references/REF_CP-8_STEPS.md",
+  "steps_sha256": "54e85dad34e3a2e30e9ad89d5e335bc780097d582a277259c14a7c4f666c54bc",
+  "provenance_literal": true,
+  "read_by_builder": false,
+  "note": "r14 CP-8 skill and its step bundle: outside this repository, never opened by the builder (a provenance literal; the reviewer verifies the hashes by hand once). The T7.1-T7.8 columns follow its Output profile (T7.3 Evidence and T7.8 Missing Item included); the adaptations (titles, extra columns, split columns, the metric set and every rule below) are recorded in work/lead/cp8-owner-preparation/methods-cp8-draft.md"
+ },
+ "design_reference": {
+  "directory": "/Users/ericguei/Documents/DEPLOY VII/design/reference/",
+  "sha256": {
+   "rbot-fp-01-credit-snapshot.dc.html": "a279fc907774025a67e082dcca0a38b014f2093b2415106f5d47733fbbe44f8c",
+   "rbot-fp-06-portfolio-decision.dc.html": "10d49a0cb2f6da34a30e286a9caf3ec4695e15e7909fc246df399380c4d29271",
+   "rbot-design-system.dc.html": "765d190eafae9658371395062c734b6954c7fcb2896458768ab81be0f5716a96"
+  },
+  "provenance_literal": true,
+  "read_by_builder": false,
+  "note": "outside this repository, never opened by the builder (a provenance literal; verified by hand once)",
+  "not_produced": [
+   "Design-system band tile 'Since last Report' with the state word 'Deteriorated', 'Prior Case <date>' and '<N> changes' (rbot-design-system.dc.html line 95; FP01 'C · Not in this Pathway, Prior Case present, Blocked module in the band'): this oracle produces no band tile, no state word (Deteriorated or any other) and no change count; the what-changed block is the only rendered CP-8 section"
+  ]
+ },
+ "market_source_pin": {
+  "file_read": "cases/cp3-cp6-owner/manifest.json",
+  "file_pinned": true,
+  "file_sha256": "e3cb221737a3930278924eb16ad67208d9967cad455043565a79b24dcfae25c6",
+  "source_sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+  "why": "the file is pinned by its own sha256 (committed 4e6997c) and its page bytes by the source sha256; only used to check the Prior Case record's dealer quotation and the later sheet's instrument line against the frozen sheet. A change to either hash fails the build"
+ },
+ "reuse": {
+  "identity": "cases/financial/manifest.json source identity, bytes unchanged (the only frozen source in the pack; it carries the issuer-confirmation citation CP-0 needs)"
+ },
+ "synthetic_sources": {
+  "SYNTHETIC": true,
+  "label": "Invented test data. No figure, name or statement in the three new sources is an issuer or market fact; every page of each says so (asserted).",
+  "page_label": "This invented case is test data, not evidence about a real issuer.",
+  "pack_limitation": "Synthetic test source (invented); not an issuer or market fact.",
+  "pack_limitation_in": "CP-0 P5 and T8 limits of every row that attaches the source, and the CP-0 limitations (readiness_review source limitations)",
+  "never_part_of_a_product_pack": true
+ },
+ "new_sources": {
+  "prior_case": {
+   "name": "Prior Case record",
+   "authority_in_cp0": "unknown",
+   "sha256": "121f1a38e759a463341bd0e2abe073728ed9bf288ec92830fa423283ac09124e",
+   "pack_limitation": "Synthetic test source (invented); not an issuer or market fact.",
+   "status": "ready",
+   "media_type": "text/plain",
+   "extractor": "supplied-representation",
+   "extraction_status": "complete",
+   "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction",
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nPrior Case record\nRecorded at Approval on January 10, 2026.\nThis invented case is test data, not evidence about a real issuer.\nDecision: Neutral action bias with Medium confidence on the Northbridge Term Loan.\nDecision-maker role: Investment Committee.\nPortfolio posture and position size were not recorded.\nThesis as decided: The credit is sound on reported figures and the single dealer quotation sits just below par.\nGreatest uncertainty as decided: Thin market evidence from one dealer quotation."
+    },
+    {
+     "locator": "page:2",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nPrior Case record: figures and expectations\nThis invented case is test data, not evidence about a real issuer.\nTotal leverage recorded at Approval on January 10, 2026 was 1.67x.\nInterest cover recorded at Approval on January 10, 2026 was 6.00x.\nDealer quotation recorded at Approval, as of January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.\nExpectation recorded: leverage and cover to stay near these levels and the quotation to hold.\nDownside paths named: weaker unaudited earnings, sized as total leverage above 1.75x or interest cover below 5.75x; and liquidity that depends on steady cash generation.\nExit trigger recorded: a sharp move in the quotation. No threshold was recorded.\nExpected spread or return, expected rating path and expected holding period were not recorded."
+    }
+   ]
+  },
+  "update": {
+   "name": "Quarterly update note",
+   "authority_in_cp0": "issuer",
+   "sha256": "63889204c8e9a55ecd7685185459bb5d131ee4ecb6ea9c74a8cef870119e4e6a",
+   "pack_limitation": "Synthetic test source (invented); not an issuer or market fact.",
+   "status": "ready",
+   "media_type": "text/plain",
+   "extractor": "supplied-representation",
+   "extraction_status": "complete",
+   "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction",
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nQuarterly update note\nPublished April 30, 2026.\nThis invented case is test data, not evidence about a real issuer.\nTotal leverage for the twelve months to December 31, 2025 was reported as 1.67x.\nNo default or restructuring had occurred as of December 31, 2025.\nTotal leverage for the twelve months to February 28, 2026 was reported as 1.70x.\nTotal leverage for the twelve months to March 31, 2026 is reported as 1.80x.\nInterest cover for the twelve months to March 31, 2026 is reported as 5.50x.\nThe figures are unaudited.\nNo default or restructuring has occurred as of April 30, 2026."
+    }
+   ]
+  },
+  "market_update": {
+   "name": "Third-party loan market quotation sheet (April 2026)",
+   "authority_in_cp0": "third_party",
+   "sha256": "c15923264aad009c19642f0d96676a5e4ccb46a032d4522e7a89625cf832dba0",
+   "pack_limitation": "Synthetic test source (invented); not an issuer or market fact.",
+   "status": "ready",
+   "media_type": "text/plain",
+   "extractor": "supplied-representation",
+   "extraction_status": "complete",
+   "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction",
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "SYNTHETIC LOAN MARKET DESK\nSecondary loan quotation sheet\nPublished April 30, 2026. Quotations are as of the close on April 29, 2026.\nThis invented case is test data, not evidence about a real issuer.\nInstrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029.\nDealer quotation on April 29, 2026: bid 98.00 and offer 98.75, expressed as a percentage of par.\nThe quotation comes from one dealer."
+    }
+   ]
+  }
+ },
+ "consistency_with_frozen_sources": [
+  "Prior Case record page:2 total leverage 1.67x is the frozen LTM Q4 2025 total_leverage_reported 5/3 shown to two places (cases/financial/manifest.json q4_ltm_metric_oracle); interest cover 6.00x is the frozen 6",
+  "Prior Case record page:2 dealer quotation bid 98.50 and offer 99.25 as of January 9, 2026 equals the frozen market sheet page:1 (cases/cp3-cp6-owner/manifest.json market_source, sha256 c175d14b...)",
+  "Instrument name, senior secured term loan and final maturity December 31, 2029 in the later sheet equal the frozen sheet page:1 and financial page:5",
+  "The decision (Neutral, Medium, thesis, single dealer quotation just below par) is consistent with, but does not depend on, the CP-6 oracle draft (cases/cp3-cp6-owner); that file is not read for its CP-6 content",
+  "All outcome figures (1.80x, 5.50x, bid 98.00, offer 98.75) are dated after the frozen period (March 31 and April 29, 2026) and contradict no frozen figure",
+  "The pre-decision comparative on update page:1 (twelve months to December 31, 2025, 1.67x) is the same frozen LTM Q4 2025 leverage as the Prior Case record; it exists so the validator's rule that a realized observation must be dated after the decision is reachable (refusal r12); the line 'No default or restructuring had occurred as of December 31, 2025.' beside it makes the same rule reachable for the default statement (refusal r57) without also failing the subject rule (r60)",
+  "The update note's line 'Total leverage for the twelve months to February 28, 2026 was reported as 1.70x.' is invented; it is used only by refusal r68 (a realized figure that does not breach the recorded size) and by no accepted literal",
+  "The sizes named in the Prior Case record's downside line (total leverage above 1.75x, interest cover below 5.75x) are invented; Python (breach_of, strictly beyond the level) decides the breach: 1.80x and 5.50x breach them, the expected 1.67x and 6.00x do not, and the fixtures fixture_unchanged, fixture_improved and fixture_not_breached (1.70x; 5.75x equal to the level) do not (asserted)"
+ ],
+ "run": {
+  "requested_modules": [
+   "CP-8"
+  ],
+  "plan_order": [
+   "CP-0",
+   "CP-8"
+  ],
+  "live_consumers_of_cp0": [
+   "CP-8"
+  ],
+  "pathway": "credit_snapshot",
+  "pathway_note": "an explicit requested_modules overrides the preset (as the CP-L10 and CP-DR runs); FP01 carries the what-changed block",
+  "plan_with_cp6": [
+   "CP-0",
+   "CP-1",
+   "CP-1A",
+   "CP-2",
+   "CP-3",
+   "CP-5",
+   "CP-6",
+   "CP-8"
+  ],
+  "optional_cp6": "CP-6 is not selected in the cases; the edge is probed by registry only"
+ },
+ "cases": [
+  {
+   "case_id": "positive",
+   "run": {
+    "run_id": "slice-cp8-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-04-30",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-8"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+    },
+    {
+     "source_id": "prior_case",
+     "sha256": "121f1a38e759a463341bd0e2abe073728ed9bf288ec92830fa423283ac09124e"
+    },
+    {
+     "source_id": "update",
+     "sha256": "63889204c8e9a55ecd7685185459bb5d131ee4ecb6ea9c74a8cef870119e4e6a"
+    },
+    {
+     "source_id": "market_update",
+     "sha256": "c15923264aad009c19642f0d96676a5e4ccb46a032d4522e7a89625cf832dba0"
+    }
+   ],
+   "submission": "submissions.json#positive",
+   "readiness_review": "submissions.json#readiness_review.positive"
+  },
+  {
+   "case_id": "no_outcome",
+   "run": {
+    "run_id": "slice-cp8-no-outcome",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-04-30",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-8"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+    },
+    {
+     "source_id": "prior_case",
+     "sha256": "121f1a38e759a463341bd0e2abe073728ed9bf288ec92830fa423283ac09124e"
+    }
+   ],
+   "submission": "submissions.json#no_outcome",
+   "readiness_review": "submissions.json#readiness_review.no_outcome"
+  },
+  {
+   "case_id": "no_record",
+   "run": {
+    "run_id": "slice-cp8-no-record",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-04-30",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+     "CP-8"
+    ]
+   },
+   "pack_sources": [
+    {
+     "source_id": "identity",
+     "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+    },
+    {
+     "source_id": "update",
+     "sha256": "63889204c8e9a55ecd7685185459bb5d131ee4ecb6ea9c74a8cef870119e4e6a"
+    },
+    {
+     "source_id": "market_update",
+     "sha256": "c15923264aad009c19642f0d96676a5e4ccb46a032d4522e7a89625cf832dba0"
+    }
+   ],
+   "submission": null,
+   "readiness_review": "submissions.json#readiness_review.no_record"
+  }
+ ],
+ "table_ids": {
+  "CP-8": [
+   "T7.1",
+   "T7.2",
+   "T7.3",
+   "T7.4",
+   "T7.5",
+   "T7.6",
+   "T7.7",
+   "T7.8"
+  ],
+  "used": [
+   "T7.1",
+   "T7.2",
+   "T7.3",
+   "T7.4",
+   "T7.5",
+   "T7.6",
+   "T7.7",
+   "T7.8"
+  ],
+  "unregistered_rails_table": "cp8.what_changed",
+  "cp0_table_id_T7": "CP-0 registers the single id T7, a different string; fact ids are module-scoped"
+ }
+}

@@ -3021,3 +3021,8 @@ CP-OS frozen (2026-10-28): review-precise-3 FREEZE; LEAD scratch rebuild matched
 `docs/CPOS-OWNER-LEASE.md` (L-1..L-3 wording applied; rendering closes after the native DOM step and
 the shell skip-link defect fix). L2 speedup fix round 1 done (exact-`Execution` substitution only; cache
 limit 4; caches reset per test); scoped adversary re-review running.
+
+CP-2A frozen (2026-10-28): review-precise-4 FREEZE (revision 4 by mx-escalate); LEAD scratch rebuild
+matched; `docs/CP2A-OWNER-LEASE.md`. Methods drafts for CP-2A and CP-2D committed under
+`docs/methods-drafts/` (they move to `src/deploy_vii/methods/` with each build). B1 fix round 4 done
+(replay-verified recovery of a lost later begin record; two test gaps closed); adversary re-review next.

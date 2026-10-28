@@ -1,0 +1,262 @@
+{
+ "schema_version": "cp2a-owner-cases/2",
+ "scope": "CP-2A (alias CP-2B) Downside pathway: CP-0 to CP-1 to CP-2A over the frozen financial pack, then the first consumer CP-2G (not yet leased)",
+ "status": "DRAFT revision 4 (after review-precise-3 and the LEAD rulings of 2026-10-28); scoped re-review pending; not executed",
+ "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+ "financial_baseline": {
+  "path": "cases/financial/manifest.json",
+  "manifest_sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "sources": [
+   {
+    "source_id": "identity",
+    "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   },
+   {
+    "source_id": "financial",
+    "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   }
+  ],
+  "oracle_pointers": [
+   "q4_ltm_derived_source_units",
+   "q4_ltm_metric_oracle",
+   "quarter_observations",
+   "negative_case"
+  ]
+ },
+ "no_new_source": "CP-2A reads only the settled CP-1 head; the financial pack already carries every operand, so no synthetic source is added",
+ "cases": {
+  "positive": {
+   "run": {
+    "run_id": "cp2a-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2A"
+    ]
+   },
+   "pack": "identity + financial, as tests/test_financial_workflow.py make_pack()",
+   "pack_limitation_financial": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+   "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "submission": "submissions.json positive",
+   "expected": "expected.json positive",
+   "execution": "closed run: CP-0, CP-1 (five stages, readiness = submissions.json cp1_downstream_review), CP-2A"
+  },
+  "gap": {
+   "run": {
+    "run_id": "cp2a-owner-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2A"
+    ]
+   },
+   "pack": "same pack as positive",
+   "base_period": "Q3 25: 2025-07-01 to 2025-09-30",
+   "submission": "submissions.json gap",
+   "expected": "expected.json gap",
+   "execution": "closed run on the same CP-1 head construction; CP-1 has no twelve-month ratio for the quarter, so ratios are Not calculable, never 0"
+  },
+  "refused": {
+   "run": {
+    "run_id": "cp2a-owner-refused",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2A"
+    ]
+   },
+   "pack": "financial source missing: no pages/hash, extraction blocked, limitation 'Quarterly financial statements were not supplied.' (cases/financial/manifest.json negative_case)",
+   "submission": "submissions.json refused.cp0_review (no CP-2A submission exists)",
+   "expected": "expected.json refused",
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A is never begun"
+  },
+  "blocked": {
+   "run": {
+    "run_id": "cp2a-owner-blocked",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2A"
+    ]
+   },
+   "pack": "same pack as positive",
+   "submission": "submissions.json refusals r01 (attempt 0) then v13 (attempt 1)",
+   "expected": "expected.json blocked",
+   "execution": "closed run: CP-0, CP-1 as positive, then CP-2A attempt 0 invalid (rejected) and attempt 1 invalid (blocked)"
+  },
+  "interest_undisclosed": {
+   "run": null,
+   "pack": null,
+   "submission": "submissions.json interest_undisclosed",
+   "expected": "expected.json interest_undisclosed",
+   "execution": "composer only: the positive CP-1 module's facts with the base cash-interest fact and CP-1's coverage fact set to status missing (limitation 'Cash interest is not disclosed in the supplied statements.'); no store, no run (a promoted head cannot be edited)"
+  }
+ },
+ "refusal_cases": "submissions.json refusals (payloads) and expected.json refusals (exact issues); each is one journaled invalid step of CP-2A attempt 0 on the positive CP-1 head",
+ "fact_selection_rule": {
+  "table_id": "T4.10",
+  "predicate": "fact.table_id == 'T4.10' and fact.label == '<column> \u00b7 <metric>' where <column> is the base period column label and <metric> the T4.10 row's field_1 text; exactly one fact per (column, metric) (probe: 500 T4.10 facts, no duplicate label)",
+  "ltm_column": "LTM Q4 25 (2025-01-01 to 2025-12-31)",
+  "q3_column": "Q3 25 (2025-07-01 to 2025-09-30)",
+  "operand_metrics": {
+   "ebitda": "ebitda",
+   "interest": "cash_interest",
+   "fcf": "fcf",
+   "total_debt": "total_debt",
+   "cash": "cash_closing"
+  },
+  "ratio_metrics": {
+   "total_leverage": "total_leverage_reported",
+   "net_leverage": "net_leverage_reported",
+   "interest_coverage": "interest_coverage_reported",
+   "fcf_to_debt": "fcf_to_debt"
+  },
+  "fy25_vs_ltm": "FY25 carries period 'FY25: 2025-01-01 to 2025-12-31' and label 'FY25 (...) \u00b7 metric'; the LTM fact has period 'LTM Q4 25: ...' - the label and period strings differ, so the selection is unique",
+  "sign": "CP-1 stores cash_interest as an outflow (negative, 'sign normalised'); CP-2A uses its magnitude as the interest operand",
+  "probe": "S1 positive promoted CP-1 head (read only copy), 2026-10-28: LTM Q4 25 ebitda 30.0, cash_interest -5.00, fcf 9.00, total_debt 50.00, cash_closing 20.00, net_debt 30.00; Q3 25 ebitda 7.5, cash_interest -1.25, fcf 2.25, total_debt 48.75, cash_closing 18.75, net_debt 30.00; Q1-Q3 ratio facts status missing, limitation 'COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required'",
+  "observed_value_class_and_cell_text": "expected.json cases.<case>.cp1_inputs (value_class and cell_text as observed; amounts derived from the frozen pages and asserted against the financial oracle by the builder)",
+  "fact_ids": "interface-fact:<sha256>; bound at run time, never literal"
+ },
+ "run_time_bindings": {
+  "figure_placeholders": "{{FIG:name|token}} -> {<CP-1 fact_id>|<token>} by fact_selection_rule; unreplaced it is malformed run text (refusal v11)",
+  "fact_id_marker": "{{FACT_ID:name}} in an expected issue -> the CP-1 fact id bound to FIG name",
+  "cp1_readiness": {
+   "literal": "submissions.json cp1_downstream_review",
+   "markers": {
+    "{{INPUTS_SHA256}}": "the content hash of the step's prefilled DownstreamInputs",
+    "{{EVID:kpi fcf, LTM Q4 25 basis}}": "the evidence_id of the one catalogue record matching evidence_predicate with key 'fcf'",
+    "{{EVID:kpi cash_closing, LTM Q4 25 basis}}": "the same with key 'cash_closing'",
+    "{{ALL narrative gap ids}}": "every narrative.gaps[*].gap_id, in catalogue order, as separate list elements"
+   },
+   "evidence_predicate": {
+    "step": "the CP-1 narrative inputs (DownstreamInputs.narrative.inputs.catalogue)",
+    "basis_record": {
+     "kind": "basis",
+     "record_json.label": "LTM Q4 25",
+     "record_json.column_key": "LTM:fy-2025",
+     "record_json.scope": "historical",
+     "must_match_exactly": 1,
+     "basis_id_field": "record_json.basis_id",
+     "why_not_label_alone": "the label 'LTM Q4 25' matches two basis records: this one (column_key 'LTM:fy-2025', scope 'historical', the column the T4.10 'LTM Q4 25 (2025-01-01 to 2025-12-31)' facts read) and a trailing_four_quarters basis (column_key 'Q:q4-2025'), which no kpi record uses"
+    },
+    "kpi_record": {
+     "kind": "kpi",
+     "record_json.key": "<fcf | cash_closing>",
+     "record_json.display_basis_id": "<basis_id of basis_record>",
+     "must_match_exactly": 1
+    }
+   },
+   "gap_predicate": {
+    "all": "narrative.gaps[*].gap_id",
+    "note": "every retained source and context warning applies to the stress (relevance 'relevant'); ids are cp1-gap:<sha256>"
+   },
+   "observed_on_probe_store": {
+    "ltm_q4_25_display_basis_id": "model-basis:e6c56bc776bdd06c5151615c8e449eabd16878d4a2e027d5545a3216aab8efd2",
+    "basis_predicate_matches": 1,
+    "basis_label_only_matches": 2,
+    "fcf_evidence_id": "narrative-evidence:fff5b3c4a6fc5489d46b93b0c205877c4b056ba3cb37e6952314df62485b9663",
+    "fcf_matches": 1,
+    "cash_closing_evidence_id": "narrative-evidence:b22fc5fd4f518f053208ce285e5e09b9e60a1df9f6569263f6fea6d5895ec843",
+    "cash_closing_matches": 1,
+    "narrative_gaps": 1132,
+    "distinct_gap_ids": 1132,
+    "kpi_calculation_id_fcf": "canonical-kpi:5a3256748dcf5081aaa9c2e81f304336d76feb237a95cdbdb7a326cef21661ad (equals the calculation_id of the T4.10 'LTM Q4 25 (...) \u00b7 fcf' fact)",
+    "note": "ids are content hashes of the probe head; a run binds its own by the predicates, the observed values are evidence that the predicates are unique, not literals"
+   },
+   "validator_result": "validate_downstream_review: no issues; _assess_consumers row CP-2A status ready_with_limitations; an empty review is not_ready (review-precise-1 section 5, rerun in revision 2 on the literal with markers bound)"
+  },
+  "pack_hash": "PreparedPack.content_hash() of the run's pack",
+  "inherited_limitations": "execution.py settle rule (see execution.inherited_limitations)",
+  "ticket_and_call_ids": "structural only"
+ },
+ "figures": {
+  "total_leverage_reported": {
+   "metric": "total_leverage_reported",
+   "unit_token": "x",
+   "spelled": "1.67x",
+   "oracle_ratio": "50/30",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_leverage_reported",
+   "cp1_coordinate": "T4.10 total_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "1.67x",
+   "value_class": "calculated"
+  },
+  "net_leverage_reported": {
+   "metric": "net_leverage_reported",
+   "unit_token": "x",
+   "spelled": "1.00x",
+   "oracle_ratio": "30/30",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 net_leverage_reported",
+   "cp1_coordinate": "T4.10 net_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "1.00x",
+   "value_class": "calculated"
+  },
+  "interest_coverage_reported": {
+   "metric": "interest_coverage_reported",
+   "unit_token": "x",
+   "spelled": "6.00x",
+   "oracle_ratio": "30/5",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 interest_coverage_reported",
+   "cp1_coordinate": "T4.10 interest_coverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "6.00x",
+   "value_class": "calculated"
+  },
+  "fcf_to_debt": {
+   "metric": "fcf_to_debt",
+   "unit_token": "%",
+   "spelled": "18.0%",
+   "oracle_ratio": "9/50",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 fcf_to_debt",
+   "cp1_coordinate": "T4.10 fcf_to_debt, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "18.0%",
+   "value_class": "calculated"
+  },
+  "ebitda_ltm": {
+   "metric": "ebitda",
+   "unit_token": "US$ m",
+   "spelled": "30 US$ m",
+   "oracle_ratio": "30",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 ebitda",
+   "cp1_coordinate": "T4.10 ebitda, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "30",
+   "value_class": "calculated"
+  },
+  "total_debt_ltm": {
+   "metric": "total_debt",
+   "unit_token": "US$ m",
+   "spelled": "50 US$ m",
+   "oracle_ratio": "50",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_debt",
+   "cp1_coordinate": "T4.10 total_debt, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "50",
+   "value_class": "source"
+  },
+  "fcf_ltm": {
+   "metric": "fcf",
+   "unit_token": "US$ m",
+   "spelled": "9 US$ m",
+   "oracle_ratio": "9",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 fcf",
+   "cp1_coordinate": "T4.10 fcf, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "9",
+   "value_class": "calculated"
+  }
+ }
+}

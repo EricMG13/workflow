@@ -1,0 +1,2765 @@
+{
+ "schema_version": "cp2a-owner-submissions/2",
+ "note": "Literal analyst submissions for the downside_pathway step. {{FIG:name|token}} marks a CP-1 figure reference to be replaced mechanically by {<actual CP-1 fact_id>|<token>} after the CP-1 head is inspected (selection rule in manifest.json); unreplaced it is malformed run text and fails closed (refusal v11). Numbers in shock fields are analyst input, not computed values. CP-0 and the five CP-1 stages are reused unchanged from tests/test_financial_workflow.py except for the CP-0 consumer rows below and the CP-1 readiness stage, whose literal is cp1_downstream_review (markers bound by manifest.json run_time_bindings.cp1_readiness).",
+ "figures": {
+  "total_leverage_reported": {
+   "metric": "total_leverage_reported",
+   "unit_token": "x",
+   "spelled": "1.67x",
+   "oracle_ratio": "50/30",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_leverage_reported",
+   "cp1_coordinate": "T4.10 total_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "1.67x",
+   "value_class": "calculated"
+  },
+  "net_leverage_reported": {
+   "metric": "net_leverage_reported",
+   "unit_token": "x",
+   "spelled": "1.00x",
+   "oracle_ratio": "30/30",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 net_leverage_reported",
+   "cp1_coordinate": "T4.10 net_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "1.00x",
+   "value_class": "calculated"
+  },
+  "interest_coverage_reported": {
+   "metric": "interest_coverage_reported",
+   "unit_token": "x",
+   "spelled": "6.00x",
+   "oracle_ratio": "30/5",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 interest_coverage_reported",
+   "cp1_coordinate": "T4.10 interest_coverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "6.00x",
+   "value_class": "calculated"
+  },
+  "fcf_to_debt": {
+   "metric": "fcf_to_debt",
+   "unit_token": "%",
+   "spelled": "18.0%",
+   "oracle_ratio": "9/50",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 fcf_to_debt",
+   "cp1_coordinate": "T4.10 fcf_to_debt, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "18.0%",
+   "value_class": "calculated"
+  },
+  "ebitda_ltm": {
+   "metric": "ebitda",
+   "unit_token": "US$ m",
+   "spelled": "30 US$ m",
+   "oracle_ratio": "30",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 ebitda",
+   "cp1_coordinate": "T4.10 ebitda, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "30",
+   "value_class": "calculated"
+  },
+  "total_debt_ltm": {
+   "metric": "total_debt",
+   "unit_token": "US$ m",
+   "spelled": "50 US$ m",
+   "oracle_ratio": "50",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 total_debt",
+   "cp1_coordinate": "T4.10 total_debt, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "50",
+   "value_class": "source"
+  },
+  "fcf_ltm": {
+   "metric": "fcf",
+   "unit_token": "US$ m",
+   "spelled": "9 US$ m",
+   "oracle_ratio": "9",
+   "cp1_label": "LTM Q4 25 (2025-01-01 to 2025-12-31) \u00b7 fcf",
+   "cp1_coordinate": "T4.10 fcf, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
+   "cell_text": "9",
+   "value_class": "calculated"
+  }
+ },
+ "cp0_consumer_row_cp2a": {
+  "module_id": "CP-2A",
+  "readiness": "READY_WITH_LIMITATIONS",
+  "evidence_demand": "Settled CP-1 EBITDA, cash interest, free cash flow, debt and cash for one base period",
+  "source_ids": [
+   "identity",
+   "financial"
+  ],
+  "rationale": "The downside pathway can run on settled CP-1 figures with inherited source and scope limitations.",
+  "citations": [
+   {
+    "source_id": "identity",
+    "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "locator": "page:1",
+    "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+   },
+   {
+    "source_id": "financial",
+    "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "locator": "page:1",
+    "quote": "Currency: USD; amounts in millions."
+   }
+  ],
+  "missing_source": null,
+  "limitations": [
+   "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+  ]
+ },
+ "cp1_downstream_review": {
+  "inputs_sha256": "{{INPUTS_SHA256}}",
+  "consumers": [
+   {
+    "entry": "CP-2A",
+    "requirements": [
+     {
+      "requirement": "cash_flow_metrics",
+      "status": "sufficient",
+      "evidence_ids": [
+       "{{EVID:kpi fcf, LTM Q4 25 basis}}"
+      ],
+      "rationale": "Twelve-month levered free cash flow is available from the settled statements."
+     },
+     {
+      "requirement": "liquidity_data",
+      "status": "limited",
+      "evidence_ids": [
+       "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+      ],
+      "rationale": "Closing cash is available; there is no revolving facility.",
+      "actions": [
+       "Confirm undrawn committed facilities with the debt schedule."
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "gap_ids": [
+       "{{ALL narrative gap ids}}"
+      ],
+      "relevance": "relevant",
+      "evidence_ids": [],
+      "rationale": "Every retained source and context warning applies to the downside stress."
+     }
+    ]
+   }
+  ]
+ },
+ "refused": {
+  "cp0_consumer_row_cp1": {
+   "module_id": "CP-1",
+   "readiness": "CONDITIONAL",
+   "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+   "source_ids": [
+    "identity"
+   ],
+   "rationale": "Quarterly financial statements were not supplied.",
+   "citations": [
+    {
+     "source_id": "identity",
+     "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "locator": "page:1",
+     "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+    }
+   ],
+   "missing_source": "Quarterly financial statements",
+   "limitations": [
+    "Quarterly financial statements were not supplied."
+   ]
+  },
+  "cp0_consumer_row_cp2a": {
+   "module_id": "CP-2A",
+   "readiness": "CONDITIONAL",
+   "evidence_demand": "Settled CP-1 figures",
+   "source_ids": [
+    "identity"
+   ],
+   "rationale": "Quarterly financial statements were not supplied.",
+   "citations": [
+    {
+     "source_id": "identity",
+     "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+     "locator": "page:1",
+     "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+    }
+   ],
+   "missing_source": "Quarterly financial statements",
+   "limitations": [
+    "Quarterly financial statements were not supplied."
+   ]
+  },
+  "gap_row": {
+   "gap_id": "missing-financial",
+   "kind": "source",
+   "severity": "material",
+   "description": "Quarterly financial statements were not supplied.",
+   "affected_modules": [
+    "CP-1",
+    "CP-2A"
+   ],
+   "remediation": "Supply quarterly financial statements"
+  }
+ },
+ "positive": {
+  "downside_pathway": {
+   "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "scenarios": [
+    {
+     "name": "Moderate downturn",
+     "ebitda_decline": "0.20",
+     "interest_increase": "0",
+     "category": "Analyst Interpretation",
+     "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+     "limitation": null
+    },
+    {
+     "name": "Severe downturn",
+     "ebitda_decline": "0.40",
+     "interest_increase": "0",
+     "category": "Analyst Interpretation",
+     "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+     "limitation": null
+    },
+    {
+     "name": "Severe downturn with higher rates",
+     "ebitda_decline": "0.40",
+     "interest_increase": "0.20",
+     "category": "Analyst Interpretation",
+     "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+     "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+    },
+    {
+     "name": "Total loss of earnings",
+     "ebitda_decline": "1.00",
+     "interest_increase": "0",
+     "category": "Analyst Interpretation",
+     "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+     "limitation": null
+    }
+   ],
+   "thresholds": [
+    {
+     "metric": "total_leverage",
+     "level": "2.50",
+     "label": "Total leverage watch level",
+     "category": "Analyst Interpretation",
+     "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+    },
+    {
+     "metric": "net_leverage",
+     "level": "2.00",
+     "label": "Net leverage watch level",
+     "category": "Analyst Interpretation",
+     "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+    },
+    {
+     "metric": "interest_coverage",
+     "level": "2.00",
+     "label": "Interest coverage watch level",
+     "category": "Analyst Interpretation",
+     "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+    }
+   ],
+   "assessment": {
+    "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+    "category": "Analyst Interpretation",
+    "confidence": "Medium",
+    "limitation": "Scenario sizes and watch levels are analyst assumptions."
+   },
+   "gaps": [
+    {
+     "gap": "No covenant document or maturity schedule is an input to this stress.",
+     "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+     "affected_analysis": "Break-point ranking",
+     "severity": "Material",
+     "action": "Run the covenant owner and compare its tests with the watch levels."
+    }
+   ]
+  }
+ },
+ "gap": {
+  "downside_pathway": {
+   "base_period": "Q3 25: 2025-07-01 to 2025-09-30",
+   "scenarios": [
+    {
+     "name": "Moderate downturn",
+     "ebitda_decline": "0.20",
+     "interest_increase": "0",
+     "category": "Analyst Interpretation",
+     "rationale": "A moderate fall in volumes lowers quarterly earnings while debt and cash interest stay as reported.",
+     "limitation": null
+    },
+    {
+     "name": "Severe downturn with higher rates",
+     "ebitda_decline": "0.40",
+     "interest_increase": "0.20",
+     "category": "Analyst Interpretation",
+     "rationale": "A severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+     "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+    }
+   ],
+   "thresholds": [
+    {
+     "metric": "total_leverage",
+     "level": "2.50",
+     "label": "Total leverage watch level",
+     "category": "Analyst Interpretation",
+     "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+    }
+   ],
+   "assessment": {
+    "rationale": "The chosen base period is a single quarter, so the twelve-month ratios are not available and only flow results can be stated.",
+    "category": "Analyst Interpretation",
+    "confidence": "Low",
+    "limitation": "Twelve-month ratios are not calculable for the chosen quarter."
+   },
+   "gaps": [
+    {
+     "gap": "Twelve-month leverage and coverage are not calculable for the third quarter.",
+     "why_it_matters": "Only stressed earnings and free cash flow can be stated; no ratio and no leverage break point can be.",
+     "affected_analysis": "Stressed credit metrics and the leverage watch level",
+     "severity": "Material",
+     "action": "Base the stress on the twelve-month column ending the fourth quarter."
+    }
+   ]
+  }
+ },
+ "interest_undisclosed": {
+  "downside_pathway": {
+   "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+   "scenarios": [
+    {
+     "name": "Severe downturn",
+     "ebitda_decline": "0.40",
+     "interest_increase": "0",
+     "category": "Analyst Interpretation",
+     "rationale": "A severe fall in volumes cuts earnings.",
+     "limitation": null
+    },
+    {
+     "name": "Severe downturn with higher rates",
+     "ebitda_decline": "0.40",
+     "interest_increase": "0.20",
+     "category": "Analyst Interpretation",
+     "rationale": "A severe fall in volumes with a higher rate.",
+     "limitation": null
+    }
+   ],
+   "thresholds": [],
+   "assessment": {
+    "rationale": "Cash interest was not disclosed, so coverage cannot be stated.",
+    "category": "Insufficient Information",
+    "confidence": "Insufficient Information",
+    "limitation": "Cash interest is not disclosed in the supplied statements."
+   },
+   "gaps": []
+  }
+ },
+ "refusals": [
+  {
+   "id": "r01",
+   "class": "decline above one",
+   "mutation": "scenarios[0].ebitda_decline = '1.50'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "1.50",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r02",
+   "class": "decline negative",
+   "mutation": "scenarios[0].ebitda_decline = '-0.10'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "-0.10",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r03",
+   "class": "decline with more than four places",
+   "mutation": "scenarios[0].ebitda_decline = '0.12345'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.12345",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r04",
+   "class": "decline not a decimal string",
+   "mutation": "scenarios[0].ebitda_decline = 'twenty percent'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "twenty percent",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r05",
+   "class": "interest increase above one",
+   "mutation": "scenarios[2].interest_increase = '1.50'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "1.50",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r06",
+   "class": "no scenario",
+   "mutation": "scenarios = []",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r07",
+   "class": "more than four scenarios",
+   "mutation": "a fifth scenario (copy of the first) appended",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     },
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r08",
+   "class": "watch level not a decimal string",
+   "mutation": "thresholds[0].level = 'two point five'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "two point five",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r09",
+   "class": "watch level negative",
+   "mutation": "thresholds[0].level = '-2'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "-2",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r10",
+   "class": "unknown threshold metric",
+   "mutation": "thresholds[0].metric = 'fcf_to_debt'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "fcf_to_debt",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r11",
+   "class": "confidence outside the enumeration",
+   "mutation": "assessment.confidence = 'Very High'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Very High",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r12",
+   "class": "required field absent",
+   "mutation": "assessment.limitation removed",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium"
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "r13",
+   "class": "unknown field",
+   "mutation": "top-level key 'extra' added",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ],
+    "extra": 1
+   }
+  },
+  {
+   "id": "r14",
+   "class": "not JSON",
+   "mutation": "payload text '{not json'",
+   "payload": null,
+   "payload_text": "{not json"
+  },
+  {
+   "id": "v01",
+   "class": "base period not offered by the view",
+   "mutation": "base_period = 'LTM Q4 24: 2024-01-01 to 2024-12-31'",
+   "payload": {
+    "base_period": "LTM Q4 24: 2024-01-01 to 2024-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v02",
+   "class": "base EBITDA missing or not positive",
+   "mutation": "positive payload; composer run on the positive CP-1 facts with the base EBITDA fact set to status missing",
+   "composer_only": true,
+   "note": "no frozen period has a missing or non-positive EBITDA, so this class is exercised on the composer only (as interest_undisclosed)",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v03",
+   "class": "duplicate scenario name",
+   "mutation": "scenarios[1].name = scenarios[0].name",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v04",
+   "class": "two thresholds for one metric",
+   "mutation": "thresholds[1].metric = 'total_leverage' (the first is total_leverage)",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "total_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v05",
+   "class": "watch level not positive",
+   "mutation": "thresholds[0].level = '0'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "0",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v06",
+   "class": "digit in a scenario name",
+   "mutation": "scenarios[0].name = 'Moderate downturn 2'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn 2",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v07",
+   "class": "brace in a threshold label",
+   "mutation": "thresholds[0].label = 'Total leverage {watch} level'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage {watch} level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v08",
+   "class": "bare figure in prose",
+   "mutation": "scenarios[2].rationale states '20 percent'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a 20 percent rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v09",
+   "class": "unresolved reference",
+   "mutation": "scenarios[2].rationale names {T9.9.value|x}",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rate rise of {T9.9.value|x} on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v10",
+   "class": "unit-mismatched reference",
+   "mutation": "scenarios[0].rationale: the ebitda_ltm token unit 'US$ m' replaced by 'x'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|x}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v11",
+   "class": "figure placeholder left unreplaced",
+   "mutation": "the payload is sent with every {{FIG:..}} still in place",
+   "bind_placeholders": false,
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v12",
+   "class": "empty prose",
+   "mutation": "scenarios[3].rationale = ''",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v13",
+   "class": "confidence High",
+   "mutation": "assessment.confidence = 'High'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "High",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v14",
+   "class": "peer ranking",
+   "mutation": "scenarios[3].rationale adds 'versus peers'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero, weak versus peers.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v15",
+   "class": "instrument recommendation",
+   "mutation": "scenarios[3].rationale adds 'we recommend'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero, so we recommend caution.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v16",
+   "class": "recovery conclusion",
+   "mutation": "scenarios[3].rationale adds 'expected recovery'",
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero, with expected recovery unclear.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   }
+  },
+  {
+   "id": "v17",
+   "class": "stale or unbound inputs",
+   "mutation": "the positive payload, validated against a literal Upstream whose current CP-1 Input differs from the attempt's bound CP-1 Input; validator only, no run",
+   "composer_only": true,
+   "payload": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   },
+   "upstream_literal": {
+    "bound": "the attempt's inputs, bound at run time (prepared-pack, CP-0 and CP-1 Input records, CP-1 status restricted)",
+    "current": [
+     {
+      "input_id": "prepared-pack",
+      "sha256": "<the bound prepared-pack Input, unchanged>"
+     },
+     {
+      "input_id": "CP-0",
+      "sha256": "<the bound CP-0 Input, unchanged>",
+      "status": "<the bound CP-0 status, unchanged>"
+     },
+     {
+      "input_id": "CP-1",
+      "sha256": "7b28303b61b0c31aa5fd151ac79434028864c4ce619344b947438e1119d029fd",
+      "status": "restricted"
+     }
+    ]
+   },
+   "note": "validate_downside(pack=<pack>, submission=<positive>, upstream=Upstream(bound=attempt.inputs, current=<the bound tuple with only the CP-1 Input replaced by the literal above>, cp1=<bound CP-1 facts>)) returns exactly this one issue; prepared-pack and CP-0 stay equal so only CP-1 is reported. Run level: through G1, a CP-1 head change after begin refuses stale_binding at the next G1 call (owner_workflow.py:423-427); a direct Execution.submit_step caller gets ValueError('Ticket inputs have changed') (execution.py:768-769); neither consumes an attempt or journals a step"
+  }
+ ],
+ "blocked": {
+  "attempt_0": "refusals r01",
+  "attempt_1": "refusals v13"
+ }
+}

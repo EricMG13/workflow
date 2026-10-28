@@ -117,8 +117,12 @@ _DATE_IN_QUOTE = re.compile(  # round 9 item 2's date match
     + r") ([1-9]|[12][0-9]|3[01]), ((?:19|20)[0-9]{2})(?![0-9])"
 )
 _FIGURE = re.compile(r"^[0-9]{1,3}\.[0-9]{2}$")  # a quoted figure or level: N.NN
-_MULTIPLE = re.compile(r"[0-9]+\.[0-9]+x")
-_DECIMAL = re.compile(r"[0-9]+\.[0-9]+")
+# Round 10 item 1: a figure read from a quote is the signed numeral it prints. A "-" is a minus
+# sign at the quote's start or after a character that is neither a letter nor a digit (so not
+# 1-December, 2024-2025, 95-96, S-350); "(N)" with no space inside is accounting negative.
+_SIGN = r"(?<![A-Za-z0-9])-"
+_MULTIPLE = re.compile(rf"(?:{_SIGN})?[0-9]+\.[0-9]+x|\([0-9]+\.[0-9]+\)x")
+_DECIMAL = re.compile(rf"(?:{_SIGN})?[0-9]+\.[0-9]+|\([0-9]+\.[0-9]+\)")
 _REFERENCE = re.compile(r"[{}\[\]]")
 _SUBJECT = re.compile(r"default|restructuring")
 _PROHIBITED = re.compile(  # r14 prohibited conclusions (lease, analyst text)
@@ -391,8 +395,10 @@ def _only_date(at: str, quote: str) -> bool:
 
 
 def _token_once(value: str, quote: str) -> bool:
-    """``value`` occurs exactly once in the normalised ``quote`` as a whole number."""
-    pattern = r"(?<![0-9.])" + re.escape(value) + r"(?![0-9]|\.[0-9])"
+    """``value`` occurs exactly once in the normalised ``quote`` as a whole unsigned number: a
+    minus-signed or parenthesised printing is another figure (round 10 item 1)."""
+    v = re.escape(value)
+    pattern = rf"(?<![0-9.])(?<!{_SIGN})(?!(?<=\(){v}\)){v}(?![0-9]|\.[0-9])"
     return len(re.findall(pattern, quote)) == 1
 
 

@@ -379,6 +379,7 @@ def test_an_unready_pack_source_is_unavailable_before_the_scope_rule() -> None:
 # Code points, not literals (as in deploy_vii.quotes): the characters are easy to misread.
 SOFT_HYPHEN, NO_BREAK_SPACE, EN_DASH = chr(0x00AD), chr(0x00A0), chr(0x2013)
 SUPERSCRIPT_TWO, ONE_HALF = chr(0x00B2), chr(0x00BD)
+MINUS_SIGN = chr(0x2212)
 NOT_CALCULABLE = "Not calculable: needs an expected and a realized value"  # pinned (no_outcome)
 NOT_ASSESSED = "Not assessed: the measure is not compared"  # pinned (no_outcome)
 POSITIVE_LIMITS = tuple(EXPECTED["cases"]["positive"]["own_limitations"])
@@ -1365,3 +1366,83 @@ def test_r9_5_an_exit_trigger_absence_has_its_gap_row() -> None:
         report.limitations[2]
         == "No exit trigger is recorded, so exit discipline cannot be measured"
     )
+
+
+# round 10 item 1: a figure read from a quote is the signed numeral the quote prints
+SIGNED = {  # form -> the printed figure, before any unit
+    "minus sign": MINUS_SIGN + "{}",
+    "hyphen-minus": "-{}",
+    "en dash": EN_DASH + "{}",
+    "accounting parentheses": "({})",
+}
+
+
+def edited(lit: dict[str, Any], source_id: str, old: str, new: str) -> tuple[str, ...]:
+    """Every literal quote and the page with ``old`` stated as ``new``: the validator's issues."""
+    text = json.dumps(lit, ensure_ascii=False)
+    assert old in text
+    moved = json.loads(text.replace(old, new))
+    return issues_over(moved, edited_pack(source_id, old, new))
+
+
+@pytest.mark.parametrize("form", list(SIGNED))
+def test_r10_a_signed_observation_figure_does_not_occur(form: str) -> None:
+    leverage = SIGNED[form].format("1.80") + "x"
+    assert edited(positive(), "update", "reported as 1.80x.", f"reported as {leverage}.") == (
+        "observations[4]: value_text 1.80 does not occur in the quote",
+    )
+    bid = SIGNED[form].format("98.00")
+    assert edited(positive(), "market_update", "bid 98.00 and", f"bid {bid} and") == (
+        "observations[6]: value_text 98.00 does not occur in the quote",
+    )
+
+
+@pytest.mark.parametrize("form", list(SIGNED))
+def test_r10_a_signed_first_figure_after_the_label_is_not_the_value(form: str) -> None:
+    leverage = SIGNED[form].format("1.80") + "x"
+    new = f"reported as {leverage} against 1.80x."
+    assert edited(positive(), "update", "reported as 1.80x.", new) == (
+        (
+            "observations[4]: total_leverage value_text 1.80 is not labelled total_leverage in "
+            "the quote"
+        ),
+    )
+    bid = SIGNED[form].format("98.00")
+    assert edited(positive(), "market_update", "bid 98.00 and", f"bid {bid} against 98.00 and") == (
+        "observations[6]: loan_bid value_text 98.00 is not labelled loan_bid in the quote",
+    )
+
+
+@pytest.mark.parametrize("form", list(SIGNED))
+def test_r10_a_signed_size_level_does_not_occur(form: str) -> None:
+    level = SIGNED[form].format("1.75") + "x"
+    assert edited(positive(), "prior_case", "above 1.75x", f"above {level}") == (
+        "thesis.downside_sizes[0]: level_text 1.75 does not occur in the quote",
+    )
+
+
+@pytest.mark.parametrize(
+    "new",
+    [
+        "reported as 1.75-1.80x.",  # a dash after a digit (95-96)
+        "reported as S-1.80x.",  # a dash after a letter (S-350)
+        "reported as +1.80x.",  # a plus is ignored
+    ],
+)
+def test_r10_a_dash_that_is_not_a_sign_still_validates(new: str) -> None:
+    assert edited(positive(), "update", "reported as 1.80x.", new) == ()
+
+
+@pytest.mark.parametrize(
+    ("value", "quote"),
+    [("1", "1-December"), ("2025", "2024-2025"), ("96", "95-96"), ("350", "S-350")],
+)
+def test_r10_the_rules_non_signs_are_read_unsigned(value: str, quote: str) -> None:
+    assert cp8_module._token_once(value, quote)
+    assert not cp8_module._token_once(value, f"as -{value}")
+
+
+def test_r10_a_parenthesis_around_a_unit_is_not_a_sign() -> None:
+    assert cp8_module._token_once("4.30", "(4.30 percent)")
+    assert cp8_module._labelled("loan_bid", "98.00", "bid (98.00 percent of par)")
+    assert not cp8_module._labelled("loan_bid", "98.00", "bid (98.00) or 98.00")

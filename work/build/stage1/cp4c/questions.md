@@ -14,3 +14,6 @@
 - **B4.** Raw quote matching is stricter than the product's `citation_issues`, so at Stage 2 a quote the host accepts can still be refused.
 - **B5 (Info).** Under A-1, a class can get a distribution of 0 while its rank's recovery is positive. This needs 38-digit amounts.
 - **B6.** The implied-multiple choice: EV's reason wins, and a not_applicable CP-1 EBITDA takes "missing". See round8-report.md.
+
+## Ruled by LEAD round 11 (d60035b)
+See `docs/rulings/2026-10-28-stage1.md` `# Round 11`, `## CP-4C`. Modules-decides items are recorded in the ledger (2026-10-28 round 11 line).

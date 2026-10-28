@@ -15,3 +15,6 @@
 - **B4.** A known FY2026 first-year result lists a later missing CP-2G fact in `derives_from`. Lease D3 (c) asks for all three rows. Is that intended (p11)?
 - **B5 (Stage 2).** The T2R.1 `u_cp1` and `u_cp2g` statuses come from fields that are not checked against the bound Inputs.
 - **B6 (Stage 2).** Untested stale-issue order, the `absent` wording, and the `str` current path.
+
+## Ruled by LEAD round 11 (d60035b)
+See `docs/rulings/2026-10-28-stage1.md` `# Round 11`, `## CP-2H`. Modules-decides items are recorded in the ledger (2026-10-28 round 11 line).

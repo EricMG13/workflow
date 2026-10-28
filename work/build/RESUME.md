@@ -16,15 +16,17 @@ Lane `claude/module-dev-status-review-0981b6` at 7fdddbf or later (rounds 9 and 
 ## In flight (resume an agent by SendMessage to its id; worktree `.claude/worktrees/agent-<impl id>` unless noted). Opus cap 6 (LEAD AGENTS.md proposal); ruling-text diffs reviewed by mx-feature.
 | Work | Base | Agent | Next |
 |---|---|---|---|
-| CP-2H fix 1 (cp2h/fix1-brief.md; decisions cp2h/questions.md) | cc1d0fb | a52b5ec0919986ddb | mx-adversary re-review, merge |
-| CP-4C fix 1 mx-adversary re-review | 3b9c3dc | impl a2c15c441717ec41c | merge |
+| CP-2H fix 1b, round 11 (cp2h/fix1b-brief.md) | 87f2d9d | a52b5ec0919986ddb | mx-adversary re-review of fix 1 + 1b, merge |
+| CP-4C fix 1 mx-adversary re-review | 3b9c3dc | impl a2c15c441717ec41c | round 11 B2/B3/B6 rulings round, then merge |
 | H1 fix 2 mx-adversary re-review | 38f0f46 | impl a69f811059171c714 | merge; then H1b |
-| CP-3C fix 1 mx-adversary re-review | 8a45037 | impl aa5a4817fa00cd287 | merge |
+| CP-3C fix 1b, round 11 (cp3c/fix1b-brief.md) | 8a45037 | aa5a4817fa00cd287 | mx-adversary re-review of fix 1 + 1b, merge |
+| Shared defect-class library + inventory (stage1/defect-classes-brief.md) | lane | see ledger (worktree defect-classes) | per-module fix rounds from the inventory |
 
 
 ## Next when a slot frees
 - H1b: the five leased `_SOURCE_STEPS`/`_OWNER_SCOPES` rows (round 10 item 6), one test per row, own review.
 - G1-side guards (round 10 item 6 follow-ups) ride with the next G1-X change.
+- Ride with the next change: CP-2D pre-D0 gap (round 11); CP-2G I1 explicit raise (round 11); per-module quote-edge (B1) and wrap (B3) fixes and blank-text fixes from the defect-class inventory.
 
 ## Queued
 - Riding Lows: CP-8 r10 (lowercase guard; close-only parenthesis); CP-2E r10 L1 (in fix 1); CP-3D r10 L1 (parenthesis tested at match start, `(-425)`); CP-1D r10 (1D7-before-≤0 unpinned; `(` side untested); CP-3D name wrap-join (quote-6h-review Low 1; needs a public joined-reading helper in deploy_vii.quotes, with LEAD); CP-2D L1-L6 test gaps (stage1/cp2d/round5-6-review.md).

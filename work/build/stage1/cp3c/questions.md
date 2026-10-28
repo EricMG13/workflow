@@ -12,3 +12,6 @@
 - B4. BURDEN-01 precedence when EBITDA ≤ 0 and the payable is missing.
 - B5. A whitespace-only limitation passes (CP-2H B3 is the same case).
 - B6. Negative principal or amortisation in the B6 state (Method and builder behave the same).
+
+## Ruled by LEAD round 11 (d60035b)
+See `docs/rulings/2026-10-28-stage1.md` `# Round 11`, `## CP-3C`. Modules-decides items are recorded in the ledger (2026-10-28 round 11 line).

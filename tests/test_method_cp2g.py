@@ -28,6 +28,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from deploy_vii import prose
+from deploy_vii.business_context import spelled
 from deploy_vii.contracts import Citation, Fact, Input, InputStatus
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners import cp2g
@@ -1195,18 +1196,29 @@ def test_m1_cp1_figure_named_by_calculation_id() -> None:
 
 
 @pytest.mark.parametrize(
-    "update",
-    [{"unit": "THOUSANDS", "scale": D(1000)}, {"currency": "EUR"}, {"scale": D(1000)}],
+    "metric,update,found",
+    [
+        ("revenue", {"unit": "THOUSANDS", "scale": D(1000)}, "USD THOUSANDS at scale 1000"),
+        ("revenue", {"currency": "EUR"}, "EUR MILLIONS at scale 1000000"),
+        ("revenue", {"scale": D(1000)}, "USD MILLIONS at scale 1000"),
+        ("total_debt", {"currency": None}, "None MILLIONS at scale 1000000"),
+    ],
 )
-def test_m2_cp1_amount_must_be_usd_millions(update: dict[str, Any]) -> None:
-    """M2: lease "All amounts USD, unit MILLIONS"; another book fails closed (an invariant)."""
+def test_m2_cp1_amount_must_be_usd_millions(
+    metric: str, update: dict[str, Any], found: str
+) -> None:
+    """M2 (round 9 wording): lease "All amounts USD, unit MILLIONS"; another book fails closed
+    in validation and composition alike (an invariant)."""
     ctx = _context("positive")
-    facts = tuple(
-        f.model_copy(update=update) if f.row_id == "revenue" else f for f in ctx.cp1_facts
-    )
+    facts = tuple(f.model_copy(update=update) if f.row_id == metric else f for f in ctx.cp1_facts)
     ctx = dataclasses.replace(ctx, cp1_facts=facts)
-    with pytest.raises(ValueError, match="USD MILLIONS"):
-        cp2g.payload_issues(json.dumps(_bind_all(_payload("positive"))), ctx)
+    want = f"CP-2G: CP-1 {metric} must be USD MILLIONS at scale 1000000, not {found}"
+    payload = _plain(_payload("positive"))
+    with pytest.raises(ValueError) as validating:
+        cp2g.payload_issues(json.dumps(payload), ctx)
+    with pytest.raises(ValueError) as composing:
+        _compose(ctx, payload)
+    assert str(validating.value) == str(composing.value) == want
 
 
 def test_l4_unitless_unmapped_level_fails_closed() -> None:
@@ -1499,6 +1511,174 @@ def test_stale_input_compares_status_too() -> None:
     assert cp2g.stale_issues(bound=(was,), current=(now,)) == (
         f"Stale input CP-2A: bound restricted {digest}, current accepted {digest}",
     )
+
+
+# --- LEAD rulings round 9 (docs/rulings/2026-10-28-stage1.md "# Round 9", CP-2G) ---------------
+NC_MIN_LIQ = "Not calculable: minimum liquidity was not assessed"
+G5_DECLINE = "Not calculable: CP-2A scenario s03 states no known EBITDA decline"
+
+
+def test_l1_minimum_liquidity_cause_before_g5() -> None:
+    """L1: a cause of the test (minimum liquidity not assessed) comes before G-5's case-wide
+    cause: the three downside headroom cells and the m01 downside first year keep it."""
+    cells = _cells(_compose(_unknown_shock("decline", case="gap"), _bind_all(_payload("gap"))))
+    for row in ("d26", "d27", "d28"):
+        assert _gap_of(cells[f"T2H.6.{row}.liquidity_headroom"]) == ("missing", NC_MIN_LIQ)
+    assert _gap_of(cells["T2H.7.m01.down_first"]) == ("missing", NC_MIN_LIQ)
+    assert _gap_of(cells["T2H.6.d26.total_leverage"]) == ("missing", G5_DECLINE)
+
+
+def test_l1_g7_and_unknown_level_causes_before_g5() -> None:
+    """L1: the G-7 reason and an unknown CP-2A level's limitation are the test's own causes."""
+    other = "Free cash flow below zero"
+    unmapped = _other_definition(other).cp2a.breaks
+    breaks = tuple(
+        dataclasses.replace(
+            b,
+            level=b.level.model_copy(
+                update={"status": "missing", "amount": None, "limitation": "Level not stated"}
+            ),
+        )
+        if b.row == "b03"
+        else b
+        for b in unmapped
+    )
+    shocked = _unknown_shock("decline")
+    ctx = dataclasses.replace(shocked, cp2a=dataclasses.replace(shocked.cp2a, breaks=breaks))
+    cells = _cells(_compose(ctx, _bind_all(_payload("positive"))))
+    g7 = f"Not calculable: CP-2A definition break b01 has a test CP-2G does not map ({other})"
+    assert _gap_of(cells["T2H.7.b01.down_first"]) == ("missing", g7)
+    assert _gap_of(cells["T2H.7.b03.down_first"]) == ("missing", "Level not stated")
+    assert _gap_of(cells["T2H.7.b04.down_first"]) == ("missing", G5_DECLINE)
+
+
+def test_l2_non_ltm_cp1d_total_leverage_claim() -> None:
+    """L2: a known CP-1D total leverage on another period than the base."""
+    ctx = _cp1d_with("total_leverage", period="FY2025: 2025-01-01 to 2025-12-31")
+    claims = _claim_texts(_compose(ctx, _plain(_payload("positive"))))
+    assert claims["T2H.2.cp1d"] == (
+        "CP-1D's total leverage on the earnings it supports, "
+        "{T2H.2.total_leverage_supported.value|x}, is for another period than the base, so "
+        "opening total leverage is not restated on it; on reported earnings it is "
+        "{T2H.2.total_leverage.value|x}."
+    )
+    no_debt = dataclasses.replace(ctx, cp1_facts=_with_cp1("positive", "total_debt").cp1_facts)
+    claims = _claim_texts(_compose(no_debt, _plain(_payload("positive"))))
+    assert claims["T2H.2.cp1d"].endswith("on reported earnings it is [T2H.2.total_leverage.value].")
+
+
+def test_l3_no_test_calculable_claim() -> None:
+    """L3: every result of a case Not calculable (G-5 downside; base with CP-1 revenue missing)."""
+    claims = _claim_texts(_compose(_unknown_shock("decline"), _bind_all(_payload("positive"))))
+    assert claims["T2H.7.down"] == (
+        "In the downside case no tested break point is calculable through FY2028: "
+        "[T2H.7.b01.down_first]."
+    )
+    claims = _claim_texts(_compose(_with_cp1("gap", "revenue"), _plain(_payload("gap"))))
+    assert claims["T2H.7.base"] == (
+        "In the base case no tested break point is calculable through FY2028: "
+        "[T2H.7.b01.base_first]."
+    )
+
+
+_EXTREME = {  # schema-valid drivers that, with a long CP-1 revenue, need more than 38 digits
+    "revenue_growth": ["0.9999", "0.9997", "-0.9993"],
+    "ebitda_margin": ["0.9999", "0.0007", "0.3333"],
+    "capex_pct_revenue": ["0.0001", "0.1237", "0.9999"],
+    "tax_wc_pct_revenue": ["0.1111", "0.2223", "0.0001"],
+    "interest_rate": ["0.9999", "0.0001", "0.3337"],
+}
+
+
+def test_info_more_than_38_digits_fails_closed() -> None:
+    """Info: a sum or product needing more than 38 significant digits is a ValueError naming
+    the operation, never decimal.Inexact."""
+    payload = _plain(_payload("positive"))
+    for name, values in _EXTREME.items():
+        payload["base_drivers"][name]["values"] = values
+    ctx = _context("positive")
+    revenue = D("120.0000000000000000000000007")
+    facts = tuple(
+        f.model_copy(update={"amount": revenue}) if f.row_id == "revenue" else f
+        for f in ctx.cp1_facts
+    )
+    ctx = dataclasses.replace(ctx, cp1_facts=facts)
+    with pytest.raises(ValueError) as error:
+        _compose(ctx, payload)
+    assert str(error.value) == "CP-2G: the base case forecast needs more than 38 significant digits"
+    ops = cp2g.Operands.from_cp1(facts)
+    drivers = cp2g.Drivers.from_submission(
+        cp2g.ForwardSubmission.model_validate_json(json.dumps(payload)).base_drivers
+    )
+    with pytest.raises(ValueError) as error:
+        cp2g.forecast(operands=ops, drivers=drivers, shock=(D("0.3"), D("0.2")))
+    assert str(error.value) == (
+        "CP-2G: the downside case forecast needs more than 38 significant digits"
+    )
+
+
+@pytest.mark.parametrize(
+    "update,basis",
+    [
+        (
+            {"supported": {"period": "FY2025: 2025-01-01 to 2025-12-31"}},
+            "Base period FY2025: 2025-01-01 to 2025-12-31",
+        ),
+        (
+            {"supported": {"status": "missing", "amount": None, "limitation": "n/a"}},
+            f"Base period {LTM}",
+        ),
+        (
+            {
+                "supported": {"status": "missing", "amount": None, "limitation": "n/a"},
+                "total_leverage": {"status": "missing", "amount": None, "limitation": "n/a"},
+                "net_leverage": {"period": "FY2024: 2024-01-01 to 2024-12-31"},
+            },
+            "Base period FY2024: 2024-01-01 to 2024-12-31",
+        ),
+        (
+            {
+                field: {"status": "missing", "amount": None, "limitation": "n/a"}
+                for field in ("supported", "total_leverage", "net_leverage")
+            },
+            "Not applicable",
+        ),
+    ],
+)
+def test_t2h1_cp1d_basis_is_the_first_known_fact_period(
+    update: dict[str, dict[str, Any]], basis: str
+) -> None:
+    """Round 9 (For LEAD): the period of the first known CP-1D fact (supported, total, net);
+    the row's fallback when none is known."""
+    ctx = _context("positive")
+    head = dataclasses.replace(
+        ctx.cp1d,
+        **{
+            f: getattr(ctx.cp1d, f).model_copy(update={"calculation_id": None, **u})
+            for f, u in update.items()
+        },
+    )
+    cells = _cells(_compose(dataclasses.replace(ctx, cp1d=head), _plain(_payload("positive"))))
+    assert cells["T2H.1.u_cp1d.basis"].text == basis
+
+
+def test_t2h9_gap_texts_spell_references() -> None:
+    """Round 9 (CP-2A Choice 5 extended): T2H.9 gap texts and the `Gap (…)` own line spell each
+    `{ref|unit}` as rendered; the referenced CP-1 fact stays in cp1_references."""
+    ctx = _context("positive")
+    revenue = cp2g.select_cp1(ctx.cp1_facts)["revenue"]
+    ref, shown = "{" + revenue.fact_id + "|US$ m}", spelled(revenue)
+    payload = _bind_all(_payload("positive"))
+    for key in ("gap", "why_it_matters", "affected_analysis", "action"):
+        payload["gaps"][0][key] = f"Revenue of {ref} is a single year."
+    result = _compose(ctx, payload)
+    cells = _cells(result)
+    for key in ("gap", "why_it_matters", "affected_analysis", "action"):
+        assert cells[f"T2H.9.g01.{key}"].text == f"Revenue of {shown} is a single year."
+        assert cells[f"T2H.9.g01.{key}"].value_class == "analyst_judgment"
+    severity = payload["gaps"][0]["severity"]
+    assert f"Gap ({severity}): Revenue of {shown} is a single year." in result.own_limitations
+    assert revenue in [r.fact for r in result.references[0].rows]
 
 
 # --- property tests (lease A-section; expected.json property_tests) ------------------------------

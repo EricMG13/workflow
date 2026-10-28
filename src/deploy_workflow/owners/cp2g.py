@@ -16,7 +16,8 @@ Nothing here does I/O or touches a store, host, session or renderer. Connection,
 orchestration seams (G1-X protocol section 2) are added to this file in later stages.
 """
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, fields, replace
 from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
@@ -31,6 +32,7 @@ from deploy_vii.business_context import (
     Severity,
     prohibited_issues,
     referencable,
+    spelled,
 )
 from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus
 from deploy_vii.model._cells import CONTEXT
@@ -230,6 +232,17 @@ def _apply(fn: Callable[..., Decimal], *args: Val) -> Val:
         return _known(fn(*(a.amount for a in args)))
 
 
+@contextmanager
+def _exact_digits(operation: str) -> Iterator[None]:
+    """Round 9 Info: a sum or product of an operation that needs more than 38 significant
+    digits (the `_EXACT` Inexact trap) fails closed with a ValueError naming the operation.
+    Only decimal.Inexact is caught."""
+    try:
+        yield
+    except Inexact as error:
+        raise ValueError(f"CP-2G: {operation} needs more than 38 significant digits") from error
+
+
 def _ratio(num: Val, den: Val, non_positive: str) -> Val:
     """num / den: one division; a missing operand propagates (numerator first), den <= 0 is
     missing with `non_positive`."""
@@ -310,9 +323,9 @@ def _usd_millions(metric: str, fact: Fact) -> None:
     """Lease "All amounts USD, unit MILLIONS": another CP-1 book fails closed (an invariant;
     carrying the book's unit through would be a lease change)."""
     if (fact.currency, fact.unit, fact.scale) != ("USD", "MILLIONS", Decimal(1000000)):
-        raise ValueError(
-            f"CP-2G: CP-1 {metric} must be USD MILLIONS (scale 1000000), found "
-            f"{fact.currency} {fact.unit} (scale {fact.scale})"
+        raise ValueError(  # round 9 wording
+            f"CP-2G: CP-1 {metric} must be USD MILLIONS at scale 1000000, not "
+            f"{fact.currency} {fact.unit} at scale {fact.scale}"
         )
 
 
@@ -460,10 +473,11 @@ def forecast(
     to every year: EBITDA x (1 - decline), rate x (1 + increase), everything else held."""
     opening = (operands.revenue, operands.debt, operands.cash)
     years: list[Year] = []
-    for t in range(3):
-        y = _year(opening, drivers, t, shock, operands.undrawn)
-        years.append(y)
-        opening = (y.revenue, y.closing_debt, y.closing_cash)
+    with _exact_digits("the base case forecast" if shock is None else "the downside case forecast"):
+        for t in range(3):
+            y = _year(opening, drivers, t, shock, operands.undrawn)
+            years.append(y)
+            opening = (y.revenue, y.closing_debt, y.closing_cash)
     return CaseForecast(years=(years[0], years[1], years[2]))
 
 
@@ -1112,8 +1126,9 @@ class _Run:
 
 def _a25(ops: Operands) -> tuple[Val, Val]:
     """FY2025 cash flow after interest, taxes and working capital, and free cash flow."""
-    cfo = _apply(lambda e, i, x, w: e - i - x - w, ops.ebitda, ops.interest, ops.taxes, ops.wc)
-    return cfo, _apply(lambda a, k: a - k, cfo, ops.capex)
+    with _exact_digits("the FY2025 cash flow"):
+        cfo = _apply(lambda e, i, x, w: e - i - x - w, ops.ebitda, ops.interest, ops.taxes, ops.wc)
+        return cfo, _apply(lambda a, k: a - k, cfo, ops.capex)
 
 
 def _known_fact(f: Fact) -> bool:
@@ -1200,9 +1215,12 @@ def _resolve(inputs: ForwardInputs) -> _Run:
 def _t2h1(b: _Book, run: _Run) -> None:
     state = run.ctx.cp1d.state
     if state == "bound":
+        # round 9: the period of the first known CP-1D fact (supported, total, net); the row's
+        # "Not applicable" when none is known
+        period = next((f.period for f in run.cp1d or () if _known_fact(f)), None)
         cp1d_row = (
             str(run.ctx.cp1d.status),
-            f"Base period {LTM_PERIOD}",
+            "Not applicable" if period is None else f"Base period {period}",
             "T1D.3 supported EBITDA and T1D.6 supported leverage",
             "Supported EBITDA includes accepted savings not yet realised.",
         )
@@ -2045,6 +2063,23 @@ def _t2h8(b: _Book, run: _Run) -> dict[str, Trajectory]:
     return out
 
 
+def _spelled(text: str, bound: Mapping[str, Fact]) -> str:
+    """Round 9 (CP-2A Choice 5 extended to CP-2G): stored gap text spells each `{ref|unit}` as
+    rendered (`business_context.spelled`), never as raw braces. Validated text holds only figure
+    references to known upstream figures, so the raise is an invariant."""
+    parts = []
+    for run in prose.tokenize(text):
+        if run.kind == "text":
+            parts.append(run.text)
+        elif run.figure and run.text in bound and bound[run.text].status == "known":
+            parts.append(spelled(bound[run.text]))
+        else:
+            raise ValueError(
+                f"CP-2G: stored text reference {run.text} does not name a known upstream figure"
+            )
+    return "".join(parts)
+
+
 def _t2h9(b: _Book, run: _Run) -> None:
     for n, gap in enumerate(run.sub.gaps, 1):
         r = f"g{n:02d}"
@@ -2054,9 +2089,11 @@ def _t2h9(b: _Book, run: _Run) -> None:
             ("why_it_matters", "Why it matters"),
             ("affected_analysis", "Affected analysis"),
         ):
-            b.text(("T2H.9", r, field), label, getattr(gap, field), value_class="analyst_judgment")
+            text = _spelled(getattr(gap, field), run.bound)
+            b.text(("T2H.9", r, field), label, text, value_class="analyst_judgment")
         b.text(("T2H.9", r, "severity"), "Severity", gap.severity)
-        b.text(("T2H.9", r, "action"), "Action", gap.action, value_class="analyst_judgment")
+        action = _spelled(gap.action, run.bound)
+        b.text(("T2H.9", r, "action"), "Action", action, value_class="analyst_judgment")
         b.row(
             "T2H.9",
             r,
@@ -2136,6 +2173,11 @@ def _first_claim(case: str, tests: Sequence[BreakTest], results: Sequence[BreakR
         return f"The first tests reached in the {lab} case are {_joined(names)} in {FY[first]}."
     if all(r.first == NOT_REACHED for r in results):
         return f"No tested break point is reached in the {lab} case through {FY[-1]}."
+    if all(r.first == NOT_CALCULABLE for r in results):  # round 9 L3: the first test's chip
+        return (
+            f"In the {lab} case no tested break point is calculable through {FY[-1]}: "
+            f"[T2H.7.{tests[0].row}.{case}_first]."
+        )
     return f"In the {lab} case no tested break point is reached, but not every test is calculable."
 
 
@@ -2242,16 +2284,21 @@ def _claims(
         )
         out.append(forecast_claim(f"T2H.8.{case}", text))
     if run.ctx.cp1d.state == "bound":
-        out.append(
-            Claim(
-                "T2H.2.cp1d",
+        supported = b.by_id["T2H.2.total_leverage_supported.value"].fact
+        if supported.status == "known" and supported.period != LTM_PERIOD:  # round 9 L2
+            text = (
+                "CP-1D's total leverage on the earnings it supports, "
+                f"{ref('T2H.2.total_leverage_supported.value', 'x')}, is for another period than "
+                "the base, so opening total leverage is not restated on it; on reported earnings "
+                f"it is {ref('T2H.2.total_leverage.value', 'x')}."
+            )
+        else:
+            text = (
                 "On the earnings CP-1D supports, opening total leverage is "
                 f"{ref('T2H.2.total_leverage_supported.value', 'x')} against "
-                f"{ref('T2H.2.total_leverage.value', 'x')} on reported earnings.",
-                None,
-                (),
+                f"{ref('T2H.2.total_leverage.value', 'x')} on reported earnings."
             )
-        )
+        out.append(Claim("T2H.2.cp1d", text, None, ()))
     a = sub.assessment
     out.append(analyst("T2H.3.assessment", a.rationale, a.limitation))
     return tuple(out)
@@ -2381,7 +2428,7 @@ def _own_limitations(
             "A leverage trajectory that cannot be calculated is missing, with the reason, "
             "not a known text."
         )
-    out.extend(f"Gap ({g.severity}): {g.gap}" for g in run.sub.gaps)
+    out.extend(f"Gap ({g.severity}): {_spelled(g.gap, run.bound)}" for g in run.sub.gaps)
     return tuple(out)
 
 
@@ -2431,13 +2478,16 @@ def compute(inputs: ForwardInputs) -> ForwardResult:
     results = {case: test_breaks(tests=tests, forecast=run.path[case]) for case in CASES}
     b = _Book()
     _t2h1(b, run)
-    _t2h2(b, run)
+    with _exact_digits("the historical-to-base bridge"):
+        _t2h2(b, run)
     _t2h3(b, run)
     _t2h4(b, run)
     _t2h5(b, run)
-    _t2h6(b, run)
+    with _exact_digits("the credit metrics"):
+        _t2h6(b, run)
     _t2h7(b, run, tests, results)
-    traj = _t2h8(b, run)
+    with _exact_digits("the deleveraging path"):
+        traj = _t2h8(b, run)
     _t2h9(b, run)
     _cite(b, run)
     claims = _claims(b, run, tests, results, traj)

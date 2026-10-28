@@ -321,3 +321,4 @@
 - 2026-10-28 GOAL (user /goal): complete all stages. Stage 2 cohort 2 dispatched: CP-2E, CP-8, CP-L10 (mx-feature) at 3f3eba4
 - 19:23 LEAD Stage 2 round 1 rulings cherry-picked (80a93a6); brief, questions and backlog updated per Q1/Q5/Q6/Q8/Q10.
 - 19:24 Stage 2 dispatched: CP-4 (Q3/Q4), CP-3 (Q2, R3 only) (mx-feature) at 2cb5a7e.
+- 19:27 CP-DR built (ca5cf5a→rebased 1e3942a, 522 passed) and CP-3D built (094b1ef→rebased d8c3512, 1263 passed); both under mx-adversary review. CP-5 queued for a free slot.

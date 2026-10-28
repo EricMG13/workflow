@@ -5,25 +5,74 @@ source, a static upward parallel rate shock and a foreign-currency strengthening
 analyst supplies only the shock sizes, an optional hedge ratio, the assessments and a summary.
 Missing is never 0: every derived value is known, missing (with its reason) or not applicable.
 
-Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
-orchestration seams (G1-X protocol section 2) are added to this file in later stages.
+The calculation (everything down to ``compute``) does no I/O and touches no store, host, session
+or renderer. Stage 2 appends the G1-X protocol section 2 seams after it: the stored submission
+schema, ``RULES``, ``submit``, ``probe``, ``ENTRY_VALIDATOR``, the ``Module`` builder and the
+consumer reader.
 """
 
 import re
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, replace
 from decimal import ROUND_HALF_EVEN, Decimal, localcontext
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
-from deploy_vii.contracts import Fact
+from pydantic import TypeAdapter, ValidationError
+
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    Module,
+    ReportTable,
+    Run,
+    RunText,
+    TableColumn,
+    TableRow,
+)
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    clipped,
+)
+from deploy_vii.live.schema import exact_json, json_object
+from deploy_vii.live.schema import normalise as normalise_payload
+from deploy_vii.live.submission import Submitted, _with_rules
+from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
+from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-2E"
 SOURCE_ID = "financial"  # the only source the CP-2E step may cite (fixed host scope)
 
-Cite = tuple[str, str]  # (source_id, locator)
+
+class Cite(tuple[str, str]):
+    """A page cite, (source_id, locator), that also remembers the quote of the submission field
+    it was read from. It equals and hashes as the plain pair (so every page-level comparison and
+    ``_dedupe`` are unchanged); ``_dedupe`` keeps the first instance of a page, which is the first
+    of a derived fact's own input quotes on that page (fix round 1, M1)."""
+
+    quote: str
+
+    def __new__(cls, source_id: str, locator: str, quote: str = "") -> Self:
+        self = super().__new__(cls, (source_id, locator))
+        self.quote = quote
+        return self
+
+
 State = Literal["known", "missing", "not_applicable"]
 RateType = Literal["FLOATING", "FIXED"]
 
@@ -381,7 +430,7 @@ def _row_decimal(token: str) -> Decimal:
 
 
 def _cite(ref: Mapping[str, Any]) -> Cite:
-    return (str(ref["source_id"]), str(ref["locator"]))
+    return Cite(str(ref["source_id"]), str(ref["locator"]), str(ref["quote"]))
 
 
 def _absence(raw: Mapping[str, Any] | None) -> Absence | None:
@@ -409,7 +458,7 @@ def inputs_from_submission(
             balance=Sourced(
                 Decimal(r["facility_balance"]["value_text"]), _cite(r["facility_balance"])
             ),
-            basis=RateBasis(basis["rate_type"], basis["reference_rate"], _cite(basis)),
+            basis=RateBasis(basis["rate_type"], normalise(basis["reference_rate"]), _cite(basis)),
             spread_bp=Sourced(Decimal(r["spread"]["bps_text"]), _cite(r["spread"])),
             floor_bp=Sourced(Decimal(r["floor"]["bps_text"]), _cite(r["floor"])),
         )
@@ -557,6 +606,9 @@ def _once(token: str, quote: str, page: str) -> bool:
     return True
 
 
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
 class _Check:
     """Accumulates the validator's issues in rule order over one pack's financial pages."""
 
@@ -582,10 +634,28 @@ class _Check:
         self.empty(path, text)
         self.digit_free(path, text)
 
+    def run_text(self, path: str, text: str) -> None:
+        """Text that becomes ``Claim.text``: checked with the very type the report builder uses
+        (``RunText``, one ``TypeAdapter`` built once), so a malformed reference is a journaled
+        issue and the builder never raises after the binding write (protocol section 6). The
+        message never echoes the input. A well-formed reference is refused too: the summary claim
+        names no fact, so settle would reject the module after a valid step."""
+        try:
+            _RUN_TEXT.validate_python(text)
+        except ValidationError as error:
+            for item in error.errors(include_input=False, include_url=False, include_context=False):
+                self.add(clipped((path, ": ", item["msg"])))
+            return
+        if any(run.kind != "text" for run in tokenize(text)):
+            self.add(f"{path}: text carries a reference")
+
     def on_page(self, ref: Mapping[str, Any], path: str) -> bool:
         sid, loc = ref["source_id"], ref["locator"]
         if sid != SOURCE_ID:
             self.add(f"{path}: source {sid} is outside the CP-2E scope ({SOURCE_ID})")
+            return False
+        if is_blank(ref["quote"]):  # Stage 2 backlog: blank is refused before the page check
+            self.add(f"{path}.quote: empty text")
             return False
         if loc not in self.pages or not quoted(ref["quote"], self.pages[loc]):
             self.add(f"{path}: quote not found on {sid} {loc}")
@@ -609,7 +679,8 @@ class _Check:
         if not _SENTENCE_NUM.fullmatch(v) or not _once(v, ref["quote"], self.pages[ref["locator"]]):
             self.add(f"{path}: {key} {v} does not occur in the quote")
             return None
-        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9])", normalise(ref["quote"])):
+        # the round 13 whole-run trailing guard: `spread 25.5` does not label the token 25
+        if not re.search(rf"{label}\s+{re.escape(v)}(?![0-9]|[.,][0-9])", normalise(ref["quote"])):
             self.add(f"{path}: {key} {v} is not labelled {label} in the quote")
             return None
         return Decimal(v)
@@ -684,7 +755,7 @@ def _check_rate_exposure(chk: _Check, r: Mapping[str, Any]) -> Decimal | None:
             chk.add(f"{path}: the quote states neither a floating nor a fixed rate")
         elif rb["rate_type"] != said:
             chk.add(f"{path}: rate_type {rb['rate_type']} contradicts the quote")
-        elif said == "FLOATING" and (rb["reference_rate"] not in quote or _split(rb)):
+        elif said == "FLOATING" and (normalise(rb["reference_rate"]) not in quote or _split(rb)):
             chk.add(f"{path}: reference_rate does not occur in the quote")
     chk.empty(f"{path}.reference_rate", rb["reference_rate"])
     chk.labelled(r["spread"], "bps_text", "spread", "rate_exposure.spread")
@@ -746,6 +817,7 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
         if s not in sections:
             chk.add(f"assessments: section {s} is missing")
     chk.prose("summary.text", sub["summary"]["text"])
+    chk.run_text("summary.text", sub["summary"]["text"])
     if _PROHIBITED.search(sub["summary"]["text"]):
         chk.add("summary.text: text carries a prohibited conclusion")
 
@@ -778,7 +850,7 @@ def validate_macro_fx(
             at = key if sub.get(key) else f"fx.{key}"  # the field's place in the submission
             for part in ("reason", "follow_up"):
                 chk.empty(f"{at}.{part}", absence[part])
-                chk.digit_free(f"{key}.{part}", absence[part])
+                chk.digit_free(f"{at}.{part}", absence[part])
     chk.shocks(
         sub["rate_shocks_bp"], "rate_shocks_bp", "a whole number of basis points", 4, _RATE_BP
     )
@@ -1607,4 +1679,365 @@ def compute(inputs: MacroFxInputs) -> MacroFxResult:
     )  # fmt: skip
     return MacroFxResult(
         sensitivity=s, tables=tables, claims=_claims(i, s, tables), limitations=own
+    )
+
+
+# =================================================================================================
+# Stage 2: the connection (docs/G1X-OWNER-CORE-PROTOCOL.md section 2)
+# =================================================================================================
+STEP_ID = "macro_fx"
+STEP_IDS: tuple[str, ...] = (STEP_ID,)
+SUBMISSION_INPUT = "macro-fx-submission"  # `<step id with hyphens>-submission` (protocol section 2)
+QUALIFICATION = Qualification(implementation="implemented")
+
+
+# --- the stored (model-facing) submission schema: references and judgment only -------------------
+class QuoteRef(Contract):
+    source_id: str
+    locator: str
+    quote: str
+
+
+class CodeRef(QuoteRef):
+    code_text: str
+
+
+class ValueRef(QuoteRef):
+    value_text: str
+
+
+class RateBasisRef(QuoteRef):
+    rate_type: Literal["FLOATING", "FIXED"]
+    reference_rate: str
+
+
+class BpsRef(QuoteRef):
+    bps_text: str
+
+
+class PercentRef(QuoteRef):
+    percent_text: str
+
+
+class AbsenceRef(Contract):
+    reason: str
+    follow_up: str
+
+
+class RateExposureRef(Contract):
+    facility_balance: ValueRef
+    rate_basis: RateBasisRef
+    spread: BpsRef
+    floor: BpsRef
+
+
+class EarningsRef(Contract):
+    ebitda: ValueRef
+    interest: ValueRef
+    fcf: ValueRef
+    total_debt: ValueRef
+
+
+class FxRef(Contract):
+    fx_cash_effect: ValueRef
+    debt_currency: CodeRef | None
+    debt_currency_absence: AbsenceRef | None
+    foreign_ebitda_share: PercentRef | None
+    operating_fx_absence: AbsenceRef | None
+
+
+class HedgeRatioRef(Contract):
+    percent_text: str
+    rationale: str
+
+
+class AssessmentRef(Contract):
+    section: str
+    category: str
+    text: str
+    basis: tuple[QuoteRef, ...]
+    limitation: str | None
+
+
+class SummaryRef(Contract):
+    text: str
+
+
+class MacroFxSubmission(Contract):
+    reporting_currency: CodeRef
+    rate_exposure: RateExposureRef | None
+    rate_absence: AbsenceRef | None
+    earnings: EarningsRef
+    fx: FxRef
+    hedge_ratio: HedgeRatioRef | None
+    hedge_absence: AbsenceRef | None
+    rate_shocks_bp: tuple[str, ...]
+    fx_shocks_percent: tuple[str, ...]
+    shock_rationale: str
+    assessments: tuple[AssessmentRef, ...]
+    summary: SummaryRef
+
+
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: MacroFxSubmission}
+
+
+class MacroFxReport(Contract):
+    """What the step validator retains as the step output: the composed module records."""
+
+    schema_version: Literal["macro-fx-report/1"] = "macro-fx-report/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    facts: tuple[Fact, ...]
+    tables: tuple[ReportTable, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[str, ...]
+
+
+# --- parsing the retained payload (protocol section 5: only the bounded, storable parse) ----------
+def _parsed(text: str) -> tuple[MacroFxSubmission | None, tuple[str, ...]]:
+    document = json_object(text)
+    if document is None:
+        return None, ("payload: not a JSON object",)
+    try:
+        return MacroFxSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
+def _pages_of(pack: PreparedPack) -> dict[str, str]:
+    """The pack's pages of the one source the step may cite (the fixed host scope)."""
+    for source in pack.sources:
+        if source.source_id == SOURCE_ID:
+            return {span.locator: span.text for span in source.spans}
+    return {}
+
+
+def _inputs(pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxInputs:
+    """The adapter: a validated submission and the pack's source names -> the Stage 1 input
+    object. CP-2E reads no upstream operand (its binding source is the manifest `run` and
+    `step_scope`: the pack and the financial scope), so nothing is read from a head."""
+    return inputs_from_submission(
+        submission.model_dump(mode="json"),
+        source_names={source.source_id: source.name for source in pack.sources},
+    )
+
+
+# --- the report: Stage 1 cells with their quotes ----------------------------------------------------
+def macro_fx(*, pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxReport:
+    """The composed records of a submission that ``validate_macro_fx`` accepted."""
+    result = compute(_inputs(pack, submission))
+    hashes = {source.source_id: source.sha256 for source in pack.sources}
+
+    def cite(refs: Iterable[Cite]) -> tuple[Citation, ...]:
+        out = []
+        for ref in refs:
+            digest = hashes.get(ref[0])
+            if digest is None or not ref.quote:
+                raise ValueError(f"CP-2E: no quote or source hash for {ref[0]} {ref[1]}")
+            out.append(
+                Citation(source_id=ref[0], source_sha256=digest, locator=ref[1], quote=ref.quote)
+            )
+        return tuple(out)
+
+    facts = tuple(
+        cell.fact().model_copy(update={"citations": cite(cell.cites)})
+        for table in result.tables
+        for row in table.rows
+        for cell in row.cells
+    )
+    tables = tuple(
+        ReportTable(
+            table_id=t.table_id,
+            title=t.title,
+            columns=tuple(TableColumn(field=f, label=label) for f, label in t.columns),
+            rows=tuple(
+                TableRow(row_id=r.row_id, label=r.label, fact_ids=tuple(c.fact_id for c in r.cells))
+                for r in t.rows
+            ),
+            row_header=t.row_header,
+        )
+        for t in result.tables
+    )
+    claims = tuple(
+        Claim(claim_id=c.claim_id, text=c.text, citations=cite(c.cites)) for c in result.claims
+    )
+    return MacroFxReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        facts=facts,
+        tables=tables,
+        claims=claims,
+        limitations=result.limitations,
+    )
+
+
+def cp2e_module(*, report: MacroFxReport, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-2E candidate: the report's records bound to `inputs` and the submission tail."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+# --- the journal seams ------------------------------------------------------------------------------
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step's validator (also ``ENTRY_VALIDATOR``): shape, then ``validate_macro_fx`` over
+    the pack's financial pages, then the composed report as the step output."""
+    submission, shape = _parsed(store.payload(attempt.steps[0].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    issues = validate_macro_fx(submission=submission.model_dump(mode="json"), pages=_pages_of(pack))
+    if issues:
+        return StepValidation(issues=issues)
+    return StepValidation(output=macro_fx(pack=pack, submission=submission).model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+_ABSENCE_FIELDS = (
+    ("rate_absence",),
+    ("fx", "debt_currency_absence"),
+    ("fx", "operating_fx_absence"),
+    ("hedge_absence",),
+)
+
+
+def _claims_absence(document: Mapping[str, Any]) -> bool:
+    for path in _ABSENCE_FIELDS:
+        node: Any = document
+        for key in path:
+            node = node.get(key) if isinstance(node, dict) else None
+        if node is not None:
+            return True
+    return False
+
+
+def RULES(text: str, seen: Seen) -> tuple[str, ...]:
+    """The tool-use rules of ``macro_fx`` (journaled): an absence object needs a recorded
+    search, then every cited page needs a ``read_pages`` read, in the product's sorted order."""
+    document = json_object(text)
+    found: list[str] = []
+    if document is not None and _claims_absence(document) and not seen.searched:
+        found.append(UNBACKED_ABSENCE)
+    found.extend(unread_citation_issues(text, seen))
+    return tuple(found)
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = MacroFxReport.model_validate_json(output)
+    return cp2e_module(report=report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one ``macro_fx`` response and settle CP-2E with the Python candidate (as
+    ``submit_cp1a_step``): promotion is an accepted step; an invalid step finishes the attempt
+    rejected, or blocked on the repair. ``rules`` adds the journaled tool-use issues."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-2E has one step, {STEP_ID}")
+    normal, resolved = normalise_payload(MacroFxSubmission, payload)
+
+    def own(pack: PreparedPack, current: Attempt) -> StepValidation:
+        return _validate_step(store, pack, current)
+
+    validate: Callable[[PreparedPack, Attempt], StepValidation] = own
+
+    if rules is not None:
+        validate = _with_rules(validate, rules, normal)
+    attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, STEP_ID, normal, validate)
+    if attempt.status != "finished":
+        outcome = _validate_step(store, store.pack(), attempt)
+        if outcome.issues or outcome.output is None or not outcome.retained_as(attempt.steps[0]):
+            raise WorkflowError("identity_mismatch")
+        candidate = _candidate(outcome.output, attempt)
+        attempt = store.finish(
+            ticket_id,
+            candidate.model_dump_json(),
+            lambda supplied: () if supplied == candidate else ("CP-2E candidate differs",),
+            qualification=QUALIFICATION,
+        )
+    return Submitted(attempt, normal, resolved, (), (), None)
+
+
+# --- the consumer reader (D3 is OPEN: pinned, no completion is claimed) -----------------------------
+@dataclass(frozen=True)
+class Reading:
+    """One fact as a consumer reads it: known with its amount, or a gap with its reason."""
+
+    state: Literal["known", "missing", "conflicting", "not_applicable"]
+    amount: Decimal | None
+    reason: str | None
+
+
+@dataclass(frozen=True)
+class ShockReading:
+    shock_bp: Reading
+    added_interest: Reading  # before hedges (T2F.3 gross)
+    cov_after: Reading
+    after_hedge: Reading  # T2F.3 net: missing until a hedge ratio is stated
+
+
+@dataclass(frozen=True)
+class Cp2eHead:
+    head_sha256: str
+    status: str
+    floating_debt: Reading
+    shocks: tuple[ShockReading, ...]
+    foreign_debt: Reading
+    hedge_ratio: Reading  # the ratio, or missing with the absence reason
+    limitations: tuple[str, ...]
+
+
+def cp2e_reader(store: Execution, head: Head) -> Cp2eHead:
+    """What a consumer must read of a settled CP-2E head (``expected.consumption``)."""
+    module = store.head_module(head)
+    if module.module_id != MODULE_ID:
+        raise ValueError(f"{MODULE_ID} reader: head is {module.module_id}")
+    facts = {fact.fact_id: fact for fact in module.facts}
+
+    def read(fact_id: str) -> Reading:
+        fact = facts.get(fact_id)
+        if fact is None:
+            raise ValueError(f"{MODULE_ID} reader: T2F fact {fact_id} is absent from the head")
+        return Reading(fact.status, fact.amount, fact.limitation)
+
+    rows = [r.row_id for t in module.tables if t.table_id == "T2F.3" for r in t.rows]
+    if not rows:
+        raise ValueError(f"{MODULE_ID} reader: T2F.3 is absent from the head")
+    return Cp2eHead(
+        head_sha256=head.result_sha256,
+        status=head.status,
+        floating_debt=read("T2F.2.r01.value"),
+        shocks=tuple(
+            ShockReading(
+                shock_bp=read(f"T2F.3.{row}.shock"),
+                added_interest=read(f"T2F.3.{row}.gross"),
+                cov_after=read(f"T2F.3.{row}.cov_after"),
+                after_hedge=read(f"T2F.3.{row}.net"),
+            )
+            for row in rows
+        ),
+        foreign_debt=read("T2F.2.r05.value"),
+        hedge_ratio=read("T2F.5.r01.value"),
+        limitations=module.limitations,
     )

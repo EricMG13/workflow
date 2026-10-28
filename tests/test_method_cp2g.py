@@ -915,9 +915,16 @@ def test_g7_other_definition_wording_settles() -> None:
         f"CP-2A definition break b01 has the test {other}, which CP-2G does not map; its first "
         "years are not calculated." in result.own_limitations
     )
-    payload["break_metrics"].append({"break_id": "b01", "metric": "total_leverage"})
+    payload["break_metrics"] += [  # round 6d: the unmapped row's own issue; b02 keeps the pinned
+        {"break_id": "b01", "metric": "total_leverage"},
+        {"break_id": "b02", "metric": "net_leverage"},
+        {"break_id": "b01", "metric": "interest_coverage"},
+    ]
+    unmapped = "is a definition break whose test CP-2G does not map; no metric can be named for it"
     assert cp2g.payload_issues(json.dumps(payload), ctx) == (
-        "break_metrics[3].break_id: b01 is a definition break with a fixed metric",
+        f"break_metrics[3].break_id: b01 {unmapped}",
+        "break_metrics[4].break_id: b02 is a definition break with a fixed metric",
+        f"break_metrics[5].break_id: b01 {unmapped}",
     )
 
 
@@ -966,10 +973,10 @@ def _cp1d_with(field: str, **update: Any) -> cp2g.ForwardContext:
     return dataclasses.replace(ctx, cp1d=dataclasses.replace(ctx.cp1d, **{field: fact}))
 
 
-def _cp1d_line(label: str) -> str:
+def _cp1d_line(label: str) -> str:  # round 6d: the row label, first letter lower-cased
     return (
-        f"CP-1D is bound but its supported {label} is not a known {LTM} figure, so starting "
-        "leverage is not restated on it."
+        f"CP-1D is bound but its {label} is not a known {LTM} figure, so starting leverage is not "
+        "restated on it."
     )
 
 
@@ -988,10 +995,10 @@ def test_g9_cp1d_supported_not_known(status: str) -> None:
     result = _compose(ctx, _bind_all(_payload("positive")))
     cells = _cells(result)
     assert _gap_of(cells["T2H.2.ebitda_supported.value"]) == (status, "Not in CP-1D")
-    reason = "Not calculable: CP-1D supported Supported adjusted EBITDA is not available"
+    reason = "Not calculable: CP-1D supported adjusted EBITDA is not available"
     for fid in _CP1D_DEPENDENT:
         assert _gap_of(cells[fid]) == ("missing", reason)
-    assert _cp1d_line("Supported adjusted EBITDA") in result.own_limitations
+    assert _cp1d_line("supported adjusted EBITDA") in result.own_limitations
 
 
 def test_g9_cp1d_supported_other_period() -> None:
@@ -1000,10 +1007,10 @@ def test_g9_cp1d_supported_other_period() -> None:
     cells = _cells(result)
     copied = cells["T2H.2.ebitda_supported.value"]
     assert (copied.status, copied.amount, copied.period) == ("known", D("31.8"), period)
-    reason = f"Not compared: CP-1D supported earnings are for {period}, not {LTM}"
+    reason = f"Not compared: CP-1D supported adjusted EBITDA is for {period}, not {LTM}"
     for fid in _CP1D_DEPENDENT:
         assert _gap_of(cells[fid]) == ("missing", reason)
-    assert _cp1d_line("Supported adjusted EBITDA") in result.own_limitations
+    assert _cp1d_line("supported adjusted EBITDA") in result.own_limitations
 
 
 def test_g9_cp1d_leverage_not_known_uses_chip() -> None:
@@ -1025,8 +1032,35 @@ def test_g9_cp1d_leverage_not_known_uses_chip() -> None:
         "[T2H.2.total_leverage_supported.value] against {T2H.2.total_leverage.value|x} on "
         "reported earnings."
     )
-    assert _cp1d_line("Total leverage") in result.own_limitations
+    assert _cp1d_line("total leverage") in result.own_limitations
     assert cells["T2H.2.ebitda_adjustment.value"].status == "known"
+
+
+def test_g9_one_line_per_cp1d_fact_in_order() -> None:
+    """Round 6d: one own line per CP-1D fact that is not a known LTM figure, supported, total
+    and net in that order, straight after the CP-1D state line."""
+    ctx = _context("positive")
+    unknown = {"status": "missing", "amount": None, "calculation_id": None, "limitation": "n/a"}
+    updates = {
+        "supported": unknown,
+        "total_leverage": {"period": "FY2025"},
+        "net_leverage": unknown,
+    }
+    head = dataclasses.replace(
+        ctx.cp1d,
+        **{f: getattr(ctx.cp1d, f).model_copy(update=u) for f, u in updates.items()},
+    )
+    lines = list(
+        _compose(dataclasses.replace(ctx, cp1d=head), _plain(_payload("positive"))).own_limitations
+    )
+    state = _result("positive").own_limitations[9]  # nine fixed lines, then the CP-1D line
+    assert state.startswith("CP-1D's supported EBITDA")
+    assert lines[9:13] == [
+        state,
+        _cp1d_line("supported adjusted EBITDA"),
+        _cp1d_line("total leverage"),
+        _cp1d_line("net leverage"),
+    ]
 
 
 def test_g_decisions_unknown_cp2a_copy_keeps_status() -> None:

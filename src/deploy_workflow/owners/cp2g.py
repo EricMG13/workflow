@@ -739,6 +739,9 @@ def _break_issues(metrics: Sequence[BreakMetric], cp2a: Cp2aHead, operands: Oper
         elif _is_definition(b):
             issues.append(
                 f"{where}.break_id: {bm.break_id} is a definition break with a fixed metric"
+                if b.test in _DEFINITION_KIND
+                else f"{where}.break_id: {bm.break_id} is a definition break whose test CP-2G does "
+                "not map; no metric can be named for it"  # round 6d (G-7)
             )
         elif bm.break_id in seen:
             issues.append(f"{where}.break_id: duplicate break {bm.break_id}")
@@ -1123,17 +1126,20 @@ def _not_calculated(reason: str) -> CaseForecast:
     return CaseForecast(years=(year, year, year))
 
 
+def _t1d_label(f: Fact) -> str:
+    """A CP-1D row label in running text: its first letter lower-cased (round 6d, G-9)."""
+    return f.label[:1].lower() + f.label[1:]
+
+
 def _supported(cp1d: tuple[Fact, Fact, Fact] | None, why: str | None) -> Val:
     """CP-1D supported EBITDA for the adjustment and the FY2026 comparison (ruling G-9)."""
     if cp1d is None:
         return Val(None, why)
     f = cp1d[0]
     if not _known_fact(f):
-        return Val(None, f"Not calculable: CP-1D supported {f.label} is not available")
+        return Val(None, f"Not calculable: CP-1D {_t1d_label(f)} is not available")
     if f.period != LTM_PERIOD:
-        return Val(
-            None, f"Not compared: CP-1D supported earnings are for {f.period}, not {LTM_PERIOD}"
-        )
+        return Val(None, f"Not compared: CP-1D {_t1d_label(f)} is for {f.period}, not {LTM_PERIOD}")
     return _known(_amount(f))
 
 
@@ -2290,9 +2296,9 @@ def _own_limitations(
 ) -> tuple[str, ...]:
     out = list(_FIXED_LIMITATIONS)
     out.append(_CP1D_LIMITATION[run.ctx.cp1d.state])
-    out.extend(  # ruling G-9
-        f"CP-1D is bound but its supported {f.label} is not a known {LTM_PERIOD} figure, so "
-        "starting leverage is not restated on it."
+    out.extend(  # ruling G-9, wording round 6d
+        f"CP-1D is bound but its {_t1d_label(f)} is not a known {LTM_PERIOD} figure, so starting "
+        "leverage is not restated on it."
         for f in run.cp1d or ()
         if not _known_fact(f) or f.period != LTM_PERIOD
     )

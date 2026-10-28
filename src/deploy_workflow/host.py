@@ -66,14 +66,19 @@ def _held(*source_ids: str) -> Callable[[PreparedPack], tuple[str, ...]]:
     return lambda pack: tuple(s.source_id for s in pack.sources if s.source_id in named)
 
 
-def _ready_pack(pack: PreparedPack) -> tuple[str, ...]:
-    """Every ready source of the prepared pack, in pack order."""
-    return tuple(s.source_id for s in pack.sources if s.status == "ready")
+def _every_held(pack: PreparedPack) -> tuple[str, ...]:
+    """Every source the prepared pack holds, in pack order; one that is not ready answers
+    `unavailable`, never its bytes."""
+    return tuple(s.source_id for s in pack.sources)
 
 
 # H1 (G1-X §3, §5): the fixed readable-source scope of each owner-only sourced step, as its lease
 # pins it. Never caller-supplied and never `live.context.SOURCE_SCOPES` (deploy_vii never imports
-# deploy_workflow). A row here applies only to a module without a live step contract.
+# deploy_workflow). A row here applies only to a module without a live step contract. One
+# convention for every row (rulings round 10 item 5): a held source that is not ready stays in
+# scope and answers `unavailable`. The one recorded exception is CP-3, a live contract whose
+# registry scope (`live.context.readable_sources`) keeps only ready sources; `deploy_vii` is not
+# edited.
 _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]]] = (
     MappingProxyType(
         {
@@ -82,8 +87,8 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-1D", "earnings_quality"): _held("identity", "financial", "bridge"),
             # docs/CP3D-OWNER-LEASE.md:46, :87: market and financial only, never identity.
             ("CP-3D", "market_implied"): _held("market", "financial"),
-            # docs/CPDR-OWNER-LEASE.md:31 (D-B): the whole ready pack.
-            ("CP-DR", "research"): _ready_pack,
+            # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
+            ("CP-DR", "research"): _every_held,
         }
     )
 )
@@ -574,13 +579,50 @@ def _cp1_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer
     )
 
 
+def _submission_schema(module_id: str, step_id: str) -> type[Contract]:
+    """The schema a settled producer's retained submission is re-parsed under, chosen by the
+    producer's module (rulings round 10 item 2, H1 F1): `STEPS` for a live-contract module's own
+    step; the registered G1-X core's `SCHEMAS` for an owner-only module whose only step it is.
+    Anything else (CP-1B `earnings_delta`, a core not registered, another module's step) has no
+    authentication rule here and is refused `not_permitted` before any payload is read."""
+    from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
+
+    schema: object
+    try:
+        step_chain(module_id)
+    except ValueError:
+        core = owner_workflow._CORES.get(module_id)
+        schemas = getattr(core, "SCHEMAS", None)
+        if (
+            getattr(core, "STEP_IDS", None) != (step_id,)
+            or step_id in STEPS
+            or not isinstance(schemas, Mapping)
+        ):
+            raise SourceError("not_permitted") from None
+        schema = schemas.get(step_id)
+    else:
+        definition = STEPS.get(step_id)
+        if definition is None or definition.module_id != module_id:
+            raise SourceError("not_permitted")
+        schema = definition.schema
+    if not (isinstance(schema, type) and issubclass(schema, Contract)):
+        raise SourceError("not_permitted")
+    return schema
+
+
 def _submission_producer_inputs(
     store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
 ) -> bool:
     """Ruling Q6 (b): a one-step module's head. Its one finished attempt binds `expected`; a
-    settled head adds exactly one `*-submission` input, the digest of the retained submission;
-    a rejected or blocked head carries the attempt inputs only (`Execution.submit_step`). The
-    settlement replay of the retained candidate must return the attempt and the head."""
+    settled head adds exactly one `*-submission` input, the digest of the retained submission
+    under the producer module's own schema (`_submission_schema`); a rejected or validator-blocked
+    head carries the attempt inputs only (`Execution.submit_step`), and an interruption-blocked
+    one is refused. The settlement replay of the retained candidate must return the attempt and
+    the head.
+
+    The host checks provenance only. Composition (that the candidate is the one the module's
+    core composes) is authenticated at the receipt verifier, where `_verify_settlements` runs
+    `_PROBES[m]` on every settled head (rulings round 10 item 3, H1 I1)."""
     selected = [
         a
         for a in snapshot.attempts
@@ -603,12 +645,19 @@ def _submission_producer_inputs(
         if attempt.issues or len(attempt.steps) != 1 or attempt.steps[0].status != "valid":
             return False
         step = attempt.steps[0]
-        if len(tail) != 1 or not tail[0].input_id.endswith("-submission"):
-            return False
-        submission = STEPS[step.step_id].schema.model_validate_json(
-            store.payload(step.payload_sha256)
+        schema = _submission_schema(producer.module_id, step.step_id)
+        # An owner-only step (never in `STEPS`) has its exact tail id (G1-X §2 SCHEMAS row).
+        owner_tail = (
+            None if step.step_id in STEPS else step.step_id.replace("_", "-") + "-submission"
         )
-        if not isinstance(submission, Contract) or tail[0].sha256 != submission.content_hash():
+        if (
+            len(tail) != 1
+            or not tail[0].input_id.endswith("-submission")
+            or (owner_tail is not None and tail[0].input_id != owner_tail)
+        ):
+            return False
+        submission = schema.model_validate_json(store.payload(step.payload_sha256))
+        if tail[0].sha256 != submission.content_hash():
             return False
     elif tail or not attempt.issues:
         return False

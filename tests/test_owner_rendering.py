@@ -23,13 +23,14 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import pytest
 import test_cp1_chart_render
 
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Run
-from deploy_vii.execution import Execution
+from deploy_vii.execution import Attempt, Execution, current_inputs
 from deploy_vii.registry import modules as registry_modules
 from deploy_vii.report_view import build, pathways
 from deploy_workflow import owner_rendering as g2
@@ -693,11 +694,24 @@ def test_genuine_cp1_model_positive_delivery(
     fin_destination = tmp_path / "financial-delivery"
     fin_report = render_financial_slice(fin_store, fin_receipt, fin_model, fin_destination)
     assert _banner_free(text) == _banner_free(fin_report.read_text(encoding="utf-8"))
+    # Ruling item 27: each delivery equals its own publication; across the two independent runs
+    # the content is equal except the per-attempt ticket_id minted by each CP-MODEL attempt.
     for name in ("model.html", "calculation.json", "receipt.json"):
-        assert (destination / "model" / name).read_bytes() == (fin_model / name).read_bytes()
-        assert (fin_destination / "model" / name).read_bytes() == (
-            destination / "model" / name
+        assert (destination / "model" / name).read_bytes() == (model / name).read_bytes()
+        assert (fin_destination / "model" / name).read_bytes() == (fin_model / name).read_bytes()
+    for name in ("model.html", "calculation.json"):
+        assert (destination / "model" / name).read_bytes() == (
+            fin_destination / "model" / name
         ).read_bytes()
+    receipts = []
+    for owned_store, delivery in ((store, destination), (fin_store, fin_destination)):
+        parsed = json.loads((delivery / "model" / "receipt.json").read_bytes())
+        tickets = [
+            a.ticket_id for a in Execution(owned_store).read().attempts if a.module_id == "CP-MODEL"
+        ]
+        assert tickets == [parsed.pop("ticket_id")]
+        receipts.append(parsed)
+    assert receipts[0] == receipts[1]
     assert_scope_figures("cp1-model", "positive", "complete", _payload(text))
     heads = {h.module_id: h for h in wire.head_results}
     assert [h.module_id for h in wire.head_results][:2] == ["CP-0", "CP-1"]
@@ -784,7 +798,28 @@ def test_genuine_cp1_model_extra_attempt_is_refused(
     tmp_path: Path, inputs: Callable[..., Any]
 ) -> None:
     store, receipt, model = inputs("positive")
-    Execution(store).begin("CP-1")  # a further attempt on the settled store
+    with pytest.raises(ValueError, match="settled"):
+        Execution(store).begin("CP-1")  # the product cannot make an extra attempt here
+    # The store bytes are untrusted, so forge a pending repair attempt (precedent:
+    # tests/test_financial_render.py, store._write of a modified snapshot).
+    execution = Execution(store)
+    snapshot = execution.read()
+    prior = [a for a in snapshot.attempts if a.module_id == "CP-1"]
+    extra = Attempt(
+        ticket_id=str(uuid4()),
+        module_id="CP-1",
+        inputs=current_inputs(snapshot, "CP-1"),
+        number=len(prior),
+        repair_of=prior[-1].ticket_id,
+    )
+    execution._write(
+        snapshot.model_copy(
+            update={"parent": snapshot.content_hash(), "attempts": (*snapshot.attempts, extra)}
+        )
+    )
+    forged = Execution(store).read()
+    assert forged.attempts[-1].ticket_id == extra.ticket_id
+    assert forged.attempts[-1].status == "pending"
     _refused(tmp_path, store, receipt, model, "extra-attempt")
 
 

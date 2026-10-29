@@ -21,3 +21,5 @@ Genuine owner runs that W2 stopped or deferred (each needs one or more CP-1 prom
   - (i) The lease R2.5 secondary-pointer assertions for cp3d, cp4 and cp8: `#/cases/<c>/tables`, `displayed_literals` and `lines_positive`. A preparer must first state what "equal" means for G2.
   - (ii) The lease body Acceptance 1 `cites` normaliser (Source and Locator from the passports).
 - **G2 genuine deferred set:** `PYTHONPATH=src:tests PY -m pytest -q -p no:cacheprovider tests/test_owner_rendering.py -k genuine_deferred`. That is 48 tests, each 10 to 23 min under load. They are run in shards on the Stage 3 integration tip.
+- **Done at the Stage 3 close (2026-10-29):** the G2 genuine deferred set is 51/51 green (35 on I6 49628a0, the 16 that failed there pass on I8 3429790); the CZR earnings shards all pass (first 155 and source 167, ab 36, ac 35 on I5; aa 36 on I8; no CZR file changed I5 to I8).
+- **Latent, flagged (item 35):** cp2d `liquidity-runway` and `funding-gap` oracles use plain-string `tabs`; `assert_block_equals_oracle` would raise TypeError if cp2d were added to G2's `DEFERRED`.

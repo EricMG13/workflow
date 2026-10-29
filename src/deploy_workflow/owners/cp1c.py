@@ -9,21 +9,59 @@ the overall view and the gaps. No I/O, store, host, session or render call happe
 connection (pack, CP-1 head, tool use) and orchestration concerns join this file in later stages.
 """
 
+import hashlib
+import json
 import re
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import ROUND_HALF_EVEN, Context, Decimal
 from itertools import pairwise
 from typing import Literal
 
+from pydantic import TypeAdapter, ValidationError
+
 from deploy_vii import prose
 from deploy_vii.business_context import Category, Severity, prohibited_issues
-from deploy_vii.contracts import Citation, Claim, Contract, Fact, Source, TableRow
-from deploy_vii.readiness import citation_issues
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    InputStatus,
+    Module,
+    ReportTable,
+    RunText,
+    Source,
+    TableColumn,
+    TableRow,
+    Text,
+)
+from deploy_vii.contracts import Run as PackRun
+from deploy_vii.display import format_value
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    clipped,
+    current_inputs,
+    inherited_limitations,
+    listed_issues,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
+from deploy_vii.live.tools import Seen, unread_citation_issues
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-1C"
 
@@ -963,12 +1001,16 @@ def _flag_operands(
     return value.value, stat.median
 
 
+def _flag_labels(m: Metric) -> tuple[str, str]:
+    return f"{m.label} · Deviation from median", f"{m.label} · Flag"
+
+
 def _flag_cells(
     c: _Composer, row_id: str, peer: _Peer | None, m: Metric, value: Ratio, stat: _Stat
 ) -> None:
     dev = ("T1C.5", row_id, f"{m.key}_deviation")
     flag = ("T1C.5", row_id, f"{m.key}_flag")
-    dev_label, flag_label = f"{m.label} · Deviation from median", f"{m.label} · Flag"
+    dev_label, flag_label = _flag_labels(m)
     operands = _flag_operands(peer, value, stat)
     if isinstance(operands, Unsettled):
         gap = operands
@@ -1348,15 +1390,17 @@ def _assessment_set_issues(
     """Exactly one assessment per sheet peer by exact label; none without a peer source."""
     if sheet is None:
         return [
-            f"Assessment given without a peer source in the pack: {a.peer}"
+            clipped(("Assessment given without a peer source in the pack: ", a.peer))
             for a in submission.assessments
         ]
     labels = [row.label for row in sheet.peers]
     unknown = [a.peer for a in submission.assessments if a.peer not in labels]
     counts = Counter(a.peer for a in submission.assessments)
-    issues = [f"Unknown peer: {peer}" for peer in dict.fromkeys(unknown)]
+    issues = [clipped(("Unknown peer: ", peer)) for peer in dict.fromkeys(unknown)]
     issues += [
-        f"Assess each sheet peer exactly once: {label}" for label in labels if counts[label] != 1
+        clipped(("Assess each sheet peer exactly once: ", label))
+        for label in labels
+        if counts[label] != 1
     ]
     return issues
 
@@ -1367,10 +1411,36 @@ def _content_issues(submission: PeerBenchmarkSubmission, sheet: PeerSheet | None
         issues.append("Confidence cannot be High: the peer figures are desk-supplied and unaudited")
     for a in submission.assessments:
         if not a.evidence:
-            issues.append(f"Evidence required for a comparability assessment: {a.peer}")
+            issues.append(clipped(("Evidence required for a comparability assessment: ", a.peer)))
         if a.comparability == "Partly comparable" and is_blank(a.limitation or ""):
-            issues.append(f"Limitation required for Partly comparable: {a.peer}")
+            issues.append(clipped(("Limitation required for Partly comparable: ", a.peer)))
     return issues
+
+
+def _citation_issues(submission: PeerBenchmarkSubmission, sources: Sequence[Source]) -> list[str]:
+    """Every citation in payload order. A quote that `is_blank` gets `<path>: empty text` and
+    never reaches the page-occurrence check (round 13 addendum 3); any other quote must occur
+    under its located page (`readiness.citation_issues`; Source quotes: CP-1C reads no figure
+    from a quote)."""
+    cited = [
+        (f"assessments[{i}].evidence[{j}]", citation)
+        for i, a in enumerate(submission.assessments)
+        for j, citation in enumerate(a.evidence)
+    ]
+    cited += [(f"overall.evidence[{j}]", c) for j, c in enumerate(submission.overall.evidence)]
+    found: list[str] = []
+    for path, citation in cited:
+        if is_blank(citation.quote):
+            found.append(f"{path}.quote: empty text")
+        else:
+            found += citation_issues((citation,), tuple(sources))
+    return found
+
+
+def _bounded(found: Iterable[str]) -> tuple[str, ...]:
+    """At most `MAX_ISSUES` lines of at most `MAX_ISSUE_CHARS`, the last counting the rest
+    (`execution.listed_issues`, protocol section 6)."""
+    return listed_issues(found, lambda line: (line,), lambda n: f"{n} further issues not listed")
 
 
 def _prohibited_fields(submission: PeerBenchmarkSubmission) -> list[tuple[str, str]]:
@@ -1397,7 +1467,9 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     """Every content issue of the analyst payload against the peer source and the module's own
     facts. An unreadable peer table returns alone (1C4). References in the analyst's text are checked
     against the composed facts only when the assessment set is consistent (before that there
-    are no facts to bind them to, and the set issues already refuse the payload)."""
+    are no facts to bind them to, and the set issues already refuse the payload). A line that
+    quotes the payload is cut by `clipped` before it is built whole, and the list is bounded
+    (`_bounded`), so the issue text cannot outgrow the payload (protocol section 6)."""
     submission = inputs.submission
     try:
         sheet = parse_peer_source(_peer_source(inputs.sources), issuer_name=inputs.issuer_name)
@@ -1405,17 +1477,18 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
         return (str(error),)
     set_issues = _assessment_set_issues(submission, sheet)
     issues = [*set_issues, *_content_issues(submission, sheet)]
-    citations = tuple(c for a in submission.assessments for c in a.evidence)
-    issues += citation_issues((*citations, *submission.overall.evidence), inputs.sources)
+    issues += _citation_issues(submission, inputs.sources)
     for path, text in _prohibited_fields(submission):
         if is_blank(text):  # round 11, round 12 B10: blank text is refused (no CP-1C frame)
             issues.append(f"{path}: empty text")
         issues += prohibited_issues(path, text, kinds=PROHIBITED_KINDS)
     if not set_issues:
         bound = prose.bind(item.fact for item in _compose(inputs, sheet).facts)
+        names = (inputs.issuer_name,)
         for text in _prose_texts(submission):
-            issues += prose.issues(text, bound, names=(inputs.issuer_name,))
-    return tuple(dict.fromkeys(issues))
+            # a prose line can quote a payload word whole (`Bare figure: <token>`)
+            issues += [clipped((line,)) for line in prose.issues(text, bound, names=names)]
+    return _bounded(dict.fromkeys(issues))
 
 
 def compute(inputs: PeerBenchmarkInputs) -> PeerBenchmarkResult:
@@ -1426,3 +1499,562 @@ def compute(inputs: PeerBenchmarkInputs) -> PeerBenchmarkResult:
     composed = _compose(inputs, sheet)
     claims = _claims(composed, inputs.submission)
     return PeerBenchmarkResult(composed.facts, composed.tables, claims, composed.limitations)
+
+
+# =============================================================================================
+# Stage 2: the connection (docs/CP1C-OWNER-LEASE.md Public API; docs/G1X-OWNER-CORE-PROTOCOL.md).
+# Everything above is the pure Stage 1 calculation; what follows binds it to the store.
+# =============================================================================================
+
+STEP_ID = "peer_benchmark"
+STEP_IDS = (STEP_ID,)
+QUALIFICATION = Qualification(implementation="implemented")
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: PeerBenchmarkSubmission}
+# The fixed H1 mapping (`host._OWNER_SCOPES[("CP-1C", "peer_benchmark")]`, lease :33): identity,
+# financial and, when the pack holds it, peers; a held source stays in scope in pack order.
+SCOPE = frozenset({"identity", "financial", PEERS_SOURCE_ID})
+CP0, CP1 = "CP-0", "CP-1"
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+# Rulings stage 2 round 5 item 9: the admitted shape issue of text `json_object` refuses.
+BAD_PAYLOAD = "(root): not a JSON object within the payload bounds"
+# manifest.json `cp1_fact_selection_rule`: table, column and period of the four T4.10 facts.
+_CP1_TABLE = "T4.10"
+_CP1_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
+_CP1_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+_SETTLED: Mapping[str, InputStatus] = {
+    "accepted": "accepted",
+    "restricted": "restricted",
+    "blocked": "blocked",
+}
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-1C attempt binds, read once from the journal (`cp1c_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp0` and `cp1` are the bound required heads; `inherited` is what settlement
+    will carry from them (`execution.inherited_limitations`)."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp0: Module
+    cp1: Module
+    inherited: tuple[str, ...] = ()
+
+    def status(self, module_id: str) -> InputStatus | None:
+        return next((item.status for item in self.bound if item.input_id == module_id), None)
+
+
+def _bound_module(store: Execution, attempt: Attempt, module_id: str) -> Module:
+    item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+    if item is None:
+        raise ValueError(f"The CP-1C attempt binds no {module_id} input")
+    module = store.result(item.sha256)
+    if module.module_id != module_id:
+        raise ValueError(f"The CP-1C attempt's {module_id} input is a {module.module_id} module")
+    return module
+
+
+def cp1c_upstream(store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-0 and CP-1 heads of `attempt`, the current input set and the inherited
+    limitations. A refusal of `current_inputs` (an upstream gone stale or blocked, or CP-0 no
+    longer authorizing CP-1C) is kept as text: the validator reports it as a staleness issue.
+    A required input that is absent, or whose blob is another module's, raises (store
+    integrity; `begin` binds both)."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp0=_bound_module(store, attempt, CP0),
+        cp1=_bound_module(store, attempt, CP1),
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def _cp1_metrics(cp1: Module) -> dict[str, Fact]:
+    """The four T4.10 facts of the LTM Q4 25 column by metric key (manifest
+    `cp1_fact_selection_rule`): exactly one match each, zero or several raise."""
+    picked: dict[str, Fact] = {}
+    for metric in METRICS:
+        label = f"{_CP1_COLUMN} · {metric.key}"
+        hits = [
+            f
+            for f in cp1.facts
+            if f.table_id == _CP1_TABLE and f.period == _CP1_PERIOD and f.label == label
+        ]
+        if len(hits) != 1:
+            raise ValueError(
+                f"CP-1 {_CP1_TABLE} {metric.key}: {len(hits)} facts, expected exactly one"
+            )
+        picked[metric.key] = hits[0]
+    return picked
+
+
+def _inputs(
+    pack: PreparedPack, submission: PeerBenchmarkSubmission, upstream: Upstream
+) -> PeerBenchmarkInputs:
+    """The one store adapter: the run's issuer name, the pack sources in the fixed H1 scope, the
+    four selected CP-1 facts and the submission, as the Stage 1 input object. Used by `submit`
+    (through the validator), `probe` and `view`. Raises ValueError when the CP-1 head does not
+    hold exactly one fact per metric."""
+    return PeerBenchmarkInputs(
+        issuer_name=pack.run.issuer_name,
+        sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
+        cp1_metrics=_cp1_metrics(upstream.cp1),
+        submission=submission,
+    )
+
+
+def _stale_issues(upstream: Upstream) -> list[str]:
+    if isinstance(upstream.current, str):
+        return [clipped(("Stale inputs: ", upstream.current))]
+    bound = {item.input_id: item for item in upstream.bound}
+    current = {item.input_id: item for item in upstream.current}
+
+    def state(item: Input | None) -> str:
+        return "absent" if item is None else f"{item.status} {item.sha256[:12]}"
+
+    return [
+        f"Stale input {key}: bound {state(bound.get(key))}, current {state(current.get(key))}"
+        for key in dict.fromkeys((*bound, *current))
+        if bound.get(key) != current.get(key)
+    ]
+
+
+def _provenance_issues(upstream: Upstream) -> list[str]:
+    """The supplied modules are the bound heads (same module, same canonical hash)."""
+    bound = {item.input_id: item for item in upstream.bound}
+    found = [
+        f"Upstream {module_id}: the supplied module is not the bound input"
+        for module_id, module in ((CP0, upstream.cp0), (CP1, upstream.cp1))
+        if (item := bound.get(module_id)) is None
+        or module.module_id != module_id
+        or module.content_hash() != item.sha256
+    ]
+    found += [
+        f"Required upstream {item.input_id} is blocked"
+        for item in upstream.bound
+        if item.input_id in (CP0, CP1) and item.status == "blocked"
+    ]
+    return found
+
+
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _model_text_issues(submission: PeerBenchmarkSubmission) -> list[str]:
+    """Rulings stage 2 round 3 item 2: each rationale becomes `Claim.text`, so it is checked here
+    with that type (`RunText`), and no composition can raise after the binding write. Lines are
+    `<path>: <msg>` without the input value."""
+    texts = [
+        (f"assessments[{i}].rationale", a.rationale) for i, a in enumerate(submission.assessments)
+    ]
+    texts.append(("overall.rationale", submission.overall.rationale))
+    found: list[str] = []
+    for path, text in texts:
+        try:
+            _RUN_TEXT.validate_python(text)
+        except ValidationError as error:
+            found += [
+                clipped((path, ": ", e["msg"]))
+                for e in error.errors(include_input=False, include_url=False, include_context=False)
+            ]
+    return found
+
+
+class PeerBenchmarkReport(Contract):
+    """The composed CP-1C output retained as the step output: the module's tables, facts, claims
+    and own limitations, bound to the pack and the retained submission."""
+
+    schema_version: Literal["peer-benchmark/1"] = "peer-benchmark/1"
+    run: PackRun
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[Text, ...]
+
+
+# Each table's columns are fixed by the composer's own field lists (T1C.7 has no row without a
+# gap), so a table's header never depends on which row comes first.
+_COLUMNS: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "T1C.1": UNIVERSE_FIELDS,
+    "T1C.2": OPERANDS,
+    "T1C.3": tuple((m.key, m.label) for m in METRICS),
+    "T1C.4": (("direction", "Direction"), *((n, STAT_LABELS[n]) for n in STAT_FIELDS[1:])),
+    "T1C.5": tuple(
+        pair
+        for m in METRICS
+        for pair in zip((f"{m.key}_deviation", f"{m.key}_flag"), _flag_labels(m), strict=True)
+    ),
+    "T1C.6": (
+        ("sheet", "Issuer line on the peer source"),
+        ("cp1", "CP-1"),
+        ("difference", "Difference"),
+        ("result", "Result"),
+    ),
+    "T1C.7": (("id", "Gap id"), *GAP_FIELDS),
+    TOTALS: TOTAL_FIELDS,
+}
+_ROW_HEADERS: Mapping[str, str] = {
+    "T1C.1": "Peer",
+    "T1C.2": "Entity",
+    "T1C.3": "Entity",
+    "T1C.4": "Metric",
+    "T1C.5": "Entity",
+    "T1C.6": "Metric",
+    "T1C.7": "Gap",
+    TOTALS: "Universe",
+}
+
+
+def _report(
+    pack: PreparedPack, submission: PeerBenchmarkSubmission, result: PeerBenchmarkResult
+) -> PeerBenchmarkReport:
+    return PeerBenchmarkReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=tuple(
+            ReportTable(
+                table_id=table.table_id,
+                title=table.title,
+                columns=tuple(
+                    TableColumn(field=f, label=label) for f, label in _COLUMNS[table.table_id]
+                ),
+                rows=table.rows,
+                row_header=_ROW_HEADERS[table.table_id],
+            )
+            for table in result.tables
+        ),
+        facts=tuple(item.fact for item in result.facts),
+        claims=result.claims,
+        limitations=result.limitations,
+    )
+
+
+def _checked(
+    pack: PreparedPack, submission: PeerBenchmarkSubmission, upstream: Upstream
+) -> tuple[tuple[str, ...], PeerBenchmarkReport | None]:
+    """(issues, None) for a refused submission, else ((), the composed report). Every check runs
+    before any product record is built from model text: the bound inputs (returned alone), the
+    CP-1 selection and the Stage 1 rules on it, the Stage 1 content rules, then the run-text type
+    of each rationale. A record the product refuses (`ValidationError`, for example a sheet row
+    whose label is empty) is reported as issue lines, never raised."""
+    found = [*_provenance_issues(upstream), *_stale_issues(upstream)]
+    if found:
+        return _bounded(found), None
+    try:
+        inputs = _inputs(pack, submission, upstream)
+        _cp1_facts(inputs)  # the Stage 1 rules on the selected facts (unit, amount, period)
+    except ValueError as error:
+        return (clipped(("CP-1 facts unavailable: ", str(error))),), None
+    issues = calculation_issues(inputs)
+    if issues:
+        return issues, None
+    texts = _model_text_issues(submission)
+    if texts:
+        return _bounded(texts), None
+    try:
+        return (), _report(pack, submission, compute(inputs))
+    except ValidationError as error:
+        return _bounded(
+            clipped((".".join(map(str, e["loc"])) or "(root)", ": ", e["msg"]))
+            for e in error.errors(include_input=False, include_url=False, include_context=False)
+        ), None
+
+
+def validate_peer_benchmark(
+    *, pack: PreparedPack, submission: PeerBenchmarkSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Every issue of one submission: the bound-input checks, the CP-1 selection, the Stage 1
+    content rules, the run-text type of each rationale and the product's own record checks.
+    Bounded to `MAX_ISSUES` lines of at most `MAX_ISSUE_CHARS`."""
+    return _checked(pack, submission, upstream)[0]
+
+
+def peer_benchmark(
+    *, pack: PreparedPack, submission: PeerBenchmarkSubmission, upstream: Upstream
+) -> PeerBenchmarkReport:
+    """The composed CP-1C report of a valid submission; raises ValueError on any issue."""
+    issues, report = _checked(pack, submission, upstream)
+    if issues or report is None:
+        raise ValueError("; ".join(issues))
+    return report
+
+
+def cp1c_module(report: PeerBenchmarkReport, *, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-1C candidate: the report bound to `inputs` plus the one `*-submission` input (the
+    owner-only settled tail, protocol section 2 `SCHEMAS`)."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+# --- the exact `read_inputs` view (lease Tool use, D2) ----------------------------------------
+
+_RULES_VIEW = {
+    "inclusion": "Comparable and Partly comparable peers are included; a Not comparable peer is "
+    "shown but kept out of every statistic",
+    "position": "1 + the number of entities strictly better than the issuer among the included "
+    "peers with a value and the issuer; ties share a position",
+}
+
+
+def _view_row(row_id: str, row: PeerRow) -> dict[str, object]:
+    """One sheet row as the table rule reads it; each amount spelled as its T1C.2 cell (one
+    decimal place) or `Not stated`. The basis cells, not the page:2 line."""
+    return {
+        "row": row_id,
+        "label": row.label,
+        "period_end": row.period_end,
+        "amounts": {
+            key: NOT_STATED
+            if value is None
+            else format_value(value, "amount", "known", decimals=SHEET_DECIMALS)
+            for key, value in row.amounts.items()
+        },
+        "basis": None
+        if row.basis is None
+        else {
+            "reporting_basis": row.basis.basis,
+            "segments": row.basis.segments,
+            "fiscal_year_end": row.basis.fiscal_year_end,
+        },
+    }
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """The exact `read_inputs` view (lease key tree): the upstream statuses, the peer sheet's rows
+    as the table rule reads them, the four CP-1 facts a `{ref|unit}` names through the module's
+    copied cells, the policy rules and the limitations settlement will inherit. No quote,
+    citation or record is in it. A ready peers source the table rule cannot read shows no rows
+    (the validator refuses every payload over it with `Peer table not found`)."""
+    source = _peer_source(pack.sources)
+    present = source is not None and source.status == "ready"
+    try:
+        sheet = parse_peer_source(source, issuer_name=pack.run.issuer_name)
+    except PeerTableError:
+        sheet = None
+    facts = _cp1_metrics(upstream.cp1)
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id.startswith("CP-")
+        ],
+        "peers": {
+            "state": "present" if present else "absent",
+            "source_id": None if source is None else source.source_id,
+            "pages": [] if source is None else [span.locator for span in source.spans],
+            "rows": []
+            if sheet is None
+            else [_view_row(f"p{n:02d}", row) for n, row in enumerate(sheet.peers, 1)],
+            "issuer_line": None if sheet is None else _view_row("issuer", sheet.issuer),
+        },
+        "cp1_facts": [
+            {
+                "ref": f"T1C.3.issuer.{m.key}",
+                "label": m.label,
+                "period": facts[m.key].period,
+                "unit": m.token,
+                "shown": shown(facts[m.key]),
+                "value_class": facts[m.key].value_class,
+            }
+            for m in METRICS
+        ],
+        "rules": {
+            "minimum_included_peers": MIN_INCLUDED_PEERS,
+            "outlier_fraction": str(OUTLIER_FRACTION),
+            **_RULES_VIEW,
+            "direction": {m.key: m.direction for m in METRICS},
+        },
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the one `read_inputs` view over the bound heads, as compact JSON."""
+    block = context_block(pack=historical.pack(), upstream=cp1c_upstream(historical, attempt))
+    body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the tool-use rule, the validator, submit and the verifier probe ---------------------------
+
+
+def RULES(text: str, seen: Seen) -> tuple[str, ...]:
+    """The tool-use evidence rule (protocol section 2): every cited page was returned by
+    `read_pages` in the step. The schema holds no `ABSENCE_MARKERS` value (lease open question 13),
+    so the product's cited-page rule (`live.tools.unread_citation_issues`, bounded and sorted) is
+    the only one."""
+    return unread_citation_issues(text, seen)
+
+
+def _parsed(payload: str) -> tuple[PeerBenchmarkSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues. Model text is read only through `json_object`
+    (protocol section 6): the schema validates the bounded document's exact re-serialisation,
+    never the raw text, and text `json_object` refuses is `BAD_PAYLOAD`."""
+    document = json_object(payload)
+    if document is None:
+        return None, (BAD_PAYLOAD,)
+    try:
+        return PeerBenchmarkSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, _bounded(shape_issues(error))
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands `Execution.submit_step` and the verifier replays: the
+    attempt's last step is the one under validation."""
+    submission, shape = _parsed(store.payload(attempt.steps[-1].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    issues, report = _checked(pack, submission, cp1c_upstream(store, attempt))
+    if issues or report is None:
+        return StepValidation(issues=issues)
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = PeerBenchmarkReport.model_validate_json(output)
+    return cp1c_module(report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def _with_rules(
+    validate: Callable[[PreparedPack, Attempt], StepValidation],
+    rules: Callable[[str], tuple[str, ...]],
+    payload: str,
+) -> Callable[[PreparedPack, Attempt], StepValidation]:
+    """`validate`, then the tool-use rule issues of the retained payload appended."""
+
+    def run(pack: PreparedPack, attempt: Attempt) -> StepValidation:
+        outcome = validate(pack, attempt)
+        found = rules(payload)
+        if not found:
+            return outcome
+        return StepValidation(
+            output=outcome.output, issues=tuple(dict.fromkeys((*outcome.issues, *found)))
+        )
+
+    return run
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one `peer_benchmark` step (null resolution through `SCHEMAS`, the rule issues
+    appended) and, when it is valid, settle CP-1C with the Python candidate. An invalid step
+    finishes the attempt; the repair is a new attempt."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-1C has one step, {STEP_ID}")
+    normal, resolved = normalise(PeerBenchmarkSubmission, payload)
+    validate: Callable[[PreparedPack, Attempt], StepValidation] = lambda pack, current: (
+        _validate_step(store, pack, current)
+    )
+    if rules is not None and rules(normal):
+        validate = _with_rules(validate, rules, normal)
+    attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, step_id, normal, validate)
+    if (
+        attempt.status == "pending"
+        and len(attempt.steps) == 1
+        and attempt.steps[0].status == "valid"
+    ):
+        outcome = _validate_step(store, store.pack(), attempt)
+        if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+            raise ValueError("Retained CP-1C output differs from trusted validation")
+        candidate = _candidate(outcome.output or "", attempt)
+        attempt = store.finish(
+            ticket_id,
+            candidate.model_dump_json(),
+            lambda supplied: () if supplied == candidate else ("CP-1C candidate differs",),
+            qualification=QUALIFICATION,
+        )
+    return Submitted(attempt, normal, resolved, (), (), None)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Rerun the step validator and settlement over the settled snapshot (nothing is written);
+    `WorkflowError("identity_mismatch")` unless the head rebuilds exactly."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+# --- the consumer reader (lease Public API and D3: OPEN, no consumer exists yet) ---------------
+
+# expected.json `execution.consumption.consumer_facts`, per metric in METRICS order, then the
+# universe count: what a consumer reads as facts (it may read the position, never re-rank).
+READER_FACTS: tuple[str, ...] = (
+    *(
+        f"T1C.4.{m.key}.{name}"
+        for m in METRICS
+        for name in ("median", "difference", "position", "outlier_count")
+    ),
+    f"{TOTALS}.total.included",
+)
+
+
+@dataclass(frozen=True)
+class Cp1cHead:
+    """What a consumer reads from a settled CP-1C head: its status and hash, the pinned facts
+    verbatim (`READER_FACTS`) and the settled own limitations (on a synthetic case these include
+    the run-level synthetic line). A blocked head gives its status and hash only (rulings stage 2
+    round 5 item 9 L2)."""
+
+    status: InputStatus
+    head_sha256: str
+    facts: tuple[Fact, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+    def fact(self, fact_id: str) -> Fact:
+        found = next((f for f in self.facts if f.fact_id == fact_id), None)
+        if found is None:
+            raise ValueError(f"CP-1C: {fact_id} is not exposed by the reader")
+        return found
+
+
+def cp1c_reader(store: Execution, head: Head) -> Cp1cHead:
+    """The consumer reader of a settled CP-1C head (lease Public API). No consumer core calls it
+    yet, so no consumption is claimed (D3 open). A stale head, another module's head, or a head
+    without a pinned fact raises."""
+    if head.module_id != MODULE_ID:
+        raise ValueError(f"CP-1C: not a CP-1C head: {head.module_id}")
+    status = _SETTLED.get(head.status)
+    if status is None:
+        raise ValueError(f"CP-1C: the CP-1C head is {head.status}")
+    if status == "blocked":
+        return Cp1cHead(status=status, head_sha256=head.result_sha256)
+    module = store.head_module(head)
+    facts = {f.fact_id: f for f in module.facts}
+    missing = [fact_id for fact_id in READER_FACTS if fact_id not in facts]
+    if missing:
+        raise ValueError(f"CP-1C: the head has no fact {missing[0]}")
+    return Cp1cHead(
+        status=status,
+        head_sha256=head.result_sha256,
+        facts=tuple(facts[fact_id] for fact_id in READER_FACTS),
+        limitations=module.limitations,
+    )

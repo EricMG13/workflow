@@ -1248,6 +1248,15 @@
       "review": "docs/CP3D-OWNER-LEASE.md"
     },
     {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
+      "sha256": "0b74f88e8ab98a21e43a675335121a27a88cf0badac8e699f8cf7281dbf1f48b",
+      "reason": "Register the CP-2D binding map after CP-2 (docs/CP2D-OWNER-LEASE.md, Files); new bindings/cp2d.py holds FP block bindings only.",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
       "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
@@ -1300,6 +1309,168 @@
       "sha256": "09ab059d832204059f454e4c9077e0c2d02493717080580a80ab44fcb080acba",
       "reason": "Add the CP-2A _DISTRESSED composition (two _Spec rows), its _spec_of entry and the two block ids in the distressed_restructuring preset (D12 registration, rows only); retains the CP-3D _RELATIVE_VALUE composition.",
       "review": "docs/CP2A-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
+      "sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
+      "reason": "Add the three CP-2D _Spec rows (liquidity-runway, maturity-wall, funding-gap) to _COVENANT_REFINANCING (docs/CP2D-OWNER-LEASE.md, Rendered sections).",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
+      "sha256": "f51954d7b2cd4569f1e1ffbe06713a8d2c5c04f828ce8bf8df3737da4583b48a",
+      "reason": "Merged registration tail: CP-2D directly after CP-2 per its lease; CP-3D, CP-DR, CP-2E, CP-8 and CP-2A rows all retained.",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
+      "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
+      "sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
+      "reason": "Merged CP-2D covenant/refinancing _Spec rows with the CP-3D _RELATIVE_VALUE and CP-2A _DISTRESSED compositions (D12 registration, rows only).",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "6b679cab982521bd0d73a213e7294d45927d6894",
+      "sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "reason": "Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
+      "review": "docs/CPL10-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "project_commit": "ab8917343a7b9a3d002a80a519d7c28d29678cad",
+      "sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
+      "reason": "Merged registration tail: CP-L10 appended last (D12 one-line registration); all earlier rows retained.",
+      "review": "docs/CPL10-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
+      "project_commit": "7831ef123f6a2cff27b63c2546906dadbcae5426",
+      "sha256": "9e6ee6cd5cbc160f1d47e1be3fdcd5f7fa7eb1f68999156e9249a8139fef8ae2",
+      "reason": "Register the CP-1D binding map (D12 one-line registration, appended last after CP-L10); all earlier rows retained.",
+      "review": "docs/CP1D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
+      "project_commit": "7831ef123f6a2cff27b63c2546906dadbcae5426",
+      "sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
+      "reason": "Add the CP-1D _EARNINGS_QUALITY composition (two _Spec rows), its _spec_of entry and the two block ids in the earnings preset (D12 registration, rows only); retains CP-3D, CP-2A and CP-2D rows.",
+      "review": "docs/CP1D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
+      "project_commit": "1c512aa7136a504f9e0993e8ae531d3100fb6102",
+      "sha256": "fc9c18280c862c91b3877701f67e1c41f3965f213cdf87ee089db3ced990f1bc",
+      "reason": "CP-1D review M2: the restated-leverage _Spec title equals expected.json FP02 (Cash conversion and restated leverage); one row's text only, all other rows retained.",
+      "review": "work/build/stage2/cp1d/review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "9e6ee6cd5cbc160f1d47e1be3fdcd5f7fa7eb1f68999156e9249a8139fef8ae2",
+      "project_commit": "8c31a5abd4d74917967d518d580607d13d314d23",
+      "sha256": "0899560e6ece36d469f5f481de8297d7fb7c60048691bca6ff209d6564f1fd08",
+      "reason": "Register the CP-2G binding map (D12 one-line registration, SHIPPED_MAPS += CP2G, appended last after CP-1D); all earlier rows retained.",
+      "review": "docs/CP2G-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "fc9c18280c862c91b3877701f67e1c41f3965f213cdf87ee089db3ced990f1bc",
+      "project_commit": "8c31a5abd4d74917967d518d580607d13d314d23",
+      "sha256": "a073edd7b7fd12af3ce8d8a461151ee58dd459813229906fd9defcc309c5010e",
+      "reason": "Add the two CP-2G _Spec rows (forward-credit-path, forward-breakpoints) to CP-2A's _DISTRESSED composition and the two block ids in the distressed_restructuring preset right after the CP-2A pair (D12 registration, rows only); all other rows retained.",
+      "review": "docs/CP2G-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "0899560e6ece36d469f5f481de8297d7fb7c60048691bca6ff209d6564f1fd08",
+      "project_commit": "b2f230871aa6574bb0c36a335df83eceef7d9b78",
+      "sha256": "1ba090235415a19c9360e0b8729647210e5c7110efa5b3a2dbfb1a52267cd727",
+      "reason": "Register the CP-1C binding map (D12 one-line registration, SHIPPED_MAPS += CP1C, appended last after CP-2G; the lease names no position); all earlier rows retained.",
+      "review": "docs/CP1C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "a073edd7b7fd12af3ce8d8a461151ee58dd459813229906fd9defcc309c5010e",
+      "project_commit": "b2f230871aa6574bb0c36a335df83eceef7d9b78",
+      "sha256": "3cbf1c08d9117c8282b8f12e271721e24e62aa6c2c06d9ca9a4401a729d18188",
+      "reason": "Add the CP-1C peer-positioning _Spec row to CP-3D's _RELATIVE_VALUE composition after market-against-fundamentals (D12 registration, one row only; _spec_of and the relative_value preset already read the mapping); all other rows retained.",
+      "review": "docs/CP1C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "1ba090235415a19c9360e0b8729647210e5c7110efa5b3a2dbfb1a52267cd727",
+      "project_commit": "54b3d903b78c987cd968fb91dc46ab5b20182d04",
+      "sha256": "635e25edaf3b3c38a024defd7eca1c0cccf85010cd8a315ab76decd516aa3b4d",
+      "reason": "Register the CP-3C binding map (D12 one-line registration, directly after CP-2D per its lease); all earlier rows retained.",
+      "review": "docs/CP3C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "3cbf1c08d9117c8282b8f12e271721e24e62aa6c2c06d9ca9a4401a729d18188",
+      "project_commit": "49c586530a6004a3afeb94ed2670f43b7135d099",
+      "sha256": "c68c0587465368b92dde8c2bb2e57c75c47559603ec14fdb70122f78bae41e75",
+      "reason": "Add the CP-3C D7 _Spec rows refinancing-paths and lme-creditor-exposure to the _COVENANT_REFINANCING composition after the CP-2D rows (round 5 item 18; rows only).",
+      "review": "docs/CP3C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "635e25edaf3b3c38a024defd7eca1c0cccf85010cd8a315ab76decd516aa3b4d",
+      "project_commit": "44596babca4122c90927c045d35817423b170a86",
+      "sha256": "2242fd10310cf881555ed1d2b3db48560bab6c717bea5d8f64c8d8493cc9c3c4",
+      "reason": "Register the CP-2H binding map (D12 one-line registration, SHIPPED_MAPS += CP2H, appended last); all earlier rows retained.",
+      "review": "docs/CP2H-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "c68c0587465368b92dde8c2bb2e57c75c47559603ec14fdb70122f78bae41e75",
+      "project_commit": "44596babca4122c90927c045d35817423b170a86",
+      "sha256": "26e6b5e44fc8c9c51aa038852c066de6035c5d89f49d30e02cbca2010d4c1812",
+      "reason": "Add the CP-2H rating-triggers _Spec row to _DISTRESSED (D12 registration, rows only).",
+      "review": "docs/CP2H-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "2242fd10310cf881555ed1d2b3db48560bab6c717bea5d8f64c8d8493cc9c3c4",
+      "project_commit": "64bf670959ef7bd015079bef683546dd43e5e4ab",
+      "sha256": "8cd0dbc9b7fb8428cd604c30f86d640b66da91a87506ff1a201a41a26790d3fe",
+      "reason": "Register the CP-4C binding map (D12 one-line registration, appended last after CP-2H); all earlier rows retained.",
+      "review": "docs/CP4C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "26e6b5e44fc8c9c51aa038852c066de6035c5d89f49d30e02cbca2010d4c1812",
+      "project_commit": "64bf670959ef7bd015079bef683546dd43e5e4ab",
+      "sha256": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
+      "reason": "Add the CP-4C recovery-by-class and value-allocation-claims _Spec rows to _DISTRESSED after rating-triggers (D12 registration, rows only).",
+      "review": "docs/CP4C-OWNER-LEASE.md"
     }
   ],
   "local_patch_lineage": [

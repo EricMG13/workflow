@@ -21,6 +21,7 @@ import test_method_cp3 as stage1
 from defect_classes import BLANK_VALUES
 from pydantic import ValidationError
 from test_method_cp3 import make_inputs, mutate
+from test_owner_g1x import hide_row
 
 from deploy_vii import cp3_relative_value
 from deploy_vii.bindings import validate_bindings
@@ -127,7 +128,7 @@ def test_check_steps_refuses_a_row_that_departs_from_the_chain(change: dict[str,
 
 
 def test_check_steps_refuses_without_an_entry_validator(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(ow._ENTRY_VALIDATORS, "CP-3")
+    hide_row(monkeypatch, "_ENTRY_VALIDATORS", "CP-3")
     with pytest.raises(WorkflowError):
         ow._check_steps("CP-3", ow.OWNER_SPECS["CP-3"])
 
@@ -495,7 +496,7 @@ def _specless_modules() -> list[str]:
     return found
 
 
-@pytest.mark.parametrize("extra", ["CP-4C", "CP-2D", "CP-3C", *_specless_modules()])
+@pytest.mark.parametrize("extra", _specless_modules())
 def test_a_module_without_a_spec_in_a_cp3_run_refuses_and_writes_nothing(
     extra: str, tmp_path: Path
 ) -> None:

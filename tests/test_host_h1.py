@@ -54,6 +54,10 @@ from deploy_workflow.workflow import WorkflowError
 
 owner: Any = importlib.import_module("deploy_workflow.owner_workflow")
 runs: Any = importlib.import_module("s1a_runs")
+# `hide_row` keeps the shipped registration order on undo (`monkeypatch.delitem` would not).
+hide_row: Callable[[pytest.MonkeyPatch, str, str], None] = importlib.import_module(
+    "test_owner_g1x"
+).hide_row
 
 ROOT = Path(__file__).resolve().parents[1]
 CP3D_ORACLE = ROOT / "cases/cp3d-owner"
@@ -583,7 +587,7 @@ def test_unregistered_owner_module_refuses_before_any_capability(
     """Item 2: no core registered -> `not_permitted`, and no `SourceTools` is ever built."""
     assert _refusal(cp3d.root, "market_implied") == "opened"
     monkeypatch.setattr(host, "SourceTools", _NoCapability)
-    monkeypatch.delitem(owner._CORES, "CP-3D")
+    hide_row(monkeypatch, "_CORES", "CP-3D")
     assert _refusal(cp3d.root, "market_implied") == "not_permitted"
 
 
@@ -997,7 +1001,7 @@ def test_schema_source_follows_the_producer_module(monkeypatch: pytest.MonkeyPat
     assert _schema_source("CP-1A", "credit_synthesis") == "SourceError not_permitted"
     # An owner-only module without a registered core (CP-3D's real core is registered since its
     # Stage 2 task, so it is unregistered here).
-    monkeypatch.delitem(owner._CORES, "CP-3D")
+    hide_row(monkeypatch, "_CORES", "CP-3D")
     assert _schema_source("CP-3D", "market_implied") == "SourceError not_permitted"
     core = _register(monkeypatch, "CP-3D", "market_implied")
     assert _schema_source("CP-3D", "market_implied") == "Note"
@@ -1026,7 +1030,7 @@ def test_unsourced_settled_producer_refuses_before_any_payload_read(
     """A settled head whose step has no schema source raises `not_permitted` before its retained
     payload is read: unregistering the core after settlement leaves no source."""
     store, snapshot, producer = _owner_head(monkeypatch, tmp_path, _genuine_owner_tail)
-    monkeypatch.delitem(owner._CORES, "CP-3D")
+    hide_row(monkeypatch, "_CORES", "CP-3D")
     reads: list[str] = []
 
     def payload(self: Execution, digest: str) -> str:
@@ -1056,7 +1060,7 @@ def test_schema_source_is_chosen_before_the_tail_checks(
 
     store, snapshot, producer = _owner_head(monkeypatch, tmp_path, two_inputs)
     assert host._producer_inputs(store, snapshot, producer) is False
-    monkeypatch.delitem(owner._CORES, "CP-3D")
+    hide_row(monkeypatch, "_CORES", "CP-3D")
     with pytest.raises(SourceError) as caught:
         host._producer_inputs(store, snapshot, producer)
     assert caught.value.code == "not_permitted"

@@ -32,6 +32,7 @@ from uuid import uuid4
 import pytest
 from pydantic import Field, ValidationError
 
+from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Contract, Module, Run
 from deploy_vii.execution import (
     Attempt,
@@ -456,11 +457,65 @@ def test_fake_module_is_owner_only_and_plans_after_cp0() -> None:
     assert plan((MODULE,)) == ("CP-0", MODULE)
 
 
+STAGE_1_MAPS = (
+    "CP-0",
+    "CP-1",
+    "CP-1B",
+    "CP-MODEL",
+    "CP-1A",
+    "CP-2",
+    "CP-4",
+    "CP-3",
+    "CP-5",
+    "CP-6",
+)
+
+
+def test_the_stage_1_binding_maps_keep_their_shipped_order() -> None:
+    """Stage 1 closed with `SHIPPED_MAPS = (CP0, CP1, CP1B, CP_MODEL, CP1A, CP2, CP4, CP3, CP5,
+    CP6)`; later modules insert or append around them, never reorder them (the rendered Front
+    Page lists blocks in map order)."""
+    ids = [m.module_id for m in SHIPPED_MAPS]
+    assert [i for i in ids if i in STAGE_1_MAPS] == list(STAGE_1_MAPS)
+
+
 Variant = tuple[str, Any, Callable[[pytest.MonkeyPatch], None]]
 
 
 def _unchanged(m: pytest.MonkeyPatch) -> None:
     pass
+
+
+def hide_row(m: pytest.MonkeyPatch, name: str, key: str) -> None:
+    """Hide one row of the fixed registration dict `owner.<name>` for the patch's lifetime.
+
+    The module attribute is swapped for a copy without the row (G1 looks every registration dict up
+    through the module at call time), so the undo puts back the original dict, its identity and
+    row order intact. `m.delitem` would re-insert the row at the end of the dict and break the
+    order-sensitive registration tests that run later in the same process."""
+    table: dict[str, Any] = getattr(owner, name)
+    m.setattr(owner, name, {k: v for k, v in table.items() if k != key})
+
+
+def test_hiding_a_shipped_row_restores_the_dict_on_undo() -> None:
+    """Test isolation: the undo restores the very dict, rows in the shipped order, so the
+    order-sensitive registration tests that run later in the same process are unaffected."""
+    rows_hidden = (
+        ("_ENTRY_VALIDATORS", "CP-1A"),
+        ("_ENTRY_VALIDATORS", "CP-3"),
+        ("_ENTRY_VALIDATORS", "CP-4"),
+        ("_CORES", "CP-3D"),
+        ("_VIEWS", "legal_covenants"),
+    )
+    for name, key in rows_hidden:
+        table = getattr(owner, name)
+        rows = tuple(table.items())
+        with pytest.MonkeyPatch.context() as m:
+            hide_row(m, name, key)
+            assert key not in getattr(owner, name)
+            assert tuple(getattr(owner, name)) == tuple(k for k, _ in rows if k != key)
+        assert getattr(owner, name) is table, name
+        assert tuple(table.items()) == rows, (name, key)
 
 
 def _refused_at_create(root: Path, variants: dict[str, Variant]) -> None:
@@ -488,7 +543,7 @@ def test_owner_only_spec_must_be_served_by_its_core(g1x: SimpleNamespace, tmp_pa
         tmp_path,
         {
             "live entry": (MODULE, replace(spec, entry="model_payload"), _unchanged),
-            "no registered core": (MODULE, spec, lambda m: m.delitem(owner._CORES, MODULE)),
+            "no registered core": (MODULE, spec, lambda m: hide_row(m, "_CORES", MODULE)),
             "steps differ from STEP_IDS": (MODULE, replace(spec, steps=(sourced,)), _unchanged),
             "module_context without a view": (
                 MODULE,
@@ -605,12 +660,12 @@ def test_every_analytical_module_but_cp0_and_cp1_has_an_entry_validator(
             "owner-only module without a validator": (
                 MODULE,
                 g1x.spec,
-                lambda m: m.delitem(owner._ENTRY_VALIDATORS, MODULE),
+                lambda m: hide_row(m, "_ENTRY_VALIDATORS", MODULE),
             ),
             "live-contract module without a validator": (
                 "CP-1A",
                 owner.OWNER_SPECS["CP-1A"],
-                lambda m: m.delitem(owner._ENTRY_VALIDATORS, "CP-1A"),
+                lambda m: hide_row(m, "_ENTRY_VALIDATORS", "CP-1A"),
             ),
         },
     )

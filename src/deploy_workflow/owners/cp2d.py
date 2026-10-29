@@ -1,26 +1,69 @@
-"""CP-2D (Liquidity) owner core: the Stage 1 calculation (docs/CP2D-OWNER-LEASE.md, Method,
-as amended by docs/rulings/2026-10-28-stage1.md, CP-2D sections of rounds 2 to 9, and round 11's
-maturity before D0 and blank text).
+"""CP-2D (Liquidity) owner core (docs/CP2D-OWNER-LEASE.md, Method, as amended by
+docs/rulings/2026-10-28-stage1.md, CP-2D sections of rounds 2 to 9, round 11's maturity before
+D0 and blank text, and the Stage 2 backlog).
 
-Pure functions over typed inputs. Python owns every figure: sources and uses (T2E.1), the
-liquidity position (T2E.2), the run-rate cash runway (T2E.3), the maturity wall (T2E.4) and
-the funding gap (T2E.5), plus the analyst-judgment and gaps ledgers (T2E.6, T2E.7), the own
-limitations and the claim texts. All arithmetic is Decimal. A value that cannot be calculated
-is a ``Gap`` carrying the reason of the first missing operand in formula order; it is never
-read as zero, and nothing that passes ``submission_issues`` raises. No I/O, store, host,
-session or render call: connections, the read view and the G1 seams are later stages.
+Stage 1, the calculation: pure functions over typed inputs. Python owns every figure: sources
+and uses (T2E.1), the liquidity position (T2E.2), the run-rate cash runway (T2E.3), the maturity
+wall (T2E.4) and the funding gap (T2E.5), plus the analyst-judgment and gaps ledgers (T2E.6,
+T2E.7), the own limitations and the claim texts. All arithmetic is Decimal. A value that cannot
+be calculated is a ``Gap`` carrying the reason of the first missing operand in formula order; it
+is never read as zero, and nothing that passes ``submission_issues`` raises.
+
+Stage 2, the connection (the last section of this file): the G1-X seams (`QUALIFICATION`,
+`STEP_IDS`, `SCHEMAS`, `view`, `probe`, `submit`, `ENTRY_VALIDATOR`), the one store adapter that
+turns the settled CP-1 head into ``Cp2dInputs`` (`_inputs`), the composition of the calculation
+into a ``Module`` (`liquidity_bridge`, `cp2d_module`) and the consumer reader `cp2d_reader`.
 """
 
+import hashlib
+import json
 from calendar import monthrange
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
+from dataclasses import fields as dataclasses_fields
 from datetime import date
 from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
-from typing import Literal
+from types import MappingProxyType
+from typing import Any, Literal
 
-from deploy_vii.contracts import Contract, Identifier, Text
+from pydantic import ValidationError
+
+from deploy_vii.business_context import spelled
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Identifier,
+    Input,
+    Module,
+    ReportTable,
+    Run,
+    TableColumn,
+    TableRow,
+    Text,
+)
 from deploy_vii.display import UnitClass, format_date, format_value
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    current_inputs,
+    inherited_limitations,
+    text_sha256,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
 from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.readiness import shape_issues
+from deploy_vii.report_view import figure_unit
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2D"
 HORIZON_BOUNDS = (1, 60)
@@ -220,9 +263,18 @@ STATE_WORD: dict[OperandStatus, str] = {
 }
 
 
+# Labels that read as plural, so take "are" (stage 2 backlog, cp2d/r13-fix1-review.md L1).
+PLURAL_LABELS = frozenset({OPERAND_LABELS["rcf_drawn"]})
+
+
+def verb(label: str) -> str:
+    """The present-tense "be" that agrees with an operand label."""
+    return "are" if label in PLURAL_LABELS else "is"
+
+
 def state_reason(label: str, status: OperandStatus) -> str:
     """The reason of an operand that is not known and of every value that depends on it."""
-    return f"Not calculable: {label} is {STATE_WORD[status]}"
+    return f"Not calculable: {label} {verb(label)} {STATE_WORD[status]}"
 
 
 def missing_reason(label: str) -> str:
@@ -824,7 +876,7 @@ FUNDING_GAP_ON_CASH_ALONE_DRAWINGS = (
 # Round 13 (LEAD addendum 4): a conflicting or not applicable revolver operand is named with its
 # state, in GAP_OPERAND's shape, never called undisclosed.
 FUNDING_GAP_ON_CASH_ALONE_STATE = (
-    "The funding gap is not calculated because {label} is {state}; the cash-only headroom over "
+    "The funding gap is not calculated because {label} {be} {state}; the cash-only headroom over "
     "minimum cash is shown as a lower bound."
 )
 SCHEDULE_EMPTY_LIMITATION = (
@@ -916,7 +968,9 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
     if isinstance(bridge.undrawn_revolver, Gap):
         named = revolver_state(bridge.undrawn_revolver)
         if named is not None:
-            text = FUNDING_GAP_ON_CASH_ALONE_STATE.format(label=named[0], state=named[1])
+            text = FUNDING_GAP_ON_CASH_ALONE_STATE.format(
+                label=named[0], be=verb(named[0]), state=named[1]
+            )
         elif bridge.undrawn_revolver.reason == DRAWINGS_UNDRAWN:
             text = FUNDING_GAP_ON_CASH_ALONE_DRAWINGS
         else:
@@ -1110,8 +1164,11 @@ def _money(value: Num, balance: str, value_class: str = "calculated") -> Cell:
 
 
 def _copy(o: Operands, value: Num, value_class: str, operand: str, balance: str) -> Cell:
-    """A copied CP-1 T4.5/T4.6 fact: own value class, unit currency normalised to MILLIONS,
-    CP-1's period (the shared one for a sum), CP-1's status and limitation when not known."""
+    """A copied CP-1 T4.5/T4.6 fact: own value class, unit currency normalised to MILLIONS and
+    CP-1's period (the shared one for a sum). A single operand keeps CP-1's status and
+    limitation when it is not known; a sum of operands is a computed value, so a gap in it
+    is a dependant gap with the first non-known operand's reason (stage 2 backlog, addendum 4
+    (b))."""
     return _num(
         value,
         "MILLIONS",
@@ -1120,7 +1177,7 @@ def _copy(o: Operands, value: Num, value_class: str, operand: str, balance: str)
         operand,
         _CP1_CURRENCY,
         _periods(o, operand),
-        copied=True,
+        copied="+" not in operand,
     )
 
 
@@ -1162,9 +1219,10 @@ RUNWAY_ROW = (
 
 
 def _t410(o: Operands, value: Num, operand: str, balance: str, unit: str = "MILLIONS") -> Cell:
-    """A cell CP-2D recomputes and tags with the CP-1 T4.10 metric it cross-checks: it keeps
-    that metric's period when CP-1 offers it."""
-    return _num(value, unit, "calculated", balance, operand, periods=_periods(o, operand))
+    """A cell CP-2D recomputes and tags with the CP-1 T4.10 metric it cross-checks. It is not a
+    copy, so it takes the balance date, not that metric's period; the tag is a twin pointer
+    only (stage 2 backlog, addendum 4 (c), (d))."""
+    return _num(value, unit, "calculated", balance, operand)
 
 
 def _sources_and_uses(o: Operands, b: Bridge) -> Table:
@@ -1245,7 +1303,6 @@ def _position(o: Operands, b: Bridge) -> Table:
                     "calculated",
                     d0,
                     "T4.18 commitment - drawn_amount",
-                    periods=tuple(f.period for f in b.ordered_facilities),
                 )
             ],
         ),
@@ -1388,11 +1445,11 @@ LIQ_DRAWINGS = (
     "which are undisclosed; cash is {cash}."
 )
 LIQ_STATE = (
-    "Available liquidity at {d} is not calculated: [T2E.2.r07] needs {label}, which is "
+    "Available liquidity at {d} is not calculated: [T2E.2.r07] needs {label}, which {be} "
     "{state}; cash is {cash}."
 )
 GAP_STATE = (
-    "The funding gap is not calculated because {label} is {state}; cash-only headroom over the "
+    "The funding gap is not calculated because {label} {be} {state}; cash-only headroom over the "
     "assumed minimum cash is {headroom}."
 )
 GAP_UNDISCLOSED = (
@@ -1419,7 +1476,7 @@ GAP_FACILITY = "The funding gap is not calculated: [T2E.5.r07] needs every facil
 # Round 11: the pre-D0 cause in the L5 frame, in the maturity date's slot.
 PRE_D0_CAUSE = "to mature on or after the balance date, and one does not"
 GAP_OPERAND = (
-    "The funding gap is not calculated: [T2E.5.r07] needs {label}, which is "
+    "The funding gap is not calculated: [T2E.5.r07] needs {label}, which {be} "
     "{state}."  # state: missing, conflicting or not applicable (round 13, R1 M3)
 )
 # Form 4 labels for the schedule itself; no ruling fixes them (reported to LEAD). They omit
@@ -1503,10 +1560,16 @@ def _gap_missing(o: Operands, b: Bridge) -> str | None:
         operand = _operand(o, name)
         if operand is None or operand.status != "known":
             status: OperandStatus = "missing" if operand is None else operand.status
-            return GAP_OPERAND.format(label=OPERAND_LABELS[name], state=STATE_WORD[status])
+            return GAP_OPERAND.format(
+                label=OPERAND_LABELS[name], be=verb(OPERAND_LABELS[name]), state=STATE_WORD[status]
+            )
     schedule = b.maturities_in_horizon
     if isinstance(schedule, Gap) and schedule.reason in SCHEDULE_LABELS:
-        return GAP_OPERAND.format(label=SCHEDULE_LABELS[schedule.reason], state="missing")
+        return GAP_OPERAND.format(
+            label=SCHEDULE_LABELS[schedule.reason],
+            be=verb(SCHEDULE_LABELS[schedule.reason]),
+            state="missing",
+        )
     return None
 
 
@@ -1521,7 +1584,7 @@ def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimTex
         liquidity = form.format(d=d0, cash=c.slot("T2E.2.r01"))
         if named is not None:
             liquidity = LIQ_STATE.format(
-                d=d0, label=named[0], state=named[1], cash=c.slot("T2E.2.r01")
+                d=d0, label=named[0], be=verb(named[0]), state=named[1], cash=c.slot("T2E.2.r01")
             )
     else:
         liquidity = (
@@ -1573,7 +1636,9 @@ def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimTex
         missing = _gap_missing(o, b)
         form = GAP_DRAWINGS if drawings else GAP_UNDISCLOSED
         if named is not None:
-            form = GAP_STATE.format(label=named[0], state=named[1], headroom="{headroom}")
+            form = GAP_STATE.format(
+                label=named[0], be=verb(named[0]), state=named[1], headroom="{headroom}"
+            )
         template = missing or form.format(headroom=c.slot("T2E.5.r05"))
         out.append(c.claim("CP-2D-GAP-01", template, gap_cites))
     return tuple(out)
@@ -1747,3 +1812,973 @@ def submission_issues(
         if carried and not insufficient:
             issues.append(LIMITATION_ISSUE)
     return tuple(dict.fromkeys(issues))
+
+
+# =============================================================================================
+# Stage 2: the connection (docs/CP2D-OWNER-LEASE.md Public API; docs/G1X-OWNER-CORE-PROTOCOL.md)
+# =============================================================================================
+
+STEP_ID = "liquidity_bridge"
+STEP_IDS: tuple[str, ...] = (STEP_ID,)
+SCHEMAS: Mapping[str, type[Contract]] = MappingProxyType({STEP_ID: LiquidityBridgeSubmission})
+# The four statuses of the settled artifact, as CP-1A and CP-2 record them (`PROMOTED`).
+QUALIFICATION = Qualification(implementation="implemented")
+# G1-X section 2: a settled owner-only head adds exactly this input after its attempt inputs.
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+EDGES = ("CP-0", "CP-1", "CP-2")
+CP1 = "CP-1"
+
+# --- the binding of the CP-1 head's facts (cases/cp2d-owner/manifest.json `fact_bindings`) ------
+
+
+@dataclass(frozen=True)
+class FactBinding:
+    """The predicate that selects one CP-1 fact: its table, its period string and its label."""
+
+    table_id: str
+    period: str
+    label: str
+
+
+_T45_PERIOD = "LTM Q4 25 · 2025-01-01 to 2025-12-31"
+_T46_PERIOD = "q4-2025 · 2025-10-01 to 2025-12-31"
+_T410_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+
+
+def _bind45(label: str) -> FactBinding:
+    return FactBinding("T4.5", _T45_PERIOD, f"{label} · LTM Q4 25")
+
+
+def _bind46(label: str) -> FactBinding:
+    return FactBinding("T4.6", _T46_PERIOD, f"{label} · q4-2025")
+
+
+def _bind410(metric: str) -> FactBinding:
+    return FactBinding("T4.10", _T410_PERIOD, f"LTM Q4 25 (2025-01-01 to 2025-12-31) · {metric}")
+
+
+# Name order is the manifest's. Each predicate selects exactly one fact ("zero or several fail").
+FACT_BINDINGS: Mapping[str, FactBinding] = MappingProxyType(
+    {
+        "cash_closing": _bind410("cash_closing"),
+        "undrawn_rcf": _bind410("undrawn_rcf"),
+        "liquidity": _bind410("liquidity"),
+        "total_debt": _bind410("total_debt"),
+        "liquidity_to_debt": _bind410("liquidity_to_debt"),
+        "cfo_reported": _bind410("cfo_reported"),
+        "opening_cash": _bind45("Opening cash"),
+        "cfo": _bind45("Operating cash flow"),
+        "investing": _bind45("Net cash used in investing"),
+        "debt_issuance": _bind45("Debt issuance"),
+        "debt_repayment": _bind45("Debt repayment"),
+        "net_debt_issuance": _bind45("Net debt issuance"),
+        "equity_issuance": _bind45("Equity issuance"),
+        "equity_repurchases": _bind45("Equity repurchases"),
+        "dividends_paid": _bind45("Dividends paid"),
+        "other_investing_financing": _bind45("Other investing and financing"),
+        "financing": _bind45("Net cash used in financing"),
+        "fx_effect": _bind45("FX effect on cash"),
+        "closing_cash": _bind45("Closing cash"),
+        "fcf_unlevered": _bind45("Fcf unlevered"),
+        "cash_bs": _bind46("Cash and cash equivalents"),
+        "restricted_cash": _bind46("Restricted cash"),
+        "rcf_commitment": _bind46("RCF commitment"),
+        "rcf_drawn": _bind46("RCF drawings"),
+        "total_debt_bs": _bind46("Total debt"),
+    }
+)
+# T4.18: the QUARTER period at the latest period end wins over its FY alias; the alias must agree
+# on every term; one row per facility_id.
+SCHEDULE_PERIOD = "q4-2025"
+FACILITY_FIELDS = (
+    "principal",
+    "maturity_date",
+    "commitment",
+    "drawn_amount",
+    "annual_amortisation",
+)
+_FACILITY_TERMS = ("facility_name", "currency", *FACILITY_FIELDS)
+BINDING_NAMES: tuple[str, ...] = (*FACT_BINDINGS, *(f"T4.18 {f}" for f in FACILITY_FIELDS))
+# The names Operands carries; the others are offered to the analyst and traced (T2E.9) only.
+OPERAND_NAMES = tuple(f.name for f in dataclasses_fields(Operands) if f.name != "facilities")
+_RATIO_NAMES = frozenset({"liquidity_to_debt"})
+
+
+@dataclass(frozen=True)
+class Offered:
+    """One CP-1 fact the read view offers (and T2E.9 traces): its binding name, and for a T4.18
+    term the facility it belongs to."""
+
+    name: str
+    fact: Fact
+    facility_id: str | None = None
+
+
+@dataclass(frozen=True)
+class Selection:
+    """What the bindings select from one CP-1 module: the Stage 1 operands, the balance date, the
+    facts offered (sorted by name, then fact id) and the T4.18 maturity-date fact ids."""
+
+    operands: Operands
+    balance_date: date
+    offered: tuple[Offered, ...]
+    maturity_date_refs: frozenset[str]
+
+    def facts(self, name: str) -> tuple[Fact, ...]:
+        return tuple(o.fact for o in self.offered if o.name == name)
+
+    def facility_fact(self, facility_id: str, field: str) -> Fact | None:
+        return next(
+            (
+                o.fact
+                for o in self.offered
+                if o.name == f"T4.18 {field}" and o.facility_id == facility_id
+            ),
+            None,
+        )
+
+
+def _usd_millions(name: str, fact: Fact) -> None:
+    """A money fact must be US dollars in millions (CP-1: scale 1e6 USD, or `MILLIONS`); a
+    ratio must be a PERCENT fraction. Anything else cannot be read as the Stage 1 amount."""
+    if fact.amount is None:
+        return
+    ok = (
+        fact.unit == "PERCENT"
+        if name in _RATIO_NAMES
+        else fact.unit in ("currency", "MILLIONS")
+        and fact.currency == CURRENCY
+        and fact.scale == Decimal(1000000)
+    )
+    if not ok:
+        raise ValueError(
+            f"CP-2D: {name} is not in US dollars millions"
+            if name not in _RATIO_NAMES
+            else f"CP-2D: {name} is not a percent fraction"
+        )
+
+
+def _operand_of(name: str, fact: Fact) -> Operand:
+    """The Stage 1 operand of a CP-1 fact: its status, amount, own period and, when it is not
+    known, CP-1's limitation verbatim. A known fact is never defaulted and a non-known one never
+    becomes an amount."""
+    _usd_millions(name, fact)
+    if fact.status == "known":
+        if fact.amount is None:
+            raise ValueError(f"CP-2D: {name} is known without an amount and a period")
+        return Operand("known", fact.amount, fact.period, None)
+    return Operand(fact.status, None, None, fact.limitation)
+
+
+def _rows(module: Module, table_id: str) -> dict[str, dict[str, Fact]]:
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in module.facts:
+        if fact.table_id == table_id:
+            row = rows.setdefault(fact.row_id, {})
+            if fact.field in row:
+                raise ValueError(f"CP-2D: duplicate CP-1 coordinate {table_id}/{fact.row_id}")
+            row[fact.field] = fact
+    return rows
+
+
+def _known_text(row: Mapping[str, Fact], field: str) -> str | None:
+    fact = row.get(field)
+    return fact.text if fact is not None and fact.status == "known" else None
+
+
+def _same_terms(a: Fact, b: Fact) -> bool:
+    return (a.amount, a.text, a.status, a.unit, a.currency, a.scale, a.basis) == (
+        b.amount,
+        b.text,
+        b.status,
+        b.unit,
+        b.currency,
+        b.scale,
+        b.basis,
+    )
+
+
+def _balance_date(module: Module) -> tuple[date, tuple[str, ...]]:
+    """The end date of the schedule period (T4.14), and the other periods that end the same day
+    (the FY alias of a quarter)."""
+    ends: dict[str, str] = {}
+    for row in _rows(module, "T4.14").values():
+        pid, end = _known_text(row, "period_id"), _known_text(row, "end_date")
+        if pid is not None and end is not None:
+            ends[pid] = end
+    if SCHEDULE_PERIOD not in ends:
+        raise ValueError(f"CP-2D: CP-1 states no end date for {SCHEDULE_PERIOD}")
+    balance = date.fromisoformat(ends[SCHEDULE_PERIOD])
+    aliases = tuple(
+        p for p, end in ends.items() if end == ends[SCHEDULE_PERIOD] and p != SCHEDULE_PERIOD
+    )
+    return balance, aliases
+
+
+def _facility_rows(
+    module: Module, aliases: tuple[str, ...]
+) -> tuple[dict[str, dict[str, Fact]] | None, tuple[Facility, ...]]:
+    """The T4.18 rows at the schedule period by facility id, and the Stage 1 facilities. The
+    schedule is None (absent) when CP-1 holds no T4.18 fact at all, and () when it holds some but
+    none for this period. The FY alias must agree on every term."""
+    table = _rows(module, "T4.18")
+    if not table:
+        return None, ()
+    chosen: dict[str, dict[str, Fact]] = {}
+    by_period: dict[tuple[str, str], dict[str, Fact]] = {}
+    for row in table.values():
+        facility_id = _known_text(row, "facility_id")
+        period = row["facility_id"].period if "facility_id" in row else None
+        if facility_id is None or period is None:
+            raise ValueError("CP-2D: a CP-1 T4.18 row has no known facility_id and period")
+        if (facility_id, period) in by_period:
+            raise ValueError(f"CP-2D: facility {facility_id} has two T4.18 rows in {period}")
+        by_period[facility_id, period] = row
+        if period == SCHEDULE_PERIOD:
+            chosen[facility_id] = row
+    for alias in aliases:
+        listed = {fid for (fid, period) in by_period if period == alias}
+        for facility_id in sorted(set(chosen) - listed):
+            raise ValueError(f"CP-2D: facility {facility_id} lacks its {alias} alias row")
+        for facility_id in sorted(listed - set(chosen)):
+            raise ValueError(
+                f"CP-2D: facility {facility_id} has a {alias} row but no {SCHEDULE_PERIOD} row"
+            )
+    facilities = []
+    for facility_id, row in chosen.items():
+        for alias in aliases:
+            other = by_period[facility_id, alias]
+            for term in _FACILITY_TERMS:
+                if (term in row) != (term in other) or (
+                    term in row and not _same_terms(row[term], other[term])
+                ):
+                    raise ValueError(
+                        f"CP-2D: facility {facility_id} {term} differs between its "
+                        f"{SCHEDULE_PERIOD} row and its {alias} alias"
+                    )
+        facilities.append(_facility_of(facility_id, row))
+    return chosen, tuple(facilities)
+
+
+def _facility_of(facility_id: str, row: Mapping[str, Fact]) -> Facility:
+    """The Stage 1 facility of a T4.18 row. CP-1 writes the money terms in the row's own
+    currency, so a facility in another currency is read as stated: the Stage 1 FX path makes its
+    row and every total missing with the limitation (lease Reuse, ruling A5). A money term must
+    be in millions and agree with the currency the row states."""
+    currency = _known_text(row, "currency")
+    for field in FACILITY_FIELDS:
+        if field not in row:
+            raise ValueError(f"CP-2D: facility {facility_id} has no CP-1 {field} fact")
+        fact = row[field]
+        if fact.amount is None:
+            continue
+        if fact.unit != "MILLIONS" or fact.scale != Decimal(1000000):
+            raise ValueError(f"CP-2D: T4.18 {field} is not in millions")
+        if currency is not None and fact.currency != currency:
+            raise ValueError(
+                f"CP-2D: T4.18 {field} is not in the facility's stated currency ({currency})"
+            )
+    when = _known_text(row, "maturity_date")
+    return Facility(
+        facility_id=facility_id,
+        name=_known_text(row, "facility_name") or facility_id,
+        currency=currency,
+        principal=row["principal"].amount,
+        maturity_date=None if when is None else date.fromisoformat(when),
+        commitment=row["commitment"].amount,
+        drawn_amount=row["drawn_amount"].amount,
+        annual_amortisation=row["annual_amortisation"].amount,
+        period=SCHEDULE_PERIOD,
+    )
+
+
+def select_cp1(cp1: Module) -> Selection:
+    """Apply the manifest bindings to a CP-1 module. Each name selects exactly one fact: zero or
+    several raise (`ValueError`), and a fact CP-1 reports missing, conflicting or not applicable
+    is read as that status, never as zero."""
+    index: dict[tuple[str, str, str], list[Fact]] = {}
+    for fact in cp1.facts:
+        if fact.table_id in ("T4.5", "T4.6", "T4.10"):
+            index.setdefault((fact.table_id, fact.period or "", fact.label), []).append(fact)
+    offered: list[Offered] = []
+    selected: dict[str, Fact] = {}
+    for name, binding in FACT_BINDINGS.items():
+        hits = index.get((binding.table_id, binding.period, binding.label), [])
+        if len(hits) != 1:
+            raise ValueError(f"CP-2D: CP-1 offers {len(hits)} facts for {name}, not exactly one")
+        selected[name] = hits[0]
+        offered.append(Offered(name, hits[0]))
+    balance, aliases = _balance_date(cp1)
+    rows, facilities = _facility_rows(cp1, aliases)
+    maturity_refs: list[str] = []
+    for facility_id, row in (rows or {}).items():
+        for field in FACILITY_FIELDS:
+            offered.append(Offered(f"T4.18 {field}", row[field], facility_id))
+        maturity_refs.append(row["maturity_date"].fact_id)
+    operands = Operands(
+        **{name: _operand_of(name, selected[name]) for name in OPERAND_NAMES},
+        facilities=None if rows is None else facilities,
+    )
+    offered.sort(key=lambda o: (o.name, o.fact.fact_id))
+    return Selection(operands, balance, tuple(offered), frozenset(maturity_refs))
+
+
+# --- the bound upstream -----------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-2D attempt binds, read once from the journal (`cp2d_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp1` is the settled module of the bound CP-1 head (CP-0 and CP-2 are edges
+    whose status and limitations CP-2D inherits and whose content it never reads); `inherited` is
+    what settlement will carry from the bound heads (`execution.inherited_limitations`)."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp1: Module
+    inherited: tuple[str, ...]
+
+    def status(self, module_id: str) -> str | None:
+        return next((i.status for i in self.bound if i.input_id == module_id), None)
+
+
+def cp2d_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-1 head of `attempt`, the current input set and the inherited limitations. A
+    refusal of `current_inputs` (an upstream gone stale, unrun or blocked, or CP-0 no longer
+    authorizing CP-2D) is kept as text: the validator reports it as a staleness issue."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+    item = next((i for i in attempt.inputs if i.input_id == CP1), None)
+    if item is None:
+        raise ValueError("The CP-2D attempt binds no CP-1 input")
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp1=store.result(item.sha256),
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def _inputs_from(upstream: Upstream, submission: LiquidityBridgeSubmission) -> Cp2dInputs:
+    selection = select_cp1(upstream.cp1)
+    return Cp2dInputs(
+        operands=selection.operands,
+        balance_date=selection.balance_date,
+        submission=submission,
+        offered_refs=frozenset(o.fact.fact_id for o in selection.offered),
+        maturity_date_refs=selection.maturity_date_refs,
+    )
+
+
+def _inputs(
+    store: Execution, attempt: Attempt, submission: LiquidityBridgeSubmission
+) -> Cp2dInputs:
+    """The store adapter: the settled CP-1 head bound by `attempt` -> the Stage 1 input object.
+    `submit`, `probe` and `view` all reach CP-1 through this selection."""
+    return _inputs_from(cp2d_upstream(store=store, attempt=attempt), submission)
+
+
+# --- validation of a submission against the bound upstream ------------------------------------
+
+
+def _stale_issues(upstream: Upstream) -> list[str]:
+    if isinstance(upstream.current, str):
+        return [f"Stale inputs: {upstream.current}"]
+    bound = {item.input_id: item for item in upstream.bound}
+    current = {item.input_id: item for item in upstream.current}
+
+    def state(item: Input | None) -> str:
+        return "absent" if item is None else f"{item.status} {item.sha256[:12]}"
+
+    return [
+        f"Stale input {key}: bound {state(bound.get(key))}, current {state(current.get(key))}"
+        for key in dict.fromkeys((*bound, *current))
+        if bound.get(key) != current.get(key)
+    ]
+
+
+def _provenance_issues(upstream: Upstream) -> list[str]:
+    """The supplied CP-1 module is the bound head: same module, same canonical hash."""
+    item = next((i for i in upstream.bound if i.input_id == CP1), None)
+    module = upstream.cp1
+    if item is None or module.module_id != CP1 or module.content_hash() != item.sha256:
+        return ["Upstream CP-1: the supplied module is not the bound input"]
+    return []
+
+
+def validate_liquidity_bridge(
+    *, submission: LiquidityBridgeSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Staleness, provenance, then the calculation-level issues of `submission_issues` over the
+    facts the bound CP-1 head offers. Empty when the submission can be composed."""
+    issues = [*_stale_issues(upstream), *_provenance_issues(upstream)]
+    selection = select_cp1(upstream.cp1)
+    issues += submission_issues(
+        submission=submission,
+        offered_refs=frozenset(o.fact.fact_id for o in selection.offered),
+        maturity_date_refs=selection.maturity_date_refs,
+    )
+    return tuple(dict.fromkeys(issues))
+
+
+# --- the composed module ----------------------------------------------------------------------
+
+# A copied cell's `cp1_operand` names a CP-1 fact. These tags name cells CP-2D recomputes and
+# cross-checks against that fact (or against T4.18 terms): they are not copies (stage 2 backlog,
+# addendum 4 (c), (d)).
+RECOMPUTED_TAGS = frozenset(
+    {"undrawn_rcf", "liquidity", "liquidity_to_debt", "T4.18 commitment - drawn_amount"}
+)
+_WALL_COPIES = {"T4.18 principal": "principal", "T4.18 maturity_date": "maturity_date"}
+
+# The formula of each computed cell, in the lease's Method wording. Keys: "<table>.<row>" and,
+# for the maturity wall, "T2E.4.<column>".
+FORMULAS: Mapping[str, str] = MappingProxyType(
+    {
+        "T2E.1.r05": "equity issuance + equity repurchases",
+        "T2E.1.r09": "opening cash + operating cash flow + net cash used in investing + "
+        "net cash used in financing + FX effect on cash",
+        "T2E.1.r11": "calculated closing cash - reported closing cash",
+        "T2E.2.r05": "RCF commitment - RCF drawings",
+        "T2E.2.r06": "sum over facilities of (commitment - drawn amount)",
+        "T2E.2.r07": "cash and cash equivalents + undrawn committed revolver",
+        "T2E.2.r09": "available liquidity / total debt",
+        "T2E.3.r01": "operating cash flow + net cash used in investing + net cash used in "
+        "financing - net debt issuance",
+        "T2E.3.r02": "run-rate net cash flow per year / 12",
+        "T2E.3.r04": "balance date + horizon months (month arithmetic, end of month clamped)",
+        "T2E.3.r05": "run-rate net cash flow per year x horizon months / 12",
+        "T2E.3.r06": "- sum over facilities maturing after the horizon of "
+        "min(annual amortisation x horizon months / 12, principal)",
+        "T2E.3.r07": "- sum of the principal of facilities maturing on or before the horizon end",
+        "T2E.3.r08": "cash and cash equivalents + run-rate net cash flow over the horizon - "
+        "amortisation - maturities",
+        "T2E.3.r09": "run-rate cash flow alone (maturities and amortisation excluded): "
+        "max(0, cash and cash equivalents + undrawn committed revolver - minimum cash) / "
+        "(- run-rate net cash flow per year / 12), 1 dp half-up",
+        "T2E.4.c3": "whole months n with balance date + n months on or before the maturity date",
+        "T2E.4.c4": "maturity date <= horizon end",
+        "T2E.4.c5": "facility principal / total debt",
+        "T2E.4.c6": "running sum of the share of total debt in maturity order",
+        "T2E.5.r01": "cash at horizon end before refinancing (T2E.3)",
+        "T2E.5.r02": "RCF commitment - RCF drawings",
+        "T2E.5.r03": "cash at horizon end before refinancing + undrawn committed revolver",
+        "T2E.5.r05": "cash at horizon end before refinancing - minimum cash",
+        "T2E.5.r06": "resources at horizon end - minimum cash",
+        "T2E.5.r07": "max(0, minimum cash - resources at horizon end)",
+    }
+)
+
+
+def _formula(fact_id: str) -> str | None:
+    parts = fact_id.split(".")
+    key = ".".join(parts[:2] + ([parts[3]] if parts[1] == "4" and len(parts) > 3 else parts[2:3]))
+    return FORMULAS.get(key)
+
+
+class LiquidityBridgeReport(Contract):
+    """The composed CP-2D module body of a valid submission (a step's retained output)."""
+
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    facts: tuple[Fact, ...]
+    tables: tuple[ReportTable, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[str, ...]
+
+
+def _citations(*groups: Sequence[Fact]) -> tuple[Citation, ...]:
+    """The citations of the given CP-1 facts, in order, each once."""
+    return tuple(dict.fromkeys(c for group in groups for fact in group for c in fact.citations))
+
+
+def _shape(unit: str | None) -> dict[str, Any]:
+    if unit == "MILLIONS":
+        return {"unit": unit, "currency": CURRENCY, "scale": Decimal(1000000)}
+    return {} if unit is None else {"unit": unit}
+
+
+_FACT_STATUS: dict[CellState, Literal["missing", "conflicting", "not_applicable"]] = {
+    "gap": "missing",
+    "conflicting": "conflicting",
+    "not_applicable": "not_applicable",
+}
+
+
+class _Composer:
+    """Turns the Stage 1 tables into Module facts and report tables. Every cell is a fact: a
+    known value as its amount or text, a gap as its status with the cell's reason as the
+    limitation; a copy cites what its CP-1 fact cites; a computed cell names its calculation."""
+
+    def __init__(self, selection: Selection, result: Cp2dResult) -> None:
+        self.selection = selection
+        self.result = result
+        self.facts: list[Fact] = []
+        self.tables: list[ReportTable] = []
+
+    def _copy_citations(self, cell: Cell, facility: str | None) -> tuple[Citation, ...]:
+        operand = cell.cp1_operand
+        if operand is None or operand in RECOMPUTED_TAGS:
+            return ()
+        if operand in _WALL_COPIES and facility is not None:
+            fact = self.selection.facility_fact(facility, _WALL_COPIES[operand])
+            return () if fact is None else _citations((fact,))
+        return _citations(*(self.selection.facts(name) for name in operand.split("+")))
+
+    def fact(
+        self,
+        table_id: str,
+        row_id: str,
+        field: str,
+        label: str,
+        cell: Cell,
+        facility: str | None,
+    ) -> Fact:
+        base: dict[str, Any] = {
+            "fact_id": cell.fact_id,
+            "label": label,
+            "table_id": table_id,
+            "row_id": row_id,
+            "field": field,
+            "value_class": cell.value_class,
+        }
+        if cell.state != "known":
+            if not cell.reason:
+                raise ValueError(f"CP-2D: gap cell {cell.fact_id} has no reason")
+            return Fact(
+                **base,
+                status=_FACT_STATUS[cell.state],
+                limitation=cell.reason,
+                citations=self._copy_citations(cell, facility),
+                **_shape(cell.unit),
+            )
+        copy = cell.cp1_operand is not None and cell.cp1_operand not in RECOMPUTED_TAGS
+        derived: dict[str, Any] = {}
+        if cell.value_class == "calculated" and (not copy or "+" in (cell.cp1_operand or "")):
+            formula = _formula(cell.fact_id)
+            if formula is None:
+                raise ValueError(f"CP-2D: computed cell {cell.fact_id} has no formula")
+            derived = {"calculation_id": f"calc:{cell.fact_id}", "formula": formula}
+        if cell.amount is not None:
+            return Fact(
+                **base,
+                amount=cell.amount,
+                period=cell.period,
+                citations=self._copy_citations(cell, facility),
+                **_shape(cell.unit),
+                **derived,
+            )
+        return Fact(
+            **base,
+            text=cell.shown,
+            citations=self._copy_citations(cell, facility),
+            **derived,
+        )
+
+    def table(self, table: Table) -> None:
+        single = len(table.columns) == 1
+        fields = ["value"] if single else [f"c{k}" for k in range(1, len(table.columns) + 1)]
+        rows: list[TableRow] = []
+        wall = {
+            f"{w.facility.name} ({w.facility.facility_id})": w.facility.facility_id
+            for w in self.result.bridge.wall
+        }
+        for row in table.rows:
+            ids: list[str] = []
+            for field, column, cell in zip(fields, table.columns, row.cells, strict=True):
+                row_id = cell.fact_id.split(".")[2]
+                label = row.label if single else f"{row.label} · {column}"
+                fact = self.fact(
+                    table.table_id,
+                    row_id,
+                    field,
+                    label,
+                    cell,
+                    wall.get(row.label) if table.table_id == "T2E.4" else None,
+                )
+                self.facts.append(fact)
+                ids.append(fact.fact_id)
+            rows.append(TableRow(row_id=ids[0].split(".")[2], label=row.label, fact_ids=tuple(ids)))
+        self.tables.append(
+            ReportTable(
+                table_id=table.table_id,
+                title=table.title,
+                columns=tuple(
+                    TableColumn(field=f, label=c)
+                    for f, c in zip(fields, table.columns, strict=True)
+                ),
+                rows=tuple(rows),
+                row_header=table.row_header,
+            )
+        )
+
+    def ledger(self, ledger: Ledger, value_class: Literal["analyst_judgment"] | None) -> None:
+        field, heading = ledger.column
+        rows: list[TableRow] = []
+        for n, (label, value) in enumerate(ledger.rows, 1):
+            row_id = f"r{n:02d}"
+            fact = Fact(
+                fact_id=f"{ledger.table_id}.{row_id}",
+                label=label,
+                table_id=ledger.table_id,
+                row_id=row_id,
+                field=field,
+                text=value,
+                value_class=value_class,
+            )
+            self.facts.append(fact)
+            rows.append(TableRow(row_id=row_id, label=label, fact_ids=(fact.fact_id,)))
+        self.tables.append(
+            ReportTable(
+                table_id=ledger.table_id,
+                title=ledger.title,
+                columns=(TableColumn(field=field, label=heading),),
+                rows=tuple(rows),
+                row_header=ledger.row_header,
+            )
+        )
+
+    def trace(self) -> None:
+        """T2E.9: one row per CP-1 fact the view offered, with the CP-1 fact id, its table, its
+        period and how it reads (a gap word for a fact that is not known, never a number)."""
+        fields = (
+            ("ref", "CP-1 fact"),
+            ("table", "Table"),
+            ("period", "Period"),
+            ("shown", "Shown"),
+        )
+        rows: list[TableRow] = []
+        for n, item in enumerate(self.selection.offered, 1):
+            fact = item.fact
+            row_id = f"r{n:02d}"
+            label = item.name if item.facility_id is None else f"{item.name} ({item.facility_id})"
+            values = (
+                fact.fact_id,
+                fact.table_id,
+                fact.period or "not stated",
+                spelled(fact) if fact.status == "known" else STATE_WORD[fact.status],
+            )
+            ids = []
+            for (field, _), value in zip(fields, values, strict=True):
+                self.facts.append(
+                    Fact(
+                        fact_id=f"T2E.9.{row_id}.{field}",
+                        label=f"{label} · {field}",
+                        table_id="T2E.9",
+                        row_id=row_id,
+                        field=field,
+                        text=value,
+                    )
+                )
+                ids.append(f"T2E.9.{row_id}.{field}")
+            rows.append(TableRow(row_id=row_id, label=label, fact_ids=tuple(ids)))
+        self.tables.append(
+            ReportTable(
+                table_id="T2E.9",
+                title="CP-1 source trace",
+                columns=tuple(TableColumn(field=f, label=h) for f, h in fields),
+                rows=tuple(rows),
+                row_header="Binding",
+            )
+        )
+
+    def claims(self) -> tuple[Claim, ...]:
+        by_name = {o.name for o in self.selection.offered}
+        return tuple(
+            Claim(
+                claim_id=c.claim_id,
+                text=c.template,
+                citations=_citations(
+                    *(self.selection.facts(n) for n in c.cites_from if n in by_name)
+                ),
+            )
+            for c in self.result.claims
+        )
+
+
+def liquidity_bridge(
+    *, pack: PreparedPack, submission: LiquidityBridgeSubmission, upstream: Upstream
+) -> LiquidityBridgeReport:
+    """The composed CP-2D tables, facts, claims and own limitations of a valid submission; raises
+    ValueError on any validation issue."""
+    issues = validate_liquidity_bridge(submission=submission, upstream=upstream)
+    if issues:
+        raise ValueError("; ".join(issues))
+    selection = select_cp1(upstream.cp1)
+    result = compute(_inputs_from(upstream, submission))
+    out = _Composer(selection, result)
+    for table in result.tables:
+        out.table(table)
+    out.ledger(result.judgments, "analyst_judgment")
+    out.ledger(result.gaps_ledger, None)
+    out.trace()
+    return LiquidityBridgeReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        facts=tuple(out.facts),
+        tables=tuple(out.tables),
+        claims=out.claims(),
+        limitations=result.own_limitations,
+    )
+
+
+def cp2d_module(*, report: LiquidityBridgeReport, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-2D candidate: the report bound to `inputs` and, as the settled tail (G1-X section
+    2), the digest of the retained submission."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+# --- the read view ----------------------------------------------------------------------------
+
+VIEW_NOTE = (
+    "Reference a fact only by its ref in basis_refs. A fact whose status is not known has no "
+    "value: it is a gap, never a zero. The maturity_wall assessment must cite a T4.18 "
+    "maturity_date ref."
+)
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """The exact `read_inputs` view of the step, all Python's: the upstream statuses, one entry
+    per fact the bindings select (a missing one included, with its status and CP-1's limitation),
+    the submission bounds and the limitations settlement will inherit. No quote, citation or
+    record at any depth (manifest `view_tree_draft`)."""
+    if upstream.cp1.run_id != pack.run.run_id:
+        raise ValueError("CP-2D: the bound CP-1 module belongs to another run")
+    selection = select_cp1(upstream.cp1)
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id in EDGES
+        ],
+        "cp1_facts": [
+            {
+                "ref": o.fact.fact_id,
+                "name": o.name,
+                "label": o.fact.label,
+                "period": o.fact.period,
+                "unit": figure_unit(o.fact) or o.fact.unit,
+                "shown": spelled(o.fact) if o.fact.status == "known" else STATE_WORD[o.fact.status],
+                "status": o.fact.status,
+                "limitation": o.fact.limitation,
+            }
+            for o in selection.offered
+        ],
+        "cp1_facts_note": VIEW_NOTE,
+        "bounds": {
+            "horizon_months": list(HORIZON_BOUNDS),
+            "minimum_cash": "decimal >= 0 in US$ m, or null with minimum_cash_absence",
+        },
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(store: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the step's one read: `context_block` over the bound heads as compact
+    JSON (registered in G1's `_VIEWS["liquidity_bridge"]`; an exact view, counted as tool use)."""
+    block = context_block(pack=store.pack(), upstream=cp2d_upstream(store=store, attempt=attempt))
+    body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the journal: validator, probe and submit -------------------------------------------------
+
+
+def _parsed(payload: str) -> tuple[LiquidityBridgeSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue and is refused even if
+    Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            LiquidityBridgeSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return LiquidityBridgeSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator: the retained response against the bound upstream; the output of a
+    valid step is the composed report (what the verifier recomputes)."""
+    submission, shape = _parsed(store.payload(attempt.steps[0].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    upstream = cp2d_upstream(store=store, attempt=attempt)
+    issues = validate_liquidity_bridge(submission=submission, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = liquidity_bridge(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+# The validator the module's own entry hands `Execution.submit_step` (R4-2 invalid-step replay).
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = LiquidityBridgeReport.model_validate_json(output)
+    return cp2d_module(report=report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Raises `WorkflowError("identity_mismatch")` unless the settled attempt and head rebuild
+    exactly: the step validated again on the frozen snapshot gives the retained output, and the
+    rebuilt candidate settles back to the finished attempt and the head's module."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: object,
+) -> Submitted:
+    """Journal the one `liquidity_bridge` response, validate it, then settle CP-2D with the
+    Python candidate in the same call (as `submit_cp2_step`). An invalid step finishes the
+    attempt rejected (or blocked on the repair): there is no within-attempt repair."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-2D has one step, {STEP_ID}")
+    if rules is not None:
+        raise ValueError("CP-2D has no tool-loop rules")
+    normalised, resolved = normalise(LiquidityBridgeSubmission, payload)
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    if attempt is None or attempt.module_id != MODULE_ID or attempt.status != "pending":
+        raise ValueError("Ticket is absent, finished or belongs to another module")
+    if attempt.steps and attempt.steps[0].payload_sha256 != text_sha256(normalised):
+        raise ValueError("Ticket already retains a different response; resume or interrupt")
+    if not attempt.steps or attempt.steps[0].status == "pending":
+        attempt = store.submit_step(
+            ticket_id,
+            MODULE_ID,
+            STEP_IDS,
+            STEP_ID,
+            normalised,
+            lambda pack, current: _validate_step(store, pack, current),
+        )
+    if attempt.status == "finished":
+        return Submitted(attempt, normalised, resolved, (), (), None)
+    outcome = _validate_step(store, store.pack(), attempt)
+    if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+        raise ValueError("Retained CP-2D output differs from trusted validation")
+    candidate = _candidate(outcome.output or "", attempt)
+    journal = store.finish(
+        ticket_id,
+        candidate.model_dump_json(),
+        lambda supplied: () if supplied == candidate else ("CP-2D candidate differs",),
+        qualification=QUALIFICATION,
+    )
+    return Submitted(journal, normalised, resolved, (), (), None)
+
+
+# --- the consumer reader (CP-3C binds it; the lease's D3 stays OPEN until that core lands) ------
+
+
+@dataclass(frozen=True)
+class WallRead:
+    """One maturity-wall row as a consumer reads it; None is a gap (never zero)."""
+
+    facility: str
+    principal: Decimal | None
+    maturity_date: date | None
+    months_to_maturity: Decimal | None
+    inside_horizon: bool | None
+    share_of_total_debt: Decimal | None
+    cumulative_share: Decimal | None
+
+
+@dataclass(frozen=True)
+class Cp2dHead:
+    """What `cp2d_reader` exposes of a settled CP-2D head (lease Consumption; oracle
+    `consumption.reader_contract`): the horizon, minimum cash or its absence, the maturity-wall
+    rows, the funding gap or why it is missing, and the head hash and status. A head that is not
+    accepted or restricted (blocked, stale) exposes its status and hash and no figures.
+
+    ``minimum_cash`` is None when not assessed (``minimum_cash_absent`` then holds CP-2D's
+    reason); ``funding_gap`` is None when missing (``funding_gap_missing`` holds the reason). A
+    computed funding gap of 0 is Decimal 0, a known value distinct from missing."""
+
+    status: str
+    head_sha256: str
+    horizon_months: int | None
+    minimum_cash: Decimal | None
+    minimum_cash_absent: str | None
+    wall: tuple[WallRead, ...]
+    funding_gap: Decimal | None
+    funding_gap_missing: str | None
+
+
+def _read_fact(facts: Mapping[str, Fact], fact_id: str) -> Fact:
+    fact = facts.get(fact_id)
+    if fact is None:
+        raise ValueError(f"CP-2D head has no fact {fact_id}")
+    return fact
+
+
+def _wall_read(table: ReportTable, facts: Mapping[str, Fact]) -> tuple[WallRead, ...]:
+    rows = []
+    for row in table.rows:
+        cells = [_read_fact(facts, fact_id) for fact_id in row.fact_ids]
+        if len(cells) != 6:
+            raise ValueError("CP-2D head: a maturity-wall row does not hold six cells")
+        principal, when, months, inside, share, cumulative = cells
+        rows.append(
+            WallRead(
+                facility=row.label,
+                principal=principal.amount,
+                maturity_date=None if when.text is None else date.fromisoformat(when.text),
+                months_to_maturity=months.amount,
+                inside_horizon={"Yes": True, "No": False}.get(inside.text or ""),
+                share_of_total_debt=share.amount,
+                cumulative_share=cumulative.amount,
+            )
+        )
+    return tuple(rows)
+
+
+def cp2d_reader(store: Execution, head: Head) -> Cp2dHead:
+    """The consumer reader CP-3C binds: the settled CP-2D head's figures (see `Cp2dHead`)."""
+    if head.module_id != MODULE_ID:
+        raise ValueError("CP-2D reader: not a CP-2D head")
+    module = store.head_module(head)
+    if head.status not in ("accepted", "restricted"):
+        return Cp2dHead(head.status, head.result_sha256, None, None, None, (), None, None)
+    facts = {f.fact_id: f for f in module.facts}
+    horizon = _read_fact(facts, "T2E.3.r03")
+    minimum = _read_fact(facts, "T2E.5.r04")
+    gap = _read_fact(facts, "T2E.5.r07")
+    wall = next((t for t in module.tables if t.table_id == "T2E.4"), None)
+    if horizon.amount is None or wall is None:
+        raise ValueError("CP-2D head: the horizon or the maturity wall is missing")
+    return Cp2dHead(
+        status=head.status,
+        head_sha256=head.result_sha256,
+        horizon_months=int(horizon.amount),
+        minimum_cash=minimum.amount,
+        minimum_cash_absent=None if minimum.amount is not None else minimum.limitation,
+        wall=_wall_read(wall, facts),
+        funding_gap=gap.amount,
+        funding_gap_missing=None if gap.amount is not None else gap.limitation,
+    )

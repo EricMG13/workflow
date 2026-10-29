@@ -1014,7 +1014,7 @@ def test_shipped_maps_place_cp3d_after_cp3() -> None:
 
 
 def test_relative_value_composition_holds_the_one_block_and_can_take_more() -> None:
-    assert list(_RELATIVE_VALUE) == [BLOCK]
+    assert next(iter(_RELATIVE_VALUE)) == BLOCK  # the creator's row first; later rows append
     spec = _spec_of(BLOCK)
     assert spec == _Spec(
         "Market against fundamentals", "CP-3D", "dense", ("CP-3D",), route_label="Full analysis"

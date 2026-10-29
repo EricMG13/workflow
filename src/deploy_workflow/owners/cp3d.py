@@ -21,7 +21,7 @@ from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal, localcontext
 from functools import partial
 from typing import Literal, Protocol, Self
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from deploy_vii.contracts import (
     Citation,
@@ -33,6 +33,7 @@ from deploy_vii.contracts import (
     Module,
     ReportTable,
     Run,
+    RunText,
     TableColumn,
     TableRow,
 )
@@ -43,6 +44,7 @@ from deploy_vii.execution import (
     Head,
     Qualification,
     StepValidation,
+    clipped,
 )
 from deploy_vii.live.schema import json_object
 from deploy_vii.live.schema import normalise as normalise_payload
@@ -1958,11 +1960,26 @@ def cp3d_upstream(
     )
 
 
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
 def validate_market_implied(
     *, submission: MarketImpliedSubmission, upstream: Upstream
 ) -> tuple[str, ...]:
-    """The validator issues of a submission against the bound upstream (empty: valid)."""
-    return submission_issues(submission=submission, context=upstream.context)
+    """The validator issues of a submission against the bound upstream (empty: valid). The
+    summary becomes `Claim.text` (`CP-3D-VIEW-01`), so once the content rules pass it is also
+    checked as `RunText` (the type's message, never the input), and no composition can raise
+    after the binding write."""
+    if issues := submission_issues(submission=submission, context=upstream.context):
+        return issues
+    try:
+        _RUN_TEXT.validate_python(submission.summary.text)
+    except ValidationError as error:
+        return tuple(
+            clipped(("summary.text: ", e["msg"]))
+            for e in error.errors(include_input=False, include_url=False, include_context=False)
+        )
+    return ()
 
 
 # --- the report and the module -----------------------------------------------------------------

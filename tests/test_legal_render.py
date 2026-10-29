@@ -29,6 +29,24 @@ from deploy_vii.report_view import FactCoord, build, build_index, pathways
 
 ROOT = Path(__file__).parents[1]
 ORACLE = json.loads((ROOT / "cases/legal/render-expected.json").read_text())
+
+# LEAD ruling Stage 2 round 4 (H1, option a): the CP-2D lease D7 gives `liquidity-runway`,
+# `maturity-wall` and `funding-gap` a `_Spec` (owner CP-2D, producers ("CP-2D",), kind dense), and
+# the CP-3C lease D7 does the same for `refinancing-paths` and `lme-creditor-exposure` (owner
+# CP-3C). In a run where the owner was not requested, each renders the product's empty state for a
+# spec'd block whose producer was not requested, not the Unbound fallback the frozen CP-4 FP04
+# oracle pins. These five are the only change to the expectation; every other id in the oracle's
+# `other_front_sections` has no row here and fails the lookup. Remove at the Stage 2 close re-pin
+# of cases/legal/render-expected.json.
+CP2D_D7_DELTA = dict.fromkeys(
+    ("liquidity-runway", "maturity-wall", "funding-gap"), ("CP-2D", "dense", "not_run", None)
+)
+CP2D_D7_NOTE = dict.fromkeys(CP2D_D7_DELTA, "Not run: CP-2D was not requested in this run.")
+CP3C_D7_DELTA = dict.fromkeys(
+    ("refinancing-paths", "lme-creditor-exposure"), ("CP-3C", "dense", "not_run", None)
+)
+CP2D_D7_DELTA |= CP3C_D7_DELTA
+CP2D_D7_NOTE |= dict.fromkeys(CP3C_D7_DELTA, "Not run: CP-3C was not requested in this run.")
 LEGAL = json.loads((ROOT / "cases/legal/manifest.json").read_text())
 FINANCIAL = json.loads((ROOT / "cases/financial/manifest.json").read_text())
 SCHEMAS = {s["table_id"]: s for s in ORACLE["schemas"]}
@@ -341,13 +359,10 @@ def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
         assert actual["spans"] == [s.model_dump(mode="json") for s in source.spans]
     for block_id in ORACLE["other_front_sections"]["ids"]:
         block = _blocks(report)[block_id]
-        assert (block.owner, block.kind, block.state, block.full_analysis_route) == (
-            "Unbound",
-            "prose",
-            "not_run",
-            None,
-        )
-        assert not block.rows and not block.lines
+        want = CP2D_D7_DELTA[block_id]
+        assert (block.owner, block.kind, block.state, block.full_analysis_route) == want
+        assert block.note == CP2D_D7_NOTE[block_id]
+        assert not block.rows and not block.lines  # no CP-2D cell, no claim that CP-2D ran
 
 
 @pytest.mark.parametrize("amount,display", [("0", "0.00x"), ("0.000", "0.00x")])

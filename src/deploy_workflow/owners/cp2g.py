@@ -12,10 +12,13 @@ sums and products run in the 38-digit half-even context with the Inexact trap (e
 is one division in that context (the correctly rounded rational). Wording the lease and the
 oracle leave open is LEAD's round 5 rulings G-1 to G-9 (docs/rulings/2026-10-28-stage1.md).
 
-Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
-orchestration seams (G1-X protocol section 2) are added to this file in later stages.
+The Stage 1 core does no I/O and touches no store, host, session or renderer. The Stage 2
+section at the end connects it (G1-X protocol section 2): one store adapter (`_inputs`) for
+submit, probe and view, the step validator, the exact `read_inputs` view and the readers.
 """
 
+import hashlib
+import json
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, fields, replace
@@ -23,7 +26,7 @@ from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
 from typing import Annotated, Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
 from deploy_vii import prose
 from deploy_vii.business_context import (
@@ -34,11 +37,42 @@ from deploy_vii.business_context import (
     referencable,
     spelled,
 )
-from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus
+from deploy_vii.contracts import (
+    Citation,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    InputStatus,
+    Module,
+    ReportTable,
+    Run,
+    RunText,
+    TableColumn,
+    TableRow,
+    Text,
+)
+from deploy_vii.contracts import Claim as ModuleClaim
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    bounded_issues,
+    clipped,
+    current_inputs,
+    inherited_limitations,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
 from deploy_vii.model._cells import CONTEXT
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
-from deploy_vii.report_view import fact_spelling
+from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2G"
 SCHEMA_VERSION = "forward-credit-model/1"
@@ -708,12 +742,33 @@ _OPERAND_ORDER: Mapping[BreakKind, tuple[str, ...]] = {
 }
 
 
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _run_text_issues(path: str, text: str) -> list[str]:
+    """Stage 2 round 3 item 2: text built as `Claim.text` is checked with that very type
+    (`RunText`, one `TypeAdapter` built once), so a malformed reference is a journaled issue and
+    composition never raises after the binding write. The message never echoes the input."""
+    try:
+        _RUN_TEXT.validate_python(text)
+    except ValidationError as error:
+        found = error.errors(include_input=False, include_url=False, include_context=False)
+        return [clipped((path, ": ", item["msg"])) for item in found]
+    return []
+
+
 def _text_issues(
-    path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str]
+    path: str, text: str, bound: Mapping[str, Fact], names: Sequence[str], *, claim: bool = False
 ) -> list[str]:
+    """Issues of one prose field; a `prose.issues` line can quote the analyst's text, so it is
+    clipped (protocol section 6). `claim`: the text becomes `Claim.text`, so when `prose.issues`
+    finds nothing it is also checked as `RunText`."""
     if is_blank(text):
         return [f"{path}: empty text"]
-    issues = [f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)]
+    found = prose.issues(text, bound, names=names)
+    issues = [clipped((path, ": ", issue)) for issue in found]
+    if claim and not found:
+        issues += _run_text_issues(path, text)
     issues.extend(prohibited_issues(path, text))
     low = text.lower()  # this core's phrase guard (ruling L11), not a semantic check
     issues.extend(
@@ -814,17 +869,19 @@ def content_issues(inputs: ForwardInputs) -> tuple[str, ...]:
                         "debt balance"
                     )
                     break
-        issues += _text_issues(f"base_drivers.{name}.rationale", driver.rationale, bound, names)
+        path = f"base_drivers.{name}.rationale"
+        issues += _text_issues(path, driver.rationale, bound, names, claim=True)
         issues += _limitation_issues(f"base_drivers.{name}.limitation", driver.limitation)
     if sub.downside.scenario not in {s.row for s in ctx.cp2a.scenarios}:
         issues.append(f"downside.scenario: not a CP-2A scenario: {sub.downside.scenario}")
-    issues += _text_issues("downside.rationale", sub.downside.rationale, bound, names)
+    issues += _text_issues("downside.rationale", sub.downside.rationale, bound, names, claim=True)
     issues += _limitation_issues("downside.limitation", sub.downside.limitation)
     issues += _break_issues(sub.break_metrics, ctx.cp2a, operands)
     issues += _text_issues(
-        "minimum_liquidity.rationale", sub.minimum_liquidity.rationale, bound, names
+        "minimum_liquidity.rationale", sub.minimum_liquidity.rationale, bound, names, claim=True
     )
-    issues += _text_issues("assessment.rationale", sub.assessment.rationale, bound, names)
+    rationale = sub.assessment.rationale
+    issues += _text_issues("assessment.rationale", rationale, bound, names, claim=True)
     issues += _limitation_issues("assessment.limitation", sub.assessment.limitation)
     if sub.assessment.confidence == "High":
         issues.append(HIGH_ISSUE)
@@ -834,13 +891,27 @@ def content_issues(inputs: ForwardInputs) -> tuple[str, ...]:
     return tuple(dict.fromkeys(issues))
 
 
+def _parsed(payload: str) -> tuple[ForwardSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue (the frozen r14 frame),
+    and is refused even if Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            ForwardSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return ForwardSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
 def payload_issues(payload: str, context: ForwardContext) -> tuple[str, ...]:
     """Shape issues alone (a payload that does not parse gets no content check), else the
     content issues."""
-    try:
-        submission = ForwardSubmission.model_validate_json(payload)
-    except ValidationError as error:
-        return shape_issues(error)
+    submission, shape = _parsed(payload)
+    if submission is None:
+        return shape
     return content_issues(ForwardInputs(context=context, submission=submission))
 
 
@@ -849,7 +920,7 @@ def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> t
     Returned alone, like shape issues (G-decisions): Stage 2 runs no content check on a stale
     upstream."""
     if isinstance(current, str):
-        return (f"Stale inputs: {current}",)
+        return (clipped(("Stale inputs: ", current)),)
     was = {item.input_id: item for item in bound}
     now = {item.input_id: item for item in current}
 
@@ -1186,7 +1257,7 @@ def _resolve(inputs: ForwardInputs) -> _Run:
     sub, ctx = inputs.submission, inputs.context
     found = content_issues(inputs)
     if found:
-        raise ValueError("CP-2G submission has issues: " + "; ".join(found))
+        raise ValueError("CP-2G submission has issues: " + "; ".join(bounded_issues(found)))
     ops = Operands.from_cp1(ctx.cp1_facts)
     drivers = Drivers.from_submission(sub.base_drivers)
     scenario = next(s for s in ctx.cp2a.scenarios if s.row == sub.downside.scenario)
@@ -2518,4 +2589,604 @@ def compute(inputs: ForwardInputs) -> ForwardResult:
         own_limitations=_own_limitations(run, unverified, results, traj),
         break_tests=break_rows,
         trajectory=traj,
+    )
+
+
+# --- Stage 2: the connection to the store (lease Public API, G1-X protocol section 2) ---------
+
+STEP_ID = "forward_credit_model"
+STEP_IDS = (STEP_ID,)
+QUALIFICATION = Qualification(implementation="implemented")
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: ForwardSubmission}
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+CP1, CP1D, CP2A, CP2D = "CP-1", "CP-1D", "CP-2A", "CP-2D"
+_SETTLED: Mapping[str, InputStatus] = {
+    "accepted": "accepted",
+    "restricted": "restricted",
+    "blocked": "blocked",
+}
+
+
+def _fact_of(facts: Mapping[str, Fact], fact_id: str, module_id: str) -> Fact:
+    fact = facts.get(fact_id)
+    if fact is None:
+        raise ValueError(f"CP-2G: the {module_id} head has no fact {fact_id}")
+    return fact
+
+
+def _text_of(facts: Mapping[str, Fact], fact_id: str, module_id: str) -> str:
+    fact = _fact_of(facts, fact_id, module_id)
+    if fact.status != "known" or fact.text is None:
+        raise ValueError(f"CP-2G: {module_id} {fact_id} is not a known text")
+    return fact.text
+
+
+def cp2a_of(module: Module) -> Cp2aHead:
+    """A settled CP-2A module as the core reads it: every T2B.1 scenario (name, decline,
+    increase) and T2B.6 break (origin, test, level, required decline, outcome), in register
+    order (`manifest.json upstream_fact_selection`). The scenario name is the known text fact
+    `T2B.1.<row>.name`. The base period is the one period the T2B.1 shocks state (round 13 R1 L2;
+    round 5 item 6): a shock with no period is not a conflict (round 5 item 5), two periods are,
+    and none at all leaves no base period. Each refusal raises (fail closed)."""
+    if module.module_id != CP2A:
+        raise ValueError(f"CP-2G: not a CP-2A head: {module.module_id}")
+    facts = {f.fact_id: f for f in module.facts}
+
+    def rows(table_id: str) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(f.row_id for f in module.facts if f.table_id == table_id))
+
+    scenarios = tuple(
+        Cp2aScenario(
+            row=row,
+            name=_text_of(facts, f"T2B.1.{row}.name", CP2A),
+            decline=_fact_of(facts, f"T2B.1.{row}.ebitda_decline", CP2A),
+            increase=_fact_of(facts, f"T2B.1.{row}.interest_increase", CP2A),
+        )
+        for row in rows("T2B.1")
+    )
+    breaks = tuple(
+        Cp2aBreak(
+            row=row,
+            origin=_text_of(facts, f"T2B.6.{row}.origin", CP2A),
+            test=_text_of(facts, f"T2B.6.{row}.test", CP2A),
+            level=_fact_of(facts, f"T2B.6.{row}.level", CP2A),
+            required_decline=_fact_of(facts, f"T2B.6.{row}.required_decline", CP2A),
+            outcome=_text_of(facts, f"T2B.6.{row}.outcome", CP2A),
+        )
+        for row in rows("T2B.6")
+    )
+    shocks = (f for s in scenarios for f in (s.decline, s.increase))
+    periods = tuple(dict.fromkeys(f.period for f in shocks if f.period is not None))
+    if len(periods) > 1:
+        raise ValueError("CP-2G: CP-2A T2B.1 facts differ in period")
+    if not periods:
+        raise ValueError("CP-2G: CP-2A T2B.1 facts state no period")
+    return Cp2aHead(base_period=periods[0], scenarios=scenarios, breaks=breaks)
+
+
+def cp1d_of(module: Module, status: InputStatus) -> Cp1dHead:
+    """A settled CP-1D module under its bound `status`: a blocked head is the state alone (it
+    settled no supported earnings); otherwise the three supported facts (`CP1D_IDS`)."""
+    if module.module_id != CP1D:
+        raise ValueError(f"CP-2G: not a CP-1D head: {module.module_id}")
+    if status == "blocked":
+        return Cp1dHead(status="blocked")
+    facts = {f.fact_id: f for f in module.facts}
+    supported, total, net = (_fact_of(facts, fid, CP1D) for fid in CP1D_IDS)
+    return Cp1dHead(status=status, supported=supported, total_leverage=total, net_leverage=net)
+
+
+def _settled_module(store: Execution, head: Head, module_id: str) -> tuple[Module, InputStatus]:
+    if head.module_id != module_id:
+        raise ValueError(f"CP-2G: not a {module_id} head: {head.module_id}")
+    status = _SETTLED.get(head.status)
+    if status is None:
+        raise ValueError(f"CP-2G: the {module_id} head is {head.status}")
+    return store.head_module(head), status
+
+
+def cp2a_reader(store: Execution, head: Head) -> Cp2aHead:
+    """D3: the T2B.1 scenarios and T2B.6 breaks of a settled CP-2A head (`cp2a_of`). CP-2A is a
+    required edge, so a blocked head is never bound and is refused here."""
+    module, status = _settled_module(store, head, CP2A)
+    if status == "blocked":
+        raise ValueError("CP-2G: the CP-2A head is blocked")
+    return cp2a_of(module)
+
+
+def cp1d_reader(store: Execution, head: Head) -> Cp1dHead:
+    """D3: T1D.3.supported.value and T1D.6.supported.total_leverage / net_leverage of a settled
+    CP-1D head, or its blocked state (`cp1d_of`)."""
+    module, status = _settled_module(store, head, CP1D)
+    return cp1d_of(module, status)
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-2G attempt binds, read once from the journal (`cp2g_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp1` the facts of the bound CP-1 head; `cp2a` and `cp1d` the bound heads as
+    the core reads them (`Cp1dHead(status=None)` when CP-1D is not bound); `inherited` what
+    settlement will carry from the bound heads (`execution.inherited_limitations`)."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp1: tuple[Fact, ...]
+    cp2a: Cp2aHead
+    cp1d: Cp1dHead
+    inherited: tuple[str, ...] = ()
+
+    def status(self, input_id: str) -> InputStatus | None:
+        return next((item.status for item in self.bound if item.input_id == input_id), None)
+
+
+def cp2g_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-1, CP-2A and (when bound) CP-1D heads, the current input set and the
+    inherited limitations. A refusal of `current_inputs` (an upstream gone stale, unrun or
+    blocked, or CP-0 no longer authorizing CP-2G) is kept as text: the validator reports it as a
+    staleness issue. A bound input whose blob is another module's raises."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+
+    def bound(module_id: str) -> tuple[Module, InputStatus] | None:
+        item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+        if item is None:
+            return None
+        module = store.result(item.sha256)
+        if module.module_id != module_id:
+            raise ValueError(
+                f"The CP-2G attempt's {module_id} input is a {module.module_id} module"
+            )
+        return module, item.status
+
+    cp1, cp2a, cp1d = bound(CP1), bound(CP2A), bound(CP1D)
+    if cp1 is None or cp2a is None:
+        raise ValueError("The CP-2G attempt binds no CP-1 or no CP-2A input")
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp1=cp1[0].facts,
+        cp2a=cp2a_of(cp2a[0]),
+        cp1d=Cp1dHead(status=None) if cp1d is None else cp1d_of(*cp1d),
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def _required_status(upstream: Upstream, input_id: str) -> InputStatus:
+    status = upstream.status(input_id)
+    if status is None:
+        raise ValueError(f"The CP-2G attempt binds no {input_id} input")
+    return status
+
+
+def _inputs(pack: PreparedPack, submission: ForwardSubmission, upstream: Upstream) -> ForwardInputs:
+    """The store adapter: the CP-1 head's selected T4.10 LTM facts (`select_cp1`, in the head's
+    order), the bound CP-2A and CP-1D heads, the bound statuses and the issuer name, as the
+    Stage 1 `ForwardInputs` the core reads. Submit, probe and view reach the core only
+    through this."""
+    chosen = {f.fact_id for f in select_cp1(upstream.cp1).values()}
+    context = ForwardContext(
+        cp1_facts=tuple(f for f in upstream.cp1 if f.fact_id in chosen),
+        cp2a=upstream.cp2a,
+        cp1d=upstream.cp1d,
+        cp1_status=_required_status(upstream, CP1),
+        cp2a_status=_required_status(upstream, CP2A),
+        names=(pack.run.issuer_name,),
+        cp2d_status=upstream.status(CP2D),
+    )
+    return ForwardInputs(context=context, submission=submission)
+
+
+def validate_forward(
+    *, pack: PreparedPack, submission: ForwardSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Every issue of `submission` over the bound `upstream`: staleness alone when a bound
+    upstream changed (ruling 10; no content check runs on a stale upstream), else the core's
+    content issues in their pinned order; empty when it composes."""
+    stale = stale_issues(bound=upstream.bound, current=upstream.current)
+    if stale:
+        return stale
+    return content_issues(_inputs(pack, submission, upstream))
+
+
+class ForwardReport(Contract):
+    """The retained step output: the composed content bound to the pack and the submission."""
+
+    schema_version: Literal["forward-credit-model/1"] = "forward-credit-model/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[ModuleClaim, ...]
+    limitations: tuple[Text, ...]
+
+
+# A table whose row labels are per row (T2H.2) or that can be empty (T2H.9) has fixed columns;
+# every other T2H table takes its columns from its first row's facts (one field sequence a table).
+_FIXED_COLUMNS: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "T2H.2": (("value", "Value"), ("basis", "Basis"), ("check", "Check")),
+    "T2H.9": (
+        ("id", "Gap id"),
+        ("gap", "Gap"),
+        ("why_it_matters", "Why it matters"),
+        ("affected_analysis", "Affected analysis"),
+        ("severity", "Severity"),
+        ("action", "Action"),
+    ),
+}
+_VALUE_COLUMN = (TableColumn(field="value", label="Value"),)
+
+
+def _report_table(table: Table, facts: Mapping[str, Fact]) -> ReportTable:
+    fixed = _FIXED_COLUMNS.get(table.table_id)
+    if fixed is not None:
+        columns = tuple(TableColumn(field=f, label=label) for f, label in fixed)
+    else:
+        first = (facts[fid] for fid in table.rows[0].fact_ids)
+        columns = tuple(TableColumn(field=f.field, label=f.label) for f in first)
+    rows = tuple(TableRow(row_id=r.row_id, label=r.label, fact_ids=r.fact_ids) for r in table.rows)
+    return ReportTable(table_id=table.table_id, title=table.title, columns=columns, rows=rows)
+
+
+def _reference_facts(ref: RefTable) -> tuple[Fact, ...]:
+    """The upstream facts verbatim under their own ids, placed in the reference table's cells
+    (`references_rule`): only the table, row and field coordinates change."""
+    return tuple(
+        r.fact.model_copy(update={"table_id": ref.table_id, "row_id": r.row_id, "field": "value"})
+        for r in ref.rows
+    )
+
+
+def _reference_table(ref: RefTable) -> ReportTable:
+    return ReportTable(
+        table_id=ref.table_id,
+        title=ref.title,
+        columns=_VALUE_COLUMN,
+        rows=tuple(
+            TableRow(row_id=r.row_id, label=r.label, fact_ids=(r.fact.fact_id,)) for r in ref.rows
+        ),
+        row_header=ref.row_header,
+        limitation=ref.note,
+    )
+
+
+def forward_model(
+    *, pack: PreparedPack, submission: ForwardSubmission, upstream: Upstream
+) -> ForwardReport:
+    """The composed report of a valid submission; raises ValueError on any issue."""
+    issues = validate_forward(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        raise ValueError("; ".join(bounded_issues(issues)))
+    result = compute(_inputs(pack, submission, upstream))
+    cells = {c.fact.fact_id: c.fact for c in result.cells}
+    return ForwardReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=(
+            *(_report_table(t, cells) for t in result.tables),
+            *(_reference_table(r) for r in result.references),
+        ),
+        facts=(*cells.values(), *(f for r in result.references for f in _reference_facts(r))),
+        claims=tuple(
+            ModuleClaim(claim_id=c.claim_id, text=c.text, citations=(), limitation=c.limitation)
+            for c in result.claims
+        ),
+        limitations=result.own_limitations,
+    )
+
+
+def cp2g_module(report: ForwardReport, *, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-2G candidate: the report's tables and claims bound to `inputs`, then the
+    submission's content hash (the owner-only settled tail, protocol section 2 `SCHEMAS`)."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands the journal and the verifier replays (its last step is
+    the one under validation)."""
+    submission, shape = _parsed(store.payload(attempt.steps[-1].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    upstream = cp2g_upstream(store=store, attempt=attempt)
+    issues = validate_forward(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = forward_model(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _submit_step(store: Execution, ticket_id: str, payload: str) -> Attempt:
+    """Retain the one `forward_credit_model` response, validate it, then settle CP-2G with the
+    Python candidate (as `cp2a._submit_step`). An invalid step finishes the attempt rejected
+    (blocked on the repair): there is no within-attempt repair. A crash after the step resumes
+    from the retained step."""
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    if attempt is None or attempt.module_id != MODULE_ID or attempt.status != "pending":
+        raise ValueError("Ticket is absent, finished or belongs to another module")
+    if (
+        attempt.steps
+        and attempt.steps[0].payload_sha256 != hashlib.sha256(payload.encode()).hexdigest()
+    ):
+        raise ValueError("Ticket already retains a different response; resume or interrupt")
+    if not attempt.steps or attempt.steps[0].status == "pending":
+        attempt = store.submit_step(
+            ticket_id,
+            MODULE_ID,
+            STEP_IDS,
+            STEP_ID,
+            payload,
+            lambda pack, current: _validate_step(store, pack, current),
+        )
+    if attempt.status == "finished":
+        return attempt
+    outcome = _validate_step(store, store.pack(), attempt)
+    if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+        raise ValueError("Retained CP-2G output differs from trusted validation")
+    candidate = _candidate(outcome.output or "", attempt)
+    return store.finish(
+        ticket_id,
+        candidate.model_dump_json(),
+        lambda supplied: () if supplied == candidate else ("CP-2G candidate differs",),
+        qualification=QUALIFICATION,
+    )
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal one `forward_credit_model` payload: null resolution against the model-facing
+    schema, then the validated step and, when valid, the settlement. CP-2G has no tool-loop
+    rules."""
+    if rules is not None:
+        raise ValueError("CP-2G has no tool-loop rules (rule mode none)")
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-2G has one step, {STEP_ID}")
+    normalised, resolved = normalise(ForwardSubmission, payload)
+    journal = _submit_step(store, ticket_id, normalised)
+    return Submitted(journal, normalised, resolved, (), (), None)
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    return cp2g_module(
+        ForwardReport.model_validate_json(output), inputs=attempt.inputs, attempt=attempt.number
+    )
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+# --- the exact `read_inputs` view (lease Tool use; manifest.json tool_use.view_tree_draft) -----
+
+_BOUNDS: Mapping[object, dict[str, object]] = {
+    GrowthDriver: {"min": "-1", "max": "1", "places": 4},
+    FractionDriver: {"min": "0", "max": "1", "places": 4},
+    AmountDriver: {"min": "0", "max": "999999.9999", "places": 4},
+}
+BREAK_METRICS_OFFERED = ("total_leverage", "net_leverage", "interest_coverage")
+
+
+def _cell(fact: Fact, referencable_ids: frozenset[str]) -> dict[str, object]:
+    return {
+        "ref": fact.fact_id if fact.fact_id in referencable_ids else None,
+        "shown": spelled(fact) if fact.status == "known" else None,
+        "status": fact.status,
+        "limitation": fact.limitation,
+    }
+
+
+def _shown(fact: Fact) -> dict[str, object]:
+    return {"shown": spelled(fact) if fact.status == "known" else None, "status": fact.status}
+
+
+def _figure(fact: Fact) -> dict[str, object]:
+    return {
+        "ref": fact.fact_id,
+        "label": fact.label,
+        "period": fact.period,
+        "unit": figure_unit(fact) or fact.unit,
+        "shown": spelled(fact),
+    }
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """What `read_inputs` returns, all Python's (lease Tool use): the upstream statuses, the
+    CP-1 twelve-month base with each operand and reported ratio, the driver bounds, the CP-2A
+    scenarios and breaks, the CP-1D supported figures when bound, the break metrics offered, the
+    figures a reference may name and the limitations settlement will inherit. Missing facts are
+    offered with their status. No quote, citation or record. `pack` is part of the lease
+    signature; the view reads none of it."""
+    del pack
+    base = select_cp1(upstream.cp1)
+    cp1d = upstream.cp1d.facts()
+    allowed = frozenset(f.fact_id for f in referencable(base.values()))
+    operands = CP1_METRICS[: len(OPERAND_METRIC)]
+    supported = dict(
+        zip(("supported_ebitda", "supported_total_leverage", "supported_net_leverage"), cp1d or ())
+    )
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id.startswith("CP-")
+        ],
+        "base": {
+            "period": LTM_PERIOD,
+            "forecast_periods": list(FY),
+            "operands": {m: _cell(base[m], allowed) for m in operands},
+            "ratios": {m: _cell(base[m], allowed) for m in CP1_METRICS[len(operands) :]},
+        },
+        "drivers": [
+            *(
+                {
+                    "name": name,
+                    "label": DRIVER_LABEL[name],
+                    "unit_class": DRIVER_UNIT[name],
+                    "bounds": _BOUNDS[BaseDrivers.model_fields[name].annotation],
+                }
+                for name in DRIVERS
+            ),
+            {
+                "name": "minimum_liquidity",
+                "label": "Minimum liquidity",
+                "unit_class": "amount",
+                "bounds": _BOUNDS[AmountDriver],
+                "may_be_not_assessed": True,
+            },
+        ],
+        "cp2a": {
+            "base_period": upstream.cp2a.base_period,
+            "scenarios": [
+                {
+                    "row": s.row,
+                    "name": s.name,
+                    "ebitda_decline": _shown(s.decline),
+                    "interest_increase": _shown(s.increase),
+                }
+                for s in upstream.cp2a.scenarios
+            ],
+            "breaks": [
+                {
+                    "row": b.row,
+                    "origin": b.origin,
+                    "test": b.test,
+                    "level": _shown(b.level),
+                    "required_decline": {
+                        **_shown(b.required_decline),
+                        "limitation": b.required_decline.limitation,
+                    },
+                    "outcome": b.outcome,
+                }
+                for b in upstream.cp2a.breaks
+            ],
+        },
+        "cp1d": {
+            "state": upstream.cp1d.state,
+            **{
+                key: None
+                if key not in supported
+                else {"ref": supported[key].fact_id, "shown": _shown(supported[key])["shown"]}
+                for key in (
+                    "supported_ebitda",
+                    "supported_total_leverage",
+                    "supported_net_leverage",
+                )
+            },
+        },
+        "break_metrics_offered": list(BREAK_METRICS_OFFERED),
+        "cp1_facts": [_figure(f) for f in base.values() if f.fact_id in allowed],
+        "cp1d_facts": [_figure(f) for f in referencable(cp1d or ())],
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the one `read_inputs` record, as compact JSON (S1a lease rev 2, M4)."""
+    upstream = cp2g_upstream(store=historical, attempt=attempt)
+    context = context_block(pack=historical.pack(), upstream=upstream)
+    body = json.dumps(context, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the consumer reader pinned for CP-2H and CP-4C (lease Consumption; round 13 item 2) ------
+
+
+@dataclass(frozen=True)
+class Cp2gHead:
+    """What a consumer reads from a settled CP-2G head: its status and hash, the pinned facts
+    verbatim (`_reader_ids`), the T2H.7 break rows, and the settled own limitations (with the
+    synthetic line on a synthetic case). A blocked head gives its status and hash only (round 5
+    item 9 L2)."""
+
+    status: InputStatus
+    head_sha256: str
+    facts: tuple[Fact, ...] = ()
+    break_rows: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+    def fact(self, fact_id: str) -> Fact:
+        found = next((f for f in self.facts if f.fact_id == fact_id), None)
+        if found is None:
+            raise ValueError(f"CP-2G: {fact_id} is not exposed by the reader")
+        return found
+
+
+def _reader_ids(break_rows: Sequence[str]) -> tuple[str, ...]:
+    """Per case and year revenue, EBITDA and free cash flow (T2H.4, with the FY2025 actual),
+    cash interest, closing debt and cash and accessible liquidity (T2H.5), the four ratios
+    (T2H.6, with the actual), each T2H.7 first year, the T2H.8 trajectory, and the two T2H.3
+    source texts that name the CP-2A row (lease amendment, round 13 item 2)."""
+    years = (*_rows("base"), *_rows("down"))
+    return (
+        *(f"T2H.4.{r}.{f}" for r in (A25, *years) for f in ("revenue", "ebitda", "fcf")),
+        *(
+            f"T2H.5.{r}.{f}"
+            for r in years
+            for f in ("interest", "closing_debt", "closing_cash", "accessible_liquidity")
+        ),
+        *(
+            f"T2H.6.{r}.{f}"
+            for r in (A25, *years)
+            for f in ("total_leverage", "net_leverage", "interest_coverage", "fcf_to_debt")
+        ),
+        *(f"T2H.7.{r}.{case}_first" for r in break_rows for case in CASES),
+        *(
+            f"T2H.8.{case}.{f}"
+            for case in CASES
+            for f in (
+                "trajectory",
+                "total_leverage_fy28",
+                "change_vs_fy25",
+                "peak_total_leverage",
+                "peak_period",
+            )
+        ),
+        "T2H.3.d01.source",
+        "T2H.3.d02.source",
+    )
+
+
+def cp2g_reader(store: Execution, head: Head) -> Cp2gHead:
+    """The consumer reader of a settled CP-2G head (lease Public API). A stale head or another
+    module's head raises."""
+    module, status = _settled_module(store, head, MODULE_ID)
+    if status == "blocked":
+        return Cp2gHead(status=status, head_sha256=head.result_sha256)
+    t2h7 = next((t for t in module.tables if t.table_id == "T2H.7"), None)
+    if t2h7 is None:
+        raise ValueError("CP-2G: the settled head has no table T2H.7")
+    rows = tuple(r.row_id for r in t2h7.rows)
+    facts = {f.fact_id: f for f in module.facts}
+    return Cp2gHead(
+        status=status,
+        head_sha256=head.result_sha256,
+        facts=tuple(_fact_of(facts, fid, MODULE_ID) for fid in _reader_ids(rows)),
+        break_rows=rows,
+        limitations=module.limitations,
     )

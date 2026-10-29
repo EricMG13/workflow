@@ -14,25 +14,65 @@ spelling is `deploy_vii.display.format_value`. A missing amount stays `None` and
 No I/O, store, host, session or render call happens here (Stage 2 adds those).
 """
 
+import hashlib
+import itertools
+import json
 import re
 import unicodedata
 from collections import Counter
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_EVEN, Context, Decimal, Inexact, InvalidOperation, Rounded
 from typing import Literal
 
 from pydantic import TypeAdapter, ValidationError
 
-from deploy_vii.business_context import Category, Confidence, Severity
-from deploy_vii.contracts import Citation, Contract, Fact, Source, Text
+from deploy_vii.business_context import (
+    CP1_REFERENCES,
+    Category,
+    Confidence,
+    Severity,
+)
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    Module,
+    ReportTable,
+    RunText,
+    Source,
+    TableColumn,
+    Text,
+)
+from deploy_vii.contracts import Run as PackRun
+from deploy_vii.contracts import TableRow as ReportRow
 from deploy_vii.display import UnitClass, format_value
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Qualification,
+    StepValidation,
+    clipped,
+    current_inputs,
+    inherited_limitations,
+    listed_issues,
+    settle,
+)
 from deploy_vii.financial_contracts import Number
-from deploy_vii.prose import Run, bind, tokenize
+from deploy_vii.live.schema import exact_json, json_object
+from deploy_vii.live.submission import Submitted
+from deploy_vii.live.tools import Seen, unread_citation_issues
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import Run as ProseRun
+from deploy_vii.prose import bind, tokenize
 from deploy_vii.prose import issues as prose_issues
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
-from deploy_vii.readiness import citation_issues
-from deploy_vii.report_view import scale_label
+from deploy_vii.readiness import citation_issues, shape_issues
+from deploy_vii.report_view import fact_spelling, figure_unit, scale_label
 from deploy_workflow.owners.blank import is_blank
 
 MODULE_ID = "CP-1D"
@@ -377,6 +417,17 @@ _RATIO_DIGITS = 38
 _RATIO_ADJUSTED = 29
 
 
+def _line(prefix: str, quoted: str) -> str:
+    """An issue line that quotes caller or pack text: cut to `MAX_ISSUE_CHARS` before it is
+    built whole (protocol section 6; identical to the plain line when it is short)."""
+    return clipped((prefix, quoted))
+
+
+def _bounded(found: Iterable[str]) -> tuple[str, ...]:
+    """At most `MAX_ISSUES` lines, the last counting the rest (`execution.listed_issues`)."""
+    return listed_issues(found, lambda line: (line,), lambda n: f"{n} further issues not listed")
+
+
 def _is_number(value: Decimal) -> bool:
     try:
         _NUMBER.validate_python(value)
@@ -570,7 +621,7 @@ def _one_whole_run(quote: str) -> bool:
         before = reading_text[: runs[0].start()][-1:]
         if _touches_before(before):  # the one seam for the before-rule
             return False
-        if _ORDINAL_AFTER.match(reading_text, runs[0].end()):
+        if _ordinal_after(reading_text, runs[0].end()):
             return False
     return True
 
@@ -580,9 +631,35 @@ def _one_whole_run(quote: str) -> bool:
 _ORDINAL_AFTER = re.compile(r"(?:st|nd|rd|th)(?![^\W\d_])", re.IGNORECASE)
 
 
+_SKIPPED = ("Cf", "Mn", "Me")
+_SUFFIX_WINDOW = 32
+
+
+def _ordinal_after(text: str, end: int) -> bool:
+    """Stage 2 L3 (LEAD): after the run, Cf/Mn/Me characters are skipped (over the whole tail) and the suffix window
+    is NFKC-folded, so `2ⁿᵈ`, `2ｎｄ`, `2<ZWSP>nd` and `2<Mn>nd` are ordinals like `2nd`; a letter
+    after the folded suffix (`2nds`, `2ndly`) still leaves the run readable."""
+    # Cf/Mn/Me are skipped over the whole tail before the window is taken, so a long run of marks
+    # cannot push the suffix out of it.
+    window = "".join(
+        itertools.islice(
+            (c for c in text[end:] if unicodedata.category(c) not in _SKIPPED), _SUFFIX_WINDOW
+        )
+    )
+    return _ORDINAL_AFTER.match(unicodedata.normalize("NFKC", window)) is not None
+
+
 def _touches_before(char: str) -> bool:
-    """A letter, or a Cf/Mn/Me character, directly before a run touches it (`Q2`, `FY25`)."""
-    return char.isalpha() or unicodedata.category(char) in ("Cf", "Mn", "Me") if char else False
+    """A letter, a Mn/Mc/Me/Cf character, or a character whose NFKC fold holds a letter (a
+    circled letter), directly before a run touches it (`Q2`, `FY25`; Stage 2 I2)."""
+    if not char:
+        return False
+    category = unicodedata.category(char)
+    return (
+        category[0] == "L"
+        or category in ("Mn", "Mc", "Me", "Cf")
+        or any(c.isalpha() for c in unicodedata.normalize("NFKC", char))
+    )
 
 
 def _cited_text(citation: Citation, sources: Sequence[Source]) -> str | None:
@@ -681,14 +758,14 @@ def _outcome(item: BridgeItem, assessment: Assessment, sources: Sequence[Source]
         return _Outcome(item, assessment, "rule", Decimal(0), kept, Decimal(0))
     claimed = item.amount
     if claimed is None:
-        raise ValueError(f"Cannot accept an unstated amount: {item.label}")
+        raise ValueError(_line("Cannot accept an unstated amount: ", item.label))
     if assessment.achievability == "Supported":
         return _Outcome(item, assessment, "rule", Decimal(1), None, _EXACT.multiply(claimed, 1))
     if cited is not None:
         basis = Decimal(_basis_amounts(cited, sources)[0])
         return _Outcome(item, assessment, "source", _quotient(basis, claimed), basis, basis)
     if assessment.accepted_fraction is None:
-        raise ValueError(f"Partly supported without basis or fraction: {item.label}")
+        raise ValueError(_line("Partly supported without basis or fraction: ", item.label))
     fraction = Decimal(assessment.accepted_fraction)
     accepted = _EXACT.multiply(claimed, fraction)
     return _Outcome(item, assessment, "judgment", fraction, None, accepted)
@@ -700,23 +777,23 @@ def _shape_issue(item: BridgeItem, assessment: Assessment, sources: Sequence[Sou
     basis, fraction = assessment.accepted_basis, assessment.accepted_fraction
     if assessment.achievability != "Partly supported":
         if basis is not None:
-            return f"Accepted basis only applies to Partly supported: {label}"
+            return _line("Accepted basis only applies to Partly supported: ", label)
         if fraction is not None:
-            return f"Accepted fraction only applies to Partly supported: {label}"
+            return _line("Accepted fraction only applies to Partly supported: ", label)
         return None
     if basis is not None and fraction is not None:
-        return f"Give either an accepted basis or an accepted fraction, not both: {label}"
+        return _line("Give either an accepted basis or an accepted fraction, not both: ", label)
     if basis is None and fraction is None:
-        return f"Accepted basis or accepted fraction required for Partly supported: {label}"
+        return _line("Accepted basis or accepted fraction required for Partly supported: ", label)
     if fraction is not None and not (_FRACTION.fullmatch(fraction) and Decimal(fraction) > 0):
-        return (
-            "Accepted fraction must be a decimal above 0 and below 1 with at most two places: "
-            f"{label}"
+        return _line(
+            "Accepted fraction must be a decimal above 0 and below 1 with at most two places: ",
+            label,
         )
     if basis is not None:
         amounts = _basis_amounts(basis, sources)
         if len(amounts) != 1 or not _one_whole_run(basis.quote):
-            return f"Accepted basis quote must contain exactly one amount: {label}"
+            return _line("Accepted basis quote must contain exactly one amount: ", label)
         amount = Decimal(amounts[0])
         if item.amount is None and _accepts(assessment):
             return None  # ruling 1D7: the content rule `Cannot accept an unstated amount`
@@ -725,13 +802,15 @@ def _shape_issue(item: BridgeItem, assessment: Assessment, sources: Sequence[Sou
         # (precision, or no stated proposed amount) the exactness text is. Round 10: "above 0"
         # applies on its own, so a signed amount at or below 0 gets the bounds text first, also
         # on an unstated proposed amount (the Recurring path).
-        bounds = f"Accepted basis must be above 0 and below the proposed amount: {label}"
+        bounds = _line("Accepted basis must be above 0 and below the proposed amount: ", label)
         if amount <= 0:
             return bounds
         if not _is_number(amount):
             if item.amount is not None and amount >= _NUMBER_LIMIT:
                 return bounds
-            return f"Accepted basis amount cannot be held exactly as a product amount: {label}"
+            return _line(
+                "Accepted basis amount cannot be held exactly as a product amount: ", label
+            )
         if item.amount is not None and not amount < item.amount:
             return bounds
     return None
@@ -746,13 +825,15 @@ def _rule_issues(item: BridgeItem, assessment: Assessment) -> list[str]:
     label, recurrence = item.label, assessment.recurrence
     found: list[str] = []
     if _accepts(assessment) and not assessment.evidence:
-        found.append(f"Evidence required for an accepted add-back: {label}")
+        found.append(_line("Evidence required for an accepted add-back: ", label))
     if recurrence not in _FITS[item.type]:
-        found.append(f"Recurrence does not fit the add-back type: {label}")
+        found.append(_line("Recurrence does not fit the add-back type: ", label))
     if recurrence == "Not assessable" and assessment.achievability != "Insufficient evidence":
-        found.append(f"Recurrence can be not assessable only with insufficient evidence: {label}")
+        found.append(
+            _line("Recurrence can be not assessable only with insufficient evidence: ", label)
+        )
     if _accepts(assessment) and item.amount is None:
-        found.append(f"Cannot accept an unstated amount: {label}")
+        found.append(_line("Cannot accept an unstated amount: ", label))
     return found
 
 
@@ -915,7 +996,7 @@ class _Facts:
 
 def _cite(source: Source, locator: str, quote: str) -> Citation:
     if source.sha256 is None:
-        raise ValueError(f"Source without a hash: {source.source_id}")
+        raise ValueError(_line("Source without a hash: ", source.source_id))
     return Citation(
         source_id=source.source_id, source_sha256=source.sha256, locator=locator, quote=quote
     )
@@ -1454,12 +1535,20 @@ def _limitations(
         else "No management bridge is in the pack: add-backs are tested only against the statements, which record none."
     ]
     lines += [
-        f"Proposed amount is not stated for {o.item.label}: every figure that needs it is Not calculable."
+        clipped(
+            (
+                "Proposed amount is not stated for ",
+                o.item.label,
+                ": every figure that needs it is Not calculable.",
+            )
+        )
         for o in outcomes
         if o.item.amount is None
     ]
     lines += [
-        f"Recurring add-back excluded although a source amount is cited: {o.item.label}."
+        clipped(
+            ("Recurring add-back excluded although a source amount is cited: ", o.item.label, ".")
+        )
         for o in outcomes
         if o.path == "rule" and o.basis is not None
     ]
@@ -1565,11 +1654,11 @@ def _assessments_by_item(
     """Label issues, and each bridge item paired with its single assessment."""
     labels = {item.label for item in bridge.items}
     count = Counter(a.addback for a in assessments)
-    found = [f"Unknown add-back: {a.addback}" for a in assessments if a.addback not in labels]
+    found = [_line("Unknown add-back: ", a.addback) for a in assessments if a.addback not in labels]
     pairs: list[tuple[BridgeItem, Assessment]] = []
     for item in bridge.items:
         if count[item.label] != 1:
-            found.append(f"Assess each bridge add-back exactly once: {item.label}")
+            found.append(_line("Assess each bridge add-back exactly once: ", item.label))
             continue
         pairs.append((item, next(a for a in assessments if a.addback == item.label)))
     return found, pairs
@@ -1649,7 +1738,7 @@ def module_fact_ids(bridge: Bridge | None, gaps: int) -> frozenset[str]:
     return frozenset(_module_shapes(bridge, gaps))
 
 
-def _structural_issues(run: Run, shape: _Shape, currency: str | None) -> list[str]:
+def _structural_issues(run: ProseRun, shape: _Shape, currency: str | None) -> list[str]:
     """The product's reference checks (`prose._run_issues`, `prose._fact_issues`) that the
     structure decides; whether a numeric fact is known depends on values and is not checked."""
     if not run.figure:
@@ -1763,7 +1852,7 @@ def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
     source = _bridge_source(inputs.sources)
     if source is None:
         found = [
-            f"Assessment given without a bridge in the pack: {a.addback}"
+            _line("Assessment given without a bridge in the pack: ", a.addback)
             for a in submission.assessments
         ]
         if not submission.overall.evidence:
@@ -1777,7 +1866,7 @@ def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
         found = _bridge_issues(inputs, source, bridge)
     found += citation_issues(submission.overall.evidence, inputs.sources)
     found += _blank_issues(submission)
-    return tuple(dict.fromkeys(found))
+    return _bounded(dict.fromkeys(found))
 
 
 # --- the calculation ------------------------------------------------------------------------
@@ -1841,3 +1930,584 @@ def compute(inputs: EarningsQualityInputs) -> EarningsQualityResult:
         claims=_claims(out.facts, outcomes, submission.overall),
         limitations=_limitations(bridge, outcomes, submission.gaps, inputs.cp1b),
     )
+
+
+# =============================================================================================
+# Stage 2: the connection (docs/CP1D-OWNER-LEASE.md Public API; docs/G1X-OWNER-CORE-PROTOCOL.md).
+# Everything above is the pure Stage 1 calculation and is not changed by what follows.
+# =============================================================================================
+
+STEP_ID = "earnings_quality"
+STEP_IDS = (STEP_ID,)
+QUALIFICATION = Qualification(implementation="implemented")
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: EarningsQualitySubmission}
+# The fixed H1 mapping (`host._OWNER_SCOPES[("CP-1D", "earnings_quality")]`): identity, financial
+# and, when the pack holds it, the bridge; a held source stays in scope in pack order.
+SCOPE = frozenset({"identity", "financial", BRIDGE_SOURCE_ID})
+CP0, CP1, CP1B = "CP-0", "CP-1", "CP-1B"
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+_CP1_TABLE = "T4.10"
+_CP1_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
+_CP1_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+# Operand name -> CP-1 T4.10 metric (manifest `cp1_fact_selection_rule.metrics`), in
+# `_CP1_FIGURES` order.
+_CP1_METRICS = {
+    "adjusted_ebitda_ltm": "adjusted_ebitda",
+    "ebitda_ltm": "ebitda",
+    "cfo_ltm": "cfo_adjusted",
+    "total_debt_ltm": "total_debt",
+    "net_debt_ltm": "net_debt",
+    "total_leverage_adjusted": "total_leverage_adjusted",
+    "net_leverage_adjusted": "net_leverage_adjusted",
+}
+_CP1B_BOUND = "CP-1B is bound but its variance evidence is not read in this version."
+
+
+class EarningsQualityReport(Contract):
+    """The composed CP-1D output retained as the step output: the module's tables, facts, claims
+    and own limitations, bound to the pack and the retained submission."""
+
+    schema_version: Literal["earnings-quality/1"] = "earnings-quality/1"
+    run: PackRun
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[Text, ...]
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-1D attempt binds, read once from the journal (`cp1d_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp0` and `cp1` are the bound required heads; `cp1b` is the bound optional
+    CP-1B head (status and limitations only; v1 reads no CP-1B fact); `inherited` is what
+    settlement will carry."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp0: Module
+    cp1: Module
+    cp1b: Module | None
+    inherited: tuple[str, ...]
+
+    def status(self, module_id: str) -> str | None:
+        return next((item.status for item in self.bound if item.input_id == module_id), None)
+
+    @property
+    def cp1b_state(self) -> Cp1bState:
+        status = self.status(CP1B)
+        return "unbound" if status is None else "blocked" if status == "blocked" else "settled"
+
+
+def _bound_module(store: Execution, attempt: Attempt, module_id: str) -> Module:
+    item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+    if item is None:
+        raise ValueError(f"The CP-1D attempt binds no {module_id} input")
+    return store.result(item.sha256)
+
+
+def cp1d_upstream(store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-0 and CP-1 heads of `attempt`, its bound CP-1B head when the run has one,
+    the current input set and the inherited limitations. A refusal of `current_inputs` is kept
+    as text: the validator reports it as a staleness issue."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+    bound = {item.input_id for item in attempt.inputs}
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp0=_bound_module(store, attempt, CP0),
+        cp1=_bound_module(store, attempt, CP1),
+        cp1b=_bound_module(store, attempt, CP1B) if CP1B in bound else None,
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def _stale_issues(upstream: Upstream) -> list[str]:
+    if isinstance(upstream.current, str):
+        return [_line("Stale inputs: ", upstream.current)]
+    bound = {item.input_id: item for item in upstream.bound}
+    current = {item.input_id: item for item in upstream.current}
+
+    def state(item: Input | None) -> str:
+        return "absent" if item is None else f"{item.status} {item.sha256[:12]}"
+
+    return [
+        f"Stale input {key}: bound {state(bound.get(key))}, current {state(current.get(key))}"
+        for key in dict.fromkeys((*bound, *current))
+        if bound.get(key) != current.get(key)
+    ]
+
+
+def _provenance_issues(upstream: Upstream) -> list[str]:
+    """The supplied modules are the bound heads (same module, same canonical hash)."""
+    supplied: dict[str, Module | None] = {CP0: upstream.cp0, CP1: upstream.cp1}
+    if upstream.status(CP1B) is not None or upstream.cp1b is not None:
+        supplied[CP1B] = upstream.cp1b
+    bound = {item.input_id: item for item in upstream.bound}
+    found: list[str] = []
+    for module_id, module in supplied.items():
+        item = bound.get(module_id)
+        if (
+            item is None
+            or module is None
+            or module.module_id != module_id
+            or module.content_hash() != item.sha256
+        ):
+            found.append(f"Upstream {module_id}: the supplied module is not the bound input")
+    found += [
+        f"Required upstream {item.input_id} is blocked"
+        for item in upstream.bound
+        if item.input_id in (CP0, CP1) and item.status == "blocked"
+    ]
+    return found
+
+
+def _cp1_facts(cp1: Module) -> dict[str, Fact]:
+    """The seven T4.10 facts of the LTM Q4 25 column by operand name (manifest
+    `cp1_fact_selection_rule`): exactly one match each, zero or several fail."""
+    picked: dict[str, Fact] = {}
+    for name, metric in _CP1_METRICS.items():
+        label = f"{_CP1_COLUMN} · {metric}"
+        hits = [
+            f
+            for f in cp1.facts
+            if f.table_id == _CP1_TABLE and f.period == _CP1_PERIOD and f.label == label
+        ]
+        if len(hits) != 1:
+            raise ValueError(f"CP-1 {_CP1_TABLE} {metric}: {len(hits)} facts, expected exactly one")
+        picked[name] = hits[0]
+    return picked
+
+
+def _cp1_operands(cp1: Module) -> tuple[Cp1Operands, dict[str, Fact]]:
+    """The Stage 1 `Cp1Operands` read from the CP-1 head, and the facts they came from."""
+    facts = _cp1_facts(cp1)
+    figures: dict[str, Cp1Figure] = {}
+    for name, fact in facts.items():
+        if fact.status not in ("known", "missing", "not_applicable"):
+            raise ValueError(f"CP-1 figure {name} is {fact.status}")
+        if fact.value_class not in ("source", "calculated", "analyst_judgment"):
+            raise ValueError(f"CP-1 figure {name}: value class {fact.value_class} is not readable")
+        figures[name] = Cp1Figure(
+            fact_id=fact.fact_id,
+            figure=name,
+            label=fact.label,
+            unit=fact.unit or "",
+            period=fact.period or "",
+            amount=fact.amount,
+            value_class=fact.value_class,
+            currency=fact.currency,
+            status=fact.status,
+            limitation=fact.limitation,
+        )
+    operands = Cp1Operands(
+        adjusted_ebitda=figures["adjusted_ebitda_ltm"],
+        ebitda=figures["ebitda_ltm"],
+        cfo=figures["cfo_ltm"],
+        total_debt=figures["total_debt_ltm"],
+        net_debt=figures["net_debt_ltm"],
+        total_leverage=figures["total_leverage_adjusted"],
+        net_leverage=figures["net_leverage_adjusted"],
+    )
+    return operands, facts
+
+
+def _inputs(
+    pack: PreparedPack, submission: EarningsQualitySubmission, upstream: Upstream
+) -> tuple[EarningsQualityInputs, dict[str, Fact]]:
+    """The one store adapter: the settled heads and the pack as the Stage 1 input object. Used by
+    `submit` (through the validator), `probe` and `view`. Raises ValueError when the CP-1 head
+    does not hold the seven operands."""
+    operands, facts = _cp1_operands(upstream.cp1)
+    return (
+        EarningsQualityInputs(
+            sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
+            cp1=operands,
+            submission=submission,
+            cp1b=upstream.cp1b_state,
+        ),
+        facts,
+    )
+
+
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _model_text_issues(submission: EarningsQualitySubmission) -> list[str]:
+    """Rulings Stage 2 round 3: each model-text field the step later builds as run text is
+    checked here with that type (`RunText`), so no composition can raise after the binding write.
+    Lines are `<path>: <msg>` without the input value."""
+    texts = [
+        (f"assessments[{i}].rationale", a.rationale) for i, a in enumerate(submission.assessments)
+    ]
+    texts.append(("overall.rationale", submission.overall.rationale))
+    found: list[str] = []
+    for path, text in texts:
+        try:
+            _RUN_TEXT.validate_python(text)
+        except ValidationError as error:
+            found += [
+                _line(f"{path}: ", e["msg"])
+                for e in error.errors(include_input=False, include_url=False, include_context=False)
+            ]
+    return found
+
+
+def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
+    """A derived fact's citations (Stage 2 round 3 ruling): one per (source, page), quoting the
+    first of its own input quotes on that page, in input order. No quote is invented."""
+    first: dict[tuple[str, str], Citation] = {}
+    for citation in citations:
+        first.setdefault((citation.source_id, citation.locator), citation)
+    return tuple(first.values())
+
+
+def _module_fact(cell: CellFact) -> Fact:
+    fact = cell.to_fact()
+    if cell.value_class != "calculated":
+        return fact  # a sourced fact quotes its own field
+    return fact.model_copy(update={"citations": _one_per_page(fact.citations)})
+
+
+def _checked(
+    pack: PreparedPack, submission: EarningsQualitySubmission, upstream: Upstream
+) -> tuple[tuple[str, ...], EarningsQualityReport | None]:
+    """(issues, None) for a refused submission, else ((), the composed report). Every check runs
+    before any product record is built from model text, and a record the product refuses
+    (`ValidationError`) is reported as an issue line, never raised."""
+    found = [*_provenance_issues(upstream), *_stale_issues(upstream)]
+    if found:
+        return _bounded(found), None
+    try:
+        inputs, cp1_facts = _inputs(pack, submission, upstream)
+    except ValueError as error:
+        return (_line("CP-1 operands unavailable: ", str(error)),), None
+    issues = validation_issues(inputs)
+    if issues:
+        return issues, None
+    texts = _model_text_issues(submission)
+    if texts:
+        return _bounded(texts), None
+    try:
+        result = compute(inputs)
+        module_facts = tuple(_module_fact(f) for f in result.facts)
+        prose = prose_issues(
+            submission.overall.rationale, bind((*module_facts, *cp1_facts.values()))
+        )
+        if prose:
+            return _bounded(prose), None
+        return (), _report(pack, submission, result, module_facts, cp1_facts)
+    except ValidationError as error:
+        return _bounded(
+            _line(f"{'.'.join(map(str, e['loc'])) or '(root)'}: ", e["msg"])
+            for e in error.errors(include_input=False, include_url=False, include_context=False)
+        ), None
+
+
+def validate_earnings_quality(
+    *, pack: PreparedPack, submission: EarningsQualitySubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Every issue of one submission: the bound-input checks, the Stage 1 calculation rules, the
+    model-text types, the overall rationale's references against the module's facts and the
+    seven CP-1 facts, and the product's own record checks. Bounded to `MAX_ISSUES` lines."""
+    return _checked(pack, submission, upstream)[0]
+
+
+def _reference_fact(figure: str, fact: Fact) -> Fact:
+    return fact.model_copy(update={"table_id": CP1_REFERENCES, "row_id": figure, "field": "value"})
+
+
+_COLUMN_LABELS = {"cfo_to_ebitda": "CFO to EBITDA"}
+_ROW_HEADERS = {
+    "T1D.1": "Add-back",
+    "T1D.2": "Add-back",
+    "T1D.3": "Bridge line",
+    "T1D.4": "Tie-out",
+    "T1D.5": "Basis",
+    "T1D.6": "Basis",
+    "T1D.7": "Gap",
+}
+
+
+def _report_table(table: Table, facts: Mapping[str, Fact]) -> ReportTable:
+    fields = [facts[fid].field for fid in table.rows[0].fact_ids]
+    return ReportTable(
+        table_id=table.table_id,
+        title=table.title,
+        columns=tuple(
+            TableColumn(field=name, label=_COLUMN_LABELS.get(name, name.replace("_", " ").title()))
+            for name in fields
+        ),
+        rows=tuple(
+            ReportRow(row_id=row.row_id, label=row.label, fact_ids=row.fact_ids)
+            for row in table.rows
+        ),
+        row_header=_ROW_HEADERS.get(table.table_id),
+    )
+
+
+def _report(
+    pack: PreparedPack,
+    submission: EarningsQualitySubmission,
+    result: EarningsQualityResult,
+    module_facts: tuple[Fact, ...],
+    cp1_facts: Mapping[str, Fact],
+) -> EarningsQualityReport:
+    by_id = {f.fact_id: f for f in module_facts}
+    referenced = tuple(_reference_fact(name, fact) for name, fact in cp1_facts.items())
+    by_figure = {name: fact for name, fact in zip(cp1_facts, referenced, strict=True)}
+    tables = [_report_table(t, by_id) for t in result.tables]
+    tables.append(
+        ReportTable(
+            table_id=CP1_REFERENCES,
+            title="CP-1 facts referenced in CP-1D",
+            columns=(TableColumn(field="value", label="Value"),),
+            rows=tuple(
+                ReportRow(row_id=r.row_id, label=r.label, fact_ids=(by_figure[r.figure].fact_id,))
+                for r in result.cp1_references
+            ),
+            row_header="CP-1 fact",
+        )
+    )
+    claims = tuple(
+        Claim(
+            claim_id=c.claim_id,
+            text=c.text,
+            citations=tuple(c.evidence or ()),
+            limitation=c.limitation,
+        )
+        for c in result.claims
+    )
+    return EarningsQualityReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=tuple(tables),
+        facts=(*module_facts, *referenced),
+        claims=claims,
+        limitations=tuple(dict.fromkeys(result.limitations)),
+    )
+
+
+def earnings_quality(
+    *, pack: PreparedPack, submission: EarningsQualitySubmission, upstream: Upstream
+) -> EarningsQualityReport:
+    """The composed CP-1D report of a valid submission; raises ValueError on any issue."""
+    issues, report = _checked(pack, submission, upstream)
+    if issues or report is None:
+        raise ValueError("; ".join(issues))
+    return report
+
+
+def cp1d_module(report: EarningsQualityReport, *, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-1D candidate: the report bound to `inputs` plus the one `*-submission` input."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """The exact `read_inputs` view (lease key tree): the upstream statuses, the bridge rows as
+    the table rule reads them, the seven CP-1 facts a `{ref|unit}` may name, the CP-1 T4.17 row
+    count and the limitations settlement will inherit. No quote or citation text is in it."""
+    source = next((s for s in pack.sources if s.source_id == BRIDGE_SOURCE_ID), None)
+    bridge = (
+        parse_bridge(_pages(source)) if source is not None and source.status == "ready" else None
+    )
+    facts = _cp1_facts(upstream.cp1)
+    rows = {f.row_id for f in upstream.cp1.facts if f.table_id == "T4.17"}
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id.startswith("CP-")
+        ],
+        "bridge": {
+            "state": "present" if source is not None else "absent",
+            "source_id": None if source is None else source.source_id,
+            "pages": [] if source is None else [span.locator for span in source.spans],
+            "items": []
+            if bridge is None
+            else [
+                {
+                    "row": item.row_id,
+                    "label": item.label,
+                    "type": item.type,
+                    "status": item.status,
+                    "claimed_ref": None if item.amount is None else f"T1D.1.{item.row_id}.claimed",
+                    "claimed_shown": None
+                    if item.amount is None
+                    else _spell(item.amount, "MILLIONS", None),
+                }
+                for item in bridge.items
+            ],
+            "totals": None
+            if bridge is None
+            else {
+                "proposed_total": None
+                if bridge.proposed_total is None
+                else _spell(bridge.proposed_total, "MILLIONS", None),
+                "management_ebitda": None
+                if bridge.management_ebitda is None
+                else _spell(bridge.management_ebitda, "MILLIONS", None),
+            },
+        },
+        "cp1_facts": [
+            {
+                "ref": fact.fact_id,
+                "label": fact.label,
+                "period": fact.period,
+                "unit": figure_unit(fact) or fact.unit,
+                # The cell spelling: the lease key tree keeps `unit` apart, so no unit is appended.
+                "shown": fact_spelling(fact, None)[2],
+            }
+            for fact in facts.values()
+            if fact.status == "known"
+        ],
+        "cp1_t417_rows": len(rows),
+        "cp1_facts_note": (
+            "Reference a CP-1 figure only in the overall rationale, as {ref|unit} with a ref and "
+            "unit listed in cp1_facts; an assessment rationale references module figures only, "
+            "as {T1D.x.y.z|unit}. Quote evidence only from read_pages."
+        ),
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the one `read_inputs` view over the bound heads, as compact JSON."""
+    block = context_block(pack=historical.pack(), upstream=cp1d_upstream(historical, attempt))
+    body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the tool-use rule, the validator, submit and the verifier probe ---------------------------
+
+
+def RULES(text: str, seen: Seen) -> tuple[str, ...]:
+    """The tool-use evidence rule (protocol section 2): every cited page was returned by
+    `read_pages` in the step. The schema holds no `ABSENCE_MARKERS` value, so the product's
+    cited-page rule (`live.tools.unread_citation_issues`, bounded and sorted) is the only one."""
+    return unread_citation_issues(text, seen)
+
+
+def _parsed(payload: str) -> tuple[EarningsQualitySubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue and is refused even if
+    Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            EarningsQualitySubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return EarningsQualitySubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands `Execution.submit_step` and the verifier replays: the
+    attempt's last step is the one under validation."""
+    step = attempt.steps[-1]
+    submission, shape = _parsed(store.payload(step.payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    issues, report = _checked(pack, submission, cp1d_upstream(store, attempt))
+    if issues or report is None:
+        return StepValidation(issues=issues)
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = EarningsQualityReport.model_validate_json(output)
+    return cp1d_module(report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def _with_rules(
+    validate: Callable[[PreparedPack, Attempt], StepValidation],
+    rules: Callable[[str], tuple[str, ...]],
+    payload: str,
+) -> Callable[[PreparedPack, Attempt], StepValidation]:
+    """`validate`, then the tool-use rule issues of the retained payload appended."""
+
+    def run(pack: PreparedPack, attempt: Attempt) -> StepValidation:
+        outcome = validate(pack, attempt)
+        found = rules(payload)
+        if not found:
+            return outcome
+        return StepValidation(
+            output=outcome.output, issues=tuple(dict.fromkeys((*outcome.issues, *found)))
+        )
+
+    return run
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one `earnings_quality` step (null resolution through `SCHEMAS`, the rule
+    issues appended) and, when it is valid, settle CP-1D with the Python candidate."""
+    from deploy_vii.live.schema import normalise as normalise_payload
+
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-1D has one step, {STEP_ID}")
+    normal, resolved = normalise_payload(EarningsQualitySubmission, payload)
+    validate: Callable[[PreparedPack, Attempt], StepValidation] = lambda pack, current: (
+        _validate_step(store, pack, current)
+    )
+    if rules is not None and rules(normal):
+        validate = _with_rules(validate, rules, normal)
+    attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, step_id, normal, validate)
+    if (
+        attempt.status == "pending"
+        and len(attempt.steps) == 1
+        and attempt.steps[0].status == "valid"
+    ):
+        outcome = _validate_step(store, store.pack(), attempt)
+        if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+            raise ValueError("Retained CP-1D output differs from trusted validation")
+        candidate = _candidate(outcome.output or "", attempt)
+        attempt = store.finish(
+            ticket_id,
+            candidate.model_dump_json(),
+            lambda supplied: () if supplied == candidate else ("CP-1D candidate differs",),
+            qualification=QUALIFICATION,
+        )
+    return Submitted(attempt, normal, resolved, (), (), None)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Rerun the step validator and settlement over the settled snapshot (nothing is written);
+    `WorkflowError("identity_mismatch")` unless the head rebuilds exactly."""
+    from deploy_workflow.owners.cp1a import probe_one_step
+
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+_ = settle  # re-exported for tests that replay settlement

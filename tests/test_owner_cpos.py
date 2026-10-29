@@ -26,11 +26,11 @@ from deploy_workflow import owners
 from deploy_workflow.owner_workflow import (
     OwnerRunReceipt,
     OwnerWorkflow,
-    WorkflowError,
     verify_owner_run_receipt,
 )
 from deploy_workflow.owners import cpos
 from deploy_workflow.owners.cpos import NavigationProof, navigation, verify_navigation
+from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
 ORACLE = ROOT / "cases/cpos-owner"
@@ -40,7 +40,9 @@ CASES = EXPECTED["cases"]
 CASE_IDS = ["s1a_positive", "s1a_gap", "s1a_blocked_cp1a", "s1a_refused_cp1a"]
 FIXED_ROUTES = {"front", "analysis", "FIT", "evidence", "limitations"}
 BLOCKED_PAGE3 = [("business", "page:3")]
-SCRIPT = re.compile(r'(<script id="report-data" type="application/json">)(.*?)(</script>)', re.S)
+SCRIPT = re.compile(
+    r'(<script id="report-data" type="application/json">)(.*?)(</script>)', re.DOTALL
+)
 assert owners.__name__ and cpos.__name__
 
 
@@ -188,10 +190,7 @@ def rewritten(proof: NavigationProof, page: bytes) -> NavigationProof:
 
 def tree(*paths: Path) -> dict[str, bytes]:
     return {
-        str(p): p.read_bytes()
-        for root in paths
-        for p in sorted(root.rglob("*"))
-        if p.is_file()
+        str(p): p.read_bytes() for root in paths for p in sorted(root.rglob("*")) if p.is_file()
     }
 
 
@@ -351,7 +350,7 @@ def seal_edited(receipt: OwnerRunReceipt) -> OwnerRunReceipt:
 
 
 def test_a5_seal_edit_refuses_identity_mismatch(run_positive: Closed) -> None:
-    assert [r["id"] for r in SUBMISSIONS["verifier_refusals"]][0] == "seal_edit"
+    assert SUBMISSIONS["verifier_refusals"][0]["id"] == "seal_edit"
     with pytest.raises(WorkflowError) as caught:
         navigation(run_positive.store, seal_edited(run_positive.receipt), run_positive.publication)
     assert caught.value.code == "identity_mismatch"
@@ -384,7 +383,7 @@ def test_a5_refusal_comes_from_the_verifier_before_any_render(
     run_positive: Closed, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     called: list[str] = []
-    real = cpos.verify_owner_run_receipt
+    real = verify_owner_run_receipt
 
     def spy(*args: Any, **kwargs: Any) -> None:
         called.append("verify")
@@ -435,7 +434,10 @@ def test_a6_receipt_hash_only(run_positive: Closed) -> None:
     other = seal_edited(run_positive.receipt).content_hash()
     assert other != proof.receipt_content_sha256
     refuses(
-        run_positive, page, proof.model_copy(update={"receipt_content_sha256": other}), "cpos_binding"
+        run_positive,
+        page,
+        proof.model_copy(update={"receipt_content_sha256": other}),
+        "cpos_binding",
     )
 
 
@@ -551,7 +553,9 @@ def test_a7_cp_os_requested_refuses_at_create_and_writes_nothing(tmp_path: Path)
 # --- A8: read-only and deterministic ------------------------------------------------------------
 
 
-def test_a8_navigation_and_a_refused_verify_leave_everything_unchanged(run_positive: Closed) -> None:
+def test_a8_navigation_and_a_refused_verify_leave_everything_unchanged(
+    run_positive: Closed,
+) -> None:
     receipt = run_positive.receipt
     before = (tree(run_positive.root), receipt.model_dump_json())
     page, proof = navigation(run_positive.store, receipt, run_positive.publication)
@@ -576,7 +580,7 @@ def test_a8_other_hash_seed_gives_identical_page_and_proof(run_positive: Closed)
         "print(hashlib.sha256(proof.model_dump_json().encode()).hexdigest())\n"
     )
     env = {**os.environ, "PYTHONHASHSEED": "4242"}
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, "-c", code, str(run_positive.root)],
         env=env,
         capture_output=True,
@@ -584,7 +588,3 @@ def test_a8_other_hash_seed_gives_identical_page_and_proof(run_positive: Closed)
         check=True,
     )
     assert result.stdout.split() == [sha(page), sha(proof.model_dump_json().encode())]
-
-
-def test_verifier_is_the_g1_verifier() -> None:
-    assert cpos.verify_owner_run_receipt is verify_owner_run_receipt

@@ -1530,7 +1530,7 @@ def main():
         "tool_use_refusals": [{"id": t["id"], "issues": t["issues"]} for t in TOOL_USE],
         "negative_cases": {
             "blocked_cp3d": {"attempt_0_issue": BLOCKED["attempt_0"]["issue"], "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
-                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, no head"},
+                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)"},
             "begin_refused_cp0_blocked": "CP-0 blocked or stale refuses begin of CP-3D (edge_rule block, no attempt consumed); built by making CP-0 blocked on a clone (two invalid CP-0 attempts), no literal",
             "stale_binding": "a snapshot change between the last read_pages and the submit refuses stale_binding",
         },

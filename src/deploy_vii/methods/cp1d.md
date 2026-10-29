@@ -80,7 +80,7 @@ claim's citations are the analyst's located evidence as submitted.
 
 ## Other rules the code enforces
 
-- Blank analyst text (`blank.is_blank`: whitespace and Cf only) is refused as `<path>: empty text`.
+- Blank analyst text (`prose.is_blank`: whitespace, control (`Cc`) and format (`Cf`) characters, the default-ignorable code points that `str.strip()` keeps (U+034F, U+115F, U+1160, U+17B4, U+17B5, U+180B-U+180F, U+3164, U+FE00-U+FE0F, U+FFA0, U+E0100-U+E01EF) and U+2800, or the empty string) is refused as `<path>: empty text`.
   A blank citation quote is refused by the pack-quote check (`Quote/locator mismatch`) or, as an
   accepted basis, by the exactly-one rule; inventory at Stage 2 found no blank quote that composes.
 - An unknown bridge type (not Saving or Cost) blocks the run (`Bridge table not found`).

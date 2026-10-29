@@ -10,7 +10,9 @@ from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.render import render
 from deploy_vii.report_view import build, pathways
 
-ORACLE = json.loads((Path(__file__).parents[1] / "cases" / "charts" / "cr1-expected.json").read_text())
+ORACLE = json.loads(
+    (Path(__file__).parents[1] / "cases" / "charts" / "cr1-expected.json").read_text()
+)
 BLOCK = "covenant-tests-headroom"
 
 
@@ -64,7 +66,15 @@ def test_a_report_with_cp4_not_shown_keeps_the_block_without_a_figure():
     view = view.model_copy(
         update={
             "modules": tuple(
-                m.model_copy(update={"status": "blocked", "facts": (), "tables": ()})
+                m.model_copy(
+                    update={
+                        "status": "blocked",
+                        "facts": (),
+                        "tables": (),
+                        "claims": (),
+                        "limitations": (),
+                    }
+                )
                 if m.module_id == "CP-4"
                 else m
                 for m in view.modules

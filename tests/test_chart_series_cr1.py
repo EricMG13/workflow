@@ -15,7 +15,9 @@ import test_connect_cp4 as cp4
 from deploy_vii import report_view
 from deploy_vii.report_view import Figure, build_index
 
-ORACLE = json.loads((Path(__file__).parents[1] / "cases" / "charts" / "cr1-expected.json").read_text())
+ORACLE = json.loads(
+    (Path(__file__).parents[1] / "cases" / "charts" / "cr1-expected.json").read_text()
+)
 MODULE = "CP-4"
 BLOCK = "covenant-tests-headroom"
 
@@ -148,7 +150,9 @@ def test_marks_follow_the_facts_not_the_oracle_constant():
 
 
 def test_a_floor_comparison_is_drawn_as_well():
-    view = _edit(cp4._expected_view("positive"), **{"T4.9.r01.comparison": {"text": "Not less than"}})
+    view = _edit(
+        cp4._expected_view("positive"), **{"T4.9.r01.comparison": {"text": "Not less than"}}
+    )
     figures, _ = _produce(view)
     assert len(figures[0].chart.marks) == 3
     assert "Comparison: Not less than" in figures[0].chart.table_twin.rows[0].label

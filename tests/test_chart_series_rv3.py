@@ -109,15 +109,13 @@ def test_an_excluded_peer_is_never_plotted_or_read():
     labels = [m.label for f in figures for m in f.chart.marks]
     assert not any("Ellsworth" in label for label in labels)
     assert ORACLE["cases"]["positive"]["excluded_facts_never_plotted"]
-    assert {p["state"] for f in ORACLE["cases"]["positive"]["chart_series"] for p in f["points"]} == {
-        "plotted"
-    }
+    assert {
+        p["state"] for f in ORACLE["cases"]["positive"]["chart_series"] for p in f["points"]
+    } == {"plotted"}
 
 
 def _with(module, fact_id, **updates):
-    facts = tuple(
-        f.model_copy(update=updates) if f.fact_id == fact_id else f for f in module.facts
-    )
+    facts = tuple(f.model_copy(update=updates) if f.fact_id == fact_id else f for f in module.facts)
     return module.model_copy(update={"facts": facts})
 
 
@@ -150,7 +148,9 @@ def test_a_missing_peer_fact_is_a_gap_with_its_reference_not_a_zero():
     )
     figures, refs = _produce("positive", module)
     mark = next(
-        m for m in figures[1].chart.marks if m.label == "Total leverage (adjusted) · Brookmere Industries"
+        m
+        for m in figures[1].chart.marks
+        if m.label == "Total leverage (adjusted) · Brookmere Industries"
     )
     assert mark.value is None and mark.ref_id in refs[(MODULE, "T1C.3.p02.total_leverage_adjusted")]
     assert mark.text == f"∅ {mark.ref_id}"

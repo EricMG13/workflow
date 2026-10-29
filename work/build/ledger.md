@@ -445,3 +445,4 @@
 - 11:25 Oracle preparer A done 6c4475d, rulings item 5 applied 618ed92 (S.5, RV.3a/b, CR.1 strict parse + threshold_text_rejected, FP-04 S.4; pins 80 paths; double rebuild identical; agent=mx-feature a17dc994). Waiting on group B for the joint mx-precise review.
 - 11:35 G2 rev 2 review REVISE (mx-precise a6a7d04d): M1 CP-8 refused outcome wrongly deferred (no_record); M2 body :59 complete rule needs model only when CP-MODEL requested; L1 cp1c banner; L2 refused-page source. Fix round 1 to preparer ac60d03f.
 - 11:55 G2 rev 2 scoped re-review APPROVE (a6a7d04d) with L3-L5 wording; preparer applies, then freeze. Oracle preparer B done 5735b06 (CR.2, CR.3 + Q-C2 move, DR.2, DR.3-5, DR.6; cp3c oracle moved via builder; agent=mx-feature a1775e03). Rulings item 6-7; DR.6 text and CP-4C prose fixes to preparer B.
+- 12:00 G2 rev 2 FROZEN b6730b7 (L3-L5 applied). G2 builder dispatched (mx-feature, ../s3-g2 from b6730b7; brief work/build/stage3/g2-brief.md).

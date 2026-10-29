@@ -309,10 +309,19 @@ def test_ordinary_text_is_unchanged():
 
 
 @given(st.text())
-def test_is_blank_is_whitespace_or_format_characters(text):
+def test_is_blank_is_whitespace_controls_format_or_invisible_characters(text):
     from deploy_vii.prose import is_blank
 
-    expected = all(c.isspace() or unicodedata.category(c) == "Cf" for c in text)
+    invisible = (
+        {0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x3164, 0xFFA0, 0x2800}
+        | set(range(0x180B, 0x1810))
+        | set(range(0xFE00, 0xFE10))
+        | set(range(0xE0100, 0xE01F0))
+    )
+    expected = all(
+        c.isspace() or unicodedata.category(c) in {"Cc", "Cf"} or ord(c) in invisible
+        for c in text
+    )
     assert is_blank(text) is expected
     assert is_blank("") is True
 

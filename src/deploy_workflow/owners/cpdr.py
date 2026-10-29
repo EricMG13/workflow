@@ -219,6 +219,15 @@ def _question_issues(
     """Rules 3-7 for one question; ``path`` is its ``gaps[i].questions[j]`` position (0-based)."""
     qid = question.question_id
     found: list[str] = []
+    if len(qid) > QUESTION_ID_MAX:
+        found.append(
+            _line(
+                "question_id is too long to compose its fact ids (at most ",
+                str(QUESTION_ID_MAX),
+                " characters): ",
+                qid,
+            )
+        )
     if question.outcome == "answered":
         if not (question.answer and question.category and question.citations):
             found.append(
@@ -303,8 +312,7 @@ def validate_research(
                 issues.append(_line("question_id appears twice: ", question.question_id))
             seen.add(question.question_id)
             issues += _question_issues(question, ready, pack, f"gaps[{g}].questions[{q}]")
-    if not issues:
-        issues += _model_text_issues(submission)
+    issues += _model_text_issues(submission)  # unconditional: a content issue never masks it
     return tuple(dict.fromkeys(issues))
 
 
@@ -312,9 +320,9 @@ _RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
 
 
 def _model_text_issues(submission: ResearchSubmission) -> list[str]:
-    """An answer becomes `Claim.text` (`CPDR-ANS-<id>`), so once the content rules pass it is
-    also checked as `RunText` (one `TypeAdapter`); no composition can raise after the binding
-    write. Lines are `<path>: <msg>` without the input value."""
+    """An answer becomes `Claim.text` (`CPDR-ANS-<id>`), so it is also checked as `RunText` (one
+    `TypeAdapter`), whatever other issues the submission has, as CP-2E does; no composition can
+    raise after the binding write. Lines are `<path>: <msg>` without the input value."""
     found: list[str] = []
     for g, gap in enumerate(submission.gaps):
         for q, question in enumerate(gap.questions):
@@ -439,6 +447,13 @@ TDR1_COLUMNS = (
 )
 TDR2_COLUMNS = tuple(
     (field, field) for field in ("gap", "question", "outcome", "answer", "evidence", "searched")
+)
+IDENTIFIER_MAX = 160  # `contracts.Identifier` max_length
+# A question id is part of every id Python derives from it: the TDR.2 fact ids
+# `TDR.2.<id>.<field>` (the longest field decides), the calculation id `cpdr-<id>-<field>` and the
+# claim id `CPDR-ANS-<id>`. One past this length makes `Fact` raise after the binding write.
+QUESTION_ID_MAX = IDENTIFIER_MAX - max(
+    len("TDR.2.") + len(f".{field}") for field, _ in TDR2_COLUMNS
 )
 TOTAL_FIELDS = (
     "gaps_total",

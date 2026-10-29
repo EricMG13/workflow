@@ -37,7 +37,11 @@ ABSENT = UNBACKED_ABSENCE
 SEARCH = "; search_pack before claiming it is not disclosed"
 KEY = "k" * 20_000
 ROWS = 2_000
+# The record bound the refusal tests below assert holds for ASCII issue text (0d-c review F1).
+# The design's real worst case is higher: both rules at one step, 20 lines of 600 characters each,
+# every character an escape of 6 bytes in JSON (`\\u0001`), plus record overhead.
 LIMIT = 64 * 1024
+WORST_CASE = 2 * MAX_ISSUES * 6 * 600 + 16 * 1024
 
 
 def _issues(step: str, payload: str) -> tuple[str, ...]:
@@ -84,6 +88,16 @@ SHAPES = {
         + "]}",
     ),
 }
+# How many matches each shape holds, so the summary line can be checked exactly (Q1).
+MATCHES = {
+    "source_context no_events": ROWS,
+    "source_context long source_id": 200,
+    "financials missing": ROWS,
+    "business_context available No": ROWS,
+    "legal_covenants threshold_unit": ROWS,
+    "unread distinct citations": ROWS * 10,
+    "unread long source_id": 200,
+}
 SUMMARIES = (
     f"{UNBACKED_ABSENCE}: 2 further absence claims not listed",
     f"{UNREAD_PAGE}: 2 further cited pages not listed",
@@ -98,8 +112,10 @@ def test_rule_issues_are_bounded_on_one_long_key_over_many_rows(name):
     assert max(len(line) for line in issues) <= MAX_ISSUE_CHARS
     assert bounded_issues(issues) == issues
     assert all(line.startswith(RULE_PREFIXES) for line in issues)
-    assert issues[-1].endswith(" further absence claims not listed") or issues[-1].endswith(
-        " further cited pages not listed"
+    left_out = MATCHES[name] - (MAX_ISSUES - 1)
+    assert issues[-1] in (
+        f"{UNBACKED_ABSENCE}: {left_out} further absence claims not listed",
+        f"{UNREAD_PAGE}: {left_out} further cited pages not listed",
     )
 
 
@@ -401,3 +417,19 @@ def test_source_context_amplification_refusal_is_bounded(tmp_path):
     assert out["status"] == "refused"
     assert _largest(fin._audit(w._store, "submissions", "x").parent) <= LIMIT
     assert len(json.dumps(out, ensure_ascii=False).encode()) <= LIMIT
+
+
+def test_the_real_worst_case_record_bound_holds_for_escaped_characters():
+    """F1: a control-character id is stored as six bytes a character, so two rules at one step
+    exceed the 64 KiB the ASCII tests assert, and stay within `WORST_CASE`."""
+    ident = "\x01" * 700
+    absence = ",".join(
+        f'{{"event_scan":"no_events_identified","source_id":"{ident}{i}"}}' for i in range(30)
+    )
+    pages = ",".join(f'{{"source_id":"{ident}","locator":"page:{i}"}}' for i in range(30))
+    payload = '{"sources":[' + absence + '],"c":[' + pages + "]}"
+    issues = _issues("source_context", payload)
+    assert len(issues) == 2 * MAX_ISSUES
+    assert max(len(line) for line in issues) <= MAX_ISSUE_CHARS
+    size = len(json.dumps(issues).encode())
+    assert LIMIT < size <= WORST_CASE

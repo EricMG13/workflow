@@ -20,6 +20,7 @@ from deploy_vii.contracts import (
     Text,
 )
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import is_blank
 from deploy_vii.quotes import explain, prefix, quoted
 from deploy_vii.registry import canonical, plan
 
@@ -131,7 +132,9 @@ def citation_issues(
 
     The locator is matched exactly; the quote with `deploy_vii.quotes` (layout normalisation,
     still a contiguous substring of that one span). The issue names the quote's prefix and,
-    where `quotes.explain` finds one (task 7.0), why it failed; it never accepts a quote."""
+    where `quotes.explain` finds one (task 7.0), why it failed; it never accepts a quote. A quote
+    that `prose.is_blank` is refused at its span, as a blank quote, before the match: invisible
+    characters would otherwise match a span that holds the same ones."""
     index = {source.source_id: source for source in sources}
     issues: list[str] = []
     for citation in citations:
@@ -146,6 +149,11 @@ def citation_issues(
             issues.append(
                 f"Quote/locator mismatch: no locator {citation.locator} in "
                 f'{citation.source_id}: "{prefix(citation.quote)}"'
+            )
+            continue
+        if is_blank(citation.quote):  # whitespace, controls and invisible characters only
+            issues.append(
+                f"Quote/locator mismatch: blank quote under {citation.source_id} {citation.locator}"
             )
             continue
         span = source.spans[position]

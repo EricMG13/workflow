@@ -910,7 +910,7 @@ def build_s4fp04():
             },
             {
                 "case": "cp2d_settled_cp1_not_settled",
-                "expected": "CP-2D settled, CP-1 not settled (view.modules lacks a settled CP-1): with the spec kind 'chart' the block draws the S.4 n/a frame first (figures[0].fig_id 'S.4', ChartSpec kind 'na', reason naming CP-1 as not settled, no marks), and T2E.4 becomes the primary tab (tab_label 'Maturity wall', tabs == ()) because no MODEL tab content exists (report_view.py:1807-1808 degraded path). Pinned with the current code's behaviour (ruling 2026-10-29 item 9, L5).",
+                "expected": "CP-2D settled, CP-1 not settled (view.modules has no settled CP-1 entry): with the spec kind 'chart' the block draws the S.4 n/a frame first (figures[0].fig_id 'S.4', ChartSpec kind 'na', no marks, reason naming CP-1 as not settled). T2E.4 is the block's own register: block.tab_label is None, block.tabs == (), and the block rows are the T2E.4 rows (t2e4_tab.rows), as Block.tab_structure (report_view.py:407) and the primary-slot path (:1822) require. Ruling 2026-10-29 item 9, L5 corrected.",
             },
             {
                 "case": "cp2d_absent_cp1_present",
@@ -953,6 +953,13 @@ def build_s4fp04():
                     'replace `assert [tab.label for tab in block.tabs] == ["T2E.4"]` and `assert block.tab_label != "T2E.4"` with the frozen labels: primary "Capital structure" (`block.tab_label`), tab "Maturity wall" (the T2E.4 binding label); intent unchanged, MODEL content first and T2E.4 not primary: a tab label is the binding label (Binding.title), never the table id, so the written literal cannot pass',
                     "make_upstream's CP-1 head (cp1_module) has three T4.14 fields per period and T4.18 rows without facility_type, period_id and lease_classification, so cp1_chart_series raises ValueError on it; extend the fixture to the full chart identity of tests/test_financial_series.py fixture() (T4.14 rows with all _PERIOD_FIELDS, T4.10 metric rows, T4.18 required fields) or give S.4 its own entry point; the oracle pins the series either way",
                     "block.figures[0] is S.4, kind 'grouped', series [label], one mark (label '2029-12-31', value Decimal('50'), text '50'); table twin cell '50'",
+                ],
+            },
+            {
+                "test_file": "chart-seam changes the wiring needs (L5, ruling item 9 corrected)",
+                "assert": [
+                    "_na_strip's reason (report_view.py:1585, today 'The KPI register carries no series for this chart') changes for maturity-wall to a text naming CP-1 as not settled; this is a named chart-seam change",
+                    "a covenant_refinancing view with CP-2D settled and no CP-1 entry in view.modules takes the degraded path in _block (report_view.py:1807): figures[0] is the S.4 n/a frame, block.tab_label is None, block.tabs == (), block.rows are the T2E.4 rows; it never raises KeyError on modules['CP-1']",
                 ],
             },
             {

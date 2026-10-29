@@ -18,16 +18,20 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
+import test_cp1_chart_render
 
+from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Run
 from deploy_vii.execution import Execution
 from deploy_vii.registry import modules as registry_modules
-from deploy_vii.report_view import pathways
+from deploy_vii.report_view import build, pathways
 from deploy_workflow import owner_rendering as g2
 from deploy_workflow.owner_workflow import BeginRecord, OwnerRunReceipt
 
@@ -189,7 +193,7 @@ def test_fast_cp1_model_sections_are_the_blocks_produced_by_cp1_alone() -> None:
 
 def test_fast_expected_block_payload_equals_the_core_payload_for_figure_blocks() -> None:
     """The proof's expectation for a block (state spelling, chart svg, gaps note) is the core's."""
-    import test_chart_render_cr1 as cr1
+    cr1 = importlib.import_module("test_chart_render_cr1")
 
     from deploy_vii import render as core_render
 
@@ -203,7 +207,7 @@ def test_fast_expected_block_payload_equals_the_core_payload_for_figure_blocks()
 
 
 def test_fast_refused_outcome_refuses_a_block_that_draws_a_figure() -> None:
-    import test_chart_render_cr1 as cr1
+    cr1 = importlib.import_module("test_chart_render_cr1")
 
     _, report = cr1._report("positive")
     block = next(b for b in report.blocks if b.figures)
@@ -368,7 +372,7 @@ def _oracle(name: str) -> Any:
 
 def _pointer(document: Any, pointer: str) -> Any:
     for part in [p for p in pointer.split("/") if p]:
-        document = document[part]
+        document = document[int(part)] if isinstance(document, list) else document[part]
     return document
 
 
@@ -555,20 +559,9 @@ def runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     from deploy_workflow.owner_workflow import OwnerWorkflow
 
     fw = _fw()
-    # G2_RUNS_CACHE keeps the 20-minute genuine runs between invocations (developer aid only).
-    cache = os.environ.get("G2_RUNS_CACHE")
-    base = Path(cache) if cache else tmp_path_factory.mktemp("g2-cp1-model")
-    base.mkdir(parents=True, exist_ok=True)
-    if (base / "ready").exists():
-        return {
-            "positive": base / "positive",
-            "gap": base / "gap",
-            "fin_positive": (
-                base / "fin-positive" / "store",
-                base / "fin-positive" / "receipt.json",
-                base / "fin-positive" / "model",
-            ),
-        }
+    # Built fresh per module run: no cache of genuine runs (a cache keyed on a path or a marker
+    # could hide a changed store or a changed producer).
+    base = tmp_path_factory.mktemp("g2-cp1-model")
 
     def start(root: Path, gap: bool = False) -> Any:
         pack = fw.make_pack(gap)
@@ -593,7 +586,6 @@ def runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     assert workflow.publish()["status"] == "refused"
     workflow.write_receipt(gap / "owner-run.json")
     financial = fw.completed_financial_case(base / "fin-positive")
-    (base / "ready").write_text("ok")
     return {"positive": positive, "gap": gap, "fin_positive": financial}
 
 
@@ -685,6 +677,7 @@ def test_genuine_cp1_model_positive_delivery(
         assert (fin_destination / "model" / name).read_bytes() == (
             destination / "model" / name
         ).read_bytes()
+    assert_scope_figures("cp1-model", "positive", "complete", _payload(text))
     heads = {h.module_id: h for h in wire.head_results}
     assert [h.module_id for h in wire.head_results][:2] == ["CP-0", "CP-1"]
     assert {h.status for h in wire.head_results} <= {"accepted", "restricted"}
@@ -708,6 +701,7 @@ def test_genuine_cp1_model_gap_is_refused_outcome(
     wire = g2.OwnerRenderReceipt.from_wire((destination / "render-receipt.json").read_bytes())
     assert wire.outcome == "refused" and wire.model is None
     assert html_lib.escape(g2.DELIVERY_SCOPES["cp1-model"].banner["refused"]) in text
+    assert_scope_figures("cp1-model", "gap", "refused", _payload(text))
     modules = {m["module_id"]: m for m in _payload(text)["modules"]}
     for module_id in ("CP-1", "CP-MODEL"):
         assert modules[module_id]["status_word"] == "Not run"
@@ -865,6 +859,811 @@ def test_genuine_cp1_model_verifier_is_deterministic_across_hash_seeds(
         check=False,
     )
     assert done.returncode == 0, done.stderr
+
+
+# ---------------------------------------------------------------- figure rule (rev 3 R3.2)
+#
+# Expectations are read from the frozen chart oracles under `cases/charts/`; nothing is derived
+# from the payload, the facts or the product. Report references (`G#`) are the renderer's, so a
+# gap is compared as the pattern `∅ G#`.
+
+CHARTS = ROOT / "cases" / "charts"
+_GAP = re.compile(r"∅ G\d+")
+_REF = re.compile(r"G\d+")
+# Oracle unit literals against the payload's spelling (`_CP1_FORMS`, the CR/DR chart units).
+_UNITS: dict[str, tuple[str, ...]] = {
+    "MULTIPLE": ("x",),
+    "MILLIONS": ("US$m", "US$ m"),
+    "PERCENT": ("%",),
+    "x": ("x",),
+    "%": ("%",),
+    "US$m": ("US$m", "US$ m"),
+}
+# The S.1-S.4 oracle names series by raw id; the page shows the CP-1 consumer's captions
+# (`report_view._CP1_CHART_LABELS`). A literal table here, so a changed caption fails the test.
+_S_CAPTIONS = {
+    "total_leverage_reported": "Total leverage (reported)",
+    "net_leverage_reported": "Net leverage (reported)",
+    "interest_coverage_reported": "Interest cover (reported)",
+    "cash_closing": "Cash",
+    "undrawn_rcf": "Undrawn RCF",
+    "liquidity": "Total liquidity",
+}
+_S_QUARTER_FIELD = {"cash_closing": "cash_millions", "undrawn_rcf": "undrawn_rcf_millions"}
+_S_QUARTER_FIELD |= {"liquidity": "liquidity_millions"}
+
+
+@dataclass(frozen=True)
+class ExpMark:
+    series: str
+    category: str | None
+    text: str | None
+    value: Decimal | None
+    role: str | None = None
+
+
+@dataclass(frozen=True)
+class FactRef:
+    """A fact the oracle names: by id, or by the (table, row field and text, value field)
+    coordinate. It must resolve to exactly one fact of the module's head."""
+
+    module_id: str
+    fact_id: str | None = None
+    table_id: str | None = None
+    row_field: str | None = None
+    row_text: str | None = None
+    value_field: str | None = None
+
+
+@dataclass(frozen=True)
+class ExpFigure:
+    fig_id: str
+    placement: str | None
+    kind: str | None
+    title: str | None
+    unit: str | None
+    series: tuple[str, ...] | None
+    marks: tuple[ExpMark, ...]
+    unordered: bool = False
+    title_prefix: bool = False  # S.4: the producer appends its basis and date to the title
+    twin: tuple[tuple[str, bool, tuple[str, ...]], ...] | None = None
+    reason: str | None = None
+    facts: tuple[FactRef, ...] = ()
+
+
+def _chart_oracle(name: str) -> Any:
+    """`s14` is the S.1-S.4 oracle (`expected.json`); the others are `<name>-expected.json`."""
+    path = CHARTS / ("expected.json" if name == "s14" else f"{name}-expected.json")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _decimal(text: str | None) -> Decimal | None:
+    return None if text is None else Decimal(text)
+
+
+def _norm(text: str) -> str:
+    return _REF.sub("G#", text).replace("G<n>", "G#")
+
+
+def _point_marks(
+    points: list[dict[str, Any]], caption: dict[str, str] | None = None
+) -> tuple[ExpMark, ...]:
+    marks = []
+    for point in points:
+        raw = point["value"] if "value" in point else point["amount_exact"]
+        series = point["series"] if caption is None else caption[point["series"]]
+        marks.append(
+            ExpMark(series, point["category"], point["shown"], _decimal(raw), point.get("role"))
+        )
+    return tuple(marks)
+
+
+def _point_facts(module_id: str, points: list[dict[str, Any]]) -> tuple[FactRef, ...]:
+    refs: list[FactRef] = []
+    for point in points:
+        if "fact_id" in point:
+            refs.append(FactRef(module_id, fact_id=point["fact_id"]))
+        for companion in point.get("companion_fact_ids", ()):
+            refs.append(FactRef(module_id, fact_id=companion))
+        coordinate = point.get("fact_coordinate")
+        if coordinate is not None:
+            refs.append(
+                FactRef(
+                    coordinate["module"],
+                    table_id=coordinate["table_id"],
+                    row_field=coordinate["row_key"]["field"],
+                    row_text=coordinate["row_key"]["text"],
+                    value_field=coordinate["value_field"],
+                )
+            )
+    return tuple(refs)
+
+
+def _twin_rows(rows: list[dict[str, Any]]) -> tuple[tuple[str, bool, tuple[str, ...]], ...]:
+    out = []
+    for row in rows:
+        if "cells" in row:
+            out.append((row["label"], False, tuple(row["cells"])))
+        else:  # label_parts is the label's prefix; companion parts are added at run time
+            out.append((row["label_parts"][0], True, (row["cell"],)))
+    return tuple(out)
+
+
+def _s_figures() -> tuple[ExpFigure, ...]:
+    """S.1-S.4 on the fields the oracle pins (R3.2): ids, title, unit, series, one mark per
+    quarter and series with the oracle amount or a gap, S.4 from the maturity wall rows."""
+    oracle = _chart_oracle("s14")
+    quarters = oracle["quarters"]
+    series_of = oracle["chart_series"]
+    figures: list[ExpFigure] = []
+    for fig_id in ("S.1", "S.2", "S.3"):
+        spec = series_of[fig_id]
+        names = spec["series"]
+        marks = []
+        for quarter in quarters:
+            for name in names:
+                if name in _S_QUARTER_FIELD:
+                    value = _decimal(quarter[_S_QUARTER_FIELD[name]])
+                else:
+                    value = _decimal(quarter[name]["amount"])
+                marks.append(ExpMark(_S_CAPTIONS[name], None, None, value))
+        figures.append(
+            ExpFigure(
+                fig_id,
+                "above",
+                None,
+                spec["title"],
+                spec["unit"],
+                tuple(_S_CAPTIONS[n] for n in names),
+                tuple(marks),
+                unordered=True,
+                facts=(),
+            )
+        )
+    wall = oracle["current_maturity_wall"]
+    figures.append(
+        ExpFigure(
+            "S.4",
+            "above",
+            None,
+            series_of["S.4"]["title"],
+            series_of["S.4"]["unit"],
+            None,
+            tuple(ExpMark("", None, None, _decimal(row["outstanding_millions"])) for row in wall),
+            unordered=True,
+            title_prefix=True,
+        )
+    )
+    return tuple(figures)
+
+
+def _s5_figures() -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("s5")
+    spec = oracle["chart_series"][0]
+    captions = spec["series_captions"]
+    return (
+        ExpFigure(
+            spec["fig_id"],
+            oracle["render"]["figures"][0]["placement"],
+            spec["kind"],
+            spec["title"],
+            spec["unit"],
+            tuple(captions[name] for name in spec["series"]),
+            _point_marks(spec["points"], captions),
+            twin=_twin_rows(oracle["table_twin"]["S.5"]["rows"]),
+            facts=_point_facts("CP-1", spec["points"]),
+        ),
+    )
+
+
+def _rv3_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("rv3")
+    if case not in ("positive", "gap"):
+        return ()
+    placements = {f["fig_id"]: f["placement"] for f in oracle["render"]["figures"]}
+    data = oracle["cases"][case]
+    out = []
+    for spec in data["chart_series"]:
+        out.append(
+            ExpFigure(
+                spec["fig_id"],
+                placements[spec["fig_id"]],
+                spec["kind"],
+                spec["title"],
+                spec["unit"],
+                tuple(spec["series"]),
+                _point_marks(spec["points"]),
+                twin=_twin_rows(data["table_twin"][spec["panel"]]["rows"]),
+                facts=_point_facts("CP-1C", spec["points"]),
+            )
+        )
+    return tuple(out)
+
+
+def _cr1_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("cr1")
+    key = "gap" if case == "gap_false_same_definition" else case
+    data = oracle["cases"][key]
+    placement = oracle["render"]["figures"][0]["placement"]
+    (spec,) = data["chart_series"]
+    return (
+        ExpFigure(
+            spec["fig_id"],
+            placement,
+            spec["kind"],
+            spec["title"],
+            spec["unit"],
+            tuple(spec["series"]),
+            _point_marks(spec["points"]),
+            twin=_twin_rows(data["table_twin"]["CR.1"]["rows"]),
+            facts=_point_facts("CP-4", spec["points"]),
+        ),
+    )
+
+
+def _cr2_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("cr2")
+    spec = oracle["chart_series"]["CR.2"][case]
+    placement = oracle["render"]["covenant_refinancing"]["figure"]["placement"]
+    return (
+        ExpFigure(
+            spec["fig_id"],
+            placement,
+            spec["kind"],
+            spec["title"],
+            spec["unit"],
+            tuple(spec["series"]),
+            _point_marks(spec["points"]),
+            twin=_twin_rows(oracle["table_twins"][case]["rows"]),
+            facts=_point_facts("CP-2D", spec["points"]),
+        ),
+    )
+
+
+def _dr2_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("dr2")
+    spec = oracle["chart_series"]["DR.2"][case]
+    placement = oracle["render"]["distressed_restructuring"]["figure"]["placement"]
+    return (
+        ExpFigure(
+            spec["fig_id"],
+            placement,
+            spec["kind"],
+            spec["title"],
+            spec["unit"],
+            tuple(spec["series"]),
+            _point_marks(spec["points"]),
+            twin=_twin_rows(oracle["table_twins"][case]["rows"]),
+            facts=_point_facts("CP-4C", spec["points"]),
+        ),
+    )
+
+
+def _dr345_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("dr345")
+    placements = {
+        f["fig_id"]: f["placement"] for f in oracle["render"]["distressed_restructuring"]["figures"]
+    }
+    out = []
+    for fig_id in ("DR.3", "DR.4", "DR.5"):
+        spec = oracle["chart_series"]["DR.3-5"][case][fig_id]
+        out.append(
+            ExpFigure(
+                fig_id,
+                placements[fig_id],
+                spec["kind"],
+                spec["title"],
+                spec["unit"],
+                tuple(spec["series"]),
+                _point_marks(spec["points"]),
+                twin=_twin_rows(oracle["table_twins"][case][fig_id]["rows"]),
+                facts=_point_facts("CP-4C", spec["points"]),
+            )
+        )
+    return tuple(out)
+
+
+def _dr6_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("dr6")
+    frame = oracle["chart_series"]["DR.6"]
+    render = oracle["render"]["distressed_restructuring"]
+    data = oracle["cases"][case]
+    assert data["marks"] == [] and frame["points"] == []
+    return (
+        ExpFigure(
+            frame["fig_id"],
+            render["figure"]["placement"],
+            render["figure"]["chart_kind"],
+            frame["title"],
+            None,
+            (),
+            (),
+            twin=(),
+            reason=data["frame_reason"],
+        ),
+    )
+
+
+# (scope, block) -> loader of a case's expected figures. A case a loader does not cover, and
+# every block not listed here, expects `()` (R3.2: no chart oracle, or the oracle draws nothing).
+_NO_FIGURE_CASES: dict[tuple[str, str], frozenset[str]] = {
+    ("cp1-model", "model-chart-strip"): frozenset({"gap"}),
+    ("cp1c-fp03-peers", "peer-positioning"): frozenset({"no_peers", "refused"}),
+}
+_FIGURE_SOURCES: dict[tuple[str, str], Callable[[str], tuple[ExpFigure, ...]]] = {
+    ("cp1-model", "model-chart-strip"): lambda case: _s_figures(),
+    ("cp1-model", "financials-credit-metrics"): lambda case: _s5_figures(),
+    ("cp1c-fp03-peers", "peer-positioning"): _rv3_figures,
+    ("cp4-fp04-covenants", "covenant-tests-headroom"): _cr1_figures,
+    ("cp2d-fp04-liquidity", "liquidity-runway"): _cr2_figures,
+    ("cp4c-fp05-recovery", "recovery-by-class"): _dr2_figures,
+    ("cp4c-fp05-recovery", "value-allocation-claims"): _dr345_figures,
+    ("cp2h-fp05-ratings", "rating-triggers"): _dr6_figures,
+}
+
+
+def expected_figures(scope_id: str, block_id: str, case: str) -> tuple[ExpFigure, ...]:
+    loader = _FIGURE_SOURCES.get((scope_id, block_id))
+    if loader is None or case in _NO_FIGURE_CASES.get((scope_id, block_id), frozenset()):
+        return ()
+    return loader(case)
+
+
+def _facts_of(modules: list[dict[str, Any]], module_id: str) -> list[dict[str, Any]]:
+    facts: list[dict[str, Any]] = next(m["facts"] for m in modules if m["module_id"] == module_id)
+    return facts
+
+
+def _resolve(ref: FactRef, modules: list[dict[str, Any]]) -> None:
+    facts = _facts_of(modules, ref.module_id)
+    if ref.fact_id is not None:
+        assert sum(f["fact_id"] == ref.fact_id for f in facts) == 1, ref
+        return
+    rows = {
+        f["row_id"]
+        for f in facts
+        if f["table_id"] == ref.table_id
+        and f["field"] == ref.row_field
+        and f.get("text") == ref.row_text
+    }
+    assert len(rows) == 1, ref
+    (row,) = rows
+    hits = [
+        f
+        for f in facts
+        if f["table_id"] == ref.table_id and f["row_id"] == row and f["field"] == ref.value_field
+    ]
+    assert len(hits) == 1, ref
+
+
+def _accepted_units(unit: str | None) -> tuple[str, ...] | None:
+    return None if unit is None else _UNITS.get(unit, (unit,))
+
+
+def _mark_value(mark: dict[str, Any]) -> Decimal | None:
+    return None if mark["value"] is None else Decimal(str(mark["value"]))
+
+
+def _marks_of(chart: dict[str, Any]) -> list[dict[str, Any]]:
+    marks: list[dict[str, Any]] = chart["marks"]
+    return marks
+
+
+def _figure_equals(got: dict[str, Any], want: ExpFigure, modules: list[dict[str, Any]]) -> None:
+    chart = got["chart"]
+    assert got["fig_id"] == want.fig_id
+    if want.placement is not None:
+        assert got["placement"] == want.placement, want.fig_id
+    if want.kind is not None:
+        assert chart["kind"] == want.kind, want.fig_id
+    if want.title is not None:
+        if want.title_prefix:
+            assert got["title"].startswith(want.title), want.fig_id
+        else:
+            assert got["title"] == want.title, want.fig_id
+    units = _accepted_units(want.unit)
+    if units is not None:
+        assert chart["unit"] in units, (want.fig_id, chart["unit"])
+    if want.series is not None:
+        assert tuple(chart["series"]) == want.series, want.fig_id
+    marks = _marks_of(chart)
+    assert len(marks) == len(want.marks), want.fig_id
+    if want.unordered:  # S.1-S.4: order is the producer's; series and values are the oracle's
+        keyed = want.marks[0].series != ""
+        have = sorted(
+            (m["series"] if keyed else "", m["value"] is None, _mark_value(m) or Decimal(0))
+            for m in marks
+        )
+        need = sorted((m.series, m.value is None, m.value or Decimal(0)) for m in want.marks)
+        assert have == need, want.fig_id
+    else:
+        for mark, exp in zip(marks, want.marks, strict=True):
+            assert mark["series"] == exp.series, (want.fig_id, mark)
+            assert mark["label"] == exp.category, (want.fig_id, mark)
+            assert _norm(mark["text"]) == exp.text, (want.fig_id, mark)
+            assert _mark_value(mark) == exp.value, (want.fig_id, mark)
+            if exp.role is not None:
+                assert mark["role"] == exp.role, (want.fig_id, mark)
+    for mark in marks:
+        if mark["value"] is None:  # a gap is a reference, never a zero
+            assert mark["ref_id"] is not None and _REF.fullmatch(mark["ref_id"]), mark
+            assert mark["text"] == f"∅ {mark['ref_id']}", mark
+            assert _GAP.fullmatch(mark["text"]), mark
+        if mark["ref_id"] is not None:
+            assert f'data-ref="{mark["ref_id"]}"' in chart["svg"], mark
+    twin = chart["table_twin"]
+    cells = [[cell["text"] for cell in row["cells"]] for row in twin["rows"]]
+    assert [text for row in cells for text in row] == [m["text"] for m in marks]
+    if want.twin is not None:
+        assert len(twin["rows"]) == len(want.twin), want.fig_id
+        for row, (label, prefix, texts) in zip(twin["rows"], want.twin, strict=True):
+            assert row["label"].startswith(label) if prefix else row["label"] == label, (
+                want.fig_id,
+                row,
+            )
+            assert tuple(_norm(cell["text"]) for cell in row["cells"]) == texts, (want.fig_id, row)
+    if want.reason is not None:
+        # The frame reason is the oracle text; where facts are missing the renderer appends the
+        # `∅ G<n>` of the cited gaps (dr6 oracle: frame_texts.per_case.<case>.reference).
+        reason = _norm(chart["reason"] or "")
+        assert reason.startswith(_norm(want.reason)), want.fig_id
+        assert not re.sub(r"∅ G#|[\s,;·.()]", "", reason[len(_norm(want.reason)) :]), want.fig_id
+    for ref in want.facts:
+        _resolve(ref, modules)
+
+
+def assert_figures_equal_oracle(
+    block: dict[str, Any], want: tuple[ExpFigure, ...], modules: list[dict[str, Any]]
+) -> None:
+    """The block's figures are exactly the oracle's, in order: a missing, extra, moved or
+    perturbed figure fails."""
+    got = block["figures"]
+    assert [f["fig_id"] for f in got] == [f.fig_id for f in want], block["block_id"]
+    for figure, expected in zip(got, want, strict=True):
+        _figure_equals(figure, expected, modules)
+
+
+# Every (scope, block, case) the rev 3 table lists, and the module whose facts the refs resolve in.
+FIGURE_CASES: tuple[tuple[str, str, str], ...] = (
+    ("cp1-model", "model-chart-strip", "positive"),
+    ("cp1-model", "financials-credit-metrics", "positive"),
+    ("cp1c-fp03-peers", "peer-positioning", "positive"),
+    ("cp1c-fp03-peers", "peer-positioning", "gap"),
+    ("cp4-fp04-covenants", "covenant-tests-headroom", "positive"),
+    ("cp4-fp04-covenants", "covenant-tests-headroom", "gap"),
+    ("cp4-fp04-covenants", "covenant-tests-headroom", "gap_false_same_definition"),
+    ("cp2d-fp04-liquidity", "liquidity-runway", "positive"),
+    ("cp2d-fp04-liquidity", "liquidity-runway", "long_horizon"),
+    ("cp2d-fp04-liquidity", "liquidity-runway", "gap_minimum_cash"),
+    ("cp4c-fp05-recovery", "recovery-by-class", "positive"),
+    ("cp4c-fp05-recovery", "recovery-by-class", "gap"),
+    ("cp4c-fp05-recovery", "value-allocation-claims", "positive"),
+    ("cp4c-fp05-recovery", "value-allocation-claims", "gap"),
+    ("cp2h-fp05-ratings", "rating-triggers", "positive"),
+    ("cp2h-fp05-ratings", "rating-triggers", "gap"),
+)
+
+
+def _fixture_modules(want: tuple[ExpFigure, ...]) -> list[dict[str, Any]]:
+    """Head facts the oracle's refs resolve in: one fact per named id, and per coordinate the
+    row-key fact and the value fact. Built from the oracle's own coordinates."""
+    modules: dict[str, list[dict[str, Any]]] = {}
+    for figure in want:
+        for ref in figure.facts:
+            facts = modules.setdefault(ref.module_id, [])
+            if ref.fact_id is not None:
+                facts.append({"fact_id": ref.fact_id, "table_id": "t", "row_id": "r", "field": "f"})
+            else:
+                row = f"row-{ref.row_text}"
+                facts.append(
+                    {
+                        "fact_id": f"{row}-key",
+                        "table_id": ref.table_id,
+                        "row_id": row,
+                        "field": ref.row_field,
+                        "text": ref.row_text,
+                    }
+                )
+                facts.append(
+                    {
+                        "fact_id": f"{row}-{ref.value_field}",
+                        "table_id": ref.table_id,
+                        "row_id": row,
+                        "field": ref.value_field,
+                    }
+                )
+    modules.setdefault("CP-0", [])
+    return [{"module_id": k, "facts": _dedupe(v)} for k, v in modules.items()]
+
+
+def _dedupe(facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    for fact in facts:
+        seen.setdefault((fact["fact_id"], fact["table_id"], fact["row_id"], fact["field"]), fact)
+    return list(seen.values())
+
+
+def _payload_block(want: tuple[ExpFigure, ...]) -> dict[str, Any]:
+    """A `report-data` block built from the oracle: what a correct page must carry."""
+    figures = []
+    number = 20
+    for figure in want:
+        marks, refs = [], []
+        for mark in figure.marks:
+            gap = mark.value is None
+            ref = None
+            if gap:
+                number += 1
+                ref = f"G{number}"
+                refs.append(ref)
+            text = f"∅ {ref}" if gap else (mark.text if mark.text is not None else str(mark.value))
+            marks.append(
+                {
+                    "series": mark.series,
+                    "label": mark.category,
+                    "text": text,
+                    "ref_id": ref,
+                    "value": None if gap else str(mark.value),
+                    "role": mark.role or "value",
+                }
+            )
+        texts = [m["text"] for m in marks]
+        rows: list[dict[str, Any]] = []
+        if figure.twin is not None:
+            cursor = 0
+            for label, prefix, cells in figure.twin:
+                taken = texts[cursor : cursor + len(cells)]
+                cursor += len(cells)
+                rows.append(
+                    {
+                        "label": label + (" · extra" if prefix else ""),
+                        "cells": [{"text": t} for t in taken],
+                    }
+                )
+        else:
+            rows = [{"label": "row", "cells": [{"text": t}]} for t in texts]
+        figures.append(
+            {
+                "fig_id": figure.fig_id,
+                "placement": figure.placement or "above",
+                "title": figure.title or "t",
+                "chart": {
+                    "kind": figure.kind or "line",
+                    "unit": (_accepted_units(figure.unit) or ("u",))[0],
+                    "series": list(figure.series or ()),
+                    "reason": figure.reason,
+                    "marks": marks,
+                    "table_twin": {"rows": rows},
+                    "svg": "<svg>" + "".join(f'<g data-ref="{r}"/>' for r in refs) + "</svg>",
+                },
+            }
+        )
+    return {"block_id": "b", "figures": figures}
+
+
+@pytest.mark.parametrize(("scope_id", "block_id", "case"), FIGURE_CASES)
+def test_fast_figure_rule_accepts_the_page_the_oracle_describes(
+    scope_id: str, block_id: str, case: str
+) -> None:
+    want = expected_figures(scope_id, block_id, case)
+    assert want, "a listed chart row expects at least one figure"
+    assert_figures_equal_oracle(_payload_block(want), want, _fixture_modules(want))
+
+
+@pytest.mark.parametrize(
+    ("scope_id", "block_id", "case"),
+    [
+        ("cp1c-fp03-peers", "peer-positioning", "no_peers"),
+        ("cp1c-fp03-peers", "peer-positioning", "refused"),
+        ("cp1-model", "model-chart-strip", "gap"),
+        ("cp1-model", "capital-structure", "positive"),
+        ("cp2d-fp04-liquidity", "funding-gap", "positive"),
+        ("s1a-credit-snapshot", "key-findings", "positive"),
+    ],
+)
+def test_fast_blocks_without_a_chart_oracle_expect_no_figure(
+    scope_id: str, block_id: str, case: str
+) -> None:
+    assert expected_figures(scope_id, block_id, case) == ()
+    assert_figures_equal_oracle({"block_id": block_id, "figures": []}, (), [])
+    extra = _payload_block(
+        expected_figures("cp4-fp04-covenants", "covenant-tests-headroom", "positive")
+    )
+    with pytest.raises(AssertionError):
+        assert_figures_equal_oracle(extra, (), [])
+
+
+def _perturbed(
+    kind: str, block: dict[str, Any], want: tuple[ExpFigure, ...]
+) -> tuple[dict[str, Any], tuple[ExpFigure, ...]]:
+    block = json.loads(json.dumps(block))
+    figure = block["figures"][0]
+    marks = figure["chart"]["marks"]
+    target = next(m for m in marks if m["value"] is not None)
+    if kind == "text":
+        target["text"] += "0"
+    elif kind == "value":
+        target["value"] = str(Decimal(target["value"]) + 1)
+    elif kind == "ref":
+        gap = next((m for m in marks if m["value"] is None), None)
+        if gap is None:
+            target["ref_id"] = "G1"  # a ref the svg does not carry
+        else:
+            gap["ref_id"] = "G999"
+    elif kind == "zero_fill":
+        target["value"], target["ref_id"] = None, None
+    elif kind == "moved":
+        figure["fig_id"] = "X.9"
+    elif kind == "extra":
+        block["figures"].append(json.loads(json.dumps(figure)) | {"fig_id": "X.8"})
+    elif kind == "missing":
+        block["figures"] = block["figures"][:-1]
+    return block, want
+
+
+@pytest.mark.parametrize("kind", ["text", "value", "ref", "zero_fill", "moved", "extra", "missing"])
+@pytest.mark.parametrize(
+    ("scope_id", "block_id", "case"),
+    [
+        ("cp4-fp04-covenants", "covenant-tests-headroom", "positive"),
+        ("cp4c-fp05-recovery", "recovery-by-class", "positive"),
+        ("cp1-model", "financials-credit-metrics", "positive"),
+        ("cp1-model", "model-chart-strip", "positive"),
+    ],
+)
+def test_fast_figure_rule_fails_a_perturbed_page(
+    kind: str, scope_id: str, block_id: str, case: str
+) -> None:
+    want = expected_figures(scope_id, block_id, case)
+    block, want = _perturbed(kind, _payload_block(want), want)
+    with pytest.raises(AssertionError):
+        assert_figures_equal_oracle(block, want, _fixture_modules(want))
+
+
+def test_fast_figure_rule_fails_an_unresolvable_or_ambiguous_fact_ref() -> None:
+    want = expected_figures("cp4-fp04-covenants", "covenant-tests-headroom", "positive")
+    block = _payload_block(want)
+    modules = _fixture_modules(want)
+    modules[0]["facts"] = modules[0]["facts"][1:]  # a named fact is absent
+    with pytest.raises(AssertionError):
+        assert_figures_equal_oracle(block, want, modules)
+    modules = _fixture_modules(want)
+    modules[0]["facts"] = [*modules[0]["facts"], dict(modules[0]["facts"][0])]  # named twice
+    with pytest.raises(AssertionError):
+        assert_figures_equal_oracle(block, want, modules)
+
+
+def test_fast_every_figure_oracle_pointer_exists() -> None:
+    """A missing pointer fails here and is never skipped (R3.2 acceptance 4)."""
+    for name, pointers in {
+        "s14": ["/chart_series", "/quarters", "/q4_trailing_basis", "/current_maturity_wall"],
+        "s5": ["/render", "/chart_series/0", "/table_twin/S.5"],
+        "rv3": ["/render", "/cases/positive/chart_series", "/cases/gap/chart_series"],
+        "cr1": ["/render", "/cases/positive/chart_series", "/cases/gap/chart_series"],
+        "cr2": [
+            "/render/covenant_refinancing",
+            "/chart_series/CR.2/positive",
+            "/table_twins/positive",
+        ],
+        "dr2": ["/render/distressed_restructuring", "/chart_series/DR.2/gap", "/table_twins/gap"],
+        "dr345": [
+            "/render/distressed_restructuring",
+            "/chart_series/DR.3-5/gap/DR.5",
+            "/table_twins/gap",
+        ],
+        "dr6": [
+            "/render/distressed_restructuring",
+            "/chart_series/DR.6",
+            "/render/distressed_restructuring/frame_texts/per_case/gap",
+        ],
+    }.items():
+        for pointer in pointers:
+            assert _pointer(_chart_oracle(name), pointer) is not None, (name, pointer)
+
+
+# The comparator against the product's own figures (the repository's real chart drivers, each
+# already pinned to its oracle by its own test file). Page payloads are rebuilt the way the core
+# renderer builds them, so this is the figure rule on genuine `build` output, not on stand-ins.
+
+chart_case = test_cp1_chart_render.chart_case
+
+
+def _modules_of(view: Any) -> list[dict[str, Any]]:
+    return [
+        {"module_id": m.module_id, "facts": [f.model_dump(mode="json") for f in m.facts]}
+        for m in view.modules
+    ]
+
+
+def _real_block(report: Any, block_id: str) -> dict[str, Any]:
+    block = next(b for b in report.blocks if b.block_id == block_id)
+    payload: dict[str, Any] = g2._expected_block_payload(block)
+    return payload
+
+
+def _real_check(
+    scope_id: str, block_id: str, case: str, view: Any, report: Any, *, perturb: bool = True
+) -> None:
+    payload = _real_block(report, block_id)
+    want = expected_figures(scope_id, block_id, case)
+    assert want
+    assert_figures_equal_oracle(payload, want, _modules_of(view))
+    if perturb:  # the same real page with one mark's text changed fails
+        mark = next(m for m in payload["figures"][0]["chart"]["marks"] if m["value"] is not None)
+        mark["text"] += "0"
+        with pytest.raises(AssertionError):
+            assert_figures_equal_oracle(payload, want, _modules_of(view))
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_fast_figure_rule_on_real_cr1_and_rv3_pages(case: str) -> None:
+    cr1 = importlib.import_module("test_chart_render_cr1")
+    rv3 = importlib.import_module("test_chart_render_rv3")
+
+    view, report = cr1._report(case)
+    _real_check("cp4-fp04-covenants", "covenant-tests-headroom", case, view, report)
+    view, report = rv3._report(case)
+    _real_check("cp1c-fp03-peers", "peer-positioning", case, view, report)
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_fast_figure_rule_on_real_dr2_and_dr345_pages(case: str) -> None:
+    support = importlib.import_module("chart_dr_support")
+
+    view = support.view_with(support.composer_module(case), case)
+    report = support.report_of(view)
+    _real_check("cp4c-fp05-recovery", "recovery-by-class", case, view, report)
+    _real_check("cp4c-fp05-recovery", "value-allocation-claims", case, view, report)
+
+
+@pytest.mark.parametrize("case", ["positive", "long_horizon", "gap_minimum_cash"])
+def test_fast_figure_rule_on_real_cr2_pages(case: str) -> None:
+    wiring = importlib.import_module("chart_wiring_c")
+
+    view = wiring.cp2d_view(case)
+    _real_check("cp2d-fp04-liquidity", "liquidity-runway", case, view, wiring.report_of(view))
+    funding = _real_block(wiring.report_of(view), "funding-gap")
+    assert (
+        funding["figures"] == []
+        and expected_figures("cp2d-fp04-liquidity", "funding-gap", case) == ()
+    )
+
+
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_fast_figure_rule_on_real_dr6_pages(case: str, tmp_path: Path) -> None:
+    dr6 = importlib.import_module("test_chart_render_dr6")
+
+    store, _pack, _attempt, _done = dr6.connect.settled(tmp_path, case)
+    view = store.view()
+    _real_check(
+        "cp2h-fp05-ratings", "rating-triggers", case, view, dr6._report(view), perturb=False
+    )
+
+
+def test_fast_figure_rule_on_real_s5_page() -> None:
+    s5 = importlib.import_module("test_chart_render_s5")
+    fixture = importlib.import_module("test_financial_series").fixture
+
+    view = s5._view(fixture())
+    pathway = next(p for p in pathways() if p.id == view.run.pathway)
+    report = build(view, pathway, SHIPPED_MAPS)
+    _real_check("cp1-model", "financials-credit-metrics", "positive", view, report)
+
+
+def test_fast_figure_rule_on_the_real_s1_to_s4_strip(chart_case: Any) -> None:
+    cp1 = importlib.import_module("test_cp1_chart_render")
+
+    view, _, _ = chart_case
+    _real_check("cp1-model", "model-chart-strip", "positive", view, cp1._report(view))
+
+
+def assert_scope_figures(scope_id: str, case: str, outcome: str, payload: dict[str, Any]) -> None:
+    """Every assigned block's figures equal its oracle expectation, or `()` (R3.2). A refused
+    page draws no figure."""
+    blocks = {b["block_id"]: b for b in payload["report"]["blocks"]}
+    for section_id in g2.DELIVERY_SCOPES[scope_id].sections:
+        want = () if outcome == "refused" else expected_figures(scope_id, section_id, case)
+        assert_figures_equal_oracle(blocks[section_id], want, payload["modules"])
 
 
 # ---------------------------------------------------------------- deferred scopes (heavy)
@@ -1039,6 +1838,7 @@ def _check_scope_run(
             assert not section.facts and section.state != "populated"
         for fact in section.facts:
             assert fact.result_sha256 == heads[fact.module_id].result_sha256
+    assert_scope_figures(scope_id, case, outcome, payload)
     if outcome == "complete" and scope_id in ORACLE_POINTERS and scope.sections:
         name, pointer = ORACLE_POINTERS[scope_id]
         node = _pointer(_oracle(name), pointer.format(c=_oracle_case_key(scope_id, case)))

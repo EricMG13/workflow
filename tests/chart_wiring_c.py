@@ -47,7 +47,8 @@ def module_of(view: View, module_id: str) -> ModuleView:
 
 def cp2d_view(case: str, root: Path | None = None) -> View:
     """The covenant_refinancing view whose CP-2D head is the real core's over ``case``."""
-    store, attempt = tc2d.make_upstream(root or Path(tempfile.mkdtemp()), case)
+    # charts=True: the maturity-wall strip (S.4) reads CP-1's chart identity.
+    store, attempt = tc2d.make_upstream(root or Path(tempfile.mkdtemp()), case, charts=True)
     tc2d._submit(store, attempt, tc2d._literal(case))
     return store.view()
 
@@ -55,7 +56,12 @@ def cp2d_view(case: str, root: Path | None = None) -> View:
 def cp3c_view(case: str, root: Path | None = None) -> View:
     """The covenant_refinancing view with the real CP-2D and CP-3C heads settled for ``case``."""
     store, _, _, _ = tc3.settled(root or Path(tempfile.mkdtemp()), case)
-    return store.view()
+    view = store.view()
+    # The maturity-wall strip (S.4) reads CP-1's chart identity; the plain CP-3C fixture lacks it.
+    modules = tuple(
+        tc2d.with_chart_identity(m) if m.module_id == "CP-1" else m for m in view.modules
+    )
+    return view.model_copy(update={"modules": modules})
 
 
 def report_of(view: View, pathway_id: str | None = None) -> ReportView:

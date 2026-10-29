@@ -1,0 +1,313 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "single_count",
+      "expected": "Exactly one mark, value 50; the FY and Q4 alias rows never double it to 100 and T2E.4 (also 50) never adds a second mark."
+    },
+    {
+      "case": "model_first",
+      "expected": "The Model figure leads: block.figures[0].fig_id == 'S.4' and the primary tab is the CP-1 register, so block.tab_label is not the T2E.4 tab's label."
+    },
+    {
+      "case": "t2e4_tab_cells_equal_cp2d",
+      "expected": "The T2E.4 tab cells equal t2e4_tab.rows[].cells (the frozen CP-2D shown strings): '50', '2029-12-31', '48 months', 'No', '100.0%', '100.0%'."
+    },
+    {
+      "case": "cp1_absent",
+      "expected": "A covenant_refinancing run without CP-1 settled (legal-render FP04 fixture, requested modules CP-4 and CP-5) keeps its pinned empty state 'Not run: CP-1 has not run.'; no figure, no T2E.4 tab."
+    },
+    {
+      "case": "cp2d_absent_cp1_present",
+      "expected": "With CP-1 only, the block shows the S.4 figure and the CP-1 register, no tabs."
+    },
+    {
+      "case": "no_cp2d_figure",
+      "expected": "CP-2D draws no figure in maturity-wall; the T2E.4 rows are table only."
+    }
+  ],
+  "builder_targets": [
+    {
+      "assert": [
+        "remove the xfail marker (strict XPASS)",
+        "replace `assert [tab.label for tab in block.tabs] == [\"T2E.4\"]` and `assert block.tab_label != \"T2E.4\"` with `== [\"Maturity wall\"]` and `block.tab_label == \"Capital structure\"`: a tab label is the binding label (Binding.title), never the table id, so the written literal cannot pass",
+        "make_upstream's CP-1 head (cp1_module) has three T4.14 fields per period and T4.18 rows without facility_type, period_id and lease_classification, so cp1_chart_series raises ValueError on it; extend the fixture to the full chart identity of tests/test_financial_series.py fixture() (T4.14 rows with all _PERIOD_FIELDS, T4.10 metric rows, T4.18 required fields) or give S.4 its own entry point; the oracle pins the series either way",
+        "block.figures[0] is S.4, kind 'grouped', series [label], one mark (label '2029-12-31', value Decimal('50'), text '50'); table twin cell '50'"
+      ],
+      "test_file": "tests/test_connect_cp2d.py::test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab"
+    },
+    {
+      "assert": [
+        "the maturity-wall row becomes (\"Maturity wall\", \"MODEL\", \"chart\", (\"CP-1\",), None); bindings/cp1.py binds T4.18 to maturity-wall (second placement, label 'Capital structure'); `_STRIP_FIGURES` gains 'maturity-wall': (('S.4', 'Maturity wall', None),)"
+      ],
+      "test_file": "tests/test_connect_cp2d.py::test_spec_rows_serve_the_three_blocks"
+    },
+    {
+      "assert": [
+        "the FP04 fixture (CP-4, CP-5 only) still renders maturity-wall owner MODEL with the pinned empty state (regression)"
+      ],
+      "test_file": "tests/test_legal_render.py"
+    }
+  ],
+  "chart_series": [
+    {
+      "fig_id": "S.4",
+      "kind": "grouped",
+      "points": [
+        {
+          "amount_exact": "50",
+          "category": "2029-12-31",
+          "companion_coordinates": [
+            {
+              "field": "facility_id",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "facility_name",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "facility_type",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "currency",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "maturity_date",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "annual_amortisation",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "lease_classification",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "period_id",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "currency": "USD",
+            "field": "principal",
+            "module": "CP-1",
+            "row": {
+              "facility_id": "term-loan",
+              "period_id": "q4-2025"
+            },
+            "scale": "1000000",
+            "table_id": "T4.18",
+            "unit": "MILLIONS"
+          },
+          "fact_id_rule": "run-time id of the T4.18 principal fact of the QUARTER alias row (an explicit QUARTER wins over the FY alias, financial_series._maturity_figure)",
+          "series": "Northbridge Term Loan (term-loan)",
+          "shown": "50",
+          "state": "plotted"
+        }
+      ],
+      "reason": null,
+      "series": [
+        "Northbridge Term Loan (term-loan)"
+      ],
+      "title": "Maturity wall — principal at 2025-12-31 (not a forecast)",
+      "unit": "US$m",
+      "unit_class": "amount"
+    }
+  ],
+  "figure": "S.4 (FP 04 populated)",
+  "form": {
+    "figure": "the same S.4 record the model-chart-strip draws (cp1_chart_series S.4); no new figure, no new producer",
+    "non_primary_tab": "CP-2D T2E.4 with the label of its binding",
+    "placement": "above; inference (the design puts the wide chart left of a commentary panel)",
+    "primary_tab": "CP-1 T4.18 register bound to maturity-wall (inference: label 'Capital structure' follows brief 04:31 'Maturity wall and capital structure'); its cells are not pinned here because the CP-1 head's T4.18 table layout is observed only at Stage 5"
+  },
+  "gap_marks": {
+    "in_positive_case": [],
+    "rule": "an unavailable maturity date or incomplete facility population yields reason text and no points (financial_series._maturity_figure), never a zero bin"
+  },
+  "render": {
+    "block_id": "maturity-wall",
+    "block_kind": "dense",
+    "figures": [
+      {
+        "fig_id": "S.4",
+        "placement": "above"
+      }
+    ],
+    "owner": "MODEL",
+    "pathway": "covenant_refinancing",
+    "primary_tab": {
+      "label": "Capital structure",
+      "module": "CP-1",
+      "table_id": "T4.18"
+    },
+    "producers": [
+      "CP-1"
+    ],
+    "route_label": null,
+    "spec_kind": "chart",
+    "state": "populated",
+    "strip_figures": {
+      "maturity-wall": [
+        [
+          "S.4",
+          "Maturity wall",
+          null
+        ]
+      ]
+    },
+    "tabs": [
+      {
+        "label": "Maturity wall",
+        "module": "CP-2D",
+        "table_id": "T2E.4"
+      }
+    ]
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "Single synthetic facility (Northbridge Term Loan, USD 50m, 2029-12-31); the design's stacked-by-rank wall is S.6/deferred.",
+    "Principal classified by contractual maturity at 2025-12-31, not a forecast.",
+    "This oracle moves no frozen value: contracts.py already requests CP-1 for covenant_refinancing; the CP-MODEL plan edit and the legal-render pin at render-expected.json:1956 stay with the Q-C1 oracle check and are not needed for this populated render."
+  ],
+  "source_authority": {
+    "brief": {
+      "file": "design pack content/04-covenant-refinancing.md",
+      "line": 31,
+      "text": "Maturity wall and capital structure (Model); charts.maturityWall"
+    },
+    "design": {
+      "file": "/Users/ericguei/Documents/DEPLOY VII/design/reference/rbot-fp-04-covenant-refinancing.dc.html",
+      "lines": "42 (head 'Maturity wall', 'MODEL · Fig. S.4')"
+    },
+    "modules": [
+      {
+        "path": "cases/charts/expected.json",
+        "sha256": "2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276"
+      },
+      {
+        "path": "cases/cp2d-owner/expected.json",
+        "sha256": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc"
+      }
+    ],
+    "order_of_authority": "approved page decides appearance; pack brief decides provider and data path; inference last",
+    "ruling": "Q-C1 revised (user, 2026-10-29): reuse the built MODEL S.4; CP-2D T2E.4 stays bound as a non-primary tab; no CP-2D figure",
+    "series_oracle": "cases/charts/expected.json current_maturity_wall (one facility); T2E.4 and the term loan terms in cases/cp2d-owner/expected.json",
+    "values": "settled module facts only; the pack sets form and owner, never numbers"
+  },
+  "t2e4_tab": {
+    "columns": [
+      "Principal (US$ m)",
+      "Maturity date",
+      "Months from 2025-12-31",
+      "Inside horizon",
+      "Share of total debt",
+      "Cumulative share"
+    ],
+    "label": "Maturity wall",
+    "label_source": "bindings/cp2d.py:33 binding label (Binding.title is the tab label)",
+    "row_header": "Facility",
+    "rows": [
+      {
+        "cells": [
+          "50",
+          "2029-12-31",
+          "48 months",
+          "No",
+          "100.0%",
+          "100.0%"
+        ],
+        "fact_ids": [
+          "T2E.4.r01.c1",
+          "T2E.4.r01.c2",
+          "T2E.4.r01.c3",
+          "T2E.4.r01.c4",
+          "T2E.4.r01.c5",
+          "T2E.4.r01.c6"
+        ],
+        "label": "Northbridge Term Loan (term-loan)"
+      }
+    ],
+    "table_id": "T2E.4",
+    "title": "Maturity wall"
+  },
+  "table_twin": {
+    "S.4": {
+      "columns": [
+        "Value"
+      ],
+      "rows": [
+        {
+          "cell": "50",
+          "label_parts": [
+            "Northbridge Term Loan (term-loan) · 2029-12-31"
+          ],
+          "row": 0
+        }
+      ],
+      "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+    }
+  }
+}

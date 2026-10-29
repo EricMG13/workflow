@@ -1,4 +1,9 @@
 {
+  "cases/charts/builder/build_a.py": "5cc985236d75e7ca9c8a2d99e6cf8f2234e93ffedb93bb248b73e064f341e949",
+  "cases/charts/cr1-expected.json": "f677cb666986623f8195ef817345a88b66bda48c11969bd9e666165e39b8d83c",
+  "cases/charts/rv3-expected.json": "b80a6d84e4c64ab3d9316e268a7686516882ea840fcb6db675a5a6f5214e3bab",
+  "cases/charts/s4fp04-expected.json": "4e16aa1b40c5078d5adb16cb5194e67375b0fc52338cdb9a1a8b43688062afdc",
+  "cases/charts/s5-expected.json": "8c19d820aedd681d1d630e57328b136a02acc5ea53df2e73e868c200351fdd0b",
   "cases/cp1c-owner/builder/build.py": "84bccfc50abb1d658231c134591558f58e4f5fdda2f8ef511e7bf173c54e6bbb",
   "cases/cp1c-owner/cp1c-view-tree.json": "d302ab2606e3504931201a06b0e2ba9f8ffa6b0754c4efac9a3b49888720c64f",
   "cases/cp1c-owner/expected.json": "d378cdcb9cf926addf582bea55b6fad6abd8dc283b4fbbc5b11d629d5f09a494",

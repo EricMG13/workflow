@@ -1,0 +1,845 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "tables",
+      "expected": "Revenue and adjusted EBITDA are read from T4.10, never from T4.5 (cash-flow statement) or T4.4; a point whose fact is not T4.10 fails."
+    },
+    {
+      "case": "quarter_count",
+      "expected": "Fewer or more than four reported QUARTER periods: reason set, no points, no interpolation; the same rule as S.1 to S.3."
+    },
+    {
+      "case": "fy_ltm_aliasing",
+      "expected": "FY2025 (120 and 30) and LTM Q4 25 are equal in value and share an end date; neither is drawn as a fifth category, and the four quarters never sum into a drawn total."
+    },
+    {
+      "case": "display_rounding",
+      "expected": "Adjusted EBITDA is exactly 7.5 per quarter and is spelled '8' (display.py 0 dp ROUND_HALF_UP); the mark carries the exact 7.5, the twin text '8'; no chart value is recomputed from the spelling."
+    },
+    {
+      "case": "nonknown_measure",
+      "expected": "A missing revenue or adjusted_ebitda quarter is a gap mark with a G# reference and a twin cell '∅ G#', never 0, and the other series keep their marks."
+    },
+    {
+      "case": "missing_financial_source",
+      "expected": "No CP-1 head: no S.5, the block keeps its table; no zero fill (same refusal as cases/charts/expected.json missing_financial_source)."
+    },
+    {
+      "case": "foreign_currency_or_scale",
+      "expected": "A revenue or adjusted_ebitda fact that is not USD MILLIONS scale 1000000 IFRS consolidated group fails closed (financial_series._numeric)."
+    }
+  ],
+  "builder_targets": [
+    {
+      "assert": [
+        "cp1_chart_series (or a second producer function, Modules decides) returns S.5 after S.4 with kind 'grouped', unit_class 'amount', unit 'US$m', series ('revenue', 'adjusted_ebitda') and the 8 points of chart_series[0].points, in series-then-quarter order",
+        "each point's fact is the one T4.10 fact at (field_1 text, basis_id(quarter)); companions are the field_1 fact and the ten T4.14 period facts of the same QUARTER row",
+        "a T4.10 fact that is not USD MILLIONS scale 1000000 raises ValueError; a nonknown fact stays a point (gap), never a zero"
+      ],
+      "test_file": "tests/test_financial_series.py"
+    },
+    {
+      "assert": [
+        "report_view.build on a credit_snapshot run: block 'financials-credit-metrics' has figures [S.5] with placement 'beside', owner 'MODEL', kind 'period_grid', and its tabs unchanged",
+        "mark values of the revenue series == [Decimal('30')] * 4 and of adjusted_ebitda [Decimal('7.5')] * 4; mark texts '30' and '8'; table twin cell texts equal mark texts in order",
+        "a gap fact renders '∅ G<n>' with ref_id 'G<n>' and value None; the other series keep their marks",
+        "S.1 to S.4 in model-chart-strip are unchanged (regression)"
+      ],
+      "test_file": "tests/test_cp1_chart_render.py"
+    }
+  ],
+  "chart_series": [
+    {
+      "fig_id": "S.5",
+      "kind": "grouped",
+      "points": [
+        {
+          "amount_exact": "30",
+          "caption": "Net revenues",
+          "category": "Q1 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "revenue",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-01-01 to 2025-03-31",
+            "row_key": {
+              "field": "field_1",
+              "text": "revenue"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:166bb94eecfa6fdbd7bbc5a81ef57c48d46696fdc9032c1abe11abc6ad613dbb"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "revenue",
+          "shown": "30",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "30",
+          "caption": "Net revenues",
+          "category": "Q2 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "revenue",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-04-01 to 2025-06-30",
+            "row_key": {
+              "field": "field_1",
+              "text": "revenue"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:89e8b30cb7c8ce8b334dc7fba59bccc2c1dfd5ebc7d7f8b8caa5fff3c766f5cb"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "revenue",
+          "shown": "30",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "30",
+          "caption": "Net revenues",
+          "category": "Q3 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "revenue",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-07-01 to 2025-09-30",
+            "row_key": {
+              "field": "field_1",
+              "text": "revenue"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:36604f9b09d609dfe1b66ec07a153d836a007251b6564d183773b8be2b3c959a"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "revenue",
+          "shown": "30",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "30",
+          "caption": "Net revenues",
+          "category": "Q4 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "revenue",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-10-01 to 2025-12-31",
+            "row_key": {
+              "field": "field_1",
+              "text": "revenue"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:1a39b61b63ee7f787ffcf5706f5dbbea2def3aa196fc2c23e4d88b6d19b834e6"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "revenue",
+          "shown": "30",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "7.5",
+          "caption": "Adjusted EBITDA",
+          "category": "Q1 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "adjusted_ebitda",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q1-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-01-01 to 2025-03-31",
+            "row_key": {
+              "field": "field_1",
+              "text": "adjusted_ebitda"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:166bb94eecfa6fdbd7bbc5a81ef57c48d46696fdc9032c1abe11abc6ad613dbb"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "adjusted_ebitda",
+          "shown": "8",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "7.5",
+          "caption": "Adjusted EBITDA",
+          "category": "Q2 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "adjusted_ebitda",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q2-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-04-01 to 2025-06-30",
+            "row_key": {
+              "field": "field_1",
+              "text": "adjusted_ebitda"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:89e8b30cb7c8ce8b334dc7fba59bccc2c1dfd5ebc7d7f8b8caa5fff3c766f5cb"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "adjusted_ebitda",
+          "shown": "8",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "7.5",
+          "caption": "Adjusted EBITDA",
+          "category": "Q3 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "adjusted_ebitda",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q3-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-07-01 to 2025-09-30",
+            "row_key": {
+              "field": "field_1",
+              "text": "adjusted_ebitda"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:36604f9b09d609dfe1b66ec07a153d836a007251b6564d183773b8be2b3c959a"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "adjusted_ebitda",
+          "shown": "8",
+          "state": "plotted"
+        },
+        {
+          "amount_exact": "7.5",
+          "caption": "Adjusted EBITDA",
+          "category": "Q4 2025",
+          "companion_coordinates": [
+            {
+              "field": "field_1",
+              "row_key": "adjusted_ebitda",
+              "table_id": "T4.10"
+            },
+            {
+              "field": "period_id",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "period_type",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_year",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "fiscal_quarter",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "start_date",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "end_date",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "currency",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "unit",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "accounting_basis",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            },
+            {
+              "field": "entity_perimeter",
+              "period_id": "q4-2025",
+              "table_id": "T4.14"
+            }
+          ],
+          "fact_coordinate": {
+            "basis": "IFRS · consolidated group",
+            "currency": "USD",
+            "module": "CP-1",
+            "period_dates": "2025-10-01 to 2025-12-31",
+            "row_key": {
+              "field": "field_1",
+              "text": "adjusted_ebitda"
+            },
+            "scale": "1000000",
+            "table_id": "T4.10",
+            "unit": "MILLIONS",
+            "value_field": "model-basis:1a39b61b63ee7f787ffcf5706f5dbbea2def3aa196fc2c23e4d88b6d19b834e6"
+          },
+          "fact_id_rule": "run-time id of the one T4.10 fact at (row field_1 = row_key.text, value_field); zero or several fail",
+          "series": "adjusted_ebitda",
+          "shown": "8",
+          "state": "plotted"
+        }
+      ],
+      "reason": null,
+      "series": [
+        "revenue",
+        "adjusted_ebitda"
+      ],
+      "series_captions": {
+        "adjusted_ebitda": "Adjusted EBITDA",
+        "revenue": "Net revenues"
+      },
+      "title": "Net revenues and Adjusted EBITDA",
+      "unit": "US$m",
+      "unit_class": "amount"
+    }
+  ],
+  "figure": "S.5",
+  "form": {
+    "categories": "four reported QUARTER periods, producer rule (financial_series.py); inference, see scope_limits",
+    "kind": "grouped columns, two series (design: C.columns on charts.revenueEbitda)",
+    "placement": "beside (design :66 puts the figure in the right column of the period table)",
+    "provider": "owner MODEL, producers (CP-1,) as report_view.py:1102-1108",
+    "series_captions": "pack charts.revenueEbitda.series[].label",
+    "summary": "none: the design's summary sentence carries numbers that are not settled facts",
+    "title": "design :66 / pack charts.revenueEbitda.title",
+    "unit": "US$m is the producer literal (financial_series.py); the design prints 'US$ m'"
+  },
+  "gap_marks": {
+    "in_positive_case": [],
+    "rule": "a nonknown or missing T4.10 fact is a gap mark with its G# reference, never 0; a known 0 is plotted"
+  },
+  "render": {
+    "block_id": "financials-credit-metrics",
+    "figures": [
+      {
+        "fig_id": "S.5",
+        "placement": "beside",
+        "summary": null
+      }
+    ],
+    "kind": "period_grid",
+    "other_blocks": "model-chart-strip keeps S.1 to S.4 unchanged; metric-strip (FP 02) is not given S.5",
+    "owner": "MODEL",
+    "pathway": "credit_snapshot",
+    "producers": [
+      "CP-1"
+    ],
+    "state": "populated",
+    "tabs": "unchanged: the CP-1 registers bound to this block (bindings/cp1.py:41-50)"
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "Synthetic frozen Northbridge case: four quarters and FY2025; the design's FY2023 to LTM Q2 2026 four-period axis cannot be drawn (no prior-year income statement: financial source page:1).",
+    "FY2025 and LTM Q4 25 are not drawn: same value and end date as Q4's trailing basis (adversarial case fy_ltm_aliasing). Raised as a question.",
+    "No segment or growth series; no summary sentence."
+  ],
+  "source_authority": {
+    "brief": {
+      "file": "design pack content/01-credit-snapshot.md",
+      "line": 36,
+      "text": "charts.revenueEbitda"
+    },
+    "design": {
+      "file": "/Users/ericguei/Documents/DEPLOY VII/design/reference/rbot-fp-01-credit-snapshot.dc.html",
+      "lines": "66 (figure S.5 caption), 124 (`C.columns` on charts.revenueEbitda), 60 (block head: MODEL, US$ m)"
+    },
+    "fact_tables": "T4.10 rows `revenue` and `adjusted_ebitda` (CP1B-ACCESS-LEASE.md:56 A1 measure rows), the same T4.10/T4.14 join as S.1 to S.3. T4.5 is the cash-flow statement and holds neither measure",
+    "modules": [
+      {
+        "path": "cases/financial/manifest.json",
+        "sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
+      },
+      {
+        "path": "cases/charts/expected.json",
+        "sha256": "2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276"
+      }
+    ],
+    "order_of_authority": "approved page decides appearance; pack brief decides provider and data path; inference last",
+    "source_locators": {
+      "quarter_values": "cases/financial/manifest.json:128-133 quarter_observations; :176-186 q4_ltm_derived_source_units; :1948-1953 fy2025_observations"
+    },
+    "values": "settled module facts only; the pack sets form and owner, never numbers"
+  },
+  "table_twin": {
+    "S.5": {
+      "columns": [
+        "Value"
+      ],
+      "rows": [
+        {
+          "cell": "30",
+          "label_parts": [
+            "Net revenues · Q1 2025"
+          ],
+          "row": 0
+        },
+        {
+          "cell": "30",
+          "label_parts": [
+            "Net revenues · Q2 2025"
+          ],
+          "row": 1
+        },
+        {
+          "cell": "30",
+          "label_parts": [
+            "Net revenues · Q3 2025"
+          ],
+          "row": 2
+        },
+        {
+          "cell": "30",
+          "label_parts": [
+            "Net revenues · Q4 2025"
+          ],
+          "row": 3
+        },
+        {
+          "cell": "8",
+          "label_parts": [
+            "Adjusted EBITDA · Q1 2025"
+          ],
+          "row": 4
+        },
+        {
+          "cell": "8",
+          "label_parts": [
+            "Adjusted EBITDA · Q2 2025"
+          ],
+          "row": 5
+        },
+        {
+          "cell": "8",
+          "label_parts": [
+            "Adjusted EBITDA · Q3 2025"
+          ],
+          "row": 6
+        },
+        {
+          "cell": "8",
+          "label_parts": [
+            "Adjusted EBITDA · Q4 2025"
+          ],
+          "row": 7
+        }
+      ],
+      "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+    }
+  }
+}

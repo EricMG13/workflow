@@ -1,0 +1,410 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "gap_headroom",
+      "expected": "Gap case: T4.9.r01.headroom is missing ('Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable'); the Headroom mark is a gap '∅ G#', never 0 and never 3.00x; headroom_share is a gap companion; Threshold 4.00x and Current 1.00x stay plotted."
+    },
+    {
+      "case": "gap_false_same_definition",
+      "expected": "The first submission is refused, so nothing is drawn and the values the documented rules would compose (3.00x, 75.0%, 'within threshold') never appear; the corrected resubmission draws the gap chart."
+    },
+    {
+      "case": "threshold_is_text",
+      "expected": "T4.9.r01.threshold is a settled text cell '4.00x', not an amount: the mark reads it as the number 4.00 with no arithmetic. Raised as a question (the alternative amends CP-4)."
+    },
+    {
+      "case": "current_is_cp1_fact",
+      "expected": "T4.9.r01.current copies the CP-1 net_leverage_reported LTM Q4 25 fact (amount 1, MULTIPLE); its period and basis are the CP-1 fact's; the chart never reads CP-1 directly."
+    },
+    {
+      "case": "direction_not_inferred",
+      "expected": "Direction comes only from the settled comparison text; a 'Not stated' comparison draws no bullet row."
+    },
+    {
+      "case": "no_legal_conclusion",
+      "expected": "The chart states no breach or compliance verdict; 'Within threshold on the CP-1 metric' stays a companion table text, and the status words Tight and Breached are not drawn."
+    }
+  ],
+  "builder_targets": [
+    {
+      "assert": [
+        "a CP-4 chart producer returns one CR.1 record (kind 'bullet', unit_class 'multiple', unit 'x', series Threshold/Current/Headroom) whose points are cases.positive.chart_series[0].points from the T4.9 facts of the oracle run, with companions as listed",
+        "the gap run returns the Headroom point as a gap (state 'gap', fact T4.9.r01.headroom) and the other two as plotted",
+        "the gap_false_same_definition first submission yields no head and the producer returns no figure"
+      ],
+      "test_file": "tests/test_connect_cp4.py (producer tests)"
+    },
+    {
+      "assert": [
+        "report_view.build on the covenant_refinancing CP-4 run: block 'covenant-tests-headroom' has figures [CR.1] (placement 'beside'), tab_label as before (T4.9 'Covenant tests and headroom'), no tabs; mark texts '4.00x', '1.00x', '3.00x'; twin cells equal mark texts in order",
+        "gap run: Headroom mark value None, ref_id G<n>, text '∅ G<n>'; Threshold and Current marks unchanged",
+        "ChartKind gains 'bullet'; the threshold mark value Decimal('4.00') is read from the text fact"
+      ],
+      "test_file": "tests/test_legal_render.py (render)"
+    }
+  ],
+  "cases": {
+    "gap": {
+      "chart_series": [
+        {
+          "fig_id": "CR.1",
+          "kind": "bullet",
+          "points": [
+            {
+              "amount_exact": "4.00",
+              "category": "Maximum net leverage ratio",
+              "companion_fact_ids": [
+                "T4.9.r01.comparison"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T4.9.r01.comparison",
+                  "label": "Comparison",
+                  "shown": "Not more than"
+                }
+              ],
+              "fact_id": "T4.9.r01.threshold",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "numeric_reading": "settled text '4.00x' read as the number 4.00; no arithmetic",
+              "series": "Threshold",
+              "settled_status": "known",
+              "shown": "4.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "1",
+              "category": "Maximum net leverage ratio",
+              "companion_fact_ids": [
+                "T4.9.r01.cp_1_metric",
+                "T4.9.r01.test_on_cp_1_metric"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T4.9.r01.cp_1_metric",
+                  "label": "CP-1 metric",
+                  "shown": "net_leverage_reported"
+                },
+                {
+                  "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                  "label": "Test on CP-1 metric",
+                  "shown": "Not calculable"
+                }
+              ],
+              "fact_id": "T4.9.r01.current",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "numeric_reading": null,
+              "series": "Current",
+              "settled_status": "known",
+              "shown": "1.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": null,
+              "category": "Maximum net leverage ratio",
+              "companion_fact_ids": [
+                "T4.9.r01.headroom_share",
+                "T4.9.r01.test_on_cp_1_metric"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T4.9.r01.headroom_share",
+                  "label": "Headroom share",
+                  "shown": "∅ G#"
+                },
+                {
+                  "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                  "label": "Test on CP-1 metric",
+                  "shown": "Not calculable"
+                }
+              ],
+              "fact_id": "T4.9.r01.headroom",
+              "gap_reason": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable",
+              "gap_ref_pattern": "∅ G\\d+",
+              "numeric_reading": null,
+              "series": "Headroom",
+              "settled_status": "missing",
+              "shown": "∅ G#",
+              "state": "gap"
+            }
+          ],
+          "reason": null,
+          "rows": [
+            {
+              "comparison_text": "Not more than",
+              "direction": "ceiling",
+              "label": "Maximum net leverage ratio",
+              "row_id": "r01"
+            }
+          ],
+          "series": [
+            "Threshold",
+            "Current",
+            "Headroom"
+          ],
+          "title": "Covenant tests and headroom",
+          "unit": "x",
+          "unit_class": "multiple"
+        }
+      ],
+      "gap_marks": [
+        {
+          "category": "Maximum net leverage ratio",
+          "fact_id": "T4.9.r01.headroom",
+          "reason": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable",
+          "series": "Headroom"
+        }
+      ],
+      "module_status": "restricted",
+      "table_twin": {
+        "CR.1": {
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            {
+              "cell": "4.00x",
+              "label_parts": [
+                "Threshold · Maximum net leverage ratio",
+                "Comparison: Not more than"
+              ],
+              "row": 0
+            },
+            {
+              "cell": "1.00x",
+              "label_parts": [
+                "Current · Maximum net leverage ratio",
+                "CP-1 metric: net_leverage_reported",
+                "Test on CP-1 metric: Not calculable"
+              ],
+              "row": 1
+            },
+            {
+              "cell": "∅ G#",
+              "label_parts": [
+                "Headroom · Maximum net leverage ratio",
+                "Headroom share: ∅ G#",
+                "Test on CP-1 metric: Not calculable"
+              ],
+              "row": 2
+            }
+          ],
+          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+        }
+      }
+    },
+    "gap_false_same_definition": {
+      "corrected_resubmission_chart": "identical to cases.gap.chart_series",
+      "corrected_resubmission_settles": "restricted CP-4 head whose tables, claims, own_limitations, settled_limitations and inherited_limitations equal expected.json gap.CP-4 exactly; headroom and share missing, T4C.9 No",
+      "first_submission": "refused by the CP-4 semantic gate: no CP-4 head is settled, so no chart and no T4.9 row exists",
+      "must_not_appear": {
+        "T4C.9_calculable": "Yes",
+        "headroom": "3 MULTIPLE",
+        "headroom_share": "0.75 PERCENT",
+        "verdict": "Within threshold on the CP-1 metric"
+      },
+      "refusal_issues": [
+        "covenants[0]: metric_basis 'Same definition' is refused because the cited source text matches incorporation-by-reference markers: 'has the meaning assigned in'; 'is not supplied with this copy'"
+      ]
+    },
+    "positive": {
+      "chart_series": [
+        {
+          "fig_id": "CR.1",
+          "kind": "bullet",
+          "points": [
+            {
+              "amount_exact": "4.00",
+              "category": "Maximum net leverage ratio",
+              "companion_fact_ids": [
+                "T4.9.r01.comparison"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T4.9.r01.comparison",
+                  "label": "Comparison",
+                  "shown": "Not more than"
+                }
+              ],
+              "fact_id": "T4.9.r01.threshold",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "numeric_reading": "settled text '4.00x' read as the number 4.00; no arithmetic",
+              "series": "Threshold",
+              "settled_status": "known",
+              "shown": "4.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "1",
+              "category": "Maximum net leverage ratio",
+              "companion_fact_ids": [
+                "T4.9.r01.cp_1_metric",
+                "T4.9.r01.test_on_cp_1_metric"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T4.9.r01.cp_1_metric",
+                  "label": "CP-1 metric",
+                  "shown": "net_leverage_reported"
+                },
+                {
+                  "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                  "label": "Test on CP-1 metric",
+                  "shown": "Within threshold on the CP-1 metric"
+                }
+              ],
+              "fact_id": "T4.9.r01.current",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "numeric_reading": null,
+              "series": "Current",
+              "settled_status": "known",
+              "shown": "1.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "3.00",
+              "category": "Maximum net leverage ratio",
+              "companion_fact_ids": [
+                "T4.9.r01.headroom_share",
+                "T4.9.r01.test_on_cp_1_metric"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T4.9.r01.headroom_share",
+                  "label": "Headroom share",
+                  "shown": "75.0%"
+                },
+                {
+                  "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                  "label": "Test on CP-1 metric",
+                  "shown": "Within threshold on the CP-1 metric"
+                }
+              ],
+              "fact_id": "T4.9.r01.headroom",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "numeric_reading": null,
+              "series": "Headroom",
+              "settled_status": "known",
+              "shown": "3.00x",
+              "state": "plotted"
+            }
+          ],
+          "reason": null,
+          "rows": [
+            {
+              "comparison_text": "Not more than",
+              "direction": "ceiling",
+              "label": "Maximum net leverage ratio",
+              "row_id": "r01"
+            }
+          ],
+          "series": [
+            "Threshold",
+            "Current",
+            "Headroom"
+          ],
+          "title": "Covenant tests and headroom",
+          "unit": "x",
+          "unit_class": "multiple"
+        }
+      ],
+      "gap_marks": [],
+      "module_status": "restricted",
+      "table_twin": {
+        "CR.1": {
+          "columns": [
+            "Value"
+          ],
+          "rows": [
+            {
+              "cell": "4.00x",
+              "label_parts": [
+                "Threshold · Maximum net leverage ratio",
+                "Comparison: Not more than"
+              ],
+              "row": 0
+            },
+            {
+              "cell": "1.00x",
+              "label_parts": [
+                "Current · Maximum net leverage ratio",
+                "CP-1 metric: net_leverage_reported",
+                "Test on CP-1 metric: Within threshold on the CP-1 metric"
+              ],
+              "row": 1
+            },
+            {
+              "cell": "3.00x",
+              "label_parts": [
+                "Headroom · Maximum net leverage ratio",
+                "Headroom share: 75.0%",
+                "Test on CP-1 metric: Within threshold on the CP-1 metric"
+              ],
+              "row": 2
+            }
+          ],
+          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+        }
+      }
+    }
+  },
+  "figure": "CR.1",
+  "form": {
+    "direction": "ceiling for comparison text 'Not more than', floor for 'Not less than' (cp4_legal.py:750-756); any other comparison text: the row is not drawn and the figure reason names the fact",
+    "headroom_share": "percent: a companion fact on the headroom mark and a table cell, never a plotted mark (one unit class per ChartSpec)",
+    "kind": "bullet, one row per covenant test (design; ChartKind gains 'bullet')",
+    "placement": "beside (design :34-35 puts the bullet beside the table in a two-column grid); inference",
+    "series": "Threshold, Current, Headroom (brief 04:27: threshold / current / headroom)",
+    "status_column": "the design's Headroom/Tight/Breached status is not a settled CP-4 fact; not drawn",
+    "unit": "x, unit_class multiple (brief 04:27 unit x)"
+  },
+  "render": {
+    "block_id": "covenant-tests-headroom",
+    "figures": [
+      {
+        "fig_id": "CR.1",
+        "placement": "beside"
+      }
+    ],
+    "kind": "dense",
+    "owner": "CP-4",
+    "pathway": "covenant_refinancing",
+    "primary_tab": "T4.9",
+    "producers": [
+      "CP-4"
+    ],
+    "state": "populated",
+    "tabs": []
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "One covenant row (r01, Maximum net leverage ratio) in the frozen synthetic case; the pack's four-row example (6.50x/3.02x) is not data.",
+    "Restricted CP-4 status stays; headroom is on the CP-1 metric, not a legal verdict.",
+    "FP 05 'Covenant levers' (covenant-levers) reuses this series after its own lease (Q-C10); not wired here."
+  ],
+  "source_authority": {
+    "brief": {
+      "file": "design pack content/04-covenant-refinancing.md",
+      "line": 27,
+      "text": "charts.fig-covenant-headroom (bullet, unit x, ceilings and floors)"
+    },
+    "design": {
+      "file": "/Users/ericguei/Documents/DEPLOY VII/design/reference/rbot-fp-04-covenant-refinancing.dc.html",
+      "lines": "34 (head 'Covenant tests and headroom', 'CP-4 · Fig. CR.1'), 35 (bullet beside the table), 58 (twin 'Fig. CR.1 Covenant tests'), lib/charts.js:90 bullet"
+    },
+    "facts": "T4.9.rNN.threshold, .comparison, .current, .headroom (+ .headroom_share, .cp_1_metric, .test_on_cp_1_metric as companions)",
+    "modules": [
+      {
+        "path": "cases/cp4-owner/expected.json",
+        "sha256": "1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78"
+      }
+    ],
+    "order_of_authority": "approved page decides appearance; pack brief decides provider and data path; inference last",
+    "values": "settled module facts only; the pack sets form and owner, never numbers"
+  }
+}

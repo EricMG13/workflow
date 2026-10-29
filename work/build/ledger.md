@@ -393,3 +393,4 @@
 - 23:46 Parallel CP-4C done (s2b-cp4c 5ae21cc; 57/57 mutants; connect set 2033 passed). v08 oracle gap -> close release. Expected conflict in test_connect_cp3.py spec-less list with CP-3C.
 - 00:00 Parallel CP-3C done (s2b-cp3c 741880a; 69/69 mutants; connect 2037 passed). Round 5 item 18 (CP-3C D7 rows with CP3C_D7_DELTA). Close-release items added. Waiting on CP-1C, then integration pass 3.
 - 00:09 CP-1C done on s2-batch (3d0392e; 34/34 mutants; connect 2054 passed; genuine positive subset 22/23, test bug fixed). Integration pass 3 next (CP-3C+D7 patch, CP-2H, CP-4C; re-chain D12 forks).
+- 00:14 Integration pass 3 done 5977ae4 (CP-3C+D7, CP-2H, CP-4C; fast set 8916 passed; manifest chains fixed, 19/19). Next: stage-level class test (Opus) + slow render suites on a detached checkout.

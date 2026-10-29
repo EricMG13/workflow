@@ -3511,12 +3511,13 @@
       "funding-gap": {
         "owner": "CP-2D",
         "producers": [
-          "CP-2D"
+          "CP-2D",
+          "CP-3C"
         ],
         "kind": "dense",
         "state": "not_run",
         "full_analysis_route": null,
-        "note": "Not run: CP-2D was not requested in this run."
+        "note": "Not run: CP-2D · CP-3C was not requested in this run."
       },
       "refinancing-paths": {
         "owner": "CP-3C",

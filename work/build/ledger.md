@@ -409,3 +409,4 @@
 - 04:34 Release W1 done fb231d4 (cp6-freeze + 0d-d merged; re-pins; double rebuild identical; fast set 9095 passed; type: ignore 6->5). Finding (predates, owner): reuse manifest bindings/shipped.py sha = report_view.py hash. W2: 5 parallel mx-feature (A1 covenant, A2 re-pins, B lease text, C product+Lows, D own citations) from fb231d4.
 - 04:42 W2-B done a70ee52 (lease/protocol/TOOL-CONTRACT 14 rows/MODULES.csv; no oracle moved). Ruled: no cp2d_reader run_rate code change (text only).
 - 04:51 W2-D done 291fa8e (round 3 citations CP-2H/1C/2G/4C; 4 view trees; CP-2G blocked xfail gone; CP-4C v08; d02 dot mutant killed; 2855 passed; double rebuild identical).
+- 04:59 W2-C done c8b708b (is_blank, blank quote, CP-DR qid max 145, RunText unconditional, CP-3D json_object, 0d-c Lows, G1-X mutant, drive_cp1 dedup, schema fill; 8/8 mutants; no oracle moved; readiness.py legal pin to re-pin).

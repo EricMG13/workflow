@@ -7,3 +7,9 @@
 - **D duplication.** Each of the four cores (cp1c, cp2g, cp2h, cp4c) has its own `_one_per_page` copy. Run jscpd at W3; if it flags them, hoist one shared helper.
 - **D v08 interpretation, for the release review.** v08 gains a separate `unread_issues` key, with `refusal_rules.journal` reworded. `expected_issues` keeps the validator's single line. Check this against the close-release text "limitations equal the issues".
 - **D cross-lane pins.** The cp2h and cp4c builders pin CP-2G files. W3 must run the full chain.
+- **C c8b708b.** Its `readiness.py` change moves the pin at `cases/legal/manifest.json:290` (119058ff… → 01616654…). The W3 chain must re-pin it; `PINS.json` does not list this file, so `pins.py --check` misses it.
+- **C, new known ruff finding.** `prose.py:114` and `:127` ISC004 predate the change and are unchanged.
+- **C, method notes.** `methods/cp1d.md`, `cp2e.md` and `cp1c.md` still say blank means "whitespace and Cf only". Fix the text at W3 to match the new `is_blank`.
+- **C, the verbatim sinks: the release review must check them.** C listed three paths as verbatim, not fixed: `consumers.*.missing_source`, `sources.*.scopes.*.limitations.*` and `sources.*.limitations.*` (CP-1).
+  - `missing_source` goes through the readiness text check (`readiness.py:321`) and is rendered nowhere else.
+  - `scopes.*.limitations` becomes a rendered gap row (`source_context.py:496-497`). It is **not** in `readiness` `_texts` (:314-326), so check whether any text check covers it. If none does, that is a predating CP-1 owner finding, not a release fix.

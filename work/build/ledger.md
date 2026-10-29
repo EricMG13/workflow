@@ -424,3 +424,4 @@
 - 08:52 Release fix1 done a50efb2 (round 3 in CP-L10/CP-2A/CP-2D sum copies, CP-1D shared helper; no oracle value moved; c8 probe 0; 1977 passed). Note for re-review: CP-2D claims _citations union unchanged.
 - 08:53 Q-C1 roles: preparer=a5f86934df7bc3a48 (mx-feature, tip 67b8a23), reviewer=a66dbdc578746c158 (mx-precise, dispatched); builder TBD (must differ).
 - 08:57 Q-C1 review (mx-precise a66dbdc5): REQUEST CHANGES (High kind=chart crash; Medium interim pin unreachable; Low route). Ruled: dense, option (a) + strict-xfail tripwire, no route. Back to preparer a5f86934.
+- 08:58 Q-C1 preparer revision 300fcdb (stage3_pending, no route, dense target). Scoped re-review by a66dbdc5.

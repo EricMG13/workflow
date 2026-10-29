@@ -505,3 +505,4 @@
 - 16:55 G2 fix round 3 dispatched (mx-feature accae7c7, isolated, claude/s3-fix3-g2 from ee95ffb; cp1-model positive_delivery + extra_attempt tests only). No fourth round: if it fails, open findings go to the user.
 - 17:10 User: "Keep it" (checkpoint merge 5980170 at a1f2cfc stays). Relayed to PR manager.
 - 17:22 I5 lane C g2def stopped (first test s1a-credit-snapshot-positive F; I5 predates F1 _check_scope_run changes; -q prints no details for hours). Rerun with -x on ee95ffb in the F1 worktree (bkik8y83y, excluding cp3c being fixed in round 2) for fast details.
+- 17:47 G2 deferred -x on ee95ffb: s1a-credit-snapshot-positive FAILED (23m): transaction-summary line text includes a run "S110" that the oracle line text lacks (_line_text joins all runs). Sent to mx-autonomous a4c23917 for root cause + static sweep of _check_scope_run against the real payload, to batch fixes into round 3.

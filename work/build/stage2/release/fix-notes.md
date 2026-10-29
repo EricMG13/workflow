@@ -11,3 +11,6 @@
 - **L2.** `methods/cp1c.md:36`, `cp2g.md:54` and `cp4c.md:37` must name `deploy_workflow.owners.blank.one_per_page`.
 - **L3.** The rulings heading at :354 should say CP-2D, not CP-3C.
 - **Info.** cp1d's own `_one_per_page` should use the shared helper, since it differs only in its docstring.
+
+## Q-C1 batch (user, 2026-10-29, approved via the LEAD peer)
+- The FP-04 maturity wall becomes MODEL-owned in this release, as one batched oracle change. Contract: `release/qc1-brief.md`. Roles: preparer, then an mx-precise review, then a builder. The builder runs after the fix batch, because both touch cp2d.

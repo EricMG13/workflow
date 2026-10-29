@@ -12,9 +12,9 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+import test_cp1_chart_render as base
 from pydantic import ValidationError
 
-import test_cp1_chart_render as base
 from deploy_vii import charts, report_view
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Citation, Fact, ModuleView, Run, View
@@ -388,8 +388,12 @@ def _cp4_view(text):
 def test_build_index_allocates_a_gap_reference_for_a_rejected_strict_text():
     _, accepted = build_index(_cp4_view("4.00x"))
     _, rejected = build_index(_cp4_view(">4.00x"))
-    accepted_refs = next(f.ref_ids for f in accepted.facts if f.coord.fact_id == "T4.9.r01.threshold")
-    rejected_refs = next(f.ref_ids for f in rejected.facts if f.coord.fact_id == "T4.9.r01.threshold")
+    accepted_refs = next(
+        f.ref_ids for f in accepted.facts if f.coord.fact_id == "T4.9.r01.threshold"
+    )
+    rejected_refs = next(
+        f.ref_ids for f in rejected.facts if f.coord.fact_id == "T4.9.r01.threshold"
+    )
     assert not any(ref.startswith("G") for ref in accepted_refs)
     assert [ref for ref in rejected_refs if ref.startswith("G")] == ["G1"]
     passports, _ = build_index(_cp4_view(">4.00x"))
@@ -404,7 +408,9 @@ def test_build_index_leaves_other_known_text_facts_alone():
     changed = module.model_copy(update={"facts": (*module.facts, comparison)})
     view = View.model_validate(
         other.model_copy(
-            update={"modules": tuple(changed if m.module_id == "CP-4" else m for m in other.modules)}
+            update={
+                "modules": tuple(changed if m.module_id == "CP-4" else m for m in other.modules)
+            }
         ).model_dump()
     )
     _, index = build_index(view)
@@ -482,11 +488,7 @@ def test_hatched_waterfall_steps_use_the_stripe_pattern():
 
 
 def test_the_synthetic_reference_still_hatches_as_before():
-    marks = [
-        ChartMark(
-            series="Cash", label="Q1 25", text="8", ref_id="S1", value=Decimal("7.5")
-        )
-    ]
+    marks = [ChartMark(series="Cash", label="Q1 25", text="8", ref_id="S1", value=Decimal("7.5"))]
     svg = charts.render_svg(
         _spec("grouped", ["Cash"], marks, "amount", "US$m"), chart_id="syn", title="Cash"
     )
@@ -591,14 +593,17 @@ def test_registered_figures_are_gated_by_pathway(monkeypatch, chart_case):
         "financials-credit-metrics", producer, pathways=frozenset({"credit_snapshot"})
     )
     assert report_view._registered_figures("financials-credit-metrics", "credit_snapshot", view, {})
-    assert report_view._registered_figures("financials-credit-metrics", "earnings_update", view, {}) == ()
+    assert (
+        report_view._registered_figures("financials-credit-metrics", "earnings_update", view, {})
+        == ()
+    )
     assert report_view._registered_figures("capital-structure", "credit_snapshot", view, {}) == ()
     assert calls == ["financials-credit-metrics"]
 
 
 def _s5_case(chart_case):
     """The CP-1 component fixture plus the S.5 facts and series of the frozen S.5 oracle."""
-    view, figures, calls = chart_case
+    view, figures, _ = chart_case
     oracle = _oracle("s5")
     cite = next(m for m in view.modules if m.module_id == "CP-1").facts[0].citations
     points, facts = [], []
@@ -644,8 +649,14 @@ def _s5_case(chart_case):
             tuple(points),
         )
     )
+    # One income-statement fact fills the financials period grid the S.5 figure sits beside.
+    statement = facts[0].model_copy(
+        update={"fact_id": "income.revenue.q1", "table_id": "T4.4", "row_id": "revenue"}
+    )
     modules = tuple(
-        m.model_copy(update={"facts": (*m.facts, *facts)}) if m.module_id == "CP-1" else m
+        m.model_copy(update={"facts": (*m.facts, *facts, statement)})
+        if m.module_id == "CP-1"
+        else m
         for m in view.modules
     )
     return View.model_validate(view.model_copy(update={"modules": modules}).model_dump())
@@ -662,7 +673,7 @@ def test_s5_entry_point_builds_the_figure_from_the_oracle_series(chart_case):
     by_series = {}
     for mark in figure.chart.marks:
         by_series.setdefault(mark.series, []).append(mark)
-    assert [m.value for m in by_series["Net revenues"]] == [Decimal("30")] * 4
+    assert [m.value for m in by_series["Net revenues"]] == [Decimal(30)] * 4
     assert [m.value for m in by_series["Adjusted EBITDA"]] == [Decimal("7.5")] * 4
     assert {m.text for m in by_series["Net revenues"]} == {"30"}
     assert {m.text for m in by_series["Adjusted EBITDA"]} == {"8"}
@@ -736,8 +747,20 @@ def test_s5_is_not_drawn_on_earnings_update(monkeypatch, chart_case):
         report_view._cp1_period_figures,
         pathways=frozenset({"credit_snapshot"}),
     )
-    update = view.model_copy(update={"run": view.run.model_copy(update={"pathway": "earnings_update"})})
+    update = view.model_copy(
+        update={"run": view.run.model_copy(update={"pathway": "earnings_update"})}
+    )
     update = View.model_validate(update.model_dump())
     pathway = next(p for p in pathways() if p.id == "earnings_update")
     blocks = {b.block_id: b for b in build(update, pathway, SHIPPED_MAPS).blocks}
-    assert blocks["financials-credit-metrics"].figures == ()
+    block = blocks["financials-credit-metrics"]
+    assert block.state == "populated"
+    assert block.rows
+    assert block.figures == ()
+    # Control: the same producer registered for every Pathway does draw S.5 here.
+    monkeypatch.setattr(report_view, "_FIGURE_PRODUCERS", {})
+    report_view.register_figure_producer(
+        "financials-credit-metrics", report_view._cp1_period_figures
+    )
+    ungated = {b.block_id: b for b in build(update, pathway, SHIPPED_MAPS).blocks}
+    assert [f.fig_id for f in ungated["financials-credit-metrics"].figures] == ["S.5"]

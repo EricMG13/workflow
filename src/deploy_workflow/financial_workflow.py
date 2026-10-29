@@ -85,7 +85,7 @@ STATEMENT_HEADING = re.compile(
     r"^\s*(?:CONSOLIDATED\s+)?(?:CONDENSED\s+)?"
     r"(?:INCOME STATEMENT|CASH FLOW STATEMENT|BALANCE SHEETS?"
     r"|STATEMENTS OF OPERATIONS|STATEMENTS OF CASH FLOWS)\s*$",
-    re.M,
+    re.MULTILINE,
 )
 SCHEMAS: dict[str, type[Contract]] = {
     "source_readiness": ReadinessReview,

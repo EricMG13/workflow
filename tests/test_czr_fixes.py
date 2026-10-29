@@ -94,13 +94,7 @@ def test_pipe_rows_of_the_real_10q_extract() -> None:
 
 
 def test_pipe_negative_nil_and_dollar_cells() -> None:
-    text = "\n".join(
-        [
-            "(In millions) | 2026 | 2025",
-            "Other, net | (12) | —",
-            "Cash | $965 | $887",
-        ]
-    )
+    text = "(In millions) | 2026 | 2025\nOther, net | (12) | —\nCash | $965 | $887"
     lines = extract_statement_lines(text, "page:1").lines
     assert [(x.label, x.raw_values, x.values) for x in lines] == [
         ("Other, net", ("(12)", "—"), (Decimal(-12), None)),

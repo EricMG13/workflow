@@ -40,11 +40,17 @@
     },
     {
       "assert": [
-        "report_view.build on the covenant_refinancing CP-4 run: block 'covenant-tests-headroom' has figures [CR.1] (placement 'beside'), tab_label as before (T4.9 'Covenant tests and headroom'), no tabs; mark texts '4.00x', '1.00x', '3.00x'; twin cells equal mark texts in order",
+        "report_view.build on the covenant_refinancing CP-4 run: block 'covenant-tests-headroom' has figures [CR.1] (placement 'beside'), block.tab_label is None and block.tabs == () (Block.tab_structure, report_view.py:408); mark texts '4.00x', '1.00x', '3.00x'; twin cells equal mark texts in order",
         "gap run: Headroom mark value None, ref_id G<n>, text '∅ G<n>'; Threshold and Current marks unchanged",
         "ChartKind gains 'bullet'; the threshold mark value Decimal('4.00') is read from the text fact"
       ],
       "test_file": "tests/test_legal_render.py (render)"
+    },
+    {
+      "assert": [
+        "ChartKind (report_view.py:56) gains 'bullet' with charts.py geometry (design lib/charts.js bullet); _chart_fact_cell gains a strict-parse mark path for a known text fact (report_view.py:1618 refuses a known fact with no amount today): text matching \\d+(\\.\\d+)?x gives value Decimal(text[:-1]), any other text a gap mark with its G# reference; _block dispatches figures from the CP-4 producer (report_view.py:1807)"
+      ],
+      "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)"
     }
   ],
   "cases": {
@@ -169,6 +175,7 @@
           "columns": [
             "Value"
           ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
           "rows": [
             {
               "cell": "4.00x",
@@ -197,7 +204,7 @@
               "row": 2
             }
           ],
-          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+          "rule": "cell texts equal the mark texts in order"
         }
       }
     },
@@ -329,6 +336,7 @@
           "columns": [
             "Value"
           ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
           "rows": [
             {
               "cell": "4.00x",
@@ -357,7 +365,7 @@
               "row": 2
             }
           ],
-          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+          "rule": "cell texts equal the mark texts in order"
         }
       }
     }

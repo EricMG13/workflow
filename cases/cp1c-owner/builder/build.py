@@ -903,7 +903,7 @@ def fp03(facts, tables):
                 for f in r["fact_ids"]]} for r in t["rows"]]
             tabs.append({"table_id": tid, "label": label, "rows": rws})
         out["blocks"][bid] = {"title": b["title"], "owner": b["owner"], "kind": b["kind"], "state": "populated", "tabs": tabs}
-    out["other_blocks"] = "instrument-levels, yield-against-maturity, market-against-fundamentals, compensation-preference, recommendation-portfolio-fit and the rest of relative_value keep their idle wording or their own owners: CP-1C fills none of them. The reference's range strip Fig. RV.3 is a chart and is not populated (table form only)"
+    out["other_blocks"] = "instrument-levels, yield-against-maturity, market-against-fundamentals, compensation-preference, recommendation-portfolio-fit and the rest of relative_value keep their idle wording or their own owners: CP-1C fills none of them. The reference's range strip Fig. RV.3 is a chart drawn from the settled T1C.3, T1C.4 and T1C.5 facts above the peer-positioning tabs (two panels, RV.3a percent and RV.3b multiple, oracle cases/charts/rv3-expected.json); CP-1C fills no other chart"
     out["evidence_rail_tables"] = EVIDENCE_TABLES
     out["limitations_rail_tables"] = LIMITATION_TABLES
     return out

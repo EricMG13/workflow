@@ -45,6 +45,12 @@
         "table twin cell texts equal the mark texts, in point order, per panel"
       ],
       "test_file": "tests/test_connect_cp1c.py (render)"
+    },
+    {
+      "assert": [
+        "ChartKind (report_view.py:56) gains 'range' with charts.py geometry (design lib/charts.js rangeStrip); _chart_fact_cell accepts unit_class 'percent' (report_view.py:1616-1617 refuse it today); _block dispatches figures per producer (CP-1C here), not only the CP-1 path at report_view.py:1807"
+      ],
+      "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)"
     }
   ],
   "cases": {
@@ -662,6 +668,7 @@
           "columns": [
             "Value"
           ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
           "rows": [
             {
               "cell": "1.67x",
@@ -754,12 +761,13 @@
               "row": 9
             }
           ],
-          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+          "rule": "cell texts equal the mark texts in order"
         },
         "percent": {
           "columns": [
             "Value"
           ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
           "rows": [
             {
               "cell": "25.0%",
@@ -852,7 +860,7 @@
               "row": 9
             }
           ],
-          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+          "rule": "cell texts equal the mark texts in order"
         }
       }
     },
@@ -1577,6 +1585,7 @@
           "columns": [
             "Value"
           ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
           "rows": [
             {
               "cell": "1.67x",
@@ -1687,12 +1696,13 @@
               "row": 11
             }
           ],
-          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+          "rule": "cell texts equal the mark texts in order"
         },
         "percent": {
           "columns": [
             "Value"
           ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
           "rows": [
             {
               "cell": "25.0%",
@@ -1803,7 +1813,7 @@
               "row": 11
             }
           ],
-          "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+          "rule": "cell texts equal the mark texts in order"
         }
       }
     }
@@ -1870,7 +1880,7 @@
     "modules": [
       {
         "path": "cases/cp1c-owner/expected.json",
-        "sha256": "d378cdcb9cf926addf582bea55b6fad6abd8dc283b4fbbc5b11d629d5f09a494"
+        "sha256": "2165d28d06e80347b8ea9c5a78350a1a41bb60db4b140cfce3e4256bccc57862"
       }
     ],
     "order_of_authority": "approved page decides appearance; pack brief decides provider and data path; inference last",

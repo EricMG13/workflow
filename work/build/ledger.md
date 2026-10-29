@@ -410,3 +410,4 @@
 - 04:42 W2-B done a70ee52 (lease/protocol/TOOL-CONTRACT 14 rows/MODULES.csv; no oracle moved). Ruled: no cp2d_reader run_rate code change (text only).
 - 04:51 W2-D done 291fa8e (round 3 citations CP-2H/1C/2G/4C; 4 view trees; CP-2G blocked xfail gone; CP-4C v08; d02 dot mutant killed; 2855 passed; double rebuild identical).
 - 04:59 W2-C done c8b708b (is_blank, blank quote, CP-DR qid max 145, RunText unconditional, CP-3D json_object, 0d-c Lows, G1-X mutant, drive_cp1 dedup, schema fill; 8/8 mutants; no oracle moved; readiness.py legal pin to re-pin).
+- 05:09 W2-A1 done 3614577 (CP-2D period/value_class/currency/stale wording/plural/drawings precedence; CP-3C periods, CP-1A, names, view tree; CP-4 other_five; FP04 blocks; 5 deltas removed; 1171+431+1296 passed; double rebuild identical). Ruled drawings wording (item 21).

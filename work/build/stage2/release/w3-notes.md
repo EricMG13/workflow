@@ -13,3 +13,9 @@
 - **C, the verbatim sinks: the release review must check them.** C listed three paths as verbatim, not fixed: `consumers.*.missing_source`, `sources.*.scopes.*.limitations.*` and `sources.*.limitations.*` (CP-1).
   - `missing_source` goes through the readiness text check (`readiness.py:321`) and is rendered nowhere else.
   - `scopes.*.limitations` becomes a rendered gap row (`source_context.py:496-497`). It is **not** in `readiness` `_texts` (:314-326), so check whether any text check covers it. If none does, that is a predating CP-1 owner finding, not a release fix.
+- **A1 3614577.** Ruled: the drawings-precedence wording "Not calculable: RCF commitment is <state>; RCF drawings are missing" (claims: "needs RCF commitment, which is <state>") meets round 5 item 4. Record it as round 5 item 21 at W3. No pack value moved.
+- **A1, stale cross-lane pins for the chain.** The cp4c builder pins cp4 `expected.json` (→ 2b98b81b) and the cp3c manifest (→ 235ee364); the cpl10 builder names the cp3c builder.
+- **A1, lease text.** CP3C lease :154 repeats the old `fact_copy_rule` sentence. Fix it at W3, in body text.
+- **A1, view tree.** `cases/cp3c-owner/cp3c-view-tree.json` is outside the `cases/pins.py` patterns, which also applies to D's four trees. Decide at W3 whether view trees are pinned; the CP-1 slice convention applies.
+- **A1, open item.** `T2E.5.r05` and `r06` carry no currency in the CP-2D oracle. Only r04 and r07 were named. The release review checks whether r05 and r06 are monetary.
+- **A1, deferred.** `test_owner_cp4.py` and `test_probe_cp4.py` were stopped (slow genuine runs). They belong to Stage 5.

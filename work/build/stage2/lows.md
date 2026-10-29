@@ -27,3 +27,5 @@
 - **Owner (predates, Medium-class).** A CP-DR gap id of 139-153 characters passes `ENTRY_VALIDATOR`, then `compose` raises on `TDR.1.<gap>.named_consumers` or `.description` (`cpdr.py:481`; the gap-id checks at :292-305 set no length bound). It is the sibling of the fixed question_id wedge. Probe: `<S>/release-review-A/probes/a04_cpdr_long_gap_id.py`.
 - **Owner (predates, Low).** CP-1 accepts a blank scope or source limitation (`" "`, U+200B, U+2800) and renders a blank gap row, because `source_context` never calls `is_blank`. Probe: `a05_cp1_scope_limitation_sink.py`.
 - CP-1 chart oracle `cases/charts/expected.json` is not covered by `cases/pins.py` patterns (predates Stage 3; oracle review A I1, 2026-10-29).
+
+- Stage 3 review (item 22): ruff check findings on untouched lines (statement_extract.py 234-263 TRY004; financial_workflow.py 439, 446, 768; test_legal_render.py:220) and D12 report_view records 3e5b537 (item 19), 24f879a (item 19), 8aef58d (chain fork) predate Stage 3: owner.

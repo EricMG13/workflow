@@ -41,6 +41,12 @@ CP2D_D7_DELTA = dict.fromkeys(
     ("liquidity-runway", "maturity-wall", "funding-gap"), ("CP-2D", "dense", "not_run", None)
 )
 CP2D_D7_NOTE = dict.fromkeys(CP2D_D7_DELTA, "Not run: CP-2D was not requested in this run.")
+# The same delta for the CP-3C lease D7 rows (pending a LEAD ruling that amends round 4).
+CP3C_D7_DELTA = dict.fromkeys(
+    ("refinancing-paths", "lme-creditor-exposure"), ("CP-3C", "dense", "not_run", None)
+)
+CP2D_D7_DELTA |= CP3C_D7_DELTA
+CP2D_D7_NOTE |= dict.fromkeys(CP3C_D7_DELTA, "Not run: CP-3C was not requested in this run.")
 LEGAL = json.loads((ROOT / "cases/legal/manifest.json").read_text())
 FINANCIAL = json.loads((ROOT / "cases/financial/manifest.json").read_text())
 SCHEMAS = {s["table_id"]: s for s in ORACLE["schemas"]}

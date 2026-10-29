@@ -1174,6 +1174,18 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         "funding-gap": _Spec(
             "Funding gap", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
         ),
+        # CP-3C (docs/CP3C-OWNER-LEASE.md, Rendered sections (D7)).
+        "refinancing-paths": _Spec(
+            "Refinancing paths", "CP-3C", "dense", ("CP-3C",), route_label="Full analysis"
+        ),
+        "lme-creditor-exposure": _Spec(
+            "LME capacity and creditor exposure",
+            "CP-3C",
+            "dense",
+            ("CP-3C",),
+            collapsed=True,
+            route_label="Full analysis",
+        ),
     }
 )
 # Heads and owner codes as FP 03 prints them (``rbot-fp-03-relative-value.dc.html``). CP-3D owns

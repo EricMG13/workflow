@@ -1297,6 +1297,24 @@ def test_shipped_maps_hold_cp3c_once_directly_after_cp2d() -> None:
     assert ids.count(MODULE) == 1 and ids.index(MODULE) == ids.index("CP-2D") + 1
 
 
+def test_spec_rows_serve_the_two_blocks() -> None:
+    from deploy_vii.report_view import _spec_of
+
+    for block, title, collapsed in (
+        ("refinancing-paths", "Refinancing paths", False),
+        ("lme-creditor-exposure", "LME capacity and creditor exposure", True),
+    ):
+        spec = _spec_of(block)
+        assert (spec.title, spec.owner, spec.kind, spec.producers, spec.collapsed) == (
+            title,
+            "CP-3C",
+            "dense",
+            ("CP-3C",),
+            collapsed,
+        )
+        assert spec.route_label == "Full analysis"
+
+
 def test_bindings_follow_the_lease() -> None:
     cp3c_map = next(m for m in SHIPPED_MAPS if m.module_id == MODULE)
     assert all(e.cell_slot.startswith("cp3c-") for e in cp3c_map.entries)

@@ -36,12 +36,12 @@
     },
     {
       "path": "cases/cp2d-owner/expected.json",
-      "sha256": "969f3013d45d235d2500f019f621ccd129719d2f2cb95a503a306fe131967d79",
+      "sha256": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
       "use": "frozen CP-2D expected cells: the facts CP-3C consumes (D3 pins); every CP-2D cell read is asserted equal to the source-derived value here"
     },
     {
       "path": "cases/cp2d-owner/builder/build.py",
-      "sha256": "f8b6f607729072ea8df676506692a6dbb1d2d806b6f325223a619ed9f5d78c17",
+      "sha256": "6c707b4bdc3b59629e8590f6e32760293aacfd9bccb5b337fc52e715f12a8e4c",
       "use": "frozen CP-2D builder (pin only: the method of the upstream whose cells are consumed)"
     },
     {

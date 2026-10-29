@@ -27,8 +27,8 @@ PINS = {
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/cp2d-owner/manifest.json": "68d774a3a2c1f7997ff871f5c5a7f1fb2201e4bf2d90b65d5a6082a3319ba732",
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
-    "cases/cp2d-owner/expected.json": "969f3013d45d235d2500f019f621ccd129719d2f2cb95a503a306fe131967d79",
-    "cases/cp2d-owner/builder/build.py": "f8b6f607729072ea8df676506692a6dbb1d2d806b6f325223a619ed9f5d78c17",
+    "cases/cp2d-owner/expected.json": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
+    "cases/cp2d-owner/builder/build.py": "6c707b4bdc3b59629e8590f6e32760293aacfd9bccb5b337fc52e715f12a8e4c",
     "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
 }
 for rel, want in PINS.items():

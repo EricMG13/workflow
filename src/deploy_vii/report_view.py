@@ -1266,7 +1266,7 @@ _RELATIVE_VALUE: Mapping[str, _Spec] = MappingProxyType(
             ("CP-3D",),
             route_label="Full analysis",
         ),
-        # CP-1C (docs/CP1C-OWNER-LEASE.md, D7): tables only, the Fig. RV.3 range strip is not drawn.
+        # CP-1C (docs/CP1C-OWNER-LEASE.md, D7): the tabs; the Fig. RV.3 range strip is drawn by _rv3_figures.
         "peer-positioning": _Spec(
             "Peer positioning", "CP-1C", "dense", ("CP-1C",), route_label="Full analysis"
         ),
@@ -2695,6 +2695,11 @@ def _rv3_figures(
     return tuple(figures)
 
 
+def _is_plain_multiple(fact: Fact) -> bool:
+    """A known fact the multiple unit class draws as it is: MULTIPLE, scale 1, with an amount."""
+    return fact.unit == "MULTIPLE" and fact.scale == 1 and fact.amount is not None
+
+
 # CR.1: the comparison texts CP-4 settles for a ceiling and a floor (cp4_legal.py:750-756).
 _CR1_COMPARISONS = frozenset({"Not more than", "Not less than"})
 _CR1_TITLE = "Covenant tests and headroom"
@@ -2719,24 +2724,31 @@ def _cr1_figures(
         return ()
     facts = {(f.row_id, f.field): f for f in module.facts if f.table_id == "T4.9"}
 
-    def fact_id(row_id: str, field: str) -> str:
+    def fact_of(row_id: str, field: str) -> Fact:
         if (row_id, field) not in facts:
             raise ValueError(f"CP-4 T4.9 row {row_id} lacks the {field} fact")
-        return facts[(row_id, field)].fact_id
+        return facts[(row_id, field)]
+
+    def fact_id(row_id: str, field: str) -> str:
+        return fact_of(row_id, field).fact_id
 
     drawn, skipped = [], []
     for row in table.rows:
         comparison = facts.get((row.row_id, "comparison"))
-        if comparison is not None and comparison.text in _CR1_COMPARISONS:
-            drawn.append(row)
-        else:
-            skipped.append(fact_id(row.row_id, "comparison"))
-    note = (
-        "Not drawn: the comparison is neither 'Not more than' nor 'Not less than' in "
-        + ", ".join(skipped)
-        if skipped
-        else None
-    )
+        if comparison is None or comparison.text not in _CR1_COMPARISONS:
+            skipped.append(
+                f"{fact_id(row.row_id, 'comparison')} is neither 'Not more than' nor 'Not less than'"
+            )
+            continue
+        # A settled number in a unit other than the multiple is not drawn on the x axis; the figure
+        # says which fact (the report still builds, and the table shows the fact in its own unit).
+        numbers = [fact_of(row.row_id, name) for name in ("current", "headroom")]
+        odd = next((f for f in numbers if f.status == "known" and not _is_plain_multiple(f)), None)
+        if odd is not None:
+            skipped.append(f"{odd.fact_id} is not a plain multiple")
+            continue
+        drawn.append(row)
+    note = "Not drawn: " + "; ".join(skipped) if skipped else None
     if not drawn:
         twin = Block(
             block_id=f"{block_id}-cr1-twin",

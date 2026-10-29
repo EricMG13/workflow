@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 import test_connect_cp1c as cp1c
 import test_method_cp1c as stage1
+
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import ModuleView
 from deploy_vii.render import render

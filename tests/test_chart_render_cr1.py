@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import test_connect_cp4 as cp4
+
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.render import render
 from deploy_vii.report_view import build, pathways

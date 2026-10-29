@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 import test_connect_cp1c as cp1c
+
 from deploy_vii import report_view
 from deploy_vii.report_view import Figure, build_index
 

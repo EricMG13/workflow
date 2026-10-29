@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 import test_connect_cp4 as cp4
+
 from deploy_vii import report_view
 from deploy_vii.report_view import Figure, build_index
 
@@ -194,3 +195,44 @@ def test_a_view_without_cp4_facts_gives_no_figure():
         update={"modules": tuple(module if m.module_id == MODULE else m for m in view.modules)}
     )
     assert _produce(view)[0] == ()
+
+
+@pytest.mark.parametrize("field", ["current", "headroom"])
+def test_a_number_in_another_unit_is_not_drawn_and_the_reason_names_the_fact(field):
+    """A native pp headroom (tests/test_legal_render.py) must not abort the report."""
+    view = _edit(cp4._expected_view("positive"), **{f"T4.9.r01.{field}": {"unit": "pp"}})
+    figures, _ = _produce(view)
+    chart = figures[0].chart
+    assert chart.kind == "na" and chart.marks == ()
+    assert f"T4.9.r01.{field}" in (chart.reason or "")
+
+
+def test_a_second_row_is_drawn_while_a_row_with_a_bad_comparison_is_named_in_the_summary():
+    view = cp4._expected_view("positive")
+    module = _module_of(view)
+    row = next(t for t in module.tables if t.table_id == "T4.9").rows[0]
+    clone = row.model_copy(
+        update={
+            "row_id": "r02",
+            "label": "Second ratio",
+            "fact_ids": tuple(f.replace(".r01.", ".r02.") for f in row.fact_ids),
+        }
+    )
+    extra = []
+    for fact in module.facts:
+        if fact.fact_id.startswith("T4.9.r01."):
+            update = {"fact_id": fact.fact_id.replace(".r01.", ".r02."), "row_id": "r02"}
+            if fact.field == "comparison":
+                update["text"] = "Greater than"
+            extra.append(fact.model_copy(update=update))
+    tables = tuple(
+        t.model_copy(update={"rows": (*t.rows, clone)}) if t.table_id == "T4.9" else t
+        for t in module.tables
+    )
+    changed = module.model_copy(update={"facts": (*module.facts, *extra), "tables": tables})
+    view = view.model_copy(
+        update={"modules": tuple(changed if m is module else m for m in view.modules)}
+    )
+    figures, _ = _produce(view)
+    assert len(figures[0].chart.marks) == 3
+    assert "T4.9.r02.comparison" in (figures[0].summary or "")

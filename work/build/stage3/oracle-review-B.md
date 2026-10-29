@@ -38,3 +38,30 @@ Probes are in `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow
 - **Feasibility:** CR.2 and CR.3 marks pass the text rule. `Block.figures` holds several figures, and "beside" is a valid `FigurePlacement`. The T3D.1 binding move and the funding-gap producers change are named.
 
 Not verified: no product code was run against the oracles (there are no producers), so render and `validate_bindings` behaviour was read, not run. I did not check the design-page and brief line citations or their sha256 values against D or P. Half A files were not reviewed.
+
+## Scoped re-review of e494177
+
+## Half B scoped re-review: APPROVE
+
+All six half B findings are fixed as ruling item 8 says (R at `e494177`, fix `38619d8`). The fixes add no High or Medium problem; one new Low is below.
+
+**Probes** (in `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/oracle-review-B/`):
+- `p1_rebuild_rev.sh e494177` exited 0. It is p1 with the revision as an argument. The fresh-copy rebuild of `build_b.py` and the cp3c and cp4c owner builders is byte-identical, and `pins.py --check` matches 86 paths.
+- `p3_values.py` exited 0: 157 points checked, 0 mismatches.
+- `p2_mark_text.py` still exits 1 with 42 mismatches, as expected until the decimals seam change is built.
+
+**Findings checked**
+- **H1:** fixed. The DR.3-5 texts keep two decimals. The seam change is named in `scope_limits` (`build_b.py:1197`) and in the series target (`:1208`), which says a mark with no declared decimals is checked as today.
+- **M1:** fixed. `frame_texts.per_case` gives `positive` the reference None, and `gap` carries `∅ G<n>` in the reason text (`build_b.py:1364-1371`). The targets are per case (`:1382-1383`).
+- **L1:** the "no chart" sentence is gone (`:1058`).
+- **L2:** the forged CR.2 view now drops r07 and r08 together (`:438`).
+- **L3:** `category_basis` and `reason_basis` are flagged as inferred (`:518-519`).
+- **L4:** the hatching seam is named in `scope_limits` and in a render target (`:1058`, `:1075`).
+- **L5:** DR.2, DR.3-5 and DR.6 each have a refused-or-blocked case and a target (`:1007`, `:1147`, `:1288`, plus the target lines).
+
+**New finding**
+- **Low:** `cases/charts/dr6-expected.json:32` (from `build_b.py:1381`) still says "chart.reason equal to the frame reason" for both the positive and gap runs. The new gap target at `:1383` says the reason only *starts with* `per_case.gap.reason` and then adds the G# text. In the gap case, "equal" and "starts with" cannot both hold.
+  - Fix: limit "equal" to the positive run, or point it at the per-case rules.
+  - Not blocking. It can ride with the next fix or the end-of-run batch.
+
+Not verified: no product code exists yet, so neither seam change (decimals, hatching) was built or run. The gap-reason G# binding was read, not run. I did not re-check the half A fixes in this merge, or the JSON lines outside the half B diff, beyond the p1 byte-identity check.

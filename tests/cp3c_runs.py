@@ -32,9 +32,9 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases/cp3c-owner"
 PINS = {
-    CASE / "builder/build.py": "cdba03c566747ce4f541af3f9a00106d3a2abeb3d3c80b99bfd87daa28969ad2",
-    CASE / "expected.json": "50ef4a7f9199e1da4a73fc75eaaf6bc8215bef12cec26067d2d44aead0952e5f",
-    CASE / "manifest.json": "e8aaf2eb316c7e88ed94a7c73f1540ade1b728159a5124d389ca67faae22d904",
+    CASE / "builder/build.py": "8480e98a2e2475fb814a9a9e34d1faee6e5476dcd931f8c15d26a1302495131c",
+    CASE / "expected.json": "168e3bee6eb444f6fe4207b961a7c7f2b3aace35b68a9ac6170696511518bad3",
+    CASE / "manifest.json": "235ee3642ffba1ef93c091341c90c2db86048e7a4ef6c0132baeb78b59dfd9d8",
     CASE / "submissions.json": "8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c",
 }
 CASES = ("positive", "gap_minimum_cash", "gap_no_repricing")

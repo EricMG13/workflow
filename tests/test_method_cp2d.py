@@ -255,91 +255,81 @@ def test_compose_bridge_refuses_horizon_outside_bound() -> None:
 # --- tables, claims, ledgers (pack cases) -----------------------------------------------------
 
 
-# --- round 13 item 1 (R1 M1): the declared delta to the frozen oracle -------------------------
+# --- round 13 item 1 (R1 M1), re-pinned at the Stage 2 close release ---------------------------
 #
-# The frozen oracle (cases/cp2d-owner/expected.json) is NOT re-pinned until the Stage 2 release.
-# Until then this test compares everything exactly as before and adds, as the two named tables
-# below, the one declared delta: the `period` of each known numeric cell and the `value_class` of
-# the five gap cells. Remove both tables at the Stage 2 re-pin (see
-# test_frozen_oracle_still_lacks_the_round13_delta).
+# The oracle (cases/cp2d-owner/expected.json) carries `period` on each known numeric cell and
+# `value_class` on each gap cell; the tables below only spell the constants other tests use.
 
 _BALANCE = "2025-12-31"
 _LTM = "LTM Q4 25 \u00b7 2025-01-01 to 2025-12-31"
 _Q4_BALANCE = "q4-2025 \u00b7 2025-10-01 to 2025-12-31"
-# cp1_operand -> the CP-1 fact's own period, verbatim; a numeric cell with no cp1_operand takes
-# the balance date.
-PERIOD_DELTA: dict[str, str] = {
-    **dict.fromkeys(
-        (
-            "opening_cash",
-            "cfo",
-            "investing",
-            "net_debt_issuance",
-            "equity_issuance+equity_repurchases",
-            "dividends_paid",
-            "other_investing_financing",
-            "fx_effect",
-            "closing_cash",
-        ),
-        _LTM,
-    ),
-    **dict.fromkeys(
-        ("cash_bs", "restricted_cash", "rcf_commitment", "rcf_drawn", "total_debt_bs"), _Q4_BALANCE
-    ),
-    "T4.18 principal": "q4-2025",
-}
 # Stage 2 backlog (addendum 4 (c), (d)): a recomputed cell takes the balance date; its cp1_operand
 # tag is a twin pointer only.
 RECOMPUTED_TAGS = frozenset(
     {"undrawn_rcf", "liquidity", "liquidity_to_debt", "T4.18 commitment - drawn_amount"}
 )
-GAP_VALUE_CLASS_DELTA: dict[tuple[str, str], str] = {
-    ("gap_minimum_cash", "T2E.3.r09"): "calculated",
-    ("gap_minimum_cash", "T2E.5.r04"): "analyst_judgment",
-    ("gap_minimum_cash", "T2E.5.r05"): "calculated",
-    ("gap_minimum_cash", "T2E.5.r06"): "calculated",
-    ("gap_minimum_cash", "T2E.5.r07"): "calculated",
-}
+INVESTING_PERIOD = _LTM
 
 
-def test_period_delta_names_the_manifest_periods() -> None:
-    """The delta table spells each CP-1 period as the manifest binds it."""
+def _numeric(cell: dict[str, Any]) -> bool:
+    return cell["state"] == "known" and cell.get("amount") is not None
+
+
+def test_oracle_periods_are_the_manifest_periods() -> None:
+    """Each copy cell's period is spelled as the manifest binds it; a recomputed or computed
+    cell takes the balance date."""
     bindings = MANIFEST["fact_bindings"]
-    for operand, period in PERIOD_DELTA.items():
-        names = [n.strip() for part in operand.split("+") for n in part.split(" - ")]
-        names = [n if n in bindings else f"T4.18 {n}" for n in names]
-        assert {bindings[n]["period"] for n in names} == {period}, operand
-
-
-def test_frozen_oracle_still_lacks_the_round13_delta() -> None:
-    """Remove the delta at the Stage 2 re-pin: this fails once expected.json carries `period`
-    on its known numeric cells and `value_class` on the five gap cells, at which point
-    PERIOD_DELTA, GAP_VALUE_CLASS_DELTA and their use in _assert_cell are deleted."""
-    gap_keys: set[tuple[str, str]] = set()
+    seen = 0
     for case in PACK_CASES:
         for table in CASES[case]["tables"].values():
             for _, cells in table["rows"]:
                 for cell in cells if isinstance(cells, list) else [cells]:
-                    assert "period" not in cell, (case, cell["fact_id"])
-                    if cell["state"] != "known" and "value_class" not in cell:
-                        gap_keys.add((case, cell["fact_id"]))
-    assert gap_keys == set(GAP_VALUE_CLASS_DELTA)
+                    if not _numeric(cell):
+                        assert "period" not in cell, (case, cell["fact_id"])
+                        continue
+                    seen += 1
+                    operand = cell.get("cp1_operand")
+                    if operand is None or operand in RECOMPUTED_TAGS:
+                        assert cell["period"] == _BALANCE, (case, cell["fact_id"])
+                        continue
+                    names = [n.strip() for part in operand.split("+") for n in part.split(" - ")]
+                    names = [n if n in bindings else f"T4.18 {n}" for n in names]
+                    assert {bindings[n]["period"] for n in names} == {cell["period"]}, operand
+    assert seen
+
+
+def test_oracle_gap_cells_carry_a_value_class_and_the_twins_a_currency() -> None:
+    """The five gap cells of gap_minimum_cash name their value class; the two CP-3C twins
+    (T2E.5.r04, T2E.5.r07) also carry the currency (CP-2D lease acceptance 1)."""
+    gaps: dict[str, dict[str, Any]] = {}
+    for case in PACK_CASES:
+        for table in CASES[case]["tables"].values():
+            for _, cells in table["rows"]:
+                for cell in cells if isinstance(cells, list) else [cells]:
+                    if cell["state"] != "known":
+                        assert "value_class" in cell, (case, cell["fact_id"])
+                        gaps[f"{case}:{cell['fact_id']}"] = cell
+    assert {k.split(":")[1] for k in gaps} == {
+        "T2E.3.r09",
+        "T2E.5.r04",
+        "T2E.5.r05",
+        "T2E.5.r06",
+        "T2E.5.r07",
+    }
+    assert {
+        k: g.get("currency") for k, g in gaps.items() if g["fact_id"] in {"T2E.5.r04", "T2E.5.r07"}
+    } == {
+        "gap_minimum_cash:T2E.5.r04": "USD",
+        "gap_minimum_cash:T2E.5.r07": "USD",
+    }
 
 
 def _assert_cell(got: cp2d.Cell, want: dict[str, Any], case: str) -> None:
     where = want["fact_id"]
     assert got.fact_id == want["fact_id"]
     assert got.state == want["state"], where
-    want_class = want.get("value_class", GAP_VALUE_CLASS_DELTA.get((case, where)))
-    assert got.value_class == want_class, where
-    numeric = want["state"] == "known" and want.get("amount") is not None
-    operand = want.get("cp1_operand")
-    want_period = None
-    if numeric:
-        want_period = (
-            _BALANCE if operand is None or operand in RECOMPUTED_TAGS else PERIOD_DELTA[operand]
-        )
-    assert got.period == want_period, where
+    assert got.value_class == want.get("value_class"), where
+    assert got.period == want.get("period"), where
     assert got.unit == want.get("unit"), where
     assert _num_equal(got.amount, want.get("amount")), where
     assert got.cp1_operand == want.get("cp1_operand"), where
@@ -1797,7 +1787,7 @@ def test_r13_m1_a_copy_keeps_the_cp1_period_verbatim() -> None:
     odd = cp2d.Operand("known", Decimal(19), "an odd CP-1 period string", None)
     cells = _cells(cp2d.compute(_op_inputs(cfo=odd)))
     assert cells["T2E.1.r02"].period == "an odd CP-1 period string"
-    assert cells["T2E.1.r03"].period == PERIOD_DELTA["investing"]  # the others keep their own
+    assert cells["T2E.1.r03"].period == INVESTING_PERIOD  # the others keep their own
     assert cells["T2E.1.r09"].period == _BALANCE  # a computed cell takes the balance date
 
 

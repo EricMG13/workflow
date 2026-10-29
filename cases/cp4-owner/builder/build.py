@@ -1159,7 +1159,7 @@ def main():
         "sections": {k: {"owner": "CP-4", "kind": "dense", "tables": v, "source": "report_view._COVENANT_REFINANCING; bindings/cp4.py"} for k, v in sections.items()},
         "evidence_rail_tables": evidence,
         "limitations_rail_tables": limitations_rail,
-        "other_five_sections": "liquidity-runway, maturity-wall, funding-gap, refinancing-paths, lme-creditor-exposure stay owner Unbound with 'No module produces this block yet.'",
+        "other_five_sections": "liquidity-runway (CP-2D), maturity-wall (CP-2D), funding-gap (CP-2D), refinancing-paths (CP-3C), lme-creditor-exposure (CP-3C) are served by the CP-2D and CP-3C D7 _Spec rows: in a run that does not request the owner each renders that owner's empty state ('Not run: <owner> was not requested in this run.'), as pinned in cases/legal/render-expected.json other_front_sections.blocks; they are no longer owner Unbound.",
         "displayed_literals": {
             "positive": {"T4.9": {"threshold": "4.00x", "comparison": "Not more than", "current": "1.00x", "headroom": "3.00x", "headroom_share": "75.0%", "test_on_cp_1_metric": VERDICT_WITHIN}, "T4.10": {"capacity_amount": "gap spelling, a G# gap id (never 0)"}, "T4.13": {"rating": "Insufficient Information"}},
             "gap": {"T4.9": {"threshold": "4.00x", "comparison": "Not more than", "current": "1.00x", "headroom": "gap spelling (G#)", "headroom_share": "gap spelling (G#)", "test_on_cp_1_metric": NOT_CALCULABLE}, "T4C.6": {"definition": "names the missing incorporated Schedule A"}, "T4.10": {"capacity_amount": "gap spelling, a G# gap id (never 0)"}, "T4.13": {"rating": "Insufficient Information"}},

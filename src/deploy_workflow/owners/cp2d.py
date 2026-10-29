@@ -264,7 +264,7 @@ STATE_WORD: dict[OperandStatus, str] = {
 
 
 # Labels that read as plural, so take "are" (stage 2 backlog, cp2d/r13-fix1-review.md L1).
-PLURAL_LABELS = frozenset({OPERAND_LABELS["rcf_drawn"]})
+PLURAL_LABELS = frozenset({OPERAND_LABELS["rcf_drawn"], OPERAND_LABELS["equity_repurchases"]})
 
 
 def verb(label: str) -> str:
@@ -670,7 +670,11 @@ def compose_bridge(
     ordered = _ordered(o.facilities or ())
     absent = _schedule_gap(o)
     undisclosed = _absent(o, "rcf_commitment")
-    drawings = not undisclosed and _absent(o, "rcf_drawn")
+    commitment = _operand(o, "rcf_commitment")
+    # Round 5 item 4: a commitment that is conflicting or not applicable is named first; the
+    # "drawings undisclosed" forms would imply that a revolver exists.
+    unsettled = commitment is not None and commitment.status in ("conflicting", "not_applicable")
+    drawings = not undisclosed and not unsettled and _absent(o, "rcf_drawn")
     with localcontext(_CONTEXT):
         # "Closing cash" in Methods 3 and 5 is T4.6 cash_bs (ruling 2D7).
         cash = _op(o, "cash_bs")
@@ -685,6 +689,11 @@ def compose_bridge(
         )
         end_cash = _diff(_total(cash, over_horizon), _total(amortisation, maturities))
         undrawn: Num = _diff(_op(o, "rcf_commitment"), _op(o, "rcf_drawn"))
+        if unsettled and isinstance(undrawn, OperandGap) and _absent(o, "rcf_drawn"):
+            drawn_label = OPERAND_LABELS["rcf_drawn"]
+            undrawn = replace(
+                undrawn, reason=f"{undrawn.reason}; {drawn_label} {verb(drawn_label)} missing"
+            )
         available = _total(cash, undrawn)
         resources = _total(end_cash, undrawn)
         revolver_reason = RUNWAY_NO_DRAWINGS if drawings else RUNWAY_NO_REVOLVER
@@ -985,7 +994,9 @@ def revolver_state(undrawn: Num) -> tuple[str, str] | None:
         return None
     for name in ("rcf_commitment", "rcf_drawn"):
         label = OPERAND_LABELS[name]
-        if undrawn.reason == state_reason(label, undrawn.status):
+        reason = state_reason(label, undrawn.status)
+        # The commitment's reason may carry "; <drawings> are missing" after it (round 5 item 4).
+        if undrawn.reason == reason or undrawn.reason.startswith(f"{reason}; "):
             return label, STATE_WORD[undrawn.status]
     return None
 

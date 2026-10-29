@@ -154,7 +154,7 @@
                   "amount": "50",
                   "unit": "MILLIONS",
                   "currency": "USD",
-                  "period": "2025-12-31",
+                  "period": "q4-2025",
                   "value_class": "source",
                   "cp2d_operand": "T2E.4.r01.c1",
                   "fact_id": "T3D.1.r01.c1"
@@ -574,7 +574,7 @@
                   "amount": "50",
                   "unit": "MILLIONS",
                   "currency": "USD",
-                  "period": "2025-12-31",
+                  "period": "q4-2025",
                   "value_class": "source",
                   "cp2d_operand": "T2E.4.r01.c1",
                   "fact_id": "T3D.4.r01.c3"
@@ -1219,7 +1219,7 @@
                   "amount": "50",
                   "unit": "MILLIONS",
                   "currency": "USD",
-                  "period": "2025-12-31",
+                  "period": "q4-2025",
                   "value_class": "source",
                   "cp2d_operand": "T2E.4.r01.c1",
                   "fact_id": "T3D.1.r01.c1"
@@ -1632,7 +1632,7 @@
                   "amount": "50",
                   "unit": "MILLIONS",
                   "currency": "USD",
-                  "period": "2025-12-31",
+                  "period": "q4-2025",
                   "value_class": "source",
                   "cp2d_operand": "T2E.4.r01.c1",
                   "fact_id": "T3D.4.r01.c3"
@@ -2279,7 +2279,7 @@
                   "amount": "50",
                   "unit": "MILLIONS",
                   "currency": "USD",
-                  "period": "2025-12-31",
+                  "period": "q4-2025",
                   "value_class": "source",
                   "cp2d_operand": "T2E.4.r01.c1",
                   "fact_id": "T3D.1.r01.c1"
@@ -2696,7 +2696,7 @@
                   "amount": "50",
                   "unit": "MILLIONS",
                   "currency": "USD",
-                  "period": "2025-12-31",
+                  "period": "q4-2025",
                   "value_class": "source",
                   "cp2d_operand": "T2E.4.r01.c1",
                   "fact_id": "T3D.4.r01.c3"
@@ -3880,6 +3880,7 @@
       "prepared-pack",
       "CP-0",
       "CP-1",
+      "CP-1A",
       "CP-2D"
     ],
     "settled_module_adds_input": "refinancing-risk-submission",

@@ -27,8 +27,8 @@ PINS = {
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/cp2d-owner/manifest.json": "166c7b185b363a89968e51c4d847c376042fafdc7cd0f6012751e72dbb63af39",
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
-    "cases/cp2d-owner/expected.json": "0f07bc75d4123a10c9360a5e800bd0727a5625cbaf214c08bb8f3a7a0f2d430c",
-    "cases/cp2d-owner/builder/build.py": "fe138e2c3410d119e17972a4afb067f6d5889a7eda95c97f4d6d63fd6b29d777",
+    "cases/cp2d-owner/expected.json": "ed36f120e432ee90de3f9d91933cb3182893e7aed370c9d38420ecfde8acc3e7",
+    "cases/cp2d-owner/builder/build.py": "ea673c0c6a9d0594d74d7a86a36371cd47659f1ee294de3801f7efdb2acf8bb4",
     "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
 }
 for rel, want in PINS.items():
@@ -779,6 +779,14 @@ def NMC(reason, unit):
     return c
 
 
+def c2d_period(cp2d_case, fact_id):
+    """The `period` of the frozen CP-2D oracle cell this copy reads (re-pinned at the Stage 2 close)."""
+    cells = [c for t in C2D_EXP["cases"][cp2d_case]["tables"].values() for rw in t["rows"]
+             for c in (rw[1] if isinstance(rw[1], list) else [rw[1]]) if c["fact_id"] == fact_id]
+    assert len(cells) == 1, fact_id
+    return cells[0]["period"]
+
+
 def A(d, vc="calculated", cp1=None, cp2d=None, formula=None, period=None):
     return C(amt(d), d, "MILLIONS", vc, cp1=cp1, cp2d=cp2d, formula=formula, period=period)
 
@@ -834,7 +842,7 @@ def build_tables(case):
         w = f"T2E.4.r{ri:02d}"
         resource_gap = x["resources"] is None
         t1.append([f"{x['name']} ({x['id']})", [
-            A(x["principal"], "source", cp2d=w + ".c1"),
+            A(x["principal"], "source", cp2d=w + ".c1", period=c2d_period(s["cp2d_case"], w + ".c1")),
             TXT(x["maturity"].isoformat(), "source", cp2d=w + ".c2"),
             MON(x["months"], cp2d=w + ".c3"),
             TXT("Yes" if x["inside"] else "No", cp2d=w + ".c4"),
@@ -894,7 +902,7 @@ def build_tables(case):
         t4.append([f"{x['name']} ({x['id']})", [
             TXT(x["secured"], "source", cp1=f"T4.18 {x['id']} secured_status"),
             TXT(x["seniority"], "source", cp1=f"T4.18 {x['id']} seniority"),
-            A(x["principal"], "source", cp2d=f"T2E.4.r{ri:02d}.c1"),
+            A(x["principal"], "source", cp2d=f"T2E.4.r{ri:02d}.c1", period=c2d_period(SCEN[case]["cp2d_case"], f"T2E.4.r{ri:02d}.c1")),
             P(x["share"], "principal / total facility principal"),
             GAP(REASON_RANK) if x["claims"] is None else A(x["claims"], formula="sum of principal of facilities ranking at or ahead (secured before unsecured, then seniority)"),
             GAP(REASON_RANK, "MULTIPLE") if x["claims"] is None else X(x["claims_x"], "claims at or ahead / adjusted EBITDA"),
@@ -1233,7 +1241,7 @@ manifest = {
         "frozen CP-2D literals reused byte for byte: the CP-2D step (positive, gap_minimum_cash), the CP-0 CP-2D consumer entry and the cp2d_blocked attempts",
         "frozen CP-2D expected cells: the facts CP-3C consumes (D3 pins); every CP-2D cell read is asserted equal to the source-derived value here",
         "frozen CP-2D builder (pin only: the method of the upstream whose cells are consumed)",
-        "prohibited-conclusion phrase tables transcribed (BC_PROHIBITED, BC_NEAR, BC_NOUN); pin only",
+        "prohibited-conclusion phrase tables transcribed (PROHIBITED, NEAR_INSTRUMENT, INSTRUMENT_NOUN of deploy_vii/business_context.py); pin only",
     ], strict=True)],
     "sources": [
         {"source_id": "identity", "ref": "cases/financial/manifest.json#sources[identity]", "sha256": IDENT_SHA},
@@ -1252,7 +1260,7 @@ manifest = {
         "required": {"CP-0": "block", "CP-1": "block", "CP-2D": "block"},
         "optional": {m: "restricted" for m in OPTIONAL_UNREAD},
         "source": "src/deploy_vii/methodology.json (pinned) and registry.edge_rule (probed 2026-10-28); no edge_rules entry for CP-3C",
-        "bound_in_attempt_inputs": ["prepared-pack", "CP-0", "CP-1", "CP-2D", "refinancing-risk-submission (added when settled)"],
+        "bound_in_attempt_inputs": ["prepared-pack", "CP-0", "CP-1", "CP-1A", "CP-2D", "refinancing-risk-submission (added when settled)"],
     },
     "optional_edges": {
         "read": [],
@@ -1294,7 +1302,7 @@ manifest = {
         {"case_id": "blocked_cp3c", "base": "clone of the positive store before CP-3C begins", "submission": "submissions.json#cp3c_blocked (attempts 0 and 1 both invalid)", "expected": "expected.json#negative_cases.blocked_cp3c"},
         {"case_id": "begin_refused_cp2d_blocked", "base": "clone of the settled upstream with CP-2D settled blocked from cases/cp2d-owner/submissions.json#cp2d_blocked before CP-3C begins", "submission": "none: CP-2D attempt 1 settles blocked and the walk then retains the CP-3C begin as a refusal (no CP-3C attempt)", "expected": "expected.json#negative_cases.begin_refused_cp2d_blocked"},
     ],
-    "fact_copy_rule": "A table cell copied from a CP-1 or CP-2D fact keeps that fact's own value_class and citations or calculation_id (CP-1 T4.18 source; CP-2D principal and maturity source, months and inside-horizon calculated, CP-2D horizon and minimum cash analyst_judgment); amounts are in unit MILLIONS with currency USD on every MILLIONS cell, a missing or not-applicable cell carrying its settled twin's unit and currency (CP-1 T4.10 facts already are; the CP-2D cells already are; CP-2D lease acceptance 1 pins currency USD on every amount cell; the CP-1C rule extends it to gap cells). Copies carry cp1_operand or cp2d_operand in expected.json. For a cp2d_operand copy the amount, unit, state and shown value equal the frozen CP-2D oracle cell; its period and value_class are the CP-2D head fact's own, bound at run time: the period 2025-12-31 and, for a copied gap, the value_class written here are this oracle's proposal, which the CP-2D oracle does not pin (it records neither). A copy of an analyst_judgment fact is never referenced by a claim.",
+    "fact_copy_rule": "A table cell copied from a CP-1 or CP-2D fact keeps that fact's own value_class and citations or calculation_id (CP-1 T4.18 source; CP-2D principal and maturity source, months and inside-horizon calculated, CP-2D horizon and minimum cash analyst_judgment); amounts are in unit MILLIONS with currency USD on every MILLIONS cell, a missing or not-applicable cell carrying its settled twin's unit and currency (CP-1 T4.10 facts already are; the CP-2D cells already are; CP-2D lease acceptance 1 pins currency USD on every amount cell; the CP-1C rule extends it to gap cells). Copies carry cp1_operand or cp2d_operand in expected.json. For a cp2d_operand copy the amount, unit, state and shown value equal the frozen CP-2D oracle cell; its period and value_class equal the CP-2D oracle cell's own `period` and `value_class` (re-pinned at the Stage 2 close release): the balance date 2025-12-31 on every copy except the principal copies, which keep CP-1's T4.18 period q4-2025, and, for a copied gap, the CP-2D gap cell's value_class. A copy of an analyst_judgment fact is never referenced by a claim.",
     "ratio_storage_rule": "Ratio facts (multiples, shares, cover) are stored quantised to 4 dp half-up; the shown value rounds from the stored one (display.py ROUND_HALF_UP); amounts are exact Decimals.",
     "fixtures": [{"fixture_id": k, "kind": "composer-level unit fixture, not a pack run", "construction": v["note"]} for k, v in FIXT.items()],
     "consumer": {
@@ -1511,7 +1519,7 @@ expected = {
     "cp3c_module": {
         "module_id": "CP-3C",
         "status_rule": "restricted: own limitations are non-empty and CP-0, CP-1 and CP-2D heads are restricted",
-        "attempt_inputs": ["prepared-pack", "CP-0", "CP-1", "CP-2D"],
+        "attempt_inputs": ["prepared-pack", "CP-0", "CP-1", "CP-1A", "CP-2D"],
         "settled_module_adds_input": "refinancing-risk-submission",
         "inherited_limitations_rule": "CP-0 head + CP-1 head + CP-2D head, each its limitations then inherited, de-duplicated, own findings removed (execution.py:345-366); the CP-2D own limitation strings 'Minimum cash is an analyst assumption, not a source figure.' (and its other lines) arrive as inherited where CP-3C does not repeat them; CP-3C repeats the first so it appears once, as own; bound at run time",
         "table_ids": USED_TABLES,

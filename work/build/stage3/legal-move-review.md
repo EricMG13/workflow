@@ -26,3 +26,27 @@ The funding-gap move is right. The move is incomplete, though: the legal fixture
 The probe is `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/oracle-review-B/p4_legal_figures.py`. It exits 1 because the fixture draws a figure and the oracle records none.
 
 Not verified: the CR.1 mark values in the legal render were not compared with any oracle, because none exists yet. I did not run `tests/test_legal_render.py` with the helpers removed. FP-05 blocks are outside this fixture's pathway.
+
+## Scoped re-check of 724a0ad
+
+## Legal CR.1 re-check (724a0ad): APPROVE
+
+The Medium finding is fixed. Both legal cases now pin the CR.1 figure, and the pinned values match what the fixture renders.
+
+**Probe p5** (`/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/oracle-review-B/p5_legal_cr1.py`) exited 0 with 0 mismatches. It renders each case and compares it with `cases[i].cr1_figure`, value by value:
+- **Figure and block:** block kind and state, tab_label None, no tabs, one figure, fig_id, placement beside, kind bullet, series, unit x and unit class multiple all match.
+- **Marks:** series, category "Maintenance leverage test", text and Decimal value match, in order.
+- **Gap case:** Headroom renders `∅ G1` with value None, which matches `gap_ref_pattern`.
+- **Twin:** cell texts equal the mark texts. Each label starts with `label_parts[0]` and contains the later parts in order, with the run-time `[S1]` and `G2` filled in.
+- **No other legal block** carries a figure.
+
+**Against the fixture and the CR.1 rules (by reading)**
+- The values come from `fixture.shared_rows[2]`: threshold text 4.00x, current 1, headroom 3, share 0.75, comparison "Not more than", and the CP-1 metric text.
+- The gap overrides are applied as `cases[1].overrides` gives them: headroom and share missing with their limitation, and the test text "Not calculable".
+- The companion ids and labels follow `cases/charts/cr1-expected.json` positive and gap exactly. They differ only where this fixture's own facts differ: the category label, the CP-1 metric text, and headroom 3 rather than 3.00.
+- The threshold keeps its settled text and strict-parse rule.
+- The gap reason is the fixture's limitation, copied verbatim, not typed.
+
+**Builder target:** `cr1_builder_target` asserts the figure, the marks, the twin and that no other block has a figure. It reads only the legal oracle.
+
+Not verified: the target has not been turned into test code, so `tests/test_legal_render.py` still has no figure assertions and was not re-run. The `source` prose field was read only in part.

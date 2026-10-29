@@ -1031,7 +1031,7 @@
       "verification": "byte-preserved; not new-project functional acceptance"
     },
     {
-      "destination": "tests/test_inputs_portfolio.py",
+      "destination": "tests/product/test_inputs_portfolio.py",
       "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
       "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
       "source_path": "tests/product/test_inputs_portfolio.py",

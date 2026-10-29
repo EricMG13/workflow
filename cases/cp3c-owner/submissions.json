@@ -76,9 +76,9 @@
       "module_id": "CP-3C",
       "status": "READY_WITH_LIMITATIONS",
       "handoff_item": "None: the refinancing assessment does not read business and ownership context",
-      "why_it_matters": "Business and ownership context would inform the owner-support and asset-sale paths, which stay Insufficient Information without it",
+      "why_it_matters": "Business and ownership context would inform the owner-support and asset-sale path, which stays Insufficient Information without it",
       "gap": "Business and ownership context is not read by the refinancing assessment",
-      "required_action": "State the owner-support and asset-sale paths as Insufficient Information and list business context as an own limitation",
+      "required_action": "State the owner-support and asset-sale path as Insufficient Information and list business context as an own limitation",
       "citations": [],
       "flag_topics": []
     }

@@ -1565,3 +1565,16 @@ def test_issue_list_is_bounded_to_the_issue_count() -> None:
     with pytest.raises(ValueError) as raised:
         cp1d.compute(_unknown_addbacks([f"L{n}" for n in range(300)]))
     assert len(str(raised.value)) < 20 * 700
+
+
+def test_partly_supported_recipe_text_states_the_comma_space_grammar() -> None:
+    """Stage 2 close: the oracle's recipe describes the figure grammar the validator applies
+    (rounds 12 and 13): a figure is a whole numeral run and a comma joined to a digit, with at
+    most one space, never starts or ends one."""
+    recipe = EXPECTED["refusal_rules"]["partly_supported"]
+    for needle in (
+        "a digit and a comma (with at most one space)",
+        "`1, 250`",
+        "exactly one numeral run",
+    ):
+        assert needle in recipe, needle

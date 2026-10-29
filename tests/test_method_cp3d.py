@@ -227,29 +227,13 @@ def test_fixture_stored_values(fixture: str) -> None:
 MUTATIONS = SUBMISSIONS["refusal_mutations"]
 
 
-# Round 13 addendum 2 (item 8): the frozen quote reads `December 31, 2029`, and `31, 2029` is one
-# run, so `31` is no figure. Mutation id -> its issue now. Remove the delta at the Stage 2 re-pin.
-STAGE2_REFUSAL_DELTA = {
-    "amortisation_nonzero": "amortisation: value_text 31 does not occur in the quote",
-}
-
-
 @pytest.mark.parametrize("entry", MUTATIONS["entries"], ids=lambda e: e["id"])
 def test_refusal_mutation_yields_exactly_its_issue(entry: dict[str, Any]) -> None:
     raw = _edited(SUBMISSIONS[MUTATIONS["base"]], entry["edits"])
     ctx = _context(MUTATIONS["base"])
     issues = cp3d.submission_issues(submission=_submission(raw), context=ctx)
-    expected = STAGE2_REFUSAL_DELTA.get(entry["id"], entry["issue"])
-    assert list(issues) == [expected]
-    if entry["id"] not in STAGE2_REFUSAL_DELTA:
-        assert entry["all_issues"] == [entry["issue"]]
-
-
-def test_stage2_refusal_delta_is_still_pending() -> None:
-    """Remove the delta at the Stage 2 re-pin: this fails once `cases/` is re-pinned, because the
-    frozen `amortisation_nonzero` issue then equals the delta table's and the table has no job."""
-    frozen = {e["id"]: e["issue"] for e in MUTATIONS["entries"]}
-    assert all(frozen[k] != v for k, v in STAGE2_REFUSAL_DELTA.items())
+    assert list(issues) == [entry["issue"]]
+    assert entry["all_issues"] == [entry["issue"]]
 
 
 def test_amortisation_above_zero_is_refused_on_a_page_without_a_date() -> None:

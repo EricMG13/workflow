@@ -700,7 +700,7 @@ def test_entry_validator_reproduces_the_oracle_refusals(entry: dict[str, Any]) -
     case = base.MUTATIONS["base"]
     store = _PayloadStore(case, json.dumps(raw))
     outcome = cp3d.ENTRY_VALIDATOR(cast(Any, store), _pack(case), _attempt_with_payload("p" * 64))
-    expected = base.STAGE2_REFUSAL_DELTA.get(entry["id"], entry["issue"])
+    expected = entry["issue"]
     assert list(outcome.issues) == [expected]
     assert outcome.output is None
 

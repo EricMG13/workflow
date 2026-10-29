@@ -1633,7 +1633,7 @@ def main():
         },
         "negative_cases": {
             "blocked_cp2e": {"attempt_0_issue": BLOCKED["attempt_0"]["issue"], "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
-                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, no head"},
+                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)"},
             "begin_refused_cp0_blocked": "CP-0 blocked or stale refuses begin of CP-2E (edge_rule block, no attempt consumed); built on a clone with two invalid CP-0 attempts, no literal",
             "stale_binding": "a snapshot change between the last read_pages and the submit refuses stale_binding",
         },

@@ -661,7 +661,13 @@ def _topic_row(r: TopicResult, pair_period: str, cp1: Mapping[str, Fact]) -> _Ce
             ("change_pct", pct_label, "PERCENT"),
         ):
             cells.add(
-                field, label, status="missing", unit=unit, period=pair_period, limitation=reason
+                field,
+                label,
+                status="missing",
+                unit=unit,
+                period=pair_period,
+                limitation=reason,
+                derives=derives,  # the lineage its known siblings carry (Stage 2 close)
             )
     else:
         cells.add(

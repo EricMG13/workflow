@@ -199,7 +199,7 @@ From the independent review (`docs/reviews/s1a-g2-lease-review.md`).
 - **L3:** model blocks rendered outside any scope section are an S1a scope limitation.
 - **L4:** the "analytical after deterministic" G1 change belongs to the S1b lease.
 
-## Rev 2 amendments (Modules, 2026-10-29) — override the body and rulings
+## Rev 2 amendments (Modules, 2026-10-29) — override the body and rulings — FROZEN by Modules 2026-10-29 after mx-precise a6a7d04d (APPROVE)
 
 Prepared for `docs/rulings/2026-10-29-stage3.md` item 2 on the release base `ab9777f`. It compiles one `DELIVERY_SCOPES` row per module run that has a frozen owner oracle, from the module leases, the oracles, the run drivers and the code. It needs an independent mx-precise approval before the G2 build starts; Modules freezes the banner texts on that approval. Rev 1 (M1-M3, L1-L4) stands except where this section says otherwise. Every line number below is on `ab9777f`.
 
@@ -210,7 +210,7 @@ Prepared for `docs/rulings/2026-10-29-stage3.md` item 2 on the release base `ab9
 - **Empty `sections` is valid.** Four rows are rails-only (`slice-cp2e-sensitivity`, `slice-cpdr-research`, `slice-cpl10-screen`, and CP-5's share of the gated R6 row). Their proof is the rail proof alone; `render-receipt.json` records `sections == []`. The "complete requires every assigned block populated" rule holds vacuously.
 - **Blocked heads stay refused (Q6, M1).** Each oracle's `blocked`, `*_blocked` and `begin_refused_*` cases produce a blocked head or a refused begin on a blocked upstream. They are not scope outcomes. G2 raises `owner_render_*` on them, and each new scope's acceptance asserts that for every such case its driver offers.
 - **Model rule (overrides body `:59`).** `complete` requires `receipt.model` set and published if and only if `"CP-MODEL" in requested_modules`. Otherwise it requires `receipt.model is None` and no publication directory. A model or directory where none is expected is refused with an `owner_render_*` code.
-- **Refused outcome (M1 applied per scope).** A scope supports `refused` only where its oracle pins a refused run (`cases.refused`: one `RefusedBegin`, heads `["CP-0"]`, no model) **and** its run driver can produce it. The driver condition is new: acceptance imports the driver (M2) and G2 never builds a run. Where the oracle pins a refused run but `CASES` lacks it, the outcome is deferred and listed in R2.5.
+- **Refused outcome (M1 applied per scope).** A scope supports `refused` only where its oracle pins a refused run (the oracle's refused case, `cases.refused`, or `refused/no_record` for CP-8: one `RefusedBegin`, heads `["CP-0"]`, no model) **and** its run driver can produce it. The driver condition is new: acceptance imports the driver (M2) and G2 never builds a run. Where the oracle pins a refused run but `CASES` lacks it, the outcome is deferred and listed in R2.5.
 
 ### R2.2 Scope table (keyed by `scope_id`)
 
@@ -248,7 +248,7 @@ All 19 triples are distinct (R2.7 says how this was checked). Positive and gap r
 
 ### R2.4 Banner texts (draft; Modules freezes on approval)
 
-Style as rev 0: what the scope covers, then that the rest remains unqualified. No numbers, no module codes. The refused text names no cause beyond the pinned one (`cp1_not_authorized`). `html.escape` is applied as in the body.
+Style as rev 0: what the scope covers, then that the rest remains unqualified. No numbers, no module codes. The refused text names no cause beyond its oracle's pinned one. `html.escape` is applied as in the body.
 
 | scope_id | outcome | literal |
 |---|---|---|
@@ -331,7 +331,7 @@ Rev 1's list (1-7) applies to `cp1-model` and `s1a-credit-snapshot` unchanged. F
 
 1. **Block check.** For each assigned section and each complete case: the five fields title, owner, kind, state and tabs (table id, label, rows and cells with `fact_id`, `field`, `shown`, `state`) equal the oracle block; `numbered`, `summary` and `lines` where the oracle has them (`cp3`, `cp6`, `cp8`). Gap cells match the `∅ G#` pattern and G numbers are sequential in report order. The render-receipt `sections` are exactly the row's ids in pathway order, and their bound-fact hashes equal the receipt heads.
 2. **Rails.** Every table in the oracle's `evidence` and `limitations` rails is on its module's payload, and module limitations equal the oracle's (own, settled and inherited, as the oracle splits them).
-3. **Outcomes.** Each complete case yields outcome `complete` with the row's banner; where the row supports `refused`, that case yields `refused` with its banner, blocks show their `not_run`-family state (`report_view.py:1304-`) with no bound facts, and there is no publication; every other outcome raises. The block state on the refused page comes from the core `report_view` honest-state code on purpose, since G2 does not own it; the test takes the producer ids from the oracle's `refused_begins` and `heads`, not from G2.
+3. **Outcomes.** Each complete case yields outcome `complete` with the row's banner; where the row supports `refused`, that case yields `refused` with its banner, blocks show their `not_run`-family state (`report_view.py:1304-`) with no bound facts, and there is no publication; every other outcome raises. The block state on the refused page comes from the core `report_view` honest-state code on purpose, since G2 does not own it; the test takes the producer ids from the oracle's `refused_begins` and `heads`, not from G2; for CP-8 it reads the oracle's `begin` and `rendered` fields, because `refused/no_record` has no `refused_begins` or `heads`.
 4. **Blocked and unsupported.** Every `blocked`, `*_blocked` and `begin_refused_*` case the driver offers raises `owner_render_*`; so does a refused receipt on a row without `refused`.
 5. **Scope refusal.** A Run with an outside `requested_modules` (one module added, dropped, or reordered) is refused. The triple-uniqueness test of R2.3.
 6. **Banner.** Exactly one banner section carrying the row's literal for the outcome, `html.escape`d; the page minus the banner equals `render(view)`.

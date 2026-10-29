@@ -477,3 +477,4 @@
 - 14:27 Legal move review REVISE (a802522e): M CR.1 now drawn on covenant-tests-headroom in both legal fixtures, unrecorded in the legal oracle. Fix round 1 to preparer a2f57624.
 - 14:30 Legal move re-check APPROVE (a802522e, p5 probe 0 mismatches); FROZEN 724a0ad (item 18). Test builder (mx-scaffold) dispatched.
 - 14:31 Legal test builder done claude/s3-legal-test 2e06b2a (workaround removed; test_cr1_covenant_headroom_figure_matches_oracle x2; 79 passed; p5 0; agent=mx-scaffold ae36d281 fix-rounds=0 gates-first-pass=y). Merges into s3-int with the G2 continuation; reviewed by the Stage 3 review.
+- 14:40 Stage 4 plan done (mx-architect Fable a7133de1): work/build/stage4/plan.md. Batch 1 classes A-D (owner_workflow.py; after Stage 3 closes); batch 2 class E CP-8 rails (after E1 + G2 continuation). User decisions D1, E1, E2.

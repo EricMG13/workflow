@@ -1,28 +1,41 @@
-STOPPED at step 3 of the brief. No edits and no commits other than the merge. This decision goes to the user (the E1 choice).
+Batch 2 is built and committed. The one thing to confirm is that the `_prose_lines` fallback for malformed brackets (below) is acceptable. The `.venv` link is removed and the tree is clean.
 
-Worktree: /Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/agent-a7e48f47956c9ff2e. Branch claude/s4-batch2 is at tip 766ca1e. That is 4c69ebc plus the `--no-ff` merge of claude/s4-cp8-oracle (f4d1f93). `PINS.json` merged without conflict. f80d2d3 is already an ancestor of 4c69ebc, so I did not merge it. I made no `.venv` link.
+**Worktree and tip:** `/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/agent-a7e48f47956c9ff2e`, branch `claude/s4-batch2`, tip 133e2ec.
+- 766ca1e is 4c69ebc plus the merge of the frozen CP-8 oracle.
+- 8abfb0c carries the code and tests.
+- 133e2ec is the `docs/reuse/manifest.json` record.
+- I did not edit `cases/`, a lease, `tests/test_owner_rendering.py` or `owner_rendering.py`.
 
-Why the brief's step 3 cannot be done in `owner_rendering.py`:
-- `owner_rendering.py` does not render the block. `_capture` calls `core_render.render(view)` and `report_view.build(view, pathway, SHIPPED_MAPS)`.
-- It then requires `payload_blocks[id] == _expected_block_payload(block)` in `_sections`. It only verifies the page against the facts.
-- The `what-changed` block is a prose block. `report_view._prose_lines` (~:1600-1640) emits a known text fact's `item.text` verbatim, as a `text` run.
-- With the token stored in the fact (`[T7.3.window.realized_value]`), the page would show the raw token. The page and its payload come from `src/deploy_vii` (`report_view.build` and `render`).
-- A resolve step inside `owner_rendering.py` would either not change the page, or would mismatch the payload equality check. Making it match would mean patching the rendered HTML and payload as strings, which I rejected as a workaround.
-- Real resolution needs `_prose_lines` to call the public `report_view.resolve(text, bound, refs)` (:1103) for a known text fact that carries `[...]` tokens. `resolve` already gives the gap as `ClaimRun(kind="gap", ref_id=G<n>)`, and it fails closed on `prose.issues` findings. That edit is in `src/deploy_vii/`, which the brief forbids.
+**Changes**
+- `src/deploy_workflow/owners/cp8.py`: removed `GAP_PLACEHOLDER`. `_resolved` now spells known figures only, so the outcome fact keeps its `[T7.3.window.realized_value]` token.
+- `src/deploy_vii/report_view.py`, `_prose_lines` only: a known text fact that carries a well-formed `[ref]` or `{ref|unit}` token goes through the unchanged `resolve()`. New helpers are `_carries_reference` and `_token_runs`. A known fact gives its figure run, a gap gives the page's `∅ G<n>` run, and a token naming a fact outside the module raises `ValueError`.
+- Text whose brackets are not reference syntax (for example CP-3's `[Insufficient Information]`) stays literal prose. This is a documented narrow `except ValueError` in `_carries_reference`, not logged.
+  - Edge: a fact mixing a valid token with a stray bracket also renders raw.
+  - Without the fallback, `tests/test_connect_cp3.py` broke on that label.
+- `tests/test_method_cp8.py`: the item 21 RED test (no `G#` in any product fact, a non-vacuous guard on the `no_outcome` outcome fact, `GAP_PLACEHOLDER` absent). `oracle_cell` now compares this fact's token `text` directly.
+- `tests/test_connect_cp8.py`: three render tests. The outcome cell shows `∅ G<n>`, with `n` taken from `gap_refs(build_index(view))`. A known window token renders as a figure. A token outside the module fails closed.
+- `docs/reuse/manifest.json`: one `post_import_patches` record for `report_view.py` (prior 1f50c7b9, new cbb4c368, project commit 8abfb0c).
 
-Reads of CP-8 files (no gates run):
-- `cp8.py` `_resolved` and `GAP_PLACEHOLDER` (:104) are as the plan describes (:2156-2174).
-- In the frozen oracle, `cp8.what_changed.outcome.value` has `text` equal to the token form, `shown` equal to `∅ G#`, and `claims[0].resolved` containing `∅ G#`.
-- The oracle review found no E2 hits outside CP-8.
+**RED evidence:** before the code change, the placeholder test failed (2 cases), and the three render tests failed with the raw token on the page and no `ValueError`. After it, 1301 passed in the two CP-8 files.
 
-Decision for the user (E1):
-- Option A: allow a `report_view._prose_lines` edit, so a known text fact with tokens is resolved via `resolve`. Batch 2 would then also touch `src/deploy_vii/`, and `report_view` tests would need to move.
-- Option B: keep the placeholder literal. This is the fake the ruling names, so I do not recommend it.
+**Gates**
+- `pytest tests/test_method_cp8.py tests/test_connect_cp8.py tests/test_connected_render.py`: 0 (1315 passed).
+- `pytest tests/test_connect_*.py` (full) plus the first three files: 0 (3113 passed, 2 skipped).
+- `tests/test_owner_rendering.py -k fast`: 0 (152 passed).
+- `tests/test_chart_seam.py`, `test_earnings_render.py`, `test_legal_render.py`, `test_cp1_chart_render.py`: 0 (261 passed).
+- `python3 -I cases/pins.py --check`: 0.
+- `MYPYPATH=src mypy --strict` on `report_view.py`, `cp8.py` and `owner_rendering.py`: 0.
+- `ruff format --check`: clean after formatting.
+- `ruff check`: one SIM102 at `report_view.py:312`, in code I did not touch; none in my lines.
+- Suppressions: none added.
+- E2 grep: the only known fact with `∅ G#` is the oracle's own `shown` pattern on `cp8.what_changed.outcome.value`.
+- `probe_d12_strict.py ... 697fe8a HEAD`: my record passes (chain=ok, item19=ok). Failures it still reports predate this work and belong to the owner:
+  - 3e5b537 and 24f879a (`report_view`);
+  - the `statement_extract.py` c81932f entry, which is misplaced and has a sha mismatch. I did not see 8aef58d in the output.
+- No test outside the CP-8 files moved after the `_carries_reference` fallback. There are no `tests/test_report_view*.py` files.
 
-If the user chooses A, I can run the whole batch: the RED tests, `cp8.py`, `tests/test_method_cp8.py` and `tests/test_connect_cp8.py`. I need the extra file scope named.
+**Deferred:** `cd <worktree> && .venv/bin/python -m pytest tests/test_owner_cp8.py` (needs the `.venv` link to the lane, which I removed).
 
-RED tests, gates and the deferred `tests/test_owner_cp8.py` command: none written or run.
+**Ledger:** agent=mx-feature fix-rounds=0 gates-first-pass=n (the CP-3 break fixed before commit).
 
-Ledger: agent=mx-feature fix-rounds=0 gates-first-pass=n/a (BLOCKED at step 3).
-
-Not verified: all gates, the RED tests, the claim that no other `owner_rendering.py` route exists beyond the one I read (`_capture` and `_sections`), and the pytest effect of the merge.
+Not verified: `tests/test_owner_cp8.py` (deferred); the full suite; whether the real owner-rendered CP-8 page (`_capture`'s page and payload equality) now carries `∅ G<n>`, since no owner-run render was exercised; a `report_view.py` edit that leaves the owner's older D12 failures; the mixed valid-token plus stray-bracket text.

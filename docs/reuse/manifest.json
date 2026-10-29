@@ -1071,8 +1071,8 @@
     {
       "destination": "src/deploy_vii/live/submission.py",
       "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
-      "prior_project_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
-      "project_commit": "lead/0d-d (uncommitted)",
+      "prior_project_sha256": "1b4aaa0967a5a9308e9061ceea6d365f1f7ee5ab88a8457fa18dffa073312186",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
       "sha256": "173547f9a18bc43afaf3acf2ddc569ed398353b672b6856500f29d7f95e75445",
       "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload. Also 0d-c made _Resolver.unbound an insertion-ordered dict of issues built by execution.clipped (at most 600 characters each, an id never copied whole), returned by prefill as a tuple. Also 0d-d: the pre-fill _Resolver indexes binding rows, facility rows, the entity's scopes (_Scopes) and the context's source classes and entities once, and parses a matched facility row once; last facility row still wins; output unchanged.",
       "review": "work/lead/product-defects-0d/"
@@ -1144,7 +1144,7 @@
       "destination": "src/deploy_vii/methodology.json",
       "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "prior_project_sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
-      "project_commit": "lead/cp6-freeze (uncommitted)",
+      "project_commit": "e22dafee8ea42577d8cf1dd4308644dabba645af",
       "sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
       "reason": "Serialised methodology change with the CP-6 half freeze of the CP-3/CP-6 owner lease (ruling Q7, D12): T6-FINAL registered in CP-6 table_ids; it collides with no module table id (CP-0's T6 is a different string) and no product code reads table_ids.",
       "review": "work/lead/cp6-freeze/"
@@ -1185,7 +1185,8 @@
     {
       "destination": "src/deploy_vii/cp3_relative_value.py",
       "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
-      "project_commit": "lead/0d-d (uncommitted)",
+      "prior_project_sha256": "5811d454e61ca5aabc6fdef8680c382b836f714680b336d4a8b11619e9e8208b",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
       "sha256": "6c80484307aef1d6c6d3b17d7432f642fdd4b11f0a3db2b26cdb3cbf8f5a9f7f",
       "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check. Also 0d-d: instrument duplicates and the preference ordering checks use Counter and a set built once instead of list.count and list membership per row.",
       "review": "work/lead/product-defects-0d/"
@@ -1193,7 +1194,8 @@
     {
       "destination": "src/deploy_vii/cp4_legal.py",
       "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
-      "project_commit": "lead/0d-d (uncommitted)",
+      "prior_project_sha256": "5b005aaf8d496051958fd1c17943a2e226a7ab05f62cad63af8f58a2bad73312",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
       "sha256": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
       "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check. Also 0d-d: _shape_issues counts duplicate documents with Counter instead of list.count per row.",
       "review": "work/lead/product-defects-0d/"
@@ -1217,7 +1219,8 @@
     {
       "destination": "src/deploy_vii/business_context.py",
       "imported_sha256": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
-      "project_commit": "lead/0d-d (uncommitted)",
+      "prior_project_sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
       "sha256": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
       "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check and in _populated. Also 0d-d: duplicate and unknown-id checks count with Counter and a set built once instead of per row.",
       "review": "work/lead/product-defects-0d/"
@@ -1484,7 +1487,8 @@
     {
       "destination": "src/deploy_vii/readiness.py",
       "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
-      "project_commit": "lead/0d-d (uncommitted)",
+      "prior_project_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
       "sha256": "119058ff8a238f29aa418da7d43110686ad0ba9d0362d5d77b989f798d088f1f",
       "reason": "0d-d: shape_issues drops a container echo by one pass over loc prefixes (_echoed), absence_issues bounds a claimed page range by the source's page count (_retains) and validate_review indexes attachment sets and READY consumers once; output and order unchanged.",
       "review": "work/lead/product-defects-0d/"
@@ -1492,7 +1496,8 @@
     {
       "destination": "src/deploy_vii/source_context.py",
       "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
-      "project_commit": "lead/0d-d (uncommitted)",
+      "prior_project_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
       "sha256": "d9fb02de160c9710378308a3dc2d4f32096cfb90de5680bf8a48e7d50c9bb9d0",
       "reason": "0d-d: validate_source_context builds each event's cited sources, the scanned (source, event) pairs and the first review per source once instead of per reference; output and order unchanged.",
       "review": "work/lead/product-defects-0d/"

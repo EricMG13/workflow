@@ -25,7 +25,7 @@ PINS = {
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
     # Text-checked only (the literal tables below are asserted to appear in them). A changed pin is the
     # prompt to re-run these checks and move the pin in the same commit; D12 registrations touch the first.
-    "src/deploy_vii/report_view.py": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+    "src/deploy_vii/report_view.py": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
     "src/deploy_vii/assets/app.js": "0f0fe30bf97384d46ebfba4d6d09bc1b179918d6c36cba03b7ef8ee149bf7706",
     "src/deploy_vii/render.py": "7bf8d889fb8f5b74d84f0239664c801a1c0fcfbc3a40e32da6ea49f1cd8bf253",
     "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",

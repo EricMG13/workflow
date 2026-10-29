@@ -26,7 +26,7 @@
     },
     {
       "path": "cases/cp2d-owner/manifest.json",
-      "sha256": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
+      "sha256": "166c7b185b363a89968e51c4d847c376042fafdc7cd0f6012751e72dbb63af39",
       "use": "frozen CP-2D manifest: CP-1 fact_bindings predicates reused by CP-2D's own step"
     },
     {
@@ -41,12 +41,12 @@
     },
     {
       "path": "cases/cp2d-owner/builder/build.py",
-      "sha256": "c274ce84e12541855b8dbe4bd66bada4a7f34298869b0901d47a2e10517c6b04",
+      "sha256": "fe138e2c3410d119e17972a4afb067f6d5889a7eda95c97f4d6d63fd6b29d777",
       "use": "frozen CP-2D builder (pin only: the method of the upstream whose cells are consumed)"
     },
     {
       "path": "src/deploy_vii/business_context.py",
-      "sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
+      "sha256": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
       "use": "prohibited-conclusion phrase tables transcribed (BC_PROHIBITED, BC_NEAR, BC_NOUN); pin only"
     }
   ],

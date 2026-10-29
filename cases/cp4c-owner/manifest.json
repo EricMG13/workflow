@@ -5,17 +5,17 @@
  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
  "pins": {
   "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-  "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+  "cases/legal/manifest.json": "3da3b74666346c7fc1423b2103bef3a2d467b2799a48774c7db0e912a0403ed4",
   "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
   "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
   "cases/cp2g-owner/manifest.json": "d69738e224d57c8f81ed4f966a6db8ea06dd2c6f5d4f2c58013d663a0b1cf95d",
   "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
   "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
-  "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
+  "cases/cp4-owner/submissions.json": "ed069b1accead9b55fc844b7a5e84f8a3f91bc87582949f2817ebd2438aaf43c",
   "cases/cp4-owner/expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
-  "cases/cp3c-owner/manifest.json": "9d99e574f12a81f910997dcaa61607d2fd4635ea7300c5c35d8b833dfb09976f",
+  "cases/cp3c-owner/manifest.json": "e8aaf2eb316c7e88ed94a7c73f1540ade1b728159a5124d389ca67faae22d904",
   "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
-  "src/deploy_vii/business_context.py": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280"
+  "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde"
  },
  "sources": {
   "identity": {

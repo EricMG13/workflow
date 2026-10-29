@@ -20,6 +20,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import TypeAdapter, ValidationError
+from pydantic_core import InitErrorDetails
 
 from deploy_vii import business_context as bc
 from deploy_vii import cp3_relative_value as cp3
@@ -484,7 +485,7 @@ def _loc(rng: random.Random) -> tuple[int | str, ...]:
     return tuple(rng.choice(_KEYS) for _ in range(rng.choice([0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 6])))
 
 
-def _synthetic_line(rng: random.Random, pool: list[tuple[int | str, ...]]) -> dict[str, Any]:
+def _synthetic_line(rng: random.Random, pool: list[tuple[int | str, ...]]) -> InitErrorDetails:
     r = rng.random()
     where = rng.choice(pool) if pool and rng.random() < 0.7 else _loc(rng)
     if r < 0.45:
@@ -515,7 +516,7 @@ def test_shape_issues_equals_the_pairwise_reference() -> None:
         rng = random.Random(seed)
         pool = [_loc(rng) for _ in range(rng.choice([1, 2, 3, 5]))]
         lines = [_synthetic_line(rng, pool) for _ in range(rng.choice([1, 2, 3, 4, 6, 9, 14]))]
-        error = ValidationError.from_exception_data("T", lines)  # type: ignore[arg-type]
+        error = ValidationError.from_exception_data("T", lines)
         assert shape_issues(error) == _pairwise_shape(error), seed
 
     class Inner(BaseModel):

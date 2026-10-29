@@ -25,11 +25,11 @@ PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-    "cases/cp2d-owner/manifest.json": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
+    "cases/cp2d-owner/manifest.json": "166c7b185b363a89968e51c4d847c376042fafdc7cd0f6012751e72dbb63af39",
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
     "cases/cp2d-owner/expected.json": "0f07bc75d4123a10c9360a5e800bd0727a5625cbaf214c08bb8f3a7a0f2d430c",
-    "cases/cp2d-owner/builder/build.py": "c274ce84e12541855b8dbe4bd66bada4a7f34298869b0901d47a2e10517c6b04",
-    "src/deploy_vii/business_context.py": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
+    "cases/cp2d-owner/builder/build.py": "fe138e2c3410d119e17972a4afb067f6d5889a7eda95c97f4d6d63fd6b29d777",
+    "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
 }
 for rel, want in PINS.items():
     got = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()

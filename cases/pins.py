@@ -31,7 +31,9 @@ PATTERNS = (
 
 def current():
     paths = sorted({p for pattern in PATTERNS for p in ROOT.glob(pattern)})
-    return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+    return {
+        p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths
+    }
 
 
 def main(argv):
@@ -44,7 +46,11 @@ def main(argv):
         print(f"wrote {OUT.relative_to(ROOT)}: {len(pins)} paths")
         return 0
     recorded = json.loads(OUT.read_text(encoding="utf-8"))
-    drift = [f"{k}: {recorded.get(k, 'unlisted')} -> {pins.get(k, 'missing')}" for k in sorted(set(recorded) | set(pins)) if recorded.get(k) != pins.get(k)]
+    drift = [
+        f"{k}: {recorded.get(k, 'unlisted')} -> {pins.get(k, 'missing')}"
+        for k in sorted(set(recorded) | set(pins))
+        if recorded.get(k) != pins.get(k)
+    ]
     print("\n".join(drift) if drift else f"cases/PINS.json matches {len(pins)} paths")
     return 1 if drift else 0
 

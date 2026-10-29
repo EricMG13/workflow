@@ -114,7 +114,8 @@ def twin(points):
     return {
         "columns": ["Value"],
         "rows": rows,
-        "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order",
+        "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
+        "rule": "cell texts equal the mark texts in order",
     }
 
 
@@ -300,6 +301,12 @@ def build_s5():
             "figures": [{"fig_id": "S.5", "placement": "beside", "summary": None}],
             "tabs": "unchanged: the CP-1 registers bound to this block (bindings/cp1.py:41-50)",
             "other_blocks": "model-chart-strip keeps S.1 to S.4 unchanged; metric-strip (FP 02) is not given S.5",
+            "earnings_update": {
+                "pathway": "earnings_update",
+                "block_id": "financials-credit-metrics",
+                "figures": [],
+                "reason": "the block is one _Spec shared by credit_snapshot and earnings_update (report_view.py:495,519,1102); the approved FP-02 page collapses it and shows no S.5 (rbot-fp-02-earnings-update.dc.html:113), so S.5 is not drawn there and the block renders as before (ruling 2026-10-29 item 9, M1)",
+            },
         },
         "builder_targets": [
             {
@@ -317,6 +324,13 @@ def build_s5():
                     "mark values of the revenue series == [Decimal('30')] * 4 and of adjusted_ebitda [Decimal('7.5')] * 4; mark texts '30' and '8'; table twin cell texts equal mark texts in order",
                     "a gap fact renders '∅ G<n>' with ref_id 'G<n>' and value None; the other series keep their marks",
                     "S.1 to S.4 in model-chart-strip are unchanged (regression)",
+                    "report_view.build on an earnings_update run: block 'financials-credit-metrics' has figures == () (no S.5), tabs and rows as before; S.5 is dispatched only for the credit_snapshot pathway",
+                ],
+            },
+            {
+                "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)",
+                "assert": [
+                    "an S.5 entry point beside _cp1_strip (report_view.py:1652,1665 force exactly S.1-S.4 and kind 'line' except S.4 'grouped'), or those checks generalised; _block (report_view.py:1807) draws figures for a period_grid spec, not only for chart specs",
                 ],
             },
         ],
@@ -526,6 +540,12 @@ def build_rv3():
                     "report_view.build(view, relative_value pathway, SHIPPED_MAPS) block 'peer-positioning': owner CP-1C, kind dense, state populated, figures fig_id 'RV.3a' (percent) then 'RV.3b' (multiple), both titled 'Peer positioning', caption Fig. RV.3, tabs unchanged",
                     "ChartSpec kind 'range' (ChartKind gains it; charts.py renders it); mark texts equal format_value of the panel unit_class; gap marks have value None and ref_id G<n>",
                     "table twin cell texts equal the mark texts, in point order, per panel",
+                ],
+            },
+            {
+                "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)",
+                "assert": [
+                    "ChartKind (report_view.py:56) gains 'range' with charts.py geometry (design lib/charts.js rangeStrip); _chart_fact_cell accepts unit_class 'percent' (report_view.py:1616-1617 refuse it today); _block dispatches figures per producer (CP-1C here), not only the CP-1 path at report_view.py:1807",
                 ],
             },
         ],
@@ -750,9 +770,15 @@ def build_cr1():
             {
                 "test_file": "tests/test_legal_render.py (render)",
                 "assert": [
-                    "report_view.build on the covenant_refinancing CP-4 run: block 'covenant-tests-headroom' has figures [CR.1] (placement 'beside'), tab_label as before (T4.9 'Covenant tests and headroom'), no tabs; mark texts '4.00x', '1.00x', '3.00x'; twin cells equal mark texts in order",
+                    "report_view.build on the covenant_refinancing CP-4 run: block 'covenant-tests-headroom' has figures [CR.1] (placement 'beside'), block.tab_label is None and block.tabs == () (Block.tab_structure, report_view.py:408); mark texts '4.00x', '1.00x', '3.00x'; twin cells equal mark texts in order",
                     "gap run: Headroom mark value None, ref_id G<n>, text '∅ G<n>'; Threshold and Current marks unchanged",
                     "ChartKind gains 'bullet'; the threshold mark value Decimal('4.00') is read from the text fact",
+                ],
+            },
+            {
+                "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)",
+                "assert": [
+                    "ChartKind (report_view.py:56) gains 'bullet' with charts.py geometry (design lib/charts.js bullet); _chart_fact_cell gains a strict-parse mark path for a known text fact (report_view.py:1618 refuses a known fact with no amount today): text matching \\d+(\\.\\d+)?x gives value Decimal(text[:-1]), any other text a gap mark with its G# reference; _block dispatches figures from the CP-4 producer (report_view.py:1807)",
                 ],
             },
         ],
@@ -789,17 +815,18 @@ def build_s4fp04():
             "scale": "1000000",
         },
         "fact_id_rule": "run-time id of the T4.18 principal fact of the QUARTER alias row (an explicit QUARTER wins over the FY alias, financial_series._maturity_figure)",
+        "companion_order": "T4.18 fields in financial_series.py:210 `required` order minus principal, then the ten T4.14 period fields",
         "companion_coordinates": [
             {"table_id": "T4.18", "row": "same", "field": f}
             for f in (
                 "facility_id",
                 "facility_name",
+                "period_id",
                 "facility_type",
                 "currency",
                 "maturity_date",
                 "annual_amortisation",
                 "lease_classification",
-                "period_id",
             )
         ]
         + [{"table_id": "T4.14", "period_id": "q4-2025", "field": f} for f in PERIOD_FIELDS],
@@ -880,6 +907,10 @@ def build_s4fp04():
             {
                 "case": "cp1_absent",
                 "expected": "A covenant_refinancing run without CP-1 settled (legal-render FP04 fixture, requested modules CP-4 and CP-5) keeps its pinned empty state 'Not run: CP-1 has not run.'; no figure, no T2E.4 tab.",
+            },
+            {
+                "case": "cp2d_settled_cp1_not_settled",
+                "expected": "CP-2D settled, CP-1 not settled (view.modules lacks a settled CP-1): with the spec kind 'chart' the block draws the S.4 n/a frame first (figures[0].fig_id 'S.4', ChartSpec kind 'na', reason naming CP-1 as not settled, no marks), and T2E.4 becomes the primary tab (tab_label 'Maturity wall', tabs == ()) because no MODEL tab content exists (report_view.py:1807-1808 degraded path). Pinned with the current code's behaviour (ruling 2026-10-29 item 9, L5).",
             },
             {
                 "case": "cp2d_absent_cp1_present",

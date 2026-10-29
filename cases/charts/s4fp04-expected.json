@@ -17,6 +17,10 @@
       "expected": "A covenant_refinancing run without CP-1 settled (legal-render FP04 fixture, requested modules CP-4 and CP-5) keeps its pinned empty state 'Not run: CP-1 has not run.'; no figure, no T2E.4 tab."
     },
     {
+      "case": "cp2d_settled_cp1_not_settled",
+      "expected": "CP-2D settled, CP-1 not settled (view.modules lacks a settled CP-1): with the spec kind 'chart' the block draws the S.4 n/a frame first (figures[0].fig_id 'S.4', ChartSpec kind 'na', reason naming CP-1 as not settled, no marks), and T2E.4 becomes the primary tab (tab_label 'Maturity wall', tabs == ()) because no MODEL tab content exists (report_view.py:1807-1808 degraded path). Pinned with the current code's behaviour (ruling 2026-10-29 item 9, L5)."
+    },
+    {
       "case": "cp2d_absent_cp1_present",
       "expected": "With CP-1 only, the block shows the S.4 figure and the CP-1 register, no tabs."
     },
@@ -68,6 +72,11 @@
               "table_id": "T4.18"
             },
             {
+              "field": "period_id",
+              "row": "same",
+              "table_id": "T4.18"
+            },
+            {
               "field": "facility_type",
               "row": "same",
               "table_id": "T4.18"
@@ -89,11 +98,6 @@
             },
             {
               "field": "lease_classification",
-              "row": "same",
-              "table_id": "T4.18"
-            },
-            {
-              "field": "period_id",
               "row": "same",
               "table_id": "T4.18"
             },
@@ -148,6 +152,7 @@
               "table_id": "T4.14"
             }
           ],
+          "companion_order": "T4.18 fields in financial_series.py:210 `required` order minus principal, then the ten T4.14 period fields",
           "fact_coordinate": {
             "currency": "USD",
             "field": "principal",
@@ -299,6 +304,7 @@
       "columns": [
         "Value"
       ],
+      "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
       "rows": [
         {
           "cell": "50",
@@ -308,7 +314,7 @@
           "row": 0
         }
       ],
-      "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+      "rule": "cell texts equal the mark texts in order"
     }
   }
 }

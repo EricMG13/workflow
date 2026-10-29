@@ -43,9 +43,16 @@
         "report_view.build on a credit_snapshot run: block 'financials-credit-metrics' has figures [S.5] with placement 'beside', owner 'MODEL', kind 'period_grid', and its tabs unchanged",
         "mark values of the revenue series == [Decimal('30')] * 4 and of adjusted_ebitda [Decimal('7.5')] * 4; mark texts '30' and '8'; table twin cell texts equal mark texts in order",
         "a gap fact renders '∅ G<n>' with ref_id 'G<n>' and value None; the other series keep their marks",
-        "S.1 to S.4 in model-chart-strip are unchanged (regression)"
+        "S.1 to S.4 in model-chart-strip are unchanged (regression)",
+        "report_view.build on an earnings_update run: block 'financials-credit-metrics' has figures == () (no S.5), tabs and rows as before; S.5 is dispatched only for the credit_snapshot pathway"
       ],
       "test_file": "tests/test_cp1_chart_render.py"
+    },
+    {
+      "assert": [
+        "an S.5 entry point beside _cp1_strip (report_view.py:1652,1665 force exactly S.1-S.4 and kind 'line' except S.4 'grouped'), or those checks generalised; _block (report_view.py:1807) draws figures for a period_grid spec, not only for chart specs"
+      ],
+      "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)"
     }
   ],
   "chart_series": [
@@ -725,6 +732,12 @@
   },
   "render": {
     "block_id": "financials-credit-metrics",
+    "earnings_update": {
+      "block_id": "financials-credit-metrics",
+      "figures": [],
+      "pathway": "earnings_update",
+      "reason": "the block is one _Spec shared by credit_snapshot and earnings_update (report_view.py:495,519,1102); the approved FP-02 page collapses it and shows no S.5 (rbot-fp-02-earnings-update.dc.html:113), so S.5 is not drawn there and the block renders as before (ruling 2026-10-29 item 9, M1)"
+    },
     "figures": [
       {
         "fig_id": "S.5",
@@ -781,6 +794,7 @@
       "columns": [
         "Value"
       ],
+      "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
       "rows": [
         {
           "cell": "30",
@@ -839,7 +853,7 @@
           "row": 7
         }
       ],
-      "rule": "label = ' · '.join(label_parts) with a run-time ' [ref]' suffix after a companion that has a report reference; cell texts equal the mark texts in order"
+      "rule": "cell texts equal the mark texts in order"
     }
   }
 }

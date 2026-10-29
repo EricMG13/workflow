@@ -10,12 +10,16 @@ never edited.
 import importlib
 import json
 import re
+from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
+import test_owner_g1x as g
 
 from deploy_vii.contracts import Run
+from deploy_vii.execution import Attempt, Execution
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow import host
 from deploy_workflow.workflow import WorkflowError
@@ -23,6 +27,7 @@ from deploy_workflow.workflow import WorkflowError
 owner: Any = importlib.import_module("deploy_workflow.owner_workflow")
 runs: Any = importlib.import_module("s1a_runs")
 
+pytest_plugins = ("test_owner_g1x",)  # supplies the g1x fixture
 CASES = Path(__file__).resolve().parents[1] / "cases"
 MODULE_KEY = re.compile(r"^(CP-[0-9A-Z]+)(?:\s|$)")
 SUBMIT_ONLY = ("submit only", "submit-only", "zero ok pack calls", "zero pack calls")
@@ -131,3 +136,65 @@ def test_tool_use_sections_match_registrations(oracle: str, module: str, text: s
         viewed = [step for step in spec.steps if step.inputs != "none"]
         assert viewed, (oracle, module)
         assert all(step.step_id in owner._VIEWS for step in viewed), (oracle, module)
+
+
+# Submission steps bind the attempt as begun (adversary Medium 1). A patched core that rewrites a
+# repair attempt's begin-set fields in the snapshot of one of its valid steps is the forgery.
+def _rewrite(store: Execution, ticket_id: str, **update: Any) -> Attempt:
+    snap = store.read()
+    att = next(a for a in snap.attempts if a.ticket_id == ticket_id)
+    forged = att.model_copy(update=update)
+    store._write(
+        snap.model_copy(
+            update={
+                "parent": snap.content_hash(),
+                "attempts": tuple(forged if a.ticket_id == ticket_id else a for a in snap.attempts),
+            }
+        )
+    )
+    return forged
+
+
+def _relabel_core(g1x_ns: SimpleNamespace, **update: Any) -> None:
+    """After the genuine journal of the repair attempt's first step, rewrite the attempt."""
+    real = g1x_ns.core.submit
+
+    def submit(store: Execution, ticket_id: str, step_id: str, payload: str, rules: Any) -> Any:
+        out = real(store, ticket_id, step_id, payload, rules)
+        if step_id == g.SOURCED and out.journal.number == 1 and out.journal.status == "pending":
+            out = replace(out, journal=_rewrite(store, ticket_id, **update))
+        return out
+
+    g1x_ns.monkeypatch.setattr(g1x_ns.core, "submit", submit)
+
+
+def _repaired_run(root: Path) -> Any:
+    workflow = g._start(root)
+    workflow.read_inputs()
+    assert workflow.submit_review(g._sourced())["status"] == "invalid"  # page never read
+    g._drive(workflow)
+    return workflow
+
+
+def test_valid_step_relabelling_a_repair_as_a_first_try_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    _relabel_core(g1x, number=0, repair_of=None, repair_issues=())
+    with pytest.raises(WorkflowError) as caught:
+        _repaired_run(tmp_path).write_receipt(tmp_path / "receipt.json")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_valid_step_rewriting_repair_issues_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    _relabel_core(g1x, repair_issues=("an invented first-try issue",))
+    with pytest.raises(WorkflowError) as caught:
+        _repaired_run(tmp_path).write_receipt(tmp_path / "receipt.json")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_genuine_repair_is_accepted(g1x: SimpleNamespace, tmp_path: Path) -> None:
+    receipt = _repaired_run(tmp_path).write_receipt(tmp_path / "receipt.json")
+    assert g._verdict(tmp_path, receipt) == "accepted"
+    assert [a.number for a in g._fake_attempts(tmp_path)] == [0, 1]

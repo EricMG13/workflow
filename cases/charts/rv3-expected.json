@@ -1,0 +1,1889 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "excluded_peer_widens_range",
+      "expected": "p05 (T1C.1.p05.included 'Excluded'; leverage 0.50x, coverage 20.00x, FFO to debt 80.0%, margin 30.0%) contributes no mark and no range extent; its T1C.5 cells are not_meaningful and are never read."
+    },
+    {
+      "case": "gap_peer_value",
+      "expected": "Gap case: T1C.3.p03.interest_coverage_adjusted is missing; the Peers mark is a gap '∅ G#', not 0, and the band spans the two plotted peers only."
+    },
+    {
+      "case": "gap_median",
+      "expected": "Gap case: T1C.4.interest_coverage_adjusted.median is missing (two included peers with a value); the Peer median mark is a gap '∅ G#' with that fact's reason, never the mean or a median of two."
+    },
+    {
+      "case": "outlier_marking",
+      "expected": "Positive case: p04 is flagged 'Outlier' on leverage, coverage and FFO to debt and 'Within range' on margin; the flag is read from T1C.5.p04.<m>_flag and p04 stays plotted (outliers are marked, not dropped)."
+    },
+    {
+      "case": "no_peers_and_refused",
+      "expected": "Cases no_peers and refused of the CP-1C oracle have no settled T1C.3 peer cells: no chart, no zero fill (the block's empty state)."
+    },
+    {
+      "case": "position_not_recomputed",
+      "expected": "Issuer position, difference and deviation (T1C.4 position/difference, T1C.5 deviation) stay table cells; the chart draws only marks and carries no rank text."
+    },
+    {
+      "case": "synthetic_peers",
+      "expected": "The peers are invented (CP1C-OWNER-LEASE.md:31); the chart carries the module's limitation and no real-market claim, and the figure note names them synthetic."
+    }
+  ],
+  "builder_targets": [
+    {
+      "assert": [
+        "a CP-1C chart producer (record fields as docs/CP1-CHART-SLICE.md:66, two panels) returns the points of cases.positive.chart_series from the CP-1C ModuleView of the oracle run, with the fact ids and companion fact ids in the file",
+        "the same producer on the gap run returns the two gap points of cases.gap.gap_marks with state 'gap'; no point reads T1C.3.p05.*",
+        "no_peers and refused runs return no panels"
+      ],
+      "test_file": "tests/test_connect_cp1c.py (producer tests)"
+    },
+    {
+      "assert": [
+        "report_view.build(view, relative_value pathway, SHIPPED_MAPS) block 'peer-positioning': owner CP-1C, kind dense, state populated, figures fig_id 'RV.3a' (percent) then 'RV.3b' (multiple), both titled 'Peer positioning', caption Fig. RV.3, tabs unchanged",
+        "ChartSpec kind 'range' (ChartKind gains it; charts.py renders it); mark texts equal format_value of the panel unit_class; gap marks have value None and ref_id G<n>",
+        "table twin cell texts equal the mark texts, in point order, per panel"
+      ],
+      "test_file": "tests/test_connect_cp1c.py (render)"
+    },
+    {
+      "assert": [
+        "ChartKind (report_view.py:56) gains 'range' with charts.py geometry (design lib/charts.js rangeStrip); _chart_fact_cell accepts unit_class 'percent' (report_view.py:1616-1617 refuse it today); _block dispatches figures per producer (CP-1C here), not only the CP-1 path at report_view.py:1807"
+      ],
+      "test_file": "chart-seam changes the wiring needs (ruling item 8/9 scope)"
+    }
+  ],
+  "cases": {
+    "gap": {
+      "chart_series": [
+        {
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3a",
+          "kind": "range",
+          "panel": "percent",
+          "points": [
+            {
+              "amount_exact": "0.25",
+              "category": "Adjusted EBITDA margin",
+              "companion_fact_ids": [
+                "T1C.5.issuer.adjusted_ebitda_margin_flag",
+                "T1C.4.adjusted_ebitda_margin.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.adjusted_ebitda_margin.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "25.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.42",
+              "category": "FFO to total debt",
+              "companion_fact_ids": [
+                "T1C.5.issuer.ffo_to_debt_flag",
+                "T1C.4.ffo_to_debt.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.ffo_to_debt.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "42.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.26",
+              "category": "Adjusted EBITDA margin",
+              "companion_fact_ids": [
+                "T1C.4.adjusted_ebitda_margin.direction",
+                "T1C.4.adjusted_ebitda_margin.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.adjusted_ebitda_margin.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                },
+                {
+                  "fact_id": "T1C.4.adjusted_ebitda_margin.n",
+                  "label": "Included peers with a value",
+                  "shown": "3 peers"
+                }
+              ],
+              "fact_id": "T1C.4.adjusted_ebitda_margin.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "26.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.4",
+              "category": "FFO to total debt",
+              "companion_fact_ids": [
+                "T1C.4.ffo_to_debt.direction",
+                "T1C.4.ffo_to_debt.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.ffo_to_debt.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                },
+                {
+                  "fact_id": "T1C.4.ffo_to_debt.n",
+                  "label": "Included peers with a value",
+                  "shown": "3 peers"
+                }
+              ],
+              "fact_id": "T1C.4.ffo_to_debt.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "40.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.26",
+              "category": "Adjusted EBITDA margin · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "26.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.22",
+              "category": "Adjusted EBITDA margin · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "22.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.3",
+              "category": "Adjusted EBITDA margin · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "30.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.4",
+              "category": "FFO to total debt · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "40.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.3030303030303030303030303030303030303",
+              "category": "FFO to total debt · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "30.3%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.46666666666666666666666666666666666667",
+              "category": "FFO to total debt · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "46.7%",
+              "state": "plotted"
+            }
+          ],
+          "range_rule": "the drawn band spans the minimum and maximum of the plotted Peers marks of the row (included peers only, gap marks excluded); it is a drawing of the marks, not a fact, and carries no text",
+          "reason": null,
+          "rows": [
+            "Adjusted EBITDA margin",
+            "FFO to total debt"
+          ],
+          "series": [
+            "Issuer",
+            "Peer median",
+            "Peers"
+          ],
+          "title": "Peer positioning",
+          "unit": "%",
+          "unit_class": "percent"
+        },
+        {
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3b",
+          "kind": "range",
+          "panel": "multiple",
+          "points": [
+            {
+              "amount_exact": "1.6666666666666666666666666666666666667",
+              "category": "Total leverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.5.issuer.total_leverage_adjusted_flag",
+                "T1C.4.total_leverage_adjusted.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.total_leverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Lower is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "1.67x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "6",
+              "category": "Interest coverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.5.issuer.interest_coverage_adjusted_flag",
+                "T1C.4.interest_coverage_adjusted.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "∅ G#"
+                },
+                {
+                  "fact_id": "T1C.4.interest_coverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "6.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "2",
+              "category": "Total leverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.4.total_leverage_adjusted.direction",
+                "T1C.4.total_leverage_adjusted.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.total_leverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Lower is better"
+                },
+                {
+                  "fact_id": "T1C.4.total_leverage_adjusted.n",
+                  "label": "Included peers with a value",
+                  "shown": "3 peers"
+                }
+              ],
+              "fact_id": "T1C.4.total_leverage_adjusted.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "2.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": null,
+              "category": "Interest coverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.4.interest_coverage_adjusted.direction",
+                "T1C.4.interest_coverage_adjusted.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.interest_coverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                },
+                {
+                  "fact_id": "T1C.4.interest_coverage_adjusted.n",
+                  "label": "Included peers with a value",
+                  "shown": "2 peers"
+                }
+              ],
+              "fact_id": "T1C.4.interest_coverage_adjusted.median",
+              "gap_reason": "Not calculable: 2 included peers have a stated value, at least 3 are required",
+              "gap_ref_pattern": "∅ G\\d+",
+              "series": "Peer median",
+              "settled_status": "missing",
+              "shown": "∅ G#",
+              "state": "gap"
+            },
+            {
+              "amount_exact": "2",
+              "category": "Total leverage (adjusted) · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "2.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "3",
+              "category": "Total leverage (adjusted) · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "3.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "1.5",
+              "category": "Total leverage (adjusted) · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "1.50x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "6.5",
+              "category": "Interest coverage (adjusted) · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "∅ G#"
+                }
+              ],
+              "fact_id": "T1C.3.p01.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "6.50x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "3",
+              "category": "Interest coverage (adjusted) · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "∅ G#"
+                }
+              ],
+              "fact_id": "T1C.3.p02.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "3.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": null,
+              "category": "Interest coverage (adjusted) · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "∅ G#"
+                }
+              ],
+              "fact_id": "T1C.3.p03.interest_coverage_adjusted",
+              "gap_reason": "Not calculable: interest expense is not stated in the peer source",
+              "gap_ref_pattern": "∅ G\\d+",
+              "series": "Peers",
+              "settled_status": "missing",
+              "shown": "∅ G#",
+              "state": "gap"
+            }
+          ],
+          "range_rule": "the drawn band spans the minimum and maximum of the plotted Peers marks of the row (included peers only, gap marks excluded); it is a drawing of the marks, not a fact, and carries no text",
+          "reason": null,
+          "rows": [
+            "Total leverage (adjusted)",
+            "Interest coverage (adjusted)"
+          ],
+          "series": [
+            "Issuer",
+            "Peer median",
+            "Peers"
+          ],
+          "title": "Peer positioning",
+          "unit": "x",
+          "unit_class": "multiple"
+        }
+      ],
+      "excluded_facts_never_plotted": [],
+      "excluded_peers": {},
+      "gap_marks": [
+        {
+          "category": "Interest coverage (adjusted)",
+          "fact_id": "T1C.4.interest_coverage_adjusted.median",
+          "reason": "Not calculable: 2 included peers have a stated value, at least 3 are required",
+          "series": "Peer median"
+        },
+        {
+          "category": "Interest coverage (adjusted) · Calder Vale Group",
+          "fact_id": "T1C.3.p03.interest_coverage_adjusted",
+          "reason": "Not calculable: interest expense is not stated in the peer source",
+          "series": "Peers"
+        }
+      ],
+      "included_peers": [
+        "p01",
+        "p02",
+        "p03"
+      ],
+      "module_status": "restricted",
+      "table_twin": {
+        "multiple": {
+          "columns": [
+            "Value"
+          ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
+          "rows": [
+            {
+              "cell": "1.67x",
+              "label_parts": [
+                "Issuer · Total leverage (adjusted)",
+                "Total leverage (adjusted) · Flag: Within range",
+                "Direction: Lower is better"
+              ],
+              "row": 0
+            },
+            {
+              "cell": "6.00x",
+              "label_parts": [
+                "Issuer · Interest coverage (adjusted)",
+                "Interest coverage (adjusted) · Flag: ∅ G#",
+                "Direction: Higher is better"
+              ],
+              "row": 1
+            },
+            {
+              "cell": "2.00x",
+              "label_parts": [
+                "Peer median · Total leverage (adjusted)",
+                "Direction: Lower is better",
+                "Included peers with a value: 3 peers"
+              ],
+              "row": 2
+            },
+            {
+              "cell": "∅ G#",
+              "label_parts": [
+                "Peer median · Interest coverage (adjusted)",
+                "Direction: Higher is better",
+                "Included peers with a value: 2 peers"
+              ],
+              "row": 3
+            },
+            {
+              "cell": "2.00x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Alder Ridge Holdings",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Within range"
+              ],
+              "row": 4
+            },
+            {
+              "cell": "3.00x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Brookmere Industries",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Within range"
+              ],
+              "row": 5
+            },
+            {
+              "cell": "1.50x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Calder Vale Group",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Within range"
+              ],
+              "row": 6
+            },
+            {
+              "cell": "6.50x",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Alder Ridge Holdings",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: ∅ G#"
+              ],
+              "row": 7
+            },
+            {
+              "cell": "3.00x",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Brookmere Industries",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: ∅ G#"
+              ],
+              "row": 8
+            },
+            {
+              "cell": "∅ G#",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Calder Vale Group",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: ∅ G#"
+              ],
+              "row": 9
+            }
+          ],
+          "rule": "cell texts equal the mark texts in order"
+        },
+        "percent": {
+          "columns": [
+            "Value"
+          ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
+          "rows": [
+            {
+              "cell": "25.0%",
+              "label_parts": [
+                "Issuer · Adjusted EBITDA margin",
+                "Adjusted EBITDA margin · Flag: Within range",
+                "Direction: Higher is better"
+              ],
+              "row": 0
+            },
+            {
+              "cell": "42.0%",
+              "label_parts": [
+                "Issuer · FFO to total debt",
+                "FFO to total debt · Flag: Within range",
+                "Direction: Higher is better"
+              ],
+              "row": 1
+            },
+            {
+              "cell": "26.0%",
+              "label_parts": [
+                "Peer median · Adjusted EBITDA margin",
+                "Direction: Higher is better",
+                "Included peers with a value: 3 peers"
+              ],
+              "row": 2
+            },
+            {
+              "cell": "40.0%",
+              "label_parts": [
+                "Peer median · FFO to total debt",
+                "Direction: Higher is better",
+                "Included peers with a value: 3 peers"
+              ],
+              "row": 3
+            },
+            {
+              "cell": "26.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Alder Ridge Holdings",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 4
+            },
+            {
+              "cell": "22.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Brookmere Industries",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 5
+            },
+            {
+              "cell": "30.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Calder Vale Group",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 6
+            },
+            {
+              "cell": "40.0%",
+              "label_parts": [
+                "Peers · FFO to total debt · Alder Ridge Holdings",
+                "Universe: Included",
+                "FFO to total debt · Flag: Within range"
+              ],
+              "row": 7
+            },
+            {
+              "cell": "30.3%",
+              "label_parts": [
+                "Peers · FFO to total debt · Brookmere Industries",
+                "Universe: Included",
+                "FFO to total debt · Flag: Within range"
+              ],
+              "row": 8
+            },
+            {
+              "cell": "46.7%",
+              "label_parts": [
+                "Peers · FFO to total debt · Calder Vale Group",
+                "Universe: Included",
+                "FFO to total debt · Flag: Within range"
+              ],
+              "row": 9
+            }
+          ],
+          "rule": "cell texts equal the mark texts in order"
+        }
+      }
+    },
+    "positive": {
+      "chart_series": [
+        {
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3a",
+          "kind": "range",
+          "panel": "percent",
+          "points": [
+            {
+              "amount_exact": "0.25",
+              "category": "Adjusted EBITDA margin",
+              "companion_fact_ids": [
+                "T1C.5.issuer.adjusted_ebitda_margin_flag",
+                "T1C.4.adjusted_ebitda_margin.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.adjusted_ebitda_margin.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "25.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.42",
+              "category": "FFO to total debt",
+              "companion_fact_ids": [
+                "T1C.5.issuer.ffo_to_debt_flag",
+                "T1C.4.ffo_to_debt.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.ffo_to_debt.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "42.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.24",
+              "category": "Adjusted EBITDA margin",
+              "companion_fact_ids": [
+                "T1C.4.adjusted_ebitda_margin.direction",
+                "T1C.4.adjusted_ebitda_margin.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.adjusted_ebitda_margin.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                },
+                {
+                  "fact_id": "T1C.4.adjusted_ebitda_margin.n",
+                  "label": "Included peers with a value",
+                  "shown": "4 peers"
+                }
+              ],
+              "fact_id": "T1C.4.adjusted_ebitda_margin.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "24.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.35151515151515151515151515151515151515",
+              "category": "FFO to total debt",
+              "companion_fact_ids": [
+                "T1C.4.ffo_to_debt.direction",
+                "T1C.4.ffo_to_debt.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.ffo_to_debt.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                },
+                {
+                  "fact_id": "T1C.4.ffo_to_debt.n",
+                  "label": "Included peers with a value",
+                  "shown": "4 peers"
+                }
+              ],
+              "fact_id": "T1C.4.ffo_to_debt.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "35.2%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.26",
+              "category": "Adjusted EBITDA margin · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "26.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.22",
+              "category": "Adjusted EBITDA margin · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "22.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.3",
+              "category": "Adjusted EBITDA margin · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "30.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.16",
+              "category": "Adjusted EBITDA margin · Dunmore Cross Corporation",
+              "companion_fact_ids": [
+                "T1C.1.p04.included",
+                "T1C.5.p04.adjusted_ebitda_margin_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p04.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p04.adjusted_ebitda_margin_flag",
+                  "label": "Adjusted EBITDA margin · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p04.adjusted_ebitda_margin",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "16.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.4",
+              "category": "FFO to total debt · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "40.0%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.3030303030303030303030303030303030303",
+              "category": "FFO to total debt · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "30.3%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.46666666666666666666666666666666666667",
+              "category": "FFO to total debt · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "46.7%",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "0.125",
+              "category": "FFO to total debt · Dunmore Cross Corporation",
+              "companion_fact_ids": [
+                "T1C.1.p04.included",
+                "T1C.5.p04.ffo_to_debt_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p04.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p04.ffo_to_debt_flag",
+                  "label": "FFO to total debt · Flag",
+                  "shown": "Outlier"
+                }
+              ],
+              "fact_id": "T1C.3.p04.ffo_to_debt",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "12.5%",
+              "state": "plotted"
+            }
+          ],
+          "range_rule": "the drawn band spans the minimum and maximum of the plotted Peers marks of the row (included peers only, gap marks excluded); it is a drawing of the marks, not a fact, and carries no text",
+          "reason": null,
+          "rows": [
+            "Adjusted EBITDA margin",
+            "FFO to total debt"
+          ],
+          "series": [
+            "Issuer",
+            "Peer median",
+            "Peers"
+          ],
+          "title": "Peer positioning",
+          "unit": "%",
+          "unit_class": "percent"
+        },
+        {
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3b",
+          "kind": "range",
+          "panel": "multiple",
+          "points": [
+            {
+              "amount_exact": "1.6666666666666666666666666666666666667",
+              "category": "Total leverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.5.issuer.total_leverage_adjusted_flag",
+                "T1C.4.total_leverage_adjusted.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.total_leverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Lower is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "1.67x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "6",
+              "category": "Interest coverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.5.issuer.interest_coverage_adjusted_flag",
+                "T1C.4.interest_coverage_adjusted.direction"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.5.issuer.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "Within range"
+                },
+                {
+                  "fact_id": "T1C.4.interest_coverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                }
+              ],
+              "fact_id": "T1C.3.issuer.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Issuer",
+              "settled_status": "known",
+              "shown": "6.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "2.5",
+              "category": "Total leverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.4.total_leverage_adjusted.direction",
+                "T1C.4.total_leverage_adjusted.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.total_leverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Lower is better"
+                },
+                {
+                  "fact_id": "T1C.4.total_leverage_adjusted.n",
+                  "label": "Included peers with a value",
+                  "shown": "4 peers"
+                }
+              ],
+              "fact_id": "T1C.4.total_leverage_adjusted.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "2.50x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "4.5",
+              "category": "Interest coverage (adjusted)",
+              "companion_fact_ids": [
+                "T1C.4.interest_coverage_adjusted.direction",
+                "T1C.4.interest_coverage_adjusted.n"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.4.interest_coverage_adjusted.direction",
+                  "label": "Direction",
+                  "shown": "Higher is better"
+                },
+                {
+                  "fact_id": "T1C.4.interest_coverage_adjusted.n",
+                  "label": "Included peers with a value",
+                  "shown": "4 peers"
+                }
+              ],
+              "fact_id": "T1C.4.interest_coverage_adjusted.median",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peer median",
+              "settled_status": "known",
+              "shown": "4.50x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "2",
+              "category": "Total leverage (adjusted) · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "2.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "3",
+              "category": "Total leverage (adjusted) · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "3.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "1.5",
+              "category": "Total leverage (adjusted) · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "1.50x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "5",
+              "category": "Total leverage (adjusted) · Dunmore Cross Corporation",
+              "companion_fact_ids": [
+                "T1C.1.p04.included",
+                "T1C.5.p04.total_leverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p04.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p04.total_leverage_adjusted_flag",
+                  "label": "Total leverage (adjusted) · Flag",
+                  "shown": "Outlier"
+                }
+              ],
+              "fact_id": "T1C.3.p04.total_leverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "5.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "6.5",
+              "category": "Interest coverage (adjusted) · Alder Ridge Holdings",
+              "companion_fact_ids": [
+                "T1C.1.p01.included",
+                "T1C.5.p01.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p01.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p01.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p01.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "6.50x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "3",
+              "category": "Interest coverage (adjusted) · Brookmere Industries",
+              "companion_fact_ids": [
+                "T1C.1.p02.included",
+                "T1C.5.p02.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p02.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p02.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p02.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "3.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "6",
+              "category": "Interest coverage (adjusted) · Calder Vale Group",
+              "companion_fact_ids": [
+                "T1C.1.p03.included",
+                "T1C.5.p03.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p03.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p03.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "Within range"
+                }
+              ],
+              "fact_id": "T1C.3.p03.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "6.00x",
+              "state": "plotted"
+            },
+            {
+              "amount_exact": "2",
+              "category": "Interest coverage (adjusted) · Dunmore Cross Corporation",
+              "companion_fact_ids": [
+                "T1C.1.p04.included",
+                "T1C.5.p04.interest_coverage_adjusted_flag"
+              ],
+              "companions": [
+                {
+                  "fact_id": "T1C.1.p04.included",
+                  "label": "Universe",
+                  "shown": "Included"
+                },
+                {
+                  "fact_id": "T1C.5.p04.interest_coverage_adjusted_flag",
+                  "label": "Interest coverage (adjusted) · Flag",
+                  "shown": "Outlier"
+                }
+              ],
+              "fact_id": "T1C.3.p04.interest_coverage_adjusted",
+              "gap_reason": null,
+              "gap_ref_pattern": null,
+              "series": "Peers",
+              "settled_status": "known",
+              "shown": "2.00x",
+              "state": "plotted"
+            }
+          ],
+          "range_rule": "the drawn band spans the minimum and maximum of the plotted Peers marks of the row (included peers only, gap marks excluded); it is a drawing of the marks, not a fact, and carries no text",
+          "reason": null,
+          "rows": [
+            "Total leverage (adjusted)",
+            "Interest coverage (adjusted)"
+          ],
+          "series": [
+            "Issuer",
+            "Peer median",
+            "Peers"
+          ],
+          "title": "Peer positioning",
+          "unit": "x",
+          "unit_class": "multiple"
+        }
+      ],
+      "excluded_facts_never_plotted": [
+        "T1C.3.p05.adjusted_ebitda_margin",
+        "T1C.3.p05.ffo_to_debt",
+        "T1C.3.p05.interest_coverage_adjusted",
+        "T1C.3.p05.total_leverage_adjusted"
+      ],
+      "excluded_peers": {
+        "p05": {
+          "inclusion_fact": "T1C.1.p05.included",
+          "name": "Ellsworth Park Limited",
+          "shown": "Excluded"
+        }
+      },
+      "gap_marks": [],
+      "included_peers": [
+        "p01",
+        "p02",
+        "p03",
+        "p04"
+      ],
+      "module_status": "restricted",
+      "table_twin": {
+        "multiple": {
+          "columns": [
+            "Value"
+          ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
+          "rows": [
+            {
+              "cell": "1.67x",
+              "label_parts": [
+                "Issuer · Total leverage (adjusted)",
+                "Total leverage (adjusted) · Flag: Within range",
+                "Direction: Lower is better"
+              ],
+              "row": 0
+            },
+            {
+              "cell": "6.00x",
+              "label_parts": [
+                "Issuer · Interest coverage (adjusted)",
+                "Interest coverage (adjusted) · Flag: Within range",
+                "Direction: Higher is better"
+              ],
+              "row": 1
+            },
+            {
+              "cell": "2.50x",
+              "label_parts": [
+                "Peer median · Total leverage (adjusted)",
+                "Direction: Lower is better",
+                "Included peers with a value: 4 peers"
+              ],
+              "row": 2
+            },
+            {
+              "cell": "4.50x",
+              "label_parts": [
+                "Peer median · Interest coverage (adjusted)",
+                "Direction: Higher is better",
+                "Included peers with a value: 4 peers"
+              ],
+              "row": 3
+            },
+            {
+              "cell": "2.00x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Alder Ridge Holdings",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Within range"
+              ],
+              "row": 4
+            },
+            {
+              "cell": "3.00x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Brookmere Industries",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Within range"
+              ],
+              "row": 5
+            },
+            {
+              "cell": "1.50x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Calder Vale Group",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Within range"
+              ],
+              "row": 6
+            },
+            {
+              "cell": "5.00x",
+              "label_parts": [
+                "Peers · Total leverage (adjusted) · Dunmore Cross Corporation",
+                "Universe: Included",
+                "Total leverage (adjusted) · Flag: Outlier"
+              ],
+              "row": 7
+            },
+            {
+              "cell": "6.50x",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Alder Ridge Holdings",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: Within range"
+              ],
+              "row": 8
+            },
+            {
+              "cell": "3.00x",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Brookmere Industries",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: Within range"
+              ],
+              "row": 9
+            },
+            {
+              "cell": "6.00x",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Calder Vale Group",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: Within range"
+              ],
+              "row": 10
+            },
+            {
+              "cell": "2.00x",
+              "label_parts": [
+                "Peers · Interest coverage (adjusted) · Dunmore Cross Corporation",
+                "Universe: Included",
+                "Interest coverage (adjusted) · Flag: Outlier"
+              ],
+              "row": 11
+            }
+          ],
+          "rule": "cell texts equal the mark texts in order"
+        },
+        "percent": {
+          "columns": [
+            "Value"
+          ],
+          "label_parts_rule": "label_parts is the PREFIX of the row label; where a point lists companion_coordinates only (S.5, S.4) the companion parts (' label: text', in companion order) are added at run time. label = ' · '.join(all parts) with a run-time ' [ref]' suffix after a companion that has a report reference",
+          "rows": [
+            {
+              "cell": "25.0%",
+              "label_parts": [
+                "Issuer · Adjusted EBITDA margin",
+                "Adjusted EBITDA margin · Flag: Within range",
+                "Direction: Higher is better"
+              ],
+              "row": 0
+            },
+            {
+              "cell": "42.0%",
+              "label_parts": [
+                "Issuer · FFO to total debt",
+                "FFO to total debt · Flag: Within range",
+                "Direction: Higher is better"
+              ],
+              "row": 1
+            },
+            {
+              "cell": "24.0%",
+              "label_parts": [
+                "Peer median · Adjusted EBITDA margin",
+                "Direction: Higher is better",
+                "Included peers with a value: 4 peers"
+              ],
+              "row": 2
+            },
+            {
+              "cell": "35.2%",
+              "label_parts": [
+                "Peer median · FFO to total debt",
+                "Direction: Higher is better",
+                "Included peers with a value: 4 peers"
+              ],
+              "row": 3
+            },
+            {
+              "cell": "26.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Alder Ridge Holdings",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 4
+            },
+            {
+              "cell": "22.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Brookmere Industries",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 5
+            },
+            {
+              "cell": "30.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Calder Vale Group",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 6
+            },
+            {
+              "cell": "16.0%",
+              "label_parts": [
+                "Peers · Adjusted EBITDA margin · Dunmore Cross Corporation",
+                "Universe: Included",
+                "Adjusted EBITDA margin · Flag: Within range"
+              ],
+              "row": 7
+            },
+            {
+              "cell": "40.0%",
+              "label_parts": [
+                "Peers · FFO to total debt · Alder Ridge Holdings",
+                "Universe: Included",
+                "FFO to total debt · Flag: Within range"
+              ],
+              "row": 8
+            },
+            {
+              "cell": "30.3%",
+              "label_parts": [
+                "Peers · FFO to total debt · Brookmere Industries",
+                "Universe: Included",
+                "FFO to total debt · Flag: Within range"
+              ],
+              "row": 9
+            },
+            {
+              "cell": "46.7%",
+              "label_parts": [
+                "Peers · FFO to total debt · Calder Vale Group",
+                "Universe: Included",
+                "FFO to total debt · Flag: Within range"
+              ],
+              "row": 10
+            },
+            {
+              "cell": "12.5%",
+              "label_parts": [
+                "Peers · FFO to total debt · Dunmore Cross Corporation",
+                "Universe: Included",
+                "FFO to total debt · Flag: Outlier"
+              ],
+              "row": 11
+            }
+          ],
+          "rule": "cell texts equal the mark texts in order"
+        }
+      }
+    }
+  },
+  "figure": "RV.3",
+  "form": {
+    "emphasis": "a peer mark whose settled T1C.5 flag text is 'Outlier' is marked from that fact; no outlier test is recomputed",
+    "kind": "range strip, one row per metric (design; ChartKind gains 'range')",
+    "marks": "Issuer (design CZR marker), Peers (design hollow marks), Peer median (pack peerRange rows[].median)",
+    "panels": "two panels, one unit class each (percent: margin, FFO to debt; multiple: leverage, coverage); inference: ChartSpec has one unit_class and mark text must equal format_value of it",
+    "placement": "above (design :54 puts the strip over the peer-set table); inference",
+    "rows": "brief 03:36 lists margin, growth and yield; only the four CP-1C metrics are facts, growth and yield rows are left out"
+  },
+  "render": {
+    "block_id": "peer-positioning",
+    "figures": [
+      {
+        "caption": "Fig. RV.3",
+        "fig_id": "RV.3a",
+        "panel": "percent",
+        "placement": "above"
+      },
+      {
+        "caption": "Fig. RV.3",
+        "fig_id": "RV.3b",
+        "panel": "multiple",
+        "placement": "above"
+      }
+    ],
+    "kind": "dense",
+    "note": "tabs as cases/cp1c-owner/expected.json cases.positive.FP03; the figures are added above them",
+    "owner": "CP-1C",
+    "pathway": "relative_value",
+    "primary_tab": "T1C.1",
+    "producers": [
+      "CP-1C"
+    ],
+    "state": "populated",
+    "tabs": [
+      "T1C.8",
+      "T1C.3",
+      "T1C.4",
+      "T1C.5"
+    ]
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "Four CP-1C metrics only; no revenue growth, no TRACE or last-trade yield row (not CP-1C facts).",
+    "Synthetic peer source; unaudited; the module status stays restricted and the chart does not upgrade it.",
+    "EBITDAR and definition differences stay in T1C.6 (evidence rail), not drawn."
+  ],
+  "source_authority": {
+    "brief": {
+      "file": "design pack content/03-relative-value.md",
+      "line": 36,
+      "text": "charts.peerRange (range strip)"
+    },
+    "design": {
+      "file": "/Users/ericguei/Documents/DEPLOY VII/design/reference/rbot-fp-03-relative-value.dc.html",
+      "lines": "53 (head 'Peer positioning', 'CP-1C · Fig. RV.3'), 54 (range strip legend '● CZR · ○ peers · band = peer range'), lib/charts.js:152 rangeStrip"
+    },
+    "facts": "T1C.3.issuer.<m>, T1C.3.pNN.<m>, T1C.4.<m>.median, T1C.1.pNN.included, T1C.5.pNN.<m>_flag for the four metrics of cases/cp1c-owner/expected.json",
+    "modules": [
+      {
+        "path": "cases/cp1c-owner/expected.json",
+        "sha256": "2165d28d06e80347b8ea9c5a78350a1a41bb60db4b140cfce3e4256bccc57862"
+      }
+    ],
+    "order_of_authority": "approved page decides appearance; pack brief decides provider and data path; inference last",
+    "values": "settled module facts only; the pack sets form and owner, never numbers"
+  }
+}

@@ -1,0 +1,1540 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "positive_recoveries",
+      "expected": "Three creditor classes by three scenarios, nine known marks; Base all 100.0%, Downside 100.0 / 18.7 / 18.7, Stress 74.2 / 0.0 / 0.0 (the points carry the settled texts); zero recoveries are known zeros plotted at zero.",
+      "module_case": "positive"
+    },
+    {
+      "case": "equity_drops_out",
+      "expected": "T4E.5.v0Neq.recovery is not_applicable (n.m.): no mark, no twin cell, no gap mark; the series and twin contain creditor classes only (item 6).",
+      "module_case": "positive"
+    },
+    {
+      "case": "gap_blocked_rank_groups",
+      "expected": "A missing administrative claim (c02) blocks its rank group and every lower rank: recoveries for c02-c04 are gap marks with the module reason, c01 Base and Downside stay 100.0%; the Stress scenario (multiple, EV missing) is all gaps and its series label is the bare scenario name. No gap is drawn as 0.",
+      "module_case": "gap"
+    },
+    {
+      "case": "ev_zero_is_known_zero",
+      "expected": "A known enterprise value of 0 gives known 0 recoveries for Downside and Stress: plotted at zero, not gaps, not n/a.",
+      "module_case": "fixture_ev_zero"
+    },
+    {
+      "case": "ebitda_missing_blocks_scenarios",
+      "expected": "Downside and Stress EV missing: their recoveries are gap marks; Base stays 100.0%.",
+      "module_case": "fixture_ebitda_missing"
+    },
+    {
+      "case": "debt_missing_blocks_everything",
+      "expected": "Claims missing: every recovery is a gap; no mark is plottable, so the chart is kind na with the module reason.",
+      "module_case": "fixture_debt_missing"
+    },
+    {
+      "case": "scenario_labels",
+      "expected": "Q-C4: series are Base 4.00x, Downside 3.00x, Stress 2.00x from T4E.3.v0N.scenario and .multiple, not the design's 'Merger value (cited EV)', 'Downside 5.0x', 'Stress 4.0x'.",
+      "module_case": "positive"
+    },
+    {
+      "case": "producer_refused_or_blocked",
+      "expected": "No CP-4C head: no figure is produced and nothing is zero-filled; the block keeps its honest state (not run, absent or blocked with the producer's first limitation), as report_view._honest_state decides.",
+      "module_case": "refused / blocked / cp2g_blocked"
+    },
+    {
+      "case": "hatching_follows_the_multiple",
+      "expected": "Every multiple is analyst_judgment, so every bar is hatched and the legend says 'hatched = illustrative'; a missing multiple hatches by default.",
+      "module_case": "positive"
+    }
+  ],
+  "builder_targets": [
+    {
+      "asserts": [
+        "cp4c_chart_series(module) on the CP-4C head of the positive and gap owner runs (tests/cp4c_runs.py) returns the DR.2 record equal to chart_series.DR.2.<case> (series labels, categories, points, gap marks, dropped equity)",
+        "fixture_ev_zero, fixture_ebitda_missing and fixture_debt_missing (composer fixtures) match their records, the last as kind na",
+        "no point value is recomputed; each equals Fact.amount of its fact_id"
+      ],
+      "test_file": "tests/test_chart_series_dr2.py (new)"
+    },
+    {
+      "asserts": [
+        "report_view.build on a distressed_restructuring run with CP-4C: block recovery-by-class owner CP-4C kind dense, figure DR.2 placement above kind grouped; marks (series, label, text, value) and table twin rows equal the oracle; gap marks spelled '∅ G<n>'",
+        "tabs unchanged: primary T4E.5 behind the figure, further tabs T4E.7, T4E.8",
+        "hatching seam: a DR.2 mark whose multiple is analyst_judgment renders hatched (charts.py:83 hatches only S refs today); a mark without that basis is unchanged",
+        "producer refused or blocked (cases/cp4c-owner cases.refused, .blocked, .cp2g_blocked): the block has no figure and keeps the honest state report_view._honest_state gives it (a blocked producer's first limitation is quoted)"
+      ],
+      "test_file": "tests/test_chart_render_dr2.py (new)"
+    }
+  ],
+  "chart_series": {
+    "DR.2": {
+      "fixture_debt_missing": {
+        "axis_label": "%",
+        "dropped_equity_marks": [
+          {
+            "fact_id": "T4E.5.v01eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v02eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v03eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          }
+        ],
+        "fig_id": "DR.2",
+        "gap_count": 9,
+        "hatched_basis": "inference: design hatches illustrative multiples (fp05 :38 legend); a multiple is illustrative unless its fact value_class is source or cited; every CP-4C multiple is analyst_judgment, so every bar is hatched",
+        "kind": "na",
+        "module_case": "fixture_debt_missing",
+        "point_count": 9,
+        "points": [
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c01.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c01.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c01.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          }
+        ],
+        "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+        "series": [
+          "Base 4.00x",
+          "Downside 3.00x",
+          "Stress 2.00x"
+        ],
+        "series_label_rule": "scenario name + ' ' + multiple spelling when the multiple is known, else the scenario name alone (Q-C4)",
+        "title": "Recovery by class",
+        "unit": "PERCENT",
+        "unit_class": "percent"
+      },
+      "fixture_ebitda_missing": {
+        "axis_label": "%",
+        "dropped_equity_marks": [
+          {
+            "fact_id": "T4E.5.v01eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v02eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v03eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          }
+        ],
+        "fig_id": "DR.2",
+        "gap_count": 6,
+        "hatched_basis": "inference: design hatches illustrative multiples (fp05 :38 legend); a multiple is illustrative unless its fact value_class is source or cited; every CP-4C multiple is analyst_judgment, so every bar is hatched",
+        "kind": "grouped",
+        "module_case": "fixture_ebitda_missing",
+        "point_count": 9,
+        "points": [
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c01.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c01.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Base 4.00x",
+          "Downside 3.00x",
+          "Stress 2.00x"
+        ],
+        "series_label_rule": "scenario name + ' ' + multiple spelling when the multiple is known, else the scenario name alone (Q-C4)",
+        "title": "Recovery by class",
+        "unit": "PERCENT",
+        "unit_class": "percent"
+      },
+      "fixture_ev_zero": {
+        "axis_label": "%",
+        "dropped_equity_marks": [
+          {
+            "fact_id": "T4E.5.v01eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v02eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v03eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          }
+        ],
+        "fig_id": "DR.2",
+        "gap_count": 0,
+        "hatched_basis": "inference: design hatches illustrative multiples (fp05 :38 legend); a multiple is illustrative unless its fact value_class is source or cited; every CP-4C multiple is analyst_judgment, so every bar is hatched",
+        "kind": "grouped",
+        "module_case": "fixture_ev_zero",
+        "point_count": 9,
+        "points": [
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Base 4.00x",
+          "Downside 3.00x",
+          "Stress 2.00x"
+        ],
+        "series_label_rule": "scenario name + ' ' + multiple spelling when the multiple is known, else the scenario name alone (Q-C4)",
+        "title": "Recovery by class",
+        "unit": "PERCENT",
+        "unit_class": "percent"
+      },
+      "gap": {
+        "axis_label": "%",
+        "dropped_equity_marks": [
+          {
+            "fact_id": "T4E.5.v01eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v02eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v03eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          }
+        ],
+        "fig_id": "DR.2",
+        "gap_count": 10,
+        "hatched_basis": "inference: design hatches illustrative multiples (fp05 :38 legend); a multiple is illustrative unless its fact value_class is source or cited; every CP-4C multiple is analyst_judgment, so every bar is hatched",
+        "kind": "grouped",
+        "module_case": "gap",
+        "point_count": 12,
+        "points": [
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c01.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: the EV multiple was not assessed",
+            "scenario_row": "v03",
+            "series": "Stress",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Administrative and priority claims",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Administrative and priority claims",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Administrative and priority claims",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c02.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: the EV multiple was not assessed",
+            "scenario_row": "v03",
+            "series": "Stress",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c03.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: the EV multiple was not assessed",
+            "scenario_row": "v03",
+            "series": "Stress",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c04",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c04.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c04.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c04",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c04.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c04.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c04",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c04.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c04.recovery",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "reason": "Not calculable: the EV multiple was not assessed",
+            "scenario_row": "v03",
+            "series": "Stress",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "PERCENT",
+            "value": null,
+            "value_class": null
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Base 4.00x",
+          "Downside 3.00x",
+          "Stress"
+        ],
+        "series_label_rule": "scenario name + ' ' + multiple spelling when the multiple is known, else the scenario name alone (Q-C4)",
+        "title": "Recovery by class",
+        "unit": "PERCENT",
+        "unit_class": "percent"
+      },
+      "positive": {
+        "axis_label": "%",
+        "dropped_equity_marks": [
+          {
+            "fact_id": "T4E.5.v01eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v02eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          },
+          {
+            "fact_id": "T4E.5.v03eq.recovery",
+            "rule": "equity has no claim, so no recovery percentage; the mark drops out of the chart and the twin (item 6); the table keeps '∅ G# n.m.'",
+            "state": "not_meaningful"
+          }
+        ],
+        "fig_id": "DR.2",
+        "gap_count": 0,
+        "hatched_basis": "inference: design hatches illustrative multiples (fp05 :38 legend); a multiple is illustrative unless its fact value_class is source or cited; every CP-4C multiple is analyst_judgment, so every bar is hatched",
+        "kind": "grouped",
+        "module_case": "positive",
+        "point_count": 9,
+        "points": [
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Senior secured term loan",
+            "class_row": "c01",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c01.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c01.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "74.2%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0.7416",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "18.7%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0.18733333333333333333333333333333333333",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Trade payables",
+            "class_row": "c02",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c02.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c02.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v01.scenario",
+              "T4E.3.v01.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v01c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v01",
+            "series": "Base 4.00x",
+            "shown": "100.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "1",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v02.scenario",
+              "T4E.3.v02.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v02c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v02",
+            "series": "Downside 3.00x",
+            "shown": "18.7%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0.18733333333333333333333333333333333333",
+            "value_class": "calculated"
+          },
+          {
+            "category": "Other current liabilities",
+            "class_row": "c03",
+            "companion_fact_ids": [
+              "T4E.3.v03.scenario",
+              "T4E.3.v03.multiple",
+              "T4E.2.c03.name"
+            ],
+            "currency": null,
+            "fact_id": "T4E.5.v03c03.recovery",
+            "hatched": true,
+            "period": "FY2026: 2026-01-01 to 2026-12-31",
+            "scenario_row": "v03",
+            "series": "Stress 2.00x",
+            "shown": "0.0%",
+            "state": "known",
+            "unit": "PERCENT",
+            "value": "0",
+            "value_class": "calculated"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Base 4.00x",
+          "Downside 3.00x",
+          "Stress 2.00x"
+        ],
+        "series_label_rule": "scenario name + ' ' + multiple spelling when the multiple is known, else the scenario name alone (Q-C4)",
+        "title": "Recovery by class",
+        "unit": "PERCENT",
+        "unit_class": "percent"
+      }
+    }
+  },
+  "figure": "DR.2",
+  "figure_group": "B",
+  "questions": [
+    "Hatching rule is inferred from the design legend; the brief does not state it."
+  ],
+  "render": {
+    "distressed_restructuring": {
+      "block_id": "recovery-by-class",
+      "block_kind": "dense",
+      "figure": {
+        "chart_kind": "grouped",
+        "design": {
+          "lines": [
+            37,
+            38
+          ],
+          "page": "design/reference/rbot-fp-05-distressed-restructuring.dc.html"
+        },
+        "fig_id": "DR.2",
+        "placement": "above"
+      },
+      "owner": "CP-4C",
+      "pathway": "distressed_restructuring",
+      "primary_tab": "T4E.5",
+      "producers": [
+        "CP-4C"
+      ],
+      "state": "populated",
+      "tabs": [
+        "T4E.7",
+        "T4E.8"
+      ],
+      "tabs_source": "cases/cp4c-owner/expected.json#cases.positive.FP05"
+    }
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output; derived from the frozen module oracles only",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "Draws T4E.5 recovery only; the fulcrum marker of the design twin (T4E.7), EV table (T4E.3) and vs-first pp (T4E.5.vs_first_pp) are table facts, not marks of this figure.",
+    "Lease claims are excluded (G38 in the design); CP-4C settles creditor classes of the supplied pack only.",
+    "All multiples are analyst assumptions; the figure is illustrative as CP-4C's own limitation says.",
+    "Seam change (ruling 8, L4): hatching needs a chart-seam change, because charts.py:83 hatches only S refs today; a mark is hatched when its basis is analyst judgment (the multiple's value_class), a seam field the wiring adds."
+  ],
+  "source_authority": {
+    "authority_order": "approved page decides figure and look; brief decides the provider; CP-4C oracle decides every number; inference marked per field",
+    "briefs": [
+      {
+        "file": "docs/design-pack/content/05-distressed-restructuring.md",
+        "line": 26,
+        "sha256": "1990e9fd9a4c1b3e9703cb5c9aaaf8c59127fe642ebe7697391cb49b19eb3276",
+        "what": "Recoveries (CP-4C), charts.fig-recovery-by-class columns %"
+      }
+    ],
+    "design": [
+      {
+        "lines": [
+          37,
+          38,
+          71,
+          72
+        ],
+        "page": "design/reference/rbot-fp-05-distressed-restructuring.dc.html",
+        "sha256": "cae34879e839be531affa30bf5f513ecfb748c1c75a874b70c179c7734984f18",
+        "what": "header 'CP-4C · Fig. DR.2 · %', figure with legend, table twin 'Fig. DR.2 Recovery, %' (Class rows, scenario columns)"
+      },
+      {
+        "lines": [
+          44,
+          66
+        ],
+        "page": "design/reference/lib/charts.js",
+        "sha256": "c892cbe3a4e2dc0d5b2f560b469356ca8502d4a14f07d9f4cfdf19d95be40f03",
+        "what": "grouped columns, hatched patterns for illustrative series"
+      }
+    ],
+    "modules": [
+      {
+        "path": "cases/cp4c-owner/expected.json",
+        "schema_version": "cp4c-owner-expected/1",
+        "sha256": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6"
+      }
+    ],
+    "rulings": [
+      "Q-C4 (scenario labels)",
+      "item 6 of questions.md"
+    ]
+  },
+  "table_twins": {
+    "fixture_debt_missing": {
+      "columns": [
+        "Class",
+        "Base 4.00x",
+        "Downside 3.00x",
+        "Stress 2.00x"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Senior secured term loan"
+        },
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Trade payables"
+        },
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Other current liabilities"
+        }
+      ]
+    },
+    "fixture_ebitda_missing": {
+      "columns": [
+        "Class",
+        "Base 4.00x",
+        "Downside 3.00x",
+        "Stress 2.00x"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "100.0%",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Senior secured term loan"
+        },
+        {
+          "cells": [
+            "100.0%",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Trade payables"
+        },
+        {
+          "cells": [
+            "100.0%",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Other current liabilities"
+        }
+      ]
+    },
+    "fixture_ev_zero": {
+      "columns": [
+        "Class",
+        "Base 4.00x",
+        "Downside 3.00x",
+        "Stress 2.00x"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "100.0%",
+            "0.0%",
+            "0.0%"
+          ],
+          "label": "Senior secured term loan"
+        },
+        {
+          "cells": [
+            "100.0%",
+            "0.0%",
+            "0.0%"
+          ],
+          "label": "Trade payables"
+        },
+        {
+          "cells": [
+            "100.0%",
+            "0.0%",
+            "0.0%"
+          ],
+          "label": "Other current liabilities"
+        }
+      ]
+    },
+    "gap": {
+      "columns": [
+        "Class",
+        "Base 4.00x",
+        "Downside 3.00x",
+        "Stress"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "100.0%",
+            "100.0%",
+            "∅ G#"
+          ],
+          "label": "Senior secured term loan"
+        },
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Administrative and priority claims"
+        },
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Trade payables"
+        },
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "Other current liabilities"
+        }
+      ]
+    },
+    "positive": {
+      "columns": [
+        "Class",
+        "Base 4.00x",
+        "Downside 3.00x",
+        "Stress 2.00x"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "100.0%",
+            "100.0%",
+            "74.2%"
+          ],
+          "label": "Senior secured term loan"
+        },
+        {
+          "cells": [
+            "100.0%",
+            "18.7%",
+            "0.0%"
+          ],
+          "label": "Trade payables"
+        },
+        {
+          "cells": [
+            "100.0%",
+            "18.7%",
+            "0.0%"
+          ],
+          "label": "Other current liabilities"
+        }
+      ]
+    }
+  },
+  "twin_rule": "Rows are creditor classes, cells are scenarios in series order (the design twin, fp05 :71-72); flattened texts equal mark texts, class-major."
+}

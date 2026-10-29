@@ -7,7 +7,7 @@
   "status": "known | missing | not_applicable",
   "fact_id": "table.row.field, assigned by Python",
   "derives_from": "cp1:<metric> = a CP-1 T4.10 fact (cp1_references); cp2g:<id> = a settled CP-2G fact (cp2g_references); any other id = a fact of this module; empty for source terms and analyst judgments",
-  "citations": "source facts carry the agency-source quote they state; calculated facts carry the ordered, de-duplicated concatenation of their own derives_from facts' citations (the cp4_legal._computed pattern); the citations of cp1:/cp2g: facts are appended at run time and not enumerated here",
+  "citations": "source facts carry the agency-source quote they state; calculated facts carry one citation per (source, page), quoting the first of their own derives_from facts' quotes on that page, in input order (rulings stage2 round 3 item 3; round 5 item 17); the citations of cp1:/cp2g: facts are appended at run time by the same rule and not enumerated here",
   "unit_twin": "an unsettled fact carries the unit its settled twin carries: MULTIPLE, PERCENT, pp, notches, scale position or triggers"
  },
  "id_rules": {
@@ -4504,12 +4504,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:2",
        "quote": "11  BB  Ba2"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:2",
-       "quote": "12  BB-  Ba3"
       }
      ]
     },
@@ -4539,20 +4533,8 @@
       {
        "source_id": "ratings",
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:2",
-       "quote": "12  BB-  Ba3"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:1",
        "quote": "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:1",
-       "quote": "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
       }
      ]
     },
@@ -4576,12 +4558,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:1",
        "quote": "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:1",
-       "quote": "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
       }
      ]
     },
@@ -4613,30 +4589,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  Total debt to EBITDA  Above  2.75x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Downgrade  Net debt to EBITDA  Above  2.25x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Upgrade  Net debt to EBITDA  Below  0.50x"
       }
      ]
     },
@@ -4683,18 +4635,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Downgrade  Net debt to EBITDA  Above  2.25x"
       }
      ]
     },
@@ -8971,18 +8911,6 @@
        "source_sha256": "0d73c11c36a9f321472b61bdcb018bf197aa4e9ce74a16a618e8e7bbb07e3f90",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  Total debt to EBITDA  Above  2.75x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "0d73c11c36a9f321472b61bdcb018bf197aa4e9ce74a16a618e8e7bbb07e3f90",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "0d73c11c36a9f321472b61bdcb018bf197aa4e9ce74a16a618e8e7bbb07e3f90",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  Not stated"
       }
      ]
     },
@@ -14147,12 +14075,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:2",
        "quote": "11  BB  Ba2"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:2",
-       "quote": "12  BB-  Ba3"
       }
      ]
     },
@@ -14182,20 +14104,8 @@
       {
        "source_id": "ratings",
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:2",
-       "quote": "12  BB-  Ba3"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:1",
        "quote": "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:1",
-       "quote": "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
       }
      ]
     },
@@ -14219,12 +14129,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:1",
        "quote": "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:1",
-       "quote": "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
       }
      ]
     },
@@ -14256,30 +14160,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  Total debt to EBITDA  Above  2.75x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Downgrade  Net debt to EBITDA  Above  2.25x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Upgrade  Net debt to EBITDA  Below  0.50x"
       }
      ]
     },
@@ -14325,12 +14205,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
       }
      ]
     },
@@ -14421,18 +14295,6 @@
        "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  Total debt to EBITDA  Above  2.75x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Downgrade  Net debt to EBITDA  Above  2.25x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
-       "locator": "page:3",
-       "quote": "Brook Credit  Upgrade  Net debt to EBITDA  Below  0.50x"
       }
      ]
     },
@@ -20071,12 +19933,6 @@
        "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
        "locator": "page:2",
        "quote": "11  BB  Ba2"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:2",
-       "quote": "12  BB-  Ba3"
       }
      ]
     },
@@ -20106,20 +19962,8 @@
       {
        "source_id": "ratings",
        "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:2",
-       "quote": "12  BB-  Ba3"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
        "locator": "page:1",
        "quote": "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:1",
-       "quote": "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
       }
      ]
     },
@@ -20143,12 +19987,6 @@
        "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
        "locator": "page:1",
        "quote": "Alder Ratings  Issuer rating  BB  Negative  2025-11-14"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:1",
-       "quote": "Brook Credit  Issuer rating  Ba3  Stable  2025-10-02"
       }
      ]
     },
@@ -20180,30 +20018,6 @@
        "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  Total debt to EBITDA  Above  2.75x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:3",
-       "quote": "Brook Credit  Downgrade  Net debt to EBITDA  Above  1.00x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:3",
-       "quote": "Brook Credit  Upgrade  Net debt to EBITDA  Below  0.50x"
       }
      ]
     },
@@ -20250,18 +20064,6 @@
        "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
        "locator": "page:3",
        "quote": "Alder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:3",
-       "quote": "Alder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%"
-      },
-      {
-       "source_id": "ratings",
-       "source_sha256": "c82b9a7205fcdfc95bd885f3e7f1c30739dc634ebf6db8efde01b54b21075caa",
-       "locator": "page:3",
-       "quote": "Brook Credit  Downgrade  Net debt to EBITDA  Above  1.00x"
       }
      ]
     },

@@ -25,6 +25,7 @@ from typing import Any, Literal
 import pytest
 import test_method_cp2g as cp2g_stage1
 import test_method_cp4c as stage1
+import view_tree
 from defect_classes import (
     MODEL_TEXT_HOSTILE,
     assert_hostile_refused,
@@ -214,11 +215,15 @@ ARABIC = "٠٣"  # ARABIC-INDIC DIGIT ZERO, THREE: `\d` matches them, `[0-9]` do
         ("CP-2A T2B.1.s03Xebitda_decline", "CP-2A T2B.1.s03.interest_increase"),
         ("CP-2A T2B.1.s03.interest_increase", "CP-2A T2B.1.s03.interest_increase"),
         ("CP-2A T2B.1.s01.ebitda_decline", "CP-2A T2B.1.s03.interest_increase"),
+        ("CP-2A T2B.1.s03.ebitda_decline", "CP-2A T2BX1.s03.interest_increase"),
+        ("CP-2A T2B.1.s03.ebitda_decline", "CP-2A T2B.1Xs03.interest_increase"),
+        ("CP-2A T2B.1.s03.ebitda_decline", "CP-2A T2B.1.s03Xinterest_increase"),
     ],
 )
 def test_source_texts_that_name_no_single_ascii_row_raise_the_invariant(d01: str, d02: str) -> None:
     """Backlog mutants `\\d` for `[0-9]` (both source patterns) and the unescaped `.` of the d01
-    pattern: each text must fullmatch the lease pattern exactly, ASCII digits only."""
+    pattern, and its d02 twin: each text must fullmatch the lease pattern exactly, ASCII digits
+    only. (`\\d` in one pattern alone is an equivalent mutant: the other pattern still refuses.)"""
     ctx = _named(stage1._context("positive"), d01, d02)
     with pytest.raises(ValueError) as caught:
         cp4c.compute(_with(ctx, _payload()))
@@ -925,12 +930,18 @@ def test_each_refusal_is_a_journaled_invalid_step_with_the_oracle_issues(
 
 def test_v08_also_journals_the_out_of_scope_page_it_could_not_read(tmp_path: Path) -> None:
     """v08 cites identity page:1, outside the step's H1 scope, so `read_pages` never returns it:
-    under the oracle's reads the journal holds the validator issue, then the unread page."""
+    under the oracle's reads the journal holds the validator issue, then the unread page. The
+    oracle lists both (`expected_issues`, then `unread_issues`)."""
     store, _, attempt = seed(tmp_path)
     _submit(store, attempt, stage1._refusal_text("v08"))
+    oracle = stage1.EXPECTED_REFUSALS["v08"]
+    assert oracle["unread_issues"] == [f"{UNREAD_PAGE}: identity page:1"]
     assert list(_finished(store, attempt).issues) == [
         *stage1._expected_issues("v08"),
-        f"{UNREAD_PAGE}: identity page:1",
+        *oracle["unread_issues"],
+    ]
+    assert not [
+        r for rid, r in stage1.EXPECTED_REFUSALS.items() if rid != "v08" and "unread_issues" in r
     ]
 
 
@@ -1061,6 +1072,13 @@ def _quotes(store: Execution) -> set[str]:
     return {
         c.quote for h in store.read().heads for f in store.head_module(h).facts for c in f.citations
     }
+
+
+@pytest.mark.parametrize("case", stage1.RUNS)
+def test_view_equals_the_committed_view_tree(case: str, tmp_path: Path) -> None:
+    """`cases/cp4c-owner/cp4c-view-tree.json`: the keys and shape of the body `view` serves."""
+    store, _, attempt = seed(tmp_path, case)
+    view_tree.check("cp4c", case, cp4c.view(_FrozenExecution(store, store.read()), attempt)[1])
 
 
 @pytest.mark.parametrize("case", stage1.RUNS)

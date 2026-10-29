@@ -2515,11 +2515,21 @@ def _own_limitations(
     return tuple(out)
 
 
+def _one_per_page(citations: tuple[Citation, ...]) -> tuple[Citation, ...]:
+    """One Citation per (source, page), quoting the first input quote on that page, in input
+    order. No quote is invented."""
+    first: dict[tuple[str, str], Citation] = {}
+    for citation in citations:
+        first.setdefault((citation.source_id, citation.locator), citation)
+    return tuple(first.values())
+
+
 def _cite(b: _Book, run: _Run) -> None:
-    """Lease :132 (lineage_rule): a calculated fact's citations are the ordered, de-duplicated
-    concatenation of the citations of the facts in its derives_from list, in that order; an own
-    fact contributes its own (transitively CP-1) citations; analyst inputs and CP-2A watch levels
-    carry none. A lineage entry the rule cannot resolve fails closed."""
+    """Lease :132 (lineage_rule; rulings stage2 round 3 item 3): a calculated fact gets one
+    Citation per (source, page), the first quote on that page among the citations of the facts
+    in its derives_from list, in that order; an own fact contributes its own (transitively CP-1)
+    citations; analyst inputs and CP-2A watch levels carry none. A lineage entry the rule cannot
+    resolve fails closed."""
     upstream = {f"cp1:{metric}": f for metric, f in run.cp1.items()}
     cp2a = [run.scenario.decline, run.scenario.increase]
     for x in run.ctx.cp2a.breaks:
@@ -2538,7 +2548,7 @@ def _cite(b: _Book, run: _Run) -> None:
             fact = cell.fact
             calculated = fact.status == "known" and fact.value_class == "calculated"
             done[ref] = (
-                tuple(dict.fromkeys(c for d in cell.derives_from for c in of(d, (*path, ref))))
+                _one_per_page(tuple(c for d in cell.derives_from for c in of(d, (*path, ref))))
                 if calculated
                 else fact.citations
             )

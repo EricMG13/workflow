@@ -805,8 +805,8 @@ def build_case(name, peer_state="absent"):
     for g in sub["gaps"]:
         limits.append(f"Gap ({g['severity']}): {g['gap']}")
 
-    # ---- lineage citations: a calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the
-    # facts in derives_from (transitively through calculated facts). A copied CP-1 cell's citations are bound at run time and
+    # ---- lineage citations: a calculated fact's citations are one Citation per (source, page), the first quote on that page
+    # among the citations of the facts in derives_from (transitively through calculated facts). A copied CP-1 cell's citations are bound at run time and
     # are not literal here; a fact that depends on one has them bound at run time from derives_from.
     by_id = {x["fact_id"]: x for x in facts}
     memo = {}
@@ -824,7 +824,12 @@ def build_case(name, peer_state="absent"):
                 c2, b2 = lineage(d)
                 cites += [c for c in c2 if c not in cites]
                 bound += [b for b in b2 if b not in bound]
-            memo[fid] = (cites, bound)
+            # rulings stage2 round 3 item 3 (close release, round 5 item 17): one citation per (source, page), the first of the
+            # input quotes on that page, in derives_from order
+            first = {}
+            for c in cites:
+                first.setdefault((c["source_id"], c["locator"]), c)
+            memo[fid] = (list(first.values()), bound)
         else:
             memo[fid] = (list(f.get("citations") or []), [])
         return memo[fid]
@@ -1146,7 +1151,7 @@ def main():
         "id_rules": {"fact_id": "<table>.<row>.<field>", "calculation_id": "calc:<fact_id> on calculated facts; '{{CP1_CALCULATION_ID}}' on copied CP-1 cells (bound at run time)",
                      "peer_rows": "p01.. in peer-source order (issuer line excluded); 'issuer' is the issuer row; 'total' and 'none' are fixed rows; T1C.4 rows are metric keys",
                      "claims": "T1C.1.pNN (analyst comparability rationale), T1C.1.universe, T1C.4.<metric>, T1C.1.assessment"},
-        "lineage_rule": "A calculated fact's citations (emitted literally) are the ordered, de-duplicated concatenation of the citations of the facts in derives_from, followed transitively through calculated facts; source facts cite the peer-source row; a calculated fact with no cited ancestor (counts and the inclusion flag, which rest on analyst judgment or on nothing quoted) carries none. A copied CP-1 cell keeps CP-1's citations, bound at run time and not literal: a fact that depends on one (T1C.4 difference, position, of; the T1C.5 issuer row; T1C.6 difference and result) has literal citations that exclude them (the copied cells are recoverable from derives_from and copied_from_cp1); the run-time list is CP-1's citations at that cell's place in derives_from order. A known fact never derives from a fact that is not known.",
+        "lineage_rule": "A calculated fact's citations (emitted literally) are one Citation per (source, page): the first quote on that page among the citations of the facts in derives_from, in that order (rulings stage2 round 3 item 3; round 5 item 17), followed transitively through calculated facts; source facts cite the peer-source row; a calculated fact with no cited ancestor (counts and the inclusion flag, which rest on analyst judgment or on nothing quoted) carries none. A copied CP-1 cell keeps CP-1's citations, bound at run time and not literal: a fact that depends on one (T1C.4 difference, position, of; the T1C.5 issuer row; T1C.6 difference and result) has literal citations that exclude them (the copied cells are recoverable from derives_from and copied_from_cp1); the run-time list is CP-1's citations at that cell's place in derives_from order. A known fact never derives from a fact that is not known.",
         "policy_constants": {"minimum_included_peers": MIN_PEERS, "outlier_rule": "strictly more than one half of the peer median (relative deviation)", "inclusion": "Comparable and Partly comparable are included; Not comparable is excluded",
                              "position": "1 + number of entities strictly better than the issuer; ties share the position; direction per metric",
                              "difference": "multiples: issuer minus median, unit MULTIPLE ('x'); percent metrics: percentage points, unit pp, the unit and formula follow CP-4 (cp4_legal.py:970-972); the amount is (issuer - median) in the 38-digit context, then .scaleb(2), not CP-4's amount * 100 (which would give '1.00 pp' and a 28-digit cell); shown is exact text, compared as a string; spelled by report_view.fact_spelling as exact text + ' pp' (unit_class none); the same rule applies to every percent-minus-percent difference, including T1C.6.<percent metric>.difference",
@@ -1167,7 +1172,7 @@ def main():
                     "host_scope": "identity, financial and peers (no_peers: identity and financial) from the fixed H1 mapping",
                     "acceptance": "exactly one ok read_inputs before the submit; ok read_pages calls covering every page:N cited by the submit (assessments[*].evidence, overall.evidence); no_peers: at least one ok search_pack over identity and financial; the literal sequence is submissions.<case>.tool_calls",
                     "rules_mode": "rules='journaled' with the core's RULES(text, seen) (docs/G1X-OWNER-CORE-PROTOCOL.md section 2): unread_citation_issues only ('Cited page not read through read_pages: <source_id> page:<n>'); CP-1C's schema carries no ABSENCE_MARKERS value",
-                    "view": "read_inputs serves the exact context_block view, no evidence lines: upstream [{module_id, status}], peers {state present|absent, source_id, pages, rows, issuer_line}, cp1_facts [{ref, label, period, unit, shown, value_class}], rules {minimum_included_peers, outlier_fraction, inclusion, position}, inherited_limitations; quotable evidence comes only from read_pages",
+                    "view": "read_inputs serves the exact context_block view, no evidence lines: upstream [{module_id, status}], peers {state present|absent, source_id, pages, rows, issuer_line}, cp1_facts [{ref, label, period, unit, shown, value_class}], rules {minimum_included_peers, outlier_fraction, inclusion, position, direction}, inherited_limitations; quotable evidence comes only from read_pages",
                 },
             },
             "consumption": {

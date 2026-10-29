@@ -27,6 +27,7 @@ from typing import Any
 import cp2h_runs as runs
 import pytest
 import test_method_cp2h as stage1
+import view_tree
 from defect_classes import model_text_failures
 from s1a_runs import clone_workflow
 from test_connect_cp2h import CP2H_VERBATIM
@@ -206,6 +207,7 @@ def test_a1_one_read_then_the_cited_pages_in_the_cp2h_step(positive: Closed) -> 
     assert reads[0].inputs_sha256 == hashlib.sha256(reads[0].body.encode()).hexdigest()
     keys = runs.oracle()["manifest"]["tool_use"]["view_tree_draft"]["keys"]
     assert list(json.loads(reads[0].body)) == list(keys)
+    view_tree.check("cp2h", "positive", reads[0].body)
     literal = [
         c for c in SUBMISSIONS["cases"]["positive"]["tool_calls"] if c["tool"] != "read_inputs"
     ]

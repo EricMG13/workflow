@@ -31,9 +31,9 @@ PINS = {
     "cases/legal/manifest.json": "3da3b74666346c7fc1423b2103bef3a2d467b2799a48774c7db0e912a0403ed4",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
     "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
-    "cases/cp2g-owner/manifest.json": "d69738e224d57c8f81ed4f966a6db8ea06dd2c6f5d4f2c58013d663a0b1cf95d",
+    "cases/cp2g-owner/manifest.json": "981401d050e47b1ee6a1cfd535f38278f3bd7acf91dff0aa7fc2f6819cd039ea",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
-    "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
+    "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
     "cases/cp4-owner/submissions.json": "ed069b1accead9b55fc844b7a5e84f8a3f91bc87582949f2817ebd2438aaf43c",
     "cases/cp4-owner/expected.json": "154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0",
     "cases/cp3c-owner/manifest.json": "e8aaf2eb316c7e88ed94a7c73f1540ade1b728159a5124d389ca67faae22d904",
@@ -1209,7 +1209,10 @@ def refusals(built):
     add("v05", "period column not in the statement", "claims[1].period_column = 'Q5 2026-03-31'", mut(lambda d: d["claims"][1].update(period_column="Q5 2026-03-31")))
     add("v06", "secured class not first", "claims[0].rank = '2'", mut(lambda d: d["claims"][0].update(rank="2")))
     add("v07", "support quote not on the page", "claims[0].support[0].quote altered", mut(lambda d: d["claims"][0]["support"][0].update(quote="Clause 1.3. The agreement governs a revolving facility.")))
-    add("v08", "support from outside the step's scope", "claims[0].support[0].source_id = 'identity'", mut(lambda d: d["claims"][0]["support"][0].update(source_id="identity")))
+    add("v08", "support from outside the step's scope", "claims[0].support[0].source_id = 'identity'", mut(lambda d: d["claims"][0]["support"][0].update(source_id="identity")),
+        # close release: identity page:1 is outside the step's H1 scope, so `read_pages` never returns it and the run-level journal holds a
+        # second line after the validator issue (live.tools.UNREAD_PAGE wording)
+        unread_issues=["Cited page not read through read_pages: identity page:1"])
     add("v09", "fulcrum names the wrong class", "fulcrum[1].class_ids = ['c01']", mut(lambda d: d["fulcrum"][1].update(class_ids=["c01"])))
     add("v10", "fulcrum names an unknown class", "fulcrum[2].class_ids = ['c09']", mut(lambda d: d["fulcrum"][2].update(class_ids=["c09"])))
     add("v11", "fulcrum named where the value break is not determinable", "gap payload: fulcrum[0].class_ids = ['c01']",
@@ -1427,7 +1430,7 @@ def main():
         "id_rules": {"fact_id": "<table_id>.<row_id>.<field>", "calculation_id": "calc:<fact_id> on calculated facts",
                      "rows": "T4E.2: the claim class ids c01.. in submission order, then eq; T4E.3, T4E.7, T4E.9: v01..v03; T4E.4, T4E.5, T4E.8: <case><class> e.g. v02c01, and <case>eq; T4E.6: <case><class> for creditor classes",
                      "claims": "analyst: T4E.2.<class>.rationale, T4E.3.<case>.rationale, T4E.7.<case>.rationale, T4E.8.<case>.rationale, T4E.3.assessment; Python: T4E.3.<case>.ev, T4E.5.<case>, T4E.7.<case>.fulcrum"},
-        "lineage_rule": ("A calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the facts in its derives_from list (cp4_legal._computed pattern); a fact backed by a literal quote lists it in citations here. "
+        "lineage_rule": ("A calculated fact's citations are one Citation per (source, page): the first quote on that page among the citations of the facts in its derives_from list, in that order (rulings stage2 round 3 item 3; round 5 item 17); a fact backed by a literal quote lists it in citations here. "
                          "A known fact never derives from a fact that is not known (asserted). A T4E cell that restates a CP-1, CP-2G, CP-2A or CP-4 fact is this module's own fact with an upstream lineage id (CP-2G ruling M3); "
                          "only the four reference tables carry the upstream facts verbatim."),
         "references_rule": "cp1_references, cp2g_references, cp2a_references, cp4_references carry the upstream facts verbatim under their own fact ids; prose resolves through them; a multiple or rank (analyst_judgment, no citation or calculation) cannot be referenced in prose; each row projects the upstream fact, and the module's reference fact equals the upstream oracle fact (cases/cp2g-owner, cp2a-owner, cp4-owner expected.json, by fact_id) in every key, including currency, scale, decimals and calculation_id; cp1 rows are bound at run time.",
@@ -1468,9 +1471,9 @@ def main():
                             "CP-4C's own consumption stays OPEN: CP-5 counts only after a lease extends its scope."),
             "inherited_limitations": "execution.inherited_limitations rule over the directly bound heads in input order, bound at run time",
         },
-        "refusals": [{k: v for k, v in r.items() if k in ("id", "class", "issue_kind", "expected_issues", "issue_prefix", "run_level", "against")} for r in ref_list],
+        "refusals": [{k: v for k, v in r.items() if k in ("id", "class", "issue_kind", "expected_issues", "unread_issues", "issue_prefix", "run_level", "against")} for r in ref_list],
         "refusal_rules": {
-            "journal": "each refusal is one invalid CP-4C step on attempt 0: attempt consumed, status rejected, limitations equal the issues (bounded 20 lines of 600 characters)",
+            "journal": "each refusal is one invalid CP-4C step on attempt 0: attempt consumed, status rejected, limitations equal the issues (bounded 20 lines of 600 characters); at run level the issues are expected_issues followed by unread_issues where the refusal lists them (v08 cites identity page:1, outside the step's scope, so read_pages never returns it and the journal holds a second line)",
             "order": "shape issues alone; then claims, valuation, case ids, fulcrum, plan (class-reference and waterfall checks only when the claims and valuation are structurally valid), assessment, then per text field prose issues and guard issues",
             "multi_issue": "v21 (instrument recommendation) and v18 (figure placeholder left unreplaced) are product multi-issue payloads: the product validator reports every guard phrase it finds in the text and every unreplaced placeholder, so their expected_issues lists hold more than one entry; every other refusal payload gives exactly one issue (v02 included: after the kind/source mismatch the source-specific amount checks are skipped)",
             "stale": "v24 to v27 validator-only on a literal Upstream; run level: stale_binding at the next G1 call, no attempt consumed, no step journaled; one clone test per upstream (CP-1, CP-2A, CP-4, CP-2G)",

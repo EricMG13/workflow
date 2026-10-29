@@ -35,9 +35,9 @@ D = Decimal
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-    "cases/cp2g-owner/manifest.json": "d69738e224d57c8f81ed4f966a6db8ea06dd2c6f5d4f2c58013d663a0b1cf95d",
+    "cases/cp2g-owner/manifest.json": "981401d050e47b1ee6a1cfd535f38278f3bd7acf91dff0aa7fc2f6819cd039ea",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
-    "cases/cp2g-owner/expected.json": "97328745be246b3bf67fe5840f291afb3da3cbae99b51db1ba7bd24d2eef406c",
+    "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 
@@ -455,7 +455,15 @@ def build_case(name):
             assert d_ in by_id, d_
             assert by_id[d_]["status"] == "known", ("a known fact derives from an unsettled fact", d_)
             out += cites.get(d_, [])
-        return [c for i, c in enumerate(out) if c not in out[:i]]
+        out = [c for i, c in enumerate(out) if c not in out[:i]]
+        if not derives:
+            return out  # a source fact cites the quote it states
+        # rulings stage2 round 3 item 3 (close release, round 5 item 17): a derived fact gets one citation per page,
+        # the first of its input quotes on that page, in input order
+        first = {}
+        for c in out:
+            first.setdefault((c["source_id"], c["locator"]), c)
+        return list(first.values())
 
     def numeric(table, row, field, label, value, kind, formula, value_class="calculated", derives=(), period=None, citations=()):
         unit = {"multiple": "MULTIPLE", "percent": "PERCENT"}.get(kind, kind)
@@ -1209,7 +1217,7 @@ def main():
         "cell_notation": {"shown": "exact displayed text; an unsettled cell is spelled as report_view.fact_spelling spells it: missing -> state gap, text '∅ G#'; not_applicable -> state not_meaningful, text '∅ G# n.m.' (G# is the report-wide gap number, not literal)",
                           "amount_exact": "canonical exact decimal; null means unsettled", "status": "known | missing | not_applicable", "fact_id": "table.row.field, assigned by Python",
                           "derives_from": "cp1:<metric> = a CP-1 T4.10 fact (cp1_references); cp2g:<id> = a settled CP-2G fact (cp2g_references); any other id = a fact of this module; empty for source terms and analyst judgments",
-                          "citations": "source facts carry the agency-source quote they state; calculated facts carry the ordered, de-duplicated concatenation of their own derives_from facts' citations (the cp4_legal._computed pattern); the citations of cp1:/cp2g: facts are appended at run time and not enumerated here",
+                          "citations": "source facts carry the agency-source quote they state; calculated facts carry one citation per (source, page), quoting the first of their own derives_from facts' quotes on that page, in input order (rulings stage2 round 3 item 3; round 5 item 17); the citations of cp1:/cp2g: facts are appended at run time by the same rule and not enumerated here",
                           "unit_twin": "an unsettled fact carries the unit its settled twin carries: MULTIPLE, PERCENT, pp, notches, scale position or triggers"},
         "id_rules": {"fact_id": "<table_id>.<row_id>.<field>", "calculation_id": "calc:<fact_id> on calculated facts",
                      "rows": "T2R.1 u_cp1, u_cp2g, u_cp1d; T2R.2 r01.. the agencies in register order; T2R.3 t01.. the trigger terms in source order; T2R.4 and T2R.6 one row per trigger (t01..); T2R.5 <trigger>_base and <trigger>_down; T2R.7 a01.. the views in register order; T2R.8 p01.. the agency pairs; T2R.9 total; T2R.10 g01..",

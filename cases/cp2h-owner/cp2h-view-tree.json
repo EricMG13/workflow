@@ -1,0 +1,213 @@
+{
+ "_note": "Stage 2 close release W2-D (Modules, 2026-10-29): key tree of the body `owners.cp2h.view(historical, attempt)` serves for `read_inputs`, observed on real stores whose upstream heads were settled through the product store (`Execution.begin/finish`) from the oracle facts of each upstream module, as the module's connect tests seed them. Shape only, not values: dict keys in order, scalar type names, a list keeps its distinct element shapes. No `quote`, `citations` or `record_json` key at any depth. Checked by tests/test_connect_cp2h.py::test_view_equals_the_committed_view_tree; the genuine run's body is checked in tests/test_owner_cp2h.py.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "register",
+   "triggers",
+   "cp2g",
+   "cp1_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "register": {
+    "state": "str",
+    "source_id": "str",
+    "pages": [
+     "str"
+    ],
+    "agencies": [
+     {
+      "row": "str",
+      "agency": "str",
+      "rating": "str",
+      "outlook": "str",
+      "date": "str",
+      "position": "int"
+     }
+    ]
+   },
+   "triggers": [
+    {
+     "row": "str",
+     "agency": "str",
+     "direction": "str",
+     "metric": "str",
+     "comparison": "str",
+     "threshold": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str"
+     }
+    }
+   ],
+   "cp2g": {
+    "status": "str",
+    "rows": [
+     {
+      "row": "str",
+      "metrics": {
+       "total_leverage": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       },
+       "net_leverage": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       },
+       "interest_coverage": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       },
+       "fcf_to_debt": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       }
+      }
+     }
+    ]
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap": {
+  "top_level_keys": [
+   "upstream",
+   "register",
+   "triggers",
+   "cp2g",
+   "cp1_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "register": {
+    "state": "str",
+    "source_id": "str",
+    "pages": [
+     "str"
+    ],
+    "agencies": [
+     {
+      "row": "str",
+      "agency": "str",
+      "rating": "str",
+      "outlook": "str",
+      "date": "str",
+      "position": "int"
+     },
+     {
+      "row": "str",
+      "agency": "str",
+      "rating": "str",
+      "outlook": "str",
+      "date": "str",
+      "position": "NoneType"
+     }
+    ]
+   },
+   "triggers": [
+    {
+     "row": "str",
+     "agency": "str",
+     "direction": "str",
+     "metric": "str",
+     "comparison": "str",
+     "threshold": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str"
+     }
+    },
+    {
+     "row": "str",
+     "agency": "str",
+     "direction": "str",
+     "metric": "str",
+     "comparison": "str",
+     "threshold": {
+      "ref": "NoneType",
+      "shown": "NoneType",
+      "status": "str"
+     }
+    }
+   ],
+   "cp2g": {
+    "status": "str",
+    "rows": [
+     {
+      "row": "str",
+      "metrics": {
+       "total_leverage": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       },
+       "net_leverage": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       },
+       "interest_coverage": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       },
+       "fcf_to_debt": {
+        "ref": "str",
+        "shown": "str",
+        "status": "str",
+        "limitation": "NoneType"
+       }
+      }
+     }
+    ]
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ }
+}

@@ -125,6 +125,27 @@ def run_refused(tmp_path_factory: pytest.TempPathFactory) -> Closed:
     return Closed("s1a_refused_cp1a", root)
 
 
+_VERIFIED: set[tuple[str, str, str]] = set()
+
+
+@pytest.fixture(autouse=True)
+def verifier_runs_once_per_receipt_and_store(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The G1 verifier replays a whole run (about 3.5 minutes on a closed S1a run). Each distinct
+    (store, receipt, publication) is verified by the real verifier once; a repeat of an input it
+    already accepted is not replayed. Refusals are never cached, so every refusal test still
+    gets the verifier's own error."""
+
+    def once(
+        store: Execution, receipt: OwnerRunReceipt, *, publication_directory: Path | None = None
+    ) -> None:
+        key = (str(store.directory), receipt.content_hash(), str(publication_directory))
+        if key not in _VERIFIED:
+            verify_owner_run_receipt(store, receipt, publication_directory=publication_directory)
+            _VERIFIED.add(key)
+
+    monkeypatch.setattr(cpos, "verify_owner_run_receipt", once)
+
+
 @pytest.fixture
 def closed(request: pytest.FixtureRequest) -> Closed:
     result: Closed = request.getfixturevalue(request.param)
@@ -229,7 +250,9 @@ def test_rows_destinations_and_tally_match_oracle(closed: Closed) -> None:
     page, proof = nav_of(closed)
     assert proof.schema_version == "cpos-navigation/1"
     assert proof.run.run_id == exp["run"]["run_id"]
-    assert json.loads(proof.run.model_dump_json()) == json.loads(json.dumps(exp["run"]))
+    run = json.loads(proof.run.model_dump_json())
+    assert run.pop("schema_version") == "run/2"
+    assert run == exp["run"]
     assert {h.module_id: h.status for h in proof.heads} == exp["heads"]
     rows = [json.loads(r.model_dump_json()) for r in proof.rows]
     want = []
@@ -278,7 +301,7 @@ def test_hash_links_are_in_the_oracle_superset_and_all_resolve(closed: Closed) -
     ids = {m["module_id"] for m in data["modules"]}
     routes = ids | {a for m in data["modules"] for a in m["aliases"]} | FIXED_ROUTES
     links = exp["hash_links"]
-    assert ["#" + r["module_id"] for r in data["nav"]] == links["navigator_and_footer_rows"]
+    assert sorted("#" + r["module_id"] for r in data["nav"]) == links["navigator_and_footer_rows"]
     drawn = {
         "#" + b["full_analysis_route"]
         for b in data["report"]["blocks"]

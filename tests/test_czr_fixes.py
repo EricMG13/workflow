@@ -82,9 +82,9 @@ def test_earnings_workflow_uses_the_same_rule() -> None:
 
 
 def test_pipe_rows_of_the_real_10q_extract() -> None:
-    text = "\n".join(Q10[103:112])  # statements of operations, header and first rows
+    text = "\n".join(Q10[103:116])  # statements of operations, header and first rows
     table = extract_statement_lines(text, "page:1")
-    by_label = {line.label: line for line in table.lines}
+    by_label = {line.label: line for line in reversed(table.lines)}  # first of a label wins
     casino = by_label["Casino"]
     assert casino.raw_values == ("1,759", "1,668", "3,425", "3,262")
     assert casino.values == (Decimal(1759), Decimal(1668), Decimal(3425), Decimal(3262))

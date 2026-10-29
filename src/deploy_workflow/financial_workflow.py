@@ -77,6 +77,16 @@ FILES = ("model.html", "calculation.json", "receipt.json")
 MAX_CALLS = 16
 MAX_MESSAGES = 128
 MAX_LINE = 4 * 1024 * 1024
+# A located statement page holds a whole line that is a statement heading: the synthetic
+# "[CONSOLIDATED] INCOME STATEMENT | CASH FLOW STATEMENT | BALANCE SHEET" and the filed SEC
+# "CONSOLIDATED [CONDENSED] BALANCE SHEETS | STATEMENTS OF OPERATIONS | STATEMENTS OF CASH FLOWS".
+# Comprehensive income and stockholders' equity statements are not located statements.
+STATEMENT_HEADING = re.compile(
+    r"^\s*(?:CONSOLIDATED\s+)?(?:CONDENSED\s+)?"
+    r"(?:INCOME STATEMENT|CASH FLOW STATEMENT|BALANCE SHEETS?"
+    r"|STATEMENTS OF OPERATIONS|STATEMENTS OF CASH FLOWS)\s*$",
+    re.M,
+)
 SCHEMAS: dict[str, type[Contract]] = {
     "source_readiness": ReadinessReview,
     "source_context": SourceContextReview,
@@ -354,11 +364,7 @@ def _evidence_issues(
         for source in pack.sources
         if source.source_id in financial_ids and source.status == "ready"
         for span in source.spans
-        if re.search(
-            r"^\s*(?:CONSOLIDATED\s+)?(?:INCOME STATEMENT|CASH FLOW STATEMENT|BALANCE SHEET)\s*$",
-            span.text,
-            re.M,
-        )
+        if STATEMENT_HEADING.search(span.text)
     }
     if not required or not required <= set(evidence.extracted):
         issues.append("Financials must extract every located statement page in this epoch")
@@ -378,7 +384,7 @@ def _evidence_issues(
             caption = (extracted.caption or "").upper()
             statement = (
                 "IS"
-                if "INCOME" in caption
+                if "INCOME" in caption or "OPERATIONS" in caption
                 else "CFS"
                 if "CASH FLOW" in caption
                 else "BS"

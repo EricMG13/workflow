@@ -33,6 +33,21 @@
   ],
   "cases": {
     "gap": {
+      "cited_gap_fact_ids": [
+        "T2R.4.t03.headroom",
+        "T2R.4.t03.status",
+        "T2R.5.t03_base.tightest",
+        "T2R.5.t03_base.tightest_year",
+        "T2R.5.t03_base.y1",
+        "T2R.5.t03_base.y2",
+        "T2R.5.t03_base.y3",
+        "T2R.5.t03_down.tightest",
+        "T2R.5.t03_down.tightest_year",
+        "T2R.5.t03_down.y1",
+        "T2R.5.t03_down.y2",
+        "T2R.5.t03_down.y3"
+      ],
+      "departs_from_approved_page": "reason text and G# differ (page: 'no agency report in the Source Pack', ref G31, fp05 :112); title, 'n/a' form, dashed frame and chip are kept",
       "forbidden_count": 45,
       "forbidden_mark_fact_ids": [
         "T2R.4.t01.actual",
@@ -81,7 +96,9 @@
         "T2R.5.t03_down.y2",
         "T2R.5.t03_down.y3"
       ],
-      "frame": "identical in both cases: the n/a frame is drawn, no mark",
+      "frame": "the n/a frame is drawn, no mark; its text is true for this case",
+      "frame_reason": "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report",
+      "g_ref_rule": "cites the settled missing T2R.4/T2R.5 facts below; G<n> is bound at run time",
       "gap_count_in_module": 12,
       "gap_fact_ids_in_module": [
         "T2R.4.t03.headroom",
@@ -101,6 +118,8 @@
       "module_status": "restricted"
     },
     "positive": {
+      "cited_gap_fact_ids": [],
+      "departs_from_approved_page": "reason text and G# differ (page: 'no agency report in the Source Pack', ref G31, fp05 :112); title, 'n/a' form, dashed frame and chip are kept",
       "forbidden_count": 75,
       "forbidden_mark_fact_ids": [
         "T2R.4.t01.actual",
@@ -179,7 +198,9 @@
         "T2R.5.t05_down.y2",
         "T2R.5.t05_down.y3"
       ],
-      "frame": "identical in both cases: the n/a frame is drawn, no mark",
+      "frame": "the n/a frame is drawn, no mark; its text is true for this case",
+      "frame_reason": "agency source is synthetic; a headroom chart waits for a real agency report",
+      "g_ref_rule": "no gap fact in this case, so the frame cites no G#",
       "gap_count_in_module": 0,
       "gap_fact_ids_in_module": [],
       "marks": [],
@@ -191,11 +212,12 @@
       "block_title": "Rating triggers",
       "design_ref_literal": "G31",
       "fig_id": "DR.6",
-      "g_ref": "G<n> is bound at run time in report order; the design literal G31 is not pinned",
+      "g_ref": "per case: cited only where a settled fact supplies it (cases.<case>.cited_gap_fact_ids); the design literal G31 is not pinned",
       "height": 96,
       "kind": "na",
       "points": [],
-      "reason": "no agency report in the Source Pack",
+      "reason": "per case: see cases.<case>.frame_reason",
+      "reason_page_literal": "no agency report in the Source Pack",
       "series": [],
       "status_chip": "Not computable",
       "text_rule": "'n/a' + ' · ' + ref, then the reason (charts.js:171-173)",
@@ -207,7 +229,7 @@
   "figure": "DR.6",
   "figure_group": "B",
   "questions": [
-    "The design reason 'no agency report in the Source Pack' is false for the positive case (a synthetic agency source exists); the oracle pins the approved page text per authority order. Which G# the frame cites is not decided by any fact (the positive case has no gap fact): the wiring needs a ruling on the gap source."
+    "Settled (ruling 6.5): the frame reason is per case and true; the approved-page text is not used."
   ],
   "render": {
     "distressed_restructuring": {
@@ -221,7 +243,10 @@
         "table_twin_rows": 0
       },
       "frame_texts": {
-        "reason": "no agency report in the Source Pack",
+        "reason": {
+          "gap": "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report",
+          "positive": "agency source is synthetic; a headroom chart waits for a real agency report"
+        },
         "ref_spelling": "∅ G#",
         "title": "Rating trigger headroom"
       },

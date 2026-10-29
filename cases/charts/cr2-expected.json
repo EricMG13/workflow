@@ -534,7 +534,7 @@
     "Draws only CP-2D's settled bridge (T2E.2.r01, T2E.3.r05-r08); no lease, capex, mandatory-use or discretionary split (Q-C3).",
     "Run-rate flow is a held-flat assumption (CP-2D own limitation); the figure note does not turn it into a forecast.",
     "Pinch point, months of runway and the right-hand short table of the design are not part of this figure (T2E.3/T2E.5 tables carry them).",
-    "Design layout beside a short table (fp04 :39-41) is not pinned: the shared block spec uses placement 'above' for both Pathways."
+    "Design deviation (Low, ruling 6.3): FP04 draws the chart beside a short table (fp04 :39-41); one shared _Spec serves both Pathways, so the figure is placed 'above' on both pages."
   ],
   "source_authority": {
     "authority_order": "approved page decides figure, title, kind and look; brief decides provider and chart id; module oracle decides every number; inference marked per field",

@@ -60,6 +60,11 @@ DR6_FRAME = {
     "height": 96,
 }
 DR6_CHIP = "Not computable"
+# Ruling 2026-10-29-stage3 item 6.5: the frame text must be true per case (the agency source is synthetic).
+FRAME_REASON_POSITIVE = (
+    "agency source is synthetic; a headroom chart waits for a real agency report"
+)
+FRAME_REASON_GAP = "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report"
 # Design figure ids and headers: CR.2 fp04 :38, CR.3 fp04 :43, DR.2 fp05 :37, DR.3-5 fp05 :40
 FIG_TITLES = {
     "CR.2": "Liquidity runway",
@@ -421,7 +426,7 @@ def build_cr2() -> dict:
             "Draws only CP-2D's settled bridge (T2E.2.r01, T2E.3.r05-r08); no lease, capex, mandatory-use or discretionary split (Q-C3).",
             "Run-rate flow is a held-flat assumption (CP-2D own limitation); the figure note does not turn it into a forecast.",
             "Pinch point, months of runway and the right-hand short table of the design are not part of this figure (T2E.3/T2E.5 tables carry them).",
-            "Design layout beside a short table (fp04 :39-41) is not pinned: the shared block spec uses placement 'above' for both Pathways.",
+            "Design deviation (Low, ruling 6.3): FP04 draws the chart beside a short table (fp04 :39-41); one shared _Spec serves both Pathways, so the figure is placed 'above' on both pages.",
         ],
         "render": render,
         "builder_targets": [
@@ -1210,8 +1215,18 @@ def build_dr6() -> dict:
         fx = {f["fact_id"]: f for f in d["cases"][name]["facts"]}
         forbidden = sorted(fid for fid, f in fx.items() if f["table_id"] in ("T2R.4", "T2R.5"))
         missing = sorted(fid for fid in forbidden if fx[fid]["status"] == "missing")
+        if name == "positive":
+            frame_reason, cited = FRAME_REASON_POSITIVE, []
+            g_rule = "no gap fact in this case, so the frame cites no G#"
+        else:
+            frame_reason, cited = FRAME_REASON_GAP, missing
+            g_rule = "cites the settled missing T2R.4/T2R.5 facts below; G<n> is bound at run time"
         cases[name] = {
-            "frame": "identical in both cases: the n/a frame is drawn, no mark",
+            "frame": "the n/a frame is drawn, no mark; its text is true for this case",
+            "frame_reason": frame_reason,
+            "g_ref_rule": g_rule,
+            "cited_gap_fact_ids": cited,
+            "departs_from_approved_page": "reason text and G# differ (page: 'no agency report in the Source Pack', ref G31, fp05 :112); title, 'n/a' form, dashed frame and chip are kept",
             "marks": [],
             "forbidden_mark_fact_ids": forbidden,
             "forbidden_count": len(forbidden),
@@ -1231,8 +1246,9 @@ def build_dr6() -> dict:
             "unit_class": "multiple",
             "series": [],
             "points": [],
-            "reason": DR6_FRAME["reason"],
-            "g_ref": "G<n> is bound at run time in report order; the design literal G31 is not pinned",
+            "reason": "per case: see cases.<case>.frame_reason",
+            "reason_page_literal": DR6_FRAME["reason"],
+            "g_ref": "per case: cited only where a settled fact supplies it (cases.<case>.cited_gap_fact_ids); the design literal G31 is not pinned",
             "status_chip": DR6_CHIP,
         }
     )
@@ -1323,7 +1339,7 @@ def build_dr6() -> dict:
                 },
                 "frame_texts": {
                     "title": DR6_FRAME["title"],
-                    "reason": DR6_FRAME["reason"],
+                    "reason": {"positive": FRAME_REASON_POSITIVE, "gap": FRAME_REASON_GAP},
                     "ref_spelling": GAP_SPELLING,
                 },
                 "status_chip": DR6_CHIP,
@@ -1340,7 +1356,7 @@ def build_dr6() -> dict:
             }
         ],
         "questions": [
-            "The design reason 'no agency report in the Source Pack' is false for the positive case (a synthetic agency source exists); the oracle pins the approved page text per authority order. Which G# the frame cites is not decided by any fact (the positive case has no gap fact): the wiring needs a ruling on the gap source.",
+            "Settled (ruling 6.5): the frame reason is per case and true; the approved-page text is not used.",
         ],
     }
 

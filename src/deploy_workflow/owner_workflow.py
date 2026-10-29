@@ -104,6 +104,7 @@ from deploy_workflow.owners import (
     cp2d,
     cp2e,
     cp2g,
+    cp2h,
     cp3,
     cp3c,
     cp3d,
@@ -137,6 +138,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-2G",
         "CP-1C",
         "CP-3C",
+        "CP-2H",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
@@ -155,6 +157,7 @@ _CORES: dict[str, ModuleType] = {
     "CP-2G": cp2g,
     "CP-1C": cp1c,
     "CP-3C": cp3c,
+    "CP-2H": cp2h,
 }
 _QUALIFICATION = {
     "CP-1": PROMOTED,
@@ -175,6 +178,7 @@ _QUALIFICATION = {
     "CP-2G": cp2g.QUALIFICATION,
     "CP-1C": cp1c.QUALIFICATION,
     "CP-3C": cp3c.QUALIFICATION,
+    "CP-2H": cp2h.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -195,6 +199,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-2G": cp2g.probe,
     "CP-1C": cp1c.probe,
     "CP-3C": cp3c.probe,
+    "CP-2H": cp2h.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -211,6 +216,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "forward_credit_model": cp2g.view,
     "peer_benchmark": cp1c.view,
     "refinancing_risk": cp3c.view,
+    "rating_triggers": cp2h.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -232,6 +238,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-2G": cp2g.ENTRY_VALIDATOR,
     "CP-1C": cp1c.ENTRY_VALIDATOR,
     "CP-3C": cp3c.ENTRY_VALIDATOR,
+    "CP-2H": cp2h.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -517,6 +524,21 @@ def _default_specs() -> dict[str, OwnerSpec]:
             module_id="CP-3C",
             steps=(
                 step("refinancing_risk", cp3c.RefinancingRiskSubmission, inputs="module_context"),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2H": OwnerSpec(
+            module_id="CP-2H",
+            steps=(
+                step(
+                    "rating_triggers",
+                    cp2h.TriggerSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
             ),
             entry="owner_core",
             kind="analytical",

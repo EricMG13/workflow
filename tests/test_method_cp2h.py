@@ -31,18 +31,24 @@ from deploy_workflow.owners import cp2h
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases" / "cp2h-owner"
-EXPECTED: dict[str, Any] = json.loads((CASE / "expected.json").read_text(encoding="utf-8"))
-SUBMISSIONS: dict[str, Any] = json.loads((CASE / "submissions.json").read_text(encoding="utf-8"))
-MANIFEST: dict[str, Any] = json.loads((CASE / "manifest.json").read_text(encoding="utf-8"))
-CP2G: dict[str, Any] = json.loads(
-    (ROOT / "cases" / "cp2g-owner" / "expected.json").read_text(encoding="utf-8")
-)
-FINANCIAL: dict[str, Any] = json.loads(
-    (ROOT / "cases" / "financial" / "manifest.json").read_text(encoding="utf-8")
-)
 # Oracle pins: cases/PINS.json, the shared manifest LEAD regenerates (python3 -I cases/pins.py).
 # The CP-2H oracle and builder, and the upstream files its builder pins.
 PINS: dict[str, str] = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+
+
+def _pinned(rel: str, pins: Mapping[str, str] = PINS, root: Path = ROOT) -> Any:
+    """An oracle file parsed only after its sha256 equals its pin (Stage 2 backlog)."""
+    data = (root / rel).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == pins[rel], rel
+    return json.loads(data)
+
+
+EXPECTED: dict[str, Any] = _pinned("cases/cp2h-owner/expected.json")
+SUBMISSIONS: dict[str, Any] = _pinned("cases/cp2h-owner/submissions.json")
+MANIFEST: dict[str, Any] = _pinned("cases/cp2h-owner/manifest.json")
+CP2G: dict[str, Any] = _pinned("cases/cp2g-owner/expected.json")
+# The financial manifest is not in PINS.json: the pinned CP-2H manifest's builder pins carry it.
+FINANCIAL: dict[str, Any] = _pinned("cases/financial/manifest.json", MANIFEST["pins"])
 PINNED = (
     *(
         f"cases/cp2h-owner/{name}"
@@ -61,6 +67,18 @@ REF = re.compile(r"\{([A-Za-z0-9][A-Za-z0-9_.:-]*)\|([^}]*)\}")
 @pytest.mark.parametrize("path", PINNED)
 def test_oracle_pins(path: str) -> None:
     assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == PINS[path]
+
+
+def test_oracle_files_load_only_under_their_pins(tmp_path: Path) -> None:
+    """Stage 2 backlog (owner Info): every oracle file this module reads, the CP-2G expected file
+    included, is parsed only after its sha256 equals its pin, so a drifted file fails at load
+    rather than feeding the other tests."""
+    rel = "cases/cp2g-owner/expected.json"
+    (tmp_path / rel).parent.mkdir(parents=True)
+    (tmp_path / rel).write_bytes((ROOT / rel).read_bytes() + b" ")
+    with pytest.raises(AssertionError, match=re.escape(rel)):
+        _pinned(rel, root=tmp_path)
+    assert _pinned(rel) == CP2G
 
 
 # --- inputs from the oracle's own files --------------------------------------------------------
@@ -1446,6 +1464,12 @@ B8_BREACHES: dict[str, tuple[list[tuple[int, str, str]], str]] = {
     ),
     "terms_two_fields_after_the_end": (
         [(2, LAST_TERM, f"{LAST_TERM}\nEnd of terms.\nSee  page:1")],
+        "Trigger terms not found",
+    ),
+    # a row after the end, then a trailing one-field note: any later line, not only the page's
+    # last (stage2 backlog; cp2h/r12-review.md Low, mutant `after_last_line_only`)
+    "terms_row_then_trailing_note": (
+        [(2, LAST_TERM, f"{LAST_TERM}\nEnd of terms.\nZeta  Watch  X  Over  1x\nSee page:1.")],
         "Trigger terms not found",
     ),
     # each block's own text

@@ -1207,7 +1207,8 @@ _RELATIVE_VALUE: Mapping[str, _Spec] = MappingProxyType(
 )
 # Heads and owner codes of the Distressed & Restructuring Front Page (``rbot-fp-05-*.dc.html``).
 # CP-2A creates the composition with its two downside blocks (lease D7); later owners append rows.
-# CP-2G appends its two forward blocks (docs/CP2G-OWNER-LEASE.md, D7).
+# CP-2G appends its two forward blocks (docs/CP2G-OWNER-LEASE.md, D7). CP-2H appends
+# ``rating-triggers``, already in the preset (docs/CP2H-OWNER-LEASE.md, D7).
 _DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
     {
         "downside-stress": _Spec(
@@ -1221,6 +1222,9 @@ _DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
         ),
         "forward-breakpoints": _Spec(
             "Forward break points", "CP-2G", "dense", ("CP-2G",), route_label="Full analysis"
+        ),
+        "rating-triggers": _Spec(
+            "Rating triggers", "CP-2H", "dense", ("CP-2H",), route_label="Full analysis"
         ),
     }
 )

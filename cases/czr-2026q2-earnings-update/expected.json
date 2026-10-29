@@ -1,0 +1,472 @@
+{
+  "schema_version": "public-case-values/1",
+  "case_id": "czr-2026q2-earnings-update",
+  "derived_from": "documents + qualification.json keys",
+  "label_measure": {
+    "Net revenues": "net_revenues",
+    "Operating income": "operating_income",
+    "Caesars": "net_revenues",
+    "Adjusted EBITDA": "adjusted_ebitda",
+    "Net cash provided by operating activities": "net_cash_provided_by_operating_activities",
+    "Purchase of property and equipment": "purchase_of_property_and_equipment",
+    "Total debt": "total_debt"
+  },
+  "key_lines": [
+    {
+      "module_id": "CP-1",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net revenues | 2,993 | 2,907 | 5,863 | 5,701",
+      "excluded_cells": []
+    },
+    {
+      "module_id": "CP-1",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Operating income | 513 | 526 | 1,013 | 1,014",
+      "excluded_cells": []
+    },
+    {
+      "module_id": "CP-1B",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Caesars | $2,993 | $2,907 | 3.0%",
+      "excluded_cells": [
+        {
+          "cell_index": 3,
+          "reason": "derived percent change (3.0%), not a reported figure"
+        }
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Adjusted EBITDA | $920 | $955 | $1,807 | $1,839",
+      "excluded_cells": []
+    },
+    {
+      "module_id": "CP-1B",
+      "source_id": "czr-fy2025-10k",
+      "document_sha256": "172309048af2a6a2dab515d765f00a7c89bf8c874c6104a5e3a052b66cad4512",
+      "key_line": "Net revenues | 11,486 | 11,245 | 11,528",
+      "excluded_cells": []
+    },
+    {
+      "module_id": "CP-2",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net cash provided by operating activities | 675 | 680",
+      "excluded_cells": []
+    },
+    {
+      "module_id": "CP-2",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Purchase of property and equipment | (335) | (453)",
+      "excluded_cells": []
+    },
+    {
+      "module_id": "CP-5",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Total debt | 11,807 | 11,705 | 11,792",
+      "excluded_cells": []
+    }
+  ],
+  "values": [
+    {
+      "module_id": "CP-1",
+      "measure": "net_revenues",
+      "cell_index": 1,
+      "period": "Q2 2026",
+      "basis": null,
+      "value": "2993",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net revenues | 2,993 | 2,907 | 5,863 | 5,701",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "net_revenues",
+      "cell_index": 2,
+      "period": "Q2 2025",
+      "basis": null,
+      "value": "2907",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net revenues | 2,993 | 2,907 | 5,863 | 5,701",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "net_revenues",
+      "cell_index": 3,
+      "period": "6M 2026",
+      "basis": null,
+      "value": "5863",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net revenues | 2,993 | 2,907 | 5,863 | 5,701",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "net_revenues",
+      "cell_index": 4,
+      "period": "6M 2025",
+      "basis": null,
+      "value": "5701",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net revenues | 2,993 | 2,907 | 5,863 | 5,701",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "operating_income",
+      "cell_index": 1,
+      "period": "Q2 2026",
+      "basis": null,
+      "value": "513",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Operating income | 513 | 526 | 1,013 | 1,014",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "operating_income",
+      "cell_index": 2,
+      "period": "Q2 2025",
+      "basis": null,
+      "value": "526",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Operating income | 513 | 526 | 1,013 | 1,014",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "operating_income",
+      "cell_index": 3,
+      "period": "6M 2026",
+      "basis": null,
+      "value": "1013",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Operating income | 513 | 526 | 1,013 | 1,014",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1",
+      "measure": "operating_income",
+      "cell_index": 4,
+      "period": "6M 2025",
+      "basis": null,
+      "value": "1014",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Operating income | 513 | 526 | 1,013 | 1,014",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "net_revenues",
+      "cell_index": 1,
+      "period": "Q2 2026",
+      "basis": null,
+      "value": "2993",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Caesars | $2,993 | $2,907 | 3.0%",
+      "column_evidence": [
+        "Three Months Ended June 30,",
+        "(In millions) | 2026 | 2025 | % Change"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "net_revenues",
+      "cell_index": 2,
+      "period": "Q2 2025",
+      "basis": null,
+      "value": "2907",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Caesars | $2,993 | $2,907 | 3.0%",
+      "column_evidence": [
+        "Three Months Ended June 30,",
+        "(In millions) | 2026 | 2025 | % Change"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "adjusted_ebitda",
+      "cell_index": 1,
+      "period": "Q2 2026",
+      "basis": null,
+      "value": "920",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Adjusted EBITDA | $920 | $955 | $1,807 | $1,839",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "adjusted_ebitda",
+      "cell_index": 2,
+      "period": "Q2 2025",
+      "basis": null,
+      "value": "955",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Adjusted EBITDA | $920 | $955 | $1,807 | $1,839",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "adjusted_ebitda",
+      "cell_index": 3,
+      "period": "6M 2026",
+      "basis": null,
+      "value": "1807",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Adjusted EBITDA | $920 | $955 | $1,807 | $1,839",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "adjusted_ebitda",
+      "cell_index": 4,
+      "period": "6M 2025",
+      "basis": null,
+      "value": "1839",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-release",
+      "document_sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "key_line": "Adjusted EBITDA | $920 | $955 | $1,807 | $1,839",
+      "column_evidence": [
+        "Three Months Ended June 30, | Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025 | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "net_revenues",
+      "cell_index": 1,
+      "period": "FY2025",
+      "basis": null,
+      "value": "11486",
+      "unit": "USD millions",
+      "source_id": "czr-fy2025-10k",
+      "document_sha256": "172309048af2a6a2dab515d765f00a7c89bf8c874c6104a5e3a052b66cad4512",
+      "key_line": "Net revenues | 11,486 | 11,245 | 11,528",
+      "column_evidence": [
+        "Years Ended December 31,",
+        "(In millions, except per share data) | 2025 | 2024 | 2023"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "net_revenues",
+      "cell_index": 2,
+      "period": "FY2024",
+      "basis": null,
+      "value": "11245",
+      "unit": "USD millions",
+      "source_id": "czr-fy2025-10k",
+      "document_sha256": "172309048af2a6a2dab515d765f00a7c89bf8c874c6104a5e3a052b66cad4512",
+      "key_line": "Net revenues | 11,486 | 11,245 | 11,528",
+      "column_evidence": [
+        "Years Ended December 31,",
+        "(In millions, except per share data) | 2025 | 2024 | 2023"
+      ]
+    },
+    {
+      "module_id": "CP-1B",
+      "measure": "net_revenues",
+      "cell_index": 3,
+      "period": "FY2023",
+      "basis": null,
+      "value": "11528",
+      "unit": "USD millions",
+      "source_id": "czr-fy2025-10k",
+      "document_sha256": "172309048af2a6a2dab515d765f00a7c89bf8c874c6104a5e3a052b66cad4512",
+      "key_line": "Net revenues | 11,486 | 11,245 | 11,528",
+      "column_evidence": [
+        "Years Ended December 31,",
+        "(In millions, except per share data) | 2025 | 2024 | 2023"
+      ]
+    },
+    {
+      "module_id": "CP-2",
+      "measure": "net_cash_provided_by_operating_activities",
+      "cell_index": 1,
+      "period": "6M 2026",
+      "basis": null,
+      "value": "675",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net cash provided by operating activities | 675 | 680",
+      "column_evidence": [
+        "Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-2",
+      "measure": "net_cash_provided_by_operating_activities",
+      "cell_index": 2,
+      "period": "6M 2025",
+      "basis": null,
+      "value": "680",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Net cash provided by operating activities | 675 | 680",
+      "column_evidence": [
+        "Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-2",
+      "measure": "purchase_of_property_and_equipment",
+      "cell_index": 1,
+      "period": "6M 2026",
+      "basis": null,
+      "value": "-335",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Purchase of property and equipment | (335) | (453)",
+      "column_evidence": [
+        "Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-2",
+      "measure": "purchase_of_property_and_equipment",
+      "cell_index": 2,
+      "period": "6M 2025",
+      "basis": null,
+      "value": "-453",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Purchase of property and equipment | (335) | (453)",
+      "column_evidence": [
+        "Six Months Ended June 30,",
+        "(In millions) | 2026 | 2025"
+      ]
+    },
+    {
+      "module_id": "CP-5",
+      "measure": "total_debt",
+      "cell_index": 1,
+      "period": "2026-06-30",
+      "basis": "face",
+      "value": "11807",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Total debt | 11,807 | 11,705 | 11,792",
+      "column_evidence": [
+        "June 30, 2026 | December 31, 2025",
+        "(Dollars in millions) | Final Maturity | Rates | Face Value | Book Value | Book Value"
+      ]
+    },
+    {
+      "module_id": "CP-5",
+      "measure": "total_debt",
+      "cell_index": 2,
+      "period": "2026-06-30",
+      "basis": "book",
+      "value": "11705",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Total debt | 11,807 | 11,705 | 11,792",
+      "column_evidence": [
+        "June 30, 2026 | December 31, 2025",
+        "(Dollars in millions) | Final Maturity | Rates | Face Value | Book Value | Book Value"
+      ]
+    },
+    {
+      "module_id": "CP-5",
+      "measure": "total_debt",
+      "cell_index": 3,
+      "period": "2025-12-31",
+      "basis": "book",
+      "value": "11792",
+      "unit": "USD millions",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "key_line": "Total debt | 11,807 | 11,705 | 11,792",
+      "column_evidence": [
+        "June 30, 2026 | December 31, 2025",
+        "(Dollars in millions) | Final Maturity | Rates | Face Value | Book Value | Book Value"
+      ]
+    }
+  ],
+  "prose_keys": [
+    {
+      "module_id": "CP-2",
+      "source_id": "czr-q2-2026-10q",
+      "document_sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "sentence": "The pending Merger may have significant effects on us, including, among others, the significant diversion of management and employee attention from ordinary course matters."
+    }
+  ],
+  "unresolved": []
+}

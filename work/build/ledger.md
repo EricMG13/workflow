@@ -492,3 +492,4 @@
 - 15:11 Dispatched CP-3C CP-1A oracle preparer (mx-feature a4872706, isolated, claude/s3-cp3c-cp1a from ee95ffb; lease amendment + cp1a_consumer_deltas; product repro to validate).
 - 15:18 CP-3C CP-1A oracle preparer done claude/s3-cp3c-cp1a c941672 (cp1a_consumer_deltas CP-3C entry READY_WITH_LIMITATIONS from lease :56/:167; lease amended; expected.json unchanged; pins 0; fresh-copy rebuilds identical; product repro CP-1 -> CP-3C positive submit all valid; agent=mx-feature a4872706). Review dispatched: mx-precise a2ed778b.
 - 15:23 I5 lane C cpos exit=0 (tests/test_owner_cpos.py 44 passed, 38m; 18 GB free). Lane C now g2cp1.
+- 15:30 CP-3C CP-1A review APPROVE (mx-precise a2ed778b; status READY_WITH_LIMITATIONS per methods/cp0.md:63-67; fresh-copy rebuilds identical; repro on lane venv CP-1 -> CP-3C valid). Two Low wording notes (PINS count; single path) sent to preparer a4872706 before freeze.

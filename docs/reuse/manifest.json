@@ -1715,6 +1715,15 @@
       "sha256": "1f50c7b92de9d7db1aec49a496895893431b5e44b2f721e352ec194843d5cf9e",
       "reason": "Stage 3 I3 merge of s3-w2d: the DR.2 to DR.6 registration block (group d).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "1f50c7b92de9d7db1aec49a496895893431b5e44b2f721e352ec194843d5cf9e",
+      "project_commit": "8abfb0ccbdf0d6bfc593c6041b76c46fc797713a",
+      "sha256": "cbb4c3682a1abf102507084fc63e52940a2fdb2943ebb8f28c1b9749b466be68",
+      "reason": "Stage 4 batch 2 (CP-8 rails, class E): _prose_lines resolves a known text fact that carries [ref] tokens through resolve(), so the window chip shows the page's gap number instead of a Python-spelled placeholder (rulings 2026-10-29-stage3 item 30).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -946,7 +946,7 @@ class ExpFigure:
     series: tuple[str, ...] | None
     marks: tuple[ExpMark, ...]
     unordered: bool = False
-    title_prefix: bool = False  # S.4: the producer appends its basis and date to the title
+    title_pattern: str | None = None  # S.4 off the FP-04 fixture: the date varies (item 20 Q1)
     twin: tuple[tuple[str, bool, tuple[str, ...]], ...] | None = None
     reason: str | None = None
     reason_gap_suffix: bool = False  # DR.6 gap case: the reason may end ` (∅ G<n>, ..., ∅ G<m>)`
@@ -1011,6 +1011,14 @@ def _twin_rows(rows: list[dict[str, Any]]) -> tuple[tuple[str, bool, tuple[str, 
     return tuple(out)
 
 
+# Rulings item 20 Q1: off the FP-04 fixture the S.4 title carries the fixture's date.
+_S4_TITLE_PATTERN = r"^Maturity wall — principal at \d{4}-\d{2}-\d{2} \(not a forecast\)$"
+
+
+_S4_SAMPLE_TITLE = "Maturity wall — principal at 2025-12-31 (not a forecast)"
+assert re.fullmatch(_S4_TITLE_PATTERN, _S4_SAMPLE_TITLE)
+
+
 def _s_figures() -> tuple[ExpFigure, ...]:
     """S.1-S.4 on the fields the oracle pins (R3.2): ids, title, unit, series, one mark per
     quarter and series with the oracle amount or a gap, S.4 from the maturity wall rows."""
@@ -1048,12 +1056,12 @@ def _s_figures() -> tuple[ExpFigure, ...]:
             "S.4",
             "above",
             None,
-            series_of["S.4"]["title"],
+            None,
             series_of["S.4"]["unit"],
             None,
             tuple(ExpMark("", None, None, _decimal(row["outstanding_millions"])) for row in wall),
             unordered=True,
-            title_prefix=True,
+            title_pattern=_S4_TITLE_PATTERN,
         )
     )
     return tuple(figures)
@@ -1339,10 +1347,9 @@ def _figure_equals(
     if want.kind is not None:
         assert chart["kind"] == want.kind, want.fig_id
     if want.title is not None:
-        if want.title_prefix:
-            assert got["title"].startswith(want.title), want.fig_id
-        else:
-            assert got["title"] == want.title, want.fig_id
+        assert got["title"] == want.title, want.fig_id
+    if want.title_pattern is not None:
+        assert re.fullmatch(want.title_pattern, got["title"]), (want.fig_id, got["title"])
     units = _accepted_units(want.unit)
     if units is not None:
         assert chart["unit"] in units, (want.fig_id, chart["unit"])
@@ -1508,7 +1515,7 @@ def _payload_block(want: tuple[ExpFigure, ...]) -> dict[str, Any]:
             {
                 "fig_id": figure.fig_id,
                 "placement": figure.placement or "above",
-                "title": figure.title or "t",
+                "title": figure.title or (_S4_SAMPLE_TITLE if figure.title_pattern else "t"),
                 "chart": {
                     "kind": figure.kind or "line",
                     "unit": (_accepted_units(figure.unit) or ("u",))[0],
@@ -1744,10 +1751,24 @@ def _real_block(report: Any, block_id: str) -> dict[str, Any]:
 
 
 def _real_check(
-    scope_id: str, block_id: str, case: str, view: Any, report: Any, *, perturb: bool = True
+    scope_id: str,
+    block_id: str,
+    case: str,
+    view: Any,
+    report: Any,
+    *,
+    perturb: bool = True,
+    exact_titles: dict[str, str] | None = None,
 ) -> None:
+    """`exact_titles` (fig_id -> title) compares a title exactly in place of its pattern, for a
+    fixture whose own title is not the producer's form."""
     payload = _real_block(report, block_id)
-    want = expected_figures(scope_id, block_id, case)
+    want = tuple(
+        replace(f, title_pattern=re.escape((exact_titles or {})[f.fig_id]))
+        if f.fig_id in (exact_titles or {})
+        else f
+        for f in expected_figures(scope_id, block_id, case)
+    )
     assert want
     assert_figures_equal_oracle(payload, want, _modules_of(view))
     if perturb:  # the same real page with one mark's text changed fails
@@ -1848,7 +1869,80 @@ def test_fast_figure_rule_on_the_real_s1_to_s4_strip(chart_case: Any) -> None:
     cp1 = importlib.import_module("test_cp1_chart_render")
 
     view, _, _ = chart_case
-    _real_check("cp1-model", "model-chart-strip", "positive", view, cp1._report(view))
+    # The composer fixture spells S.4 "current principal" (tests/test_cp1_chart_render.py:150),
+    # not the producer's `financial_series.py:212` form that the pattern pins; the genuine
+    # cp1-model run compares the pattern. Here the fixture's own title is compared exactly.
+    fixture_title = "Maturity wall — current principal at 2025-12-31 (not a forecast)"
+    _real_check(
+        "cp1-model",
+        "model-chart-strip",
+        "positive",
+        view,
+        cp1._report(view),
+        exact_titles={"S.4": fixture_title},
+    )
+
+
+def _s4_fp04_figure() -> ExpFigure:
+    """S.4 on the FP-04 fixture: every field the frozen `s4fp04-expected.json` pins, the title
+    compared exactly (rulings item 20 Q1)."""
+    oracle = json.loads((CHARTS / "s4fp04-expected.json").read_text(encoding="utf-8"))
+    (spec,) = oracle["chart_series"]
+    (figure,) = oracle["render"]["figures"]
+    return ExpFigure(
+        spec["fig_id"],
+        figure["placement"],
+        None,
+        spec["title"],
+        spec["unit"],
+        tuple(spec["series"]),
+        _point_marks(spec["points"]),
+    )
+
+
+def test_fast_s4_title_is_exact_on_the_fp04_fixture(tmp_path: Path) -> None:
+    s4 = importlib.import_module("test_chart_render_s4fp04")
+
+    want = _s4_fp04_figure()
+    assert want.title == "Maturity wall — principal at 2025-12-31 (not a forecast)"
+    store, attempt = s4.make_upstream(tmp_path, charts=True)
+    s4._submit(store, attempt, s4._literal("positive"))
+    view = store.view()
+    payload: dict[str, Any] = g2._expected_block_payload(s4._block(view))
+    assert_figures_equal_oracle(payload, (want,), _modules_of(view))
+    for forged in (
+        f"{want.title} junk",
+        "Maturity wall",
+        "Maturity wall — principal at 2025-12-30 (not a forecast)",
+        "Maturity wall — principal at 2025-12-31 (a forecast)",
+    ):
+        payload["figures"][0]["title"] = forged
+        with pytest.raises(AssertionError):
+            assert_figures_equal_oracle(payload, (want,), _modules_of(view))
+
+
+def test_fast_s4_title_elsewhere_matches_the_ruled_form_only() -> None:
+    (s4,) = (f for f in _s_figures() if f.fig_id == "S.4")
+    block = _payload_block((s4,))
+    for good in (
+        "Maturity wall — principal at 2025-12-31 (not a forecast)",
+        "Maturity wall — principal at 2024-06-30 (not a forecast)",
+    ):
+        block["figures"][0]["title"] = good
+        assert_figures_equal_oracle(block, (s4,), [])
+    for bad in (
+        "Maturity wall",
+        "Maturity wall junk",
+        "Maturity wall — principal at 2025-12-31 (not a forecast) junk",
+        "x Maturity wall — principal at 2025-12-31 (not a forecast)",
+        "Maturity wall — principal at 2025-12-3 (not a forecast)",
+        "Maturity wall — principal at 2025-12-31 (a forecast)",
+        "Maturity wall — principal at 2025-12-31 (not a forecast)\n",
+        "",
+    ):
+        block["figures"][0]["title"] = bad
+        with pytest.raises(AssertionError):
+            assert_figures_equal_oracle(block, (s4,), [])
 
 
 def assert_scope_figures(scope_id: str, case: str, outcome: str, payload: dict[str, Any]) -> None:

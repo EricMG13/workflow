@@ -28,15 +28,15 @@ D = Decimal
 # --- 0. pinned inputs --------------------------------------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "cases/legal/manifest.json": "dceee076fb74ae79685b1551fb3d35ed92355561793383f29590d90e71801d40",
+    "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
     "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
     "cases/cp2g-owner/manifest.json": "c7f66104fbfda75cd06b3dd51b2a49f7ed19b107e058ee7fe77d9832624a4068",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
     "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
-    "cases/cp4-owner/submissions.json": "094425aacc3e819d2cb3b740d5c973c1e1f4c27d561458bdad18b2417cfdecbe",
+    "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
     "cases/cp4-owner/expected.json": "2b98b81bd529ef5b754dd6977b4624e2dc1359d29385be952a7afe0bd09e4a55",
-    "cases/cp3c-owner/manifest.json": "10e891ffc7354c25ef323a582502444a0085170d610ebf33c709bdb2288d0c46",
+    "cases/cp3c-owner/manifest.json": "551c3125319f5dde4a2022f51a5a40f59f79880764a1dd0aac3b7cd9933fc919",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
     "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
 }

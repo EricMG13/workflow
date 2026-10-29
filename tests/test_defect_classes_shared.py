@@ -112,7 +112,7 @@ CP0_VERBATIM: Mapping[tuple[str | int, ...], str] = {
     ("consumers", "*", "rationale"): "Fact.text (T4 rationale)",
     ("consumers", "*", "limitations", "*"): "Module.limitations (str) and Fact.text (T8 limits)",
     ("consumers", "*", "missing_source"): "ConsumerReadiness.missing_source (str | None): checked"
-    " for prohibited text (`readiness.py`), required when CONDITIONAL, and read nowhere else",
+    " by the absence-claim rule (`readiness.py:321`), required when CONDITIONAL, and read nowhere else",
     ("analysis", "*", "limitation"): "Claim.limitation (str | None; Claim.text is not this)",
 }
 

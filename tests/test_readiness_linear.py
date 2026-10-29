@@ -124,7 +124,7 @@ def _case_refs() -> Callable[[], object]:
     d = copy.deepcopy(CONTEXT)
     scan = d["sources"][1]
     n = 120000
-    d["events"] = [_event(0, [EVENT_CITE] * (n // 40))]
+    d["events"] = [_event(0, [EVENT_CITE] * (n // 10))]
     scan["event_scan"] = "events_identified"
     scan["event_ids"] = ["ev0"] * n
     review = SourceContextReview.model_validate_json(json.dumps(d))
@@ -132,9 +132,14 @@ def _case_refs() -> Callable[[], object]:
 
 
 def _case_scans() -> Callable[[], object]:
+    """Events x scans x the event ids each scan lists: a scan list with 1,000 ids each is 200,000
+    entries, which the old per-event `any(... in s.event_ids ...)` walked once per event (about
+    18 s) and the one-pass index builds once (0.5 s)."""
     d = copy.deepcopy(CONTEXT)
-    d["sources"] = [d["sources"][0]] * 1999 + [d["sources"][1]]
-    d["events"] = [_event(i, [dict(EVENT_CITE, source_id="zz")]) for i in range(20000)]
+    first = dict(d["sources"][0], event_ids=[f"o{j}" for j in range(1000)])
+    d["sources"] = [first] * 199 + [d["sources"][1]]
+    cited = dict(EVENT_CITE, source_id=first["source_id"])
+    d["events"] = [_event(i, [cited]) for i in range(20000)]
     review = SourceContextReview.model_validate_json(json.dumps(d))
     return lambda: validate_source_context(pack, review)
 
@@ -283,17 +288,25 @@ def _case_prefill_fxrow() -> Callable[[], object]:
     return _run_prefill(doc, k)
 
 
-def _with_scopes(k: Any, same_end: bool) -> Any:
+def _with_scopes(k: Any, same_end: bool, total: int) -> Any:
+    """`total` scopes for the financial source's entity, 2,000 to a source (the contract's cap),
+    carried by copies of the financial source."""
     ctx = k.context
     fin = next(s for s in ctx.sources if s.classification == "financial")
     scope0 = fin.scopes[0]
-    extra = tuple(
-        scope0.model_copy(update={"scope_id": f"x{i}", **({} if same_end else {"end_date": None})})
-        for i in range(2000 - len(fin.scopes))
+
+    def scopes(n: int, count: int) -> tuple[Any, ...]:
+        update = {} if same_end else {"end_date": None}
+        return tuple(
+            scope0.model_copy(update={"scope_id": f"x{n}_{i}", **update}) for i in range(count)
+        )
+
+    first = fin.model_copy(update={"scopes": (*fin.scopes, *scopes(0, 2000 - len(fin.scopes)))})
+    more = tuple(
+        fin.model_copy(update={"source_id": f"fin{n}", "scopes": scopes(n, 2000)})
+        for n in range(1, total // 2000)
     )
-    sources = tuple(
-        s.model_copy(update={"scopes": (*s.scopes, *extra)}) if s is fin else s for s in ctx.sources
-    )
+    sources = tuple(first if s is fin else s for s in ctx.sources) + more
     return type(k)(k.pack_sha256, k.sources, k.step, ctx.model_copy(update={"sources": sources}))
 
 
@@ -301,17 +314,17 @@ def _case_prefill_scopes() -> Callable[[], object]:
     doc, k = _financials()
     period0 = doc["financial"]["books"][0]["periods"][0]
     short = {key: period0[key] for key in ("period_id", "period_type", "start_date", "end_date")}
-    doc["financial"]["books"] = [{"book_id": f"b{i}", "periods": [short]} for i in range(8000)]
-    doc["binding"]["books"] = [{"book_id": f"b{i}", "entity_id": "issuer"} for i in range(8000)]
-    return _run_prefill(doc, _with_scopes(k, same_end=False))
+    doc["financial"]["books"] = [{"book_id": f"b{i}", "periods": [short]} for i in range(2000)]
+    doc["binding"]["books"] = [{"book_id": f"b{i}", "entity_id": "issuer"} for i in range(2000)]
+    return _run_prefill(doc, _with_scopes(k, same_end=False, total=60000))
 
 
 def _case_prefill_periods() -> Callable[[], object]:
     doc, k = _financials()
     b = doc["financial"]["books"][0]
     period0 = b["periods"][0]
-    b["periods"] = [dict(period0, period_id=f"q{i}") for i in range(4000)]
-    return _run_prefill(doc, _with_scopes(k, same_end=True))
+    b["periods"] = [dict(period0, period_id=f"q{i}") for i in range(1000)]
+    return _run_prefill(doc, _with_scopes(k, same_end=True, total=20000))
 
 
 # The latent sites: CP-3 and CP-4 validators reached once those steps connect to a workflow.
@@ -394,8 +407,8 @@ CASES: dict[str, tuple[Callable[[], Callable[[], object]], float]] = {
     "absence": (_case_absence, 0.1),
     "gaps": (_case_gaps, 1.5),
     "attach": (_case_attach, 0.5),
-    "refs": (_case_refs, 2.0),
-    "scans": (_case_scans, 1.0),
+    "refs": (_case_refs, 2.5),
+    "scans": (_case_scans, 3.0),
     "cp1a_sources": (_case_cp1a_sources, 0.2),
     "cp1a_consumers": (_case_cp1a_consumers, 0.2),
     "cp1a_conflicts": (_case_cp1a_conflicts, 0.2),

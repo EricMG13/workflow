@@ -890,8 +890,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
     sources exactly when `host._OWNER_SCOPES` has its row, and a `journaled` step has pack
     sources (`RULES` judges the session's `Seen`). Every step: no upstream grant, some evidence
     (pack sources or a read), `module_context` or `step_context` only with a `_VIEWS` entry, and
-    the
-    financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
+    the financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
     take."""
     core = _CORES.get(module_id)
     try:

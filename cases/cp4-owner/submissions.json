@@ -3,7 +3,7 @@
   "note": "Literal analyst inputs only. Every number CP-4 shows is Python's (cp4_legal): the threshold is parsed from the quote, the headroom is threshold minus the bound CP-1 metric, the verdict follows. Run-time placeholders are listed in `run_time_bindings`.",
   "frozen_inputs": {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "cases/legal/manifest.json": "dceee076fb74ae79685b1551fb3d35ed92355561793383f29590d90e71801d40",
+    "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
   },
   "run_time_bindings": {

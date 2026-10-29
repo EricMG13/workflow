@@ -419,9 +419,11 @@ def test_source_context_amplification_refusal_is_bounded(tmp_path):
     assert len(json.dumps(out, ensure_ascii=False).encode()) <= LIMIT
 
 
-def test_the_real_worst_case_record_bound_holds_for_escaped_characters():
+def test_the_real_worst_case_record_bound_holds_for_escaped_characters(tmp_path):
     """F1: a control-character id is stored as six bytes a character, so two rules at one step
-    exceed the 64 KiB the ASCII tests assert, and stay within `WORST_CASE`."""
+    exceed the 64 KiB the ASCII tests assert, and the stored record stays within `WORST_CASE`."""
+    from deploy_workflow import financial_workflow as fin
+
     ident = "\x01" * 700
     absence = [
         {"event_scan": "no_events_identified", "source_id": f"{ident}{i}"} for i in range(30)
@@ -433,3 +435,14 @@ def test_the_real_worst_case_record_bound_holds_for_escaped_characters():
     assert max(len(line) for line in issues) <= MAX_ISSUE_CHARS
     size = len(json.dumps(issues).encode())
     assert LIMIT < size <= WORST_CASE
+    w, pack = fw.start(tmp_path / "c")
+    fw.read_sources(w)
+    assert w.submit_review(fw.readiness(pack))["status"] == "valid"
+    for source in ("identity", "financial"):
+        w.invoke("read_pages", {"source_id": source, "first_page": 1, "last_page": 1})
+    w.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
+    out = w.submit_review(payload)
+    assert out["status"] == "refused"
+    assert len(out["issues"]) == MAX_ISSUES * 2
+    stored = _largest(fin._audit(w._store, "submissions", "x").parent)
+    assert LIMIT < stored <= WORST_CASE

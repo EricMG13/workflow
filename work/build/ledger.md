@@ -534,3 +534,4 @@
 - 20:21 CP-1D tab RCA done (mx-autonomous a6a15771): G2 tabs-only rule wrong for one-register blocks (report_view renders them untabbed); 3-line test fix proposed; 4th G2 change -> asked the user. Item 35.
 - 20:29 I6 G2 shard 5: 5 passed, 3 failed (cp1d positive: item 35 one-register rule; cp2g gap-gap and cp2h blocked: item 34 note). No new cause.
 - 20:41 I6 G2 shard 1: 6 passed, 3 failed (cp1d gap: item 35; cp2h gap and cp4c blocked: item 34). No new cause.
+- 20:46 I6 G2 shard 3: 7 passed, 2 failed (cp4c gap, cp2g gap-blocked: item 34). G2 deferred genuine on I6 complete: 51 tests, 35 passed, 16 failed; 13 item 34 (cp2g/cp2h/cp4c readiness note, fixer a7b022fb reruns them), 3 item 35 (cp1d one-register rule, awaiting the user). Failed list scratchpad i6/g2d-failed.txt.

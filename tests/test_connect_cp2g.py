@@ -8,7 +8,9 @@ pinned CP-2A and CP-1D oracles), never from the code under test. The stores here
 from the oracles' own records (CP-2A also through the real CP-2A core), so no CP-1 promotion
 runs: the genuine runs are `tests/test_owner_cp2g.py` and `tests/cp2g_runs.py`. The fixtures vary
 the CP-1 amounts, the as-of date, the case kind (heads settle accepted or restricted), the CP-1D
-state and the CP-2A head, so a constant equal to the oracle cannot pass.
+state, the CP-2A head, and the CP-1D supported facts (`test_the_forecast_follows_the_cp1d_facts`
+settles a CP-1D head whose three facts differ from the oracle's), so a constant equal to the
+oracle cannot pass.
 """
 
 import hashlib
@@ -370,11 +372,13 @@ def seed(
     cp2a_source: str = "positive",
     genuine_cp2a: bool = False,
     cp1_facts: tuple[Fact, ...] | None = None,
+    cp1d_facts: tuple[Fact, ...] | None = None,
     as_of: str | None = None,
     case_kind: CaseKind = "synthetic",
     notes: bool = True,
 ) -> tuple[Execution, PreparedPack, Attempt]:
-    """A real store with CP-0, CP-1, CP-1D (when requested) and CP-2A settled, CP-2G begun."""
+    """A real store with CP-0, CP-1, CP-1D (when requested) and CP-2A settled, CP-2G begun.
+    `cp1d_facts` replaces the CP-1D oracle facts the CP-1D head settles with."""
     pack = _pack(case, as_of=as_of, case_kind=case_kind)
     store = Execution.create(root / "store", pack)
 
@@ -388,7 +392,8 @@ def seed(
     if cp1d_blocked:
         _blocked(store, "CP-1D")
     elif "CP-1D" in pack.run.requested_modules:
-        _finish(store, "CP-1D", oracle_facts(stage1.CP1D_EXP, "positive"), note("CP-1D"))
+        body = oracle_facts(stage1.CP1D_EXP, "positive") if cp1d_facts is None else cp1d_facts
+        _finish(store, "CP-1D", body, note("CP-1D"))
     if genuine_cp2a:
         _cp2a_genuine(store, facts)
     else:
@@ -1121,6 +1126,37 @@ def test_consumer_readers_read_the_cp2a_and_cp1d_heads(tmp_path: Path) -> None:
 
 
 # --- consumption (D3): CP-2G reads the settled CP-2A and CP-1D heads ---------------------------
+
+
+def test_the_forecast_follows_the_cp1d_facts(tmp_path: Path) -> None:
+    """D3 strength: a CP-1D head whose supported EBITDA and leverages differ from the oracle's
+    (40.0, 2.5, 1.25; the oracle has 31.8, 1.57, 0.94) moves T2H.2.*_supported and
+    T2H.8.*.ebitda_fy26_vs_supported with it, so CP-2G cannot take them from a constant while
+    only the CP-1D status is bound."""
+    moved = {
+        "T1D.3.supported.value": Decimal("40.0"),
+        "T1D.6.supported.total_leverage": Decimal("2.5"),
+        "T1D.6.supported.net_leverage": Decimal("1.25"),
+    }
+    oracle = oracle_facts(stage1.CP1D_EXP, "positive")
+    seeded = tuple(
+        f.model_copy(update={"amount": moved[f.fact_id]}) if f.fact_id in moved else f
+        for f in oracle
+    )
+    assert {f.fact_id: f.amount for f in seeded if f.fact_id in moved} == moved
+    assert all(f.amount != moved[f.fact_id] for f in oracle if f.fact_id in moved)
+    store, _, _, _ = settled(tmp_path, cp1d_facts=seeded)
+    mine = {f.fact_id: f for f in store.head_module(_head(store, MODULE)).facts}
+    assert mine["T2H.2.ebitda_supported.value"].amount == Decimal("40.0")
+    assert mine["T2H.2.total_leverage_supported.value"].amount == Decimal("2.5")
+    assert mine["T2H.2.net_leverage_supported.value"].amount == Decimal("1.25")
+    reader = cp2g.cp1d_reader(store, _head(store, "CP-1D"))
+    assert reader.supported is not None and reader.supported.amount == Decimal("40.0")
+    for case, row in (("base", "b26"), ("down", "d26")):
+        ebitda = mine[f"T2H.4.{row}.ebitda"].amount
+        assert ebitda is not None
+        delta = mine[f"T2H.8.{case}.ebitda_fy26_vs_supported"].amount
+        assert delta == ebitda - Decimal("40.0"), case
 
 
 def test_d3_cp2g_consumes_the_genuine_cp2a_head_and_the_cp1d_head(tmp_path: Path) -> None:

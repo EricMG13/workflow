@@ -9,6 +9,8 @@ pinned CP-2A, CP-2G and CP-4 oracles), never from the code under test. The store
 CP-1 promotion runs: the genuine runs are `tests/test_owner_cp4c.py` and `tests/cp4c_runs.py`.
 The fixtures vary the CP-1 amounts, the as-of date, the case kind (heads settle accepted or
 restricted), the T4.18 period and the CP-2G head, so a constant equal to the oracle cannot pass.
+`test_the_copies_follow_the_cp2g_cp2a_and_cp4_heads` settles a CP-2G head with scaled T2H.4
+EBITDA, a CP-2A head with another s03 decline and a CP-4 head with another facility text.
 """
 
 import hashlib
@@ -564,13 +566,18 @@ def seed(
     case: str = "positive",
     *,
     cp1: tuple[Fact, ...] | None = None,
+    cp2a: tuple[Fact, ...] | None = None,
+    cp4: tuple[Fact, ...] | None = None,
+    cp2g_facts: tuple[Fact, ...] | None = None,
     genuine_cp2g: bool = False,
     cp2g_blocked: bool = False,
     as_of: str | None = None,
     case_kind: CaseKind = "synthetic",
     notes: bool = True,
 ) -> tuple[Execution, PreparedPack, Attempt]:
-    """A real store with CP-0, CP-1, CP-2A, CP-4 and CP-2G settled (plan order), CP-4C begun."""
+    """A real store with CP-0, CP-1, CP-2A, CP-4 and CP-2G settled (plan order), CP-4C begun.
+    `cp2a`, `cp4` and `cp2g_facts` replace the facts those heads settle with (the oracle's by
+    default); the CP-2G replacement keeps the oracle's T2H.7 table."""
     pack = _pack(case, as_of=as_of, case_kind=case_kind)
     store = Execution.create(root / "store", pack)
 
@@ -580,15 +587,21 @@ def seed(
     commands = tuple(_command(m) for m in ("CP-1", "CP-2A", "CP-4", "CP-2G", "CP-4C"))
     _finish(store, "CP-0", commands, note("CP-0"))
     _finish(store, "CP-1", cp1_facts(case) if cp1 is None else cp1, note("CP-1"))
-    _finish(store, "CP-2A", oracle_facts(stage1.CP2A_EXP, "positive"), note("CP-2A"))
-    _finish(store, "CP-4", stage1._cp4(case).facts, note("CP-4"))
+    _finish(
+        store,
+        "CP-2A",
+        oracle_facts(stage1.CP2A_EXP, "positive") if cp2a is None else cp2a,
+        note("CP-2A"),
+    )
+    _finish(store, "CP-4", stage1._cp4(case).facts if cp4 is None else cp4, note("CP-4"))
     if cp2g_blocked:
         _blocked(store, "CP-2G")
         return store, pack, store.read().attempts[-1]
     if genuine_cp2g:
         _cp2g_genuine(store)
     else:
-        _finish(store, "CP-2G", oracle_facts(stage1.CP2G_EXP, "gap"), note("CP-2G"), (_t2h7(),))
+        body = oracle_facts(stage1.CP2G_EXP, "gap") if cp2g_facts is None else cp2g_facts
+        _finish(store, "CP-2G", body, note("CP-2G"), (_t2h7(),))
     return store, pack, store.begin(MODULE)
 
 
@@ -1340,6 +1353,28 @@ def test_consumer_readers_read_the_cp2a_and_cp4_heads(tmp_path: Path) -> None:
         cp4c.cp4_reader(store, _head(store, "CP-2A"))
 
 
+@pytest.mark.parametrize("module_id", ["CP-1", "CP-2A", "CP-4"])
+def test_a_blocked_required_head_is_refused(module_id: str, tmp_path: Path) -> None:
+    """CP-1, CP-2A and CP-4 are required edges: a head blocked by two refused settlements is
+    never read (`_required_module`, also behind `cp2a_reader` and `cp4_reader`; the CP-2G reader
+    has its own refusal, tested below)."""
+    store = Execution.create(tmp_path / "store", _pack("positive"))
+    commands = tuple(_command(m) for m in ("CP-1", "CP-2A", "CP-4"))
+    _finish(store, "CP-0", commands, None)
+    if module_id != "CP-1":
+        _finish(store, "CP-1", cp1_facts(), None)
+    _blocked(store, module_id)
+    blocked = _head(store, module_id)
+    assert blocked.status == "blocked"
+    message = f"^CP-4C: the {module_id} head is blocked$"
+    with pytest.raises(ValueError, match=message):
+        cp4c._required_module(store, blocked, module_id)
+    readers = {"CP-2A": cp4c.cp2a_reader, "CP-4": cp4c.cp4_reader}
+    if module_id in readers:
+        with pytest.raises(ValueError, match=message):
+            readers[module_id](store, blocked)
+
+
 def test_cp2g_is_read_through_its_own_reader_and_selected_into_the_core_type(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1362,6 +1397,53 @@ def test_cp2g_is_read_through_its_own_reader_and_selected_into_the_core_type(
 
 
 # --- consumption (D3): CP-4C reads the settled CP-2G, CP-4 and CP-2A heads ----------------------
+
+
+def _changed(facts: tuple[Fact, ...], **updates: dict[str, Any]) -> tuple[Fact, ...]:
+    """`facts` with the named facts updated (each name must exist; the update must change it)."""
+    named = {fid.replace("__", "."): u for fid, u in updates.items()}
+    out = tuple(f.model_copy(update=named[f.fact_id]) if f.fact_id in named else f for f in facts)
+    assert {f.fact_id for f in out if f != next(o for o in facts if o.fact_id == f.fact_id)} == set(
+        named
+    )
+    return out
+
+
+def test_the_copies_follow_the_cp2g_cp2a_and_cp4_heads(tmp_path: Path) -> None:
+    """D3 strength: CP-2G T2H.4 EBITDA scaled (b26 x 1.1, d26 x 0.9), a CP-2A head whose s03
+    decline differs, and a CP-4 head with another facility text. The T4E.3 and T4E.2 copies
+    follow each, so CP-4C cannot take them from a constant equal to the oracle while only the
+    bound statuses are read."""
+    g_oracle = oracle_facts(stage1.CP2G_EXP, "gap")
+    a_oracle = oracle_facts(stage1.CP2A_EXP, "positive")
+    by_g = {f.fact_id: f for f in g_oracle}
+    by_a = {f.fact_id: f for f in a_oracle}
+    s = EXPECTED["cases"]["positive"]["cp2a_head"]["scenario"]
+    b26, d26 = by_g["T2H.4.b26.ebitda"].amount, by_g["T2H.4.d26.ebitda"].amount
+    decline = by_a[f"T2B.1.{s}.ebitda_decline"].amount
+    assert b26 is not None and d26 is not None and decline is not None
+    new_b26, new_d26, new_decline = b26 * Decimal("1.1"), d26 * Decimal("0.9"), decline + 1
+    facility = "Bridge Facility (not the oracle's)"
+    cp4_oracle = stage1._cp4("positive").facts
+    assert next(f for f in cp4_oracle if f.fact_id == "T4C.11.r01.facility").text != facility
+    store, _, _, _ = settled(
+        tmp_path,
+        cp2g_facts=_changed(
+            g_oracle,
+            T2H__4__b26__ebitda={"amount": new_b26},
+            T2H__4__d26__ebitda={"amount": new_d26},
+        ),
+        cp2a=_changed(a_oracle, **{f"T2B__1__{s}__ebitda_decline": {"amount": new_decline}}),
+        cp4=_changed(cp4_oracle, T4C__11__r01__facility={"text": facility}),
+    )
+    mine = {f.fact_id: f for f in store.head_module(_head(store, MODULE)).facts}
+    assert new_b26 != b26 and new_d26 != d26 and new_decline != decline
+    for v in _payload()["valuation"]:
+        row = "b26" if v["ebitda_case"] == "base" else "d26"
+        want = new_b26 if row == "b26" else new_d26
+        assert mine[f"T4E.3.{v['case_id']}.ebitda"].amount == want, v["case_id"]
+    assert mine["T4E.3.v02.ebitda_decline"].amount == new_decline
+    assert mine["T4E.2.c01.facility"].text == facility
 
 
 def test_d3_cp4c_consumes_the_genuine_cp2g_head_and_the_cp4_and_cp2a_heads(tmp_path: Path) -> None:

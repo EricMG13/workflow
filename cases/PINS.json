@@ -46,7 +46,7 @@
   "cases/cp3-cp6-owner/expected.json": "7428c9340cae7221157657bdc628e43717b3f61716c86d6b6775c5b46b162a3e",
   "cases/cp3-cp6-owner/manifest.json": "893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b",
   "cases/cp3-cp6-owner/submissions.json": "eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b",
-  "cases/cp3c-owner/builder/build.py": "3f9580a1ba181ac41fb7d0212d3c0618f6a5bdadb687d3f5e271dd68232ccf00",
+  "cases/cp3c-owner/builder/build.py": "e62f8e88b1ee4474f4e44d17722d044859b35eda5c91730039a55cfc202f950a",
   "cases/cp3c-owner/cp3c-view-tree.json": "18a222a05e1f9e13f83997e82d75eb083e80ba64881b5bd8ff5c8ff0ee93dc88",
   "cases/cp3c-owner/expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
   "cases/cp3c-owner/manifest.json": "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",

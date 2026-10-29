@@ -152,7 +152,7 @@ def chart_case(monkeypatch: pytest.MonkeyPatch) -> ChartCase:
     figures.append(
         ComponentFigure(
             "S.4",
-            "Maturity wall — current principal at 2025-12-31 (not a forecast)",
+            "Maturity wall — principal at 2025-12-31 (not a forecast)",
             "grouped",
             "amount",
             "US$ m",

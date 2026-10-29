@@ -1941,3 +1941,62 @@ def test_unplanned_module_head_refuses(
     resealed = _reseal_on(store, receipt, final)
     assert [h.module_id for h in store.read().heads] == ["CP-0", "CP-1A", module_id]
     assert _verdict(store, resealed) == "identity_mismatch"
+
+
+# --- G1 I2 (round 5 item 11): a valid step never carries issues ----------------------------------
+
+
+def test_a_valid_step_that_carries_issues_is_refused_by_its_contract() -> None:
+    """`probe_one_step` does not recompute a valid step's `issues`; the model contract does: a
+    valid step with issues does not parse, so no snapshot holding one can be read back."""
+    step = {"step_id": "s", "inputs": (), "payload_sha256": "0" * 64}
+    valid = {**step, "status": "valid", "output_sha256": "1" * 64}
+    assert StepSubmission.model_validate(valid).issues == ()
+    with pytest.raises(ValueError, match="Valid step requires output and no issues"):
+        StepSubmission.model_validate({**valid, "issues": ("Forged issue",)})
+
+
+def test_forged_issues_on_a_valid_step_are_refused_even_after_a_consistent_reseal(
+    tmp_path: Path,
+) -> None:
+    """A forger writes `issues` on CP-1A's settled valid step into the current snapshot. The
+    store refuses to read it; with the snapshot hash, step hash, `snapshot_after` and seal all
+    reseated to match, the verifier still returns `identity_mismatch`."""
+    workflow, pack = _cp1a_only_run(tmp_path / "run")
+    context = json.loads(runs.literal("positive", "business_context", pack))
+    context["consumers"] = [c for c in context["consumers"] if c["module_id"] == "CP-MODEL"]
+    assert (
+        runs.drive_cp1a(workflow, pack, "positive", text=json.dumps(context))["status"] == "valid"
+    )
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    store = Execution(tmp_path / "run" / "store")
+    assert _verdict(store, receipt) == "accepted"
+
+    snapshot = store.read()
+    document = json.loads(snapshot.model_dump_json())
+    ticket = next(a.ticket_id for a in snapshot.attempts if a.module_id == "CP-1A")
+    step_document = next(a for a in document["attempts"] if a["ticket_id"] == ticket)["steps"][0]
+    assert step_document["status"] == "valid"
+    step_document["issues"] = ["Forged issue"]
+    raw = json.dumps(document, separators=(",", ":")).encode()
+    digest = hashlib.sha256(raw).hexdigest()
+    (store.directory / "snapshots" / f"{digest}.json").write_bytes(raw)
+    (store.directory / "current").write_text(digest + "\n")
+    with pytest.raises(ValueError, match="Valid step requires output and no issues"):
+        store.read()
+    assert _verdict(store, receipt) == "identity_mismatch"
+
+    last = next(s for s in reversed(receipt.submissions) if s.binding.binding.module_id == "CP-1A")
+    step_hash = hashlib.sha256(
+        json.dumps(step_document, separators=(",", ":")).encode()
+    ).hexdigest()
+    moved = last.model_copy(update={"snapshot_after_sha256": digest, "step_sha256": step_hash})
+    _swap(store, "submissions", last, moved)
+    resealed = receipt.model_copy(
+        update={
+            "snapshot_sha256": digest,
+            "submissions": tuple(moved if s is last else s for s in receipt.submissions),
+        }
+    )
+    _reseal(store, resealed)
+    assert _verdict(store, resealed) == "identity_mismatch"

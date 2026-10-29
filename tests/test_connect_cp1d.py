@@ -15,6 +15,7 @@ import re
 from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
+from typing import cast
 
 import cp1d_runs as runs
 import pytest
@@ -679,21 +680,76 @@ def test_view_matches_the_lease_key_tree_and_holds_no_quote(case: str, t417: int
         assert not (len(text) > 40 and any(text in page for page in pages)), text
 
 
-def test_view_body_is_compact_json_and_the_hash_matches() -> None:
+def test_view_body_is_compact_json_and_the_hash_matches(monkeypatch: pytest.MonkeyPatch) -> None:
     upstream = _upstream()
 
     class Store:
         def pack(self) -> PreparedPack:
             return _pack("positive")
 
-    original = cp1d.cp1d_upstream
-    cp1d.cp1d_upstream = lambda _store, _attempt: upstream  # type: ignore[assignment]
-    try:
-        digest, body = cp1d.view(Store(), None)  # type: ignore[arg-type]
-    finally:
-        cp1d.cp1d_upstream = original
+    monkeypatch.setattr(cp1d, "cp1d_upstream", lambda _store, _attempt: upstream)
+    digest, body = cp1d.view(cast(Execution, Store()), cast(Attempt, None))
     assert hashlib.sha256(body.encode()).hexdigest() == digest
     assert body == json.dumps(json.loads(body), ensure_ascii=False, separators=(",", ":"))
+
+
+def test_view_upstream_lists_each_bound_status_not_a_constant() -> None:
+    """The view reports the status each bound head carries (CP-0, CP-1, CP-1B), in bound order."""
+    upstream = _upstream(cp1b="blocked")
+    bound = tuple(
+        item.model_copy(update={"status": status})
+        for item, status in zip(upstream.bound, ("accepted", "restricted", "blocked"), strict=True)
+    )
+    block = cp1d.context_block(
+        pack=_pack("positive"), upstream=dataclasses.replace(upstream, bound=bound)
+    )
+    assert block["upstream"] == [
+        {"module_id": "CP-0", "status": "accepted"},
+        {"module_id": "CP-1", "status": "restricted"},
+        {"module_id": "CP-1B", "status": "blocked"},
+    ]
+
+
+def test_view_lists_only_the_known_cp1_facts() -> None:
+    """A CP-1 figure that is not known has no spelling a `{ref|unit}` may name; it is not listed."""
+    cp1 = _cp1_module()
+    target = next(
+        f for f in cp1.facts if f.row_id == "total_debt_ltm" and f.period == cp1d._CP1_PERIOD
+    )
+    gap = Fact.model_validate(
+        {
+            **target.model_dump(),
+            "status": "missing",
+            "amount": None,
+            "text": None,
+            "limitation": "Total debt not disclosed",
+        }
+    )
+    cp1 = cp1.model_copy(update={"facts": tuple(gap if f is target else f for f in cp1.facts)})
+    block = cp1d.context_block(pack=_pack("positive"), upstream=_upstream(cp1))
+    facts = block["cp1_facts"]
+    assert isinstance(facts, list)
+    listed = [f["ref"] for f in facts]
+    assert target.fact_id not in listed and len(listed) == 6
+
+
+def test_upstream_current_is_the_stores_current_input_set_not_the_bound_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, ticket = _settled_store(tmp_path, "positive")
+    attempt = next(a for a in store.read().attempts if a.ticket_id == ticket)
+    moved = (Input(input_id="CP-0", sha256="f" * 64, status="accepted"),)
+    asked: list[tuple[str, str]] = []
+
+    def current(snapshot: ExecutionSnapshot, module_id: str) -> tuple[Input, ...]:
+        asked.append((snapshot.content_hash(), module_id))
+        return moved
+
+    monkeypatch.setattr(cp1d, "current_inputs", current)
+    upstream = cp1d.cp1d_upstream(store, attempt)
+    assert upstream.current == moved != attempt.inputs
+    assert upstream.bound == attempt.inputs
+    assert asked == [(store.read().content_hash(), "CP-1D")]
 
 
 # --- bindings -------------------------------------------------------------------------------------

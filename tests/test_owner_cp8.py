@@ -13,6 +13,7 @@ from typing import Any
 
 import cp8_runs as runs
 import pytest
+import s1a_runs as base
 
 from deploy_vii.execution import Execution, inherited_limitations
 from deploy_vii.live.tools import UNBACKED_ABSENCE
@@ -213,7 +214,33 @@ def test_extract_statements_and_read_inputs_are_not_permitted(tmp_path: Path) ->
 def test_identity_is_outside_the_host_scope(tmp_path: Path) -> None:
     workflow, _ = runs.start("positive", tmp_path)
     call = workflow.invoke("read_pages", {"source_id": "identity", "first_page": 1, "last_page": 1})
-    assert call["status"] != "ok"
+    assert (call["status"], call["error_code"]) == ("refused", "not_permitted")
+
+
+def test_refused_run_level_calls_consume_no_attempt_and_are_recorded_in_the_receipt(
+    tmp_path: Path,
+) -> None:
+    """Lease acceptance 5: `extract_statements`, an identity read and `read_inputs` are refused
+    `not_permitted`; none consumes the attempt, and the receipt records each refused call."""
+    workflow, pack = runs.start("positive", tmp_path)
+    before = attempts(tmp_path)
+    assert [(a.status, len(a.steps)) for a in before] == [("pending", 0)]
+    workflow.invoke("extract_statements", {"source_id": "prior_case"})
+    workflow.invoke("read_pages", {"source_id": "identity", "first_page": 1, "last_page": 1})
+    with pytest.raises(WorkflowError):
+        workflow.read_inputs()
+    assert attempts(tmp_path) == before
+    submission = runs.literal("positive", "submission", pack)
+    base.read_cited(workflow, submission)
+    base.search(workflow, "prior_case", runs.SEARCH_QUERY)
+    base.submit_valid(workflow, submission)
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    refused = [(c.tool, c.arguments.get("source_id"), c.error_code) for c in receipt.calls]
+    refused = [r for r in refused if r[2] == "not_permitted"]
+    assert refused == [
+        ("extract_statements", "prior_case", "not_permitted"),
+        ("read_pages", "identity", "not_permitted"),
+    ]
 
 
 def test_a_snapshot_change_between_the_last_read_and_the_submit_is_stale(tmp_path: Path) -> None:
@@ -222,9 +249,13 @@ def test_a_snapshot_change_between_the_last_read_and_the_submit_is_stale(tmp_pat
     runs.read_pages(workflow, cover("positive"))
     store = Execution(tmp_path / "store")
     store.interrupt(attempts(tmp_path)[0].ticket_id, "external change between read and submit")
+    interrupted = attempts(tmp_path)
     with pytest.raises(WorkflowError) as caught:
         workflow.submit_review(payload)
     assert caught.value.code == "stale_binding"
+    # the interruption itself finished the attempt; the refused submit adds no step and no attempt
+    assert attempts(tmp_path) == interrupted
+    assert [(a.status, len(a.steps)) for a in interrupted] == [("finished", 0)]
 
 
 # --- acceptance 6: tamper ----------------------------------------------------------------------------

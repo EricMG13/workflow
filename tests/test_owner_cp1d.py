@@ -16,7 +16,7 @@ import shutil
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -25,6 +25,7 @@ from deploy_vii.execution import Attempt, Execution
 from deploy_vii.live.tools import cited_locators
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.owner_workflow import (
+    _PROBES,
     OWNER_SPECS,
     OwnerRunReceipt,
     OwnerWorkflow,
@@ -97,7 +98,7 @@ def _promoted(case: str, factory: pytest.TempPathFactory) -> tuple[OwnerWorkflow
 
 
 def _fork(promoted: tuple[OwnerWorkflow, PreparedPack], tmp_path: Path) -> OwnerWorkflow:
-    return runs.S1A.clone_workflow(promoted[0], tmp_path)  # type: ignore[no-any-return]
+    return cast(OwnerWorkflow, runs.S1A.clone_workflow(promoted[0], tmp_path))
 
 
 @pytest.fixture(scope="module", params=CASES)
@@ -305,7 +306,9 @@ def test_blocked_after_two_invalid_attempts_has_limitations_only(
 # --- A4 tamper at verifier level ----------------------------------------------------------------
 
 
-def test_tampering_refuses_with_identity_mismatch(closed: Closed, tmp_path: Path) -> None:
+def test_tampering_refuses_with_identity_mismatch(
+    closed: Closed, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The audit and the pre-probe checks pass on a consistently forged read body; the view
     replay refuses; an edited step output, SettledHead or retained step makes `probe` raise."""
     root = tmp_path / "audit"
@@ -355,8 +358,29 @@ def test_tampering_refuses_with_identity_mismatch(closed: Closed, tmp_path: Path
     )
     refuses(closed.receipt.model_copy(update={"heads": wrong}))
 
-    # probe itself: the retained step swapped for another payload under the same attempt
+    # an edited step output blob: the receipt no longer reproduces the retained output
     live = Execution(root / "store")
+    blob = root / "store/blobs" / (_attempts(live, "CP-1D")[0].steps[0].output_sha256 or "")
+    original = blob.read_bytes()
+    blob.write_bytes(original + b" ")
+    refuses()
+    blob.write_bytes(original)
+    _verify(root, closed.receipt)
+
+    # the verifier reaches the CP-1D probe: a spy in its registry row is the one that refuses
+    seen: list[str] = []
+
+    def spy(store: Execution, snapshot: Any, attempt: Attempt) -> None:
+        seen.append(attempt.module_id)
+        raise WorkflowError("identity_mismatch")
+
+    monkeypatch.setitem(_PROBES, "CP-1D", spy)
+    refuses()
+    assert seen == ["CP-1D"]
+    monkeypatch.undo()
+    _verify(root, closed.receipt)
+
+    # probe itself: the retained step swapped for another payload under the same attempt
     attempt = _attempts(live, "CP-1D")[0]
     other = json.loads(live.payload(attempt.steps[0].payload_sha256))
     other["overall"]["rationale"] += " Reviewed."

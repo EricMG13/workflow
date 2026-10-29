@@ -32,6 +32,7 @@ from uuid import uuid4
 import pytest
 from pydantic import Field, ValidationError
 
+from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Contract, Module, Run
 from deploy_vii.execution import (
     Attempt,
@@ -456,6 +457,28 @@ def test_fake_module_is_owner_only_and_plans_after_cp0() -> None:
     assert plan((MODULE,)) == ("CP-0", MODULE)
 
 
+STAGE_1_MAPS = (
+    "CP-0",
+    "CP-1",
+    "CP-1B",
+    "CP-MODEL",
+    "CP-1A",
+    "CP-2",
+    "CP-4",
+    "CP-3",
+    "CP-5",
+    "CP-6",
+)
+
+
+def test_the_stage_1_binding_maps_keep_their_shipped_order() -> None:
+    """Stage 1 closed with `SHIPPED_MAPS = (CP0, CP1, CP1B, CP_MODEL, CP1A, CP2, CP4, CP3, CP5,
+    CP6)`; later modules insert or append around them, never reorder them (the rendered Front
+    Page lists blocks in map order)."""
+    ids = [m.module_id for m in SHIPPED_MAPS]
+    assert [i for i in ids if i in STAGE_1_MAPS] == list(STAGE_1_MAPS)
+
+
 Variant = tuple[str, Any, Callable[[pytest.MonkeyPatch], None]]
 
 
@@ -520,7 +543,7 @@ def test_owner_only_spec_must_be_served_by_its_core(g1x: SimpleNamespace, tmp_pa
         tmp_path,
         {
             "live entry": (MODULE, replace(spec, entry="model_payload"), _unchanged),
-            "no registered core": (MODULE, spec, lambda m: m.delitem(owner._CORES, MODULE)),
+            "no registered core": (MODULE, spec, lambda m: hide_row(m, "_CORES", MODULE)),
             "steps differ from STEP_IDS": (MODULE, replace(spec, steps=(sourced,)), _unchanged),
             "module_context without a view": (
                 MODULE,
@@ -637,7 +660,7 @@ def test_every_analytical_module_but_cp0_and_cp1_has_an_entry_validator(
             "owner-only module without a validator": (
                 MODULE,
                 g1x.spec,
-                lambda m: m.delitem(owner._ENTRY_VALIDATORS, MODULE),
+                lambda m: hide_row(m, "_ENTRY_VALIDATORS", MODULE),
             ),
             "live-contract module without a validator": (
                 "CP-1A",

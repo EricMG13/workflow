@@ -1410,6 +1410,11 @@ def test_bindings_follow_the_lease() -> None:
     for entry in cp3c_map.entries:
         placed.setdefault(entry.block_id, []).append(entry.fact_coord.table_id)
     want = {b: [s["primary_tab"], *s["tabs"]] for b, s in FP04["blocks"].items()}
+    # Stage 3 (ruling item 6.1): T3D.1 is bound to CP-2D's funding-gap, per the frozen CR.3 oracle.
+    cr3 = json.loads((tm.ROOT / "cases/charts/cr3-expected.json").read_text(encoding="utf-8"))
+    moved = cr3["render"]["covenant_refinancing"]["binding"]
+    assert moved["fact_coord"] == "CP-3C / T3D.1"
+    want[moved["block_id"]] = ["T3D.1"]
     assert placed == want | FP04["rails"]
     labels = {e.fact_coord.table_id: e.label for e in cp3c_map.entries}
     assert labels == tm.EXPECTED["cp3c_module"]["table_titles"]

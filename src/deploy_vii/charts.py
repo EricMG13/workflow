@@ -81,7 +81,8 @@ def _label(mark: ChartMark, extra: str = "") -> str:
 
 
 def _is_synthetic(mark: ChartMark) -> bool:
-    return mark.ref_id is not None and mark.ref_id.startswith("S")
+    """Drawn hatched: a synthetic reference, or a value whose basis is analyst judgment."""
+    return mark.hatched or (mark.ref_id is not None and mark.ref_id.startswith("S"))
 
 
 def _tick_text(spec: ChartSpec, value: float) -> str:
@@ -91,6 +92,19 @@ def _tick_text(spec: ChartSpec, value: float) -> str:
 _EDGE = 14.0
 _DEBT_ROW = 17
 _DEBT_TOP = 6
+_RANGE_ROW = 38
+_BULLET_ROW = 34
+_SEP = " · "  # a range mark's label is "<metric> · <peer>": the strip is the part before it
+
+
+def _row_keys(spec: ChartSpec) -> list[str]:
+    """The strips of a range chart: the metric part of each mark's label, in first-seen order."""
+    seen: list[str] = []
+    for mark in spec.marks:
+        key = mark.label.split(_SEP, 1)[0]
+        if key not in seen:
+            seen.append(key)
+    return seen
 
 
 def _size(spec: ChartSpec) -> tuple[int, int]:
@@ -98,6 +112,10 @@ def _size(spec: ChartSpec) -> tuple[int, int]:
         return 640, 200
     if spec.kind == "debt_stack":
         return 460, _DEBT_TOP + len(spec.marks) * _DEBT_ROW + 20
+    if spec.kind == "range":
+        return 460, 6 + len(_row_keys(spec)) * _RANGE_ROW + 4
+    if spec.kind == "bullet":
+        return 520, 8 + len(_categories(spec)) * _BULLET_ROW + 22
     return 320, 160
 
 
@@ -479,7 +497,7 @@ def _waterfall(spec: ChartSpec, root: ET.Element, chart_id: str) -> None:
         x = left + group_width * (i + 0.5) - bar_width / 2
         label = _label(
             step,
-            "running total " + format_value(end, spec.unit_class, "known")
+            "running total " + format_value(end, spec.unit_class, "known", decimals=step.decimals)
             if step.value is not None and step.role != "total"
             else "",
         )
@@ -621,6 +639,218 @@ def _debt_stack(spec: ChartSpec, root: ET.Element, chart_id: str) -> None:
         _mark_group(root, row, label, (x_of(start) + x_of(end)) / 2, y + row_height / 2, draw)
 
 
+def _range(spec: ChartSpec, root: ET.Element, chart_id: str) -> None:
+    """One strip per metric: the band spans the plotted marks, each mark sits at its value.
+
+    The first series is drawn solid (the issuer); later series are hollow with a distinct shape.
+    Positions are the marks' own values; nothing is computed here, and a gap mark is a labelled
+    "n/a" slot, never a position.
+    """
+    width, _ = _size(spec)
+    left, right, top = 150.0, 16.0, 6.0
+    for row, key in enumerate(_row_keys(spec)):
+        marks = [m for m in spec.marks if m.label.split(_SEP, 1)[0] == key]
+        plotted = [m for m in marks if m.value is not None]
+        y = top + row * _RANGE_ROW + _RANGE_ROW / 2 + 2
+        _el(root, "text", key, x=_n(left - 10), y=_n(y + 4), text_anchor="end", class_="lb small")
+        if spec.unit:
+            _el(
+                root,
+                "text",
+                spec.unit,
+                x=_n(left - 10),
+                y=_n(y + 15),
+                text_anchor="end",
+                class_="ax small",
+            )
+        _el(root, "line", x1=_n(left), x2=_n(width - right), y1=_n(y), y2=_n(y), class_="grid")
+        values = [float(m.value) for m in plotted if m.value is not None]
+        low, high = (min(values), max(values)) if values else (0.0, 0.0)
+        span = (high - low) or 1.0
+
+        def x_of(value: float, lo: float = low, sp: float = span) -> float:
+            return left + 24 + (width - left - right - 48) * (value - lo) / sp
+
+        if values:
+            _el(
+                root,
+                "rect",
+                x=_n(x_of(low)),
+                y=_n(y - 5),
+                width=_n(max(1.0, x_of(high) - x_of(low))),
+                height="10",
+                class_="f1",
+                fill_opacity="0.18",
+            )
+        last_label_x = -1e9
+        gaps = 0
+        for mark in marks:
+            index = spec.series.index(mark.series)
+            if mark.value is None:
+                gx = left + 10 + gaps * 22
+                gaps += 1
+                _na_slot(root, gx, y + 4)
+                _mark_group(root, mark, _label(mark), gx, y, None)
+                continue
+            x = x_of(float(mark.value))
+            cls = _series_class(spec, mark.series)
+            hollow = index > 0 or _is_synthetic(mark)
+            _mark_group(root, mark, _label(mark), x, y, _marker(index, x, y, cls, hollow))
+            if (
+                abs(x - last_label_x) >= 30
+            ):  # a label too close to the last one is left to the title
+                _el(
+                    root,
+                    "text",
+                    mark.text,
+                    x=_n(x),
+                    y=_n(y - 10 if index == 0 else y + 17),
+                    text_anchor="middle",
+                    class_="lb small" if index == 0 else "ax small",
+                )
+                last_label_x = x
+
+
+def _bullet(spec: ChartSpec, root: ET.Element, chart_id: str) -> None:
+    """Threshold tick, current bar and headroom per category; series order is the contract.
+
+    The first series is the threshold, the second the current value, the third (if any) the
+    headroom. Direction (ceiling or floor) is not on a mark, so headroom is its settled text
+    and a dashed span between current and threshold, never a verdict.
+    """
+    if len(spec.series) < 2:
+        raise ValueError("A bullet chart needs a threshold series and a current series")
+    width, height = _size(spec)
+    left, right, top, bottom, row_height = 190.0, 70.0, 8.0, 22.0, float(_BULLET_ROW)
+    threshold_series, current_series = spec.series[0], spec.series[1]
+    headroom_series = spec.series[2] if len(spec.series) > 2 else None
+    points = _lookup(spec)
+    categories = _categories(spec)
+    anchors = [
+        float(m.value)
+        for m in spec.marks
+        if m.value is not None and m.series in {threshold_series, current_series}
+    ]
+    high = _nice(max(anchors) * 1.1) if anchors else 1.0
+
+    def x_of(value: float) -> float:
+        return left + (width - left - right) * value / high
+
+    for tick in _ticks(0.0, high, 4):
+        _el(
+            root,
+            "line",
+            x1=_n(x_of(tick)),
+            x2=_n(x_of(tick)),
+            y1=_n(top),
+            y2=_n(height - bottom),
+            class_="grid",
+        )
+        _el(
+            root,
+            "text",
+            _tick_text(spec, tick),
+            x=_n(x_of(tick)),
+            y=str(height - 6),
+            text_anchor="middle",
+            class_="ax",
+        )
+    for row, category in enumerate(categories):
+        y = top + row * row_height + row_height / 2
+        _el(
+            root,
+            "text",
+            category,
+            x=_n(left - 10),
+            y=_n(y + 4),
+            text_anchor="end",
+            class_="lb small",
+        )
+        threshold = points.get((threshold_series, category))
+        current = points.get((current_series, category))
+        headroom = points.get((headroom_series, category)) if headroom_series else None
+        if current is not None:
+            if current.value is None:
+                _na_slot(root, left + 14, y + 4)
+                _mark_group(root, current, _label(current), left + 14, y, None)
+            else:
+                end = x_of(float(current.value))
+                cls = _series_class(spec, current_series)
+
+                def draw_bar(
+                    group: ET.Element,
+                    m: ChartMark = current,
+                    c: int = cls,
+                    e: float = end,
+                    yy: float = y,
+                ) -> None:
+                    _el(
+                        group,
+                        "rect",
+                        x=_n(left),
+                        y=_n(yy - 6),
+                        width=_n(max(1.0, e - left)),
+                        height="12",
+                        **_fill(m, c, chart_id),
+                    )
+
+                _mark_group(root, current, _label(current), (left + end) / 2, y, draw_bar)
+                _el(root, "text", current.text, x=_n(end + 6), y=_n(y + 4), class_="lb small")
+        if threshold is not None:
+            if threshold.value is None:
+                _na_slot(root, left + 14, y - 10)
+                _mark_group(root, threshold, _label(threshold), left + 14, y - 10, None)
+            else:
+                tx = x_of(float(threshold.value))
+                cls = _series_class(spec, threshold_series)
+
+                def draw_tick(
+                    group: ET.Element, c: int = cls, t: float = tx, yy: float = y
+                ) -> None:
+                    _el(
+                        group,
+                        "rect",
+                        x=_n(t - 1.5),
+                        y=_n(yy - 12),
+                        width="3",
+                        height="24",
+                        class_=f"bar s{c}",
+                    )
+
+                _mark_group(root, threshold, _label(threshold), tx, y, draw_tick)
+                _el(root, "text", threshold.text, x=_n(tx + 6), y=_n(y - 13), class_="lb small")
+        if headroom is not None:
+            if headroom.value is None:
+                _na_slot(root, width - right / 2, y + 4)
+                _mark_group(root, headroom, _label(headroom), width - right / 2, y + 4, None)
+            else:
+                if (
+                    threshold is not None
+                    and current is not None
+                    and threshold.value is not None
+                    and current.value is not None
+                ):
+                    _el(
+                        root,
+                        "line",
+                        x1=_n(x_of(float(current.value))),
+                        x2=_n(x_of(float(threshold.value))),
+                        y1=_n(y),
+                        y2=_n(y),
+                        class_="connector",
+                    )
+                _mark_group(root, headroom, _label(headroom), width - right / 2, y + 4, None)
+                _el(
+                    root,
+                    "text",
+                    headroom.text,
+                    x=_n(width - 2),
+                    y=_n(y + 4),
+                    text_anchor="end",
+                    class_="lb small",
+                )
+
+
 def _na(spec: ChartSpec, title: str) -> ET.Element:
     width, height = 300, 120
     reason = spec.reason or ""
@@ -688,6 +918,10 @@ def render_svg(spec: ChartSpec, *, chart_id: str, title: str) -> str:
             _columns(spec, root, chart_id, stacked=spec.kind == "stacked")
         elif spec.kind == "waterfall":
             _waterfall(spec, root, chart_id)
+        elif spec.kind == "range":
+            _range(spec, root, chart_id)
+        elif spec.kind == "bullet":
+            _bullet(spec, root, chart_id)
         else:
             _debt_stack(spec, root, chart_id)
     _fixup_class(root)

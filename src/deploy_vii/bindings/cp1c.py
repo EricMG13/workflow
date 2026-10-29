@@ -5,7 +5,8 @@ peer universe (T1C.1), the universe totals (T1C.8), the normalised metrics (T1C.
 statistics (T1C.4) and the outlier register (T1C.5) are its tabs in that order. The source figures
 (T1C.2) and the definition alignment and tie-out (T1C.6) go to Evidence; the gaps ledger (T1C.7)
 to Limitations. A table that mixes units (percent, multiple, pp, counts, text) is bound as
-``text``; every cell is still spelled from its own fact. The reference's range strip (Fig. RV.3) is a chart and is not bound. Data only: no
+``text``; every cell is still spelled from its own fact. The range strip (Fig. RV.3) is drawn by the
+CP-1C figure producer in report_view and binds no table. Data only: no
 arithmetic, and no import of ``deploy_workflow``. Slots carry a ``cp1c-`` prefix: a slot is unique
 across all shipped maps.
 """

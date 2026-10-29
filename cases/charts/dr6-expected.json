@@ -1,0 +1,335 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "frame_in_the_positive_case",
+      "expected": "The synthetic fictional-agency source settles T2R.4/T2R.5, but Q-C11 draws no trigger mark: the same n/a frame is rendered, with zero marks and an empty twin.",
+      "module_case": "positive"
+    },
+    {
+      "case": "frame_in_the_gap_case",
+      "expected": "The gap case (trigger t03 has no stated threshold: T2R.4.t03.headroom and status, and every T2R.5.t03 cell, missing) renders the same frame; no gap mark and no 0 is drawn for those facts.",
+      "module_case": "gap"
+    },
+    {
+      "case": "no_t2r_mark",
+      "expected": "No T2R.4 or T2R.5 fact id appears as a point or companion of the frame (forbidden_mark_fact_ids).",
+      "module_case": null
+    },
+    {
+      "case": "producer_refused_or_blocked",
+      "expected": "No CP-2H head: no frame, no figure; the block keeps its honest state (the frame belongs to a settled head, not to an absent one).",
+      "module_case": "refused / blocked / cp2g_blocked"
+    },
+    {
+      "case": "tables_unchanged",
+      "expected": "The CP-2H tabs (T2R.9 primary, T2R.4-T2R.8) render as in the cases/cp2h-owner FP05 pin; only the frame is added.",
+      "module_case": null
+    }
+  ],
+  "builder_targets": [
+    {
+      "asserts": [
+        "report_view.build on a distressed_restructuring run with CP-2H (positive and gap owner runs, tests/cp2h_runs.py): block rating-triggers has one figure DR.6 with chart.kind na, zero marks, empty twin and chart.reason equal to frame_texts.per_case.positive.reason for positive, and for gap per the per-case rule below; no fact id of T2R.4 or T2R.5 appears among the figure's refs",
+        "tabs unchanged: primary T2R.9, tabs T2R.4 to T2R.8",
+        "positive: the frame reason equals frame_texts.per_case.positive.reason and contains no G# reference",
+        "gap: the frame reason starts with frame_texts.per_case.gap.reason and carries the '∅ G<n>' of the cited gap facts (n bound at run time)",
+        "the block shows the chip text 'Not computable'",
+        "producer refused or blocked (cases/cp2h-owner cases.refused, .blocked, .cp2g_blocked): no frame and no figure; the block keeps its honest state"
+      ],
+      "test_file": "tests/test_chart_render_dr6.py (new)"
+    }
+  ],
+  "cases": {
+    "gap": {
+      "cited_gap_fact_ids": [
+        "T2R.4.t03.headroom",
+        "T2R.4.t03.status",
+        "T2R.5.t03_base.tightest",
+        "T2R.5.t03_base.tightest_year",
+        "T2R.5.t03_base.y1",
+        "T2R.5.t03_base.y2",
+        "T2R.5.t03_base.y3",
+        "T2R.5.t03_down.tightest",
+        "T2R.5.t03_down.tightest_year",
+        "T2R.5.t03_down.y1",
+        "T2R.5.t03_down.y2",
+        "T2R.5.t03_down.y3"
+      ],
+      "departs_from_approved_page": "reason text and G# differ (page: 'no agency report in the Source Pack', ref G31, fp05 :112); title, 'n/a' form, dashed frame and chip are kept",
+      "forbidden_count": 45,
+      "forbidden_mark_fact_ids": [
+        "T2R.4.t01.actual",
+        "T2R.4.t01.check",
+        "T2R.4.t01.headroom",
+        "T2R.4.t01.metric",
+        "T2R.4.t01.status",
+        "T2R.4.t02.actual",
+        "T2R.4.t02.check",
+        "T2R.4.t02.headroom",
+        "T2R.4.t02.metric",
+        "T2R.4.t02.status",
+        "T2R.4.t03.actual",
+        "T2R.4.t03.check",
+        "T2R.4.t03.headroom",
+        "T2R.4.t03.metric",
+        "T2R.4.t03.status",
+        "T2R.5.t01_base.tightest",
+        "T2R.5.t01_base.tightest_year",
+        "T2R.5.t01_base.y1",
+        "T2R.5.t01_base.y2",
+        "T2R.5.t01_base.y3",
+        "T2R.5.t01_down.tightest",
+        "T2R.5.t01_down.tightest_year",
+        "T2R.5.t01_down.y1",
+        "T2R.5.t01_down.y2",
+        "T2R.5.t01_down.y3",
+        "T2R.5.t02_base.tightest",
+        "T2R.5.t02_base.tightest_year",
+        "T2R.5.t02_base.y1",
+        "T2R.5.t02_base.y2",
+        "T2R.5.t02_base.y3",
+        "T2R.5.t02_down.tightest",
+        "T2R.5.t02_down.tightest_year",
+        "T2R.5.t02_down.y1",
+        "T2R.5.t02_down.y2",
+        "T2R.5.t02_down.y3",
+        "T2R.5.t03_base.tightest",
+        "T2R.5.t03_base.tightest_year",
+        "T2R.5.t03_base.y1",
+        "T2R.5.t03_base.y2",
+        "T2R.5.t03_base.y3",
+        "T2R.5.t03_down.tightest",
+        "T2R.5.t03_down.tightest_year",
+        "T2R.5.t03_down.y1",
+        "T2R.5.t03_down.y2",
+        "T2R.5.t03_down.y3"
+      ],
+      "frame": "the n/a frame is drawn, no mark; its text is true for this case",
+      "frame_reason": "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report",
+      "g_ref_rule": "cites the settled missing T2R.4/T2R.5 facts below; G<n> is bound at run time",
+      "gap_count_in_module": 12,
+      "gap_fact_ids_in_module": [
+        "T2R.4.t03.headroom",
+        "T2R.4.t03.status",
+        "T2R.5.t03_base.tightest",
+        "T2R.5.t03_base.tightest_year",
+        "T2R.5.t03_base.y1",
+        "T2R.5.t03_base.y2",
+        "T2R.5.t03_base.y3",
+        "T2R.5.t03_down.tightest",
+        "T2R.5.t03_down.tightest_year",
+        "T2R.5.t03_down.y1",
+        "T2R.5.t03_down.y2",
+        "T2R.5.t03_down.y3"
+      ],
+      "marks": [],
+      "module_status": "restricted"
+    },
+    "positive": {
+      "cited_gap_fact_ids": [],
+      "departs_from_approved_page": "reason text and G# differ (page: 'no agency report in the Source Pack', ref G31, fp05 :112); title, 'n/a' form, dashed frame and chip are kept",
+      "forbidden_count": 75,
+      "forbidden_mark_fact_ids": [
+        "T2R.4.t01.actual",
+        "T2R.4.t01.check",
+        "T2R.4.t01.headroom",
+        "T2R.4.t01.metric",
+        "T2R.4.t01.status",
+        "T2R.4.t02.actual",
+        "T2R.4.t02.check",
+        "T2R.4.t02.headroom",
+        "T2R.4.t02.metric",
+        "T2R.4.t02.status",
+        "T2R.4.t03.actual",
+        "T2R.4.t03.check",
+        "T2R.4.t03.headroom",
+        "T2R.4.t03.metric",
+        "T2R.4.t03.status",
+        "T2R.4.t04.actual",
+        "T2R.4.t04.check",
+        "T2R.4.t04.headroom",
+        "T2R.4.t04.metric",
+        "T2R.4.t04.status",
+        "T2R.4.t05.actual",
+        "T2R.4.t05.check",
+        "T2R.4.t05.headroom",
+        "T2R.4.t05.metric",
+        "T2R.4.t05.status",
+        "T2R.5.t01_base.tightest",
+        "T2R.5.t01_base.tightest_year",
+        "T2R.5.t01_base.y1",
+        "T2R.5.t01_base.y2",
+        "T2R.5.t01_base.y3",
+        "T2R.5.t01_down.tightest",
+        "T2R.5.t01_down.tightest_year",
+        "T2R.5.t01_down.y1",
+        "T2R.5.t01_down.y2",
+        "T2R.5.t01_down.y3",
+        "T2R.5.t02_base.tightest",
+        "T2R.5.t02_base.tightest_year",
+        "T2R.5.t02_base.y1",
+        "T2R.5.t02_base.y2",
+        "T2R.5.t02_base.y3",
+        "T2R.5.t02_down.tightest",
+        "T2R.5.t02_down.tightest_year",
+        "T2R.5.t02_down.y1",
+        "T2R.5.t02_down.y2",
+        "T2R.5.t02_down.y3",
+        "T2R.5.t03_base.tightest",
+        "T2R.5.t03_base.tightest_year",
+        "T2R.5.t03_base.y1",
+        "T2R.5.t03_base.y2",
+        "T2R.5.t03_base.y3",
+        "T2R.5.t03_down.tightest",
+        "T2R.5.t03_down.tightest_year",
+        "T2R.5.t03_down.y1",
+        "T2R.5.t03_down.y2",
+        "T2R.5.t03_down.y3",
+        "T2R.5.t04_base.tightest",
+        "T2R.5.t04_base.tightest_year",
+        "T2R.5.t04_base.y1",
+        "T2R.5.t04_base.y2",
+        "T2R.5.t04_base.y3",
+        "T2R.5.t04_down.tightest",
+        "T2R.5.t04_down.tightest_year",
+        "T2R.5.t04_down.y1",
+        "T2R.5.t04_down.y2",
+        "T2R.5.t04_down.y3",
+        "T2R.5.t05_base.tightest",
+        "T2R.5.t05_base.tightest_year",
+        "T2R.5.t05_base.y1",
+        "T2R.5.t05_base.y2",
+        "T2R.5.t05_base.y3",
+        "T2R.5.t05_down.tightest",
+        "T2R.5.t05_down.tightest_year",
+        "T2R.5.t05_down.y1",
+        "T2R.5.t05_down.y2",
+        "T2R.5.t05_down.y3"
+      ],
+      "frame": "the n/a frame is drawn, no mark; its text is true for this case",
+      "frame_reason": "agency source is synthetic; a headroom chart waits for a real agency report",
+      "g_ref_rule": "no gap fact in this case, so the frame cites no G#",
+      "gap_count_in_module": 0,
+      "gap_fact_ids_in_module": [],
+      "marks": [],
+      "module_status": "restricted"
+    }
+  },
+  "chart_series": {
+    "DR.6": {
+      "block_title": "Rating triggers",
+      "design_ref_literal": "G31",
+      "fig_id": "DR.6",
+      "g_ref": "per case: cited only where a settled fact supplies it (cases.<case>.cited_gap_fact_ids); the design literal G31 is not pinned",
+      "height": 96,
+      "kind": "na",
+      "points": [],
+      "reason": "per case: see cases.<case>.frame_reason",
+      "reason_page_literal": "no agency report in the Source Pack",
+      "series": [],
+      "status_chip": "Not computable",
+      "text_rule": "'n/a' + ' · ' + ref, then the reason (charts.js:171-173)",
+      "title": "Rating trigger headroom",
+      "unit_class": "multiple",
+      "width": 200
+    }
+  },
+  "figure": "DR.6",
+  "figure_group": "B",
+  "questions": [
+    "Settled (ruling 6.5): the frame reason is per case and true; the approved-page text is not used."
+  ],
+  "render": {
+    "distressed_restructuring": {
+      "block_id": "rating-triggers",
+      "block_kind": "dense",
+      "figure": {
+        "chart_kind": "na",
+        "fig_id": "DR.6",
+        "marks": 0,
+        "placement": "above",
+        "table_twin_rows": 0
+      },
+      "frame_texts": {
+        "per_case": {
+          "gap": {
+            "reason": "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report",
+            "reference": "the reason text carries the '∅ G<n>' of the cited facts (cases.gap.cited_gap_fact_ids), bound at run time; no separate reference field"
+          },
+          "positive": {
+            "reason": "agency source is synthetic; a headroom chart waits for a real agency report",
+            "reference": null
+          }
+        },
+        "ref_spelling": "∅ G#",
+        "title": "Rating trigger headroom"
+      },
+      "owner": "CP-2H",
+      "pathway": "distressed_restructuring",
+      "primary_tab": "T2R.9",
+      "producers": [
+        "CP-2H"
+      ],
+      "state": "populated",
+      "status_chip": "Not computable",
+      "tabs": [
+        "T2R.4",
+        "T2R.5",
+        "T2R.6",
+        "T2R.7",
+        "T2R.8"
+      ],
+      "tabs_source": "cases/cp2h-owner/expected.json#cases.positive.FP05"
+    }
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output; derived from the frozen module oracles only",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "n/a frame only: no T2R.4 or T2R.5 mark; the real headroom chart waits for a real agency source (CP2H-OWNER-LEASE.md:166 item 9).",
+    "The design's rating rows table (agency, current, 'thr. G31') and migration view are not part of this figure."
+  ],
+  "source_authority": {
+    "authority_order": "approved page decides the frame; brief confirms; CP-2H oracle supplies the gap shape; inference marked",
+    "briefs": [
+      {
+        "file": "docs/design-pack/content/05-distressed-restructuring.md",
+        "line": 36,
+        "sha256": "1990e9fd9a4c1b3e9703cb5c9aaaf8c59127fe642ebe7697391cb49b19eb3276",
+        "what": "Rating triggers (CP-2H): thresholds n/a (G31), status Not computable, the bullet chart is an n/a frame"
+      }
+    ],
+    "design": [
+      {
+        "lines": [
+          54,
+          55,
+          56,
+          112
+        ],
+        "page": "design/reference/rbot-fp-05-distressed-restructuring.dc.html",
+        "sha256": "cae34879e839be531affa30bf5f513ecfb748c1c75a874b70c179c7734984f18",
+        "what": "header 'CP-2H · Fig. DR.6' with chip 'Not computable', chRating slot, naFrame call (title, ref G31, reason)"
+      },
+      {
+        "lines": [
+          166,
+          174
+        ],
+        "page": "design/reference/lib/charts.js",
+        "sha256": "c892cbe3a4e2dc0d5b2f560b469356ca8502d4a14f07d9f4cfdf19d95be40f03",
+        "what": "naFrame: dashed box, 'n/a · <ref>', reason"
+      }
+    ],
+    "modules": [
+      {
+        "path": "cases/cp2h-owner/expected.json",
+        "schema_version": "cp2h-owner-expected/1",
+        "sha256": "d0d0310087cfed3bc1ca9c90d1bcd4b54960f0da3b29b449997e80459c14fae6"
+      }
+    ],
+    "rulings": [
+      "Q-C11 (draw the n/a frame now, existing CP-2H gap shape; a real chart waits for a real agency source)",
+      "item 9 of questions.md"
+    ]
+  }
+}

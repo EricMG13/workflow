@@ -134,11 +134,12 @@
   "upstream_literals": {
     "CP-0": "cases/snapshot/submissions.json#positive.readiness_review with pack_sha256 bound at run time and cp0_consumer_deltas appended to consumers in order (CP-2D, then CP-3C)",
     "CP-1": "cases/snapshot/submissions.json#cp1_submission and #positive.cp1_source_context, except the readiness stage: submissions.json#cp1_downstream_review replaces the S1 {\"consumers\": []}",
-    "CP-1A": "cases/snapshot/submissions.json#positive.business_context",
+    "CP-1A": "cases/snapshot/submissions.json#positive.business_context with cp1a_consumer_deltas appended to consumers (CP-3C; the product rule business_context.cp1a_consumers counts CP-3C, whose optional CP-1A edge is unread)",
     "CP-2": "cases/snapshot/submissions.json#positive.credit_synthesis with {{FIG:name}} replaced as S1a lease rev 2 M2 freezes",
     "CP-2D": "cases/cp2d-owner/submissions.json#cp2d.positive (cases positive, gap_no_repricing) and #cp2d.gap_minimum_cash (case gap_minimum_cash), {{FACT:name}} bound by cases/cp2d-owner/manifest.json fact_bindings"
   },
   "cp0_consumer_deltas": "submissions.json#cp0_consumer_deltas",
+  "cp1a_consumer_deltas": "submissions.json#cp1a_consumer_deltas",
   "analyst_judgment_policy": "The margin step-up (or its absence) and the five path assessments are literal submission input. Text is digit-free; builder-checked against the oracle's own validator.",
   "fact_bindings": {
     "cash_closing": {

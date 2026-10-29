@@ -366,6 +366,60 @@ def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
         assert not block.rows and not block.lines  # no owner cell, no claim that the owner ran
 
 
+@pytest.mark.parametrize("case", [0, 1])
+def test_cr1_covenant_headroom_figure_matches_oracle(case):
+    want = ORACLE["cases"][case]["cr1_figure"]
+    report = _report(_seed(case))
+    block = _blocks(report)[want["block_id"]]
+    assert (block.kind, block.state) == (want["block_kind"], want["block_state"])
+    assert block.tab_label is None and block.tabs == ()
+    assert len(block.figures) == 1
+    figure = block.figures[0]
+    chart = figure.chart
+    assert figure.fig_id == want["fig_id"] and figure.placement == want["placement"]
+    assert chart.kind == want["chart_kind"] and chart.unit == want["unit"]
+    assert chart.unit_class == want["unit_class"] and list(chart.series) == want["series"]
+    assert len(chart.marks) == len(want["marks"])
+    texts = []
+    for mark, exp in zip(chart.marks, want["marks"], strict=True):
+        assert (mark.series, mark.label) == (exp["series"], exp["category"])
+        if exp["state"] == "gap":
+            assert mark.value is None
+            assert re.fullmatch(exp["gap_ref_pattern"], mark.text)
+        else:
+            assert mark.value == Decimal(exp["amount_exact"])
+            assert mark.text == exp["shown"]
+        texts.append(mark.text)
+        # The mark reaches its fact through the T4.9 fact id, by the report index.
+        coord = FactCoord(module_id="CP-4", table_id="T4.9", row_id="r01", fact_id=exp["fact_id"])
+        entry = next(e for e in report.index.facts if e.coord == coord)
+        assert mark.ref_id in entry.ref_ids
+    assert len(texts) == len(want["mark_texts"])
+    for text, expected_text, exp in zip(texts, want["mark_texts"], want["marks"], strict=True):
+        if exp["state"] == "gap":
+            assert re.fullmatch(exp["gap_ref_pattern"], text)
+        else:
+            assert text == expected_text
+    assert [c.text for row in chart.table_twin.rows for c in row.cells] == texts
+    assert len(chart.table_twin.rows) == len(want["table_twin"]["rows"])
+    for row, exp_row in zip(chart.table_twin.rows, want["table_twin"]["rows"], strict=True):
+        # Row label: starts with label_parts[0], then each later part in order; '#' in a part is
+        # the run-time gap number.
+        first, *later = exp_row["label_parts"]
+        assert row.label.startswith(first)
+        position = len(first)
+        for part in later:
+            found = re.compile(re.escape(part).replace("\\#", r"\d+")).search(row.label, position)
+            assert found is not None, (row.label, part)
+            position = found.end()
+    others = [
+        b.block_id
+        for b in report.blocks
+        if (b.figures or b.chart) and b.block_id != want["block_id"]
+    ]
+    assert others == []
+
+
 @pytest.mark.parametrize("amount,display", [("0", "0.00x"), ("0.000", "0.00x")])
 def test_known_zero_is_not_an_unknown_capacity_or_actual_unused_commitment(amount, display):
     view = _fact(_seed(), "T4.9.r01.headroom", amount=Decimal(amount))

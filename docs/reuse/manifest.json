@@ -1652,6 +1652,78 @@
       "sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
       "reason": "FP-04 maturity-wall _Spec becomes owner MODEL with producer CP-1 (Q-C1).",
       "review": "work/build/stage2/release/qc1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/charts.py",
+      "imported_sha256": "9c10704c8b4707305990a501574602adefc4c5eee2d326c830c77cc281153aef",
+      "prior_project_sha256": "9c10704c8b4707305990a501574602adefc4c5eee2d326c830c77cc281153aef",
+      "project_commit": "80ab9f50ed87a2cb2f92460b55b92c963ee7931c",
+      "sha256": "a1805bca3e9bc6aa21383be158cc677b3ea6fbe2b95b8882ac045bfbe985e591",
+      "reason": "Stage 3 chart seam: range and bullet geometry and the hatch flag for analyst-judgment marks; waterfall running total uses a mark's declared decimals.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
+      "project_commit": "80ab9f50ed87a2cb2f92460b55b92c963ee7931c",
+      "sha256": "ec311130f73ee314ce31c0595cb3238cad340f6f8a24f41e99e23a9e2a4ea14c",
+      "reason": "Stage 3 chart seam: ChartKind range and bullet, ChartMark decimals and hatched, percent and strict-parse text in _chart_fact_cell, build_index gap reference for a rejected strict text, _na_strip reason, per-producer figure registry and the S.5 entry point, no KeyError without CP-1.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp1.py",
+      "imported_sha256": "d94f6a460f7bb112dd2136d62a25496433dc3085582018d12a3c4091db5ba169",
+      "prior_project_sha256": "d94f6a460f7bb112dd2136d62a25496433dc3085582018d12a3c4091db5ba169",
+      "project_commit": "65cc9825cca043c6a0ca1103fb244488f8c35b6c",
+      "sha256": "f1d39b51f487a5a960f742007b836fab2fbd0cd00ec509ae7b0a8880d3f0c8d1",
+      "reason": "Stage 3 I3 merge of s3-w2a: the CP-1 binding gains the S.4/S.5 chart rows (group a).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "ec311130f73ee314ce31c0595cb3238cad340f6f8a24f41e99e23a9e2a4ea14c",
+      "project_commit": "65cc9825cca043c6a0ca1103fb244488f8c35b6c",
+      "sha256": "0812b2c0f01ab5b73cbd154443bbcf512c29155fa11b7fc2bcb1c031e39bce33",
+      "reason": "Stage 3 I3 merge of s3-w2a: the S.5 producer registration for financials-credit-metrics (group a).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "0812b2c0f01ab5b73cbd154443bbcf512c29155fa11b7fc2bcb1c031e39bce33",
+      "project_commit": "e79d9d81458a2cc2ba16d765f1b155137e1efb51",
+      "sha256": "ac9565d90e1ed3dd08ef34b2cbde4398fccc73507b2d6297fa1c032c00b5da51",
+      "reason": "Stage 3 I3 merge of s3-w2b: RV.3 and CR.1 producers and their registrations (group b).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "ac9565d90e1ed3dd08ef34b2cbde4398fccc73507b2d6297fa1c032c00b5da51",
+      "project_commit": "70ea110a72c157062bf8ac29fc4558cbafbac923",
+      "sha256": "fedb5fa041508f36e035b750fc96b635bbc483fb4ecb921cb8d8ca100c0d316c",
+      "reason": "Stage 3 I3 merge of s3-w2c: CR.2 and CR.3 producers and registrations; funding-gap gains the CP-3C producer (group c).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "fedb5fa041508f36e035b750fc96b635bbc483fb4ecb921cb8d8ca100c0d316c",
+      "project_commit": "f5477b431a62c760c4f91ce5541dd06d22ea5724",
+      "sha256": "1f50c7b92de9d7db1aec49a496895893431b5e44b2f721e352ec194843d5cf9e",
+      "reason": "Stage 3 I3 merge of s3-w2d: the DR.2 to DR.6 registration block (group d).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/statement_extract.py",
+      "imported_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "prior_project_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "project_commit": "c81932f1d1bb66431da9d7ff66d3cd7e18ad0029",
+      "sha256": "d7e15269089f8d5597586206ba2efa730eaa4694c5c2b285871aa283c15c8ff5",
+      "reason": "Read ` | `-delimited table rows (each pipe as two spaces; separator rows give no line; a pipe line is never a caption or label continuation) for the filed CZR documents; two-space rows extract as before (user-approved Gap 2, rulings 2026-10-29-stage3 item 10).",
+      "review": "work/build/stage3/czr-brief.md"
     }
   ],
   "local_patch_lineage": [

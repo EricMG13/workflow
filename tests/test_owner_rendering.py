@@ -949,6 +949,7 @@ class ExpFigure:
     title_prefix: bool = False  # S.4: the producer appends its basis and date to the title
     twin: tuple[tuple[str, bool, tuple[str, ...]], ...] | None = None
     reason: str | None = None
+    reason_gap_suffix: bool = False  # DR.6 gap case: the reason may end ` (∅ G<n>, ..., ∅ G<m>)`
     facts: tuple[FactRef, ...] = ()
 
 
@@ -1220,6 +1221,12 @@ def _dr6_figures(case: str) -> tuple[ExpFigure, ...]:
             (),
             twin=(),
             reason=data["frame_reason"],
+            # rulings item 22: only a gap case (dr6 `frame_texts.per_case.<case>.reference`
+            # is set) may carry the cited gaps; a positive reason carries no suffix
+            reason_gap_suffix=oracle["render"]["distressed_restructuring"]["frame_texts"][
+                "per_case"
+            ][case]["reference"]
+            is not None,
         ),
     )
 
@@ -1290,7 +1297,41 @@ def _marks_of(chart: dict[str, Any]) -> list[dict[str, Any]]:
     return marks
 
 
-def _figure_equals(got: dict[str, Any], want: ExpFigure, modules: list[dict[str, Any]]) -> None:
+_REASON_SUFFIX = re.compile(r"(.*?)(?: \((∅ G\d+(?:, ∅ G\d+)*)\))?", re.DOTALL)
+
+
+def _page_gaps(block: dict[str, Any]) -> frozenset[str]:
+    """The `G<n>` references the block's own cells cite (rows and every tab's rows)."""
+    rows = [*block.get("rows", ())]
+    for tab in block.get("tabs", ()):
+        rows.extend(tab.get("rows", ()))
+    return frozenset(
+        cell["gap_ref"] for row in rows for cell in row["cells"] if cell.get("gap_ref") is not None
+    )
+
+
+def _assert_reason(chart: dict[str, Any], want: ExpFigure, page_gaps: frozenset[str]) -> None:
+    """The frame reason is the oracle text. In a gap case it may be followed only by the exact
+    suffix ` (∅ G<n>, ..., ∅ G<m>)`, each `G<n>` distinct and cited by the page (rulings item 22,
+    Precise M1). Nothing else may follow, and a positive reason carries no suffix."""
+    assert want.reason is not None
+    match = _REASON_SUFFIX.fullmatch(chart["reason"] or "")
+    assert match is not None, want.fig_id
+    base, suffix = match.groups()
+    assert _norm(base) == _norm(want.reason), (want.fig_id, chart["reason"])
+    if suffix is not None:
+        assert want.reason_gap_suffix, (want.fig_id, chart["reason"])
+        refs = [part.removeprefix("∅ ") for part in suffix.split(", ")]
+        assert len(set(refs)) == len(refs), (want.fig_id, refs)
+        assert set(refs) <= page_gaps, (want.fig_id, sorted(set(refs) - page_gaps))
+
+
+def _figure_equals(
+    got: dict[str, Any],
+    want: ExpFigure,
+    modules: list[dict[str, Any]],
+    page_gaps: frozenset[str] = frozenset(),
+) -> None:
     chart = got["chart"]
     assert got["fig_id"] == want.fig_id
     if want.placement is not None:
@@ -1344,11 +1385,7 @@ def _figure_equals(got: dict[str, Any], want: ExpFigure, modules: list[dict[str,
             )
             assert tuple(_norm(cell["text"]) for cell in row["cells"]) == texts, (want.fig_id, row)
     if want.reason is not None:
-        # The frame reason is the oracle text; where facts are missing the renderer appends the
-        # `∅ G<n>` of the cited gaps (dr6 oracle: frame_texts.per_case.<case>.reference).
-        reason = _norm(chart["reason"] or "")
-        assert reason.startswith(_norm(want.reason)), want.fig_id
-        assert not re.sub(r"∅ G#|[\s,;·.()]", "", reason[len(_norm(want.reason)) :]), want.fig_id
+        _assert_reason(chart, want, page_gaps)
     for ref in want.facts:
         _resolve(ref, modules)
 
@@ -1360,8 +1397,9 @@ def assert_figures_equal_oracle(
     perturbed figure fails."""
     got = block["figures"]
     assert [f["fig_id"] for f in got] == [f.fig_id for f in want], block["block_id"]
+    page_gaps = _page_gaps(block)
     for figure, expected in zip(got, want, strict=True):
-        _figure_equals(figure, expected, modules)
+        _figure_equals(figure, expected, modules, page_gaps)
 
 
 # Every (scope, block, case) the rev 3 table lists, and the module whose facts the refs resolve in.
@@ -1562,6 +1600,79 @@ def test_fast_figure_rule_fails_a_perturbed_page(
     block, want = _perturbed(kind, _payload_block(want), want)
     with pytest.raises(AssertionError):
         assert_figures_equal_oracle(block, want, _fixture_modules(want))
+
+
+def _dr6_page(reason: str | None, cited: tuple[str, ...] = ("G23", "G24", "G25")) -> dict[str, Any]:
+    """A DR.6 block as the page carries it: the frame figure plus tab cells citing `cited`."""
+    cells = [{"text": f"\u2205 {ref}", "gap_ref": ref, "state": "gap"} for ref in cited]
+    return {
+        "block_id": "rating-triggers",
+        "rows": [],
+        "tabs": [{"label": "Current headroom", "rows": [{"row_id": "t03", "cells": cells}]}],
+        "figures": [
+            {
+                "fig_id": "DR.6",
+                "placement": "above",
+                "title": "Rating trigger headroom",
+                "chart": {
+                    "kind": "na",
+                    "unit": None,
+                    "series": [],
+                    "marks": [],
+                    "svg": "",
+                    "table_twin": {"rows": []},
+                    "reason": reason,
+                },
+            }
+        ],
+    }
+
+
+def test_fast_dr6_reason_accepts_the_oracle_text_and_the_ruled_suffix_only() -> None:
+    gap = _dr6_figures("gap")
+    positive = _dr6_figures("positive")
+    base_gap, base_pos = gap[0].reason, positive[0].reason
+    assert base_gap is not None and base_pos is not None
+    for reason in (base_gap, f"{base_gap} (\u2205 G23)", f"{base_gap} (\u2205 G23, \u2205 G25)"):
+        assert_figures_equal_oracle(_dr6_page(reason), gap, [])
+    assert_figures_equal_oracle(_dr6_page(base_pos), positive, [])
+    forged = {
+        gap: [
+            f"{base_gap} junk",
+            f"{base_gap} (\u2205 G23) junk",
+            f"{base_gap};;; \u2205 G23 .",
+            f"{base_gap}  (\u2205 G23)",
+            f"{base_gap} (\u2205 G999)",  # resolves to no gap the page cites
+            f"{base_gap} (\u2205 G23, \u2205 G999)",
+            f"{base_gap} (\u2205 G23, \u2205 G23)",  # a repeated reference
+            f"{base_gap} (G23)",
+            f"{base_gap} (\u2205 G23, junk)",
+            f"{base_gap} ()",
+            f"{base_gap} (\u2205 G23 \u2205 G24)",
+            f"x {base_gap}",
+            f"{base_gap[:-1]}",
+        ],
+        positive: [
+            f"{base_pos} \u2205 G7",
+            f"{base_pos} (\u2205 G23)",  # a positive reason carries no suffix
+            f"{base_pos} junk",
+        ],
+    }
+    for want, reasons in forged.items():
+        for reason in reasons:
+            with pytest.raises(AssertionError):
+                assert_figures_equal_oracle(_dr6_page(reason), want, [])
+
+
+def test_fast_dr6_reason_compare_is_the_page_check_not_the_figure_alone() -> None:
+    """The cited-gap lookup reads the page's tab cells: with no cell citing G23 the suffix fails."""
+    gap = _dr6_figures("gap")
+    reason = f"{gap[0].reason} (\u2205 G23)"
+    assert_figures_equal_oracle(_dr6_page(reason), gap, [])
+    with pytest.raises(AssertionError):
+        assert_figures_equal_oracle(_dr6_page(reason, cited=("G30",)), gap, [])
+    with pytest.raises(AssertionError):
+        assert_figures_equal_oracle(_dr6_page(reason, cited=()), gap, [])
 
 
 def test_fast_figure_rule_fails_an_unresolvable_or_ambiguous_fact_ref() -> None:

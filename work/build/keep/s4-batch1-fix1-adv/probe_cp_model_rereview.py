@@ -24,6 +24,10 @@ from test_owner_s1a import positive_promoted  # noqa: F401  (fixture)
 
 owner: Any = importlib.import_module("deploy_workflow.owner_workflow")
 runs = t.runs
+import deploy_vii.execution as ex  # noqa: E402
+
+REAL_CURRENT_INPUTS = ex.current_inputs  # captured before any test patches it
+REAL_BEGIN = Execution.begin
 
 
 def test_loaded_from_copy() -> None:
@@ -173,10 +177,25 @@ def test_reach(positive_promoted: Any, tmp_path: Path, monkeypatch: pytest.Monke
     workflow = t._publish_forged_cp_model(
         positive_promoted, tmp_path, monkeypatch, forge, fail_first_write=case == "failed-first"
     )
-    # the verifier's own replay must not see the producer patch
-    import deploy_vii.execution as ex
+    # the verifier's own replay must not see the producer patch: the helper restored
+    # `execution.current_inputs`, and owner_workflow bound the original at import
+    assert ex.current_inputs is REAL_CURRENT_INPUTS, "producer patch still installed"
+    assert owner.current_inputs is REAL_CURRENT_INPUTS, "patch leaked into the verifier"
+    # tripwires for the verification: count calls through `execution.current_inputs` (module
+    # probes look it up there) and any `Execution.begin` (the helper's begin patch is still on)
+    seen = {"current_inputs": 0, "begin": 0}
 
-    assert owner.current_inputs is ex.current_inputs, "patch leaked into the verifier"
+    def counted(snapshot: Any, module_id: str) -> Any:
+        seen["current_inputs"] += 1
+        return REAL_CURRENT_INPUTS(snapshot, module_id)
+
+    def no_begin(self: Execution, module_id: str) -> Any:
+        seen["begin"] += 1
+        return REAL_BEGIN(self, module_id)
+
+    monkeypatch.setattr(ex, "current_inputs", counted)
+    monkeypatch.setattr(Execution, "begin", no_begin)
     seal, verify = _verdicts(workflow, tmp_path)
-    print("VERDICT reach-" + case, workflow._phase, _shape(tmp_path), seal, verify)
+    print("VERDICT reach-" + case, workflow._phase, _shape(tmp_path), seal, verify, "tripwires", seen)
+    assert seen["begin"] == 0
     assert seal.startswith("identity_mismatch") and verify.startswith("identity_mismatch")

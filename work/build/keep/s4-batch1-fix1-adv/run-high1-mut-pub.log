@@ -1,11 +1,11 @@
 SRC /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/mut-pub/src/deploy_workflow/owner_workflow.py pub-lenient True head-lenient False
-.F
+...F
 =================================== FAILURES ===================================
 ___ test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses ____
 
-positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10b1aa660>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
-tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2377/test_forgery_cp_model_failed_f0')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b3235c0>
+positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10c91aba0>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-20/test_forgery_cp_model_failed_f0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11b6f55b0>
 
     def test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses(
         positive_promoted: tuple[OwnerWorkflow, PreparedPack],
@@ -30,6 +30,8 @@ tests/test_owner_s1a.py:2143: Failed
 ==================================== PASSES ====================================
 =========================== short test summary info ============================
 PASSED ::test_which_src
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_bound_to_another_cp1_refuses
 FAILED tests/test_owner_s1a.py::test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses
-1 failed, 1 passed in 394.19s (0:06:34)
-exit=1
+1 failed, 3 passed, 65 deselected in 615.59s (0:10:15)
+exit=1 elapsed=617s

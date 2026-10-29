@@ -1,0 +1,166 @@
+.F..F..F......F......F......
+=================================== FAILURES ===================================
+_________ test_tool_use_sections_match_registrations[cp1c-owner:CP-1] __________
+
+oracle = 'cp1c-owner', module = 'CP-1', text = '"as the financial slice"'
+
+    @pytest.mark.parametrize(
+        ("oracle", "module", "text"), SECTIONS, ids=[f"{o}:{m}" for o, m, _ in SECTIONS]
+    )
+    def test_tool_use_sections_match_registrations(oracle: str, module: str, text: str) -> None:
+        """The oracle's tool-use statement and the verifier's replay inputs agree: a submit-only
+        module has no source session on any step; a module whose section reads pages has a host
+        scope; a module whose section requires `read_inputs` has an inputs mode and a view row, and
+        one that reads none has no inputs mode."""
+        spec = owner.OWNER_SPECS[module]
+        assert spec.kind == "analytical"
+        if module in PACK_TOOL_MODULES:
+            # CP-0, CP-1 and CP-1A are the pack-tool modules: their sections say "pack tools plus
+            # submit" or "as the financial slice" (no `read_pages` phrase to key on), and the host
+            # serves a source session on exactly the steps `_SOURCE_STEPS` lists.
+>           assert {s.step_id for s in spec.steps if s.sources} == set(host._SOURCE_STEPS[module])
+E           AssertionError: assert {'financials'...urce_context'} == {'source_context'}
+E             
+E             Extra items in the left set:
+E             'financials'
+E             Use -v to get more diff
+
+tests/test_owner_stage4.py:133: AssertionError
+_________ test_tool_use_sections_match_registrations[cp1d-owner:CP-1] __________
+
+oracle = 'cp1d-owner', module = 'CP-1', text = '"as the financial slice"'
+
+    @pytest.mark.parametrize(
+        ("oracle", "module", "text"), SECTIONS, ids=[f"{o}:{m}" for o, m, _ in SECTIONS]
+    )
+    def test_tool_use_sections_match_registrations(oracle: str, module: str, text: str) -> None:
+        """The oracle's tool-use statement and the verifier's replay inputs agree: a submit-only
+        module has no source session on any step; a module whose section reads pages has a host
+        scope; a module whose section requires `read_inputs` has an inputs mode and a view row, and
+        one that reads none has no inputs mode."""
+        spec = owner.OWNER_SPECS[module]
+        assert spec.kind == "analytical"
+        if module in PACK_TOOL_MODULES:
+            # CP-0, CP-1 and CP-1A are the pack-tool modules: their sections say "pack tools plus
+            # submit" or "as the financial slice" (no `read_pages` phrase to key on), and the host
+            # serves a source session on exactly the steps `_SOURCE_STEPS` lists.
+>           assert {s.step_id for s in spec.steps if s.sources} == set(host._SOURCE_STEPS[module])
+E           AssertionError: assert {'financials'...urce_context'} == {'source_context'}
+E             
+E             Extra items in the left set:
+E             'financials'
+E             Use -v to get more diff
+
+tests/test_owner_stage4.py:133: AssertionError
+_________ test_tool_use_sections_match_registrations[cp2a-owner:CP-1] __________
+
+oracle = 'cp2a-owner', module = 'CP-1', text = '"as the financial slice"'
+
+    @pytest.mark.parametrize(
+        ("oracle", "module", "text"), SECTIONS, ids=[f"{o}:{m}" for o, m, _ in SECTIONS]
+    )
+    def test_tool_use_sections_match_registrations(oracle: str, module: str, text: str) -> None:
+        """The oracle's tool-use statement and the verifier's replay inputs agree: a submit-only
+        module has no source session on any step; a module whose section reads pages has a host
+        scope; a module whose section requires `read_inputs` has an inputs mode and a view row, and
+        one that reads none has no inputs mode."""
+        spec = owner.OWNER_SPECS[module]
+        assert spec.kind == "analytical"
+        if module in PACK_TOOL_MODULES:
+            # CP-0, CP-1 and CP-1A are the pack-tool modules: their sections say "pack tools plus
+            # submit" or "as the financial slice" (no `read_pages` phrase to key on), and the host
+            # serves a source session on exactly the steps `_SOURCE_STEPS` lists.
+>           assert {s.step_id for s in spec.steps if s.sources} == set(host._SOURCE_STEPS[module])
+E           AssertionError: assert {'financials'...urce_context'} == {'source_context'}
+E             
+E             Extra items in the left set:
+E             'financials'
+E             Use -v to get more diff
+
+tests/test_owner_stage4.py:133: AssertionError
+________ test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-1] ________
+
+oracle = 'cp3-cp6-owner', module = 'CP-1'
+text = '"positive adds read_pages market page:1 before the source_context submit (the market entry cites page:1); gap unchanged from s1"'
+
+    @pytest.mark.parametrize(
+        ("oracle", "module", "text"), SECTIONS, ids=[f"{o}:{m}" for o, m, _ in SECTIONS]
+    )
+    def test_tool_use_sections_match_registrations(oracle: str, module: str, text: str) -> None:
+        """The oracle's tool-use statement and the verifier's replay inputs agree: a submit-only
+        module has no source session on any step; a module whose section reads pages has a host
+        scope; a module whose section requires `read_inputs` has an inputs mode and a view row, and
+        one that reads none has no inputs mode."""
+        spec = owner.OWNER_SPECS[module]
+        assert spec.kind == "analytical"
+        if module in PACK_TOOL_MODULES:
+            # CP-0, CP-1 and CP-1A are the pack-tool modules: their sections say "pack tools plus
+            # submit" or "as the financial slice" (no `read_pages` phrase to key on), and the host
+            # serves a source session on exactly the steps `_SOURCE_STEPS` lists.
+>           assert {s.step_id for s in spec.steps if s.sources} == set(host._SOURCE_STEPS[module])
+E           AssertionError: assert {'financials'...urce_context'} == {'source_context'}
+E             
+E             Extra items in the left set:
+E             'financials'
+E             Use -v to get more diff
+
+tests/test_owner_stage4.py:133: AssertionError
+__________ test_tool_use_sections_match_registrations[cp4-owner:CP-1] __________
+
+oracle = 'cp4-owner', module = 'CP-1'
+text = '"read_pages identity page:1, financial page:1 and legal-covenants page:1 (every page the source_context literal cites; the legal one is the clause 1.1 quote); no search required (event_scan unassessed)"'
+
+    @pytest.mark.parametrize(
+        ("oracle", "module", "text"), SECTIONS, ids=[f"{o}:{m}" for o, m, _ in SECTIONS]
+    )
+    def test_tool_use_sections_match_registrations(oracle: str, module: str, text: str) -> None:
+        """The oracle's tool-use statement and the verifier's replay inputs agree: a submit-only
+        module has no source session on any step; a module whose section reads pages has a host
+        scope; a module whose section requires `read_inputs` has an inputs mode and a view row, and
+        one that reads none has no inputs mode."""
+        spec = owner.OWNER_SPECS[module]
+        assert spec.kind == "analytical"
+        if module in PACK_TOOL_MODULES:
+            # CP-0, CP-1 and CP-1A are the pack-tool modules: their sections say "pack tools plus
+            # submit" or "as the financial slice" (no `read_pages` phrase to key on), and the host
+            # serves a source session on exactly the steps `_SOURCE_STEPS` lists.
+>           assert {s.step_id for s in spec.steps if s.sources} == set(host._SOURCE_STEPS[module])
+E           AssertionError: assert {'financials'...urce_context'} == {'source_context'}
+E             
+E             Extra items in the left set:
+E             'financials'
+E             Use -v to get more diff
+
+tests/test_owner_stage4.py:133: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1c-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1c-owner:CP-1C]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1d-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1d-owner:CP-1D]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2a-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2a-owner:CP-2A]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2d-owner:CP-2D]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2e-owner:CP-2E]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2g-owner:CP-2G]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2h-owner:CP-2H]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-1A]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-2]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-3]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3c-owner:CP-3C]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3d-owner:CP-3D]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4-owner:CP-4]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4c-owner:CP-4C]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp5-owner:CP-5]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp8-owner:CP-8]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cpdr-owner:CP-DR]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cpl10-owner:CP-L10]
+FAILED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1c-owner:CP-1]
+FAILED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1d-owner:CP-1]
+FAILED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2a-owner:CP-1]
+FAILED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-1]
+FAILED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4-owner:CP-1]
+5 failed, 23 passed, 6 deselected in 1.23s
+exit=1 elapsed=2s

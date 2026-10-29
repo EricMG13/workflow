@@ -1,4 +1,4 @@
-LOADED /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-adv/src515/src/deploy_workflow/owner_workflow.py
+LOADED /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/base515/src/deploy_workflow/owner_workflow.py
 .VERDICT valid-g1x_sourced-module_id applied=True runtime-stop:WorkflowError:identity_mismatch seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify:2222
 .VERDICT valid-g1x_viewed-module_id applied=True  seal=identity_mismatch@_verify_attempts:1992 verify=identity_mismatch@_verify_attempts:1992
 .VERDICT valid-g1x_sourced-inputs applied=True runtime-stop:WorkflowError:identity_mismatch seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify:2222
@@ -31,12 +31,20 @@ FFVERDICT valid-g1x_sourced-number_only applied=True  seal=identity_mismatch@_ve
 .VERDICT other-cp0-['repair_of'] applied=True  seal=identity_mismatch@_verify_attempts:1979 verify=identity_mismatch@_verify_attempts:1979
 .VERDICT absent [('absent-before', 'identity_mismatch'), ('absent-both', 'identity_mismatch'), ('none-ticket', 'identity_mismatch')]
 .VERDICT control-genuine-repair  seal=accepted verify=accepted
+.LOADED /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/base515/src/deploy_workflow/owner_workflow.py
+.SHAPE [(0, False, 'finished', True), (0, False, 'finished', True)]
+VERDICT blocked-number0 applied=True runtime-stop:ValueError:Input set is settled or its one repair has been consumed seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify_invalid_step:1961
+.SHAPE [(0, False, 'finished', True), (1, True, 'finished', False)] head-module-attempt 0
+VERDICT mid-settle applied=True  seal=ValueError:Settled payload is not the retained response@_verify_settlements:2181 verify=identity_mismatch@verify_owner_run_receipt:2404
+.SHAPE [(0, False, 'finished', True), (1, True, 'finished', True)] heads ['CP-0']
+VERDICT mid-rejected applied=True  seal=identity_mismatch@_verify_walk:1676 verify=identity_mismatch@_verify_walk:1676
+.VERDICT mid-sourced applied=True  seal=accepted verify=accepted SHAPE [(0, False, 'finished', True), (1, True, 'finished', False)]
 .
 =================================== FAILURES ===================================
 _____________________ test_valid_step[number0-g1x_sourced] _____________________
 
-g1x = namespace(core=<module 'g1x_fake_core'>, spec=OwnerSpec(module_id='CP-3D', steps=(StepSpec(step_id='g1x_sourced', sche...ry='owner_core', kind='analytical', publish=None), monkeypatch=<_pytest.monkeypatch.MonkeyPatch object at 0x10cb59480>)
-tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2373/test_valid_step_number0_g1x_so0')
+g1x = namespace(core=<module 'g1x_fake_core'>, spec=OwnerSpec(module_id='CP-3D', steps=(StepSpec(step_id='g1x_sourced', sche...ry='owner_core', kind='analytical', publish=None), monkeypatch=<_pytest.monkeypatch.MonkeyPatch object at 0x10cad7ce0>)
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-15/test_valid_step_number0_g1x_so0')
 step = 'g1x_sourced', field = 'number0'
 
     @pytest.mark.parametrize("step", [SOURCED, VIEWED])
@@ -54,12 +62,12 @@ step = 'g1x_sourced', field = 'number0'
         workflow, stop = _run(tmp_path)
 >       _report(f"valid-{step}-{field}", tmp_path, workflow, stop, applied)
 
-../../s4-batch1-fix1-adv/probe_m1_fields.py:160: 
+../probe_m1_fields.py:160: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 case = 'valid-g1x_sourced-number0'
-root = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2373/test_valid_step_number0_g1x_so0')
-workflow = <deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10cbd0e90>
+root = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-15/test_valid_step_number0_g1x_so0')
+workflow = <deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10cab90f0>
 stop = '', applied = [1]
 
     def _report(case: str, root: Path, workflow: Any, stop: str, applied: list[Any]) -> None:
@@ -70,11 +78,11 @@ stop = '', applied = [1]
 E       AssertionError: valid-g1x_sourced-number0
 E       assert ('accepted' != 'accepted')
 
-../../s4-batch1-fix1-adv/probe_m1_fields.py:125: AssertionError
+../probe_m1_fields.py:125: AssertionError
 _____________________ test_valid_step[number0-g1x_viewed] ______________________
 
-g1x = namespace(core=<module 'g1x_fake_core'>, spec=OwnerSpec(module_id='CP-3D', steps=(StepSpec(step_id='g1x_sourced', sche...ry='owner_core', kind='analytical', publish=None), monkeypatch=<_pytest.monkeypatch.MonkeyPatch object at 0x10ccf5250>)
-tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2373/test_valid_step_number0_g1x_vi0')
+g1x = namespace(core=<module 'g1x_fake_core'>, spec=OwnerSpec(module_id='CP-3D', steps=(StepSpec(step_id='g1x_sourced', sche...ry='owner_core', kind='analytical', publish=None), monkeypatch=<_pytest.monkeypatch.MonkeyPatch object at 0x10cc6cd50>)
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-15/test_valid_step_number0_g1x_vi0')
 step = 'g1x_viewed', field = 'number0'
 
     @pytest.mark.parametrize("step", [SOURCED, VIEWED])
@@ -92,32 +100,32 @@ step = 'g1x_viewed', field = 'number0'
         workflow, stop = _run(tmp_path)
 >       _report(f"valid-{step}-{field}", tmp_path, workflow, stop, applied)
 
-../../s4-batch1-fix1-adv/probe_m1_fields.py:160: 
+../probe_m1_fields.py:160: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../../s4-batch1-fix1-adv/probe_m1_fields.py:122: in _report
+../probe_m1_fields.py:122: in _report
     seal, verify = _verdicts(root, workflow)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^
-../../s4-batch1-fix1-adv/probe_m1_fields.py:82: in _verdicts
+../probe_m1_fields.py:82: in _verdicts
     receipt = workflow.write_receipt(root / "receipt.json")
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-src/deploy_workflow/owner_workflow.py:1475: in write_receipt
+../base515/src/deploy_workflow/owner_workflow.py:1475: in write_receipt
     _verify(
-src/deploy_workflow/owner_workflow.py:2301: in _verify
+../base515/src/deploy_workflow/owner_workflow.py:2301: in _verify
     expected_steps = _verify_settlements(store, snapshot, settlements, analytical)
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-src/deploy_workflow/owner_workflow.py:2181: in _verify_settlements
+../base515/src/deploy_workflow/owner_workflow.py:2181: in _verify_settlements
     _PROBES[head.module_id](store, snapshot, attempt)
 tests/test_owner_g1x.py:188: in _probe
     finished, result = settle(
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-snapshot = ExecutionSnapshot(schema_version='execution/5', parent='373865a84c2a29c46646fa7cd408aafe12ac82065f46bbec14f5e272399479...on='implemented', analytical_qualification='unrun', rendering_acceptance='unrun', native_host_qualification='unrun'))))
-attempt = Attempt(ticket_id='94b2ad2c-384a-4e57-9628-cd6472931009', module_id='CP-3D', inputs=(Input(input_id='prepared-pack', s...valid', output_sha256='fbe3c5429a31c1e73b551dbe8ecce8be6274268c0e9af44a93ee449555b1ea9f', issues=())), step_repairs=())
+snapshot = ExecutionSnapshot(schema_version='execution/5', parent='939a87ab44e824bc9fda40b8eda1efa763857f82b9e5a872ae0094c973d3ef...on='implemented', analytical_qualification='unrun', rendering_acceptance='unrun', native_host_qualification='unrun'))))
+attempt = Attempt(ticket_id='74f9e46a-4ab0-464c-8111-226a1f7d9927', module_id='CP-3D', inputs=(Input(input_id='prepared-pack', s...valid', output_sha256='fbe3c5429a31c1e73b551dbe8ecce8be6274268c0e9af44a93ee449555b1ea9f', issues=())), step_repairs=())
 payload = '{"schema_version":"module/5","run_id":"slice-snapshot-positive","issuer_id":"northbridge-synthetic","as_of":"2026-01-...5","status":"restricted"}],"facts":[],"tables":[],"claims":[],"limitations":[],"inherited_limitations":[],"attempt":0}'
-validator = <function _same.<locals>.<lambda> at 0x10cd2ad40>
+validator = <function _same.<locals>.<lambda> at 0x10cb46660>
 interruption = None
 pack = PreparedPack(schema_version='prepared-pack/1', run=Run(schema_version='run/2', run_id='slice-snapshot-positive', issue...t=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=())))
-load = <bound method Execution.head_module of <deploy_vii.execution.Execution object at 0x10cc82120>>
+load = <bound method Execution.head_module of <deploy_vii.execution.Execution object at 0x10cbb9e50>>
 
     def settle(
         snapshot: ExecutionSnapshot,
@@ -138,8 +146,43 @@ load = <bound method Execution.head_module of <deploy_vii.execution.Execution ob
 >           raise ValueError("Settled payload is not the retained response")
 E           ValueError: Settled payload is not the retained response
 
-src/deploy_vii/execution.py:450: ValueError
+../base515/src/deploy_vii/execution.py:450: ValueError
+==================================== PASSES ====================================
 =========================== short test summary info ============================
+PASSED ::test_loaded_from_copy
+PASSED ::test_valid_step[module_id-g1x_sourced]
+PASSED ::test_valid_step[module_id-g1x_viewed]
+PASSED ::test_valid_step[inputs-g1x_sourced]
+PASSED ::test_valid_step[inputs-g1x_viewed]
+PASSED ::test_valid_step[number_only-g1x_sourced]
+PASSED ::test_valid_step[number_only-g1x_viewed]
+PASSED ::test_valid_step[repair_of-g1x_sourced]
+PASSED ::test_valid_step[repair_of-g1x_viewed]
+PASSED ::test_valid_step[repair_issues-g1x_sourced]
+PASSED ::test_valid_step[repair_issues-g1x_viewed]
+PASSED ::test_rejected_step[module_id]
+PASSED ::test_rejected_step[inputs]
+PASSED ::test_rejected_step[number1]
+PASSED ::test_rejected_step[repair_of]
+PASSED ::test_rejected_step[repair_issues]
+PASSED ::test_refused_submission_rewrites
+PASSED ::test_interrupt_in_step[False]
+PASSED ::test_interrupt_in_step[True]
+PASSED ::test_final_snapshot_appended
+PASSED ::test_final_snapshot_replaced
+PASSED ::test_other_ticket[attempt0-update0]
+PASSED ::test_other_ticket[attempt0-update1]
+PASSED ::test_other_ticket[attempt0-update2]
+PASSED ::test_other_ticket[cp0-update3]
+PASSED ::test_other_ticket[cp0-update4]
+PASSED ::test_attempt_absent_before
+PASSED ::test_control_genuine_repair
+PASSED ::test_loaded_from_copy
+PASSED ::test_blocked_number0
+PASSED ::test_mid_settle
+PASSED ::test_mid_rejected
+PASSED ::test_mid_sourced_control
 FAILED ::test_valid_step[number0-g1x_sourced] - AssertionError: valid-g1x_sou...
 FAILED ::test_valid_step[number0-g1x_viewed] - ValueError: Settled payload is...
-2 failed, 28 passed in 3.57s
+2 failed, 33 passed in 6.16s
+exit=1 elapsed=7s

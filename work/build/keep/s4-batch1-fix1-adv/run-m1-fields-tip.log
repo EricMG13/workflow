@@ -1,0 +1,69 @@
+LOADED /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/tip/src/deploy_workflow/owner_workflow.py
+.VERDICT valid-g1x_sourced-module_id applied=True runtime-stop:WorkflowError:identity_mismatch seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify:2231
+.VERDICT valid-g1x_viewed-module_id applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT valid-g1x_sourced-inputs applied=True runtime-stop:WorkflowError:identity_mismatch seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify:2231
+.VERDICT valid-g1x_viewed-inputs applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT valid-g1x_sourced-number0 applied=True  seal=identity_mismatch@_verify_transition:1601 verify=identity_mismatch@_verify_transition:1601
+.VERDICT valid-g1x_viewed-number0 applied=True  seal=identity_mismatch@_verify_transition:1601 verify=identity_mismatch@_verify_transition:1601
+.VERDICT valid-g1x_sourced-number_only applied=True  seal=identity_mismatch@_verify_attempts:1988 verify=identity_mismatch@_verify_attempts:1988
+.VERDICT valid-g1x_viewed-number_only applied=True  seal=identity_mismatch@_verify_attempts:1988 verify=identity_mismatch@_verify_attempts:1988
+.VERDICT valid-g1x_sourced-repair_of applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT valid-g1x_viewed-repair_of applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT valid-g1x_sourced-repair_issues applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT valid-g1x_viewed-repair_issues applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT rejected-module_id applied=True  seal=identity_mismatch@_verify_transition:1601 verify=identity_mismatch@_verify_transition:1601
+.VERDICT rejected-inputs applied=True  seal=identity_mismatch@_verify_transition:1601 verify=identity_mismatch@_verify_transition:1601
+.VERDICT rejected-number1 applied=True runtime-stop:WorkflowError:not_permitted seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT rejected-repair_of applied=True  seal=identity_mismatch@_verify_attempts:1988 verify=identity_mismatch@_verify_attempts:1988
+.VERDICT rejected-repair_issues applied=True  seal=identity_mismatch@_verify_attempts:1988 verify=identity_mismatch@_verify_attempts:1988
+.VERDICT refused-precheck-rewrite applied=True runtime-stop:WorkflowError:stale_binding seal=stale_binding@_current:1095 verify=identity_mismatch@_verify:2231
+.VERDICT interrupt-relabel=False applied=True runtime-stop:AssertionError:assert 'invalid' == 'valid'
+  
+  - valid
+  + invalid
+  ? ++ seal=identity_mismatch@_verify_attempts:2011 verify=identity_mismatch@_verify_attempts:2011
+.VERDICT interrupt-relabel=True applied=True runtime-stop:ValueError:Input set is settled or its one repair has been consumed seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify_attempts:2011
+.VERDICT final-appended applied=True  seal=identity_mismatch@_verify_chain:1657 verify=identity_mismatch@_verify_chain:1657
+.VERDICT final-replaced verify=identity_mismatch@_verify_transition:1601
+.VERDICT other-attempt0-['number'] applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT other-attempt0-['inputs'] applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT other-attempt0-['repair_issues'] applied=True  seal=identity_mismatch@_verify_attempts:1988 verify=identity_mismatch@_verify_attempts:1988
+.VERDICT other-cp0-['number'] applied=True  seal=identity_mismatch@_verify_attempts:2001 verify=identity_mismatch@_verify_attempts:2001
+.VERDICT other-cp0-['repair_of'] applied=True  seal=identity_mismatch@_verify_attempts:1988 verify=identity_mismatch@_verify_attempts:1988
+.VERDICT absent [('absent-before', 'identity_mismatch'), ('absent-both', 'identity_mismatch'), ('none-ticket', 'identity_mismatch')]
+.VERDICT control-genuine-repair  seal=accepted verify=accepted
+.
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_loaded_from_copy
+PASSED ::test_valid_step[module_id-g1x_sourced]
+PASSED ::test_valid_step[module_id-g1x_viewed]
+PASSED ::test_valid_step[inputs-g1x_sourced]
+PASSED ::test_valid_step[inputs-g1x_viewed]
+PASSED ::test_valid_step[number0-g1x_sourced]
+PASSED ::test_valid_step[number0-g1x_viewed]
+PASSED ::test_valid_step[number_only-g1x_sourced]
+PASSED ::test_valid_step[number_only-g1x_viewed]
+PASSED ::test_valid_step[repair_of-g1x_sourced]
+PASSED ::test_valid_step[repair_of-g1x_viewed]
+PASSED ::test_valid_step[repair_issues-g1x_sourced]
+PASSED ::test_valid_step[repair_issues-g1x_viewed]
+PASSED ::test_rejected_step[module_id]
+PASSED ::test_rejected_step[inputs]
+PASSED ::test_rejected_step[number1]
+PASSED ::test_rejected_step[repair_of]
+PASSED ::test_rejected_step[repair_issues]
+PASSED ::test_refused_submission_rewrites
+PASSED ::test_interrupt_in_step[False]
+PASSED ::test_interrupt_in_step[True]
+PASSED ::test_final_snapshot_appended
+PASSED ::test_final_snapshot_replaced
+PASSED ::test_other_ticket[attempt0-update0]
+PASSED ::test_other_ticket[attempt0-update1]
+PASSED ::test_other_ticket[attempt0-update2]
+PASSED ::test_other_ticket[cp0-update3]
+PASSED ::test_other_ticket[cp0-update4]
+PASSED ::test_attempt_absent_before
+PASSED ::test_control_genuine_repair
+30 passed in 3.28s
+exit=0 elapsed=4s

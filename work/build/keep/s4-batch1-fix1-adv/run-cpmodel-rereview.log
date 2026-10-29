@@ -1,2 +1,19 @@
 LOADED /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/tip/src/deploy_workflow/owner_workflow.py /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/tip/tests/test_owner_s1a.py
+.VERDICT p1-genuine refused ok [(0, 'finished', False, 2, True), (1, 'finished', True, 2, False)] accepted accepted
+.VERDICT intr-repair_issues refused ok complete [(0, 'finished', False, 2, True), (1, 'finished', True, 2, False)] identity_mismatch@_verify_publications:1784 identity_mismatch@_verify_publications:1784
+.VERDICT intr-inputs refused ok complete [(0, 'finished', False, 1, True), (0, 'finished', False, 2, False)] identity_mismatch@_verify_publications:1784 identity_mismatch@_verify_publications:1784
+.VERDICT reach-drop complete [(0, 'finished', False, 1, False)] identity_mismatch@_verify:2244 identity_mismatch@_verify:2244 tripwires {'current_inputs': 0, 'begin': 0}
+.VERDICT reach-other complete [(0, 'finished', False, 2, False)] identity_mismatch@_verify:2244 identity_mismatch@_verify:2244 tripwires {'current_inputs': 0, 'begin': 0}
+.VERDICT reach-failed-first complete [(0, 'finished', False, 1, True), (0, 'finished', False, 2, False)] identity_mismatch@_verify_publications:1784 identity_mismatch@_verify_publications:1784 tripwires {'current_inputs': 0, 'begin': 0}
 .
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_loaded_from_copy
+PASSED ::test_p1_genuine_second_attempt
+PASSED ::test_intr_forge[repair_issues]
+PASSED ::test_intr_forge[inputs]
+PASSED ::test_reach[drop]
+PASSED ::test_reach[other]
+PASSED ::test_reach[failed-first]
+7 passed in 1126.19s (0:18:46)
+exit=0 elapsed=1128s

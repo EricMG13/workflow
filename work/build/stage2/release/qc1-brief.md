@@ -47,3 +47,12 @@ Worktree `../s2r-qc1`, branch `claude/s2r-qc1`, cut at release 5a6a746.
 - Gate exit codes.
 - Any question.
 - `Not verified:`.
+
+## Rulings after the mx-precise review (Modules, 2026-10-29; `qc1-review.md`)
+1. **High, kind.** The `maturity-wall` `_Spec` is `_Spec("Maturity wall", "MODEL", "dense", ("CP-1",), route_label=None)`. Kind `chart` is forbidden until the Stage 3 S.4 task adds the `_STRIP_FIGURES` entry and the CP-1 binding. Without them, `chart` raises `KeyError('maturity-wall')` on every populated FP-04 render.
+2. **Medium, interim populated render: option (a).** The release pins only the ownership flip and the not-run/empty states, as the earlier ruling says.
+   - In the cp2d oracle, `fp04_render.blocks["maturity-wall"]` pins the owner MODEL. It marks the populated shape `stage3_pending`, with a note naming the Stage 3 S.4 task. It does not pin `primary_tab: null, tabs: ["T2E.4"]`, a shape the release cannot produce.
+   - The builder adds a strict-xfail tripwire. On a populated FP-04 run, it asserts that `maturity-wall` shows the MODEL content first, with T2E.4 as a non-primary tab. Its reason: "Stage 3 S.4 wiring". This forces the Stage 3 task to flip it.
+   - The interim misattribution (CP-2D rows under a MODEL owner) sits only in an FP-04 render path that is not delivered until Stage 3 G2 rendering. The S.4 task must land before FP-04 is delivered.
+   - A `_block` behaviour change is outside the user's Q-C1 approval (a `src/deploy_vii` change), so it is not made here.
+3. **Low, route.** The approved page shows no route on the maturity-wall header (`rbot-fp-04-covenant-refinancing.dc.html:42`), so `route_label` is None. The cp2d `maturity_wall_note` drops "route Open in Model".

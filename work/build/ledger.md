@@ -423,3 +423,4 @@
 - 08:51 Q-C14 eight conflicts settled by Modules (C-01=0 Caesars own, 2.37 Asurion context; five limits; SECTOR id; Source C scope; Source A units; NAV whole US$; Fits; no asOfMismatch flag). Q-C1 preparer done 80c9bb8 (a5f86934): render-expected/cp2d/cp4 oracles, CP-2D lease; asked to add CP-4 lease line; populated FP-04 S.4 wiring ruled a Stage 3 chart task.
 - 08:52 Release fix1 done a50efb2 (round 3 in CP-L10/CP-2A/CP-2D sum copies, CP-1D shared helper; no oracle value moved; c8 probe 0; 1977 passed). Note for re-review: CP-2D claims _citations union unchanged.
 - 08:53 Q-C1 roles: preparer=a5f86934df7bc3a48 (mx-feature, tip 67b8a23), reviewer=a66dbdc578746c158 (mx-precise, dispatched); builder TBD (must differ).
+- 08:57 Q-C1 review (mx-precise a66dbdc5): REQUEST CHANGES (High kind=chart crash; Medium interim pin unreachable; Low route). Ruled: dense, option (a) + strict-xfail tripwire, no route. Back to preparer a5f86934.

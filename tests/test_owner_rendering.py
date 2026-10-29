@@ -40,7 +40,8 @@ LEASE = (ROOT / "docs/OWNER-RENDERING-LEASE.md").read_text(encoding="utf-8")
 H = "0" * 64
 BANNER_ANCHOR = '<div id="call-root"></div>'
 
-# The 17 shipped rows (lease rev 2, R2.2); the two gated rows are absent until their prerequisite.
+# The 18 shipped rows (lease rev 2, R2.2; `cp3c-fp04-refinancing` since rulings item 22 M1); the
+# `cp6-fp01-committee` row is absent until its prerequisite lands.
 SHIPPED_IDS = (
     "cp1-model",
     "s1a-credit-snapshot",
@@ -54,13 +55,14 @@ SHIPPED_IDS = (
     "cp2h-fp05-ratings",
     "cp4c-fp05-recovery",
     "cp2d-fp04-liquidity",
+    "cp3c-fp04-refinancing",
     "cp4-fp04-covenants",
     "cp8-fp01-what-changed",
     "slice-cp2e-sensitivity",
     "slice-cpdr-research",
     "slice-cpl10-screen",
 )
-GATED_IDS = ("cp6-fp01-committee", "cp3c-fp04-refinancing")
+GATED_IDS = ("cp6-fp01-committee",)
 # Rev 0 literals (lease lines 173-181); the s1a refused text is dropped by rev 1 M1.
 REV0_BANNERS = {
     ("cp1-model", "complete"): (
@@ -96,6 +98,7 @@ EXPECTED_SECTIONS = {
     "cp2h-fp05-ratings": ("rating-triggers",),
     "cp4c-fp05-recovery": ("recovery-by-class", "value-allocation-claims"),
     "cp2d-fp04-liquidity": ("liquidity-runway", "funding-gap"),
+    "cp3c-fp04-refinancing": ("funding-gap", "refinancing-paths", "lme-creditor-exposure"),
     "cp4-fp04-covenants": (
         "covenant-tests-headroom",
         "red-flags",
@@ -155,6 +158,24 @@ def test_fast_scope_table_rows_and_gated_rows() -> None:
         assert scope.scope_id == scope_id
         assert scope.rails == ("evidence", "limitations")
         assert scope.case_kind == "synthetic"
+
+
+def test_fast_cp3c_row_is_the_lease_r22_row() -> None:
+    """Rulings item 22 M1: the row ships exactly as lease R2.2 writes it."""
+    section = LEASE.split("### R2.2", 1)[1].split("### R2.3", 1)[0]
+    (row,) = re.findall(r"^\| `cp3c-fp04-refinancing` \|(.+)$", section, re.MULTILINE)
+    cells = [cell.strip() for cell in row.split("|")]
+    pathway, requested, sections, cases, refused = cells[:5]
+    scope = g2.DELIVERY_SCOPES["cp3c-fp04-refinancing"]
+    assert scope.pathway == pathway == "covenant_refinancing"
+    assert tuple(scope.requested_modules) == tuple(re.findall(r'"([^"]+)"', requested))
+    assert tuple(scope.requested_modules) == ("CP-1", "CP-1A", "CP-2", "CP-2D", "CP-3C")
+    assert tuple(scope.sections) == tuple(re.findall(r"`([^`]+)`", sections))
+    assert tuple(scope.sections) == EXPECTED_SECTIONS["cp3c-fp04-refinancing"]
+    assert cases == "positive, gap_minimum_cash, gap_no_repricing"
+    assert refused == "none"
+    assert set(scope.banner) == {"complete"}
+    assert scope.case_kind == "synthetic" and scope.rails == ("evidence", "limitations")
 
 
 def test_fast_scope_banners_equal_the_frozen_lease_literals() -> None:
@@ -295,7 +316,7 @@ def _driver_runs() -> Iterator[tuple[str, str, Callable[[], Run]]]:
     for case in ("positive", "gap_no_recovery", "gap_no_market"):
         yield f"cp3d-{case}", "cp3d-fp03-market", pack_run("cp3d_runs", case)
     yield "cp2d", "cp2d-fp04-liquidity", pack_run("cp2d_runs")
-    yield "cp3c", "-", pack_run("cp3c_runs")
+    yield "cp3c", "cp3c-fp04-refinancing", pack_run("cp3c_runs")
     for case in ("positive", "gap"):
         yield f"cp3-{case}", "cp3-fp01-relative-value", _cp3_run(case)
     for case in ("positive", "gap", "gap_false_same_definition"):
@@ -1120,6 +1141,25 @@ def _cr2_figures(case: str) -> tuple[ExpFigure, ...]:
     )
 
 
+def _cr3_figures(case: str) -> tuple[ExpFigure, ...]:
+    oracle = _chart_oracle("cr3")
+    spec = oracle["chart_series"]["CR.3"][case]
+    placement = oracle["render"]["covenant_refinancing"]["figure"]["placement"]
+    return (
+        ExpFigure(
+            spec["fig_id"],
+            placement,
+            spec["kind"],
+            spec["title"],
+            spec["unit"],
+            tuple(spec["series"]),
+            _point_marks(spec["points"]),
+            twin=_twin_rows(oracle["table_twins"][case]["rows"]),
+            facts=_point_facts("CP-3C", spec["points"]),
+        ),
+    )
+
+
 def _dr2_figures(case: str) -> tuple[ExpFigure, ...]:
     oracle = _chart_oracle("dr2")
     spec = oracle["chart_series"]["DR.2"][case]
@@ -1196,6 +1236,7 @@ _FIGURE_SOURCES: dict[tuple[str, str], Callable[[str], tuple[ExpFigure, ...]]] =
     ("cp1c-fp03-peers", "peer-positioning"): _rv3_figures,
     ("cp4-fp04-covenants", "covenant-tests-headroom"): _cr1_figures,
     ("cp2d-fp04-liquidity", "liquidity-runway"): _cr2_figures,
+    ("cp3c-fp04-refinancing", "funding-gap"): _cr3_figures,
     ("cp4c-fp05-recovery", "recovery-by-class"): _dr2_figures,
     ("cp4c-fp05-recovery", "value-allocation-claims"): _dr345_figures,
     ("cp2h-fp05-ratings", "rating-triggers"): _dr6_figures,
@@ -1335,6 +1376,9 @@ FIGURE_CASES: tuple[tuple[str, str, str], ...] = (
     ("cp2d-fp04-liquidity", "liquidity-runway", "positive"),
     ("cp2d-fp04-liquidity", "liquidity-runway", "long_horizon"),
     ("cp2d-fp04-liquidity", "liquidity-runway", "gap_minimum_cash"),
+    ("cp3c-fp04-refinancing", "funding-gap", "positive"),
+    ("cp3c-fp04-refinancing", "funding-gap", "gap_minimum_cash"),
+    ("cp3c-fp04-refinancing", "funding-gap", "gap_no_repricing"),
     ("cp4c-fp05-recovery", "recovery-by-class", "positive"),
     ("cp4c-fp05-recovery", "recovery-by-class", "gap"),
     ("cp4c-fp05-recovery", "value-allocation-claims", "positive"),
@@ -1545,6 +1589,13 @@ def test_fast_every_figure_oracle_pointer_exists() -> None:
             "/chart_series/CR.2/positive",
             "/table_twins/positive",
         ],
+        "cr3": [
+            "/render/covenant_refinancing",
+            "/chart_series/CR.3/positive",
+            "/chart_series/CR.3/gap_minimum_cash",
+            "/chart_series/CR.3/gap_no_repricing",
+            "/table_twins/positive",
+        ],
         "dr2": ["/render/distressed_restructuring", "/chart_series/DR.2/gap", "/table_twins/gap"],
         "dr345": [
             "/render/distressed_restructuring",
@@ -1629,6 +1680,38 @@ def test_fast_figure_rule_on_real_cr2_pages(case: str) -> None:
     )
 
 
+@pytest.mark.parametrize("case", ["positive", "gap_minimum_cash", "gap_no_repricing"])
+def test_fast_figure_rule_on_real_cr3_pages(case: str) -> None:
+    wiring = importlib.import_module("chart_wiring_c")
+
+    view = wiring.cp3c_view(case)
+    _real_check("cp3c-fp04-refinancing", "funding-gap", case, view, wiring.report_of(view))
+    for block_id in ("refinancing-paths", "lme-creditor-exposure"):
+        assert _real_block(wiring.report_of(view), block_id)["figures"] == []
+        assert expected_figures("cp3c-fp04-refinancing", block_id, case) == ()
+
+
+def test_fast_funding_gap_facts_are_members_of_the_cp2d_or_cp3c_head() -> None:
+    """Lease R2.8 item 7: each bound `funding-gap` fact comes from its own head's facts."""
+    modules = [
+        {"module_id": "CP-2D", "facts": [{"fact_id": "T2E.5.r01.c1"}]},
+        {"module_id": "CP-3C", "facts": [{"fact_id": "T3D.1.r01.c6"}]},
+    ]
+    good = [("CP-2D", "T2E.5.r01.c1"), ("CP-3C", "T3D.1.r01.c6")]
+    assert_funding_gap_heads("cp3c-fp04-refinancing", good, modules)
+    assert_funding_gap_heads("cp2d-fp04-liquidity", good[:1], modules)
+    for scope_id, bad in (
+        ("cp3c-fp04-refinancing", good[:1]),  # T3D.1 is bound here: CP-3C must contribute
+        ("cp3c-fp04-refinancing", [*good, ("CP-3C", "T3D.1.r09.c9")]),  # not in the head
+        ("cp3c-fp04-refinancing", [*good, ("CP-2D", "T3D.1.r01.c6")]),  # the other head's fact
+        ("cp3c-fp04-refinancing", [*good, ("CP-4", "T4.1.r01.c1")]),  # not a funding-gap head
+        ("cp2d-fp04-liquidity", good),  # CP-3C is not in this run
+        ("cp2d-fp04-liquidity", []),
+    ):
+        with pytest.raises(AssertionError):
+            assert_funding_gap_heads(scope_id, bad, modules)
+
+
 @pytest.mark.parametrize("case", ["positive", "gap"])
 def test_fast_figure_rule_on_real_dr6_pages(case: str, tmp_path: Path) -> None:
     dr6 = importlib.import_module("test_chart_render_dr6")
@@ -1664,6 +1747,27 @@ def assert_scope_figures(scope_id: str, case: str, outcome: str, payload: dict[s
     for section_id in g2.DELIVERY_SCOPES[scope_id].sections:
         want = () if outcome == "refused" else expected_figures(scope_id, section_id, case)
         assert_figures_equal_oracle(blocks[section_id], want, payload["modules"])
+
+
+# Heads whose facts the `funding-gap` block binds (lease R2.8 item 7): CP-2D, and CP-3C for T3D.1.
+_FUNDING_GAP_HEADS = {
+    "cp2d-fp04-liquidity": frozenset({"CP-2D"}),
+    "cp3c-fp04-refinancing": frozenset({"CP-2D", "CP-3C"}),
+}
+
+
+def assert_funding_gap_heads(
+    scope_id: str, bound: list[tuple[str, str]], modules: list[dict[str, Any]]
+) -> None:
+    """`bound` is the section's (module_id, fact_id) pairs. Every one is a member of the facts of
+    its own head in the page payload, and every head the scope names contributes."""
+    heads = _FUNDING_GAP_HEADS[scope_id]
+    assert {module_id for module_id, _ in bound} == heads, scope_id
+    for module_id, fact_id in bound:
+        assert sum(f["fact_id"] == fact_id for f in _facts_of(modules, module_id)) == 1, (
+            module_id,
+            fact_id,
+        )
 
 
 # ---------------------------------------------------------------- deferred scopes (heavy)
@@ -1727,6 +1831,13 @@ def _cp8(case: str, root: Path) -> tuple[Path, Path, Path | None]:
     return root / "store", root / "owner-receipt.json", None
 
 
+def _cp3c(case: str, root: Path) -> tuple[Path, Path, Path | None]:
+    driver = importlib.import_module("cp3c_runs")
+    template, _pack = driver.reach_cp2d(root / "template")
+    store, receipt = driver.cp3c_closed(case, root, template)
+    return Path(store), Path(receipt), None
+
+
 Adapter = Callable[[str, Path], tuple[Path, Path, Path | None]]
 # scope -> (driver adapter, complete cases, refused case or None, blocked cases the driver offers)
 DEFERRED: dict[str, tuple[Adapter, tuple[str, ...], str | None, tuple[str, ...]]] = {
@@ -1780,6 +1891,12 @@ DEFERRED: dict[str, tuple[Adapter, tuple[str, ...], str | None, tuple[str, ...]]
         "refused",
         ("blocked", "cp2g_blocked"),
     ),
+    "cp3c-fp04-refinancing": (
+        _cp3c,
+        ("positive", "gap_minimum_cash", "gap_no_repricing"),
+        None,
+        (),
+    ),
     "cp4-fp04-covenants": (
         _wrap("cp4_runs", "cp4_closed"),
         ("positive", "gap", "gap_false_same_definition"),
@@ -1807,6 +1924,37 @@ def _oracle_case_key(scope_id: str, case: str) -> str:
     if scope_id.startswith("s1a") and case == "gap":
         return "gap_business_without_ownership_transaction"
     return case
+
+
+def _assert_cp3c_blocks(blocks: dict[str, Any]) -> None:
+    """The three assigned blocks against the frozen oracles: `refinancing-paths` and
+    `lme-creditor-exposure` from `cp3c-owner#/fp04_render`, `funding-gap` (T3D.1 moved there by
+    the Q-C2 wiring) from `cr3-expected.json#/render/covenant_refinancing`."""
+    wiring = importlib.import_module("chart_wiring_c")
+    render = _oracle("cp3c-owner")["fp04_render"]["blocks"]
+    funding = _chart_oracle("cr3")["render"]["covenant_refinancing"]
+    wanted = {
+        **{
+            block_id: (
+                spec["owner"],
+                spec["kind"],
+                spec["state"],
+                [spec["primary_tab"], *spec["tabs"]],
+            )
+            for block_id, spec in render.items()
+        },
+        "funding-gap": (
+            funding["owner"],
+            funding["block_kind"],
+            funding["state"],
+            [funding["primary_tab"], *funding["tabs_with_cp3c"]],
+        ),
+    }
+    for block_id, (owner, kind, state, tab_ids) in wanted.items():
+        block = blocks[block_id]
+        assert (block["owner"], block["kind"], block["state"]) == (owner, kind, state), block_id
+        got = [block["tab_label"], *(tab["label"] for tab in block["tabs"])]
+        assert got == wiring.labels_of(*tab_ids), block_id
 
 
 def _check_scope_run(
@@ -1839,6 +1987,13 @@ def _check_scope_run(
         for fact in section.facts:
             assert fact.result_sha256 == heads[fact.module_id].result_sha256
     assert_scope_figures(scope_id, case, outcome, payload)
+    if scope_id in _FUNDING_GAP_HEADS:
+        (gap,) = (s for s in wire.sections if s.block_id == "funding-gap")
+        assert_funding_gap_heads(
+            scope_id, [(f.module_id, f.fact_id) for f in gap.facts], payload["modules"]
+        )
+    if scope_id == "cp3c-fp04-refinancing":
+        _assert_cp3c_blocks(blocks)
     if outcome == "complete" and scope_id in ORACLE_POINTERS and scope.sections:
         name, pointer = ORACLE_POINTERS[scope_id]
         node = _pointer(_oracle(name), pointer.format(c=_oracle_case_key(scope_id, case)))

@@ -282,8 +282,21 @@ _DELIVERY_ROWS: tuple[DeliveryScope, ...] = (
             )
         },
     ),
-    # Gated, no row until the Q-C2 wiring and the oracle re-pin land (lease D2, rulings item 6):
-    # "cp3c-fp04-refinancing" with funding-gap, refinancing-paths, lme-creditor-exposure.
+    # Lease D2's gate is met (Q-C2 wiring binds T3D.1 to `funding-gap`; fp04_render re-pinned;
+    # CR.3 frozen), so the row ships as lease R2.2 and R2.4 write it (rulings item 22, F1).
+    _scope(
+        "cp3c-fp04-refinancing",
+        "covenant_refinancing",
+        ("CP-1", "CP-1A", "CP-2", "CP-2D", "CP-3C"),
+        ("funding-gap", "refinancing-paths", "lme-creditor-exposure"),
+        {
+            "complete": (
+                "Refinancing paths, the funding gap by maturity and creditor exposure under "
+                "liability management only, built on the liquidity analysis. Covenant analysis "
+                "and the remaining blocks on this page remain unqualified."
+            )
+        },
+    ),
     _scope(
         "cp4-fp04-covenants",
         "covenant_refinancing",

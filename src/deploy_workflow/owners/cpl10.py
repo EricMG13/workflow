@@ -60,7 +60,7 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, status_display
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.workflow import WorkflowError
 
@@ -554,7 +554,8 @@ def _topic_unit(topic: Topic) -> tuple[str, str | None, Decimal]:
 
 
 def _unique(citations: Iterable[Citation]) -> tuple[Citation, ...]:
-    return tuple(dict.fromkeys(citations))
+    """Round 3: one Citation per (source, page), the first input quote on that page."""
+    return one_per_page(tuple(citations))
 
 
 class _Cells:
@@ -569,7 +570,7 @@ class _Cells:
             kw.setdefault("calculation_id", f"calc:{self.table}.{self.row_id}.{field}")
         if kw.get("unit") == "MILLIONS":
             kw.update(_MONEY)
-        # F5 (CP-1C L3): a calculated fact cites what its derives_from cites, ordered, de-duplicated.
+        # F5, round 3: a derived fact has one Citation per (source, page), the first input quote.
         cites = _unique(c for d in derives for c in self.cp1[d].citations)
         fact = Fact.model_validate(
             {
@@ -890,7 +891,7 @@ def _claim(
     limitation: str | None,
     facts: Mapping[str, Fact],
 ) -> ClaimRecord:
-    """F5: citations are the referenced facts' citations, first-reference order, de-duplicated."""
+    """F5, round 3: the referenced facts' citations in first-reference order, one per (source, page)."""
     cites = _unique(c for ref in refs for c in facts[ref.split("|")[0]].citations)
     return ClaimRecord(claim_id, text, refs, limitation, cites)
 

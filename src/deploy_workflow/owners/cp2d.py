@@ -62,7 +62,7 @@ from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import figure_unit
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2D"
@@ -2341,7 +2341,9 @@ class _Composer:
         if operand in _WALL_COPIES and facility is not None:
             fact = self.selection.facility_fact(facility, _WALL_COPIES[operand])
             return () if fact is None else _citations((fact,))
-        return _citations(*(self.selection.facts(name) for name in operand.split("+")))
+        cited = _citations(*(self.selection.facts(name) for name in operand.split("+")))
+        # A sum copy derives from several CP-1 facts: one Citation per (source, page) (round 3).
+        return one_per_page(cited) if "+" in operand else cited
 
     def fact(
         self,

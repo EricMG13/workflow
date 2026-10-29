@@ -1497,3 +1497,28 @@ def test_validate_step_reads_the_payload_only_through_json_object(
     out = cp2d._validate_step(cast(Any, store), cast(Any, None), cast(Any, attempt))
     assert seen == ["{}"] and out.output is None
     assert out.issues and all(len(i) <= 600 for i in out.issues)
+
+
+def test_sum_copy_cites_one_quote_per_page_the_first() -> None:
+    """Round 3 item 3 (Stage 2 close, item 17): a sum copy derives from two CP-1 facts, so two
+    quotes on one page give one Citation, the first; a copy of one fact keeps its own citations."""
+    first = CITATION
+    second = CITATION.model_copy(update={"quote": "Repurchases 12"})
+    elsewhere = CITATION.model_copy(update={"locator": "page:9", "quote": "Issuance 40"})
+    facts = {
+        "equity_issuance": (SimpleNamespace(citations=(first,)),),
+        "equity_repurchases": (SimpleNamespace(citations=(second, elsewhere)),),
+    }
+    composer = cp2d._Composer(
+        cast(Any, SimpleNamespace(facts=lambda name: facts[name])), cast(Any, None)
+    )
+    summed = cp2d.Cell(
+        "x",
+        "known",
+        "1",
+        value_class="calculated",
+        cp1_operand="equity_issuance+equity_repurchases",
+    )
+    assert composer._copy_citations(summed, None) == (first, elsewhere)
+    single = cp2d.Cell("x", "known", "1", value_class="source", cp1_operand="equity_repurchases")
+    assert composer._copy_citations(single, None) == (second, elsewhere)

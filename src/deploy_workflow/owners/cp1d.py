@@ -73,7 +73,7 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit, scale_label
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 
 MODULE_ID = "CP-1D"
 BRIDGE_SOURCE_ID = "bridge"
@@ -2161,20 +2161,11 @@ def _model_text_issues(submission: EarningsQualitySubmission) -> list[str]:
     return found
 
 
-def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
-    """A derived fact's citations (Stage 2 round 3 ruling): one per (source, page), quoting the
-    first of its own input quotes on that page, in input order. No quote is invented."""
-    first: dict[tuple[str, str], Citation] = {}
-    for citation in citations:
-        first.setdefault((citation.source_id, citation.locator), citation)
-    return tuple(first.values())
-
-
 def _module_fact(cell: CellFact) -> Fact:
     fact = cell.to_fact()
     if cell.value_class != "calculated":
         return fact  # a sourced fact quotes its own field
-    return fact.model_copy(update={"citations": _one_per_page(fact.citations)})
+    return fact.model_copy(update={"citations": one_per_page(fact.citations)})
 
 
 def _checked(

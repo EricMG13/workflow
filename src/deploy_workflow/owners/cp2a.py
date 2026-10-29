@@ -67,7 +67,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import figure_unit
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2A"
@@ -810,15 +810,15 @@ GAP_FIELDS = ("id", "gap", "why_it_matters", "affected_analysis", "severity", "a
 
 
 def lineage(base: BaseOperands, metrics: Sequence[str]) -> tuple[Citation, ...]:
-    """The ordered, de-duplicated citations of the CP-1 facts a calculated fact derives from;
-    a known fact never derives from a CP-1 fact that is not known (fail closed)."""
+    """The citations of the CP-1 facts a calculated fact derives from, one per (source, page),
+    quoting the first input quote on that page (round 3); a known fact never derives from a CP-1 fact that is not known (fail closed)."""
     cited: list[Citation] = []
     for metric in metrics:
         source = base.sources.get(metric)
         if source is None or source.status != "known":
             raise ValueError(f"CP-2A fact would derive from CP-1 {metric}, which is not known")
         cited.extend(source.citations)
-    return tuple(dict.fromkeys(cited))
+    return one_per_page(cited)
 
 
 def _fcf_lineage(increase: Decimal) -> tuple[str, ...]:

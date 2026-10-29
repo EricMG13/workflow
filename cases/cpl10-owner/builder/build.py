@@ -130,9 +130,9 @@ QKEYS = tuple(QUARTERS)
 # Marker for the calculation_id of a copied CP-1 cell: the CP-1 fact's own `canonical-kpi:<sha256>` id (every
 # T4.10 fact has one, source-class and missing ratio facts too), bound at run time, never literal here.
 CP1_CALCULATION_ID = "{{CP1_CALCULATION_ID}}"
-CLAIM_CITATION_RULE = ("Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim references, transitively through "
-                       "derives_from and the copied CP-1 cells (the CP-1C L3 rule: a calculated fact's citations are the ordered, de-duplicated concatenation of "
-                       "the citations of the facts in derives_from; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none")
+CLAIM_CITATION_RULE = ("Claim.citations = the union, in first-reference order, one Citation per (source, page) (the first quote), of the citations of every fact the claim references, transitively through "
+                       "derives_from and the copied CP-1 cells (round 3: a calculated fact has one Citation per (source, page), the first input quote on that page, in "
+                       "derives_from order, via deploy_workflow.owners.blank.one_per_page; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none")
 CP1_CITATION_MARKER = "{{{{CP1_CITATIONS:{label}}}}}"  # the citations of the named CP-1 T4.10 fact, bound at run time
 ORD = {"Q1": "first", "Q2": "second", "Q3": "third", "Q4": "fourth"}
 # CP-1's own limitation text for a month-less ratio. OBSERVED on the real promoted CP-1 head (a copy of
@@ -991,7 +991,7 @@ def main():
                           "issue_order": "per gap in order: topic, missing item, digit (field order gap, why_it_matters, affected_analysis, action), repeat",
                           "literal_consequence": "the positive gap's affected_analysis is `overall` (it was `Earnings and cash generation topics`, which the topic rule now refuses; r16 reuses that text)"},
             "claim_citations": CLAIM_CITATION_RULE,
-            "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell lists the same two CP-1 labels as its known siblings (Stage 2 close: the lineage queued at the CP-L10 freeze), so a claim that names a missing change carries their citations; only a claim that references counts alone carries none",
+            "lineage_citations": "a calculated own fact has one Citation per (source, page), the first input quote on that page, over its derives_from in order (round 3, deploy_workflow.owners.blank.one_per_page); a count fact has no derives_from, and a missing change or change_pct cell lists the same two CP-1 labels as its known siblings (Stage 2 close: the lineage queued at the CP-L10 freeze), so a claim that names a missing change carries their citations; only a claim that references counts alone carries none",
             "submission_types": {"note": "the field types decide shape versus content; pinned here, frozen with the lease",
                                  "comparison.from_period, to_period": "Text (contracts.Text: str, min_length 1)",
                                  "assessments[].topic_id, assessment, credit_transmission, overall.rationale, gaps[].*": "Text (contracts.Text); whitespace-only text passes the type and is a content refusal",

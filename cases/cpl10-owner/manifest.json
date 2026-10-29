@@ -337,7 +337,7 @@
       }
     },
     "claim_citations": {
-      "rule": "Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim references, transitively through derives_from and the copied CP-1 cells (the CP-1C L3 rule: a calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the facts in derives_from; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none",
+      "rule": "Claim.citations = the union, in first-reference order, one Citation per (source, page) (the first quote), of the citations of every fact the claim references, transitively through derives_from and the copied CP-1 cells (round 3: a calculated fact has one Citation per (source, page), the first input quote on that page, in derives_from order, via deploy_workflow.owners.blank.one_per_page; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none",
       "marker": "{{CP1_CITATIONS:<CP-1 T4.10 label>}}: the citations of that CP-1 fact, bound at run time; each claim lists its markers in first-reference order, de-duplicated"
     },
     "inherited_limitations": "execution.py settle rule (execution.inherited_limitations)",

@@ -55,7 +55,7 @@ methodology.json: CP-1C "Peer benchmark" "benchmarks the issuer against a define
 ```
 MODULE_ID="CP-1C"; STEP_ID="peer_benchmark"; STEP_IDS=(STEP_ID,)
 QUALIFICATION; SCHEMAS={STEP_ID: PeerBenchmarkSubmission}; RULES(text, seen) -> tuple[str, ...]
-parse_peer_source(source) -> PeerSheet | None         # the table rule below
+parse_peer_source(source, *, issuer_name) -> PeerSheet | None   # the table rule below; owners/cp1c.py:347 (issuer_name is the run issuer, pack.run.issuer_name)
 peer_metrics(row) / median(values) / position(...) / outlier(value, median)   # pure, Decimal; exercised by expected.fixtures
 cp1c_upstream(store, attempt) -> Upstream             # CP-0, CP-1 heads; T4.10 facts by label (exactly one match each)
 validate_peer_benchmark(*, pack, submission, upstream) -> tuple[str, ...]

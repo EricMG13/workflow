@@ -87,6 +87,16 @@ CP2D/CP3C/CP4C responsibilities remain pending; existing no-producer/Unbound emp
 state is honest here, not supplied by CP4 or a new six-owner acceptance claim.
 No fabricated content/routes or new specs for those five sections.
 
+Amended by Modules 2026-10-29 (Stage 2 close release W2-B, rulings round 4 and round 5 item 18): this
+lease was written before CP-2D and CP-3C registered. Under their own leases' D7 sections three of the
+five sections are CP-2D's (`liquidity-runway`, `maturity-wall`, `funding-gap`, `_Spec` rows at
+`src/deploy_vii/report_view.py:1168-1176`, owner CP-2D) and two are CP-3C's (`refinancing-paths`,
+`lme-creditor-exposure`, `report_view.py:1178-1190`, owner CP-3C). The "remain pending ... Unbound
+empty state is honest here" sentence therefore holds for CP-4's own acceptance only: CP-4 supplies
+none of the five and still makes no claim over them. CP-4C's blocks (`recovery-by-class`,
+`value-allocation-claims`) are not among the five. The FP04 render oracle's `other_front_sections`
+is re-pinned for these five in the same release (`cases/legal/render-expected.json`).
+
 Documents primary label is Document register and second tab Facility coverage.
 T4.9 row_header Covenant; exact eight columns: Test formula,Threshold,Comparison,
 CP-1 metric,Current,Headroom,Headroom share,Test on CP-1 metric. T4.13 is unkeyed

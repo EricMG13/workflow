@@ -50,7 +50,7 @@ methodology.json: CP-1D (alias CP-1E) "challenges the adjusted-EBITDA bridge: te
 ```
 MODULE_ID="CP-1D"; STEP_ID="earnings_quality"; STEP_IDS=(STEP_ID,)
 QUALIFICATION; SCHEMAS={STEP_ID: EarningsQualitySubmission}; RULES(text, seen) -> tuple[str, ...]
-parse_bridge(source) -> BridgeRows | None          # the lease's table rule below
+parse_bridge(pages: Sequence[str]) -> Bridge | None   # the lease's table rule below; owners/cp1d.py:481 (takes the bridge source's page texts; the earlier `parse_bridge(source) -> BridgeRows | None` was stale text, rulings round 5 item 13)
 cp1d_upstream(store, attempt) -> Upstream          # CP-0, CP-1 required, CP-1B status only
 validate_earnings_quality(*, pack, submission, upstream) -> tuple[str, ...]
 earnings_quality(*, pack, submission, upstream) -> Report     # raises ValueError on any issue

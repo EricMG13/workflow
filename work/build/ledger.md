@@ -478,3 +478,4 @@
 - 14:30 Legal move re-check APPROVE (a802522e, p5 probe 0 mismatches); FROZEN 724a0ad (item 18). Test builder (mx-scaffold) dispatched.
 - 14:31 Legal test builder done claude/s3-legal-test 2e06b2a (workaround removed; test_cr1_covenant_headroom_figure_matches_oracle x2; 79 passed; p5 0; agent=mx-scaffold ae36d281 fix-rounds=0 gates-first-pass=y). Merges into s3-int with the G2 continuation; reviewed by the Stage 3 review.
 - 14:40 Stage 4 plan done (mx-architect Fable a7133de1): work/build/stage4/plan.md. Batch 1 classes A-D (owner_workflow.py; after Stage 3 closes); batch 2 class E CP-8 rails (after E1 + G2 continuation). User decisions D1, E1, E2.
+- 14:45 User decisions (item 19): CZR stop at pack; DR.6 chip after Stage 5; D1 document gap; E1 owner_rendering + CP-8 two-field re-pin (separate preparer + mx-precise). I3 render suites rerun started at c43b681 (bg by04mw6v3; 11 GB free).

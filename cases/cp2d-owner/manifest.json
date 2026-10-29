@@ -31,7 +31,7 @@
     },
     {
       "path": "cases/legal/manifest.json",
-      "sha256": "3da3b74666346c7fc1423b2103bef3a2d467b2799a48774c7db0e912a0403ed4",
+      "sha256": "dceee076fb74ae79685b1551fb3d35ed92355561793383f29590d90e71801d40",
       "use": "legal pack: unused_commitment_oracle cross-checked (undrawn term loan commitment 0); the legal source is NOT a CP-2D input (CP-4 is not an upstream edge of CP-2D)"
     }
   ],

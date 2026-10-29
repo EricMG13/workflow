@@ -1141,6 +1141,15 @@
       "review": "work/lead/methodology-serialised/review.md"
     },
     {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+      "project_commit": "lead/cp6-freeze (uncommitted)",
+      "sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
+      "reason": "Serialised methodology change with the CP-6 half freeze of the CP-3/CP-6 owner lease (ruling Q7, D12): T6-FINAL registered in CP-6 table_ids; it collides with no module table id (CP-0's T6 is a different string) and no product code reads table_ids.",
+      "review": "work/lead/cp6-freeze/"
+    },
+    {
       "destination": "src/deploy_vii/live/schema.py",
       "imported_sha256": "c63744196066a9046e1d3331ee5191f8dc30b2d7f08644ca816c7ae2955e56cb",
       "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",

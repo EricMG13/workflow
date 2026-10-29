@@ -27,7 +27,7 @@ CTX = Context(prec=38, rounding=ROUND_HALF_EVEN)
 # --- 0. pinned inputs (every file this builder reads) -------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 RAW = {}
 for _rel, _sha in PINS.items():
@@ -798,11 +798,12 @@ for _s in NAV_STATES.values():
 D4_SIDE_EFFECTS = {
     "methodology_json": {"file": "src/deploy_vii/methodology.json", "sha256_before": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
                          "sha256_after": PINS["src/deploy_vii/methodology.json"],
+                         "sha256_after_note": "tracks the current methodology.json pin, not a frozen history: the serialised change, then T6-FINAL registered under CP-6 with the CP-6 freeze",
                          "change": "landed in the serialised change: CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"] and CP-L10 `table_ids` gains TL10.5 (amendment 1, F1: appended after TL10.4); CP-1C `table_ids` become T1C.1-T1C.8 (the eleven T4.x ids dropped); CP-1D drops T1E.1-T1E.6; CP-2A drops T5.1-T5.7 (they stay CP-5's)",
                          "serialised_change": "one methodology.json change carrying CP-L10 D4 (required edge), the CP-L10 table_ids gaining TL10.5 (amendment 1) and CP-1C D8 (T1C.1-T1C.8, CP-1C amendment 1) together, with ONE re-pin pass of every builder that pins methodology.json (methodology_pinning_builders below); neither lands alone"},
     "test_pin": {"file": "tests/test_cp1b_registration.py", "line": 34, "test": "test_only_cp1b_table_ownership_changes",
                  "digest_before": DIGEST_BEFORE,
-                 "digest_after": DIGEST_AFTER, "digest_after_note": "computed by this builder from the landed methodology.json (the whole serialised change: D4, TL10.5, CP-1C D8, the CP-1D and CP-2A id drops); the c19be178... of the pre-landing text covered D4 and TL10.5 only and was not final",
+                 "digest_after": DIGEST_AFTER, "digest_after_note": "computed by this builder from the current methodology.json and tracking it, not frozen history (the serialised change: D4, TL10.5, CP-1C D8, the CP-1D and CP-2A id drops; then T6-FINAL under CP-6 with the CP-6 freeze, which moved the digest to c89118c6...); the c19be178... of the pre-landing text covered D4 and TL10.5 only and was not final",
                  "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes because of the serialised methodology.json change (computed by this builder from the pinned methodology.json)",
                  "action": "the pin is recomputed from methodology.json after the whole serialised change (not from D4 and TL10.5 alone) and updated in the same commit, a deliberate registry change; the test fails otherwise"},
     "methodology_pinning_builders": {

@@ -1,5 +1,7 @@
 # CP-5 (integrity review) owner run lease — FROZEN by LEAD 2026-10-28 (preparation revision 2)
 
+Amended by LEAD 2026-10-28 (CP-6 freeze re-pin, `work/lead/cp6-freeze/report.md`): `src/deploy_vii/methodology.json` registers `T6-FINAL` under CP-6 `table_ids` (ruling Q7), 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 → 0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8; this module's builder re-pins it and its manifest records the new hash. Only pin hashes move: no other leaf of this module's oracle changes. It also re-pins `cases/cp3-cp6-owner/manifest.json` and `expected.json` to the CP-6 half freeze (builder PINS). Own files, old → new sha256: `manifest.json` 605a5baed84ff9e1fb5731f56de798af5812b4e6796622735339af64441acd91 → b87556f3abd8e8279477eef349dd5e055c3b08fdc9e70e7c3220195499742b68; `submissions.json` unchanged; `expected.json` unchanged; `builder/build.py` 60805bcf42e26b09598a36571fbee2ff8015f067b22bca559bacc665a02394d2 → 74ea9872bddae75239ac88200d192be26d9f62cecd1fd2c6861fd30ee37ae648.
+
 Pin consumers: none (no other builder pins or reads this module's files). Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
 
 Frozen after these reviews:

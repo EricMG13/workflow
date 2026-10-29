@@ -8,10 +8,10 @@
   "cases/cp2a-owner/manifest.json": "5219f063dcb130b38b8059397a73ff890ccb14ef03f8c2a6188b971dce7ead1a",
   "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
   "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
-  "cases/cp1d-owner/manifest.json": "7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585",
+  "cases/cp1d-owner/manifest.json": "07dd8530a7f53aa5fe2c1b4840554c0fc6392e26e53bf01ad2858458ecdfe955",
   "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
   "cases/cp1d-owner/expected.json": "293120368b5d791727738d56e4078129e4b4de07d5c8287cf0cef7cade2e58c3",
-  "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6"
+  "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
  },
  "financial_baseline": {
   "path": "cases/financial/manifest.json",

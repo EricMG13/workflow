@@ -10,24 +10,66 @@ Missing is never 0: a value that is not calculated is a ``Gap`` carrying its rea
 missing operand in formula order (LEAD rulings round 5, C-2 and C-6, which extend the frozen
 lease and oracle). Each reason and claim form is one the oracle (cases/cp3c-owner/expected.json)
 or a ruling fixes; an input state no ruling settles raises ValueError rather than invent one.
-Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
-orchestration seams (G1-X protocol section 2) are added to this file in later stages.
+The Stage 1 calculation does no I/O and touches no store, host, session or renderer. The Stage 2
+section at the end connects it (G1-X protocol section 2): the store adapter over the bound CP-1
+and CP-2D heads (CP-2D read through `cp2d_reader`), validation, the composed module, the exact
+`read_inputs` view, the journal seams and the consumer reader the lease pins.
 """
 
+import hashlib
+import json
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from dataclasses import field as _field
 from datetime import date
 from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
-from typing import Final, Literal
+from types import MappingProxyType
+from typing import Any, Final, Literal
+
+from pydantic import ValidationError
 
 from deploy_vii import prose
-from deploy_vii.business_context import prohibited_issues
-from deploy_vii.contracts import Contract, Fact, Identifier, Text
+from deploy_vii.business_context import prohibited_issues, spelled
+from deploy_vii.contracts import (
+    Citation,
+    Claim,
+    Contract,
+    Fact,
+    Hash,
+    Identifier,
+    Input,
+    Module,
+    ReportTable,
+    Run,
+    TableColumn,
+    TableRow,
+    Text,
+)
 from deploy_vii.display import format_date
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    bounded_issues,
+    clipped,
+    current_inputs,
+    head_of,
+    inherited_limitations,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.owners import cp2d
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.cp2d import Cp2dHead
+from deploy_workflow.owners.cp2g import stale_issues
 
 MODULE_ID = "CP-3C"
 BPS_BOUNDS = (0, 1000)
@@ -270,7 +312,8 @@ class Cp1Fact:
     currency: str | None = None  # the head fact's own currency (round 13 item 5)
 
     def __post_init__(self) -> None:
-        _check_value(f"CP-1 {self.table_id}", self.status, self.amount, self.text, self.reason)
+        # Stage 2 round 5 item 7 (Info 3): the module's own frame, not its producer's.
+        _check_value(f"CP-3C {self.table_id}", self.status, self.amount, self.text, self.reason)
 
 
 @dataclass(frozen=True)
@@ -288,7 +331,7 @@ class Cp2dFact:
     currency: str | None = None  # the cell's own currency (round 13 item 5)
 
     def __post_init__(self) -> None:
-        _check_value(f"CP-2D {self.fact_id}", self.status, self.amount, self.text, self.reason)
+        _check_value(f"CP-3C {self.fact_id}", self.status, self.amount, self.text, self.reason)
 
 
 @dataclass(frozen=True)
@@ -404,8 +447,15 @@ _PRE_D0_CAUSE = (
 _FX_CAUSE = "the total needs every facility in USD, and one is not"
 
 
-def _unstated_gap(fid: str, term: str) -> Gap:
-    return Gap(NOT_STATED.format(fid=fid, term=term), cause=_UNSTATED_CAUSE.format(term=term))
+def _unstated_gap(fid: str, term: str, status: Status = "missing") -> Gap:
+    """Round 8 B6: a term that is missing (or a NOT_STATED flag) is not stated. Stage 2 round 5
+    item 7 (Info 2): a conflicting or not applicable term names its status in the same frame."""
+    reason = (
+        NOT_STATED.format(fid=fid, term=term)
+        if status == "missing"
+        else f"{_NOT_CALCULABLE}facility {fid} {term} is {_STATE_WORD[status]}"
+    )
+    return Gap(reason, cause=_UNSTATED_CAUSE.format(term=term))
 
 
 NM_TOTAL_NEGATIVE = "Not meaningful: total facility principal is negative" + _NM
@@ -473,6 +523,9 @@ class FacilityOperand:
     annual_amortisation: Decimal | None  # None: not stated
     secured_status: str | None  # SECURED, UNSECURED or NOT_STATED; None is missing
     seniority: str | None
+    # The status of each unsettled term above ("annual amortisation", "secured status",
+    # "seniority"), from the head fact; one absent here is missing (Stage 2 round 5 item 7).
+    statuses: Mapping[str, Status] = _field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -588,9 +641,12 @@ def _rank(f: FacilityOperand) -> tuple[int, int] | Gap:
         ("seniority", f.seniority, _SENIORITY_RANK),
     ):
         if value is None or value == "NOT_STATED":
-            return _unstated_gap(f.facility_id, term)
+            status = f.statuses.get(term, "missing") if value is None else "missing"
+            return _unstated_gap(f.facility_id, term, status)
         if value not in table:  # CP-1's ranking vocabulary is closed (ruling C-6): an invariant
-            raise ValueError(f"CP-3C {f.facility_id}: unknown ranking flag {value!r}")
+            raise ValueError(
+                clipped(("CP-3C ", f.facility_id, ": unknown ranking flag ", repr(value)))
+            )
         ranks.append(table[value])
     return ranks[0], ranks[1]
 
@@ -617,7 +673,8 @@ def _earlier(a: int | Gap, b: int | Gap) -> int | Gap:
 def _amortised(f: FacilityOperand, months: int | Gap) -> Num:
     """min(annual amortisation x months / 12, principal), the operands in formula order."""
     if f.annual_amortisation is None:
-        return _unstated_gap(f.facility_id, "annual amortisation")
+        term = "annual amortisation"
+        return _unstated_gap(f.facility_id, term, f.statuses.get(term, "missing"))
     if isinstance(months, Gap):
         return months
     if isinstance(f.principal, Gap):
@@ -720,7 +777,15 @@ def compose_refinancing(*, operands: Operands, step_up_bps: int | None) -> Refin
         extra = tuple(Gap(u.reason, cause=_UNMATCHED_CAUSE) for u in unmatched)
         # No facility at all: each facility-dependent value takes this one reason (C-6).
         none = None if ordered or unmatched else Gap(NO_FACILITY)
-        minimum: Num = Gap(REASON_MINIMUM_CASH) if o.minimum_cash is None else o.minimum_cash
+        # The oracle's reason for a minimum cash that is missing; Stage 2 round 5 item 7
+        # (Info 2): a conflicting or not applicable one names its status in the C-2 frame.
+        minimum: Num
+        if o.minimum_cash is not None:
+            minimum = o.minimum_cash
+        elif o.status("minimum_cash") == "missing":
+            minimum = Gap(REASON_MINIMUM_CASH)
+        else:
+            minimum = _op(None, "minimum cash", o.status("minimum_cash"))
         cash_and_revolver = _total(
             (
                 _op(o.cash, "cash and cash equivalents", o.status("cash")),
@@ -825,23 +890,19 @@ def _flag(fact: Cp2dFact) -> bool | None:
     """CP-2D's inside-horizon flag, or None when the cell is missing."""
     flag = _stated_text(fact.fact_id, fact.status, fact.text)
     if flag not in (None, "Yes", "No"):
-        raise ValueError(f"CP-3C {fact.fact_id}: inside-horizon flag {flag!r}")
+        raise ValueError(clipped(("CP-3C ", fact.fact_id, ": inside-horizon flag ", repr(flag))))
     return None if flag is None else flag == "Yes"
 
 
-def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> None:
-    """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
-    currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
-    A missing cash_closing states none, so the reporting currency stands unchecked then."""
-    cash = cp1.cash_closing
-    if cash.status == "known":
-        if cash.currency is None or is_blank(cash.currency):
-            raise ValueError("CP-3C cash_closing: currency is not set")
-        if cash.currency != currency:
-            raise ValueError(
-                f"CP-3C: reporting currency {currency!r} is not cash_closing's {cash.currency!r}"
-            )
-    read: list[tuple[str, Cp1Fact | Cp2dFact]] = [
+UNSOURCED_CURRENCY = (
+    "CP-3C: the reporting currency is not sourced: cash_closing is not known and no known "
+    "US$ m fact states a currency"
+)
+
+
+def _millions_read(cp1: Cp1Operands, cp2d: Cp2dOperands) -> list[tuple[str, Cp1Fact | Cp2dFact]]:
+    """Every US$ m fact CP-3C reads besides cash_closing, in reading order, by its name."""
+    return [
         ("undrawn_rcf", cp1.undrawn_rcf),
         ("adjusted_ebitda", cp1.adjusted_ebitda),
         ("cash_interest", cp1.cash_interest),
@@ -849,7 +910,44 @@ def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> No
         *((f.fact_id, f) for f in (cp2d.run_rate, cp2d.minimum_cash, cp2d.funding_gap)),
         *((r.principal.fact_id, r.principal) for r in cp2d.wall),
     ]
-    for name, fact in read:
+
+
+def _cash_currency(cash: Cp1Fact) -> str:
+    if cash.currency is None or is_blank(cash.currency):
+        raise ValueError("CP-3C cash_closing: currency is not set")
+    return cash.currency
+
+
+def reporting_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands) -> str:
+    """The currency every summed amount is in (round 13 item 5; Stage 2 round 5 item 7, Info 1):
+    CP-1 T4.10 ``cash_closing``'s own currency when that fact is known (it must be set);
+    otherwise the currency the first known US$ m fact read states (``check_currency`` then holds
+    every other one to it). When cash_closing is not known and no known US$ m fact states a
+    currency (none is known, or every one is blank), the currency is unsourced: an invariant
+    raise, never a stamped default."""
+    if cp1.cash_closing.status == "known":
+        return _cash_currency(cp1.cash_closing)
+    for _, fact in _millions_read(cp1, cp2d):
+        stated = fact.currency
+        if fact.status == "known" and fact.unit == _MILLIONS and stated and not is_blank(stated):
+            return stated
+    raise ValueError(UNSOURCED_CURRENCY)
+
+
+def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> None:
+    """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
+    currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
+    A cash_closing that is not known states none: the currency is then the one the known
+    US$ m facts state, and an unsourced one raises (``reporting_currency``)."""
+    cash = cp1.cash_closing
+    if cash.status == "known":
+        if _cash_currency(cash) != currency:
+            raise ValueError(
+                f"CP-3C: reporting currency {currency!r} is not cash_closing's {cash.currency!r}"
+            )
+    else:
+        reporting_currency(cp1=cp1, cp2d=cp2d)
+    for name, fact in _millions_read(cp1, cp2d):
         if fact.status == "known" and fact.unit == _MILLIONS and fact.currency != currency:
             raise ValueError(f"CP-3C {name}: currency {fact.currency!r} is not {currency!r}")
 
@@ -868,8 +966,10 @@ def _facility(
         principal = Gap(fx, cause=_FX_CAUSE)
     else:
         amount = _cp2d_amount(row.principal)
-        unstated = _unstated_gap(fid, "principal")  # round 8 B6 (2D-c)
-        principal = unstated if amount is None else amount
+        # Round 8 B6 (2D-c); Stage 2 round 5 item 7: an unsettled principal names its status.
+        principal = (
+            _unstated_gap(fid, "principal", row.principal.status) if amount is None else amount
+        )
     stated = _stated_text(
         row.maturity_date.fact_id, row.maturity_date.status, row.maturity_date.text
     )
@@ -877,7 +977,7 @@ def _facility(
     months: int | Gap
     inside: bool | Gap
     if stated is None:  # round 8 B6 (2D-c): no position
-        maturity = months = inside = _unstated_gap(fid, "maturity date")
+        maturity = months = inside = _unstated_gap(fid, "maturity date", row.maturity_date.status)
     elif (maturity := date.fromisoformat(stated)) < balance_date:
         # Round 11 B1: the date stays known; the position takes the unstated date's slot.
         months = inside = Gap(PRE_D0.format(fid=fid), cause=_PRE_D0_CAUSE)
@@ -896,6 +996,15 @@ def _facility(
         annual_amortisation=_cp1_amount(f"{fid}.annual_amortisation", terms.annual_amortisation),
         secured_status=_cp1_text(f"{fid}.secured_status", terms.secured_status),
         seniority=_cp1_text(f"{fid}.seniority", terms.seniority),
+        statuses={
+            term: fact.status
+            for term, fact in (
+                ("annual amortisation", terms.annual_amortisation),
+                ("secured status", terms.secured_status),
+                ("seniority", terms.seniority),
+            )
+            if fact.status != "known"
+        },
     )
 
 
@@ -948,6 +1057,7 @@ def compose_operands(
             ("run_rate_annual", cp2d.run_rate),
             ("adjusted_ebitda", cp1.adjusted_ebitda),
             ("cash_interest_paid", cp1.cash_interest),
+            ("minimum_cash", cp2d.minimum_cash),
         )
         if fact.status != "known"
     }
@@ -1735,15 +1845,17 @@ class _Claims:
     def fig(self, fact_id: str) -> str:
         cell = self.cells[fact_id]
         if cell.status != "known" or cell.amount is None or cell.value_class == "analyst_judgment":
-            raise ValueError(f"CP-3C claim figure {fact_id}: not a known computed figure")
+            raise ValueError(
+                clipped(("CP-3C claim figure ", fact_id, ": not a known computed figure"))
+            )
         unit = figure_unit(cell.fact())
         if unit is None:
-            raise ValueError(f"CP-3C claim figure {fact_id}: no figure unit")
+            raise ValueError(clipped(("CP-3C claim figure ", fact_id, ": no figure unit")))
         return "{" + fact_id + "|" + unit + "}"
 
     def chip(self, fact_id: str) -> str:
         if self.cells[fact_id].status == "known":
-            raise ValueError(f"CP-3C claim chip {fact_id}: a chip names a gap")
+            raise ValueError(clipped(("CP-3C claim chip ", fact_id, ": a chip names a gap")))
         return "[" + fact_id + "]"
 
     def either(self, fact_id: str) -> str:
@@ -1753,7 +1865,7 @@ class _Claims:
         gaps = {k for k, v in self.cells.items() if v.status != "known"}
         found = prose.check(template, refs=self.cells.keys() - gaps, gaps=gaps)
         if found:
-            raise ValueError(f"CP-3C {claim_id}: {'; '.join(found)}")
+            raise ValueError(clipped(("CP-3C ", claim_id, ": ", "; ".join(bounded_issues(found)))))
         parts, refs = [], []
         for run in prose.tokenize(template, gaps=gaps):
             if run.kind == "text":
@@ -1895,7 +2007,7 @@ def compute(inputs: Cp3cInputs) -> Cp3cResult:
     """CP-3C's tables, ledgers, claims and own limitations for a valid submission."""
     issues = submission_issues(submission=inputs.submission, offered=inputs.offered)
     if issues:
-        raise ValueError("CP-3C submission is invalid: " + "; ".join(issues))
+        raise ValueError("CP-3C submission is invalid: " + "; ".join(bounded_issues(issues)))
     check_currency(cp1=inputs.cp1, cp2d=inputs.cp2d, currency=inputs.currency)
     operands = compose_operands(
         cp1=inputs.cp1, cp2d=inputs.cp2d, balance_date=inputs.balance_date, currency=inputs.currency
@@ -1927,4 +2039,885 @@ def compute(inputs: Cp3cInputs) -> Cp3cResult:
         claims=_claims(c, cells),
         own_limitations=tuple(text for _, _, text in limitations),
         status="restricted",
+    )
+
+
+# =============================================================================================
+# Stage 2: the connection (docs/CP3C-OWNER-LEASE.md Public API; docs/G1X-OWNER-CORE-PROTOCOL.md)
+# =============================================================================================
+
+STEP_ID = "refinancing_risk"
+STEP_IDS: tuple[str, ...] = (STEP_ID,)
+SCHEMAS: Mapping[str, type[Contract]] = MappingProxyType({STEP_ID: RefinancingRiskSubmission})
+QUALIFICATION = Qualification(implementation="implemented")
+# G1-X section 2: a settled owner-only head adds exactly this input after its attempt inputs.
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+EDGES = ("CP-0", "CP-1", "CP-2D")
+# manifest.json#optional_edges.unread, in the view tree's order: absent from the attempt inputs,
+# the view and the trace; each is an own limitation.
+UNREAD_OPTIONAL_EDGES = ("CP-1A", "CP-2A", "CP-4", "CP-3D")
+CP1: Final = "CP-1"
+CP2D: Final = "CP-2D"
+_SCALE = Decimal(1000000)
+
+# --- the bindings (cases/cp3c-owner/manifest.json `fact_bindings`) ------------------------------
+
+CP1_METRICS = ("cash_closing", "undrawn_rcf", "adjusted_ebitda", "cash_interest")
+FACT_BINDINGS: Mapping[str, cp2d.FactBinding] = MappingProxyType(
+    {
+        name: cp2d.FactBinding(
+            "T4.10",
+            "LTM Q4 25: 2025-01-01 to 2025-12-31",
+            f"LTM Q4 25 (2025-01-01 to 2025-12-31) · {name}",
+        )
+        for name in CP1_METRICS
+    }
+)
+# T4.18: the QUARTER period at the latest period end wins over its FY alias; the alias must agree
+# on every term; one row per facility_id. Names are `<facility_id>.<term>`.
+SCHEDULE_PERIOD = "q4-2025"
+FACILITY_TERMS = ("secured_status", "seniority", "annual_amortisation", "facility_name")
+_ALIAS_TERMS = ("currency", "rate_type", *FACILITY_TERMS)
+# CP-2D: the stable fact ids of the CP-2D oracle; the wall cells are named
+# `cp2d.<facility_id>.<field>` (T2E.4 columns 1-4 of the facility's row).
+CP2D_FACTS: Mapping[str, str] = MappingProxyType(
+    {
+        "cp2d.horizon": "T2E.3.r03",
+        "cp2d.run_rate": "T2E.3.r01",
+        "cp2d.min_cash": "T2E.5.r04",
+        "cp2d.funding_gap": "T2E.5.r07",
+    }
+)
+WALL_FIELDS = ("principal", "maturity_date", "months", "inside_horizon")
+_VALUE_CLASSES: Mapping[str, ValueClass] = {
+    "source": "source",
+    "calculated": "calculated",
+    "analyst_judgment": "analyst_judgment",
+}
+
+
+@dataclass(frozen=True)
+class Offered:
+    """One upstream fact the read view offers and T3D.9 traces, by its binding name."""
+
+    name: str
+    source: Literal["CP-1", "CP-2D"]
+    fact: Fact
+
+
+@dataclass(frozen=True)
+class Cp1Selection:
+    operands: Cp1Operands
+    balance_date: date
+    offered: tuple[Offered, ...]
+    facilities: tuple[Mapping[str, str | None], ...]  # the view's facility list (text only)
+
+
+@dataclass(frozen=True)
+class Selection:
+    """What the bindings select from the bound CP-1 and CP-2D heads: the Stage 1 operands, the
+    balance date, the reporting currency and the offered facts (sorted by name)."""
+
+    cp1: Cp1Operands
+    cp2d: Cp2dOperands
+    balance_date: date
+    currency: str
+    offered: tuple[Offered, ...]
+    facilities: tuple[Mapping[str, str | None], ...]
+
+    @property
+    def refs(self) -> tuple[tuple[str, str], ...]:
+        """(binding name, the ref the view offers for it)."""
+        return tuple((o.name, o.fact.fact_id) for o in self.offered)
+
+    def named(self, name: str) -> Fact | None:
+        return next((o.fact for o in self.offered if o.name == name), None)
+
+    def by_ref(self, ref: str) -> Fact | None:
+        return next((o.fact for o in self.offered if o.fact.fact_id == ref), None)
+
+
+def _value_class(name: str, fact: Fact) -> ValueClass | None:
+    if fact.value_class is None:
+        return None
+    read = _VALUE_CLASSES.get(fact.value_class)
+    if read is None:
+        raise ValueError(clipped(("CP-3C ", name, ": a ", fact.value_class, " fact is not read")))
+    return read
+
+
+def _cp1_fact(name: str, fact: Fact, *, money: bool) -> Cp1Fact:
+    """A CP-1 head fact as Stage 1 reads it. A money term must be in millions (unit MILLIONS, or
+    `currency` at scale 1e6, normalised to MILLIONS; a gap takes that unit, its twin's)."""
+    millions = fact.unit in (_MILLIONS, "currency") and fact.scale == _SCALE
+    if money and fact.unit is not None and not millions:
+        raise ValueError(clipped(("CP-3C ", name, ": not an amount in millions")))
+    if fact.period is None:
+        raise ValueError(clipped(("CP-3C ", name, ": the CP-1 fact states no period")))
+    return Cp1Fact(
+        table_id=fact.table_id,
+        period=fact.period,
+        status=fact.status,
+        amount=fact.amount,
+        text=fact.text,
+        unit=_MILLIONS if money else fact.unit,
+        value_class=_value_class(name, fact),
+        reason=None if fact.status == "known" else fact.limitation,
+        currency=fact.currency,
+    )
+
+
+def _rows(module: Module, table_id: str) -> dict[str, dict[str, Fact]]:
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in module.facts:
+        if fact.table_id == table_id:
+            row = rows.setdefault(fact.row_id, {})
+            if fact.field in row:
+                raise ValueError(clipped(("CP-3C: duplicate CP-1 coordinate ", fact.fact_id)))
+            row[fact.field] = fact
+    return rows
+
+
+def _known_text(row: Mapping[str, Fact], field: str) -> str | None:
+    fact = row.get(field)
+    return fact.text if fact is not None and fact.status == "known" else None
+
+
+def _balance_date(module: Module) -> tuple[date, tuple[str, ...]]:
+    """The end date of the schedule period (T4.14) and the other periods ending that day."""
+    ends: dict[str, str] = {}
+    for row in _rows(module, "T4.14").values():
+        pid, end = _known_text(row, "period_id"), _known_text(row, "end_date")
+        if pid is not None and end is not None:
+            ends[pid] = end
+    if SCHEDULE_PERIOD not in ends:
+        raise ValueError(f"CP-3C: CP-1 states no end date for {SCHEDULE_PERIOD}")
+    aliases = tuple(
+        p for p, e in ends.items() if e == ends[SCHEDULE_PERIOD] and p != SCHEDULE_PERIOD
+    )
+    return date.fromisoformat(ends[SCHEDULE_PERIOD]), aliases
+
+
+def _same(a: Fact | None, b: Fact | None) -> bool:
+    if a is None or b is None:
+        return a is b
+    return (a.amount, a.text, a.status, a.unit, a.currency, a.scale) == (
+        b.amount,
+        b.text,
+        b.status,
+        b.unit,
+        b.currency,
+        b.scale,
+    )
+
+
+def _facility_rows(module: Module, aliases: tuple[str, ...]) -> dict[str, dict[str, Fact]]:
+    """The T4.18 row of each facility at the schedule period; each FY alias row must agree on
+    every term CP-3C reads."""
+    chosen: dict[str, dict[str, Fact]] = {}
+    by_period: dict[tuple[str, str], dict[str, Fact]] = {}
+    for row in _rows(module, "T4.18").values():
+        fid = _known_text(row, "facility_id")
+        period = row["facility_id"].period if "facility_id" in row else None
+        if fid is None or period is None:
+            raise ValueError("CP-3C: a CP-1 T4.18 row has no known facility_id and period")
+        if (fid, period) in by_period:
+            raise ValueError(clipped(("CP-3C: facility ", fid, " has two T4.18 rows in ", period)))
+        by_period[fid, period] = row
+        if period == SCHEDULE_PERIOD:
+            chosen[fid] = row
+    for alias in aliases:
+        listed = {fid for (fid, period) in by_period if period == alias}
+        if listed != set(chosen):
+            raise ValueError(f"CP-3C: the {alias} T4.18 rows are not the {SCHEDULE_PERIOD} rows")
+        for fid, row in chosen.items():
+            for term in _ALIAS_TERMS:
+                if not _same(row.get(term), by_period[fid, alias].get(term)):
+                    raise ValueError(
+                        clipped(
+                            (
+                                f"CP-3C: facility {fid} {term} differs between its ",
+                                f"{SCHEDULE_PERIOD} row and its {alias} alias",
+                            )
+                        )
+                    )
+    return chosen
+
+
+def _terms(fid: str, row: Mapping[str, Fact]) -> FacilityTerms:
+    def term(field: str) -> Cp1Fact:
+        fact = row.get(field)
+        if fact is None:
+            raise ValueError(clipped(("CP-3C: facility ", fid, " has no CP-1 ", field, " fact")))
+        return _cp1_fact(f"{fid}.{field}", fact, money=field == "annual_amortisation")
+
+    return FacilityTerms(
+        facility_id=fid,
+        currency=_known_text(row, "currency"),
+        facility_name=term("facility_name"),
+        secured_status=term("secured_status"),
+        seniority=term("seniority"),
+        annual_amortisation=term("annual_amortisation"),
+    )
+
+
+def select_cp1(cp1: Module) -> Cp1Selection:
+    """Apply the CP-1 bindings. Each T4.10 name selects exactly one fact (zero or several raise);
+    a fact CP-1 reports missing, conflicting or not applicable is read as that status."""
+    index: dict[tuple[str, str, str], list[Fact]] = {}
+    for fact in cp1.facts:
+        if fact.table_id == "T4.10":
+            index.setdefault((fact.table_id, fact.period or "", fact.label), []).append(fact)
+    offered: list[Offered] = []
+    metrics: dict[str, Cp1Fact] = {}
+    for name, b in FACT_BINDINGS.items():
+        hits = index.get((b.table_id, b.period, b.label), [])
+        if len(hits) != 1:
+            raise ValueError(f"CP-3C: CP-1 offers {len(hits)} facts for {name}, not exactly one")
+        offered.append(Offered(name, CP1, hits[0]))
+        metrics[name] = _cp1_fact(name, hits[0], money=True)
+    balance, aliases = _balance_date(cp1)
+    rows = _facility_rows(cp1, aliases)
+    facilities = tuple(_terms(fid, row) for fid, row in rows.items())
+    offered += [
+        Offered(f"{fid}.{term}", CP1, row[term])
+        for fid, row in rows.items()
+        for term in FACILITY_TERMS
+    ]
+    listed = tuple(
+        {"facility_id": fid}
+        | {k: _known_text(row, k) for k in ("facility_name", "secured_status", "seniority")}
+        | {"rate_type": _known_text(row, "rate_type")}
+        for fid, row in rows.items()
+    )
+    operands = Cp1Operands(
+        cash_closing=metrics["cash_closing"],
+        undrawn_rcf=metrics["undrawn_rcf"],
+        adjusted_ebitda=metrics["adjusted_ebitda"],
+        cash_interest=metrics["cash_interest"],
+        facilities=facilities,
+    )
+    return Cp1Selection(operands, balance, tuple(offered), listed)
+
+
+def _cp2d_fact(fact: Fact) -> Cp2dFact:
+    unit = fact.unit
+    if unit in (_MILLIONS, "currency"):
+        if fact.scale != _SCALE:
+            raise ValueError(clipped(("CP-3C ", fact.fact_id, ": not an amount in millions")))
+        unit = _MILLIONS
+    return Cp2dFact(
+        fact_id=fact.fact_id,
+        status=fact.status,
+        amount=fact.amount,
+        text=fact.text,
+        unit=unit,
+        period=fact.period,
+        value_class=_value_class(fact.fact_id, fact),
+        reason=None if fact.status == "known" else fact.limitation,
+        currency=fact.currency,
+    )
+
+
+def _facility_of(label: str) -> str:
+    """The facility id of a CP-2D wall row, labelled `<name> (<facility_id>)`."""
+    _, sep, tail = label.rpartition(" (")
+    if not sep or not tail.endswith(")") or len(tail) == 1:
+        raise ValueError(clipped(("CP-3C: CP-2D wall row ", label, " names no facility id")))
+    return tail[:-1]
+
+
+def _reader_agrees(read: Cp2dHead, ops: Cp2dOperands, labels: Sequence[str]) -> None:
+    """D3: the figures `cp2d_reader` gives for the bound head are the head's own cells."""
+
+    def value(f: Cp2dFact) -> tuple[Decimal | None, str | None]:
+        return f.amount, (f.reason if f.amount is None else None)
+
+    horizon = None if read.horizon_months is None else Decimal(read.horizon_months)
+    pairs: list[tuple[str, object, object]] = [
+        (ops.horizon.fact_id, horizon, ops.horizon.amount),
+        (
+            ops.minimum_cash.fact_id,
+            (read.minimum_cash, read.minimum_cash_absent),
+            value(ops.minimum_cash),
+        ),
+        (
+            ops.funding_gap.fact_id,
+            (read.funding_gap, read.funding_gap_missing),
+            value(ops.funding_gap),
+        ),
+        ("T2E.4", tuple(w.facility for w in read.wall), tuple(labels)),
+    ]
+    flag = {True: "Yes", False: "No"}
+    for w, r in zip(read.wall, ops.wall, strict=False):
+        when = None if w.maturity_date is None else w.maturity_date.isoformat()
+        inside = None if w.inside_horizon is None else flag[w.inside_horizon]
+        pairs += [
+            (r.principal.fact_id, w.principal, r.principal.amount),
+            (r.maturity_date.fact_id, when, r.maturity_date.text),
+            (r.months.fact_id, w.months_to_maturity, r.months.amount),
+            (r.inside_horizon.fact_id, inside, r.inside_horizon.text),
+        ]
+    for fact_id, reader, head in pairs:
+        if reader != head:
+            raise ValueError(
+                clipped(("CP-3C: cp2d_reader and the CP-2D head disagree on ", fact_id))
+            )
+
+
+def select_cp2d(module: Module, read: Cp2dHead) -> tuple[Cp2dOperands, tuple[Offered, ...]]:
+    """The CP-2D figures through `cp2d_reader`, each with its head cell's status, unit, period,
+    value class and reason (the reader exposes none of these, nor T2E.3.r01: the run-rate flow
+    is read from its cell, the pin extension expected.json#consumption names)."""
+    facts = {f.fact_id: f for f in module.facts}
+
+    def fact(fact_id: str) -> Fact:
+        if fact_id not in facts:
+            raise ValueError(clipped(("CP-3C: the CP-2D head has no fact ", fact_id)))
+        return facts[fact_id]
+
+    table = next((t for t in module.tables if t.table_id == "T2E.4"), None)
+    if table is None:
+        raise ValueError("CP-3C: the CP-2D head has no maturity wall (T2E.4)")
+    offered = [Offered(name, CP2D, fact(fid)) for name, fid in CP2D_FACTS.items()]
+    wall = []
+    for row in table.rows:
+        fid = _facility_of(row.label)
+        cells = [fact(i) for i in row.fact_ids[: len(WALL_FIELDS)]]
+        offered += [
+            Offered(f"cp2d.{fid}.{f}", CP2D, c) for f, c in zip(WALL_FIELDS, cells, strict=True)
+        ]
+        wall.append(WallRow(fid, *(_cp2d_fact(c) for c in cells)))
+    named = {o.name: _cp2d_fact(o.fact) for o in offered[: len(CP2D_FACTS)]}
+    ops = Cp2dOperands(
+        horizon=named["cp2d.horizon"],
+        run_rate=named["cp2d.run_rate"],
+        minimum_cash=named["cp2d.min_cash"],
+        funding_gap=named["cp2d.funding_gap"],
+        wall=tuple(wall),
+    )
+    _reader_agrees(read, ops, [row.label for row in table.rows])
+    return ops, tuple(offered)
+
+
+# --- the bound upstream -----------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-3C attempt binds, read once from the journal (`cp3c_upstream`): the input set,
+    `execution.current_inputs` now (or its refusal text), the run's as-of, the settled CP-1 and
+    CP-2D modules of the bound heads, `cp2d_reader` over the bound CP-2D head, and what settlement
+    will inherit (`execution.inherited_limitations`). CP-0 is an edge whose status and
+    limitations CP-3C inherits and whose content it never reads."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    as_of: date
+    cp1: Module
+    cp2d: Module
+    cp2d_read: Cp2dHead
+    inherited: tuple[str, ...]
+
+
+def cp3c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
+    """A refusal of `current_inputs` (an upstream gone stale, unrun or blocked, or CP-0 no longer
+    authorizing CP-3C) is kept as text: the validator reports it as a staleness issue. A bound
+    input whose blob is another module's raises."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+
+    def bound(module_id: str) -> Module:
+        item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+        if item is None:
+            raise ValueError(f"The CP-3C attempt binds no {module_id} input")
+        module = store.result(item.sha256)
+        if module.module_id != module_id:
+            raise ValueError(
+                f"The CP-3C attempt's {module_id} input is a {module.module_id} module"
+            )
+        return module
+
+    cp1, settled = bound(CP1), bound(CP2D)
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        as_of=snapshot.run.as_of,
+        cp1=cp1,
+        cp2d=settled,
+        cp2d_read=cp2d.cp2d_reader(store, head_of(settled)),
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def select(upstream: Upstream) -> Selection:
+    """The store adapter: the bound heads -> the Stage 1 operands. `submit`, `probe` and `view`
+    reach the CP-1 and CP-2D facts only through this selection."""
+    cp1 = select_cp1(upstream.cp1)
+    ops, cp2d_offered = select_cp2d(upstream.cp2d, upstream.cp2d_read)
+    return Selection(
+        cp1=cp1.operands,
+        cp2d=ops,
+        balance_date=cp1.balance_date,
+        currency=reporting_currency(cp1=cp1.operands, cp2d=ops),
+        offered=tuple(sorted((*cp1.offered, *cp2d_offered), key=lambda o: o.name)),
+        facilities=cp1.facilities,
+    )
+
+
+def _inputs_from(
+    upstream: Upstream, selection: Selection, submission: RefinancingRiskSubmission
+) -> Cp3cInputs:
+    return Cp3cInputs(
+        balance_date=selection.balance_date,
+        as_of=upstream.as_of,
+        currency=selection.currency,
+        cp1=selection.cp1,
+        cp2d=selection.cp2d,
+        submission=submission,
+        offered={ref: name for name, ref in selection.refs},
+    )
+
+
+def _inputs(
+    store: Execution, attempt: Attempt, submission: RefinancingRiskSubmission
+) -> Cp3cInputs:
+    upstream = cp3c_upstream(store=store, attempt=attempt)
+    return _inputs_from(upstream, select(upstream), submission)
+
+
+# --- validation -------------------------------------------------------------------------------
+
+
+def _provenance_issues(upstream: Upstream) -> tuple[str, ...]:
+    """The supplied CP-1 and CP-2D modules (and the CP-2D read) are the bound heads."""
+    issues = []
+    for module_id, module in ((CP1, upstream.cp1), (CP2D, upstream.cp2d)):
+        item = next((i for i in upstream.bound if i.input_id == module_id), None)
+        read = upstream.cp2d_read.head_sha256 if module_id == CP2D else module.content_hash()
+        if (
+            item is None
+            or module.module_id != module_id
+            or module.content_hash() != item.sha256
+            or read != item.sha256
+        ):
+            issues.append(f"Upstream {module_id}: the supplied module is not the bound input")
+    return tuple(issues)
+
+
+def validate_refinancing(
+    *, submission: RefinancingRiskSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Staleness alone when a bound upstream changed (no content check runs on it), then
+    provenance alone, else the calculation-level issues over the refs the view offers."""
+    stale = stale_issues(bound=upstream.bound, current=upstream.current)
+    if stale:
+        return stale
+    provenance = _provenance_issues(upstream)
+    if provenance:
+        return provenance
+    offered = {ref: name for name, ref in select(upstream).refs}
+    return submission_issues(submission=submission, offered=offered)
+
+
+# --- the composed module ----------------------------------------------------------------------
+
+
+class RefinancingRiskReport(Contract):
+    """The composed CP-3C module body of a valid submission (a step's retained output)."""
+
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    facts: tuple[Fact, ...]
+    tables: tuple[ReportTable, ...]
+    claims: tuple[Claim, ...]
+    limitations: tuple[str, ...]
+
+
+def _copied(cell: Cell, selection: Selection) -> Fact | None:
+    """The upstream fact a copy (an operand and no formula) copies."""
+    if cell.formula is not None:
+        return None
+    if cell.cp2d_operand is not None:
+        return selection.by_ref(cell.cp2d_operand)
+    if cell.cp1_operand is not None:
+        operand = cell.cp1_operand
+        if operand.startswith("T4.18 "):
+            fid, term = operand.removeprefix("T4.18 ").rsplit(" ", 1)
+            operand = f"{fid}.{term}"
+        return selection.named(operand)
+    return None
+
+
+def _cell_fact(cell: Cell, selection: Selection) -> Fact:
+    """A cell as a Module fact (lease Composer; acceptance 1): a copy keeps its upstream fact's
+    citations and calculation id; a known computed cell names its calculation; a US$ m cell is
+    at scale 1e6, as CP-1 and CP-2D write theirs."""
+    extra: dict[str, Any] = {"scale": _SCALE} if cell.unit == _MILLIONS else {}
+    source = _copied(cell, selection)
+    copy = cell.formula is None and (cell.cp1_operand or cell.cp2d_operand) is not None
+    if copy and source is None:  # an invariant: every operand names a bound fact
+        raise ValueError(clipped(("CP-3C ", cell.fact_id, ": its upstream fact is not bound")))
+    if source is not None:
+        extra |= {"citations": source.citations, "calculation_id": source.calculation_id}
+    elif cell.formula is not None and cell.status == "known":
+        extra["calculation_id"] = f"calc:{cell.fact_id}"
+    return cell.fact().model_copy(update=extra)
+
+
+def _report_table(table: Table) -> ReportTable:
+    single = len(table.columns) == 1
+    fields = ["value"] if single else [f"c{n}" for n in range(1, len(table.columns) + 1)]
+    return ReportTable(
+        table_id=table.table_id,
+        title=table.title,
+        columns=tuple(
+            TableColumn(field=f, label=c) for f, c in zip(fields, table.columns, strict=True)
+        ),
+        rows=tuple(
+            TableRow(row_id=r.row_id, label=r.label, fact_ids=tuple(c.fact_id for c in r.cells))
+            for r in table.rows
+        ),
+        row_header=table.row_header,
+    )
+
+
+# T3D.7-T3D.9 (lease freeze note 4: text rows): the row header and the (field, heading) columns
+# after the row label.
+_TEXT_TABLES: Mapping[str, tuple[str, tuple[tuple[str, str], ...]]] = {
+    "T3D.7": ("Judgment", (("value", "Value"),)),
+    "T3D.8": ("Item", (("kind", "Kind"),)),
+    "T3D.9": ("Name", (("module", "Module"), ("ref", "Table or id"), ("shown", "Shown"))),
+}
+
+
+def _text_table(table: TextTable) -> tuple[ReportTable, list[Fact]]:
+    header, columns = _TEXT_TABLES[table.table_id]
+    judged: Literal["analyst_judgment"] | None = (
+        "analyst_judgment" if table.table_id == "T3D.7" else None
+    )
+    facts: list[Fact] = []
+    rows: list[TableRow] = []
+    for n, (label, *values) in enumerate(table.rows, 1):
+        row_id = f"r{n:02d}"
+        ids = []
+        for (field, _), text in zip(columns, values, strict=True):
+            one = len(columns) == 1
+            fact_id = f"{table.table_id}.{row_id}" + ("" if one else f".{field}")
+            facts.append(
+                Fact(
+                    fact_id=fact_id,
+                    label=label if one else f"{label} · {field}",
+                    table_id=table.table_id,
+                    row_id=row_id,
+                    field=field,
+                    text=text,
+                    value_class=judged,
+                )
+            )
+            ids.append(fact_id)
+        rows.append(TableRow(row_id=row_id, label=label, fact_ids=tuple(ids)))
+    report = ReportTable(
+        table_id=table.table_id,
+        title=table.title,
+        columns=tuple(TableColumn(field=f, label=h) for f, h in columns),
+        rows=tuple(rows),
+        row_header=header,
+    )
+    return report, facts
+
+
+def _module_claims(
+    result: Cp3cResult, selection: Selection, facts: Mapping[str, Fact]
+) -> tuple[Claim, ...]:
+    """Each claim's template as its run text, citing what the bound names and the referenced
+    cells it lists (`cites_from`) cite, each citation once."""
+
+    def cited(item: str) -> tuple[Citation, ...]:
+        fact = selection.named(item) or facts.get(item)
+        if fact is None:
+            raise ValueError(clipped(("CP-3C: a claim cites ", item, ", which is not bound")))
+        return fact.citations
+
+    return tuple(
+        Claim(
+            claim_id=c.claim_id,
+            text=c.template,
+            citations=tuple(dict.fromkeys(x for item in c.cites_from for x in cited(item))),
+        )
+        for c in result.claims
+    )
+
+
+def refinancing_risk(
+    *, pack: PreparedPack, submission: RefinancingRiskSubmission, upstream: Upstream
+) -> RefinancingRiskReport:
+    """The composed CP-3C tables, facts, claims and own limitations of a valid submission;
+    raises ValueError on any validation issue."""
+    issues = validate_refinancing(submission=submission, upstream=upstream)
+    if issues:
+        raise ValueError("; ".join(bounded_issues(issues)))
+    selection = select(upstream)
+    result = compute(_inputs_from(upstream, selection, submission))
+    facts = [_cell_fact(c, selection) for t in result.tables for r in t.rows for c in r.cells]
+    tables = [_report_table(t) for t in result.tables]
+    for text in (result.judgments, result.gaps_ledger, result.trace):
+        table, rows = _text_table(text)
+        tables.append(table)
+        facts += rows
+    return RefinancingRiskReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        facts=tuple(facts),
+        tables=tuple(tables),
+        claims=_module_claims(result, selection, {f.fact_id: f for f in facts}),
+        limitations=result.own_limitations,
+    )
+
+
+def cp3c_module(*, report: RefinancingRiskReport, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-3C candidate: the report bound to `inputs` and, as the settled tail (G1-X section
+    2), the digest of the retained submission."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+# --- the exact `read_inputs` view (manifest.json view_tree_draft) -----------------------------
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """The step's one read, all Python's: the required edges' statuses, one entry per bound name
+    (a missing fact included, with its status and its limitation, never a number), the facility
+    list (text only), the unread optional edges, the submission bounds and the limitations
+    settlement will inherit. No quote, citation or record at any depth."""
+    for module in (upstream.cp1, upstream.cp2d):
+        if module.run_id != pack.run.run_id:
+            raise ValueError(f"CP-3C: the bound {module.module_id} module belongs to another run")
+    selection = select(upstream)
+    return {
+        "upstream": [
+            {"module_id": i.input_id, "status": i.status}
+            for i in upstream.bound
+            if i.input_id in EDGES
+        ],
+        "facts": [
+            {
+                "ref": o.fact.fact_id,
+                "name": o.name,
+                "source": o.source,
+                "label": o.fact.label,
+                "period": o.fact.period,
+                "unit": figure_unit(o.fact) or o.fact.unit,
+                "shown": spelled(o.fact)
+                if o.fact.status == "known"
+                else _STATE_WORD[o.fact.status],
+                "status": o.fact.status,
+                "limitation": o.fact.limitation,
+            }
+            for o in selection.offered
+        ],
+        "facilities": [dict(f) for f in selection.facilities],
+        "unread_optional_edges": list(UNREAD_OPTIONAL_EDGES),
+        "bounds": {
+            "repricing_bps": list(BPS_BOUNDS),
+            "path_kinds": list(KINDS),
+            "feasibility": ["High", "Medium", "Low", II],
+        },
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of `context_block` over the bound heads as compact JSON (registered in G1's
+    `_VIEWS["refinancing_risk"]`; an exact view, counted as tool use)."""
+    upstream = cp3c_upstream(store=historical, attempt=attempt)
+    block = context_block(pack=historical.pack(), upstream=upstream)
+    body = json.dumps(block, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the journal: validator, probe and submit -------------------------------------------------
+
+
+def _parsed(payload: str) -> tuple[RefinancingRiskSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`; the schema validates the bounded document's exact re-serialisation)."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            RefinancingRiskSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return RefinancingRiskSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands the journal and the verifier replays: the retained
+    response against the bound upstream; a valid step's output is the composed report."""
+    submission, shape = _parsed(store.payload(attempt.steps[-1].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    upstream = cp3c_upstream(store=store, attempt=attempt)
+    issues = validate_refinancing(submission=submission, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = refinancing_risk(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+# The validator the module's own entry hands `Execution.submit_step` (R4-2 invalid-step replay).
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = RefinancingRiskReport.model_validate_json(output)
+    return cp3c_module(report=report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Raises `WorkflowError("identity_mismatch")` unless the settled attempt and head rebuild
+    exactly from the journaled payload over the frozen snapshot."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal the one `refinancing_risk` response, validate it, then settle CP-3C with the
+    Python candidate in the same call. An invalid step finishes the attempt rejected (or blocked
+    on the repair): there is no within-attempt repair. A crash after the step resumes from the
+    retained step."""
+    if rules is not None:
+        raise ValueError("CP-3C has no tool-loop rules (rule mode none)")
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-3C has one step, {STEP_ID}")
+    normalised, resolved = normalise(RefinancingRiskSubmission, payload)
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    if attempt is None or attempt.module_id != MODULE_ID or attempt.status != "pending":
+        raise ValueError("Ticket is absent, finished or belongs to another module")
+    digest = hashlib.sha256(normalised.encode()).hexdigest()
+    if attempt.steps and attempt.steps[0].payload_sha256 != digest:
+        raise ValueError("Ticket already retains a different response; resume or interrupt")
+    if not attempt.steps or attempt.steps[0].status == "pending":
+        attempt = store.submit_step(
+            ticket_id,
+            MODULE_ID,
+            STEP_IDS,
+            STEP_ID,
+            normalised,
+            lambda pack, current: _validate_step(store, pack, current),
+        )
+    if attempt.status == "finished":
+        return Submitted(attempt, normalised, resolved, (), (), None)
+    outcome = _validate_step(store, store.pack(), attempt)
+    if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+        raise ValueError("Retained CP-3C output differs from trusted validation")
+    candidate = _candidate(outcome.output or "", attempt)
+    journal = store.finish(
+        ticket_id,
+        candidate.model_dump_json(),
+        lambda supplied: () if supplied == candidate else ("CP-3C candidate differs",),
+        qualification=QUALIFICATION,
+    )
+    return Submitted(journal, normalised, resolved, (), (), None)
+
+
+# --- the consumer reader (lease Public API; expected.json#consumption.cp3c_consumed_by) ----------
+
+
+@dataclass(frozen=True)
+class NeedRow:
+    """One facility's refinancing need (T3D.1 column 9); None is a gap with its reason."""
+
+    facility: str
+    need: Decimal | None
+    missing: str | None
+
+
+@dataclass(frozen=True)
+class Cp3cHead:
+    """What `cp3c_reader` exposes of a settled CP-3C head: total principal payable at maturity,
+    the refinancing need or why it is missing, the per-facility need rows, the added annual cash
+    interest or why it is missing, the claims at or ahead of the most junior facility (Base), the
+    path feasibility judgments, the own limitations, the head hash and status. A head that is
+    not accepted or restricted (blocked, stale) exposes its status and hash and no figures."""
+
+    status: str
+    head_sha256: str
+    total_principal_payable: Decimal | None = None
+    need: Decimal | None = None
+    need_missing: str | None = None
+    need_rows: tuple[NeedRow, ...] = ()
+    added_interest: Decimal | None = None
+    added_interest_missing: str | None = None
+    base_claims: Decimal | None = None
+    paths: tuple[tuple[PathKind, str], ...] = ()
+    own_limitations: tuple[str, ...] = ()
+
+
+def cp3c_reader(store: Execution, head: Head) -> Cp3cHead:
+    """The consumer reader the lease pins (no consumer binds it yet)."""
+    if head.module_id != MODULE_ID:
+        raise ValueError("CP-3C reader: not a CP-3C head")
+    if head.status not in ("accepted", "restricted"):
+        return Cp3cHead(head.status, head.result_sha256)
+    module = store.head_module(head)
+    facts = {f.fact_id: f for f in module.facts}
+    tables = {t.table_id: t for t in module.tables}
+
+    def read(fact_id: str) -> Fact:
+        if fact_id not in facts:
+            raise ValueError(f"CP-3C head has no fact {fact_id}")
+        return facts[fact_id]
+
+    def missing(fact: Fact) -> str | None:
+        return None if fact.amount is not None else fact.limitation
+
+    def feasibility(row_id: str) -> str:
+        text = read(f"T3D.6.{row_id}.c1").text
+        if text is None:
+            raise ValueError(f"CP-3C head: the feasibility of path {row_id} is not stated")
+        return text
+
+    need, added = read("T3D.2.r03"), read("T3D.3.r06")
+    kinds = {label: kind for kind, label in KIND_LABEL.items()}
+    return Cp3cHead(
+        status=head.status,
+        head_sha256=head.result_sha256,
+        total_principal_payable=read("T3D.2.r01").amount,
+        need=need.amount,
+        need_missing=missing(need),
+        need_rows=tuple(
+            NeedRow(
+                r.label, read(f"T3D.1.{r.row_id}.c9").amount, missing(read(f"T3D.1.{r.row_id}.c9"))
+            )
+            for r in tables["T3D.1"].rows
+        ),
+        added_interest=added.amount,
+        added_interest_missing=missing(added),
+        base_claims=read("T3D.5.r01.c1").amount,
+        paths=tuple((kinds[r.label], feasibility(r.row_id)) for r in tables["T3D.6"].rows),
+        own_limitations=module.limitations,
     )

@@ -1175,7 +1175,7 @@ def test_spec_rows_serve_the_three_blocks() -> None:
         )
 
 
-@pytest.mark.xfail(strict=True, reason="Stage 3 S.4 wiring")
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason="Stage 3 S.4 wiring")
 def test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab(tmp_path: Path) -> None:
     """Tripwire for Q-C1. The release flips only the owner, so a populated FP 04 render still
     leads with CP-2D's T2E.4 rows under a MODEL owner. Once the Stage 3 S.4 task wires the CP-1

@@ -405,8 +405,8 @@ def _case_cp3_ordering() -> Callable[[], object]:
 CASES: dict[str, tuple[Callable[[], Callable[[], object]], float]] = {
     "shape": (_case_shape, 0.5),
     "absence": (_case_absence, 0.1),
-    "gaps": (_case_gaps, 1.5),
-    "attach": (_case_attach, 0.5),
+    "gaps": (_case_gaps, 0.8),
+    "attach": (_case_attach, 0.4),
     "refs": (_case_refs, 2.5),
     "scans": (_case_scans, 3.0),
     "cp1a_sources": (_case_cp1a_sources, 0.2),

@@ -1724,6 +1724,24 @@
       "sha256": "d7e15269089f8d5597586206ba2efa730eaa4694c5c2b285871aa283c15c8ff5",
       "reason": "Read ` | `-delimited table rows (each pipe as two spaces; separator rows give no line; a pipe line is never a caption or label continuation) for the filed CZR documents; two-space rows extract as before (user-approved Gap 2, rulings 2026-10-29-stage3 item 10).",
       "review": "work/build/stage3/czr-brief.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "1f50c7b92de9d7db1aec49a496895893431b5e44b2f721e352ec194843d5cf9e",
+      "project_commit": "8abfb0ccbdf0d6bfc593c6041b76c46fc797713a",
+      "sha256": "cbb4c3682a1abf102507084fc63e52940a2fdb2943ebb8f28c1b9749b466be68",
+      "reason": "Stage 4 batch 2 (CP-8 rails, class E): _prose_lines resolves a known text fact that carries [ref] tokens through resolve(), so the window chip shows the page's gap number instead of a Python-spelled placeholder (rulings 2026-10-29-stage3 item 30).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "cbb4c3682a1abf102507084fc63e52940a2fdb2943ebb8f28c1b9749b466be68",
+      "project_commit": "f1f6bce5b08f599d2e5937c7064c1d3ef9284366",
+      "sha256": "8506ef09e8ac1b5585f664f02bfe2ec50e90b80c328b23532e8d586fb15f01eb",
+      "reason": "Stage 4 batch 2 fix round 1: _carries_reference uses the prose token grammar, so a text holding any reference goes to resolve() and a malformed mix fails closed (rulings 2026-10-29-stage3 item 31).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

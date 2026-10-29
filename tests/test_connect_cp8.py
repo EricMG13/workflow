@@ -29,7 +29,7 @@ from deploy_vii.cp6_committee import ACTION_BIAS_FACT, CONFIDENCE_FACT
 from deploy_vii.execution import Attempt, Execution, Head, Qualification, StepValidation
 from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen
 from deploy_vii.registry import plan, step_chain
-from deploy_vii.report_view import _spec_of
+from deploy_vii.report_view import _spec_of, build, build_index, gap_refs, pathways
 from deploy_workflow import host
 from deploy_workflow.owners import cp8
 from deploy_workflow.owners.cp8 import (
@@ -539,6 +539,94 @@ def test_the_what_changed_block_is_cp8s() -> None:
     assert (spec.owner, spec.kind, spec.producers) == ("CP-8", "prose", ("CP-8",))
     assert spec.title == "What changed since the last Report"
     assert spec.collapsed is False  # the oracle pins the as-is state (lease question 5)
+
+
+def _what_changed_view(case: str, edit: dict[str, str] | None = None) -> View:
+    """The oracle's CP-8 module as an accepted view; ``edit`` swaps fact texts by fact id."""
+    module = _head_module(case)
+    facts = tuple(
+        f.model_copy(update={"text": edit[f.fact_id]}) if edit and f.fact_id in edit else f
+        for f in module.facts
+    )
+    facts = tuple(  # a figure needs a calculation behind it (the oracle's own id)
+        f.model_copy(update={"calculation_id": f"calc:{f.fact_id}"})
+        if f.fact_id == "T7.3.window.realized_value"
+        else f
+        for f in facts
+    )
+    return View(
+        run=_run(case),
+        mode="accepted",
+        modules=(
+            ModuleView(
+                module_id="CP-8",
+                title="CP-8",
+                aliases=(),
+                status="restricted",
+                artifact_sha256="b" * 64,
+                facts=facts,
+                limitations=module.limitations,
+            ),
+        ),
+    )
+
+
+def _what_changed_lines(view: View) -> list[list[tuple[str, str, str | None]]]:
+    pathway = next(p for p in pathways() if p.id == view.run.pathway)
+    block = next(
+        b for b in build(view, pathway, SHIPPED_MAPS).blocks if b.block_id == "what-changed"
+    )
+    return [[(r.kind, r.text, r.ref_id) for r in line.runs] for line in block.lines]
+
+
+def test_the_outcome_cell_shows_the_gap_the_page_gives_the_window_figure() -> None:
+    view = _what_changed_view("no_outcome")
+    _, index = build_index(view)
+    gap = gap_refs(index)[("CP-8", "T7.3.window.realized_value")]
+    lines = _what_changed_lines(view)
+    line = next(r for r in lines if r[0][1].startswith("No realized outcome is recorded"))
+    assert line == [
+        ("text", "No realized outcome is recorded, so the window since the decision ", None),
+        ("gap", f"\u2205 {gap}", gap),
+        ("text", " and every variance are missing.", None),
+    ]
+    assert not any("[T7.3" in run[1] for r in lines for run in r)
+
+
+def test_a_known_window_figure_renders_as_the_figure_and_a_positive_line_is_unchanged() -> None:
+    plain = _what_changed_lines(_what_changed_view("positive"))
+    leverage = next(r for r in plain if r[0][1].startswith("Total leverage was recorded"))
+    assert leverage[0] == ("text", leverage[0][1], None) and "[" not in leverage[0][1]
+    token = "Window {T7.3.window.realized_value|days} after the decision."
+    lines = _what_changed_lines(
+        _what_changed_view("positive", {"cp8.what_changed.attribution.value": token})
+    )
+    line = next(r for r in lines if r[0][1] == "Window ")
+    shown = next(
+        f["shown"]
+        for t in EXPECTED["cases"]["positive"]["tables"]
+        for row in t["rows"]
+        for f in row["facts"]
+        if f["fact_id"] == "T7.3.window.realized_value"
+    )
+    assert shown == "109 days"
+    assert line[1][:2] == ("fig", shown)
+    assert line[-1][1] == " after the decision." and not any(run[0] == "gap" for run in line)
+
+
+def test_a_well_formed_token_beside_a_non_token_bracket_fails_closed() -> None:
+    text = "Window {T7.3.window.realized_value|days} then [Not a token]."
+    view = _what_changed_view("positive", {"cp8.what_changed.attribution.value": text})
+    with pytest.raises(ValueError, match="does not resolve"):
+        _what_changed_lines(view)
+
+
+def test_a_token_naming_a_fact_outside_the_module_fails_closed() -> None:
+    view = _what_changed_view(
+        "no_outcome", {"cp8.what_changed.outcome.value": "Outside [T9.9.nope.value] here."}
+    )
+    with pytest.raises(ValueError, match="does not resolve"):
+        _what_changed_lines(view)
 
 
 # --- the reader (D3 is OPEN: pin what it exposes, claim nothing) -------------------------------------

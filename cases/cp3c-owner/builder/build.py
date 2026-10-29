@@ -25,10 +25,10 @@ PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-    "cases/cp2d-owner/manifest.json": "68d774a3a2c1f7997ff871f5c5a7f1fb2201e4bf2d90b65d5a6082a3319ba732",
+    "cases/cp2d-owner/manifest.json": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
     "cases/cp2d-owner/expected.json": "ed36f120e432ee90de3f9d91933cb3182893e7aed370c9d38420ecfde8acc3e7",
-    "cases/cp2d-owner/builder/build.py": "cc200e99d141b05a9d396a015d2e7d4a553cc89f7b003f92971b81a1c0568f7d",
+    "cases/cp2d-owner/builder/build.py": "0e3bdde389c301c8c9adfc43729251f1bcf1e359dcb7edd7d59f03ed302cbbe6",
     "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
 }
 for rel, want in PINS.items():

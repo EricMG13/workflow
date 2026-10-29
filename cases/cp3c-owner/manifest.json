@@ -26,7 +26,7 @@
     },
     {
       "path": "cases/cp2d-owner/manifest.json",
-      "sha256": "68d774a3a2c1f7997ff871f5c5a7f1fb2201e4bf2d90b65d5a6082a3319ba732",
+      "sha256": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
       "use": "frozen CP-2D manifest: CP-1 fact_bindings predicates reused by CP-2D's own step"
     },
     {
@@ -41,7 +41,7 @@
     },
     {
       "path": "cases/cp2d-owner/builder/build.py",
-      "sha256": "cc200e99d141b05a9d396a015d2e7d4a553cc89f7b003f92971b81a1c0568f7d",
+      "sha256": "0e3bdde389c301c8c9adfc43729251f1bcf1e359dcb7edd7d59f03ed302cbbe6",
       "use": "frozen CP-2D builder (pin only: the method of the upstream whose cells are consumed)"
     },
     {

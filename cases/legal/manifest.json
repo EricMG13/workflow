@@ -287,7 +287,7 @@
     "files": {
       "src/deploy_vii/cp4_legal.py": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
       "src/deploy_vii/methods/cp4.md": "99ec34c7a8257e15325456eb5466388eeb656fa01cf30db91e8474334bb39ff0",
-      "src/deploy_vii/readiness.py": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
+      "src/deploy_vii/readiness.py": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
       "src/deploy_vii/registry.py": "e351d5b917558d4988e582963063dbf8a237f5949ae8a132b9f1c4e5f559995a",
       "src/deploy_vii/methodology.json": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "src/deploy_vii/bindings/cp4.py": "484448f5fbbc81995efa9e8f3e5f1b636c01bbc9d16234a5be44107b6baa7f97",

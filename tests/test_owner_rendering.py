@@ -2065,6 +2065,10 @@ def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) ->
             *((t["label"], t["rows"]) for t in block["tabs"]),
         ]
         wants = [(t["label"], t["rows"]) for t in oracle["tabs"]]
+        # report_view tab_structure: one register is untabbed; its label is checked in
+        # tests/test_connect_cp1d.py:319-340.
+        if len(wants) == 1:
+            wants = [(None, wants[0][1])]
         assert [label for label, _ in pages] == [label for label, _ in wants]
         for (_, got_rows), (_, want_rows) in zip(pages, wants, strict=True):
             _register_ok(got_rows, want_rows)
@@ -2116,6 +2120,24 @@ def test_fast_block_rule_handles_s_chip_gap_placeholder_and_tabs_only_oracle() -
     wrong_tab = {**oracle, "tabs": [oracle["tabs"][0]]}
     with pytest.raises(AssertionError):
         assert_block_equals_oracle(block, wrong_tab)
+    # One register renders untabbed: tab_label None, no tabs (report_view tab_structure).
+    row = {"label": "A", "cells": [cell]}
+    one_tab: dict[str, Any] = {
+        "tabs": [
+            {
+                "label": "Binding",
+                "rows": [{"label": "A", "cells": [{"state": "known", "shown": "7.5x"}]}],
+            },
+        ]
+    }
+    untabbed: dict[str, Any] = {"tab_label": None, "rows": [row], "tabs": []}
+    assert_block_equals_oracle(untabbed, one_tab)
+    with pytest.raises(AssertionError):
+        assert_block_equals_oracle(block, one_tab)
+    with pytest.raises(AssertionError):
+        assert_block_equals_oracle(
+            {**untabbed, "rows": [{"label": "A", "cells": [{"text": "9x"}]}]}, one_tab
+        )
 
 
 def _s1a(case: str, root: Path) -> tuple[Path, Path, Path | None]:

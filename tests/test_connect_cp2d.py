@@ -1151,19 +1151,51 @@ def test_validate_bindings_over_the_settled_tables_is_clean(tmp_path: Path) -> N
 def test_spec_rows_serve_the_three_blocks() -> None:
     from deploy_vii.report_view import _spec_of
 
-    for block, title in (
-        ("liquidity-runway", "Liquidity and cash runway"),
-        ("maturity-wall", "Maturity wall"),
-        ("funding-gap", "Funding gap"),
-    ):
-        spec = _spec_of(block)
-        assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
-            title,
+    for block, title, owner, kind, producers, route in (
+        (
+            "liquidity-runway",
+            "Liquidity and cash runway",
             "CP-2D",
             "dense",
             ("CP-2D",),
             "Full analysis",
+        ),
+        # Q-C1: the maturity wall is Model-owned (approved FP 04 page, "MODEL · Fig. S.4"); kind
+        # stays dense until the Stage 3 S.4 task adds the strip figure and the CP-1 binding.
+        ("maturity-wall", "Maturity wall", "MODEL", "dense", ("CP-1",), None),
+        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D",), "Full analysis"),
+    ):
+        spec = _spec_of(block)
+        assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
+            title,
+            owner,
+            kind,
+            producers,
+            route,
         )
+
+
+@pytest.mark.xfail(strict=True, reason="Stage 3 S.4 wiring")
+def test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab(tmp_path: Path) -> None:
+    """Tripwire for Q-C1. The release flips only the owner, so a populated FP 04 render still
+    leads with CP-2D's T2E.4 rows under a MODEL owner. Once the Stage 3 S.4 task wires the CP-1
+    strip into ``maturity-wall``, the Model figure leads and T2E.4 is a further tab: this then
+    XPASSes, strict fails, and the task removes the marker."""
+    from deploy_vii import report_view
+    from deploy_vii.bindings.shipped import SHIPPED_MAPS
+
+    store, attempt = make_upstream(tmp_path)
+    _submit(store, attempt, _literal("positive"))
+    view = store.view()
+    assert {m.module_id: m.status for m in view.modules}["CP-2D"] in {"accepted", "restricted"}
+    pathway = next(p for p in report_view.pathways() if p.id == view.run.pathway)
+    block = {b.block_id: b for b in report_view.build(view, pathway, SHIPPED_MAPS).blocks}[
+        "maturity-wall"
+    ]
+    assert block.owner == "MODEL"
+    assert block.figures and block.figures[0].fig_id == "S.4"
+    assert [tab.label for tab in block.tabs] == ["T2E.4"]
+    assert block.tab_label != "T2E.4"
 
 
 # --- the run driver (its runs are deferred; its assembly is cheap) -----------------------------

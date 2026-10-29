@@ -1168,9 +1168,10 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         "liquidity-runway": _Spec(
             "Liquidity and cash runway", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
         ),
-        "maturity-wall": _Spec(
-            "Maturity wall", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
-        ),
+        # Q-C1: Model-owned (approved FP 04 page, "MODEL · Fig. S.4"; no route on its header).
+        # Kind stays dense until the Stage 3 S.4 task adds the `_STRIP_FIGURES` entry and the
+        # CP-1 binding: kind chart would raise KeyError here. CP-2D's T2E.4 stays bound.
+        "maturity-wall": _Spec("Maturity wall", "MODEL", "dense", ("CP-1",), route_label=None),
         "funding-gap": _Spec(
             "Funding gap", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
         ),

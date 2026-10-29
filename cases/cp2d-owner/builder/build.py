@@ -1053,10 +1053,11 @@ expected = {
         "pathway": "covenant_refinancing",
         "blocks": {
             "liquidity-runway": {"owner": "CP-2D", "kind": "dense", "primary_tab": "T2E.3", "tabs": ["T2E.1"], "state": "populated"},
-            "maturity-wall": {"owner": "CP-2D", "kind": "dense", "primary_tab": "T2E.4", "tabs": [], "state": "populated"},
+            "maturity-wall": {"owner": "MODEL", "stage3_pending": "the populated shape (MODEL S.4 content first, T2E.4 as a non-primary tab) waits for the Stage 3 S.4 chart task (CP-1 binding into maturity-wall and a _STRIP_FIGURES entry); this release pins the owner only"},
             "funding-gap": {"owner": "CP-2D", "kind": "dense", "primary_tab": "T2E.5", "tabs": ["T2E.2"], "state": "populated"},
         },
         "rails": {"evidence": ["T2E.6", "T2E.9"], "limitations": ["T2E.7"]},
+        "maturity_wall_note": "Q-C1 (user 2026-10-29): maturity-wall is MODEL-owned (Fig. S.4 from CP-1, producer CP-1); the approved page shows no route on its header, so route_label is None. CP-2D's T2E.4 binding is unchanged (validate_bindings requires every fact bound) and CP-2D draws no figure and does not own the block. The populated shape is stage3_pending: until the Stage 3 S.4 task lands, a populated FP-04 render is not delivered and is not pinned here",
         "cells": "block cell text equals the `shown` strings of expected.cases.<case>.tables for the same table id; gap cells render the product spelling '∅ G<n>' (display.py) with n assigned in report order: the expected `shown` of a gap cell is the pattern '∅ G#', an A7 exception that matches '∅ G' plus digits",
         "other_FP04_blocks": "CP-4 and CP-3C blocks are not asserted (CP-4 is not requested; CP-3C has no core)",
     },

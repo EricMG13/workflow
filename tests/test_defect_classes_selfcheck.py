@@ -36,6 +36,7 @@ from defect_classes import (
     BlankCase,
     QuoteCase,
     ReviewRun,
+    absent_free_text_paths,
     assert_hostile_refused,
     blank_failure,
     case,
@@ -45,6 +46,7 @@ from defect_classes import (
     model_text_failures,
     path_matches,
     quote_failure,
+    with_absent_text,
     with_text,
 )
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -585,3 +587,67 @@ def test_model_text_failures_reports_a_wedge_that_refuses() -> None:
 
     failures = model_text_failures(Doc, POSITIVE, lambda: Wedge("strict", False))
     assert failures and all("wedged, valid payload was refused" in f for f in failures)
+
+
+# --- Stage 2 round 5 item 10 L2: free text the positive leaves null, omitted or empty ----------------
+
+
+class Tagged(BaseModel):
+    title: Text | None = None
+    tags: list[Text] = []
+    nested: Part | None = None
+    kind: Literal["a", "b"] | None = None
+    parts: list[Part] = []
+
+
+def test_absent_free_text_paths_read_the_schema() -> None:
+    assert absent_free_text_paths(POSITIVE, Doc) == [("parts", 1, "note")]
+    bare = json.dumps({"parts": [{"ref": "p1"}], "nested": {"ref": "n"}})
+    assert absent_free_text_paths(bare, Tagged) == [
+        ("title",),
+        ("tags", 0),
+        ("nested", "note"),
+        ("parts", 0, "note"),
+    ]
+    held = json.dumps({"title": None, "tags": [], "kind": None})
+    assert absent_free_text_paths(held, Tagged) == [("title",), ("tags", 0)]
+
+
+def test_absent_free_text_paths_skip_what_the_payload_already_holds_and_non_free_fields() -> None:
+    full = json.dumps(
+        {"title": "t", "tags": ["a"], "kind": None, "nested": {"ref": "n", "note": "x"}}
+    )
+    assert absent_free_text_paths(full, Tagged) == []
+    assert free_text_paths(full, Tagged) == [("title",), ("tags", 0), ("nested", "note")]
+
+
+def test_with_absent_text_fills_a_field_or_a_one_item_list() -> None:
+    payload = json.loads(json.dumps({"tags": [], "nested": {"ref": "n"}}))
+    assert with_absent_text(payload, ("title",), "{}") == {**payload, "title": "{}"}
+    assert with_absent_text(payload, ("tags", 0), "{}")["tags"] == ["{}"]
+    assert with_absent_text(payload, ("nested", "note"), "{}")["nested"] == {
+        "ref": "n",
+        "note": "{}",
+    }
+    assert payload == {"tags": [], "nested": {"ref": "n"}}
+
+
+def test_fill_absent_reaches_a_validator_that_skips_a_field_the_positive_leaves_null() -> None:
+    """The mutant the fill closes: the second part's note is null in the positive, so a validator
+    that never checks it passes every path the positive reaches."""
+    assert _failures("strict_first_note", build=False) == []
+    failures = _failures("strict_first_note", build=False, fill_absent=True)
+    assert [f for f in failures if f.startswith("parts.1.note=")] == [
+        f"parts.1.note={value!r}: accepted" for value in MODEL_TEXT_HOSTILE
+    ]
+
+
+def test_fill_absent_is_quiet_for_a_validator_that_journals_every_field() -> None:
+    assert _failures("strict", build=True, fill_absent=True) == []
+    assert _failures("strict", build=False, fill_absent=True) == []
+
+
+def test_fill_absent_counts_the_filled_paths_for_a_verbatim_pattern() -> None:
+    failures = _failures("lax", build=False, verbatim=frozenset({NOTE}), fill_absent=True)
+    assert not any(f.startswith("parts.1.note") for f in failures)
+    assert any("summary='{}': accepted" in f for f in failures)

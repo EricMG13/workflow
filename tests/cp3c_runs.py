@@ -115,22 +115,17 @@ def downstream_review(inputs: DownstreamInputs, inputs_sha256: str) -> str:
 def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack) -> None:
     """CP-1 to its promotion: the S1 positive stages (`s1a_runs.drive_cp1`), except the
     readiness stage, which submits this run's downstream review."""
-    fw = s1a._fw()
-    context = s1a.literal("positive", "cp1_source_context", pack)
-    s1a.read_cited(workflow, context)
-    s1a.search(workflow, "financial", "subsequent")
-    s1a.search(workflow, "business", "acquisition")
-    s1a.submit_valid(workflow, context)
-    fw.financial_reads(workflow)
-    s1a.submit_valid(workflow, json.dumps(fw.financials(pack)))
-    read = workflow.read_inputs()
-    s1a.submit_valid(workflow, json.dumps(fw.narrative(read)))
-    ready = workflow.read_inputs()
-    inputs = importlib.import_module("cp1d_runs").downstream_inputs(workflow)
-    s1a.submit_valid(workflow, downstream_review(inputs, str(ready["inputs_sha256"])))
-    quality = json.loads(workflow.read_inputs()["body"])
-    review = importlib.import_module("cp2g_runs")._quality_review(fw, read, quality)
-    s1a.submit_valid(workflow, review)
+    cp1d = importlib.import_module("cp1d_runs")
+    s1a.drive_cp1(
+        workflow,
+        pack,
+        "positive",
+        context=s1a.literal("positive", "cp1_source_context", pack),
+        narrative_tool_check=False,
+        readiness=lambda w, ready: downstream_review(
+            cp1d.downstream_inputs(w), str(ready["inputs_sha256"])
+        ),
+    )
 
 
 def reach_cp2d(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:

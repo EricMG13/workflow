@@ -11,6 +11,7 @@ from deploy_vii.contracts import Citation, Fact, ModuleView
 from deploy_workflow.financial_series import cp1_chart_series
 
 ORACLE = json.loads((Path(__file__).parents[1] / "cases/charts/expected.json").read_text())
+S5_ORACLE = json.loads((Path(__file__).parents[1] / "cases/charts/s5-expected.json").read_text())
 # Adopted financial_model._basis_id('historical', 'Q:<source period id>') identities.
 BASES = (
     "166bb94eecfa6fdbd7bbc5a81ef57c48d46696fdc9032c1abe11abc6ad613dbb",
@@ -26,6 +27,16 @@ METRICS = (
     "undrawn_rcf",
     "liquidity",
 )
+S5_METRICS = ("revenue", "adjusted_ebitda")
+# Every S.5 value is read from the frozen S.5 oracle, never typed here.
+S5_VALUES = {
+    name: [
+        Decimal(p["amount_exact"])
+        for p in S5_ORACLE["chart_series"][0]["points"]
+        if p["series"] == name
+    ]
+    for name in S5_METRICS
+}
 
 
 def fixture():
@@ -45,7 +56,7 @@ def fixture():
                 "carrying_value",
                 "drawn_amount",
                 "annual_amortisation",
-            } or (table == "T4.10" and identity in METRICS[3:])
+            } or (table == "T4.10" and identity in (*METRICS[3:], *S5_METRICS))
             facts.append(
                 Fact(
                     fact_id=f"{table}.{identity}.{field}",
@@ -86,9 +97,11 @@ def fixture():
             ),
             pid,
         )
-        for metric in METRICS:
+        for metric in (*METRICS, *S5_METRICS):
             value = (
-                quarter[metric]["amount"]
+                S5_VALUES[metric][i]
+                if metric in S5_METRICS
+                else quarter[metric]["amount"]
                 if metric in METRICS[:3]
                 else quarter["cash_millions"]
                 if metric == "cash_closing"
@@ -164,8 +177,8 @@ def amounts(module, figure):
 def test_source_first_series_values_identity_and_immutability():
     module = fixture()
     figures = cp1_chart_series(module)
-    assert [f.fig_id for f in figures] == ["S.1", "S.2", "S.3", "S.4"]
-    assert [f.kind for f in figures] == ["line", "line", "line", "grouped"]
+    assert [f.fig_id for f in figures] == ["S.1", "S.2", "S.3", "S.4", "S.5"]
+    assert [f.kind for f in figures] == ["line", "line", "line", "grouped", "grouped"]
     assert amounts(module, figures[0]) == [
         None,
         None,

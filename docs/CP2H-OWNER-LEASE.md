@@ -67,7 +67,7 @@ headroom(*, comparison, metric, threshold, unit_class) -> Decimal      # pure De
 is_reached(*, comparison, metric, threshold) -> bool                   # strict
 first_year(*, hits) -> str                                              # the CP-2G first_result semantics
 validate_triggers(*, pack, submission, upstream) -> tuple[str, ...]
-rating_triggers(*, pack, submission, upstream) -> RatingTriggersReport         # raises ValueError on any issue; owners/cp2h.py:2079 (the lease's earlier name was TriggerReport; the internal engine dataclass keeps it, cp2h.py:657)
+rating_triggers(*, pack, submission, upstream) -> RatingTriggersReport         # raises ValueError on any issue; owners/cp2h.py:2081-2083 (the lease's earlier name was TriggerReport; the internal engine dataclass keeps it, cp2h.py:657)
 context_block(*, pack, upstream) -> dict[str, object]                   # the exact read_inputs view
 cp2h_module(report, *, inputs, attempt) -> Module
 submit(store, ticket_id, step_id, payload, rules) -> Submitted

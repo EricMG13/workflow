@@ -1,0 +1,101 @@
+...F...F.                                                                [100%]
+=================================== FAILURES ===================================
+_________ test_genuine_deferred_complete_cases[cp4c-fp05-recovery-gap] _________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2329/test_genuine_deferred_complete3')
+scope_id = 'cp4c-fp05-recovery', case = 'gap'
+
+    @pytest.mark.parametrize(("scope_id", "case"), _COMPLETE_CASES)
+    def test_genuine_deferred_complete_cases(tmp_path: Path, scope_id: str, case: str) -> None:
+>       _check_scope_run(tmp_path, scope_id, case, "complete", DEFERRED[scope_id][0])
+
+tests/test_owner_rendering.py:2380: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_owner_rendering.py:2326: in _check_scope_run
+    store, receipt, publication = build(case, root)
+                                  ^^^^^^^^^^^^^^^^^
+tests/test_owner_rendering.py:2141: in run
+    built = getattr(importlib.import_module(module), function)(case, root)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cp4c_runs.py:330: in cp4c_closed
+    workflow = ready(case, root)
+               ^^^^^^^^^^^^^^^^^
+tests/cp4c_runs.py:236: in ready
+    workflow, _ = promoted(case, root)
+                  ^^^^^^^^^^^^^^^^^^^^
+tests/cp4c_runs.py:198: in promoted
+    drive_cp1(workflow, pack, case)
+tests/cp4c_runs.py:188: in drive_cp1
+    s1a.submit_valid(workflow, readiness_literal(workflow, case, ready))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+workflow = <deploy_workflow.owner_workflow.OwnerWorkflow object at 0x113724fc0>
+payload = '{"inputs_sha256": "1207fcfd9577487d88141e9bf3d431ee456821e39f7130dbd89baa936aef553e", "consumers": [{"entry": "CP-2A"...ses/cp2g-owner (gap) unchanged; CP-4C new with the same marker style; CP-4 has no CP-1 readiness entry in its oracle"}'
+
+    def submit_valid(workflow: OwnerWorkflow, payload: str) -> dict[str, Any]:
+        outcome = workflow.submit_review(payload)
+        if outcome["status"] != "valid":
+>           raise RuntimeError(f"submission not valid: {outcome['status']} {outcome['issues']}")
+E           RuntimeError: submission not valid: invalid ['note: Extra inputs are not permitted']
+
+tests/s1a_runs.py:221: RuntimeError
+_ test_genuine_deferred_blocked_cases_are_refused[cp2g-fp05-forward-gap-blocked] _
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2329/test_genuine_deferred_blocked_0')
+scope_id = 'cp2g-fp05-forward-gap', case = 'blocked'
+
+    @pytest.mark.parametrize(("scope_id", "case"), _BLOCKED_CASES)
+    def test_genuine_deferred_blocked_cases_are_refused(
+        tmp_path: Path, scope_id: str, case: str
+    ) -> None:
+        root = tmp_path / "blocked"
+        root.mkdir()
+>       store, receipt, publication = DEFERRED[scope_id][0](case, root)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_owner_rendering.py:2395: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_owner_rendering.py:2141: in run
+    built = getattr(importlib.import_module(module), function)(case, root)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cp2g_runs.py:350: in cp2g_closed
+    workflow = ready(case, root)
+               ^^^^^^^^^^^^^^^^^
+tests/cp2g_runs.py:268: in ready
+    workflow, _ = promoted(case, root)
+                  ^^^^^^^^^^^^^^^^^^^^
+tests/cp2g_runs.py:220: in promoted
+    drive_cp1(workflow, pack, case)
+tests/cp2g_runs.py:210: in drive_cp1
+    s1a.submit_valid(workflow, readiness_literal(workflow, case, ready))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cp2g_runs.py:156: in readiness_literal
+    return json.dumps(bind(literal), ensure_ascii=False)
+                      ^^^^^^^^^^^^^
+tests/cp2g_runs.py:147: in bind
+    return {k: bind(v) for k, v in value.items()}
+               ^^^^^^^
+tests/cp2g_runs.py:153: in bind
+    return scalar(value) if isinstance(value, str) else value
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = "The consumer entries are the frozen literals of their owners, unchanged: CP-1D from cases/cp1d-owner/submissions.json...HA256}} and {{PREFILLED:inputs_sha256}} are the same value: the content hash of the step's prefilled DownstreamInputs."
+
+    def scalar(value: str) -> str:
+        if value == "{{INPUTS_SHA256}}":
+            return str(read["inputs_sha256"])
+        if match := KPI.fullmatch(value):
+            return str(cp1d_runs._kpi_id(inputs, match[1]))
+        if match := EVID.fullmatch(value):
+            return str(cp2a_runs._marker(inputs, match[1]))
+        if "{{" in value:
+>           raise RuntimeError(f"unbound readiness marker {value}")
+E           RuntimeError: unbound readiness marker The consumer entries are the frozen literals of their owners, unchanged: CP-1D from cases/cp1d-owner/submissions.json positive.cp1_readiness.payload (markers {{KPI:<key>|FY-2025}} and {{GAP_IDS}}, bound by that file's run_time_bindings), CP-2A from cases/cp2a-owner/submissions.json cp1_downstream_review (markers {{EVID:kpi <key>, LTM Q4 25 basis}} and {{ALL narrative gap ids}}, bound by cases/cp2a-owner/manifest.json run_time_bindings.cp1_readiness), CP-2G new with the CP-2A marker style. {{INPUTS_SHA256}} and {{PREFILLED:inputs_sha256}} are the same value: the content hash of the step's prefilled DownstreamInputs.
+
+tests/cp2g_runs.py:142: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp4c-fp05-recovery-gap]
+FAILED tests/test_owner_rendering.py::test_genuine_deferred_blocked_cases_are_refused[cp2g-fp05-forward-gap-blocked]
+2 failed, 7 passed in 7712.86s (2:08:32)
+exit=1

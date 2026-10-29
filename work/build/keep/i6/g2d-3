@@ -1,0 +1,9 @@
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp3-fp01-relative-value-positive]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp3d-fp03-market-gap_no_recovery]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp2a-fp05-downside-gap]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp4c-fp05-recovery-gap]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp4-fp04-covenants-gap_false_same_definition]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[slice-cpdr-research-unresolved]
+tests/test_owner_rendering.py::test_genuine_deferred_refused_cases[cp2h-fp05-ratings-refused]
+tests/test_owner_rendering.py::test_genuine_deferred_blocked_cases_are_refused[cp2g-fp05-forward-gap-blocked]
+tests/test_owner_rendering.py::test_genuine_deferred_s1a_gap_must_not_appear

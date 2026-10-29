@@ -1,0 +1,8 @@
+ROWS 11 ['CP-0', 'CP-1', 'CP-1A']
+............MUTANT cp1-drop-financials rows 5 survived []
+.MUTANT cp1-add-narrative rows 5 survived []
+.MUTANT cp0-empty rows 5 survived []
+.MUTANT cp1a-extra rows 1 survived []
+.MUTANT cp0-renamed rows 5 survived []
+..
+18 passed in 1.03s

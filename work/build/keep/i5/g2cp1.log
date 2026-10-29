@@ -1,0 +1,97 @@
+F..F....                                                                 [100%]
+=================================== FAILURES ===================================
+___________________ test_genuine_cp1_model_positive_delivery ___________________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2279/test_genuine_cp1_model_positiv0')
+inputs = <function inputs.<locals>.copy at 0x108711e40>
+runs = {'positive': PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2279/g2-cp1...ate/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2279/g2-cp1-model0/fin-positive/model'))}
+
+    def test_genuine_cp1_model_positive_delivery(
+        tmp_path: Path, inputs: Callable[..., Any], runs: dict[str, Any]
+    ) -> None:
+        store, receipt, model = inputs("positive")
+        assert model is not None
+        before = _tree(store, model)
+        report, destination = _render_ok(tmp_path, store, receipt, model)
+        assert _tree(store, model) == before
+        text = report.read_text(encoding="utf-8")
+        scope = g2.DELIVERY_SCOPES["cp1-model"]
+        assert text.count('id="delivery-scope-banner"') == 1
+        assert text.count(BANNER_ANCHOR + '<section id="delivery-scope-banner"') == 1
+        assert (
+            f'data-delivery-scope="cp1-model">{html_lib.escape(scope.banner["complete"])}</section>'
+            in text
+        )
+        wire = g2.OwnerRenderReceipt.from_wire((destination / "render-receipt.json").read_bytes())
+        assert wire.outcome == "complete" and wire.scope_id == "cp1-model"
+        assert not (destination / "render-receipt.json").read_bytes().endswith(b"\n")
+        assert (destination / "owner-run.json").read_bytes() == receipt.read_bytes()
+        assert wire.owner_receipt_file_sha256 == hashlib.sha256(receipt.read_bytes()).hexdigest()
+        names = {str(p.relative_to(destination)) for p in destination.rglob("*") if p.is_file()}
+        assert names == {
+            "report.html",
+            "owner-run.json",
+            "render-receipt.json",
+            "calculation.json",
+            "model/model.html",
+            "model/calculation.json",
+            "model/receipt.json",
+        }
+        assert not any(p.is_symlink() for p in destination.rglob("*"))
+        assert set(wire.files) == names - {"render-receipt.json"}
+        for name, digest in wire.files.items():
+            assert hashlib.sha256((destination / name).read_bytes()).hexdigest() == digest
+        # Equivalence with the financial slice delivery (lease test 3)
+        from deploy_workflow.financial_rendering import render_financial_slice
+    
+        fin_store, fin_receipt, fin_model = runs["fin_positive"]
+        fin_destination = tmp_path / "financial-delivery"
+        fin_report = render_financial_slice(fin_store, fin_receipt, fin_model, fin_destination)
+        assert _banner_free(text) == _banner_free(fin_report.read_text(encoding="utf-8"))
+        for name in ("model.html", "calculation.json", "receipt.json"):
+>           assert (destination / "model" / name).read_bytes() == (fin_model / name).read_bytes()
+E           assert b'{\n  "schem...e2"\n  }\n}\n' == b'{\n  "schem...e2"\n  }\n}\n'
+E             
+E             At index 357 diff: b'b' != b'6'
+E             Use -v to get more diff
+
+tests/test_owner_rendering.py:676: AssertionError
+_______________ test_genuine_cp1_model_extra_attempt_is_refused ________________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2279/test_genuine_cp1_model_extra_a0')
+inputs = <function inputs.<locals>.copy at 0x106c2ad40>
+
+    def test_genuine_cp1_model_extra_attempt_is_refused(
+        tmp_path: Path, inputs: Callable[..., Any]
+    ) -> None:
+        store, receipt, model = inputs("positive")
+>       Execution(store).begin("CP-1")  # a further attempt on the settled store
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_owner_rendering.py:766: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <deploy_vii.execution.Execution object at 0x109132300>
+module_id = 'CP-1'
+
+    def begin(self, module_id: str) -> Attempt:
+        module_id = canonical(module_id)
+        with self._locked():
+            snapshot = self.read()
+            if any(item.status == "pending" for item in snapshot.attempts):
+                raise ValueError("An attempt is pending; resume or explicitly interrupt it first")
+            inputs = current_inputs(snapshot, module_id)
+            previous = [
+                item
+                for item in snapshot.attempts
+                if item.module_id == module_id and item.inputs == inputs
+            ]
+            if previous and (len(previous) >= 2 or not previous[-1].issues):
+>               raise ValueError("Input set is settled or its one repair has been consumed")
+E               ValueError: Input set is settled or its one repair has been consumed
+
+src/deploy_vii/execution.py:660: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_owner_rendering.py::test_genuine_cp1_model_positive_delivery
+FAILED tests/test_owner_rendering.py::test_genuine_cp1_model_extra_attempt_is_refused
+2 failed, 6 passed, 187 deselected in 5199.87s (1:26:39)

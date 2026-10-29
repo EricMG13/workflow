@@ -1,0 +1,6 @@
+VERDICT w1 [(0, ['g1x_viewed'], 'finished')] ('accepted', 'accepted') fields-kept True
+.VERDICT w2 [(0, [], 'finished'), (1, ['g1x_viewed'], 'finished')] ('accepted', 'accepted') fields-kept True
+.VERDICT w3 [(0, ['g1x_sourced'], 'finished')] ('accepted', 'accepted') fields-kept True
+.VERDICT w4 [(0, [], 'finished'), (1, [], 'finished')] ('accepted', 'accepted') fields-kept True
+.
+4 passed in 1.67s

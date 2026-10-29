@@ -1,0 +1,86 @@
+SRC /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/mut-both/src/deploy_workflow/owner_workflow.py pub-lenient True head-lenient True
+.FFF
+=================================== FAILURES ===================================
+______ test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses ______
+
+positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10d1ae660>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2376/test_forgery_cp_model_attempt_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d3e35c0>
+
+    def test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses(
+        positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Stage 4 class A (MEDIUM 1, `drop-cp1`): the publisher attempt binds no CP-1."""
+        workflow = _publish_forged_cp_model(
+            positive_promoted,
+            tmp_path,
+            monkeypatch,
+            lambda inputs, snapshot: tuple(i for i in inputs if i.input_id != "CP-1"),
+        )
+>       with pytest.raises(WorkflowError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE WorkflowError
+
+tests/test_owner_s1a.py:2103: Failed
+__________ test_forgery_cp_model_attempt_bound_to_another_cp1_refuses __________
+
+positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10d1ae660>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2376/test_forgery_cp_model_attempt_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b51ed70>
+
+    def test_forgery_cp_model_attempt_bound_to_another_cp1_refuses(
+        positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Stage 4 class A (MEDIUM 1, `other-cp1`): the publisher attempt binds a CP-1 hash that is not
+        the final snapshot's CP-1 head (here the CP-1A hash)."""
+    
+        def other(inputs: tuple[Input, ...], snapshot: Any) -> tuple[Input, ...]:
+            stranger = next(h.result_sha256 for h in snapshot.heads if h.module_id == "CP-1A")
+            return tuple(
+                i.model_copy(update={"sha256": stranger}) if i.input_id == "CP-1" else i for i in inputs
+            )
+    
+        workflow = _publish_forged_cp_model(positive_promoted, tmp_path, monkeypatch, other)
+>       with pytest.raises(WorkflowError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE WorkflowError
+
+tests/test_owner_s1a.py:2123: Failed
+___ test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses ____
+
+positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10d1ae660>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2376/test_forgery_cp_model_failed_f0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x125bfdb50>
+
+    def test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses(
+        positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Stage 4 class A (adversary P-F): the first publisher attempt binds no CP-1 and its
+        publication fails; the second, genuine, publication begins another attempt 0 and publishes,
+        so the final head is genuine. Only the replay of the first publication's `begin` refuses."""
+        workflow = _publish_forged_cp_model(
+            positive_promoted,
+            tmp_path,
+            monkeypatch,
+            lambda inputs, snapshot: tuple(i for i in inputs if i.input_id != "CP-1"),
+            fail_first_write=True,
+        )
+>       with pytest.raises(WorkflowError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE WorkflowError
+
+tests/test_owner_s1a.py:2143: Failed
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_which_src
+FAILED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses
+FAILED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_bound_to_another_cp1_refuses
+FAILED tests/test_owner_s1a.py::test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses
+3 failed, 1 passed in 858.35s (0:14:18)
+exit=1

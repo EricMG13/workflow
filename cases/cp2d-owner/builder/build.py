@@ -27,7 +27,7 @@ PINS = {
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
     "cases/snapshot/cp2-view-tree.json": "f739395cbcf30ae2af710d8423927a8f810c8c4b948c07c6e6583e2a3b86f446",
-    "cases/legal/manifest.json": "3da3b74666346c7fc1423b2103bef3a2d467b2799a48774c7db0e912a0403ed4",
+    "cases/legal/manifest.json": "dceee076fb74ae79685b1551fb3d35ed92355561793383f29590d90e71801d40",
 }
 for rel, want in PINS.items():
     got = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()

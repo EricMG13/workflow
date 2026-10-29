@@ -3,7 +3,7 @@
   "status": "FROZEN pre-implementation seeded component render expectations only; no actual owner/tool/CP5/selected-run/native qualification",
   "base": "4e2bce9df0e010f0795c392e8254db12fce5fcfe",
   "authority_sha256": {
-    "cases/legal/manifest.json": "3da3b74666346c7fc1423b2103bef3a2d467b2799a48774c7db0e912a0403ed4",
+    "cases/legal/manifest.json": "dceee076fb74ae79685b1551fb3d35ed92355561793383f29590d90e71801d40",
     "docs/LEGAL-SOURCE-CONTRACT.md": "80f21f1e73063655e799496c3484a51576ff5e9649f03383b341ed7ff2aa453a",
     "docs/reviews/legal-source-contract.md": "f6b816587587d5eca6db808c5f8b3a2c4c60cea27bcbe1dba5d0769ddae6013a"
   },

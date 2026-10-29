@@ -28,7 +28,7 @@ D = Decimal
 # --- 0. pinned inputs --------------------------------------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "cases/legal/manifest.json": "3da3b74666346c7fc1423b2103bef3a2d467b2799a48774c7db0e912a0403ed4",
+    "cases/legal/manifest.json": "dceee076fb74ae79685b1551fb3d35ed92355561793383f29590d90e71801d40",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
     "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
     "cases/cp2g-owner/manifest.json": "981401d050e47b1ee6a1cfd535f38278f3bd7acf91dff0aa7fc2f6819cd039ea",

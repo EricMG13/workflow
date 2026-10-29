@@ -2953,3 +2953,16 @@ def _cr3_figures(
 # -- group c (CR.2, CR.3) --
 register_figure_producer("liquidity-runway", _cr2_figures)
 register_figure_producer("funding-gap", _cr3_figures)
+
+
+# -- group d (DR.2 to DR.6) --
+def _register_group_d() -> None:
+    from deploy_vii.distressed_figures import PRODUCERS
+
+    for block_id, producer in PRODUCERS:
+        register_figure_producer(
+            block_id, producer, pathways=frozenset({"distressed_restructuring"})
+        )
+
+
+_register_group_d()

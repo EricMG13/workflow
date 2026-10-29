@@ -555,12 +555,29 @@ def _figure():
     return Figure(fig_id="X.1", title="X", chart=chart, placement="beside")
 
 
-def test_the_registry_holds_the_s5_registration_of_w2_group_a():
-    # Group a (S.5) is the registry's first entry; the later groups append their own blocks.
-    assert report_view._FIGURE_PRODUCERS["financials-credit-metrics"] == (
-        report_view._cp1_period_figures,
-        frozenset({"credit_snapshot"}),
-    )
+def test_the_registry_holds_exactly_the_producers_of_the_four_w2_groups():
+    # Every block id and pathway each group registered, in group order a, b, c, d.
+    distressed = frozenset({"distressed_restructuring"})
+    expected = {
+        # group a: S.5 beside the financials period grid
+        "financials-credit-metrics": ("_cp1_period_figures", frozenset({"credit_snapshot"})),
+        # group b: RV.3 and CR.1
+        "peer-positioning": ("_rv3_figures", frozenset({"relative_value"})),
+        "covenant-tests-headroom": ("_cr1_figures", frozenset({"covenant_refinancing"})),
+        # group c: CR.2 and CR.3 (every pathway that holds the block)
+        "liquidity-runway": ("_cr2_figures", None),
+        "funding-gap": ("_cr3_figures", None),
+        # group d: DR.2 to DR.6
+        "recovery-by-class": ("recovery_by_class_figures", distressed),
+        "value-allocation-claims": ("value_allocation_figures", distressed),
+        "rating-triggers": ("rating_trigger_figures", distressed),
+    }
+    registered = {
+        block_id: (producer.__name__, pathways)
+        for block_id, (producer, pathways) in report_view._FIGURE_PRODUCERS.items()
+    }
+    assert registered == expected
+    assert list(report_view._FIGURE_PRODUCERS) == list(expected)
 
 
 def test_an_empty_registry_leaves_the_dispatch_with_no_figure_of_its_own(monkeypatch, chart_case):

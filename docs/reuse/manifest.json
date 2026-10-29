@@ -11,7 +11,7 @@
     "deploy_vii.cp_model_workflow",
     "deploy_vii.delivery"
   ],
-  "python_modules": 85,
+  "python_modules": 88,
   "files": [
     {
       "destination": "src/deploy_vii/__init__.py",
@@ -984,13 +984,77 @@
       "sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "selection_reason": "registry metadata required by selected modules",
       "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/inputs/__init__.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "src/deploy_vii/inputs/__init__.py",
+      "sha256": "78db891259cf2d2361590d452fa392816a84d71ad1fee17c76ca83c0581aa7e9",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/inputs/portfolio.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "src/deploy_vii/inputs/portfolio.py",
+      "sha256": "ed239e92269fb550601e76ccaf84aaf05b739428a265781cb07dacc7ffbbe048",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/inputs/rv_quotes.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "src/deploy_vii/inputs/rv_quotes.py",
+      "sha256": "7ff9213724b331fc0cd2535dc216220ac6965b6d29e634a86c199f6ef4c73f9c",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "scripts/build_templates.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "scripts/build_templates.py",
+      "sha256": "af1859041c2063707c5baa120775b374b0649125e931c931a1928233c22eac02",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "docs/templates/portfolio.template.xlsx",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "docs/templates/portfolio.template.xlsx",
+      "sha256": "c3564078644ad6e9ecf4b9559f8f828063d6daef57dc57c636d6e64c405cf97b",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "tests/product/test_inputs_portfolio.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "tests/product/test_inputs_portfolio.py",
+      "sha256": "5f8c08fe2e5e7fdd7c34459e0a9b8ae1bcde8f9d635da2e27541227fe0c4c8fd",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "docs/templates/README.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "docs/templates/README.md",
+      "sha256": "9cec0e896a4ebec4cc3048a890ee0a480c17dacc950277620946685b4ed1de70",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "source_file_sha256": "09fa35e9a787a4fc1ad1fbb2d873d7e9a7445234bf826e7280fc334db7b31550",
+      "excerpt": "lines 112-401 of the source file (the 'Portfolio workbook' section only); sha256 is of the excerpt bytes",
+      "verification": "byte-preserved excerpt; not new-project functional acceptance",
+      "note": "build_templates.py main() also writes the non-imported rv-quotes.template.xlsx"
     }
   ],
   "excluded_python_modules": [
     "deploy_vii.__main__",
     "deploy_vii.execution_cli",
-    "deploy_vii.inputs",
-    "deploy_vii.inputs.rv_quotes",
     "deploy_vii.live.catalog",
     "deploy_vii.live.cli",
     "deploy_vii.live.client",

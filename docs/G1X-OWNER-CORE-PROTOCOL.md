@@ -59,6 +59,15 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
   `precheck`; the gate runs first.
 - `_verify_submissions` recomputes the gate for every submission of the module: a refused
   record must reproduce exactly its issues; a valid or invalid step must yield none.
+- Known gap (Stage 4 class D, ruling D1 of 2026-10-29: documented, not closed; the receipt stays
+  `owner-run-receipt/1`). A refused submission, and a refused call after a binding's last
+  submit, changes no snapshot, so nothing in the snapshot chain anchors that it happened or in
+  what order: its `sequence` can be renumbered and the seal file is attacker-written. Detection
+  needs a runtime anchor (a hash-chain field on `OwnerSubmission` and `OwnerCall`, or a
+  counter in `ExecutionSnapshot`), which is an interface change. The impact is bounded: no
+  head, attempt, input or publication depends on a refused record; what is lost is the count
+  and order of refused tries as participation evidence. The verifier checks each refused
+  record it is given (its issues, its unchanged snapshot) but cannot show the set is complete.
 
 ## 5. Plan ordering after CP-MODEL (built); not in G1-X
 - (Round 2 of `docs/rulings/2026-10-28-stage2.md`, built at `owner_workflow.py:1004-1010`.)

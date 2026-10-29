@@ -10,7 +10,10 @@ and prose yields an empty table.
 
 Rules (docs/development/live-runner.md, "Statement extraction"):
 
-- A line's cells are separated by two or more spaces. A data line is a label (with a letter)
+- A line's cells are separated by two or more spaces, or by a ` | ` pipe (a table row printed
+  as `Label | 1,759 | 1,668`: the line is read as if each pipe were two spaces; a row of only
+  `-` runs and pipes gives no line, and a line holding a pipe is never a caption or a label
+  continuation). A data line is a label (with a letter)
   followed, to the end of the line, by two or more numeric cells: `10,441`, `2.42`, `(1,234)`
   (negative) or a lone em dash, en dash or hyphen (nil: value `None`, raw token kept). A `$`
   before a number, alone or attached, is folded into it and not kept in the raw value. A line
@@ -56,6 +59,7 @@ _CELL = re.compile(r"\S+(?: \S+)*")
 _YEAR = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
 _BARE_YEAR = re.compile(r"(?:19|20)\d{2}")
 _WORD = re.compile(r"[A-Za-z]+")
+_PIPE = re.compile(r"[ \t]*\|[ \t]*")
 _MONTH_NAMES = (
     *("January", "February", "March", "April", "May", "June", "July", "August"),
     *("September", "October", "November", "December"),
@@ -112,6 +116,8 @@ def _value(raw: str) -> Decimal | None:
 
 def _cells(line: str) -> _Cells | None:
     """The label and trailing numeric cells of a data line, or None for any other line."""
+    if "|" in line:
+        line = _PIPE.sub("  ", line)
     found: list[tuple[str, bool]] = []  # (raw, a `$` is folded in), right to left
     start = len(line)
     for cell in reversed(list(_CELL.finditer(line))):
@@ -138,7 +144,8 @@ def _is_header(line: str) -> bool:
 
 def _is_caption(stripped: str) -> bool:
     return (
-        bool(_WORD.search(stripped))
+        "|" not in stripped
+        and bool(_WORD.search(stripped))
         and not any(c.islower() for c in stripped)
         and not any(c.isdigit() for c in stripped)
     )
@@ -146,7 +153,8 @@ def _is_caption(stripped: str) -> bool:
 
 def _is_continuation(stripped: str) -> bool:
     return (
-        _CELL.fullmatch(stripped) is not None
+        "|" not in stripped
+        and _CELL.fullmatch(stripped) is not None
         and any(c.islower() for c in stripped)
         and not any(c.isdigit() for c in stripped)
         and not stripped.endswith(":")

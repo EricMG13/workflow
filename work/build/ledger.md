@@ -438,3 +438,4 @@
 - 10:00 Q-C1 builder done ff1dbce (MODEL dense spec, CP-MODEL in covenant_refinancing, legal render green, tripwire xfail strict, pathway_has_model_block test). I2 integrator dispatched.
 - 10:20 I2 done 192772c (f1+f2+qc1 merged; chain fixed point; double rebuild identical; fast set 9448 passed + tripwire xfail; S1a 3 passed; timing gaps 0.8/attach 0.4 >=5x). Ruled cpos re-pins OK; D12 records for report_view/contracts (Q-C1) requested.
 - 10:22 D12 records c752e59 (report_view, contracts); probe_d12_chain exit 0 over 12 reused files. Render suites + test_source_tools running on c752e59; scoped Opus re-review (mx-precise aee778f4) of C-M1, B-M1, Q-C1 code, I2.
+- 10:28 Release re-review APPROVE (aee778f4): C-M1, B-M1 fixed; Q-C1 code matches rulings; blast radius only covenant_refinancing default plan. 2 Lows (methods notes for cpl10/cp2a/cp2d; tripwire raises=AssertionError) -> f3 on claude/s2r-f3 from c752e59.

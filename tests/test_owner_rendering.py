@@ -23,13 +23,14 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import pytest
 import test_cp1_chart_render
 
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.contracts import Run
-from deploy_vii.execution import Execution
+from deploy_vii.execution import Attempt, Execution, current_inputs
 from deploy_vii.registry import modules as registry_modules
 from deploy_vii.report_view import build, pathways
 from deploy_workflow import owner_rendering as g2
@@ -693,11 +694,24 @@ def test_genuine_cp1_model_positive_delivery(
     fin_destination = tmp_path / "financial-delivery"
     fin_report = render_financial_slice(fin_store, fin_receipt, fin_model, fin_destination)
     assert _banner_free(text) == _banner_free(fin_report.read_text(encoding="utf-8"))
+    # Ruling item 27: each delivery equals its own publication; across the two independent runs
+    # the content is equal except the per-attempt ticket_id minted by each CP-MODEL attempt.
     for name in ("model.html", "calculation.json", "receipt.json"):
-        assert (destination / "model" / name).read_bytes() == (fin_model / name).read_bytes()
-        assert (fin_destination / "model" / name).read_bytes() == (
-            destination / "model" / name
+        assert (destination / "model" / name).read_bytes() == (model / name).read_bytes()
+        assert (fin_destination / "model" / name).read_bytes() == (fin_model / name).read_bytes()
+    for name in ("model.html", "calculation.json"):
+        assert (destination / "model" / name).read_bytes() == (
+            fin_destination / "model" / name
         ).read_bytes()
+    receipts = []
+    for owned_store, delivery in ((store, destination), (fin_store, fin_destination)):
+        parsed = json.loads((delivery / "model" / "receipt.json").read_bytes())
+        tickets = [
+            a.ticket_id for a in Execution(owned_store).read().attempts if a.module_id == "CP-MODEL"
+        ]
+        assert tickets == [parsed.pop("ticket_id")]
+        receipts.append(parsed)
+    assert receipts[0] == receipts[1]
     assert_scope_figures("cp1-model", "positive", "complete", _payload(text))
     heads = {h.module_id: h for h in wire.head_results}
     assert [h.module_id for h in wire.head_results][:2] == ["CP-0", "CP-1"]
@@ -784,7 +798,28 @@ def test_genuine_cp1_model_extra_attempt_is_refused(
     tmp_path: Path, inputs: Callable[..., Any]
 ) -> None:
     store, receipt, model = inputs("positive")
-    Execution(store).begin("CP-1")  # a further attempt on the settled store
+    with pytest.raises(ValueError, match="settled"):
+        Execution(store).begin("CP-1")  # the product cannot make an extra attempt here
+    # The store bytes are untrusted, so forge a pending repair attempt (precedent:
+    # tests/test_financial_render.py, store._write of a modified snapshot).
+    execution = Execution(store)
+    snapshot = execution.read()
+    prior = [a for a in snapshot.attempts if a.module_id == "CP-1"]
+    extra = Attempt(
+        ticket_id=str(uuid4()),
+        module_id="CP-1",
+        inputs=current_inputs(snapshot, "CP-1"),
+        number=len(prior),
+        repair_of=prior[-1].ticket_id,
+    )
+    execution._write(
+        snapshot.model_copy(
+            update={"parent": snapshot.content_hash(), "attempts": (*snapshot.attempts, extra)}
+        )
+    )
+    forged = Execution(store).read()
+    assert forged.attempts[-1].ticket_id == extra.ticket_id
+    assert forged.attempts[-1].status == "pending"
     _refused(tmp_path, store, receipt, model, "extra-attempt")
 
 
@@ -1978,9 +2013,15 @@ def assert_funding_gap_heads(
 # ---------------------------------------------------------------- deferred scopes (heavy)
 
 
+def _matches_oracle_text(got: str, want: str) -> bool:
+    """Oracle `∅ G#` is a placeholder for the renderer's gap number."""
+    parts = (re.escape(part) for part in want.split("∅ G#"))
+    return re.fullmatch(r"∅ G\d+".join(parts), got) is not None
+
+
 def _cell_ok(payload_cell: dict[str, Any], oracle_cell: dict[str, Any]) -> None:
     if oracle_cell["state"] == "known" and oracle_cell.get("shown") is not None:
-        assert payload_cell["text"] == oracle_cell["shown"]
+        assert _matches_oracle_text(payload_cell["text"], oracle_cell["shown"]), payload_cell
     else:  # gap spelling `∅ G#` / `∅ G# n.m.`, numbered by the renderer (oracle cell_notation)
         assert re.fullmatch(r"∅ G\d+( n\.m\.)?", payload_cell["text"]), payload_cell
 
@@ -1993,8 +2034,29 @@ def _register_ok(payload_rows: list[dict[str, Any]], oracle_rows: list[dict[str,
             _cell_ok(got_cell, want_cell)
 
 
+def _is_synthetic_chip(run: dict[str, Any]) -> bool:
+    """The S provenance chip: a `fig` run whose ref_id is S<n> and whose text is that ref_id."""
+    ref = run.get("ref_id") or ""
+    return run["kind"] == "fig" and re.fullmatch(r"S\d+", ref) is not None and run["text"] == ref
+
+
 def _line_text(line: dict[str, Any]) -> str:
-    return "".join(run["text"] for run in line["runs"])
+    """The line's text without S chips, runs joined by a space as the page does (app.js)."""
+    return " ".join(run["text"] for run in line["runs"] if not _is_synthetic_chip(run))
+
+
+_RENDER_NODE_SCOPES = {"cp3d-fp03-market", "cp4-fp04-covenants", "cp8-fp01-what-changed"}
+
+
+def assert_render_node_owner(block: dict[str, Any], node: dict[str, Any], scope_id: str) -> None:
+    """cp3d, cp4 and cp8 oracles are render nodes, not block dicts: owner, kind where present,
+    and for cp3d the tab labels. Their secondary-pointer checks are deferred (ruling item 28)."""
+    assert block["owner"] == node["owner"], scope_id
+    if "kind" in node:
+        assert block["kind"] == node["kind"], scope_id
+    if scope_id == "cp3d-fp03-market":
+        got = [block["tab_label"], *(tab["label"] for tab in block["tabs"])]
+        assert got == [label for _, label in node["tabs"]], scope_id
 
 
 def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) -> None:
@@ -2006,14 +2068,67 @@ def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) ->
     if "primary" in oracle:
         assert block["tab_label"] == oracle["primary"]["tab"]
         _register_ok(block["rows"], oracle["primary"]["rows"])
-    for got, want in zip(block["tabs"], oracle.get("tabs", []), strict=False):
-        assert got["label"] == want["tab"]
-        if "rows" in want:
-            _register_ok(got["rows"], want["rows"])
-    if "lines" in oracle:
-        assert [_line_text(line) for line in block["lines"]] == [
-            line["text"] for line in oracle["lines"]
+        for got, want in zip(block["tabs"], oracle.get("tabs", []), strict=False):
+            assert got["label"] == want["tab"]
+            if "rows" in want:
+                _register_ok(got["rows"], want["rows"])
+    elif "tabs" in oracle:  # tabs-only oracle: the primary tab is tabs[0]
+        pages = [
+            (block["tab_label"], block["rows"]),
+            *((t["label"], t["rows"]) for t in block["tabs"]),
         ]
+        wants = [(t["label"], t["rows"]) for t in oracle["tabs"]]
+        assert [label for label, _ in pages] == [label for label, _ in wants]
+        for (_, got_rows), (_, want_rows) in zip(pages, wants, strict=True):
+            _register_ok(got_rows, want_rows)
+    if "lines" in oracle:
+        assert len(block["lines"]) == len(oracle["lines"])
+        for line, want in zip(block["lines"], oracle["lines"], strict=True):
+            assert _matches_oracle_text(_line_text(line), want["text"]), line
+            has_chip = any(_is_synthetic_chip(run) for run in line["runs"])
+            assert has_chip == bool(want.get("synthetic_ref")), line
+
+
+def _run(kind: str, text: str, ref_id: str | None = None) -> dict[str, Any]:
+    return {"kind": kind, "text": text, "ref_id": ref_id}
+
+
+def test_fast_block_rule_handles_s_chip_gap_placeholder_and_tabs_only_oracle() -> None:
+    cell = {"text": "7.5x"}
+    block: dict[str, Any] = {
+        "tab_label": "Peers",
+        "rows": [{"label": "A", "cells": [cell]}],
+        "tabs": [{"label": "Other", "rows": [{"label": "B", "cells": [{"text": "∅ G12 n.m."}]}]}],
+        "lines": [
+            {"runs": [_run("text", "Deal value"), _run("fig", "S110", "S110")]},
+            {"runs": [_run("text", "Date / window:"), _run("text", "∅ G7 n.m.")]},
+        ],
+    }
+    oracle: dict[str, Any] = {
+        "tabs": [
+            {
+                "label": "Peers",
+                "rows": [{"label": "A", "cells": [{"state": "known", "shown": "7.5x"}]}],
+            },
+            {
+                "label": "Other",
+                "rows": [
+                    {"label": "B", "cells": [{"state": "known", "shown": "∅ G# n.m."}]},
+                ],
+            },
+        ],
+        "lines": [
+            {"text": "Deal value", "synthetic_ref": True},
+            {"text": "Date / window: ∅ G# n.m."},
+        ],
+    }
+    assert_block_equals_oracle(block, oracle)
+    wrong_chip = {**oracle, "lines": [{"text": "Deal value"}, oracle["lines"][1]]}
+    with pytest.raises(AssertionError):
+        assert_block_equals_oracle(block, wrong_chip)
+    wrong_tab = {**oracle, "tabs": [oracle["tabs"][0]]}
+    with pytest.raises(AssertionError):
+        assert_block_equals_oracle(block, wrong_tab)
 
 
 def _s1a(case: str, root: Path) -> tuple[Path, Path, Path | None]:
@@ -2244,7 +2359,10 @@ def _check_scope_run(
         name, pointer = ORACLE_POINTERS[scope_id]
         node = _pointer(_oracle(name), pointer.format(c=_oracle_case_key(scope_id, case)))
         for section_id, oracle_block in _block_nodes(node, tuple(scope.sections)).items():
-            assert_block_equals_oracle(blocks[section_id], oracle_block)
+            if scope_id in _RENDER_NODE_SCOPES:
+                assert_render_node_owner(blocks[section_id], oracle_block, scope_id)
+            else:
+                assert_block_equals_oracle(blocks[section_id], oracle_block)
     for rail in wire.rails:
         for fact in rail.facts:
             module = next(m for m in payload["modules"] if m["module_id"] == fact.module_id)

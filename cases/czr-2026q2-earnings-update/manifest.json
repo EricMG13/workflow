@@ -1,0 +1,51 @@
+{
+  "schema_version": "public-case/1",
+  "case_id": "czr-2026q2-earnings-update",
+  "run": {
+    "run_id": "czr-2026q2-earnings-update-v1",
+    "issuer_id": "CZR",
+    "issuer_name": "Caesars Entertainment, Inc.",
+    "as_of": "2026-10-02",
+    "case_kind": "public",
+    "pathway": "earnings_update",
+    "requested_modules": ["CP-1", "CP-1B", "CP-2", "CP-5"]
+  },
+  "origin": {
+    "project": "caos-databricks",
+    "path": "qualification/czr-2026q2-earnings-update",
+    "commit": "455ecd44d27fb3167588ff9dd1d435d319c6d0b4",
+    "qualification_set_digest": "03b43aad16b19c0c3ce2d66b3b949a5b21f2708831b1e293ad0efe94c2677d75",
+    "qualification_json_sha256": "d6d60127aafc869e113674dfdf4b628aa23af107d62bb3b08304e79cc75a073f",
+    "keys_authority": "owner ruling 2026-10-17 (caos N126, F702); keys authored from the documents, not from any run output",
+    "copied": "2026-10-28, byte-identical"
+  },
+  "documents": [
+    {
+      "source_id": "czr-fy2025-10k",
+      "path": "documents/CZR_FY2025_10K.txt",
+      "sha256": "172309048af2a6a2dab515d765f00a7c89bf8c874c6104a5e3a052b66cad4512",
+      "document_type": "Form 10-K, year ended 2025-12-31",
+      "url": "https://www.sec.gov/Archives/edgar/data/1590895/000159089526000011/czr-20251231.htm",
+      "accession": "0001590895-26-000011"
+    },
+    {
+      "source_id": "czr-q2-2026-10q",
+      "path": "documents/CZR_Q2_2026_10Q.txt",
+      "sha256": "f369ce5f1ebeddd9a0d4ce02ce3958112267d8701d1a348dfd6dc82d2034793a",
+      "document_type": "Form 10-Q, quarter ended 2026-06-30",
+      "url": "https://www.sec.gov/Archives/edgar/data/1590895/000159089526000028/czr-20260630.htm",
+      "accession": "0001590895-26-000028"
+    },
+    {
+      "source_id": "czr-q2-2026-release",
+      "path": "documents/CZR_Q2_2026_Earnings_Release.txt",
+      "sha256": "b385f76ff631243d1053fa8073ebde4f8886b4a50c9ce34ce3498d6b2ac3e9f8",
+      "document_type": "Earnings release, Ex. 99.1, 2026-07-28",
+      "url": "https://www.sec.gov/Archives/edgar/data/1590895/000159089526000027/ex991-2026q2ceiearningsrel.htm",
+      "accession": "0001590895-26-000027"
+    }
+  ],
+  "citation_keys": "qualification.json",
+  "value_expectations": "expected.json",
+  "limits": "Oracle only. No recorded module submissions exist for this case, so no module or pathway run consumes it yet."
+}

@@ -526,3 +526,4 @@
 - 18:44 I6 lane A: fast exit=0 (10247 passed, 19 skipped, 1 xfailed, 6m); g2fast exit=0 (153 passed).
 - 19:17 Batch 1 adversary FINDINGS (mx-adversary aaa8857d, 2619 s): High 1 two CP-MODEL forgery tests fail before the verifier (test defect); Medium 1 valid-step relabel of a repair attempt accepted (predates; ruled in, plan §1); Info B3 11/28 rows kind-only; Class D as documented; replay matched begin on 4000 snapshots. Rulings item 33. Report work/build/stage4/batch1-adversary.md.
 - 19:17 Dispatched batch 1 fix round 1 (mx-feature a2b07df1, isolated, claude/s4-batch1-fix1 from 515a8c6; brief work/build/stage4/batch1-fix1-brief.md).
+- 20:02 I6 G2 shard 4: 6 passed, 2 failed (cp2g positive and cp2a_blocked: tests/cp2g_runs.py binds the oracle's readiness note; driver never run before). Rulings item 34. Dispatching CP-2G driver fix (mx-feature, isolated, claude/s3-cp2g-driver from a020996).

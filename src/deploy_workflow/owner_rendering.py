@@ -98,13 +98,13 @@ def _scope(
 
 
 _DELIVERY_ROWS: tuple[DeliveryScope, ...] = (
-    # Lease rev 0/1 (Q6 texts). Sections are the Front Page blocks only CP-1 and CP-MODEL fill
-    # that are not charts; `model-chart-strip` is a chart, which G2 does not assign.
+    # Lease rev 0/1 (Q6 texts); sections per rev 3 R3.1: the three credit_snapshot blocks whose
+    # producers are CP-1 alone (the chart strip included).
     _scope(
         "cp1-model",
         "credit_snapshot",
         ("CP-1", "CP-MODEL"),
-        ("capital-structure", "financials-credit-metrics"),
+        ("model-chart-strip", "capital-structure", "financials-credit-metrics"),
         {
             "complete": (
                 "Historical financial analysis and Model publication only. "

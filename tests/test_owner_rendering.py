@@ -72,8 +72,9 @@ REV0_BANNERS = {
         "unqualified."
     ),
 }
-# Rev 2 R2.2 sections (pathway order); `cp1-model` is not listed in the lease (see the report).
+# Rev 2 R2.2 sections (pathway order); `cp1-model` is rev 3 R3.1.
 EXPECTED_SECTIONS = {
+    "cp1-model": ("model-chart-strip", "capital-structure", "financials-credit-metrics"),
     "s1a-credit-snapshot": (
         "key-findings",
         "company-operating-model",
@@ -170,12 +171,20 @@ def test_fast_scope_banners_equal_the_frozen_lease_literals() -> None:
 def test_fast_scope_sections_follow_the_pathway_order() -> None:
     blocks = {item.id: item.blocks for item in pathways()}
     for scope_id, scope in g2.DELIVERY_SCOPES.items():
-        if scope_id != "cp1-model":
-            assert tuple(scope.sections) == EXPECTED_SECTIONS[scope_id], scope_id
+        assert tuple(scope.sections) == EXPECTED_SECTIONS[scope_id], scope_id
         order = [blocks[scope.pathway].index(section) for section in scope.sections]
         assert order == sorted(set(order)), scope_id
     for scope_id in ("slice-cp2e-sensitivity", "slice-cpdr-research", "slice-cpl10-screen"):
         assert g2.DELIVERY_SCOPES[scope_id].sections == ()
+
+
+def test_fast_cp1_model_sections_are_the_blocks_produced_by_cp1_alone() -> None:
+    """Rev 3 R3.1 derivation, read from the core's block specs rather than G2's table."""
+    from deploy_vii.report_view import _spec_of
+
+    credit = next(item for item in pathways() if item.id == "credit_snapshot")
+    producers_cp1 = tuple(b for b in credit.blocks if _spec_of(b).producers == ("CP-1",))
+    assert producers_cp1 == tuple(g2.DELIVERY_SCOPES["cp1-model"].sections)
 
 
 def test_fast_scope_triples_are_unique_and_modules_are_known() -> None:

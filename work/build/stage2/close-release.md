@@ -68,8 +68,15 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
 - **CP-2A lease.** The unit rule applies to settled operands only (lows.md).
 - `MODULES.csv`: record the D3 closures once runs are accepted.
 
+## From LEAD's dispatch queue (:145-200)
+- **CP-2E lease.** Internals and the Files row (round 3).
+- **Protocol §6.** The synthetic-limitation line (round 3).
+- **CP-3 lease alias text.** It is inside the CP-6 freeze.
+
 ## LEAD product items
-- **`lead/cp6-freeze`.** Merge 562a3bc.
+- **`lead/cp6-freeze`.** 562a3bc, PASS.
+  - **First:** merge it before any other re-pin. It moves `methodology.json` 1bb6c0bc → 0932d9fb (T6-FINAL) and re-pins 14 builders and manifests.
+  - **Then:** re-pin against the tip, and set the reuse-manifest `project_commit`.
 - **`lead/0d-d`.** Finish it and review it (the user stopped its reviews earlier).
 - **`is_blank`.** Extend it to Cc, default-ignorables and U+2800.
 - **`citation_issues`.** Refuse a blank quote.

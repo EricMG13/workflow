@@ -6,7 +6,6 @@ and block wiring are W2's; these tests hold the shared seam only.
 
 import json
 import re
-from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -519,11 +518,11 @@ def test_maturity_wall_has_one_strip_figure_and_a_cp1_not_settled_reason():
     assert report_view._strip_reason("model-chart-strip") is None
 
 
-def test_maturity_wall_stays_dense_until_w2_flips_it():
-    assert report_view._spec_of("maturity-wall").kind == "dense"
+def test_maturity_wall_is_a_chart_strip_since_the_s4_wiring():
+    assert report_view._spec_of("maturity-wall").kind == "chart"
 
 
-def test_a_chart_block_without_a_cp1_entry_takes_the_degraded_path(monkeypatch, tmp_path):
+def test_a_chart_block_without_a_cp1_entry_takes_the_degraded_path(tmp_path):
     import test_connect_cp2d as c2d
 
     store, attempt = c2d.make_upstream(tmp_path)
@@ -537,13 +536,6 @@ def test_a_chart_block_without_a_cp1_entry_takes_the_degraded_path(monkeypatch, 
         ).model_dump()
     )
     assert "CP-1" not in {m.module_id for m in view.modules}
-    original = report_view._spec_of
-
-    def as_chart(block_id):
-        spec = original(block_id)
-        return replace(spec, kind="chart") if block_id == "maturity-wall" else spec
-
-    monkeypatch.setattr(report_view, "_spec_of", as_chart)
     pathway = next(p for p in pathways() if p.id == view.run.pathway)
     block = {b.block_id: b for b in build(view, pathway, SHIPPED_MAPS).blocks}["maturity-wall"]
     assert block.figures[0].fig_id == "S.4"

@@ -56,6 +56,10 @@ CP1 = BindingMap(
             "T4.17", "capital-structure", "amount", "adjusted-ebitda-bridge", "EBITDA adjustments"
         ),
         _bind("pro-forma", "capital-structure", "amount", None, "Transaction and new debt"),
+        # Maturity wall (FP 04 S.4): the facility register is the Model's primary tab; CP-2D's
+        # T2E.4 follows as a further tab (a second placement of T4.18, never a second binding in
+        # one block).
+        _bind("T4.18", "maturity-wall", "amount", "debt-facilities", "Capital structure"),
         # Earnings Update (FP 02): the same registers placed in that Pathway's own blocks.
         _bind("T4.17", "ebitda-adjustments", "amount", "adjusted-ebitda-bridge", "House view"),
         _bind("T4.10", "metric-strip", "text", "kpi-dashboard", "KPI dashboard"),

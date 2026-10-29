@@ -90,7 +90,9 @@ def test_marks_keep_the_exact_value_and_the_display_rounding():
 def test_strip_s1_to_s4_is_unchanged_by_s5():
     blocks = _blocks(_view(fixture()))
     assert [f.fig_id for f in blocks["model-chart-strip"].figures] == ["S.1", "S.2", "S.3", "S.4"]
-    assert "S.5" not in {f.fig_id for b in blocks.values() if b.block_id != BLOCK for f in b.figures}
+    assert "S.5" not in {
+        f.fig_id for b in blocks.values() if b.block_id != BLOCK for f in b.figures
+    }
 
 
 def test_a_gap_quarter_is_a_gap_mark_with_its_reference_and_the_others_survive():

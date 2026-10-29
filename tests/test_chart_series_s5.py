@@ -105,10 +105,10 @@ def test_s5_gap_quarter_stays_a_point_with_no_value_never_zero():
 @pytest.mark.parametrize(
     "updates",
     [
-        dict(unit="UNITS"),
-        dict(scale=Decimal(1)),
-        dict(currency="EUR"),
-        dict(basis="IFRS · borrower"),
+        {"unit": "UNITS"},
+        {"scale": Decimal(1)},
+        {"currency": "EUR"},
+        {"basis": "IFRS · borrower"},
     ],
 )
 def test_s5_foreign_unit_currency_scale_or_basis_fails_closed(updates):
@@ -162,11 +162,11 @@ def test_s5_fy_alias_period_is_never_a_fifth_category():
     added = []
     for f in module.facts:
         if f.row_id in {"T4.14.q4-2025", "T4.18.q4-2025"}:
-            updates = dict(
-                fact_id=f.fact_id.replace("q4-2025", "fy-2025"),
-                row_id=f.row_id.replace("q4-2025", "fy-2025"),
-                period="fy-2025",
-            )
+            updates = {
+                "fact_id": f.fact_id.replace("q4-2025", "fy-2025"),
+                "row_id": f.row_id.replace("q4-2025", "fy-2025"),
+                "period": "fy-2025",
+            }
             if f.field == "period_id":
                 updates["text"] = "fy-2025"
             if f.field == "period_type":

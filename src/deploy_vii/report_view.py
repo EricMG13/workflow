@@ -1234,10 +1234,10 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         "liquidity-runway": _Spec(
             "Liquidity and cash runway", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
         ),
-        # Q-C1: Model-owned (approved FP 04 page, "MODEL · Fig. S.4"; no route on its header).
-        # Kind stays dense until the Stage 3 S.4 task adds the `_STRIP_FIGURES` entry and the
-        # CP-1 binding: kind chart would raise KeyError here. CP-2D's T2E.4 stays bound.
-        "maturity-wall": _Spec("Maturity wall", "MODEL", "dense", ("CP-1",), route_label=None),
+        # Q-C1: Model-owned (approved FP 04 page, "MODEL · Fig. S.4"; no route on its header). A
+        # chart strip drawing S.4 from CP-1's T4.18 (bindings/cp1.py), with CP-2D's T2E.4 bound
+        # as the further tab.
+        "maturity-wall": _Spec("Maturity wall", "MODEL", "chart", ("CP-1",), route_label=None),
         "funding-gap": _Spec(
             "Funding gap", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
         ),
@@ -2017,7 +2017,13 @@ def _block(
     spec = _spec_of(block_id)
     modules = {module.module_id: module for module in view.modules}
     statuses: dict[str, Status] = {code: module.status for code, module in modules.items()}
-    shown = tuple(e for e in entries if modules[e.fact_coord.module_id].status in SHOWN_STATUSES)
+    # A binding whose module has no entry in the view shows nothing (the maturity wall binds CP-1
+    # and CP-2D; a view without CP-1 keeps CP-2D's register and the n/a frame).
+    shown = tuple(
+        e
+        for e in entries
+        if (m := modules.get(e.fact_coord.module_id)) is not None and m.status in SHOWN_STATUSES
+    )
     synthetic = ("Synthetic",) if view.run.case_kind == "synthetic" else ()
     state: BlockState = "collapsed" if spec.collapsed else "populated"
     route = spec.producers[0] if spec.producers else None

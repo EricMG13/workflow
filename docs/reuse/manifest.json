@@ -1614,6 +1614,15 @@
       "companion_test": "tests/test_upstream_tools.py",
       "companion_test_sha256": "b95bc0a2816a16fdfe775023af773e232af8872c762e6cb280e6b76f5239b665",
       "reason": "Add the admitted v2 CP-5 integrity upstream transport over CP-1/CP-1B; preserves baseline, A2 and CP1B pager project bytes."
+    },
+    {
+      "destination": "src/deploy_vii/statement_extract.py",
+      "imported_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "prior_project_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "project_commit": "c81932f1d1bb66431da9d7ff66d3cd7e18ad0029",
+      "sha256": "d7e15269089f8d5597586206ba2efa730eaa4694c5c2b285871aa283c15c8ff5",
+      "reason": "Read ` | `-delimited table rows (each pipe as two spaces; separator rows give no line; a pipe line is never a caption or label continuation) for the filed CZR documents; two-space rows extract as before (user-approved Gap 2, rulings 2026-10-29-stage3 item 10).",
+      "review": "work/build/stage3/czr-brief.md"
     }
   ]
 }

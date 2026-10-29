@@ -26,6 +26,7 @@ CP1_CONTEXT_VERBATIM: Mapping[tuple[str | int, ...], str] = {
     ("sources", "*", "event_scan_explanation"): "SourceContext.event_scan_explanation (Text)",
     ("sources", "*", "limitations", "*"): "SourceContext.limitations (Text)",
     ("sources", "*", "scopes", "*", "period_label"): "ReportingScope.period_label (Text)",
+    ("sources", "*", "scopes", "*", "limitations", "*"): "ReportingScope.limitations (Text)",
 }
 
 
@@ -62,6 +63,10 @@ def test_cp1_source_context_model_text_is_journaled_except_on_its_verbatim_paths
         return _Cp1ContextRun(fork, positive)
 
     failures = dc.model_text_failures(
-        schema, positive, fresh, verbatim=frozenset(CP1_CONTEXT_VERBATIM)
+        schema,
+        positive,
+        fresh,
+        verbatim=frozenset(CP1_CONTEXT_VERBATIM),
+        fill_absent=True,  # round 5 item 10 L2: events and scopes the positive leaves null
     )
     assert failures == []

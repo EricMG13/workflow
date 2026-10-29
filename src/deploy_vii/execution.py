@@ -378,8 +378,10 @@ def shortened(text: str, limit: int = MAX_ISSUE_CHARS) -> str:
 
 
 def clipped(parts: Iterable[str], limit: int = MAX_ISSUE_CHARS) -> str:
-    """`shortened("".join(parts), limit)`, never joining more than `limit + 1` characters, so a
-    line that quotes caller content is cut before it is built whole."""
+    """`shortened("".join(parts), limit)` for `limit >= 1`, never joining more than `limit + 1`
+    characters, so a line that quotes caller content is cut before it is built whole. At
+    `limit=0` the two differ (`["ab"]` gives `"…"` here and `"a…"` from `shortened`); no caller
+    passes a limit below 1 (the default is `MAX_ISSUE_CHARS`)."""
     kept: list[str] = []
     size = 0
     for part in parts:

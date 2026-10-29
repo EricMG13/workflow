@@ -32,7 +32,9 @@ added to the journal's own issues for the submit (`live.submission.submit_model_
 
 Each of these two rules gives at most 20 lines of at most 600 characters (0d-c): past 20 matches,
 the first 19 and a count of the rest. Its issues are built only for the lines shown, so a
-payload cannot make the rule's text, memory or time outgrow the payload.
+payload cannot make the rule's issue text or memory outgrow the payload. The walk that finds the
+matches costs O(nodes x depth) in time, as it did before 0d-c (a deeply nested payload of about
+1 MiB takes several seconds per call, at submit and again at verify).
 
 Task 8.9 (user decision 24 Oct 2026, every live step a tool loop): a step's tool set is the
 registry's (`registry.tool_sets`). A `pack` step is offered `search_pack`, `read_pages` (over

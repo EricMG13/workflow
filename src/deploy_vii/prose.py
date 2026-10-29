@@ -27,14 +27,30 @@ if TYPE_CHECKING:
     from deploy_vii.contracts import Fact, Module
 
 
-def is_blank(text: str) -> bool:
-    """Whether `text` holds only whitespace and Unicode format (`Cf`) characters (round 12 B10).
+# Default-ignorable code points outside Cf (round 13 addendum 3), plus U+2800 (braille blank,
+# category So): they render as nothing, and `str.strip()` keeps them.
+_INVISIBLE = frozenset(
+    {0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x3164, 0xFFA0, 0x2800}
+    | set(range(0x180B, 0x1810))
+    | set(range(0xFE00, 0xFE10))
+    | set(range(0xE0100, 0xE01F0))
+)
 
-    A text is blank when every character is whitespace (`str.isspace`) or a format character
-    (category `Cf`: U+200B, U+FEFF, U+00AD, U+2060 and the like), which `str.strip()` keeps.
-    `""` is blank, as `not "".strip()` is.
+
+def is_blank(text: str) -> bool:
+    """Whether `text` holds only whitespace and invisible characters (round 12 B10, extended in
+    the Stage 2 close release by round 13 addendum 3).
+
+    A text is blank when every character is whitespace (`str.isspace`), a control (category
+    `Cc`), a format character (`Cf`: U+200B, U+FEFF, U+00AD, U+2060 and the like), one of the
+    default-ignorable code points outside `Cf` (U+034F, U+115F, U+1160, U+17B4, U+17B5,
+    U+180B-U+180F, U+3164, U+FE00-U+FE0F, U+FFA0, U+E0100-U+E01EF) or U+2800. `str.strip()`
+    keeps all of those. `""` is blank, as `not "".strip()` is.
     """
-    return all(ch.isspace() or unicodedata.category(ch) == "Cf" for ch in text)
+    return all(
+        ch.isspace() or unicodedata.category(ch) in {"Cc", "Cf"} or ord(ch) in _INVISIBLE
+        for ch in text
+    )
 
 
 _ID = r"[A-Za-z0-9][A-Za-z0-9_.:-]*"

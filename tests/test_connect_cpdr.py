@@ -1083,3 +1083,84 @@ def test_reader_refuses_per_gap_counts_that_do_not_add_up() -> None:
     served, head = settled(module)
     with pytest.raises(ValueError, match="unresolved"):
         cpdr.cpdr_reader(served, head)
+
+
+def test_reader_refuses_a_negative_count() -> None:
+    """L2b: a forged count below zero is not a count (the `found.amount < 0` check)."""
+    module = _forged(_partial_module(), "TDR.3.total.questions_total", amount=Decimal(-1))
+    served, head = settled(module)
+    with pytest.raises(ValueError, match="not a known count"):
+        cpdr.cpdr_reader(served, head)
+
+
+def test_reader_refuses_a_per_gap_share_that_is_not_known() -> None:
+    """L2f: the per-gap share must be a known amount (the lease lists it for consumption)."""
+    module = _forged(
+        _partial_module(),
+        f"TDR.1.{GAP_ID}.answered_share",
+        status="missing",
+        amount=None,
+        unit=None,
+        period=None,
+        limitation="Not stated.",
+    )
+    served, head = settled(module)
+    with pytest.raises(ValueError, match="answered share is not known"):
+        cpdr.cpdr_reader(served, head)
+
+
+# --- question_id length and the unconditional RunText check (Stage 2 close release) -------------
+
+
+def _with_question_id(question_id: str) -> dict[str, Any]:
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    payload["gaps"][0]["questions"][0]["question_id"] = question_id
+    return payload
+
+
+def test_the_longest_accepted_question_id_composes() -> None:
+    """Every id Python derives from a question id (`TDR.2.<id>.<field>`, `cpdr-<id>-<field>`,
+    `CPDR-ANS-<id>`) is an `Identifier`: the longest id the validator accepts composes."""
+    longest = "q" * cpdr.QUESTION_ID_MAX
+    sub = submission(_with_question_id(longest))
+    assert check(sub) == ()
+    attempt, store = attempt_of(cp0_module(empty=False))
+    inputs = cpdr._inputs(store, attempt, sub)
+    assert cpdr.compose(inputs).facts
+
+
+@pytest.mark.parametrize("extra", [1, 15])
+def test_a_question_id_too_long_to_compose_is_refused_at_validation(extra: int) -> None:
+    qid = "q" * (cpdr.QUESTION_ID_MAX + extra)
+    sub = submission(_with_question_id(qid))
+    expected = (
+        f"question_id is too long to compose its fact ids (at most {cpdr.QUESTION_ID_MAX} "
+        f"characters): {qid}"
+    )
+    assert check(sub) == (expected,)
+    attempt, store = attempt_of(cp0_module(empty=False), json.dumps(_with_question_id(qid)))
+    outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
+    assert outcome.output is None
+    assert any(line.startswith("question_id is too long") for line in outcome.issues)
+
+
+def test_question_id_max_is_the_longest_id_the_composer_accepts() -> None:
+    """The constant is tight: one more character makes `Fact` raise."""
+    attempt, store = attempt_of(cp0_module(empty=False))
+    sub = submission(_with_question_id("q" * (cpdr.QUESTION_ID_MAX + 1)))
+    inputs = cpdr._inputs(store, attempt, sub)
+    with pytest.raises(ValueError, match="Fact"):
+        cpdr.compose(inputs)
+
+
+def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
+    """The RunText check is unconditional (as CP-2E's): a content issue no longer masks it."""
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    question = payload["gaps"][0]["questions"][0]
+    question["answer"] = "Rates matter [a lot"
+    question["limitation"] = "Some limitation text"
+    issues = check(submission(payload))
+    malformed = "gaps[0].questions[0].answer: Value error, Malformed run text: unbalanced or empty reference"
+    assert issues == ("an answered question carries no limitation: transactions", malformed)
+    question["limitation"] = None
+    assert check(submission(payload)) == issues[1:]

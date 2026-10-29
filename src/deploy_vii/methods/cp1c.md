@@ -20,7 +20,7 @@ Method basis: `methodology.json` CP-1C "Peer benchmark" ("benchmarks the issuer 
 3. No size, rating, sector or business-mix universe criteria. The universe is whatever the data desk supplies, narrowed only by the analyst's comparability judgment.
 4. No definition restatement. Peer ratios use the definitions the desk states, including its add-backs as the desk asserts them; the issuer line on the same summary is tied to CP-1 (definition alignment table) but no peer is restated to the issuer's basis.
 5. No net leverage, free cash flow, capital expenditure, market-based or valuation metrics. The pack carries no market data and relative value belongs to CP-3 (ruling 7).
-6. No dispersion statistics (quartiles, range, standard deviation). The reference Fig. RV.3 range strip would need new facts and a chart, and is deferred; the block shows tables only.
+6. No dispersion statistics (quartiles, range, standard deviation). The reference Fig. RV.3 range strip is drawn by the report from the settled T1C.3, T1C.4 and T1C.5 facts (RV.3a percent, RV.3b multiple) above the peer-positioning tabs; CP-1C adds no fact for it and fills no other chart.
 7. Medians over three or four peers are fragile: they move with a single peer. The module states this as a limitation whenever fewer than five peers are included.
 8. The minimum of three included peers, the half-median outlier distance and the inclusion rule are policy constants (rulings 2-4), not findings; each is one number in the oracle builder.
 

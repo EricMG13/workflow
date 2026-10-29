@@ -32,8 +32,8 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases/cp3c-owner"
 PINS = {
-    CASE / "builder/build.py": "6353168eb07c6cd263b6db88e5256701e2d447e2f43093a7a642bc3a500c0b66",
-    CASE / "expected.json": "168e3bee6eb444f6fe4207b961a7c7f2b3aace35b68a9ac6170696511518bad3",
+    CASE / "builder/build.py": "e62f8e88b1ee4474f4e44d17722d044859b35eda5c91730039a55cfc202f950a",
+    CASE / "expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
     CASE / "manifest.json": "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",
     CASE / "submissions.json": "8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c",
 }

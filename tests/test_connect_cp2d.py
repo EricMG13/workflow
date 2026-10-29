@@ -1253,7 +1253,8 @@ def test_spec_rows_serve_the_three_blocks() -> None:
         # Q-C1: the maturity wall is Model-owned (approved FP 04 page, "MODEL · Fig. S.4"); the
         # Stage 3 S.4 wiring made it a chart strip with the CP-1 T4.18 binding.
         ("maturity-wall", "Maturity wall", "MODEL", "chart", ("CP-1",), None),
-        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D",), "Full analysis"),
+        ("maturity-wall", "Maturity wall", "MODEL", "dense", ("CP-1",), None),
+        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D", "CP-3C"), "Full analysis"),
     ):
         spec = _spec_of(block)
         assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (

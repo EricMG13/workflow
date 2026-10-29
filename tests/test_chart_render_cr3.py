@@ -31,8 +31,7 @@ def test_funding_gap_draws_cr3_beside_the_tables(case: str) -> None:
     assert figure.placement == RENDER["figure"]["placement"] == "beside"
     assert figure.chart.kind == RENDER["figure"]["chart_kind"] == "grouped"
     assert figure.title == w.CR3_FIG[case]["title"]
-    assert block.tab_label == RENDER["primary_tab"]
-    assert [t.label for t in block.tabs] == RENDER["tabs_with_cp3c"]
+    assert w.tab_labels(block) == w.labels_of(RENDER["primary_tab"], *RENDER["tabs_with_cp3c"])
 
 
 @pytest.mark.parametrize("case", w.CR3_PACK_CASES)
@@ -95,8 +94,7 @@ def test_without_cp3c_there_is_no_figure_and_the_cp2d_tabs_stay() -> None:
     modules = tuple(bare if m.module_id == "CP-3C" else m for m in view.modules)
     block = w.block_of(w.report_of(view.model_copy(update={"modules": modules})), "funding-gap")
     assert block.figures == ()
-    assert block.tab_label == RENDER["primary_tab"]
-    assert [t.label for t in block.tabs] == RENDER["tabs_without_cp3c"]
+    assert w.tab_labels(block) == w.labels_of(RENDER["primary_tab"], *RENDER["tabs_without_cp3c"])
 
 
 def test_t3d1_is_bound_to_funding_gap_only() -> None:
@@ -109,5 +107,4 @@ def test_t3d1_is_bound_to_funding_gap_only() -> None:
         assert validate_bindings(view, SHIPPED_MAPS) == ()
         report = w.report_of(view)
         paths = w.block_of(report, "refinancing-paths")
-        labels = [paths.tab_label, *(t.label for t in paths.tabs)]
-        assert labels == ["T3D.6", *RENDER["refinancing_paths_tabs_after"]]
+        assert w.tab_labels(paths) == w.labels_of("T3D.6", *RENDER["refinancing_paths_tabs_after"])

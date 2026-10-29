@@ -1238,8 +1238,9 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         # Kind stays dense until the Stage 3 S.4 task adds the `_STRIP_FIGURES` entry and the
         # CP-1 binding: kind chart would raise KeyError here. CP-2D's T2E.4 stays bound.
         "maturity-wall": _Spec("Maturity wall", "MODEL", "dense", ("CP-1",), route_label=None),
+        # CP-3C is a producer too: its T3D.1 register is a tab here and CR.3 draws from it.
         "funding-gap": _Spec(
-            "Funding gap", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
+            "Funding gap", "CP-2D", "dense", ("CP-2D", "CP-3C"), route_label="Full analysis"
         ),
         # CP-3C (docs/CP3C-OWNER-LEASE.md, Rendered sections (D7)).
         "refinancing-paths": _Spec(
@@ -2498,3 +2499,137 @@ def call_state(report: ReportView) -> tuple[str, tuple[str, str] | None]:
     if any(item.kind != "na" for item in report.call):
         return "populated", None
     return "no-judgement", None
+
+
+# --- Stage 3 chart wiring W2, group c: CR.2 (CP-2D) and CR.3 (CP-3C) ------------------------------
+
+
+def _liquidity_figure(
+    block_id: str,
+    module: ModuleView,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+    record: Any,
+    *,
+    owner: str,
+    row_header: str,
+    placement: FigurePlacement,
+    summary: str | None,
+) -> Figure:
+    """Render one ``LiquidityFigureSeries`` against its settled module and the report index.
+
+    Each mark is its fact's own cell (``_chart_fact_cell``): the record's value and spelling are
+    only checked against it. A gap point takes the ``G#`` the report index allocated for its
+    fact. One table row per category, one cell per series, so the twin reads category-major.
+    """
+    facts = {fact.fact_id: fact for fact in module.facts}
+
+    def current(fact_id: str) -> tuple[Fact, tuple[str, ...]]:
+        if fact_id not in facts:
+            raise ValueError(f"{module.module_id} chart references an unknown fact {fact_id}")
+        return facts[fact_id], refs.get((module.module_id, fact_id), ())
+
+    marks: list[ChartMark] = []
+    by_category: dict[str, list[Cell]] = {}
+    for point in record.points:
+        fact, fact_refs = current(point.fact_id)
+        for companion_id in point.companion_fact_ids:
+            current(companion_id)
+        cell = _chart_fact_cell(fact, record.unit_class, fact_refs)
+        mark = _chart_mark(fact, cell, series=point.series, label=point.category, role=point.role)
+        if mark.value != point.value:
+            raise ValueError(f"{module.module_id} chart value of {point.fact_id} is not the fact's")
+        marks.append(mark)
+        by_category.setdefault(point.category, []).append(cell)
+    rows = tuple(
+        Row(row_id=f"{record.fig_id}.row.{index}", label=category, cells=tuple(cells))
+        for index, (category, cells) in enumerate(by_category.items())
+    )
+    twin = Block(
+        block_id=f"{block_id}-{record.fig_id.replace('.', '').lower()}-twin",
+        title=f"{record.title} table",
+        owner=owner,
+        state="populated" if rows else "absent",
+        kind="dense",
+        scale=record.axis_label,
+        row_header=row_header,
+        columns=(record.axis_label,) if len(record.series) == 1 else tuple(record.series),
+        rows=rows,
+        note=record.reason,
+    )
+    return Figure(
+        fig_id=record.fig_id,
+        title=record.title,
+        placement=placement,
+        summary=summary,
+        chart=ChartSpec(
+            kind=record.kind,
+            series=tuple(record.series),
+            table_twin=twin,
+            marks=tuple(marks),
+            unit=record.axis_label,
+            unit_class=record.unit_class,
+            reason=record.reason,
+        ),
+    )
+
+
+def _settled_module(view: View, module_id: str) -> ModuleView | None:
+    module = next((item for item in view.modules if item.module_id == module_id), None)
+    return module if module is not None and module.status in _CP1_SETTLED else None
+
+
+def _cr2_figures(
+    block_id: str,
+    view: View,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+) -> tuple[Figure, ...]:
+    """CR.2: the settled CP-2D cash bridge above the liquidity runway tables (both Pathways)."""
+    from deploy_workflow.liquidity_series import cp2d_chart_series
+
+    module = _settled_module(view, "CP-2D")
+    if module is None:
+        return ()
+    return tuple(
+        _liquidity_figure(
+            block_id,
+            module,
+            refs,
+            record,
+            owner="CP-2D",
+            row_header="Step",
+            placement="above",
+            summary=record.note,
+        )
+        for record in cp2d_chart_series(module)
+    )
+
+
+def _cr3_figures(
+    block_id: str,
+    view: View,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+) -> tuple[Figure, ...]:
+    """CR.3: the settled CP-3C need by maturity beside the funding gap tables."""
+    from deploy_workflow.liquidity_series import cp3c_chart_series
+
+    module = _settled_module(view, "CP-3C")
+    if module is None:
+        return ()
+    return tuple(
+        _liquidity_figure(
+            block_id,
+            module,
+            refs,
+            record,
+            owner="CP-3C",
+            row_header="Facility",
+            placement="beside",
+            summary=None,
+        )
+        for record in cp3c_chart_series(module)
+    )
+
+
+# Registrations of group c (one block per producer; the integration pass appends the groups).
+register_figure_producer("liquidity-runway", _cr2_figures)
+register_figure_producer("funding-gap", _cr3_figures)

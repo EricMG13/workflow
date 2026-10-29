@@ -57,8 +57,7 @@ def test_the_long_horizon_closing_total_plots_below_zero() -> None:
 def test_the_tabs_are_unchanged() -> None:
     block = w.block_of(w.report_of(w.cp2d_view("positive")), "liquidity-runway")
     spec = w.CR2["render"]["covenant_refinancing"]
-    assert block.tab_label == spec["primary_tab"]
-    assert [t.label for t in block.tabs] == spec["tabs"]
+    assert w.tab_labels(block) == w.labels_of(spec["primary_tab"], *spec["tabs"])
 
 
 def test_fp05_draws_the_same_figure_when_cp2d_is_in_the_run() -> None:

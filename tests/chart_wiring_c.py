@@ -75,6 +75,19 @@ def figure_of(block: Block, fig_id: str) -> Figure:
     return next(f for f in block.figures if f.fig_id == fig_id)
 
 
+def tab_labels(block: Block) -> list[str | None]:
+    """The block's register labels in order: the primary register, then its tabs."""
+    return [block.tab_label, *(tab.label for tab in block.tabs)]
+
+
+def labels_of(*table_ids: str) -> list[str | None]:
+    """The binding labels of the oracle's table ids (the oracle names tabs by table id)."""
+    by_table = {
+        entry.fact_coord.table_id: entry.label for m in SHIPPED_MAPS for entry in m.entries
+    }
+    return [by_table[table_id] for table_id in table_ids]
+
+
 def decimal_or_none(text: str | None) -> Decimal | None:
     return None if text is None else Decimal(text)
 

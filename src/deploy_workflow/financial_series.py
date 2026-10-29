@@ -53,7 +53,10 @@ _SERIES = (
     ("S.1", "Leverage", ("total_leverage_reported", "net_leverage_reported")),
     ("S.2", "Interest cover", ("interest_coverage_reported",)),
     ("S.3", "Liquidity", ("cash_closing", "undrawn_rcf", "liquidity")),
+    # S.5 reads T4.10 `revenue` and `adjusted_ebitda` (T4.5 is the cash-flow statement).
+    ("S.5", "Net revenues and Adjusted EBITDA", ("revenue", "adjusted_ebitda")),
 )
+_MONEY_FIGURES = frozenset({"S.3", "S.5"})
 
 
 def _text(fact: Fact) -> str:
@@ -168,7 +171,7 @@ def _quarter_figures(
 
     figures = []
     for fig_id, title, series in _SERIES:
-        money = fig_id == "S.3"
+        money = fig_id in _MONEY_FIGURES
         points = []
         for key in series:
             if key not in metrics:
@@ -186,7 +189,8 @@ def _quarter_figures(
                         raise ValueError("Chart fact does not match its canonical QUARTER dates")
                     companions = (metric_id, *period_companions)
                     points.append(FinancialSeriesPoint(key, category, fact.fact_id, companions))
-        figures.append(FinancialFigureSeries(fig_id, title, "line", "amount" if money else "multiple",
+        figures.append(FinancialFigureSeries(fig_id, title, "grouped" if fig_id == "S.5" else "line",
+                                             "amount" if money else "multiple",
                                              "US$m" if money else "x", series, tuple(points), reason))
     return tuple(figures)
 
@@ -275,4 +279,5 @@ def cp1_chart_series(module: ModuleView) -> tuple[FinancialFigureSeries, ...]:
     if len({f.fact_id for f in module.facts}) != len(module.facts):
         raise ValueError("Duplicate chart fact identity")
     periods = _periods(module)
-    return (*_quarter_figures(module, periods), _maturity_figure(module, periods))
+    *strip, period_figure = _quarter_figures(module, periods)
+    return (*strip, _maturity_figure(module, periods), period_figure)

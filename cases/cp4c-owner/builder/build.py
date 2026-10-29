@@ -35,8 +35,8 @@ PINS = {
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
     "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
     "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
-    "cases/cp4-owner/expected.json": "2b98b81bd529ef5b754dd6977b4624e2dc1359d29385be952a7afe0bd09e4a55",
-    "cases/cp3c-owner/manifest.json": "551c3125319f5dde4a2022f51a5a40f59f79880764a1dd0aac3b7cd9933fc919",
+    "cases/cp4-owner/expected.json": "1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78",
+    "cases/cp3c-owner/manifest.json": "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
     "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
 }

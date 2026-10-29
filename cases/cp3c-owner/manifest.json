@@ -41,7 +41,7 @@
     },
     {
       "path": "cases/cp2d-owner/builder/build.py",
-      "sha256": "0e3bdde389c301c8c9adfc43729251f1bcf1e359dcb7edd7d59f03ed302cbbe6",
+      "sha256": "0dd71e009ee8c95f39253de0658b9c46783655f6d490b56d5f6611c7e5d9a1bc",
       "use": "frozen CP-2D builder (pin only: the method of the upstream whose cells are consumed)"
     },
     {

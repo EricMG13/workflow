@@ -51,6 +51,18 @@ CP1_ROW_ID = "net_leverage_reported"
 CP1_QUOTE = "Reporting basis: IFRS; entity perimeter: consolidated group."
 
 
+def test_other_five_sections_are_the_cp2d_and_cp3c_blocks() -> None:
+    """Stage 2 close release (review-B L2): after the CP-2D and CP-3C D7 deltas the five blocks
+    are not owner Unbound; the oracle line names the legal render oracle's re-pin."""
+    text = EXPECTED["render"]["other_five_sections"]
+    render = json.loads((ROOT / "cases/legal/render-expected.json").read_text())
+    blocks = render["other_front_sections"]["blocks"]
+    assert "stay owner Unbound" not in text and "no longer owner Unbound" in text
+    for block_id, want in blocks.items():
+        assert f"{block_id} ({want['owner']})" in text, block_id
+    assert "other_front_sections.blocks" in text
+
+
 def test_oracle_files_are_the_pinned_revision() -> None:
     for name in PINNED:
         digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()

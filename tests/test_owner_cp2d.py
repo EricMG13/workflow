@@ -183,9 +183,13 @@ def test_begin_is_refused_when_cp2_is_blocked_and_no_attempt_is_consumed(tmp_pat
 
 
 def test_a_stale_required_head_is_not_a_retained_refusal(tmp_path: Path) -> None:
-    """Plan note: only the blocked half of the oracle's 'a stale required head refuses the same
-    way' is a retained refusal; a stale one re-raises at begin (owner_workflow `_begin`) and
-    consumes no attempt."""
+    """Round 5 item 15: only the blocked half is a retained refusal; a stale one re-raises at
+    begin (owner_workflow `_begin`) and consumes no attempt. The oracle says the same."""
+    begin = tm.EXPECTED["negative_cases"]["begin_refused_cp2_blocked"]
+    assert begin["also"] == (
+        "a stale required head is not a retained refusal: begin re-raises ValueError, an "
+        "integrity fault in the store snapshot, and consumes no attempt"
+    )
     store = tc.make_store(tmp_path, tc.cp1_module(tm._base_operands()))
     store.replace_pack(tc.PACK.model_copy(update={"sources": tc.PACK.sources[:1]}))
     assert {h.status for h in store.read().heads} == {"stale"}

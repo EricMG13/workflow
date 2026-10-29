@@ -609,77 +609,37 @@ def submission_of(
 
 # --- the store adapter (one adapter for submit, probe and view) ----------------------------------
 
-# Stage 2 close re-pin (backlog "6 CP-3C periods to q4-2025"): the CP-2D head's principal copy
-# keeps CP-1's T4.18 period, which the frozen CP-3C oracle (and so the Stage 1 test's stand-in)
-# proposes as the balance date. Remove with the re-pin (`test_the_principal_period_delta...`).
-PRINCIPAL_PERIOD_DELTA = "q4-2025"
-PRINCIPAL_COPIES = ("T3D.1.r01.c1", "T3D.4.r01.c3")
-# A CP-2D gap cell carries its settled twin's unit and currency (CP-2D lease acceptance 1); the
-# Stage 1 test's stand-in for a CP-2D gap carries no currency (the CP-2D oracle's T2E.5.r04/r07
-# record none; the CP-3C oracle's own gap cells already carry USD). Retire with the CP-2D oracle
-# re-pin (`test_the_gap_currency_delta_is_still_needed` fails then).
-GAP_CURRENCY = "USD"
-
 
 def _stage1_expectation(
     case: str, store: Execution, attempt: Attempt, submission: cp3c.RefinancingRiskSubmission
 ) -> cp3c.Cp3cInputs:
-    """The Stage 1 test's input object for `case` with the run-time refs and the two deltas."""
+    """The Stage 1 test's input object for `case` with the run-time refs."""
     stage1 = tm._inputs(case)
     names = refs(store, attempt)
-    wall = tuple(
-        replace(r, principal=replace(r.principal, period=PRINCIPAL_PERIOD_DELTA))
-        for r in stage1.cp2d.wall
-    )
-
-    def twin(fact: cp3c.Cp2dFact) -> cp3c.Cp2dFact:
-        gap = fact.status != "known" and fact.unit == "MILLIONS"
-        return replace(fact, currency=GAP_CURRENCY) if gap else fact
-
-    ops = replace(
-        stage1.cp2d,
-        wall=wall,
-        minimum_cash=twin(stage1.cp2d.minimum_cash),
-        funding_gap=twin(stage1.cp2d.funding_gap),
-    )
     offered = {names[name]: name for name in stage1.offered.values()}
-    return replace(stage1, cp2d=ops, offered=offered, submission=submission)
+    return replace(stage1, offered=offered, submission=submission)
 
 
 @pytest.mark.parametrize("case", tm.PACK_CASES)
 def test_adapter_returns_the_stage_1_input_object(case: str, tmp_path: Path) -> None:
     """Over heads settled from the oracles' own records (CP-2D by its own core), the adapter
-    returns exactly the Stage 1 test's input object, with the run-time refs and two deltas."""
+    returns exactly the Stage 1 test's input object, with the run-time refs."""
     store, _, attempt = seed(tmp_path, case)
     submission = submission_of(store, attempt, case)
     got = cp3c._inputs(store, attempt, submission)
     assert got == _stage1_expectation(case, store, attempt, submission)
 
 
-def test_the_principal_period_delta_is_still_needed() -> None:
-    """Remove PRINCIPAL_PERIOD_DELTA at the Stage 2 close re-pin: this fails once the frozen
-    oracle's principal copies carry CP-1's T4.18 period."""
+def test_the_oracle_carries_the_principal_period_and_the_gap_currency() -> None:
+    """Stage 2 close re-pin: the principal copies keep CP-1's T4.18 period, and the CP-2D gap
+    twins (T2E.5.r04, T2E.5.r07) carry the currency USD in the CP-2D oracle."""
     for case in tm.PACK_CASES:
         cells = tm._cells(tm.EXPECTED["cases"][case]["tables"])
-        for fact_id in PRINCIPAL_COPIES:
-            assert cells[fact_id]["period"] == tm.BALANCE_DATE.isoformat()
-
-
-def test_the_gap_currency_delta_is_still_needed() -> None:
-    """Remove GAP_CURRENCY (and the `twin` stand-in) when the CP-2D oracle's gap twins
-    T2E.5.r04/r07 carry a currency: this fails once they do. The CP-3C oracle's own gap cells
-    already carry USD, so re-pinning that oracle alone cannot retire the delta."""
-    path = Path(__file__).resolve().parents[1] / "cases" / "cp2d-owner" / "expected.json"
-    cells = tm._cells(json.loads(path.read_text())["cases"]["gap_minimum_cash"]["tables"])
+        for fact_id in ("T3D.1.r01.c1", "T3D.4.r01.c3"):
+            assert cells[fact_id]["period"] == "q4-2025"
+    cp2d_cells = tm._cells(tm.CP2D_EXPECTED["cases"]["gap_minimum_cash"]["tables"])
     for fact_id in ("T2E.5.r04", "T2E.5.r07"):
-        assert cells[fact_id]["state"] != "known" and cells[fact_id].get("currency") is None
-    ours = tm._cells(tm.EXPECTED["cases"]["gap_minimum_cash"]["tables"])
-    gaps = {
-        c["currency"]
-        for c in ours.values()
-        if c["state"] != "known" and c.get("unit") == "MILLIONS"
-    }
-    assert gaps == {GAP_CURRENCY}
+        assert cp2d_cells[fact_id]["state"] != "known" and cp2d_cells[fact_id]["currency"] == "USD"
 
 
 def test_adapter_follows_the_heads_not_the_oracle(tmp_path: Path) -> None:
@@ -887,11 +847,9 @@ def test_adapter_reads_cp2d_through_its_reader(
             cp3c.select(upstream_of(store, attempt))
 
 
-# Oracle defect (reported): `registry.dependencies` binds an optional edge whose producer the run
-# selects, so this run (CP-1A requested) binds CP-1A in CP-3C's attempt inputs, and settlement
-# inherits its limitations; expected.json#cp3c_module.attempt_inputs, manifest
-# edges.bound_in_attempt_inputs and lease acceptance 1 list prepared-pack, CP-0, CP-1, CP-2D.
-CP1A_BOUND = "CP-1A"
+# `registry.dependencies` binds an optional edge whose producer the run selects, so this run
+# (CP-1A requested) binds CP-1A in CP-3C's attempt inputs, and settlement inherits its limitations;
+# expected.json#cp3c_module.attempt_inputs and manifest edges.bound_in_attempt_inputs list it.
 
 
 def test_upstream_binds_the_attempt_and_reports_the_inputs_now(tmp_path: Path) -> None:
@@ -900,11 +858,12 @@ def test_upstream_binds_the_attempt_and_reports_the_inputs_now(tmp_path: Path) -
     assert upstream.bound == attempt.inputs and upstream.current == attempt.inputs
     inputs = [i.input_id for i in attempt.inputs]
     oracle = tm.EXPECTED["cp3c_module"]["attempt_inputs"]
-    assert inputs == [*oracle[:3], CP1A_BOUND, *oracle[3:]]
+    assert inputs == oracle and "CP-1A" in oracle
+    assert inputs == tm.MANIFEST["edges"]["bound_in_attempt_inputs"][:-1]
     cp1 = next(i.sha256 for i in attempt.inputs if i.input_id == "CP-1")
     assert upstream.cp1.content_hash() == cp1
     cp2d_head = store.head_module(head(store, "CP-2D"))
-    cp1a = f"{CP1A_BOUND} synthetic limitation"
+    cp1a = "CP-1A synthetic limitation"
     notes = ("CP-0 synthetic limitation", SYNTHETIC, "CP-1 synthetic limitation", cp1a)
     assert upstream.inherited == tuple(
         dict.fromkeys((*notes, *cp2d_head.limitations, *cp2d_head.inherited_limitations))
@@ -1196,8 +1155,7 @@ def assert_module_equals_oracle(module: Module, case: str) -> None:
         ), fact_id
         assert fact.scale == (Decimal(1000000) if fact.unit == "MILLIONS" else 1), fact_id
         if fact.amount is not None:
-            want = PRINCIPAL_PERIOD_DELTA if fact_id in PRINCIPAL_COPIES else cell["period"]
-            assert (fact.amount, fact.period) == (Decimal(cell["amount"]), want), fact_id
+            assert (fact.amount, fact.period) == (Decimal(cell["amount"]), cell["period"]), fact_id
         assert fact.limitation == cell.get("reason"), fact_id
     for table_id in ("T3D.7", "T3D.8", "T3D.9"):
         rows = [[r.label, *(facts[i].text for i in r.fact_ids)] for r in tables[table_id].rows]
@@ -1301,6 +1259,41 @@ def test_view_is_the_lease_key_tree_without_quotes(case: str, tmp_path: Path) ->
         c.quote for h in store.read().heads for f in store.head_module(h).facts for c in f.citations
     }
     assert quotes and not [q for q in quotes if q in body]
+
+
+TREE_FILE = Path(__file__).resolve().parents[1] / "cases" / "cp3c-owner" / "cp3c-view-tree.json"
+
+
+def _shape(value: Any) -> Any:
+    """The key tree of a JSON value: leaves are type names; a list is the merge of its items."""
+    if isinstance(value, dict):
+        return {k: _shape(v) for k, v in value.items()}
+    if isinstance(value, list):
+        merged: Any = None
+        for item in value:
+            merged = _merge(merged, _shape(item))
+        return [] if merged is None else [merged]
+    return "null" if value is None else type(value).__name__
+
+
+def _merge(a: Any, b: Any) -> Any:
+    if a is None or a == b:
+        return b
+    if isinstance(a, dict) and isinstance(b, dict) and list(a) == list(b):
+        return {k: _merge(a[k], b[k]) for k in a}
+    assert isinstance(a, str) and isinstance(b, str), (a, b)
+    return "|".join(sorted({*a.split("|"), *b.split("|")}))
+
+
+@pytest.mark.parametrize("case", tm.PACK_CASES)
+def test_view_key_tree_equals_the_committed_tree(case: str, tmp_path: Path) -> None:
+    """Stage 2 close release: `cases/cp3c-owner/cp3c-view-tree.json` is the key tree (shape,
+    not values) observed on a product-settled head for each pack case."""
+    store, _, attempt = seed(tmp_path, case)
+    tree = json.loads(cp3c.view(_FrozenExecution(store, store.read()), attempt)[1])
+    committed = json.loads(TREE_FILE.read_text())[case]
+    assert committed == {"top_level_keys": list(tree), "tree": _shape(tree)}
+    assert list(tree) == TREE["top_level_keys_in_order"]
 
 
 def test_view_offers_a_missing_fact_with_its_status_never_a_number(tmp_path: Path) -> None:

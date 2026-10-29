@@ -28,7 +28,7 @@ BALANCE = "2025-12-31"
         ),
         (
             {"equity_repurchases": tm._opd("not_applicable")},
-            "Not calculable: Equity repurchases is not applicable",
+            "Not calculable: Equity repurchases are not applicable",
         ),
         (
             {"equity_issuance": tm._opd("missing")},
@@ -126,6 +126,56 @@ def test_backlog_rcf_commitment_keeps_the_singular_verb(
     assert f"because RCF commitment is {word}; cash-only headroom" in _claim_text(
         result, "CP-2D-GAP-01"
     )
+
+
+# --- Stage 2 close release: round 5 item 4 (drawings precedence) and "Equity repurchases are" ---
+
+
+@pytest.mark.parametrize(("status", "word"), tm._NOT_KNOWN)
+def test_release_equity_repurchases_take_a_plural_verb(
+    status: cp2d.OperandStatus, word: str
+) -> None:
+    operands = tm._ro(tm._operands("fixture_burn"), equity_repurchases=tm._unknown(status))
+    cell = tm._cells(cp2d.compute(replace(tm._inputs("positive"), operands=operands)))
+    assert cell["T2E.1.r05"].reason == f"Not calculable: Equity repurchases are {word}"
+    assert "Equity repurchases is" not in str(cell["T2E.1.r05"].reason)
+
+
+@pytest.mark.parametrize(("status", "word"), tm._NOT_KNOWN)
+def test_release_unsettled_commitment_with_missing_drawings_names_the_commitment_first(
+    status: cp2d.OperandStatus, word: str
+) -> None:
+    """Round 5 item 4: the commitment's state first, then the missing drawings; never a
+    reason that implies a revolver exists."""
+    operands = tm._ro(
+        tm._operands("fixture_burn"),
+        rcf_commitment=tm._unknown(status),
+        rcf_drawn=tm._unknown("missing"),
+    )
+    result = cp2d.compute(replace(tm._inputs("positive"), operands=operands))
+    reason = f"Not calculable: RCF commitment is {word}; RCF drawings are missing"
+    bridge = result.bridge
+    assert bridge.runway_reason == reason
+    for gap in (
+        bridge.undrawn_revolver,
+        bridge.available_liquidity,
+        bridge.resources_at_horizon_end,
+        bridge.headroom,
+    ):
+        assert isinstance(gap, cp2d.Gap) and gap.reason == reason
+    for text in (
+        *(c.template for c in result.claims),
+        *result.own_limitations,
+    ):
+        assert "drawings, which are undisclosed" not in text
+        assert "revolver drawings are undisclosed" not in text
+    assert f"needs RCF commitment, which is {word};" in _claim_text(result, "CP-2D-LIQ-01")
+
+
+def test_release_known_commitment_with_missing_drawings_keeps_the_drawings_reason() -> None:
+    operands = tm._ro(tm._operands("fixture_burn"), rcf_drawn=tm._unknown("missing"))
+    result = cp2d.compute(replace(tm._inputs("positive"), operands=operands))
+    assert result.bridge.runway_reason == "Not calculable: revolver drawings undisclosed"
 
 
 def _claim_text(result: cp2d.Cp2dResult, claim_id: str) -> str:
@@ -698,7 +748,9 @@ _STATUS = {
 def _assert_fact(fact: Fact, cell: dict[str, Any], case: str) -> None:
     where = cell["fact_id"]
     assert fact.status == _STATUS[cell["state"]], where
-    assert fact.value_class == cell.get("value_class", tm.GAP_VALUE_CLASS_DELTA.get((case, where)))
+    assert fact.value_class == cell.get("value_class")
+    if "currency" in cell:
+        assert fact.currency == cell["currency"], where
     if cell["state"] != "known":
         assert fact.amount is None and fact.text is None and fact.limitation == cell["reason"]
         return

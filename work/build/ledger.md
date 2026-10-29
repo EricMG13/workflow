@@ -428,3 +428,4 @@
 - 08:59 Q-C14 re-checked against DEPLOY VII PF-1 workbook (7260b22; acef417d): C-01 current 2.37 (workbook wins), Fits withdrawn, Caesars existing exposure a gap (holdings partial 5/320), portfolio.py import pulls rv_quotes+preparation -> user confirmation pending.
 - 08:59 Q-C1 oracle re-review APPROVE (a66dbdc5). Builder dispatched (separate mx-feature; id in next line on return).
 - 08:59 Q-C1 builder=ae54502382a289082 (mx-feature; distinct from preparer a5f86934df7bc3a48 and reviewer a66dbdc578746c158).
+- 09:18 Release 5a6a746 gates: fast set 9444 passed, 4 skipped, exit 0 (226 s); render suites (financial, earnings, cp1_chart) 148 passed, exit 0 (48 min). test_owner_s1a excluded (fix2 fixes it).

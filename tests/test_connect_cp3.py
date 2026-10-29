@@ -496,7 +496,7 @@ def _specless_modules() -> list[str]:
     return found
 
 
-@pytest.mark.parametrize("extra", ["CP-4C", *_specless_modules()])
+@pytest.mark.parametrize("extra", _specless_modules())
 def test_a_module_without_a_spec_in_a_cp3_run_refuses_and_writes_nothing(
     extra: str, tmp_path: Path
 ) -> None:

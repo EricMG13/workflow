@@ -15,20 +15,24 @@ division in that context (the correctly rounded rational). A partly paid rank sh
 by exact largest remainder (round 8 A-1) and T4E.9 adds exactly. Where neither the lease, the
 rulings nor the oracle pins the wording an outcome needs, the code fails closed with ValueError.
 
-Nothing here does I/O or touches a store, host, session or renderer. Connection, tool-use and
-orchestration seams (G1-X protocol section 2) are added to this file in later stages.
+The Stage 1 core does no I/O and touches no store, host, session or renderer. The Stage 2
+section at the end connects it (G1-X protocol section 2): one store adapter (`_inputs` over
+`cp4c_upstream`) for submit, probe and view, the `read_inputs` view, the tool-use rule and the
+readers.
 """
 
+import hashlib
+import json
 import math
 import re
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
-from typing import Annotated, Literal
+from typing import Annotated, Literal, get_args
 
-from pydantic import Field, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
 from deploy_vii import prose
 from deploy_vii.business_context import (
@@ -37,13 +41,48 @@ from deploy_vii.business_context import (
     Quote,
     Severity,
     prohibited_issues,
+    referencable,
+    spelled,
 )
-from deploy_vii.contracts import Citation, Contract, Fact, Input, InputStatus
+from deploy_vii.contracts import (
+    Citation,
+    Contract,
+    Fact,
+    Hash,
+    Input,
+    InputStatus,
+    Module,
+    ReportTable,
+    Run,
+    RunText,
+    TableColumn,
+    TableRow,
+    Text,
+)
+from deploy_vii.contracts import Claim as ModuleClaim
+from deploy_vii.execution import (
+    Attempt,
+    Execution,
+    ExecutionSnapshot,
+    Head,
+    Qualification,
+    StepValidation,
+    bounded_issues,
+    clipped,
+    commands_of,
+    current_inputs,
+    inherited_limitations,
+)
+from deploy_vii.live.schema import exact_json, json_object, normalise
+from deploy_vii.live.submission import Submitted
+from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
-from deploy_vii.report_view import fact_spelling
+from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-4C"
 STEP_ID = "restructuring_fulcrum"
@@ -460,13 +499,17 @@ class Cp2aHead:
         return found[0]
 
     def base_period(self, row: str) -> str:
-        """The one period the row's `ebitda_decline` and `interest_increase` facts share
-        (round 13 item 5, R1 L2)."""
-        periods = {self.fact(f"T2B.1.{row}.{name}").period for name in _SHOCKS}
-        (period,) = periods if len(periods) == 1 else (None,)
-        if period is None:
+        """The one period the row's `ebitda_decline` and `interest_increase` facts state
+        (round 13 item 5, R1 L2). A shock with no period is not a period conflict (Stage 2
+        round 5 item 16): only stated periods are compared. Two stated periods that differ raise,
+        and so does a row that states none (fail closed, never a default)."""
+        facts = (self.fact(f"T2B.1.{row}.{name}") for name in _SHOCKS)
+        stated = tuple(dict.fromkeys(f.period for f in facts if f.period is not None))
+        if len(stated) > 1:
             raise ValueError("CP-4C: CP-2A T2B.1 facts differ in period")
-        return period
+        if not stated:
+            raise ValueError("CP-4C: CP-2A T2B.1 facts state no period")
+        return stated[0]
 
 
 @dataclass(frozen=True)
@@ -740,10 +783,12 @@ def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], st
         return [f"claims[{i}].amount_quote.quote: empty text"]
     page = pages.get(("financial", q.locator), "")
     if q.source_id != "financial" or q.quote not in page:
-        return [f"claims[{i}].amount_quote: quote not found under {q.source_id} {q.locator}"]
+        where = (f"claims[{i}].amount_quote: quote not found under ", q.source_id, " ", q.locator)
+        return [clipped(where)]
     column = c.period_column
     if column not in _header(page)[1:]:
-        return [f"claims[{i}].period_column: not a column of the quoted statement: {column}"]
+        what = f"claims[{i}].period_column: not a column of the quoted statement: "
+        return [clipped((what, str(column)))]
     if column != _PINNED_COLUMN:
         return [
             (
@@ -760,7 +805,8 @@ def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], st
 def _claim_above_zero(i: int, c: ClaimClass, amount: Decimal) -> list[str]:
     if amount > 0:
         return []
-    return [f"claims[{i}]: a claim class needs a claim above zero; {c.name} reads {_exact(amount)}"]
+    parts = (f"claims[{i}]: a claim class needs a claim above zero; ", c.name, " reads ")
+    return [clipped((*parts, str(_exact(amount))))]
 
 
 def _claim_issues(
@@ -794,14 +840,11 @@ def _claim_issues(
         if is_blank(q.quote):  # round 13 addendum 3: before the page-occurrence check
             issues.append(f"claims[{i}].support[{j}].quote: empty text")
         elif q.source_id not in SCOPE:
-            issues.append(
-                f"claims[{i}].support[{j}].source_id: not in this step's source scope: "
-                f"{q.source_id}"
-            )
+            what = f"claims[{i}].support[{j}].source_id: not in this step's source scope: "
+            issues.append(clipped((what, q.source_id)))
         elif q.quote not in pages.get((q.source_id, q.locator), ""):
-            issues.append(
-                f"claims[{i}].support[{j}]: quote not found under {q.source_id} {q.locator}"
-            )
+            what = f"claims[{i}].support[{j}]: quote not found under "
+            issues.append(clipped((what, q.source_id, " ", q.locator)))
     return issues
 
 
@@ -861,9 +904,8 @@ def _plan_issues(
         seen: list[str] = []
         for j, t in enumerate(p.treatments):
             if t.class_id not in known:
-                issues.append(
-                    f"plan[{i}].treatments[{j}].class_id: not a claim class: {t.class_id}"
-                )
+                what = f"plan[{i}].treatments[{j}].class_id: not a claim class: "
+                issues.append(clipped((what, t.class_id)))
                 bad = True
             elif t.class_id in seen:
                 issues.append(f"plan[{i}].treatments[{j}].class_id: duplicate class {t.class_id}")
@@ -957,24 +999,57 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
             else:  # round 11 B3: as the claims spell it (a valuation label in lower case)
                 spelt = text.lower() if path.startswith("valuation") else text
                 issues += [
-                    f"{path}: Bare figure: {t}" for t in prose.bare_figures(spelt, names=names)
+                    clipped((path, ": Bare figure: ", t))
+                    for t in prose.bare_figures(spelt, names=names)
                 ]
                 if _RESERVED.search(text):  # round 12 B7: CP-8's pinned frame
                     issues.append(f"{path}: reference syntax is not allowed")
             continue
-        if kind == "run":
-            issues += [f"{path}: {issue}" for issue in prose.issues(text, bound, names=names)]
+        if kind == "run":  # a rationale becomes `Claim.text` (Stage 2 round 3 item 2)
+            found = prose.issues(text, bound, names=names)
+            issues += [clipped((path, ": ", issue)) for issue in found]
+            if not found:
+                issues += _run_text_issues(path, text)
         issues += guard_issues(path, text)
     return tuple(issues)
+
+
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _run_text_issues(path: str, text: str) -> list[str]:
+    """Stage 2 round 3 item 2: text built as `Claim.text` is checked with that very type
+    (`RunText`, one `TypeAdapter` built once), so a malformed reference is a journaled issue and
+    composition never raises after the binding write. The message never echoes the input."""
+    try:
+        _RUN_TEXT.validate_python(text)
+    except ValidationError as error:
+        found = error.errors(include_input=False, include_url=False, include_context=False)
+        return [clipped((path, ": ", item["msg"])) for item in found]
+    return []
+
+
+def _parsed(payload: str) -> tuple[RestructuringSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue (the frozen r12 frame),
+    and is refused even if Pydantic would parse it (the CP-2G precedent)."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            RestructuringSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return RestructuringSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
 
 
 def payload_issues(payload: str, context: Cp4cContext) -> tuple[str, ...]:
     """Shape issues alone (a payload that does not parse gets no content check), else the
     content issues."""
-    try:
-        submission = RestructuringSubmission.model_validate_json(payload)
-    except ValidationError as error:
-        return shape_issues(error)
+    submission, shape = _parsed(payload)
+    if submission is None:
+        return shape
     return content_issues(Cp4cInputs(context=context, submission=submission))
 
 
@@ -982,7 +1057,7 @@ def stale_issues(*, bound: Sequence[Input], current: Sequence[Input] | str) -> t
     """Every bound upstream that changed (CP-2G precedent), in the `cp2_synthesis._stale_issues`
     form; returned alone, like shape issues (rulings round 5, G-decisions)."""
     if isinstance(current, str):
-        return (f"Stale inputs: {current}",)
+        return (clipped(("Stale inputs: ", current)),)
     was = {item.input_id: item for item in bound}
     now = {item.input_id: item for item in current}
 
@@ -1368,7 +1443,7 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
     sub, ctx = inputs.submission, inputs.context
     found = content_issues(inputs)
     if found:
-        raise ValueError("CP-4C submission has issues: " + "; ".join(found))
+        raise ValueError("CP-4C submission has issues: " + "; ".join(bounded_issues(found)))
     cp1 = select_cp1(ctx.cp1.t410)
     _check_cp4_head(ctx)
     classes = claim_classes(sub, ctx)
@@ -2369,4 +2444,646 @@ def compute(inputs: Cp4cInputs) -> RestructuringResult:
         own_limitations=_own_limitations(run),
         waterfalls=run.falls,
         enterprise_values={k: v.ev for k, v in run.values.items()},
+    )
+
+
+# =============================================================================================
+# Stage 2: the connection (docs/CP4C-OWNER-LEASE.md Public API; G1-X protocol section 2). One
+# store adapter (`_inputs` over `cp4c_upstream`) serves submit, probe and view; the readers put
+# each settled head into the Stage 1 type the core reads. Everything above is the Stage 1 core.
+# =============================================================================================
+
+STEP_IDS = (STEP_ID,)
+QUALIFICATION = Qualification(implementation="implemented")
+SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: RestructuringSubmission}
+SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
+CP1, CP2A, CP2G, CP4, CP3C = "CP-1", "CP-2A", "CP-2G", "CP-4", "CP-3C"
+_SETTLED: Mapping[str, InputStatus] = {
+    "accepted": "accepted",
+    "restricted": "restricted",
+    "blocked": "blocked",
+}
+# manifest fact_selection_rule.cp1_t418: the secured facility, the two terms the core reads.
+FACILITY_ID = "term-loan"
+_T418_TERMS = ("secured_status", "seniority")
+# manifest fact_selection_rule.cp2g: the T2H.7 row of the first free cash flow break.
+CP2G_BREAK_ROW = "b01"
+# lease Public API `cp4_reader` (T4C.11, T4.10.r02, T4.13), as (table id, row id or None).
+_CP4_READ = (("T4C.11", None), ("T4.10", "r02"), ("T4.13", None))
+
+
+def _settled_module(store: Execution, head: Head, module_id: str) -> tuple[Module, InputStatus]:
+    """The head's module and its settled status; a stale head or another module's raises."""
+    if head.module_id != module_id:
+        raise ValueError(f"CP-4C: not a {module_id} head: {head.module_id}")
+    status = _SETTLED.get(head.status)
+    if status is None:
+        raise ValueError(f"CP-4C: the {module_id} head is {head.status}")
+    return store.head_module(head), status
+
+
+def _rows(module: Module, table_id: str) -> dict[str, dict[str, Fact]]:
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in module.facts:
+        if fact.table_id == table_id:
+            row = rows.setdefault(fact.row_id, {})
+            if fact.field in row:
+                raise ValueError(f"CP-4C: duplicate CP-1 coordinate {table_id}/{fact.row_id}")
+            row[fact.field] = fact
+    return rows
+
+
+def _known_text(row: Mapping[str, Fact], field_name: str) -> str | None:
+    fact = row.get(field_name)
+    return fact.text if fact is not None and fact.status == "known" else None
+
+
+def _quarter_period(module: Module) -> tuple[str, tuple[str, ...]]:
+    """The T4.18 period the terms are read at (manifest cp1_t418 rule): the QUARTER period at the
+    latest T4.14 period end wins over its FY alias. Returns it and the other periods ending that
+    day. No period, or no single quarter at the latest end, fails closed."""
+    ends: dict[str, tuple[str, str]] = {}
+    for row in _rows(module, "T4.14").values():
+        pid = _known_text(row, "period_id")
+        kind, end = _known_text(row, "period_type"), _known_text(row, "end_date")
+        if pid is not None and kind is not None and end is not None:
+            ends[pid] = (kind, end)
+    if not ends:
+        raise ValueError("CP-4C: CP-1 states no T4.14 period")
+    latest = max(end for _, end in ends.values())
+    current = tuple(pid for pid, (_, end) in ends.items() if end == latest)
+    quarters = tuple(pid for pid in current if ends[pid][0] == "QUARTER") or current
+    if len(quarters) != 1:
+        raise ValueError(f"CP-4C: CP-1 has no single current T4.18 period at {latest}")
+    (period,) = quarters
+    return period, tuple(pid for pid in current if pid != period)
+
+
+def _facility_terms(module: Module) -> tuple[Fact, Fact]:
+    """The secured facility's T4.18 `secured_status` and `seniority` facts at the quarter period;
+    an alias row of the same period end must state the same terms. A missing row or term, two
+    rows of one period, or an alias that differs fails closed."""
+    period, aliases = _quarter_period(module)
+    by_period: dict[str, dict[str, Fact]] = {}
+    for row in _rows(module, "T4.18").values():
+        if _known_text(row, "facility_id") != FACILITY_ID:
+            continue
+        pid = _known_text(row, "period_id")
+        if pid is None:
+            raise ValueError(f"CP-4C: a CP-1 T4.18 {FACILITY_ID} row states no period_id")
+        if pid in by_period:
+            raise ValueError(f"CP-4C: CP-1 T4.18 has two {FACILITY_ID} rows for {pid}")
+        by_period[pid] = row
+    chosen = by_period.get(period)
+    if chosen is None or any(term not in chosen for term in _T418_TERMS):
+        raise ValueError(f"CP-4C: CP-1 T4.18 states no {FACILITY_ID} terms for {period}")
+    for alias in aliases:
+        other = by_period.get(alias) or {}
+        for term in _T418_TERMS if other else ():
+            mine, theirs = chosen[term], other.get(term)
+            if theirs is None or (mine.status, mine.text) != (theirs.status, theirs.text):
+                raise ValueError(
+                    f"CP-4C: {FACILITY_ID} {term} differs between its {period} row and its "
+                    f"{alias} alias"
+                )
+    return chosen["secured_status"], chosen["seniority"]
+
+
+def cp1_of(module: Module, status: InputStatus) -> Cp1Head:
+    """A settled CP-1 module as the core reads it: the T4.10 LTM total debt and EBITDA
+    (`select_cp1`, in `CP1_METRICS` order) and the secured facility's T4.18 terms."""
+    if module.module_id != CP1:
+        raise ValueError(f"CP-4C: not a CP-1 head: {module.module_id}")
+    selected = select_cp1(module.facts)
+    secured, seniority = _facility_terms(module)
+    return Cp1Head(
+        status=status,
+        t410=tuple(selected[m] for m in CP1_METRICS),
+        facility_id=FACILITY_ID,
+        secured_status=secured,
+        seniority=seniority,
+    )
+
+
+def cp2a_of(module: Module, status: InputStatus) -> Cp2aHead:
+    """A settled CP-2A module: every T2B.1 fact in head order. The row the core reads is named by
+    the CP-2G T2H.3 source texts (lease amendment, round 13 item 2), not here."""
+    if module.module_id != CP2A:
+        raise ValueError(f"CP-4C: not a CP-2A head: {module.module_id}")
+    return Cp2aHead(status=status, facts=tuple(f for f in module.facts if f.table_id == "T2B.1"))
+
+
+def cp4_of(module: Module, status: InputStatus) -> Cp4Head:
+    """A settled CP-4 module: its T4C.11, T4.10 row r02 and T4.13 facts in head order."""
+    if module.module_id != CP4:
+        raise ValueError(f"CP-4C: not a CP-4 head: {module.module_id}")
+    facts = tuple(
+        f
+        for f in module.facts
+        if any(f.table_id == t and r in (None, f.row_id) for t, r in _CP4_READ)
+    )
+    return Cp4Head(status=status, facts=facts)
+
+
+def cp2g_of(read: cp2g.Cp2gHead) -> Cp2gHead:
+    """The CP-2G reader's output selected into the core's type (rulings stage2 Q6): the six
+    T2H.4 EBITDA facts, the T2H.7.b01 first years and the two T2H.3 source texts. A blocked head
+    is refused: CP-2G is a required edge, so it is never bound blocked."""
+    if read.status == "blocked":
+        raise ValueError("CP-4C: the CP-2G head is blocked")
+    ebitda = tuple(
+        Cp2gEbitda(case=case, year=year, fact=read.fact(f"T2H.4.{CASE_ROW[case]}{26 + n}.ebitda"))
+        for case in CASE_ROW
+        for n, year in enumerate(YEARS)
+    )
+    return Cp2gHead(
+        status=read.status,
+        ebitda=ebitda,
+        base_first=read.fact(f"T2H.7.{CP2G_BREAK_ROW}.base_first"),
+        down_first=read.fact(f"T2H.7.{CP2G_BREAK_ROW}.down_first"),
+        down_ebitda_source=read.fact("T2H.3.d01.source"),
+        down_interest_source=read.fact("T2H.3.d02.source"),
+    )
+
+
+def _required_module(store: Execution, head: Head, module_id: str) -> tuple[Module, InputStatus]:
+    """`_settled_module` of a required edge (methodology: CP-1, CP-2A, CP-4 and CP-2G, no edge
+    rule), so a blocked head is never bound and is refused here."""
+    module, status = _settled_module(store, head, module_id)
+    if status == "blocked":
+        raise ValueError(f"CP-4C: the {module_id} head is blocked")
+    return module, status
+
+
+def cp2a_reader(store: Execution, head: Head) -> Cp2aHead:
+    """D3: the T2B.1 facts of a settled CP-2A head (`cp2a_of`)."""
+    return cp2a_of(*_required_module(store, head, CP2A))
+
+
+def cp4_reader(store: Execution, head: Head) -> Cp4Head:
+    """D3: the T4C.11, T4.10.r02 and T4.13 facts of a settled CP-4 head (`cp4_of`)."""
+    return cp4_of(*_required_module(store, head, CP4))
+
+
+@dataclass(frozen=True)
+class Upstream:
+    """What one CP-4C attempt binds, read once from the journal (`cp4c_upstream`).
+
+    `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
+    refusal text; `cp1`, `cp2a`, `cp2g` and `cp4` are the bound heads as the core reads them;
+    `inherited` is what settlement will carry from the bound heads."""
+
+    bound: tuple[Input, ...]
+    current: tuple[Input, ...] | str
+    cp1: Cp1Head
+    cp2a: Cp2aHead
+    cp2g: Cp2gHead
+    cp4: Cp4Head
+    inherited: tuple[str, ...] = ()
+
+    def status(self, input_id: str) -> InputStatus | None:
+        return next((item.status for item in self.bound if item.input_id == input_id), None)
+
+
+def _bound_head(store: Execution, attempt: Attempt, module_id: str) -> Head:
+    """The head record of the module the attempt bound as `module_id` (its blob checked)."""
+    item = next((i for i in attempt.inputs if i.input_id == module_id), None)
+    if item is None:
+        raise ValueError(f"The CP-4C attempt binds no {module_id} input")
+    module = store.result(item.sha256)
+    if module.module_id != module_id:
+        raise ValueError(f"The CP-4C attempt's {module_id} input is a {module.module_id} module")
+    return Head(
+        module_id=module_id,
+        status=item.status,
+        result_sha256=item.sha256,
+        inputs=module.inputs,
+        commands=commands_of(module),
+    )
+
+
+def cp4c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
+    """The bound CP-1, CP-2A, CP-4 and CP-2G heads through their readers (CP-2G's is
+    `owners.cp2g.cp2g_reader`), the current input set and the inherited limitations. A refusal
+    of `current_inputs` (an upstream gone stale, unrun or blocked, or CP-0 no longer authorizing
+    CP-4C) is kept as text: the validator reports it as a staleness issue."""
+    snapshot = store.read()
+    current: tuple[Input, ...] | str
+    try:
+        current = current_inputs(snapshot, MODULE_ID)
+    except ValueError as error:  # NotAuthorized included: reported, never passed as current
+        current = str(error)
+
+    def head(module_id: str) -> Head:
+        return _bound_head(store, attempt, module_id)
+
+    cp1_module, cp1_status = _required_module(store, head(CP1), CP1)
+    return Upstream(
+        bound=attempt.inputs,
+        current=current,
+        cp1=cp1_of(cp1_module, cp1_status),
+        cp2a=cp2a_reader(store, head(CP2A)),
+        cp2g=cp2g_of(cp2g.cp2g_reader(store, head(CP2G))),
+        cp4=cp4_reader(store, head(CP4)),
+        inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+    )
+
+
+def _inputs(
+    pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
+) -> Cp4cInputs:
+    """The store adapter: the bound heads as the Stage 1 `Cp4cInputs` the core reads, with the
+    status of a bound optional CP-3C (never read). Submit, probe and view reach the core only
+    through this."""
+    context = Cp4cContext(
+        pack=pack,
+        cp1=upstream.cp1,
+        cp2a=upstream.cp2a,
+        cp2g=upstream.cp2g,
+        cp4=upstream.cp4,
+        cp3c_status=upstream.status(CP3C),
+    )
+    return Cp4cInputs(context=context, submission=submission)
+
+
+def validate_restructuring(
+    *, pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """Every issue of `submission` over the bound `upstream`: staleness alone when a bound
+    upstream changed (no content check runs on a stale upstream), else the core's content issues
+    in their pinned order; empty when it composes."""
+    stale = stale_issues(bound=upstream.bound, current=upstream.current)
+    if stale:
+        return stale
+    return content_issues(_inputs(pack, submission, upstream))
+
+
+class RestructuringReport(Contract):
+    """The retained step output: the composed content bound to the pack and the submission."""
+
+    schema_version: Literal["restructuring-fulcrum/1"] = "restructuring-fulcrum/1"
+    run: Run
+    pack_sha256: Hash
+    submission_sha256: Hash
+    tables: tuple[ReportTable, ...]
+    facts: tuple[Fact, ...]
+    claims: tuple[ModuleClaim, ...]
+    limitations: tuple[Text, ...]
+
+
+# T4E.10 can be empty (no gap), so its columns are fixed; every other T4E table takes its columns
+# from its first row's facts (one field sequence per table, builder-asserted).
+_GAP_COLUMNS = (
+    ("id", "Gap id"),
+    ("gap", "Gap"),
+    ("why_it_matters", "Why it matters"),
+    ("affected_analysis", "Affected analysis"),
+    ("severity", "Severity"),
+    ("action", "Action"),
+)
+_VALUE_COLUMN = (TableColumn(field="value", label="Value"),)
+
+
+def _report_table(table: Table, facts: Mapping[str, Fact]) -> ReportTable:
+    if table.table_id == "T4E.10":
+        columns = tuple(TableColumn(field=f, label=label) for f, label in _GAP_COLUMNS)
+    else:
+        first = (facts[fid] for fid in table.rows[0].fact_ids)
+        columns = tuple(TableColumn(field=f.field, label=f.label) for f in first)
+    rows = tuple(TableRow(row_id=r.row_id, label=r.label, fact_ids=r.fact_ids) for r in table.rows)
+    return ReportTable(table_id=table.table_id, title=table.title, columns=columns, rows=rows)
+
+
+def _placed_references(ref: RefTable) -> tuple[Fact, ...]:
+    """The upstream facts verbatim under their own ids in the reference table's cells
+    (expected.references_rule): only the table, row and field coordinates change."""
+    return tuple(
+        r.fact.model_copy(update={"table_id": ref.table_id, "row_id": r.row_id, "field": "value"})
+        for r in ref.rows
+    )
+
+
+def _reference_table(ref: RefTable) -> ReportTable:
+    return ReportTable(
+        table_id=ref.table_id,
+        title=ref.title,
+        columns=_VALUE_COLUMN,
+        rows=tuple(
+            TableRow(row_id=r.row_id, label=r.label, fact_ids=(r.fact.fact_id,)) for r in ref.rows
+        ),
+        row_header=ref.row_header,
+    )
+
+
+def restructuring(
+    *, pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
+) -> RestructuringReport:
+    """The composed report of a valid submission; raises ValueError on any issue."""
+    issues = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        raise ValueError("; ".join(bounded_issues(issues)))
+    result = compute(_inputs(pack, submission, upstream))
+    cells = {c.fact.fact_id: c.fact for c in result.cells}
+    return RestructuringReport(
+        run=pack.run,
+        pack_sha256=pack.content_hash(),
+        submission_sha256=submission.content_hash(),
+        tables=(
+            *(_report_table(t, cells) for t in result.tables),
+            *(_reference_table(r) for r in result.references),
+        ),
+        facts=(*cells.values(), *(f for r in result.references for f in _placed_references(r))),
+        claims=tuple(
+            ModuleClaim(claim_id=c.claim_id, text=c.text, citations=(), limitation=c.limitation)
+            for c in result.claims
+        ),
+        limitations=result.own_limitations,
+    )
+
+
+def cp4c_module(report: RestructuringReport, *, inputs: Sequence[Input], attempt: int) -> Module:
+    """The CP-4C candidate: the report's tables and claims bound to `inputs`, then the
+    submission's content hash (the owner-only settled tail, protocol section 2 `SCHEMAS`)."""
+    run = report.run
+    return Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id=MODULE_ID,
+        inputs=(*inputs, Input(input_id=SUBMISSION_INPUT, sha256=report.submission_sha256)),
+        facts=report.facts,
+        tables=report.tables,
+        claims=report.claims,
+        limitations=report.limitations,
+        attempt=attempt,
+    )
+
+
+# --- the exact `read_inputs` view (lease Tool use; manifest.json tool_use.view_tree_draft) -----
+
+MULTIPLE_BOUNDS: Mapping[str, object] = {"max": "99.99", "places": 2, "may_be_not_assessed": True}
+
+
+def _figure(fact: Fact) -> dict[str, object]:
+    return {
+        "ref": fact.fact_id,
+        "label": fact.label,
+        "period": fact.period,
+        "unit": figure_unit(fact) or fact.unit,
+        "shown": spelled(fact),
+    }
+
+
+def _shown(fact: Fact) -> dict[str, object]:
+    return {"shown": spelled(fact) if fact.status == "known" else None, "status": fact.status}
+
+
+def _text_if_known(fact: Fact) -> str | None:
+    return fact.text if fact.status == "known" else None
+
+
+def _statement_rows(pack: PreparedPack) -> list[dict[str, object]]:
+    """Every row of a ready financial page under a `Period end` header whose cells line up with
+    the header (the rows `_row_amount` can read), as its label and the header's columns. Python
+    offers rows, not amounts, and classifies none: the analyst names the claim row."""
+    out: list[dict[str, object]] = []
+    for (source_id, _locator), page in _pages(pack).items():
+        header = _header(page) if source_id == "financial" else ()
+        for line in page.split("\n") if header else ():
+            cells = _CELLS.split(line)
+            if not line.startswith(_HEADER + "  ") and len(cells) == len(header):
+                out.append({"label": cells[0], "columns": list(header[1:])})
+    return out
+
+
+def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """What `read_inputs` returns, all Python's (lease Tool use): the upstream statuses, the
+    secured claim and the statement rows a class may read, the six CP-2G EBITDA facts, the CP-2A
+    scenario CP-2G applied, the CP-4 terms, the judgment bounds, the figures a reference may name
+    and the limitations settlement will inherit. Unsettled facts are offered with their status.
+    No quote, citation or record."""
+    cp1 = select_cp1(upstream.cp1.t410)
+    debt = cp1["total_debt"]
+    cp2g_head, cp2a_head, cp4_head = upstream.cp2g, upstream.cp2a, upstream.cp4
+    row = _scenario_row(cp2g_head)
+    allowed = frozenset(f.fact_id for f in referencable(cp1.values()))
+    ebitda = tuple(e.fact for e in cp2g_head.ebitda)
+    figures = frozenset(f.fact_id for f in referencable(ebitda))
+    return {
+        "upstream": [
+            {"module_id": item.input_id, "status": item.status}
+            for item in upstream.bound
+            if item.input_id.startswith("CP-")
+        ],
+        "claims_offered": {
+            "secured": {
+                "ref": debt.fact_id if debt.fact_id in allowed else None,
+                "shown": spelled(debt) if debt.status == "known" else None,
+                "status": debt.status,
+                "limitation": debt.limitation,
+                "secured_status": _text_if_known(upstream.cp1.secured_status),
+                "seniority": _text_if_known(upstream.cp1.seniority),
+                "facility_id": upstream.cp1.facility_id,
+                "facility": _text_if_known(cp4_head.fact(CP4_FACILITY)),
+            },
+            "statement_rows": _statement_rows(pack),
+        },
+        "ebitda_offered": [
+            {
+                "case": e.case,
+                "year": e.year,
+                "ref": e.fact.fact_id if e.fact.fact_id in figures else None,
+                "shown": spelled(e.fact) if e.fact.status == "known" else None,
+                "status": e.fact.status,
+                "limitation": e.fact.limitation,
+            }
+            for e in cp2g_head.ebitda
+        ],
+        "cp2a": {
+            "scenario_row": row,
+            "name": _text_if_known(cp2a_head.fact(f"T2B.1.{row}.name")),
+            **{name: _shown(cp2a_head.fact(f"T2B.1.{row}.{name}")) for name in _SHOCKS},
+        },
+        "cp4": {
+            "facility": _text_if_known(cp4_head.fact(CP4_FACILITY)),
+            "lender_protection": _text_if_known(cp4_head.fact(CP4_RATING)),
+            "additional_debt_conditions": _text_if_known(cp4_head.fact(CP4_CONDITIONS)),
+        },
+        "bounds": {
+            "multiple": dict(MULTIPLE_BOUNDS),
+            "ranks": {"min": 1, "max": 9},
+            "treatments": list(get_args(TreatmentKind)),
+        },
+        "cp1_facts": [_figure(f) for f in cp1.values() if f.fact_id in allowed],
+        "cp2g_facts": [_figure(f) for f in ebitda if f.fact_id in figures],
+        "inherited_limitations": list(upstream.inherited),
+    }
+
+
+def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
+    """(sha256, body) of the one `read_inputs` view over the bound heads, as compact JSON."""
+    upstream = cp4c_upstream(store=historical, attempt=attempt)
+    context = context_block(pack=historical.pack(), upstream=upstream)
+    body = json.dumps(context, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(body.encode()).hexdigest(), body
+
+
+# --- the tool-use rule, the validator, submit and the verifier probe ---------------------------
+
+
+def RULES(text: str, seen: Seen) -> tuple[str, ...]:
+    """The tool-use evidence rule (protocol section 2): every cited `page:N` was returned by
+    `read_pages` in the step. The schema holds no `ABSENCE_MARKERS` value, so the product's
+    cited-page rule (`live.tools.unread_citation_issues`, bounded by `listed_issues` and sorted)
+    is the only one; it reads the payload only through the product's bounded parse."""
+    return unread_citation_issues(text, seen)
+
+
+def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
+    """The step validator `submit` hands the journal and the verifier replays (its last step is
+    the one under validation)."""
+    submission, shape = _parsed(store.payload(attempt.steps[-1].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
+    upstream = cp4c_upstream(store=store, attempt=attempt)
+    issues = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
+    if issues:
+        return StepValidation(issues=issues)
+    report = restructuring(pack=pack, submission=submission, upstream=upstream)
+    return StepValidation(output=report.model_dump_json())
+
+
+ENTRY_VALIDATOR = _validate_step
+
+
+def _candidate(output: str, attempt: Attempt) -> Module:
+    report = RestructuringReport.model_validate_json(output)
+    return cp4c_module(report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def _with_rules(
+    validate: Callable[[PreparedPack, Attempt], StepValidation],
+    rules: Callable[[str], tuple[str, ...]],
+    payload: str,
+) -> Callable[[PreparedPack, Attempt], StepValidation]:
+    """`validate`, then the tool-use rule issues of the retained payload appended (the order the
+    verifier rebuilds: validator issues, then the journaled rules)."""
+
+    def run(pack: PreparedPack, attempt: Attempt) -> StepValidation:
+        outcome = validate(pack, attempt)
+        found = rules(payload)
+        if not found:
+            return outcome
+        return StepValidation(
+            output=outcome.output, issues=tuple(dict.fromkeys((*outcome.issues, *found)))
+        )
+
+    return run
+
+
+def _submit_step(
+    store: Execution,
+    ticket_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Attempt:
+    """Retain the one `restructuring_fulcrum` response (validator issues, then the tool-use rule
+    issues), then settle CP-4C with the Python candidate when it is valid. An invalid step
+    finishes the attempt rejected (blocked on the repair). A crash after the step resumes from
+    the retained step."""
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    if attempt is None or attempt.module_id != MODULE_ID or attempt.status != "pending":
+        raise ValueError("Ticket is absent, finished or belongs to another module")
+    if (
+        attempt.steps
+        and attempt.steps[0].payload_sha256 != hashlib.sha256(payload.encode()).hexdigest()
+    ):
+        raise ValueError("Ticket already retains a different response; resume or interrupt")
+    if not attempt.steps or attempt.steps[0].status == "pending":
+        validate: Callable[[PreparedPack, Attempt], StepValidation] = lambda pack, current: (
+            _validate_step(store, pack, current)
+        )
+        if rules is not None:
+            validate = _with_rules(validate, rules, payload)
+        attempt = store.submit_step(ticket_id, MODULE_ID, STEP_IDS, STEP_ID, payload, validate)
+    if attempt.status == "finished":
+        return attempt
+    outcome = _validate_step(store, store.pack(), attempt)
+    if outcome.issues or not outcome.retained_as(attempt.steps[0]):
+        raise ValueError("Retained CP-4C output differs from trusted validation")
+    candidate = _candidate(outcome.output or "", attempt)
+    return store.finish(
+        ticket_id,
+        candidate.model_dump_json(),
+        lambda supplied: () if supplied == candidate else ("CP-4C candidate differs",),
+        qualification=QUALIFICATION,
+    )
+
+
+def submit(
+    store: Execution,
+    ticket_id: str,
+    step_id: str,
+    payload: str,
+    rules: Callable[[str], tuple[str, ...]] | None,
+) -> Submitted:
+    """Journal one `restructuring_fulcrum` payload: null resolution against the model-facing
+    schema, then the validated step (the journaled tool-use rules appended) and, when valid, the
+    settlement."""
+    if step_id != STEP_ID:
+        raise ValueError(f"CP-4C has one step, {STEP_ID}")
+    normalised, resolved = normalise(RestructuringSubmission, payload)
+    journal = _submit_step(store, ticket_id, normalised, rules)
+    return Submitted(journal, normalised, resolved, (), (), None)
+
+
+def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
+    """Rerun the step validator and settlement over the settled snapshot (nothing is written);
+    `WorkflowError("identity_mismatch")` unless the head rebuilds exactly."""
+    probe_one_step(store, snapshot, attempt, validate=_validate_step, build=_candidate)
+
+
+# --- the consumer reader (lease Public API: for CP-5 and later consumers) ----------------------
+
+
+@dataclass(frozen=True)
+class Cp4cHead:
+    """What a consumer reads from a settled CP-4C head: its status and hash, the enterprise
+    value of each valuation, the recovery of each class and the equity residual row, the value
+    break of each valuation (verbatim), and the settled own limitations (with the synthetic line
+    on a synthetic case). A blocked head gives its status and hash only."""
+
+    status: InputStatus
+    head_sha256: str
+    facts: tuple[Fact, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+    def fact(self, fact_id: str) -> Fact:
+        found = next((f for f in self.facts if f.fact_id == fact_id), None)
+        if found is None:
+            raise ValueError(f"CP-4C: {fact_id} is not exposed by the reader")
+        return found
+
+
+_READ_FIELDS = (("T4E.3", "ev"), ("T4E.5", "recovery"), ("T4E.7", "value_break"))
+
+
+def cp4c_reader(store: Execution, head: Head) -> Cp4cHead:
+    """The consumer reader of a settled CP-4C head (lease Public API): EV (T4E.3), recoveries
+    (T4E.5) and the fulcrum (T4E.7 value break) by the head's own rows. A stale head or another
+    module's head raises."""
+    module, status = _settled_module(store, head, MODULE_ID)
+    if status == "blocked":
+        return Cp4cHead(status=status, head_sha256=head.result_sha256)
+    tables = {t.table_id: t for t in module.tables}
+    facts = {f.fact_id: f for f in module.facts}
+    ids = [f"{t}.{r.row_id}.{name}" for t, name in _READ_FIELDS for r in tables[t].rows]
+    missing = [fid for fid in ids if fid not in facts]
+    if missing:
+        raise ValueError(f"CP-4C: the head has no fact {missing[0]}")
+    return Cp4cHead(
+        status=status,
+        head_sha256=head.result_sha256,
+        facts=tuple(facts[fid] for fid in ids),
+        limitations=module.limitations,
     )

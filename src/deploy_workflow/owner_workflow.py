@@ -109,6 +109,7 @@ from deploy_workflow.owners import (
     cp3c,
     cp3d,
     cp4,
+    cp4c,
     cp5,
     cp8,
     cpdr,
@@ -139,6 +140,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-1C",
         "CP-3C",
         "CP-2H",
+        "CP-4C",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
@@ -158,6 +160,7 @@ _CORES: dict[str, ModuleType] = {
     "CP-1C": cp1c,
     "CP-3C": cp3c,
     "CP-2H": cp2h,
+    "CP-4C": cp4c,
 }
 _QUALIFICATION = {
     "CP-1": PROMOTED,
@@ -179,6 +182,7 @@ _QUALIFICATION = {
     "CP-1C": cp1c.QUALIFICATION,
     "CP-3C": cp3c.QUALIFICATION,
     "CP-2H": cp2h.QUALIFICATION,
+    "CP-4C": cp4c.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -200,6 +204,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-1C": cp1c.probe,
     "CP-3C": cp3c.probe,
     "CP-2H": cp2h.probe,
+    "CP-4C": cp4c.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -217,6 +222,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "peer_benchmark": cp1c.view,
     "refinancing_risk": cp3c.view,
     "rating_triggers": cp2h.view,
+    "restructuring_fulcrum": cp4c.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -239,6 +245,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-1C": cp1c.ENTRY_VALIDATOR,
     "CP-3C": cp3c.ENTRY_VALIDATOR,
     "CP-2H": cp2h.ENTRY_VALIDATOR,
+    "CP-4C": cp4c.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -535,6 +542,21 @@ def _default_specs() -> dict[str, OwnerSpec]:
                 step(
                     "rating_triggers",
                     cp2h.TriggerSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-4C": OwnerSpec(
+            module_id="CP-4C",
+            steps=(
+                step(
+                    "restructuring_fulcrum",
+                    cp4c.RestructuringSubmission,
                     sources=True,
                     inputs="module_context",
                     rules="journaled",

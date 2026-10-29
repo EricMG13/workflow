@@ -17,6 +17,7 @@ from deploy_vii.bindings.cp3 import CP3
 from deploy_vii.bindings.cp3c import CP3C
 from deploy_vii.bindings.cp3d import CP3D
 from deploy_vii.bindings.cp4 import CP4
+from deploy_vii.bindings.cp4c import CP4C
 from deploy_vii.bindings.cp5 import CP5
 from deploy_vii.bindings.cp6 import CP6
 from deploy_vii.bindings.cp8 import CP8
@@ -37,6 +38,7 @@ from deploy_vii.bindings.cpl10 import CPL10
 # CP-1C appended last (docs/CP1C-OWNER-LEASE.md names no position).
 # CP-3C directly after CP-2D, whose head it consumes (docs/CP3C-OWNER-LEASE.md).
 # CP-2H appended last (docs/CP2H-OWNER-LEASE.md: SHIPPED_MAPS += CP2H).
+# CP-4C appended last (docs/CP4C-OWNER-LEASE.md Files: bindings/cp4c.py + SHIPPED_MAPS).
 SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP0,
     CP1,
@@ -60,4 +62,5 @@ SHIPPED_MAPS: tuple[BindingMap, ...] = (
     CP2G,
     CP1C,
     CP2H,
+    CP4C,
 )

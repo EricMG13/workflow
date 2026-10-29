@@ -1250,7 +1250,7 @@
     {
       "destination": "src/deploy_vii/bindings/shipped.py",
       "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "8afa15fc82db7580e03c6405f43eee7adfa3344d2b2acfb7f490562084791cc1",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
       "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
       "sha256": "0b74f88e8ab98a21e43a675335121a27a88cf0badac8e699f8cf7281dbf1f48b",
       "reason": "Register the CP-2D binding map after CP-2 (docs/CP2D-OWNER-LEASE.md, Files); new bindings/cp2d.py holds FP block bindings only.",
@@ -1268,7 +1268,7 @@
     {
       "destination": "src/deploy_vii/bindings/shipped.py",
       "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "0b74f88e8ab98a21e43a675335121a27a88cf0badac8e699f8cf7281dbf1f48b",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
       "project_commit": "0fa5b4aae6b2393a642d8b5e2f5c39b27d1b5872",
       "sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
       "reason": "Register the CP-2E rails binding map (D12 one-line registration, appended last) with the CP-2E owner core.",
@@ -1313,7 +1313,7 @@
     {
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
-      "prior_project_sha256": "09ab059d832204059f454e4c9077e0c2d02493717080580a80ab44fcb080acba",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
       "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
       "sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
       "reason": "Add the three CP-2D _Spec rows (liquidity-runway, maturity-wall, funding-gap) to _COVENANT_REFINANCING (docs/CP2D-OWNER-LEASE.md, Rendered sections).",
@@ -1340,7 +1340,7 @@
     {
       "destination": "src/deploy_vii/bindings/shipped.py",
       "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "f51954d7b2cd4569f1e1ffbe06713a8d2c5c04f828ce8bf8df3737da4583b48a",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
       "project_commit": "6b679cab982521bd0d73a213e7294d45927d6894",
       "sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
       "reason": "Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
@@ -1359,7 +1359,7 @@
       "destination": "src/deploy_vii/bindings/shipped.py",
       "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
       "prior_project_sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
-      "project_commit": "94d9f29e026c274935cea57e7687afe1720adc8e",
+      "project_commit": "7831ef123f6a2cff27b63c2546906dadbcae5426",
       "sha256": "9e6ee6cd5cbc160f1d47e1be3fdcd5f7fa7eb1f68999156e9249a8139fef8ae2",
       "reason": "Register the CP-1D binding map (D12 one-line registration, appended last after CP-L10); all earlier rows retained.",
       "review": "docs/CP1D-OWNER-LEASE.md"
@@ -1368,7 +1368,7 @@
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
       "prior_project_sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
-      "project_commit": "94d9f29e026c274935cea57e7687afe1720adc8e",
+      "project_commit": "7831ef123f6a2cff27b63c2546906dadbcae5426",
       "sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
       "reason": "Add the CP-1D _EARNINGS_QUALITY composition (two _Spec rows), its _spec_of entry and the two block ids in the earnings preset (D12 registration, rows only); retains CP-3D, CP-2A and CP-2D rows.",
       "review": "docs/CP1D-OWNER-LEASE.md"

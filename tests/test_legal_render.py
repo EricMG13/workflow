@@ -31,17 +31,17 @@ ROOT = Path(__file__).parents[1]
 ORACLE = json.loads((ROOT / "cases/legal/render-expected.json").read_text())
 
 # LEAD ruling Stage 2 round 4 (H1, option a): the CP-2D lease D7 gives `liquidity-runway`,
-# `maturity-wall` and `funding-gap` a `_Spec` (owner CP-2D, producers ("CP-2D",), kind dense), so
-# in a run where CP-2D was not requested they render the product's empty state for a spec'd block
-# whose producer was not requested, not the Unbound fallback the frozen CP-4 FP04 oracle pins.
-# This is the only change to the expectation; `refinancing-paths` and `lme-creditor-exposure`
-# stay the Unbound fallback. Remove at the Stage 2 close re-pin of cases/legal/render-expected.json.
-UNBOUND_FALLBACK = ("Unbound", "prose", "not_run", None)
+# `maturity-wall` and `funding-gap` a `_Spec` (owner CP-2D, producers ("CP-2D",), kind dense), and
+# the CP-3C lease D7 does the same for `refinancing-paths` and `lme-creditor-exposure` (owner
+# CP-3C). In a run where the owner was not requested, each renders the product's empty state for a
+# spec'd block whose producer was not requested, not the Unbound fallback the frozen CP-4 FP04
+# oracle pins. These five are the only change to the expectation; every other id in the oracle's
+# `other_front_sections` has no row here and fails the lookup. Remove at the Stage 2 close re-pin
+# of cases/legal/render-expected.json.
 CP2D_D7_DELTA = dict.fromkeys(
     ("liquidity-runway", "maturity-wall", "funding-gap"), ("CP-2D", "dense", "not_run", None)
 )
 CP2D_D7_NOTE = dict.fromkeys(CP2D_D7_DELTA, "Not run: CP-2D was not requested in this run.")
-# The same delta for the CP-3C lease D7 rows (pending a LEAD ruling that amends round 4).
 CP3C_D7_DELTA = dict.fromkeys(
     ("refinancing-paths", "lme-creditor-exposure"), ("CP-3C", "dense", "not_run", None)
 )
@@ -359,9 +359,9 @@ def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
         assert actual["spans"] == [s.model_dump(mode="json") for s in source.spans]
     for block_id in ORACLE["other_front_sections"]["ids"]:
         block = _blocks(report)[block_id]
-        want = CP2D_D7_DELTA.get(block_id, UNBOUND_FALLBACK)
+        want = CP2D_D7_DELTA[block_id]
         assert (block.owner, block.kind, block.state, block.full_analysis_route) == want
-        assert block.note == CP2D_D7_NOTE.get(block_id, block.note)
+        assert block.note == CP2D_D7_NOTE[block_id]
         assert not block.rows and not block.lines  # no CP-2D cell, no claim that CP-2D ran
 
 

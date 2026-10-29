@@ -455,7 +455,10 @@ class _Run:
         hostile = [t for t in texts if "[" in t or "{" in t]
         if self._check == "strict_summary":  # a validator that checks only the summary
             hostile = [t for t in hostile if t == doc["summary"]]
-        if self._check in {"strict", "strict_summary"} and hostile:
+        if self._check == "strict_first_note":  # a validator that skips the second part's note
+            checked = [doc["summary"], doc["parts"][0].get("note") or ""]
+            hostile = [t for t in checked if "[" in t or "{" in t]
+        if self._check in {"strict", "strict_summary", "strict_first_note"} and hostile:
             self._stale = False
             return {"status": "invalid", "issues": [f"summary: bad text {hostile[0]!r}"]}
         if self._check == "silent" and hostile:
@@ -526,9 +529,26 @@ def test_a_verbatim_path_that_refuses_every_value_is_a_failure() -> None:
     assert failures == ["summary: listed verbatim but refused every value"]
 
 
+TWO_NOTES = json.dumps(
+    {
+        "kind": "a",
+        "summary": "Rates matter.",
+        "parts": [{"ref": "p1", "note": "x"}, {"ref": "p2", "note": "y"}],
+    }
+)
+
+
 def test_a_verbatim_pattern_needs_only_one_accepted_value_on_one_path() -> None:
-    # parts.1.note is absent, parts.0.note accepts: the pattern as a whole is used
-    assert _failures("strict_summary", build=False, verbatim=frozenset({NOTE})) == []
+    """`parts.0.note` refuses the hostile text and `parts.1.note` accepts it: the pattern as a
+    whole is used, so the refusing path is excused; unlisted, the accepting path is the failure."""
+
+    def run(**options: Any) -> list[str]:
+        return model_text_failures(
+            Doc, TWO_NOTES, lambda: _Run("strict_first_note", False), **options
+        )
+
+    assert run(verbatim=frozenset({NOTE})) == []
+    assert any("parts.1.note='{}': accepted" in f for f in run())
 
 
 def test_a_verbatim_path_is_required_to_be_listed() -> None:

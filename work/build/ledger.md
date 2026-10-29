@@ -437,3 +437,4 @@
 - 09:49 Release fix2 done a8e93cf (D12 records restored, legal pin restored + cascade 13 shas, S1a 3 tests pass 687s, F1 stored record, timing >=5x both sides, cites/notes/heading). Waiting on Q-C1 builder, then integration I2.
 - 10:00 Q-C1 builder done ff1dbce (MODEL dense spec, CP-MODEL in covenant_refinancing, legal render green, tripwire xfail strict, pathway_has_model_block test). I2 integrator dispatched.
 - 10:20 I2 done 192772c (f1+f2+qc1 merged; chain fixed point; double rebuild identical; fast set 9448 passed + tripwire xfail; S1a 3 passed; timing gaps 0.8/attach 0.4 >=5x). Ruled cpos re-pins OK; D12 records for report_view/contracts (Q-C1) requested.
+- 10:22 D12 records c752e59 (report_view, contracts); probe_d12_chain exit 0 over 12 reused files. Render suites + test_source_tools running on c752e59; scoped Opus re-review (mx-precise aee778f4) of C-M1, B-M1, Q-C1 code, I2.

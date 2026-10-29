@@ -37,7 +37,7 @@ from deploy_vii.live.tools import Seen, cited_locators
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.report_view import _EARNINGS_QUALITY, Block, _spec_of, build, pathways
 from deploy_workflow import host, owner_workflow
-from deploy_workflow.owners import cp1d
+from deploy_workflow.owners import blank, cp1d
 from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -602,8 +602,9 @@ def test_derived_fact_citations_are_one_per_page_first_quote() -> None:
     again = page1.model_copy(update={"quote": "second"})
     page2 = page1.model_copy(update={"locator": "page:2", "quote": "other"})
     last = page1.model_copy(update={"quote": "last"})
-    assert cp1d._one_per_page([page1, page2, again, last]) == (page1, page2)
-    assert cp1d._one_per_page([]) == ()
+    assert cp1d.one_per_page is blank.one_per_page  # the shared rule, not a private copy
+    assert cp1d.one_per_page([page1, page2, again, last]) == (page1, page2)
+    assert cp1d.one_per_page([]) == ()
     cell = cp1d.CellFact(
         "T1D.3.x.value",
         "T1D.3",

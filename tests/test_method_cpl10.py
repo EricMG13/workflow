@@ -29,6 +29,7 @@ from deploy_vii.contracts import (
     validate_tables,
 )
 from deploy_workflow.owners import cpl10
+from deploy_workflow.owners.blank import one_per_page
 
 CASE = Path(__file__).resolve().parents[1] / "cases" / "cpl10-owner"
 EXPECTED: dict[str, Any] = json.loads((CASE / "expected.json").read_text())
@@ -413,7 +414,8 @@ def test_view_topics_and_pair_screens() -> None:
 
 
 def _citations(labels: Any) -> tuple[Citation, ...]:
-    return tuple(dict.fromkeys(c for label in labels for c in UPSTREAM.cp1_facts[label].citations))
+    """The oracle's derived citations (round 3): one per (source, page), the first input quote."""
+    return one_per_page(tuple(c for label in labels for c in UPSTREAM.cp1_facts[label].citations))
 
 
 def _assert_cell(cell: cpl10.Cell, want: dict[str, Any]) -> None:
@@ -461,7 +463,11 @@ def _assert_cell(cell: cpl10.Cell, want: dict[str, Any]) -> None:
         "derives_from": tuple(want.get("derives_from") or ()),
         "copied_from_cp1": copied,
         # F5: a copied cell carries its CP-1 fact's citations; a calculated one its derives_from's.
-        "citations": _citations([copied] if copied else want.get("derives_from") or ()),
+        "citations": (
+            UPSTREAM.cp1_facts[copied].citations  # a copy keeps CP-1's own citations
+            if copied
+            else _citations(want.get("derives_from") or ())
+        ),
         "shown": _bind_run(want["shown"]).replace("G#", GAP),
     }
     assert got == expected, fact.fact_id
@@ -557,8 +563,8 @@ def test_missing_change_cells_derive_from_both_cp1_labels(
             cell = cells[f"TL10.2.{topic.topic.topic_id}.{field}"]
             assert cell.fact.status == "missing"
             assert cell.derives_from == (topic.start.label, topic.close.label)
-            assert cell.fact.citations == tuple(
-                dict.fromkeys((*topic.start.citations, *topic.close.citations))
+            assert cell.fact.citations == one_per_page(
+                (*topic.start.citations, *topic.close.citations)
             )
 
 
@@ -893,3 +899,20 @@ def test_blank_gap_fields_follow_the_gap_empty_check() -> None:
         "gaps[0].action: empty",
         "gaps[1].action: must not contain a digit",
     ]
+
+
+def test_derived_cells_cite_one_quote_per_page() -> None:
+    """Round 3 item 3 (Stage 2 close, item 17): a cell with derives_from has one Citation per
+    (source, page), the first input quote; a Q1 and a Q4 quote on one page give one Citation."""
+    repeated = 0
+    for name in ("positive", "limited"):
+        result = cpl10.change_screen(submission=_payload(name), upstream=UPSTREAM)
+        for cell in result.cells:
+            pages = [(c.source_id, c.locator) for c in cell.fact.citations]
+            assert len(pages) == len(set(pages)), cell.fact.fact_id
+            if cell.derives_from:
+                inputs = tuple(
+                    c for d in cell.derives_from for c in UPSTREAM.cp1_facts[d].citations
+                )
+                repeated += len(inputs) > len(one_per_page(inputs))
+    assert repeated, "the fixture must exercise two quotes on one page"

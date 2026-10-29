@@ -1,10 +1,10 @@
 # Reuse selection and known risks
 
 Source: Claude worktree `agent-a2b34b93ed9b7ad1a`, commit `6441553936086c834be885e2f3d7cd7f0959aa5c`.
-Selected 85 Python modules form the static local import closure of the
+Selected 88 Python modules form the static local import closure of the
 source-tool, frozen-context, CP0/CP1/Model/workflow and rendering seeds. This includes
 necessary financial kernels and bindings; counting files does not establish completion.
-There are 108 source/resource entries with exact hashes in manifest.json.
+There are 115 source/resource entries with exact hashes in manifest.json.
 Resources include renderer assets/font licenses, step instructions and registry metadata.
 No file was copied from active Codex staged WIP or a mutable runtime.
 

@@ -11,7 +11,7 @@
     "deploy_vii.cp_model_workflow",
     "deploy_vii.delivery"
   ],
-  "python_modules": 85,
+  "python_modules": 88,
   "files": [
     {
       "destination": "src/deploy_vii/__init__.py",
@@ -1048,7 +1048,8 @@
       "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
       "source_file_sha256": "09fa35e9a787a4fc1ad1fbb2d873d7e9a7445234bf826e7280fc334db7b31550",
       "excerpt": "lines 112-401 of the source file (the 'Portfolio workbook' section only); sha256 is of the excerpt bytes",
-      "verification": "byte-preserved excerpt; not new-project functional acceptance"
+      "verification": "byte-preserved excerpt; not new-project functional acceptance",
+      "note": "build_templates.py main() also writes the non-imported rv-quotes.template.xlsx"
     }
   ],
   "excluded_python_modules": [

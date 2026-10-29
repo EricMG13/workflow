@@ -454,3 +454,4 @@
 - 11:02 Oracle half B scoped re-review APPROVE (a802522e; p1 0, p3 0, p2 1 expected); 1 Low (dr6:32 wording) ruled, rides in the end batch.
 - 11:02 Oracle half A scoped re-review REVISE (a1ce38fb): M-new L5 pin unmeetable (tab_label with no tabs; reason seam unnamed). Ruling item 9 L5 corrected. Fix round 2 to preparer A; dr6:32 Low to preparer B in parallel.
 - 11:04 Chart oracles FROZEN at s3-oracles 731059f (preparers a17dc994 A, a1775e03 B; reviewers a1ce38fb A, a802522e B; ids for the chart-oracle independence rule). W1 seam builder dispatched (mx-feature a23964be, ../s3-wire from 731059f; brief work/build/stage3/wire-seam-brief.md).
+- 11:09 W1 attempt 1 (a23964be) blocked by the harness cross-worktree write guard before any write; it did not bypass it. Hand-made ../s3-wire removed. W1 retry dispatched with isolation=worktree (mx-feature a37a7472), branch claude/s3-wire from 731059f inside its own worktree.

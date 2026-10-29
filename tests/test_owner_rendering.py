@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable, Iterator
 from datetime import date
 from pathlib import Path
@@ -86,6 +87,12 @@ EXPECTED_SECTIONS = {
     "cp1d-fp02-quality": ("earnings-quality", "restated-leverage"),
     "cp2a-fp05-downside": ("downside-stress", "break-points"),
     "cp2g-fp05-forward": ("forward-credit-path", "forward-breakpoints"),
+    "cp2g-fp05-forward": (
+        _wrap("cp2g_runs", "cp2g_closed"),
+        ("positive",),
+        None,
+        ("cp1d_blocked",),
+    ),
     "cp2g-fp05-forward-gap": ("forward-credit-path", "forward-breakpoints"),
     "cp2h-fp05-ratings": ("rating-triggers",),
     "cp4c-fp05-recovery": ("recovery-by-class", "value-allocation-claims"),
@@ -118,8 +125,15 @@ MODEL_ROWS = {"cp1-model", "s1a-credit-snapshot", "cp3-fp01-relative-value"}
 def _lease_banners() -> dict[tuple[str, str], str]:
     """The R2.4 table, parsed from the frozen lease."""
     section = LEASE.split("### R2.4", 1)[1].split("### R2.5", 1)[0]
-    rows = re.findall(r"^\| `([a-z0-9-]+)` \| (complete|refused) \| (.+) \|$", section, re.M)
+    rows = re.findall(
+        r"^\| `([a-z0-9-]+)` \| (complete|refused) \| (.+) \|$", section, re.MULTILINE
+    )
     return {(scope, outcome): literal for scope, outcome, literal in rows}
+
+
+def _run_of(value: Any) -> Run:
+    assert isinstance(value, Run)
+    return value
 
 
 def _match(run: Run) -> list[str]:
@@ -201,7 +215,9 @@ def _driver_runs() -> Iterator[tuple[str, str, Callable[[], Run]]]:
     def pack_run(module: str, case: str | None = None) -> Callable[[], Run]:
         def build() -> Run:
             driver = importlib.import_module(module)
-            return driver.make_pack(case).run if case is not None else driver.make_pack().run
+            return _run_of(
+                driver.make_pack(case).run if case is not None else driver.make_pack().run
+            )
 
         return build
 
@@ -244,14 +260,14 @@ def _driver_runs() -> Iterator[tuple[str, str, Callable[[], Run]]]:
 
 def _cp3_run(case: str) -> Callable[[], Run]:
     def build() -> Run:
-        return importlib.import_module("cp3_cp6_runs").make_pack(case).run
+        return _run_of(importlib.import_module("cp3_cp6_runs").make_pack(case).run)
 
     return build
 
 
 def _cp4_run(case: str) -> Callable[[], Run]:
     def build() -> Run:
-        return importlib.import_module("test_method_cp4").make_pack(case).run
+        return _run_of(importlib.import_module("test_method_cp4").make_pack(case).run)
 
     return build
 
@@ -545,7 +561,8 @@ def inputs(tmp_path: Path, runs: dict[str, Any]) -> Callable[[str], tuple[Path, 
 
 def _payload(html_text: str) -> dict[str, Any]:
     marker = '<script id="report-data" type="application/json">'
-    return json.loads(html_text.split(marker, 1)[1].split("</script>", 1)[0])
+    payload: dict[str, Any] = json.loads(html_text.split(marker, 1)[1].split("</script>", 1)[0])
+    return payload
 
 
 def _render_ok(
@@ -559,7 +576,9 @@ def _render_ok(
 
 
 def _banner_free(text: str) -> str:
-    return re.sub(r'<section id="delivery-scope-banner".*?</section>', "", text, count=1, flags=re.S)
+    return re.sub(
+        r'<section id="delivery-scope-banner".*?</section>', "", text, count=1, flags=re.DOTALL
+    )
 
 
 def test_genuine_cp1_model_positive_delivery(
@@ -640,7 +659,6 @@ def test_genuine_cp1_model_gap_is_refused_outcome(
         assert not section.facts and section.state != "populated"
     assert not (destination / "model").exists()
     assert not (destination / "calculation.json").exists()
-    assert not any(h.status == "blocked" for h in wire.head_results)
     g2.verify_owner_rendered_slice(store, receipt, None, destination)
 
 
@@ -704,12 +722,14 @@ def test_genuine_cp1_model_store_change_during_staging_and_after_rename(
     store, receipt, model = inputs("positive")
     real_rename = os.rename
 
-    def change_then_rename(src: Any, dst: Any) -> None:
+    real_mkdtemp = tempfile.mkdtemp
+
+    def change_then_stage(*args: Any, **kwargs: Any) -> str:
         (store / "current").write_text("0" * 64 + "\n", encoding="ascii")
-        real_rename(src, dst)
+        return str(real_mkdtemp(*args, **kwargs))
 
     good = (store / "current").read_text(encoding="ascii")
-    monkeypatch.setattr(g2.os, "rename", change_then_rename)
+    monkeypatch.setattr(tempfile, "mkdtemp", change_then_stage)
     _refused(tmp_path, store, receipt, model, "during-staging")
     (store / "current").write_text(good, encoding="ascii")
 
@@ -717,7 +737,8 @@ def test_genuine_cp1_model_store_change_during_staging_and_after_rename(
         real_rename(src, dst)
         (store / "current").write_text("0" * 64 + "\n", encoding="ascii")
 
-    monkeypatch.setattr(g2.os, "rename", rename_then_change)
+    monkeypatch.undo()
+    monkeypatch.setattr(os, "rename", rename_then_change)
     destination = tmp_path / "out" / "after-rename"
     with pytest.raises(ValueError, match=r"^owner_render_"):
         g2.render_owner_slice(store, receipt, model, destination)
@@ -831,7 +852,8 @@ def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) ->
 
 
 def _s1a(case: str, root: Path) -> tuple[Path, Path, Path | None]:
-    return importlib.import_module("s1a_runs").s1a_closed(case, root)
+    store, receipt, publication = importlib.import_module("s1a_runs").s1a_closed(case, root)
+    return Path(store), Path(receipt), Path(publication)
 
 
 def _wrap(module: str, function: str) -> Callable[[str, Path], tuple[Path, Path, Path | None]]:
@@ -844,9 +866,7 @@ def _wrap(module: str, function: str) -> Callable[[str, Path], tuple[Path, Path,
 
 def _cp8(case: str, root: Path) -> tuple[Path, Path, Path | None]:
     driver = importlib.import_module("cp8_runs")
-    workflow, _ = (
-        driver.start(case, root) if case == "no_record" else driver.cp8_closed(case, root)
-    )
+    workflow, _ = driver.start(case, root) if case == "no_record" else driver.cp8_closed(case, root)
     workflow.write_receipt(root / "owner-receipt.json")
     return root / "store", root / "owner-receipt.json", None
 

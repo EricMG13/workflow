@@ -1,0 +1,727 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "negative_resources_plot_below_zero",
+      "expected": "Resources at maturity that are negative (two_facilities term-loan -8.5, burn -14) are known values drawn below zero with the bracket spelling; never clipped to zero (design 'Columns with negatives', charts.js:44-55). Texts for these fixtures are derived (0 dp half away from zero).",
+      "module_cases": [
+        "fixture_two_facilities",
+        "fixture_burn"
+      ],
+      "negative_point_fact_ids": {
+        "fixture_burn": [
+          "T3D.1.r01.c7"
+        ],
+        "fixture_two_facilities": [
+          "T3D.1.r02.c7"
+        ]
+      }
+    },
+    {
+      "case": "resources_gap_keeps_principal",
+      "expected": "Minimum cash not assessed: T3D.1.r01.c7 is a gap with its G# reference and reason; c6 (principal payable at maturity 50) stays a known mark.",
+      "module_case": "gap_minimum_cash"
+    },
+    {
+      "case": "no_repricing_leaves_t3d1_known",
+      "expected": "The repricing gap does not touch T3D.1: marks equal positive exactly.",
+      "module_case": "gap_no_repricing"
+    },
+    {
+      "case": "all_gap_chart_is_the_na_frame",
+      "expected": "Amortisation missing: principal payable and resources are both missing for the only facility, so no mark is plottable; the chart is kind na with a reason and both marks are gaps, never 0.",
+      "module_case": "fixture_amortisation_missing"
+    },
+    {
+      "case": "two_facilities_order",
+      "expected": "Categories follow T3D.1 row order (facility_order: months ascending, then id): notes (31 months) before term-loan (48 months). One category per facility, no aggregation by year.",
+      "module_case": "fixture_two_facilities"
+    },
+    {
+      "case": "earlier_principal_paid_from_resources",
+      "expected": "Resources at the later maturity are net of principal paid from resources at the earlier one (notes 4.5 then term-loan -8.5): marks carry the settled per-row value, never a recomputed running balance.",
+      "module_case": "fixture_two_facilities"
+    },
+    {
+      "case": "cp3c_not_in_the_run",
+      "expected": "Without a CP-3C head the funding-gap block has no CR.3 figure and keeps the CP-2D oracle's tabs (T2E.5 primary, T2E.2); nothing is drawn from T2E.5 as a stand-in.",
+      "module_case": null
+    }
+  ],
+  "builder_targets": [
+    {
+      "asserts": [
+        "cp3c_chart_series(module) on the CP-3C head of the positive and gap_minimum_cash owner runs (tests/cp3c_runs.py) equals chart_series.CR.3.<case> (points, gap marks, series order)",
+        "fixture inputs of fixture_two_facilities and fixture_burn (composer) produce negative c7 values; the producer keeps them negative",
+        "fixture_amortisation_missing yields kind na with a reason and two gap points"
+      ],
+      "test_file": "tests/test_chart_series_cr3.py (new)"
+    },
+    {
+      "asserts": [
+        "run covenant_refinancing with CP-0, CP-1, CP-1A, CP-2, CP-2D, CP-3C: block funding-gap owner CP-2D, one figure CR.3 placement beside kind grouped, marks and twin equal the oracle, tabs T2E.2 and T3D.1 behind primary T2E.5",
+        "gap_minimum_cash run: the c7 mark is a gap spelled '∅ G<n>' with n from the report's gap ledger, c6 is 50",
+        "the same run without CP-3C: no figure, tabs [T2E.2] as cases/cp2d-owner fp04_render",
+        "validate_bindings(view, SHIPPED_MAPS) returns no issue with T3D.1 bound to funding-gap only; refinancing-paths tabs are T3D.2 and T3D.3"
+      ],
+      "test_file": "tests/test_chart_render_cr3.py (new)"
+    }
+  ],
+  "category_basis": "inference: the design axis is a year; the oracle draws one category per T3D.1 row (facility), labelled by the row label, with the maturity date c2 as `axis_sublabel` and companion; no aggregation by year (no recompute), as ruled for S.4 in Q-C1.",
+  "chart_series": {
+    "CR.3": {
+      "fixture_amortisation_missing": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 2,
+        "kind": "na",
+        "module_case": "fixture_amortisation_missing",
+        "origin": "composer fixture, derived only",
+        "point_count": 2,
+        "points": [
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "reason": "Not calculable: a required operand is missing",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "∅ G#",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "gap",
+            "unit": "MILLIONS",
+            "value": null
+          },
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "reason": "Not calculable: a required operand is missing",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "∅ G#",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "gap",
+            "unit": "MILLIONS",
+            "value": null
+          }
+        ],
+        "reason": "Not calculable: a required operand is missing",
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      },
+      "fixture_burn": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 0,
+        "kind": "grouped",
+        "module_case": "fixture_burn",
+        "origin": "composer fixture, derived only",
+        "point_count": 2,
+        "points": [
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "50",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "50"
+          },
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "(14)",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "-14"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      },
+      "fixture_long_horizon": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 0,
+        "kind": "grouped",
+        "module_case": "fixture_long_horizon",
+        "origin": "composer fixture, derived only",
+        "point_count": 2,
+        "points": [
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "50",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "50"
+          },
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "10",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "10"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      },
+      "fixture_two_facilities": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 0,
+        "kind": "grouped",
+        "module_case": "fixture_two_facilities",
+        "origin": "composer fixture, derived only",
+        "point_count": 4,
+        "points": [
+          {
+            "category": "notes",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "30",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "30"
+          },
+          {
+            "category": "notes",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "5",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "4.5"
+          },
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r02.c2",
+              "T3D.1.r02.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r02.c6",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r02",
+            "series": "Principal payable at maturity",
+            "shown": "26",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "26"
+          },
+          {
+            "category": "term-loan",
+            "companion_fact_ids": [
+              "T3D.1.r02.c2",
+              "T3D.1.r02.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r02.c7",
+            "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "row_id": "r02",
+            "series": "Resources at maturity",
+            "shown": "(9)",
+            "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "-8.5"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      },
+      "gap_minimum_cash": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 1,
+        "kind": "grouped",
+        "module_case": "gap_minimum_cash",
+        "origin": "pack case with tables",
+        "point_count": 2,
+        "points": [
+          {
+            "axis_sublabel": "2029-12-31",
+            "category": "Northbridge Term Loan (term-loan)",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "period": "2025-12-31",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "50",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "50",
+            "value_class": "calculated"
+          },
+          {
+            "axis_sublabel": "2029-12-31",
+            "category": "Northbridge Term Loan (term-loan)",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "gap_rule": "never zero; the G# reference is bound at run time in report order",
+            "period": null,
+            "reason": "Not calculable: minimum cash not assessed",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "∅ G#",
+            "state": "gap",
+            "unit": "MILLIONS",
+            "value": null,
+            "value_class": "calculated"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      },
+      "gap_no_repricing": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 0,
+        "kind": "grouped",
+        "module_case": "gap_no_repricing",
+        "origin": "pack case with tables",
+        "point_count": 2,
+        "points": [
+          {
+            "axis_sublabel": "2029-12-31",
+            "category": "Northbridge Term Loan (term-loan)",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "period": "2025-12-31",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "50",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "50",
+            "value_class": "calculated"
+          },
+          {
+            "axis_sublabel": "2029-12-31",
+            "category": "Northbridge Term Loan (term-loan)",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "period": "2025-12-31",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "10",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "10",
+            "value_class": "calculated"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      },
+      "positive": {
+        "axis_label": "US$ m",
+        "currency": "USD",
+        "fig_id": "CR.3",
+        "gap_count": 0,
+        "kind": "grouped",
+        "module_case": "positive",
+        "origin": "pack case with tables",
+        "point_count": 2,
+        "points": [
+          {
+            "axis_sublabel": "2029-12-31",
+            "category": "Northbridge Term Loan (term-loan)",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c6",
+            "period": "2025-12-31",
+            "row_id": "r01",
+            "series": "Principal payable at maturity",
+            "shown": "50",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "50",
+            "value_class": "calculated"
+          },
+          {
+            "axis_sublabel": "2029-12-31",
+            "category": "Northbridge Term Loan (term-loan)",
+            "companion_fact_ids": [
+              "T3D.1.r01.c2",
+              "T3D.1.r01.c3"
+            ],
+            "currency": "USD",
+            "fact_id": "T3D.1.r01.c7",
+            "period": "2025-12-31",
+            "row_id": "r01",
+            "series": "Resources at maturity",
+            "shown": "10",
+            "state": "known",
+            "unit": "MILLIONS",
+            "value": "10",
+            "value_class": "calculated"
+          }
+        ],
+        "reason": null,
+        "series": [
+          "Principal payable at maturity",
+          "Resources at maturity"
+        ],
+        "title": "Funding gap",
+        "unit": "MILLIONS",
+        "unit_class": "amount"
+      }
+    }
+  },
+  "figure": "CR.3",
+  "figure_group": "B",
+  "lease_amendment": "docs/CP3C-OWNER-LEASE.md (Stage 3 group B amendment): T3D.1 moves from refinancing-paths to funding-gap; cases/cp3c-owner/expected.json#fp04_render.blocks.refinancing-paths.tabs becomes [T3D.2, T3D.3]",
+  "questions": [
+    "Q-C2 says the CP-3C binding 'gains a read'. validate_bindings makes a second binding of T3D.1 an error in FP04, so the lease amendment moves the binding. If the owner prefers T3D.1 to stay in refinancing-paths, the figure must read the CP-3C head without a binding (a producer-level read).",
+    "Category labels: facility rows, not the design's year buckets (inference, flagged)."
+  ],
+  "render": {
+    "covenant_refinancing": {
+      "binding": {
+        "block_id": "funding-gap",
+        "cell_slot": "cp3c-t3d-1",
+        "fact_coord": "CP-3C / T3D.1",
+        "label": "Refinancing need by maturity",
+        "moved_from": "refinancing-paths",
+        "reason": "validate_bindings forbids one fact bound to two blocks of one Pathway (bindings/__init__.py:113)"
+      },
+      "block_id": "funding-gap",
+      "block_kind": "dense",
+      "figure": {
+        "chart_kind": "grouped",
+        "design": {
+          "lines": [
+            43,
+            44
+          ],
+          "page": "design/reference/rbot-fp-04-covenant-refinancing.dc.html"
+        },
+        "fig_id": "CR.3",
+        "module": "CP-3C",
+        "placement": "beside"
+      },
+      "owner": "CP-2D",
+      "owner_basis": "unchanged (report_view _Spec, CP2D-OWNER-LEASE.md:139); the figure's module is CP-3C (design fp04 :43 'CP-3C · Fig. CR.3')",
+      "pathway": "covenant_refinancing",
+      "primary_tab": "T2E.5",
+      "producers": [
+        "CP-2D",
+        "CP-3C"
+      ],
+      "producers_change": "CP-3C is added to the funding-gap _Spec.producers at the wiring step (Q-C2)",
+      "refinancing_paths_tabs_after": [
+        "T3D.2",
+        "T3D.3"
+      ],
+      "state": "populated",
+      "tabs_source": "cases/cp2d-owner/expected.json#fp04_render.blocks.funding-gap plus the Q-C2 binding move (docs/CP3C-OWNER-LEASE.md amendment)",
+      "tabs_with_cp3c": [
+        "T2E.2",
+        "T3D.1"
+      ],
+      "tabs_without_cp3c": [
+        "T2E.2"
+      ]
+    }
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output; derived from the frozen module oracles only",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "Draws T3D.1 c6 and c7 only; the design's pressure chip (illustrative High/Medium/Low) and year buckets (2026 rest ... Thereafter) are not CP-3C facts and are not drawn.",
+    "Resources at maturity restate CP-3C's own limitations (run-rate flow held flat); the figure adds none.",
+    "LME capacity (T3D.5) and the FP05 funding-gap-lme block are deferred (Q-C10).",
+    "Fixture-derived point texts use the display.py rule (0 dp half away from zero) because fixtures carry no tables."
+  ],
+  "series_labels_basis": "inference: column headers of T3D.1 without the unit suffix",
+  "source_authority": {
+    "authority_order": "approved page decides figure and look; brief decides the provider; CP-3C oracle decides every number; inference marked per field",
+    "briefs": [
+      {
+        "file": "docs/design-pack/content/04-covenant-refinancing.md",
+        "line": 33,
+        "sha256": "9cd89c17b26e666d7d7e86f52edeef90fd492031118b65c23850212e9c532ade",
+        "what": "Funding gap (CP-3C), charts.fig-funding-gap columns, blocks.maturityPressure; maturing against liquidity left"
+      }
+    ],
+    "design": [
+      {
+        "lines": [
+          43,
+          44
+        ],
+        "page": "design/reference/rbot-fp-04-covenant-refinancing.dc.html",
+        "sha256": "57f921b3b4c1ed53ab3c5cd39295dd5bd9f29b46d4b5978f3974cab1f78169ad",
+        "what": "header 'CP-3C · Fig. CR.3', 'before operating cash flow; pressure illustrative', chGap columns beside the Year / Maturing / Liq. left / Pressure table"
+      },
+      {
+        "lines": [
+          44,
+          58
+        ],
+        "page": "design/reference/lib/charts.js",
+        "sha256": "c892cbe3a4e2dc0d5b2f560b469356ca8502d4a14f07d9f4cfdf19d95be40f03",
+        "what": "columns with negatives (min below zero)"
+      }
+    ],
+    "modules": [
+      {
+        "path": "cases/cp3c-owner/expected.json",
+        "schema_version": "cp3c-owner-expected/1",
+        "sha256": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3"
+      }
+    ],
+    "rulings": [
+      "Q-C2 (CP-3C produces the series, drawn in funding-gap, T3D.1 binding added)",
+      "item 5 of questions.md"
+    ]
+  },
+  "table_twins": {
+    "fixture_amortisation_missing": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "∅ G#",
+            "∅ G#"
+          ],
+          "label": "term-loan"
+        }
+      ]
+    },
+    "fixture_burn": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "50",
+            "(14)"
+          ],
+          "label": "term-loan"
+        }
+      ]
+    },
+    "fixture_long_horizon": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "50",
+            "10"
+          ],
+          "label": "term-loan"
+        }
+      ]
+    },
+    "fixture_two_facilities": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "30",
+            "5"
+          ],
+          "label": "notes"
+        },
+        {
+          "cells": [
+            "26",
+            "(9)"
+          ],
+          "label": "term-loan"
+        }
+      ]
+    },
+    "gap_minimum_cash": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "50",
+            "∅ G#"
+          ],
+          "label": "Northbridge Term Loan (term-loan)"
+        }
+      ]
+    },
+    "gap_no_repricing": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "50",
+            "10"
+          ],
+          "label": "Northbridge Term Loan (term-loan)"
+        }
+      ]
+    },
+    "positive": {
+      "columns": [
+        "Facility",
+        "Principal payable at maturity",
+        "Resources at maturity"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "50",
+            "10"
+          ],
+          "label": "Northbridge Term Loan (term-loan)"
+        }
+      ]
+    }
+  },
+  "twin_rule": "One row per category (facility), one cell per series (c6, c7); flattened cell texts equal mark texts in order (category-major)."
+}

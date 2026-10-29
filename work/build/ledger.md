@@ -405,3 +405,4 @@
 - 01:39 Fix batch merged on s2-batch c197434 (one import conflict resolved). Fast set+pins running; scoped Opus re-review of the 5 Mediums dispatched.
 - 01:43 Batch c197434 fast set + render: 9067 passed, 4 skipped in 231.24s (0:03:51);  [exited with code 0] 
 - 01:50 Fix batch re-review: APPROVE (5 Mediums closed; CP-1D frozen moved 0; shape payloads identical). Stage 2 batch done. Merging s2-batch into lane.
+- 04:16 Stage 2 batch merged into lane f1544a3. User: include 0d-d (one review); fix CP-DR question_id wedge. 0d-d committed 0daac2c on lead/0d-d. Release plan written; W1 dispatched.

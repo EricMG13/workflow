@@ -1078,6 +1078,15 @@
       "review": "work/lead/product-defects-0d/"
     },
     {
+      "destination": "src/deploy_vii/live/submission.py",
+      "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
+      "prior_project_sha256": "1b4aaa0967a5a9308e9061ceea6d365f1f7ee5ab88a8457fa18dffa073312186",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "173547f9a18bc43afaf3acf2ddc569ed398353b672b6856500f29d7f95e75445",
+      "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload. Also 0d-c made _Resolver.unbound an insertion-ordered dict of issues built by execution.clipped (at most 600 characters each, an id never copied whole), returned by prefill as a tuple. Also 0d-d: the pre-fill _Resolver indexes binding rows, facility rows, the entity's scopes (_Scopes) and the context's source classes and entities once, and parses a matched facility row once; last facility row still wins; output unchanged.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
       "prior_project_sha256": "21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b",
@@ -1141,6 +1150,15 @@
       "review": "work/lead/methodology-serialised/review.md"
     },
     {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+      "project_commit": "e22dafee8ea42577d8cf1dd4308644dabba645af",
+      "sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
+      "reason": "Serialised methodology change with the CP-6 half freeze of the CP-3/CP-6 owner lease (ruling Q7, D12): T6-FINAL registered in CP-6 table_ids; it collides with no module table id (CP-0's T6 is a different string) and no product code reads table_ids.",
+      "review": "work/lead/cp6-freeze/"
+    },
+    {
       "destination": "src/deploy_vii/live/schema.py",
       "imported_sha256": "c63744196066a9046e1d3331ee5191f8dc30b2d7f08644ca816c7ae2955e56cb",
       "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
@@ -1182,12 +1200,30 @@
       "review": "work/lead/b10-engines/"
     },
     {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "prior_project_sha256": "5811d454e61ca5aabc6fdef8680c382b836f714680b336d4a8b11619e9e8208b",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "6c80484307aef1d6c6d3b17d7432f642fdd4b11f0a3db2b26cdb3cbf8f5a9f7f",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check. Also 0d-d: instrument duplicates and the preference ordering checks use Counter and a set built once instead of list.count and list membership per row.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
       "destination": "src/deploy_vii/cp4_legal.py",
       "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
       "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
       "sha256": "5b005aaf8d496051958fd1c17943a2e226a7ab05f62cad63af8f58a2bad73312",
       "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
       "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "prior_project_sha256": "5b005aaf8d496051958fd1c17943a2e226a7ab05f62cad63af8f58a2bad73312",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check. Also 0d-d: _shape_issues counts duplicate documents with Counter instead of list.count per row.",
+      "review": "work/lead/product-defects-0d/"
     },
     {
       "destination": "src/deploy_vii/cp5_integrity.py",
@@ -1212,6 +1248,15 @@
       "sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
       "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check and in _populated.",
       "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/business_context.py",
+      "imported_sha256": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
+      "prior_project_sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check and in _populated. Also 0d-d: duplicate and unknown-id checks count with Counter and a set built once instead of per row.",
+      "review": "work/lead/product-defects-0d/"
     },
     {
       "destination": "src/deploy_vii/narrative.py",
@@ -1471,6 +1516,78 @@
       "sha256": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
       "reason": "Add the CP-4C recovery-by-class and value-allocation-claims _Spec rows to _DISTRESSED after rating-triggers (D12 registration, rows only).",
       "review": "docs/CP4C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "prior_project_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "119058ff8a238f29aa418da7d43110686ad0ba9d0362d5d77b989f798d088f1f",
+      "reason": "0d-d: shape_issues drops a container echo by one pass over loc prefixes (_echoed), absence_issues bounds a claimed page range by the source's page count (_retains) and validate_review indexes attachment sets and READY consumers once; output and order unchanged.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "prior_project_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "d9fb02de160c9710378308a3dc2d4f32096cfb90de5680bf8a48e7d50c9bb9d0",
+      "reason": "0d-d: validate_source_context builds each event's cited sources, the scanned (source, event) pairs and the first review per source once instead of per reference; output and order unchanged.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/prose.py",
+      "imported_sha256": "33f4de8945127d4e2af005949c4d560a1b3d6d20629be8c42ce86e684784a74f",
+      "prior_project_sha256": "99c638b6185f34e6bdf82e530f0536b13483e14489325b16816402dfd029edd6",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "8dcb2a51ba1865970fca7c17dba2fb8a8657e4a8bfae4679ffd5c7b6823cbbef",
+      "reason": "is_blank also counts Cc controls, the default-ignorable code points outside Cf (U+034F, U+115F, U+1160, U+17B4, U+17B5, U+180B-U+180F, U+3164, U+FE00-U+FE0F, U+FFA0, U+E0100-U+E01EF) and U+2800 (round 13 addendum 3, B10 beyond Cf); the owners/blank.py re-export inherits it.",
+      "review": "docs/rulings/2026-10-28-stage1.md (round 13 addendum 3)"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "prior_project_sha256": "119058ff8a238f29aa418da7d43110686ad0ba9d0362d5d77b989f798d088f1f",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
+      "reason": "citation_issues refuses a quote that is_blank as 'Quote/locator mismatch: blank quote under <source> <locator>', before the page match (round 13 addendum 3).",
+      "review": "docs/rulings/2026-10-28-stage1.md (round 13 addendum 3)"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "ab6dba880e09507b6dd8c03d0895bcbd04ca8c9a98f2999475ee4220756434e0",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "dd81024e407a325415c294467cc5f69db22b4fcc67878b35e245c4cc2682c0b6",
+      "reason": "clipped docstring states it equals shortened only for limit >= 1 (0d-c review Q4); no code change.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/live/tools.py",
+      "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "prior_project_sha256": "a50a3f8c14069f16ee6f77610ecfe66d85972390aa8ce203176fc1b1b110bb1c",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "f03f7d04cf10939859e04208406d7c1f81f540ba4802a67878b7ba967d2fb6af",
+      "reason": "Module docstring states the rule walk costs O(nodes x depth) in time and bounds issue text and memory, not time (0d-c review F3); no code change.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "imported_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "prior_project_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "project_commit": "ff1dbce0a392bec50ba44ec13364416dfef4a042",
+      "sha256": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+      "reason": "FP-04 covenant_refinancing preset gains CP-MODEL (Q-C1: the maturity wall is MODEL-owned).",
+      "review": "work/build/stage2/release/qc1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
+      "project_commit": "ff1dbce0a392bec50ba44ec13364416dfef4a042",
+      "sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
+      "reason": "FP-04 maturity-wall _Spec becomes owner MODEL with producer CP-1 (Q-C1).",
+      "review": "work/build/stage2/release/qc1-review.md"
     }
   ],
   "local_patch_lineage": [

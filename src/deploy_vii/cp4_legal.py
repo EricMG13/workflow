@@ -24,6 +24,7 @@ VII's placement, recorded in `methods/cp4.md`, not r14's layout.
 """
 
 import re
+from collections import Counter
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -593,7 +594,7 @@ def _shape_issues(submission: CovenantInterpretationSubmission) -> list[str]:
     seen = [row.source_id for row in submission.documents]
     return [
         f"documents: {source_id} is registered more than once"
-        for source_id in sorted({s for s in seen if seen.count(s) > 1})
+        for source_id in sorted(s for s, n in Counter(seen).items() if n > 1)
     ]
 
 

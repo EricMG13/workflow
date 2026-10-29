@@ -6,7 +6,7 @@
   "frozen_inputs": [
     {
       "path": "src/deploy_vii/methodology.json",
-      "sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+      "sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
       "use": "edges and table ids: required CP-0, CP-1, CP-2D; optional CP-1A, CP-2A, CP-4, CP-3D; T3D.1-T3D.11 registered under CP-3C only (D4: used as is, no edit proposed)"
     },
     {
@@ -36,18 +36,18 @@
     },
     {
       "path": "cases/cp2d-owner/expected.json",
-      "sha256": "0f07bc75d4123a10c9360a5e800bd0727a5625cbaf214c08bb8f3a7a0f2d430c",
+      "sha256": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
       "use": "frozen CP-2D expected cells: the facts CP-3C consumes (D3 pins); every CP-2D cell read is asserted equal to the source-derived value here"
     },
     {
       "path": "cases/cp2d-owner/builder/build.py",
-      "sha256": "c274ce84e12541855b8dbe4bd66bada4a7f34298869b0901d47a2e10517c6b04",
+      "sha256": "0dd71e009ee8c95f39253de0658b9c46783655f6d490b56d5f6611c7e5d9a1bc",
       "use": "frozen CP-2D builder (pin only: the method of the upstream whose cells are consumed)"
     },
     {
       "path": "src/deploy_vii/business_context.py",
-      "sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
-      "use": "prohibited-conclusion phrase tables transcribed (BC_PROHIBITED, BC_NEAR, BC_NOUN); pin only"
+      "sha256": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
+      "use": "prohibited-conclusion phrase tables transcribed (PROHIBITED, NEAR_INSTRUMENT, INSTRUMENT_NOUN of deploy_vii/business_context.py); pin only"
     }
   ],
   "sources": [
@@ -115,6 +115,7 @@
       "prepared-pack",
       "CP-0",
       "CP-1",
+      "CP-1A",
       "CP-2D",
       "refinancing-risk-submission (added when settled)"
     ]
@@ -335,7 +336,7 @@
       "expected": "expected.json#negative_cases.begin_refused_cp2d_blocked"
     }
   ],
-  "fact_copy_rule": "A table cell copied from a CP-1 or CP-2D fact keeps that fact's own value_class and citations or calculation_id (CP-1 T4.18 source; CP-2D principal and maturity source, months and inside-horizon calculated, CP-2D horizon and minimum cash analyst_judgment); amounts are in unit MILLIONS with currency USD on every MILLIONS cell, a missing or not-applicable cell carrying its settled twin's unit and currency (CP-1 T4.10 facts already are; the CP-2D cells already are; CP-2D lease acceptance 1 pins currency USD on every amount cell; the CP-1C rule extends it to gap cells). Copies carry cp1_operand or cp2d_operand in expected.json. For a cp2d_operand copy the amount, unit, state and shown value equal the frozen CP-2D oracle cell; its period and value_class are the CP-2D head fact's own, bound at run time: the period 2025-12-31 and, for a copied gap, the value_class written here are this oracle's proposal, which the CP-2D oracle does not pin (it records neither). A copy of an analyst_judgment fact is never referenced by a claim.",
+  "fact_copy_rule": "A table cell copied from a CP-1 or CP-2D fact keeps that fact's own value_class and citations or calculation_id (CP-1 T4.18 source; CP-2D principal and maturity source, months and inside-horizon calculated, CP-2D horizon and minimum cash analyst_judgment); amounts are in unit MILLIONS with currency USD on every MILLIONS cell, a missing or not-applicable cell carrying its settled twin's unit and currency (CP-1 T4.10 facts already are; the CP-2D cells already are; CP-2D lease acceptance 1 pins currency USD on every amount cell; the CP-1C rule extends it to gap cells). Copies carry cp1_operand or cp2d_operand in expected.json. For a cp2d_operand copy the amount, unit, state and shown value equal the frozen CP-2D oracle cell; its period and value_class equal the CP-2D oracle cell's own `period` and `value_class` (re-pinned at the Stage 2 close release): the balance date 2025-12-31 on every copy except the principal copies, which keep CP-1's T4.18 period q4-2025, and, for a copied gap, the CP-2D gap cell's value_class. A copy of an analyst_judgment fact is never referenced by a claim.",
   "ratio_storage_rule": "Ratio facts (multiples, shares, cover) are stored quantised to 4 dp half-up; the shown value rounds from the stored one (display.py ROUND_HALF_UP); amounts are exact Decimals.",
   "fixtures": [
     {

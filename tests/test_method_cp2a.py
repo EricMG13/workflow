@@ -1250,3 +1250,22 @@ def test_format_character_labels_are_not_reported_as_duplicates() -> None:
         "thresholds[0].label: empty text",
         "thresholds[1].label: empty text",
     ]
+
+
+def test_lineage_cites_one_quote_per_page_the_first() -> None:
+    """Round 3 item 3 (Stage 2 close, item 17): two CP-1 operands quoted on one financial page
+    give one Citation for that page, the first operand's quote; a later page keeps its own."""
+    base = cp2a.BaseOperands.from_cp1(cp1_facts("positive"), period=LTM)
+    debt, ebitda, interest = (base.sources[m] for m in ("total_debt", "ebitda", "cash_interest"))
+    page = debt.citations[0].model_copy(update={"locator": "page:4"})
+    other = page.model_copy(update={"locator": "page:9", "quote": "Interest 30"})
+    shared = {
+        "total_debt": debt.model_copy(update={"citations": (page,)}),
+        "ebitda": ebitda.model_copy(
+            update={"citations": (page.model_copy(update={"quote": "EBITDA 120"}),)}
+        ),
+        "cash_interest": interest.model_copy(update={"citations": (other,)}),
+    }
+    stub = cp2a.BaseOperands.__new__(cp2a.BaseOperands)
+    object.__setattr__(stub, "sources", shared)
+    assert cp2a.lineage(stub, ("total_debt", "ebitda", "cash_interest")) == (page, other)

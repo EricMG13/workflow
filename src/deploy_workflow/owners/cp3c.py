@@ -2368,7 +2368,8 @@ def _reader_agrees(read: Cp2dHead, ops: Cp2dOperands, labels: Sequence[str]) -> 
 def select_cp2d(module: Module, read: Cp2dHead) -> tuple[Cp2dOperands, tuple[Offered, ...]]:
     """The CP-2D figures through `cp2d_reader`, each with its head cell's status, unit, period,
     value class and reason (the reader exposes none of these, nor T2E.3.r01: the run-rate flow
-    is read from its cell, the pin extension expected.json#consumption names)."""
+    is read from its cell; expected.json#consumption lists it under `reads_beyond_the_cp2d_lease_pins`
+    and no reader extension was made, round 5 item 20)."""
     facts = {f.fact_id: f for f in module.facts}
 
     def fact(fact_id: str) -> Fact:

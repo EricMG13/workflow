@@ -2,8 +2,11 @@
 
 DEFERRED to Stage 5 (brief step 7): written, not run at Stage 2. Expectations come from
 `cases/cp2e-owner/expected.json` only. The D3 test pins what the reader exposes; consumption is
-OPEN, so nothing here claims completion. Not written: the tamper, stale_binding, blocked and
-begin-refused cases (they need the oracle recipes' store forgery; listed under Not verified).
+OPEN, so nothing here claims completion. The tamper, stale_binding, blocked and begin-refused
+cases are written below (`test_tamper_is_refused_by_the_probe_alone`,
+`test_a_snapshot_change_between_read_and_submit_is_stale`,
+`test_the_blocked_case_blocks_after_two_invalid_attempts`,
+`test_begin_is_refused_when_cp0_is_blocked`).
 """
 
 import hashlib

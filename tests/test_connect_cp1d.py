@@ -37,7 +37,7 @@ from deploy_vii.live.tools import Seen, cited_locators
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.report_view import _EARNINGS_QUALITY, Block, _spec_of, build, pathways
 from deploy_workflow import host, owner_workflow
-from deploy_workflow.owners import cp1d
+from deploy_workflow.owners import blank, cp1d
 from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -602,8 +602,9 @@ def test_derived_fact_citations_are_one_per_page_first_quote() -> None:
     again = page1.model_copy(update={"quote": "second"})
     page2 = page1.model_copy(update={"locator": "page:2", "quote": "other"})
     last = page1.model_copy(update={"quote": "last"})
-    assert cp1d._one_per_page([page1, page2, again, last]) == (page1, page2)
-    assert cp1d._one_per_page([]) == ()
+    assert cp1d.one_per_page is blank.one_per_page  # the shared rule, not a private copy
+    assert cp1d.one_per_page([page1, page2, again, last]) == (page1, page2)
+    assert cp1d.one_per_page([]) == ()
     cell = cp1d.CellFact(
         "T1D.3.x.value",
         "T1D.3",
@@ -679,6 +680,35 @@ def test_view_matches_the_lease_key_tree_and_holds_no_quote(case: str, t417: int
     pages = [s.text for src in _pack(case).sources for s in src.spans]
     for text in _walk_strings(block):
         assert not (len(text) > 40 and any(text in page for page in pages)), text
+
+
+VIEW_TREE = ROOT / "cases" / "cp1d-owner" / "cp1d-view-tree.json"
+
+
+def _shape(node: object) -> object:
+    """The key tree of a view value: scalars by type name, a list by its first element's shape
+    (an empty list stays empty), no value."""
+    if isinstance(node, Mapping):
+        return {key: _shape(value) for key, value in node.items()}
+    if isinstance(node, list):
+        return [_shape(node[0])] if node else []
+    return "null" if node is None else type(node).__name__
+
+
+def view_tree_of(case: str) -> dict[str, object]:
+    """The committed tree of one case: `context_block` over the fixture heads with 3 T4.17 rows."""
+    upstream = _upstream(_cp1_module(t417=3), inherited=("An inherited line",))
+    block = cp1d.context_block(pack=_pack(case), upstream=upstream)
+    return {"top_level_keys": list(block), "tree": _shape(block)}
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_the_committed_view_tree_is_the_views_key_tree(case: str) -> None:
+    """`cases/cp1d-owner/cp1d-view-tree.json` (lease Tool use) holds the shape of the view of
+    each case and no value, so a change of key, nesting or type shows here."""
+    committed = json.loads(VIEW_TREE.read_text(encoding="utf-8"))
+    assert committed[case] == view_tree_of(case)
+    assert not any(len(s) > 40 for s in _walk_strings(committed[case]["tree"]))
 
 
 def test_view_body_is_compact_json_and_the_hash_matches(monkeypatch: pytest.MonkeyPatch) -> None:

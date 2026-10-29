@@ -1,5 +1,9 @@
 # CP-2E (Macro, FX and hedging sensitivity) owner lease — FROZEN by LEAD 2026-10-28 (preparation revision 3)
 
+Amended by Modules 2026-10-29 (Stage 2 close release W2-A2): CP-2E: `expected.json` `negative_cases.blocked_cp2e.result` now reads "module blocked, the store holds a blocked head (status blocked)" instead of "module blocked, no head" (ruling Stage 2 round 2 item 8). No other leaf moves. Own files, old → new sha256: `manifest.json` unchanged; `submissions.json` unchanged; `expected.json` 8f507e108ac3d75e4fcc3f524dcf1c31ad8ceedb2e2359fcb9de02b56f25bc86 → 08a80e96cf23de2a5acbcc8f24ba2c713a1dc02152e3f5b99417d5ced3871592; `builder/build.py` 0b0ce5602263132b5c037162a97feecea60b94515993575738a67d8ee7aa9134 → 7a145dc3ad8b46d8579d02d287931c5d379bf4999c36a28b9af67787d26a32e4.
+
+Amended by LEAD 2026-10-28 (CP-6 freeze re-pin, `work/lead/cp6-freeze/report.md`): `src/deploy_vii/methodology.json` registers `T6-FINAL` under CP-6 `table_ids` (ruling Q7), 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 → 0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8; this module's builder re-pins it and its manifest records the new hash. Only pin hashes move: no other leaf of this module's oracle changes. Own files, old → new sha256: `manifest.json` af12e05064b7f7b9726ea9f18a6341f561fd2d16cb1ffa44bbac8792aa0008c7 → 4e3dab8f462c5d6968cfa3326d9f808242df7e1d34a6ca2b0383ed4752d4a6ab; `submissions.json` unchanged; `expected.json` unchanged; `builder/build.py` 2242460f89a917470e00f912cf9141b9fed3dc3ce40fa67fbca7b0f9823e4bd0 → 0b0ce5602263132b5c037162a97feecea60b94515993575738a67d8ee7aa9134.
+
 Amended by LEAD 2026-10-28 (Stage 1 release batch, `docs/rulings/2026-10-28-stage1.md`; `work/lead/stage1-release/report.md`): E1 (the share-known currency-move claims, with the E4a reason), E5 as amended by round 5 E8 (the rate-basis quote must match `\b(floating|fixed)[\s-]+rate\b`, case-insensitive, for exactly one of the two stems) and A4 with round 6i (the floor own limitations apply to floating-rate debt only: floor 0 keeps the pinned line, floor above zero gets the A4 line, fixed rate gets neither). Builder only: no frozen case reaches the changed branches, so manifest, submissions and expected are unchanged. Own files, old → new sha256: `manifest.json` unchanged; `submissions.json` unchanged; `expected.json` unchanged; `builder/build.py` de0d14fcb431a965452d91311f150e7e527f7f6f877b1da19065acd93a848adf → 2242460f89a917470e00f912cf9141b9fed3dc3ce40fa67fbca7b0f9823e4bd0. A double scratch rebuild of every builder in dependency order was byte-identical. Pin consumers: none (no other builder pins or reads this module's files). Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change.
 
 Amended by LEAD 2026-10-28 (round 6 oracle batch, `docs/rulings/2026-10-28-stage1.md` round 6; `work/lead/r6batch-review.md` COMMIT): round 6 A3: a divisor <= 0 is not_applicable, negatives read `… is negative` and the zero reasons stay byte-identical; only the `arithmetic.coverage` text changes. This amends lease :131-132. A scratch rebuild in dependency order was byte-identical. builder aaa1969f… → de0d14fcb431a965452d91311f150e7e527f7f6f877b1da19065acd93a848adf; expected 8568b1ce… → 8f507e108ac3d75e4fcc3f524dcf1c31ad8ceedb2e2359fcb9de02b56f25bc86; files not listed are unchanged. Pins elsewhere in this file are superseded where they differ.
@@ -72,7 +76,7 @@ Reused unchanged (hash-checked): `cases/financial/manifest.json` sources `identi
 ## Files
 
 - New `src/deploy_workflow/owners/cp2e.py` (about 450 lines).
-- `owner_workflow.py` (G1-X): the spec above; `_CORES`, `SUPPORTED_ANALYTICAL`, `_QUALIFICATION`, `_PROBES`.
+- `owner_workflow.py` (G1-X): the spec above; `_CORES`, `SUPPORTED_ANALYTICAL`, `_QUALIFICATION`, `_PROBES` and `_ENTRY_VALIDATORS["CP-2E"]` = `owners.cp2e.ENTRY_VALIDATOR` (`owners/cp2e.py:1906`, registered at `owner_workflow.py:235`; protocol section 2 requires it of every analytical module but CP-0 and CP-1, as ruled for CP-4 in rulings round 1 Q3).
 - D12 registrations: `host.py` `_SOURCE_STEPS` (H1); new `src/deploy_vii/bindings/cp2e.py` and `bindings/shipped.py`: one binding per table T2F.1 to T2F.9 (`expected.render.bindings`: T2F.1 to T2F.6 and T2F.8 to the `evidence` rail as `bindings/cp5.py` does, T2F.7 and T2F.9 to `limitations`, `unit_class` text, slot prefix `cp2e-`), because `validate_bindings` needs every fact of a restricted module bound exactly once and `report_view.build` raises otherwise. `cp2e_module` ships `Module.tables`: T2F.1 to T2F.9 as `ReportTable` layouts (`expected.cases.<case>.module_tables`). No `methodology.json`, `registry.py` or `report_view.py` edit.
 - `methods/cp2e.md` adaptation record (shock conventions, table titles and columns; question 6).
 - G2 `owner_rendering.py`: one `DeliveryScope` for `slice-cp2e-sensitivity` (module page and rails).
@@ -91,10 +95,10 @@ probe(store, snapshot, attempt) -> None                         # identity_misma
 RULES(text, seen) -> tuple[str, ...]                            # absence rule, then unread citations (sorted)
 submit(store, ticket_id, step_id, payload, rules) -> Submitted
 # internals
-cp2e_upstream(*, store, attempt) -> Upstream                    # CP-0 head bound, current inputs, inherited limitations
+# no `cp2e_upstream`: it was an internal with no consumer (rulings round 3 item 4). `settle` derives the inherited limitations, `submit_step` refuses changed inputs and `begin` binds CP-0.
 validate_macro_fx(*, submission, pack) -> tuple[str, ...]       # quotes on page, whole-line rows, labelled values, ranges
 derive_sensitivity(*, operands, rate_shocks_bp, fx_shocks, hedge_ratio) -> Sensitivity   # pure Decimal; no I/O
-macro_fx(*, pack, submission, upstream) -> Report
+macro_fx(*, pack, submission) -> MacroFxReport                  # owners/cp2e.py:1827
 cp2e_module(*, report, inputs, attempt) -> Module
 cp2e_reader(store, head) -> Cp2eHead                            # consumer reader (D3), not a G1 seam
 ```

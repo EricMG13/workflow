@@ -66,9 +66,8 @@ A sentence operand (facility balance, spread, floor) is at most 999.9999, so a b
 or more cannot be quoted by this step; that is stated, not a source limit.
 
 ## Other notes
-- A blank quote (`is_blank`: whitespace and Unicode format characters only, or "") is refused
-  with `<path>.quote: empty text` before the page check. U+2800 and control or default-ignorable
-  blanks wait on the shared `is_blank` batch; the re-export inherits it.
+- A blank quote (`prose.is_blank`: whitespace, control (`Cc`) and format (`Cf`) characters, the default-ignorable code points that `str.strip()` keeps (U+034F, U+115F, U+1160, U+17B4, U+17B5, U+180B-U+180F, U+3164, U+FE00-U+FE0F, U+FFA0, U+E0100-U+E01EF) and U+2800, or the empty string) is refused
+  with `<path>.quote: empty text` before the page check; the re-export inherits it.
 - `reference_rate` is compared normalised with the normalised quote, so a U+2212 name occurs
   where the page prints `-`; the normalised name is what T2F.1 stores and shows.
 - The summary becomes a claim, so it must be valid run text (no unbalanced `[` or `{`) and must

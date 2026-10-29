@@ -109,7 +109,7 @@ def test_each_refusal_mutation_is_journaled_with_exactly_its_issue(
     workflow = _fork(after_cp0, tmp_path)
     raw = base._edited(ORACLE["submissions"][base.MUTATIONS["base"]], entry["edits"])
     outcome = runs.drive_cp3d(workflow, "positive", text=json.dumps(raw))
-    expected = base.STAGE2_REFUSAL_DELTA.get(entry["id"], entry["issue"])
+    expected = entry["issue"]
     assert (outcome["status"], outcome["issues"]) == ("invalid", [expected])
 
 

@@ -20,6 +20,7 @@ from deploy_vii.contracts import (
     Text,
 )
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import is_blank
 from deploy_vii.quotes import explain, prefix, quoted
 from deploy_vii.registry import canonical, plan
 
@@ -94,23 +95,34 @@ def shape_issues(error: ValidationError) -> tuple[str, ...]:
     compares it exactly) and small enough for a repair prompt. A whole-payload error (invalid
     JSON) has the path `(root)`."""
     errors = error.errors(include_url=False, include_input=False, include_context=False)
+    echoed = _echoed(errors)
     return tuple(
         f"{'.'.join(str(part) for part in item['loc']) or '(root)'}: {item['msg']}"
         for item in errors
-        if not _echoes_item_error(item, errors)
+        if not (_container_too_short(item) and item["loc"] in echoed)
     )
 
 
-def _echoes_item_error(item: ErrorDetails, errors: list[ErrorDetails]) -> bool:
-    """A container min-length error beside an error inside that container (the items failed)."""
-    return (
-        item["type"] == "too_short"
-        and item["msg"].startswith(("Tuple should have at least", "List should have at least"))
-        and any(
-            len(other["loc"]) > len(item["loc"]) and other["loc"][: len(item["loc"])] == item["loc"]
-            for other in errors
-        )
+def _container_too_short(item: ErrorDetails) -> bool:
+    """A tuple or list min-length error: the container may only echo its items' errors."""
+    return item["type"] == "too_short" and item["msg"].startswith(
+        ("Tuple should have at least", "List should have at least")
     )
+
+
+def _echoed(errors: list[ErrorDetails]) -> set[tuple[int | str, ...]]:
+    """The locs of container min-length errors beside an error inside that container (the
+    items failed): every error's proper loc prefixes, looked up once each, so the work is
+    linear in the errors (0d-d)."""
+    containers = {item["loc"] for item in errors if _container_too_short(item)}
+    if not containers:
+        return set()
+    return {
+        item["loc"][:end]
+        for item in errors
+        for end in range(len(item["loc"]))
+        if item["loc"][:end] in containers
+    }
 
 
 def citation_issues(
@@ -120,7 +132,9 @@ def citation_issues(
 
     The locator is matched exactly; the quote with `deploy_vii.quotes` (layout normalisation,
     still a contiguous substring of that one span). The issue names the quote's prefix and,
-    where `quotes.explain` finds one (task 7.0), why it failed; it never accepts a quote."""
+    where `quotes.explain` finds one (task 7.0), why it failed; it never accepts a quote. A quote
+    that `prose.is_blank` is refused at its span, as a blank quote, before the match: invisible
+    characters would otherwise match a span that holds the same ones."""
     index = {source.source_id: source for source in sources}
     issues: list[str] = []
     for citation in citations:
@@ -135,6 +149,11 @@ def citation_issues(
             issues.append(
                 f"Quote/locator mismatch: no locator {citation.locator} in "
                 f'{citation.source_id}: "{prefix(citation.quote)}"'
+            )
+            continue
+        if is_blank(citation.quote):  # whitespace, controls and invisible characters only
+            issues.append(
+                f"Quote/locator mismatch: blank quote under {citation.source_id} {citation.locator}"
             )
             continue
         span = source.spans[position]
@@ -273,13 +292,19 @@ def absence_issues(
         if not targets or any(item not in paged for item in targets):
             continue  # about a source without page locators: nothing to compare against
         for first, last in absent_page_ranges(text):
-            pages = set(range(first, last + 1))
-            if all(pages <= paged[item] for item in targets):
+            if all(_retains(paged[item], first, last) for item in targets):
                 issues.append(
                     f"Absence claim contradicts extraction coverage: page:{first} to "
                     f"page:{last} retained in {', '.join(targets)}"
                 )
     return tuple(issues)
+
+
+def _retains(pages: set[int], first: int, last: int) -> bool:
+    """Whether `pages` holds every page from `first` to `last` (`first <= last`). A range longer
+    than `pages` cannot be held, so the work is bounded by the source's page count, never by
+    the number a claim writes (0d-d)."""
+    return last - first < len(pages) and all(page in pages for page in range(first, last + 1))
 
 
 def coverage_issues(pack: PreparedPack, review: ReadinessReview) -> tuple[str, ...]:
@@ -351,6 +376,12 @@ def validate_review(pack: PreparedPack, review: ReadinessReview) -> tuple[str, .
         issues.extend(citation_issues(source_review.citations, pack.sources))
 
     assessments_by_id = {item.source_id: item for item in review.sources}
+    # The first READY consumer of each module, by position: a gap's "omits relevant gap" lines
+    # in consumer order without testing every consumer against every gap (0d-d).
+    ready_rank: dict[str, int] = {}
+    for position, consumer in enumerate(review.consumers):
+        if consumer.readiness == "READY":
+            ready_rank.setdefault(consumer.module_id, position)
     for consumer in review.consumers:
         try:
             owner = canonical(consumer.module_id)
@@ -382,7 +413,8 @@ def validate_review(pack: PreparedPack, review: ReadinessReview) -> tuple[str, .
                 )
         if runnable and (not consumer.source_ids or not consumer.citations):
             issues.append(f"Runnable consumer needs located evidence: {consumer.module_id}")
-        if any(citation.source_id not in consumer.source_ids for citation in consumer.citations):
+        attached = set(consumer.source_ids)
+        if any(citation.source_id not in attached for citation in consumer.citations):
             issues.append(f"Consumer citation not in its attachment set: {consumer.module_id}")
         if not review.issuer_confirmed and runnable:
             issues.append(f"Issuer unconfirmed: {consumer.module_id}")
@@ -392,9 +424,12 @@ def validate_review(pack: PreparedPack, review: ReadinessReview) -> tuple[str, .
         issues.extend(citation_issues(gap.citations, pack.sources))
         if not set(gap.affected_modules) <= selected | {"CP-0"}:
             issues.append(f"Gap names unselected consumers: {gap.gap_id}")
-        for consumer in review.consumers:
-            if consumer.module_id in gap.affected_modules and consumer.readiness == "READY":
-                issues.append(f"Consumer omits relevant gap: {consumer.module_id} {gap.gap_id}")
+        omitted = sorted(
+            (m for m in dict.fromkeys(gap.affected_modules) if m in ready_rank),
+            key=ready_rank.__getitem__,
+        )
+        for module_id in omitted:
+            issues.append(f"Consumer omits relevant gap: {module_id} {gap.gap_id}")
 
     for claim in review.analysis:
         if not claim.citations and not claim.limitation:

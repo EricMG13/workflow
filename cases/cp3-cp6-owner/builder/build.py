@@ -26,9 +26,9 @@ PINS = {
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
     # rev 1 (review L2, M4): the two other data files the builder reads. methodology.json changes when the
-    # CP-6 freeze registers T6-FINAL (ruling Q7); the pin is then moved with that change.
+    # CP-6 freeze registered T6-FINAL (ruling Q7); the pin moved with that change.
     "cases/snapshot/cp2-view-tree.json": "f739395cbcf30ae2af710d8423927a8f810c8c4b948c07c6e6583e2a3b86f446",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 S1_FILES = ("cases/snapshot/manifest.json", "cases/snapshot/submissions.json", "cases/snapshot/expected.json")
 
@@ -1445,7 +1445,7 @@ TOOL_USE_REFUSALS = [
      "expect": "invalid step; issue starts 'Cited page not read through read_pages: market page:2' (live/tools.py UNREAD_PAGE); attempt 0 is re-begun as attempt 1 with repair_of set",
      "rule": "applicable_rules('relative_value') == ('unread-citations',)"},
     {"id": "cp6-read-before-submit", "owner": "CP-6", "case": "positive",
-     "setup": "submit with no read_inputs on the attempt", "expect": "refused not_permitted (S1a lease: a session-less step needs a read on its own binding)", "rule": "owner_workflow.py:549 as extended by S1a"},
+     "setup": "submit with no read_inputs on the attempt", "expect": "refused not_permitted (S1a lease: a session-less step needs a read on its own binding)", "rule": "G1-X protocol §3: submit_review requires a read on the step's own binding when inputs != none"},
     {"id": "cp6-pack-tool", "owner": "CP-6", "case": "positive",
      "setup": "invoke read_pages or search_pack", "expect": "refused receipt not_permitted (submit-only step)", "rule": "registry.tool_set('committee_challenge') == 'submit-only'"},
     {"id": "cp3-out-of-scope-read", "owner": "CP-3", "case": "positive",
@@ -1615,7 +1615,7 @@ def main():
     manifest = {
         "schema_version": "cp3-cp6-owner-cases/1",
         "scope": "CP-3 relative value and CP-6 committee challenge owner inputs on top of the S1 credit-snapshot run (CP-0, CP-1, CP-1A, CP-2, CP-MODEL), plus CP-5 where CP-6 requires it",
-        "status": "DRAFT by owner-preparation task cp3-cp6-owner, 2026-10-28; CP-3 half rev 1 (revised after review-precise-r3-1, awaiting scoped re-review); CP-6 half rev 0 draft; not executed",
+        "status": "CP-3 half frozen rev 3; CP-6 half frozen 2026-10-28; not executed",
         "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
         "pins": {rel: pin for rel, pin in PINS.items()},
         "reuse": {
@@ -1721,9 +1721,9 @@ def build_expected(cases):
         "table_id_check": {
             "method": "methodology.json table_ids of every module compared for equality with each id below (builder data read, no code run)",
             "CP-3": {"T3.1": "unique to CP-3", "T3.3": "unique to CP-3", "T3.4": "unique to CP-3", "T3.9": "unique to CP-3", "T3.10": "unique to CP-3"},
-            "CP-6": {"T6A.4": "unique to CP-6", "T6A.6": "unique to CP-6", "T6A.7": "unique to CP-6", "T6A.11": "unique to CP-6"},
-            "unregistered_composed_ids": ["T6-FINAL", "cp3.relative_value", "cp6.committee_challenge", "cp6.thesis_challenge", "cp6.strength_challenges", "cp6.weakness_challenges", "cp1_references"],
-            "note": "No collision exists. The unregistered ids are composed by the cores today (cp1_references is shared by every module by design). T6-FINAL is listed for the CP-6 half only: ruling Q7 registers it under CP-6 table_ids with the CP-6 freeze, so the CP-3 build does not assert it either way.",
+            "CP-6": {"T6-FINAL": "unique to CP-6 (registered in CP-6 table_ids with the CP-6 freeze, ruling Q7)", "T6A.4": "unique to CP-6", "T6A.6": "unique to CP-6", "T6A.7": "unique to CP-6", "T6A.11": "unique to CP-6"},
+            "unregistered_composed_ids": ["cp3.relative_value", "cp6.committee_challenge", "cp6.thesis_challenge", "cp6.strength_challenges", "cp6.weakness_challenges", "cp1_references"],
+            "note": "No collision exists. The unregistered ids are composed by the cores today (cp1_references is shared by every module by design). T6-FINAL is registered under CP-6 table_ids by the CP-6 freeze (ruling Q7) and asserted unique to CP-6 above.",
         },
     }
     meth = {m["module_id"]: m["table_ids"] for m in METH}
@@ -1733,10 +1733,8 @@ def build_expected(cases):
             allids.setdefault(i, []).append(mod)
     for tid, mod in [(t, "CP-3") for t in exp["table_id_check"]["CP-3"]] + [(t, "CP-6") for t in exp["table_id_check"]["CP-6"]]:
         assert allids[tid] == [mod], (tid, allids.get(tid))
-    # T6-FINAL is not asserted here: ruling Q7 registers it under CP-6 with the CP-6 freeze, which asserts it then.
     for tid in exp["table_id_check"]["unregistered_composed_ids"]:
-        if tid != "T6-FINAL":
-            assert tid not in allids, tid
+        assert tid not in allids, tid
     for case in ("positive", "gap"):
         d = cases[case]
         c3, c6 = d["c3"], d["c6"]
@@ -1810,6 +1808,112 @@ def build_expected(cases):
     return exp
 
 
+CP6_VIEW_KEY_TREE = [
+    ".action_biases",
+    ".blocked_ancestors",
+    ".confidence_caps",
+    ".cp1_facts",
+    ".cp1_facts[].label",
+    ".cp1_facts[].period",
+    ".cp1_facts[].ref",
+    ".cp1_facts[].shown",
+    ".cp1_facts[].unit",
+    ".cp1_facts_note",
+    ".cp2_rows",
+    ".cp2_rows[].cells",
+    ".cp2_rows[].cells.action",
+    ".cp2_rows[].cells.affected_analysis",
+    ".cp2_rows[].cells.assessment",
+    ".cp2_rows[].cells.basis",
+    ".cp2_rows[].cells.category",
+    ".cp2_rows[].cells.confidence",
+    ".cp2_rows[].cells.finding",
+    ".cp2_rows[].cells.gap",
+    ".cp2_rows[].cells.gap_id",
+    ".cp2_rows[].cells.implication",
+    ".cp2_rows[].cells.label",
+    ".cp2_rows[].cells.limitation",
+    ".cp2_rows[].cells.mechanic",
+    ".cp2_rows[].cells.risk",
+    ".cp2_rows[].cells.severity",
+    ".cp2_rows[].cells.side",
+    ".cp2_rows[].cells.text",
+    ".cp2_rows[].cells.why_it_matters",
+    ".cp2_rows[].challengeable",
+    ".cp2_rows[].claim",
+    ".cp2_rows[].ref",
+    ".cp2_rows[].register",
+    ".cp2_rows[].row",
+    ".cp3_rows",
+    ".cp3_rows[].cells",
+    ".cp3_rows[].cells.action",
+    ".cp3_rows[].cells.affected_analysis",
+    ".cp3_rows[].cells.as_of",
+    ".cp3_rows[].cells.basis",
+    ".cp3_rows[].cells.confidence",
+    ".cp3_rows[].cells.facility_id",
+    ".cp3_rows[].cells.fundamental_view",
+    ".cp3_rows[].cells.gap",
+    ".cp3_rows[].cells.gap_id",
+    ".cp3_rows[].cells.implication",
+    ".cp3_rows[].cells.kind",
+    ".cp3_rows[].cells.limitation",
+    ".cp3_rows[].cells.market_observation",
+    ".cp3_rows[].cells.mechanic",
+    ".cp3_rows[].cells.ordering",
+    ".cp3_rows[].cells.quote",
+    ".cp3_rows[].cells.rationale",
+    ".cp3_rows[].cells.risk",
+    ".cp3_rows[].cells.severity",
+    ".cp3_rows[].cells.source",
+    ".cp3_rows[].cells.why_it_matters",
+    ".cp3_rows[].claim",
+    ".cp3_rows[].ref",
+    ".cp3_rows[].register",
+    ".cp3_rows[].row",
+    ".cp5_cp4_rows",
+    ".cp5_findings",
+    ".cp5_flagged_claims",
+    ".cp5_note",
+    ".cp5_rows",
+    ".cp5_rows[].cells",
+    ".cp5_rows[].cells.cp_5_findings",
+    ".cp5_rows[].cells.head_status",
+    ".cp5_rows[].cells.limitation",
+    ".cp5_rows[].cells.origin",
+    ".cp5_rows[].cells.result",
+    ".cp5_rows[].cells.value",
+    ".cp5_rows[].ref",
+    ".cp5_rows[].register",
+    ".cp5_rows[].row",
+    ".cp5_verdict",
+    ".cp5_verdict.evaluated",
+    ".cp5_verdict.not_evaluated",
+    ".cp5_verdict.scope",
+    ".cp5_verdict.status",
+    ".heads",
+    ".heads[].claims",
+    ".heads[].claims[].claim_id",
+    ".heads[].claims[].limitation",
+    ".heads[].claims[].text",
+    ".heads[].inherited_limitations",
+    ".heads[].limitations",
+    ".heads[].module_id",
+    ".heads[].status",
+    ".inherited_limitations",
+    ".insufficient_information",
+    ".issuer",
+    ".optional_upstream",
+    ".optional_upstream[].limitations",
+    ".optional_upstream[].module_id",
+    ".optional_upstream[].status",
+    ".rows_note",
+    ".upstream",
+    ".upstream[].module_id",
+    ".upstream[].status",
+]
+
+
 def cp2_read_counts(case, delta):
     """Review M4: the per-register row counts of the CP-2 read body (module_context credit_synthesis) in this
     oracle's runs, from the pinned S1 view tree (positive: 70 rows) plus this oracle's CP-1A deltas."""
@@ -1855,7 +1959,11 @@ def execution_block(cases):
             "CP-6": {
                 "tool_set": "submit-only (registry.tool_set('committee_challenge')); applicable_rules = () ",
                 "read_inputs": "exactly one read_inputs per attempt before the submit; body = module_context('committee_challenge') with heads[*].claims[*].citations removed (narrower than the live CONTEXT, D2); digest = sha256 of the body",
-                "assertion": "the body's key tree equals the tree frozen by the probe task and no source quote string of the pack occurs in it",
+                "assertion": ("the body's key tree equals view_key_tree; no 'quote' key occurs at any depth except cp3_rows[*].cells.quote, which holds CP-3's own T3.3 settled "
+                              "market-evidence quote facts (not citations); no citation quote string of a bound head, and no pack quote, occurs outside those cells; the recorded digest equals the sha256 of the body"),
+                "view": ("owners.cp6.view(historical, attempt): context = module_context(historical, attempt, 'committee_challenge') (None raises WorkflowError identity_mismatch); "
+                         "delete citations from every heads[*].claims[*]; body = json.dumps(context, ensure_ascii=False, separators=(',', ':'), allow_nan=False); return (sha256(body.encode()).hexdigest(), body)"),
+                "view_key_tree": CP6_VIEW_KEY_TREE,
                 "ok_pack_calls": 0,
             },
         },
@@ -1864,7 +1972,11 @@ def execution_block(cases):
                      "claim_rows (T3.4.preference and T3.1.iNN), Upstream.insufficient (T3.3 kind cells and T3.4.preference.confidence) and the CP-3 head's claims in context_block. "
                      "Proof: CP-6's table cells name CP-3 rows (basis cells 'CP-3 T3.4.preference (Preference)' and so on), the gap case's action bias is forced to Insufficient Information by the CP-3 head's T3.3/T3.4 cells, and the verifier probe re-runs cp6_committee._validate_step, which reads the bound CP-3 head."),
             "CP-2": ("CP-3 reads the CP-2 head (cp2_catalogue over T2.1, T2.7, T2.10, T2.11, T2.12 and the CP-2 input status for the confidence cap); CP-6 reads it again (cp2_rows, challengeable rows, claim_rows). "
-                     "Proof for D3 is the CP-6 table T6A.4 (one challenge per CP-2 row, column 'CP-2 row' = 'CP-2 <ref> (<label>)') and the T6-FINAL basis cell, plus CP-3's basis cells 'CP-2 <ref> (<label>)'. CP-5 is not claimed as a consumer of CP-2 or CP-3 until its own lease extends the integrity scope (D3)."),
+                     "Proof for D3 is the CP-6 table T6A.4 (one challenge per CP-2 row, column 'CP-2 row' = 'CP-2 <ref> (<label>)') and the T6-FINAL basis cell, plus CP-3's basis cells 'CP-2 <ref> (<label>)'. "
+                     "In R6, CP-5 consumes CP-1, CP-1A, CP-2 and CP-3 under docs/CP5-OWNER-LEASE.md D3 (inputs bind each head, T5B.1 cites its facts, the probe re-runs cp5_integrity._validate_step). "
+                     "CP-6 consumes CP-2 (T6A.4 'CP-2 row', T6-FINAL basis), CP-3 (basis cells 'CP-3 <ref> (<label>)'; in the gap case the T3.3/T3.4 cells force Insufficient Information) "
+                     "and CP-5 (inputs bind CP-5; cp5_review reads T5.9 and T5B.2/3/4/6/7/8; own limitation 'CP-5 handoff caps the confidence below High: CP-5 is restricted' and cap 'CP-5 is restricted'). "
+                     "The verifier probe re-runs cp6_committee._validate_step on _FrozenExecution. D3 for CP-1, CP-1A, CP-2, CP-3 and CP-5 closes only when the R6 run verifies."),
             "CP-1A": "optional upstream of CP-3 and CP-6: read for status and limitations only (CONTEXT optional_upstream); not a content consumer, and the optional read is shown by the CP-3/CP-6 CONTEXT block, not by a table cell",
             "optional_producers_never_read": {
                 "CP-3": "CP-3C, CP-3D, CP-4C, CP-2D (cp3_relative_value.py:99-104). They are not in requested_modules, so no attempt input exists and the CP-3 module inputs list contains none; the CONTEXT optional_upstream lists only CP-1A and CP-4 (CP-4 'not in this run'). The test asserts the inputs list and the absence of the four ids in the CONTEXT body",

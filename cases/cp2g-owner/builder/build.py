@@ -36,10 +36,10 @@ PINS = {
     "cases/cp2a-owner/manifest.json": "5219f063dcb130b38b8059397a73ff890ccb14ef03f8c2a6188b971dce7ead1a",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
     "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
-    "cases/cp1d-owner/manifest.json": "7e1766071125b41fb459428f37e90166f9f35f2a806310a2f74baf81e926f585",
+    "cases/cp1d-owner/manifest.json": "07dd8530a7f53aa5fe2c1b4840554c0fc6392e26e53bf01ad2858458ecdfe955",
     "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
-    "cases/cp1d-owner/expected.json": "293120368b5d791727738d56e4078129e4b4de07d5c8287cf0cef7cade2e58c3",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "cases/cp1d-owner/expected.json": "8880a2c59a92604ea40e2f2d80e899ed45450d1094388e950ef7015637e2f993",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 
 
@@ -1406,11 +1406,17 @@ def refusals():
     return out
 
 
+BLOCKED_UNRESOLVED = "assessment.rationale: Unresolved reference: T1D.6.supported.total_leverage"
+
+
 def blocked_case(by_id):
     return {
         "plan_order": ["CP-0", "CP-1", "CP-2A", "CP-2G"],
         "attempt_0": {"payload": "r01", "result_status": "rejected", "limitations": by_id["r01"]["expected_issues"]},
-        "attempt_1": {"payload": "v13", "repair_of": "attempt_0", "repair_issues": by_id["r01"]["expected_issues"], "result_status": "blocked", "limitations": by_id["v13"]["expected_issues"]},
+        "attempt_1": {"payload": "v13", "repair_of": "attempt_0", "repair_issues": by_id["r01"]["expected_issues"], "result_status": "blocked",
+                      # close release: this run requests CP-2G alone, so CP-1D is unbound and v13's rationale (the positive text,
+                      # which names the CP-1D supported leverage) is also an unresolved reference; that line comes first
+                      "limitations": [BLOCKED_UNRESOLVED, *by_id["v13"]["expected_issues"]]},
         "head": {"module_id": "CP-2G", "status": "blocked", "tables": 0, "facts": 0},
         "downstream": "CP-2H and CP-4C (required edge block) cannot begin on a blocked CP-2G head",
         "rule": "execution.settle: attempt 0 invalid -> status rejected; attempt 1 invalid -> status blocked; limitations are the bounded issues (20 lines of at most 600 characters)",
@@ -1521,7 +1527,7 @@ def main():
             "fact_ids": "interface-fact:<sha256>; bound at run time, never literal",
         },
         "upstream_fact_selection": {
-            "CP-2A": {"head": "the settled CP-2A head of the run", "scenario": "T2B.1.<row>.ebitda_decline and T2B.1.<row>.interest_increase of the row named by downside.scenario",
+            "CP-2A": {"head": "the settled CP-2A head of the run", "scenario": "T2B.1.<row>.name, T2B.1.<row>.ebitda_decline and T2B.1.<row>.interest_increase of the row named by downside.scenario",
                       "breaks": "T2B.6.<row>.{origin,test,level,required_decline,outcome} for every row of the register, in register order",
                       "fact_ids": "literal (table.row.field assigned by CP-2A); read from cases/cp2a-owner/expected.json cases.positive (pinned)"},
             "CP-1D": {"head": "the settled CP-1D head of the run", "facts": ["T1D.3.supported.value", "T1D.6.supported.total_leverage", "T1D.6.supported.net_leverage"],
@@ -1610,7 +1616,7 @@ def main():
         "id_rules": {"fact_id": "<table_id>.<row_id>.<field>", "calculation_id": "calc:<fact_id> on calculated facts",
                      "rows": "T2H.3: a01..a07 base drivers in the canonical order, d01 and d02 the CP-2A shocks, m01 minimum liquidity; T2H.4/5/6: a25 the FY2025 actual (T2H.4 and T2H.6 only), b26..b28 base case, d26..d28 downside; T2H.7: the CP-2A break rows b01.. then m01; T2H.8: base, down",
                      "claims": "T2H.3.<driver> (seven), T2H.3.downside, T2H.3.minimum_liquidity, T2H.4.base/down, T2H.6.base/down, T2H.5.down, T2H.7.base/down, T2H.8.base/down, [T2H.2.cp1d when CP-1D is bound], T2H.3.assessment, in this order"},
-        "lineage_rule": "A calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the facts in its derives_from list, in that order (cp4_legal._computed pattern), where an own fact contributes its own (transitively CP-1) citations; analyst inputs and CP-2A watch levels carry none. A known fact never derives from a fact that is not known (asserted by the builder). A copied upstream cell keeps the upstream fact's value_class (analyst_judgment, calculated, or None for the CP-2A definition constants) and carries a calculation_id only when calculated. A T2H cell that restates a CP-1 fact (T2H.2 copies, T2H.4 and T2H.5 openings, T2H.2 recomputed ratios) is this module's own calculated fact with cp1:<metric> lineage and calc:<fact_id>; it does not keep CP-1's class (calculated or source): only cp1_references carry the CP-1 fact verbatim with its class. A copy of a CP-2A cell in T2H.7 (level, static_decline) lists the CP-2A fact it copies in derives_from whatever the cell's class; the base_first and down_first texts of a CP-2A row list cp2a:T2B.6.<row>.level; the downside EBITDA (T2H.4) and interest (T2H.5) cells list the CP-2A shock fact they apply (D3 proof, ruling H1).",
+        "lineage_rule": "A calculated fact's citations are one Citation per (source, page): the first quote on that page among the citations of the facts in its derives_from list, in that order (rulings stage2 round 3 item 3; round 5 item 17), where an own fact contributes its own (transitively CP-1) citations; analyst inputs and CP-2A watch levels carry none. A known fact never derives from a fact that is not known (asserted by the builder). A copied upstream cell keeps the upstream fact's value_class (analyst_judgment, calculated, or None for the CP-2A definition constants) and carries a calculation_id only when calculated. A T2H cell that restates a CP-1 fact (T2H.2 copies, T2H.4 and T2H.5 openings, T2H.2 recomputed ratios) is this module's own calculated fact with cp1:<metric> lineage and calc:<fact_id>; it does not keep CP-1's class (calculated or source): only cp1_references carry the CP-1 fact verbatim with its class. A copy of a CP-2A cell in T2H.7 (level, static_decline) lists the CP-2A fact it copies in derives_from whatever the cell's class; the base_first and down_first texts of a CP-2A row list cp2a:T2B.6.<row>.level; the downside EBITDA (T2H.4) and interest (T2H.5) cells list the CP-2A shock fact they apply (D3 proof, ruling H1).",
         "references_rule": "cp1_references, cp2a_references and cp1d_references carry the upstream facts verbatim under their own fact ids with their own value_class, status and limitation; prose and T2H.2 reference them ({<fact_id>|<unit>}). No CP-2G table or claim stores a spelled upstream figure.",
         "property_tests": {
             "base_control": "FY2025 free cash flow recomputed from the CP-1 operands equals CP-1's reported fcf exactly (T2H.2 fcf 'Reconciled to CP-1'); total and net leverage recomputed equal the CP-1 reported ratios exactly",

@@ -57,6 +57,7 @@ FORBIDDEN_KEYS = {"quote", "citations", "record_json"}
 ID_PLACEHOLDER = re.compile(r"<fact_id of the CP-1 fact for FIG:([a-z0-9_]+), bound at run time>")
 LABEL_PLACEHOLDER = re.compile(r"<label and period of FIG:([a-z0-9_]+)>")
 CITES_PLACEHOLDER = "<the CP-1 fact's own citations, bound at run time>"
+PACK_HASH_PLACEHOLDER = "<<PreparedPack.content_hash(), bound at run time>>"
 REFERENCE_NOTES = ("spelled_as", "note", "table_coordinate")
 JUDGED_NOT_ESTABLISHED = {"", "0", "N/A", "TBD"}
 # sha256 of the reviewed literal cases/snapshot/cp2-blocked-cp1a-submission.json (lease R3-4)
@@ -370,6 +371,13 @@ def test_plan_attempts_heads_and_cp0(closed: Closed) -> None:
     )
     module = _module(closed.store, "CP-0")
     assert len(module.facts) == len(cp0["facts"]) == 56
+    # the oracle binds the pack hash at run time; bind it to this run's pack before comparing
+    pack_hash = closed.pack.content_hash()
+    bound_facts = [
+        {**fact, "text": fact["text"].replace(PACK_HASH_PLACEHOLDER, pack_hash)}
+        for fact in cp0["facts"]
+    ]
+    assert sum(pack_hash in fact["text"] for fact in bound_facts) == 1
     assert [
         {
             "fact_id": f.fact_id,
@@ -377,7 +385,7 @@ def test_plan_attempts_heads_and_cp0(closed: Closed) -> None:
             "cites": [[c.source_id, c.locator] for c in f.citations],
         }
         for f in module.facts
-    ] == cp0["facts"]
+    ] == bound_facts
     assert list(module.limitations) == cp0["limitations"]
 
 
@@ -1314,7 +1322,8 @@ def test_cp2_invalid_submission_without_a_read_refuses(
         run=store.read().run,
         pack_sha256=store.read().pack_sha256,
     )
-    assert len(_verify_submissions(store, with_read, OWNER_SPECS)[0]) == 0
+    valid, _ = _verify_submissions(store, with_read, OWNER_SPECS)
+    assert "credit_synthesis" not in {step for _, step, _ in valid}
     without_read = SimpleNamespace(**{**vars(with_read), "input_reads": ()})
     with pytest.raises(WorkflowError) as caught:
         _verify_submissions(store, without_read, OWNER_SPECS)

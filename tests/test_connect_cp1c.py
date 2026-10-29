@@ -20,6 +20,7 @@ from typing import Any, Literal, cast
 import cp1c_runs as runs
 import pytest
 import test_method_cp1c as stage1
+import view_tree
 from defect_classes import (
     BLANK_VALUES,
     MODEL_TEXT_HOSTILE,
@@ -200,6 +201,20 @@ def test_peer_table_guard_limits_noted_in_the_method(amount: str) -> None:
     line = stage1.ALDER.replace("200.0", amount)
     case = stage1._with_sources("positive", stage1._edited("positive", 1, stage1.ALDER, line))
     assert cp1c.calculation_issues(case) == ("Peer table not found",)
+
+
+def test_the_oracle_view_names_the_rules_the_view_serves() -> None:
+    """Close release: `expected.execution.tool_use` lists every key of `rules` the view serves,
+    `direction` included (the lease key tree has it)."""
+    text = stage1.expected()["execution"]["tool_use"]["CP-1C"]["view"]
+    rules = text.split("rules {", 1)[1].split("}", 1)[0]
+    assert [k.strip() for k in rules.split(",")] == [
+        "minimum_included_peers",
+        "outlier_fraction",
+        "inclusion",
+        "position",
+        "direction",
+    ]
 
 
 def test_method_note_exists_and_names_each_stage_2_rule() -> None:
@@ -666,7 +681,9 @@ def test_copied_cells_carry_cp1_citations_and_calculation_id_at_run_time() -> No
             ), fid
     # a fact derived from a copied cell carries CP-1's citation at that cell's place
     position = facts["T1C.4.total_leverage_adjusted.position"]
-    assert position.citations[0] == CP1_CITE and len(position.citations) == 5
+    # (CP-1's financial quote, then the first peer row on the one peers page: round 3 item 3)
+    assert position.citations[0] == CP1_CITE and len(position.citations) == 2
+    assert position.citations[1].source_id == "peers"
 
 
 def test_report_follows_the_cp1_head() -> None:
@@ -1032,6 +1049,14 @@ def test_view_over_a_real_store_is_the_context_block(tmp_path: Path) -> None:
     )
     assert block["inherited_limitations"] == ["CP-0 note", SYNTHETIC, "CP-1 note"]
     assert [u["module_id"] for u in block["upstream"]] == ["CP-0", "CP-1"]
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_view_equals_the_committed_view_tree(case: str, tmp_path: Path) -> None:
+    """`cases/cp1c-owner/cp1c-view-tree.json`: the keys and shape of the body `view` serves."""
+    store, ticket = _settled_store(tmp_path, case)
+    attempt = next(a for a in store.read().attempts if a.ticket_id == ticket)
+    view_tree.check("cp1c", case, cp1c.view(store, attempt)[1])
 
 
 class _Fresh:

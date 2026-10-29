@@ -593,10 +593,23 @@ def test_owner_step_sources_follow_the_h1_scope_table(g1x: SimpleNamespace, tmp_
                     ),
                 ),
             ),
-            "scope row without sources": (
+            "sources on a second step without a scope row": (
                 MODULE,
                 replace(spec, steps=(sourced, replace(viewed, sources=True))),
                 _unchanged,
+            ),
+            # The reverse direction (Stage 2 Low): a scope row for a step that offers no sources.
+            # The mutant `==` -> `<=` on the scope clause accepts this spec.
+            "scope row without sources": (
+                MODULE,
+                spec,
+                lambda m: m.setattr(
+                    host,
+                    "_OWNER_SCOPES",
+                    MappingProxyType(
+                        {**_scopes_with_sourced_step(), (MODULE, VIEWED): lambda _pack: ()}
+                    ),
+                ),
             ),
         },
     )

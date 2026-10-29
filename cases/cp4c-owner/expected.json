@@ -14,7 +14,7 @@
   "rows": "T4E.2: the claim class ids c01.. in submission order, then eq; T4E.3, T4E.7, T4E.9: v01..v03; T4E.4, T4E.5, T4E.8: <case><class> e.g. v02c01, and <case>eq; T4E.6: <case><class> for creditor classes",
   "claims": "analyst: T4E.2.<class>.rationale, T4E.3.<case>.rationale, T4E.7.<case>.rationale, T4E.8.<case>.rationale, T4E.3.assessment; Python: T4E.3.<case>.ev, T4E.5.<case>, T4E.7.<case>.fulcrum"
  },
- "lineage_rule": "A calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the facts in its derives_from list (cp4_legal._computed pattern); a fact backed by a literal quote lists it in citations here. A known fact never derives from a fact that is not known (asserted). A T4E cell that restates a CP-1, CP-2G, CP-2A or CP-4 fact is this module's own fact with an upstream lineage id (CP-2G ruling M3); only the four reference tables carry the upstream facts verbatim.",
+ "lineage_rule": "A calculated fact's citations are one Citation per (source, page): the first quote on that page among the citations of the facts in its derives_from list, in that order (rulings stage2 round 3 item 3; round 5 item 17); a fact backed by a literal quote lists it in citations here. A known fact never derives from a fact that is not known (asserted). A T4E cell that restates a CP-1, CP-2G, CP-2A or CP-4 fact is this module's own fact with an upstream lineage id (CP-2G ruling M3); only the four reference tables carry the upstream facts verbatim.",
  "references_rule": "cp1_references, cp2g_references, cp2a_references, cp4_references carry the upstream facts verbatim under their own fact ids; prose resolves through them; a multiple or rank (analyst_judgment, no citation or calculation) cannot be referenced in prose; each row projects the upstream fact, and the module's reference fact equals the upstream oracle fact (cases/cp2g-owner, cp2a-owner, cp4-owner expected.json, by fact_id) in every key, including currency, scale, decimals and calculation_id; cp1 rows are bound at run time.",
  "waterfall_rules": {
   "order": "classes by the analyst's rank number, lowest first; classes of one rank share pro rata; the secured_debt class must rank strictly first",
@@ -374,6 +374,9 @@
    "issue_kind": "content",
    "expected_issues": [
     "claims[0].support[0].source_id: not in this step's source scope: identity"
+   ],
+   "unread_issues": [
+    "Cited page not read through read_pages: identity page:1"
    ]
   },
   {
@@ -568,7 +571,7 @@
   }
  ],
  "refusal_rules": {
-  "journal": "each refusal is one invalid CP-4C step on attempt 0: attempt consumed, status rejected, limitations equal the issues (bounded 20 lines of 600 characters)",
+  "journal": "each refusal is one invalid CP-4C step on attempt 0: attempt consumed, status rejected, limitations equal the issues (bounded 20 lines of 600 characters); at run level the issues are expected_issues followed by unread_issues where the refusal lists them (v08 cites identity page:1, outside the step's scope, so read_pages never returns it and the journal holds a second line)",
   "order": "shape issues alone; then claims, valuation, case ids, fulcrum, plan (class-reference and waterfall checks only when the claims and valuation are structurally valid), assessment, then per text field prose issues and guard issues",
   "multi_issue": "v21 (instrument recommendation) and v18 (figure placeholder left unreplaced) are product multi-issue payloads: the product validator reports every guard phrase it finds in the text and every unreplaced placeholder, so their expected_issues lists hold more than one entry; every other refusal payload gives exactly one issue (v02 included: after the kind/source mismatch the source-specific amount checks are skipped)",
   "stale": "v24 to v27 validator-only on a literal Upstream; run level: stale_binding at the next G1 call, no attempt consumed, no step journaled; one clone test per upstream (CP-1, CP-2A, CP-4, CP-2G)",

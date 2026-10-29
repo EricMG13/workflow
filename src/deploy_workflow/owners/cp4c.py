@@ -81,7 +81,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners import cp2g
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-4C"
@@ -1313,8 +1313,9 @@ class _Book:
 
     def cells(self, upstream: Mapping[str, Fact]) -> tuple[Cell, ...]:
         """Settle the lineage citations (expected.lineage_rule): a quoted cell cites its quotes;
-        a calculated cell the ordered, de-duplicated citations of the facts it derives from. A
-        known fact never derives from a fact that is not known."""
+        a calculated cell has one Citation per (source, page), the first quote on that page among
+        the citations of the facts it derives from, in derives_from order (rulings stage2 round
+        3 item 3). A known fact never derives from a fact that is not known."""
         memo: dict[str, tuple[Citation, ...]] = {}
 
         def cited(fid: str, trail: tuple[str, ...]) -> tuple[Citation, ...]:
@@ -1326,12 +1327,12 @@ class _Book:
             out: list[Citation] = list(d.quoted)
             if not d.quoted and d.fact.value_class == "calculated":
                 for dep in d.derives:
-                    more = (
+                    out += (
                         upstream[dep].citations
                         if dep.startswith(_UPSTREAM)
                         else cited(dep, (*trail, fid))
                     )
-                    out += [c for c in more if c not in out]
+                out = list(one_per_page(out))
             memo[fid] = tuple(out)
             return memo[fid]
 

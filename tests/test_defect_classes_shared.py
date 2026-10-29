@@ -111,6 +111,8 @@ CP0_VERBATIM: Mapping[tuple[str | int, ...], str] = {
     ("consumers", "*", "evidence_demand"): "Fact.text (T4 demand)",
     ("consumers", "*", "rationale"): "Fact.text (T4 rationale)",
     ("consumers", "*", "limitations", "*"): "Module.limitations (str) and Fact.text (T8 limits)",
+    ("consumers", "*", "missing_source"): "ConsumerReadiness.missing_source (str | None): checked"
+    " by the absence-claim rule (`readiness.py:321`), required when CONDITIONAL, and read nowhere else",
     ("analysis", "*", "limitation"): "Claim.limitation (str | None; Claim.text is not this)",
 }
 
@@ -121,6 +123,10 @@ def test_cp0_model_text_is_journaled_except_on_its_verbatim_paths(tmp_path: Path
     schema = OWNER_SPECS["CP-0"].steps[0].schema
     assert dc.free_text_paths(positive, schema), "CP-0 has free-text fields"
     failures = dc.model_text_failures(
-        schema, positive, _cp0_fresh(tmp_path, positive, pack), verbatim=frozenset(CP0_VERBATIM)
+        schema,
+        positive,
+        _cp0_fresh(tmp_path, positive, pack),
+        verbatim=frozenset(CP0_VERBATIM),
+        fill_absent=True,  # round 5 item 10 L2: gaps and consumers the positive leaves null
     )
     assert failures == []

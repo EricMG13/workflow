@@ -74,7 +74,7 @@ step raises ValueError before anything is written. The validators' binding check
 """
 
 import json
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from functools import cached_property, partial, reduce
@@ -572,13 +572,41 @@ def _scope_strings(scope: ReportingScope) -> Dimensions:
     return tuple(getattr(scope, name) for name in DIMENSIONS)
 
 
-def _period_scopes(
-    period: dict[str, Any], scopes: Sequence[ReportingScope]
-) -> frozenset[Dimensions] | None:
+@dataclass(frozen=True)
+class _Scopes:
+    """One entity's financial-source scopes inverted by `source_context.scope_matches_period`:
+    the rule is true only where a period's end date (and, unless `PERIOD_END`, its start date)
+    equals the scope's own, so each scope is asked once, at its own dates (0d-d).
+    `ends`: the strings a `PERIOD_END` period ending on the date binds
+    to; `spans`: those of any other period type, by (end, start)."""
+
+    ends: Mapping[date, frozenset[Dimensions]]
+    spans: Mapping[tuple[date, date], frozenset[Dimensions]]
+
+    @classmethod
+    def of(cls, scopes: Sequence[ReportingScope]) -> "_Scopes":
+        ends: dict[date, set[Dimensions]] = {}
+        spans: dict[tuple[date, date], set[Dimensions]] = {}
+        for scope in scopes:
+            end, start = scope.end_date, scope.start_date
+            if end is None:
+                continue  # the rule binds no period to a scope without an end date
+            strings = _scope_strings(scope)
+            if scope_matches_period(scope, "PERIOD_END", start, end):
+                ends.setdefault(end, set()).add(strings)
+            if start is not None and scope_matches_period(scope, "FY", start, end):
+                spans.setdefault((end, start), set()).add(strings)
+        return cls(
+            {key: frozenset(value) for key, value in ends.items()},
+            {key: frozenset(value) for key, value in spans.items()},
+        )
+
+
+def _period_scopes(period: dict[str, Any], scopes: _Scopes) -> frozenset[Dimensions] | None:
     """The distinct strings of the scopes a period binds to, by the date and kind rule
-    `context_binding` binds by (`source_context.scope_matches_period`). None when the period's
-    type or dates (or its id) do not parse as the contract parses them: the shape rejection
-    names them."""
+    `context_binding` binds by (`source_context.scope_matches_period`, through `_Scopes`). None
+    when the period's type or dates (or its id) do not parse as the contract parses them: the
+    shape rejection names them."""
     kind = period.get("period_type")
     if (
         not isinstance(kind, str)
@@ -591,9 +619,21 @@ def _period_scopes(
         end = _DAY.validate_json(exact_json(period["end_date"]))
     except ValidationError:
         return None
-    return frozenset(
-        _scope_strings(scope) for scope in scopes if scope_matches_period(scope, kind, start, end)
-    )
+    if kind == "PERIOD_END":
+        return scopes.ends.get(end, frozenset()) if end is not None else frozenset()
+    if end is None or start is None:
+        return frozenset()
+    return scopes.spans.get((end, start), frozenset())
+
+
+def _frozen(value: object) -> Hashable:
+    """A JSON value as a key equal to another's exactly when the values are `==` (lists and
+    objects frozen recursively, tagged so neither equals a scalar or the other)."""
+    if isinstance(value, list | tuple):
+        return ("list" if isinstance(value, list) else "tuple", tuple(_frozen(v) for v in value))
+    if isinstance(value, dict):
+        return ("dict", frozenset((key, _frozen(item)) for key, item in value.items()))
+    return value
 
 
 class _Resolver:
@@ -607,12 +647,39 @@ class _Resolver:
         self.document = document
         self.books: dict[int, _Book | None] = {}
         self.dimensions: dict[int, Mapping[int, Dimensions]] = {}
+        self.scopes: dict[str, _Scopes] = {}  # by bound entity
+        self.facilities: dict[int, dict[Hashable, dict[str, Any]]] = {}  # by id(book)
+        self.facility_hashes: dict[int, str | None] = {}  # by id(row), within the facility phase
         # Insertion-ordered set of (path, issue): each issue cut as `bounded_issues` shows it,
         # built by `clipped` so an id the caller repeats is never copied whole into a line.
         self.unbound: dict[tuple[str, str], None] = {}
 
     def _note(self, path: str, *parts: str) -> None:
         self.unbound.setdefault((path, clipped(parts)), None)
+
+    @cached_property
+    def bound_rows(self) -> dict[str, list[object]] | None:
+        """`binding.books`' entity_id values by string book_id, in row order (None: no row
+        list). Built once (0d-d): the rows are not marked, so no phase changes them."""
+        binding = self.document.get("binding")
+        rows = binding.get("books") if isinstance(binding, dict) else None
+        if not isinstance(rows, list):
+            return None
+        named: dict[str, list[object]] = {}
+        for row in rows:
+            if isinstance(row, dict) and isinstance(row.get("book_id"), str):
+                named.setdefault(row["book_id"], []).append(row.get("entity_id"))
+        return named
+
+    @cached_property
+    def classes(self) -> dict[str, str]:
+        context = self.known.context
+        return {} if context is None else {s.source_id: s.classification for s in context.sources}
+
+    @cached_property
+    def entities(self) -> frozenset[str]:
+        context = self.known.context
+        return frozenset(() if context is None else (e.entity_id for e in context.entities))
 
     @cached_property
     def financial_review(self) -> str | None:
@@ -673,14 +740,18 @@ class _Resolver:
         entity = self._bound_entity(where, book_id, context)
         if entity is None:
             return {}
-        classes = {source.source_id: source.classification for source in context.sources}
-        scopes = [
-            scope
-            for source in context.sources
-            if source.classification == "financial"
-            for scope in source.scopes
-            if scope.entity_id == entity
-        ]
+        classes = self.classes
+        if entity not in self.scopes:
+            self.scopes[entity] = _Scopes.of(
+                [
+                    scope
+                    for source in context.sources
+                    if source.classification == "financial"
+                    for scope in source.scopes
+                    if scope.entity_id == entity
+                ]
+            )
+        scopes = self.scopes[entity]
         filled: dict[int, Dimensions] = {}
         bound: list[tuple[str, frozenset[Dimensions], dict[str, Any]]] = []
         for index, period in enumerate(periods):
@@ -715,20 +786,17 @@ class _Resolver:
         """The one entity `binding.books` binds `book_id` to, or None. A count other than one
         and an entity the source context lacks are recorded in `validate_financial_context`'s
         wording; a binding that does not parse is left to the shape rejection."""
-        binding = self.document.get("binding")
-        rows = binding.get("books") if isinstance(binding, dict) else None
-        if not isinstance(rows, list):
+        rows = self.bound_rows
+        if rows is None:
             return None
-        named = [
-            r.get("entity_id") for r in rows if isinstance(r, dict) and r.get("book_id") == book_id
-        ]
+        named = rows.get(book_id, [])
         if len(named) != 1:
             self._note(where, "Bind every financial book exactly once")
             return None
         (entity,) = named
         if not isinstance(entity, str):
             return None
-        if entity not in {known.entity_id for known in context.entities}:
+        if entity not in self.entities:
             self._note(where, "Unknown bound entity: ", book_id, " ", entity)
             return None
         return entity
@@ -777,14 +845,18 @@ class _Resolver:
     def _facility(self, item: Marked, book: dict[str, Any]) -> str | None:
         # `fx_conversion_issues` keys rows by (facility_id, period_id); the last one wins.
         scope = item.holder.get("facility_id"), item.holder.get("period_id")
-        rows = book.get("facilities")
-        matches = [
-            row
-            for row in (rows if isinstance(rows, list) else ())
-            if isinstance(row, dict) and (row.get("facility_id"), row.get("period_id")) == scope
-        ]
-        if matches:
-            return _parsed_hash(FacilityObservation, matches[-1])
+        if id(book) not in self.facilities:  # (facility_id, period_id) -> its last row (0d-d)
+            rows = book.get("facilities")
+            self.facilities[id(book)] = {
+                _frozen((row.get("facility_id"), row.get("period_id"))): row
+                for row in (rows if isinstance(rows, list) else ())
+                if isinstance(row, dict)
+            }
+        match = self.facilities[id(book)].get(_frozen(scope))
+        if match is not None:
+            if id(match) not in self.facility_hashes:
+                self.facility_hashes[id(match)] = _parsed_hash(FacilityObservation, match)
+            return self.facility_hashes[id(match)]
         conversion = item.holder.get("conversion_id")
         if isinstance(conversion, str):  # `fx_conversion_issues`' wording
             self._note(item.path, "FX conversion ", conversion, ": unknown facility/period")

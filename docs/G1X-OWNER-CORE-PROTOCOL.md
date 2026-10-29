@@ -40,12 +40,14 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
   fixed host-side mapping built by the H1 host task, never caller-supplied.
 - `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`,
   with or without a source session (CP-4 review-precise-2 F5). `read_inputs` serves
-  `projection` or `module_context`.
+  `projection`, `module_context` or `step_context` (the last two serve `_VIEWS[step]`,
+  `owner_workflow.py:820`; a step that declares either without a `_VIEWS` row is refused `not_permitted`
+  at create, `:949`).
 - `_check_specs` refuses (`not_permitted`) an owner-only step that offers statement extraction,
   uses a step id in `live.submission.STEPS`, or has `rules="journaled"` without `sources=True`; and
   any step outside CP-0/CP-1 with `rules="precheck"` or `inputs="projection"` (those take the
-  11-field financial binding) (rulings round 4 A3). CP-4's `inputs="step_context"` is added by its
-  build as its lease says (`docs/CP4-OWNER-LEASE.md:37-38`).
+  11-field financial binding) (rulings round 4 A3). CP-4's `inputs="step_context"` is built
+  (`StepSpec.inputs`, `owner_workflow.py:272`; `OWNER_SPECS["CP-4"]`, `:476`).
 
 ## 4. Precheck gate
 - Runs on the filled payload after `_fill`, before `rules` of any mode and before the journal.
@@ -58,9 +60,14 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
 - `_verify_submissions` recomputes the gate for every submission of the module: a refused
   record must reproduce exactly its issues; a valid or invalid step must yield none.
 
-## 5. Not in G1-X
-- Analytical modules after the deterministic CP-MODEL in a plan: no current lease needs it
-  (CP-2D runs without CP-MODEL). Add when a lease does.
+## 5. Plan ordering after CP-MODEL (built); not in G1-X
+- (Round 2 of `docs/rulings/2026-10-28-stage2.md`, built at `owner_workflow.py:1004-1010`.)
+  An analytical module may follow the deterministic CP-MODEL in a plan only when neither
+  consumes the other, directly or through `plan`'s producer graph (`_check_specs`); anything
+  else refuses `not_permitted`. Publication stays terminal: it runs once, in phase `walked`,
+  after every planned analytical module has its outcome. `_refused` and `_terminal` look only
+  at CP-MODEL's own required producers; the analytical walk order is `planned` with the
+  deterministic module skipped; at most one deterministic module per plan.
 - An owner-only `sources=True` step opens a real `SourceSession` only through the H1 fixed host
   mapping; until H1 lands, such steps are exercised by test-only sessions and no Stage 2 run of
   them is admitted (rulings round 4 A5; build order unchanged). A `_SOURCE_STEPS` row alone is not
@@ -79,3 +86,4 @@ one-line registrations, following `bindings/cp4.py`. `src/deploy_vii` never impo
   - a core whose `STEP_IDS` is not a tuple of str.
 - **A core reads model payload text only through `deploy_vii.live.schema.json_object` or `payload_document`.** This covers its `RULES`, its `_PRECHECKS` gate and its `submit`. Those are the bounded, storable parse that 0d-b (1a1a140) installed; no raw `json.loads` of model text is allowed. Because of this, a payload cannot raise after the binding audit write (LEAD amendment 2026-10-28, 0d-b plan §3).
 - **A core builds a caller-quoting issue line in its `RULES` or `_PRECHECKS` gate only with `deploy_vii.execution.listed_issues` and `clipped`, or by reusing the `deploy_vii.live.tools` rules.** `listed_issues` keeps at most 20 lines of at most 600 characters and formats only the lines it shows, so a payload cannot make the gate's issue text outgrow the payload after the binding write (LEAD amendment 2026-10-28, 0d-c plan §5 item 5).
+- **Oracle limitation lists are pre-settle.** Settled-equality tests and readers use `execution.settle`'s lists (synthetic run line in own): on a `case_kind: synthetic` run it appends "Synthetic case; not real issuer qualification" to the module's own limitations (deduplicated) and leaves it out of inherited (`deploy_vii/execution.py:472-478`; rulings round 3 item 5).

@@ -60,7 +60,7 @@ from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-1C"
@@ -1251,9 +1251,10 @@ def _limitations(
 
 
 def _with_lineage(items: Sequence[PeerFact]) -> tuple[PeerFact, ...]:
-    """A calculated fact's citations: the ordered, de-duplicated citations of the facts it
-    derives from, transitively through calculated facts. A copied CP-1 cell is a leaf carrying
-    CP-1's own citations, so they appear at that cell's place in derives_from order."""
+    """A calculated fact's citations: one Citation per (source, page), the first quote on that
+    page among the citations of the facts it derives from, in derives_from order, transitively
+    through calculated facts (rulings stage2 round 3 item 3). A copied CP-1 cell is a leaf
+    carrying CP-1's own citations, so they appear at that cell's place in derives_from order."""
     by_id = {item.fact.fact_id: item for item in items}
     memo: dict[str, tuple[Citation, ...]] = {}
 
@@ -1266,8 +1267,8 @@ def _with_lineage(items: Sequence[PeerFact]) -> tuple[PeerFact, ...]:
             if derived(item):
                 found: list[Citation] = []
                 for parent in item.derives_from:
-                    found += [cite for cite in cites(parent) if cite not in found]
-                memo[fact_id] = tuple(found)
+                    found += cites(parent)
+                memo[fact_id] = one_per_page(found)
             else:
                 memo[fact_id] = item.fact.citations
         return memo[fact_id]

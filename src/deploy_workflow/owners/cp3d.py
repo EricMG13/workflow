@@ -46,7 +46,7 @@ from deploy_vii.execution import (
     StepValidation,
     clipped,
 )
-from deploy_vii.live.schema import json_object
+from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.live.schema import normalise as normalise_payload
 from deploy_vii.live.submission import Submitted, _with_rules
 from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
@@ -1967,19 +1967,21 @@ def validate_market_implied(
     *, submission: MarketImpliedSubmission, upstream: Upstream
 ) -> tuple[str, ...]:
     """The validator issues of a submission against the bound upstream (empty: valid). The
-    summary becomes `Claim.text` (`CP-3D-VIEW-01`), so once the content rules pass it is also
-    checked as `RunText` (the type's message, never the input), and no composition can raise
-    after the binding write."""
-    if issues := submission_issues(submission=submission, context=upstream.context):
-        return issues
+    summary becomes `Claim.text` (`CP-3D-VIEW-01`), so it is also checked as `RunText` (the
+    type's message, never the input) whatever the content rules found, as CP-2E does, and no
+    composition can raise after the binding write."""
+    issues = submission_issues(submission=submission, context=upstream.context)
     try:
         _RUN_TEXT.validate_python(submission.summary.text)
     except ValidationError as error:
-        return tuple(
-            clipped(("summary.text: ", e["msg"]))
-            for e in error.errors(include_input=False, include_url=False, include_context=False)
+        issues = (
+            *issues,
+            *(
+                clipped(("summary.text: ", e["msg"]))
+                for e in error.errors(include_input=False, include_url=False, include_context=False)
+            ),
         )
-    return ()
+    return tuple(dict.fromkeys(issues))
 
 
 # --- the report and the module -----------------------------------------------------------------
@@ -2121,15 +2123,27 @@ def cp3d_module(*, report: MarketImpliedReport, inputs: Sequence[Input], attempt
 # --- the journal: validator, rules, submit and probe -------------------------------------------
 
 
+def _parsed(payload: str) -> tuple[MarketImpliedSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue and is refused even if
+    Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            MarketImpliedSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return MarketImpliedSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
 def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
     """The step validator `submit` hands `Execution.submit_step` and the verifier replays: the
     attempt's last step, against the bound CP-0 head."""
-    try:
-        submission = MarketImpliedSubmission.model_validate_json(
-            store.payload(attempt.steps[-1].payload_sha256)
-        )
-    except ValidationError as error:
-        return StepValidation(issues=shape_issues(error))
+    submission, shape = _parsed(store.payload(attempt.steps[-1].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
     upstream = cp3d_upstream(store=store, attempt=attempt, pack=pack)
     if issues := validate_market_implied(submission=submission, upstream=upstream):
         return StepValidation(issues=issues)

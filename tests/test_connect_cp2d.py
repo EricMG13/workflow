@@ -28,7 +28,7 @@ BALANCE = "2025-12-31"
         ),
         (
             {"equity_repurchases": tm._opd("not_applicable")},
-            "Not calculable: Equity repurchases is not applicable",
+            "Not calculable: Equity repurchases are not applicable",
         ),
         (
             {"equity_issuance": tm._opd("missing")},
@@ -126,6 +126,56 @@ def test_backlog_rcf_commitment_keeps_the_singular_verb(
     assert f"because RCF commitment is {word}; cash-only headroom" in _claim_text(
         result, "CP-2D-GAP-01"
     )
+
+
+# --- Stage 2 close release: round 5 item 4 (drawings precedence) and "Equity repurchases are" ---
+
+
+@pytest.mark.parametrize(("status", "word"), tm._NOT_KNOWN)
+def test_release_equity_repurchases_take_a_plural_verb(
+    status: cp2d.OperandStatus, word: str
+) -> None:
+    operands = tm._ro(tm._operands("fixture_burn"), equity_repurchases=tm._unknown(status))
+    cell = tm._cells(cp2d.compute(replace(tm._inputs("positive"), operands=operands)))
+    assert cell["T2E.1.r05"].reason == f"Not calculable: Equity repurchases are {word}"
+    assert "Equity repurchases is" not in str(cell["T2E.1.r05"].reason)
+
+
+@pytest.mark.parametrize(("status", "word"), tm._NOT_KNOWN)
+def test_release_unsettled_commitment_with_missing_drawings_names_the_commitment_first(
+    status: cp2d.OperandStatus, word: str
+) -> None:
+    """Round 5 item 4: the commitment's state first, then the missing drawings; never a
+    reason that implies a revolver exists."""
+    operands = tm._ro(
+        tm._operands("fixture_burn"),
+        rcf_commitment=tm._unknown(status),
+        rcf_drawn=tm._unknown("missing"),
+    )
+    result = cp2d.compute(replace(tm._inputs("positive"), operands=operands))
+    reason = f"Not calculable: RCF commitment is {word}; RCF drawings are missing"
+    bridge = result.bridge
+    assert bridge.runway_reason == reason
+    for gap in (
+        bridge.undrawn_revolver,
+        bridge.available_liquidity,
+        bridge.resources_at_horizon_end,
+        bridge.headroom,
+    ):
+        assert isinstance(gap, cp2d.Gap) and gap.reason == reason
+    for text in (
+        *(c.template for c in result.claims),
+        *result.own_limitations,
+    ):
+        assert "drawings, which are undisclosed" not in text
+        assert "revolver drawings are undisclosed" not in text
+    assert f"needs RCF commitment, which is {word};" in _claim_text(result, "CP-2D-LIQ-01")
+
+
+def test_release_known_commitment_with_missing_drawings_keeps_the_drawings_reason() -> None:
+    operands = tm._ro(tm._operands("fixture_burn"), rcf_drawn=tm._unknown("missing"))
+    result = cp2d.compute(replace(tm._inputs("positive"), operands=operands))
+    assert result.bridge.runway_reason == "Not calculable: revolver drawings undisclosed"
 
 
 def _claim_text(result: cp2d.Cp2dResult, claim_id: str) -> str:
@@ -698,7 +748,9 @@ _STATUS = {
 def _assert_fact(fact: Fact, cell: dict[str, Any], case: str) -> None:
     where = cell["fact_id"]
     assert fact.status == _STATUS[cell["state"]], where
-    assert fact.value_class == cell.get("value_class", tm.GAP_VALUE_CLASS_DELTA.get((case, where)))
+    assert fact.value_class == cell.get("value_class")
+    if "currency" in cell:
+        assert fact.currency == cell["currency"], where
     if cell["state"] != "known":
         assert fact.amount is None and fact.text is None and fact.limitation == cell["reason"]
         return
@@ -1099,19 +1151,51 @@ def test_validate_bindings_over_the_settled_tables_is_clean(tmp_path: Path) -> N
 def test_spec_rows_serve_the_three_blocks() -> None:
     from deploy_vii.report_view import _spec_of
 
-    for block, title in (
-        ("liquidity-runway", "Liquidity and cash runway"),
-        ("maturity-wall", "Maturity wall"),
-        ("funding-gap", "Funding gap"),
-    ):
-        spec = _spec_of(block)
-        assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
-            title,
+    for block, title, owner, kind, producers, route in (
+        (
+            "liquidity-runway",
+            "Liquidity and cash runway",
             "CP-2D",
             "dense",
             ("CP-2D",),
             "Full analysis",
+        ),
+        # Q-C1: the maturity wall is Model-owned (approved FP 04 page, "MODEL · Fig. S.4"); kind
+        # stays dense until the Stage 3 S.4 task adds the strip figure and the CP-1 binding.
+        ("maturity-wall", "Maturity wall", "MODEL", "dense", ("CP-1",), None),
+        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D",), "Full analysis"),
+    ):
+        spec = _spec_of(block)
+        assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
+            title,
+            owner,
+            kind,
+            producers,
+            route,
         )
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason="Stage 3 S.4 wiring")
+def test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab(tmp_path: Path) -> None:
+    """Tripwire for Q-C1. The release flips only the owner, so a populated FP 04 render still
+    leads with CP-2D's T2E.4 rows under a MODEL owner. Once the Stage 3 S.4 task wires the CP-1
+    strip into ``maturity-wall``, the Model figure leads and T2E.4 is a further tab: this then
+    XPASSes, strict fails, and the task removes the marker."""
+    from deploy_vii import report_view
+    from deploy_vii.bindings.shipped import SHIPPED_MAPS
+
+    store, attempt = make_upstream(tmp_path)
+    _submit(store, attempt, _literal("positive"))
+    view = store.view()
+    assert {m.module_id: m.status for m in view.modules}["CP-2D"] in {"accepted", "restricted"}
+    pathway = next(p for p in report_view.pathways() if p.id == view.run.pathway)
+    block = {b.block_id: b for b in report_view.build(view, pathway, SHIPPED_MAPS).blocks}[
+        "maturity-wall"
+    ]
+    assert block.owner == "MODEL"
+    assert block.figures and block.figures[0].fig_id == "S.4"
+    assert [tab.label for tab in block.tabs] == ["T2E.4"]
+    assert block.tab_label != "T2E.4"
 
 
 # --- the run driver (its runs are deferred; its assembly is cheap) -----------------------------
@@ -1445,3 +1529,28 @@ def test_validate_step_reads_the_payload_only_through_json_object(
     out = cp2d._validate_step(cast(Any, store), cast(Any, None), cast(Any, attempt))
     assert seen == ["{}"] and out.output is None
     assert out.issues and all(len(i) <= 600 for i in out.issues)
+
+
+def test_sum_copy_cites_one_quote_per_page_the_first() -> None:
+    """Round 3 item 3 (Stage 2 close, item 17): a sum copy derives from two CP-1 facts, so two
+    quotes on one page give one Citation, the first; a copy of one fact keeps its own citations."""
+    first = CITATION
+    second = CITATION.model_copy(update={"quote": "Repurchases 12"})
+    elsewhere = CITATION.model_copy(update={"locator": "page:9", "quote": "Issuance 40"})
+    facts = {
+        "equity_issuance": (SimpleNamespace(citations=(first,)),),
+        "equity_repurchases": (SimpleNamespace(citations=(second, elsewhere)),),
+    }
+    composer = cp2d._Composer(
+        cast(Any, SimpleNamespace(facts=lambda name: facts[name])), cast(Any, None)
+    )
+    summed = cp2d.Cell(
+        "x",
+        "known",
+        "1",
+        value_class="calculated",
+        cp1_operand="equity_issuance+equity_repurchases",
+    )
+    assert composer._copy_citations(summed, None) == (first, elsewhere)
+    single = cp2d.Cell("x", "known", "1", value_class="source", cp1_operand="equity_repurchases")
+    assert composer._copy_citations(single, None) == (second, elsewhere)

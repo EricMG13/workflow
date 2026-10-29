@@ -40,8 +40,8 @@ runs: Any = importlib.import_module("cp3c_runs")
 
 MODULE = tc.MODULE
 # The attempt binds CP-1A too (registry.dependencies selects the optional producer the run plans);
-# the oracle's attempt_inputs omit it (test_connect_cp3c.CP1A_BOUND; reported to LEAD).
-BOUND = ("CP-0", "CP-1", tc.CP1A_BOUND, "CP-2D")
+# the oracle's attempt_inputs list it since the Stage 2 close release.
+BOUND = tuple(tm.EXPECTED["cp3c_module"]["attempt_inputs"][1:])
 NEGATIVE = tm.EXPECTED["negative_cases"]
 
 # --- the fast group: the real workflow over the synthetic store ---------------------------------

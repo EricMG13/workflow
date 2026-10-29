@@ -25,6 +25,7 @@ from typing import Any
 import cp4c_runs as runs
 import pytest
 import test_method_cp4c as stage1
+import view_tree
 from defect_classes import model_text_failures
 from s1a_runs import clone_workflow
 from test_connect_cp4c import CP4C_VERBATIM
@@ -53,9 +54,6 @@ REFUSALS = {r["id"]: r for r in SUBMISSIONS["refusals"]}
 EXPECTED_REFUSALS = {r["id"]: r for r in EXPECTED["refusals"]}
 STALE = ("v24", "v25", "v26", "v27")
 RUN_LEVEL = [rid for rid in REFUSALS if rid not in STALE]
-# v08 cites identity page:1, outside the step's H1 scope: `read_pages` never returns it, so the
-# journal holds the oracle issue and then the unread page (the fast form pins the same line).
-UNREAD_AT_RUN_LEVEL = {"v08": (f"{UNREAD_PAGE}: identity page:1",)}
 REFERENCES = ("cp1_references", "cp2g_references", "cp2a_references", "cp4_references")
 
 
@@ -199,6 +197,7 @@ def test_a1_tool_use_is_the_oracle_sequence(positive: Closed) -> None:
     assert reads[0].inputs_sha256 == hashlib.sha256(reads[0].body.encode()).hexdigest()
     keys = MANIFEST["tool_use"]["view_tree_draft"]["keys"]
     assert list(json.loads(reads[0].body)) == list(keys)
+    view_tree.check("cp4c", "positive", reads[0].body)
     calls = [c for c in receipt.calls if c.binding.module_id == MODULE and c.status == "ok"]
     want = [c for c in SUBMISSIONS["cases"]["positive"]["tool_calls"] if c["tool"] != "read_inputs"]
     assert [(c.tool, c.arguments) for c in calls] == [(c["tool"], c["arguments"]) for c in want]
@@ -305,7 +304,9 @@ def _expected_issues(store: Execution, rid: str) -> list[str]:
     issues = [
         FACT_ID.sub(lambda m: ids[m[1]], i) for i in EXPECTED_REFUSALS[rid]["expected_issues"]
     ]
-    return [*issues, *UNREAD_AT_RUN_LEVEL.get(rid, ())]
+    # v08 cites identity page:1, outside the step's H1 scope: `read_pages` never returns it, so
+    # the journal holds the validator issues and then the oracle's `unread_issues`
+    return [*issues, *EXPECTED_REFUSALS[rid].get("unread_issues", ())]
 
 
 def _refusal_text(workflow: OwnerWorkflow, rid: str, body: dict[str, Any]) -> str:

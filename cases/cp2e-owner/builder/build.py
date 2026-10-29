@@ -28,7 +28,7 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 
 
@@ -1633,7 +1633,7 @@ def main():
         },
         "negative_cases": {
             "blocked_cp2e": {"attempt_0_issue": BLOCKED["attempt_0"]["issue"], "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
-                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, no head"},
+                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)"},
             "begin_refused_cp0_blocked": "CP-0 blocked or stale refuses begin of CP-2E (edge_rule block, no attempt consumed); built on a clone with two invalid CP-0 attempts, no literal",
             "stale_binding": "a snapshot change between the last read_pages and the submit refuses stale_binding",
         },

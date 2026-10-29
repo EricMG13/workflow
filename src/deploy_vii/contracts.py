@@ -53,7 +53,17 @@ _PRESETS: dict[PathwayId, tuple[str, ...]] = {
     "relative_value": (
         *("CP-0", "CP-1", "CP-MODEL", "CP-1C", "CP-2", "CP-2D", "CP-3", "CP-3C", "CP-3D", "CP-5"),
     ),
-    "covenant_refinancing": ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2D", "CP-4", "CP-3C", "CP-5"),
+    "covenant_refinancing": (
+        "CP-0",
+        "CP-1",
+        "CP-MODEL",
+        "CP-1A",
+        "CP-2",
+        "CP-2D",
+        "CP-4",
+        "CP-3C",
+        "CP-5",
+    ),
     "distressed_restructuring": (
         *("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4", "CP-4C", "CP-5"),
     ),

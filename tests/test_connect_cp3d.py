@@ -700,7 +700,7 @@ def test_entry_validator_reproduces_the_oracle_refusals(entry: dict[str, Any]) -
     case = base.MUTATIONS["base"]
     store = _PayloadStore(case, json.dumps(raw))
     outcome = cp3d.ENTRY_VALIDATOR(cast(Any, store), _pack(case), _attempt_with_payload("p" * 64))
-    expected = base.STAGE2_REFUSAL_DELTA.get(entry["id"], entry["issue"])
+    expected = entry["issue"]
     assert list(outcome.issues) == [expected]
     assert outcome.output is None
 
@@ -712,6 +712,59 @@ def test_entry_validator_reports_a_malformed_payload_as_shape_issues() -> None:
     )
     assert outcome.output is None and outcome.issues
     assert all(": " in i for i in outcome.issues)
+
+
+def test_a_malformed_summary_is_reported_beside_a_content_issue() -> None:
+    """The RunText check is unconditional (as CP-2E's): a content issue never masks it."""
+    raw = copy.deepcopy(base.SUBMISSIONS["positive"])
+    raw["summary"]["text"] = "Undervalued [a"
+    issues = cp3d.validate_market_implied(
+        submission=cp3d.MarketImpliedSubmission.model_validate_json(json.dumps(raw)),
+        upstream=_upstream("positive"),
+    )
+    assert issues == (
+        "summary.text: text carries a prohibited conclusion",
+        "summary.text: Value error, Malformed run text: unbalanced or empty reference",
+    )
+    raw["summary"]["text"] = "A summary with no figure [a"
+    only = cp3d.validate_market_implied(
+        submission=cp3d.MarketImpliedSubmission.model_validate_json(json.dumps(raw)),
+        upstream=_upstream("positive"),
+    )
+    assert only == issues[1:]
+
+
+def test_entry_validator_refuses_text_json_object_refuses_even_if_the_schema_parses_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Protocol section 6: the payload is read only through `json_object`. Whatever it refuses is
+    refused, even a text the schema alone would parse (as in CP-2D and CP-1D)."""
+    calls: list[str] = []
+
+    def refuse(payload: str) -> None:
+        calls.append(payload)
+
+    monkeypatch.setattr(cp3d, "json_object", refuse)
+    store = _PayloadStore("positive", json.dumps(base.SUBMISSIONS["positive"]))
+    outcome = cp3d.ENTRY_VALIDATOR(
+        cast(Any, store), _pack("positive"), _attempt_with_payload("p" * 64)
+    )
+    assert len(calls) == 1
+    assert outcome.output is None
+    assert outcome.issues == ("(root): not a bounded JSON object",)
+
+
+@pytest.mark.parametrize("text", ["[]", "[1]", '"x"', "null", '{"a": ' + "[" * 200 + "}"])
+def test_entry_validator_reports_non_objects_as_bounded_shape_issues(text: str) -> None:
+    """Protocol section 6: text `json_object` refuses never reaches the schema; the issue is the
+    one bounded line the other owner cores give."""
+    store = _PayloadStore("positive", text)
+    outcome = cp3d.ENTRY_VALIDATOR(
+        cast(Any, store), _pack("positive"), _attempt_with_payload("p" * 64)
+    )
+    assert outcome.output is None
+    assert len(outcome.issues) >= 1
+    assert all(len(line) <= 600 for line in outcome.issues)
 
 
 class _JournalStore(_PayloadStore):

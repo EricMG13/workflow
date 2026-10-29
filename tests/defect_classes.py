@@ -708,6 +708,93 @@ def free_text_paths(payload: Any, schema: type[BaseModel]) -> list[TextPath]:
     return out
 
 
+def _free_string(node: Mapping[str, Any], defs: Mapping[str, Any]) -> bool:
+    """`node` is a free string, or an `anyOf`/`oneOf` that holds one (an optional text)."""
+    node = _resolve(node, defs)
+    if node.get("type") == "string" and not any(k in node for k in _NOT_FREE):
+        return True
+    return any(_free_string(b, defs) for key in ("anyOf", "oneOf") for b in node.get(key, ()))
+
+
+def _free_string_list(node: Mapping[str, Any], defs: Mapping[str, Any]) -> bool:
+    """`node` is an array of free strings, or an `anyOf`/`oneOf` that holds one."""
+    node = _resolve(node, defs)
+    items = node.get("items")
+    if node.get("type") == "array" and isinstance(items, dict) and _free_string(items, defs):
+        return True
+    return any(_free_string_list(b, defs) for key in ("anyOf", "oneOf") for b in node.get(key, ()))
+
+
+def _walk_absent(
+    node: Mapping[str, Any],
+    value: Any,
+    path: TextPath,
+    defs: Mapping[str, Any],
+    out: list[TextPath],
+) -> None:
+    node = _resolve(node, defs)
+    for key in ("anyOf", "oneOf"):
+        for branch in node.get(key, ()):
+            _walk_absent(branch, value, path, defs, out)
+    if isinstance(value, dict):
+        props = node.get("properties", {})
+        extra = node.get("additionalProperties")
+        for key, spec in props.items():
+            item = value.get(key)
+            if item is None:  # omitted or null: a free string, or a list of them, can be filled
+                if _free_string(spec, defs) and (*path, key) not in out:
+                    out.append((*path, key))
+                elif _free_string_list(spec, defs) and (*path, key, 0) not in out:
+                    out.append((*path, key, 0))
+            elif isinstance(item, list) and not item and _free_string_list(spec, defs):
+                if (*path, key, 0) not in out:
+                    out.append((*path, key, 0))
+            else:
+                _walk_absent(spec, item, (*path, key), defs, out)
+        if isinstance(extra, dict):
+            for key, item in value.items():
+                if key not in props:
+                    _walk_absent(extra, item, (*path, key), defs, out)
+    elif isinstance(value, list):
+        prefix = node.get("prefixItems", ())
+        items = node.get("items")
+        for i, item in enumerate(value):
+            if i < len(prefix):
+                _walk_absent(prefix[i], item, (*path, i), defs, out)
+            elif isinstance(items, dict):
+                _walk_absent(items, item, (*path, i), defs, out)
+
+
+def absent_free_text_paths(payload: Any, schema: type[BaseModel]) -> list[TextPath]:
+    """Round 5 item 10 L2: the free-text paths `free_text_paths` cannot reach because the positive
+    payload leaves them null or omitted (a free string of an object the payload holds) or empty (a
+    list of free strings, named by its index 0). Read from `schema.model_json_schema()`, so a new
+    optional text field is covered without a name here. A field behind an empty list of objects
+    (a citation list the positive leaves empty) has no object to fill and is not listed."""
+    parsed = json.loads(payload) if isinstance(payload, str) else payload
+    document = schema.model_json_schema()
+    out: list[TextPath] = []
+    _walk_absent(document, parsed, (), document.get("$defs", {}), out)
+    return out
+
+
+def with_absent_text(payload: Any, path: TextPath, value: str) -> Any:
+    """A deep copy of `payload` (parsed JSON) with the null, omitted or empty field at `path`
+    (from `absent_free_text_paths`) holding `value`; a path ending in index 0 sets a one-item
+    list."""
+    changed = copy.deepcopy(payload)
+    node = changed
+    if path[-1] == 0:
+        for step in path[:-2]:
+            node = node[step]
+        node[path[-2]] = [value]
+        return changed
+    for step in path[:-1]:
+        node = node[step]
+    node[path[-1]] = value
+    return changed
+
+
 def with_text(payload: Any, path: TextPath, value: str) -> Any:
     """A deep copy of `payload` (parsed JSON) with the string at `path` replaced by `value`."""
     changed = copy.deepcopy(payload)
@@ -743,6 +830,7 @@ def model_text_failures(
     *,
     values: Sequence[str] = MODEL_TEXT_HOSTILE,
     verbatim: frozenset[tuple[str | int, ...]] = frozenset(),
+    fill_absent: bool = False,
 ) -> list[str]:
     """Round 3 item 2 and round 5 item 10: for each free-text path of the module's `positive`
     payload and each hostile value, on a `fresh()` run at the step: the outcome lists an issue and
@@ -756,25 +844,38 @@ def model_text_failures(
     value is a failure (the entry is wrong or the field has tightened). Every other path must
     journal an issue. A pattern that names no path of the payload is a failure, so the set cannot rot.
 
+    `fill_absent` (round 5 item 10 L2) also feeds the hostile values to the free-text fields the
+    positive leaves null, omitted or empty (`absent_free_text_paths`), each placed alone in a copy
+    of the positive. The follow-up is still the unmodified `positive`.
+
     `fresh()` returns a run whose `submit_review` does whatever the module needs before a submit
     (reads), since a refused attempt re-activates the step. A raise, from the hostile submit or the
     follow-up, propagates as the failure. Returns the non-raising failures as
     `<path>=<value>: <what>` (accepted, no issue, wedged, unused verbatim); `[]` when none."""
     payload = json.loads(positive)
     failures: list[str] = []
-    paths = free_text_paths(payload, schema)
+    cases: list[tuple[TextPath, Callable[[str], Any]]] = [
+        (path, lambda value, path=path: with_text(payload, path, value))
+        for path in free_text_paths(payload, schema)
+    ]
+    if fill_absent:
+        cases += [
+            (path, lambda value, path=path: with_absent_text(payload, path, value))
+            for path in absent_free_text_paths(payload, schema)
+        ]
+    paths = [path for path, _ in cases]
     failures.extend(
         f"{'.'.join(map(str, pattern))}: verbatim pattern names no path of the payload"
         for pattern in sorted(verbatim, key=str)
         if not any(path_matches(pattern, path) for path in paths)
     )
     taken: set[tuple[str | int, ...]] = set()  # verbatim patterns that accepted some value
-    for path in paths:
+    for path, build in cases:
         allowed = any(path_matches(pattern, path) for pattern in verbatim)
         for value in values:
             label = f"{_dotted(path)}={value!r}"
             run = fresh()
-            text = json.dumps(with_text(payload, path, value), ensure_ascii=False)
+            text = json.dumps(build(value), ensure_ascii=False)
             outcome = run.submit_review(text)  # a raise propagates: it is the failure
             if outcome["status"] == "valid":
                 if not allowed:

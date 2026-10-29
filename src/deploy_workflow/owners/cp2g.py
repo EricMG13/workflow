@@ -71,7 +71,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2G"
@@ -2516,10 +2516,11 @@ def _own_limitations(
 
 
 def _cite(b: _Book, run: _Run) -> None:
-    """Lease :132 (lineage_rule): a calculated fact's citations are the ordered, de-duplicated
-    concatenation of the citations of the facts in its derives_from list, in that order; an own
-    fact contributes its own (transitively CP-1) citations; analyst inputs and CP-2A watch levels
-    carry none. A lineage entry the rule cannot resolve fails closed."""
+    """Lease :132 (lineage_rule; rulings stage2 round 3 item 3): a calculated fact gets one
+    Citation per (source, page), the first quote on that page among the citations of the facts
+    in its derives_from list, in that order; an own fact contributes its own (transitively CP-1)
+    citations; analyst inputs and CP-2A watch levels carry none. A lineage entry the rule cannot
+    resolve fails closed."""
     upstream = {f"cp1:{metric}": f for metric, f in run.cp1.items()}
     cp2a = [run.scenario.decline, run.scenario.increase]
     for x in run.ctx.cp2a.breaks:
@@ -2538,7 +2539,7 @@ def _cite(b: _Book, run: _Run) -> None:
             fact = cell.fact
             calculated = fact.status == "known" and fact.value_class == "calculated"
             done[ref] = (
-                tuple(dict.fromkeys(c for d in cell.derives_from for c in of(d, (*path, ref))))
+                one_per_page(tuple(c for d in cell.derives_from for c in of(d, (*path, ref))))
                 if calculated
                 else fact.citations
             )

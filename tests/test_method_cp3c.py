@@ -152,13 +152,12 @@ def _cp2d_fact(cp2d_case: str, name: str) -> cp3c.Cp2dFact:
     fact_id = BINDINGS[name]["fact_id"]
     cell = _cells(CP2D_EXPECTED["cases"][cp2d_case]["tables"])[fact_id]
     if cell["state"] != "known":
-        # The CP-2D oracle records no value_class on a gap; a fact's class does not change with
-        # its state, so the known twin's class stands in for the head's (Stage 2 binds it).
         return cp3c.Cp2dFact(
             fact_id=fact_id,
             status="missing",
             unit=cell["unit"],
-            value_class=CP2D_POSITIVE[fact_id]["value_class"],
+            currency=cell.get("currency"),
+            value_class=cell["value_class"],
             reason=cell["reason"],
         )
     numeric = "amount" in cell
@@ -169,8 +168,8 @@ def _cp2d_fact(cp2d_case: str, name: str) -> cp3c.Cp2dFact:
         text=None if numeric else cell["shown"],
         unit=cell.get("unit"),
         currency=CURRENCY if cell.get("unit") == "MILLIONS" else None,
-        # manifest.json#fact_copy_rule: the CP-2D head fact's period at the balance date.
-        period=BALANCE_DATE.isoformat() if numeric else None,
+        # manifest.json#fact_copy_rule: the CP-2D oracle cell's own period.
+        period=cell["period"] if numeric else None,
         value_class=cell["value_class"],
     )
 

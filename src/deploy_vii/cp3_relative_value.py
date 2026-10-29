@@ -37,6 +37,7 @@ needs no registry entry.
 """
 
 import re
+from collections import Counter
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
@@ -606,7 +607,7 @@ def _instrument_issues(
     offered = upstream.facilities
     catalogue = upstream.catalogue
     seen = [row.facility_id for row in submission.instruments]
-    for facility_id in sorted({f for f in seen if seen.count(f) > 1}):
+    for facility_id in sorted(f for f, n in Counter(seen).items() if n > 1):
         issues.append(f"instruments: facility {facility_id} appears more than once")
     for index, row in enumerate(submission.instruments):
         path = f"instruments[{index}]"
@@ -633,13 +634,15 @@ def _preference_issues(
     row = submission.preference
     issues = _basis_issues("preference", row.basis, upstream.catalogue, evidence)
     instruments = [item.facility_id for item in submission.instruments]
+    known = set(instruments)
+    ranked = Counter(row.ordering)
     for facility_id in dict.fromkeys(row.ordering):
-        if facility_id not in instruments:
+        if facility_id not in known:
             issues.append(f"preference.ordering: {facility_id} is not an instruments row")
-        elif row.ordering.count(facility_id) > 1:
+        elif ranked[facility_id] > 1:
             issues.append(f"preference.ordering: {facility_id} appears more than once")
     for facility_id in dict.fromkeys(instruments):
-        if facility_id not in row.ordering:
+        if facility_id not in ranked:
             issues.append(f"preference.ordering: {facility_id} is missing")
     insufficient = row.confidence == "Insufficient Information"
     if insufficient and not row.limitation:

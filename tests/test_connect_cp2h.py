@@ -23,6 +23,7 @@ from typing import Any, Literal
 import pytest
 import test_method_cp2g as cp2g_stage1
 import test_method_cp2h as stage1
+import view_tree
 from defect_classes import (
     MODEL_TEXT_HOSTILE,
     assert_hostile_refused,
@@ -891,6 +892,47 @@ def test_upstream_citations_are_appended_one_per_page_in_lineage_order(tmp_path:
     untouched = [f for f in module.facts if f.table_id == "T2R.2"]
     assert untouched and all(f.citations == own(f.fact_id) for f in untouched)
     assert facts["T2H.6.a25.total_leverage"].citations == (a, b)  # the reference copy, verbatim
+
+
+def _pages(citations: Any) -> list[tuple[str, str]]:
+    return [(c["source_id"], c["locator"]) for c in citations]
+
+
+def test_oracle_derived_facts_cite_one_quote_per_page() -> None:
+    """Round 5 item 17 at the close release: every derived fact of every oracle case carries one
+    citation per (source, page); the quote is the first input quote on that page."""
+    seen = 0
+    for name, case in EXPECTED["cases"].items():
+        for f in case.get("facts", ()):
+            if f.get("derives_from") and f.get("citations"):
+                pages = _pages(f["citations"])
+                assert len(pages) == len(set(pages)), (name, f["fact_id"])
+                seen += 1
+    assert seen
+
+
+def test_a_derived_fact_cites_the_first_input_quote_on_each_page(tmp_path: Path) -> None:
+    """The settled module meets the same rule, and keeps the first of the inputs' quotes (so the
+    last-quote mutant fails): `T2R.9.total.triggers` derives from several rows of one page."""
+    store, _, _, _ = settled(tmp_path)
+    module = store.head_module(_head(store, MODULE))
+    facts = {f.fact_id: f for f in module.facts}
+    want = {e["fact_id"]: e for e in EXPECTED["cases"]["positive"]["facts"]}
+    derived = [fid for fid, e in want.items() if e.get("derives_from") and e.get("citations")]
+    assert derived
+    for fid in derived:
+        pages = [(c.source_id, c.locator) for c in facts[fid].citations]
+        assert len(pages) == len(set(pages)), fid
+        assert [c.model_dump() for c in facts[fid].citations[: len(want[fid]["citations"])]] == (
+            want[fid]["citations"]
+        ), fid
+
+
+@pytest.mark.parametrize("case", ("positive", "gap"))
+def test_view_equals_the_committed_view_tree(case: str, tmp_path: Path) -> None:
+    """`cases/cp2h-owner/cp2h-view-tree.json`: the keys and shape of the body `view` serves."""
+    store, _, attempt = seed(tmp_path, case)
+    view_tree.check("cp2h", case, cp2h.view(_FrozenExecution(store, store.read()), attempt)[1])
 
 
 # --- the shared hostile set and model text (rulings stage2 Q5; round 3 item 2) -----------------

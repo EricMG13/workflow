@@ -73,7 +73,7 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit, scale_label
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 
 MODULE_ID = "CP-1D"
 BRIDGE_SOURCE_ID = "bridge"
@@ -2161,20 +2161,11 @@ def _model_text_issues(submission: EarningsQualitySubmission) -> list[str]:
     return found
 
 
-def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
-    """A derived fact's citations (Stage 2 round 3 ruling): one per (source, page), quoting the
-    first of its own input quotes on that page, in input order. No quote is invented."""
-    first: dict[tuple[str, str], Citation] = {}
-    for citation in citations:
-        first.setdefault((citation.source_id, citation.locator), citation)
-    return tuple(first.values())
-
-
 def _module_fact(cell: CellFact) -> Fact:
     fact = cell.to_fact()
     if cell.value_class != "calculated":
         return fact  # a sourced fact quotes its own field
-    return fact.model_copy(update={"citations": _one_per_page(fact.citations)})
+    return fact.model_copy(update={"citations": one_per_page(fact.citations)})
 
 
 def _checked(
@@ -2327,7 +2318,9 @@ def cp1d_module(report: EarningsQualityReport, *, inputs: Sequence[Input], attem
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The exact `read_inputs` view (lease key tree): the upstream statuses, the bridge rows as
     the table rule reads them, the seven CP-1 facts a `{ref|unit}` may name, the CP-1 T4.17 row
-    count and the limitations settlement will inherit. No quote or citation text is in it."""
+    count and `inherited_limitations`: what the bound upstream heads pass on, computed with no
+    own limitations (`inherited_limitations(..., (), ...)`), so settlement's list can be shorter by
+    any line that repeats one of CP-1D's own limitations. No quote or citation text is in it."""
     source = next((s for s in pack.sources if s.source_id == BRIDGE_SOURCE_ID), None)
     bridge = (
         parse_bridge(_pages(source)) if source is not None and source.status == "ready" else None

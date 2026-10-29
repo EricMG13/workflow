@@ -26,6 +26,7 @@ from typing import Any, Literal
 import pytest
 import test_method_cp2a as cp2a_stage1
 import test_method_cp2g as stage1
+import view_tree
 from defect_classes import (
     MODEL_TEXT_HOSTILE,
     assert_hostile_refused,
@@ -176,6 +177,20 @@ def test_scenario_name_is_the_settled_t2b1_name_fact() -> None:
     )
     with pytest.raises(ValueError, match=r"has no fact T2B\.1\.s01\.name"):
         cp2g.cp2a_of(missing)
+
+
+@pytest.mark.parametrize("case", stage1.RUNS)
+def test_view_equals_the_committed_view_tree(case: str, tmp_path: Path) -> None:
+    """`cases/cp2g-owner/cp2g-view-tree.json`: the keys and shape of the body `view` serves."""
+    store, _, attempt = _case_seed(tmp_path, case)
+    view_tree.check("cp2g", case, cp2g.view(_FrozenExecution(store, store.read()), attempt)[1])
+
+
+def test_the_manifest_names_the_scenario_name_fact() -> None:
+    """Close release: `upstream_fact_selection` lists `T2B.1.<row>.name`, the fact the reader
+    takes the scenario name from, ahead of the decline and the increase."""
+    scenario = MANIFEST["upstream_fact_selection"]["CP-2A"]["scenario"]
+    assert scenario.startswith("T2B.1.<row>.name, T2B.1.<row>.ebitda_decline and ")
 
 
 def test_prose_issue_quoting_the_payload_is_clipped() -> None:
@@ -694,10 +709,10 @@ def test_each_refusal_is_a_journaled_invalid_step_with_the_oracle_issues(
 def test_two_refusals_block_the_module(case: str, tmp_path: Path) -> None:
     """expected.json cases.blocked: r01 on attempt 0 (rejected), v13 on attempt 1 (blocked).
 
-    Release item (frozen oracle): the `blocked` run requests CP-2G alone, so CP-1D is unbound and
-    v13's assessment rationale (the positive text, which names the CP-1D supported leverage) is
-    also an unresolved reference there; `attempt_1.limitations` lists only the High line, which
-    holds on a run that binds CP-1D (the positive pack) and is asserted on that one."""
+    Close release: the `blocked` run requests CP-2G alone, so CP-1D is unbound and v13's
+    assessment rationale (the positive text, which names the CP-1D supported leverage) is also an
+    unresolved reference there; `attempt_1.limitations` lists that line, then the High line. A
+    run that binds CP-1D (the `positive` pack) settles the High line alone."""
     expected = EXPECTED["cases"]["blocked"]
     store, _, first = seed(tmp_path, case, cp1_facts=stage1._cp1_facts("gap"))
     _submit(store, first, stage1._refusal_text("r01"))
@@ -711,7 +726,8 @@ def test_two_refusals_block_the_module(case: str, tmp_path: Path) -> None:
     assert head.status == "blocked" and module.tables == () and module.facts == ()
     unresolved = "assessment.rationale: Unresolved reference: T1D.6.supported.total_leverage"
     oracle = expected["attempt_1"]["limitations"]
-    assert list(module.limitations) == (oracle if case == "positive" else [unresolved, *oracle])
+    assert oracle[0] == unresolved and "High is not allowed" in oracle[1]
+    assert list(module.limitations) == (oracle if case == "blocked" else oracle[1:])
     read = cp2g.cp2g_reader(store, head)
     assert (read.status, read.head_sha256, read.facts, read.limitations) == (
         "blocked",

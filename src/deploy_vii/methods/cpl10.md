@@ -38,3 +38,6 @@ The independent review must challenge the thresholds and rank order as policy (Q
 - **Exact change in plain form.** The stored change is one exact subtraction of CP-1 decimals, kept in plain notation: zero is `0` (never `-0` or `0E+2`) and a whole number has no positive exponent. A magnitude below one millionth still prints in scientific notation (the decimal text form); the rating always uses the exact value.
 - **Consumption (D3) is open.** `cpl10_reader` exposes status, per topic id, materiality, evidence, disposition, rank and change, and the counts. No consumer core reads CP-L10, so no completion is claimed.
 
+
+## Derived-fact citations
+- **Derived-fact citations.** The lineage rule (rulings stage2 round 3 item 3, applied to this module at the Stage 2 close release, round 5 item 17): a calculated fact has one `Citation` per (source, page), quoting the first of its inputs' quotes on that page, in `derives_from` order (`deploy_workflow.owners.blank.one_per_page`). A copied CP-1 cell keeps CP-1's own citations. No quote is invented.

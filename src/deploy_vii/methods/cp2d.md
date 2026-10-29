@@ -37,3 +37,9 @@ Guard limits (accepted costs, recorded with the Stage 2 connection):
   drawn) takes the balance date as its period; a copied cell keeps CP-1's period verbatim.
 - A sum copy (equity issuance and repurchases) with an operand that is not known is a gap that
   names that operand; a single copy keeps CP-1's status and limitation.
+- Derived-fact citations (rulings stage2 round 3 item 3, applied to this module at the Stage 2 close
+  release, round 5 item 17): a sum copy (equity issuance and repurchases) has one `Citation` per
+  (source, page), quoting the first of its operands' quotes on that page, in `derives_from` order
+  (`deploy_workflow.owners.blank.one_per_page`). A single copy keeps CP-1's own citations. CP-2D
+  claims are not facts: each carries the citations of the sourced CP-1 facts it names. No quote is
+  invented.

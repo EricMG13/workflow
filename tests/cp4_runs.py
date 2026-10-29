@@ -60,48 +60,15 @@ def drive_cp0(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
 
 def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
     """CP-1 to its promotion: the CP-4 oracle's literal source_context (reads of every page it
-    cites), then the financial case's literal financials, narrative, readiness and quality."""
-    fw = s1a._fw()
-    context = literal(case, "cp1_source_context", pack)
-    s1a.read_cited(workflow, context)
-    s1a.search(workflow, "financial", "subsequent")
-    s1a.submit_valid(workflow, context)
-    fw.financial_reads(workflow)
-    s1a.submit_valid(workflow, json.dumps(fw.financials(pack)))
-    read = workflow.read_inputs()
-    refused = workflow.invoke(
-        "read_pages", {"source_id": "financial", "first_page": 1, "last_page": 1}
+    cites), then the financial case's literal financials, narrative, readiness and quality
+    (`s1a_runs.drive_cp1`, with no business search for absence)."""
+    s1a.drive_cp1(
+        workflow,
+        pack,
+        case,
+        context=literal(case, "cp1_source_context", pack),
+        business_search=False,
     )
-    if refused["error_code"] != "not_permitted":
-        raise RuntimeError("narrative step offered a source tool")
-    s1a.submit_valid(workflow, json.dumps(fw.narrative(read)))
-    workflow.read_inputs()
-    s1a.submit_valid(workflow, json.dumps({"consumers": []}))
-    inputs = json.loads(workflow.read_inputs()["body"])
-    kpi_ids = {r["evidence_id"] for r in fw.parsed_evidence(read["body"]) if r["kind"] == "kpi"}
-    review = {
-        "claims": [
-            {
-                "claim_id": claim["claim_id"],
-                "material": True,
-                "evidence": [
-                    {
-                        "evidence_id": evidence_id,
-                        "lineage_class": "Calculated"
-                        if evidence_id in kpi_ids
-                        else "Directly Sourced",
-                        "rationale": "Python calculation"
-                        if evidence_id in kpi_ids
-                        else "Located source balance-sheet observation",
-                    }
-                    for evidence_id in claim["evidence_ids"]
-                ],
-                "rationale": "Material historical credit consideration",
-            }
-            for claim in inputs["claims"]
-        ]
-    }
-    s1a.submit_valid(workflow, json.dumps(review))
 
 
 def promoted(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:

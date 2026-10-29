@@ -78,7 +78,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2g import cp2g_reader
 
@@ -744,9 +744,10 @@ class _Book:
         self.by_id[fact.fact_id] = cell
 
     def lineage(self, derives: Sequence[str], own: Sequence[Citation] = ()) -> tuple[Citation, ...]:
-        """Own citations, then those of each own derived fact, ordered and de-duplicated; the
-        `cp1:`/`cp2g:` facts' citations are appended at run time. A known fact never derives
-        from an unsettled fact."""
+        """Own citations, then those of each own derived fact, ordered and de-duplicated; a
+        derived fact keeps one citation per (source, page), the first in that order (rulings
+        stage2 round 3 item 3); the `cp1:`/`cp2g:` facts' citations are appended at run time. A
+        known fact never derives from an unsettled fact."""
         out = list(own)
         for ref in derives:
             if ref.startswith(("cp1:", "cp2g:")):
@@ -755,7 +756,8 @@ class _Book:
             if cell.fact.status != "known":
                 raise ValueError(f"CP-2H: a known fact derives from the unsettled fact {ref}")
             out += cell.fact.citations
-        return tuple(dict.fromkeys(out))
+        cites = tuple(dict.fromkeys(out))
+        return one_per_page(cites) if derives else cites
 
     def number(
         self,

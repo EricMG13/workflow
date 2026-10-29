@@ -348,3 +348,68 @@ Rev 1's list (1-7) applies to `cp1-model` and `s1a-credit-snapshot` unchanged. F
 Settled by rulings item 4 (`docs/rulings/2026-10-29-stage3.md` on the lane); no open questions here.
 
 Not verified: nothing was rendered or run through G2 (it does not exist); the banners are drafts; the oracle block trees were compared to the pathway order and key sets only, not to product output; for `cp3-fp01-relative-value` the CP-3 core was not run; the refused-run pins were read from oracle text, and the refused drivers (`cp1c`, `cp2a`, `cp2g`, `cp2h`, `cp4c`) were checked to list the case, not run.
+
+## Rev 3 amendments (Modules, 2026-10-29) — override rev 2 where they differ
+
+Prepared for `docs/rulings/2026-10-29-stage3.md` item 15 (with items 2, 4 and 7). Rev 2 is frozen at `b6730b7`; rev 3 settles two things and changes nothing else. Oracle paths are on `731059f` (the integrated Stage 3 chart tree); `E` is `cases/charts/`. Line numbers for `report_view.py`, `bindings/`, `financial_series.py`, `financial_rendering.py` and the tests are on `b6730b7`.
+
+### R3.1 `cp1-model` sections (answers the G2 builder's question 1)
+
+Sections, in pathway order (`_PRESETS` credit_snapshot, `report_view.py:493-495`): `model-chart-strip`, `capital-structure`, `financials-credit-metrics`. Rev 0/1's "unchanged" for this row means these three, not the builder's two.
+
+Derivation. The `cp1-model` complete run is the `slice-cp1-model-positive` run (`requested_modules ["CP-1","CP-MODEL"]`, `cases/financial/manifest.json` `run`). `tests/test_financial_render.py` asserts CP-1 and CP-MODEL both read "With limitations" (`:127-128`), and "Not run" with no facts or claims on the gap (`:108-122`). The page is rendered by `core_render.render(view)` (`financial_rendering.py:158`), so the composed blocks are the ones the shipped bindings fill from CP-1:
+
+| block | what fills it | file:line |
+|---|---|---|
+| `model-chart-strip` | T4.10 bound `text` (`kpi-dashboard`); figures S.1-S.4 from `cp1_chart_series` for a CP-1 head that is accepted or restricted | `bindings/cp1.py:52`; `report_view.py:1098-1100`, `:1645-1660`; `financial_series.py:53-55`, `:256` |
+| `capital-structure` | T4.18, T4.17 and `pro-forma` | `bindings/cp1.py:54-58`; `report_view.py:1101` |
+| `financials-credit-metrics` | T4.4, T4.5, T4.6, T4.8, T4.9, T4.15, T4.16, `segment-allocation`, `operating-kpis` | `bindings/cp1.py:42-51`; `report_view.py:1102-1108` |
+
+`CP-MODEL` binds the Evidence rail only (`bindings/cp_model.py:5-20`), so it adds no section. These three are the only credit_snapshot blocks whose producers are `("CP-1",)` alone (`report_view.py:1098-1108`); every other block needs CP-1A, CP-2 or a later owner, which a `("CP-1","CP-MODEL")` run does not request.
+
+`model-chart-strip` IS a section. The builder excluded it only because rev 1 L1 forced `figures == ()` and the strip is a chart block; R3.2 lifts that rule. The strip is bound (`bindings/cp1.py:52`) and drawn for a restricted CP-1 (`_cp1_strip`, `report_view.py:1645-1660`; its payload is asserted at `tests/test_cp1_chart_render.py:405-410` and `:439-441`), so the "complete requires every assigned block populated" rule holds for it. Leaving it out would leave a populated, bound Model block outside the proof of the one scope whose purpose is the Model. Rev 1 L3 (model blocks outside a scope section are an S1a limitation) is unchanged for `s1a-credit-snapshot` and does not apply to `cp1-model`.
+
+Refused outcome: all three blocks have no bound facts, are not populated, and have `figures == ()` (the rev 1 refused rule, plus `E/expected.json` adversarial `missing_financial_source`: no chart zero-fill).
+
+### R3.2 Figures in assigned blocks (replaces rev 1 L1)
+
+Rev 1 L1's "assigned blocks have no chart and `figures == ()`, asserted" is withdrawn. Its `render`/`build` citations stand.
+
+**Rule.** For an assigned block, the block's `figures` in `build`'s output and in the `report-data` JSON equal the frozen chart oracle's render expectation for that block, pathway and case. Where no chart oracle covers the block and pathway, or the oracle says the case draws nothing, `figures == ()`, asserted. A refused outcome keeps `figures == ()` (blocks not populated).
+
+**Comparison.** Field by field against the oracle's literals, never recomputed. For each figure: `fig_id`, `placement`, chart `kind`, title, unit, series captions in order, and for each mark its category, series, text, value and report reference. Each mark's fact id is looked up at run time from the oracle's `fact_coordinate`/`companion_coordinates` (or `fact_id_rule`) and must resolve to exactly one fact of the receipt's head. The table twin's row labels and cell texts equal the oracle's twin in order. A gap mark equals the oracle's gap mark (`value` null, `∅ G#`), never 0. The test reads values from the oracle; it never derives a mark, ratio, sum or rounding from the payload or the facts. A figure the oracle names for the case but the payload lacks, or an extra figure the oracle does not name, fails.
+
+**Rows with a chart expectation** (every rev 2 row's sections checked). `<c>` is the driver case.
+
+| scope_id | block | figures | oracle path and pointers |
+|---|---|---|---|
+| `cp1-model` | `model-chart-strip` | S.1-S.4 | `E/expected.json` `#/chart_series` (S.1-S.4), `#/quarters`, `#/q4_trailing_basis`, `#/current_maturity_wall` (positive only) |
+| `cp1-model` | `financials-credit-metrics` | S.5, beside | `E/s5-expected.json` `#/render` (credit_snapshot), `#/chart_series/0`, `#/table_twin/S.5` |
+| `cp1c-fp03-peers` | `peer-positioning` | RV.3a and RV.3b, above | `E/rv3-expected.json` `#/render`, `#/cases/<c>/chart_series` for `positive`, `gap`; `no_peers` and `refused`: `()` (adversarial `no_peers_and_refused`) |
+| `cp4-fp04-covenants` | `covenant-tests-headroom` | CR.1, beside | `E/cr1-expected.json` `#/render`, `#/cases/<c>/chart_series` for `positive`, `gap`; `gap_false_same_definition` settles the `gap` chart (`#/cases/gap_false_same_definition/corrected_resubmission_chart`) |
+| `cp2d-fp04-liquidity` | `liquidity-runway` | CR.2, above | `E/cr2-expected.json` `#/render/covenant_refinancing`, `#/chart_series/CR.2/<c>`, `#/table_twins/<c>` for `positive`, `long_horizon`, `gap_minimum_cash` |
+| `cp2d-fp04-liquidity` | `funding-gap` | `()` (no CR.3: no CP-3C in the run) | `E/cr3-expected.json` adversarial `cp3c_not_in_the_run` |
+| `cp3c-fp04-refinancing` | `funding-gap` | CR.3, beside | `E/cr3-expected.json` `#/render/covenant_refinancing`, `#/chart_series/CR.3/<c>`, `#/table_twins/<c>` for `positive`, `gap_minimum_cash`, `gap_no_repricing` |
+| `cp4c-fp05-recovery` | `recovery-by-class` | DR.2, above | `E/dr2-expected.json` `#/render/distressed_restructuring`, `#/chart_series/DR.2/<c>`, `#/table_twins/<c>` for `positive`, `gap` |
+| `cp4c-fp05-recovery` | `value-allocation-claims` | DR.3, DR.4, DR.5 in that order, above | `E/dr345-expected.json` `#/render/distressed_restructuring`, `#/chart_series/DR.3-5/<c>/DR.3` (and `.../DR.4`, `.../DR.5`), `#/table_twins/<c>` for `positive`, `gap` |
+| `cp2h-fp05-ratings` | `rating-triggers` | DR.6 (the n/a frame, 0 marks, chip "Not computable") | `E/dr6-expected.json` `#/render/distressed_restructuring`, `#/chart_series/DR.6`, `#/render/distressed_restructuring/frame_texts/per_case/<c>` for `positive`, `gap` |
+
+Notes on the table.
+- **S.5.** It sits on `financials-credit-metrics` for the credit_snapshot pathway (`s5#/render`). The only credit_snapshot row that assigns that block is `cp1-model`; `s1a-credit-snapshot` and `cp3-fp01-relative-value` assign other blocks, so S.5 is not asserted there (rev 1 L3).
+- **`cp2d-fp04-liquidity`.** `funding-gap` is `()` because CR.3 needs a CP-3C head.
+- **`cp3c-fp04-refinancing`.** CR.2 is not asserted: the row assigns no `liquidity-runway`.
+- **CR.2 on distressed_restructuring** (`cr2#/render/distressed_restructuring`) applies to no row: no distressed row assigns `liquidity-runway`.
+- **S.4 on FP-04** (`E/s4fp04-expected.json`, block `maturity-wall`) applies to no row, as rev 2 D1 holds.
+- **Fixtures.** Oracle entries keyed `fixture_*` are derived-only unit fixtures, not driver cases; G2 acceptance does not assert them.
+
+**Every other assigned block** in every rev 2 row has no chart oracle for its pathway: `figures == ()`, asserted. That covers `key-findings`, `company-operating-model`, `strengths-weaknesses`, `company-profile`, `transaction-summary`; `relative-value`; `market-against-fundamentals`; `earnings-quality`, `restated-leverage`; `downside-stress`, `break-points`; `forward-credit-path`, `forward-breakpoints`; `red-flags`, `lender-protection-score`, `capacity`, `ebitda-definition`, `documents-structure`; `refinancing-paths`, `lme-creditor-exposure`; `what-changed`; and `capital-structure` on `cp1-model`. Rows with `sections == []` assert nothing.
+
+**Acceptance (adds to R2.8).**
+1. Each row above: figures equal the oracle by the comparison rule, for every listed case, on the genuine driver run.
+2. Each other assigned block: `figures == ()`.
+3. A negative: for one row, perturb a payload mark's text, value or ref after rendering, and the comparison fails; a figure moved to another block or an extra figure fails.
+4. Each listed oracle pointer must exist; a missing pointer fails the test and is never skipped.
+
+`cp3c-fp04-refinancing` is `gated`, so its figure assertions land with its wiring, as rev 2 holds.
+
+Not verified: nothing was rendered or run through G2; no `report_view.build` output was compared to these oracle pointers (keys were read from the JSON, not from product output); whether `build` already emits S.5, RV.3, CR.1-3 and DR.2-6 is the wiring builders' work; the claim that a restricted CP-1 run populates `model-chart-strip` rests on `tests/test_cp1_chart_render.py` (a typed-seam fixture, not the genuine G1 run); the `E/expected.json` pointers for S.1-S.4 were read as keys, not matched to marks.

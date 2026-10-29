@@ -536,3 +536,4 @@
 - 20:41 I6 G2 shard 1: 6 passed, 3 failed (cp1d gap: item 35; cp2h gap and cp4c blocked: item 34). No new cause.
 - 20:46 I6 G2 shard 3: 7 passed, 2 failed (cp4c gap, cp2g gap-blocked: item 34). G2 deferred genuine on I6 complete: 51 tests, 35 passed, 16 failed; 13 item 34 (cp2g/cp2h/cp4c readiness note, fixer a7b022fb reruns them), 3 item 35 (cp1d one-register rule, awaiting the user). Failed list scratchpad i6/g2d-failed.txt.
 - 21:05 The user: "Yes, fix it" (G2 fourth fix round, item 36). Dispatching G2 fix round 4 (fresh mx-feature, isolated, claude/s3-fix4-g2 from a020996; brief work/build/stage3/fix4-g2-brief.md).
+- 21:05 Dispatched G2 fix round 4 (mx-feature a46a5b1a).

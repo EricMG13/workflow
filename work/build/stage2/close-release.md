@@ -29,9 +29,11 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
 - **CP-4C view tree.** Commit `cases/cp4c-owner/cp4c-view-tree.json`.
 
 - **CP-3C oracle.**
-  - Re-pin the principal periods to q4-2025 (`PRINCIPAL_PERIOD_DELTA`) and the gap-cell currency to USD (`GAP_CURRENCY`).
+  - Re-pin the principal periods to q4-2025 (`PRINCIPAL_PERIOD_DELTA`).
+  - `GAP_CURRENCY`: the missing currency is in the **CP-2D** oracle (`T2E.5.r04`/`r07` gap twins), not CP-3C's. Re-pin CP-2D. The fix batch adds a tripwire, because none exists (review-B L1).
   - Add CP-1A to `expected.cp3c_module.attempt_inputs` and `manifest edges.bound_in_attempt_inputs` (`CP1A_BOUND`).
   - Apply `fact_copy_rule` and `frozen_inputs[8]`.
+- **CP-4 `expected.json:318` `other_five_sections`.** It still says all five blocks "stay owner Unbound", which is false after the CP-2D and CP-3C deltas (review-B L2).
 - **FP04 render oracle** (`cases/legal/render-expected.json`). Re-pin it with the CP-2D blocks (`CP2D_D7_DELTA`) and the CP-3C `refinancing-paths` and `lme-creditor-exposure` blocks (`CP3C_D7_DELTA`, round 5 item 18).
 - **CP-3C view tree.** Commit `cases/cp3c-owner/cp3c-view-tree.json`.
 

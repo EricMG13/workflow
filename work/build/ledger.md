@@ -395,3 +395,4 @@
 - 00:09 CP-1C done on s2-batch (3d0392e; 34/34 mutants; connect 2054 passed; genuine positive subset 22/23, test bug fixed). Integration pass 3 next (CP-3C+D7 patch, CP-2H, CP-4C; re-chain D12 forks).
 - 00:14 Integration pass 3 done 5977ae4 (CP-3C+D7, CP-2H, CP-4C; fast set 8916 passed; manifest chains fixed, 19/19). Next: stage-level class test (Opus) + slow render suites on a detached checkout.
 - 00:46 Stage class test a1a0574 (13 cores; 2 strict-xfail findings: CP-DR answer, CP-3D summary.text raise after binding write -> fix batch). Dispatching 3 review lanes.
+- 01:02 Review lane B: CP-2D fix1 APPROVE, CP-4 fix1 APPROVE, CP-3C REQUEST CHANGES (M1 test strength). Release list corrected (GAP_CURRENCY target; CP-4 other_five_sections).

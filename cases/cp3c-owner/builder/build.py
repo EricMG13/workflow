@@ -1581,12 +1581,12 @@ expected = {
         "pathway": "covenant_refinancing",
         "design_reference": "rbot-fp-04-covenant-refinancing.dc.html: 'Refinancing paths' (CP-3C, path / feasibility chip / impact, ILLUSTRATIVE tag), 'LME capacity and creditor exposure' (CP-3C, collapsed, Base / LME / Stress); 'Funding gap' is headed CP-3C there but is registered to CP-2D by the frozen CP-2D lease (open question)",
         "blocks": {
-            "refinancing-paths": {"owner": "CP-3C", "kind": "dense", "primary_tab": "T3D.6", "tabs": ["T3D.1", "T3D.2", "T3D.3"], "state": "populated"},
+            "refinancing-paths": {"owner": "CP-3C", "kind": "dense", "primary_tab": "T3D.6", "tabs": ["T3D.2", "T3D.3"], "state": "populated"},
             "lme-creditor-exposure": {"owner": "CP-3C", "kind": "dense", "collapsed": True, "primary_tab": "T3D.5", "tabs": ["T3D.4"], "state": "populated"},
         },
         "rails": {"evidence": ["T3D.7", "T3D.9"], "limitations": ["T3D.8"]},
         "cells": "block cell text equals the `shown` strings of expected.cases.<case>.tables; gap cells render '∅ G<n>' with n assigned in report order, not_applicable cells '∅ G<n> n.m.' (the expected shown is the pattern '∅ G#' / '∅ G# n.m.', an A7 exception)",
-        "other_FP04_blocks": "CP-4 blocks (CP-4 not requested), CP-2D blocks (asserted by the CP-2D lease) and funding-gap ownership are not asserted here",
+        "other_FP04_blocks": "CP-4 blocks (CP-4 not requested) and CP-2D blocks (asserted by the CP-2D lease) are not asserted here; T3D.1 moved from refinancing-paths to the funding-gap block (Q-C2, user 2026-10-29): it is a non-primary tab of funding-gap behind Fig. CR.3, and its expectations (tabs, figure, twin) are pinned in cases/charts/cr3-expected.json, not here",
     },
     "table_id_collision_check": "T3D.1-T3D.11 appear in src/deploy_vii/methodology.json only under CP-3C (asserted by this builder against the pinned file); a grep of src, tests, docs and cases on 2026-10-28 found them in methodology.json alone before this preparation; T3D.10 and T3D.11 are registered and unused",
     "not_verified": [

@@ -20,3 +20,6 @@
 - **Tests.** `s1a_runs.drive_cp1` hard-codes the readiness literal; `cp3c_runs` and `cp4_runs` duplicate `drive_cp1` (jscpd).
 - **CP-1D (protocol §6, Info).** `_validate_step` parses with raw `model_validate_json`, not `json_object`. Source: batch/cp1c-report.md.
 - **CP-3D (protocol §6).** `_validate_step` still parses with raw `model_validate_json`. Source: batch/fix-src-report.md.
+- **CP-DR and CP-3D (introduced by the fix batch).** The RunText check runs only when there is no other content issue, so a malformed answer is masked and blocks CP-DR on the repair. Run it unconditionally, as CP-2E does; no frozen text moves (41 + 3 checked). Probe: `<S>/stage2-rereview/rr4_cpdr_masked_runtext.py`.
+- **Owner (predates, Medium-class).** A CP-DR `question_id` of 155–160 characters makes `Fact` raise after the binding write, so the run is wedged (`rr2_cpdr_long_question_id.py`, exit 1 at a1a0574 and at c197434).
+- **Owner (predates, Info).** A well-formed but unresolved reference passes the CP-DR and CP-3D validators and surfaces only at settlement; CP-2E refuses it at validation. The run is not wedged.

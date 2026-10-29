@@ -1377,7 +1377,7 @@ def build_dr6() -> dict:
             {
                 "test_file": "tests/test_chart_render_dr6.py (new)",
                 "asserts": [
-                    "report_view.build on a distressed_restructuring run with CP-2H (positive and gap owner runs, tests/cp2h_runs.py): block rating-triggers has one figure DR.6 with chart.kind na, zero marks, empty twin and chart.reason equal to the frame reason; no fact id of T2R.4 or T2R.5 appears among the figure's refs",
+                    "report_view.build on a distressed_restructuring run with CP-2H (positive and gap owner runs, tests/cp2h_runs.py): block rating-triggers has one figure DR.6 with chart.kind na, zero marks, empty twin and chart.reason equal to frame_texts.per_case.positive.reason for positive, and for gap per the per-case rule below; no fact id of T2R.4 or T2R.5 appears among the figure's refs",
                     "tabs unchanged: primary T2R.9, tabs T2R.4 to T2R.8",
                     "positive: the frame reason equals frame_texts.per_case.positive.reason and contains no G# reference",
                     "gap: the frame reason starts with frame_texts.per_case.gap.reason and carries the '∅ G<n>' of the cited gap facts (n bound at run time)",

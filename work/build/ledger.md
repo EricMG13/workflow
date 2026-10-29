@@ -397,3 +397,4 @@
 - 00:46 Stage class test a1a0574 (13 cores; 2 strict-xfail findings: CP-DR answer, CP-3D summary.text raise after binding write -> fix batch). Dispatching 3 review lanes.
 - 01:02 Review lane B: CP-2D fix1 APPROVE, CP-4 fix1 APPROVE, CP-3C REQUEST CHANGES (M1 test strength). Release list corrected (GAP_CURRENCY target; CP-4 other_five_sections).
 - 01:04 Slow render suites (financial, earnings, cp1_chart) on batch 5977ae4: exit 0, [exited with code 0]
+- 01:09 Review lane C: all APPROVE (CP-1C, CP-1D fixes, CP-L10 fix1, class test, integration); G1 I2 closed (coherent_state guard). 4 Lows. Round 5 item 19 (D12 provenance).

@@ -51,7 +51,7 @@
       "asserts": [
         "cp2d_chart_series(module) on the CP-2D head of the positive and long_horizon owner runs (tests/cp2d_runs.py) returns one record whose fig_id, title, kind, unit_class, unit, series, reason and points (series, category, fact_id, companion_fact_ids, shown, value) equal chart_series.CR.2.<case>",
         "the bridge identity holds on the returned values (opening + flow + amortisation + maturities == closing) and the closing mark of long_horizon is negative",
-        "no point is recomputed: each value equals Fact.amount of its fact_id; a forged view with T2E.3.r07 missing yields a gap point (value None) for r07 and r08, never 0"
+        "no point is recomputed: each value equals Fact.amount of its fact_id; a forged view that drops T2E.3.r07 and T2E.3.r08 together yields gap points (value None) for both, never 0"
       ],
       "test_file": "tests/test_chart_series_cr2.py (new)"
     },

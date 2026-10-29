@@ -81,6 +81,7 @@
         "points": [
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -90,6 +91,7 @@
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
             "gap_rule": "never zero; the G# reference is bound at run time in report order",
             "reason": "Not calculable: a required operand is missing",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Principal payable at maturity",
             "shown": "∅ G#",
@@ -100,6 +102,7 @@
           },
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -109,6 +112,7 @@
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
             "gap_rule": "never zero; the G# reference is bound at run time in report order",
             "reason": "Not calculable: a required operand is missing",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Resources at maturity",
             "shown": "∅ G#",
@@ -139,6 +143,7 @@
         "points": [
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -146,6 +151,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r01.c6",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Principal payable at maturity",
             "shown": "50",
@@ -156,6 +162,7 @@
           },
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -163,6 +170,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r01.c7",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Resources at maturity",
             "shown": "(14)",
@@ -193,6 +201,7 @@
         "points": [
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -200,6 +209,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r01.c6",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Principal payable at maturity",
             "shown": "50",
@@ -210,6 +220,7 @@
           },
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -217,6 +228,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r01.c7",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Resources at maturity",
             "shown": "10",
@@ -247,6 +259,7 @@
         "points": [
           {
             "category": "notes",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -254,6 +267,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r01.c6",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Principal payable at maturity",
             "shown": "30",
@@ -264,6 +278,7 @@
           },
           {
             "category": "notes",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r01.c2",
               "T3D.1.r01.c3"
@@ -271,6 +286,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r01.c7",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r01",
             "series": "Resources at maturity",
             "shown": "5",
@@ -281,6 +297,7 @@
           },
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r02.c2",
               "T3D.1.r02.c3"
@@ -288,6 +305,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r02.c6",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r02",
             "series": "Principal payable at maturity",
             "shown": "26",
@@ -298,6 +316,7 @@
           },
           {
             "category": "term-loan",
+            "category_basis": "inferred: the facility id (fixtures carry no row label)",
             "companion_fact_ids": [
               "T3D.1.r02.c2",
               "T3D.1.r02.c3"
@@ -305,6 +324,7 @@
             "currency": "USD",
             "fact_id": "T3D.1.r02.c7",
             "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+            "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
             "row_id": "r02",
             "series": "Resources at maturity",
             "shown": "(9)",

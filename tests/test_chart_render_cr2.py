@@ -81,6 +81,8 @@ def test_a_run_without_cp2d_has_no_figure() -> None:
         update={"status": "unrun", "facts": (), "tables": (), "claims": (), "artifact_sha256": None}
     )
     modules = tuple(bare if m.module_id == "CP-2D" else m for m in view.modules)
-    block = w.block_of(w.report_of(view.model_copy(update={"modules": modules})), "liquidity-runway")
+    block = w.block_of(
+        w.report_of(view.model_copy(update={"modules": modules})), "liquidity-runway"
+    )
     assert block.figures == ()
     assert block.state != "populated"

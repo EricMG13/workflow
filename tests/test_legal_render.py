@@ -355,15 +355,34 @@ def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
     assert set(sections["blocks"]) == set(sections["ids"])
     for block_id, want in sections["blocks"].items():
         block = _blocks(report)[block_id]
-        assert report_view._spec_of(block_id).producers == tuple(want["producers"])
+        assert report_view._spec_of(block_id).producers == _producers_after_stage3(block_id, want)
         assert (block.owner, block.kind, block.state, block.full_analysis_route) == (
             want["owner"],
             want["kind"],
             want["state"],
             want["full_analysis_route"],
         )
-        assert block.note == want["note"]
+        assert block.note == _note_after_stage3(block_id, want)
         assert not block.rows and not block.lines  # no owner cell, no claim that the owner ran
+
+
+def _producers_after_stage3(block_id, want):
+    """The frozen legal oracle predates ruling item 6.1: CP-3C joins the funding-gap producers.
+    The new value is read from the frozen CR.3 oracle, not written here."""
+    if block_id != "funding-gap":
+        return tuple(want["producers"])
+    cr3 = json.loads((ROOT / "cases/charts/cr3-expected.json").read_text())
+    return tuple(cr3["render"]["covenant_refinancing"]["producers"])
+
+
+def _note_after_stage3(block_id, want):
+    """The honest Not-run note names the block's producers, so CP-3C joins funding-gap's."""
+    producers = _producers_after_stage3(block_id, want)
+    if tuple(want["producers"]) == producers:
+        return want["note"]
+    old, new = " \u00b7 ".join(want["producers"]), " \u00b7 ".join(producers)
+    assert old in want["note"]
+    return want["note"].replace(old, new, 1)
 
 
 @pytest.mark.parametrize("amount,display", [("0", "0.00x"), ("0.000", "0.00x")])

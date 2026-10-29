@@ -46,7 +46,9 @@ def test_negative_resources_stay_negative() -> None:
     ):
         record = _record(w.fixture_register(case).module)
         negatives = [p.fact_id for p in record.points if p.value is not None and p.value < 0]
-        assert negatives == fact_ids == w.CR3["adversarial_cases"][0]["negative_point_fact_ids"][case]
+        assert (
+            negatives == fact_ids == w.CR3["adversarial_cases"][0]["negative_point_fact_ids"][case]
+        )
         assert all(p.shown.startswith("(") for p in record.points if p.fact_id in fact_ids)
 
 
@@ -62,7 +64,9 @@ def test_categories_are_facility_rows_in_row_order() -> None:
 def test_the_pack_category_is_the_row_label_and_the_sublabel_is_the_maturity_date() -> None:
     record = _record(w.module_of(w.cp3c_view("positive"), "CP-3C"))
     assert {p.category for p in record.points} == {"Northbridge Term Loan (term-loan)"}
-    assert {p.sublabel for p in record.points} == {w.CR3_FIG["positive"]["points"][0]["axis_sublabel"]}
+    assert {p.sublabel for p in record.points} == {
+        w.CR3_FIG["positive"]["points"][0]["axis_sublabel"]
+    }
 
 
 def test_a_gap_resource_keeps_the_principal_mark_known() -> None:

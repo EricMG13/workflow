@@ -1163,7 +1163,8 @@ def test_spec_rows_serve_the_three_blocks() -> None:
         # Q-C1: the maturity wall is Model-owned (approved FP 04 page, "MODEL · Fig. S.4"); kind
         # stays dense until the Stage 3 S.4 task adds the strip figure and the CP-1 binding.
         ("maturity-wall", "Maturity wall", "MODEL", "dense", ("CP-1",), None),
-        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D",), "Full analysis"),
+        # Stage 3 ruling item 6.1: CP-3C joins the funding-gap producers (CR.3, T3D.1 tab).
+        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D", "CP-3C"), "Full analysis"),
     ):
         spec = _spec_of(block)
         assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (

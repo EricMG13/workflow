@@ -104,7 +104,9 @@ def _shown(fact: Fact, value: Decimal | None) -> str:
 
 
 def _kind_and_reason(
-    points: tuple[LiquidityPoint, ...], facts: Mapping[str, Fact], kind: Literal["waterfall", "grouped"]
+    points: tuple[LiquidityPoint, ...],
+    facts: Mapping[str, Fact],
+    kind: Literal["waterfall", "grouped"],
 ) -> tuple[Literal["waterfall", "grouped", "na"], str | None]:
     """The drawn kind, or the n/a frame with the facts' own reasons when nothing is plottable."""
     if any(point.value is not None for point in points):

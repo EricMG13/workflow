@@ -82,9 +82,7 @@ def tab_labels(block: Block) -> list[str | None]:
 
 def labels_of(*table_ids: str) -> list[str | None]:
     """The binding labels of the oracle's table ids (the oracle names tabs by table id)."""
-    by_table = {
-        entry.fact_coord.table_id: entry.label for m in SHIPPED_MAPS for entry in m.entries
-    }
+    by_table = {entry.fact_coord.table_id: entry.label for m in SHIPPED_MAPS for entry in m.entries}
     return [by_table[table_id] for table_id in table_ids]
 
 

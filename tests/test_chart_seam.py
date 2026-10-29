@@ -563,8 +563,9 @@ def _figure():
     return Figure(fig_id="X.1", title="X", chart=chart, placement="beside")
 
 
-def test_the_registry_ships_empty_so_the_dispatch_holds_no_figure_of_its_own():
-    assert report_view._FIGURE_PRODUCERS == {}
+def test_the_dispatch_holds_no_figure_of_its_own_only_registered_producers():
+    # W2 groups register their producers at the end of report_view; the seam adds none itself.
+    assert all(callable(producer) for producer, _ in report_view._FIGURE_PRODUCERS.values())
 
 
 def test_register_figure_producer_refuses_a_duplicate_and_an_unknown_pathway(monkeypatch):

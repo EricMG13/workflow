@@ -48,3 +48,22 @@ Run them from the s3-g2scope root:
 Side effect: running the first probe with `uv run` created an untracked `.venv` in the s3-g2scope worktree. `git status` stays clean.
 
 Not verified: no owner run, G2 or render was run. The rendered block trees were not compared to oracle content beyond block keys. The `cp1-model` row rests on rev 0 and was not probed. I did not run the CP-8 `no_record` receipt myself; that finding relies on `test_owner_cp8.py:121-130` and on `make_pack`. The banners of the other refused rows were checked against the oracles' `refusal`/`refused_begins` text only.
+
+## Scoped re-review of 5050797
+
+**Scoped re-review of `5050797`: APPROVE.** M1 and M2 are fixed. The fix adds three Low wording slips and nothing that blocks. All line numbers are in `/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s3-g2scope/docs/OWNER-RENDERING-LEASE.md`.
+
+**M1 is fixed** at :235, :273, :298, :303 and :316. The CP-8 row now lists `no_record` as its refused case, and the driver path it names (`cp8_runs.start("no_record", root)` then `write_receipt`, as in `test_owner_cp8.py:121-130`) is right. Only cp1d and cpl10 are still deferred.
+- The pointer `cp8-owner/expected.json#/refused/no_record` resolves. Its keys are `run`, `cp0_readiness`, `cp0_exact_command`, `begin` and `rendered`.
+- The banner at :273 is true to that case. The oracle has `cp0_readiness` "BLOCKED, missing_source prior_case", `{"CP-8": "DO NOT RUN"}`, and a NotAuthorized refusal on CP-8 itself. The banner has no numbers and no module codes.
+
+**M2 is fixed** at :211. The new rule ties the model to whether `CP-MODEL` is in `requested_modules` (model required if it is, absent if not), says it overrides body :59, and refuses an unexpected model or publication directory. It agrees with R2.8 #7 at :336.
+
+**L1 and I1 are applied.** The banner at :256 now makes no claim about a peer set, and :344 points to rulings item 4.
+
+**New findings (all Low, none blocking):**
+- **L3, :251.** The style rule still says "The refused text names no cause beyond the pinned one (`cp1_not_authorized`)". The CP-8 refused banner names a different cause, which is correct for its own pinned case. Fix: change the rule to "names no cause beyond its oracle's pinned one".
+- **L4, :332 (L2 fix).** The new sentence says the test takes the producer ids from the oracle's `refused_begins` and `heads`. CP-8's pinned case has neither key. It describes the begin in prose (`begin`: "recorded as one RefusedBegin; no CP-8 attempt and no head") and pins the page in `rendered` (`what-changed` not_run, "Not run: CP-8 has not run."). The test is still possible from those fields. Fix: say that for CP-8 the test reads `begin` and `rendered`.
+- **L5, :213.** The refused-run shape is still cited as `cases.refused`. CP-8 keeps its refused run at `#/refused/no_record`. Fix: write "the oracle's refused case (`cases.refused`, or `refused/no_record` for CP-8)".
+
+Not verified: I did not run the CP-8 `no_record` receipt myself; that rests on `test_owner_cp8.py:121-130` and the earlier `make_pack` probe. I did not re-run the earlier probes, because the table rows they cover are unchanged except the CP-8 refused column.

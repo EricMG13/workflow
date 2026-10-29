@@ -37,11 +37,14 @@ verified settled CP-4 head, a verified `OwnerRunReceipt` and the six FP04 sectio
 ## Files
 
 - `src/deploy_workflow/owner_workflow.py`: one `OwnerSpec` entry (below), `SUPPORTED_ANALYTICAL` += CP-4,
-  `_QUALIFICATION` += `cp4_legal.PROMOTED`, `_PROBES` += `owners.cp4.probe`, and `StepSpec.inputs` gains the value
-  `"step_context"` (see Public API). CP-4 is a live-contract module (`docs/G1X-OWNER-CORE-PROTOCOL.md` section 1): G1-X builds the core
-  hooks (section 3 read_inputs, section 4 precheck, replay); this lease only registers CP-4 against them. Change to G1 (section 3):
-  `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`, with or without a source session
-  (G1 enforces it today only for steps without one, `owner_workflow.py:558`, and accepts only `inputs == "projection"`, `:530`).
+  `_QUALIFICATION` += `cp4_legal.PROMOTED`, `_PROBES` += `owners.cp4.probe`, `_ENTRY_VALIDATORS["CP-4"]` =
+  `owners.cp4.ENTRY_VALIDATOR` (= `cp4_legal._validate_step`; the signature matches, no adapter), `_PRECHECKS["CP-4"]` =
+  `owners.cp4.precheck`, `_VIEWS["legal_covenants"]` = `owners.cp4.view`, and `StepSpec.inputs` gains the value
+  `"step_context"` with its `_inputs` branch and `_check_steps` clause (see Public API; built at `owner_workflow.py:272`, `:820`,
+  `:949`). CP-4 is a live-contract module (`docs/G1X-OWNER-CORE-PROTOCOL.md` section 1): G1-X builds the core
+  hooks (section 3 read_inputs, section 4 precheck, replay); this lease only registers CP-4 against them. The rule that
+  `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`, with or without a source session,
+  already exists from G1-X (protocol section 3); this lease adds no G1 change for it.
 - New `src/deploy_workflow/owners/cp4.py`: `probe`, `view`, `semantic_issues` (the Q1 gate, LEAD ruling option A) and the core
   `precheck(store, binding, stored)` hook (protocol section 4), which calls `semantic_issues` on the filled payload.
 - New `tests/test_owner_cp4.py`; new `tests/cp4_runs.py` exporting `cp4_closed(case, root) -> (store_dir,
@@ -51,7 +54,7 @@ verified settled CP-4 head, a verified `OwnerRunReceipt` and the six FP04 sectio
   ids all exist (see D8 below). No `docs/reuse/manifest.json` row beyond the new files.
 - No `src/deploy_vii` edit, no host edit, no case-pack byte changed.
 
-## Public API additions (keyword arguments only)
+## Public API additions (the seams are positional, protocol section 2; `semantic_issues` is keyword-only)
 
 ```
 StepSpec.inputs: Literal["none", "projection", "module_context", "step_context"]
@@ -62,12 +65,12 @@ OWNER_SPECS += "CP-4": OwnerSpec(
                     sources=True, extract=False, upstream_grant=None,
                     inputs="step_context", rules="journaled"),),
     entry="model_payload", kind="analytical", publish=None)
-owners.cp4.probe(*, store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None
-owners.cp4.view(*, store: Execution, attempt: Attempt) -> tuple[str, str]       # (sha256, body)
+owners.cp4.probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None   # owners/cp4.py:132
+owners.cp4.view(historical: Execution, attempt: Attempt) -> tuple[str, str]       # (sha256, body); owners/cp4.py:119
 owners.cp4.semantic_issues(*, pack, submission) -> tuple[str, ...]                 # the Q1 gate; see Semantic gate
 owners.cp4.precheck(store, binding, stored) -> tuple[str, ...]                     # core hook (protocol section 4); calls semantic_issues
 ```
-`view` body is `json.dumps(cp4_legal.context_block(store.pack(), cp4_legal.upstream_of(store, attempt)),
+`view` body is `json.dumps(cp4_legal.context_block(historical.pack(), cp4_legal.upstream_of(historical, attempt)),
 ensure_ascii=False, separators=(",", ":"), allow_nan=False)`, digest its sha256 (as `live/context.py:111`). The
 receipt schema, JSON-lines operations and return shapes do not change.
 

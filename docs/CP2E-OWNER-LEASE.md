@@ -74,7 +74,7 @@ Reused unchanged (hash-checked): `cases/financial/manifest.json` sources `identi
 ## Files
 
 - New `src/deploy_workflow/owners/cp2e.py` (about 450 lines).
-- `owner_workflow.py` (G1-X): the spec above; `_CORES`, `SUPPORTED_ANALYTICAL`, `_QUALIFICATION`, `_PROBES`.
+- `owner_workflow.py` (G1-X): the spec above; `_CORES`, `SUPPORTED_ANALYTICAL`, `_QUALIFICATION`, `_PROBES` and `_ENTRY_VALIDATORS["CP-2E"]` = `owners.cp2e.ENTRY_VALIDATOR` (`owners/cp2e.py:1906`, registered at `owner_workflow.py:235`; protocol section 2 requires it of every analytical module but CP-0 and CP-1, as ruled for CP-4 in rulings round 1 Q3).
 - D12 registrations: `host.py` `_SOURCE_STEPS` (H1); new `src/deploy_vii/bindings/cp2e.py` and `bindings/shipped.py`: one binding per table T2F.1 to T2F.9 (`expected.render.bindings`: T2F.1 to T2F.6 and T2F.8 to the `evidence` rail as `bindings/cp5.py` does, T2F.7 and T2F.9 to `limitations`, `unit_class` text, slot prefix `cp2e-`), because `validate_bindings` needs every fact of a restricted module bound exactly once and `report_view.build` raises otherwise. `cp2e_module` ships `Module.tables`: T2F.1 to T2F.9 as `ReportTable` layouts (`expected.cases.<case>.module_tables`). No `methodology.json`, `registry.py` or `report_view.py` edit.
 - `methods/cp2e.md` adaptation record (shock conventions, table titles and columns; question 6).
 - G2 `owner_rendering.py`: one `DeliveryScope` for `slice-cp2e-sensitivity` (module page and rails).
@@ -93,10 +93,10 @@ probe(store, snapshot, attempt) -> None                         # identity_misma
 RULES(text, seen) -> tuple[str, ...]                            # absence rule, then unread citations (sorted)
 submit(store, ticket_id, step_id, payload, rules) -> Submitted
 # internals
-cp2e_upstream(*, store, attempt) -> Upstream                    # CP-0 head bound, current inputs, inherited limitations
+# no `cp2e_upstream`: it was an internal with no consumer (rulings round 3 item 4). `settle` derives the inherited limitations, `submit_step` refuses changed inputs and `begin` binds CP-0.
 validate_macro_fx(*, submission, pack) -> tuple[str, ...]       # quotes on page, whole-line rows, labelled values, ranges
 derive_sensitivity(*, operands, rate_shocks_bp, fx_shocks, hedge_ratio) -> Sensitivity   # pure Decimal; no I/O
-macro_fx(*, pack, submission, upstream) -> Report
+macro_fx(*, pack, submission) -> MacroFxReport                  # owners/cp2e.py:1827
 cp2e_module(*, report, inputs, attempt) -> Module
 cp2e_reader(store, head) -> Cp2eHead                            # consumer reader (D3), not a G1 seam
 ```

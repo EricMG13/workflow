@@ -78,7 +78,9 @@ def test_gap_reason_starts_with_the_oracle_text_and_cites_the_settled_gaps(
     assert reason.startswith(FRAMES["gap"]["reason"])
     cited = CASES["gap"]["cited_gap_fact_ids"]
     missing = sorted(
-        f.fact_id for f in module.facts if f.table_id in ("T2R.4", "T2R.5") and f.status != "known"
+        f.fact_id
+        for f in module.facts
+        if f.table_id in ("T2R.4", "T2R.5") and f.status == "missing"
     )
     assert missing == sorted(cited) == sorted(CASES["gap"]["gap_fact_ids_in_module"])
     wanted = {_g_of(report, fact_id) for fact_id in cited}

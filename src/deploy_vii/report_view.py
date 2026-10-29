@@ -2498,3 +2498,17 @@ def call_state(report: ReportView) -> tuple[str, tuple[str, str] | None]:
     if any(item.kind != "na" for item in report.call):
         return "populated", None
     return "no-judgement", None
+
+
+# --- Stage 3 W2 group d: the Distressed & Restructuring figures (DR.2 to DR.6) -------------------
+# The integration pass merges the four groups by appending their registration blocks here.
+def _register_group_d() -> None:
+    from deploy_vii.distressed_figures import PRODUCERS
+
+    for block_id, producer in PRODUCERS:
+        register_figure_producer(
+            block_id, producer, pathways=frozenset({"distressed_restructuring"})
+        )
+
+
+_register_group_d()

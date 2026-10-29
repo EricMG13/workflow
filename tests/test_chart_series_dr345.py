@@ -12,9 +12,9 @@ from typing import Any
 
 import chart_dr_support as support
 import pytest
-from deploy_workflow.restructuring_series import cp4c_chart_series
 
 from deploy_vii.contracts import Fact
+from deploy_workflow.restructuring_series import cp4c_chart_series
 
 ORACLE = support.oracle("dr345")
 RECORDS = ORACLE["chart_series"]["DR.3-5"]

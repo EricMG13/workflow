@@ -563,8 +563,10 @@ def _figure():
     return Figure(fig_id="X.1", title="X", chart=chart, placement="beside")
 
 
-def test_the_registry_ships_empty_so_the_dispatch_holds_no_figure_of_its_own():
-    assert report_view._FIGURE_PRODUCERS == {}
+def test_the_registry_holds_only_producers_registered_for_table_blocks():
+    """The seam ships no producer of its own (W1); W2's groups register theirs at import."""
+    registered = report_view._FIGURE_PRODUCERS
+    assert all(report_view._spec_of(block_id).kind != "chart" for block_id in registered)
 
 
 def test_register_figure_producer_refuses_a_duplicate_and_an_unknown_pathway(monkeypatch):

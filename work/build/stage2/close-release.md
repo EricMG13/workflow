@@ -37,6 +37,7 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
 - **FP04 render oracle** (`cases/legal/render-expected.json`). Re-pin it with the CP-2D blocks (`CP2D_D7_DELTA`) and the CP-3C `refinancing-paths` and `lme-creditor-exposure` blocks (`CP3C_D7_DELTA`, round 5 item 18).
 - **CP-3C view tree.** Commit `cases/cp3c-owner/cp3c-view-tree.json`.
 
+- **CP-2G and CP-4C.** Re-pin the derived-fact citations to round 3; both oracles carry concatenation lineage (review-A L1).
 - **CP-1C.** Re-pin the derived-fact citations to round 3 (round 5 item 17, extended). Commit `cases/cp1c-owner/cp1c-view-tree.json`. View `rules.direction` is in the lease key tree but missing from `expected.execution.tool_use.view`; re-pin.
 
 ## Leases and contract text

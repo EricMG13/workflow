@@ -430,3 +430,4 @@
 - 08:59 Q-C1 builder=ae54502382a289082 (mx-feature; distinct from preparer a5f86934df7bc3a48 and reviewer a66dbdc578746c158).
 - 09:18 Release 5a6a746 gates: fast set 9444 passed, 4 skipped, exit 0 (226 s); render suites (financial, earnings, cp1_chart) 148 passed, exit 0 (48 min). test_owner_s1a excluded (fix2 fixes it).
 - 09:34 User confirmed: LEAD-session relays speak for them; Modules settles LEAD module work (memory saved). PF-1 portfolio reader import (DEPLOY VII 7260b22, portfolio.py + rv_quotes + builder + template + test) dispatched on claude/s3-pf1 from 5a6a746 (mx-feature); independent mx-precise review follows.
+- 09:37 PF-1 import committed 5578693 (7 files byte-equal, manifest records, openpyxl already pinned; 166/181 tests pass). Ruled: test to tests/product/ (ROOT depth), CLI tests skipped via documented conftest + guard test (deploy_vii.__main__ stays excluded). Import agent abaed1d3 applying.

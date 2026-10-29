@@ -602,16 +602,23 @@ def test_a_known_window_figure_renders_as_the_figure_and_a_positive_line_is_unch
         _what_changed_view("positive", {"cp8.what_changed.attribution.value": token})
     )
     line = next(r for r in lines if r[0][1] == "Window ")
-    assert line[1][0] == "fig" and line[1][1].startswith(
-        next(
-            f["text"] or ""
-            for t in EXPECTED["cases"]["positive"]["tables"]
-            for row in t["rows"]
-            for f in row["facts"]
-            if f["fact_id"] == "T7.3.window.realized_value"
-        )
+    shown = next(
+        f["shown"]
+        for t in EXPECTED["cases"]["positive"]["tables"]
+        for row in t["rows"]
+        for f in row["facts"]
+        if f["fact_id"] == "T7.3.window.realized_value"
     )
-    assert line[-1][1] == " after the decision." and not any("G" == run[0] for run in line)
+    assert shown == "109 days"
+    assert line[1][:2] == ("fig", shown)
+    assert line[-1][1] == " after the decision." and not any(run[0] == "gap" for run in line)
+
+
+def test_a_well_formed_token_beside_a_non_token_bracket_fails_closed() -> None:
+    text = "Window {T7.3.window.realized_value|days} then [Not a token]."
+    view = _what_changed_view("positive", {"cp8.what_changed.attribution.value": text})
+    with pytest.raises(ValueError, match="does not resolve"):
+        _what_changed_lines(view)
 
 
 def test_a_token_naming_a_fact_outside_the_module_fails_closed() -> None:

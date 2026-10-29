@@ -1601,13 +1601,10 @@ def _carries_reference(text: str) -> bool:
     """Whether a known text fact holds a well-formed ``[ref]``/``{ref|unit}`` reference.
 
     Text whose brackets are not reference syntax (a label such as ``[Insufficient Information]``)
-    is plain prose and shown as written, as before; a well-formed reference is never skipped, so
-    one that names a fact outside the module reaches ``resolve`` and fails closed.
+    is plain prose and shown as written, as before. Text holding any reference goes to
+    ``resolve``: a malformed mix, or a reference to a fact outside the module, fails closed.
     """
-    try:
-        return any(run.kind != "text" for run in prose.tokenize(text))
-    except ValueError:  # not reference syntax: literal prose, nothing to resolve
-        return False
+    return prose._TOKEN.search(text) is not None  # the grammar resolve() parses
 
 
 def _token_runs(

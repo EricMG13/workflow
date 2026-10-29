@@ -186,7 +186,7 @@ def oracle_cell(item: dict[str, Any]) -> dict[str, Any]:
     out = dict(item)
     if item["status"] != "known":
         out["shown"] = item["shown"].replace("G#", GAP_REF)
-    elif item["text"] is not None and "[" in item["text"]:
+    elif item["fact_id"] == "cp8.what_changed.outcome.value":
         # the product stores the token form; the oracle's ``shown`` (``∅ G#``) is the rendered
         # page text, which the render test in test_connect_cp8 checks
         out["shown"] = item["text"]

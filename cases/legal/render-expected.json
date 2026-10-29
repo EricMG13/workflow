@@ -1953,7 +1953,7 @@
       "CP-0": "unrun",
       "CP-1": "unrun",
       "CP-5": "unrun",
-      "CP-MODEL": "not_in_pathway",
+      "CP-MODEL": "unrun",
       "CP-1D": "not_in_pathway"
     },
     "no_fake_CP0_CP1_CP5_modules": true,
@@ -3487,13 +3487,59 @@
       "refinancing-paths",
       "lme-creditor-exposure"
     ],
-    "preserve_existing_fallback": true,
-    "owner": "Unbound",
-    "producers": [],
-    "kind": "prose",
-    "full_analysis_route": null,
-    "note": "No module produces this block yet.",
-    "responsibility_context_only": "Broader CP2D/CP3C/CP4C work remains pending; no new producer/spec or CP4 content here"
+    "blocks": {
+      "liquidity-runway": {
+        "owner": "CP-2D",
+        "producers": [
+          "CP-2D"
+        ],
+        "kind": "dense",
+        "state": "not_run",
+        "full_analysis_route": null,
+        "note": "Not run: CP-2D was not requested in this run."
+      },
+      "maturity-wall": {
+        "owner": "MODEL",
+        "producers": [
+          "CP-1"
+        ],
+        "kind": "dense",
+        "state": "not_run",
+        "full_analysis_route": null,
+        "note": "Not run: CP-1 has not run."
+      },
+      "funding-gap": {
+        "owner": "CP-2D",
+        "producers": [
+          "CP-2D"
+        ],
+        "kind": "dense",
+        "state": "not_run",
+        "full_analysis_route": null,
+        "note": "Not run: CP-2D was not requested in this run."
+      },
+      "refinancing-paths": {
+        "owner": "CP-3C",
+        "producers": [
+          "CP-3C"
+        ],
+        "kind": "dense",
+        "state": "not_run",
+        "full_analysis_route": null,
+        "note": "Not run: CP-3C was not requested in this run."
+      },
+      "lme-creditor-exposure": {
+        "owner": "CP-3C",
+        "producers": [
+          "CP-3C"
+        ],
+        "kind": "dense",
+        "state": "not_run",
+        "full_analysis_route": null,
+        "note": "Not run: CP-3C was not requested in this run."
+      }
+    },
+    "responsibility_context_only": "Re-pinned at the Stage 2 close release (rulings round 4, round 5 item 18; Q-C1 batch, user 2026-10-29): the CP-2D and CP-3C D7 _Spec rows serve four of the five blocks; each renders the empty state of a spec'd block whose producer was not requested in the run, and no owner cell or claim. maturity-wall is MODEL-owned (approved FP 04 page: MODEL Fig. S.4; pack brief 04: Model block fed by the CP-1 S.4 series; producer CP-1, so the covenant_refinancing Pathway also requests CP-MODEL): its empty state names CP-1, which was not run in this fixture. Broader CP4C work remains pending."
   },
   "source_copy_boundary": "Source inventory is copied literal supplied context in a synthetic seeded fixture; source/passport lexical match is not source-tool/owner semantic acceptance",
   "independent_display_literals": {

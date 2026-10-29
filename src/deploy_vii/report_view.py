@@ -512,6 +512,8 @@ _PRESETS: tuple[tuple[PathwayId, str, str, tuple[str, ...]], ...] = (
             "kpi-changes",
             "guidance-signals",
             "ebitda-adjustments",
+            "earnings-quality",
+            "restated-leverage",
             "metric-strip",
             "watch-items",
             "financials-credit-metrics",
@@ -562,6 +564,10 @@ _PRESETS: tuple[tuple[PathwayId, str, str, tuple[str, ...]], ...] = (
         "Is the distress gate met; which path and fulcrum; what recoveries?",
         (
             "distress-gate",
+            "downside-stress",
+            "break-points",
+            "forward-credit-path",
+            "forward-breakpoints",
             "recovery-by-class",
             "value-allocation-claims",
             "liquidity-runway",
@@ -1157,6 +1163,92 @@ _COVENANT_REFINANCING: Mapping[str, _Spec] = MappingProxyType(
         "documents-structure": _Spec(
             "Documents and structure", "CP-4", "dense", ("CP-4",), route_label="Full analysis"
         ),
+        # CP-2D (docs/CP2D-OWNER-LEASE.md, Rendered sections). `liquidity-runway` is also a block
+        # of distressed_restructuring; `_spec_of` is by block id, so this row serves both.
+        "liquidity-runway": _Spec(
+            "Liquidity and cash runway", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
+        ),
+        # Q-C1: Model-owned (approved FP 04 page, "MODEL · Fig. S.4"; no route on its header).
+        # Kind stays dense until the Stage 3 S.4 task adds the `_STRIP_FIGURES` entry and the
+        # CP-1 binding: kind chart would raise KeyError here. CP-2D's T2E.4 stays bound.
+        "maturity-wall": _Spec("Maturity wall", "MODEL", "dense", ("CP-1",), route_label=None),
+        "funding-gap": _Spec(
+            "Funding gap", "CP-2D", "dense", ("CP-2D",), route_label="Full analysis"
+        ),
+        # CP-3C (docs/CP3C-OWNER-LEASE.md, Rendered sections (D7)).
+        "refinancing-paths": _Spec(
+            "Refinancing paths", "CP-3C", "dense", ("CP-3C",), route_label="Full analysis"
+        ),
+        "lme-creditor-exposure": _Spec(
+            "LME capacity and creditor exposure",
+            "CP-3C",
+            "dense",
+            ("CP-3C",),
+            collapsed=True,
+            route_label="Full analysis",
+        ),
+    }
+)
+# Heads and owner codes as FP 03 prints them (``rbot-fp-03-relative-value.dc.html``). CP-3D owns
+# the market-implied half; later modules append their rows (CP-1C's ``peer-positioning``).
+_RELATIVE_VALUE: Mapping[str, _Spec] = MappingProxyType(
+    {
+        "market-against-fundamentals": _Spec(
+            "Market against fundamentals",
+            "CP-3D",
+            "dense",
+            ("CP-3D",),
+            route_label="Full analysis",
+        ),
+        # CP-1C (docs/CP1C-OWNER-LEASE.md, D7): tables only, the Fig. RV.3 range strip is not drawn.
+        "peer-positioning": _Spec(
+            "Peer positioning", "CP-1C", "dense", ("CP-1C",), route_label="Full analysis"
+        ),
+    }
+)
+# Heads and owner codes of the Distressed & Restructuring Front Page (``rbot-fp-05-*.dc.html``).
+# CP-2A creates the composition with its two downside blocks (lease D7); later owners append rows.
+# CP-2G appends its two forward blocks (docs/CP2G-OWNER-LEASE.md, D7). CP-2H appends
+# ``rating-triggers``, already in the preset (docs/CP2H-OWNER-LEASE.md, D7).
+_DISTRESSED: Mapping[str, _Spec] = MappingProxyType(
+    {
+        "downside-stress": _Spec(
+            "Downside stress", "CP-2A", "dense", ("CP-2A",), route_label="Full analysis"
+        ),
+        "break-points": _Spec(
+            "Break points", "CP-2A", "dense", ("CP-2A",), route_label="Full analysis"
+        ),
+        "forward-credit-path": _Spec(
+            "Forward credit path", "CP-2G", "dense", ("CP-2G",), route_label="Full analysis"
+        ),
+        "forward-breakpoints": _Spec(
+            "Forward break points", "CP-2G", "dense", ("CP-2G",), route_label="Full analysis"
+        ),
+        "rating-triggers": _Spec(
+            "Rating triggers", "CP-2H", "dense", ("CP-2H",), route_label="Full analysis"
+        ),
+        # docs/CP4C-OWNER-LEASE.md D7: both ids already in the preset, specs added here.
+        "recovery-by-class": _Spec(
+            "Recovery by class", "CP-4C", "dense", ("CP-4C",), route_label="Full analysis"
+        ),
+        "value-allocation-claims": _Spec(
+            "Value allocation and claims", "CP-4C", "dense", ("CP-4C",), route_label="Full analysis"
+        ),
+    }
+)
+# Heads and owner codes of the two FP 02 blocks CP-1D owns (docs/CP1D-OWNER-LEASE.md, D7).
+_EARNINGS_QUALITY: Mapping[str, _Spec] = MappingProxyType(
+    {
+        "earnings-quality": _Spec(
+            "Earnings quality", "CP-1D", "dense", ("CP-1D",), route_label="Full analysis"
+        ),
+        "restated-leverage": _Spec(
+            "Cash conversion and restated leverage",
+            "CP-1D",
+            "dense",
+            ("CP-1D",),
+            route_label="Full analysis",
+        ),
     }
 )
 _NO_PRODUCER = "No module produces this block yet."
@@ -1195,7 +1287,14 @@ def _strip_note(block_id: str) -> str:
 
 
 def _spec_of(block_id: str) -> _Spec:
-    for composition in (_CREDIT_SNAPSHOT, _EARNINGS_UPDATE, _COVENANT_REFINANCING):
+    for composition in (
+        _CREDIT_SNAPSHOT,
+        _EARNINGS_UPDATE,
+        _COVENANT_REFINANCING,
+        _RELATIVE_VALUE,
+        _DISTRESSED,
+        _EARNINGS_QUALITY,
+    ):
         if block_id in composition:
             return composition[block_id]
     # Blocks only another Pathway lists are not produced yet: they keep the idle view's wording.

@@ -1,0 +1,148 @@
+{
+ "_note": "Stage 2 close release (W2-A2): key tree of cp1d.context_block over the Stage 2 fixture heads (a hand-built CP-1 head with the seven T4.10 facts and 3 T4.17 rows, CP-0 restricted), per case. Shape only, not values; scalars by type name, a list by its first element, an empty list stays empty. Not observed on a promoted CP-1 head: that run is deferred to Stage 5.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "bridge",
+   "cp1_facts",
+   "cp1_t417_rows",
+   "cp1_facts_note",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "bridge": {
+    "state": "str",
+    "source_id": "str",
+    "pages": [
+     "str"
+    ],
+    "items": [
+     {
+      "row": "str",
+      "label": "str",
+      "type": "str",
+      "status": "str",
+      "claimed_ref": "str",
+      "claimed_shown": "str"
+     }
+    ],
+    "totals": {
+     "proposed_total": "str",
+     "management_ebitda": "str"
+    }
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1_t417_rows": "int",
+   "cp1_facts_note": "str",
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "statements_only": {
+  "top_level_keys": [
+   "upstream",
+   "bridge",
+   "cp1_facts",
+   "cp1_t417_rows",
+   "cp1_facts_note",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "bridge": {
+    "state": "str",
+    "source_id": "null",
+    "pages": [],
+    "items": [],
+    "totals": "null"
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1_t417_rows": "int",
+   "cp1_facts_note": "str",
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap": {
+  "top_level_keys": [
+   "upstream",
+   "bridge",
+   "cp1_facts",
+   "cp1_t417_rows",
+   "cp1_facts_note",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "bridge": {
+    "state": "str",
+    "source_id": "str",
+    "pages": [
+     "str"
+    ],
+    "items": [
+     {
+      "row": "str",
+      "label": "str",
+      "type": "str",
+      "status": "str",
+      "claimed_ref": "str",
+      "claimed_shown": "str"
+     }
+    ],
+    "totals": {
+     "proposed_total": "null",
+     "management_ebitda": "null"
+    }
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1_t417_rows": "int",
+   "cp1_facts_note": "str",
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ }
+}

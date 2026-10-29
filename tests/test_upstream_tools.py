@@ -709,66 +709,130 @@ def test_deep_json_arguments_return_and_retain_complete_refusal(tmp_path):
 
 
 # A2 fixtures are handwritten permission components, not settled analytical evidence.
-A2_FIELDS = ["fact_id", "label", "table_id", "row_id", "field", "amount", "text", "status",
-             "unit", "currency", "scale", "period", "basis", "limitation", "calculation_id",
-             "citation_handles"]
+A2_FIELDS = [
+    "fact_id",
+    "label",
+    "table_id",
+    "row_id",
+    "field",
+    "amount",
+    "text",
+    "status",
+    "unit",
+    "currency",
+    "scale",
+    "period",
+    "basis",
+    "limitation",
+    "calculation_id",
+    "citation_handles",
+]
 
 
 def _a2_basis(period_id, kind="Q"):
     parts = ("historical", f"{kind}:{period_id}")
-    return "model-basis:" + hashlib.sha256("".join(f"{len(p)}:{p}" for p in parts).encode()).hexdigest()
+    return (
+        "model-basis:"
+        + hashlib.sha256("".join(f"{len(p)}:{p}" for p in parts).encode()).hexdigest()
+    )
 
 
 def _a2_producer(*, page25=False, long_ids=False):
     producer = Module.model_validate_json(ARTIFACT_JSON)
     facts = []
-    periods = ("q3-2025", "q4-2025") if page25 else (
-        "q1-2025", "q2-2025", "q3-2025", "q4-2025", "fy-2025", "opening-2024")
+    periods = (
+        ("q3-2025", "q4-2025")
+        if page25
+        else ("q1-2025", "q2-2025", "q3-2025", "q4-2025", "fy-2025", "opening-2024")
+    )
     suffix = "x" * 153 if long_ids else ""
 
     def add(table, row, field, value, period):
         numeric = isinstance(value, Decimal)
-        facts.append(Fact(
-            fact_id=f"f{len(facts):03}" + suffix, label=field, table_id=table,
-            row_id=row + suffix, field=field, amount=value if numeric else None,
-            text=None if numeric or value is None else value,
-            status="missing" if value is None else "known", period=period,
-            limitation="Four complete contiguous quarters required" if value is None else None,
-            unit="MULTIPLE" if row == "total_leverage_reported" else "MILLIONS" if numeric else None,
-            currency="USD" if numeric and row != "total_leverage_reported" else None,
-            scale=Decimal(1000000) if numeric and row != "total_leverage_reported" else Decimal(1),
-            citations=producer.facts[0].citations,
-        ))
+        facts.append(
+            Fact(
+                fact_id=f"f{len(facts):03}" + suffix,
+                label=field,
+                table_id=table,
+                row_id=row + suffix,
+                field=field,
+                amount=value if numeric else None,
+                text=None if numeric or value is None else value,
+                status="missing" if value is None else "known",
+                period=period,
+                limitation="Four complete contiguous quarters required" if value is None else None,
+                unit="MULTIPLE"
+                if row == "total_leverage_reported"
+                else "MILLIONS"
+                if numeric
+                else None,
+                currency="USD" if numeric and row != "total_leverage_reported" else None,
+                scale=Decimal(1000000)
+                if numeric and row != "total_leverage_reported"
+                else Decimal(1),
+                citations=producer.facts[0].citations,
+            )
+        )
+
     for pid in periods:
         kind = "QUARTER" if pid.startswith("q") else "FY" if pid.startswith("fy") else "PERIOD_END"
-        values = dict(period_id=pid, period_type=kind, fiscal_year="2025",
-                      fiscal_quarter="3" if pid.startswith("q3") else "4", start_date="2025-07-01",
-                      end_date="2025-09-30", currency="USD", unit="MILLIONS",
-                      accounting_basis="IFRS", entity_perimeter="consolidated group")
+        values = dict(
+            period_id=pid,
+            period_type=kind,
+            fiscal_year="2025",
+            fiscal_quarter="3" if pid.startswith("q3") else "4",
+            start_date="2025-07-01",
+            end_date="2025-09-30",
+            currency="USD",
+            unit="MILLIONS",
+            accounting_basis="IFRS",
+            entity_perimeter="consolidated group",
+        )
         for key, value in values.items():
             add("T4.14", pid, key, value, pid)
     if page25:
         add("T4.14", periods[0], "basis_note", "Reported", periods[0])
-    for row in (("revenue",) if page25 else ("revenue", "total_leverage_reported")):
+    for row in ("revenue",) if page25 else ("revenue", "total_leverage_reported"):
         add("T4.10", row, "field_0", "Earnings", "dashboard")
         add("T4.10", row, "field_1", row, "dashboard")
         for pid in ("q3-2025", "q4-2025"):
-            value = (Decimal(0) if pid.startswith("q3") else Decimal(30)) if row == "revenue" else (
-                None if pid.startswith("q3") else Decimal("1.6666666666666666666666666666666666667"))
+            value = (
+                (Decimal(0) if pid.startswith("q3") else Decimal(30))
+                if row == "revenue"
+                else (
+                    None
+                    if pid.startswith("q3")
+                    else Decimal("1.6666666666666666666666666666666666667")
+                )
+            )
             add("T4.10", row, _a2_basis(pid), value, pid)
     return producer.model_copy(update={"facts": tuple(facts)})
 
 
 def _a2_grants(producer, *, diagonal=False):
-    coords = [dict(fact_id=f.fact_id, table_id=f.table_id, row_id=f.row_id, field=f.field)
-              for f in producer.facts if not diagonal or f.table_id == "T4.14"
-              or f.field in {"field_0", "field_1"}
-              or (f.row_id == "revenue" and f.field == _a2_basis("q3-2025"))
-              or (f.row_id == "total_leverage_reported" and f.field == _a2_basis("q4-2025"))]
-    return dict(schema_version="cp1b-upstream-grant/2", consumer_module_id="CP-1B",
-                step_id="earnings_delta", raw_source_ids=[], producers=[dict(
-                    module_id="CP-1", sha256=producer.content_hash(), coordinates=coords,
-                    projected_fields=A2_FIELDS.copy())])
+    coords = [
+        dict(fact_id=f.fact_id, table_id=f.table_id, row_id=f.row_id, field=f.field)
+        for f in producer.facts
+        if not diagonal
+        or f.table_id == "T4.14"
+        or f.field in {"field_0", "field_1"}
+        or (f.row_id == "revenue" and f.field == _a2_basis("q3-2025"))
+        or (f.row_id == "total_leverage_reported" and f.field == _a2_basis("q4-2025"))
+    ]
+    return dict(
+        schema_version="cp1b-upstream-grant/2",
+        consumer_module_id="CP-1B",
+        step_id="earnings_delta",
+        raw_source_ids=[],
+        producers=[
+            dict(
+                module_id="CP-1",
+                sha256=producer.content_hash(),
+                coordinates=coords,
+                projected_fields=A2_FIELDS.copy(),
+            )
+        ],
+    )
 
 
 def _a2_session(tmp_path, *, producer=None, diagonal=False):
@@ -780,20 +844,33 @@ def _a2_session(tmp_path, *, producer=None, diagonal=False):
 
 
 def _a2_lookup(producer, row="revenue", **changes):
-    return dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(),
-                table_id="T4.10", row_ids=[row], fields=A2_FIELDS.copy(), **changes)
+    return dict(
+        producer_module_id="CP-1",
+        producer_sha256=producer.content_hash(),
+        table_id="T4.10",
+        row_ids=[row],
+        fields=A2_FIELDS.copy(),
+        **changes,
+    )
 
 
 def _a2_page(session, *, cursor=None, limit=20, **changes):
     header = session.access_manifest
-    args = dict(producer_module_id="CP-1", producer_sha256=header["producer"]["sha256"],
-                manifest_sha256=header["manifest_sha256"], cursor=cursor, limit=limit)
+    args = dict(
+        producer_module_id="CP-1",
+        producer_sha256=header["producer"]["sha256"],
+        manifest_sha256=header["manifest_sha256"],
+        cursor=cursor,
+        limit=limit,
+    )
     args.update(changes)
     return session.invoke("read_access_manifest", args)
 
 
 def _a2_canonical(value):
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode()
 
 
 def test_a2_status_projection_tuple_grants_and_citation_handles(tmp_path):
@@ -804,33 +881,61 @@ def test_a2_status_projection_tuple_grants_and_citation_handles(tmp_path):
     assert body["projection"] == "granted_fact_projection"
     values = [f for f in body["rows"][0]["facts"] if f["amount"] is not None]
     assert [(f["amount"], f["status"]) for f in values] == [("0", "known")]
-    assert [f["field"] for f in body["rows"][0]["facts"]] == sorted(f["field"] for f in body["rows"][0]["facts"])
+    assert [f["field"] for f in body["rows"][0]["facts"]] == sorted(
+        f["field"] for f in body["rows"][0]["facts"]
+    )
     assert set(values[0]["citation_handles"][0]) == {"source_id", "source_sha256", "locator"}
-    hidden = next(f.fact_id for f in producer.facts if f.row_id == "revenue" and f.field == _a2_basis("q4-2025"))
-    _assert_refused(session.invoke("verify_upstream", _verify(producer, "citations", [hidden])), "not_permitted")
+    hidden = next(
+        f.fact_id
+        for f in producer.facts
+        if f.row_id == "revenue" and f.field == _a2_basis("q4-2025")
+    )
+    _assert_refused(
+        session.invoke("verify_upstream", _verify(producer, "citations", [hidden])), "not_permitted"
+    )
     allowed = {c["fact_id"] for c in grants["producers"][0]["coordinates"]}
     assert hidden not in allowed
-    assert all(not any(v in json.dumps(receipt) for v in ("UPSTREAM_RAW_ONLY", "quote\"")) for receipt in session.receipts)
+    assert all(
+        not any(v in json.dumps(receipt) for v in ("UPSTREAM_RAW_ONLY", 'quote"'))
+        for receipt in session.receipts
+    )
     other = _a2_session(tmp_path / "all")[4]
     missing = other.invoke("lookup_upstream", _a2_lookup(producer, "total_leverage_reported"))
     gap = next(f for f in missing["body"]["rows"][0]["facts"] if f["status"] == "missing")
     assert gap["amount"] is None and "Four complete" in gap["limitation"]
-    metadata = other.invoke("lookup_upstream", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(),
-        table_id="T4.14", row_ids=["opening-2024"], fields=A2_FIELDS.copy()))
+    metadata = other.invoke(
+        "lookup_upstream",
+        dict(
+            producer_module_id="CP-1",
+            producer_sha256=producer.content_hash(),
+            table_id="T4.14",
+            row_ids=["opening-2024"],
+            fields=A2_FIELDS.copy(),
+        ),
+    )
     assert any(f["text"] == "PERIOD_END" for f in metadata["body"]["rows"][0]["facts"])
 
 
 def test_a2_manifest_exact_hashes_pagination_replay_and_detachment(tmp_path):
     _, _, producer, grants, session = _a2_session(tmp_path, producer=_a2_producer(page25=True))
     header = session.access_manifest
-    assert header["coordinate_count"] == 25 and header["period_index"]["authorized_complete"] is True
+    assert (
+        header["coordinate_count"] == 25 and header["period_index"]["authorized_complete"] is True
+    )
     normalized = copy.deepcopy(grants)
     pg = normalized["producers"][0]
     pg["projected_fields"].sort()
-    pg["coordinates"].sort(key=lambda c: tuple(c[k] for k in ("table_id", "row_id", "field", "fact_id")))
+    pg["coordinates"].sort(
+        key=lambda c: tuple(c[k] for k in ("table_id", "row_id", "field", "fact_id"))
+    )
     assert header["grant_sha256"] == hashlib.sha256(_a2_canonical(normalized)).hexdigest()
     without_m = {k: v for k, v in header.items() if k != "manifest_sha256"}
-    assert header["manifest_sha256"] == hashlib.sha256(_a2_canonical(dict(header=without_m, coordinates=pg["coordinates"]))).hexdigest()
+    assert (
+        header["manifest_sha256"]
+        == hashlib.sha256(
+            _a2_canonical(dict(header=without_m, coordinates=pg["coordinates"]))
+        ).hexdigest()
+    )
     page1 = _a2_page(session)["body"]
     assert page1["offset"] == 0 and len(page1["entries"]) == 20 and not page1["complete"]
     token = page1["next_cursor"]
@@ -848,45 +953,75 @@ def test_a2_manifest_exact_hashes_pagination_replay_and_detachment(tmp_path):
     assert producer.content_hash() == session.access_manifest["producer"]["sha256"]
 
 
-@pytest.mark.parametrize("variant,code", [
-    ("omit-index", "not_permitted"), ("missing-index", "not_permitted"),
-    ("omit-field", "not_permitted"), ("extra-table", "not_permitted"),
-    ("wrong-tuple", "not_permitted"), ("rolling", "not_permitted"),
-    ("duplicate", "bad_arguments"), ("duplicate-id", "bad_arguments"),
-    ("duplicate-placement", "bad_arguments"),
-    ("extra-key", "bad_arguments"), ("quote-field", "not_permitted"),
-    ("extra-producer", "not_permitted"), ("wrong-digest", "identity_mismatch"),
-])
+@pytest.mark.parametrize(
+    "variant,code",
+    [
+        ("omit-index", "not_permitted"),
+        ("missing-index", "not_permitted"),
+        ("omit-field", "not_permitted"),
+        ("extra-table", "not_permitted"),
+        ("wrong-tuple", "not_permitted"),
+        ("rolling", "not_permitted"),
+        ("duplicate", "bad_arguments"),
+        ("duplicate-id", "bad_arguments"),
+        ("duplicate-placement", "bad_arguments"),
+        ("extra-key", "bad_arguments"),
+        ("quote-field", "not_permitted"),
+        ("extra-producer", "not_permitted"),
+        ("wrong-digest", "identity_mismatch"),
+    ],
+)
 def test_a2_factory_grant_guards(tmp_path, variant, code):
     producer = _a2_producer()
     if variant == "missing-index":
-        producer = producer.model_copy(update={"facts": tuple(f for f in producer.facts if f.table_id != "T4.14")})
+        producer = producer.model_copy(
+            update={"facts": tuple(f for f in producer.facts if f.table_id != "T4.14")}
+        )
     store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
     grants = _a2_grants(producer)
     pg = grants["producers"][0]
-    if variant == "omit-index": pg["coordinates"].pop(1)
-    elif variant == "omit-field": pg["projected_fields"].remove("text")
-    elif variant == "extra-table": pg["coordinates"][0]["table_id"] = "T4.1"
-    elif variant == "wrong-tuple": pg["coordinates"][0]["row_id"] = "ungranted-row"
-    elif variant == "rolling": pg["coordinates"][-1]["field"] = "rolling:value"
-    elif variant == "duplicate": pg["coordinates"].append(pg["coordinates"][0].copy())
-    elif variant == "duplicate-id": pg["coordinates"][1]["fact_id"] = pg["coordinates"][0]["fact_id"]
-    elif variant == "duplicate-placement": pg["coordinates"][0]["row_id"] = "q4-2025"
-    elif variant == "extra-key": grants["unexpected"] = True
-    elif variant == "quote-field": pg["projected_fields"].append("quote")
-    elif variant == "extra-producer": grants["producers"].append(dict(pg, module_id="CP-1B"))
-    elif variant == "wrong-digest": pg["sha256"] = "e" * 64
+    if variant == "omit-index":
+        pg["coordinates"].pop(1)
+    elif variant == "omit-field":
+        pg["projected_fields"].remove("text")
+    elif variant == "extra-table":
+        pg["coordinates"][0]["table_id"] = "T4.1"
+    elif variant == "wrong-tuple":
+        pg["coordinates"][0]["row_id"] = "ungranted-row"
+    elif variant == "rolling":
+        pg["coordinates"][-1]["field"] = "rolling:value"
+    elif variant == "duplicate":
+        pg["coordinates"].append(pg["coordinates"][0].copy())
+    elif variant == "duplicate-id":
+        pg["coordinates"][1]["fact_id"] = pg["coordinates"][0]["fact_id"]
+    elif variant == "duplicate-placement":
+        pg["coordinates"][0]["row_id"] = "q4-2025"
+    elif variant == "extra-key":
+        grants["unexpected"] = True
+    elif variant == "quote-field":
+        pg["projected_fields"].append("quote")
+    elif variant == "extra-producer":
+        grants["producers"].append(dict(pg, module_id="CP-1B"))
+    elif variant == "wrong-digest":
+        pg["sha256"] = "e" * 64
     with pytest.raises(ValueError, match=f"^{code}$"):
         _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
 
 
-@pytest.mark.parametrize("change,code", [
-    ({"cursor": "bad"}, "bad_arguments"), ({"cursor": "access-cursor:" + "a" * 64}, "stale_binding"),
-    ({"limit": True}, "bad_arguments"), ({"limit": 0}, "bad_arguments"),
-    ({"limit": 21}, "bad_arguments"), ({"manifest_sha256": "e" * 64}, "identity_mismatch"),
-    ({"manifest_sha256": "bad"}, "bad_arguments"), ({"producer_module_id": "CP-0"}, "not_permitted"),
-    ({"extra": 1}, "bad_arguments"),
-])
+@pytest.mark.parametrize(
+    "change,code",
+    [
+        ({"cursor": "bad"}, "bad_arguments"),
+        ({"cursor": "access-cursor:" + "a" * 64}, "stale_binding"),
+        ({"limit": True}, "bad_arguments"),
+        ({"limit": 0}, "bad_arguments"),
+        ({"limit": 21}, "bad_arguments"),
+        ({"manifest_sha256": "e" * 64}, "identity_mismatch"),
+        ({"manifest_sha256": "bad"}, "bad_arguments"),
+        ({"producer_module_id": "CP-0"}, "not_permitted"),
+        ({"extra": 1}, "bad_arguments"),
+    ],
+)
 def test_a2_manifest_refusals(tmp_path, change, code):
     session = _a2_session(tmp_path)[4]
     _assert_refused(_a2_page(session, **change), code)
@@ -898,7 +1033,9 @@ def test_a2_versions_are_exclusive_and_no_integrity_or_source_tools(tmp_path):
     with pytest.raises(ValueError, match="not_permitted"):
         _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=GRANTS)
     _, _, producer, _, session = _a2_session(tmp_path / "v2")
-    _assert_refused(session.invoke("verify_upstream", _verify(producer, "integrity")), "not_permitted")
+    _assert_refused(
+        session.invoke("verify_upstream", _verify(producer, "integrity")), "not_permitted"
+    )
     for name in ("read_integrity_scope", "verify_integrity_scope", "read_pages", "search_pack"):
         _assert_refused(session.invoke(name, {}), "not_permitted")
     for consumer in ("CP-2", "CP-5"):
@@ -915,15 +1052,25 @@ def test_a2_versions_are_exclusive_and_no_integrity_or_source_tools(tmp_path):
 def test_a2_bytes_and_invalid_citations_are_sanitized(tmp_path):
     producer = _a2_producer()
     target = next(f for f in producer.facts if f.row_id == "revenue" and f.amount is not None)
-    bad = target.model_copy(update={"citations": (target.citations[0].model_copy(update={"quote": "UPSTREAM_PRIVATE_QUOTE_SENTINEL"}),)})
-    producer = producer.model_copy(update={"facts": tuple(bad if f == target else f for f in producer.facts)})
+    bad = target.model_copy(
+        update={
+            "citations": (
+                target.citations[0].model_copy(update={"quote": "UPSTREAM_PRIVATE_QUOTE_SENTINEL"}),
+            )
+        }
+    )
+    producer = producer.model_copy(
+        update={"facts": tuple(bad if f == target else f for f in producer.facts)}
+    )
     _, _, producer, _, session = _a2_session(tmp_path, producer=producer)
     result = session.invoke("verify_upstream", _verify(producer, "citations", [bad.fact_id]))
     assert result["status"] == "ok" and result["body"]["verdict"] == "invalid"
     assert result["body"]["issues"] == [{"code": "fact_citation", "fact_ids": [bad.fact_id]}]
     assert "UPSTREAM_PRIVATE" not in json.dumps(result)
     giant = bad.model_copy(update={"label": "€" * 3000})
-    producer = producer.model_copy(update={"facts": tuple(giant if f == bad else f for f in producer.facts)})
+    producer = producer.model_copy(
+        update={"facts": tuple(giant if f == bad else f for f in producer.facts)}
+    )
     s2 = _a2_session(tmp_path / "giant", producer=producer)[4]
     _assert_refused(s2.invoke("lookup_upstream", _a2_lookup(producer)), "bad_arguments")
 
@@ -959,10 +1106,26 @@ def test_a2_changed_snapshot_revokes_all_access(tmp_path, operation):
     elif operation == "lookup":
         _assert_refused(session.invoke("lookup_upstream", _a2_lookup(producer)), "stale_binding")
     elif operation == "verify":
-        _assert_refused(session.invoke("verify_upstream", _verify(producer, "citations", [producer.facts[0].fact_id])), "stale_binding")
+        _assert_refused(
+            session.invoke(
+                "verify_upstream", _verify(producer, "citations", [producer.facts[0].fact_id])
+            ),
+            "stale_binding",
+        )
     else:
-        _assert_refused(session.invoke("read_access_manifest", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(),
-            manifest_sha256=header["manifest_sha256"], cursor=None, limit=20)), "stale_binding")
+        _assert_refused(
+            session.invoke(
+                "read_access_manifest",
+                dict(
+                    producer_module_id="CP-1",
+                    producer_sha256=producer.content_hash(),
+                    manifest_sha256=header["manifest_sha256"],
+                    cursor=None,
+                    limit=20,
+                ),
+            ),
+            "stale_binding",
+        )
 
 
 def test_a2_fresh_executable_repair_uses_actual_attempt_number(tmp_path):
@@ -982,25 +1145,40 @@ def test_a2_real_begin_keeps_required_edges_and_cp0_gate(tmp_path, variant):
     store, _, _, _, _ = _a2_session(tmp_path)
     snapshot = store.read()
     heads = list(snapshot.heads)
-    if variant == "absent": heads = [h for h in heads if h.module_id != "CP-1"]
-    elif variant == "blocked": heads = [h.model_copy(update={"status": "blocked"}) if h.module_id == "CP-1" else h for h in heads]
-    else: heads = [h.model_copy(update={"commands": ()}) if h.module_id == "CP-0" else h for h in heads]
+    if variant == "absent":
+        heads = [h for h in heads if h.module_id != "CP-1"]
+    elif variant == "blocked":
+        heads = [
+            h.model_copy(update={"status": "blocked"}) if h.module_id == "CP-1" else h
+            for h in heads
+        ]
+    else:
+        heads = [
+            h.model_copy(update={"commands": ()}) if h.module_id == "CP-0" else h for h in heads
+        ]
     store._write(snapshot.model_copy(update={"attempts": (), "heads": tuple(heads)}))
     with pytest.raises(ValueError):
         store.begin("CP-1B")
 
 
-@pytest.mark.parametrize("attribute,value", [("run_id", "other-run"), ("issuer_id", "other-issuer"), ("as_of", date(2024, 12, 31))])
+@pytest.mark.parametrize(
+    "attribute,value",
+    [("run_id", "other-run"), ("issuer_id", "other-issuer"), ("as_of", date(2024, 12, 31))],
+)
 def test_a2_foreign_bound_module_cannot_disclose(tmp_path, attribute, value):
     producer = _a2_producer().model_copy(update={attribute: value})
     store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
     with pytest.raises(ValueError, match="identity_mismatch"):
-        _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=_a2_grants(producer))
+        _tools().from_execution(
+            store, attempt.ticket_id, "earnings_delta", grants=_a2_grants(producer)
+        )
 
 
 def test_a2_tampered_current_blob_and_duplicate_current_identity_refuse(tmp_path):
     store, _, producer, _, session = _a2_session(tmp_path)
-    (store.directory / "blobs" / producer.content_hash()).write_text("UPSTREAM_PRIVATE_QUOTE_SENTINEL")
+    (store.directory / "blobs" / producer.content_hash()).write_text(
+        "UPSTREAM_PRIVATE_QUOTE_SENTINEL"
+    )
     _assert_refused(session.invoke("lookup_upstream", _a2_lookup(producer)), "identity_mismatch")
     producer = _a2_producer()
     grants = _a2_grants(producer)
@@ -1017,14 +1195,21 @@ def test_a2_cursor_is_session_bound_and_commit_is_staged(tmp_path, monkeypatch):
     other = _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
     _assert_refused(_a2_page(other, cursor=token), "stale_binding")
     header = other.access_manifest
-    args = dict(producer_module_id="CP-1", producer_sha256=header["producer"]["sha256"],
-                manifest_sha256=header["manifest_sha256"], cursor=None, limit=20)
+    args = dict(
+        producer_module_id="CP-1",
+        producer_sha256=header["producer"]["sha256"],
+        manifest_sha256=header["manifest_sha256"],
+        cursor=None,
+        limit=20,
+    )
     original = other._manifest_page
+
     def page_then_change(supplied):
         page = original(supplied)
         snapshot = store.read()
         store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
         return page
+
     monkeypatch.setattr(other, "_manifest_page", page_then_change)
     _assert_refused(other.invoke("read_access_manifest", args), "stale_binding")
     assert other._cursors == {} and other.receipts[-1]["body"] is None
@@ -1033,31 +1218,57 @@ def test_a2_cursor_is_session_bound_and_commit_is_staged(tmp_path, monkeypatch):
 @pytest.mark.parametrize("operation", ["lookup", "verify", "page", "property"])
 def test_a2_mid_projection_changes_never_expose_provisional_data(tmp_path, monkeypatch, operation):
     from deploy_workflow.tools import upstream
+
     store, _, producer, _, session = _a2_session(tmp_path)
     header = session.access_manifest
+
     def change():
         snapshot = store.read()
         store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
+
     if operation == "property":
         original = upstream._canonical
+
         def encode_then_change(value):
             encoded = original(value)
-            if isinstance(value, dict) and value.get("schema_version") == "cp1b-access-manifest/1": change()
+            if isinstance(value, dict) and value.get("schema_version") == "cp1b-access-manifest/1":
+                change()
             return encoded
+
         monkeypatch.setattr(upstream, "_canonical", encode_then_change)
         with pytest.raises(ValueError, match="stale_binding"):
             _ = session.access_manifest
         return
-    method = "_lookup" if operation == "lookup" else "_verify" if operation == "verify" else "_manifest_page"
+    method = (
+        "_lookup"
+        if operation == "lookup"
+        else "_verify"
+        if operation == "verify"
+        else "_manifest_page"
+    )
     original = getattr(session, method)
+
     def build_then_change(*args):
         result = original(*args)
         change()
         return result
+
     monkeypatch.setattr(session, method, build_then_change)
-    if operation == "lookup": tool, args = "lookup_upstream", _a2_lookup(producer)
-    elif operation == "verify": tool, args = "verify_upstream", _verify(producer, "citations", [producer.facts[0].fact_id])
-    else: tool, args = "read_access_manifest", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(), manifest_sha256=header["manifest_sha256"], cursor=None, limit=20)
+    if operation == "lookup":
+        tool, args = "lookup_upstream", _a2_lookup(producer)
+    elif operation == "verify":
+        tool, args = "verify_upstream", _verify(producer, "citations", [producer.facts[0].fact_id])
+    else:
+        tool, args = (
+            "read_access_manifest",
+            dict(
+                producer_module_id="CP-1",
+                producer_sha256=producer.content_hash(),
+                manifest_sha256=header["manifest_sha256"],
+                cursor=None,
+                limit=20,
+            ),
+        )
     _assert_refused(session.invoke(tool, args), "stale_binding")
     assert session._cursors == {}
 
@@ -1066,11 +1277,13 @@ def test_a2_reentrant_property_and_invocation_are_atomic(tmp_path, monkeypatch):
     _, _, producer, _, session = _a2_session(tmp_path)
     original = session._lookup
     nested = []
+
     def reenter(*args):
         with pytest.raises(ValueError, match="not_permitted"):
             _ = session.access_manifest
         nested.append(session.invoke("lookup_upstream", _a2_lookup(producer)))
         return original(*args)
+
     monkeypatch.setattr(session, "_lookup", reenter)
     assert session.invoke("lookup_upstream", _a2_lookup(producer))["status"] == "ok"
     _assert_refused(nested[0], "not_permitted")
@@ -1080,7 +1293,10 @@ def test_a2_reentrant_property_and_invocation_are_atomic(tmp_path, monkeypatch):
 def test_a2_manifest_failure_recovers_without_cursor_or_private_diagnostics(tmp_path, monkeypatch):
     session = _a2_session(tmp_path)[4]
     with monkeypatch.context() as patch:
-        def fails(args): raise RuntimeError("UPSTREAM_PRIVATE_QUOTE_SENTINEL")
+
+        def fails(args):
+            raise RuntimeError("UPSTREAM_PRIVATE_QUOTE_SENTINEL")
+
         patch.setattr(session, "_manifest_page", fails)
         result = _a2_page(session)
         assert result["status"] == "error" and result["error_code"] == "internal_error"
@@ -1090,10 +1306,13 @@ def test_a2_manifest_failure_recovers_without_cursor_or_private_diagnostics(tmp_
 
 
 @pytest.mark.parametrize("operation", ["property", "constructor"])
-def test_a2_final_authenticated_module_read_rechecks_live_snapshot(tmp_path, monkeypatch, operation):
+def test_a2_final_authenticated_module_read_rechecks_live_snapshot(
+    tmp_path, monkeypatch, operation
+):
     store, attempt, _, grants, session = _a2_session(tmp_path)
     original = store.head_module
     reads = 0
+
     def authenticate_then_change(head):
         nonlocal reads
         result = original(head)
@@ -1103,6 +1322,7 @@ def test_a2_final_authenticated_module_read_rechecks_live_snapshot(tmp_path, mon
                 snapshot = store.read()
                 store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
         return result
+
     monkeypatch.setattr(store, "head_module", authenticate_then_change)
     with pytest.raises(ValueError, match="^stale_binding$"):
         if operation == "property":
@@ -1115,8 +1335,14 @@ def test_a2_final_authenticated_module_read_rechecks_live_snapshot(tmp_path, mon
 @pytest.mark.parametrize("status", ["missing", "conflicting", "not_applicable"])
 def test_a2_all_nonknown_statuses_remain_visible(tmp_path, status):
     producer = _a2_producer()
-    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={"status": status})
-        if f.status == "missing" else f for f in producer.facts)})
+    producer = producer.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"status": status}) if f.status == "missing" else f
+                for f in producer.facts
+            )
+        }
+    )
     session = _a2_session(tmp_path, producer=producer)[4]
     result = session.invoke("lookup_upstream", _a2_lookup(producer, "total_leverage_reported"))
     assert result["status"] == "ok"
@@ -1125,25 +1351,49 @@ def test_a2_all_nonknown_statuses_remain_visible(tmp_path, status):
     assert gaps[0]["limitation"]
 
 
-@pytest.mark.parametrize("variant", ["other-table", "trend", "rolling", "unknown-basis", "unknown-metric", "missing-companion"])
+@pytest.mark.parametrize(
+    "variant",
+    ["other-table", "trend", "rolling", "unknown-basis", "unknown-metric", "missing-companion"],
+)
 def test_a2_existing_actual_facts_outside_universe_stay_hidden(tmp_path, variant):
     producer = _a2_producer()
     target = next(f for f in producer.facts if f.table_id == "T4.10" and f.amount is not None)
     if variant == "other-table":
         extra = target.model_copy(update={"fact_id": "extra", "table_id": "T4.1"})
     elif variant in {"trend", "rolling", "unknown-basis"}:
-        field = "field_2" if variant == "trend" else "model-basis:" + "d" * 64 if variant == "unknown-basis" else "rolling:value"
+        field = (
+            "field_2"
+            if variant == "trend"
+            else "model-basis:" + "d" * 64
+            if variant == "unknown-basis"
+            else "rolling:value"
+        )
         extra = target.model_copy(update={"fact_id": "extra", "field": field})
     elif variant == "unknown-metric":
-        producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={"text": "operating_profit"})
-            if f.row_id == "revenue" and f.field == "field_1" else f for f in producer.facts)})
+        producer = producer.model_copy(
+            update={
+                "facts": tuple(
+                    f.model_copy(update={"text": "operating_profit"})
+                    if f.row_id == "revenue" and f.field == "field_1"
+                    else f
+                    for f in producer.facts
+                )
+            }
+        )
         extra = None
-    else: extra = None
-    if extra is not None: producer = producer.model_copy(update={"facts": (*producer.facts, extra)})
+    else:
+        extra = None
+    if extra is not None:
+        producer = producer.model_copy(update={"facts": (*producer.facts, extra)})
     grants = _a2_grants(producer)
     if variant == "missing-companion":
-        grants["producers"][0]["coordinates"] = [c for c in grants["producers"][0]["coordinates"]
-            if not (c["table_id"] == "T4.10" and c["row_id"] == "revenue" and c["field"] == "field_0")]
+        grants["producers"][0]["coordinates"] = [
+            c
+            for c in grants["producers"][0]["coordinates"]
+            if not (
+                c["table_id"] == "T4.10" and c["row_id"] == "revenue" and c["field"] == "field_0"
+            )
+        ]
     store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
     with pytest.raises(ValueError, match="^not_permitted$"):
         _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
@@ -1151,12 +1401,18 @@ def test_a2_existing_actual_facts_outside_universe_stay_hidden(tmp_path, variant
 
 def test_a2_shared_live_offline_submit_refuses_before_callback_and_journal(tmp_path):
     from deploy_vii.live.submission import submit_model_payload
+
     store, attempt, _, _, _ = _a2_session(tmp_path)
     before = store.read().content_hash()
     called = []
     with pytest.raises(ValueError, match="offline-only"):
-        submit_model_payload(store, attempt.ticket_id, "earnings_delta", "invalid private payload",
-                             on_normalised=lambda value: called.append(value))
+        submit_model_payload(
+            store,
+            attempt.ticket_id,
+            "earnings_delta",
+            "invalid private payload",
+            on_normalised=lambda value: called.append(value),
+        )
     assert not called and store.read().content_hash() == before
 
 
@@ -1166,9 +1422,20 @@ P_FIELDS = sorted([*A2_FIELDS, "denominator", "value_class", "calculation_status
 
 def _projection_session(tmp_path, *, producer=None):
     producer = producer or _projection_producer15()
-    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={
-        "citations": (*f.citations, *f.citations) if len(f.citations) == 1 else f.citations})
-        for f in producer.facts)})
+    producer = producer.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(
+                    update={
+                        "citations": (*f.citations, *f.citations)
+                        if len(f.citations) == 1
+                        else f.citations
+                    }
+                )
+                for f in producer.facts
+            )
+        }
+    )
     store, attempt, _, _ = _execution(tmp_path, producer=producer, consumer="CP-1B")
     grants = _a2_grants(producer)
     grants["producers"][0]["projected_fields"] = P_FIELDS.copy()
@@ -1178,15 +1445,36 @@ def _projection_session(tmp_path, *, producer=None):
 
 def _projection_args(session, **changes):
     h = session.access_manifest
-    return {"producer_module_id": "CP-1", "producer_sha256": h["producer"]["sha256"],
-            "manifest_sha256": h["manifest_sha256"], "cursor": None, "limit": 20, **changes}
+    return {
+        "producer_module_id": "CP-1",
+        "producer_sha256": h["producer"]["sha256"],
+        "manifest_sha256": h["manifest_sha256"],
+        "cursor": None,
+        "limit": 20,
+        **changes,
+    }
 
 
 def _expected_projection_catalog(producer):
     facts = sorted(producer.facts, key=lambda f: (f.table_id, f.row_id, f.field, f.fact_id))
-    return [{k: ([{"source_id": c.source_id, "source_sha256": c.source_sha256,
-                  "locator": c.locator} for c in f.citations] if k == "citation_handles"
-                 else f.model_dump(mode="json")[k]) for k in P_FIELDS} for f in facts]
+    return [
+        {
+            k: (
+                [
+                    {
+                        "source_id": c.source_id,
+                        "source_sha256": c.source_sha256,
+                        "locator": c.locator,
+                    }
+                    for c in f.citations
+                ]
+                if k == "citation_handles"
+                else f.model_dump(mode="json")[k]
+            )
+            for k in P_FIELDS
+        }
+        for f in facts
+    ]
 
 
 def test_projection_complete_catalog_all19_order_status_and_duplicate_handles(tmp_path):
@@ -1197,8 +1485,17 @@ def test_projection_complete_catalog_all19_order_status_and_duplicate_handles(tm
         result = session.invoke("read_access_projection", _projection_args(session, cursor=cursor))
         assert result["status"] == "ok"
         body = result["body"]
-        assert set(body) == {"producer", "projection", "grant_sha256", "manifest_sha256",
-                             "coordinate_count", "offset", "entries", "next_cursor", "complete"}
+        assert set(body) == {
+            "producer",
+            "projection",
+            "grant_sha256",
+            "manifest_sha256",
+            "coordinate_count",
+            "offset",
+            "entries",
+            "next_cursor",
+            "complete",
+        }
         assert body["offset"] == len(seen) and body["coordinate_count"] == len(expected)
         assert body["projection"] == "granted_fact_projection"
         assert len(_a2_canonical(body)) <= 8192 and 1 <= len(body["entries"]) <= 20
@@ -1213,29 +1510,43 @@ def test_projection_complete_catalog_all19_order_status_and_duplicate_handles(tm
     assert seen == expected
     assert any(f["status"] == "missing" and f["amount"] is None and f["limitation"] for f in seen)
     assert any(f["status"] == "known" and f["amount"] == "0" for f in seen)
-    assert all(len(f["citation_handles"]) == 2 and f["citation_handles"][0] == f["citation_handles"][1] for f in seen)
-    assert "quote\"" not in json.dumps(seen)
+    assert all(
+        len(f["citation_handles"]) == 2 and f["citation_handles"][0] == f["citation_handles"][1]
+        for f in seen
+    )
+    assert 'quote"' not in json.dumps(seen)
 
 
 def test_projection_maximal_utf8_escaped_prefix_includes_own_terminal_wrapper(tmp_path):
     producer = _a2_producer(page25=True)
-    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={
-        "label": '€"\\\n' * 80}) for f in producer.facts)})
+    producer = producer.model_copy(
+        update={
+            "facts": tuple(f.model_copy(update={"label": '€"\\\n' * 80}) for f in producer.facts)
+        }
+    )
     _, _, producer, _, session = _projection_session(tmp_path, producer=producer)
     catalog = _expected_projection_catalog(producer)
     cursor, offset = None, 0
     while offset < len(catalog):
-        response = session.invoke("read_access_projection", _projection_args(session, cursor=cursor))
+        response = session.invoke(
+            "read_access_projection", _projection_args(session, cursor=cursor)
+        )
         assert response["status"] == "ok"
         body = response["body"]
         fitting = []
         for count in range(1, min(20, len(catalog) - offset) + 1):
-            candidate = {**body, "entries": catalog[offset:offset + count],
-                         "complete": offset + count == len(catalog),
-                         "next_cursor": None if offset + count == len(catalog) else "projection-cursor:" + "0" * 64}
-            if len(_a2_canonical(candidate)) <= 8192: fitting.append(count)
+            candidate = {
+                **body,
+                "entries": catalog[offset : offset + count],
+                "complete": offset + count == len(catalog),
+                "next_cursor": None
+                if offset + count == len(catalog)
+                else "projection-cursor:" + "0" * 64,
+            }
+            if len(_a2_canonical(candidate)) <= 8192:
+                fitting.append(count)
         assert len(body["entries"]) == max(fitting) < 20
-        assert body["entries"] == catalog[offset:offset + max(fitting)]
+        assert body["entries"] == catalog[offset : offset + max(fitting)]
         offset += len(body["entries"])
         cursor = body["next_cursor"]
         assert body["complete"] is (offset == len(catalog))
@@ -1244,7 +1555,10 @@ def test_projection_maximal_utf8_escaped_prefix_includes_own_terminal_wrapper(tm
 def test_projection_replay_cross_namespace_and_detached_authority(tmp_path):
     store, attempt, producer, grants, session = _projection_session(tmp_path)
     manifest_token = _a2_page(session, limit=1)["body"]["next_cursor"]
-    _assert_refused(session.invoke("read_access_projection", _projection_args(session, cursor=manifest_token)), "stale_binding")
+    _assert_refused(
+        session.invoke("read_access_projection", _projection_args(session, cursor=manifest_token)),
+        "stale_binding",
+    )
     first = session.invoke("read_access_projection", _projection_args(session, limit=1))
     token = first["body"]["next_cursor"]
     _assert_refused(_a2_page(session, cursor=token), "bad_arguments")
@@ -1254,60 +1568,100 @@ def test_projection_replay_cross_namespace_and_detached_authority(tmp_path):
     assert _a2_canonical(second["body"]) == _a2_canonical(replay["body"])
     assert second["call_id"] != replay["call_id"] and second["sequence"] < replay["sequence"]
     other = _tools().from_execution(store, attempt.ticket_id, "earnings_delta", grants=grants)
-    _assert_refused(other.invoke("read_access_projection", _projection_args(other, cursor=token)), "stale_binding")
+    _assert_refused(
+        other.invoke("read_access_projection", _projection_args(other, cursor=token)),
+        "stale_binding",
+    )
     grants["producers"][0]["coordinates"].clear()
     first["body"]["entries"].clear()
-    assert session.invoke("read_access_projection", _projection_args(session, limit=1))["body"]["entries"] == _expected_projection_catalog(producer)[:1]
+    assert (
+        session.invoke("read_access_projection", _projection_args(session, limit=1))["body"][
+            "entries"
+        ]
+        == _expected_projection_catalog(producer)[:1]
+    )
     assert second["body"]["offset"] == 1 and len(second["body"]["entries"]) == 2
     assert session._cursors and session._projection_cursors
     assert not set(session._cursors) & set(session._projection_cursors)
 
 
-@pytest.mark.parametrize("changes,code", [
-    ({"limit": True}, "bad_arguments"), ({"limit": 0}, "bad_arguments"),
-    ({"limit": 21}, "bad_arguments"), ({"fields": ["amount"]}, "bad_arguments"),
-    ({"coordinates": []}, "bad_arguments"), ({"manifest_sha256": "bad"}, "bad_arguments"),
-    ({"manifest_sha256": "f" * 64}, "identity_mismatch"),
-    ({"producer_sha256": "f" * 64}, "identity_mismatch"),
-    ({"cursor": "projection-cursor:" + "a" * 64}, "stale_binding"),
-    ({"cursor": "projection-cursor:no"}, "bad_arguments"),
-])
+@pytest.mark.parametrize(
+    "changes,code",
+    [
+        ({"limit": True}, "bad_arguments"),
+        ({"limit": 0}, "bad_arguments"),
+        ({"limit": 21}, "bad_arguments"),
+        ({"fields": ["amount"]}, "bad_arguments"),
+        ({"coordinates": []}, "bad_arguments"),
+        ({"manifest_sha256": "bad"}, "bad_arguments"),
+        ({"manifest_sha256": "f" * 64}, "identity_mismatch"),
+        ({"producer_sha256": "f" * 64}, "identity_mismatch"),
+        ({"cursor": "projection-cursor:" + "a" * 64}, "stale_binding"),
+        ({"cursor": "projection-cursor:no"}, "bad_arguments"),
+    ],
+)
 def test_projection_exact_arguments_refuse_atomically(tmp_path, changes, code):
     session = _projection_session(tmp_path)[4]
-    _assert_refused(session.invoke("read_access_projection", _projection_args(session, **changes)), code)
+    _assert_refused(
+        session.invoke("read_access_projection", _projection_args(session, **changes)), code
+    )
 
 
 def test_projection_v1_and_cp5_never_gain_new_capability(tmp_path):
     for consumer in ("CP-2", "CP-5"):
         store, attempt, step, producer = _execution(tmp_path / consumer, consumer=consumer)
         grants = copy.deepcopy(GRANTS)
-        if consumer == "CP-2": grants["row_ids"] = ["revenue", "operating_profit"]
+        if consumer == "CP-2":
+            grants["row_ids"] = ["revenue", "operating_profit"]
         session = _session(store, attempt, step, grants)
-        _assert_refused(session.invoke("read_access_projection", dict(producer_module_id="CP-1", producer_sha256=producer.content_hash(), manifest_sha256="0" * 64, cursor=None, limit=20)), "not_permitted")
+        _assert_refused(
+            session.invoke(
+                "read_access_projection",
+                dict(
+                    producer_module_id="CP-1",
+                    producer_sha256=producer.content_hash(),
+                    manifest_sha256="0" * 64,
+                    cursor=None,
+                    limit=20,
+                ),
+            ),
+            "not_permitted",
+        )
 
 
 def test_projection_indivisible_record_refuses_without_cursor_or_lock_loss(tmp_path):
     producer = _a2_producer(page25=True)
-    producer = producer.model_copy(update={"facts": tuple(f.model_copy(update={"label": "€" * 4000}) for f in producer.facts)})
+    producer = producer.model_copy(
+        update={"facts": tuple(f.model_copy(update={"label": "€" * 4000}) for f in producer.facts)}
+    )
     session = _projection_session(tmp_path, producer=producer)[4]
     earlier = _a2_page(session, limit=1)
-    _assert_refused(session.invoke("read_access_projection", _projection_args(session)), "bad_arguments")
+    _assert_refused(
+        session.invoke("read_access_projection", _projection_args(session)), "bad_arguments"
+    )
     assert session._projection_cursors == {} and session.receipts[0] == earlier
     assert _a2_page(session)["status"] == "ok"
 
 
-@pytest.mark.parametrize("variant,code", [("snapshot", "stale_binding"), ("blob", "identity_mismatch")])
-def test_projection_final_currentness_prevents_provisional_cursor(tmp_path, monkeypatch, variant, code):
+@pytest.mark.parametrize(
+    "variant,code", [("snapshot", "stale_binding"), ("blob", "identity_mismatch")]
+)
+def test_projection_final_currentness_prevents_provisional_cursor(
+    tmp_path, monkeypatch, variant, code
+):
     store, _, producer, _, session = _projection_session(tmp_path)
     args = _projection_args(session)
     original = session._projection_page
+
     def project_then_change(supplied, current):
         result = original(supplied, current)
-        if variant == "blob": (store.directory / "blobs" / producer.content_hash()).write_text("private tamper")
+        if variant == "blob":
+            (store.directory / "blobs" / producer.content_hash()).write_text("private tamper")
         else:
             snapshot = store.read()
             store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
         return result
+
     monkeypatch.setattr(session, "_projection_page", project_then_change)
     _assert_refused(session.invoke("read_access_projection", args), code)
     assert session._projection_cursors == {}
@@ -1316,41 +1670,61 @@ def test_projection_final_currentness_prevents_provisional_cursor(tmp_path, monk
 @pytest.mark.parametrize("seam", ["serialize", "append"])
 def test_projection_one_shot_retention_failure_retains_only_safe_error(tmp_path, monkeypatch, seam):
     from deploy_workflow.tools import upstream
+
     session = _projection_session(tmp_path)[4]
     earlier = session.invoke("read_access_projection", _projection_args(session, limit=1))
     previous_tokens = session._projection_cursors.copy()
     if seam == "serialize":
         original = upstream.json.dumps
         failed = False
+
         def fail_once(value, *args, **kwargs):
             nonlocal failed
-            if isinstance(value, dict) and value.get("tool") == "read_access_projection" and not failed:
+            if (
+                isinstance(value, dict)
+                and value.get("tool") == "read_access_projection"
+                and not failed
+            ):
                 failed = True
                 raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
             return original(value, *args, **kwargs)
+
         monkeypatch.setattr(upstream.json, "dumps", fail_once)
     else:
+
         class FailOnce(list):
             failed = False
+
             def append(self, value):
                 if not self.failed:
                     self.failed = True
                     raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
                 super().append(value)
+
         monkeypatch.setattr(session, "_receipts", FailOnce(session._receipts))
     failed = session.invoke("read_access_projection", _projection_args(session, limit=2))
-    assert failed["status"] == "error" and failed["error_code"] == "internal_error" and failed["body"] is None
+    assert (
+        failed["status"] == "error"
+        and failed["error_code"] == "internal_error"
+        and failed["body"] is None
+    )
     assert "PRIVATE_RETENTION" not in json.dumps(failed)
     assert session._projection_cursors == previous_tokens and session.receipts[0] == earlier
     assert session.receipts[-1] == failed
-    assert session.invoke("read_access_projection", _projection_args(session, limit=2))["status"] == "ok"
+    assert (
+        session.invoke("read_access_projection", _projection_args(session, limit=2))["status"]
+        == "ok"
+    )
 
 
 def test_projection_permanent_retention_failure_is_visible_and_no_cursor(tmp_path, monkeypatch):
     session = _projection_session(tmp_path)[4]
     args = _projection_args(session)
+
     class NeverRetain(list):
-        def append(self, value): raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+        def append(self, value):
+            raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+
     with monkeypatch.context() as patch:
         patch.setattr(session, "_receipts", NeverRetain())
         with pytest.raises(ValueError, match="^internal_error$"):
@@ -1365,11 +1739,25 @@ def _projection_producer15():
     facts = [f for f in producer.facts if f.field != "basis_note"]
     for pid in ("q3-2025", "q4-2025"):
         sample = next(f for f in facts if f.table_id == "T4.14" and f.row_id == pid)
-        for key, text in dict(day_count="92", audit_status="UNAUDITED", source_id="upstream-note",
-                              source_locator="line:1", component_period_ids=None).items():
-            facts.append(sample.model_copy(update=dict(fact_id=f"period-{pid}-{key}", field=key,
-                label=key, text=text, status="not_applicable" if text is None else "known",
-                limitation="No component periods" if text is None else None)))
+        for key, text in dict(
+            day_count="92",
+            audit_status="UNAUDITED",
+            source_id="upstream-note",
+            source_locator="line:1",
+            component_period_ids=None,
+        ).items():
+            facts.append(
+                sample.model_copy(
+                    update=dict(
+                        fact_id=f"period-{pid}-{key}",
+                        field=key,
+                        label=key,
+                        text=text,
+                        status="not_applicable" if text is None else "known",
+                        limitation="No component periods" if text is None else None,
+                    )
+                )
+            )
     return producer.model_copy(update={"facts": tuple(facts)})
 
 
@@ -1377,8 +1765,14 @@ def test_projection_literal15_fact_rows_preserve_distinct_and_duplicate_handles(
     producer = _projection_producer15()
     target = producer.facts[0]
     distinct = target.citations[0].model_copy(update={"locator": "line:2"})
-    producer = producer.model_copy(update={"facts": (target.model_copy(update={
-        "citations": (*target.citations, distinct)}), *producer.facts[1:])})
+    producer = producer.model_copy(
+        update={
+            "facts": (
+                target.model_copy(update={"citations": (*target.citations, distinct)}),
+                *producer.facts[1:],
+            )
+        }
+    )
     _, _, producer, _, session = _projection_session(tmp_path, producer=producer)
     expected = _expected_projection_catalog(producer)
     seen, cursor = [], None
@@ -1386,7 +1780,8 @@ def test_projection_literal15_fact_rows_preserve_distinct_and_duplicate_handles(
         result = session.invoke("read_access_projection", _projection_args(session, cursor=cursor))
         assert result["status"] == "ok"
         seen.extend(result["body"]["entries"])
-        if result["body"]["complete"]: break
+        if result["body"]["complete"]:
+            break
         cursor = result["body"]["next_cursor"]
     assert seen == expected
     for pid in ("q3-2025", "q4-2025"):
@@ -1395,20 +1790,29 @@ def test_projection_literal15_fact_rows_preserve_distinct_and_duplicate_handles(
     assert len(handles) == 2 and handles[0] != handles[1]
 
 
-def test_projection_snapshot_change_during_receipt_encoding_cannot_publish_success(tmp_path, monkeypatch):
+def test_projection_snapshot_change_during_receipt_encoding_cannot_publish_success(
+    tmp_path, monkeypatch
+):
     from deploy_workflow.tools import upstream
+
     store, _, _, _, session = _projection_session(tmp_path)
     args = _projection_args(session)
     original = upstream.json.dumps
     changed = False
+
     def encode_then_change(value, *positional, **kwargs):
         nonlocal changed
         encoded = original(value, *positional, **kwargs)
-        if isinstance(value, dict) and value.get("tool") == "read_access_projection" and not changed:
+        if (
+            isinstance(value, dict)
+            and value.get("tool") == "read_access_projection"
+            and not changed
+        ):
             changed = True
             snapshot = store.read()
             store._write(snapshot.model_copy(update={"parent": snapshot.content_hash()}))
         return encoded
+
     monkeypatch.setattr(upstream.json, "dumps", encode_then_change)
     failed = session.invoke("read_access_projection", args)
     _assert_refused(failed, "stale_binding")
@@ -1416,16 +1820,24 @@ def test_projection_snapshot_change_during_receipt_encoding_cannot_publish_succe
 
 
 @pytest.mark.parametrize("seam", ["projection", "retention"])
-def test_projection_control_interrupt_releases_writer_without_usable_cursor(tmp_path, monkeypatch, seam):
+def test_projection_control_interrupt_releases_writer_without_usable_cursor(
+    tmp_path, monkeypatch, seam
+):
     session = _projection_session(tmp_path)[4]
     args = _projection_args(session)
     with monkeypatch.context() as patch:
         if seam == "projection":
-            def interrupt(*args): raise KeyboardInterrupt()
+
+            def interrupt(*args):
+                raise KeyboardInterrupt()
+
             patch.setattr(session, "_projection_page", interrupt)
         else:
+
             class Interrupt(list):
-                def append(self, value): raise KeyboardInterrupt()
+                def append(self, value):
+                    raise KeyboardInterrupt()
+
             patch.setattr(session, "_receipts", Interrupt())
         with pytest.raises(KeyboardInterrupt):
             session.invoke("read_access_projection", args)
@@ -1433,7 +1845,9 @@ def test_projection_control_interrupt_releases_writer_without_usable_cursor(tmp_
     assert session.invoke("read_access_projection", args)["status"] == "ok"
 
 
-def test_projection_postappend_failure_hides_provisional_receipt_before_unlock(tmp_path, monkeypatch):
+def test_projection_postappend_failure_hides_provisional_receipt_before_unlock(
+    tmp_path, monkeypatch
+):
     """Observe immediately on unlock; retain an unrelated reentrant refusal too."""
     session = _projection_session(tmp_path)[4]
     args = _projection_args(session, limit=2)
@@ -1441,23 +1855,28 @@ def test_projection_postappend_failure_hides_provisional_receipt_before_unlock(t
     before_tokens = session._projection_cursors.copy()
     observed, unrelated = [], []
     lock = session._receipt_lock
+
     class FailOnceAfterAppend(list):
         failed = False
+
         def append(self, value):
             super().append(value)
             if not self.failed:
                 self.failed = True
                 raise RuntimeError("PRIVATE_RETENTION_SENTINEL")
+
     class ObserveUnlock:
         def __enter__(self):
             lock.acquire()
             return self
+
         def __exit__(self, kind, value, traceback):
             lock.release()
             if kind is RuntimeError:
                 observed.extend(session.receipts)
                 unrelated.append(session.invoke("read_access_projection", args))
             return False
+
     monkeypatch.setattr(session, "_receipts", FailOnceAfterAppend(session._receipts))
     monkeypatch.setattr(session, "_receipt_lock", ObserveUnlock())
     failed = session.invoke("read_access_projection", args)
@@ -1469,28 +1888,35 @@ def test_projection_postappend_failure_hides_provisional_receipt_before_unlock(t
 
 
 @pytest.mark.parametrize("seam", ["uuid", "binding-copy"])
-def test_projection_receipt_initialization_failure_is_sanitized_without_fake_id(tmp_path, monkeypatch, seam):
+def test_projection_receipt_initialization_failure_is_sanitized_without_fake_id(
+    tmp_path, monkeypatch, seam
+):
     from deploy_workflow.tools import upstream
+
     session = _projection_session(tmp_path)[4]
     args = _projection_args(session)
     fired = False
     if seam == "uuid":
         original = upstream.uuid4
+
         def fail_once():
             nonlocal fired
             if not fired:
                 fired = True
                 raise OSError("PRIVATE_INIT_SENTINEL")
             return original()
+
         monkeypatch.setattr(upstream, "uuid4", fail_once)
     else:
         original = upstream.copy.deepcopy
+
         def fail_once(value, *positional, **kwargs):
             nonlocal fired
             if value is session._binding and not fired:
                 fired = True
                 raise OSError("PRIVATE_INIT_SENTINEL")
             return original(value, *positional, **kwargs)
+
         monkeypatch.setattr(upstream.copy, "deepcopy", fail_once)
     with pytest.raises(ValueError, match="^internal_error$"):
         session.invoke("read_access_projection", args)
@@ -1503,53 +1929,91 @@ def test_projection_receipt_initialization_failure_is_sanitized_without_fake_id(
 def _integrity_execution(tmp_path, mutation=None, extras=(), transform=None):
     from pathlib import Path
 
-    oracle = json.loads((Path(__file__).parents[1] / 'cases/integrity/expected.json').read_text())
-    fixture = copy.deepcopy(oracle['literal_component_fixture'])
-    data = fixture['producers']
-    if mutation == 'bad_fact_quote':
-        data[0]['facts'][0]['citations'][0]['quote'] = 'PRIVATE_QUOTE_SENTINEL'
-    elif mutation == 'bad_claim_quote':
-        data[0]['claims'][0]['citations'][0]['quote'] = 'PRIVATE_QUOTE_SENTINEL'
-    elif mutation == 'bad_scale':
-        data[0]['facts'][0]['scale'] = '1'
-    elif mutation == 'unresolved_claim':
-        data[0]['claims'][0]['text'] = 'Revenue observation [unknown.fact].'
-    elif mutation in {'unsettled_unlimited', 'unsettled_limited'}:
-        data[0]['facts'][0].update(amount=None, status='missing', limitation='Not supplied')
-        data[0]['claims'][0]['text'] = 'Revenue observation [fin.rev].'
-        if mutation == 'unsettled_limited':
-            data[0]['claims'][0]['limitation'] = 'Observation is unavailable within this scope.'
-    elif mutation == 'identity_twice':
-        fact = copy.deepcopy(data[0]['facts'][0])
-        fact['amount'] = '1'
-        data[1]['facts'].append(fact)
-    elif mutation == 'blocked':
-        data[1]['status'] = 'blocked'
-        data[1]['limitations'] = ['PRIVATE_BLOCKED_LIMITATION']
+    oracle = json.loads((Path(__file__).parents[1] / "cases/integrity/expected.json").read_text())
+    fixture = copy.deepcopy(oracle["literal_component_fixture"])
+    data = fixture["producers"]
+    if mutation == "bad_fact_quote":
+        data[0]["facts"][0]["citations"][0]["quote"] = "PRIVATE_QUOTE_SENTINEL"
+    elif mutation == "bad_claim_quote":
+        data[0]["claims"][0]["citations"][0]["quote"] = "PRIVATE_QUOTE_SENTINEL"
+    elif mutation == "bad_scale":
+        data[0]["facts"][0]["scale"] = "1"
+    elif mutation == "unresolved_claim":
+        data[0]["claims"][0]["text"] = "Revenue observation [unknown.fact]."
+    elif mutation in {"unsettled_unlimited", "unsettled_limited"}:
+        data[0]["facts"][0].update(amount=None, status="missing", limitation="Not supplied")
+        data[0]["claims"][0]["text"] = "Revenue observation [fin.rev]."
+        if mutation == "unsettled_limited":
+            data[0]["claims"][0]["limitation"] = "Observation is unavailable within this scope."
+    elif mutation == "identity_twice":
+        fact = copy.deepcopy(data[0]["facts"][0])
+        fact["amount"] = "1"
+        data[1]["facts"].append(fact)
+    elif mutation == "blocked":
+        data[1]["status"] = "blocked"
+        data[1]["limitations"] = ["PRIVATE_BLOCKED_LIMITATION"]
     if transform is not None:
         transform(data)
-    run = Run(run_id='integrity-component', issuer_id='component', issuer_name='Component',
-              as_of=date(2025, 12, 31), case_kind='synthetic',
-              requested_modules=('CP-1B', 'CP-5', *(h.module_id for h in extras)))
-    source = fixture['source']
-    assert hashlib.sha256(source['text'].encode()).hexdigest() == source['sha256']
-    pack = PreparedPack(run=run, sources=(Source(
-        source_id=source['source_id'], name='Component note', status='ready',
-        sha256=source['sha256'], spans=(Span(locator=source['locator'], text=source['text']),)),))
-    store = Execution.create(tmp_path / 'integrity', pack)
-    heads = [Module(run_id=run.run_id, issuer_id=run.issuer_id, as_of=run.as_of,
-                    module_id='CP-0', status='accepted', facts=(Fact(
-                        fact_id='run-cp5', label='Run integrity', table_id='T8', row_id='CP-5',
-                        field='exact_command', text='Run CP-5'),))]
+    run = Run(
+        run_id="integrity-component",
+        issuer_id="component",
+        issuer_name="Component",
+        as_of=date(2025, 12, 31),
+        case_kind="synthetic",
+        requested_modules=("CP-1B", "CP-5", *(h.module_id for h in extras)),
+    )
+    source = fixture["source"]
+    assert hashlib.sha256(source["text"].encode()).hexdigest() == source["sha256"]
+    pack = PreparedPack(
+        run=run,
+        sources=(
+            Source(
+                source_id=source["source_id"],
+                name="Component note",
+                status="ready",
+                sha256=source["sha256"],
+                spans=(Span(locator=source["locator"], text=source["text"]),),
+            ),
+        ),
+    )
+    store = Execution.create(tmp_path / "integrity", pack)
+    heads = [
+        Module(
+            run_id=run.run_id,
+            issuer_id=run.issuer_id,
+            as_of=run.as_of,
+            module_id="CP-0",
+            status="accepted",
+            facts=(
+                Fact(
+                    fact_id="run-cp5",
+                    label="Run integrity",
+                    table_id="T8",
+                    row_id="CP-5",
+                    field="exact_command",
+                    text="Run CP-5",
+                ),
+            ),
+        )
+    ]
     for datum in data:
-        heads.append(Module.model_validate_json(json.dumps({
-            'run_id': run.run_id, 'issuer_id': run.issuer_id, 'as_of': run.as_of.isoformat(),
-            **datum})))
+        heads.append(
+            Module.model_validate_json(
+                json.dumps(
+                    {
+                        "run_id": run.run_id,
+                        "issuer_id": run.issuer_id,
+                        "as_of": run.as_of.isoformat(),
+                        **datum,
+                    }
+                )
+            )
+        )
     heads.extend(extras)
     for head in heads:
         store._store(head.model_dump_json())
-    store._write(store.read().model_copy(update={'heads': tuple(map(head_of, heads))}))
-    attempt = store.begin('CP-5')
+    store._write(store.read().model_copy(update={"heads": tuple(map(head_of, heads))}))
+    attempt = store.begin("CP-5")
     return store, attempt, heads[1:], fixture
 
 
@@ -1558,56 +2022,81 @@ def _integrity_grant(store, attempt):
 
     from deploy_vii import cp5_integrity
 
-    wire = json.loads((Path(__file__).parents[1] / 'cases/integrity/expected.json').read_text())['wire_types']
-    projected_fields = wire['FactAttribute'].split('|')
+    wire = json.loads((Path(__file__).parents[1] / "cases/integrity/expected.json").read_text())[
+        "wire_types"
+    ]
+    projected_fields = wire["FactAttribute"].split("|")
     scope = cp5_integrity.review_scope(store, attempt)
     return {
-        'schema_version': 'cp5-upstream-grant/2', 'consumer_module_id': 'CP-5',
-        'step_id': 'integrity_review',
-        'bound_inputs': [item.model_dump(mode='json') for item in attempt.inputs],
-        'producers': [{
-            'module_id': item.input_id, 'sha256': item.sha256, 'status': item.status,
-            'role': 'blocked' if item.status == 'blocked' else 'evaluated',
-            'fact_coordinates': [] if item.status == 'blocked' else [{
-                key: getattr(fact, key) for key in ('fact_id', 'table_id', 'row_id', 'field')
-            } for fact in head.facts],
-            'claim_ids': [] if item.status == 'blocked' else [c.claim_id for c in head.claims],
-            'claim_citation_refs': [] if item.status == 'blocked' else [
-                cp5_integrity.citation_ref(c.claim_id, n)
-                for c in head.claims for n in range(1, len(c.citations) + 1)],
-            'projected_fact_fields': sorted(projected_fields),
-        } for item, head in scope.heads],
-        'raw_source_ids': [],
-        'internal_scope_inspection': 'complete_bound_scope_for_existing_python_checks_only',
+        "schema_version": "cp5-upstream-grant/2",
+        "consumer_module_id": "CP-5",
+        "step_id": "integrity_review",
+        "bound_inputs": [item.model_dump(mode="json") for item in attempt.inputs],
+        "producers": [
+            {
+                "module_id": item.input_id,
+                "sha256": item.sha256,
+                "status": item.status,
+                "role": "blocked" if item.status == "blocked" else "evaluated",
+                "fact_coordinates": []
+                if item.status == "blocked"
+                else [
+                    {key: getattr(fact, key) for key in ("fact_id", "table_id", "row_id", "field")}
+                    for fact in head.facts
+                ],
+                "claim_ids": [] if item.status == "blocked" else [c.claim_id for c in head.claims],
+                "claim_citation_refs": []
+                if item.status == "blocked"
+                else [
+                    cp5_integrity.citation_ref(c.claim_id, n)
+                    for c in head.claims
+                    for n in range(1, len(c.citations) + 1)
+                ],
+                "projected_fact_fields": sorted(projected_fields),
+            }
+            for item, head in scope.heads
+        ],
+        "raw_source_ids": [],
+        "internal_scope_inspection": "complete_bound_scope_for_existing_python_checks_only",
     }
 
 
 def _integrity_session(store, attempt, grants=None):
-    return _tools().from_execution(store, attempt.ticket_id, 'integrity_review',
-                                   grants=_integrity_grant(store, attempt) if grants is None else grants)
+    return _tools().from_execution(
+        store,
+        attempt.ticket_id,
+        "integrity_review",
+        grants=_integrity_grant(store, attempt) if grants is None else grants,
+    )
 
 
 def _integrity_pages(session, section, limit=20):
     manifest = session.integrity_manifest
     cursor, entries, pages = None, [], []
     while True:
-        receipt = session.invoke('read_integrity_scope', {
-            'scope_sha256': manifest['scope_sha256'], 'section': section,
-            'cursor': cursor, 'limit': limit})
-        assert receipt['status'] == 'ok', receipt
-        body = receipt['body']
-        assert len(json.dumps(body, ensure_ascii=False, separators=(',', ':')).encode()) <= 8192
-        assert body['offset'] == len(entries)
-        assert body['grant_sha256'] == manifest['grant_sha256']
-        assert body['manifest_sha256'] == manifest['manifest_sha256']
-        entries.extend(body['entries'])
+        receipt = session.invoke(
+            "read_integrity_scope",
+            {
+                "scope_sha256": manifest["scope_sha256"],
+                "section": section,
+                "cursor": cursor,
+                "limit": limit,
+            },
+        )
+        assert receipt["status"] == "ok", receipt
+        body = receipt["body"]
+        assert len(json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()) <= 8192
+        assert body["offset"] == len(entries)
+        assert body["grant_sha256"] == manifest["grant_sha256"]
+        assert body["manifest_sha256"] == manifest["manifest_sha256"]
+        entries.extend(body["entries"])
         pages.append(receipt)
-        if body['complete']:
-            assert body['next_cursor'] is None
-            assert len(entries) == body['total']
+        if body["complete"]:
+            assert body["next_cursor"] is None
+            assert len(entries) == body["total"]
             return entries, pages
-        assert body['entries']
-        cursor = body['next_cursor']
+        assert body["entries"]
+        cursor = body["next_cursor"]
 
 
 def test_integrity_v2_complete_two_producers_zero_and_qualified_claims(tmp_path):
@@ -1615,115 +2104,149 @@ def test_integrity_v2_complete_two_producers_zero_and_qualified_claims(tmp_path)
     before = store.read().content_hash()
     session = _integrity_session(store, attempt)
     manifest = session.integrity_manifest
-    assert manifest['producer_count'] == manifest['evaluated_count'] == 2
-    assert manifest['fact_count'] == manifest['claim_count'] == manifest['claim_citation_count'] == 2
-    assert len(manifest['sections']) == 16
-    evidence, _ = _integrity_pages(session, 'required_evidence')
+    assert manifest["producer_count"] == manifest["evaluated_count"] == 2
+    assert (
+        manifest["fact_count"] == manifest["claim_count"] == manifest["claim_citation_count"] == 2
+    )
+    assert len(manifest["sections"]) == 16
+    evidence, _ = _integrity_pages(session, "required_evidence")
     assert len(evidence) == 2
-    assert [x['fact']['amount'] for x in evidence] == ['0', '0']
-    assert all(x['fact']['citation_handles']['count'] == 1 for x in evidence)
-    assert all(x['fact']['fact_sha256'] == heads[n].facts[0].content_hash()
-               for n, x in enumerate(evidence))
-    claims, _ = _integrity_pages(session, 'claims')
-    assert [x['claim_id'] for x in claims] == ['summary', 'summary']
-    assert [x['producer']['module_id'] for x in claims] == ['CP-1', 'CP-1B']
-    for section in (x['section'] for x in manifest['sections']):
+    assert [x["fact"]["amount"] for x in evidence] == ["0", "0"]
+    assert all(x["fact"]["citation_handles"]["count"] == 1 for x in evidence)
+    assert all(
+        x["fact"]["fact_sha256"] == heads[n].facts[0].content_hash() for n, x in enumerate(evidence)
+    )
+    claims, _ = _integrity_pages(session, "claims")
+    assert [x["claim_id"] for x in claims] == ["summary", "summary"]
+    assert [x["producer"]["module_id"] for x in claims] == ["CP-1", "CP-1B"]
+    for section in (x["section"] for x in manifest["sections"]):
         _integrity_pages(session, section)
-    verify = session.invoke('verify_integrity_scope', {'scope_sha256': manifest['scope_sha256']})
-    assert verify['status'] == 'ok'
-    assert verify['body']['category_counts'] == fixture['expected']['mechanical_counts']
-    assert verify['body']['mechanical_verdict'] == 'clean'
+    verify = session.invoke("verify_integrity_scope", {"scope_sha256": manifest["scope_sha256"]})
+    assert verify["status"] == "ok"
+    assert verify["body"]["category_counts"] == fixture["expected"]["mechanical_counts"]
+    assert verify["body"]["mechanical_verdict"] == "clean"
     assert store.read().content_hash() == before
     serialized = json.dumps(session.receipts)
-    assert 'Component revenue zero.' not in serialized
-    assert 'quote' not in serialized
-    assert all(r['source_evidence'] == {'read': [], 'extracted': [], 'surfaced': [], 'searched': []}
-               for r in session.receipts)
+    assert "Component revenue zero." not in serialized
+    assert "quote" not in serialized
+    assert all(
+        r["source_evidence"] == {"read": [], "extracted": [], "surfaced": [], "searched": []}
+        for r in session.receipts
+    )
 
 
-@pytest.mark.parametrize('mutation', [
-    'bad_fact_quote', 'bad_claim_quote', 'bad_scale', 'unresolved_claim',
-    'unsettled_unlimited', 'unsettled_limited', 'identity_twice', 'blocked',
-])
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "bad_fact_quote",
+        "bad_claim_quote",
+        "bad_scale",
+        "unresolved_claim",
+        "unsettled_unlimited",
+        "unsettled_limited",
+        "identity_twice",
+        "blocked",
+    ],
+)
 def test_integrity_v2_causal_mechanical_categories(tmp_path, mutation):
     store, attempt, _, fixture = _integrity_execution(tmp_path, mutation)
     session = _integrity_session(store, attempt)
-    expected = next(x for x in fixture['causal_mutations'] if x['id'] == mutation)
-    response = session.invoke('verify_integrity_scope', {
-        'scope_sha256': session.integrity_manifest['scope_sha256']})
-    assert response['status'] == 'ok', response
-    assert response['body']['category_counts'] == expected['expected_counts']
-    findings, _ = _integrity_pages(session, 'findings')
-    assert len(findings) == sum(expected['expected_counts'].values())
-    nonzero = {code: count for code, count in expected['expected_counts'].items() if count}
-    assert {code: sum(x['code'] == code for x in findings) for code in {x['code'] for x in findings}} == nonzero
-    evidence, _ = _integrity_pages(session, 'required_evidence')
-    if mutation.startswith('unsettled'):
-        assert evidence[0]['fact']['amount'] is None
-        unsettled, _ = _integrity_pages(session, 'unsettled')
-        assert unsettled[0]['limited'] is expected['limited']
-    if mutation == 'identity_twice':
-        groups, _ = _integrity_pages(session, 'identity_groups')
+    expected = next(x for x in fixture["causal_mutations"] if x["id"] == mutation)
+    response = session.invoke(
+        "verify_integrity_scope", {"scope_sha256": session.integrity_manifest["scope_sha256"]}
+    )
+    assert response["status"] == "ok", response
+    assert response["body"]["category_counts"] == expected["expected_counts"]
+    findings, _ = _integrity_pages(session, "findings")
+    assert len(findings) == sum(expected["expected_counts"].values())
+    nonzero = {code: count for code, count in expected["expected_counts"].items() if count}
+    assert {
+        code: sum(x["code"] == code for x in findings) for code in {x["code"] for x in findings}
+    } == nonzero
+    evidence, _ = _integrity_pages(session, "required_evidence")
+    if mutation.startswith("unsettled"):
+        assert evidence[0]["fact"]["amount"] is None
+        unsettled, _ = _integrity_pages(session, "unsettled")
+        assert unsettled[0]["limited"] is expected["limited"]
+    if mutation == "identity_twice":
+        groups, _ = _integrity_pages(session, "identity_groups")
         assert len(groups) == 2
-        assert all(g['differing'] == ['value'] for g in groups)
-        assert all(len(g['members']) == 2 for g in groups)
-    assert 'PRIVATE_QUOTE_SENTINEL' not in json.dumps(session.receipts)
-    assert 'PRIVATE_BLOCKED_LIMITATION' not in json.dumps(session.receipts)
-    assert 'detail' not in json.dumps(findings)
+        assert all(g["differing"] == ["value"] for g in groups)
+        assert all(len(g["members"]) == 2 for g in groups)
+    assert "PRIVATE_QUOTE_SENTINEL" not in json.dumps(session.receipts)
+    assert "PRIVATE_BLOCKED_LIMITATION" not in json.dumps(session.receipts)
+    assert "detail" not in json.dumps(findings)
 
 
-@pytest.mark.parametrize('part', ['producers', 'fact_coordinates', 'claim_ids', 'claim_citation_refs'])
+@pytest.mark.parametrize(
+    "part", ["producers", "fact_coordinates", "claim_ids", "claim_citation_refs"]
+)
 def test_integrity_v2_incomplete_grant_never_discloses(tmp_path, part):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     grant = _integrity_grant(store, attempt)
-    if part == 'producers':
+    if part == "producers":
         grant[part].pop()
     else:
-        grant['producers'][0][part].pop()
-    with pytest.raises(ValueError, match='^not_permitted$'):
+        grant["producers"][0][part].pop()
+    with pytest.raises(ValueError, match="^not_permitted$"):
         _integrity_session(store, attempt, grant)
 
 
-@pytest.mark.parametrize('part', ['fact_coordinates', 'claim_ids', 'claim_citation_refs', 'projected_fact_fields'])
+@pytest.mark.parametrize(
+    "part", ["fact_coordinates", "claim_ids", "claim_citation_refs", "projected_fact_fields"]
+)
 def test_integrity_v2_duplicate_grant_is_bad_arguments(tmp_path, part):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     grant = _integrity_grant(store, attempt)
-    grant['producers'][0][part].append(copy.deepcopy(grant['producers'][0][part][0]))
-    with pytest.raises(ValueError, match='^bad_arguments$'):
+    grant["producers"][0][part].append(copy.deepcopy(grant["producers"][0][part][0]))
+    with pytest.raises(ValueError, match="^bad_arguments$"):
         _integrity_session(store, attempt, grant)
 
 
-@pytest.mark.parametrize('tool,args', [
-    ('read_access_projection', {}), ('read_access_manifest', {}), ('read_source', {}),
-    ('verify_upstream', {'kind': 'integrity'}),
-])
+@pytest.mark.parametrize(
+    "tool,args",
+    [
+        ("read_access_projection", {}),
+        ("read_access_manifest", {}),
+        ("read_source", {}),
+        ("verify_upstream", {"kind": "integrity"}),
+    ],
+)
 def test_integrity_v2_denies_other_surfaces(tmp_path, tool, args):
     store, attempt, heads, _ = _integrity_execution(tmp_path)
     session = _integrity_session(store, attempt)
-    if tool == 'verify_upstream':
-        args = {'producer_module_id': 'CP-1', 'producer_sha256': heads[0].content_hash(),
-                'kind': 'integrity', 'fact_ids': ['fin.rev']}
-    _assert_refused(session.invoke(tool, args), 'not_permitted')
+    if tool == "verify_upstream":
+        args = {
+            "producer_module_id": "CP-1",
+            "producer_sha256": heads[0].content_hash(),
+            "kind": "integrity",
+            "fact_ids": ["fin.rev"],
+        }
+    _assert_refused(session.invoke(tool, args), "not_permitted")
 
 
 def test_integrity_v2_foreign_cursor_empty_section_and_replay(tmp_path):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     session = _integrity_session(store, attempt)
-    claims, pages = _integrity_pages(session, 'claims', 1)
-    first = pages[0]['body']
-    args = {'scope_sha256': session.integrity_manifest['scope_sha256'],
-            'section': 'claims', 'cursor': first['next_cursor'], 'limit': 1}
-    assert session.invoke('read_integrity_scope', args)['body'] == pages[1]['body']
-    args['section'] = 'producers'
-    _assert_refused(session.invoke('read_integrity_scope', args), 'stale_binding')
-    args['cursor'] = 'integrity-cursor:' + 'a' * 64
-    _assert_refused(session.invoke('read_integrity_scope', args), 'stale_binding')
-    args['cursor'] = 'bad'
-    _assert_refused(session.invoke('read_integrity_scope', args), 'bad_arguments')
-    empty, empty_pages = _integrity_pages(session, 'findings')
+    claims, pages = _integrity_pages(session, "claims", 1)
+    first = pages[0]["body"]
+    args = {
+        "scope_sha256": session.integrity_manifest["scope_sha256"],
+        "section": "claims",
+        "cursor": first["next_cursor"],
+        "limit": 1,
+    }
+    assert session.invoke("read_integrity_scope", args)["body"] == pages[1]["body"]
+    args["section"] = "producers"
+    _assert_refused(session.invoke("read_integrity_scope", args), "stale_binding")
+    args["cursor"] = "integrity-cursor:" + "a" * 64
+    _assert_refused(session.invoke("read_integrity_scope", args), "stale_binding")
+    args["cursor"] = "bad"
+    _assert_refused(session.invoke("read_integrity_scope", args), "bad_arguments")
+    empty, empty_pages = _integrity_pages(session, "findings")
     assert empty == [] and len(empty_pages) == 1
-    assert empty_pages[0]['body']['offset'] == 0
-    assert empty_pages[0]['body']['complete'] is True
+    assert empty_pages[0]["body"]["offset"] == 0
+    assert empty_pages[0]["body"]["complete"] is True
     assert len(claims) == 2
 
 
@@ -1732,118 +2255,213 @@ def test_integrity_v2_final_recheck_discards_body_and_cursor(tmp_path, monkeypat
     session = _integrity_session(store, attempt)
     manifest = session.integrity_manifest
     original = session._scope_page
+
     def race(args):
         result = original(args)
-        store._write(store.read().model_copy(update={'heads': ()}))
+        store._write(store.read().model_copy(update={"heads": ()}))
         return result
-    monkeypatch.setattr(session, '_scope_page', race)
-    _assert_refused(session.invoke('read_integrity_scope', {
-        'scope_sha256': manifest['scope_sha256'], 'section': 'claims',
-        'cursor': None, 'limit': 1}), 'stale_binding')
+
+    monkeypatch.setattr(session, "_scope_page", race)
+    _assert_refused(
+        session.invoke(
+            "read_integrity_scope",
+            {
+                "scope_sha256": manifest["scope_sha256"],
+                "section": "claims",
+                "cursor": None,
+                "limit": 1,
+            },
+        ),
+        "stale_binding",
+    )
     assert session._integrity_cursors == {}
-    assert session.receipts[-1]['body'] is None
+    assert session.receipts[-1]["body"] is None
 
 
 def test_integrity_v2_dynamic_model_is_mandatory_and_not_pooled(tmp_path):
-    extra = Module(run_id='integrity-component', issuer_id='component', as_of=date(2025, 12, 31),
-                   module_id='CP-MODEL', status='accepted', facts=(Fact(
-                       fact_id='fin.rev', label='Model observation', amount=Decimal(0),
-                       unit='MILLIONS', scale=Decimal(1000000), period='Q4 2025'),))
+    extra = Module(
+        run_id="integrity-component",
+        issuer_id="component",
+        as_of=date(2025, 12, 31),
+        module_id="CP-MODEL",
+        status="accepted",
+        facts=(
+            Fact(
+                fact_id="fin.rev",
+                label="Model observation",
+                amount=Decimal(0),
+                unit="MILLIONS",
+                scale=Decimal(1000000),
+                period="Q4 2025",
+            ),
+        ),
+    )
     store, attempt, _, _ = _integrity_execution(tmp_path, extras=(extra,))
     session = _integrity_session(store, attempt)
-    assert session.integrity_manifest['evaluated_count'] == 3
-    producers, _ = _integrity_pages(session, 'producers')
-    assert {p['producer']['module_id'] for p in producers} == {'CP-1', 'CP-1B', 'CP-MODEL'}
-    groups, _ = _integrity_pages(session, 'identity_groups')
+    assert session.integrity_manifest["evaluated_count"] == 3
+    producers, _ = _integrity_pages(session, "producers")
+    assert {p["producer"]["module_id"] for p in producers} == {"CP-1", "CP-1B", "CP-MODEL"}
+    groups, _ = _integrity_pages(session, "identity_groups")
     assert len(groups) == 1
-    assert {r['producer_module_id'] for r in groups[0]['members']} == {'CP-1', 'CP-MODEL'}
+    assert {r["producer_module_id"] for r in groups[0]["members"]} == {"CP-1", "CP-MODEL"}
     grant = _integrity_grant(store, attempt)
-    grant['producers'] = [p for p in grant['producers'] if p['module_id'] != 'CP-MODEL']
-    with pytest.raises(ValueError, match='^not_permitted$'):
+    grant["producers"] = [p for p in grant["producers"] if p["module_id"] != "CP-MODEL"]
+    with pytest.raises(ValueError, match="^not_permitted$"):
         _integrity_session(store, attempt, grant)
 
 
 def test_integrity_v2_unicode_maximal_prefix_and_oversize_atomic(tmp_path):
     def transform(data):
-        data[0]['claims'] = [{'claim_id': f'claim{n:02}', 'text': 'Observation ' + '界' * 330 + '.',
-                             'citations': [], 'limitation': None} for n in range(25)]
+        data[0]["claims"] = [
+            {
+                "claim_id": f"claim{n:02}",
+                "text": "Observation " + "界" * 330 + ".",
+                "citations": [],
+                "limitation": None,
+            }
+            for n in range(25)
+        ]
+
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=transform)
     session = _integrity_session(store, attempt)
-    claims, pages = _integrity_pages(session, 'claims')
+    claims, pages = _integrity_pages(session, "claims")
     assert len(claims) == 26 and len(pages) > 2
     for page in pages[:-1]:
-        body = copy.deepcopy(page['body'])
-        end = body['offset'] + len(body['entries'])
-        body['entries'].append(claims[end])
-        body['complete'] = end + 1 == len(claims)
-        body['next_cursor'] = None if body['complete'] else 'integrity-cursor:' + '0' * 64
-        assert len(json.dumps(body, ensure_ascii=False, separators=(',', ':')).encode()) > 8192
+        body = copy.deepcopy(page["body"])
+        end = body["offset"] + len(body["entries"])
+        body["entries"].append(claims[end])
+        body["complete"] = end + 1 == len(claims)
+        body["next_cursor"] = None if body["complete"] else "integrity-cursor:" + "0" * 64
+        assert len(json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()) > 8192
+
     def huge(data):
-        data[0]['claims'][0]['text'] = 'Observation ' + '界' * 4000 + '.'
-    other, ticket, _, _ = _integrity_execution(tmp_path / 'huge', transform=huge)
+        data[0]["claims"][0]["text"] = "Observation " + "界" * 4000 + "."
+
+    other, ticket, _, _ = _integrity_execution(tmp_path / "huge", transform=huge)
     large = _integrity_session(other, ticket)
-    _assert_refused(large.invoke('read_integrity_scope', {
-        'scope_sha256': large.integrity_manifest['scope_sha256'], 'section': 'claims',
-        'cursor': None, 'limit': 20}), 'bad_arguments')
+    _assert_refused(
+        large.invoke(
+            "read_integrity_scope",
+            {
+                "scope_sha256": large.integrity_manifest["scope_sha256"],
+                "section": "claims",
+                "cursor": None,
+                "limit": 20,
+            },
+        ),
+        "bad_arguments",
+    )
     assert large._integrity_cursors == {}
 
 
 def test_integrity_v2_preserves_unreferenced_flagged_fact_and_calculation_alias(tmp_path):
     def transform(data):
-        data[0]['facts'][0]['calculation_id'] = 'calc.rev'
-        data[0]['claims'][0]['text'] = 'Revenue observation {calc.rev|MILLIONS}.'
-        unreferenced = copy.deepcopy(data[0]['facts'][0])
-        unreferenced.update(fact_id='unreferenced', row_id='unreferenced', calculation_id=None, scale='1')
-        data[0]['facts'].append(unreferenced)
+        data[0]["facts"][0]["calculation_id"] = "calc.rev"
+        data[0]["claims"][0]["text"] = "Revenue observation {calc.rev|MILLIONS}."
+        unreferenced = copy.deepcopy(data[0]["facts"][0])
+        unreferenced.update(
+            fact_id="unreferenced", row_id="unreferenced", calculation_id=None, scale="1"
+        )
+        data[0]["facts"].append(unreferenced)
+
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=transform)
     session = _integrity_session(store, attempt)
-    evidence, _ = _integrity_pages(session, 'required_evidence')
-    by_id = {e['fact']['fact_id']: e for e in evidence}
-    assert by_id['fin.rev']['reasons'] == ['claim_reference']
-    assert by_id['fin.rev']['claim_ids'] == ['summary']
-    assert by_id['unreferenced']['reasons'] == ['flagged_fact']
-    assert by_id['unreferenced']['claim_ids'] == []
+    evidence, _ = _integrity_pages(session, "required_evidence")
+    by_id = {e["fact"]["fact_id"]: e for e in evidence}
+    assert by_id["fin.rev"]["reasons"] == ["claim_reference"]
+    assert by_id["fin.rev"]["claim_ids"] == ["summary"]
+    assert by_id["unreferenced"]["reasons"] == ["flagged_fact"]
+    assert by_id["unreferenced"]["claim_ids"] == []
 
 
 def test_integrity_v2_lookup_safe_citation_verification_and_hash_refusal(tmp_path):
-    store, attempt, heads, _ = _integrity_execution(tmp_path, 'bad_fact_quote')
+    store, attempt, heads, _ = _integrity_execution(tmp_path, "bad_fact_quote")
     session = _integrity_session(store, attempt)
-    args = {'producer_module_id': 'CP-1', 'producer_sha256': heads[0].content_hash(),
-            'table_id': 'T4.10', 'row_ids': ['revenue'],
-            'fields': ['fact_id', 'table_id', 'row_id', 'field', 'status', 'amount', 'citation_handles']}
-    receipt = session.invoke('lookup_upstream', args)
-    assert receipt['status'] == 'ok', receipt
-    assert receipt['body']['projection'] == 'safe_scope_fact_projection'
-    assert receipt['body']['rows'][0]['facts'][0]['amount'] == '0'
-    assert receipt['body']['rows'][0]['facts'][0]['fact_sha256'] == heads[0].facts[0].content_hash()
-    args['fields'].append('quote')
-    _assert_refused(session.invoke('lookup_upstream', args), 'not_permitted')
-    args['producer_sha256'] = '0' * 64
-    _assert_refused(session.invoke('lookup_upstream', args), 'identity_mismatch')
-    result = session.invoke('verify_upstream', {'producer_module_id': 'CP-1',
-        'producer_sha256': heads[0].content_hash(), 'kind': 'citations', 'fact_ids': ['fin.rev']})
-    assert result['body']['verdict'] == 'invalid' and result['body']['issue_count'] == 1
-    assert 'PRIVATE_QUOTE_SENTINEL' not in json.dumps(session.receipts)
+    args = {
+        "producer_module_id": "CP-1",
+        "producer_sha256": heads[0].content_hash(),
+        "table_id": "T4.10",
+        "row_ids": ["revenue"],
+        "fields": [
+            "fact_id",
+            "table_id",
+            "row_id",
+            "field",
+            "status",
+            "amount",
+            "citation_handles",
+        ],
+    }
+    receipt = session.invoke("lookup_upstream", args)
+    assert receipt["status"] == "ok", receipt
+    assert receipt["body"]["projection"] == "safe_scope_fact_projection"
+    assert receipt["body"]["rows"][0]["facts"][0]["amount"] == "0"
+    assert receipt["body"]["rows"][0]["facts"][0]["fact_sha256"] == heads[0].facts[0].content_hash()
+    args["fields"].append("quote")
+    _assert_refused(session.invoke("lookup_upstream", args), "not_permitted")
+    args["producer_sha256"] = "0" * 64
+    _assert_refused(session.invoke("lookup_upstream", args), "identity_mismatch")
+    result = session.invoke(
+        "verify_upstream",
+        {
+            "producer_module_id": "CP-1",
+            "producer_sha256": heads[0].content_hash(),
+            "kind": "citations",
+            "fact_ids": ["fin.rev"],
+        },
+    )
+    assert result["body"]["verdict"] == "invalid" and result["body"]["issue_count"] == 1
+    assert "PRIVATE_QUOTE_SENTINEL" not in json.dumps(session.receipts)
 
 
-_PERIOD_FIELDS = ['period_id', 'period_type', 'fiscal_year', 'fiscal_quarter', 'start_date',
-                  'end_date', 'currency', 'unit', 'accounting_basis', 'entity_perimeter']
+_PERIOD_FIELDS = [
+    "period_id",
+    "period_type",
+    "fiscal_year",
+    "fiscal_quarter",
+    "start_date",
+    "end_date",
+    "currency",
+    "unit",
+    "accounting_basis",
+    "entity_perimeter",
+]
 _PERIOD_VALUES = {
-    'q3-2025': ['q3-2025', 'QUARTER', '2025', 'Q3', '2025-07-01', '2025-09-30', 'USD',
-                'MILLIONS', 'GAAP', 'consolidated'],
-    'q4-2025': ['q4-2025', 'QUARTER', '2025', 'Q4', '2025-10-01', '2025-12-31', 'USD',
-                'MILLIONS', 'GAAP', 'consolidated'],
+    "q3-2025": [
+        "q3-2025",
+        "QUARTER",
+        "2025",
+        "Q3",
+        "2025-07-01",
+        "2025-09-30",
+        "USD",
+        "MILLIONS",
+        "GAAP",
+        "consolidated",
+    ],
+    "q4-2025": [
+        "q4-2025",
+        "QUARTER",
+        "2025",
+        "Q4",
+        "2025-10-01",
+        "2025-12-31",
+        "USD",
+        "MILLIONS",
+        "GAAP",
+        "consolidated",
+    ],
 }
 
 
 def _model_basis(pid):
     """The frozen reference derivation (cp5-fixture-reference-contract.md, basis(pid))."""
-    raw = ''.join(f'{len(x)}:{x}' for x in ['historical', 'Q:' + pid])
-    return 'model-basis:' + hashlib.sha256(raw.encode()).hexdigest()
+    raw = "".join(f"{len(x)}:{x}" for x in ["historical", "Q:" + pid])
+    return "model-basis:" + hashlib.sha256(raw.encode()).hexdigest()
 
 
 def _canonical_text(value):
-    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(',', ':'))
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
 def _protected_component(data, prior=True, drop=()):
@@ -1858,270 +2476,405 @@ def _protected_component(data, prior=True, drop=()):
     """
     from pathlib import Path
 
-    measure_order = json.loads((Path(__file__).parents[1] / 'cases/earnings/owner-expected.json').read_text())['lineage']['measure_order']
+    measure_order = json.loads(
+        (Path(__file__).parents[1] / "cases/earnings/owner-expected.json").read_text()
+    )["lineage"]["measure_order"]
     cp1 = data[0]
-    source_citation = copy.deepcopy(cp1['facts'][0]['citations'][0])
-    source_basis = 'Component basis ' + 'scope ' * 180
-    pids = ['q3-2025', 'q4-2025'] if prior else ['q4-2025']
+    source_citation = copy.deepcopy(cp1["facts"][0]["citations"][0])
+    source_basis = "Component basis " + "scope " * 180
+    pids = ["q3-2025", "q4-2025"] if prior else ["q4-2025"]
     for pid in pids:
         for field, value in zip(_PERIOD_FIELDS, _PERIOD_VALUES[pid], strict=True):
-            cp1['facts'].append({'fact_id': f'{pid}.{field}', 'label': 'Component period',
-                                 'table_id': 'T4.14', 'row_id': pid, 'field': field,
-                                 'text': value, 'status': 'known', 'period': pid})
+            cp1["facts"].append(
+                {
+                    "fact_id": f"{pid}.{field}",
+                    "label": "Component period",
+                    "table_id": "T4.14",
+                    "row_id": pid,
+                    "field": field,
+                    "text": value,
+                    "status": "known",
+                    "period": pid,
+                }
+            )
     # First pin the complete full CP1 before any qualified lineage is constructed.
     for n, measure in enumerate(measure_order):
-        cp1['facts'].append({'fact_id': f'metric{n:02}', 'label': 'Metric identity', 'table_id': 'T4.10',
-                            'row_id': measure, 'field': 'field_1', 'text': measure})
-        for role, pid in (('prior', 'q3-2025'), ('current', 'q4-2025')):
+        cp1["facts"].append(
+            {
+                "fact_id": f"metric{n:02}",
+                "label": "Metric identity",
+                "table_id": "T4.10",
+                "row_id": measure,
+                "field": "field_1",
+                "text": measure,
+            }
+        )
+        for role, pid in (("prior", "q3-2025"), ("current", "q4-2025")):
             if pid not in pids:
                 continue
-            cp1['facts'].append({'fact_id': f'{measure}.{role}', 'label': 'Component operand',
-                'table_id': 'T4.10', 'row_id': measure, 'field': _model_basis(pid), 'amount': '0',
-                'status': 'known', 'unit': 'MILLIONS', 'scale': '1000000', 'currency': 'USD',
-                'period': pid, 'basis': source_basis,
-                'citations': [copy.deepcopy(source_citation), copy.deepcopy(source_citation)]})
-    cp1['facts'] = [f for f in cp1['facts'] if f['fact_id'] not in drop]
-    source = Module.model_validate_json(json.dumps({
-        'run_id': 'integrity-component', 'issuer_id': 'component', 'as_of': '2025-12-31', **cp1}))
+            cp1["facts"].append(
+                {
+                    "fact_id": f"{measure}.{role}",
+                    "label": "Component operand",
+                    "table_id": "T4.10",
+                    "row_id": measure,
+                    "field": _model_basis(pid),
+                    "amount": "0",
+                    "status": "known",
+                    "unit": "MILLIONS",
+                    "scale": "1000000",
+                    "currency": "USD",
+                    "period": pid,
+                    "basis": source_basis,
+                    "citations": [copy.deepcopy(source_citation), copy.deepcopy(source_citation)],
+                }
+            )
+    cp1["facts"] = [f for f in cp1["facts"] if f["fact_id"] not in drop]
+    source = Module.model_validate_json(
+        json.dumps(
+            {
+                "run_id": "integrity-component",
+                "issuer_id": "component",
+                "as_of": "2025-12-31",
+                **cp1,
+            }
+        )
+    )
     by_id = {f.fact_id: f for f in source.facts}
+
     def reference(fact):
-        return {'producer_module_id': 'CP-1', 'producer_sha256': source.content_hash(),
-                **{k: getattr(fact, k) for k in ('fact_id', 'table_id', 'row_id', 'field')}}
+        return {
+            "producer_module_id": "CP-1",
+            "producer_sha256": source.content_hash(),
+            **{k: getattr(fact, k) for k in ("fact_id", "table_id", "row_id", "field")},
+        }
+
     points = []
     for n, measure in enumerate(measure_order):
-        companions = [by_id[f'metric{n:02}']] + [
-            by_id[f'{pid}.{field}'] for pid in pids for field in _PERIOD_FIELDS
-            if f'{pid}.{field}' in by_id]
-        point = {'measure_id': measure, 'prior': None,
-                 'companions': [reference(f) for f in companions]}
-        for role, pid in (('prior', 'q3-2025'), ('current', 'q4-2025')):
-            if pid not in pids or f'{measure}.{role}' not in by_id:
+        companions = [by_id[f"metric{n:02}"]] + [
+            by_id[f"{pid}.{field}"]
+            for pid in pids
+            for field in _PERIOD_FIELDS
+            if f"{pid}.{field}" in by_id
+        ]
+        point = {
+            "measure_id": measure,
+            "prior": None,
+            "companions": [reference(f) for f in companions],
+        }
+        for role, pid in (("prior", "q3-2025"), ("current", "q4-2025")):
+            if pid not in pids or f"{measure}.{role}" not in by_id:
                 continue
-            fact = by_id[f'{measure}.{role}']
-            point[role] = {'fact': reference(fact), 'period_id': pid,
-                           'basis_id': _model_basis(pid), 'source_period': fact.period,
-                           'source_basis': fact.basis, 'fact_sha256': fact.content_hash(),
-                           'citation_handles': [{k: getattr(c, k) for k in
-                               ('source_id', 'source_sha256', 'locator')} for c in fact.citations]}
+            fact = by_id[f"{measure}.{role}"]
+            point[role] = {
+                "fact": reference(fact),
+                "period_id": pid,
+                "basis_id": _model_basis(pid),
+                "source_period": fact.period,
+                "source_basis": fact.basis,
+                "fact_sha256": fact.content_hash(),
+                "citation_handles": [
+                    {k: getattr(c, k) for k in ("source_id", "source_sha256", "locator")}
+                    for c in fact.citations
+                ],
+            }
         points.append(point)
-    bundle = {'producer_module_id': 'CP-1', 'producer_sha256': source.content_hash(),
-              'prior_period_id': 'q3-2025', 'current_period_id': 'q4-2025',
-              'prior_basis_id': _model_basis('q3-2025') if prior else None,
-              'current_basis_id': _model_basis('q4-2025'), 'operands': points}
+    bundle = {
+        "producer_module_id": "CP-1",
+        "producer_sha256": source.content_hash(),
+        "prior_period_id": "q3-2025",
+        "current_period_id": "q4-2025",
+        "prior_basis_id": _model_basis("q3-2025") if prior else None,
+        "current_basis_id": _model_basis("q4-2025"),
+        "operands": points,
+    }
     _write_bundle(data, bundle)
-    data[1]['claims'][0]['text'] = 'Delta observation {owner00|MILLIONS}.'
+    data[1]["claims"][0]["text"] = "Delta observation {owner00|MILLIONS}."
 
 
 def _write_bundle(data, bundle):
     """Rewrite the CP1B evidence bundle and keep every owner basis a genuine lineage."""
-    source_citation = copy.deepcopy(data[0]['facts'][0]['citations'][0])
-    points = bundle['operands']
-    data[1]['facts'] = [{
-        'fact_id': f'owner{n:02}', 'label': 'Component owner', 'table_id': 'T1B.1',
-        'row_id': f'owner{n:02}', 'field': 'delta', 'amount': '0', 'unit': 'MILLIONS',
-        'scale': '1000000', 'currency': 'USD', 'period': 'current_period',
-        'basis': _canonical_text(points[n % 12]),
-        'citations': [copy.deepcopy(source_citation), copy.deepcopy(source_citation)],
-    } for n in range(43)]
-    data[1]['facts'].append({
-        'fact_id': 'cp1b:T1B.3:evidence.inputs:assessment', 'label': 'Evidence inputs',
-        'table_id': 'T1B.3', 'row_id': 'evidence.inputs', 'field': 'assessment',
-        'text': _canonical_text(bundle)})
+    source_citation = copy.deepcopy(data[0]["facts"][0]["citations"][0])
+    points = bundle["operands"]
+    data[1]["facts"] = [
+        {
+            "fact_id": f"owner{n:02}",
+            "label": "Component owner",
+            "table_id": "T1B.1",
+            "row_id": f"owner{n:02}",
+            "field": "delta",
+            "amount": "0",
+            "unit": "MILLIONS",
+            "scale": "1000000",
+            "currency": "USD",
+            "period": "current_period",
+            "basis": _canonical_text(points[n % 12]),
+            "citations": [copy.deepcopy(source_citation), copy.deepcopy(source_citation)],
+        }
+        for n in range(43)
+    ]
+    data[1]["facts"].append(
+        {
+            "fact_id": "cp1b:T1B.3:evidence.inputs:assessment",
+            "label": "Evidence inputs",
+            "table_id": "T1B.3",
+            "row_id": "evidence.inputs",
+            "field": "assessment",
+            "text": _canonical_text(bundle),
+        }
+    )
 
 
 def test_integrity_v2_protected_large_lineage_is_complete_bounded_and_ordinal(tmp_path):
     store, attempt, heads, _ = _integrity_execution(tmp_path, transform=_protected_component)
     session = _integrity_session(store, attempt)
-    bundle, _ = _integrity_pages(session, 'lineage_bundles')
-    headers, _ = _integrity_pages(session, 'lineage_headers')
-    operands, _ = _integrity_pages(session, 'lineage_operands')
-    companions, _ = _integrity_pages(session, 'lineage_companions')
-    citations, _ = _integrity_pages(session, 'lineage_citations')
-    owner, _ = _integrity_pages(session, 'lineage_owner_facts')
-    fact_cites, _ = _integrity_pages(session, 'fact_citations')
-    evidence, _ = _integrity_pages(session, 'required_evidence')
-    assert (len(bundle), len(headers), len(operands), len(companions), len(citations), len(owner)) == (1, 12, 24, 252, 48, 44)
+    bundle, _ = _integrity_pages(session, "lineage_bundles")
+    headers, _ = _integrity_pages(session, "lineage_headers")
+    operands, _ = _integrity_pages(session, "lineage_operands")
+    companions, _ = _integrity_pages(session, "lineage_companions")
+    citations, _ = _integrity_pages(session, "lineage_citations")
+    owner, _ = _integrity_pages(session, "lineage_owner_facts")
+    fact_cites, _ = _integrity_pages(session, "fact_citations")
+    evidence, _ = _integrity_pages(session, "required_evidence")
+    assert (
+        len(bundle),
+        len(headers),
+        len(operands),
+        len(companions),
+        len(citations),
+        len(owner),
+    ) == (1, 12, 24, 252, 48, 44)
     # 24 primaries + 12 metric identities + 20 distinct period fields (companions of the canonical
     # join) + original named CP1 + one named owner. (Was 47 when companions were shared stand-ins.)
     assert len(evidence) == 58
-    assert bundle[0]['raw_bytes'] > 8192
-    assert [r['ordinal'] for r in companions[:21]] == list(range(21))
-    assert citations[0]['citation'] == citations[1]['citation']
-    assert citations[0]['ordinal'] == 0 and citations[1]['ordinal'] == 1
-    assert len([c for c in fact_cites if c['owner_fact']['ref'] == 'owner00']) == 2
-    args = {'producer_module_id': 'CP-1B', 'producer_sha256': heads[1].content_hash(),
-            'table_id': 'T1B.3', 'row_ids': ['evidence.inputs'],
-            'fields': ['fact_id', 'table_id', 'row_id', 'field', 'status', 'text']}
-    result = session.invoke('lookup_upstream', args)
-    text = result['body']['rows'][0]['facts'][0]['text']
-    assert text['kind'] == 'cp1b_evidence_bundle' and text['handle'] == bundle[0]['bundle_id']
-    assert text['raw_sha256'] == hashlib.sha256(heads[1].facts[-1].text.encode()).hexdigest()
+    assert bundle[0]["raw_bytes"] > 8192
+    assert [r["ordinal"] for r in companions[:21]] == list(range(21))
+    assert citations[0]["citation"] == citations[1]["citation"]
+    assert citations[0]["ordinal"] == 0 and citations[1]["ordinal"] == 1
+    assert len([c for c in fact_cites if c["owner_fact"]["ref"] == "owner00"]) == 2
+    args = {
+        "producer_module_id": "CP-1B",
+        "producer_sha256": heads[1].content_hash(),
+        "table_id": "T1B.3",
+        "row_ids": ["evidence.inputs"],
+        "fields": ["fact_id", "table_id", "row_id", "field", "status", "text"],
+    }
+    result = session.invoke("lookup_upstream", args)
+    text = result["body"]["rows"][0]["facts"][0]["text"]
+    assert text["kind"] == "cp1b_evidence_bundle" and text["handle"] == bundle[0]["bundle_id"]
+    assert text["raw_sha256"] == hashlib.sha256(heads[1].facts[-1].text.encode()).hexdigest()
     assert '"operands"' not in json.dumps(result)
 
 
-@pytest.mark.parametrize('mutation', ['extra', 'hash', 'coordinate', 'citation', 'missing', 'reordered'])
-def test_integrity_v2_protected_payload_never_accepts_partial_or_nested_authority(tmp_path, mutation):
+@pytest.mark.parametrize(
+    "mutation", ["extra", "hash", "coordinate", "citation", "missing", "reordered"]
+)
+def test_integrity_v2_protected_payload_never_accepts_partial_or_nested_authority(
+    tmp_path, mutation
+):
     def transform(data):
         _protected_component(data)
-        bundle = json.loads(data[1]['facts'][-1]['text'])
-        point = bundle['operands'][0]
-        if mutation == 'extra':
-            point['current']['fact']['quote'] = 'PRIVATE_NESTED_QUOTE'
-        elif mutation == 'hash':
-            point['current']['fact_sha256'] = '0' * 64
-        elif mutation == 'coordinate':
-            point['current']['fact']['row_id'] = 'other'
-        elif mutation == 'citation':
-            point['current']['citation_handles'].pop()
-        elif mutation == 'missing':
-            bundle['operands'].pop()
+        bundle = json.loads(data[1]["facts"][-1]["text"])
+        point = bundle["operands"][0]
+        if mutation == "extra":
+            point["current"]["fact"]["quote"] = "PRIVATE_NESTED_QUOTE"
+        elif mutation == "hash":
+            point["current"]["fact_sha256"] = "0" * 64
+        elif mutation == "coordinate":
+            point["current"]["fact"]["row_id"] = "other"
+        elif mutation == "citation":
+            point["current"]["citation_handles"].pop()
+        elif mutation == "missing":
+            bundle["operands"].pop()
         else:
-            bundle['operands'].reverse()
-        data[1]['facts'][-1]['text'] = json.dumps(bundle, sort_keys=True, ensure_ascii=False, separators=(',', ':'))
+            bundle["operands"].reverse()
+        data[1]["facts"][-1]["text"] = json.dumps(
+            bundle, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+        )
+
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=transform)
-    with pytest.raises(ValueError, match='^not_permitted$'):
+    with pytest.raises(ValueError, match="^not_permitted$"):
         _integrity_session(store, attempt)
 
 
 # --- Fix round 1: canonical lineage authentication, parity, detachment, categories ----------
 def _upstream_module():
-    return importlib.import_module('deploy_workflow.tools.upstream')
+    return importlib.import_module("deploy_workflow.tools.upstream")
 
 
 def _lineage_transform(prior=True, drop=(), edit=None):
     def transform(data):
         _protected_component(data, prior, drop)
         if edit is not None:
-            bundle = json.loads(data[1]['facts'][-1]['text'])
+            bundle = json.loads(data[1]["facts"][-1]["text"])
             edit(bundle)
             _write_bundle(data, bundle)
+
     return transform
 
 
 def _null_prior(bundle):
-    bundle['prior_basis_id'] = None
-    for point in bundle['operands']:
-        point['prior'] = None
+    bundle["prior_basis_id"] = None
+    for point in bundle["operands"]:
+        point["prior"] = None
 
 
 def _null_prior_and_companions(bundle):
     _null_prior(bundle)
-    for point in bundle['operands']:
-        point['companions'] = point['companions'][:1] + point['companions'][11:]
+    for point in bundle["operands"]:
+        point["companions"] = point["companions"][:1] + point["companions"][11:]
 
 
 def _swap_periods(bundle):
-    bundle['prior_period_id'], bundle['current_period_id'] = (
-        bundle['current_period_id'], bundle['prior_period_id'])
-    for point in bundle['operands']:
-        point['prior']['period_id'], point['current']['period_id'] = (
-            point['current']['period_id'], point['prior']['period_id'])
+    bundle["prior_period_id"], bundle["current_period_id"] = (
+        bundle["current_period_id"],
+        bundle["prior_period_id"],
+    )
+    for point in bundle["operands"]:
+        point["prior"]["period_id"], point["current"]["period_id"] = (
+            point["current"]["period_id"],
+            point["prior"]["period_id"],
+        )
 
 
 def _prior_equals_current(bundle):
-    bundle['prior_period_id'], bundle['prior_basis_id'] = (
-        bundle['current_period_id'], bundle['current_basis_id'])
-    for point in bundle['operands']:
-        point['prior'] = copy.deepcopy(point['current'])
+    bundle["prior_period_id"], bundle["prior_basis_id"] = (
+        bundle["current_period_id"],
+        bundle["current_basis_id"],
+    )
+    for point in bundle["operands"]:
+        point["prior"] = copy.deepcopy(point["current"])
 
 
 def _drop_companion(bundle):
-    bundle['operands'][0]['companions'].pop()
+    bundle["operands"][0]["companions"].pop()
 
 
 def _dup_companion(bundle):
-    companions = bundle['operands'][0]['companions']
+    companions = bundle["operands"][0]["companions"]
     companions[1] = copy.deepcopy(companions[0])
 
 
 def _empty_companions(bundle):
-    bundle['operands'][0]['companions'].clear()
+    bundle["operands"][0]["companions"].clear()
 
 
 def _reorder_companions(bundle):
-    bundle['operands'][0]['companions'].reverse()
+    bundle["operands"][0]["companions"].reverse()
 
 
 def _garbage_basis(bundle):
-    bundle['prior_basis_id'] = 'prior_basis'
-    for point in bundle['operands']:
-        point['prior']['basis_id'] = 'prior_basis'
+    bundle["prior_basis_id"] = "prior_basis"
+    for point in bundle["operands"]:
+        point["prior"]["basis_id"] = "prior_basis"
 
 
 def _swap_operand_facts(bundle):
-    point = bundle['operands'][0]
-    point['prior']['fact'], point['current']['fact'] = point['current']['fact'], point['prior']['fact']
+    point = bundle["operands"][0]
+    point["prior"]["fact"], point["current"]["fact"] = (
+        point["current"]["fact"],
+        point["prior"]["fact"],
+    )
 
 
 def _consistent_swap(bundle):
-    bundle['prior_period_id'], bundle['current_period_id'] = (
-        bundle['current_period_id'], bundle['prior_period_id'])
-    bundle['prior_basis_id'], bundle['current_basis_id'] = (
-        bundle['current_basis_id'], bundle['prior_basis_id'])
-    for point in bundle['operands']:
-        point['prior'], point['current'] = point['current'], point['prior']
-        c = point['companions']
-        point['companions'] = [c[0], *c[11:], *c[1:11]]
+    bundle["prior_period_id"], bundle["current_period_id"] = (
+        bundle["current_period_id"],
+        bundle["prior_period_id"],
+    )
+    bundle["prior_basis_id"], bundle["current_basis_id"] = (
+        bundle["current_basis_id"],
+        bundle["prior_basis_id"],
+    )
+    for point in bundle["operands"]:
+        point["prior"], point["current"] = point["current"], point["prior"]
+        c = point["companions"]
+        point["companions"] = [c[0], *c[11:], *c[1:11]]
 
 
-_Q3_PERIOD_FACTS = {f'q3-2025.{field}' for field in _PERIOD_FIELDS}
-_PRIOR_FACTS = {f'{m}.prior' for m in json.loads((Path(__file__).parents[1] / 'cases/earnings/owner-expected.json').read_text())['lineage']['measure_order']}
+_Q3_PERIOD_FACTS = {f"q3-2025.{field}" for field in _PERIOD_FIELDS}
+_PRIOR_FACTS = {
+    f"{m}.prior"
+    for m in json.loads(
+        (Path(__file__).parents[1] / "cases/earnings/owner-expected.json").read_text()
+    )["lineage"]["measure_order"]
+}
 
 
-@pytest.mark.parametrize('name,kwargs', [
-    ('p1_false_absence', {'edit': _null_prior}),
-    ('p1_false_absence_consistent_companions', {'edit': _null_prior_and_companions}),
-    ('p1b_swapped_periods', {'edit': _swap_periods}),
-    ('p7_prior_equals_current', {'edit': _prior_equals_current}),
-    ('consistent_swap_prior_after_current', {'edit': _consistent_swap}),
-    ('p8_drop_companion', {'edit': _drop_companion}),
-    ('p8_duplicate_companion', {'edit': _dup_companion}),
-    ('p8_empty_companions', {'edit': _empty_companions}),
-    ('p8_reordered_companions', {'edit': _reorder_companions}),
-    ('bundle_basis_not_derived', {'edit': _garbage_basis}),
-    ('operand_fact_swapped', {'edit': _swap_operand_facts}),
-    # Open semantic questions: partial absence shapes are refused, not interpreted.
-    ('partial_row_present_measure_fact_missing', {'drop': {'revenue.prior'}}),
-    ('partial_period_field_missing', {'drop': {'q3-2025.end_date'}}),
-    ('partial_row_present_all_prior_facts_missing', {'drop': _PRIOR_FACTS, 'edit': _null_prior}),
-    ('partial_row_absent_prior_facts_present', {'drop': _Q3_PERIOD_FACTS, 'edit': _null_prior}),
-])
+@pytest.mark.parametrize(
+    "name,kwargs",
+    [
+        ("p1_false_absence", {"edit": _null_prior}),
+        ("p1_false_absence_consistent_companions", {"edit": _null_prior_and_companions}),
+        ("p1b_swapped_periods", {"edit": _swap_periods}),
+        ("p7_prior_equals_current", {"edit": _prior_equals_current}),
+        ("consistent_swap_prior_after_current", {"edit": _consistent_swap}),
+        ("p8_drop_companion", {"edit": _drop_companion}),
+        ("p8_duplicate_companion", {"edit": _dup_companion}),
+        ("p8_empty_companions", {"edit": _empty_companions}),
+        ("p8_reordered_companions", {"edit": _reorder_companions}),
+        ("bundle_basis_not_derived", {"edit": _garbage_basis}),
+        ("operand_fact_swapped", {"edit": _swap_operand_facts}),
+        # Open semantic questions: partial absence shapes are refused, not interpreted.
+        ("partial_row_present_measure_fact_missing", {"drop": {"revenue.prior"}}),
+        ("partial_period_field_missing", {"drop": {"q3-2025.end_date"}}),
+        (
+            "partial_row_present_all_prior_facts_missing",
+            {"drop": _PRIOR_FACTS, "edit": _null_prior},
+        ),
+        ("partial_row_absent_prior_facts_present", {"drop": _Q3_PERIOD_FACTS, "edit": _null_prior}),
+    ],
+)
 def test_integrity_v2_lineage_is_authenticated_against_canonical_cp1(tmp_path, name, kwargs):
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=_lineage_transform(**kwargs))
-    with pytest.raises(ValueError, match='^not_permitted$'):
+    with pytest.raises(ValueError, match="^not_permitted$"):
         _integrity_session(store, attempt)
 
 
 def test_integrity_v2_factory_tampered_store_bytes_are_identity_mismatch(tmp_path):
     store, attempt, heads, _ = _integrity_execution(tmp_path, transform=_protected_component)
     grant = _integrity_grant(store, attempt)
-    (store.directory / 'blobs' / heads[0].content_hash()).write_text('private tamper')
-    with pytest.raises(ValueError, match='^identity_mismatch$') as caught:
+    (store.directory / "blobs" / heads[0].content_hash()).write_text("private tamper")
+    with pytest.raises(ValueError, match="^identity_mismatch$") as caught:
         _integrity_session(store, attempt, grant)
-    assert 'tamper' not in str(caught.value)
+    assert "tamper" not in str(caught.value)
 
 
 def test_integrity_v2_lineage_genuine_prior_absence_is_accepted(tmp_path):
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=_lineage_transform(prior=False))
     session = _integrity_session(store, attempt)
-    headers, _ = _integrity_pages(session, 'lineage_headers')
-    operands, _ = _integrity_pages(session, 'lineage_operands')
-    companions, _ = _integrity_pages(session, 'lineage_companions')
-    assert [h['prior_operand_id'] for h in headers] == [None] * 12
-    assert {o['role'] for o in operands} == {'current'} and len(operands) == 12
-    assert len(companions) == 12 * 11 and [h['companion_count'] for h in headers] == [11] * 12
-    bundle, _ = _integrity_pages(session, 'lineage_bundles')
-    assert bundle[0]['prior_basis_id'] is None
+    headers, _ = _integrity_pages(session, "lineage_headers")
+    operands, _ = _integrity_pages(session, "lineage_operands")
+    companions, _ = _integrity_pages(session, "lineage_companions")
+    assert [h["prior_operand_id"] for h in headers] == [None] * 12
+    assert {o["role"] for o in operands} == {"current"} and len(operands) == 12
+    assert len(companions) == 12 * 11 and [h["companion_count"] for h in headers] == [11] * 12
+    bundle, _ = _integrity_pages(session, "lineage_bundles")
+    assert bundle[0]["prior_basis_id"] is None
 
 
 def test_integrity_v2_lineage_both_present_counts_are_stable(tmp_path):
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=_lineage_transform())
     session = _integrity_session(store, attempt)
-    counts = {s: len(_integrity_pages(session, s)[0]) for s in
-              ('lineage_bundles', 'lineage_headers', 'lineage_operands', 'lineage_companions',
-               'lineage_citations', 'lineage_owner_facts')}
-    assert counts == {'lineage_bundles': 1, 'lineage_headers': 12, 'lineage_operands': 24,
-                      'lineage_companions': 252, 'lineage_citations': 48, 'lineage_owner_facts': 44}
+    counts = {
+        s: len(_integrity_pages(session, s)[0])
+        for s in (
+            "lineage_bundles",
+            "lineage_headers",
+            "lineage_operands",
+            "lineage_companions",
+            "lineage_citations",
+            "lineage_owner_facts",
+        )
+    }
+    assert counts == {
+        "lineage_bundles": 1,
+        "lineage_headers": 12,
+        "lineage_operands": 24,
+        "lineage_companions": 252,
+        "lineage_citations": 48,
+        "lineage_owner_facts": 44,
+    }
 
 
 def _contradictions():
@@ -2131,161 +2884,214 @@ def _contradictions():
     from deploy_vii import cp5_integrity as core
 
     severities = typing.get_args(core.Severity)
-    refs = (core.ClaimRef(producer_module='CP-1', claim_ref='summary'),
-            core.ClaimRef(producer_module='CP-1B', claim_ref='summary'))
-    first = core.Contradiction(claim_refs=refs, nature='Opposed direction',
-                               rationale='Labels only.', severity=severities[0])
-    second = core.Contradiction(claim_refs=refs, nature='Opposed timing',
-                                rationale='Labels only.', severity=severities[-1])
+    refs = (
+        core.ClaimRef(producer_module="CP-1", claim_ref="summary"),
+        core.ClaimRef(producer_module="CP-1B", claim_ref="summary"),
+    )
+    first = core.Contradiction(
+        claim_refs=refs,
+        nature="Opposed direction",
+        rationale="Labels only.",
+        severity=severities[0],
+    )
+    second = core.Contradiction(
+        claim_refs=refs, nature="Opposed timing", rationale="Labels only.", severity=severities[-1]
+    )
     return core, SimpleNamespace, first, second
 
 
-@pytest.mark.parametrize('label,pick,expected', [
-    ('distinct_same_pair', (0, 1), 2), ('exact_repeat', (0, 0), 1)])
-def test_integrity_v2_final_findings_preserve_core_contradiction_multiplicity(tmp_path, label, pick, expected):
+@pytest.mark.parametrize(
+    "label,pick,expected", [("distinct_same_pair", (0, 1), 2), ("exact_repeat", (0, 0), 1)]
+)
+def test_integrity_v2_final_findings_preserve_core_contradiction_multiplicity(
+    tmp_path, label, pick, expected
+):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     session = _integrity_session(store, attempt)
     core, namespace, first, second = _contradictions()
     items = [(first, second)[n] for n in pick]
     findings = core._ordered([core._contradiction_finding(c) for c in items])
     assert len(findings) == expected
-    out = session._catalog.safe_findings(findings, final=True, submission=namespace(contradictions=items))
-    assert [f['code'] for f in out] == ['contradiction'] * expected
-    assert len({f['finding_id'] for f in out}) == expected
-    assert all([r['producer_module_id'] for r in f['claim_refs']] == ['CP-1', 'CP-1B'] for f in out)
+    out = session._catalog.safe_findings(
+        findings, final=True, submission=namespace(contradictions=items)
+    )
+    assert [f["code"] for f in out] == ["contradiction"] * expected
+    assert len({f["finding_id"] for f in out}) == expected
+    assert all([r["producer_module_id"] for r in f["claim_refs"]] == ["CP-1", "CP-1B"] for f in out)
 
 
 def test_integrity_v2_returned_receipts_are_detached_from_catalog(tmp_path):
     store, attempt, heads, _ = _integrity_execution(tmp_path, transform=_protected_component)
     session = _integrity_session(store, attempt)
     manifest = session.integrity_manifest
-    args = {'scope_sha256': manifest['scope_sha256'], 'section': 'claims', 'cursor': None, 'limit': 20}
-    first = session.invoke('read_integrity_scope', args)
-    original = copy.deepcopy(first['body'])
-    first['body']['entries'][0]['text'] = 'TAMPERED'
-    first['body']['entries'][0]['touching_kinds'].append('fact_citation')
-    again = session.invoke('read_integrity_scope', args)
-    assert again['body']['entries'] == original['entries']
-    assert session.integrity_manifest['manifest_sha256'] == manifest['manifest_sha256']
-    assert session.receipts[0]['body'] == original
-    lookup = {'producer_module_id': 'CP-1B', 'producer_sha256': heads[1].content_hash(),
-              'table_id': 'T1B.3', 'row_ids': ['evidence.inputs'],
-              'fields': ['fact_id', 'table_id', 'row_id', 'field', 'status', 'text', 'citation_handles']}
-    receipt = session.invoke('lookup_upstream', lookup)
-    pristine = copy.deepcopy(receipt['body'])
-    receipt['body']['rows'][0]['facts'][0]['text']['raw_sha256'] = '0' * 64
-    receipt['body']['rows'][0]['facts'][0]['citation_handles']['count'] = 999
-    assert session.invoke('lookup_upstream', lookup)['body'] == pristine
-    owner, _ = _integrity_pages(session, 'lineage_owner_facts')
-    bundle = next(o for o in owner if o['coordinate']['fact_id'] == 'cp1b:T1B.3:evidence.inputs:assessment')
-    assert bundle['text_commitment']['raw_sha256'] == pristine['rows'][0]['facts'][0]['text']['raw_sha256']
-    assert bundle['citation_set']['count'] != 999
-    findings = session.invoke('read_integrity_scope', {**args, 'section': 'findings'})
-    findings['body']['entries'].append('TAMPERED')
-    verify = session.invoke('verify_integrity_scope', {'scope_sha256': manifest['scope_sha256']})
-    assert verify['status'] == 'ok'
+    args = {
+        "scope_sha256": manifest["scope_sha256"],
+        "section": "claims",
+        "cursor": None,
+        "limit": 20,
+    }
+    first = session.invoke("read_integrity_scope", args)
+    original = copy.deepcopy(first["body"])
+    first["body"]["entries"][0]["text"] = "TAMPERED"
+    first["body"]["entries"][0]["touching_kinds"].append("fact_citation")
+    again = session.invoke("read_integrity_scope", args)
+    assert again["body"]["entries"] == original["entries"]
+    assert session.integrity_manifest["manifest_sha256"] == manifest["manifest_sha256"]
+    assert session.receipts[0]["body"] == original
+    lookup = {
+        "producer_module_id": "CP-1B",
+        "producer_sha256": heads[1].content_hash(),
+        "table_id": "T1B.3",
+        "row_ids": ["evidence.inputs"],
+        "fields": ["fact_id", "table_id", "row_id", "field", "status", "text", "citation_handles"],
+    }
+    receipt = session.invoke("lookup_upstream", lookup)
+    pristine = copy.deepcopy(receipt["body"])
+    receipt["body"]["rows"][0]["facts"][0]["text"]["raw_sha256"] = "0" * 64
+    receipt["body"]["rows"][0]["facts"][0]["citation_handles"]["count"] = 999
+    assert session.invoke("lookup_upstream", lookup)["body"] == pristine
+    owner, _ = _integrity_pages(session, "lineage_owner_facts")
+    bundle = next(
+        o for o in owner if o["coordinate"]["fact_id"] == "cp1b:T1B.3:evidence.inputs:assessment"
+    )
+    assert (
+        bundle["text_commitment"]["raw_sha256"]
+        == pristine["rows"][0]["facts"][0]["text"]["raw_sha256"]
+    )
+    assert bundle["citation_set"]["count"] != 999
+    findings = session.invoke("read_integrity_scope", {**args, "section": "findings"})
+    findings["body"]["entries"].append("TAMPERED")
+    verify = session.invoke("verify_integrity_scope", {"scope_sha256": manifest["scope_sha256"]})
+    assert verify["status"] == "ok"
 
 
 def test_integrity_v2_touching_kinds_match_core_claim_marks(tmp_path):
     from deploy_vii import cp5_integrity as core
 
     def two_claims(data):
-        data[0]['facts'][0].update(amount=None, status='missing', limitation='Not supplied')
-        base = data[0]['claims'][0]
-        base['text'] = 'Revenue observation [fin.rev].'
+        data[0]["facts"][0].update(amount=None, status="missing", limitation="Not supplied")
+        base = data[0]["claims"][0]
+        base["text"] = "Revenue observation [fin.rev]."
         other = copy.deepcopy(base)
-        other.update(claim_id='limited', limitation='Observation is unavailable within this scope.')
-        data[0]['claims'].append(other)
+        other.update(claim_id="limited", limitation="Observation is unavailable within this scope.")
+        data[0]["claims"].append(other)
+
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=two_claims)
     session = _integrity_session(store, attempt)
-    claims, _ = _integrity_pages(session, 'claims')
-    kinds = {(c['producer']['module_id'], c['claim_id']): c['touching_kinds'] for c in claims}
+    claims, _ = _integrity_pages(session, "claims")
+    kinds = {(c["producer"]["module_id"], c["claim_id"]): c["touching_kinds"] for c in claims}
     # Oracle: a properly limited claim is in the unsettled catalog but gets no forced own finding.
-    assert kinds['CP-1', 'limited'] == []
-    assert kinds['CP-1', 'summary'] == ['unsettled_fact']
+    assert kinds["CP-1", "limited"] == []
+    assert kinds["CP-1", "summary"] == ["unsettled_fact"]
     marks = core.python_checks(core.review_scope(store, attempt)).claim_marks
     for key, value in kinds.items():
-        assert value == sorted({m.split(':')[0].split(' on ')[0] for m in marks.get(key, ())},
-                               key=core.KINDS.index)
+        assert value == sorted(
+            {m.split(":")[0].split(" on ")[0] for m in marks.get(key, ())}, key=core.KINDS.index
+        )
 
 
-@pytest.mark.parametrize('error', [ValueError('secret'), KeyError('secret'), TypeError('secret'),
-                                   RuntimeError('secret')])
+@pytest.mark.parametrize(
+    "error", [ValueError("secret"), KeyError("secret"), TypeError("secret"), RuntimeError("secret")]
+)
 def test_integrity_v2_factory_unexpected_error_is_internal_error(tmp_path, monkeypatch, error):
     from deploy_vii import cp5_integrity as core
 
     store, attempt, _, _ = _integrity_execution(tmp_path)
+
     def boom(_scope):
         raise error
-    monkeypatch.setattr(core, 'python_checks', boom)
-    with pytest.raises(ValueError, match='^internal_error$') as caught:
+
+    monkeypatch.setattr(core, "python_checks", boom)
+    with pytest.raises(ValueError, match="^internal_error$") as caught:
         _integrity_session(store, attempt)
-    assert 'secret' not in str(caught.value) and caught.value.__cause__ is None
+    assert "secret" not in str(caught.value) and caught.value.__cause__ is None
 
 
-@pytest.mark.parametrize('error', [KeyError('secret'), 'internal_error'])
-def test_integrity_v2_lineage_internal_error_is_not_relabelled_not_permitted(tmp_path, monkeypatch, error):
+@pytest.mark.parametrize("error", [KeyError("secret"), "internal_error"])
+def test_integrity_v2_lineage_internal_error_is_not_relabelled_not_permitted(
+    tmp_path, monkeypatch, error
+):
     module = _upstream_module()
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=_protected_component)
+
     def boom(*_args, **_kwargs):
         raise module._Refusal(error) if isinstance(error, str) else error
-    monkeypatch.setattr(module._IntegrityCatalog, '_citation_set', boom)
-    with pytest.raises(ValueError, match='^internal_error$'):
+
+    monkeypatch.setattr(module._IntegrityCatalog, "_citation_set", boom)
+    with pytest.raises(ValueError, match="^internal_error$"):
         _integrity_session(store, attempt)
 
 
-@pytest.mark.parametrize('kind,code', [
-    (5, 'bad_arguments'), (['citations'], 'bad_arguments'), (None, 'bad_arguments'),
-    ('bogus', 'bad_arguments'), ('integrity', 'not_permitted')])
+@pytest.mark.parametrize(
+    "kind,code",
+    [
+        (5, "bad_arguments"),
+        (["citations"], "bad_arguments"),
+        (None, "bad_arguments"),
+        ("bogus", "bad_arguments"),
+        ("integrity", "not_permitted"),
+    ],
+)
 def test_integrity_v2_verify_kind_is_checked_before_producer_hash(tmp_path, kind, code):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     session = _integrity_session(store, attempt)
-    receipt = session.invoke('verify_upstream', {
-        'producer_module_id': 'CP-1', 'producer_sha256': '0' * 64, 'kind': kind,
-        'fact_ids': ['fin.rev']})
+    receipt = session.invoke(
+        "verify_upstream",
+        {
+            "producer_module_id": "CP-1",
+            "producer_sha256": "0" * 64,
+            "kind": kind,
+            "fact_ids": ["fin.rev"],
+        },
+    )
     _assert_refused(receipt, code)
 
 
 def test_integrity_v2_ordinary_brace_prose_passes_but_record_json_refuses(tmp_path):
     def prose(data):
-        data[0]['facts'][0]['basis'] = '{fin.rev|MILLIONS} rose'
+        data[0]["facts"][0]["basis"] = "{fin.rev|MILLIONS} rose"
+
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=prose)
     session = _integrity_session(store, attempt)
-    evidence, _ = _integrity_pages(session, 'required_evidence')
-    assert evidence[0]['fact']['basis'] == '{fin.rev|MILLIONS} rose'
+    evidence, _ = _integrity_pages(session, "required_evidence")
+    assert evidence[0]["fact"]["basis"] == "{fin.rev|MILLIONS} rose"
+
     def wrapper(data):
-        data[0]['facts'][0]['basis'] = '{"record_json":"x"}'
-    store, attempt, _, _ = _integrity_execution(tmp_path / 'wrapper', transform=wrapper)
-    with pytest.raises(ValueError, match='^not_permitted$'):
+        data[0]["facts"][0]["basis"] = '{"record_json":"x"}'
+
+    store, attempt, _, _ = _integrity_execution(tmp_path / "wrapper", transform=wrapper)
+    with pytest.raises(ValueError, match="^not_permitted$"):
         _integrity_session(store, attempt)
 
 
 def test_integrity_v2_causal_findings_exact_and_blocked_limitation_never_disclosed(tmp_path):
-    store, attempt, _, fixture = _integrity_execution(tmp_path, 'blocked')
+    store, attempt, _, fixture = _integrity_execution(tmp_path, "blocked")
     session = _integrity_session(store, attempt)
-    expected = next(x for x in fixture['causal_mutations'] if x['id'] == 'blocked')['expected_counts']
-    findings, _ = _integrity_pages(session, 'findings')
-    assert {f['code'] for f in findings} == {k for k, v in expected.items() if v}
-    for section in (x['section'] for x in session.integrity_manifest['sections']):
+    expected = next(x for x in fixture["causal_mutations"] if x["id"] == "blocked")[
+        "expected_counts"
+    ]
+    findings, _ = _integrity_pages(session, "findings")
+    assert {f["code"] for f in findings} == {k for k, v in expected.items() if v}
+    for section in (x["section"] for x in session.integrity_manifest["sections"]):
         _integrity_pages(session, section)
-    limitations, _ = _integrity_pages(session, 'limitations')
-    assert all(entry['label'] == 'Upstream restriction retained' for entry in limitations)
-    assert 'PRIVATE_BLOCKED_LIMITATION' not in json.dumps(session.receipts)
-    assert 'PRIVATE_BLOCKED_LIMITATION' not in json.dumps(session.integrity_manifest)
+    limitations, _ = _integrity_pages(session, "limitations")
+    assert all(entry["label"] == "Upstream restriction retained" for entry in limitations)
+    assert "PRIVATE_BLOCKED_LIMITATION" not in json.dumps(session.receipts)
+    assert "PRIVATE_BLOCKED_LIMITATION" not in json.dumps(session.integrity_manifest)
 
 
-@pytest.mark.parametrize('mutation', ['bound_input_hash', 'producer_hash', 'producer_status'])
+@pytest.mark.parametrize("mutation", ["bound_input_hash", "producer_hash", "producer_status"])
 def test_integrity_v2_wrong_grant_identity_is_identity_mismatch(tmp_path, mutation):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     grant = _integrity_grant(store, attempt)
-    if mutation == 'bound_input_hash':
-        grant['bound_inputs'][0]['sha256'] = '0' * 64
-    elif mutation == 'producer_hash':
-        grant['producers'][0]['sha256'] = '0' * 64
+    if mutation == "bound_input_hash":
+        grant["bound_inputs"][0]["sha256"] = "0" * 64
+    elif mutation == "producer_hash":
+        grant["producers"][0]["sha256"] = "0" * 64
     else:
-        actual = grant['producers'][0]['status']
-        grant['producers'][0]['status'] = 'restricted' if actual != 'restricted' else 'accepted'
-    with pytest.raises(ValueError, match='^identity_mismatch$'):
+        actual = grant["producers"][0]["status"]
+        grant["producers"][0]["status"] = "restricted" if actual != "restricted" else "accepted"
+    with pytest.raises(ValueError, match="^identity_mismatch$"):
         _integrity_session(store, attempt, grant)
 
 
@@ -2296,29 +3102,34 @@ def test_integrity_v2_empty_evaluated_set_is_one_mechanical_finding(tmp_path):
     module = _upstream_module()
     pack = core.review_scope(store, attempt).pack
     scope = core.ReviewScope(pack=pack, inputs=(), heads=())
-    grant = {'schema_version': 'cp5-upstream-grant/2', 'consumer_module_id': 'CP-5',
-             'step_id': 'integrity_review', 'bound_inputs': [], 'producers': [],
-             'raw_source_ids': [],
-             'internal_scope_inspection': 'complete_bound_scope_for_existing_python_checks_only'}
+    grant = {
+        "schema_version": "cp5-upstream-grant/2",
+        "consumer_module_id": "CP-5",
+        "step_id": "integrity_review",
+        "bound_inputs": [],
+        "producers": [],
+        "raw_source_ids": [],
+        "internal_scope_inspection": "complete_bound_scope_for_existing_python_checks_only",
+    }
     catalog = module._IntegrityCatalog(scope, {}, grant)
-    expected = next(x for x in fixture['causal_mutations'] if x['id'] == 'empty')['expected_counts']
-    findings = catalog.sections['findings']
-    assert [f['code'] for f in findings] == ['empty_evaluated_set']
-    assert expected['empty_evaluated_set'] == 1 and sum(expected.values()) == 1
+    expected = next(x for x in fixture["causal_mutations"] if x["id"] == "empty")["expected_counts"]
+    findings = catalog.sections["findings"]
+    assert [f["code"] for f in findings] == ["empty_evaluated_set"]
+    assert expected["empty_evaluated_set"] == 1 and sum(expected.values()) == 1
 
 
 def test_integrity_v2_same_cursor_with_different_limit_keeps_starting_offset(tmp_path):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     session = _integrity_session(store, attempt)
     manifest = session.integrity_manifest
-    base = {'scope_sha256': manifest['scope_sha256'], 'section': 'required_evidence', 'limit': 1}
-    first = session.invoke('read_integrity_scope', {**base, 'cursor': None})
-    cursor = first['body']['next_cursor']
-    one = session.invoke('read_integrity_scope', {**base, 'cursor': cursor})
-    two = session.invoke('read_integrity_scope', {**base, 'cursor': cursor, 'limit': 2})
-    assert one['body']['offset'] == two['body']['offset'] == 1
-    assert one['body']['entries'] == two['body']['entries']  # only one entry remains
-    assert one['body']['entries'][0] != first['body']['entries'][0]
+    base = {"scope_sha256": manifest["scope_sha256"], "section": "required_evidence", "limit": 1}
+    first = session.invoke("read_integrity_scope", {**base, "cursor": None})
+    cursor = first["body"]["next_cursor"]
+    one = session.invoke("read_integrity_scope", {**base, "cursor": cursor})
+    two = session.invoke("read_integrity_scope", {**base, "cursor": cursor, "limit": 2})
+    assert one["body"]["offset"] == two["body"]["offset"] == 1
+    assert one["body"]["entries"] == two["body"]["entries"]  # only one entry remains
+    assert one["body"]["entries"][0] != first["body"]["entries"][0]
 
 
 def test_integrity_v2_same_cursor_with_different_limit_changes_prefix_length(tmp_path):
@@ -2326,32 +3137,36 @@ def test_integrity_v2_same_cursor_with_different_limit_changes_prefix_length(tmp
     store, attempt, _, _ = _integrity_execution(tmp_path, transform=_protected_component)
     session = _integrity_session(store, attempt)
     manifest = session.integrity_manifest
-    base = {'scope_sha256': manifest['scope_sha256'], 'section': 'lineage_companions'}
-    first = session.invoke('read_integrity_scope', {**base, 'cursor': None, 'limit': 1})
-    cursor = first['body']['next_cursor']
-    one = session.invoke('read_integrity_scope', {**base, 'cursor': cursor, 'limit': 1})
-    two = session.invoke('read_integrity_scope', {**base, 'cursor': cursor, 'limit': 2})
-    assert one['status'] == two['status'] == 'ok'
-    assert one['body']['offset'] == two['body']['offset'] == 1
-    assert len(one['body']['entries']) == 1 and len(two['body']['entries']) == 2
-    assert two['body']['entries'][0] == one['body']['entries'][0]
-    assert first['body']['total'] - 1 >= 3
+    base = {"scope_sha256": manifest["scope_sha256"], "section": "lineage_companions"}
+    first = session.invoke("read_integrity_scope", {**base, "cursor": None, "limit": 1})
+    cursor = first["body"]["next_cursor"]
+    one = session.invoke("read_integrity_scope", {**base, "cursor": cursor, "limit": 1})
+    two = session.invoke("read_integrity_scope", {**base, "cursor": cursor, "limit": 2})
+    assert one["status"] == two["status"] == "ok"
+    assert one["body"]["offset"] == two["body"]["offset"] == 1
+    assert len(one["body"]["entries"]) == 1 and len(two["body"]["entries"]) == 2
+    assert two["body"]["entries"][0] == one["body"]["entries"][0]
+    assert first["body"]["total"] - 1 >= 3
 
 
 def test_integrity_v2_lineage_measures_are_the_one_vocabulary_in_owner_order():
     module = _upstream_module()
-    owner = json.loads((Path(__file__).parents[1] / 'cases/earnings/owner-expected.json').read_text())
-    assert list(module._LINEAGE_MEASURES) == owner['lineage']['measure_order']
+    owner = json.loads(
+        (Path(__file__).parents[1] / "cases/earnings/owner-expected.json").read_text()
+    )
+    assert list(module._LINEAGE_MEASURES) == owner["lineage"]["measure_order"]
     assert set(module._LINEAGE_MEASURES) == module._MEASURES
 
 
-@pytest.mark.parametrize('where,key,value', [
-    ('producers', 'role', []), ('producers', 'status', {}), ('bound_inputs', 'status', [])])
+@pytest.mark.parametrize(
+    "where,key,value",
+    [("producers", "role", []), ("producers", "status", {}), ("bound_inputs", "status", [])],
+)
 def test_integrity_v2_unhashable_grant_enum_is_bad_arguments(tmp_path, where, key, value):
     store, attempt, _, _ = _integrity_execution(tmp_path)
     grant = _integrity_grant(store, attempt)
     grant[where][0][key] = value
-    with pytest.raises(ValueError, match='^bad_arguments$'):
+    with pytest.raises(ValueError, match="^bad_arguments$"):
         _integrity_session(store, attempt, grant)
 
 
@@ -2360,18 +3175,18 @@ def test_integrity_v2_verify_reread_swapped_cp1b_blob_is_identity_mismatch(tmp_p
 
     store, attempt, heads, _ = _integrity_execution(tmp_path, transform=_protected_component)
     session = _integrity_session(store, attempt)
-    scope_sha = session.integrity_manifest['scope_sha256']
+    scope_sha = session.integrity_manifest["scope_sha256"]
     real = cp5_integrity.review_scope
-    path = store.directory / 'blobs' / heads[1].content_hash()
+    path = store.directory / "blobs" / heads[1].content_hash()
 
     def swapping(store_, attempt_):
         raw = path.read_bytes()
-        path.write_bytes(b'x')
+        path.write_bytes(b"x")
         try:
             return real(store_, attempt_)
         finally:
             path.write_bytes(raw)
 
-    monkeypatch.setattr(cp5_integrity, 'review_scope', swapping)
-    receipt = session.invoke('verify_integrity_scope', {'scope_sha256': scope_sha})
-    _assert_refused(receipt, 'identity_mismatch')
+    monkeypatch.setattr(cp5_integrity, "review_scope", swapping)
+    receipt = session.invoke("verify_integrity_scope", {"scope_sha256": scope_sha})
+    _assert_refused(receipt, "identity_mismatch")

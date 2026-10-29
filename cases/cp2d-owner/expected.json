@@ -152,7 +152,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "opening_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r01"
+                "fact_id": "T2E.1.r01",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -165,7 +166,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "cfo",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r02"
+                "fact_id": "T2E.1.r02",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -178,7 +180,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "investing",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r03"
+                "fact_id": "T2E.1.r03",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -191,7 +194,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "net_debt_issuance",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r04"
+                "fact_id": "T2E.1.r04",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -204,7 +208,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "equity_issuance+equity_repurchases",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r05"
+                "fact_id": "T2E.1.r05",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -217,7 +222,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "dividends_paid",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r06"
+                "fact_id": "T2E.1.r06",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -230,7 +236,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "other_investing_financing",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r07"
+                "fact_id": "T2E.1.r07",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -243,7 +250,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "fx_effect",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r08"
+                "fact_id": "T2E.1.r08",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -254,7 +262,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.1.r09"
+                "fact_id": "T2E.1.r09",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -267,7 +276,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "closing_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r10"
+                "fact_id": "T2E.1.r10",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -278,7 +288,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.1.r11"
+                "fact_id": "T2E.1.r11",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -300,7 +311,8 @@
                 "value_class": "source",
                 "cp1_operand": "cash_bs",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r01"
+                "fact_id": "T2E.2.r01",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -313,7 +325,8 @@
                 "value_class": "source",
                 "cp1_operand": "restricted_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r02"
+                "fact_id": "T2E.2.r02",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -326,7 +339,8 @@
                 "value_class": "source",
                 "cp1_operand": "rcf_commitment",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r03"
+                "fact_id": "T2E.2.r03",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -339,7 +353,8 @@
                 "value_class": "source",
                 "cp1_operand": "rcf_drawn",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r04"
+                "fact_id": "T2E.2.r04",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -351,7 +366,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "undrawn_rcf",
-                "fact_id": "T2E.2.r05"
+                "fact_id": "T2E.2.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -363,7 +379,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "T4.18 commitment - drawn_amount",
-                "fact_id": "T2E.2.r06"
+                "fact_id": "T2E.2.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -375,7 +392,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "liquidity",
-                "fact_id": "T2E.2.r07"
+                "fact_id": "T2E.2.r07",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -388,7 +406,8 @@
                 "value_class": "source",
                 "cp1_operand": "total_debt_bs",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r08"
+                "fact_id": "T2E.2.r08",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -400,7 +419,8 @@
                 "unit": "PERCENT",
                 "value_class": "calculated",
                 "cp1_operand": "liquidity_to_debt",
-                "fact_id": "T2E.2.r09"
+                "fact_id": "T2E.2.r09",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -420,7 +440,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r01"
+                "fact_id": "T2E.3.r01",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -431,7 +452,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r02"
+                "fact_id": "T2E.3.r02",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -442,7 +464,8 @@
                 "amount": "24",
                 "unit": "months",
                 "value_class": "analyst_judgment",
-                "fact_id": "T2E.3.r03"
+                "fact_id": "T2E.3.r03",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -462,7 +485,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r05"
+                "fact_id": "T2E.3.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -473,7 +497,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r06"
+                "fact_id": "T2E.3.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -484,7 +509,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r07"
+                "fact_id": "T2E.3.r07",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -495,7 +521,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r08"
+                "fact_id": "T2E.3.r08",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -532,7 +559,8 @@
                   "unit": "MILLIONS",
                   "value_class": "source",
                   "cp1_operand": "T4.18 principal",
-                  "fact_id": "T2E.4.r01.c1"
+                  "fact_id": "T2E.4.r01.c1",
+                  "period": "q4-2025"
                 },
                 {
                   "shown": "2029-12-31",
@@ -547,7 +575,8 @@
                   "amount": "48",
                   "unit": "months",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c3"
+                  "fact_id": "T2E.4.r01.c3",
+                  "period": "2025-12-31"
                 },
                 {
                   "shown": "No",
@@ -561,7 +590,8 @@
                   "amount": "1",
                   "unit": "PERCENT",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c5"
+                  "fact_id": "T2E.4.r01.c5",
+                  "period": "2025-12-31"
                 },
                 {
                   "shown": "100.0%",
@@ -569,7 +599,8 @@
                   "amount": "1",
                   "unit": "PERCENT",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c6"
+                  "fact_id": "T2E.4.r01.c6",
+                  "period": "2025-12-31"
                 }
               ]
             ]
@@ -590,7 +621,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r01"
+                "fact_id": "T2E.5.r01",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -602,7 +634,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "undrawn_rcf",
-                "fact_id": "T2E.5.r02"
+                "fact_id": "T2E.5.r02",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -613,7 +646,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r03"
+                "fact_id": "T2E.5.r03",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -624,7 +658,8 @@
                 "amount": "10",
                 "unit": "MILLIONS",
                 "value_class": "analyst_judgment",
-                "fact_id": "T2E.5.r04"
+                "fact_id": "T2E.5.r04",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -635,7 +670,8 @@
                 "amount": "10",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r05"
+                "fact_id": "T2E.5.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -646,7 +682,8 @@
                 "amount": "10",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r06"
+                "fact_id": "T2E.5.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -657,7 +694,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r07"
+                "fact_id": "T2E.5.r07",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -818,7 +856,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "opening_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r01"
+                "fact_id": "T2E.1.r01",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -831,7 +870,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "cfo",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r02"
+                "fact_id": "T2E.1.r02",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -844,7 +884,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "investing",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r03"
+                "fact_id": "T2E.1.r03",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -857,7 +898,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "net_debt_issuance",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r04"
+                "fact_id": "T2E.1.r04",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -870,7 +912,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "equity_issuance+equity_repurchases",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r05"
+                "fact_id": "T2E.1.r05",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -883,7 +926,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "dividends_paid",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r06"
+                "fact_id": "T2E.1.r06",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -896,7 +940,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "other_investing_financing",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r07"
+                "fact_id": "T2E.1.r07",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -909,7 +954,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "fx_effect",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r08"
+                "fact_id": "T2E.1.r08",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -920,7 +966,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.1.r09"
+                "fact_id": "T2E.1.r09",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -933,7 +980,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "closing_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r10"
+                "fact_id": "T2E.1.r10",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -944,7 +992,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.1.r11"
+                "fact_id": "T2E.1.r11",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -966,7 +1015,8 @@
                 "value_class": "source",
                 "cp1_operand": "cash_bs",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r01"
+                "fact_id": "T2E.2.r01",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -979,7 +1029,8 @@
                 "value_class": "source",
                 "cp1_operand": "restricted_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r02"
+                "fact_id": "T2E.2.r02",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -992,7 +1043,8 @@
                 "value_class": "source",
                 "cp1_operand": "rcf_commitment",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r03"
+                "fact_id": "T2E.2.r03",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1005,7 +1057,8 @@
                 "value_class": "source",
                 "cp1_operand": "rcf_drawn",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r04"
+                "fact_id": "T2E.2.r04",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1017,7 +1070,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "undrawn_rcf",
-                "fact_id": "T2E.2.r05"
+                "fact_id": "T2E.2.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1029,7 +1083,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "T4.18 commitment - drawn_amount",
-                "fact_id": "T2E.2.r06"
+                "fact_id": "T2E.2.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1041,7 +1096,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "liquidity",
-                "fact_id": "T2E.2.r07"
+                "fact_id": "T2E.2.r07",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1054,7 +1110,8 @@
                 "value_class": "source",
                 "cp1_operand": "total_debt_bs",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r08"
+                "fact_id": "T2E.2.r08",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1066,7 +1123,8 @@
                 "unit": "PERCENT",
                 "value_class": "calculated",
                 "cp1_operand": "liquidity_to_debt",
-                "fact_id": "T2E.2.r09"
+                "fact_id": "T2E.2.r09",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -1086,7 +1144,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r01"
+                "fact_id": "T2E.3.r01",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1097,7 +1156,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r02"
+                "fact_id": "T2E.3.r02",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1108,7 +1168,8 @@
                 "amount": "60",
                 "unit": "months",
                 "value_class": "analyst_judgment",
-                "fact_id": "T2E.3.r03"
+                "fact_id": "T2E.3.r03",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1128,7 +1189,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r05"
+                "fact_id": "T2E.3.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1139,7 +1201,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r06"
+                "fact_id": "T2E.3.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1150,7 +1213,8 @@
                 "amount": "-50",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r07"
+                "fact_id": "T2E.3.r07",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1161,7 +1225,8 @@
                 "amount": "-30",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r08"
+                "fact_id": "T2E.3.r08",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1198,7 +1263,8 @@
                   "unit": "MILLIONS",
                   "value_class": "source",
                   "cp1_operand": "T4.18 principal",
-                  "fact_id": "T2E.4.r01.c1"
+                  "fact_id": "T2E.4.r01.c1",
+                  "period": "q4-2025"
                 },
                 {
                   "shown": "2029-12-31",
@@ -1213,7 +1279,8 @@
                   "amount": "48",
                   "unit": "months",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c3"
+                  "fact_id": "T2E.4.r01.c3",
+                  "period": "2025-12-31"
                 },
                 {
                   "shown": "Yes",
@@ -1227,7 +1294,8 @@
                   "amount": "1",
                   "unit": "PERCENT",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c5"
+                  "fact_id": "T2E.4.r01.c5",
+                  "period": "2025-12-31"
                 },
                 {
                   "shown": "100.0%",
@@ -1235,7 +1303,8 @@
                   "amount": "1",
                   "unit": "PERCENT",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c6"
+                  "fact_id": "T2E.4.r01.c6",
+                  "period": "2025-12-31"
                 }
               ]
             ]
@@ -1256,7 +1325,8 @@
                 "amount": "-30",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r01"
+                "fact_id": "T2E.5.r01",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1268,7 +1338,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "undrawn_rcf",
-                "fact_id": "T2E.5.r02"
+                "fact_id": "T2E.5.r02",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1279,7 +1350,8 @@
                 "amount": "-30",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r03"
+                "fact_id": "T2E.5.r03",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1290,7 +1362,8 @@
                 "amount": "10",
                 "unit": "MILLIONS",
                 "value_class": "analyst_judgment",
-                "fact_id": "T2E.5.r04"
+                "fact_id": "T2E.5.r04",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1301,7 +1374,8 @@
                 "amount": "-40",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r05"
+                "fact_id": "T2E.5.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1312,7 +1386,8 @@
                 "amount": "-40",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r06"
+                "fact_id": "T2E.5.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1323,7 +1398,8 @@
                 "amount": "40",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r07"
+                "fact_id": "T2E.5.r07",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -1492,7 +1568,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "opening_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r01"
+                "fact_id": "T2E.1.r01",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1505,7 +1582,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "cfo",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r02"
+                "fact_id": "T2E.1.r02",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1518,7 +1596,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "investing",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r03"
+                "fact_id": "T2E.1.r03",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1531,7 +1610,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "net_debt_issuance",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r04"
+                "fact_id": "T2E.1.r04",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1544,7 +1624,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "equity_issuance+equity_repurchases",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r05"
+                "fact_id": "T2E.1.r05",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1557,7 +1638,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "dividends_paid",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r06"
+                "fact_id": "T2E.1.r06",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1570,7 +1652,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "other_investing_financing",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r07"
+                "fact_id": "T2E.1.r07",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1583,7 +1666,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "fx_effect",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r08"
+                "fact_id": "T2E.1.r08",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1594,7 +1678,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.1.r09"
+                "fact_id": "T2E.1.r09",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1607,7 +1692,8 @@
                 "value_class": "calculated",
                 "cp1_operand": "closing_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.1.r10"
+                "fact_id": "T2E.1.r10",
+                "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31"
               }
             ],
             [
@@ -1618,7 +1704,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.1.r11"
+                "fact_id": "T2E.1.r11",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -1640,7 +1727,8 @@
                 "value_class": "source",
                 "cp1_operand": "cash_bs",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r01"
+                "fact_id": "T2E.2.r01",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1653,7 +1741,8 @@
                 "value_class": "source",
                 "cp1_operand": "restricted_cash",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r02"
+                "fact_id": "T2E.2.r02",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1666,7 +1755,8 @@
                 "value_class": "source",
                 "cp1_operand": "rcf_commitment",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r03"
+                "fact_id": "T2E.2.r03",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1679,7 +1769,8 @@
                 "value_class": "source",
                 "cp1_operand": "rcf_drawn",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r04"
+                "fact_id": "T2E.2.r04",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1691,7 +1782,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "undrawn_rcf",
-                "fact_id": "T2E.2.r05"
+                "fact_id": "T2E.2.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1703,7 +1795,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "T4.18 commitment - drawn_amount",
-                "fact_id": "T2E.2.r06"
+                "fact_id": "T2E.2.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1715,7 +1808,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "liquidity",
-                "fact_id": "T2E.2.r07"
+                "fact_id": "T2E.2.r07",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1728,7 +1822,8 @@
                 "value_class": "source",
                 "cp1_operand": "total_debt_bs",
                 "cp1_unit": "currency",
-                "fact_id": "T2E.2.r08"
+                "fact_id": "T2E.2.r08",
+                "period": "q4-2025 · 2025-10-01 to 2025-12-31"
               }
             ],
             [
@@ -1740,7 +1835,8 @@
                 "unit": "PERCENT",
                 "value_class": "calculated",
                 "cp1_operand": "liquidity_to_debt",
-                "fact_id": "T2E.2.r09"
+                "fact_id": "T2E.2.r09",
+                "period": "2025-12-31"
               }
             ]
           ]
@@ -1760,7 +1856,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r01"
+                "fact_id": "T2E.3.r01",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1771,7 +1868,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r02"
+                "fact_id": "T2E.3.r02",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1782,7 +1880,8 @@
                 "amount": "24",
                 "unit": "months",
                 "value_class": "analyst_judgment",
-                "fact_id": "T2E.3.r03"
+                "fact_id": "T2E.3.r03",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1802,7 +1901,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r05"
+                "fact_id": "T2E.3.r05",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1813,7 +1913,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r06"
+                "fact_id": "T2E.3.r06",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1824,7 +1925,8 @@
                 "amount": "0",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r07"
+                "fact_id": "T2E.3.r07",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1835,7 +1937,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.3.r08"
+                "fact_id": "T2E.3.r08",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1846,6 +1949,7 @@
                 "state": "gap",
                 "unit": "months",
                 "reason": "Not calculable: minimum cash not assessed",
+                "value_class": "calculated",
                 "fact_id": "T2E.3.r09"
               }
             ]
@@ -1873,7 +1977,8 @@
                   "unit": "MILLIONS",
                   "value_class": "source",
                   "cp1_operand": "T4.18 principal",
-                  "fact_id": "T2E.4.r01.c1"
+                  "fact_id": "T2E.4.r01.c1",
+                  "period": "q4-2025"
                 },
                 {
                   "shown": "2029-12-31",
@@ -1888,7 +1993,8 @@
                   "amount": "48",
                   "unit": "months",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c3"
+                  "fact_id": "T2E.4.r01.c3",
+                  "period": "2025-12-31"
                 },
                 {
                   "shown": "No",
@@ -1902,7 +2008,8 @@
                   "amount": "1",
                   "unit": "PERCENT",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c5"
+                  "fact_id": "T2E.4.r01.c5",
+                  "period": "2025-12-31"
                 },
                 {
                   "shown": "100.0%",
@@ -1910,7 +2017,8 @@
                   "amount": "1",
                   "unit": "PERCENT",
                   "value_class": "calculated",
-                  "fact_id": "T2E.4.r01.c6"
+                  "fact_id": "T2E.4.r01.c6",
+                  "period": "2025-12-31"
                 }
               ]
             ]
@@ -1931,7 +2039,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r01"
+                "fact_id": "T2E.5.r01",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1943,7 +2052,8 @@
                 "unit": "MILLIONS",
                 "value_class": "calculated",
                 "cp1_operand": "undrawn_rcf",
-                "fact_id": "T2E.5.r02"
+                "fact_id": "T2E.5.r02",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1954,7 +2064,8 @@
                 "amount": "20",
                 "unit": "MILLIONS",
                 "value_class": "calculated",
-                "fact_id": "T2E.5.r03"
+                "fact_id": "T2E.5.r03",
+                "period": "2025-12-31"
               }
             ],
             [
@@ -1965,6 +2076,8 @@
                 "state": "gap",
                 "unit": "MILLIONS",
                 "reason": "Minimum cash not assessed",
+                "value_class": "analyst_judgment",
+                "currency": "USD",
                 "fact_id": "T2E.5.r04"
               }
             ],
@@ -1976,6 +2089,7 @@
                 "state": "gap",
                 "unit": "MILLIONS",
                 "reason": "Not calculable: minimum cash not assessed",
+                "value_class": "calculated",
                 "fact_id": "T2E.5.r05"
               }
             ],
@@ -1987,6 +2101,7 @@
                 "state": "gap",
                 "unit": "MILLIONS",
                 "reason": "Not calculable: minimum cash not assessed",
+                "value_class": "calculated",
                 "fact_id": "T2E.5.r06"
               }
             ],
@@ -1998,6 +2113,8 @@
                 "state": "gap",
                 "unit": "MILLIONS",
                 "reason": "Not calculable: minimum cash not assessed",
+                "value_class": "calculated",
+                "currency": "USD",
                 "fact_id": "T2E.5.r07"
               }
             ]
@@ -2398,7 +2515,7 @@
       "outcome": "begin refused (edge_rule block): 'Required upstream is unrun, stale or blocked'",
       "attempt_consumed": false,
       "head": "none",
-      "also": "a stale required head refuses the same way"
+      "also": "a stale required head is not a retained refusal: begin re-raises ValueError, an integrity fault in the store snapshot, and consumes no attempt"
     }
   },
   "tool_use": {
@@ -2422,11 +2539,8 @@
         "state": "populated"
       },
       "maturity-wall": {
-        "owner": "CP-2D",
-        "kind": "dense",
-        "primary_tab": "T2E.4",
-        "tabs": [],
-        "state": "populated"
+        "owner": "MODEL",
+        "stage3_pending": "the populated shape (MODEL S.4 content first, T2E.4 as a non-primary tab) waits for the Stage 3 S.4 chart task (CP-1 binding into maturity-wall and a _STRIP_FIGURES entry); this release pins the owner only"
       },
       "funding-gap": {
         "owner": "CP-2D",
@@ -2447,6 +2561,7 @@
         "T2E.7"
       ]
     },
+    "maturity_wall_note": "Q-C1 (user 2026-10-29): maturity-wall is MODEL-owned (Fig. S.4 from CP-1, producer CP-1); the approved page shows no route on its header, so route_label is None. CP-2D's T2E.4 binding is unchanged (validate_bindings requires every fact bound) and CP-2D draws no figure and does not own the block. The populated shape is stage3_pending: until the Stage 3 S.4 task lands, a populated FP-04 render is not delivered and is not pinned here",
     "cells": "block cell text equals the `shown` strings of expected.cases.<case>.tables for the same table id; gap cells render the product spelling '∅ G<n>' (display.py) with n assigned in report order: the expected `shown` of a gap cell is the pattern '∅ G#', an A7 exception that matches '∅ G' plus digits",
     "other_FP04_blocks": "CP-4 and CP-3C blocks are not asserted (CP-4 is not requested; CP-3C has no core)"
   },

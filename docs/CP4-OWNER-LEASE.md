@@ -1,8 +1,20 @@
 # CP-4 (legal and covenants) owner run lease - FROZEN by LEAD 2026-10-28 (draft rev 2 by cp4-owner preparation; oracle sha256 pinned below)
 
+Amended by Modules 2026-10-29 (Stage 2 close release I2 chain): only pin hashes move, no oracle value moves beyond the Q-C1 batch. `expected.json` moves by the Q-C1 batch (merged `claude/s2r-qc1`), recorded in that batch's line above; the chain moves no other oracle value. Own files, old → new sha256 (old = after the fix batch): `manifest.json` unchanged; `submissions.json` unchanged; `expected.json` 2b98b81bd529ef5b754dd6977b4624e2dc1359d29385be952a7afe0bd09e4a55 → 1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78; `builder/build.py` 94010ed045646e65b91dfe70c6612882282e3f483f39d313954ef345e5c5321b → 62c55210e1db506612910c7008e778979be0d7e057009faee388bcb827aa10f0.
+
+Amended by Modules 2026-10-29 (Stage 2 close release fix batch): only pin hashes move, no oracle value changes; its builder re-pins the legal manifest. Own files, old → new sha256: `builder/build.py` 72ad8c26 → 94010ed0; `manifest.json` 6f17b943 → 2c12bf68; `submissions.json` 094425aa → f2ef2e30. `cases/legal/manifest.json` dceee076 → d6a8ec15 (its `readiness.py` inspection pin returns to the imported 1038a37a, was 01616654); `render-expected.json` 95f298a8 → 499289b9; `source-host-expected.json` 1a9db34d → 7d359fd5.
+
+Amended by Modules 2026-10-29 (Q-C1, user-approved): the W2-A1 note below and the FP04 amendment (`docs/CP4-FP04-BINDING-LEASE.md` :84-98) call `maturity-wall` CP-2D's; in FP-04 it is MODEL-owned (producer CP-1, Fig. S.4), and the CP-2D T2E.4 table is a non-primary tab. `expected.json` `render.other_five_sections` names `maturity-wall (MODEL)`; `expected.json` and `builder/build.py` hashes are in the Q-C1 commit's `cases/PINS.json`.
+
+Amended by Modules 2026-10-29 (Stage 2 close release W2-A1; `work/build/stage2/release/w2-brief.md`): `expected.json` `render.other_five_sections` no longer says the five blocks stay owner Unbound: it names liquidity-runway, maturity-wall and funding-gap as CP-2D's and refinancing-paths and lme-creditor-exposure as CP-3C's, as re-pinned in `cases/legal/render-expected.json` `other_front_sections.blocks` (rulings round 4 and round 5 item 18; sha256 ad9b8ca9… → d4eadecf…). No other leaf moves. Own files, old → new sha256: `manifest.json` unchanged; `submissions.json` unchanged; `expected.json` 154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0 → 2b98b81bd529ef5b754dd6977b4624e2dc1359d29385be952a7afe0bd09e4a55; `builder/build.py` e0518720e6179eb1bdf33de7348be0d9f7598433914411d4a10269c2ded7312f → 8ec386bf1943e7a17729a4762e5719a2ee706ab44727a9bb05b585262b062ce3.
+
+Amended by Modules 2026-10-29 (Stage 2 close release W1, merge of `lead/0d-d` 0daac2c onto `lead/cp6-freeze` 562a3bc; `work/build/stage2/release-plan.md`): pin hashes only, re-pinned against the merged tip: `cases/legal/manifest.json` d6a8ec15… → 3da3b746… (readiness.py imported-hash entry, 0d-d). No oracle value moves. Own files, old → new sha256: `manifest.json` 2c12bf6836f54b704201af217866002d279b51cd8f1ed6094154aec9198f6b23 → 6495ca2e5411461c7af14595b0181e0c0a0569e83bde012bd20368de362b5690; `submissions.json` f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461 → ed069b1accead9b55fc844b7a5e84f8a3f91bc87582949f2817ebd2438aaf43c; `expected.json` unchanged; `builder/build.py` 71cf075839362058f6be70140995bfb363a19228151842414200f4d961755446 → e0518720e6179eb1bdf33de7348be0d9f7598433914411d4a10269c2ded7312f.
+
 Pin consumers: `cases/cp4c-owner/builder/build.py` pins `expected.json`, `submissions.json`. Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
 
 Amended by LEAD 2026-10-28 (amendment 1, ruling 4-1 in `docs/rulings/2026-10-28-stage1.md`): the T4.9 current and T4F.2 basis description reads `bound from the CP-1 fact (IFRS · consolidated group)`, the engine's copied `predicate_facts.basis_observed` value (builder :801, :816). Only those four `expected.json` strings changed (:827, :2800, :4083, :6089); submissions and manifest are byte-identical; the `entity` string `Northbridge Synthetic Group (IFRS consolidated group)` (builder :1109) is a different field and is unchanged. Three rebuilds (in place and two scratch copies, `python3 -I`) identical. Pins now: expected 154fc2d09a4c8a06232a489e5a047e947ee098507969e5e11cdb1ca7f6f4f6a0, builder 71cf075839362058f6be70140995bfb363a19228151842414200f4d961755446 (submissions f2ef2e30…, manifest 2c12bf68… unchanged); the expected pin a60ab627… at :259 and :290 below is superseded.
+
+Amended by Modules 2026-10-29 (Stage 2 close release W3 chain): only pin hashes move, no oracle value changes; its builder re-pins the legal manifest. Own files, old → new sha256: `builder/build.py` 8ec386bf → 72ad8c26; `manifest.json` 6495ca2e → 6f17b943; `submissions.json` ed069b1a → 094425aa. The legal manifest `cases/legal/manifest.json` pins the new `readiness.py` (119058ff → 01616654): 3da3b746 → dceee076; `render-expected.json` d4eadecf → 95f298a8; `source-host-expected.json` 5868a06c → 1a9db34d.
 
 Rev 1 implemented the LEAD rulings on review-precise-1 (H1, H2, M1, M2, L1-L6, Q1-Q6). Rev 2 implements the LEAD rulings on review-precise-2 (F1-F5). Pre-code. Follows `docs/S1A-OWNER-RUN-LEASE.md` (rev 1 with amendments) and
 `docs/OWNER-WORKFLOW-LEASE.md` (D1-D12). The oracle is `cases/cp4-owner/{manifest,submissions,expected}.json`
@@ -35,11 +47,14 @@ verified settled CP-4 head, a verified `OwnerRunReceipt` and the six FP04 sectio
 ## Files
 
 - `src/deploy_workflow/owner_workflow.py`: one `OwnerSpec` entry (below), `SUPPORTED_ANALYTICAL` += CP-4,
-  `_QUALIFICATION` += `cp4_legal.PROMOTED`, `_PROBES` += `owners.cp4.probe`, and `StepSpec.inputs` gains the value
-  `"step_context"` (see Public API). CP-4 is a live-contract module (`docs/G1X-OWNER-CORE-PROTOCOL.md` section 1): G1-X builds the core
-  hooks (section 3 read_inputs, section 4 precheck, replay); this lease only registers CP-4 against them. Change to G1 (section 3):
-  `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`, with or without a source session
-  (G1 enforces it today only for steps without one, `owner_workflow.py:558`, and accepts only `inputs == "projection"`, `:530`).
+  `_QUALIFICATION` += `cp4_legal.PROMOTED`, `_PROBES` += `owners.cp4.probe`, `_ENTRY_VALIDATORS["CP-4"]` =
+  `owners.cp4.ENTRY_VALIDATOR` (= `cp4_legal._validate_step`; the signature matches, no adapter), `_PRECHECKS["CP-4"]` =
+  `owners.cp4.precheck`, `_VIEWS["legal_covenants"]` = `owners.cp4.view`, and `StepSpec.inputs` gains the value
+  `"step_context"` with its `_inputs` branch and `_check_steps` clause (see Public API; built at `owner_workflow.py:272`, `:820`,
+  `:949`). CP-4 is a live-contract module (`docs/G1X-OWNER-CORE-PROTOCOL.md` section 1): G1-X builds the core
+  hooks (section 3 read_inputs, section 4 precheck, replay); this lease only registers CP-4 against them. The rule that
+  `read_inputs` is required before `submit_review` for every step whose `inputs != "none"`, with or without a source session,
+  already exists from G1-X (protocol section 3); this lease adds no G1 change for it.
 - New `src/deploy_workflow/owners/cp4.py`: `probe`, `view`, `semantic_issues` (the Q1 gate, LEAD ruling option A) and the core
   `precheck(store, binding, stored)` hook (protocol section 4), which calls `semantic_issues` on the filled payload.
 - New `tests/test_owner_cp4.py`; new `tests/cp4_runs.py` exporting `cp4_closed(case, root) -> (store_dir,
@@ -49,7 +64,7 @@ verified settled CP-4 head, a verified `OwnerRunReceipt` and the six FP04 sectio
   ids all exist (see D8 below). No `docs/reuse/manifest.json` row beyond the new files.
 - No `src/deploy_vii` edit, no host edit, no case-pack byte changed.
 
-## Public API additions (keyword arguments only)
+## Public API additions (the seams are positional, protocol section 2; `semantic_issues` is keyword-only)
 
 ```
 StepSpec.inputs: Literal["none", "projection", "module_context", "step_context"]
@@ -60,12 +75,12 @@ OWNER_SPECS += "CP-4": OwnerSpec(
                     sources=True, extract=False, upstream_grant=None,
                     inputs="step_context", rules="journaled"),),
     entry="model_payload", kind="analytical", publish=None)
-owners.cp4.probe(*, store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None
-owners.cp4.view(*, store: Execution, attempt: Attempt) -> tuple[str, str]       # (sha256, body)
+owners.cp4.probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None   # owners/cp4.py:132
+owners.cp4.view(historical: Execution, attempt: Attempt) -> tuple[str, str]       # (sha256, body); owners/cp4.py:119
 owners.cp4.semantic_issues(*, pack, submission) -> tuple[str, ...]                 # the Q1 gate; see Semantic gate
 owners.cp4.precheck(store, binding, stored) -> tuple[str, ...]                     # core hook (protocol section 4); calls semantic_issues
 ```
-`view` body is `json.dumps(cp4_legal.context_block(store.pack(), cp4_legal.upstream_of(store, attempt)),
+`view` body is `json.dumps(cp4_legal.context_block(historical.pack(), cp4_legal.upstream_of(historical, attempt)),
 ensure_ascii=False, separators=(",", ":"), allow_nan=False)`, digest its sha256 (as `live/context.py:111`). The
 receipt schema, JSON-lines operations and return shapes do not change.
 

@@ -469,11 +469,37 @@ def A(d, vc="calculated", ref=None):
     return c
 
 
+# The CP-1 periods of the copied facts, verbatim as the manifest binds them (fact_bindings below).
+PERIOD_T45 = "LTM Q4 25 · 2025-01-01 to 2025-12-31"
+PERIOD_T46 = "q4-2025 · 2025-10-01 to 2025-12-31"
+PERIOD_T418 = "q4-2025"
+RECOMPUTED = {"undrawn_rcf", "liquidity", "liquidity_to_debt", "T4.18 commitment - drawn_amount"}
+
+
+def period_of(ref):
+    """Round 13 R1 M1: a copy carries its CP-1 fact's own period; a computed or recomputed cell (the
+    cp1_operand tag of a recomputed cell is a twin pointer only) takes the balance date."""
+    if ref is None or ref in RECOMPUTED:
+        return BAL_DATE.isoformat()
+    periods = set()
+    for part in ref.split("+"):
+        for name in part.split(" - "):
+            name = name.strip()
+            periods.add(PERIOD_T45 if name in T45 else PERIOD_T46 if name in T46 else PERIOD_T418)
+    assert len(periods) == 1, ref
+    return periods.pop()
+
+
 GAP_SHOWN = "∅ G#"  # product spelling "∅ G<n>" (display.py); n is assigned by the report at run time
 
 
-def GAP(reason, unit="MILLIONS"):
-    return {"shown": GAP_SHOWN, "shown_pattern": "∅ G<n>", "state": "gap", "unit": unit, "reason": reason}
+def GAP(reason, unit="MILLIONS", vc=None, currency=None):
+    c = {"shown": GAP_SHOWN, "shown_pattern": "∅ G<n>", "state": "gap", "unit": unit, "reason": reason}
+    if vc:  # Stage 2 close release (round 13 R1 M1): the gap cell names its value class
+        c["value_class"] = vc
+    if currency:  # a CP-2D gap twin carries its settled twin's currency (lease acceptance 1)
+        c["currency"] = currency
+    return c
 
 
 RUNWAY_ROW = "Months until cash reaches minimum cash from run-rate cash flow alone (excludes maturities and amortisation)"
@@ -522,7 +548,7 @@ def build_tables(case):
     elif r["runway_state"] == "months":
         runway_cell = C(f"{r['runway_months']} months", format(r["runway_months"], "f"), "months", "calculated")
     else:
-        runway_cell = GAP("Not calculable: " + r["runway_reason"], "months")
+        runway_cell = GAP("Not calculable: " + r["runway_reason"], "months", "calculated")
     t3 = [
         ["Run-rate net cash flow before new borrowing, per year", A(r["f_annual"])],
         ["Run-rate net cash flow before new borrowing, per month", A(r["f_month"])],
@@ -554,10 +580,10 @@ def build_tables(case):
         ["Cash at horizon end before refinancing", A(r["end_cash"])],
         ["Undrawn committed revolver", GAP("Undrawn revolver not calculable: commitment undisclosed") if undisclosed else A(r["rcf_undrawn"], "calculated", "undrawn_rcf")],
         ["Resources at horizon end", GAP("Not calculable: revolver undisclosed") if miss_res else A(r["resources"])],
-        ["Minimum cash (analyst judgment)", GAP("Minimum cash not assessed") if gap_min else A(s["min"], "analyst_judgment")],
-        ["Cash-only headroom over minimum cash (excludes any revolver)", GAP("Not calculable: minimum cash not assessed") if gap_min else A(r["cash_only_headroom"])],
-        ["Headroom over minimum cash", GAP("Not calculable: " + ("minimum cash not assessed" if gap_min else "revolver undisclosed")) if (gap_min or miss_res) else A(r["headroom"])],
-        ["Funding gap", GAP("Not calculable: " + ("minimum cash not assessed" if gap_min else "revolver undisclosed")) if (gap_min or miss_res) else A(r["gap"])],
+        ["Minimum cash (analyst judgment)", GAP("Minimum cash not assessed", vc="analyst_judgment", currency="USD") if gap_min else A(s["min"], "analyst_judgment")],
+        ["Cash-only headroom over minimum cash (excludes any revolver)", GAP("Not calculable: minimum cash not assessed", vc="calculated") if gap_min else A(r["cash_only_headroom"])],
+        ["Headroom over minimum cash", GAP("Not calculable: " + ("minimum cash not assessed" if gap_min else "revolver undisclosed"), vc="calculated") if (gap_min or miss_res) else A(r["headroom"])],
+        ["Funding gap", GAP("Not calculable: " + ("minimum cash not assessed" if gap_min else "revolver undisclosed"), vc="calculated", currency="USD") if (gap_min or miss_res) else A(r["gap"])],
     ]
     T["T2E.5"] = {"title": "Funding gap", "row_header": "Line", "columns": ["Value (US$ m)"], "rows": t5}
     for tid, tab in T.items():  # every cell is a fact: fact_id T2E.<n>.rNN (one value column) or T2E.<n>.rNN.cK
@@ -565,6 +591,8 @@ def build_tables(case):
             cells = rw[1] if isinstance(rw[1], list) else [rw[1]]
             for ci, cell in enumerate(cells, 1):
                 cell["fact_id"] = f"{tid}.r{ri:02d}" + (f".c{ci}" if len(cells) > 1 else "")
+                if cell["state"] == "known" and "amount" in cell:
+                    cell["period"] = period_of(cell.get("cp1_operand"))
     return T
 
 
@@ -745,13 +773,13 @@ def fact_bindings():
         b[name] = {"table_id": tbl, "period": LTM_P, "label": f"{LTM} · {metric}",
                    "rule": "exactly one fact; zero or several fail"}
     for name, line in T45.items():
-        b[name] = {"table_id": "T4.5", "period": "LTM Q4 25 · 2025-01-01 to 2025-12-31", "label": f"{line} · LTM Q4 25",
+        b[name] = {"table_id": "T4.5", "period": PERIOD_T45, "label": f"{line} · LTM Q4 25",
                    "rule": "exactly one fact; status is read, never defaulted"}
     for name, line in T46.items():
-        b[name] = {"table_id": "T4.6", "period": "q4-2025 · 2025-10-01 to 2025-12-31", "label": f"{line} · q4-2025",
+        b[name] = {"table_id": "T4.6", "period": PERIOD_T46, "label": f"{line} · q4-2025",
                    "rule": "exactly one fact; status is read, never defaulted"}
     for f in T418:
-        b["T4.18 " + f] = {"table_id": "T4.18", "field": f, "period": "q4-2025", "facility_id": "term-loan",
+        b["T4.18 " + f] = {"table_id": "T4.18", "field": f, "period": PERIOD_T418, "facility_id": "term-loan",
                            "rule": "the QUARTER period at the latest period end wins over its FY alias; the alias must agree on every term (financial_series._maturity_figure rule); one facility row per facility_id"}
     return b
 
@@ -1010,7 +1038,7 @@ expected = {
             "outcome": "begin refused (edge_rule block): 'Required upstream is unrun, stale or blocked'",
             "attempt_consumed": False,
             "head": "none",
-            "also": "a stale required head refuses the same way",
+            "also": "a stale required head is not a retained refusal: begin re-raises ValueError, an integrity fault in the store snapshot, and consumes no attempt",
         },
     },
     "tool_use": {
@@ -1025,10 +1053,11 @@ expected = {
         "pathway": "covenant_refinancing",
         "blocks": {
             "liquidity-runway": {"owner": "CP-2D", "kind": "dense", "primary_tab": "T2E.3", "tabs": ["T2E.1"], "state": "populated"},
-            "maturity-wall": {"owner": "CP-2D", "kind": "dense", "primary_tab": "T2E.4", "tabs": [], "state": "populated"},
+            "maturity-wall": {"owner": "MODEL", "stage3_pending": "the populated shape (MODEL S.4 content first, T2E.4 as a non-primary tab) waits for the Stage 3 S.4 chart task (CP-1 binding into maturity-wall and a _STRIP_FIGURES entry); this release pins the owner only"},
             "funding-gap": {"owner": "CP-2D", "kind": "dense", "primary_tab": "T2E.5", "tabs": ["T2E.2"], "state": "populated"},
         },
         "rails": {"evidence": ["T2E.6", "T2E.9"], "limitations": ["T2E.7"]},
+        "maturity_wall_note": "Q-C1 (user 2026-10-29): maturity-wall is MODEL-owned (Fig. S.4 from CP-1, producer CP-1); the approved page shows no route on its header, so route_label is None. CP-2D's T2E.4 binding is unchanged (validate_bindings requires every fact bound) and CP-2D draws no figure and does not own the block. The populated shape is stage3_pending: until the Stage 3 S.4 task lands, a populated FP-04 render is not delivered and is not pinned here",
         "cells": "block cell text equals the `shown` strings of expected.cases.<case>.tables for the same table id; gap cells render the product spelling '∅ G<n>' (display.py) with n assigned in report order: the expected `shown` of a gap cell is the pattern '∅ G#', an A7 exception that matches '∅ G' plus digits",
         "other_FP04_blocks": "CP-4 and CP-3C blocks are not asserted (CP-4 is not requested; CP-3C has no core)",
     },

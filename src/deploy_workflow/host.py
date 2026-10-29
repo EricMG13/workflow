@@ -1,14 +1,15 @@
 """Task0 v1 single-writer source host; no submission validation or settlement."""
 
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from hashlib import sha256
 from pathlib import Path
 from threading import Lock
+from types import MappingProxyType
 from typing import Any, cast
 from uuid import uuid4
 
-from deploy_vii.contracts import Input, Module
+from deploy_vii.contracts import Contract, Input, Module
 from deploy_vii.cp1_quality import cp1_quality_inputs
 from deploy_vii.cp1_workflow import (
     CP1_PROMOTION,
@@ -35,18 +36,78 @@ from deploy_vii.execution import (
 )
 from deploy_vii.live.context import declared_sources, readable_sources
 from deploy_vii.live.prompts import PromptError
+from deploy_vii.live.submission import STEPS
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
 from deploy_workflow.tools.source import SourceError, SourceTools
 
+# The steps that may open a source session, per module. CP-0, CP-1, CP-1A, CP-3 and CP-4 have a
+# live step contract and keep the registry's scope (`declared_sources`/`readable_sources`; CP-3:
+# the CP-0 `third_party` sources, docs/CP3-OWNER-LEASE.md:65). Eight modules are owner-only
+# (G1-X §1): CP-1D, CP-1C, CP-2E, CP-2H, CP-3D, CP-4C, CP-8 and CP-DR. Their scope is
+# `_OWNER_SCOPES`, their step order their G1-X core's.
 _SOURCE_STEPS = {
     "CP-0": ("source_readiness",),
     "CP-1": ("source_context", "financials"),
     "CP-1A": ("business_context",),
+    "CP-3": ("relative_value",),
     "CP-4": ("legal_covenants",),
+    "CP-1D": ("earnings_quality",),
+    "CP-3D": ("market_implied",),
+    "CP-DR": ("research",),
+    "CP-1C": ("peer_benchmark",),
+    "CP-2E": ("macro_fx",),
+    "CP-2H": ("rating_triggers",),
+    "CP-4C": ("restructuring_fulcrum",),
+    "CP-8": ("decision_ledger",),
 }
+
+
+def _held(*source_ids: str) -> Callable[[PreparedPack], tuple[str, ...]]:
+    """The named sources the prepared pack holds, in pack order. A held source that is not
+    ready stays named; its tools answer `unavailable` (`SourceTools.stage`), never its bytes."""
+    named = frozenset(source_ids)
+    return lambda pack: tuple(s.source_id for s in pack.sources if s.source_id in named)
+
+
+def _every_held(pack: PreparedPack) -> tuple[str, ...]:
+    """Every source the prepared pack holds, in pack order; one that is not ready answers
+    `unavailable`, never its bytes."""
+    return tuple(s.source_id for s in pack.sources)
+
+
+# H1 (G1-X §3, §5): the fixed readable-source scope of each owner-only sourced step, as its lease
+# pins it. Never caller-supplied and never `live.context.SOURCE_SCOPES` (deploy_vii never imports
+# deploy_workflow). A row here applies only to a module without a live step contract. One
+# convention for every row (rulings round 10 item 5): a held source that is not ready stays in
+# scope and answers `unavailable`. The one recorded exception is CP-3, a live contract whose
+# registry scope (`live.context.readable_sources`) keeps only ready sources; `deploy_vii` is not
+# edited.
+_OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]]] = (
+    MappingProxyType(
+        {
+            # docs/CP1D-OWNER-LEASE.md:30, cases/cp1d-owner/manifest.json "fixed H1 mapping": the
+            # statements_only pack holds no bridge, so its scope is identity and financial.
+            ("CP-1D", "earnings_quality"): _held("identity", "financial", "bridge"),
+            # docs/CP3D-OWNER-LEASE.md:46, :87: market and financial only, never identity.
+            ("CP-3D", "market_implied"): _held("market", "financial"),
+            # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
+            ("CP-DR", "research"): _every_held,
+            # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers.
+            ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
+            # docs/CP2E-OWNER-LEASE.md:40: the financial source only, never identity.
+            ("CP-2E", "macro_fx"): _held("financial"),
+            # docs/CP2H-OWNER-LEASE.md:36: identity, financial and ratings.
+            ("CP-2H", "rating_triggers"): _held("identity", "financial", "ratings"),
+            # docs/CP4C-OWNER-LEASE.md:46, :85: financial and legal-covenants, never identity.
+            ("CP-4C", "restructuring_fulcrum"): _held("financial", "legal-covenants"),
+            # docs/CP8-OWNER-LEASE.md:35: prior_case, update and market_update.
+            ("CP-8", "decision_ledger"): _held("prior_case", "update", "market_update"),
+        }
+    )
+)
 
 
 def _detached(value: dict[str, Any]) -> dict[str, Any]:
@@ -534,13 +595,136 @@ def _cp1_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer
     )
 
 
+def _submission_schema(module_id: str, step_id: str) -> type[Contract]:
+    """The schema a settled producer's retained submission is re-parsed under, chosen by the
+    producer's module (rulings round 10 item 2, H1 F1): `STEPS` for a live-contract module's own
+    step; the registered G1-X core's `SCHEMAS` for an owner-only module whose only step it is.
+    Anything else (CP-1B `earnings_delta`, a core not registered, another module's step) has no
+    authentication rule here and is refused `not_permitted` before any payload is read."""
+    from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
+
+    schema: object
+    try:
+        step_chain(module_id)
+    except ValueError:
+        core = owner_workflow._CORES.get(module_id)
+        schemas = getattr(core, "SCHEMAS", None)
+        if (
+            getattr(core, "STEP_IDS", None) != (step_id,)
+            or step_id in STEPS
+            or not isinstance(schemas, Mapping)
+        ):
+            raise SourceError("not_permitted") from None
+        schema = schemas.get(step_id)
+    else:
+        definition = STEPS.get(step_id)
+        if definition is None or definition.module_id != module_id:
+            raise SourceError("not_permitted")
+        schema = definition.schema
+    if not (isinstance(schema, type) and issubclass(schema, Contract)):
+        raise SourceError("not_permitted")
+    return schema
+
+
+def _submission_producer_inputs(
+    store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
+) -> bool:
+    """Ruling Q6 (b): a one-step module's head. Its one finished attempt binds `expected`; a
+    settled head adds exactly one `*-submission` input, the digest of the retained submission
+    under the producer module's own schema (`_submission_schema`); a rejected or validator-blocked
+    head carries the attempt inputs only (`Execution.submit_step`), and an interruption-blocked
+    one is refused. The settlement replay of the retained candidate must return the attempt and
+    the head.
+
+    The host checks provenance only. Composition (that the candidate is the one the module's
+    core composes) is authenticated at the receipt verifier, where `_verify_settlements` runs
+    `_PROBES[m]` on every settled head (rulings round 10 item 3, H1 I1)."""
+    selected = [
+        a
+        for a in snapshot.attempts
+        if a.module_id == producer.module_id and a.result_sha256 == producer.content_hash()
+    ]
+    if len(selected) != 1:
+        return False
+    attempt = selected[0]
+    if (
+        attempt.status != "finished"
+        or attempt.interruption is not None
+        or attempt.number != producer.attempt
+        or attempt.inputs != expected
+        or attempt.payload_sha256 is None
+        or producer.inputs[: len(expected)] != expected
+    ):
+        return False
+    tail = producer.inputs[len(expected) :]
+    if producer.status in ("accepted", "restricted"):
+        if attempt.issues or len(attempt.steps) != 1 or attempt.steps[0].status != "valid":
+            return False
+        step = attempt.steps[0]
+        schema = _submission_schema(producer.module_id, step.step_id)
+        # An owner-only step (never in `STEPS`) has its exact tail id (G1-X §2 SCHEMAS row).
+        owner_tail = (
+            None if step.step_id in STEPS else step.step_id.replace("_", "-") + "-submission"
+        )
+        if (
+            len(tail) != 1
+            or not tail[0].input_id.endswith("-submission")
+            or (owner_tail is not None and tail[0].input_id != owner_tail)
+        ):
+            return False
+        submission = schema.model_validate_json(store.payload(step.payload_sha256))
+        if tail[0].sha256 != submission.content_hash():
+            return False
+    elif tail or not attempt.issues:
+        return False
+    finished, result = settle(
+        snapshot,
+        attempt,
+        store.payload(attempt.payload_sha256),
+        lambda _: attempt.issues,
+        pack=store.pack(snapshot),
+        load=store.head_module,
+    )
+    return finished == attempt and result == producer
+
+
+# In-process only, never persisted, as `_CP1_VERIFIED`: key (snapshot content hash, producer
+# result hash), value the blob digests a passing `_submission_producer_inputs` read. Only a pass
+# is kept; a hit re-reads and hash-checks each digest, so tampered or missing bytes still refuse.
+_SUBMISSION_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
+_SUBMISSION_VERIFIED_LIMIT = 16
+_SUBMISSION_VERIFIED_LOCK = Lock()
+
+
+def _submission_producer_inputs_memoised(
+    store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
+) -> bool:
+    # `expected` is `current_inputs(snapshot, producer.module_id)`, fixed by the key's snapshot.
+    key = (sha256(snapshot.model_dump_json().encode()).hexdigest(), producer.content_hash())
+    with _SUBMISSION_VERIFIED_LOCK:
+        touched = _SUBMISSION_VERIFIED.get(key)
+    if touched is not None:
+        for digest in sorted(touched):
+            store._load(digest)  # raises ValueError for missing or tampered bytes
+        return True
+    recorder = _RecordingExecution(store.directory)
+    if not _submission_producer_inputs(recorder, snapshot, producer, expected):
+        return False
+    with _SUBMISSION_VERIFIED_LOCK:
+        while len(_SUBMISSION_VERIFIED) >= _SUBMISSION_VERIFIED_LIMIT:
+            del _SUBMISSION_VERIFIED[next(iter(_SUBMISSION_VERIFIED))]
+        _SUBMISSION_VERIFIED[key] = frozenset(recorder.touched)
+    return True
+
+
 def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
-    """Authenticate CP0 canonical readiness and CP1's actual promotion/failure history."""
+    """Authenticate CP0 canonical readiness, CP1's actual promotion/failure history and any
+    other module's one-step settlement (the `*-submission` rule)."""
     expected = current_inputs(snapshot, producer.module_id)
     if producer.module_id == "CP-1":
         return _cp1_producer_inputs(store, snapshot, producer)
     if producer.module_id != "CP-0":
-        return producer.inputs == expected
+        return _submission_producer_inputs_memoised(store, snapshot, producer, expected)
     selected = [
         a
         for a in snapshot.attempts
@@ -611,6 +795,30 @@ def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Mo
     return finished == attempt and result == producer
 
 
+def _owner_sequence(module_id: str) -> tuple[str, ...]:
+    """An owner-only module's step order: its registered G1-X core's `STEP_IDS`, as
+    `owner_workflow._sequence` gives it (G1-X §2, §5). A module with a live step contract never
+    takes an owner scope, and one without a registered core with a well-formed `STEP_IDS` (a
+    nonempty tuple of distinct step ids) is refused before anything is read."""
+    from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
+
+    try:
+        step_chain(module_id)
+    except ValueError:
+        pass
+    else:
+        raise SourceError("not_permitted")
+    steps = getattr(owner_workflow._CORES.get(module_id), "STEP_IDS", None)
+    if (
+        type(steps) is not tuple
+        or not steps
+        or any(type(step) is not str for step in steps)
+        or len(set(steps)) != len(steps)
+    ):
+        raise SourceError("not_permitted")
+    return owner_workflow._sequence(module_id)
+
+
 def _execution_state(
     store: Execution,
     ticket_id: str,
@@ -642,17 +850,23 @@ def _execution_state(
             raise SourceError("not_permitted")
         if step_id not in _SOURCE_STEPS.get(attempt.module_id, ()):
             raise SourceError("not_permitted")
-        chain = step_chain(attempt.module_id)
-        if step_id not in chain.pack_sources:
-            raise SourceError("not_permitted")
+        owner_scope = _OWNER_SCOPES.get((attempt.module_id, step_id))
+        if owner_scope is None:
+            chain = step_chain(attempt.module_id)
+            if step_id not in chain.pack_sources:
+                raise SourceError("not_permitted")
+            sequence, repairable = chain.steps, chain.repairable
+        else:
+            # An owner-only step has no within-attempt repair (that is a live chain's).
+            sequence, repairable = _owner_sequence(attempt.module_id), frozenset()
         prior_steps = attempt.steps
-        ordered_prefix = tuple(s.step_id for s in prior_steps) == chain.steps[: len(prior_steps)]
+        ordered_prefix = tuple(s.step_id for s in prior_steps) == sequence[: len(prior_steps)]
         all_valid = all(s.status == "valid" for s in prior_steps)
         if (
             not all_valid
             or not ordered_prefix
-            or len(prior_steps) >= len(chain.steps)
-            or chain.steps[len(prior_steps)] != step_id
+            or len(prior_steps) >= len(sequence)
+            or sequence[len(prior_steps)] != step_id
         ):
             raise SourceError("not_permitted")
         if sum(a.status == "pending" for a in snapshot.attempts) != 1:
@@ -694,9 +908,9 @@ def _execution_state(
             store.payload(step.payload_sha256)
             store.step_output(step.output_sha256)
         for repair in attempt.step_repairs:
-            if repair.step_id not in chain.repairable:
+            if repair.step_id not in repairable:
                 raise SourceError("not_permitted")
-            index = chain.steps.index(repair.step_id)
+            index = sequence.index(repair.step_id)
             if index > len(prior_steps):
                 raise SourceError("not_permitted")
             if repair.inputs != _step_inputs(attempt, prior_steps[:index]):
@@ -719,12 +933,15 @@ def _execution_state(
                 or (attempt.module_id == "CP-4" and attempt.repair_issues != previous[0].issues)
             ):
                 raise SourceError("identity_mismatch")
-        ids = tuple(s.source_id for s in pack.sources)
-        declared = set(declared_sources(store, attempt, step_id, ids))
-        readable = set(readable_sources(store, attempt, step_id))
-        if not declared <= set(ids) or not readable <= set(ids):
-            raise SourceError("identity_mismatch")
-        sources = tuple(ident for ident in ids if ident in declared and ident in readable)
+        if owner_scope is None:
+            ids = tuple(s.source_id for s in pack.sources)
+            declared = set(declared_sources(store, attempt, step_id, ids))
+            readable = set(readable_sources(store, attempt, step_id))
+            if not declared <= set(ids) or not readable <= set(ids):
+                raise SourceError("identity_mismatch")
+            sources = tuple(ident for ident in ids if ident in declared and ident in readable)
+        else:
+            sources = owner_scope(pack)
         if attempt.module_id == "CP-4" and not sources:
             raise SourceError("not_permitted")
         if store.read().content_hash() != snapshot.content_hash():

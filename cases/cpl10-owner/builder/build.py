@@ -27,7 +27,7 @@ CTX = Context(prec=38, rounding=ROUND_HALF_EVEN)
 # --- 0. pinned inputs (every file this builder reads) -------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 RAW = {}
 for _rel, _sha in PINS.items():
@@ -130,9 +130,9 @@ QKEYS = tuple(QUARTERS)
 # Marker for the calculation_id of a copied CP-1 cell: the CP-1 fact's own `canonical-kpi:<sha256>` id (every
 # T4.10 fact has one, source-class and missing ratio facts too), bound at run time, never literal here.
 CP1_CALCULATION_ID = "{{CP1_CALCULATION_ID}}"
-CLAIM_CITATION_RULE = ("Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim references, transitively through "
-                       "derives_from and the copied CP-1 cells (the CP-1C L3 rule: a calculated fact's citations are the ordered, de-duplicated concatenation of "
-                       "the citations of the facts in derives_from; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none")
+CLAIM_CITATION_RULE = ("Claim.citations = the union, in first-reference order, one Citation per (source, page) (the first quote), of the citations of every fact the claim references, transitively through "
+                       "derives_from and the copied CP-1 cells (round 3: a calculated fact has one Citation per (source, page), the first input quote on that page, in "
+                       "derives_from order, via deploy_workflow.owners.blank.one_per_page; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none")
 CP1_CITATION_MARKER = "{{{{CP1_CITATIONS:{label}}}}}"  # the citations of the named CP-1 T4.10 fact, bound at run time
 ORD = {"Q1": "first", "Q2": "second", "Q3": "third", "Q4": "fourth"}
 # CP-1's own limitation text for a month-less ratio. OBSERVED on the real promoted CP-1 head (a copy of
@@ -422,11 +422,12 @@ def composed_case(name):
                     formula=formula, calculation_id=f"calc:{table}.{row}.{field}" if vclass == "calculated" else None,
                     derives_from=list(derives))
 
-    def gapf(table, row, field, label, unit, reason, status="missing", period=None):
+    def gapf(table, row, field, label, unit, reason, status="missing", period=None, derives=()):
         # fact_spelling: a missing cell reads `∅ G#`; a not_applicable cell reads `∅ G# n.m.`
+        extra = {"derives_from": list(derives)} if derives else {}
         return fact(table, row, field, label, status=status, unit=unit, period=period,
                     shown="∅ G#" if status == "missing" else "∅ G# n.m.", limitation=reason,
-                    value_class="calculated" if status != "missing" else None)
+                    value_class="calculated" if status != "missing" else None, **extra)
 
     def na(table, row, field, label, reason):
         """A not_applicable text cell (F1: the overall row's cells that have no meaning for it); nothing is derived, so no value class."""
@@ -469,8 +470,8 @@ def composed_case(name):
         else:
             ends = 'either quarter' if fa['status'] == fb['status'] == 'missing' else 'the starting quarter' if fa['status'] == 'missing' else 'the closing quarter'
             reason = f"Not calculable: CP-1 carries no known value for {ends} ({fa['limitation'] or fb['limitation']})"  # CP-1's own limitation text
-            ids.append(gapf("TL10.2", tid, "change", f"{r['label']} · Change", UNIT[ucl], reason, period=pair_period))
-            ids.append(gapf("TL10.2", tid, "change_pct", f"{r['label']} · Change on starting level", "PERCENT", reason, period=pair_period))
+            ids.append(gapf("TL10.2", tid, "change", f"{r['label']} · Change", UNIT[ucl], reason, period=pair_period, derives=derives))
+            ids.append(gapf("TL10.2", tid, "change_pct", f"{r['label']} · Change on starting level", "PERCENT", reason, period=pair_period, derives=derives))
         ids.append(text("TL10.2", tid, "materiality", "Materiality", r["materiality"], "calculated", derives))
         ids.append(text("TL10.2", tid, "evidence_status", "Evidence status", r["evidence"], "calculated", derives))
         ids.append(text("TL10.2", tid, "disposition", "Disposition", DISPOSITION[r["materiality"]], "calculated", derives))
@@ -798,11 +799,12 @@ for _s in NAV_STATES.values():
 D4_SIDE_EFFECTS = {
     "methodology_json": {"file": "src/deploy_vii/methodology.json", "sha256_before": "348fbc4b877e4f0351ecc238ea005adf815291b15a6267f263459203a08f8d45",
                          "sha256_after": PINS["src/deploy_vii/methodology.json"],
+                         "sha256_after_note": "tracks the current methodology.json pin, not a frozen history: the serialised change, then T6-FINAL registered under CP-6 with the CP-6 freeze",
                          "change": "landed in the serialised change: CP-L10 `required` [\"CP-0\"] -> [\"CP-0\", \"CP-1\"] and CP-L10 `table_ids` gains TL10.5 (amendment 1, F1: appended after TL10.4); CP-1C `table_ids` become T1C.1-T1C.8 (the eleven T4.x ids dropped); CP-1D drops T1E.1-T1E.6; CP-2A drops T5.1-T5.7 (they stay CP-5's)",
                          "serialised_change": "one methodology.json change carrying CP-L10 D4 (required edge), the CP-L10 table_ids gaining TL10.5 (amendment 1) and CP-1C D8 (T1C.1-T1C.8, CP-1C amendment 1) together, with ONE re-pin pass of every builder that pins methodology.json (methodology_pinning_builders below); neither lands alone"},
     "test_pin": {"file": "tests/test_cp1b_registration.py", "line": 34, "test": "test_only_cp1b_table_ownership_changes",
                  "digest_before": DIGEST_BEFORE,
-                 "digest_after": DIGEST_AFTER, "digest_after_note": "computed by this builder from the landed methodology.json (the whole serialised change: D4, TL10.5, CP-1C D8, the CP-1D and CP-2A id drops); the c19be178... of the pre-landing text covered D4 and TL10.5 only and was not final",
+                 "digest_after": DIGEST_AFTER, "digest_after_note": "computed by this builder from the current methodology.json and tracking it, not frozen history (the serialised change: D4, TL10.5, CP-1C D8, the CP-1D and CP-2A id drops; then T6-FINAL under CP-6 with the CP-6 freeze, which moved the digest to c89118c6...); the c19be178... of the pre-landing text covered D4 and TL10.5 only and was not final",
                  "rule": "sha256 of json.dumps(rows, sort_keys=True, separators=(',', ':')) with the CP-1B table_ids popped; the digest changes because of the serialised methodology.json change (computed by this builder from the pinned methodology.json)",
                  "action": "the pin is recomputed from methodology.json after the whole serialised change (not from D4 and TL10.5 alone) and updated in the same commit, a deliberate registry change; the test fails otherwise"},
     "methodology_pinning_builders": {
@@ -989,7 +991,7 @@ def main():
                           "issue_order": "per gap in order: topic, missing item, digit (field order gap, why_it_matters, affected_analysis, action), repeat",
                           "literal_consequence": "the positive gap's affected_analysis is `overall` (it was `Earnings and cash generation topics`, which the topic rule now refuses; r16 reuses that text)"},
             "claim_citations": CLAIM_CITATION_RULE,
-            "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell has none either, so a claim that references only counts or only a missing change carries no citations as the facts stand (a derives_from on those cells would be a fact-value change outside amendment 1)",
+            "lineage_citations": "a calculated own fact has one Citation per (source, page), the first input quote on that page, over its derives_from in order (round 3, deploy_workflow.owners.blank.one_per_page); a count fact has no derives_from, and a missing change or change_pct cell lists the same two CP-1 labels as its known siblings (Stage 2 close: the lineage queued at the CP-L10 freeze), so a claim that names a missing change carries their citations; only a claim that references counts alone carries none",
             "submission_types": {"note": "the field types decide shape versus content; pinned here, frozen with the lease",
                                  "comparison.from_period, to_period": "Text (contracts.Text: str, min_length 1)",
                                  "assessments[].topic_id, assessment, credit_transmission, overall.rationale, gaps[].*": "Text (contracts.Text); whitespace-only text passes the type and is a content refusal",

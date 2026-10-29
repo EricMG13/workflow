@@ -66,7 +66,7 @@ probe(store, snapshot, attempt) -> None           # raises WorkflowError("identi
 
 ```
 DownsideSubmission
-  base_period: str                     # exactly a `period` string offered by the view
+  base_period: str                     # exactly a `period` string offered by the view; a period is offered only when each *settled* (known) operand it reads is in USD millions (unit MILLIONS, currency USD, scale 1000000), an unsettled operand carrying no amount and no currency (owners/cp2a.py:1510-1515, :1542; Stage 2 round 5 item 1)
   scenarios: tuple[Scenario, ...]      # 1..4
   thresholds: tuple[Threshold, ...]    # 0..3, at most one per metric
   assessment: Assessment

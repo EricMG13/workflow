@@ -1,0 +1,77 @@
+# CP-2E — macro, FX and hedging sensitivity
+
+Method basis: Deploy V r14 module CP-2E (alias CP-2F). The r14 SKILL.md is not in this
+repository, so the table definitions are an adaptation recorded here (lease question 6), not r14
+text. Execution adaptation: one `macro_fx` step returns verbatim financial-source quotes and
+analyst judgment; Python reads each quoted numeral, derives every figure with `Decimal`, composes
+the tables, assigns every identifier, spells every figure and sets the status. This changes
+transport; the analytical responsibilities below are unchanged.
+
+## Adaptation record
+- Tables (D8 ids; `T2G.1-8` stay registered and unproduced). Titles, row headers and columns are
+  this module's choice, not r14's:
+  - `T2F.1` Sourced operands (row header Operand): Value, Basis.
+  - `T2F.2` Baseline exposure (Measure): Value, Convention.
+  - `T2F.3` Interest rate shock (Shock; one row per shock): Rate shock, Added annual interest
+    before hedges, Added annual interest after hedges, Cash interest after the shock, Interest
+    coverage after the shock, Change in interest coverage, Free cash flow after the shock, Added
+    interest as share of EBITDA.
+  - `T2F.4` Currency shock (Shock): Currency move, Change in debt, Total debt after the move,
+    Change in EBITDA, Total leverage after the move.
+  - `T2F.5` Hedging (Item): Value, Convention.
+  - `T2F.6` Assessments (Section): Category, Assessment.
+  - `T2F.7` Missing inputs (Input): Not calculated, Reason.
+  - `T2F.8` Evidence (Page): Source, Locator.
+  - `T2F.9` Limitations (Limitation): Limitation.
+- Citations: every fact and claim cites the page it was read from, with a verbatim quote of that
+  page. A sourced fact (T2F.1 value and basis cells) quotes the submission field it was read
+  from. A derived fact (T2F.2 to T2F.5, the T2F.6 assessment cells and the claims) carries one
+  citation per page, and its quote is the first of its own input quotes on that page, in the
+  order of its inputs. Page-level cites are the oracle's; the quote never comes from a field the
+  fact did not read.
+- Shock conventions: a static, parallel, upward rate move applied once to closing balances and
+  FY flows; computed only when the quoted floor is 0 (no reference rate level is sourced); a
+  fixed-rate facility is a known zero; a missing term is a gap, never 0. A currency move is the
+  foreign currency strengthening against the reporting currency. Shock bounds (1 to 1000 bp, 1 to
+  50 percent, at most three of each) are screening policy, not a source limit.
+- Deliverables: the module page (`Module.tables` layouts) and the Evidence and Limitations
+  rails. No Front Page block is assigned (lease D7).
+- Consumption (D3) is OPEN: `cp2e_reader` exposes what a consumer must read; no consumer reads
+  CP-2E, so the module is not complete.
+
+## Accepted costs of the quote guards (Stage 2 notes)
+A quoted figure must occur once in the quote as a whole, unsigned number, and the page must
+print it there as the same whole figure. The guards are deliberately strict; each refusal below
+is a known cost, not a defect.
+
+Rule W and the round 10 sign rule:
+- A `-` before the first digit is a minus when it starts the text or follows a character that is
+  neither a letter nor a digit; a numeral in accounting parentheses is negative. Such a printed
+  figure is not an occurrence of the unsigned token. A `+` is ignored.
+- Rule W lets one space (a line break included, since `normalise` makes any whitespace run one
+  space) stand between the sign and the figure, and one space inside each accounting
+  parenthesis. Cost: a spaced range (`2 - 5`) and a dash bullet (`- 25 percent`) read the
+  following figure as negative, so it is refused as an occurrence of the unsigned value.
+
+Item 8, a comma joins the digit run (`1,25` and `1, 25` continue the number). Costs, each
+refused when the value is the figure shown:
+- a grouped figure of 1,000 or more (`1,250`);
+- a decimal comma (`1,25`);
+- a comma-space list (`25, 30`: both figures are refused);
+- a figure after a year (`2025, 30`);
+- the day of a `Month D, YYYY` date (`January 10, 2026`: the 10 and the 2026 are refused).
+A comma beside a letter does not join (`were 25, a share`).
+
+A sentence operand (facility balance, spread, floor) is at most 999.9999, so a balance of 1000
+or more cannot be quoted by this step; that is stated, not a source limit.
+
+## Other notes
+- A blank quote (`prose.is_blank`: whitespace, control (`Cc`) and format (`Cf`) characters, the default-ignorable code points that `str.strip()` keeps (U+034F, U+115F, U+1160, U+17B4, U+17B5, U+180B-U+180F, U+3164, U+FE00-U+FE0F, U+FFA0, U+E0100-U+E01EF) and U+2800, or the empty string) is refused
+  with `<path>.quote: empty text` before the page check; the re-export inherits it.
+- `reference_rate` is compared normalised with the normalised quote, so a U+2212 name occurs
+  where the page prints `-`; the normalised name is what T2F.1 stores and shows.
+- The summary becomes a claim, so it must be valid run text (no unbalanced `[` or `{`) and must
+  hold no reference: either is a journaled issue at `summary.text`.
+- A labelled operand needs a whole run after its label (`(?![0-9]|[.,][0-9])`), so `spread 25.5`
+  does not label the token 25. Absence digit issues name the submission path
+  (`fx.debt_currency_absence.reason`).

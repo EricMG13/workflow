@@ -1,0 +1,83 @@
+# Stage 2 close release: collected items (Modules owns the release; LEAD stopped)
+
+Each item names its source. Applied once, at the Stage 2 close, with the re-pin cascade.
+
+## Oracles and pins (`cases/`)
+- **CP-2G `expected.json` `cases.blocked.attempt_1.limitations`.** It lists only the High line. That run requests CP-2G alone, so CP-1D is unbound, and v13's rationale names `T1D.6.supported.total_leverage`. The real issues are `[assessment.rationale: Unresolved reference: T1D.6.supported.total_leverage, High…]`. The deferred test marks it as a strict xfail. Source: batch/cp2g-report.md release 1.
+- **CP-2G view tree.** Commit `cases/cp2g-owner/cp2g-view-tree.json`.
+- **CP-1D view tree.** Commit `cases/cp1d-owner/cp1d-view-tree.json`.
+- **Re-pins in stage2-backlog.md.** They cover:
+  - CP-2D and CP-3C deltas;
+  - CP-3D `amortisation_nonzero`;
+  - CP-1D recipe text;
+  - CP-3C `frozen_inputs[8]` and `fact_copy_rule`;
+  - CP-2G name;
+  - CP-L10 lineage;
+  - FP04 render (`CP2D_D7_DELTA`);
+  - CP-2E blocked wording;
+  - the CP-2D stale-head oracle wording (round 5 item 15).
+
+- **CP-2H `expected.json` citations (round 5 item 17).** Several derived facts carry more than one quote from the same page:
+  - positive: T2R.8.p01.notches, T2R.8.p01.lower_rated, T2R.8.p01.outlook_match, T2R.9.total.triggers, T2R.9.total.downgrade_down;
+  - gap: T2R.9.total.triggers;
+  - fixtures: the same facts, plus not_calculable_down.
+
+  Re-pin to round 3: one citation per page, quoting the first input quote. Then switch CP-2H's own citations to the round 3 rule.
+- **CP-2H view tree.** Commit `cases/cp2h-owner/cp2h-view-tree.json`.
+
+- **CP-4C v08.** The refusal cites identity page:1, which is outside the step's scope, so at run level the journal holds a second line: "Cited page not read through read_pages: identity page:1". The oracle `refusal_rules` say the limitations equal the issues. Re-pin to the two-line form. Both test files pin it now.
+- **CP-4C view tree.** Commit `cases/cp4c-owner/cp4c-view-tree.json`.
+
+- **CP-3C oracle.**
+  - Re-pin the principal periods to q4-2025 (`PRINCIPAL_PERIOD_DELTA`).
+  - `GAP_CURRENCY`: the missing currency is in the **CP-2D** oracle (`T2E.5.r04`/`r07` gap twins), not CP-3C's. Re-pin CP-2D. The fix batch adds a tripwire, because none exists (review-B L1).
+  - Add CP-1A to `expected.cp3c_module.attempt_inputs` and `manifest edges.bound_in_attempt_inputs` (`CP1A_BOUND`).
+  - Apply `fact_copy_rule` and `frozen_inputs[8]`.
+- **CP-4 `expected.json:318` `other_five_sections`.** It still says all five blocks "stay owner Unbound", which is false after the CP-2D and CP-3C deltas (review-B L2).
+- **FP04 render oracle** (`cases/legal/render-expected.json`). Re-pin it with the CP-2D blocks (`CP2D_D7_DELTA`) and the CP-3C `refinancing-paths` and `lme-creditor-exposure` blocks (`CP3C_D7_DELTA`, round 5 item 18).
+- **CP-3C view tree.** Commit `cases/cp3c-owner/cp3c-view-tree.json`.
+
+- **CP-2G and CP-4C.** Re-pin the derived-fact citations to round 3; both oracles carry concatenation lineage (review-A L1).
+- **CP-1C.** Re-pin the derived-fact citations to round 3 (round 5 item 17, extended). Commit `cases/cp1c-owner/cp1c-view-tree.json`. View `rules.direction` is in the lease key tree but missing from `expected.execution.tool_use.view`; re-pin.
+
+## Leases and contract text
+- **CP-1C.**
+  - Add the TOOL-CONTRACT row.
+  - Lease signature `parse_peer_source` adds `issuer_name`.
+  - In `MODULES.csv`, set CP-1C `downstream_consumption` to `open`.
+- **CP-3C lease.**
+  - Acceptance 1 adds CP-1A.
+  - :185 "CP-4C has no core" is stale.
+  - Add the `cp3c_closed(case, root, template)` signature.
+  - Add the TOOL-CONTRACT row.
+- **CP-2D lease.** Add a `cp2d_reader` pin extension for run_rate (T2E.3.r01).
+- **CP-4C lease.**
+  - `Claims.from_sources` is `claim_classes` in the core.
+  - `Upstream` gains `inherited`.
+  - Add the TOOL-CONTRACT row.
+- **CP-2H lease.** `TriggerReport` is renamed `RatingTriggersReport`; add the TOOL-CONTRACT row.
+- **CP-2G lease.**
+  - :61 should show `Upstream` with `inherited`.
+  - The scenario name comes from `T2B.1.<row>.name`.
+  - Add the `base_period` invariant text.
+  - Add the TOOL-CONTRACT row (text in batch/cp2g-report.md).
+- **CP-1D lease.**
+  - `parse_bridge(pages)` (round 5 item 13).
+  - Add the TOOL-CONTRACT row (cp1d/report.md).
+- **CP-8 lease :85.** It says "both recorded in receipt", which cannot hold for `stale_binding`: `write_receipt` itself raises `stale_binding`. Reword it (fix-infra-report CP-8 L-b).
+- **CP-2A lease.** The unit rule applies to settled operands only (lows.md).
+- `MODULES.csv`: record the D3 closures once runs are accepted.
+
+## From LEAD's dispatch queue (:145-200)
+- **CP-2E lease.** Internals and the Files row (round 3).
+- **Protocol §6.** The synthetic-limitation line (round 3).
+- **CP-3 lease alias text.** It is inside the CP-6 freeze.
+
+## LEAD product items
+- **`lead/cp6-freeze`.** 562a3bc, PASS.
+  - **First:** merge it before any other re-pin. It moves `methodology.json` 1bb6c0bc → 0932d9fb (T6-FINAL) and re-pins 14 builders and manifests.
+  - **Then:** re-pin against the tip, and set the reuse-manifest `project_commit`.
+- **`lead/0d-d`.** Finish it and review it (the user stopped its reviews earlier).
+- **`is_blank`.** Extend it to Cc, default-ignorables and U+2800.
+- **`citation_issues`.** Refuse a blank quote.
+- **0d-c Lows.**

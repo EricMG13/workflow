@@ -11,7 +11,7 @@ import importlib
 import json
 import re
 import shutil
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from copy import copy
 from pathlib import Path
 from threading import Lock
@@ -250,28 +250,9 @@ def drive_cp0(
     submit_valid(workflow, payload)
 
 
-def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
-    """CP-1 to its promotion: the S1 literal source_context, then the financial case's literal
-    financials, narrative, readiness and quality stages (the QA built from the read inputs)."""
+def _credit_quality_review(read: Mapping[str, Any], inputs: Mapping[str, Any]) -> str:
+    """The S1 quality review: every claim material, each evidence line classed by the read."""
     fw = _fw()
-    context = literal(case, "cp1_source_context", pack)
-    read_cited(workflow, context)
-    search(workflow, "financial", "subsequent")
-    if case == "positive":  # business event_scan is no_events_identified only here
-        search(workflow, "business", "acquisition")
-    submit_valid(workflow, context)
-    fw.financial_reads(workflow)
-    submit_valid(workflow, json.dumps(fw.financials(pack)))
-    read = workflow.read_inputs()
-    refused = workflow.invoke(
-        "read_pages", {"source_id": "financial", "first_page": 1, "last_page": 1}
-    )
-    if refused["error_code"] != "not_permitted":
-        raise RuntimeError("narrative step offered a source tool")
-    submit_valid(workflow, json.dumps(fw.narrative(read)))
-    workflow.read_inputs()
-    submit_valid(workflow, json.dumps({"consumers": []}))
-    inputs = json.loads(workflow.read_inputs()["body"])
     kpi_ids = {r["evidence_id"] for r in fw.parsed_evidence(read["body"]) if r["kind"] == "kpi"}
     review = {
         "claims": [
@@ -295,7 +276,53 @@ def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
             for claim in inputs["claims"]
         ]
     }
-    submit_valid(workflow, json.dumps(review))
+    return json.dumps(review)
+
+
+def drive_cp1(
+    workflow: OwnerWorkflow,
+    pack: PreparedPack,
+    case: str,
+    *,
+    context: str | None = None,
+    business_search: bool | None = None,
+    narrative_tool_check: bool = True,
+    readiness: Callable[[OwnerWorkflow, Mapping[str, Any]], str] | None = None,
+    quality: Callable[[Mapping[str, Any], Mapping[str, Any]], str] = _credit_quality_review,
+) -> None:
+    """CP-1 to its promotion: the S1 literal source_context (or `context`, a later oracle's
+    literal), then the financial case's literal financials, narrative, readiness and quality
+    stages (the QA built from the read inputs).
+
+    A later oracle's driver passes what differs, so none repeats these stages: `business_search`
+    (default: only the S1 `positive` case searches the business note for absence),
+    `narrative_tool_check` (the refused source tool call in the narrative step), `readiness`
+    (the readiness payload from the workflow and the step's read inputs; default: no consumers)
+    and `quality` (the quality payload from the narrative read and the quality step's inputs)."""
+    fw = _fw()
+    context = literal(case, "cp1_source_context", pack) if context is None else context
+    read_cited(workflow, context)
+    search(workflow, "financial", "subsequent")
+    if case == "positive" if business_search is None else business_search:
+        search(workflow, "business", "acquisition")
+    submit_valid(workflow, context)
+    fw.financial_reads(workflow)
+    submit_valid(workflow, json.dumps(fw.financials(pack)))
+    read = workflow.read_inputs()
+    if narrative_tool_check:
+        refused = workflow.invoke(
+            "read_pages", {"source_id": "financial", "first_page": 1, "last_page": 1}
+        )
+        if refused["error_code"] != "not_permitted":
+            raise RuntimeError("narrative step offered a source tool")
+    submit_valid(workflow, json.dumps(fw.narrative(read)))
+    ready = workflow.read_inputs()
+    submit_valid(
+        workflow,
+        json.dumps({"consumers": []}) if readiness is None else readiness(workflow, ready),
+    )
+    inputs = json.loads(workflow.read_inputs()["body"])
+    submit_valid(workflow, quality(read, inputs))
 
 
 def promoted(

@@ -102,8 +102,8 @@
       "issue_order": "per gap in order: topic, missing item, digit (field order gap, why_it_matters, affected_analysis, action), repeat",
       "literal_consequence": "the positive gap's affected_analysis is `overall` (it was `Earnings and cash generation topics`, which the topic rule now refuses; r16 reuses that text)"
     },
-    "claim_citations": "Claim.citations = the de-duplicated union, in first-reference order, of the citations of every fact the claim references, transitively through derives_from and the copied CP-1 cells (the CP-1C L3 rule: a calculated fact's citations are the ordered, de-duplicated concatenation of the citations of the facts in derives_from; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none",
-    "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell has none either, so a claim that references only counts or only a missing change carries no citations as the facts stand (a derives_from on those cells would be a fact-value change outside amendment 1)",
+    "claim_citations": "Claim.citations = the union, in first-reference order, one Citation per (source, page) (the first quote), of the citations of every fact the claim references, transitively through derives_from and the copied CP-1 cells (round 3: a calculated fact has one Citation per (source, page), the first input quote on that page, in derives_from order, via deploy_workflow.owners.blank.one_per_page; a copied cell carries its CP-1 fact's citations). A claim that references no fact carries none",
+    "lineage_citations": "a calculated own fact has one Citation per (source, page), the first input quote on that page, over its derives_from in order (round 3, deploy_workflow.owners.blank.one_per_page); a count fact has no derives_from, and a missing change or change_pct cell lists the same two CP-1 labels as its known siblings (Stage 2 close: the lineage queued at the CP-L10 freeze), so a claim that names a missing change carries their citations; only a claim that references counts alone carries none",
     "submission_types": {
       "note": "the field types decide shape versus content; pinned here, frozen with the lease",
       "comparison.from_period, to_period": "Text (contracts.Text: str, min_length 1)",
@@ -1585,7 +1585,11 @@
           "period": "Q1 25: 2025-01-01 to 2025-03-31 -> Q4 25: 2025-10-01 to 2025-12-31",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for the starting quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q1 25 (2025-01-01 to 2025-03-31) · total_leverage_reported",
+            "Q4 25 (2025-10-01 to 2025-12-31) · total_leverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.total_leverage.change_pct",
@@ -1598,7 +1602,11 @@
           "period": "Q1 25: 2025-01-01 to 2025-03-31 -> Q4 25: 2025-10-01 to 2025-12-31",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for the starting quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q1 25 (2025-01-01 to 2025-03-31) · total_leverage_reported",
+            "Q4 25 (2025-10-01 to 2025-12-31) · total_leverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.total_leverage.materiality",
@@ -1752,7 +1760,11 @@
           "period": "Q1 25: 2025-01-01 to 2025-03-31 -> Q4 25: 2025-10-01 to 2025-12-31",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for the starting quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q1 25 (2025-01-01 to 2025-03-31) · interest_coverage_reported",
+            "Q4 25 (2025-10-01 to 2025-12-31) · interest_coverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.interest_coverage.change_pct",
@@ -1765,7 +1777,11 @@
           "period": "Q1 25: 2025-01-01 to 2025-03-31 -> Q4 25: 2025-10-01 to 2025-12-31",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for the starting quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q1 25 (2025-01-01 to 2025-03-31) · interest_coverage_reported",
+            "Q4 25 (2025-10-01 to 2025-12-31) · interest_coverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.interest_coverage.materiality",
@@ -3130,7 +3146,10 @@
             "TL10.2.total_leverage.change"
           ],
           "text": "Total leverage: the change between the first quarter of 2025 and the fourth quarter of 2025 cannot be screened; [TL10.2.total_leverage.change] is not calculable because CP-1 carries no known value for the starting quarter.",
-          "citations": []
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · total_leverage_reported}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · total_leverage_reported}}"
+          ]
         },
         {
           "claim_id": "TL10.2.interest_coverage",
@@ -3139,7 +3158,10 @@
             "TL10.2.interest_coverage.change"
           ],
           "text": "Interest coverage: the change between the first quarter of 2025 and the fourth quarter of 2025 cannot be screened; [TL10.2.interest_coverage.change] is not calculable because CP-1 carries no known value for the starting quarter.",
-          "citations": []
+          "citations": [
+            "{{CP1_CITATIONS:Q1 25 (2025-01-01 to 2025-03-31) · interest_coverage_reported}}",
+            "{{CP1_CITATIONS:Q4 25 (2025-10-01 to 2025-12-31) · interest_coverage_reported}}"
+          ]
         },
         {
           "claim_id": "TL10.2.summary",
@@ -4866,7 +4888,11 @@
           "period": "Q2 25: 2025-04-01 to 2025-06-30 -> Q3 25: 2025-07-01 to 2025-09-30",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for either quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q2 25 (2025-04-01 to 2025-06-30) · total_leverage_reported",
+            "Q3 25 (2025-07-01 to 2025-09-30) · total_leverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.total_leverage.change_pct",
@@ -4879,7 +4905,11 @@
           "period": "Q2 25: 2025-04-01 to 2025-06-30 -> Q3 25: 2025-07-01 to 2025-09-30",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for either quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q2 25 (2025-04-01 to 2025-06-30) · total_leverage_reported",
+            "Q3 25 (2025-07-01 to 2025-09-30) · total_leverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.total_leverage.materiality",
@@ -5033,7 +5063,11 @@
           "period": "Q2 25: 2025-04-01 to 2025-06-30 -> Q3 25: 2025-07-01 to 2025-09-30",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for either quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q2 25 (2025-04-01 to 2025-06-30) · interest_coverage_reported",
+            "Q3 25 (2025-07-01 to 2025-09-30) · interest_coverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.interest_coverage.change_pct",
@@ -5046,7 +5080,11 @@
           "period": "Q2 25: 2025-04-01 to 2025-06-30 -> Q3 25: 2025-07-01 to 2025-09-30",
           "shown": "∅ G#",
           "limitation": "Not calculable: CP-1 carries no known value for either quarter (COMPONENT_MISSING; Four complete contiguous quarters spanning 364-371 days are required)",
-          "value_class": null
+          "value_class": null,
+          "derives_from": [
+            "Q2 25 (2025-04-01 to 2025-06-30) · interest_coverage_reported",
+            "Q3 25 (2025-07-01 to 2025-09-30) · interest_coverage_reported"
+          ]
         },
         {
           "fact_id": "TL10.2.interest_coverage.materiality",
@@ -6206,7 +6244,10 @@
             "TL10.2.total_leverage.change"
           ],
           "text": "Total leverage: the change between the second quarter of 2025 and the third quarter of 2025 cannot be screened; [TL10.2.total_leverage.change] is not calculable because CP-1 carries no known value for either quarter.",
-          "citations": []
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · total_leverage_reported}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · total_leverage_reported}}"
+          ]
         },
         {
           "claim_id": "TL10.2.interest_coverage",
@@ -6215,7 +6256,10 @@
             "TL10.2.interest_coverage.change"
           ],
           "text": "Interest coverage: the change between the second quarter of 2025 and the third quarter of 2025 cannot be screened; [TL10.2.interest_coverage.change] is not calculable because CP-1 carries no known value for either quarter.",
-          "citations": []
+          "citations": [
+            "{{CP1_CITATIONS:Q2 25 (2025-04-01 to 2025-06-30) · interest_coverage_reported}}",
+            "{{CP1_CITATIONS:Q3 25 (2025-07-01 to 2025-09-30) · interest_coverage_reported}}"
+          ]
         },
         {
           "claim_id": "TL10.2.summary",

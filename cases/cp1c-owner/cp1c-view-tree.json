@@ -1,0 +1,222 @@
+{
+ "_note": "Stage 2 close release W2-D (Modules, 2026-10-29): key tree of the body `owners.cp1c.view(historical, attempt)` serves for `read_inputs`, observed on real stores whose upstream heads were settled through the product store (`Execution.begin/finish`) from the oracle facts of each upstream module, as the module's connect tests seed them. Shape only, not values: dict keys in order, scalar type names, a list keeps its distinct element shapes. No `quote`, `citations` or `record_json` key at any depth. Checked by tests/test_connect_cp1c.py::test_view_equals_the_committed_view_tree; the genuine run's body is checked in tests/test_owner_cp1c.py.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "peers",
+   "cp1_facts",
+   "rules",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "peers": {
+    "state": "str",
+    "source_id": "str",
+    "pages": [
+     "str"
+    ],
+    "rows": [
+     {
+      "row": "str",
+      "label": "str",
+      "period_end": "str",
+      "amounts": {
+       "revenue": "str",
+       "ebitda": "str",
+       "debt": "str",
+       "interest": "str",
+       "ffo": "str"
+      },
+      "basis": {
+       "reporting_basis": "str",
+       "segments": "str",
+       "fiscal_year_end": "str"
+      }
+     }
+    ],
+    "issuer_line": {
+     "row": "str",
+     "label": "str",
+     "period_end": "str",
+     "amounts": {
+      "revenue": "str",
+      "ebitda": "str",
+      "debt": "str",
+      "interest": "str",
+      "ffo": "str"
+     },
+     "basis": {
+      "reporting_basis": "str",
+      "segments": "str",
+      "fiscal_year_end": "str"
+     }
+    }
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str",
+     "value_class": "str"
+    }
+   ],
+   "rules": {
+    "minimum_included_peers": "int",
+    "outlier_fraction": "str",
+    "inclusion": "str",
+    "position": "str",
+    "direction": {
+     "adjusted_ebitda_margin": "str",
+     "total_leverage_adjusted": "str",
+     "interest_coverage_adjusted": "str",
+     "ffo_to_debt": "str"
+    }
+   },
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap": {
+  "top_level_keys": [
+   "upstream",
+   "peers",
+   "cp1_facts",
+   "rules",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "peers": {
+    "state": "str",
+    "source_id": "str",
+    "pages": [
+     "str"
+    ],
+    "rows": [
+     {
+      "row": "str",
+      "label": "str",
+      "period_end": "str",
+      "amounts": {
+       "revenue": "str",
+       "ebitda": "str",
+       "debt": "str",
+       "interest": "str",
+       "ffo": "str"
+      },
+      "basis": {
+       "reporting_basis": "str",
+       "segments": "str",
+       "fiscal_year_end": "str"
+      }
+     }
+    ],
+    "issuer_line": {
+     "row": "str",
+     "label": "str",
+     "period_end": "str",
+     "amounts": {
+      "revenue": "str",
+      "ebitda": "str",
+      "debt": "str",
+      "interest": "str",
+      "ffo": "str"
+     },
+     "basis": {
+      "reporting_basis": "str",
+      "segments": "str",
+      "fiscal_year_end": "str"
+     }
+    }
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str",
+     "value_class": "str"
+    }
+   ],
+   "rules": {
+    "minimum_included_peers": "int",
+    "outlier_fraction": "str",
+    "inclusion": "str",
+    "position": "str",
+    "direction": {
+     "adjusted_ebitda_margin": "str",
+     "total_leverage_adjusted": "str",
+     "interest_coverage_adjusted": "str",
+     "ffo_to_debt": "str"
+    }
+   },
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "no_peers": {
+  "top_level_keys": [
+   "upstream",
+   "peers",
+   "cp1_facts",
+   "rules",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "peers": {
+    "state": "str",
+    "source_id": "NoneType",
+    "pages": [],
+    "rows": [],
+    "issuer_line": "NoneType"
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str",
+     "value_class": "str"
+    }
+   ],
+   "rules": {
+    "minimum_included_peers": "int",
+    "outlier_fraction": "str",
+    "inclusion": "str",
+    "position": "str",
+    "direction": {
+     "adjusted_ebitda_margin": "str",
+     "total_leverage_adjusted": "str",
+     "interest_coverage_adjusted": "str",
+     "ffo_to_debt": "str"
+    }
+   },
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ }
+}

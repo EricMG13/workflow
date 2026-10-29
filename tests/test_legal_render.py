@@ -29,6 +29,7 @@ from deploy_vii.report_view import FactCoord, build, build_index, pathways
 
 ROOT = Path(__file__).parents[1]
 ORACLE = json.loads((ROOT / "cases/legal/render-expected.json").read_text())
+
 LEGAL = json.loads((ROOT / "cases/legal/manifest.json").read_text())
 FINANCIAL = json.loads((ROOT / "cases/financial/manifest.json").read_text())
 SCHEMAS = {s["table_id"]: s for s in ORACLE["schemas"]}
@@ -273,6 +274,14 @@ def test_adopted_values_gaps_capacity_and_all_front_columns(case):
     assert not any(f.field == "unused_commitment" for f in _module(view).facts)
 
 
+def test_pathway_has_model_block_follows_the_composition():
+    by_id = {p.id: p for p in pathways()}
+    # Q-C1: the FP 04 maturity wall is Model-owned, so covenant_refinancing now asks for CP-MODEL.
+    assert report_view.pathway_has_model_block(by_id["covenant_refinancing"])
+    assert report_view.pathway_has_model_block(by_id["credit_snapshot"])
+    assert not report_view.pathway_has_model_block(by_id["distressed_restructuring"])
+
+
 @pytest.mark.parametrize("case", [0, 1])
 def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
     view = _seed(case)
@@ -339,15 +348,22 @@ def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
         actual = next(s for s in data["sources"] if s["source_id"] == source.source_id)
         assert actual["sha256"] == source.sha256
         assert actual["spans"] == [s.model_dump(mode="json") for s in source.spans]
-    for block_id in ORACLE["other_front_sections"]["ids"]:
+    # Stage 2 close release (rulings round 4 and round 5 item 18): the five blocks are the
+    # CP-2D and CP-3C D7 `_Spec` rows; in a run that did not request the owner each renders the
+    # empty state of a spec'd block, not the Unbound fallback.
+    sections = ORACLE["other_front_sections"]
+    assert set(sections["blocks"]) == set(sections["ids"])
+    for block_id, want in sections["blocks"].items():
         block = _blocks(report)[block_id]
+        assert report_view._spec_of(block_id).producers == tuple(want["producers"])
         assert (block.owner, block.kind, block.state, block.full_analysis_route) == (
-            "Unbound",
-            "prose",
-            "not_run",
-            None,
+            want["owner"],
+            want["kind"],
+            want["state"],
+            want["full_analysis_route"],
         )
-        assert not block.rows and not block.lines
+        assert block.note == want["note"]
+        assert not block.rows and not block.lines  # no owner cell, no claim that the owner ran
 
 
 @pytest.mark.parametrize("amount,display", [("0", "0.00x"), ("0.000", "0.00x")])

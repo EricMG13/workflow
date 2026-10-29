@@ -24,6 +24,7 @@ candidate in the same call, as `submit_cp0_review` does for CP-0, recording the 
 """
 
 import re
+from collections import Counter
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, get_args
@@ -659,7 +660,7 @@ def _governance_issues(path: str, row: GovernanceItem) -> list[str]:
 def _source_issues(pack: PreparedPack, submission: BusinessContextSubmission) -> list[str]:
     issues: list[str] = []
     seen = [item.source_id for item in submission.sources]
-    for source_id in sorted({s for s in seen if seen.count(s) > 1}):
+    for source_id in sorted(s for s, n in Counter(seen).items() if n > 1):
         issues.append(f"cp1a.source_ids_unique: {source_id} is assessed more than once")
     if set(seen) != {s.source_id for s in pack.sources} or len(seen) != len(pack.sources):
         issues.append("Assess every prepared source exactly once")
@@ -675,7 +676,7 @@ def _source_issues(pack: PreparedPack, submission: BusinessContextSubmission) ->
 def _consumer_issues(pack: PreparedPack, submission: BusinessContextSubmission) -> list[str]:
     issues: list[str] = []
     judged = [item.module_id for item in submission.consumers]
-    for module_id in sorted({m for m in judged if judged.count(m) > 1}):
+    for module_id in sorted(m for m, n in Counter(judged).items() if n > 1):
         issues.append(f"cp1a.downstream_modules_unique: {module_id} is judged more than once")
     expected = cp1a_consumers(pack)
     if set(judged) != set(expected):
@@ -708,13 +709,14 @@ def _shape_issues(submission: BusinessContextSubmission) -> list[str]:
         if aspects.count(aspect) != 1:
             issues.append(f"company: state {aspect} exactly once")
     ids = [item.conflict_id for item in submission.conflicts]
-    for conflict_id in sorted({c for c in ids if ids.count(c) > 1}):
+    for conflict_id in sorted(c for c, n in Counter(ids).items() if n > 1):
         issues.append(f"conflicts: duplicate conflict_id {conflict_id}")
     for index, conflict_id in enumerate(ids):
         if not re.fullmatch(r"[A-Za-z][A-Za-z_.:-]{0,63}", conflict_id):
             issues.append(f"conflicts[{index}]: conflict_id is letters, '_', '.', ':' or '-'")
+    known = set(ids)
     for index, row in enumerate(submission.credit_translations):
-        for unknown in sorted(set(row.countervailing_conflict_ids) - set(ids)):
+        for unknown in sorted(set(row.countervailing_conflict_ids) - known):
             issues.append(f"credit_translations[{index}]: unknown conflict_id {unknown}")
     if not any(
         all(_populated(text) for text in (row.evidence, row.risk_mechanic, row.credit_implication))

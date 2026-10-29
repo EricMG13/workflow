@@ -1,0 +1,638 @@
+{
+ "_note": "Stage 2 close release W2-D (Modules, 2026-10-29): key tree of the body `owners.cp2g.view(historical, attempt)` serves for `read_inputs`, observed on real stores whose upstream heads were settled through the product store (`Execution.begin/finish`) from the oracle facts of each upstream module, as the module's connect tests seed them. Shape only, not values: dict keys in order, scalar type names, a list keeps its distinct element shapes. No `quote`, `citations` or `record_json` key at any depth. Checked by tests/test_connect_cp2g.py::test_view_equals_the_committed_view_tree; the genuine run's body is checked in tests/test_owner_cp2g.py.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "base",
+   "drivers",
+   "cp2a",
+   "cp1d",
+   "break_metrics_offered",
+   "cp1_facts",
+   "cp1d_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "base": {
+    "period": "str",
+    "forecast_periods": [
+     "str"
+    ],
+    "operands": {
+     "revenue": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "ebitda": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_interest": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_taxes": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "working_capital_change": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "capex": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "fcf": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "total_debt": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_closing": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "undrawn_rcf": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     }
+    },
+    "ratios": {
+     "ebitda_margin": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "capex_to_revenue": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "total_leverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "net_leverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "interest_coverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "fcf_to_debt": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     }
+    }
+   },
+   "drivers": [
+    {
+     "name": "str",
+     "label": "str",
+     "unit_class": "str",
+     "bounds": {
+      "min": "str",
+      "max": "str",
+      "places": "int"
+     }
+    },
+    {
+     "name": "str",
+     "label": "str",
+     "unit_class": "str",
+     "bounds": {
+      "min": "str",
+      "max": "str",
+      "places": "int"
+     },
+     "may_be_not_assessed": "bool"
+    }
+   ],
+   "cp2a": {
+    "base_period": "str",
+    "scenarios": [
+     {
+      "row": "str",
+      "name": "str",
+      "ebitda_decline": {
+       "shown": "str",
+       "status": "str"
+      },
+      "interest_increase": {
+       "shown": "str",
+       "status": "str"
+      }
+     }
+    ],
+    "breaks": [
+     {
+      "row": "str",
+      "origin": "str",
+      "test": "str",
+      "level": {
+       "shown": "str",
+       "status": "str"
+      },
+      "required_decline": {
+       "shown": "str",
+       "status": "str",
+       "limitation": "NoneType"
+      },
+      "outcome": "str"
+     }
+    ]
+   },
+   "cp1d": {
+    "state": "str",
+    "supported_ebitda": {
+     "ref": "str",
+     "shown": "str"
+    },
+    "supported_total_leverage": {
+     "ref": "str",
+     "shown": "str"
+    },
+    "supported_net_leverage": {
+     "ref": "str",
+     "shown": "str"
+    }
+   },
+   "break_metrics_offered": [
+    "str"
+   ],
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1d_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap": {
+  "top_level_keys": [
+   "upstream",
+   "base",
+   "drivers",
+   "cp2a",
+   "cp1d",
+   "break_metrics_offered",
+   "cp1_facts",
+   "cp1d_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "base": {
+    "period": "str",
+    "forecast_periods": [
+     "str"
+    ],
+    "operands": {
+     "revenue": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "ebitda": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_interest": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_taxes": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "working_capital_change": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "capex": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "fcf": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "total_debt": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_closing": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "undrawn_rcf": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     }
+    },
+    "ratios": {
+     "ebitda_margin": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "capex_to_revenue": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "total_leverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "net_leverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "interest_coverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "fcf_to_debt": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     }
+    }
+   },
+   "drivers": [
+    {
+     "name": "str",
+     "label": "str",
+     "unit_class": "str",
+     "bounds": {
+      "min": "str",
+      "max": "str",
+      "places": "int"
+     }
+    },
+    {
+     "name": "str",
+     "label": "str",
+     "unit_class": "str",
+     "bounds": {
+      "min": "str",
+      "max": "str",
+      "places": "int"
+     },
+     "may_be_not_assessed": "bool"
+    }
+   ],
+   "cp2a": {
+    "base_period": "str",
+    "scenarios": [
+     {
+      "row": "str",
+      "name": "str",
+      "ebitda_decline": {
+       "shown": "str",
+       "status": "str"
+      },
+      "interest_increase": {
+       "shown": "str",
+       "status": "str"
+      }
+     }
+    ],
+    "breaks": [
+     {
+      "row": "str",
+      "origin": "str",
+      "test": "str",
+      "level": {
+       "shown": "str",
+       "status": "str"
+      },
+      "required_decline": {
+       "shown": "str",
+       "status": "str",
+       "limitation": "NoneType"
+      },
+      "outcome": "str"
+     }
+    ]
+   },
+   "cp1d": {
+    "state": "str",
+    "supported_ebitda": "NoneType",
+    "supported_total_leverage": "NoneType",
+    "supported_net_leverage": "NoneType"
+   },
+   "break_metrics_offered": [
+    "str"
+   ],
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1d_facts": [],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "cp1d_blocked": {
+  "top_level_keys": [
+   "upstream",
+   "base",
+   "drivers",
+   "cp2a",
+   "cp1d",
+   "break_metrics_offered",
+   "cp1_facts",
+   "cp1d_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "base": {
+    "period": "str",
+    "forecast_periods": [
+     "str"
+    ],
+    "operands": {
+     "revenue": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "ebitda": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_interest": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_taxes": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "working_capital_change": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "capex": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "fcf": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "total_debt": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "cash_closing": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "undrawn_rcf": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     }
+    },
+    "ratios": {
+     "ebitda_margin": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "capex_to_revenue": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "total_leverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "net_leverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "interest_coverage_reported": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     },
+     "fcf_to_debt": {
+      "ref": "str",
+      "shown": "str",
+      "status": "str",
+      "limitation": "NoneType"
+     }
+    }
+   },
+   "drivers": [
+    {
+     "name": "str",
+     "label": "str",
+     "unit_class": "str",
+     "bounds": {
+      "min": "str",
+      "max": "str",
+      "places": "int"
+     }
+    },
+    {
+     "name": "str",
+     "label": "str",
+     "unit_class": "str",
+     "bounds": {
+      "min": "str",
+      "max": "str",
+      "places": "int"
+     },
+     "may_be_not_assessed": "bool"
+    }
+   ],
+   "cp2a": {
+    "base_period": "str",
+    "scenarios": [
+     {
+      "row": "str",
+      "name": "str",
+      "ebitda_decline": {
+       "shown": "str",
+       "status": "str"
+      },
+      "interest_increase": {
+       "shown": "str",
+       "status": "str"
+      }
+     }
+    ],
+    "breaks": [
+     {
+      "row": "str",
+      "origin": "str",
+      "test": "str",
+      "level": {
+       "shown": "str",
+       "status": "str"
+      },
+      "required_decline": {
+       "shown": "str",
+       "status": "str",
+       "limitation": "NoneType"
+      },
+      "outcome": "str"
+     }
+    ]
+   },
+   "cp1d": {
+    "state": "str",
+    "supported_ebitda": "NoneType",
+    "supported_total_leverage": "NoneType",
+    "supported_net_leverage": "NoneType"
+   },
+   "break_metrics_offered": [
+    "str"
+   ],
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp1d_facts": [],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ }
+}

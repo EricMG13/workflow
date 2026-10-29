@@ -1,0 +1,31 @@
+# Stage 2 Lows: one batch at the end of the stage, or riding with the module's next fix
+
+- **[G1-X guards] Low, test gap.** No test covers a step that has a scope row while its `sources` is `False`. The mutant `==` → `<=` at owner_workflow.py:614 survives. Probe: `<S>/s2-g1x-review/p_one_direction.sh`. Source: stage2/g1x-guards-review.md.
+- **[G1-X guards] Info.** The docstring lines at owner_workflow.py:563, :565 and :566 are longer than 100 characters.
+- **CP-DR (fix1 re-review) Low:** reader refusals for a negative count (L2b) and a per-gap share not known (L2f) are untested; `<S>/cpdr-s2-review/review_mutants_fix1.py`.
+- **CP-2E (fix1 re-review) Info:** `tests/test_owner_cp2e.py` docstring :5-6 still says tamper/stale/blocked/begin-refused are not written; `Cite` breaks `copy.deepcopy`/`asdict` (no src path does it; also CP-3D `Cites`); empty summary gets two issues.
+- **CP-2A (close release, lease text).** Round 5 item 1's unit rule checks settled operands only; an unsettled operand carries no amount and no currency. Lease text "every operand fact it reads" narrows to "every settled operand". Source: cp2a/fix1-review.md M2; `<S>/cp2a-s2-review/r3_unsettled_stamp.py`.
+- **CP-2A Low (unchanged).** Public-API caller-built `Upstream` with forged facts composes (`r4`); not reachable through submit, probe or view.
+- **Shared defect test Info.** `test_a_verbatim_pattern_needs_only_one_accepted_value_on_one_path` (`test_defect_classes_selfcheck.py:529`) repeats `:519`; it never shows a second refusing path excused. End batch. Source: defect-classes/fix2-review.md.
+- **CP-8 L-a.** `test_identity_is_outside_the_host_scope` asserts only `status != "ok"`; pin `refused`/`not_permitted` (`<S>/cp8-s2-rereview/p14_run_level_refusals.py`).
+- **CP-8 L-b.** The `not_permitted`/`stale_binding` tests do not assert "neither consumes an attempt; both recorded in the receipt"; the stale test uses `interrupt`, which consumes the attempt itself. Test gap only (p14 exit 0).
+- **CP-1D L1.** The 32-char ordinal window is cut before Cf/Mn/Me are skipped; `2`+31 marks+`nd` reads 2. Skip over the whole tail first (`<S>/cp1d-s2-review/p4_ordinal_identifier_edges.py`). Fails closed under the Source quotes freeze as a guard limit if not fixed.
+- **CP-1D L2.** Surviving mutants: constant upstream status, `attempt.inputs` for `current_inputs`, the view's `known` filter removed (`p7_review_mutants.py`).
+- **CP-1D L3.** The deferred tamper test does not show the verifier reaching `_PROBES["CP-1D"]`; add a `monkeypatch.setitem` spy as CP-2A does; no edited step output case.
+- **CP-1D L5.** `type: ignore` 0 → 3 in tests (`test_connect_cp1d.py:623,625`, `test_owner_cp1d.py:100`); suppressions may only fall.
+- **CP-1D L6 (predates).** CP-1 references refused in assessment rationales while `cp1_facts_note` admits them; align the note or the core (`p9_cp1_ref_in_assessment.py`).
+- **CP-1D I1.** `context_block` docstring overstates `inherited_limitations` (computed with own=()).
+- **CP-2G Info (batch).** `cp2g_reader` uses `next(...)` without a default on T2H.7; a head without the table raises StopIteration, not ValueError. Source: batch/cp2h-report.md release 3.
+- **CP-2D (protocol §6).** `_validate_step` uses raw `model_validate_json`, not the `json_object` path. Source: batch/cp3c-report.md item 7.
+- **Tests.** `s1a_runs.drive_cp1` hard-codes the readiness literal; `cp3c_runs` and `cp4_runs` duplicate `drive_cp1` (jscpd).
+- **CP-1D (protocol §6, Info).** `_validate_step` parses with raw `model_validate_json`, not `json_object`. Source: batch/cp1c-report.md.
+- **CP-3D (protocol §6).** `_validate_step` still parses with raw `model_validate_json`. Source: batch/fix-src-report.md.
+- **CP-DR and CP-3D (introduced by the fix batch).** The RunText check runs only when there is no other content issue, so a malformed answer is masked and blocks CP-DR on the repair. Run it unconditionally, as CP-2E does; no frozen text moves (41 + 3 checked). Probe: `<S>/stage2-rereview/rr4_cpdr_masked_runtext.py`.
+- **Owner (predates, Medium-class).** A CP-DR `question_id` of 155–160 characters makes `Fact` raise after the binding write, so the run is wedged (`rr2_cpdr_long_question_id.py`, exit 1 at a1a0574 and at c197434).
+- **Owner (predates, Info).** A well-formed but unresolved reference passes the CP-DR and CP-3D validators and surfaces only at settlement; CP-2E refuses it at validation. The run is not wedged.
+- **Owner (predates, D12).** The `docs/reuse/manifest.json` record for `bindings/shipped.py` carries sha256 5c71a311…, which is the current `report_view.py` hash; the real `shipped.py` hashes to 8cd0dbc9…. Found by release W1 (`release/w1-report.md`); left untouched.
+- **Owner (predates, Medium-class).** A CP-DR gap id of 139-153 characters passes `ENTRY_VALIDATOR`, then `compose` raises on `TDR.1.<gap>.named_consumers` or `.description` (`cpdr.py:481`; the gap-id checks at :292-305 set no length bound). It is the sibling of the fixed question_id wedge. Probe: `<S>/release-review-A/probes/a04_cpdr_long_gap_id.py`.
+- **Owner (predates, Low).** CP-1 accepts a blank scope or source limitation (`" "`, U+200B, U+2800) and renders a blank gap row, because `source_context` never calls `is_blank`. Probe: `a05_cp1_scope_limitation_sink.py`.
+- CP-1 chart oracle `cases/charts/expected.json` is not covered by `cases/pins.py` patterns (predates Stage 3; oracle review A I1, 2026-10-29).
+
+- Stage 3 review (item 22): ruff check findings on untouched lines (statement_extract.py 234-263 TRY004; financial_workflow.py 439, 446, 768; test_legal_render.py:220) and D12 report_view records 3e5b537 (item 19), 24f879a (item 19), 8aef58d (chain fork) predate Stage 3: owner.

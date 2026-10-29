@@ -31,7 +31,7 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 MARKET_FILE = "cases/cp3-cp6-owner/manifest.json"
 MARKET_SHA = "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7"
@@ -175,8 +175,10 @@ NUM_RE = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,4})?$")
 
 
 def token_once(value_text, quote):
-    """value_text occurs exactly once in the quote as a whole numeric token."""
-    return len(re.findall(r"(?<![0-9.])" + re.escape(value_text) + r"(?![0-9]|\.[0-9])", quote)) == 1
+    """value_text occurs exactly once in the quote as a whole numeric token (round 13 item 8: a comma or a comma and
+    one space joins a digit on either side, so `31, 2029` is one run)."""
+    return len(re.findall(r"(?<![0-9.])(?<![0-9],)(?<![0-9], )" + re.escape(value_text)
+                          + r"(?![0-9]|\.[0-9]|,[0-9]|, [0-9])", quote)) == 1
 
 
 def spell(amount, unit, decimals):
@@ -1265,7 +1267,7 @@ def amort_nonzero_literal():
 
 
 _an = check_submission(amort_nonzero_literal(), PACK_IDS["positive"])
-assert _an == ["amortisation: the simple margin convention requires zero amortisation"], _an
+assert _an == ["amortisation: value_text 31 does not occur in the quote"], _an
 
 # Replace the two placeholder mutations by their concrete literals.
 MUT_LIST = []
@@ -1277,9 +1279,12 @@ for m in [*run_mutations(), {"id": "maturity_before_quotation"}, {"id": "amortis
     if m["id"] == "amortisation_nonzero":
         m = {"id": m["id"], "edits": [["terms.amortisation.quote", amort_nonzero_literal()["terms"]["amortisation"]["quote"]],
                                       ["terms.amortisation.value_text", "31"]],
-             "issue": "amortisation: the simple margin convention requires zero amortisation", "all_issues": _an,
-             "note": "value_text 31 is the day-of-month numeral of 'December 31' in the quote, not an amortisation "
-                     "figure; the quote's other numerals are the zero and the year"}
+             "issue": "amortisation: value_text 31 does not occur in the quote", "all_issues": _an,
+             "note": "value_text 31 is the day-of-month numeral of 'December 31, 2029' in the quote; under the "
+                     "comma-space join '31, 2029' is one run, so 31 is no figure of the quote and the refusal is the "
+                     "text-occurrence one (round 13 addendum 2, re-pinned at the Stage 2 close). The nonzero-amortisation "
+                     "branch itself is pinned by tests/test_method_cp3d.py::"
+                     "test_amortisation_above_zero_is_refused_on_a_page_without_a_date"}
     MUT_LIST.append(m)
 
 # Tool-use refusals: the core RULES(text, seen) attribute (protocol section 2), reusing live/tools.py
@@ -1525,7 +1530,7 @@ def main():
         "tool_use_refusals": [{"id": t["id"], "issues": t["issues"]} for t in TOOL_USE],
         "negative_cases": {
             "blocked_cp3d": {"attempt_0_issue": BLOCKED["attempt_0"]["issue"], "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
-                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, no head"},
+                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)"},
             "begin_refused_cp0_blocked": "CP-0 blocked or stale refuses begin of CP-3D (edge_rule block, no attempt consumed); built by making CP-0 blocked on a clone (two invalid CP-0 attempts), no literal",
             "stale_binding": "a snapshot change between the last read_pages and the submit refuses stale_binding",
         },

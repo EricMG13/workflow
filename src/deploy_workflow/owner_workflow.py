@@ -5,9 +5,12 @@ adapter owns finite capabilities, immutable participation evidence and the recei
 It generalises `financial_workflow` (which stays the reference and is imported, never
 edited): the walk follows `registry.plan`, each module's steps come from a declared
 `OwnerSpec`, and paths are supplied by trusted setup, never by a message.
-G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 (their probes and the CP-2
-read view live in `deploy_workflow.owners`). No durable resume exists (an interrupted run
-is refused and a new run starts).
+G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 and Stage 2 adds CP-4 (their
+probes and views live in `deploy_workflow.owners`). G1-X (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves
+owner cores: an owner-only module (no live step contract) is entered through its registered
+core (`_CORES`), any module may register a precheck gate (`_PRECHECKS`), and every module with
+a `_VIEWS` entry may be read through `module_context` or `step_context`. No durable resume exists (an
+interrupted run is refused and a new run starts).
 """
 
 import argparse
@@ -20,7 +23,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
 from typing import Any, Literal, TextIO
 from uuid import uuid4
 
@@ -30,6 +33,8 @@ from deploy_vii.cp0_workflow import _validate_review as cp0_validate_review
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_workflow import PROMOTED, _quality_stage, validate_cp1_stage
 from deploy_vii.cp2_synthesis import PROMOTED as CP2_PROMOTED
+from deploy_vii.cp4_legal import PROMOTED as CP4_PROMOTED
+from deploy_vii.cp5_integrity import PROMOTED as CP5_PROMOTED
 from deploy_vii.cp_model_workflow import (
     PUBLISHED,
     CpModelRefused,
@@ -51,11 +56,11 @@ from deploy_vii.execution import (
     settle,
     text_sha256,
 )
-from deploy_vii.live.context import MODULE_CONTEXTS
 from deploy_vii.live.schema import normalise
 from deploy_vii.live.submission import (
     PREFILLED,
     STEPS,
+    Submitted,
     _validate_prefilled,
     known_bindings,
     prefill,
@@ -63,7 +68,8 @@ from deploy_vii.live.submission import (
 )
 from deploy_vii.live.tools import ToolRules
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.registry import dependencies, plan, step_chain
+from deploy_vii.registry import StepChain, dependencies, plan, step_chain
+from deploy_workflow import host
 from deploy_workflow.financial_workflow import (
     FILES,
     MAX_CALLS,
@@ -89,29 +95,157 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import SourceSession
-from deploy_workflow.owners import cp1a, cp2
+from deploy_workflow.owners import (
+    cp1a,
+    cp1c,
+    cp1d,
+    cp2,
+    cp2a,
+    cp2d,
+    cp2e,
+    cp2g,
+    cp2h,
+    cp3,
+    cp3c,
+    cp3d,
+    cp4,
+    cp4c,
+    cp5,
+    cp8,
+    cpdr,
+    cpl10,
+)
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
 AUDIT = "owner-run-audit"
-SUPPORTED_ANALYTICAL = frozenset({"CP-0", "CP-1", "CP-1A", "CP-2"})
-ENTRIES = ("cp0_review", "model_payload")
+SUPPORTED_ANALYTICAL = frozenset(
+    {
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-3D",
+        "CP-DR",
+        "CP-2E",
+        "CP-3",
+        "CP-5",
+        "CP-8",
+        "CP-2A",
+        "CP-2D",
+        "CP-4",
+        "CP-L10",
+        "CP-1D",
+        "CP-2G",
+        "CP-1C",
+        "CP-3C",
+        "CP-2H",
+        "CP-4C",
+    }
+)
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
+# G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
+# raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
+# supplies `STEP_IDS`, `SCHEMAS`, `submit` and, for steps with pack sources, `RULES`.
+_CORES: dict[str, ModuleType] = {
+    "CP-DR": cpdr,
+    "CP-3D": cp3d,
+    "CP-2E": cp2e,
+    "CP-8": cp8,
+    "CP-2A": cp2a,
+    "CP-2D": cp2d,
+    "CP-L10": cpl10,
+    "CP-1D": cp1d,
+    "CP-2G": cp2g,
+    "CP-1C": cp1c,
+    "CP-3C": cp3c,
+    "CP-2H": cp2h,
+    "CP-4C": cp4c,
+}
 _QUALIFICATION = {
     "CP-1": PROMOTED,
     "CP-1A": CP1A_PROMOTED,
     "CP-2": CP2_PROMOTED,
     "CP-MODEL": PUBLISHED,
+    "CP-DR": cpdr.QUALIFICATION,
+    "CP-3D": cp3d.QUALIFICATION,
+    "CP-2E": cp2e.QUALIFICATION,
+    "CP-3": cp3.QUALIFICATION,
+    "CP-5": CP5_PROMOTED,
+    "CP-8": cp8.QUALIFICATION,
+    "CP-2A": cp2a.QUALIFICATION,
+    "CP-2D": cp2d.QUALIFICATION,
+    "CP-4": CP4_PROMOTED,
+    "CP-L10": cpl10.QUALIFICATION,
+    "CP-1D": cp1d.QUALIFICATION,
+    "CP-2G": cp2g.QUALIFICATION,
+    "CP-1C": cp1c.QUALIFICATION,
+    "CP-3C": cp3c.QUALIFICATION,
+    "CP-2H": cp2h.QUALIFICATION,
+    "CP-4C": cp4c.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
     "CP-1": _verify_promotion,
     "CP-1A": cp1a.probe,
     "CP-2": cp2.probe,
+    "CP-DR": cpdr.probe,
+    "CP-3D": cp3d.probe,
+    "CP-2E": cp2e.probe,
+    "CP-3": cp3.probe,
+    "CP-5": cp5.probe,
+    "CP-8": cp8.probe,
+    "CP-2A": cp2a.probe,
+    "CP-2D": cp2d.probe,
+    "CP-4": cp4.probe,
+    "CP-L10": cpl10.probe,
+    "CP-1D": cp1d.probe,
+    "CP-2G": cp2g.probe,
+    "CP-1C": cp1c.probe,
+    "CP-3C": cp3c.probe,
+    "CP-2H": cp2h.probe,
+    "CP-4C": cp4c.probe,
 }
-# The exact `read_inputs` view of each `module_context` step (S1a lease rev 2, M4).
+# The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
+# M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
+# `inputs="step_context"`, rulings stage2 Q4). Both are served as `_VIEWS[step](historical, attempt)`.
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
+    "research": cpdr.view,
+    "integrity_review": cp5.view,
+    "downside_pathway": cp2a.view,
+    "liquidity_bridge": cp2d.view,
+    "legal_covenants": cp4.view,
+    "change_screen": cpl10.view,
+    "earnings_quality": cp1d.view,
+    "forward_credit_model": cp2g.view,
+    "peer_benchmark": cp1c.view,
+    "refinancing_risk": cp3c.view,
+    "rating_triggers": cp2h.view,
+    "restructuring_fulcrum": cp4c.view,
+}
+# The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
+# invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
+# every analytical module but CP-0 and CP-1 needs one, or create refuses it (G1-X §2).
+_ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepValidation]] = {
+    "CP-1A": cp1a.ENTRY_VALIDATOR,
+    "CP-2": cp2.ENTRY_VALIDATOR,
+    "CP-DR": cpdr.ENTRY_VALIDATOR,
+    "CP-3D": cp3d.ENTRY_VALIDATOR,
+    "CP-2E": cp2e.ENTRY_VALIDATOR,
+    "CP-3": cp3.ENTRY_VALIDATOR,
+    "CP-5": cp5.ENTRY_VALIDATOR,
+    "CP-8": cp8.ENTRY_VALIDATOR,
+    "CP-2A": cp2a.ENTRY_VALIDATOR,
+    "CP-2D": cp2d.ENTRY_VALIDATOR,
+    "CP-4": cp4.ENTRY_VALIDATOR,
+    "CP-L10": cpl10.ENTRY_VALIDATOR,
+    "CP-1D": cp1d.ENTRY_VALIDATOR,
+    "CP-2G": cp2g.ENTRY_VALIDATOR,
+    "CP-1C": cp1c.ENTRY_VALIDATOR,
+    "CP-3C": cp3c.ENTRY_VALIDATOR,
+    "CP-2H": cp2h.ENTRY_VALIDATOR,
+    "CP-4C": cp4c.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -122,17 +256,20 @@ class StepSpec:
     """One journal step. `sources`: pack tools (SourceSession); `extract`: statement
     extraction is offered; `upstream_grant`: frozen-upstream grant (none yet);
     `inputs`: `projection` lets `read_inputs` return the adopted CP-1 view and
-    `module_context` the module's exact CONTEXT view (`live.context.MODULE_CONTEXTS`);
+    `module_context` and `step_context` the step's exact view (its `_VIEWS` entry); any `inputs` other than
+    `none` must be read before the step is submitted, with or without a source session;
     `rules`: `precheck` applies the evidence rules of `financial_workflow._evidence_issues`
-    before the journal (a failing submit is refused and writes nothing); `journaled` hands
-    the tool-loop rules to the journal (a failing submit is retained as an invalid step)."""
+    before the journal (a failing submit is refused and writes nothing; CP-0 and CP-1 only);
+    `journaled` hands the tool-loop rules to the journal (a failing submit is retained as an
+    invalid step): `ToolRules` for a live-contract step, the core's `RULES` for an owner-only
+    one. A module's `_PRECHECKS` gate runs before either mode (G1-X §4)."""
 
     step_id: str
     schema: type[Contract]
     sources: bool
     extract: bool
     upstream_grant: Mapping[str, Any] | None
-    inputs: Literal["none", "projection", "module_context"]
+    inputs: Literal["none", "projection", "module_context", "step_context"]
     rules: Literal["none", "precheck", "journaled"]
 
 
@@ -140,7 +277,7 @@ class StepSpec:
 class OwnerSpec:
     module_id: str
     steps: tuple[StepSpec, ...]
-    entry: Literal["cp0_review", "model_payload"] | None
+    entry: Literal["cp0_review", "model_payload", "owner_core"] | None
     kind: Literal["analytical", "deterministic"]
     publish: Callable[..., Attempt] | None
 
@@ -149,11 +286,20 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.business_context import BusinessContextSubmission
     from deploy_vii.cp1_workflow import FinancialSubmission
     from deploy_vii.cp2_synthesis import CreditSynthesisSubmission
+    from deploy_vii.cp3_relative_value import RelativeValueSubmission
+    from deploy_vii.cp4_legal import CovenantInterpretationSubmission
+    from deploy_vii.cp5_integrity import IntegritySubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
     from deploy_vii.quality import QualityReview
     from deploy_vii.readiness import ReadinessReview
     from deploy_vii.source_context import SourceContextReview
+    from deploy_workflow.owners.cp2a import DownsideSubmission
+    from deploy_workflow.owners.cp2d import LiquidityBridgeSubmission
+    from deploy_workflow.owners.cp2e import MacroFxSubmission
+    from deploy_workflow.owners.cp8 import DecisionLedgerSubmission
+    from deploy_workflow.owners.cpdr import ResearchSubmission
+    from deploy_workflow.owners.cpl10 import ChangeScreenSubmission
 
     def step(
         step_id: str,
@@ -161,7 +307,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
         *,
         sources: bool = False,
         extract: bool = False,
-        inputs: Literal["none", "projection", "module_context"] = "none",
+        inputs: Literal["none", "projection", "module_context", "step_context"] = "none",
         rules: Literal["none", "precheck", "journaled"] = "none",
     ) -> StepSpec:
         return StepSpec(
@@ -229,6 +375,197 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="deterministic",
             publish=publish_cp_model,
         ),
+        # G1-X owner-only module (docs/CPDR-OWNER-LEASE.md Public API): the agenda is its
+        # `module_context` view, the pack tools its evidence; every issue is a journaled step.
+        "CP-DR": OwnerSpec(
+            module_id="CP-DR",
+            steps=(
+                step(
+                    "research",
+                    ResearchSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3D": OwnerSpec(
+            module_id="CP-3D",
+            steps=(
+                step(
+                    "market_implied", cp3d.MarketImpliedSubmission, sources=True, rules="journaled"
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2E": OwnerSpec(
+            module_id="CP-2E",
+            steps=(
+                step(
+                    "macro_fx",
+                    MacroFxSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3": OwnerSpec(
+            module_id="CP-3",
+            steps=(
+                step(
+                    "relative_value",
+                    RelativeValueSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-5": OwnerSpec(
+            module_id="CP-5",
+            steps=(step("integrity_review", IntegritySubmission, inputs="module_context"),),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-8": OwnerSpec(
+            module_id="CP-8",
+            steps=(
+                step(
+                    "decision_ledger",
+                    DecisionLedgerSubmission,
+                    sources=True,
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2A": OwnerSpec(
+            module_id="CP-2A",
+            steps=(step("downside_pathway", DownsideSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2D": OwnerSpec(
+            module_id="CP-2D",
+            steps=(step("liquidity_bridge", LiquidityBridgeSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-4": OwnerSpec(
+            module_id="CP-4",
+            steps=(
+                step(
+                    "legal_covenants",
+                    CovenantInterpretationSubmission,
+                    sources=True,
+                    inputs="step_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-L10": OwnerSpec(
+            module_id="CP-L10",
+            steps=(step("change_screen", ChangeScreenSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-1D": OwnerSpec(
+            module_id="CP-1D",
+            steps=(
+                step(
+                    "earnings_quality",
+                    cp1d.EarningsQualitySubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2G": OwnerSpec(
+            module_id="CP-2G",
+            steps=(step("forward_credit_model", cp2g.ForwardSubmission, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        # docs/CP1C-OWNER-LEASE.md Public API: the view is the agenda, the pack tools (identity,
+        # financial and, when held, peers) the evidence; every content rule is journaled.
+        "CP-1C": OwnerSpec(
+            module_id="CP-1C",
+            steps=(
+                step(
+                    "peer_benchmark",
+                    cp1c.PeerBenchmarkSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-3C": OwnerSpec(
+            module_id="CP-3C",
+            steps=(
+                step("refinancing_risk", cp3c.RefinancingRiskSubmission, inputs="module_context"),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-2H": OwnerSpec(
+            module_id="CP-2H",
+            steps=(
+                step(
+                    "rating_triggers",
+                    cp2h.TriggerSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-4C": OwnerSpec(
+            module_id="CP-4C",
+            steps=(
+                step(
+                    "restructuring_fulcrum",
+                    cp4c.RestructuringSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="journaled",
+                ),
+            ),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
     }
 
 
@@ -247,6 +584,14 @@ class OwnerBinding(Contract):
     ticket_id: Identifier
     attempt: int
     inputs: tuple[Input, ...]
+
+
+# G1-X §4: a module's optional precheck gate, `precheck(store, binding, stored)` over the filled
+# payload. Issues refuse the submission before any rule and before the journal; the verifier
+# recomputes it for every submission. Module tasks add their rows (live-contract or owner-only).
+_PRECHECKS: dict[str, Callable[[Execution, OwnerBinding, str], tuple[str, ...]]] = {
+    "CP-4": cp4.precheck,
+}
 
 
 class OwnerCall(Contract):
@@ -358,11 +703,40 @@ def _owner_binding(snapshot: ExecutionSnapshot, attempt: Attempt, step_id: str) 
     )
 
 
+def _attempt_of(snapshot: ExecutionSnapshot, ticket_id: str) -> Attempt:
+    """The snapshot's attempt of `ticket_id`; evidence naming another ticket does not bind (R4-4:
+    a tamper cause, never a raw lookup failure)."""
+    attempt = next((a for a in snapshot.attempts if a.ticket_id == ticket_id), None)
+    if attempt is None:
+        raise WorkflowError("identity_mismatch")
+    return attempt
+
+
+def _result_attempt(snapshot: ExecutionSnapshot, head: Head) -> Attempt:
+    """The snapshot's attempt that settled `head` (R4-4, as `_attempt_of`)."""
+    attempt = next((a for a in snapshot.attempts if a.result_sha256 == head.result_sha256), None)
+    if attempt is None:
+        raise WorkflowError("identity_mismatch")
+    return attempt
+
+
+def _sequence(module_id: str) -> tuple[str, ...]:
+    """The module's journal step sequence: its live step contract, or its owner core's
+    `STEP_IDS` where `step_chain` has none (G1-X §2). An owner-only module without a core is a
+    registration error and raises `KeyError` (`_check_specs` refuses it before any run)."""
+    try:
+        return step_chain(module_id).steps
+    except ValueError:
+        steps: tuple[str, ...] = tuple(_CORES[module_id].STEP_IDS)
+        return steps
+
+
 def _owner_historical(store: Execution, binding: OwnerBinding) -> _FrozenExecution:
-    """`financial_workflow._historical` for any other module: its step chain is the sequence."""
+    """`financial_workflow._historical` for any other module: its step sequence (the live step
+    chain, else the owner core's `STEP_IDS`) is the sequence."""
     snapshot = _snapshot(store, binding.snapshot_sha256)
-    attempt = next(a for a in snapshot.attempts if a.ticket_id == binding.ticket_id)
-    sequence = step_chain(attempt.module_id).steps
+    attempt = _attempt_of(snapshot, binding.ticket_id)
+    sequence = _sequence(attempt.module_id)
     if (
         _owner_binding(snapshot, attempt, binding.step_id) != binding
         or attempt.status != "pending"
@@ -382,6 +756,8 @@ def _owner_historical(store: Execution, binding: OwnerBinding) -> _FrozenExecuti
 
 def _hist(store: Execution, binding: OwnerBinding) -> _FrozenExecution:
     if binding.module_id in _FINANCIAL_MODULES:
+        # R4-4: the reused helper looks the ticket up unguarded; an absent one is checked first.
+        _attempt_of(_snapshot(store, binding.snapshot_sha256), binding.ticket_id)
         return _historical(store, _fin(binding))
     return _owner_historical(store, binding)
 
@@ -389,27 +765,64 @@ def _hist(store: Execution, binding: OwnerBinding) -> _FrozenExecution:
 def _fill(
     store: Execution, binding: OwnerBinding, payload: str
 ) -> tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
-    """What the journal retains: CP-0/CP-1 as `_filled`; a one-step module as the entry path of
-    `live.submission.submit_model_payload` (null resolution, no pre-fill)."""
+    """What the journal retains: CP-0/CP-1 as `_filled`; any other step as the entry path of
+    `live.submission.submit_model_payload` (null resolution, no pre-fill), against the live
+    schema of its step or, for a step outside `live.submission.STEPS`, its owner core's
+    `SCHEMAS` entry (G1-X §2)."""
     if binding.module_id in _FINANCIAL_MODULES:
         return _filled(store, _fin(binding), payload)
-    normal, resolved = normalise(STEPS[binding.step_id].schema, payload)
+    step_id = binding.step_id
+    schema = (
+        STEPS[step_id].schema if step_id in STEPS else _CORES[binding.module_id].SCHEMAS[step_id]
+    )
+    normal, resolved = normalise(schema, payload)
     return normal, resolved, (), ()
 
 
-def _journaled_issues(step_id: str, payload: str, evidence: SourceEvidence) -> tuple[str, ...]:
-    """The tool-loop rules of a `journaled` step (absence and unread citations)."""
-    return ToolRules().issues(step_id, payload, seen=evidence.seen(), context=None)
+def _journaled_issues(
+    module_id: str, step_id: str, payload: str, evidence: SourceEvidence
+) -> tuple[str, ...]:
+    """The tool-use rules of a `journaled` step over the session's `Seen`: `ToolRules` (absence
+    and unread citations) for a live-contract step; the owner core's `RULES(text, seen)` for an
+    owner-only one, where `ToolRules` raises (G1-X §2, LEAD amendment 2026-10-28)."""
+    core = _CORES.get(module_id)
+    if core is None:
+        return ToolRules().issues(step_id, payload, seen=evidence.seen(), context=None)
+    found: tuple[str, ...] = tuple(core.RULES(payload, evidence.seen()))
+    return found
+
+
+def _gate(
+    store: Execution,
+    binding: OwnerBinding,
+    spec: StepSpec,
+    stored: str,
+    evidence: SourceEvidence,
+) -> tuple[str, ...]:
+    """The issues that refuse a submission before the journal, recomputed alike at submit and in
+    the verifier: the module's precheck gate over the filled payload first (G1-X §4), then, only
+    when the gate passes, the `precheck`-mode evidence rules. The journaled rules come later.
+    The gate sees the same read-only view of the binding's snapshot at submit and in replay."""
+    precheck = _PRECHECKS.get(binding.module_id)
+    issues: tuple[str, ...] = ()
+    if precheck is not None:
+        frozen = _FrozenExecution(store, _snapshot(store, binding.snapshot_sha256))
+        issues = bounded_issues(tuple(precheck(frozen, binding, stored)))
+    if not issues and spec.rules == "precheck":
+        issues = _evidence_issues(store, _fin(binding), stored, evidence)
+    return issues
 
 
 def _inputs(store: Execution, binding: OwnerBinding, spec: StepSpec) -> tuple[str, str]:
     """The (sha256, body) `read_inputs` returns for `spec`, recomputed from the journal."""
     if spec.inputs == "projection":
         return _projection(store, _fin(binding))
-    if spec.inputs == "module_context":
+    if spec.inputs in ("module_context", "step_context"):
+        view = _VIEWS.get(spec.step_id)
+        if view is None:
+            raise WorkflowError("not_permitted")
         historical = _owner_historical(store, binding)
-        attempt = next(a for a in historical.read().attempts if a.ticket_id == binding.ticket_id)
-        return _VIEWS[spec.step_id](historical, attempt)
+        return view(historical, _attempt_of(historical.read(), binding.ticket_id))
     raise WorkflowError("not_permitted")
 
 
@@ -437,8 +850,10 @@ def _raw(store: Execution, digest: str) -> str:
 
 def _settled(store: Execution, module_id: str) -> SettledHead:
     snapshot = store.read()
-    head = next(h for h in snapshot.heads if h.module_id == module_id)
-    attempt = next(a for a in snapshot.attempts if a.result_sha256 == head.result_sha256)
+    head = next((h for h in snapshot.heads if h.module_id == module_id), None)
+    if head is None:
+        raise WorkflowError("identity_mismatch")
+    attempt = _result_attempt(snapshot, head)
     if attempt.status != "finished" or (head.status != "blocked" and attempt.issues):
         raise WorkflowError("identity_mismatch")
     if head.status not in ("accepted", "restricted", "blocked"):
@@ -452,7 +867,104 @@ def _settled(store: Execution, module_id: str) -> SettledHead:
 
 
 def _step(specs: Mapping[str, OwnerSpec], module_id: str, step_id: str) -> StepSpec:
-    return next(s for s in specs[module_id].steps if s.step_id == step_id)
+    """The declared step; a recorded binding naming no declared step does not bind (R4-4)."""
+    spec = specs.get(module_id)
+    found = None if spec is None else next((s for s in spec.steps if s.step_id == step_id), None)
+    if found is None:
+        raise WorkflowError("identity_mismatch")
+    return found
+
+
+def _check_steps(module_id: str, spec: OwnerSpec) -> None:
+    """The reference spec of one analytical module is one G1-X can serve (protocol §1-§3).
+
+    The entry is the one `submit_review` and `_entry_outcome` dispatch for the module:
+    `cp0_review` for CP-0, `model_payload` for any other live-contract module, `owner_core` for
+    an owner-only one (`step_chain` raises "has no live step contract"). Every module but CP-0
+    and CP-1 has an `_ENTRY_VALIDATORS` row (§2). A live-contract module keeps its registry
+    chain and the chain's pack and extraction tools. An owner-only module has a registered,
+    complete core: `STEP_IDS` (nonempty and distinct, as `Execution.submit_step` requires) are
+    its steps (a tuple of str), `SCHEMAS[step]` is each step's schema, `submit` is callable and
+    so is `RULES` when a step is journaled. Its step ids stay outside `live.submission.STEPS`
+    (so `_fill` reads the core's `SCHEMAS`), it offers no statement extraction, a step has pack
+    sources exactly when `host._OWNER_SCOPES` has its row, and a `journaled` step has pack
+    sources (`RULES` judges the session's `Seen`). Every step: no upstream grant, some evidence
+    (pack sources or a read), `module_context` or `step_context` only with a `_VIEWS` entry, and
+    the financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
+    take."""
+    core = _CORES.get(module_id)
+    try:
+        chain: StepChain | None = step_chain(module_id)
+    except ValueError:
+        chain = None
+    entry = (
+        "owner_core" if chain is None else "cp0_review" if module_id == "CP-0" else "model_payload"
+    )
+    if (
+        spec.entry != entry
+        or (core is None) == (chain is None)
+        or (module_id not in _FINANCIAL_MODULES and module_id not in _ENTRY_VALIDATORS)
+    ):
+        raise WorkflowError("not_permitted")
+    if chain is None:
+        schemas = getattr(core, "SCHEMAS", {})
+        if (
+            not callable(getattr(core, "submit", None))
+            or (
+                any(s.rules == "journaled" for s in spec.steps)
+                and not callable(getattr(core, "RULES", None))
+            )
+            or any(schemas.get(s.step_id) is not s.schema for s in spec.steps)
+        ):
+            raise WorkflowError("not_permitted")
+        raw = getattr(core, "STEP_IDS", ())
+        if type(raw) is not tuple or not all(type(i) is str for i in raw):
+            raise WorkflowError("not_permitted")
+        sequence = raw
+    else:
+        sequence = chain.steps
+    # `Execution.submit_step` takes only a nonempty, duplicate-free sequence.
+    if (
+        not sequence
+        or len(set(sequence)) != len(sequence)
+        or tuple(s.step_id for s in spec.steps) != sequence
+    ):
+        raise WorkflowError("not_permitted")
+    for item in spec.steps:
+        if chain is None:
+            served = (
+                item.step_id not in STEPS
+                and not item.extract
+                and (item.rules != "journaled" or item.sources)
+                and item.sources == ((module_id, item.step_id) in host._OWNER_SCOPES)
+            )
+        else:
+            served = item.sources == (item.step_id in chain.pack_sources) and item.extract == (
+                item.step_id in chain.extract_tools
+            )
+        if (
+            not served
+            or item.upstream_grant is not None  # grant calls are not verifiable in G1
+            or (not item.sources and item.inputs == "none")
+            or (item.inputs in ("module_context", "step_context") and item.step_id not in _VIEWS)
+            or (
+                module_id not in _FINANCIAL_MODULES
+                and (item.rules == "precheck" or item.inputs == "projection")
+            )
+        ):
+            raise WorkflowError("not_permitted")
+
+
+def _upstream(graph: Mapping[str, set[str]], module_id: str) -> set[str]:
+    """Every producer `module_id` requires, directly or through other producers."""
+    found: set[str] = set()
+    pending = [module_id]
+    while pending:
+        for producer in graph.get(pending.pop(), ()):
+            if producer not in found:
+                found.add(producer)
+                pending.append(producer)
+    return found
 
 
 def _check_specs(
@@ -467,6 +979,7 @@ def _check_specs(
     except ValueError:
         raise WorkflowError("not_permitted") from None
     seen_deterministic = False
+    graph = dependencies(pack.run.requested_modules)
     for module_id, extra in specs.items():
         if module_id not in planned and (
             module_id not in OWNER_SPECS or extra != OWNER_SPECS[module_id]
@@ -486,26 +999,15 @@ def _check_specs(
                 raise WorkflowError("not_permitted")
             seen_deterministic = True
             continue
-        if seen_deterministic or module_id not in SUPPORTED_ANALYTICAL or spec.publish:
+        if module_id not in SUPPORTED_ANALYTICAL or spec.publish:
             raise WorkflowError("not_permitted")
-        try:
-            chain = step_chain(module_id)
-        except ValueError:
-            raise WorkflowError("not_permitted") from None
-        if spec.entry not in ENTRIES or tuple(s.step_id for s in spec.steps) != chain.steps:
-            raise WorkflowError("not_permitted")
-        for item in spec.steps:
-            if (
-                item.upstream_grant is not None  # grant calls are not verifiable in G1
-                or item.sources != (item.step_id in chain.pack_sources)
-                or item.extract != (item.step_id in chain.extract_tools)
-                or (not item.sources and item.inputs == "none")
-                or (
-                    item.inputs == "module_context"
-                    and (item.sources or item.step_id not in MODULE_CONTEXTS)
-                )
-            ):
+        if seen_deterministic:
+            # An analytical module may follow the deterministic one only when neither consumes
+            # the other, directly or through the producer graph (rulings 2026-10-28, round 2).
+            publisher = next(m for m in planned if OWNER_SPECS[m].kind == "deterministic")
+            if publisher in _upstream(graph, module_id) or module_id in _upstream(graph, publisher):
                 raise WorkflowError("not_permitted")
+        _check_steps(module_id, spec)
     if any(OWNER_SPECS[m].kind == "deterministic" for m in planned):
         out = publication_directory
         if (
@@ -720,7 +1222,9 @@ class OwnerWorkflow:
                 raise WorkflowError("not_permitted")
             self._limits[key] += 1
             spec = self._spec
-            if self._session is None and not any(r.binding == self._binding for r in self._reads):
+            # G1-X §3: a step whose inputs are not "none" (every session-less step, and a step
+            # with pack sources that also has a view) is read on its own binding first.
+            if spec.inputs != "none" and not any(r.binding == self._binding for r in self._reads):
                 raise WorkflowError("not_permitted")
             evidence = (
                 self._epoch_calls[-1].source_evidence if self._epoch_calls else SourceEvidence()
@@ -744,13 +1248,11 @@ class OwnerWorkflow:
             stored, resolved, paths, kinds = _fill(self._store, self._binding, payload)
             stored_hash = _hash(stored.encode())
             _put(_audit(self._store, "payloads", stored_hash), stored.encode())
-            issues = (
-                _evidence_issues(self._store, _fin(self._binding), stored, evidence)
-                if spec.rules == "precheck"
-                else ()
-            )
+            module_id = self._binding.module_id
+            # G1-X §4: issues here refuse the submission: no journal step, no attempt consumed.
+            issues = _gate(self._store, self._binding, spec, stored, evidence)
             rules = (
-                (lambda text: _journaled_issues(spec.step_id, text, evidence))
+                (lambda text: _journaled_issues(module_id, spec.step_id, text, evidence))
                 if spec.rules == "journaled"
                 else None
             )
@@ -759,11 +1261,21 @@ class OwnerWorkflow:
             disposition: Literal["valid", "invalid", "refused"] = "refused"
             submitted_step = None
             if not issues:
-                if spec.step_id == "source_readiness" and self._binding.module_id == "CP-0":
-                    attempt = submit_cp0_review(self._store, self._binding.ticket_id, stored)
+                entry = self._specs[module_id].entry
+                ticket_id = self._binding.ticket_id
+                if entry == "cp0_review":
+                    attempt = submit_cp0_review(self._store, ticket_id, stored)
                 else:
-                    submitted = submit_model_payload(
-                        self._store, self._binding.ticket_id, spec.step_id, payload, rules=rules
+                    # G1-X §2: an owner core journals its step and returns the same `Submitted`
+                    # as `submit_model_payload`, so the identity check below holds for both.
+                    submitted: Submitted = (
+                        _CORES[module_id].submit(
+                            self._store, ticket_id, spec.step_id, payload, rules
+                        )
+                        if entry == "owner_core"
+                        else submit_model_payload(
+                            self._store, ticket_id, spec.step_id, payload, rules=rules
+                        )
                     )
                     if (
                         submitted.payload,
@@ -814,9 +1326,8 @@ class OwnerWorkflow:
             _retain(self._store, "submissions", record)
             self._submissions.append(record)
             self._current_sha256 = after_hash
-            module_id = self._binding.module_id
             if attempt is not None:
-                chain = step_chain(module_id).steps
+                chain = _sequence(module_id)
                 if disposition == "valid" and attempt.status == "finished":
                     if len(attempt.steps) != len(chain):
                         raise WorkflowError("identity_mismatch")
@@ -1297,8 +1808,9 @@ def _entry_outcome(
     """What the module's own entry validator says of `attempt` (its last step the one under
     replay) on the historical snapshot: `cp0_workflow._validate_review` for CP-0; for CP-1 the
     stage validator the pre-fill selects (`_validate_prefilled` when a marked field stays
-    unset or unbound) or the promotion's `_quality_stage`; the module's `_validate_step` for
-    the one-step modules."""
+    unset or unbound) or the promotion's `_quality_stage`; for any other module the validator
+    registered in `_ENTRY_VALIDATORS` (the one its entry, or its owner core's `submit`, hands
+    `Execution.submit_step`). A module without one is refused, never passed."""
     pack = historical.pack()
     module_id, step_id = binding.module_id, binding.step_id
     if module_id == "CP-0":
@@ -1312,8 +1824,8 @@ def _entry_outcome(
         if filled.unbound or filled.unset:
             return _validate_prefilled(historical, known, step_id, pack, attempt)
         return validate_cp1_stage(historical, pack, attempt)
-    validate = cp1a.ENTRY_VALIDATOR if module_id == "CP-1A" else cp2.ENTRY_VALIDATOR
-    if module_id not in ("CP-1A", "CP-2"):
+    validate = _ENTRY_VALIDATORS.get(module_id)
+    if validate is None:
         raise WorkflowError("not_permitted")
     return validate(historical, pack, attempt)
 
@@ -1321,9 +1833,10 @@ def _entry_outcome(
 def _unbounded_step_issues(
     spec: StepSpec, validator_issues: tuple[str, ...], journaled: tuple[str, ...]
 ) -> tuple[str, ...]:
-    """The issues the core hands `settle` for an invalid step, before any bound (R4-1, R4-2): the
-    entry validator's, with the journaled rule issues appended and de-duplicated exactly as
-    `live.submission._with_rules` composes them (no dedupe when no rule found anything)."""
+    """The issues the core hands `settle` for an invalid step, before the journal's bound (rule
+    issues arrive capped, 0d-c) (R4-1, R4-2): the entry validator's, with the journaled rule
+    issues appended and de-duplicated exactly as `live.submission._with_rules` composes them (no
+    dedupe when no rule found anything)."""
     if spec.rules == "journaled" and journaled:
         return tuple(dict.fromkeys((*validator_issues, *journaled)))
     return tuple(validator_issues)
@@ -1348,7 +1861,7 @@ def _verify_invalid_step(
     step settles the attempt: the empty candidate, the `settle` of that candidate under the same
     issues, the finished attempt and the stored result must all be exactly what the core
     produces, and the rebuilt result is returned for the head check (R5-1)."""
-    before = next(a for a in historical.read().attempts if a.ticket_id == binding.ticket_id)
+    before = _attempt_of(historical.read(), binding.ticket_id)
     pending = step.model_copy(update={"status": "pending", "output_sha256": None, "issues": ()})
     view = before.model_copy(update={"steps": (*before.steps, pending)})
     outcome = _entry_outcome(historical, binding, raw_payload, view)
@@ -1475,10 +1988,15 @@ def _verify_submissions(
             raise WorkflowError("identity_mismatch")
         binding = submission.binding
         spec = _step(specs, binding.binding.module_id, binding.binding.step_id)
+        # R4-3, G1-X §3: as at runtime, a step whose inputs are not "none" is read on its own
+        # binding before its payload is filled or its gate runs.
+        if spec.inputs != "none" and not any(
+            r.binding == binding.binding for r in receipt.input_reads
+        ):
+            raise WorkflowError("identity_mismatch")
         historical = _hist(store, binding.binding)
-        filled, resolved, paths, kinds = _fill(
-            historical, binding.binding, _raw(store, binding.payload_sha256)
-        )
+        raw = _raw(store, binding.payload_sha256)
+        filled, resolved, paths, kinds = _fill(historical, binding.binding, raw)
         if (filled, resolved, paths, kinds) != (
             _raw(store, submission.stored_payload_sha256),
             submission.nulls_resolved,
@@ -1495,30 +2013,11 @@ def _verify_submissions(
             or binding.source_evidence != evidence
         ):
             raise WorkflowError("identity_mismatch")
-        issues = (
-            _evidence_issues(historical, _fin(binding.binding), filled, evidence)
-            if spec.rules == "precheck"
-            else ()
-        )
-        journaled = (
-            _journaled_issues(spec.step_id, filled, evidence) if spec.rules == "journaled" else ()
-        )
+        # G1-X §4: the gate is recomputed for every submission. A refused record must reproduce
+        # exactly its issues; a journaled (valid or invalid) step must yield none.
+        issues = _gate(historical, binding.binding, spec, filled, evidence)
         after = _snapshot(store, submission.snapshot_after_sha256)
         if after.run != receipt.run or after.pack_sha256 != receipt.pack_sha256:
-            raise WorkflowError("identity_mismatch")
-        if submission.disposition == "refused":
-            if (
-                not issues
-                or submission.issues != issues
-                or after.content_hash() != binding.binding.snapshot_sha256
-                or submission.step_sha256 is not None
-            ):
-                raise WorkflowError("identity_mismatch")
-            continue
-        if issues:
-            raise WorkflowError("identity_mismatch")
-        # R4-3: the runtime refuses any submit of a session-less step before its read.
-        if not spec.sources and not any(r.binding == binding.binding for r in receipt.input_reads):
             raise WorkflowError("identity_mismatch")
         try:
             canonical: str | None = spec.schema.model_validate_json(filled).content_hash()
@@ -1526,10 +2025,26 @@ def _verify_submissions(
             canonical = None
         if canonical != submission.canonical_review_sha256:
             raise WorkflowError("identity_mismatch")
-        attempt = next(a for a in after.attempts if a.ticket_id == binding.binding.ticket_id)
-        before_attempt = next(
-            a for a in historical.read().attempts if a.ticket_id == binding.binding.ticket_id
+        if submission.disposition == "refused":
+            if (
+                not issues
+                or submission.issues != issues
+                or after.content_hash() != binding.binding.snapshot_sha256
+                or submission.step_sha256 is not None
+                or submission.step_output_sha256 is not None
+            ):
+                raise WorkflowError("identity_mismatch")
+            continue
+        if issues:
+            raise WorkflowError("identity_mismatch")
+        # The journaled rules (`ToolRules`, or the owner core's `RULES`) at the same evidence.
+        journaled = (
+            _journaled_issues(binding.binding.module_id, spec.step_id, filled, evidence)
+            if spec.rules == "journaled"
+            else ()
         )
+        attempt = _attempt_of(after, binding.binding.ticket_id)
+        before_attempt = _attempt_of(historical.read(), binding.binding.ticket_id)
         candidates = (
             attempt.steps
             if len(attempt.steps) > len(before_attempt.steps)
@@ -1597,7 +2112,7 @@ def _verify_settlements(
     for head in snapshot.heads:
         if head.module_id not in analytical:
             continue
-        attempt = next(a for a in snapshot.attempts if a.result_sha256 == head.result_sha256)
+        attempt = _result_attempt(snapshot, head)
         settlement = settlements.get(attempt.ticket_id)
         if settlement is None:
             raise WorkflowError("identity_mismatch")
@@ -1650,7 +2165,9 @@ def _verify(
         raise WorkflowError("stale_binding")
     store.pack(snapshot)
     planned = plan(snapshot.run.requested_modules)
-    if receipt.plan != planned:
+    # A run `create` could not have opened (a planned module without a spec) is evidence that
+    # does not bind (R4-4), not a raw lookup failure.
+    if receipt.plan != planned or any(m not in OWNER_SPECS for m in planned):
         raise WorkflowError("identity_mismatch")
     analytical = tuple(m for m in planned if OWNER_SPECS[m].kind == "analytical")
     deterministic = next((m for m in planned if OWNER_SPECS[m].kind == "deterministic"), None)
@@ -1779,6 +2296,10 @@ def _verify_publication_outcome(
             else:
                 raise WorkflowError("identity_mismatch")
         return
+    # R4-4: a recorded publication without the heads it names is a tamper cause, checked here
+    # before `financial_workflow._record` looks them up.
+    if not {deterministic, "CP-1"} <= {h.module_id for h in snapshot.heads}:
+        raise WorkflowError("identity_mismatch")
     model = _record(store, deterministic)
     if (
         terminal
@@ -1808,13 +2329,19 @@ def verify_owner_run_receipt(
     historical snapshot (R4-2), every settlement rebuilt and bound to the final snapshot (R5-1),
     the recorded coordinates form one gapless chain of own-ticket transitions from the created
     snapshot to the final one and every head binds the final snapshot's inputs (R6-1), and only
-    planned modules appear anywhere in it (R6-2); nothing is written."""
+    planned modules appear anywhere in it (R6-2); nothing is written.
+
+    Exception mapping (S1a R4-4, as B1 N2): a tamper cause refuses `identity_mismatch`. Those are
+    evidence that fails to parse or to hash (`ValueError`: pydantic, JSON, UTF-8, the store's
+    blob and snapshot checks, the core refusals) and evidence that is missing or unreadable
+    (`OSError`); every lookup a forged record can reach is an explicit check. Programming errors
+    (`TypeError`, `KeyError`, `StopIteration`, `AttributeError`, ...) propagate unchanged."""
     try:
         receipt = OwnerRunReceipt.model_validate_json(receipt.model_dump_json())
         _verify(store, receipt, publication_directory=publication_directory, sealed=True)
     except WorkflowError:
         raise
-    except (ValueError, OSError, KeyError, StopIteration, TypeError, UnicodeError):
+    except (ValueError, OSError):
         raise WorkflowError("identity_mismatch") from None
 
 

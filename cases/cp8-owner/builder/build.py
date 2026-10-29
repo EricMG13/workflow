@@ -42,8 +42,8 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "src/deploy_vii/methodology.json": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
-    "cases/cp3-cp6-owner/manifest.json": "525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
+    "cases/cp3-cp6-owner/manifest.json": "893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b",
 }
 MARKET_FILE = "cases/cp3-cp6-owner/manifest.json"
 MARKET_SHA = "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7"

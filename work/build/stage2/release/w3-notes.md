@@ -1,0 +1,26 @@
+# W3 integration notes (collected from W2 reports)
+
+- **B a70ee52.** The CP-2D `run_rate_annual` question is ruled: no reader or oracle change in this release. CP-3C reads `T2E.3.r01` from the bound head, and the lease text records that (YAGNI: no consumer needs it on `Cp2dHead`). Record it as round 5 item 20 at W3.
+- **B's TOOL-CONTRACT rows** cite `cases/<cp>-owner/<cp>-view-tree.json` for CP-1C, 1D, 2G, 2H, 3C and 4C. After the merge, check that all six files exist.
+- **Stale comment at `cp3c.py:2368`.** It says the oracle consumption block names the run-rate pin; it does not. Fix it at W3 if A1 has not; it is comment-only.
+- **D 291fa8e.** The owner cores are not reused files: the reuse manifest has no `owners/` or `methods/` records, so they need no D12 records.
+- **D duplication.** Each of the four cores (cp1c, cp2g, cp2h, cp4c) has its own `_one_per_page` copy. Run jscpd at W3; if it flags them, hoist one shared helper.
+- **D v08 interpretation, for the release review.** v08 gains a separate `unread_issues` key, with `refusal_rules.journal` reworded. `expected_issues` keeps the validator's single line. Check this against the close-release text "limitations equal the issues".
+- **D cross-lane pins.** The cp2h and cp4c builders pin CP-2G files. W3 must run the full chain.
+- **C c8b708b.** Its `readiness.py` change moves the pin at `cases/legal/manifest.json:290` (119058ff… → 01616654…). The W3 chain must re-pin it; `PINS.json` does not list this file, so `pins.py --check` misses it.
+- **C, new known ruff finding.** `prose.py:114` and `:127` ISC004 predate the change and are unchanged.
+- **C, method notes.** `methods/cp1d.md`, `cp2e.md` and `cp1c.md` still say blank means "whitespace and Cf only". Fix the text at W3 to match the new `is_blank`.
+- **C, the verbatim sinks: the release review must check them.** C listed three paths as verbatim, not fixed: `consumers.*.missing_source`, `sources.*.scopes.*.limitations.*` and `sources.*.limitations.*` (CP-1).
+  - `missing_source` goes through the readiness text check (`readiness.py:321`) and is rendered nowhere else.
+  - `scopes.*.limitations` becomes a rendered gap row (`source_context.py:496-497`). It is **not** in `readiness` `_texts` (:314-326), so check whether any text check covers it. If none does, that is a predating CP-1 owner finding, not a release fix.
+- **A1 3614577.** Ruled: the drawings-precedence wording "Not calculable: RCF commitment is <state>; RCF drawings are missing" (claims: "needs RCF commitment, which is <state>") meets round 5 item 4. Record it as round 5 item 21 at W3. No pack value moved.
+- **A1, stale cross-lane pins for the chain.** The cp4c builder pins cp4 `expected.json` (→ 2b98b81b) and the cp3c manifest (→ 235ee364); the cpl10 builder names the cp3c builder.
+- **A1, lease text.** CP3C lease :154 repeats the old `fact_copy_rule` sentence. Fix it at W3, in body text.
+- **A1, view tree.** `cases/cp3c-owner/cp3c-view-tree.json` is outside the `cases/pins.py` patterns, which also applies to D's four trees. Decide at W3 whether view trees are pinned; the CP-1 slice convention applies.
+- **A1, open item.** `T2E.5.r05` and `r06` carry no currency in the CP-2D oracle. Only r04 and r07 were named. The release review checks whether r05 and r06 are monetary.
+- **A1, deferred.** `test_owner_cp4.py` and `test_probe_cp4.py` were stopped (slow genuine runs). They belong to Stage 5.
+- **A2 c824206.** Ruled: the CP-L10 lineage scope is the missing `change` and `change_pct` cells, which derive from both CP-1 labels. A not-applicable `change_pct` (zero start) and the count facts keep no lineage. Record it as round 5 item 22.
+- **A2 cascade.** The cp2g builder pins cp1d `expected.json` (293120368b5d… → 8880a2c59a92…). This moves the cp2g manifest (d69738e2… → e8469c68…), which the cp2h and cp4c builders pin. The chain must apply it.
+- **A2, lease text.** `CPL10-OWNER-LEASE.md` :13 ("Queued for a later revision", now done), :131 and :216 still say missing-change cells have no `derives_from`.
+- **A2, CP-3D blocked wording.** `cases/cp3d-owner/builder/build.py:1528` has the same "module blocked, no head" wording that round 2 item 8 fixed for CP-2E. Ruled: apply the same wording at W3 if CP-3D's blocked case really holds a blocked head in the store. Otherwise leave it and report.
+- **View trees.** `cases/pins.py` PATTERNS covers only `manifest`, `submissions` and `expected`. Ruled: add `cases/*-owner/*-view-tree.json`, so the six committed trees are frozen like the oracles they mirror.

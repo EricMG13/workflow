@@ -1,0 +1,174 @@
+{
+ "_note": "Stage 2 close release (Modules 2026-10-29): key tree of owners.cp3c.view(historical, attempt), observed on the product-settled head of each pack case (test_connect_cp3c.seed). Shape only, not values; a list is the merge of its items, 'a|b' joins the types an item takes. Regenerate by running tests/test_connect_cp3c.py::test_view_key_tree_equals_the_committed_tree and copying the observed tree.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "facts",
+   "facilities",
+   "unread_optional_edges",
+   "bounds",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "facts": [
+    {
+     "ref": "str",
+     "name": "str",
+     "source": "str",
+     "label": "str",
+     "period": "null|str",
+     "unit": "null|str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "null"
+    }
+   ],
+   "facilities": [
+    {
+     "facility_id": "str",
+     "facility_name": "str",
+     "secured_status": "str",
+     "seniority": "str",
+     "rate_type": "str"
+    }
+   ],
+   "unread_optional_edges": [
+    "str"
+   ],
+   "bounds": {
+    "repricing_bps": [
+     "int"
+    ],
+    "path_kinds": [
+     "str"
+    ],
+    "feasibility": [
+     "str"
+    ]
+   },
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap_minimum_cash": {
+  "top_level_keys": [
+   "upstream",
+   "facts",
+   "facilities",
+   "unread_optional_edges",
+   "bounds",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "facts": [
+    {
+     "ref": "str",
+     "name": "str",
+     "source": "str",
+     "label": "str",
+     "period": "null|str",
+     "unit": "null|str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "null|str"
+    }
+   ],
+   "facilities": [
+    {
+     "facility_id": "str",
+     "facility_name": "str",
+     "secured_status": "str",
+     "seniority": "str",
+     "rate_type": "str"
+    }
+   ],
+   "unread_optional_edges": [
+    "str"
+   ],
+   "bounds": {
+    "repricing_bps": [
+     "int"
+    ],
+    "path_kinds": [
+     "str"
+    ],
+    "feasibility": [
+     "str"
+    ]
+   },
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap_no_repricing": {
+  "top_level_keys": [
+   "upstream",
+   "facts",
+   "facilities",
+   "unread_optional_edges",
+   "bounds",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "facts": [
+    {
+     "ref": "str",
+     "name": "str",
+     "source": "str",
+     "label": "str",
+     "period": "null|str",
+     "unit": "null|str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "null"
+    }
+   ],
+   "facilities": [
+    {
+     "facility_id": "str",
+     "facility_name": "str",
+     "secured_status": "str",
+     "seniority": "str",
+     "rate_type": "str"
+    }
+   ],
+   "unread_optional_edges": [
+    "str"
+   ],
+   "bounds": {
+    "repricing_bps": [
+     "int"
+    ],
+    "path_kinds": [
+     "str"
+    ],
+    "feasibility": [
+     "str"
+    ]
+   },
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ }
+}

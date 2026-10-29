@@ -16,13 +16,26 @@ def test_cp1b_has_exact_source_free_single_step():
     chain = step_chain("CP-1B")
     assert chain.cell == "cp1b" and chain.steps == ("earnings_delta",)
     assert chain.settling == "earnings_delta"
-    for name in ("repairable", "prefilled", "projections", "pack_sources", "one_shot",
-                 "pack_reads", "extract_tools", "part_submits"):
+    for name in (
+        "repairable",
+        "prefilled",
+        "projections",
+        "pack_sources",
+        "one_shot",
+        "pack_reads",
+        "extract_tools",
+        "part_submits",
+    ):
         assert not getattr(chain, name)
     assert step_modules()["earnings_delta"] == "CP-1B"
     assert module_route("CP-1B") == (
-        "source_readiness", "source_context", "financials", "narrative", "readiness",
-        "quality", "earnings_delta",
+        "source_readiness",
+        "source_context",
+        "financials",
+        "narrative",
+        "readiness",
+        "quality",
+        "earnings_delta",
     )
 
 
@@ -30,8 +43,10 @@ def test_only_cp1b_table_ownership_changes():
     rows = json.loads((Path(__file__).parents[1] / "src/deploy_vii/methodology.json").read_text())
     cp1b = next(row for row in rows if row["module_id"] == "CP-1B")
     assert cp1b.pop("table_ids") == ["T1B.1", "T1B.2", "T1B.3"]
-    digest = hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    assert digest == "43ce204f21717064ca188e882239a5628fd2f29d0f45a1179511d7067da90107"
+    digest = hashlib.sha256(
+        json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    assert digest == "c89118c68039b0948e192298c334f9cfb22b13fa0d2d6d175d8eb289a227e3d2"
     assert next(m for m in modules() if m.module_id == "CP-1B").required == ("CP-0", "CP-1")
     assert dependencies(("CP-1B", "CP-5"))["CP-5"] == {"CP-0", "CP-1", "CP-1B"}
     assert step_chain("CP-5").steps == ("integrity_review",)
@@ -40,23 +55,36 @@ def test_only_cp1b_table_ownership_changes():
 
 def test_shared_live_eligibility_preserves_all_existing_steps():
     from deploy_vii.registry import STEP_CHAINS, StepChain, shared_live_step_modules
+
     assert all(c.shared_live is (c.module_id != "CP-1B") for c in STEP_CHAINS)
     assert StepChain("CP-X", "x", ("x_step",)).shared_live is True
     eligible = shared_live_step_modules()
     assert list(eligible) == [
-        "source_readiness", "source_context", "financials", "narrative", "readiness",
-        "quality", "business_context", "credit_synthesis", "legal_covenants", "relative_value",
-        "integrity_review", "committee_challenge",
+        "source_readiness",
+        "source_context",
+        "financials",
+        "narrative",
+        "readiness",
+        "quality",
+        "business_context",
+        "credit_synthesis",
+        "legal_covenants",
+        "relative_value",
+        "integrity_review",
+        "committee_challenge",
     ]
     assert "earnings_delta" in step_modules() and "earnings_delta" not in eligible
-    custom = (StepChain("CP-X", "x", ("offline_step",), shared_live=False),
-              StepChain("CP-Y", "y", ("online_step",)))
+    custom = (
+        StepChain("CP-X", "x", ("offline_step",), shared_live=False),
+        StepChain("CP-Y", "y", ("online_step",)),
+    )
     assert shared_live_step_modules(custom) == {"online_step": "CP-Y"}
 
 
 @pytest.mark.parametrize("value", [None, 0, 1, "false", [], {}])
 def test_shared_live_is_strict_bool(value):
     from deploy_vii.registry import StepChain
+
     with pytest.raises(ValueError, match="shared_live"):
         StepChain("CP-X", "x", ("x_step",), shared_live=value)
 
@@ -80,6 +108,7 @@ def test_fresh_public_source_upstream_import_orders(reverse):
 def test_live_schema_totality_remains_strict_and_offline_keys_are_guarded():
     from deploy_vii.live.submission import STEPS, step_definitions
     from deploy_vii.registry import shared_live_step_modules
+
     schemas = {key: value.schema for key, value in STEPS.items()}
     assert list(STEPS) == list(shared_live_step_modules())
     assert "earnings_delta" not in STEPS and STEPS.get("earnings_delta") is None
@@ -99,6 +128,7 @@ def test_live_schema_totality_remains_strict_and_offline_keys_are_guarded():
 @pytest.mark.parametrize("kind", [None, "submit-only", "pack"])
 def test_offline_tool_schema_requests_refuse_explicitly(kind):
     from deploy_vii.live.tools import submit_spec, tool_specs
+
     with pytest.raises(ValueError, match="offline-only"):
         submit_spec("earnings_delta")
     with pytest.raises(ValueError, match="offline-only"):

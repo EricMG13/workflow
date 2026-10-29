@@ -12,7 +12,7 @@
   "peer_rows": "p01.. in peer-source order (issuer line excluded); 'issuer' is the issuer row; 'total' and 'none' are fixed rows; T1C.4 rows are metric keys",
   "claims": "T1C.1.pNN (analyst comparability rationale), T1C.1.universe, T1C.4.<metric>, T1C.1.assessment"
  },
- "lineage_rule": "A calculated fact's citations (emitted literally) are the ordered, de-duplicated concatenation of the citations of the facts in derives_from, followed transitively through calculated facts; source facts cite the peer-source row; a calculated fact with no cited ancestor (counts and the inclusion flag, which rest on analyst judgment or on nothing quoted) carries none. A copied CP-1 cell keeps CP-1's citations, bound at run time and not literal: a fact that depends on one (T1C.4 difference, position, of; the T1C.5 issuer row; T1C.6 difference and result) has literal citations that exclude them (the copied cells are recoverable from derives_from and copied_from_cp1); the run-time list is CP-1's citations at that cell's place in derives_from order. A known fact never derives from a fact that is not known.",
+ "lineage_rule": "A calculated fact's citations (emitted literally) are one Citation per (source, page): the first quote on that page among the citations of the facts in derives_from, in that order (rulings stage2 round 3 item 3; round 5 item 17), followed transitively through calculated facts; source facts cite the peer-source row; a calculated fact with no cited ancestor (counts and the inclusion flag, which rest on analyst judgment or on nothing quoted) carries none. A copied CP-1 cell keeps CP-1's citations, bound at run time and not literal: a fact that depends on one (T1C.4 difference, position, of; the T1C.5 issuer row; T1C.6 difference and result) has literal citations that exclude them (the copied cells are recoverable from derives_from and copied_from_cp1); the run-time list is CP-1's citations at that cell's place in derives_from order. A known fact never derives from a fact that is not known.",
  "policy_constants": {
   "minimum_included_peers": 3,
   "outlier_rule": "strictly more than one half of the peer median (relative deviation)",
@@ -124,7 +124,7 @@
     "host_scope": "identity, financial and peers (no_peers: identity and financial) from the fixed H1 mapping",
     "acceptance": "exactly one ok read_inputs before the submit; ok read_pages calls covering every page:N cited by the submit (assessments[*].evidence, overall.evidence); no_peers: at least one ok search_pack over identity and financial; the literal sequence is submissions.<case>.tool_calls",
     "rules_mode": "rules='journaled' with the core's RULES(text, seen) (docs/G1X-OWNER-CORE-PROTOCOL.md section 2): unread_citation_issues only ('Cited page not read through read_pages: <source_id> page:<n>'); CP-1C's schema carries no ABSENCE_MARKERS value",
-    "view": "read_inputs serves the exact context_block view, no evidence lines: upstream [{module_id, status}], peers {state present|absent, source_id, pages, rows, issuer_line}, cp1_facts [{ref, label, period, unit, shown, value_class}], rules {minimum_included_peers, outlier_fraction, inclusion, position}, inherited_limitations; quotable evidence comes only from read_pages"
+    "view": "read_inputs serves the exact context_block view, no evidence lines: upstream [{module_id, status}], peers {state present|absent, source_id, pages, rows, issuer_line}, cp1_facts [{ref, label, period, unit, shown, value_class}], rules {minimum_included_peers, outlier_fraction, inclusion, position, direction}, inherited_limitations; quotable evidence comes only from read_pages"
    }
   },
   "consumption": {
@@ -2991,21 +2991,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3034,21 +3019,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3075,21 +3045,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3119,21 +3074,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3163,21 +3103,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3217,21 +3142,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3260,21 +3170,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3301,21 +3196,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3345,21 +3225,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3389,21 +3254,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3443,21 +3293,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3486,21 +3321,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3527,21 +3347,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3571,21 +3376,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3615,21 +3405,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3669,21 +3444,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3712,21 +3472,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3753,21 +3498,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3797,21 +3527,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3841,21 +3556,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3882,21 +3582,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3921,21 +3606,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -3962,21 +3632,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4001,21 +3656,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4042,21 +3682,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4081,21 +3706,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4122,21 +3732,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4161,21 +3756,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4202,21 +3782,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4241,21 +3806,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4282,21 +3832,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4321,21 +3856,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4362,21 +3882,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4401,21 +3906,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4442,21 +3932,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4481,21 +3956,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4522,21 +3982,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4561,21 +4006,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4602,21 +4032,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4641,21 +4056,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4682,21 +4082,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4721,21 +4106,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4762,21 +4132,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4801,21 +4156,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4842,21 +4182,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4881,21 +4206,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4922,21 +4232,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -4961,21 +4256,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5002,21 +4282,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5041,21 +4306,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5082,21 +4332,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5121,21 +4356,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5162,21 +4382,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5201,21 +4406,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5242,21 +4432,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5281,21 +4456,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5322,21 +4482,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5361,21 +4506,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5402,21 +4532,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5441,21 +4556,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
       }
      ]
     },
@@ -5588,21 +4688,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5631,21 +4716,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5674,21 +4744,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -5717,21 +4772,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  4.5  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Dunmore Cross Corporation  2025-09-30  300.0  48.0  240.0  24.0  30.0"
       }
      ]
     },
@@ -9179,16 +8219,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9216,16 +8246,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9252,16 +8272,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9290,16 +8300,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9328,16 +8328,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9376,16 +8366,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9413,16 +8393,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9449,16 +8419,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9487,16 +8447,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9525,16 +8475,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9572,11 +8512,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -9680,16 +8615,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9717,16 +8642,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9753,16 +8668,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9791,16 +8696,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9829,16 +8724,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9865,16 +8750,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9899,16 +8774,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9935,16 +8800,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -9969,16 +8824,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10031,16 +8876,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10065,16 +8900,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10101,16 +8926,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10135,16 +8950,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10171,16 +8976,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10205,16 +9000,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10267,16 +9052,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10301,16 +9076,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10337,16 +9102,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10371,16 +9126,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10407,16 +9152,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10441,16 +9176,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10503,16 +9228,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10537,16 +9252,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10573,16 +9278,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -10607,16 +9302,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -10643,16 +9328,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -10677,16 +9352,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -10739,16 +9404,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -10773,16 +9428,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
       }
      ]
     },
@@ -10810,16 +9455,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10847,16 +9482,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },
@@ -10884,16 +9509,6 @@
        "source_id": "peers",
        "locator": "page:1",
        "quote": "Alder Ridge Holdings  2025-12-31  200.0  52.0  104.0  8.0  41.6"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Brookmere Industries  2025-12-31  150.0  33.0  99.0  11.0  30.0"
-      },
-      {
-       "source_id": "peers",
-       "locator": "page:1",
-       "quote": "Calder Vale Group  2025-12-31  90.0  27.0  40.5  Not stated  18.9"
       }
      ]
     },

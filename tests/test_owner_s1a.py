@@ -57,6 +57,7 @@ FORBIDDEN_KEYS = {"quote", "citations", "record_json"}
 ID_PLACEHOLDER = re.compile(r"<fact_id of the CP-1 fact for FIG:([a-z0-9_]+), bound at run time>")
 LABEL_PLACEHOLDER = re.compile(r"<label and period of FIG:([a-z0-9_]+)>")
 CITES_PLACEHOLDER = "<the CP-1 fact's own citations, bound at run time>"
+PACK_HASH_PLACEHOLDER = "<<PreparedPack.content_hash(), bound at run time>>"
 REFERENCE_NOTES = ("spelled_as", "note", "table_coordinate")
 JUDGED_NOT_ESTABLISHED = {"", "0", "N/A", "TBD"}
 # sha256 of the reviewed literal cases/snapshot/cp2-blocked-cp1a-submission.json (lease R3-4)
@@ -307,6 +308,8 @@ def _selection(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
 
 def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) -> None:
     pack = runs.make_pack("positive")
+    # On this branch CP-5 has no OWNER_SPECS row; once registered, round 2's rule refuses it
+    # through the CP-5 -> CP-MODEL fan-in (DC-5 open on the CP-MODEL row).
     with pytest.raises(WorkflowError) as selected:
         OwnerWorkflow.create(
             tmp_path / "store",
@@ -314,6 +317,7 @@ def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) 
             publication_directory=tmp_path / "model",
         )
     assert selected.value.code == "not_permitted"
+    assert list(tmp_path.iterdir()) == []
     cp1a, cp2 = OWNER_SPECS["CP-1A"], OWNER_SPECS["CP-2"]
     overrides = {
         "cp1a rules off": {
@@ -367,6 +371,13 @@ def test_plan_attempts_heads_and_cp0(closed: Closed) -> None:
     )
     module = _module(closed.store, "CP-0")
     assert len(module.facts) == len(cp0["facts"]) == 56
+    # the oracle binds the pack hash at run time; bind it to this run's pack before comparing
+    pack_hash = closed.pack.content_hash()
+    bound_facts = [
+        {**fact, "text": fact["text"].replace(PACK_HASH_PLACEHOLDER, pack_hash)}
+        for fact in cp0["facts"]
+    ]
+    assert sum(pack_hash in fact["text"] for fact in bound_facts) == 1
     assert [
         {
             "fact_id": f.fact_id,
@@ -374,7 +385,7 @@ def test_plan_attempts_heads_and_cp0(closed: Closed) -> None:
             "cites": [[c.source_id, c.locator] for c in f.citations],
         }
         for f in module.facts
-    ] == cp0["facts"]
+    ] == bound_facts
     assert list(module.limitations) == cp0["limitations"]
 
 
@@ -1311,7 +1322,8 @@ def test_cp2_invalid_submission_without_a_read_refuses(
         run=store.read().run,
         pack_sha256=store.read().pack_sha256,
     )
-    assert len(_verify_submissions(store, with_read, OWNER_SPECS)[0]) == 0
+    valid, _ = _verify_submissions(store, with_read, OWNER_SPECS)
+    assert "credit_synthesis" not in {step for _, step, _ in valid}
     without_read = SimpleNamespace(**{**vars(with_read), "input_reads": ()})
     with pytest.raises(WorkflowError) as caught:
         _verify_submissions(store, without_read, OWNER_SPECS)
@@ -1901,7 +1913,7 @@ def test_unplanned_module_head_refuses(
     valid_run: tuple[Path, OwnerRunReceipt], tmp_path: Path, module_id: str
 ) -> None:
     """HIGH 2 (fix 4): an appended final snapshot adds a finished attempt and an accepted head of
-    a module outside the plan (CP-4; CP-2 and CP-MODEL with the qualification `head_of` expects),
+    a module outside the plan (CP-4, CP-2 and CP-MODEL, each with the qualification `head_of` expects),
     with no begin, submission or publication; the receipt heads are re-derived and resealed."""
     store, receipt = _fork_blocked(valid_run, tmp_path)
     assert module_id not in receipt.plan
@@ -1937,4 +1949,63 @@ def test_unplanned_module_head_refuses(
     )
     resealed = _reseal_on(store, receipt, final)
     assert [h.module_id for h in store.read().heads] == ["CP-0", "CP-1A", module_id]
+    assert _verdict(store, resealed) == "identity_mismatch"
+
+
+# --- G1 I2 (round 5 item 11): a valid step never carries issues ----------------------------------
+
+
+def test_a_valid_step_that_carries_issues_is_refused_by_its_contract() -> None:
+    """`probe_one_step` does not recompute a valid step's `issues`; the model contract does: a
+    valid step with issues does not parse, so no snapshot holding one can be read back."""
+    step = {"step_id": "s", "inputs": (), "payload_sha256": "0" * 64}
+    valid = {**step, "status": "valid", "output_sha256": "1" * 64}
+    assert StepSubmission.model_validate(valid).issues == ()
+    with pytest.raises(ValueError, match="Valid step requires output and no issues"):
+        StepSubmission.model_validate({**valid, "issues": ("Forged issue",)})
+
+
+def test_forged_issues_on_a_valid_step_are_refused_even_after_a_consistent_reseal(
+    tmp_path: Path,
+) -> None:
+    """A forger writes `issues` on CP-1A's settled valid step into the current snapshot. The
+    store refuses to read it; with the snapshot hash, step hash, `snapshot_after` and seal all
+    reseated to match, the verifier still returns `identity_mismatch`."""
+    workflow, pack = _cp1a_only_run(tmp_path / "run")
+    context = json.loads(runs.literal("positive", "business_context", pack))
+    context["consumers"] = [c for c in context["consumers"] if c["module_id"] == "CP-MODEL"]
+    assert (
+        runs.drive_cp1a(workflow, pack, "positive", text=json.dumps(context))["status"] == "valid"
+    )
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    store = Execution(tmp_path / "run" / "store")
+    assert _verdict(store, receipt) == "accepted"
+
+    snapshot = store.read()
+    document = json.loads(snapshot.model_dump_json())
+    ticket = next(a.ticket_id for a in snapshot.attempts if a.module_id == "CP-1A")
+    step_document = next(a for a in document["attempts"] if a["ticket_id"] == ticket)["steps"][0]
+    assert step_document["status"] == "valid"
+    step_document["issues"] = ["Forged issue"]
+    raw = json.dumps(document, separators=(",", ":")).encode()
+    digest = hashlib.sha256(raw).hexdigest()
+    (store.directory / "snapshots" / f"{digest}.json").write_bytes(raw)
+    (store.directory / "current").write_text(digest + "\n")
+    with pytest.raises(ValueError, match="Valid step requires output and no issues"):
+        store.read()
+    assert _verdict(store, receipt) == "identity_mismatch"
+
+    last = next(s for s in reversed(receipt.submissions) if s.binding.binding.module_id == "CP-1A")
+    step_hash = hashlib.sha256(
+        json.dumps(step_document, separators=(",", ":")).encode()
+    ).hexdigest()
+    moved = last.model_copy(update={"snapshot_after_sha256": digest, "step_sha256": step_hash})
+    _swap(store, "submissions", last, moved)
+    resealed = receipt.model_copy(
+        update={
+            "snapshot_sha256": digest,
+            "submissions": tuple(moved if s is last else s for s in receipt.submissions),
+        }
+    )
+    _reseal(store, resealed)
     assert _verdict(store, resealed) == "identity_mismatch"

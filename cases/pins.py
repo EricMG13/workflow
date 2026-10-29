@@ -2,6 +2,7 @@
 
     python3 -I cases/pins.py            write cases/PINS.json: sorted {path: sha256} for
                                         cases/*-owner/{manifest,submissions,expected}.json,
+                                        cases/*-owner/*-view-tree.json,
                                         cases/*-owner/builder/build.py and src/deploy_vii/methodology.json
     python3 -I cases/pins.py --check    exit 1 and name every path that differs, is missing or is unlisted
 
@@ -19,6 +20,7 @@ PATTERNS = (
     "cases/*-owner/manifest.json",
     "cases/*-owner/submissions.json",
     "cases/*-owner/expected.json",
+    "cases/*-owner/*-view-tree.json",
     "cases/*-owner/builder/build.py",
     "src/deploy_vii/methodology.json",
 )

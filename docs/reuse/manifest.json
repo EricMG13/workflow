@@ -11,7 +11,7 @@
     "deploy_vii.cp_model_workflow",
     "deploy_vii.delivery"
   ],
-  "python_modules": 85,
+  "python_modules": 88,
   "files": [
     {
       "destination": "src/deploy_vii/__init__.py",
@@ -984,13 +984,77 @@
       "sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "selection_reason": "registry metadata required by selected modules",
       "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/inputs/__init__.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "src/deploy_vii/inputs/__init__.py",
+      "sha256": "78db891259cf2d2361590d452fa392816a84d71ad1fee17c76ca83c0581aa7e9",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/inputs/portfolio.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "src/deploy_vii/inputs/portfolio.py",
+      "sha256": "ed239e92269fb550601e76ccaf84aaf05b739428a265781cb07dacc7ffbbe048",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "src/deploy_vii/inputs/rv_quotes.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "src/deploy_vii/inputs/rv_quotes.py",
+      "sha256": "7ff9213724b331fc0cd2535dc216220ac6965b6d29e634a86c199f6ef4c73f9c",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "scripts/build_templates.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "scripts/build_templates.py",
+      "sha256": "af1859041c2063707c5baa120775b374b0649125e931c931a1928233c22eac02",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "docs/templates/portfolio.template.xlsx",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "docs/templates/portfolio.template.xlsx",
+      "sha256": "c3564078644ad6e9ecf4b9559f8f828063d6daef57dc57c636d6e64c405cf97b",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "tests/product/test_inputs_portfolio.py",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "tests/product/test_inputs_portfolio.py",
+      "sha256": "5f8c08fe2e5e7fdd7c34459e0a9b8ae1bcde8f9d635da2e27541227fe0c4c8fd",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "verification": "byte-preserved; not new-project functional acceptance"
+    },
+    {
+      "destination": "docs/templates/README.md",
+      "source_repository": "/Users/ericguei/Documents/DEPLOY VII",
+      "source_commit": "7260b22c9c908ce6303334400cc67ef970838ba9",
+      "source_path": "docs/templates/README.md",
+      "sha256": "9cec0e896a4ebec4cc3048a890ee0a480c17dacc950277620946685b4ed1de70",
+      "selection_reason": "PD.1 Portfolio Fit and the CP-3B lease: PF-1 portfolio workbook reader (user approval 2026-10-29; Q-C14)",
+      "source_file_sha256": "09fa35e9a787a4fc1ad1fbb2d873d7e9a7445234bf826e7280fc334db7b31550",
+      "excerpt": "lines 112-401 of the source file (the 'Portfolio workbook' section only); sha256 is of the excerpt bytes",
+      "verification": "byte-preserved excerpt; not new-project functional acceptance",
+      "note": "build_templates.py main() also writes the non-imported rv-quotes.template.xlsx"
     }
   ],
   "excluded_python_modules": [
     "deploy_vii.__main__",
     "deploy_vii.execution_cli",
-    "deploy_vii.inputs",
-    "deploy_vii.inputs.rv_quotes",
     "deploy_vii.live.catalog",
     "deploy_vii.live.cli",
     "deploy_vii.live.client",
@@ -1078,6 +1142,15 @@
       "review": "work/lead/product-defects-0d/"
     },
     {
+      "destination": "src/deploy_vii/live/submission.py",
+      "imported_sha256": "6656846fab07c46e7fe60006c965065ccb0aacd6a86164081c0d25eeb3575e4a",
+      "prior_project_sha256": "1b4aaa0967a5a9308e9061ceea6d365f1f7ee5ab88a8457fa18dffa073312186",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "173547f9a18bc43afaf3acf2ddc569ed398353b672b6856500f29d7f95e75445",
+      "reason": "Refuse offline-only registered steps explicitly at shared-live schema lookup while preserving existing schemas. Also 0d bounded payload nesting and the non-str discriminator tag; 0d-b added the single storable parse payload_document (refuses lone-surrogate strings) used by json_object, tools._document and compose_payload. Also 0d-c made _Resolver.unbound an insertion-ordered dict of issues built by execution.clipped (at most 600 characters each, an id never copied whole), returned by prefill as a tuple. Also 0d-d: the pre-fill _Resolver indexes binding rows, facility rows, the entity's scopes (_Scopes) and the context's source classes and entities once, and parses a matched facility row once; last facility row still wins; output unchanged.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
       "prior_project_sha256": "21dc5c341c85eeb22a372f3c3a97e48b28f0dd37b7f9a62be1d5851e4785808b",
@@ -1141,6 +1214,15 @@
       "review": "work/lead/methodology-serialised/review.md"
     },
     {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6",
+      "project_commit": "e22dafee8ea42577d8cf1dd4308644dabba645af",
+      "sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
+      "reason": "Serialised methodology change with the CP-6 half freeze of the CP-3/CP-6 owner lease (ruling Q7, D12): T6-FINAL registered in CP-6 table_ids; it collides with no module table id (CP-0's T6 is a different string) and no product code reads table_ids.",
+      "review": "work/lead/cp6-freeze/"
+    },
+    {
       "destination": "src/deploy_vii/live/schema.py",
       "imported_sha256": "c63744196066a9046e1d3331ee5191f8dc30b2d7f08644ca816c7ae2955e56cb",
       "project_commit": "1a1a140c26da2fc54fecb9476e8ad5dfef75c91d",
@@ -1182,12 +1264,30 @@
       "review": "work/lead/b10-engines/"
     },
     {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "prior_project_sha256": "5811d454e61ca5aabc6fdef8680c382b836f714680b336d4a8b11619e9e8208b",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "6c80484307aef1d6c6d3b17d7432f642fdd4b11f0a3db2b26cdb3cbf8f5a9f7f",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check. Also 0d-d: instrument duplicates and the preference ordering checks use Counter and a set built once instead of list.count and list membership per row.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
       "destination": "src/deploy_vii/cp4_legal.py",
       "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
       "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
       "sha256": "5b005aaf8d496051958fd1c17943a2e226a7ab05f62cad63af8f58a2bad73312",
       "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check.",
       "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "prior_project_sha256": "5b005aaf8d496051958fd1c17943a2e226a7ab05f62cad63af8f58a2bad73312",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check. Also 0d-d: _shape_issues counts duplicate documents with Counter instead of list.count per row.",
+      "review": "work/lead/product-defects-0d/"
     },
     {
       "destination": "src/deploy_vii/cp5_integrity.py",
@@ -1214,6 +1314,15 @@
       "review": "work/lead/b10-engines/"
     },
     {
+      "destination": "src/deploy_vii/business_context.py",
+      "imported_sha256": "1d8f0cc5aeee7ad79ec314300cebeef772abd83dc65e554cd47d638f3abf41a7",
+      "prior_project_sha256": "1672ba97593aeac7110032599a42ad3e732e3d00ce19a863198ae952ead76280",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde",
+      "reason": "Round 12 B10: blank analyst text is whitespace or Unicode Cf (prose.is_blank) at the existing empty-text check and in _populated. Also 0d-d: duplicate and unknown-id checks count with Counter and a set built once instead of per row.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
       "destination": "src/deploy_vii/narrative.py",
       "imported_sha256": "f118fe08134511c01c0f30edfe3f6fd21dd8c1a27943865661875fa0f9040583",
       "project_commit": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
@@ -1228,6 +1337,321 @@
       "sha256": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
       "reason": "Round 12 B10: blank QA explanation (model text) is whitespace or Unicode Cf (prose.is_blank).",
       "review": "work/lead/b10-engines/"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "b22972d6d8c7f97825d70fbc6bc59de41a2f5ba5",
+      "sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
+      "reason": "Register the CP-DR rails binding map (D12 one-line registration, appended last) with the CP-DR owner core.",
+      "review": "docs/CPDR-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
+      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
+      "sha256": "8afa15fc82db7580e03c6405f43eee7adfa3344d2b2acfb7f490562084791cc1",
+      "reason": "Register the CP-3D binding map (D12 one-line registration, directly after CP-3) with the CP-3D owner core.",
+      "review": "docs/CP3D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
+      "sha256": "0b74f88e8ab98a21e43a675335121a27a88cf0badac8e699f8cf7281dbf1f48b",
+      "reason": "Register the CP-2D binding map after CP-2 (docs/CP2D-OWNER-LEASE.md, Files); new bindings/cp2d.py holds FP block bindings only.",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
+      "sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
+      "reason": "Add the CP-3D relative-value mapping and one _spec_of loop entry (D12 registration, rows only).",
+      "review": "docs/CP3D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "0fa5b4aae6b2393a642d8b5e2f5c39b27d1b5872",
+      "sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
+      "reason": "Register the CP-2E rails binding map (D12 one-line registration, appended last) with the CP-2E owner core.",
+      "review": "docs/CP2E-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
+      "project_commit": "b48a3c5be974bdebbd9f0213e2d589e8ffd456ce",
+      "sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
+      "reason": "Merged registration tail: CP-2E appended after CP-DR in SHIPPED_MAPS (CP-3D, CP-DR, CP-2E rows all retained).",
+      "review": "docs/CP2E-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
+      "project_commit": "fb7819b4986b38cbf77665420ae44b1ba02ff4e1",
+      "sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
+      "reason": "Register the CP-8 binding map (D12 one-line registration, appended last after CP-2E) with the CP-8 owner core; merged tail retains CP-3D, CP-DR and CP-2E.",
+      "review": "docs/CP8-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
+      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
+      "sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "reason": "Register the CP-2A binding map (D12 one-line registration, SHIPPED_MAPS += CP2A, appended last after CP-8); merged tail retains CP-3D, CP-DR, CP-2E and CP-8.",
+      "review": "docs/CP2A-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
+      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
+      "sha256": "09ab059d832204059f454e4c9077e0c2d02493717080580a80ab44fcb080acba",
+      "reason": "Add the CP-2A _DISTRESSED composition (two _Spec rows), its _spec_of entry and the two block ids in the distressed_restructuring preset (D12 registration, rows only); retains the CP-3D _RELATIVE_VALUE composition.",
+      "review": "docs/CP2A-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12",
+      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
+      "sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
+      "reason": "Add the three CP-2D _Spec rows (liquidity-runway, maturity-wall, funding-gap) to _COVENANT_REFINANCING (docs/CP2D-OWNER-LEASE.md, Rendered sections).",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
+      "sha256": "f51954d7b2cd4569f1e1ffbe06713a8d2c5c04f828ce8bf8df3737da4583b48a",
+      "reason": "Merged registration tail: CP-2D directly after CP-2 per its lease; CP-3D, CP-DR, CP-2E, CP-8 and CP-2A rows all retained.",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "4edad0a38c17a0f16db9bb02f994f14ef60039a8dc07b6e4e3713b3335620703",
+      "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
+      "sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
+      "reason": "Merged CP-2D covenant/refinancing _Spec rows with the CP-3D _RELATIVE_VALUE and CP-2A _DISTRESSED compositions (D12 registration, rows only).",
+      "review": "docs/CP2D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
+      "project_commit": "6b679cab982521bd0d73a213e7294d45927d6894",
+      "sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "reason": "Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
+      "review": "docs/CPL10-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "project_commit": "ab8917343a7b9a3d002a80a519d7c28d29678cad",
+      "sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
+      "reason": "Merged registration tail: CP-L10 appended last (D12 one-line registration); all earlier rows retained.",
+      "review": "docs/CPL10-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
+      "project_commit": "7831ef123f6a2cff27b63c2546906dadbcae5426",
+      "sha256": "9e6ee6cd5cbc160f1d47e1be3fdcd5f7fa7eb1f68999156e9249a8139fef8ae2",
+      "reason": "Register the CP-1D binding map (D12 one-line registration, appended last after CP-L10); all earlier rows retained.",
+      "review": "docs/CP1D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "8ed326cb7e961ac2244d991dd622991bd1df17a2d194b20b4c6bd573f70ce4a1",
+      "project_commit": "7831ef123f6a2cff27b63c2546906dadbcae5426",
+      "sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
+      "reason": "Add the CP-1D _EARNINGS_QUALITY composition (two _Spec rows), its _spec_of entry and the two block ids in the earnings preset (D12 registration, rows only); retains CP-3D, CP-2A and CP-2D rows.",
+      "review": "docs/CP1D-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "974e5a5c4e1ad6947f6467061881fbff313d8ad3dbad4aca7b6d92b0ea66f8b0",
+      "project_commit": "1c512aa7136a504f9e0993e8ae531d3100fb6102",
+      "sha256": "fc9c18280c862c91b3877701f67e1c41f3965f213cdf87ee089db3ced990f1bc",
+      "reason": "CP-1D review M2: the restated-leverage _Spec title equals expected.json FP02 (Cash conversion and restated leverage); one row's text only, all other rows retained.",
+      "review": "work/build/stage2/cp1d/review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "9e6ee6cd5cbc160f1d47e1be3fdcd5f7fa7eb1f68999156e9249a8139fef8ae2",
+      "project_commit": "8c31a5abd4d74917967d518d580607d13d314d23",
+      "sha256": "0899560e6ece36d469f5f481de8297d7fb7c60048691bca6ff209d6564f1fd08",
+      "reason": "Register the CP-2G binding map (D12 one-line registration, SHIPPED_MAPS += CP2G, appended last after CP-1D); all earlier rows retained.",
+      "review": "docs/CP2G-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "fc9c18280c862c91b3877701f67e1c41f3965f213cdf87ee089db3ced990f1bc",
+      "project_commit": "8c31a5abd4d74917967d518d580607d13d314d23",
+      "sha256": "a073edd7b7fd12af3ce8d8a461151ee58dd459813229906fd9defcc309c5010e",
+      "reason": "Add the two CP-2G _Spec rows (forward-credit-path, forward-breakpoints) to CP-2A's _DISTRESSED composition and the two block ids in the distressed_restructuring preset right after the CP-2A pair (D12 registration, rows only); all other rows retained.",
+      "review": "docs/CP2G-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "0899560e6ece36d469f5f481de8297d7fb7c60048691bca6ff209d6564f1fd08",
+      "project_commit": "b2f230871aa6574bb0c36a335df83eceef7d9b78",
+      "sha256": "1ba090235415a19c9360e0b8729647210e5c7110efa5b3a2dbfb1a52267cd727",
+      "reason": "Register the CP-1C binding map (D12 one-line registration, SHIPPED_MAPS += CP1C, appended last after CP-2G; the lease names no position); all earlier rows retained.",
+      "review": "docs/CP1C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "a073edd7b7fd12af3ce8d8a461151ee58dd459813229906fd9defcc309c5010e",
+      "project_commit": "b2f230871aa6574bb0c36a335df83eceef7d9b78",
+      "sha256": "3cbf1c08d9117c8282b8f12e271721e24e62aa6c2c06d9ca9a4401a729d18188",
+      "reason": "Add the CP-1C peer-positioning _Spec row to CP-3D's _RELATIVE_VALUE composition after market-against-fundamentals (D12 registration, one row only; _spec_of and the relative_value preset already read the mapping); all other rows retained.",
+      "review": "docs/CP1C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "1ba090235415a19c9360e0b8729647210e5c7110efa5b3a2dbfb1a52267cd727",
+      "project_commit": "54b3d903b78c987cd968fb91dc46ab5b20182d04",
+      "sha256": "635e25edaf3b3c38a024defd7eca1c0cccf85010cd8a315ab76decd516aa3b4d",
+      "reason": "Register the CP-3C binding map (D12 one-line registration, directly after CP-2D per its lease); all earlier rows retained.",
+      "review": "docs/CP3C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "3cbf1c08d9117c8282b8f12e271721e24e62aa6c2c06d9ca9a4401a729d18188",
+      "project_commit": "49c586530a6004a3afeb94ed2670f43b7135d099",
+      "sha256": "c68c0587465368b92dde8c2bb2e57c75c47559603ec14fdb70122f78bae41e75",
+      "reason": "Add the CP-3C D7 _Spec rows refinancing-paths and lme-creditor-exposure to the _COVENANT_REFINANCING composition after the CP-2D rows (round 5 item 18; rows only).",
+      "review": "docs/CP3C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "635e25edaf3b3c38a024defd7eca1c0cccf85010cd8a315ab76decd516aa3b4d",
+      "project_commit": "44596babca4122c90927c045d35817423b170a86",
+      "sha256": "2242fd10310cf881555ed1d2b3db48560bab6c717bea5d8f64c8d8493cc9c3c4",
+      "reason": "Register the CP-2H binding map (D12 one-line registration, SHIPPED_MAPS += CP2H, appended last); all earlier rows retained.",
+      "review": "docs/CP2H-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "c68c0587465368b92dde8c2bb2e57c75c47559603ec14fdb70122f78bae41e75",
+      "project_commit": "44596babca4122c90927c045d35817423b170a86",
+      "sha256": "26e6b5e44fc8c9c51aa038852c066de6035c5d89f49d30e02cbca2010d4c1812",
+      "reason": "Add the CP-2H rating-triggers _Spec row to _DISTRESSED (D12 registration, rows only).",
+      "review": "docs/CP2H-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/shipped.py",
+      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
+      "prior_project_sha256": "2242fd10310cf881555ed1d2b3db48560bab6c717bea5d8f64c8d8493cc9c3c4",
+      "project_commit": "64bf670959ef7bd015079bef683546dd43e5e4ab",
+      "sha256": "8cd0dbc9b7fb8428cd604c30f86d640b66da91a87506ff1a201a41a26790d3fe",
+      "reason": "Register the CP-4C binding map (D12 one-line registration, appended last after CP-2H); all earlier rows retained.",
+      "review": "docs/CP4C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "26e6b5e44fc8c9c51aa038852c066de6035c5d89f49d30e02cbca2010d4c1812",
+      "project_commit": "64bf670959ef7bd015079bef683546dd43e5e4ab",
+      "sha256": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
+      "reason": "Add the CP-4C recovery-by-class and value-allocation-claims _Spec rows to _DISTRESSED after rating-triggers (D12 registration, rows only).",
+      "review": "docs/CP4C-OWNER-LEASE.md"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "prior_project_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "119058ff8a238f29aa418da7d43110686ad0ba9d0362d5d77b989f798d088f1f",
+      "reason": "0d-d: shape_issues drops a container echo by one pass over loc prefixes (_echoed), absence_issues bounds a claimed page range by the source's page count (_retains) and validate_review indexes attachment sets and READY consumers once; output and order unchanged.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "prior_project_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "project_commit": "93c1ffca2cd61f7f5a2fec385cd6df62ed95da1e",
+      "sha256": "d9fb02de160c9710378308a3dc2d4f32096cfb90de5680bf8a48e7d50c9bb9d0",
+      "reason": "0d-d: validate_source_context builds each event's cited sources, the scanned (source, event) pairs and the first review per source once instead of per reference; output and order unchanged.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/prose.py",
+      "imported_sha256": "33f4de8945127d4e2af005949c4d560a1b3d6d20629be8c42ce86e684784a74f",
+      "prior_project_sha256": "99c638b6185f34e6bdf82e530f0536b13483e14489325b16816402dfd029edd6",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "8dcb2a51ba1865970fca7c17dba2fb8a8657e4a8bfae4679ffd5c7b6823cbbef",
+      "reason": "is_blank also counts Cc controls, the default-ignorable code points outside Cf (U+034F, U+115F, U+1160, U+17B4, U+17B5, U+180B-U+180F, U+3164, U+FE00-U+FE0F, U+FFA0, U+E0100-U+E01EF) and U+2800 (round 13 addendum 3, B10 beyond Cf); the owners/blank.py re-export inherits it.",
+      "review": "docs/rulings/2026-10-28-stage1.md (round 13 addendum 3)"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "prior_project_sha256": "119058ff8a238f29aa418da7d43110686ad0ba9d0362d5d77b989f798d088f1f",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
+      "reason": "citation_issues refuses a quote that is_blank as 'Quote/locator mismatch: blank quote under <source> <locator>', before the page match (round 13 addendum 3).",
+      "review": "docs/rulings/2026-10-28-stage1.md (round 13 addendum 3)"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "ab6dba880e09507b6dd8c03d0895bcbd04ca8c9a98f2999475ee4220756434e0",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "dd81024e407a325415c294467cc5f69db22b4fcc67878b35e245c4cc2682c0b6",
+      "reason": "clipped docstring states it equals shortened only for limit >= 1 (0d-c review Q4); no code change.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/live/tools.py",
+      "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "prior_project_sha256": "a50a3f8c14069f16ee6f77610ecfe66d85972390aa8ce203176fc1b1b110bb1c",
+      "project_commit": "30a1f7a8c07057e1e17d337a5892e4d448b342d7",
+      "sha256": "f03f7d04cf10939859e04208406d7c1f81f540ba4802a67878b7ba967d2fb6af",
+      "reason": "Module docstring states the rule walk costs O(nodes x depth) in time and bounds issue text and memory, not time (0d-c review F3); no code change.",
+      "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "imported_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "prior_project_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "project_commit": "ff1dbce0a392bec50ba44ec13364416dfef4a042",
+      "sha256": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+      "reason": "FP-04 covenant_refinancing preset gains CP-MODEL (Q-C1: the maturity wall is MODEL-owned).",
+      "review": "work/build/stage2/release/qc1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
+      "project_commit": "ff1dbce0a392bec50ba44ec13364416dfef4a042",
+      "sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
+      "reason": "FP-04 maturity-wall _Spec becomes owner MODEL with producer CP-1 (Q-C1).",
+      "review": "work/build/stage2/release/qc1-review.md"
     }
   ],
   "local_patch_lineage": [

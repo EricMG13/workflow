@@ -1,0 +1,209 @@
+{
+ "_note": "Stage 2 close release W2-D (Modules, 2026-10-29): key tree of the body `owners.cp4c.view(historical, attempt)` serves for `read_inputs`, observed on real stores whose upstream heads were settled through the product store (`Execution.begin/finish`) from the oracle facts of each upstream module, as the module's connect tests seed them. Shape only, not values: dict keys in order, scalar type names, a list keeps its distinct element shapes. No `quote`, `citations` or `record_json` key at any depth. Checked by tests/test_connect_cp4c.py::test_view_equals_the_committed_view_tree; the genuine run's body is checked in tests/test_owner_cp4c.py.",
+ "positive": {
+  "top_level_keys": [
+   "upstream",
+   "claims_offered",
+   "ebitda_offered",
+   "cp2a",
+   "cp4",
+   "bounds",
+   "cp1_facts",
+   "cp2g_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "claims_offered": {
+    "secured": {
+     "ref": "str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "NoneType",
+     "secured_status": "str",
+     "seniority": "str",
+     "facility_id": "str",
+     "facility": "str"
+    },
+    "statement_rows": [
+     {
+      "label": "str",
+      "columns": [
+       "str"
+      ]
+     }
+    ]
+   },
+   "ebitda_offered": [
+    {
+     "case": "str",
+     "year": "str",
+     "ref": "str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "NoneType"
+    }
+   ],
+   "cp2a": {
+    "scenario_row": "str",
+    "name": "str",
+    "ebitda_decline": {
+     "shown": "str",
+     "status": "str"
+    },
+    "interest_increase": {
+     "shown": "str",
+     "status": "str"
+    }
+   },
+   "cp4": {
+    "facility": "str",
+    "lender_protection": "str",
+    "additional_debt_conditions": "str"
+   },
+   "bounds": {
+    "multiple": {
+     "max": "str",
+     "places": "int",
+     "may_be_not_assessed": "bool"
+    },
+    "ranks": {
+     "min": "int",
+     "max": "int"
+    },
+    "treatments": [
+     "str"
+    ]
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp2g_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ },
+ "gap": {
+  "top_level_keys": [
+   "upstream",
+   "claims_offered",
+   "ebitda_offered",
+   "cp2a",
+   "cp4",
+   "bounds",
+   "cp1_facts",
+   "cp2g_facts",
+   "inherited_limitations"
+  ],
+  "tree": {
+   "upstream": [
+    {
+     "module_id": "str",
+     "status": "str"
+    }
+   ],
+   "claims_offered": {
+    "secured": {
+     "ref": "str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "NoneType",
+     "secured_status": "str",
+     "seniority": "str",
+     "facility_id": "str",
+     "facility": "str"
+    },
+    "statement_rows": [
+     {
+      "label": "str",
+      "columns": [
+       "str"
+      ]
+     }
+    ]
+   },
+   "ebitda_offered": [
+    {
+     "case": "str",
+     "year": "str",
+     "ref": "str",
+     "shown": "str",
+     "status": "str",
+     "limitation": "NoneType"
+    }
+   ],
+   "cp2a": {
+    "scenario_row": "str",
+    "name": "str",
+    "ebitda_decline": {
+     "shown": "str",
+     "status": "str"
+    },
+    "interest_increase": {
+     "shown": "str",
+     "status": "str"
+    }
+   },
+   "cp4": {
+    "facility": "str",
+    "lender_protection": "str",
+    "additional_debt_conditions": "str"
+   },
+   "bounds": {
+    "multiple": {
+     "max": "str",
+     "places": "int",
+     "may_be_not_assessed": "bool"
+    },
+    "ranks": {
+     "min": "int",
+     "max": "int"
+    },
+    "treatments": [
+     "str"
+    ]
+   },
+   "cp1_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "cp2g_facts": [
+    {
+     "ref": "str",
+     "label": "str",
+     "period": "str",
+     "unit": "str",
+     "shown": "str"
+    }
+   ],
+   "inherited_limitations": [
+    "str"
+   ]
+  }
+ }
+}

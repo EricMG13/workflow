@@ -2131,19 +2131,23 @@ def _oracle_case_key(scope_id: str, case: str) -> str:
     return case
 
 
-def _assert_cp3c_blocks(blocks: dict[str, Any]) -> None:
-    """The three assigned blocks against the frozen oracles: `refinancing-paths` and
-    `lme-creditor-exposure` from `cp3c-owner#/fp04_render`, `funding-gap` (T3D.1 moved there by
-    the Q-C2 wiring) from `cr3-expected.json#/render/covenant_refinancing`."""
-    wiring = importlib.import_module("chart_wiring_c")
+def _cp3c_wanted() -> dict[str, tuple[str, str, str, list[str]]]:
+    """Per assigned block: (owner, kind, state, tab ids) from the frozen oracles. An oracle block
+    that is `populated` with `collapsed` set renders as state `collapsed` (`report_view`)."""
     render = _oracle("cp3c-owner")["fp04_render"]["blocks"]
     funding = _chart_oracle("cr3")["render"]["covenant_refinancing"]
-    wanted = {
+
+    def state(spec: dict[str, Any]) -> str:
+        return (
+            "collapsed" if spec["state"] == "populated" and spec.get("collapsed") else spec["state"]
+        )
+
+    return {
         **{
             block_id: (
                 spec["owner"],
                 spec["kind"],
-                spec["state"],
+                state(spec),
                 [spec["primary_tab"], *spec["tabs"]],
             )
             for block_id, spec in render.items()
@@ -2155,11 +2159,48 @@ def _assert_cp3c_blocks(blocks: dict[str, Any]) -> None:
             [funding["primary_tab"], *funding["tabs_with_cp3c"]],
         ),
     }
-    for block_id, (owner, kind, state, tab_ids) in wanted.items():
+
+
+def _assert_cp3c_blocks(blocks: dict[str, Any]) -> None:
+    """The three assigned blocks against the frozen oracles: `refinancing-paths` and
+    `lme-creditor-exposure` from `cp3c-owner#/fp04_render`, `funding-gap` (T3D.1 moved there by
+    the Q-C2 wiring) from `cr3-expected.json#/render/covenant_refinancing`."""
+    wiring = importlib.import_module("chart_wiring_c")
+    for block_id, (owner, kind, state, tab_ids) in _cp3c_wanted().items():
         block = blocks[block_id]
         assert (block["owner"], block["kind"], block["state"]) == (owner, kind, state), block_id
         got = [block["tab_label"], *(tab["label"] for tab in block["tabs"])]
         assert got == wiring.labels_of(*tab_ids), block_id
+
+
+def _oracle_cp3c_page() -> dict[str, dict[str, Any]]:
+    wiring = importlib.import_module("chart_wiring_c")
+    page: dict[str, dict[str, Any]] = {}
+    for block_id, (owner, kind, state, tab_ids) in _cp3c_wanted().items():
+        labels = wiring.labels_of(*tab_ids)
+        page[block_id] = {
+            "owner": owner,
+            "kind": kind,
+            "state": state,
+            "tab_label": labels[0],
+            "tabs": [{"label": label} for label in labels[1:]],
+        }
+    return page
+
+
+def test_fast_cp3c_comparator_takes_collapsed_from_the_oracle() -> None:
+    page = _oracle_cp3c_page()
+    _assert_cp3c_blocks(page)
+    collapsed = [
+        b
+        for b, spec in _oracle("cp3c-owner")["fp04_render"]["blocks"].items()
+        if spec["state"] == "populated" and spec.get("collapsed")
+    ]
+    assert collapsed
+    for block_id in collapsed:
+        widened = {**page, block_id: {**page[block_id], "state": "populated"}}
+        with pytest.raises(AssertionError):
+            _assert_cp3c_blocks(widened)
 
 
 def _check_scope_run(

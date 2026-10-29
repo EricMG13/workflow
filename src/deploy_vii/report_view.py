@@ -1597,6 +1597,39 @@ def _clip(text: str) -> str:
     return text if len(text) <= _SUMMARY_LIMIT else text[: _SUMMARY_LIMIT - 1] + "…"
 
 
+def _carries_reference(text: str) -> bool:
+    """Whether a known text fact holds a well-formed ``[ref]``/``{ref|unit}`` reference.
+
+    Text whose brackets are not reference syntax (a label such as ``[Insufficient Information]``)
+    is plain prose and shown as written, as before; a well-formed reference is never skipped, so
+    one that names a fact outside the module reaches ``resolve`` and fails closed.
+    """
+    try:
+        return any(run.kind != "text" for run in prose.tokenize(text))
+    except ValueError:  # not reference syntax: literal prose, nothing to resolve
+        return False
+
+
+def _token_runs(
+    text: str,
+    module: ModuleView,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+    *,
+    judged: bool,
+) -> list[TextRun]:
+    """A known text fact that carries ``[ref]``/``{ref|unit}`` tokens, resolved as a claim is:
+    a known fact becomes its figure, an unsettled one the page's ``G#``; a token that names a
+    fact outside the module fails closed (``resolve``)."""
+    by_fact = {fact_id: ids for (owner, fact_id), ids in refs.items() if owner == module.module_id}
+    out: list[TextRun] = []
+    for run in resolve(text, prose.bind(module.facts), by_fact):
+        if run.kind == "text":
+            out.append(TextRun(text=run.text, kind="pen" if judged else "text"))
+        else:
+            out.append(TextRun(text=run.text, kind=run.kind, ref_id=run.ref_id))
+    return out
+
+
 def _prose_lines(
     entries: Iterable["Binding"],
     view: View,
@@ -1621,7 +1654,10 @@ def _prose_lines(
                 runs.append(TextRun(text=item.text, kind="gap", ref_id=item.gap_ref))
             elif fact.text is not None:
                 judged = fact.value_class == "analyst_judgment"
-                runs.append(TextRun(text=item.text, kind="pen" if judged else "text"))
+                if _carries_reference(fact.text):
+                    runs += _token_runs(fact.text, module, refs, judged=judged)
+                else:
+                    runs.append(TextRun(text=item.text, kind="pen" if judged else "text"))
                 if item.ref_id:
                     runs.append(TextRun(text=item.ref_id, kind="fig", ref_id=item.ref_id))
             elif item.ref_id:

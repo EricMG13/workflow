@@ -186,6 +186,10 @@ def oracle_cell(item: dict[str, Any]) -> dict[str, Any]:
     out = dict(item)
     if item["status"] != "known":
         out["shown"] = item["shown"].replace("G#", GAP_REF)
+    elif item["text"] is not None and "[" in item["text"]:
+        # the product stores the token form; the oracle's ``shown`` (``∅ G#``) is the rendered
+        # page text, which the render test in test_connect_cp8 checks
+        out["shown"] = item["text"]
     return out
 
 
@@ -245,6 +249,20 @@ def test_case_tables_cell_for_cell(case: str) -> None:
             assert list(row.fact_ids) == [f["fact_id"] for f in erow["facts"]]
             for fact_id, efact in zip(row.fact_ids, erow["facts"], strict=True):
                 assert cell(facts[fact_id]) == oracle_cell(efact), fact_id
+
+
+@pytest.mark.parametrize("case", CASES)
+def test_no_settled_cp8_fact_carries_a_gap_placeholder_literal(case: str) -> None:
+    assert not hasattr(cp8_module, "GAP_PLACEHOLDER")
+    facts = report_of(case).facts
+    assert facts  # not a vacuous pass
+    for fact in facts:
+        assert "G#" not in (fact.text or ""), fact.fact_id
+        assert "G#" not in fact_spelling(fact, GAP_REF)[2], fact.fact_id
+    if case == "no_outcome":
+        outcome = next(f for f in facts if f.fact_id == "cp8.what_changed.outcome.value")
+        want = EXPECTED["cases"][case]["claims"][0]["text"]
+        assert outcome.text == want and "[T7.3.window.realized_value]" in want
 
 
 @pytest.mark.parametrize("case", CASES)

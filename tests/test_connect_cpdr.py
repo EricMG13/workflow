@@ -1133,10 +1133,11 @@ def test_the_longest_accepted_question_id_composes() -> None:
 def test_a_question_id_too_long_to_compose_is_refused_at_validation(extra: int) -> None:
     qid = "q" * (cpdr.QUESTION_ID_MAX + extra)
     sub = submission(_with_question_id(qid))
-    assert check(sub) == (
+    expected = (
         f"question_id is too long to compose its fact ids (at most {cpdr.QUESTION_ID_MAX} "
-        f"characters): {qid}",
+        f"characters): {qid}"
     )
+    assert check(sub) == (expected,)
     attempt, store = attempt_of(cp0_module(empty=False), json.dumps(_with_question_id(qid)))
     outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
     assert outcome.output is None
@@ -1159,10 +1160,7 @@ def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
     question["answer"] = "Rates matter [a lot"
     question["limitation"] = "Some limitation text"
     issues = check(submission(payload))
-    assert issues == (
-        "an answered question carries no limitation: transactions",
-        "gaps[0].questions[0].answer: Value error, Malformed run text: "
-        "unbalanced or empty reference",
-    )
+    malformed = "gaps[0].questions[0].answer: Value error, Malformed run text: unbalanced or empty reference"
+    assert issues == ("an answered question carries no limitation: transactions", malformed)
     question["limitation"] = None
     assert check(submission(payload)) == issues[1:]

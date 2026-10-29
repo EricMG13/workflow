@@ -319,8 +319,7 @@ def test_is_blank_is_whitespace_controls_format_or_invisible_characters(text):
         | set(range(0xE0100, 0xE01F0))
     )
     expected = all(
-        c.isspace() or unicodedata.category(c) in {"Cc", "Cf"} or ord(c) in invisible
-        for c in text
+        c.isspace() or unicodedata.category(c) in {"Cc", "Cf"} or ord(c) in invisible for c in text
     )
     assert is_blank(text) is expected
     assert is_blank("") is True

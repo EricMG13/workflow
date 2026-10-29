@@ -212,6 +212,12 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
         )
         if is_incomplete and not entity.limitations:
             issues.append(f"Incomplete entity context requires limitation: {entity.entity_id}")
+    # Built once (0d-d): each event's cited sources, and every (source, event) a scan lists.
+    event_sources = {key: {c.source_id for c in event.citations} for key, event in events.items()}
+    scanned = {(s.source_id, event_id) for s in review.sources for event_id in s.event_ids}
+    first_review: dict[str, SourceContext] = {}
+    for item in review.sources:
+        first_review.setdefault(item.source_id, item)
     # Source-local checks retain review order, including event attachments.
     referenced_events: set[str] = set()
     for assessment in review.sources:
@@ -285,8 +291,7 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
         if assessment.event_scan != "unassessed" and not assessment.event_scan_citations:
             issues.append(f"Event scan requires located evidence: {source.source_id}")
         for event_id in assessment.event_ids:
-            event = events.get(event_id)
-            if event and source.source_id not in {c.source_id for c in event.citations}:
+            if event_id in events and source.source_id not in event_sources[event_id]:
                 issues.append(
                     f"Event attachment lacks evidence from source: {source.source_id} {event_id}"
                 )
@@ -312,7 +317,7 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
         if event.event_id not in referenced_events:
             issues.append(f"Subsequent event is absent from source scans: {event.event_id}")
         for source_id in sorted({c.source_id for c in event.citations}):
-            source_review = next((s for s in review.sources if s.source_id == source_id), None)
+            source_review = first_review.get(source_id)
             if (
                 source_review
                 and source_review.published_on
@@ -321,9 +326,7 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
                 issues.append(
                     f"Event knowledge date is after cited publication: {source_id} {event.event_id}"
                 )
-            if not any(
-                s.source_id == source_id and event.event_id in s.event_ids for s in review.sources
-            ):
+            if (source_id, event.event_id) not in scanned:
                 issues.append(
                     f"Event evidence omitted by source scan: {source_id} {event.event_id}"
                 )

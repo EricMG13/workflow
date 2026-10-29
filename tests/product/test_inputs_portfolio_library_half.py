@@ -6,16 +6,15 @@ The imported `test_a_file_prepare_cannot_read_is_one_issue_not_a_traceback` also
 """
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
+from deploy_vii.inputs.portfolio import validate_portfolio
 from tests.product import test_inputs_portfolio as imported
 
-_PARAMETRIZE = [
-    mark
-    for mark in imported.test_a_file_prepare_cannot_read_is_one_issue_not_a_traceback.pytestmark
-    if mark.name == "parametrize"
-][0]
+_IMPORTED_CASE: Any = imported.test_a_file_prepare_cannot_read_is_one_issue_not_a_traceback
+_PARAMETRIZE = next(mark for mark in _IMPORTED_CASE.pytestmark if mark.name == "parametrize")
 CASES = _PARAMETRIZE.args[1]
 IDS = _PARAMETRIZE.kwargs["ids"]
 
@@ -30,4 +29,4 @@ def test_validate_portfolio_reports_one_issue_for_a_file_prepare_cannot_read(
         f"{imported.FILE}:Mandate!A1: prepare cannot read this file as an OOXML workbook: "
         f"{problem} — fix: {fix}"
     )
-    assert imported.rendered(imported.validate_portfolio(path)) == [expected]
+    assert imported.rendered(validate_portfolio(path)) == [expected]

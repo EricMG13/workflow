@@ -474,3 +474,4 @@
 - 14:24 Disk-light work while waiting for space: mypy --strict clean on 9 changed src files at s3-int c43b681; suppressions noqa 13, type:ignore 5. Rulings item 17. Dispatching: legal oracle move preparer, G2 continuation (fast tests only), Stage 4 Fable plan.
 - 14:24 Dispatched: legal oracle move preparer (mx-feature a2f57624, isolated, claude/s3-legal from c43b681); G2 continuation (mx-feature a16e092a, isolated, claude/s3-g2c from c43b681 + g2rev3 + s3-g2 + patch; fast tests only); Stage 4 plan (mx-architect Fable a7133de1, plan to scratchpad stage4/plan.md).
 - 14:26 Legal oracle move done claude/s3-legal 9ac76c6 (funding-gap producers + note; maturity-wall not moved, rendered kind unchanged; test_legal_render 77 passed). Review: mx-precise a802522e.
+- 14:27 Legal move review REVISE (a802522e): M CR.1 now drawn on covenant-tests-headroom in both legal fixtures, unrecorded in the legal oracle. Fix round 1 to preparer a2f57624.

@@ -31,6 +31,7 @@ pytest_plugins = ("test_owner_g1x",)  # supplies the g1x fixture
 CASES = Path(__file__).resolve().parents[1] / "cases"
 MODULE_KEY = re.compile(r"^(CP-[0-9A-Z]+)(?:\s|$)")
 SUBMIT_ONLY = ("submit only", "submit-only", "zero ok pack calls", "zero pack calls")
+PACK_TOOL_MODULES = ("CP-0", "CP-1", "CP-1A")
 READS_INPUTS = re.compile(r"(exactly one (ok )?|one |once per attempt|read_inputs once)")
 
 
@@ -125,6 +126,12 @@ def test_tool_use_sections_match_registrations(oracle: str, module: str, text: s
     one that reads none has no inputs mode."""
     spec = owner.OWNER_SPECS[module]
     assert spec.kind == "analytical"
+    if module in PACK_TOOL_MODULES:
+        # CP-0, CP-1 and CP-1A are the pack-tool modules: their sections say "pack tools plus
+        # submit" or "as the financial slice" (no `read_pages` phrase to key on), and the host
+        # serves a source session on exactly the steps `_SOURCE_STEPS` lists.
+        assert {s.step_id for s in spec.steps if s.sources} == set(host._SOURCE_STEPS[module])
+        assert host._SOURCE_STEPS[module], (oracle, module)
     if any(phrase in text for phrase in SUBMIT_ONLY):
         assert all(not step.sources for step in spec.steps), (oracle, module)
     if "ok read_pages" in text and not any(p in text for p in SUBMIT_ONLY):

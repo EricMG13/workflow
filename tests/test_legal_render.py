@@ -366,6 +366,7 @@ def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
         assert not block.rows and not block.lines  # no owner cell, no claim that the owner ran
 
 
+# Stage 3 item 13: temporary until the legal oracle move
 def _producers_after_stage3(block_id, want):
     """The frozen legal oracle predates ruling item 6.1: CP-3C joins the funding-gap producers.
     The new value is read from the frozen CR.3 oracle, not written here."""
@@ -375,6 +376,7 @@ def _producers_after_stage3(block_id, want):
     return tuple(cr3["render"]["covenant_refinancing"]["producers"])
 
 
+# Stage 3 item 13: temporary until the legal oracle move
 def _note_after_stage3(block_id, want):
     """The honest Not-run note names the block's producers, so CP-3C joins funding-gap's."""
     producers = _producers_after_stage3(block_id, want)

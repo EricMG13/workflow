@@ -427,3 +427,4 @@
 - 08:58 Q-C1 preparer revision 300fcdb (stage3_pending, no route, dense target). Scoped re-review by a66dbdc5.
 - 08:59 Q-C14 re-checked against DEPLOY VII PF-1 workbook (7260b22; acef417d): C-01 current 2.37 (workbook wins), Fits withdrawn, Caesars existing exposure a gap (holdings partial 5/320), portfolio.py import pulls rv_quotes+preparation -> user confirmation pending.
 - 08:59 Q-C1 oracle re-review APPROVE (a66dbdc5). Builder dispatched (separate mx-feature; id in next line on return).
+- 08:59 Q-C1 builder=ae54502382a289082 (mx-feature; distinct from preparer a5f86934df7bc3a48 and reviewer a66dbdc578746c158).

@@ -195,10 +195,11 @@ def test_a1_the_settled_head_binds_its_upstream_and_its_tail_input(
     store = _verify(request.getfixturevalue(case))
     (attempt,) = _attempts(store)
     heads = {h.module_id: h for h in store.read().heads}
-    for item in attempt.inputs:
-        assert (item.sha256, item.status) == (
-            heads[item.input_id].result_sha256,
-            heads[item.input_id].status,
+    bound = {item.input_id: item for item in attempt.inputs}  # the pack input has no head
+    for upstream in ("CP-0", "CP-1"):
+        assert (bound[upstream].sha256, bound[upstream].status) == (
+            heads[upstream].result_sha256,
+            heads[upstream].status,
         )
     module = store.head_module(heads[MODULE])
     text = json.dumps(SUBMISSIONS[case][runs.STEP], ensure_ascii=False)

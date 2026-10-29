@@ -1588,6 +1588,24 @@
       "sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
       "reason": "FP-04 maturity-wall _Spec becomes owner MODEL with producer CP-1 (Q-C1).",
       "review": "work/build/stage2/release/qc1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/charts.py",
+      "imported_sha256": "9c10704c8b4707305990a501574602adefc4c5eee2d326c830c77cc281153aef",
+      "prior_project_sha256": "9c10704c8b4707305990a501574602adefc4c5eee2d326c830c77cc281153aef",
+      "project_commit": "80ab9f50ed87a2cb2f92460b55b92c963ee7931c",
+      "sha256": "a1805bca3e9bc6aa21383be158cc677b3ea6fbe2b95b8882ac045bfbe985e591",
+      "reason": "Stage 3 chart seam: range and bullet geometry and the hatch flag for analyst-judgment marks; waterfall running total uses a mark's declared decimals.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
+      "project_commit": "80ab9f50ed87a2cb2f92460b55b92c963ee7931c",
+      "sha256": "ec311130f73ee314ce31c0595cb3238cad340f6f8a24f41e99e23a9e2a4ea14c",
+      "reason": "Stage 3 chart seam: ChartKind range and bullet, ChartMark decimals and hatched, percent and strict-parse text in _chart_fact_cell, build_index gap reference for a rejected strict text, _na_strip reason, per-producer figure registry and the S.5 entry point, no KeyError without CP-1.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

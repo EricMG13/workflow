@@ -137,7 +137,7 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
 
 - [ ] **G2.** (`mx-feature` builds, `mx-precise` reviews.) `owner_rendering.py` per `docs/OWNER-RENDERING-LEASE.md`, with one `DELIVERY_SCOPES` row per module run.
 - [ ] **CP-OS.** (`mx-feature` builds, `mx-precise` reviews.) Per `docs/CPOS-OWNER-LEASE.md`, re-pinned at `e8ee084`. `#workbench` resolves via routeOf.
-- [ ] **Charts.** The controller lists the series blocks from Stage 1 (for example CP-2D T2E.4 maturity wall and T2E.3 runway). LEAD freezes chart oracles following `docs/CP1-CHART-SLICE.md`, and one `mx-feature` agent wires each frozen chart; `mx-precise` reviews.
+- [ ] **Charts.** The series blocks are listed in `work/build/stage3/charts-inventory.md` (for example CP-2D T2E.4 maturity wall and T2E.3 runway); the oracles to freeze and the rulings still open are in `work/build/stage3/questions.md`. LEAD freezes chart oracles following `docs/CP1-CHART-SLICE.md`, and one `mx-feature` agent wires each frozen chart; `mx-precise` reviews.
 - [ ] **Real-data case.** Workflow Test's `cases/czr-2026q2-earnings-update/` (CP-1, CP-1B, CP-2, CP-5 on `earnings_update`) needs LEAD's ruling on a public multi-document `case_kind` and its scope. One `mx-feature` agent then builds its run driver, and Workflow Test runs it.
 - [ ] **Stage 3 review.** `mx-architect` (Fable) checks that each of the six pathways renders its assigned blocks from settled facts. Findings go to `mx-feature` fix rounds.
 

@@ -1590,6 +1590,15 @@ def _verify_transition(
         ):
             raise WorkflowError("identity_mismatch")
         module_id = attempt.module_id
+        # The attempt keeps the identity it was begun with: a step may not relabel a repair as a
+        # first try (or the reverse). `Execution.begin` fixes these fields; nothing later changes
+        # them.
+        begun = next(a for a in after.attempts if a.ticket_id == ticket_id)
+        if any(
+            getattr(begun, field) != getattr(attempt, field)
+            for field in ("module_id", "inputs", "number", "repair_of", "repair_issues")
+        ):
+            raise WorkflowError("identity_mismatch")
     if (
         tuple(h for h in after.heads if h.module_id != module_id)
         != tuple(h for h in before.heads if h.module_id != module_id)

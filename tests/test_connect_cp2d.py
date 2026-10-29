@@ -147,6 +147,7 @@ import json
 from collections.abc import Callable
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 
 from deploy_vii.contracts import Citation, Fact, Module, Run
@@ -1426,3 +1427,21 @@ def test_reader_reads_two_facilities_in_maturity_order(tmp_path: Path) -> None:
     assert (second.share_of_total_debt, second.cumulative_share) == (Decimal("0.4"), Decimal(1))
     # cash 20 at 24 months, less the 30 maturing inside it: resources -10, minimum cash 10 -> 20
     assert read.funding_gap == Decimal(20) and read.horizon_months == 24
+
+
+def test_validate_step_reads_the_payload_only_through_json_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Protocol section 6: the step validator parses the bounded `json_object` document, never raw
+    text; text it refuses is refused with a bounded issue even if Pydantic would parse it."""
+    seen: list[str] = []
+
+    def refuse(text: str) -> None:
+        seen.append(text)
+
+    monkeypatch.setattr(cp2d, "json_object", refuse)
+    store = SimpleNamespace(payload=lambda sha: "{}")
+    attempt = SimpleNamespace(steps=[SimpleNamespace(payload_sha256="x")])
+    out = cp2d._validate_step(cast(Any, store), cast(Any, None), cast(Any, attempt))
+    assert seen == ["{}"] and out.output is None
+    assert out.issues and all(len(i) <= 600 for i in out.issues)

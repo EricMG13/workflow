@@ -15,6 +15,7 @@ No I/O, store, host, session or render call happens here (Stage 2 adds those).
 """
 
 import hashlib
+import itertools
 import json
 import re
 import unicodedata
@@ -62,6 +63,7 @@ from deploy_vii.execution import (
     settle,
 )
 from deploy_vii.financial_contracts import Number
+from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.live.submission import Submitted
 from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
@@ -634,11 +636,15 @@ _SUFFIX_WINDOW = 32
 
 
 def _ordinal_after(text: str, end: int) -> bool:
-    """Stage 2 L3 (LEAD): after the run, Cf/Mn/Me characters are skipped and the suffix window
+    """Stage 2 L3 (LEAD): after the run, Cf/Mn/Me characters are skipped (over the whole tail) and the suffix window
     is NFKC-folded, so `2ⁿᵈ`, `2ｎｄ`, `2<ZWSP>nd` and `2<Mn>nd` are ordinals like `2nd`; a letter
     after the folded suffix (`2nds`, `2ndly`) still leaves the run readable."""
+    # Cf/Mn/Me are skipped over the whole tail before the window is taken, so a long run of marks
+    # cannot push the suffix out of it.
     window = "".join(
-        c for c in text[end : end + _SUFFIX_WINDOW] if unicodedata.category(c) not in _SKIPPED
+        itertools.islice(
+            (c for c in text[end:] if unicodedata.category(c) not in _SKIPPED), _SUFFIX_WINDOW
+        )
     )
     return _ORDINAL_AFTER.match(unicodedata.normalize("NFKC", window)) is not None
 
@@ -2378,8 +2384,9 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         ],
         "cp1_t417_rows": len(rows),
         "cp1_facts_note": (
-            "Reference a CP-1 figure only as {ref|unit} with a ref and unit listed in cp1_facts; "
-            "reference a module figure as {T1D.x.y.z|unit}. Quote evidence only from read_pages."
+            "Reference a CP-1 figure only in the overall rationale, as {ref|unit} with a ref and "
+            "unit listed in cp1_facts; an assessment rationale references module figures only, "
+            "as {T1D.x.y.z|unit}. Quote evidence only from read_pages."
         ),
         "inherited_limitations": list(upstream.inherited),
     }
@@ -2402,16 +2409,28 @@ def RULES(text: str, seen: Seen) -> tuple[str, ...]:
     return unread_citation_issues(text, seen)
 
 
+def _parsed(payload: str) -> tuple[EarningsQualitySubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue and is refused even if
+    Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            EarningsQualitySubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return EarningsQualitySubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
 def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
     """The step validator `submit` hands `Execution.submit_step` and the verifier replays: the
     attempt's last step is the one under validation."""
     step = attempt.steps[-1]
-    try:
-        submission = EarningsQualitySubmission.model_validate_json(
-            store.payload(step.payload_sha256)
-        )
-    except ValidationError as error:
-        return StepValidation(issues=shape_issues(error))
+    submission, shape = _parsed(store.payload(step.payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
     issues, report = _checked(pack, submission, cp1d_upstream(store, attempt))
     if issues or report is None:
         return StepValidation(issues=issues)

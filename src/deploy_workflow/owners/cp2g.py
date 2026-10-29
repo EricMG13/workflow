@@ -3178,7 +3178,9 @@ def cp2g_reader(store: Execution, head: Head) -> Cp2gHead:
     module, status = _settled_module(store, head, MODULE_ID)
     if status == "blocked":
         return Cp2gHead(status=status, head_sha256=head.result_sha256)
-    t2h7 = next(t for t in module.tables if t.table_id == "T2H.7")
+    t2h7 = next((t for t in module.tables if t.table_id == "T2H.7"), None)
+    if t2h7 is None:
+        raise ValueError("CP-2G: the settled head has no table T2H.7")
     rows = tuple(r.row_id for r in t2h7.rows)
     facts = {f.fact_id: f for f in module.facts}
     return Cp2gHead(

@@ -716,6 +716,22 @@ def test_two_refusals_block_the_module(case: str, tmp_path: Path) -> None:
     )
 
 
+def test_reader_refuses_a_settled_head_without_the_break_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Low: a settled head with no T2H.7 is a `ValueError` in the module frame, never the bare
+    `StopIteration` of a `next(...)` without a default."""
+    store, _, _, _ = settled(tmp_path)
+    head = _head(store, MODULE)
+    module = store.head_module(head)
+    bare = module.model_copy(
+        update={"tables": tuple(t for t in module.tables if t.table_id != "T2H.7")}
+    )
+    monkeypatch.setattr(cp2g, "_settled_module", lambda store, head, module_id: (bare, "ok"))
+    with pytest.raises(ValueError, match=r"CP-2G: the settled head has no table T2H\.7"):
+        cp2g.cp2g_reader(store, head)
+
+
 def test_submit_refuses_rules_and_a_foreign_step(tmp_path: Path) -> None:
     store, _, attempt = seed(tmp_path)
     payload = json.dumps(_payload())

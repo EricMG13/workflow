@@ -75,7 +75,7 @@ only if a frozen case needs it.
 
 A sourced fact (a bridge amount, an accepted basis) quotes its own field. A derived (calculated)
 fact is cited per page: one `Citation` per (source, page), quoting the first of its own input
-quotes on that page, in input order (`cp1d._one_per_page`); a quote is never invented. A
+quotes on that page, in input order (`deploy_workflow.owners.blank.one_per_page`); a quote is never invented. A
 claim's citations are the analyst's located evidence as submitted.
 
 ## Other rules the code enforces

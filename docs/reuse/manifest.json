@@ -1570,6 +1570,24 @@
       "sha256": "f03f7d04cf10939859e04208406d7c1f81f540ba4802a67878b7ba967d2fb6af",
       "reason": "Module docstring states the rule walk costs O(nodes x depth) in time and bounds issue text and memory, not time (0d-c review F3); no code change.",
       "review": "work/lead/product-defects-0d/"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "imported_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "prior_project_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "project_commit": "ff1dbce0a392bec50ba44ec13364416dfef4a042",
+      "sha256": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+      "reason": "FP-04 covenant_refinancing preset gains CP-MODEL (Q-C1: the maturity wall is MODEL-owned).",
+      "review": "work/build/stage2/release/qc1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "5c71a3113bd2a739bfeacd3093c82799d3ca492d821e1973f42abc4f3eb35075",
+      "project_commit": "ff1dbce0a392bec50ba44ec13364416dfef4a042",
+      "sha256": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
+      "reason": "FP-04 maturity-wall _Spec becomes owner MODEL with producer CP-1 (Q-C1).",
+      "review": "work/build/stage2/release/qc1-review.md"
     }
   ],
   "local_patch_lineage": [

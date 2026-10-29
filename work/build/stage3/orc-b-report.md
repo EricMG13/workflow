@@ -59,3 +59,27 @@ Group B oracles are written and committed on `claude/s3-orc-b`, tip `5735b06` (`
   - `test_bindings_follow_the_lease` fails because it still expects T3D.1 in `refinancing-paths`; that is the wiring target.
 
 Not verified: no producer or renderer code exists, so no oracle value was compared with product output. `display.py` spelling was not run (fixture-derived texts follow the stated rule). The G# numbering, the layout, and hatching were not exercised. Gap, n/a, and "missing bridge operand" cases for CR.2 and DR.6 have no executed test. The DR.6 G# source and the `T3D.1` move were not checked in the product (no `validate_bindings` run). Other CP-4C/CP-2D/CP-2H tests, and `PINS.json` with the re-pins, were not run (the controller regenerates them). No reviewer has read these oracles yet.
+
+## Rulings 6.3, 6.5, 6.7 applied (0448be2)
+
+All three rulings are applied through the builders and committed as one commit, tip `0448be2`. Both CP-4C test modules fail to collect (2 errors, the expected reds); nothing else was run.
+
+**Moves**
+- **6.7:** I changed the `d7_rendering.decision` text in `cases/cp4c-owner/expected.json` through `cases/cp4c-owner/builder/build.py`.
+  - The old ending "; no chart" is now "; Stage 3 adds Fig. DR.2 to recovery-by-class and Figs. DR.3-5 to value-allocation-claims, drawn above the tabs (cases/charts/dr2-expected.json, dr345-expected.json)".
+  - `expected.json` sha256 `66edecbb…` → `eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6`.
+  - `build.py` sha256 `e7628d4d…` → `45e3620f579d6165d2145a1806d2d22e4f596680175a6aa2bd5a3f6d36145dfd`.
+  - `manifest.json` and `submissions.json` are unchanged.
+- **6.5 (DR.6):** each case now has its own `frame_reason`, `g_ref_rule`, `cited_gap_fact_ids` and `departs_from_approved_page`.
+  - `positive`: "agency source is synthetic; a headroom chart waits for a real agency report". It cites no G#, because no gap fact exists in that case.
+  - `gap`: "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report". It cites the 12 missing T2R.4/T2R.5 facts, with the G# bound at run time.
+  - Departures from the approved page text: the reason text and the G31 reference. The title, the "n/a" form, the dashed frame and the "Not computable" chip are kept.
+- **6.3:** the `scope_limits` in `cr2-expected.json` now records FP-04's "beside" layout as a Low design deviation.
+- `dr2-expected.json` and `dr345-expected.json` changed only because they embed the new CP-4C `expected.json` sha256.
+
+**Exit codes**
+- Double fresh-copy rebuild of the `cp4c-owner` builder and `build_b.py`: both runs exit 0, and every output (`cp4c-owner` expected, manifest and submissions, plus the five chart oracles) is byte-identical across the two copies and to the tree.
+- `ruff format --check` and `ruff check` on `build_b.py`: exit 0.
+- `tests/test_method_cp4c.py` and `tests/test_connect_cp4c.py`: 2 collection errors, because both assert the `expected.json` sha256 literal. The wiring builder re-pins those literals. No test ran past collection.
+
+Not verified: the product tests of CP-4C past collection; the renderer text for DR.6 (no code exists); `PINS.json` (the controller regenerates it).

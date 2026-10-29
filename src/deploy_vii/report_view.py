@@ -1266,7 +1266,7 @@ _RELATIVE_VALUE: Mapping[str, _Spec] = MappingProxyType(
             ("CP-3D",),
             route_label="Full analysis",
         ),
-        # CP-1C (docs/CP1C-OWNER-LEASE.md, D7): tables only, the Fig. RV.3 range strip is not drawn.
+        # CP-1C (docs/CP1C-OWNER-LEASE.md, D7): the tabs; the Fig. RV.3 range strip is drawn by _rv3_figures.
         "peer-positioning": _Spec(
             "Peer positioning", "CP-1C", "dense", ("CP-1C",), route_label="Full analysis"
         ),
@@ -2515,4 +2515,306 @@ register_figure_producer(
     "financials-credit-metrics",
     _cp1_period_figures,
     pathways=frozenset({"credit_snapshot"}),
+)
+
+# --- Stage 3 chart wiring W2, group b: RV.3 (CP-1C) and CR.1 (CP-4) -------------------------------
+# Values come only from the settled module facts: no producer here computes, ranks or rounds.
+
+
+@dataclass(frozen=True)
+class _ChartPoint:
+    """One point of a group b figure: its series, category, fact and the companions beside it."""
+
+    series: str
+    category: str
+    fact_id: str
+    companions: tuple[str, ...] = ()
+    strict_text: bool = False
+
+
+def _settled_cell(
+    fact: Fact, unit_class: UnitClass, refs: tuple[str, ...], *, strict_text: bool = False
+) -> Cell:
+    """``_chart_fact_cell``, except that a fact the module did not settle is a gap in any unit.
+
+    The settled module may carry an unsettled fact with no unit (CP-4's missing headroom). The
+    chart draws it as a gap in the chart's own unit class, with the fact's ``G#``; a fact with no
+    ``G#`` fails closed. Never a zero.
+    """
+    if strict_text or fact.status == "known":
+        return _chart_fact_cell(fact, unit_class, refs, strict_text=strict_text)
+    gap = next((ref for ref in refs if ref.startswith("G")), None)
+    if gap is None:
+        raise ValueError("A chart gap needs its G# reference")
+    _, state, _ = fact_spelling(fact, gap)
+    return Cell(
+        text=format_value(None, unit_class, state, gap_id=gap),
+        prov="gap",
+        gap_ref=gap,
+        unit_class=unit_class,
+        state=state,
+    )
+
+
+def _shown_module(view: View, module_id: str) -> ModuleView | None:
+    """The module when its facts are drawn in blocks (accepted, restricted or candidate)."""
+    from deploy_vii.bindings import SHOWN_STATUSES
+
+    module = next((item for item in view.modules if item.module_id == module_id), None)
+    return module if module is not None and module.status in SHOWN_STATUSES else None
+
+
+def _figure_of_points(
+    block_id: str,
+    module: ModuleView,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+    *,
+    fig_id: str,
+    title: str,
+    kind: ChartKind,
+    unit_class: UnitClass,
+    unit: str,
+    series: tuple[str, ...],
+    points: tuple[_ChartPoint, ...],
+    placement: FigurePlacement,
+    summary: str | None = None,
+) -> Figure:
+    """The figure of these points: each mark and twin row is read from its settled fact."""
+    facts = {fact.fact_id: fact for fact in module.facts}
+
+    def current(fact_id: str) -> tuple[Fact, tuple[str, ...]]:
+        if fact_id not in facts:
+            raise ValueError(f"Chart references the unknown fact {fact_id}")
+        return facts[fact_id], refs.get((module.module_id, fact_id), ())
+
+    marks, rows = [], []
+    for index, point in enumerate(points):
+        fact, fact_refs = current(point.fact_id)
+        cell = _settled_cell(fact, unit_class, fact_refs, strict_text=point.strict_text)
+        labels = [f"{point.series} · {point.category}"]
+        for companion_id in point.companions:
+            companion, companion_refs = current(companion_id)
+            companion_cell = _cell(companion, companion_refs)
+            companion_ref = companion_cell.ref_id  # a gap states its G# in its text
+            label = f"{companion.label}: {companion_cell.text}"
+            labels.append(label + (f" [{companion_ref}]" if companion_ref else ""))
+        marks.append(_chart_mark(fact, cell, series=point.series, label=point.category))
+        rows.append(Row(row_id=f"{fig_id}.point.{index}", label=" · ".join(labels), cells=(cell,)))
+    twin = Block(
+        block_id=f"{block_id}-{fig_id.replace('.', '').lower()}-twin",
+        title=f"{title} table",
+        owner=module.module_id,
+        state="populated" if rows else "absent",
+        kind="dense",
+        scale=unit,
+        columns=("Value",),
+        rows=tuple(rows),
+    )
+    return Figure(
+        fig_id=fig_id,
+        title=title,
+        placement=placement,
+        summary=summary,
+        chart=ChartSpec(
+            kind=kind,
+            series=series,
+            table_twin=twin,
+            marks=tuple(marks),
+            unit=unit,
+            unit_class=unit_class,
+        ),
+    )
+
+
+# RV.3: two panels, one unit class each (a ChartSpec has one). (fig_id, unit class, unit, metrics)
+_RV3_PANELS: tuple[tuple[str, UnitClass, str, tuple[str, ...]], ...] = (
+    ("RV.3a", "percent", "%", ("adjusted_ebitda_margin", "ffo_to_debt")),
+    ("RV.3b", "multiple", "x", ("total_leverage_adjusted", "interest_coverage_adjusted")),
+)
+_RV3_INCLUDED = re.compile(r"T1C\.1\.(p\d+)\.included")
+
+
+def _rv3_figures(
+    block_id: str,
+    view: View,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+) -> tuple[Figure, ...]:
+    """Peer positioning: Issuer, Peer median and Peers marks per metric, from CP-1C's T1C facts.
+
+    Only peers whose T1C.1 ``included`` fact reads "Included" are drawn; an excluded peer's
+    T1C.3 and T1C.5 facts are never read. No included peer, no figure.
+    """
+    module = _shown_module(view, "CP-1C")
+    if module is None:
+        return ()
+    facts = {fact.fact_id: fact for fact in module.facts}
+    names = {
+        row.row_id: row.label
+        for table in module.tables
+        if table.table_id == "T1C.1"
+        for row in table.rows
+    }
+    peers = []
+    for fact in module.facts:
+        match = _RV3_INCLUDED.fullmatch(fact.fact_id)
+        if match and fact.text == "Included" and match.group(1) in names:
+            peers.append((match.group(1), names[match.group(1)]))
+    if not peers:
+        return ()
+    figures = []
+    for fig_id, unit_class, unit, metrics in _RV3_PANELS:
+        if any(f"T1C.3.issuer.{m}" not in facts for m in metrics):
+            raise ValueError(f"CP-1C lacks an issuer fact for {fig_id}")
+        label = {m: facts[f"T1C.3.issuer.{m}"].label for m in metrics}
+        points = [
+            _ChartPoint(
+                "Issuer",
+                label[m],
+                f"T1C.3.issuer.{m}",
+                (f"T1C.5.issuer.{m}_flag", f"T1C.4.{m}.direction"),
+            )
+            for m in metrics
+        ]
+        points += [
+            _ChartPoint(
+                "Peer median",
+                label[m],
+                f"T1C.4.{m}.median",
+                (f"T1C.4.{m}.direction", f"T1C.4.{m}.n"),
+            )
+            for m in metrics
+        ]
+        points += [
+            _ChartPoint(
+                "Peers",
+                f"{label[m]} · {name}",
+                f"T1C.3.{peer_id}.{m}",
+                (f"T1C.1.{peer_id}.included", f"T1C.5.{peer_id}.{m}_flag"),
+            )
+            for m in metrics
+            for peer_id, name in peers
+        ]
+        figures.append(
+            _figure_of_points(
+                block_id,
+                module,
+                refs,
+                fig_id=fig_id,
+                title="Peer positioning",
+                kind="range",
+                unit_class=unit_class,
+                unit=unit,
+                series=("Issuer", "Peer median", "Peers"),
+                points=tuple(points),
+                placement="above",
+            )
+        )
+    return tuple(figures)
+
+
+def _is_plain_multiple(fact: Fact) -> bool:
+    """A known fact the multiple unit class draws as it is: MULTIPLE, scale 1, with an amount."""
+    return fact.unit == "MULTIPLE" and fact.scale == 1 and fact.amount is not None
+
+
+# CR.1: the comparison texts CP-4 settles for a ceiling and a floor (cp4_legal.py:750-756).
+_CR1_COMPARISONS = frozenset({"Not more than", "Not less than"})
+_CR1_TITLE = "Covenant tests and headroom"
+
+
+def _cr1_figures(
+    block_id: str,
+    view: View,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+) -> tuple[Figure, ...]:
+    """Covenant tests and headroom: a Threshold, Current and Headroom bullet row per T4.9 row.
+
+    The threshold is the settled text ("4.00x") read by the strict parse. A row whose comparison
+    text is not a ceiling or a floor is not drawn and the figure names its comparison fact. No
+    legal verdict is drawn: the figure holds the three settled numbers and the companion texts.
+    """
+    module = _shown_module(view, "CP-4")
+    if module is None:
+        return ()
+    table = next((item for item in module.tables if item.table_id == "T4.9"), None)
+    if table is None or not table.rows:
+        return ()
+    facts = {(f.row_id, f.field): f for f in module.facts if f.table_id == "T4.9"}
+
+    def fact_of(row_id: str, field: str) -> Fact:
+        if (row_id, field) not in facts:
+            raise ValueError(f"CP-4 T4.9 row {row_id} lacks the {field} fact")
+        return facts[(row_id, field)]
+
+    def fact_id(row_id: str, field: str) -> str:
+        return fact_of(row_id, field).fact_id
+
+    drawn, skipped = [], []
+    for row in table.rows:
+        comparison = facts.get((row.row_id, "comparison"))
+        if comparison is None or comparison.text not in _CR1_COMPARISONS:
+            skipped.append(
+                f"{fact_id(row.row_id, 'comparison')} is neither 'Not more than' nor 'Not less than'"
+            )
+            continue
+        # A settled number in a unit other than the multiple is not drawn on the x axis; the figure
+        # says which fact (the report still builds, and the table shows the fact in its own unit).
+        numbers = [fact_of(row.row_id, name) for name in ("current", "headroom")]
+        odd = next((f for f in numbers if f.status == "known" and not _is_plain_multiple(f)), None)
+        if odd is not None:
+            skipped.append(f"{odd.fact_id} is not a plain multiple")
+            continue
+        drawn.append(row)
+    note = "Not drawn: " + "; ".join(skipped) if skipped else None
+    if not drawn:
+        twin = Block(
+            block_id=f"{block_id}-cr1-twin",
+            title=f"{_CR1_TITLE} table",
+            owner=module.module_id,
+            state="absent",
+            kind="dense",
+            note=f"Absent: {note}.",
+        )
+        chart = ChartSpec(kind="na", series=(), table_twin=twin, marks=(), unit="x", reason=note)
+        return (Figure(fig_id="CR.1", title=_CR1_TITLE, chart=chart, placement="beside"),)
+    repeated = {label for label, n in Counter(row.label for row in drawn).items() if n > 1}
+    points: list[_ChartPoint] = []
+    for row in drawn:
+        for series, field, companions, strict in (
+            ("Threshold", "threshold", ("comparison",), True),
+            ("Current", "current", ("cp_1_metric", "test_on_cp_1_metric"), False),
+            ("Headroom", "headroom", ("headroom_share", "test_on_cp_1_metric"), False),
+        ):
+            category = f"{row.label} ({row.row_id})" if row.label in repeated else row.label
+            points.append(
+                _ChartPoint(
+                    series,
+                    category,
+                    fact_id(row.row_id, field),
+                    tuple(fact_id(row.row_id, name) for name in companions),
+                    strict_text=strict,
+                )
+            )
+    return (
+        _figure_of_points(
+            block_id,
+            module,
+            refs,
+            fig_id="CR.1",
+            title=_CR1_TITLE,
+            kind="bullet",
+            unit_class="multiple",
+            unit="x",
+            series=("Threshold", "Current", "Headroom"),
+            points=tuple(points),
+            placement="beside",
+            summary=note,
+        ),
+    )
+
+
+# -- group b (RV.3, CR.1) --
+register_figure_producer("peer-positioning", _rv3_figures, pathways=frozenset({"relative_value"}))
+register_figure_producer(
+    "covenant-tests-headroom", _cr1_figures, pathways=frozenset({"covenant_refinancing"})
 )

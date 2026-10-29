@@ -31,3 +31,15 @@
 **Probe:** `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/g2scope-review/probe_rev3_pointers.py` exits 0. It reads oracle copies I extracted from `731059f` into the `charts731/` folder next to it.
 
 Not verified: nothing was rendered, and I did not compare `build` output on `s3-int` to the oracles. I did not run the `cp1-model` positive run, so I have not seen that `capital-structure` gets non-empty bound facts (T4.17 has 0 facts per the Q-C9 note; it rests on T4.18 and `pro-forma`). I did not check that S.5 renders for a `("CP-1","CP-MODEL")` run on `s3-int`.
+
+## Scoped re-review of d737d8f
+
+**Scoped re-review of `d737d8f`: APPROVE.** M1 is fixed, the two Lows are fixed, and the fix adds nothing that blocks. I checked the diff against the earlier oracle reads only and ran no new probe.
+
+- **M1 (:384): fixed.** S.1-S.4 is now checked only on fields the strip oracle (`cases/charts/expected.json`) actually holds: figure order, title, unit and currency, series names, one category per quarter, values from `#/quarters` (a null value carries a `∅ G#` ref), and S.4's rows from `#/current_maturity_wall`. For mark text and the table twin, the test only checks that the twin's cells equal the mark texts (`test_cp1_chart_render.py:405-410`). The amendment now says plainly that these are not checked against an oracle and that no value is derived to fill the gap.
+- **L1 (:380, :382): fixed.** The fact-id rule now also accepts `fact_id`/`companion_fact_ids`, which the newer chart oracles use. The new "Refs" rule checks only that each mark's ref exists and matches its `data-ref` in the SVG; it does not compare refs with the oracle.
+- **L2 (:386): fixed.** The build base is now named as `claude/s3-int`, and a G2 build whose figures come out empty (`figures == ()`) is not done.
+
+New, Info only: at :384, "S.4's marks equal the `#/current_maturity_wall` rows" does not say which row field becomes the mark value. `outstanding_millions` is the obvious one, and the builder can name it. At the same line, `#/q4_trailing_basis` holds period dates, not amounts; it reads as the basis for the trailing-quarter point, which is harmless.
+
+Not verified: I did not render anything on `s3-int`, so it is unconfirmed that `build` produces the figures and values this rule expects.

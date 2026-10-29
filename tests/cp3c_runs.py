@@ -32,10 +32,10 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases/cp3c-owner"
 PINS = {
-    CASE / "builder/build.py": "e62f8e88b1ee4474f4e44d17722d044859b35eda5c91730039a55cfc202f950a",
+    CASE / "builder/build.py": "c4d9af183d2bc1e527d61e074e8a2085371b0347b3be9da7f65ba3cd3409f981",
     CASE / "expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
-    CASE / "manifest.json": "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",
-    CASE / "submissions.json": "8c2b08fa3a7022097aca03798b81a23fd678ba2654ff9ef970a4c02166c34e3c",
+    CASE / "manifest.json": "c63e531441397d9f600e164d3a8876f51b33a527aeb9a8a29a2ff3a59e656021",
+    CASE / "submissions.json": "eff5c4fb64452a8aa40a646f58772e6eb55767ea18db9ff54f2f47183d6e2b11",
 }
 CASES = ("positive", "gap_minimum_cash", "gap_no_repricing")
 TOKEN = re.compile(r"\{\{FACT:([^}]+)\}\}")
@@ -74,6 +74,17 @@ def cp0_text(pack: PreparedPack) -> str:
     document["consumers"] = [
         *document["consumers"],
         *oracle()["submissions"]["cp0_consumer_deltas"],
+    ]
+    return json.dumps(document, ensure_ascii=False)
+
+
+def cp1a_text(pack: PreparedPack) -> str:
+    """The S1 CP-1A business_context literal with the CP-3C consumer delta appended (CP-3C
+    consumes CP-1A, so the product requires it judged)."""
+    document = json.loads(s1a.literal("positive", "business_context", pack))
+    document["consumers"] = [
+        *document["consumers"],
+        *oracle()["submissions"]["cp1a_consumer_deltas"],
     ]
     return json.dumps(document, ensure_ascii=False)
 
@@ -133,10 +144,11 @@ def reach_cp2d(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
     workflow, pack = start(root)
     s1a.drive_cp0(workflow, pack, "positive", text=cp0_text(pack))
     drive_cp1(workflow, pack)
-    for outcome in (
-        s1a.drive_cp1a(workflow, pack, "positive"),
-        s1a.drive_cp2(workflow, "positive", s1a.read_cp2(workflow)),
+    for step in (
+        lambda: s1a.drive_cp1a(workflow, pack, "positive", text=cp1a_text(pack)),
+        lambda: s1a.drive_cp2(workflow, "positive", s1a.read_cp2(workflow)),
     ):
+        outcome = step()
         if outcome["status"] != "valid":
             raise RuntimeError(f"upstream not valid: {outcome['issues']}")
     return workflow, pack

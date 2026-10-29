@@ -29,7 +29,7 @@
     {
       "assert": [
         "remove the xfail marker (strict XPASS)",
-        "replace `assert [tab.label for tab in block.tabs] == [\"T2E.4\"]` and `assert block.tab_label != \"T2E.4\"` with `== [\"Maturity wall\"]` and `block.tab_label == \"Capital structure\"`: a tab label is the binding label (Binding.title), never the table id, so the written literal cannot pass",
+        "replace `assert [tab.label for tab in block.tabs] == [\"T2E.4\"]` and `assert block.tab_label != \"T2E.4\"` with the frozen labels: primary \"Capital structure\" (`block.tab_label`), tab \"Maturity wall\" (the T2E.4 binding label); intent unchanged, MODEL content first and T2E.4 not primary: a tab label is the binding label (Binding.title), never the table id, so the written literal cannot pass",
         "make_upstream's CP-1 head (cp1_module) has three T4.14 fields per period and T4.18 rows without facility_type, period_id and lease_classification, so cp1_chart_series raises ValueError on it; extend the fixture to the full chart identity of tests/test_financial_series.py fixture() (T4.14 rows with all _PERIOD_FIELDS, T4.10 metric rows, T4.18 required fields) or give S.4 its own entry point; the oracle pins the series either way",
         "block.figures[0] is S.4, kind 'grouped', series [label], one mark (label '2029-12-31', value Decimal('50'), text '50'); table twin cell '50'"
       ],
@@ -199,6 +199,7 @@
     "pathway": "covenant_refinancing",
     "primary_tab": {
       "label": "Capital structure",
+      "label_status": "inference from brief 04:31 (ruling 2026-10-29 item 5.5)",
       "module": "CP-1",
       "table_id": "T4.18"
     },

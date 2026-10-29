@@ -10,7 +10,11 @@
     },
     {
       "case": "threshold_is_text",
-      "expected": "T4.9.r01.threshold is a settled text cell '4.00x', not an amount: the mark reads it as the number 4.00 with no arithmetic. Raised as a question (the alternative amends CP-4)."
+      "expected": "T4.9.r01.threshold is a settled text cell '4.00x', not an amount: the mark carries the fact id and the settled text, read by the strict parse \\d+(\\.\\d+)?x with no arithmetic (value 4.00). CP-4 is not amended (ruling 2026-10-29 item 5.3)."
+    },
+    {
+      "case": "threshold_text_rejected",
+      "expected": "Any threshold text the strict parse rejects (for example '4.00', '>4.00x', '4,00x', '' or 'n/a') makes the Threshold mark a gap '∅ G#' with that reason, never 0 and never a guessed number; Current and Headroom marks are unaffected."
     },
     {
       "case": "current_is_cp1_fact",
@@ -66,9 +70,10 @@
               "fact_id": "T4.9.r01.threshold",
               "gap_reason": null,
               "gap_ref_pattern": null,
-              "numeric_reading": "settled text '4.00x' read as the number 4.00; no arithmetic",
+              "parse_rule": "\\d+(\\.\\d+)?x",
               "series": "Threshold",
               "settled_status": "known",
+              "settled_text": "4.00x",
               "shown": "4.00x",
               "state": "plotted"
             },
@@ -94,9 +99,10 @@
               "fact_id": "T4.9.r01.current",
               "gap_reason": null,
               "gap_ref_pattern": null,
-              "numeric_reading": null,
+              "parse_rule": null,
               "series": "Current",
               "settled_status": "known",
+              "settled_text": null,
               "shown": "1.00x",
               "state": "plotted"
             },
@@ -122,9 +128,10 @@
               "fact_id": "T4.9.r01.headroom",
               "gap_reason": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable",
               "gap_ref_pattern": "∅ G\\d+",
-              "numeric_reading": null,
+              "parse_rule": null,
               "series": "Headroom",
               "settled_status": "missing",
+              "settled_text": null,
               "shown": "∅ G#",
               "state": "gap"
             }
@@ -230,9 +237,10 @@
               "fact_id": "T4.9.r01.threshold",
               "gap_reason": null,
               "gap_ref_pattern": null,
-              "numeric_reading": "settled text '4.00x' read as the number 4.00; no arithmetic",
+              "parse_rule": "\\d+(\\.\\d+)?x",
               "series": "Threshold",
               "settled_status": "known",
+              "settled_text": "4.00x",
               "shown": "4.00x",
               "state": "plotted"
             },
@@ -258,9 +266,10 @@
               "fact_id": "T4.9.r01.current",
               "gap_reason": null,
               "gap_ref_pattern": null,
-              "numeric_reading": null,
+              "parse_rule": null,
               "series": "Current",
               "settled_status": "known",
+              "settled_text": null,
               "shown": "1.00x",
               "state": "plotted"
             },
@@ -286,9 +295,10 @@
               "fact_id": "T4.9.r01.headroom",
               "gap_reason": null,
               "gap_ref_pattern": null,
-              "numeric_reading": null,
+              "parse_rule": null,
               "series": "Headroom",
               "settled_status": "known",
+              "settled_text": null,
               "shown": "3.00x",
               "state": "plotted"
             }

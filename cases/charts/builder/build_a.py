@@ -331,6 +331,7 @@ METRICS = (  # brief 03:36 and T1C.3 field order
     "interest_coverage_adjusted",
     "ffo_to_debt",
 )
+PANEL_IDS = {"percent": "RV.3a", "multiple": "RV.3b"}  # ruling 2026-10-29 item 5.4
 PANELS = (  # one unit class per panel (ChartSpec has one unit_class; Q-C8 precedent: never mixed on one axis)
     ("percent", "%", ("adjusted_ebitda_margin", "ffo_to_debt")),
     ("multiple", "x", ("total_leverage_adjusted", "interest_coverage_adjusted")),
@@ -379,7 +380,8 @@ def rv3_case(case):
                     )
         panels.append(
             {
-                "fig_id": "RV.3",
+                "fig_id": PANEL_IDS[unit_class],
+                "caption": "Fig. RV.3",
                 "panel": unit_class,
                 "title": "Peer positioning",
                 "kind": "range",
@@ -492,8 +494,18 @@ def build_rv3():
             "kind": "dense",
             "state": "populated",
             "figures": [
-                {"fig_id": "RV.3", "panel": "percent", "placement": "above"},
-                {"fig_id": "RV.3", "panel": "multiple", "placement": "above"},
+                {
+                    "fig_id": "RV.3a",
+                    "caption": "Fig. RV.3",
+                    "panel": "percent",
+                    "placement": "above",
+                },
+                {
+                    "fig_id": "RV.3b",
+                    "caption": "Fig. RV.3",
+                    "panel": "multiple",
+                    "placement": "above",
+                },
             ],
             "primary_tab": "T1C.1",
             "tabs": ["T1C.8", "T1C.3", "T1C.4", "T1C.5"],
@@ -511,7 +523,7 @@ def build_rv3():
             {
                 "test_file": "tests/test_connect_cp1c.py (render)",
                 "assert": [
-                    "report_view.build(view, relative_value pathway, SHIPPED_MAPS) block 'peer-positioning': owner CP-1C, kind dense, state populated, figures fig_id 'RV.3' x2 (percent then multiple), tabs unchanged",
+                    "report_view.build(view, relative_value pathway, SHIPPED_MAPS) block 'peer-positioning': owner CP-1C, kind dense, state populated, figures fig_id 'RV.3a' (percent) then 'RV.3b' (multiple), both titled 'Peer positioning', caption Fig. RV.3, tabs unchanged",
                     "ChartSpec kind 'range' (ChartKind gains it; charts.py renders it); mark texts equal format_value of the panel unit_class; gap marks have value None and ref_id G<n>",
                     "table twin cell texts equal the mark texts, in point order, per panel",
                 ],
@@ -522,6 +534,7 @@ def build_rv3():
 
 # --- CR.1 ----------------------------------------------------------------------------------------
 
+THRESHOLD_TEXT = r"\d+(\.\d+)?x"  # strict parse of a settled threshold text; ruling item 5.3
 DIRECTION = {  # src/deploy_vii/cp4_legal.py:750-756 `_COMPARISON_TEXT`; design bullet direction max/min
     "Not more than": "ceiling",
     "Not less than": "floor",
@@ -559,13 +572,17 @@ def cr1_case(case):
                 if "amount" in fact:
                     exact = fact["amount"]
                 else:  # the threshold is a settled text cell '4.00x'; read as a coordinate, no arithmetic
-                    assert re.fullmatch(r"\d+(\.\d+)?x", fact["text"])
-                    exact = fact["text"][:-1]
-                    reading = (
-                        f"settled text {fact['text']!r} read as the number {exact}; no arithmetic"
-                    )
-                shown, state, gap_reason = spell(Decimal(exact), "multiple"), "plotted", None
-                assert fact.get("text", shown) == shown
+                    reading = fact["text"]
+                    if not re.fullmatch(THRESHOLD_TEXT, reading):
+                        exact = None  # strict parse rejects the text: a gap, never 0
+                    else:
+                        exact = reading[:-1]
+                if exact is None:
+                    shown, state = GAP, "gap"
+                    gap_reason = f"settled text {reading!r} is not a strict multiple"
+                else:
+                    shown, state, gap_reason = spell(Decimal(exact), "multiple"), "plotted", None
+                    assert fact.get("text", shown) == shown
             else:
                 exact, shown, state, gap_reason = None, GAP, "gap", fact["limitation"]
             companions = []
@@ -586,7 +603,8 @@ def cr1_case(case):
                     "companion_fact_ids": [c["fact_id"] for c in companions],
                     "state": state,
                     "settled_status": fact["status"],
-                    "numeric_reading": reading,
+                    "settled_text": reading,
+                    "parse_rule": THRESHOLD_TEXT if reading is not None else None,
                     "amount_exact": exact,
                     "shown": shown,
                     "gap_ref_pattern": GAP_PATTERN if state == "gap" else None,
@@ -685,7 +703,11 @@ def build_cr1():
             },
             {
                 "case": "threshold_is_text",
-                "expected": "T4.9.r01.threshold is a settled text cell '4.00x', not an amount: the mark reads it as the number 4.00 with no arithmetic. Raised as a question (the alternative amends CP-4).",
+                "expected": "T4.9.r01.threshold is a settled text cell '4.00x', not an amount: the mark carries the fact id and the settled text, read by the strict parse \\d+(\\.\\d+)?x with no arithmetic (value 4.00). CP-4 is not amended (ruling 2026-10-29 item 5.3).",
+            },
+            {
+                "case": "threshold_text_rejected",
+                "expected": "Any threshold text the strict parse rejects (for example '4.00', '>4.00x', '4,00x', '' or 'n/a') makes the Threshold mark a gap '\u2205 G#' with that reason, never 0 and never a guessed number; Current and Headroom marks are unaffected.",
             },
             {
                 "case": "current_is_cp1_fact",
@@ -883,7 +905,12 @@ def build_s4fp04():
             "state": "populated",
             "route_label": None,
             "figures": [{"fig_id": "S.4", "placement": "above"}],
-            "primary_tab": {"module": "CP-1", "table_id": "T4.18", "label": "Capital structure"},
+            "primary_tab": {
+                "module": "CP-1",
+                "table_id": "T4.18",
+                "label": "Capital structure",
+                "label_status": "inference from brief 04:31 (ruling 2026-10-29 item 5.5)",
+            },
             "tabs": [{"module": "CP-2D", "table_id": "T2E.4", "label": "Maturity wall"}],
             "strip_figures": {"maturity-wall": [["S.4", "Maturity wall", None]]},
         },
@@ -892,7 +919,7 @@ def build_s4fp04():
                 "test_file": "tests/test_connect_cp2d.py::test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab",
                 "assert": [
                     "remove the xfail marker (strict XPASS)",
-                    'replace `assert [tab.label for tab in block.tabs] == ["T2E.4"]` and `assert block.tab_label != "T2E.4"` with `== ["Maturity wall"]` and `block.tab_label == "Capital structure"`: a tab label is the binding label (Binding.title), never the table id, so the written literal cannot pass',
+                    'replace `assert [tab.label for tab in block.tabs] == ["T2E.4"]` and `assert block.tab_label != "T2E.4"` with the frozen labels: primary "Capital structure" (`block.tab_label`), tab "Maturity wall" (the T2E.4 binding label); intent unchanged, MODEL content first and T2E.4 not primary: a tab label is the binding label (Binding.title), never the table id, so the written literal cannot pass',
                     "make_upstream's CP-1 head (cp1_module) has three T4.14 fields per period and T4.18 rows without facility_type, period_id and lease_classification, so cp1_chart_series raises ValueError on it; extend the fixture to the full chart identity of tests/test_financial_series.py fixture() (T4.14 rows with all _PERIOD_FIELDS, T4.10 metric rows, T4.18 required fields) or give S.4 its own entry point; the oracle pins the series either way",
                     "block.figures[0] is S.4, kind 'grouped', series [label], one mark (label '2029-12-31', value Decimal('50'), text '50'); table twin cell '50'",
                 ],

@@ -40,7 +40,7 @@
     },
     {
       "assert": [
-        "report_view.build(view, relative_value pathway, SHIPPED_MAPS) block 'peer-positioning': owner CP-1C, kind dense, state populated, figures fig_id 'RV.3' x2 (percent then multiple), tabs unchanged",
+        "report_view.build(view, relative_value pathway, SHIPPED_MAPS) block 'peer-positioning': owner CP-1C, kind dense, state populated, figures fig_id 'RV.3a' (percent) then 'RV.3b' (multiple), both titled 'Peer positioning', caption Fig. RV.3, tabs unchanged",
         "ChartSpec kind 'range' (ChartKind gains it; charts.py renders it); mark texts equal format_value of the panel unit_class; gap marks have value None and ref_id G<n>",
         "table twin cell texts equal the mark texts, in point order, per panel"
       ],
@@ -51,7 +51,8 @@
     "gap": {
       "chart_series": [
         {
-          "fig_id": "RV.3",
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3a",
           "kind": "range",
           "panel": "percent",
           "points": [
@@ -342,7 +343,8 @@
           "unit_class": "percent"
         },
         {
-          "fig_id": "RV.3",
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3b",
           "kind": "range",
           "panel": "multiple",
           "points": [
@@ -857,7 +859,8 @@
     "positive": {
       "chart_series": [
         {
-          "fig_id": "RV.3",
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3a",
           "kind": "range",
           "panel": "percent",
           "points": [
@@ -1202,7 +1205,8 @@
           "unit_class": "percent"
         },
         {
-          "fig_id": "RV.3",
+          "caption": "Fig. RV.3",
+          "fig_id": "RV.3b",
           "kind": "range",
           "panel": "multiple",
           "points": [
@@ -1817,12 +1821,14 @@
     "block_id": "peer-positioning",
     "figures": [
       {
-        "fig_id": "RV.3",
+        "caption": "Fig. RV.3",
+        "fig_id": "RV.3a",
         "panel": "percent",
         "placement": "above"
       },
       {
-        "fig_id": "RV.3",
+        "caption": "Fig. RV.3",
+        "fig_id": "RV.3b",
         "panel": "multiple",
         "placement": "above"
       }

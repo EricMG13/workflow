@@ -209,6 +209,7 @@ Prepared for `docs/rulings/2026-10-29-stage3.md` item 2 on the release base `ab9
 - `banner` is a mapping outcome to literal. A scope carries a banner only for an outcome it supports. A receipt whose outcome the scope does not support is refused with an `owner_render_*` code, exactly as an unmatched scope is.
 - **Empty `sections` is valid.** Four rows are rails-only (`slice-cp2e-sensitivity`, `slice-cpdr-research`, `slice-cpl10-screen`, and CP-5's share of the gated R6 row). Their proof is the rail proof alone; `render-receipt.json` records `sections == []`. The "complete requires every assigned block populated" rule holds vacuously.
 - **Blocked heads stay refused (Q6, M1).** Each oracle's `blocked`, `*_blocked` and `begin_refused_*` cases produce a blocked head or a refused begin on a blocked upstream. They are not scope outcomes. G2 raises `owner_render_*` on them, and each new scope's acceptance asserts that for every such case its driver offers.
+- **Model rule (overrides body `:59`).** `complete` requires `receipt.model` set and published if and only if `"CP-MODEL" in requested_modules`. Otherwise it requires `receipt.model is None` and no publication directory. A model or directory where none is expected is refused with an `owner_render_*` code.
 - **Refused outcome (M1 applied per scope).** A scope supports `refused` only where its oracle pins a refused run (`cases.refused`: one `RefusedBegin`, heads `["CP-0"]`, no model) **and** its run driver can produce it. The driver condition is new: acceptance imports the driver (M2) and G2 never builds a run. Where the oracle pins a refused run but `CASES` lacks it, the outcome is deferred and listed in R2.5.
 
 ### R2.2 Scope table (keyed by `scope_id`)
@@ -232,7 +233,7 @@ Prepared for `docs/rulings/2026-10-29-stage3.md` item 2 on the release base `ab9
 | `cp2d-fp04-liquidity` | covenant_refinancing | `("CP-1","CP-1A","CP-2","CP-2D")` | `liquidity-runway`, `funding-gap` | positive, long_horizon, gap_minimum_cash | none | ready |
 | `cp3c-fp04-refinancing` | covenant_refinancing | `("CP-1","CP-1A","CP-2","CP-2D","CP-3C")` | `funding-gap`, `refinancing-paths`, `lme-creditor-exposure` | positive, gap_minimum_cash, gap_no_repricing | none | gated: Q-C2 wiring and oracle re-pin (D2) |
 | `cp4-fp04-covenants` | covenant_refinancing | `("CP-4",)` | `covenant-tests-headroom`, `red-flags`, `lender-protection-score`, `capacity`, `ebitda-definition`, `documents-structure` | positive, gap, gap_false_same_definition | none | ready |
-| `cp8-fp01-what-changed` | credit_snapshot | `("CP-8",)` | `what-changed` | positive, no_outcome | deferred (R2.5) | ready |
+| `cp8-fp01-what-changed` | credit_snapshot | `("CP-8",)` | `what-changed` | positive, no_outcome | no_record | ready |
 | `slice-cp2e-sensitivity` | credit_snapshot | `("CP-2E",)` | none (rails and module page) | positive, gap_no_facility_schedule | none | ready |
 | `slice-cpdr-research` | credit_snapshot | `("CP-DR",)` | none (rails) | partial, unresolved, empty_agenda | none | ready |
 | `slice-cpl10-screen` | credit_snapshot | `("CP-L10",)` | none (rails) | positive, limited | deferred (R2.5) | ready |
@@ -253,7 +254,7 @@ Style as rev 0: what the scope covers, then that the rest remains unqualified. N
 |---|---|---|
 | `cp3-fp01-relative-value` | complete | Relative value only: the instrument preference set against the observed market evidence. Every other block on this page, including committee challenge, integrity review and the remaining analytical owners, remains unqualified. |
 | `cp6-fp01-committee` | complete | Committee challenge only: the action bias and the challenge to thesis, strengths and weaknesses, resting on the integrity review. Every other block on this page, including relative value and the remaining analytical owners, remains unqualified. |
-| `cp1c-fp03-peers` | complete | Peer positioning only: the issuer against a synthetic peer set. Every other block on this page remains unqualified. |
+| `cp1c-fp03-peers` | complete | Peer positioning only. Every other block on this page remains unqualified. |
 | `cp1c-fp03-peers` | refused | Peer positioning did not run: an earlier owner was not authorized, so this owner never started. Every other block on this page remains unqualified. |
 | `cp3d-fp03-market` | complete | Market against fundamentals only: observed levels, price metrics and spread. Instrument levels, yield against maturity and the remaining blocks on this page remain unqualified. |
 | `cp1d-fp02-quality` | complete | Earnings quality and restated leverage only: the add-back assessment and leverage restated on supported earnings. Every other block on this page, including the headline results and the Model, remains unqualified. |
@@ -269,6 +270,7 @@ Style as rev 0: what the scope covers, then that the rest remains unqualified. N
 | `cp2d-fp04-liquidity` | complete | Liquidity runway and funding gap only. The maturity wall, covenant analysis, refinancing and the remaining blocks on this page remain unqualified. |
 | `cp3c-fp04-refinancing` | complete | Refinancing paths, the funding gap by maturity and creditor exposure under liability management only, built on the liquidity analysis. Covenant analysis and the remaining blocks on this page remain unqualified. |
 | `cp4-fp04-covenants` | complete | Covenant analysis only: tests and headroom, capacity, red flags, lender protection, the EBITDA definition and the document register. Liquidity, refinancing and the remaining blocks on this page remain unqualified. |
+| `cp8-fp01-what-changed` | refused | What changed since the last Report did not run: the readiness review refused this owner itself because no prior case was supplied. Every other block on this page remains unqualified. |
 | `cp8-fp01-what-changed` | complete | What changed since the last Report only: a comparison with the recorded prior case. Every other block on this page remains unqualified. |
 | `slice-cp2e-sensitivity` | complete | Macro and FX sensitivity only, on its module page with its evidence and limitations. No Front Page block on this page is qualified. |
 | `slice-cpdr-research` | complete | Local research agenda coverage only, shown as evidence and limitations. No Front Page block on this page is qualified. |
@@ -295,12 +297,12 @@ Style as rev 0: what the scope covers, then that the rest remains unqualified. N
 | `cp2d-fp04-liquidity` | `cp2d-owner/E#/fp04_render` (`blocks`, `rails`) with cell text from `#/cases/<c>/tables` | none | `cp2d_closed(case, root, template=None) -> (store, receipt)` `cp2d_runs.py:119` (pack `:47`) |
 | `cp3c-fp04-refinancing` | `cp3c-owner/E#/fp04_render` (to be re-pinned, D2) with `#/cases/<c>/tables` | none | `cp3c_closed(case, root, template) -> (store, receipt)` `cp3c_runs.py:178` (pack `:63`; `template` from `reach_cp2d`) |
 | `cp4-fp04-covenants` | `cp4-owner/E#/render` (`sections`, `evidence_rail_tables`, `limitations_rail_tables`, `displayed_literals/<positive or gap>`, `limitations_rail_module_limitations`) with cases at `#/positive`, `#/gap`, `#/gap_false_same_definition` | none | `cp4_closed(case, root, *, template=None) -> (store, receipt, None)` `cp4_runs.py:149` (pack `test_method_cp4.py:89` via `cp4_runs.py:50`) |
-| `cp8-fp01-what-changed` | `cp8-owner/E#/render` (`blocks`, `rails`, `lines_positive`) with `#/cases/<c>` | oracle `#/refused/no_record` exists, driver lacks it | `cp8_closed -> (OwnerWorkflow, PreparedPack)` `cp8_runs.py:127` (pack `:42`): returns the settled workflow, so the test writes the receipt with `workflow.write_receipt` as `cpl10_closed` does (`cpl10_runs.py:175`) |
+| `cp8-fp01-what-changed` | `cp8-owner/E#/render` (`blocks`, `rails`, `lines_positive`) with `#/cases/<c>` | `cp8-owner/E#/refused/no_record` | complete: `cp8_closed -> (OwnerWorkflow, PreparedPack)` `cp8_runs.py:127` (pack `:42`) returns the settled workflow, so the test writes the receipt with `workflow.write_receipt` as `cpl10_closed` does (`cpl10_runs.py:175`). Refused: `cp8_runs.start("no_record", root)` (`cp8_runs.py:94`) then `workflow.write_receipt`, as `tests/test_owner_cp8.py:121-130` |
 | `slice-cp2e-sensitivity` | `cp2e-owner/E#/render` (`module_page`, `evidence rail`, `limitations rail`) and `#/cases/<c>/module_tables` | none | `cp2e_closed -> (store, receipt)` `cp2e_runs.py:146` (pack `:44`) |
 | `slice-cpdr-research` | `cpdr-owner/E#/evidence_rail`, `#/limitations_rail` (rails); `#/rendering` pins the surrounding page and is not asserted by G2 | none | `cpdr_closed -> (store, receipt)` `cpdr_runs.py:128` (pack `:43`) |
 | `slice-cpl10-screen` | `cpl10-owner/E#/rendered/rails` | oracle `#/refused` exists, driver lacks it | `cpl10_closed -> (store, receipt)` `cpl10_runs.py:169` (pack `:40`) |
 
-Deferred refused outcomes (oracle pins a refused run, driver cannot yet run it): `cp1d-fp02-quality` (`cp1d_runs.py:26` `CASES`), `cp8-fp01-what-changed`, `slice-cpl10-screen`. Each gets a banner and the outcome in one later amendment when its driver gains the case; until then a refused receipt for these triples raises `owner_render_*`. This is M1 applied: no outcome without a pinned run **and** a driver.
+Deferred refused outcomes (oracle pins a refused run, driver cannot yet run it): `cp1d-fp02-quality` (`cp1d_runs.py:26` `CASES`) and `slice-cpl10-screen`. Each gets a banner and the outcome in one later amendment when its driver gains the case; until then a refused receipt for these triples raises `owner_render_*`. This is M1 applied: no outcome without a pinned run **and** a driver.
 
 ### R2.6 Disagreements between a lease, the oracle, the code and the rulings
 
@@ -313,7 +315,7 @@ Deferred refused outcomes (oracle pins a refused run, driver cannot yet run it):
 | D5 | CP-DR lease `:185`: "a new scope entry, sections Evidence and Limitations only", no id. The brief recorded CP-DR as "none per Q1"; no "Q1" text exists in `CPDR-OWNER-LEASE.md`, and the other leases' "Q1" are unrelated. | CP-DR gets a rails-only row `slice-cpdr-research` as its lease says. The oracle's full-page pin (`#/rendering`: every block `not_in_pathway` or `absent`, wording the lease calls false for an override slice) stays the CP-DR test's business; the banner says no Front Page block is qualified. **Question Q-S1 below.** |
 | D6 | CP-4 lease `:200` and the oracle list the six sections in oracle order. | Pathway order (R2.2). |
 | D7 | Drivers return different shapes (`cp1d_closed`, `cp2d_closed`, `cp3c_closed`, `cp2e_closed`, `cp3d_closed`, `cpdr_closed`, `cpl10_closed` return two paths; `cp8_closed` returns a workflow; `cp2d_closed` and `cp3c_closed` take a template). Leases quote `(store, receipt, None)` for several. | Drivers are unchanged (M2: G2 imports, never re-implements). The shape is recorded per row in R2.5 and the G2 test adapts it. |
-| D8 | CP-1D, CP-8 and CP-L10 oracles pin refused runs but their `CASES` lack them (R2.5). Lease rows (`CP1D-OWNER-LEASE.md:47`) name no outcomes. | Outcome deferred, not guessed. |
+| D8 | CP-1D and CP-L10 oracles pin refused runs but their `CASES` lack them (R2.5). CP-8's `no_record` is driven by `cp8_runs.start`, so CP-8 supports `refused`. Lease rows (`CP1D-OWNER-LEASE.md:47`) name no outcomes. | Outcome deferred, not guessed. |
 | D9 | CP-2G lease `:166` and CP-1D lease `:47` omit `case_kind`; CP-3 and CP-4 leases name no scope. | `case_kind="synthetic"` for all rows, from each pack's Run (R2.7). |
 
 ### R2.7 Gate evidence (script run on `ab9777f`; rerun it, do not trust this table)
@@ -329,7 +331,7 @@ Rev 1's list (1-7) applies to `cp1-model` and `s1a-credit-snapshot` unchanged. F
 
 1. **Block check.** For each assigned section and each complete case: the five fields title, owner, kind, state and tabs (table id, label, rows and cells with `fact_id`, `field`, `shown`, `state`) equal the oracle block; `numbered`, `summary` and `lines` where the oracle has them (`cp3`, `cp6`, `cp8`). Gap cells match the `∅ G#` pattern and G numbers are sequential in report order. The render-receipt `sections` are exactly the row's ids in pathway order, and their bound-fact hashes equal the receipt heads.
 2. **Rails.** Every table in the oracle's `evidence` and `limitations` rails is on its module's payload, and module limitations equal the oracle's (own, settled and inherited, as the oracle splits them).
-3. **Outcomes.** Each complete case yields outcome `complete` with the row's banner; where the row supports `refused`, that case yields `refused` with its banner, blocks show their `not_run`-family state (`report_view.py:1304-`) with no bound facts, and there is no publication; every other outcome raises.
+3. **Outcomes.** Each complete case yields outcome `complete` with the row's banner; where the row supports `refused`, that case yields `refused` with its banner, blocks show their `not_run`-family state (`report_view.py:1304-`) with no bound facts, and there is no publication; every other outcome raises. The block state on the refused page comes from the core `report_view` honest-state code on purpose, since G2 does not own it; the test takes the producer ids from the oracle's `refused_begins` and `heads`, not from G2.
 4. **Blocked and unsupported.** Every `blocked`, `*_blocked` and `begin_refused_*` case the driver offers raises `owner_render_*`; so does a refused receipt on a row without `refused`.
 5. **Scope refusal.** A Run with an outside `requested_modules` (one module added, dropped, or reordered) is refused. The triple-uniqueness test of R2.3.
 6. **Banner.** Exactly one banner section carrying the row's literal for the outcome, `html.escape`d; the page minus the banner equals `render(view)`.
@@ -341,9 +343,8 @@ Rev 1's list (1-7) applies to `cp1-model` and `s1a-credit-snapshot` unchanged. F
 
 `CP-OS` (independent of G2, rulings item 1 Q2); `CP-1B` (its delivery is the unintegrated D1 `earnings_rendering`, not a G1 run, and `cases/earnings` is the D1 oracle); `CP-5` (shares the R6 row, D4); the `legal`, `connected`, `source`, `upstream` and `integrity` case sets (not owner runs or not G1 receipts). S1b (`CP-5` after the S1a modules) needs the G1 change of prerequisite 4 first.
 
-### R2.10 Questions for Modules
+### R2.10 Questions
 
-- **Q-S1.** Confirm CP-DR gets `slice-cpdr-research` (D5), contrary to the brief's "none per Q1".
-- **Q-S2.** Confirm the gated rows ship only after the Q-C2 wiring (D2) and the CP-6 core (D4), rather than shipping `cp3c-fp04-refinancing` now with `refinancing-paths` and `lme-creditor-exposure` only (that variant leaves `T3D.1` unasserted on `funding-gap`).
+Settled by rulings item 4 (`docs/rulings/2026-10-29-stage3.md` on the lane); no open questions here.
 
 Not verified: nothing was rendered or run through G2 (it does not exist); the banners are drafts; the oracle block trees were compared to the pathway order and key sets only, not to product output; for `cp3-fp01-relative-value` the CP-3 core was not run; the refused-run pins were read from oracle text, and the refused drivers (`cp1c`, `cp2a`, `cp2g`, `cp2h`, `cp4c`) were checked to list the case, not run.

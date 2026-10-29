@@ -731,6 +731,21 @@ CP0_CP3C = {
     "limitations": [LIMIT_FIN],
 }
 
+# --- CP-1A consumer entry (appended to the snapshot CP-1A literal's consumers) -------------------------
+# The product rule (business_context.cp1a_consumers) makes CP-1A judge every planned module that lists
+# it as an input, required or optional. CP-3C lists it as optional and does not read it (lease: the
+# CP-1A row of the optional-edge table, and the own limitation "business context (CP-1A unread)").
+CP1A_CP3C = {
+    "module_id": "CP-3C",
+    "status": "READY_WITH_LIMITATIONS",
+    "handoff_item": "None: the refinancing assessment does not read business and ownership context",
+    "why_it_matters": "Business and ownership context would inform the owner-support and asset-sale paths, which stay Insufficient Information without it",
+    "gap": "Business and ownership context is not read by the refinancing assessment",
+    "required_action": "State the owner-support and asset-sale paths as Insufficient Information and list business context as an own limitation",
+    "citations": [],
+    "flag_topics": [],
+}
+
 # --- expected tables --------------------------------------------------------------------------
 
 GAP_SHOWN = "∅ G#"
@@ -1276,11 +1291,12 @@ manifest = {
     "upstream_literals": {
         "CP-0": "cases/snapshot/submissions.json#positive.readiness_review with pack_sha256 bound at run time and cp0_consumer_deltas appended to consumers in order (CP-2D, then CP-3C)",
         "CP-1": "cases/snapshot/submissions.json#cp1_submission and #positive.cp1_source_context, except the readiness stage: submissions.json#cp1_downstream_review replaces the S1 {\"consumers\": []}",
-        "CP-1A": "cases/snapshot/submissions.json#positive.business_context",
+        "CP-1A": "cases/snapshot/submissions.json#positive.business_context with cp1a_consumer_deltas appended to consumers (CP-3C; the product rule business_context.cp1a_consumers counts CP-3C, whose optional CP-1A edge is unread)",
         "CP-2": "cases/snapshot/submissions.json#positive.credit_synthesis with {{FIG:name}} replaced as S1a lease rev 2 M2 freezes",
         "CP-2D": "cases/cp2d-owner/submissions.json#cp2d.positive (cases positive, gap_no_repricing) and #cp2d.gap_minimum_cash (case gap_minimum_cash), {{FACT:name}} bound by cases/cp2d-owner/manifest.json fact_bindings",
     },
     "cp0_consumer_deltas": "submissions.json#cp0_consumer_deltas",
+    "cp1a_consumer_deltas": "submissions.json#cp1a_consumer_deltas",
     "analyst_judgment_policy": "The margin step-up (or its absence) and the five path assessments are literal submission input. Text is digit-free; builder-checked against the oracle's own validator.",
     "fact_bindings": fact_bindings(),
     "fact_binding_note": "CP-1 predicates reuse the CP-2D forms and were observed read-only on a promoted CP-1 head (scratch copy of a CP-2D probe store, 2026-10-28; values listed as observed_on_promoted_head). The T4.18 text values SECURED, SENIOR are the head's, mapped from page 5 'senior secured term loan'. CP-2D facts are named by their stable ids. {{FACT:name}} tokens in basis_refs are replaced by the offered ref at run time (CP-1 fact id, or the CP-2D stable id).",
@@ -1316,8 +1332,9 @@ manifest = {
 
 submissions = {
     "schema_version": "cp3c-owner-submissions/1",
-    "note": "Literal analyst input only. {{FACT:name}} tokens are replaced by offered refs at run time (manifest.fact_bindings). CP-0, CP-1, CP-1A and CP-2 literals are those of cases/snapshot/submissions.json, the CP-2D step and the CP-2D CP-0 entry are those of cases/cp2d-owner/submissions.json, unchanged.",
+    "note": "Literal analyst input only. {{FACT:name}} tokens are replaced by offered refs at run time (manifest.fact_bindings). CP-0, CP-1, CP-1A and CP-2 literals are those of cases/snapshot/submissions.json (CP-0 and CP-1A with the consumer deltas below appended), the CP-2D step and the CP-2D CP-0 entry are those of cases/cp2d-owner/submissions.json, unchanged.",
     "cp0_consumer_deltas": [CP0_CP2D, CP0_CP3C],
+    "cp1a_consumer_deltas": [CP1A_CP3C],
     "cp3c": SUBS,
     "cp3c_blocked": {
         "note": "Attempt 0 and attempt 1 are both invalid, so CP-3C settles blocked. Each attempt is a full literal payload (the same as refusal_inputs.step_up_over_limit and .step_up_negative); attempt 1 is begun with repair_of set.",

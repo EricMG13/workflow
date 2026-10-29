@@ -448,3 +448,4 @@
 - 10:52 G2 rev 2 FROZEN b6730b7 (L3-L5 applied). G2 builder dispatched (mx-feature a9d0477b, ../s3-g2 from b6730b7; brief work/build/stage3/g2-brief.md).
 - 10:53 Oracle preparer B rulings applied 0448be2 (DR.6 per-case text, CP-4C d7 prose via builder, CR.2 deviation). Merged A+B on claude/s3-oracles 6288196 (PINS.json 86 paths, --check 0). Independent oracle review: half A mx-precise a1ce38fb, half B mx-precise a802522e.
 - 10:58 Oracle review half B REVISE (a802522e): H1 DR.3-5 marks vs ChartSpec 0dp text rule; M1 DR.6 positive G# vs ruling 6.5; L1-L5. Rulings item 8 (decimals seam change, per-case DR.6 ref). Fix round 1 to preparer B a1775e03 on claude/s3-orc-b.
+- 10:59 Oracle review half A REVISE (a1ce38fb): M1 S.5 on FP-02 unstated; L1-L5; I1 to owner. Rulings item 9 (S.5 not on FP-02; chart-seam feasibility in scope; CP-1C prose via builder). Fix round 1 to preparer A a17dc994 on claude/s3-orc-a.

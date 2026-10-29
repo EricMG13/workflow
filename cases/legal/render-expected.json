@@ -2985,7 +2985,127 @@
         "sha256": "888698b075d80892d04ef2346df9705141b05ca9bece8b8760c30469de7ff2a8",
         "scope": "Fixture descriptor only; not actual settled Module digest"
       },
-      "fixture_input_descriptor_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa"
+      "fixture_input_descriptor_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa",
+      "cr1_figure": {
+        "block_id": "covenant-tests-headroom",
+        "fig_id": "CR.1",
+        "placement": "beside",
+        "chart_kind": "bullet",
+        "unit_class": "multiple",
+        "unit": "x",
+        "series": [
+          "Threshold",
+          "Current",
+          "Headroom"
+        ],
+        "block_kind": "dense",
+        "block_state": "populated",
+        "tab_label": null,
+        "tabs": [],
+        "marks": [
+          {
+            "series": "Threshold",
+            "category": "Maintenance leverage test",
+            "fact_id": "T4.9.r01.threshold",
+            "amount_exact": "4.00",
+            "shown": "4.00x",
+            "state": "plotted",
+            "settled_status": "known",
+            "companions": [
+              {
+                "fact_id": "T4.9.r01.comparison",
+                "label": "Comparison",
+                "shown": "Not more than"
+              }
+            ],
+            "settled_text": "4.00x",
+            "parse_rule": "\\d+(\\.\\d+)?x"
+          },
+          {
+            "series": "Current",
+            "category": "Maintenance leverage test",
+            "fact_id": "T4.9.r01.current",
+            "amount_exact": "1",
+            "shown": "1.00x",
+            "state": "plotted",
+            "settled_status": "known",
+            "companions": [
+              {
+                "fact_id": "T4.9.r01.cp_1_metric",
+                "label": "CP-1 metric",
+                "shown": "Reported net leverage; fixture supplied comparator"
+              },
+              {
+                "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                "label": "Test on CP-1 metric",
+                "shown": "Within threshold on the CP-1 metric"
+              }
+            ]
+          },
+          {
+            "series": "Headroom",
+            "category": "Maintenance leverage test",
+            "fact_id": "T4.9.r01.headroom",
+            "amount_exact": "3",
+            "shown": "3.00x",
+            "state": "plotted",
+            "settled_status": "known",
+            "companions": [
+              {
+                "fact_id": "T4.9.r01.headroom_share",
+                "label": "Headroom share",
+                "shown": "75.0%"
+              },
+              {
+                "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                "label": "Test on CP-1 metric",
+                "shown": "Within threshold on the CP-1 metric"
+              }
+            ]
+          }
+        ],
+        "mark_texts": [
+          "4.00x",
+          "1.00x",
+          "3.00x"
+        ],
+        "table_twin": {
+          "columns": [
+            "Value"
+          ],
+          "rule": "cell texts equal the mark texts in order",
+          "rows": [
+            {
+              "row": 0,
+              "cell": "4.00x",
+              "label_parts": [
+                "Threshold · Maintenance leverage test",
+                "Comparison: Not more than"
+              ]
+            },
+            {
+              "row": 1,
+              "cell": "1.00x",
+              "label_parts": [
+                "Current · Maintenance leverage test",
+                "CP-1 metric: Reported net leverage; fixture supplied comparator",
+                "Test on CP-1 metric: Within threshold on the CP-1 metric"
+              ]
+            },
+            {
+              "row": 2,
+              "cell": "3.00x",
+              "label_parts": [
+                "Headroom · Maintenance leverage test",
+                "Headroom share: 75.0%",
+                "Test on CP-1 metric: Within threshold on the CP-1 metric"
+              ]
+            }
+          ]
+        },
+        "source": "Values from this fixture's T4.9 r01 settled facts (fixture.shared_rows[2] plus this case's overrides) under the rules of cases/charts/cr1-expected.json (cases.gap and cases.positive; adversarial cases threshold_is_text, direction_not_inferred, no_legal_conclusion); the category is the fixture row label, not the cp4-owner case's",
+        "gap_ref_rule": null
+      }
     },
     {
       "case_id": "legal-current-missing-ebitda-definition",
@@ -3107,7 +3227,129 @@
         "sha256": "f058238d321228687e841dd8d0875ebdd048cf701197dab09e0779ed8bf6b3db",
         "scope": "Fixture descriptor only; not actual settled Module digest"
       },
-      "fixture_input_descriptor_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa"
+      "fixture_input_descriptor_sha256": "25e34aa63ac64d38bdb0fcb6a284ae9451eefe3a6681ea62ad0d14fd2b5a95aa",
+      "cr1_figure": {
+        "block_id": "covenant-tests-headroom",
+        "fig_id": "CR.1",
+        "placement": "beside",
+        "chart_kind": "bullet",
+        "unit_class": "multiple",
+        "unit": "x",
+        "series": [
+          "Threshold",
+          "Current",
+          "Headroom"
+        ],
+        "block_kind": "dense",
+        "block_state": "populated",
+        "tab_label": null,
+        "tabs": [],
+        "marks": [
+          {
+            "series": "Threshold",
+            "category": "Maintenance leverage test",
+            "fact_id": "T4.9.r01.threshold",
+            "amount_exact": "4.00",
+            "shown": "4.00x",
+            "state": "plotted",
+            "settled_status": "known",
+            "companions": [
+              {
+                "fact_id": "T4.9.r01.comparison",
+                "label": "Comparison",
+                "shown": "Not more than"
+              }
+            ],
+            "settled_text": "4.00x",
+            "parse_rule": "\\d+(\\.\\d+)?x"
+          },
+          {
+            "series": "Current",
+            "category": "Maintenance leverage test",
+            "fact_id": "T4.9.r01.current",
+            "amount_exact": "1",
+            "shown": "1.00x",
+            "state": "plotted",
+            "settled_status": "known",
+            "companions": [
+              {
+                "fact_id": "T4.9.r01.cp_1_metric",
+                "label": "CP-1 metric",
+                "shown": "Reported net leverage; fixture supplied comparator"
+              },
+              {
+                "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                "label": "Test on CP-1 metric",
+                "shown": "Not calculable"
+              }
+            ]
+          },
+          {
+            "series": "Headroom",
+            "category": "Maintenance leverage test",
+            "fact_id": "T4.9.r01.headroom",
+            "amount_exact": null,
+            "shown": "∅ G#",
+            "state": "gap",
+            "settled_status": "missing",
+            "companions": [
+              {
+                "fact_id": "T4.9.r01.headroom_share",
+                "label": "Headroom share",
+                "shown": "∅ G#"
+              },
+              {
+                "fact_id": "T4.9.r01.test_on_cp_1_metric",
+                "label": "Test on CP-1 metric",
+                "shown": "Not calculable"
+              }
+            ],
+            "gap_ref_pattern": "∅ G\\d+",
+            "gap_reason": "Not calculable: Whether the covenant definition is the CP-1 metric's is not determinable"
+          }
+        ],
+        "mark_texts": [
+          "4.00x",
+          "1.00x",
+          "∅ G#"
+        ],
+        "table_twin": {
+          "columns": [
+            "Value"
+          ],
+          "rule": "cell texts equal the mark texts in order",
+          "rows": [
+            {
+              "row": 0,
+              "cell": "4.00x",
+              "label_parts": [
+                "Threshold · Maintenance leverage test",
+                "Comparison: Not more than"
+              ]
+            },
+            {
+              "row": 1,
+              "cell": "1.00x",
+              "label_parts": [
+                "Current · Maintenance leverage test",
+                "CP-1 metric: Reported net leverage; fixture supplied comparator",
+                "Test on CP-1 metric: Not calculable"
+              ]
+            },
+            {
+              "row": 2,
+              "cell": "∅ G#",
+              "label_parts": [
+                "Headroom · Maintenance leverage test",
+                "Headroom share: ∅ G#",
+                "Test on CP-1 metric: Not calculable"
+              ]
+            }
+          ]
+        },
+        "source": "Values from this fixture's T4.9 r01 settled facts (fixture.shared_rows[2] plus this case's overrides) under the rules of cases/charts/cr1-expected.json (cases.gap and cases.positive; adversarial cases threshold_is_text, direction_not_inferred, no_legal_conclusion); the category is the fixture row label, not the cp4-owner case's",
+        "gap_ref_rule": "gap marks show '∅ G<n>'; n is run-time (cr1-expected gap_ref_pattern)"
+      }
     }
   ],
   "zero_vs_unknown": {
@@ -3566,5 +3808,14 @@
     "all_hashes_and_quotes_match_selected_supplied_pages": true,
     "no_product_imports": true,
     "no_legal_financial_engine_run": true
+  },
+  "cr1_builder_target": {
+    "test_file": "tests/test_legal_render.py",
+    "assert": [
+      "for each case, the covenant-tests-headroom block (kind dense, state populated, tab_label None, tabs ()) has exactly one figure with fig_id, placement, chart.kind, chart.series, chart.unit and chart.unit_class equal to cases[i].cr1_figure",
+      "chart.marks equal marks in order: series, text (the gap mark's text matches gap_ref_pattern), value Decimal(amount_exact) or None for the gap, fact via the T4.9 fact id; mark texts equal mark_texts",
+      "chart.table_twin rows: cell text equals the mark text in order; each row label starts with label_parts[0] and contains each later label_parts entry in order, plus the run-time ' [ref]' suffixes",
+      "no other legal block carries a figure or chart"
+    ]
   }
 }

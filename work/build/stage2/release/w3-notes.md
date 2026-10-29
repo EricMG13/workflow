@@ -19,3 +19,8 @@
 - **A1, view tree.** `cases/cp3c-owner/cp3c-view-tree.json` is outside the `cases/pins.py` patterns, which also applies to D's four trees. Decide at W3 whether view trees are pinned; the CP-1 slice convention applies.
 - **A1, open item.** `T2E.5.r05` and `r06` carry no currency in the CP-2D oracle. Only r04 and r07 were named. The release review checks whether r05 and r06 are monetary.
 - **A1, deferred.** `test_owner_cp4.py` and `test_probe_cp4.py` were stopped (slow genuine runs). They belong to Stage 5.
+- **A2 c824206.** Ruled: the CP-L10 lineage scope is the missing `change` and `change_pct` cells, which derive from both CP-1 labels. A not-applicable `change_pct` (zero start) and the count facts keep no lineage. Record it as round 5 item 22.
+- **A2 cascade.** The cp2g builder pins cp1d `expected.json` (293120368b5d… → 8880a2c59a92…). This moves the cp2g manifest (d69738e2… → e8469c68…), which the cp2h and cp4c builders pin. The chain must apply it.
+- **A2, lease text.** `CPL10-OWNER-LEASE.md` :13 ("Queued for a later revision", now done), :131 and :216 still say missing-change cells have no `derives_from`.
+- **A2, CP-3D blocked wording.** `cases/cp3d-owner/builder/build.py:1528` has the same "module blocked, no head" wording that round 2 item 8 fixed for CP-2E. Ruled: apply the same wording at W3 if CP-3D's blocked case really holds a blocked head in the store. Otherwise leave it and report.
+- **View trees.** `cases/pins.py` PATTERNS covers only `manifest`, `submissions` and `expected`. Ruled: add `cases/*-owner/*-view-tree.json`, so the six committed trees are frozen like the oracles they mirror.

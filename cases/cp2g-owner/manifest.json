@@ -254,7 +254,7 @@
  "upstream_fact_selection": {
   "CP-2A": {
    "head": "the settled CP-2A head of the run",
-   "scenario": "T2B.1.<row>.ebitda_decline and T2B.1.<row>.interest_increase of the row named by downside.scenario",
+   "scenario": "T2B.1.<row>.name, T2B.1.<row>.ebitda_decline and T2B.1.<row>.interest_increase of the row named by downside.scenario",
    "breaks": "T2B.6.<row>.{origin,test,level,required_decline,outcome} for every row of the register, in register order",
    "fact_ids": "literal (table.row.field assigned by CP-2A); read from cases/cp2a-owner/expected.json cases.positive (pinned)"
   },

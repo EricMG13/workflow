@@ -26,6 +26,7 @@ from typing import Any
 import cp2g_runs as runs
 import pytest
 import test_method_cp2g as stage1
+import view_tree
 from defect_classes import model_text_failures
 from s1a_runs import clone_workflow
 from test_connect_cp2g import CP2G_VERBATIM
@@ -197,6 +198,7 @@ def test_a1_one_ok_read_and_no_ok_pack_call_in_the_cp2g_step(positive: Closed) -
     assert all(c.status != "ok" and c.error_code == "not_permitted" for c in calls)
     keys = runs.oracle()["manifest"]["tool_use"]["view_tree_draft"]["keys"]
     assert list(json.loads(reads[0].body)) == list(keys)
+    view_tree.check("cp2g", "positive", reads[0].body)
     store = _verify(positive)
     quotes = {
         c.quote for h in store.read().heads for f in store.head_module(h).facts for c in f.citations
@@ -272,11 +274,6 @@ def test_a2c_blocked_run_leaves_a_blocked_head_and_a_verifying_receipt(blocked: 
     assert (read.status, read.facts) == ("blocked", ())
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="release item: the blocked run requests CP-2G alone, so v13's rationale (which names "
-    "the CP-1D supported leverage) is also an unresolved reference; the oracle lists High alone",
-)
 def test_a2c_blocked_attempt_1_limitations_equal_the_oracle(blocked: Closed) -> None:
     store = _verify(blocked)
     module = store.head_module(_head(store, MODULE))

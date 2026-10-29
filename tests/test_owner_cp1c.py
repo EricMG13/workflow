@@ -29,6 +29,7 @@ from typing import Any
 import cp1c_runs as runs
 import pytest
 import test_method_cp1c as stage1
+import view_tree
 from defect_classes import model_text_failures
 from s1a_runs import clone_workflow
 from test_connect_cp1c import CP1C_VERBATIM, assert_equals_oracle, assert_fp03_cells
@@ -226,6 +227,7 @@ def test_a1_tool_use_is_one_read_and_the_cited_pages(
     assert len(reads) == 1
     assert reads[0].inputs_sha256 == hashlib.sha256(reads[0].body.encode()).hexdigest()
     assert list(json.loads(reads[0].body)) == VIEW_KEYS
+    view_tree.check("cp1c", case, reads[0].body)
     store = _verify(closed)
     quotes = {
         c.quote for h in store.read().heads for f in store.head_module(h).facts for c in f.citations

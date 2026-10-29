@@ -744,9 +744,10 @@ class _Book:
         self.by_id[fact.fact_id] = cell
 
     def lineage(self, derives: Sequence[str], own: Sequence[Citation] = ()) -> tuple[Citation, ...]:
-        """Own citations, then those of each own derived fact, ordered and de-duplicated; the
-        `cp1:`/`cp2g:` facts' citations are appended at run time. A known fact never derives
-        from an unsettled fact."""
+        """Own citations, then those of each own derived fact, ordered and de-duplicated; a
+        derived fact keeps one citation per (source, page), the first in that order (rulings
+        stage2 round 3 item 3); the `cp1:`/`cp2g:` facts' citations are appended at run time. A
+        known fact never derives from an unsettled fact."""
         out = list(own)
         for ref in derives:
             if ref.startswith(("cp1:", "cp2g:")):
@@ -755,7 +756,8 @@ class _Book:
             if cell.fact.status != "known":
                 raise ValueError(f"CP-2H: a known fact derives from the unsettled fact {ref}")
             out += cell.fact.citations
-        return tuple(dict.fromkeys(out))
+        cites = tuple(dict.fromkeys(out))
+        return _one_per_page(cites) if derives else cites
 
     def number(
         self,
@@ -2012,6 +2014,15 @@ class RatingTriggersReport(Contract):
     facts: tuple[Fact, ...]
     claims: tuple[ModuleClaim, ...]
     limitations: tuple[Text, ...]
+
+
+def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
+    """One Citation per (source, page), quoting the first input quote on that page, in input
+    order. No quote is invented."""
+    first: dict[tuple[str, str], Citation] = {}
+    for citation in citations:
+        first.setdefault((citation.source_id, citation.locator), citation)
+    return tuple(first.values())
 
 
 _UPSTREAM_REF = ("cp1:", "cp2g:")

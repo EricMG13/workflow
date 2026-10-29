@@ -1313,8 +1313,9 @@ class _Book:
 
     def cells(self, upstream: Mapping[str, Fact]) -> tuple[Cell, ...]:
         """Settle the lineage citations (expected.lineage_rule): a quoted cell cites its quotes;
-        a calculated cell the ordered, de-duplicated citations of the facts it derives from. A
-        known fact never derives from a fact that is not known."""
+        a calculated cell has one Citation per (source, page), the first quote on that page among
+        the citations of the facts it derives from, in derives_from order (rulings stage2 round
+        3 item 3). A known fact never derives from a fact that is not known."""
         memo: dict[str, tuple[Citation, ...]] = {}
 
         def cited(fid: str, trail: tuple[str, ...]) -> tuple[Citation, ...]:
@@ -1326,12 +1327,12 @@ class _Book:
             out: list[Citation] = list(d.quoted)
             if not d.quoted and d.fact.value_class == "calculated":
                 for dep in d.derives:
-                    more = (
+                    out += (
                         upstream[dep].citations
                         if dep.startswith(_UPSTREAM)
                         else cited(dep, (*trail, fid))
                     )
-                    out += [c for c in more if c not in out]
+                out = list(_one_per_page(out))
             memo[fid] = tuple(out)
             return memo[fid]
 
@@ -1350,6 +1351,15 @@ class _Book:
             shown = fact_spelling(fact, None)[2] if fact.status == "known" else None
             out.append(Cell(fact=fact, derives_from=d.derives, quoted=d.quoted, shown=shown))
         return tuple(out)
+
+
+def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
+    """One Citation per (source, page), quoting the first input quote on that page, in input
+    order. No quote is invented."""
+    first: dict[tuple[str, str], Citation] = {}
+    for citation in citations:
+        first.setdefault((citation.source_id, citation.locator), citation)
+    return tuple(first.values())
 
 
 def _copy_status(f: Fact) -> CellStatus:

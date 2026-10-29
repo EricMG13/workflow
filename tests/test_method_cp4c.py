@@ -622,7 +622,8 @@ def test_cell_spelling_matches_fp05(case: str) -> None:
 
 def _oracle_citations(case: str) -> dict[str, list[dict[str, str]]]:
     """The lineage rule applied to the oracle's own records: a quoted cell keeps its quote, a
-    calculated cell takes the ordered, de-duplicated citations of what it derives from."""
+    calculated cell takes one citation per (source, page): the first quote on that page among the
+    citations of what it derives from, in derives_from order (rulings stage2 round 3 item 3)."""
     recs = {f["fact_id"]: f for f in EXPECTED["cases"][case]["facts"]}
     upstream = _upstream(case)
     memo: dict[str, list[dict[str, str]]] = {}
@@ -641,7 +642,11 @@ def _oracle_citations(case: str) -> dict[str, list[dict[str, str]]]:
                     if dep.startswith(UPSTREAM_PREFIXES)
                     else of(dep)
                 )
-                out += [c for c in more if c not in out]
+                out += more
+            first: dict[tuple[str, str], dict[str, str]] = {}
+            for c in out:
+                first.setdefault((c["source_id"], c["locator"]), c)
+            out = list(first.values())
         memo[fid] = out
         return out
 

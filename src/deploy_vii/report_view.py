@@ -2498,3 +2498,15 @@ def call_state(report: ReportView) -> tuple[str, tuple[str, str] | None]:
     if any(item.kind != "na" for item in report.call):
         return "populated", None
     return "no-judgement", None
+
+
+# --- Stage 3 figure producer registrations -------------------------------------------------------
+# One block per W2 group; the integration pass merges the groups by appending.
+
+# W2 group a: S.5 beside the financials period grid (Credit Snapshot only; the approved FP 02 page
+# shows no S.5 in this block). The maturity wall (S.4) draws through the CP1 strip, not here.
+register_figure_producer(
+    "financials-credit-metrics",
+    _cp1_period_figures,
+    pathways=frozenset({"credit_snapshot"}),
+)

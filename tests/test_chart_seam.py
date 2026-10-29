@@ -563,8 +563,12 @@ def _figure():
     return Figure(fig_id="X.1", title="X", chart=chart, placement="beside")
 
 
-def test_the_registry_ships_empty_so_the_dispatch_holds_no_figure_of_its_own():
-    assert report_view._FIGURE_PRODUCERS == {}
+def test_the_registry_holds_the_s5_registration_of_w2_group_a():
+    # Group a (S.5) is the registry's first entry; the later groups append their own blocks.
+    assert report_view._FIGURE_PRODUCERS["financials-credit-metrics"] == (
+        report_view._cp1_period_figures,
+        frozenset({"credit_snapshot"}),
+    )
 
 
 def test_register_figure_producer_refuses_a_duplicate_and_an_unknown_pathway(monkeypatch):

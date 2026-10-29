@@ -161,7 +161,7 @@ def test_s5_fy_alias_period_is_never_a_fifth_category():
     module = fixture()
     added = []
     for f in module.facts:
-        if f.row_id == "T4.14.q4-2025":
+        if f.row_id in {"T4.14.q4-2025", "T4.18.q4-2025"}:
             updates = dict(
                 fact_id=f.fact_id.replace("q4-2025", "fy-2025"),
                 row_id=f.row_id.replace("q4-2025", "fy-2025"),

@@ -452,3 +452,4 @@
 - 11:00 User ruled CZR scope B ("CP-0 + CP-1 now"): gaps 1-2 approved; rulings item 10. Oracle preparer B fix 1 done 38619d8 (H1 decimals seam named, M1 per-case DR.6, L1-L5; p3 0, p2 1 expected).
 - 11:01 Oracle A fix 1 done 7eec984 (M1, seam targets, L1-L5, CP-1C prose via builder). Merged A+B fixes on s3-oracles e494177 (pins 86, double rebuild of 5 builders identical). Scoped re-reviews: A a1ce38fb, B a802522e. Workflow Test committed CZR case 7a5a861; merged into ../s3-czr (claude/s3-czr). CZR builder dispatched.
 - 11:02 Oracle half B scoped re-review APPROVE (a802522e; p1 0, p3 0, p2 1 expected); 1 Low (dr6:32 wording) ruled, rides in the end batch.
+- 11:02 Oracle half A scoped re-review REVISE (a1ce38fb): M-new L5 pin unmeetable (tab_label with no tabs; reason seam unnamed). Ruling item 9 L5 corrected. Fix round 2 to preparer A; dr6:32 Low to preparer B in parallel.

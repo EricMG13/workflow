@@ -50,3 +50,36 @@ Probes are saved under `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy
 - No target needs a `cases/` change. The RV.3 panels are two figures, which `Block.figures` already supports, so no two-panel `ChartSpec` is needed.
 
 Not verified: no pytest or wiring was run against `src/`. I did not open the pack brief lines (01:36, 03:36, 04:27, 04:31); I read the design pages only for S.5 and FP-02. Whether `view.modules` always holds CP-1 (the L5 path) is unchecked. Half B and its moves were not reviewed.
+
+## Scoped re-review of e494177
+
+## Scoped re-review, half A fixes (s3-oracles at e494177; fix commit 7eec984)
+
+**Verdict: REVISE.** One new Medium finding, in the L5 fix.
+
+**Probes** (in `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/oracle-review-A/`):
+
+| Probe | Exit | Result |
+|---|---|---|
+| `p1_rebuild_e494177.sh` | 0 | build_a rebuilt from a fresh archive is byte-identical; pins match 86 paths |
+| `p2_spotcheck.py` | 0 | values still match the module oracles |
+| `p3_gaps_and_twins.py` | 0 | L1 order now matches the producer |
+| `p4_feasibility.sh` | 0 | code facts behind the seam targets unchanged |
+| `p5_l5_pin.sh` (new) | 1 | flags the contradiction in M-new below, on purpose |
+
+**Fixed:**
+- **M1:** `build_a.py:304-309` adds an `earnings_update` expectation with `figures: []`, plus a builder target. The seam targets are named for S.5, RV.3 and CR.1 and stay within ruling item 9's feasibility list.
+- **L1:** the companion order now follows `financial_series.py:210`.
+- **L2:** `label_parts` is now documented as a prefix of the row label, with companion parts added at run time.
+- **L4:** the CR.1 target now asserts `tab_label is None` and `tabs == ()`.
+- **L3:** the CP-1C rewording goes through `cases/cp1c-owner/builder/build.py:906` only. It changes the three `other_blocks` lines and nothing else, within item 9. The sha256 values match: `expected.json` 2165d28d…, `build.py` 2d6fde87….
+- Between 7eec984 and e494177, none of the half A files changed.
+
+**M-new (Medium). The L5 pin cannot be met.** It is at `cases/charts/s4fp04-expected.json:21`, written by the new case `cp2d_settled_cp1_not_settled` in `build_a.py` near `:911`.
+- The pin says "T2E.4 becomes the primary tab (tab_label 'Maturity wall', tabs == ())".
+- `Block.tab_structure` (`report_view.py:407`) refuses a block with a `tab_label` and no tabs. The current code sets `tab_label=primary.label if tabs else None` (`:1822`). So with only T2E.4 present, `tab_label` is None.
+- The pin also says it reflects "current code's behaviour", but the current n/a reason is "The KPI register carries no series for this chart" (`:1585`). That does not name CP-1. Ruling item 9 asks for a reason that names CP-1, so the seam has to change, and the oracle does not say so.
+- **Failure:** a wiring builder who writes this literal gets a validator error, or has to loosen `tab_structure`.
+- **Fix:** pin `tab_label is None`, `tabs == ()` and T2E.4's rows as the block's rows. Then either name the `_na_strip` reason change as a seam target, or pin the current reason text and `_strip_note`.
+
+Not verified: whether `view.modules` always holds a CP-1 entry. If it does not, `report_view.py:1807`'s `modules["CP-1"]` raises a KeyError instead of taking the degraded path. No pytest was run.

@@ -80,6 +80,14 @@ Five ideas. The plan is `docs/superpowers/plans/2026-10-28-verified-module-build
    check and the Stage 4 class-level plan and review, never for code; `mx-autonomous`
    stands in if Fable has no credits. LEAD's lane dispatches no Fable.
 
+Chart oracles (user, 2026-10-29): Modules, not LEAD, freezes the Stage 3 chart
+oracles listed in `work/build/stage3/charts-inventory.md`, following
+`docs/CP1-CHART-SLICE.md`. Independence still holds: a separate preparer agent
+writes each oracle from the design reference and the lease only; an independent
+`mx-precise` review approves it before any builder wires the chart; no agent that
+builds a chart prepares or reviews its oracle. A deferred figure that needs an
+owner, or a chart that changes another module's frozen oracle, goes to the user.
+
 Source quotes (user, 2026-10-28): quote reading is frozen. No new ruling on how
 Python reads a figure from a model-chosen quote (CP-1D, CP-3D, CP-8, CP-2E); a new
 edge case fails closed and is recorded as a guard limit in `methods/<cp>.md`,

@@ -125,20 +125,38 @@ def run_refused(tmp_path_factory: pytest.TempPathFactory) -> Closed:
     return Closed("s1a_refused_cp1a", root)
 
 
-_VERIFIED: set[tuple[str, str, str]] = set()
+_VERIFIED: set[tuple[str, str, str, str]] = set()
+
+
+def tree_digest(directory: Path | None) -> str:
+    """Content digest of a directory tree (relative paths and bytes), so an in-place edit changes
+    the cache key; "none" for no directory."""
+    if directory is None:
+        return "none"
+    digest = hashlib.sha256()
+    for path in sorted(directory.rglob("*")):
+        digest.update(path.relative_to(directory).as_posix().encode() + b"\0")
+        if path.is_file():
+            digest.update(path.read_bytes())
+    return digest.hexdigest()
 
 
 @pytest.fixture(autouse=True)
 def verifier_runs_once_per_receipt_and_store(monkeypatch: pytest.MonkeyPatch) -> None:
     """The G1 verifier replays a whole run (about 3.5 minutes on a closed S1a run). Each distinct
-    (store, receipt, publication) is verified by the real verifier once; a repeat of an input it
-    already accepted is not replayed. Refusals are never cached, so every refusal test still
+    (store tree, receipt, publication tree) content is verified by the real verifier once; a
+    repeat of an input it already accepted is not replayed, and an in-place edit changes the digest. Refusals are never cached, so every refusal test still
     gets the verifier's own error."""
 
     def once(
         store: Execution, receipt: OwnerRunReceipt, *, publication_directory: Path | None = None
     ) -> None:
-        key = (str(store.directory), receipt.content_hash(), str(publication_directory))
+        key = (
+            tree_digest(store.directory),
+            receipt.content_hash(),
+            tree_digest(publication_directory),
+            str(publication_directory),
+        )
         if key not in _VERIFIED:
             verify_owner_run_receipt(store, receipt, publication_directory=publication_directory)
             _VERIFIED.add(key)

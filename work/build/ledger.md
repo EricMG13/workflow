@@ -407,3 +407,4 @@
 - 01:50 Fix batch re-review: APPROVE (5 Mediums closed; CP-1D frozen moved 0; shape payloads identical). Stage 2 batch done. Merging s2-batch into lane.
 - 04:16 Stage 2 batch merged into lane f1544a3. User: include 0d-d (one review); fix CP-DR question_id wedge. 0d-d committed 0daac2c on lead/0d-d. Release plan written; W1 dispatched.
 - 04:34 Release W1 done fb231d4 (cp6-freeze + 0d-d merged; re-pins; double rebuild identical; fast set 9095 passed; type: ignore 6->5). Finding (predates, owner): reuse manifest bindings/shipped.py sha = report_view.py hash. W2: 5 parallel mx-feature (A1 covenant, A2 re-pins, B lease text, C product+Lows, D own citations) from fb231d4.
+- 04:42 W2-B done a70ee52 (lease/protocol/TOOL-CONTRACT 14 rows/MODULES.csv; no oracle moved). Ruled: no cp2d_reader run_rate code change (text only).

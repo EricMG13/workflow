@@ -504,3 +504,4 @@
 - 16:55 G2 genuine RCA (mx-autonomous a4c23917): both test defects (independent-run ticket_id; extra attempt must be forged). Item 27 (Acceptance 3 reading). Fix round 3 -> fresh mx-feature.
 - 16:55 G2 fix round 3 dispatched (mx-feature accae7c7, isolated, claude/s3-fix3-g2 from ee95ffb; cp1-model positive_delivery + extra_attempt tests only). No fourth round: if it fails, open findings go to the user.
 - 17:10 User: "Keep it" (checkpoint merge 5980170 at a1f2cfc stays). Relayed to PR manager.
+- 17:22 I5 lane C g2def stopped (first test s1a-credit-snapshot-positive F; I5 predates F1 _check_scope_run changes; -q prints no details for hours). Rerun with -x on ee95ffb in the F1 worktree (bkik8y83y, excluding cp3c being fixed in round 2) for fast details.

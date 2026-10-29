@@ -503,7 +503,20 @@ def runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     from deploy_workflow.owner_workflow import OwnerWorkflow
 
     fw = _fw()
-    base = tmp_path_factory.mktemp("g2-cp1-model")
+    # G2_RUNS_CACHE keeps the 20-minute genuine runs between invocations (developer aid only).
+    cache = os.environ.get("G2_RUNS_CACHE")
+    base = Path(cache) if cache else tmp_path_factory.mktemp("g2-cp1-model")
+    base.mkdir(parents=True, exist_ok=True)
+    if (base / "ready").exists():
+        return {
+            "positive": base / "positive",
+            "gap": base / "gap",
+            "fin_positive": (
+                base / "fin-positive" / "store",
+                base / "fin-positive" / "receipt.json",
+                base / "fin-positive" / "model",
+            ),
+        }
 
     def start(root: Path, gap: bool = False) -> Any:
         pack = fw.make_pack(gap)
@@ -527,11 +540,9 @@ def runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     assert workflow.submit_review(fw.readiness(pack, gap=True))["status"] == "valid"
     assert workflow.publish()["status"] == "refused"
     workflow.write_receipt(gap / "owner-run.json")
-    return {
-        "positive": positive,
-        "gap": gap,
-        "fin_positive": fw.completed_financial_case(base / "fin-positive"),
-    }
+    financial = fw.completed_financial_case(base / "fin-positive")
+    (base / "ready").write_text("ok")
+    return {"positive": positive, "gap": gap, "fin_positive": financial}
 
 
 @pytest.fixture
@@ -967,7 +978,7 @@ def _check_scope_run(
     )
     assert tuple(s.block_id for s in wire.sections) == tuple(scope.sections)
     payload = _payload(text)
-    blocks = {b["block_id"]: b for b in payload["blocks"]}
+    blocks = {b["block_id"]: b for b in payload["report"]["blocks"]}
     heads = {h.module_id: h for h in wire.head_results}
     for section in wire.sections:
         if outcome == "complete":
@@ -1020,7 +1031,9 @@ def test_genuine_deferred_s1a_gap_must_not_appear(tmp_path: Path) -> None:
     root.mkdir()
     store, receipt, publication = _s1a("gap", root)
     report = g2.render_owner_slice(store, receipt, publication, tmp_path / "delivery")
-    blocks = {b["block_id"]: b for b in _payload(report.read_text(encoding="utf-8"))["blocks"]}
+    blocks = {
+        b["block_id"]: b for b in _payload(report.read_text(encoding="utf-8"))["report"]["blocks"]
+    }
     for section_id in ("company-profile", "transaction-summary"):
         for row in blocks[section_id].get("rows", []):
             for cell in row["cells"]:

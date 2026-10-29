@@ -582,10 +582,11 @@ def _bound_facts(
     shown: Mapping[str, Any],
     heads: Mapping[str, Head],
     head_modules: Mapping[str, Module],
-) -> tuple[OwnerBoundFact, ...]:
+) -> tuple[tuple[OwnerBoundFact, Fact], ...]:
     """The facts the shipped maps place in `block_id`, in placement order, each a member of
-    its receipt head's facts."""
-    out: list[OwnerBoundFact] = []
+    its receipt head's facts (the bound record and the fact itself)."""
+    out: list[tuple[OwnerBoundFact, Fact]] = []
+    members: dict[str, dict[tuple[str, str, str], list[Fact]]] = {}
     for module_map in SHIPPED_MAPS:
         module = shown.get(module_map.module_id)
         if module is None:
@@ -593,12 +594,18 @@ def _bound_facts(
         for entry in module_map.entries:
             if entry.block_id != block_id:
                 continue
+            if module_map.module_id not in members:
+                index: dict[tuple[str, str, str], list[Fact]] = {}
+                for fact in head_modules[module_map.module_id].facts:
+                    index.setdefault((fact.table_id, fact.row_id, fact.fact_id), []).append(fact)
+                members[module_map.module_id] = index
             for fact in module.facts:
                 if not entry.matches(module_map.module_id, fact):
                     continue
-                if fact not in head_modules[module_map.module_id].facts:
+                key = (fact.table_id, fact.row_id, fact.fact_id)
+                if fact not in members[module_map.module_id].get(key, ()):
                     raise _refusal("owner_render_proof")
-                out.append(_bound(module_map.module_id, heads, fact))
+                out.append((_bound(module_map.module_id, heads, fact), fact))
     return tuple(out)
 
 
@@ -741,7 +748,7 @@ def _capture(
     payload = _payload_of(page)
     shown_modules = {m.module_id: m for m in view.modules if m.status in SHOWN_STATUSES}
     blocks: dict[str, Block] = {b.block_id: b for b in report.blocks}
-    payload_blocks = {b["block_id"]: b for b in payload["blocks"]}
+    payload_blocks = {b["block_id"]: b for b in payload["report"]["blocks"]}
     sections = _sections(scope, outcome, blocks, payload_blocks, shown_modules, heads, head_modules)
     rails = _rails(scope, view, payload, shown_modules, heads, head_modules)
     files: dict[str, bytes] = {"report.html": html_bytes, OWNER_RECEIPT_NAME: raw}
@@ -787,7 +794,7 @@ def _sections(
         block = blocks.get(section_id)
         if block is None or block.chart is not None or block.figures:
             raise _refusal("owner_render_proof")
-        facts = _bound_facts(section_id, shown, heads, head_modules)
+        facts = tuple(item for item, _ in _bound_facts(section_id, shown, heads, head_modules))
         if outcome == "complete":
             if block.state not in _ASSIGNED_SHOWN or not facts:
                 raise _refusal("owner_render_proof")
@@ -822,26 +829,25 @@ def _rails(
             continue
         if list(module.limitations) != payload_modules[module.module_id]["limitations"]:
             raise _refusal("owner_render_payload")
+    on_page: dict[str, dict[tuple[str, str, str], list[dict[str, Any]]]] = {}
+    for module_id, entry in payload_modules.items():
+        index: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+        for item in entry["facts"]:
+            index.setdefault((item["table_id"], item["row_id"], item["fact_id"]), []).append(item)
+        on_page[module_id] = index
     proofs: list[OwnerRailProof] = []
     for destination in scope.rails:
-        facts = _bound_facts(destination, shown, heads, head_modules)
-        for bound in facts:
-            expected = next(
-                f
-                for f in shown[bound.module_id].facts
-                if (f.table_id, f.row_id, f.fact_id)
-                == (bound.table_id, bound.row_id, bound.fact_id)
-            ).model_dump(mode="json")
-            candidates = [
-                f
-                for f in payload_modules[bound.module_id]["facts"]
-                if (f["table_id"], f["row_id"], f["fact_id"])
-                == (bound.table_id, bound.row_id, bound.fact_id)
-            ]
+        pairs = _bound_facts(destination, shown, heads, head_modules)
+        for bound, fact in pairs:
+            expected = fact.model_dump(mode="json")
+            candidates = on_page[bound.module_id].get(
+                (bound.table_id, bound.row_id, bound.fact_id), []
+            )
             if not any(
                 all(item[key] == value for key, value in expected.items()) for item in candidates
             ):
                 raise _refusal("owner_render_payload")
+        facts = tuple(bound for bound, _ in pairs)
         limits = tuple(
             OwnerModuleLimitations(module_id=m.module_id, limitations=m.limitations)
             for m in view.modules

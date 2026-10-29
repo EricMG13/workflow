@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -1793,17 +1793,9 @@ def _real_check(
     report: Any,
     *,
     perturb: bool = True,
-    exact_titles: dict[str, str] | None = None,
 ) -> None:
-    """`exact_titles` (fig_id -> title) compares a title exactly in place of its pattern, for a
-    fixture whose own title is not the producer's form."""
     payload = _real_block(report, block_id)
-    want = tuple(
-        replace(f, title_pattern=re.escape((exact_titles or {})[f.fig_id]))
-        if f.fig_id in (exact_titles or {})
-        else f
-        for f in expected_figures(scope_id, block_id, case)
-    )
+    want = expected_figures(scope_id, block_id, case)
     assert want
     assert_figures_equal_oracle(payload, want, _modules_of(view))
     if perturb:  # the same real page with one mark's text changed fails
@@ -1904,17 +1896,12 @@ def test_fast_figure_rule_on_the_real_s1_to_s4_strip(chart_case: Any) -> None:
     cp1 = importlib.import_module("test_cp1_chart_render")
 
     view, _, _ = chart_case
-    # The composer fixture spells S.4 "current principal" (tests/test_cp1_chart_render.py:150),
-    # not the producer's `financial_series.py:212` form that the pattern pins; the genuine
-    # cp1-model run compares the pattern. Here the fixture's own title is compared exactly.
-    fixture_title = "Maturity wall — current principal at 2025-12-31 (not a forecast)"
     _real_check(
         "cp1-model",
         "model-chart-strip",
         "positive",
         view,
         cp1._report(view),
-        exact_titles={"S.4": fixture_title},
     )
 
 

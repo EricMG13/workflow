@@ -152,7 +152,7 @@ def readiness_literal(workflow: OwnerWorkflow, case: str, read: Mapping[str, Any
         return scalar(value) if isinstance(value, str) else value
 
     literal = oracle()["submissions"]["cases"][LITERALS[case]]["cp1_readiness"]
-    return json.dumps(bind(literal), ensure_ascii=False)
+    return json.dumps(bind(_driver("cp2g_runs").readiness_payload(literal)), ensure_ascii=False)
 
 
 def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:

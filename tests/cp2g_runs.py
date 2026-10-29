@@ -121,8 +121,23 @@ def drive_cp0(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
     s1a.submit_valid(workflow, review)
 
 
+PAYLOAD_KEYS = ("inputs_sha256", "consumers")  # DownstreamReview fields (extra="forbid")
+COMMENTARY_KEYS = ("note",)  # oracle prose describing the entries; never submitted
+
+
+def readiness_payload(literal: Mapping[str, Any]) -> dict[str, Any]:
+    """The submittable part of an oracle `cp1_readiness` literal: `inputs_sha256` and
+    `consumers`. `note` is oracle commentary and is dropped; any other key, or a missing
+    payload key, fails closed."""
+    unknown = sorted(set(literal) - set(PAYLOAD_KEYS) - set(COMMENTARY_KEYS))
+    missing = [key for key in PAYLOAD_KEYS if key not in literal]
+    if unknown or missing:
+        raise RuntimeError(f"readiness literal keys: unknown {unknown}, missing {missing}")
+    return {key: literal[key] for key in PAYLOAD_KEYS}
+
+
 def readiness_literal(workflow: OwnerWorkflow, case: str, read: Mapping[str, Any]) -> str:
-    """`cases.<case>.cp1_readiness` with its markers bound to the readiness step's inputs:
+    """`cases.<case>.cp1_readiness` (payload keys only) with its markers bound to the readiness step's inputs:
     `{{INPUTS_SHA256}}` the read's hash; `{{KPI:key|FY-2025}}` (CP-1D frame) and
     `{{EVID:kpi key, LTM Q4 25 basis}}` (CP-2A and CP-2G frame) by the frozen drivers' own
     selection rules; a gap marker list element expands to every narrative gap id. An unknown
@@ -153,7 +168,7 @@ def readiness_literal(workflow: OwnerWorkflow, case: str, read: Mapping[str, Any
         return scalar(value) if isinstance(value, str) else value
 
     literal = oracle()["submissions"]["cases"][READINESS[case]]["cp1_readiness"]
-    return json.dumps(bind(literal), ensure_ascii=False)
+    return json.dumps(bind(readiness_payload(literal)), ensure_ascii=False)
 
 
 def _quality_review(fw: Any, read: Mapping[str, Any], inputs: Mapping[str, Any]) -> str:

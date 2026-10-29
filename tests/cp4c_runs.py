@@ -139,7 +139,7 @@ def readiness_literal(workflow: OwnerWorkflow, case: str, read: Mapping[str, Any
         return scalar(value) if isinstance(value, str) else value
 
     literal = oracle()["submissions"]["cases"][LITERAL[case]]["cp1_readiness"]
-    return json.dumps(bind(literal), ensure_ascii=False)
+    return json.dumps(bind(_driver("cp2g_runs").readiness_payload(literal)), ensure_ascii=False)
 
 
 def _quality_review(fw: Any, read: Mapping[str, Any], inputs: Mapping[str, Any]) -> str:

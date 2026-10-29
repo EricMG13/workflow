@@ -532,3 +532,4 @@
 - 20:16 I6 G2 shard 0: 5 passed, 3 failed (cp2h positive and cp2g_blocked: same readiness-note cause -> fixer a7b022fb scope widened to cp2h_runs.py and cp4c_runs.py, item 34; cp1d statements_only: single-tab block, tab_label None vs oracle label -> item 35, RCA). Dispatching CP-1D tab RCA (mx-autonomous).
 - 20:17 I6 G2 shard 2: 6 passed, 3 failed (cp4c positive and cp2g_blocked: 'submission not valid: note: Extra inputs are not permitted' at tests/s1a_runs.py:221, confirming item 34's reading that note is not payload; cp2g cp1d_blocked: unbound marker). All item 34 scope.
 - 20:21 CP-1D tab RCA done (mx-autonomous a6a15771): G2 tabs-only rule wrong for one-register blocks (report_view renders them untabbed); 3-line test fix proposed; 4th G2 change -> asked the user. Item 35.
+- 20:29 I6 G2 shard 5: 5 passed, 3 failed (cp1d positive: item 35 one-register rule; cp2g gap-gap and cp2h blocked: item 34 note). No new cause.

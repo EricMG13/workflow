@@ -87,12 +87,6 @@ EXPECTED_SECTIONS = {
     "cp1d-fp02-quality": ("earnings-quality", "restated-leverage"),
     "cp2a-fp05-downside": ("downside-stress", "break-points"),
     "cp2g-fp05-forward": ("forward-credit-path", "forward-breakpoints"),
-    "cp2g-fp05-forward": (
-        _wrap("cp2g_runs", "cp2g_closed"),
-        ("positive",),
-        None,
-        ("cp1d_blocked",),
-    ),
     "cp2g-fp05-forward-gap": ("forward-credit-path", "forward-breakpoints"),
     "cp2h-fp05-ratings": ("rating-triggers",),
     "cp4c-fp05-recovery": ("recovery-by-class", "value-allocation-claims"),
@@ -899,6 +893,12 @@ DEFERRED: dict[str, tuple[Adapter, tuple[str, ...], str | None, tuple[str, ...]]
         ("positive", "gap"),
         "refused",
         ("blocked",),
+    ),
+    "cp2g-fp05-forward": (
+        _wrap("cp2g_runs", "cp2g_closed"),
+        ("positive",),
+        None,
+        ("cp1d_blocked",),
     ),
     "cp2g-fp05-forward-gap": (
         _wrap("cp2g_runs", "cp2g_closed"),

@@ -390,9 +390,28 @@ def test_cr1_covenant_headroom_figure_matches_oracle(case):
             assert mark.value == Decimal(exp["amount_exact"])
             assert mark.text == exp["shown"]
         texts.append(mark.text)
+        # The mark reaches its fact through the T4.9 fact id, by the report index.
+        coord = FactCoord(module_id="CP-4", table_id="T4.9", row_id="r01", fact_id=exp["fact_id"])
+        entry = next(e for e in report.index.facts if e.coord == coord)
+        assert mark.ref_id in entry.ref_ids
     assert len(texts) == len(want["mark_texts"])
+    for text, expected_text, exp in zip(texts, want["mark_texts"], want["marks"], strict=True):
+        if exp["state"] == "gap":
+            assert re.fullmatch(exp["gap_ref_pattern"], text)
+        else:
+            assert text == expected_text
     assert [c.text for row in chart.table_twin.rows for c in row.cells] == texts
     assert len(chart.table_twin.rows) == len(want["table_twin"]["rows"])
+    for row, exp_row in zip(chart.table_twin.rows, want["table_twin"]["rows"], strict=True):
+        # Row label: starts with label_parts[0], then each later part in order; '#' in a part is
+        # the run-time gap number.
+        first, *later = exp_row["label_parts"]
+        assert row.label.startswith(first)
+        position = len(first)
+        for part in later:
+            found = re.compile(re.escape(part).replace("\\#", r"\d+")).search(row.label, position)
+            assert found is not None, (row.label, part)
+            position = found.end()
     others = [
         b.block_id
         for b in report.blocks

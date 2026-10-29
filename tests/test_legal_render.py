@@ -274,6 +274,14 @@ def test_adopted_values_gaps_capacity_and_all_front_columns(case):
     assert not any(f.field == "unused_commitment" for f in _module(view).facts)
 
 
+def test_pathway_has_model_block_follows_the_composition():
+    by_id = {p.id: p for p in pathways()}
+    # Q-C1: the FP 04 maturity wall is Model-owned, so covenant_refinancing now asks for CP-MODEL.
+    assert report_view.pathway_has_model_block(by_id["covenant_refinancing"])
+    assert report_view.pathway_has_model_block(by_id["credit_snapshot"])
+    assert not report_view.pathway_has_model_block(by_id["distressed_restructuring"])
+
+
 @pytest.mark.parametrize("case", [0, 1])
 def test_core_html_full_fact_fields_sources_passports_and_honest_states(case):
     view = _seed(case)

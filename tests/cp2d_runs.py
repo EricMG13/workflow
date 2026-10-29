@@ -24,8 +24,8 @@ from deploy_workflow.owners import cp2d
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases/cp2d-owner"
 PINS = {
-    CASE / "builder/build.py": "cc200e99d141b05a9d396a015d2e7d4a553cc89f7b003f92971b81a1c0568f7d",
-    CASE / "expected.json": "ed36f120e432ee90de3f9d91933cb3182893e7aed370c9d38420ecfde8acc3e7",
+    CASE / "builder/build.py": "6c707b4bdc3b59629e8590f6e32760293aacfd9bccb5b337fc52e715f12a8e4c",
+    CASE / "expected.json": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
 }
 CASES = ("positive", "long_horizon", "gap_minimum_cash")
 TOKEN = re.compile(r"\{\{FACT:([^}]+)\}\}")

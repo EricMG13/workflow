@@ -2009,3 +2009,137 @@ def test_forged_issues_on_a_valid_step_are_refused_even_after_a_consistent_resea
     )
     _reseal(store, resealed)
     assert _verdict(store, resealed) == "identity_mismatch"
+
+
+def _publish_forged_cp_model(
+    promoted: tuple[OwnerWorkflow, PreparedPack],
+    root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    forge: Any,
+) -> OwnerWorkflow:
+    """The positive run driven to CP-MODEL, whose publisher attempt a patched `Execution.begin`
+    starts on `forge(inputs)` (adv-4's `drop-cp1` and `other-cp1`); the run is then published."""
+    workflow = runs.clone_workflow(promoted[0], root)
+    assert runs.drive_cp1a(workflow, promoted[1], "positive")["status"] == "valid"
+    outcome = runs.drive_cp2(workflow, "positive", runs.read_cp2(workflow))
+    assert outcome["status"] == "valid", outcome["issues"]
+    real = Execution.begin
+
+    def begin(self: Execution, module_id: str) -> Attempt:
+        attempt = real(self, module_id)
+        if module_id != "CP-MODEL":
+            return attempt
+        snapshot = self.read()
+        forged = attempt.model_copy(update={"inputs": forge(attempt.inputs, snapshot)})
+        self._write(
+            snapshot.model_copy(
+                update={
+                    "parent": snapshot.content_hash(),
+                    "attempts": tuple(
+                        forged if a.ticket_id == attempt.ticket_id else a for a in snapshot.attempts
+                    ),
+                }
+            )
+        )
+        return forged
+
+    monkeypatch.setattr(Execution, "begin", begin)
+    workflow.publish()
+    return workflow
+
+
+def test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses(
+    positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 class A (MEDIUM 1, `drop-cp1`): the publisher attempt binds no CP-1."""
+    workflow = _publish_forged_cp_model(
+        positive_promoted,
+        tmp_path,
+        monkeypatch,
+        lambda inputs, snapshot: tuple(i for i in inputs if i.input_id != "CP-1"),
+    )
+    with pytest.raises(WorkflowError) as caught:
+        workflow.write_receipt(tmp_path / "owner-receipt.json")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_forgery_cp_model_attempt_bound_to_another_cp1_refuses(
+    positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 class A (MEDIUM 1, `other-cp1`): the publisher attempt binds a CP-1 hash that is not
+    the final snapshot's CP-1 head (here the CP-1A hash)."""
+
+    def other(inputs: tuple[Input, ...], snapshot: Any) -> tuple[Input, ...]:
+        stranger = next(h.result_sha256 for h in snapshot.heads if h.module_id == "CP-1A")
+        return tuple(
+            i.model_copy(update={"sha256": stranger}) if i.input_id == "CP-1" else i for i in inputs
+        )
+
+    workflow = _publish_forged_cp_model(positive_promoted, tmp_path, monkeypatch, other)
+    with pytest.raises(WorkflowError) as caught:
+        workflow.write_receipt(tmp_path / "owner-receipt.json")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_forgery_unblock_restricted_head_replacing_blocked_refuses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Stage 4 class A (S1a adv-4 HIGH 1, `unblock`): CP-1A blocks after its one repair; a patched
+    `Execution.begin` then starts a third attempt 0 that settles restricted and replaces the
+    blocked head. The runtime seals it; the verifier replays `Execution.begin` and refuses the
+    begin whose input set is already settled and whose repair is used."""
+    workflow, pack = _cp1a_only_run(tmp_path)
+    context = json.loads(runs.literal("positive", "business_context", pack))
+    context["consumers"] = [c for c in context["consumers"] if c["module_id"] == "CP-MODEL"]
+    for _ in range(2):
+        outcome = runs.drive_cp1a(
+            workflow,
+            pack,
+            "positive",
+            skip_reads=[("business", "page:3")],
+            text=json.dumps(context),
+        )
+        assert outcome["status"] == "invalid"
+    assert [(h.module_id, h.status) for h in Execution(tmp_path / "store").read().heads] == [
+        ("CP-0", "restricted"),
+        ("CP-1A", "blocked"),
+    ]
+    real = Execution.begin
+
+    def lenient(self: Execution, module_id: str) -> Attempt:
+        if module_id != "CP-1A":
+            return real(self, module_id)
+        with self._locked():
+            snapshot = self.read()
+            attempt = Attempt(
+                ticket_id=str(uuid4()),
+                module_id=module_id,
+                inputs=current_inputs(snapshot, module_id),
+                number=0,
+            )
+            self._write(
+                snapshot.model_copy(
+                    update={
+                        "parent": snapshot.content_hash(),
+                        "attempts": (*snapshot.attempts, attempt),
+                    }
+                )
+            )
+            return attempt
+
+    monkeypatch.setattr(Execution, "begin", lenient)
+    workflow._phase = "analytical"  # the walk had ended at the blocked head; the forger resumes it
+    assert workflow._begin("CP-1A")
+    outcome = runs.drive_cp1a(workflow, pack, "positive", text=json.dumps(context))
+    assert outcome["status"] == "valid", outcome["issues"]
+    assert [(h.module_id, h.status) for h in Execution(tmp_path / "store").read().heads] == [
+        ("CP-0", "restricted"),
+        ("CP-1A", "restricted"),
+    ]
+    with pytest.raises(WorkflowError) as caught:
+        workflow.write_receipt(tmp_path / "receipt.json")
+    assert caught.value.code == "identity_mismatch"

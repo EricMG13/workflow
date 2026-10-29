@@ -9,7 +9,7 @@ for the CP-2D and CP-3C bindings, and whose CP-2D head is settled by the real CP
 CP-1 promotion runs: the genuine runs are `tests/test_owner_cp3c.py` and `tests/cp3c_runs.py`
 (deferred). The fixtures vary the CP-1 amounts and statuses, the CP-2D case (minimum cash
 assessed or not, horizon), the as-of date and the case kind, so a constant equal to the oracle
-cannot pass.
+cannot pass; the CP-1 facility principal and a foreign-run module are varied the same way.
 
 First section: the backlog rows (work/build/stage2-backlog.md, CP-3C Infos 1-3 as ruled in
 docs/rulings/2026-10-28-stage2.md round 5 item 7, and the caller-quoting f-string sites of the
@@ -615,7 +615,9 @@ def submission_of(
 PRINCIPAL_PERIOD_DELTA = "q4-2025"
 PRINCIPAL_COPIES = ("T3D.1.r01.c1", "T3D.4.r01.c3")
 # A CP-2D gap cell carries its settled twin's unit and currency (CP-2D lease acceptance 1); the
-# Stage 1 test's stand-in for a CP-2D gap carries no currency (its oracle records none).
+# Stage 1 test's stand-in for a CP-2D gap carries no currency (the CP-2D oracle's T2E.5.r04/r07
+# record none; the CP-3C oracle's own gap cells already carry USD). Retire with the CP-2D oracle
+# re-pin (`test_the_gap_currency_delta_is_still_needed` fails then).
 GAP_CURRENCY = "USD"
 
 
@@ -661,6 +663,23 @@ def test_the_principal_period_delta_is_still_needed() -> None:
         cells = tm._cells(tm.EXPECTED["cases"][case]["tables"])
         for fact_id in PRINCIPAL_COPIES:
             assert cells[fact_id]["period"] == tm.BALANCE_DATE.isoformat()
+
+
+def test_the_gap_currency_delta_is_still_needed() -> None:
+    """Remove GAP_CURRENCY (and the `twin` stand-in) when the CP-2D oracle's gap twins
+    T2E.5.r04/r07 carry a currency: this fails once they do. The CP-3C oracle's own gap cells
+    already carry USD, so re-pinning that oracle alone cannot retire the delta."""
+    path = Path(__file__).resolve().parents[1] / "cases" / "cp2d-owner" / "expected.json"
+    cells = tm._cells(json.loads(path.read_text())["cases"]["gap_minimum_cash"]["tables"])
+    for fact_id in ("T2E.5.r04", "T2E.5.r07"):
+        assert cells[fact_id]["state"] != "known" and cells[fact_id].get("currency") is None
+    ours = tm._cells(tm.EXPECTED["cases"]["gap_minimum_cash"]["tables"])
+    gaps = {
+        c["currency"]
+        for c in ours.values()
+        if c["state"] != "known" and c.get("unit") == "MILLIONS"
+    }
+    assert gaps == {GAP_CURRENCY}
 
 
 def test_adapter_follows_the_heads_not_the_oracle(tmp_path: Path) -> None:
@@ -740,6 +759,81 @@ def test_adapter_refuses_a_normalized_fact() -> None:
     module = swap(cp1_module(make_pack().run), "cp1:cash_closing", value_class="normalized")
     with pytest.raises(ValueError, match="^CP-3C cash_closing: a normalized fact is not read$"):
         cp3c.select_cp1(module)
+
+
+def _alias_fact(module: Module, field: str) -> Fact:
+    """The fy-2025 alias row's fact for `field` (the quarter row stays the schedule row)."""
+    return next(
+        f
+        for f in module.facts
+        if f.table_id == "T4.18" and f.period == "fy-2025" and f.field == field
+    )
+
+
+def test_adapter_refuses_an_alias_only_facility() -> None:
+    """A facility with a fy-2025 row and no q4-2025 row is refused, never silently dropped from
+    the refinancing need (the CP-2D review M2 class)."""
+    base = cp1_module(make_pack().run)
+    extra = tuple(
+        f.model_copy(
+            update={
+                "fact_id": f.fact_id + "-b",
+                "row_id": f.row_id + "-b",
+                **({"text": "bridge-loan"} if f.field == "facility_id" else {}),
+            }
+        )
+        for f in base.facts
+        if f.table_id == "T4.18" and f.period == "fy-2025"
+    )
+    alias_only = Module.model_validate({**base.model_dump(), "facts": (*base.facts, *extra)})
+    with pytest.raises(
+        ValueError, match="^CP-3C: the fy-2025 T4.18 rows are not the q4-2025 rows$"
+    ):
+        cp3c.select_cp1(alias_only)
+
+
+@pytest.mark.parametrize(
+    ("field", "update", "term"),
+    [
+        ("currency", {"text": "EUR"}, "currency"),
+        ("rate_type", {"text": "FIXED"}, "rate_type"),
+        ("annual_amortisation", {"scale": Decimal(1000)}, "annual_amortisation"),
+        ("annual_amortisation", {"amount": Decimal("7.5")}, "annual_amortisation"),
+        ("facility_name", {"text": "Another Loan"}, "facility_name"),
+        ("secured_status", {"text": "UNSECURED"}, "secured_status"),
+    ],
+)
+def test_adapter_compares_every_alias_term(field: str, update: dict[str, Any], term: str) -> None:
+    """The alias must agree on currency, rate type and scale as well as the amounts and texts."""
+    base = cp1_module(make_pack().run)
+    module = swap(base, _alias_fact(base, field).fact_id, **update)
+    pattern = f"^CP-3C: facility term-loan {term} differs between its q4-2025 row and its fy-2025"
+    with pytest.raises(ValueError, match=pattern):
+        cp3c.select_cp1(module)
+
+
+def test_cp2d_fact_refuses_a_scale_that_is_not_millions(tmp_path: Path) -> None:
+    """A CP-2D head fact (a real one, settled by the CP-2D core) at another scale is refused."""
+    store, _, _ = seed(tmp_path)
+    facts = store.head_module(head(store, "CP-2D")).facts
+    real = next(f for f in facts if f.fact_id == "T2E.3.r01")
+    assert cp3c._cp2d_fact(real).unit == "MILLIONS"
+    with pytest.raises(ValueError, match="^CP-3C T2E.3.r01: not an amount in millions$"):
+        cp3c._cp2d_fact(real.model_copy(update={"scale": Decimal(1000)}))
+
+
+def test_view_refuses_a_bound_module_of_another_run(tmp_path: Path) -> None:
+    store, pack, attempt = seed(tmp_path)
+    upstream = upstream_of(store, attempt)
+    assert cp3c.context_block(pack=pack, upstream=upstream)["facts"]
+    other = {"run_id": "another-run"}
+    foreign_cp1 = Module.model_validate({**upstream.cp1.model_dump(), **other})
+    foreign_cp2d = Module.model_validate({**upstream.cp2d.model_dump(), **other})
+    for moved in (replace(upstream, cp1=foreign_cp1), replace(upstream, cp2d=foreign_cp2d)):
+        module_id = "CP-1" if moved.cp1 is foreign_cp1 else "CP-2D"
+        message = f"^CP-3C: the bound {module_id} module belongs to another run$"
+        with pytest.raises(ValueError, match=message):
+            cp3c.context_block(pack=pack, upstream=moved)
 
 
 def test_adapter_balance_date_is_cp1s_schedule_period_end() -> None:
@@ -1396,6 +1490,22 @@ def test_reader_follows_the_head_not_the_oracle(tmp_path: Path) -> None:
     _submit(store, attempt, literal(store, attempt))
     read = cp3c.cp3c_reader(store, head(store, MODULE))
     assert (read.need, read.need_rows[0].need) == (Decimal(15), Decimal(15))  # 50 - (45 - 10)
+
+
+def test_reader_principal_and_base_claims_follow_the_head(tmp_path: Path) -> None:
+    """CP-1's facility principal (62.5, not the oracle's 50) flows through the real CP-2D head
+    into T3D.2.r01 and T3D.5.r01.c1, and the reader returns those cells."""
+    module = cp1_module(make_pack().run)
+    for fact_id in ("cp1:T4.18_principal", "cp1:term-loan-fy-2025:principal"):
+        module = swap(module, fact_id, amount=Decimal("62.5"))
+    store, _, attempt = seed(tmp_path, cp1=module)
+    _submit(store, attempt, literal(store, attempt))
+    h = head(store, MODULE)
+    mine = {f.fact_id: f for f in store.head_module(h).facts}
+    read = cp3c.cp3c_reader(store, h)
+    assert mine["T3D.2.r01"].amount == mine["T3D.5.r01.c1"].amount == Decimal("62.5")
+    assert (read.total_principal_payable, read.base_claims) == (Decimal("62.5"), Decimal("62.5"))
+    assert read.need == mine["T3D.2.r03"].amount != Decimal(15)
 
 
 def test_reader_refuses_another_modules_head_and_shows_a_stale_heads_status_only(

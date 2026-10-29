@@ -83,3 +83,26 @@ Not verified: no pytest or wiring was run against `src/`. I did not open the pac
 - **Fix:** pin `tab_label is None`, `tabs == ()` and T2E.4's rows as the block's rows. Then either name the `_na_strip` reason change as a seam target, or pin the current reason text and `_strip_note`.
 
 Not verified: whether `view.modules` always holds a CP-1 entry. If it does not, `report_view.py:1807`'s `modules["CP-1"]` raises a KeyError instead of taking the degraded path. No pytest was run.
+
+## Scoped re-check of 731059f (M-new)
+
+## Scoped re-check of M-new (s3-oracles at 731059f; fix commit 89a293d)
+
+**Verdict: APPROVE.** The fix resolves M-new and adds nothing new to half A.
+
+The `cp2d_settled_cp1_not_settled` case in `cases/charts/s4fp04-expected.json`, written by `build_a.py:911-914`, now pins:
+- `block.tab_label is None` and `block.tabs == ()`;
+- the block's rows as the T2E.4 rows (`t2e4_tab.rows`);
+- the S.4 n/a frame first, with no marks and a reason naming CP-1 as not settled.
+
+That agrees with the validator (`report_view.py:407`) and with how the code sets `tab_label` (`:1822`).
+
+A new builder target at `build_a.py:958-964` names both pieces the coordinator listed:
+- the `_na_strip` reason change (`:1585`) as a chart-seam change;
+- a covenant_refinancing view with no CP-1 entry, which must take the degraded path and never raise `KeyError` (`:1807`).
+
+Both follow the corrected item 9 L5 ruling. Between 89a293d and 731059f, none of the half A files changed.
+
+**Probe:** I rewrote `p5_l5_pin.sh` to check the new pin text and the two targets, and to confirm the validator line is still in `report_view.py`. It exits 0. Path: `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/oracle-review-A/p5_l5_pin.sh`
+
+Not verified: no pytest or wiring was run. The pin leaves the degraded block's note text (`_strip_note`) unpinned, so the builder decides it. Group B's `dr6:32` change was out of scope and not checked.

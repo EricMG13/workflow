@@ -19,3 +19,4 @@
 - **CP-2D (protocol §6).** `_validate_step` uses raw `model_validate_json`, not the `json_object` path. Source: batch/cp3c-report.md item 7.
 - **Tests.** `s1a_runs.drive_cp1` hard-codes the readiness literal; `cp3c_runs` and `cp4_runs` duplicate `drive_cp1` (jscpd).
 - **CP-1D (protocol §6, Info).** `_validate_step` parses with raw `model_validate_json`, not `json_object`. Source: batch/cp1c-report.md.
+- **CP-3D (protocol §6).** `_validate_step` still parses with raw `model_validate_json`. Source: batch/fix-src-report.md.

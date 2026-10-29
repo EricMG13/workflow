@@ -36,6 +36,11 @@
       "module_case": "positive"
     },
     {
+      "case": "producer_refused_or_blocked",
+      "expected": "No CP-4C head: no figure is produced and nothing is zero-filled; the block keeps its honest state (not run, absent or blocked with the producer's first limitation), as report_view._honest_state decides.",
+      "module_case": "refused / blocked / cp2g_blocked"
+    },
+    {
       "case": "hatching_follows_the_multiple",
       "expected": "Every multiple is analyst_judgment, so every bar is hatched and the legend says 'hatched = illustrative'; a missing multiple hatches by default.",
       "module_case": "positive"
@@ -53,7 +58,9 @@
     {
       "asserts": [
         "report_view.build on a distressed_restructuring run with CP-4C: block recovery-by-class owner CP-4C kind dense, figure DR.2 placement above kind grouped; marks (series, label, text, value) and table twin rows equal the oracle; gap marks spelled '∅ G<n>'",
-        "tabs unchanged: primary T4E.5 behind the figure, further tabs T4E.7, T4E.8"
+        "tabs unchanged: primary T4E.5 behind the figure, further tabs T4E.7, T4E.8",
+        "hatching seam: a DR.2 mark whose multiple is analyst_judgment renders hatched (charts.py:83 hatches only S refs today); a mark without that basis is unchanged",
+        "producer refused or blocked (cases/cp4c-owner cases.refused, .blocked, .cp2g_blocked): the block has no figure and keeps the honest state report_view._honest_state gives it (a blocked producer's first limitation is quoted)"
       ],
       "test_file": "tests/test_chart_render_dr2.py (new)"
     }
@@ -1303,7 +1310,7 @@
     "Draws T4E.5 recovery only; the fulcrum marker of the design twin (T4E.7), EV table (T4E.3) and vs-first pp (T4E.5.vs_first_pp) are table facts, not marks of this figure.",
     "Lease claims are excluded (G38 in the design); CP-4C settles creditor classes of the supplied pack only.",
     "All multiples are analyst assumptions; the figure is illustrative as CP-4C's own limitation says.",
-    "cases/cp4c-owner d7_rendering.decision still reads 'no chart'; this oracle supersedes that sentence for Stage 3 (the owner oracle is not edited)."
+    "Seam change (ruling 8, L4): hatching needs a chart-seam change, because charts.py:83 hatches only S refs today; a mark is hatched when its basis is analyst judgment (the multiple's value_class), a seam field the wiring adds."
   ],
   "source_authority": {
     "authority_order": "approved page decides figure and look; brief decides the provider; CP-4C oracle decides every number; inference marked per field",

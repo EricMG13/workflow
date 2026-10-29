@@ -41,6 +41,11 @@
       "module_case": "positive"
     },
     {
+      "case": "producer_refused_or_blocked",
+      "expected": "No CP-4C head: no figure, no zero-fill; the block keeps its honest state.",
+      "module_case": "refused / blocked / cp2g_blocked"
+    },
+    {
       "case": "checks_are_companions",
       "expected": "T4E.9.v0N.total_claims, .creditor_distributions and .balance travel as companion ids of the EV mark and are not marks.",
       "module_case": "positive"
@@ -51,7 +56,9 @@
       "asserts": [
         "cp4c_chart_series(module) returns DR.3, DR.4 and DR.5 after DR.2, equal to chart_series.DR.3-5.<case> for positive and gap",
         "the three composer fixtures match, including the n/a frames and the zero EV case",
-        "conservation holds on the returned positive values; no value recomputed"
+        "conservation holds on the returned positive values; no value recomputed",
+        "seam: each mark declares decimals 2 (the settled cell's); ChartSpec.coherent accepts text '3.75' for value 3.7466... via format_value(decimals=2); a mark with no declared decimals is checked as today (CP-1 charts unchanged)",
+        "producer refused or blocked (cases/cp4c-owner cases.refused, .blocked, .cp2g_blocked): no DR.3, DR.4 or DR.5 figure; the block keeps its honest state"
       ],
       "test_file": "tests/test_chart_series_dr345.py (new)"
     },
@@ -2108,6 +2115,7 @@
   "scope_limits": [
     "Draws distributions, equity residual and EV only; claims, shortfalls and value available (T4E.2/T4E.4 tabs) stay tables.",
     "Step order builds up to the enterprise value rather than starting from it (inference, flagged): marks keep the settled non-negative texts.",
+    "Seam change (ruling 8, H1): marks keep the settled two-decimal texts. ChartMark carries the fact's declared decimals, and the ChartSpec text check (report_view.py:286) passes them to display.format_value (which already takes decimals). Without a declared value the behaviour is unchanged, so CP-1 charts do not move.",
     "Lease claims are excluded; the design's 'Merger value (cited EV)' scenario does not exist in CP-4C."
   ],
   "source_authority": {

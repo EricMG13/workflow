@@ -435,7 +435,7 @@ def build_cr2() -> dict:
                 "asserts": [
                     "cp2d_chart_series(module) on the CP-2D head of the positive and long_horizon owner runs (tests/cp2d_runs.py) returns one record whose fig_id, title, kind, unit_class, unit, series, reason and points (series, category, fact_id, companion_fact_ids, shown, value) equal chart_series.CR.2.<case>",
                     "the bridge identity holds on the returned values (opening + flow + amortisation + maturities == closing) and the closing mark of long_horizon is negative",
-                    "no point is recomputed: each value equals Fact.amount of its fact_id; a forged view with T2E.3.r07 missing yields a gap point (value None) for r07 and r08, never 0",
+                    "no point is recomputed: each value equals Fact.amount of its fact_id; a forged view that drops T2E.3.r07 and T2E.3.r08 together yields gap points (value None) for both, never 0",
                 ],
             },
             {
@@ -515,6 +515,8 @@ def cr3_fixture_points(case: dict) -> list:
                 "unit": "MILLIONS",
                 "row_id": row_id,
                 "fact_id_basis": "inferred: rows follow facility_order (months ascending, then id); fixtures carry no tables",
+                "category_basis": "inferred: the facility id (fixtures carry no row label)",
+                "reason_basis": "inferred: fixtures carry no gap text; the reason is generic and the wiring test must not compare it",
                 "shown_basis": "derived: display.py 0 dp half away from zero, negatives in brackets",
             }
             value = fac[key]
@@ -1003,6 +1005,11 @@ def build_dr2() -> dict:
             "expected": "Q-C4: series are Base 4.00x, Downside 3.00x, Stress 2.00x from T4E.3.v0N.scenario and .multiple, not the design's 'Merger value (cited EV)', 'Downside 5.0x', 'Stress 4.0x'.",
         },
         {
+            "case": "producer_refused_or_blocked",
+            "module_case": "refused / blocked / cp2g_blocked",
+            "expected": "No CP-4C head: no figure is produced and nothing is zero-filled; the block keeps its honest state (not run, absent or blocked with the producer's first limitation), as report_view._honest_state decides.",
+        },
+        {
             "case": "hatching_follows_the_multiple",
             "module_case": "positive",
             "expected": "Every multiple is analyst_judgment, so every bar is hatched and the legend says 'hatched = illustrative'; a missing multiple hatches by default.",
@@ -1048,7 +1055,7 @@ def build_dr2() -> dict:
             "Draws T4E.5 recovery only; the fulcrum marker of the design twin (T4E.7), EV table (T4E.3) and vs-first pp (T4E.5.vs_first_pp) are table facts, not marks of this figure.",
             "Lease claims are excluded (G38 in the design); CP-4C settles creditor classes of the supplied pack only.",
             "All multiples are analyst assumptions; the figure is illustrative as CP-4C's own limitation says.",
-            "cases/cp4c-owner d7_rendering.decision still reads 'no chart'; this oracle supersedes that sentence for Stage 3 (the owner oracle is not edited).",
+            "Seam change (ruling 8, L4): hatching needs a chart-seam change, because charts.py:83 hatches only S refs today; a mark is hatched when its basis is analyst judgment (the multiple's value_class), a seam field the wiring adds.",
         ],
         "render": {"distressed_restructuring": spec},
         "builder_targets": [
@@ -1065,6 +1072,8 @@ def build_dr2() -> dict:
                 "asserts": [
                     "report_view.build on a distressed_restructuring run with CP-4C: block recovery-by-class owner CP-4C kind dense, figure DR.2 placement above kind grouped; marks (series, label, text, value) and table twin rows equal the oracle; gap marks spelled '∅ G<n>'",
                     "tabs unchanged: primary T4E.5 behind the figure, further tabs T4E.7, T4E.8",
+                    "hatching seam: a DR.2 mark whose multiple is analyst_judgment renders hatched (charts.py:83 hatches only S refs today); a mark without that basis is unchanged",
+                    "producer refused or blocked (cases/cp4c-owner cases.refused, .blocked, .cp2g_blocked): the block has no figure and keeps the honest state report_view._honest_state gives it (a blocked producer's first limitation is quoted)",
                 ],
             },
         ],
@@ -1136,6 +1145,11 @@ def build_dr345() -> dict:
             "expected": "Q-C4: titles read 'Value allocation, Base 4.00x', '..., Downside 3.00x', '..., Stress 2.00x'; the design's 'Merger value' / 5.0x / 4.0x are not used.",
         },
         {
+            "case": "producer_refused_or_blocked",
+            "module_case": "refused / blocked / cp2g_blocked",
+            "expected": "No CP-4C head: no figure, no zero-fill; the block keeps its honest state.",
+        },
+        {
             "case": "checks_are_companions",
             "module_case": "positive",
             "expected": "T4E.9.v0N.total_claims, .creditor_distributions and .balance travel as companion ids of the EV mark and are not marks.",
@@ -1180,6 +1194,7 @@ def build_dr345() -> dict:
         "scope_limits": [
             "Draws distributions, equity residual and EV only; claims, shortfalls and value available (T4E.2/T4E.4 tabs) stay tables.",
             "Step order builds up to the enterprise value rather than starting from it (inference, flagged): marks keep the settled non-negative texts.",
+            "Seam change (ruling 8, H1): marks keep the settled two-decimal texts. ChartMark carries the fact's declared decimals, and the ChartSpec text check (report_view.py:286) passes them to display.format_value (which already takes decimals). Without a declared value the behaviour is unchanged, so CP-1 charts do not move.",
             "Lease claims are excluded; the design's 'Merger value (cited EV)' scenario does not exist in CP-4C.",
         ],
         "render": {"distressed_restructuring": spec},
@@ -1190,6 +1205,8 @@ def build_dr345() -> dict:
                     "cp4c_chart_series(module) returns DR.3, DR.4 and DR.5 after DR.2, equal to chart_series.DR.3-5.<case> for positive and gap",
                     "the three composer fixtures match, including the n/a frames and the zero EV case",
                     "conservation holds on the returned positive values; no value recomputed",
+                    "seam: each mark declares decimals 2 (the settled cell's); ChartSpec.coherent accepts text '3.75' for value 3.7466... via format_value(decimals=2); a mark with no declared decimals is checked as today (CP-1 charts unchanged)",
+                    "producer refused or blocked (cases/cp4c-owner cases.refused, .blocked, .cp2g_blocked): no DR.3, DR.4 or DR.5 figure; the block keeps its honest state",
                 ],
             },
             {
@@ -1269,6 +1286,11 @@ def build_dr6() -> dict:
             "expected": "No T2R.4 or T2R.5 fact id appears as a point or companion of the frame (forbidden_mark_fact_ids).",
         },
         {
+            "case": "producer_refused_or_blocked",
+            "module_case": "refused / blocked / cp2g_blocked",
+            "expected": "No CP-2H head: no frame, no figure; the block keeps its honest state (the frame belongs to a settled head, not to an absent one).",
+        },
+        {
             "case": "tables_unchanged",
             "module_case": None,
             "expected": "The CP-2H tabs (T2R.9 primary, T2R.4-T2R.8) render as in the cases/cp2h-owner FP05 pin; only the frame is added.",
@@ -1339,8 +1361,14 @@ def build_dr6() -> dict:
                 },
                 "frame_texts": {
                     "title": DR6_FRAME["title"],
-                    "reason": {"positive": FRAME_REASON_POSITIVE, "gap": FRAME_REASON_GAP},
                     "ref_spelling": GAP_SPELLING,
+                    "per_case": {
+                        "positive": {"reason": FRAME_REASON_POSITIVE, "reference": None},
+                        "gap": {
+                            "reason": FRAME_REASON_GAP,
+                            "reference": "the reason text carries the '∅ G<n>' of the cited facts (cases.gap.cited_gap_fact_ids), bound at run time; no separate reference field",
+                        },
+                    },
                 },
                 "status_chip": DR6_CHIP,
             }
@@ -1351,7 +1379,10 @@ def build_dr6() -> dict:
                 "asserts": [
                     "report_view.build on a distressed_restructuring run with CP-2H (positive and gap owner runs, tests/cp2h_runs.py): block rating-triggers has one figure DR.6 with chart.kind na, zero marks, empty twin and chart.reason equal to the frame reason; no fact id of T2R.4 or T2R.5 appears among the figure's refs",
                     "tabs unchanged: primary T2R.9, tabs T2R.4 to T2R.8",
-                    "the frame cites a gap reference spelled '∅ G<n>' (n bound at run time) and the block shows the chip text 'Not computable'",
+                    "positive: the frame reason equals frame_texts.per_case.positive.reason and contains no G# reference",
+                    "gap: the frame reason starts with frame_texts.per_case.gap.reason and carries the '∅ G<n>' of the cited gap facts (n bound at run time)",
+                    "the block shows the chip text 'Not computable'",
+                    "producer refused or blocked (cases/cp2h-owner cases.refused, .blocked, .cp2g_blocked): no frame and no figure; the block keeps its honest state",
                 ],
             }
         ],

@@ -16,6 +16,11 @@
       "module_case": null
     },
     {
+      "case": "producer_refused_or_blocked",
+      "expected": "No CP-2H head: no frame, no figure; the block keeps its honest state (the frame belongs to a settled head, not to an absent one).",
+      "module_case": "refused / blocked / cp2g_blocked"
+    },
+    {
       "case": "tables_unchanged",
       "expected": "The CP-2H tabs (T2R.9 primary, T2R.4-T2R.8) render as in the cases/cp2h-owner FP05 pin; only the frame is added.",
       "module_case": null
@@ -26,7 +31,10 @@
       "asserts": [
         "report_view.build on a distressed_restructuring run with CP-2H (positive and gap owner runs, tests/cp2h_runs.py): block rating-triggers has one figure DR.6 with chart.kind na, zero marks, empty twin and chart.reason equal to the frame reason; no fact id of T2R.4 or T2R.5 appears among the figure's refs",
         "tabs unchanged: primary T2R.9, tabs T2R.4 to T2R.8",
-        "the frame cites a gap reference spelled '∅ G<n>' (n bound at run time) and the block shows the chip text 'Not computable'"
+        "positive: the frame reason equals frame_texts.per_case.positive.reason and contains no G# reference",
+        "gap: the frame reason starts with frame_texts.per_case.gap.reason and carries the '∅ G<n>' of the cited gap facts (n bound at run time)",
+        "the block shows the chip text 'Not computable'",
+        "producer refused or blocked (cases/cp2h-owner cases.refused, .blocked, .cp2g_blocked): no frame and no figure; the block keeps its honest state"
       ],
       "test_file": "tests/test_chart_render_dr6.py (new)"
     }
@@ -243,9 +251,15 @@
         "table_twin_rows": 0
       },
       "frame_texts": {
-        "reason": {
-          "gap": "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report",
-          "positive": "agency source is synthetic; a headroom chart waits for a real agency report"
+        "per_case": {
+          "gap": {
+            "reason": "a trigger threshold is not stated in the synthetic agency source; a headroom chart waits for a real agency report",
+            "reference": "the reason text carries the '∅ G<n>' of the cited facts (cases.gap.cited_gap_fact_ids), bound at run time; no separate reference field"
+          },
+          "positive": {
+            "reason": "agency source is synthetic; a headroom chart waits for a real agency report",
+            "reference": null
+          }
         },
         "ref_spelling": "∅ G#",
         "title": "Rating trigger headroom"

@@ -31,6 +31,7 @@ from typing import Any, Literal, Self
 
 from pydantic import ValidationError, model_validator
 
+from deploy_vii import charts
 from deploy_vii import render as core_render
 from deploy_vii.bindings import SHOWN_STATUSES
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
@@ -780,6 +781,23 @@ def _capture(
     return _Capture(wire, MappingProxyType(files))
 
 
+def _expected_block_payload(block: Block) -> dict[str, Any]:
+    """The block as `render._report_payload` puts it in `report-data`: the dumped block, the
+    DOM spelling of its state and, for a chart or figure, the SVG and gaps note it adds."""
+    expected: dict[str, Any] = block.model_dump(mode="json")
+    expected["state"] = _DOM_BLOCK_STATE.get(block.state, block.state)
+    if block.chart is not None:
+        expected["chart"]["svg"] = charts.render_svg(
+            block.chart, chart_id=block.block_id, title=block.title
+        )
+    for index, (item, figure) in enumerate(zip(expected["figures"], block.figures, strict=True)):
+        item["gaps_note"] = figure.gaps_note
+        item["chart"]["svg"] = charts.render_svg(
+            figure.chart, chart_id=f"{block.block_id}-f{index}", title=figure.title
+        )
+    return expected
+
+
 def _sections(
     scope: DeliveryScope,
     outcome: Outcome,
@@ -792,7 +810,12 @@ def _sections(
     proofs: list[OwnerSectionProof] = []
     for section_id in scope.sections:
         block = blocks.get(section_id)
-        if block is None or block.chart is not None or block.figures:
+        if block is None:
+            raise _refusal("owner_render_proof")
+        # Rev 3 R3.2: a shown block may hold figures. They are proved against the frozen chart
+        # oracles by the acceptance tests and are covered here by the exact payload equality
+        # below; a refused page draws no figure (blocks that never ran carry none).
+        if outcome == "refused" and (block.figures or block.chart is not None):
             raise _refusal("owner_render_proof")
         facts = tuple(item for item, _ in _bound_facts(section_id, shown, heads, head_modules))
         if outcome == "complete":
@@ -800,9 +823,7 @@ def _sections(
                 raise _refusal("owner_render_proof")
         elif facts or block.state in _ASSIGNED_SHOWN:
             raise _refusal("owner_render_proof")
-        expected = block.model_dump(mode="json")
-        expected["state"] = _DOM_BLOCK_STATE.get(block.state, block.state)
-        if payload_blocks.get(section_id) != expected:
+        if payload_blocks.get(section_id) != _expected_block_payload(block):
             raise _refusal("owner_render_payload")
         proofs.append(
             OwnerSectionProof(

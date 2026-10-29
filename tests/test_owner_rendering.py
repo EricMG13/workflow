@@ -187,6 +187,49 @@ def test_fast_cp1_model_sections_are_the_blocks_produced_by_cp1_alone() -> None:
     assert producers_cp1 == tuple(g2.DELIVERY_SCOPES["cp1-model"].sections)
 
 
+def test_fast_expected_block_payload_equals_the_core_payload_for_figure_blocks() -> None:
+    """The proof's expectation for a block (state spelling, chart svg, gaps note) is the core's."""
+    import test_chart_render_cr1 as cr1
+
+    from deploy_vii import render as core_render
+
+    _, report = cr1._report("positive")
+    payload = core_render._report_payload(report)
+    assert any(block.figures for block in report.blocks)
+    payload_blocks = payload["blocks"]
+    assert isinstance(payload_blocks, list)
+    for block, got in zip(report.blocks, payload_blocks, strict=True):
+        assert g2._expected_block_payload(block) == got, block.block_id
+
+
+def test_fast_refused_outcome_refuses_a_block_that_draws_a_figure() -> None:
+    import test_chart_render_cr1 as cr1
+
+    _, report = cr1._report("positive")
+    block = next(b for b in report.blocks if b.figures)
+    # model_copy skips the Block validator, which would itself refuse a not_run figure block
+    hollow = block.model_copy(update={"state": "not_run"})
+    scope = g2.DELIVERY_SCOPES["cp4-fp04-covenants"]
+    with pytest.raises(ValueError, match=r"^owner_render_proof"):
+        g2._sections(
+            g2.DeliveryScope(
+                scope.scope_id,
+                scope.pathway,
+                scope.requested_modules,
+                scope.case_kind,
+                (block.block_id,),
+                scope.rails,
+                scope.banner,
+            ),
+            "refused",
+            {block.block_id: hollow},
+            {},
+            {},
+            {},
+            {},
+        )
+
+
 def test_fast_scope_triples_are_unique_and_modules_are_known() -> None:
     triples = [
         (s.pathway, tuple(s.requested_modules), s.case_kind) for s in g2.DELIVERY_SCOPES.values()

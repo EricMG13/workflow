@@ -1,0 +1,2756 @@
+{
+  "adversarial_cases": [
+    {
+      "case": "positive_conservation",
+      "expected": "Per scenario, class distributions plus the equity residual equal the enterprise value: Base 50 + 20 + 10 + 43.60 = 123.60; Downside 50 + 3.75 + 1.87 + 0 = 55.62 (exact 50 + 3.7466... + 1.8733... + 0); Stress 37.08 + 0 + 0 + 0 = 37.08. Marks carry the settled two-decimal texts; the builder asserts the exact identity.",
+      "module_case": "positive"
+    },
+    {
+      "case": "equity_residual_zero_is_known",
+      "expected": "Downside and Stress residual 0.00 is a settled known 0 (T4E.9.v02/v03.equity_residual): plotted as a zero residual step, not a gap.",
+      "module_case": "positive"
+    },
+    {
+      "case": "partial_gap_keeps_known_marks",
+      "expected": "Base and Downside: EV and the senior secured distribution are known, the other classes and the residual are gap marks (a missing claim blocks lower ranks and the residual); the chart stays a waterfall with gap marks.",
+      "module_case": "gap"
+    },
+    {
+      "case": "ev_missing_is_the_na_frame",
+      "expected": "Stress (DR.5): EV, every distribution and the residual are missing, so the chart is kind na with the module reason 'the EV multiple was not assessed'.",
+      "module_case": "gap"
+    },
+    {
+      "case": "ev_zero",
+      "expected": "EV 0 gives all-zero known distributions and residual for Downside and Stress; plotted as zero steps with an EV total of 0, not n/a.",
+      "module_case": "fixture_ev_zero"
+    },
+    {
+      "case": "ebitda_missing",
+      "expected": "Downside and Stress are n/a frames; Base is complete.",
+      "module_case": "fixture_ebitda_missing"
+    },
+    {
+      "case": "debt_missing",
+      "expected": "EV is known in every scenario but every distribution and the residual are gaps: each chart has one known mark (EV total) and gap marks.",
+      "module_case": "fixture_debt_missing"
+    },
+    {
+      "case": "scenario_names",
+      "expected": "Q-C4: titles read 'Value allocation, Base 4.00x', '..., Downside 3.00x', '..., Stress 2.00x'; the design's 'Merger value' / 5.0x / 4.0x are not used.",
+      "module_case": "positive"
+    },
+    {
+      "case": "checks_are_companions",
+      "expected": "T4E.9.v0N.total_claims, .creditor_distributions and .balance travel as companion ids of the EV mark and are not marks.",
+      "module_case": "positive"
+    }
+  ],
+  "builder_targets": [
+    {
+      "asserts": [
+        "cp4c_chart_series(module) returns DR.3, DR.4 and DR.5 after DR.2, equal to chart_series.DR.3-5.<case> for positive and gap",
+        "the three composer fixtures match, including the n/a frames and the zero EV case",
+        "conservation holds on the returned positive values; no value recomputed"
+      ],
+      "test_file": "tests/test_chart_series_dr345.py (new)"
+    },
+    {
+      "asserts": [
+        "block value-allocation-claims owner CP-4C kind dense holds figures DR.3, DR.4, DR.5 in that order, each placement above kind waterfall (kind na for an n/a frame), marks roles value..., residual, total",
+        "twin rows equal table_twins; tabs primary T4E.2 then T4E.3, T4E.4, T4E.6 unchanged"
+      ],
+      "test_file": "tests/test_chart_render_dr345.py (new)"
+    }
+  ],
+  "chart_series": {
+    "DR.3-5": {
+      "fixture_debt_missing": {
+        "DR.3": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.3",
+          "gap_count": 4,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_debt_missing",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c01.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v01.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.9.v01.total_claims",
+                "T4E.9.v01.creditor_distributions",
+                "T4E.9.v01.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v01.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "123.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "123.6",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Base 4.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Base 4.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.4": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.4",
+          "gap_count": 4,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_debt_missing",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c01.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v02.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.9.v02.total_claims",
+                "T4E.9.v02.creditor_distributions",
+                "T4E.9.v02.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v02.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "55.62",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "55.62",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Downside 3.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Downside 3.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.5": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.5",
+          "gap_count": 4,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_debt_missing",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c01.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v03.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: total debt is missing in CP-1 for LTM Q4 25: 2025-01-01 to 2025-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.9.v03.total_claims",
+                "T4E.9.v03.creditor_distributions",
+                "T4E.9.v03.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v03.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "37.08",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "37.08",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Stress 2.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Stress 2.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        }
+      },
+      "fixture_ebitda_missing": {
+        "DR.3": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.3",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_ebitda_missing",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "50.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "50",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "20.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "20",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "10.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "10",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v01.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "43.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "43.6",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.9.v01.total_claims",
+                "T4E.9.v01.creditor_distributions",
+                "T4E.9.v01.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v01.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "123.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "123.6",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Base 4.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Base 4.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.4": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.4",
+          "gap_count": 5,
+          "hatched": true,
+          "kind": "na",
+          "module_case": "fixture_ebitda_missing",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c01.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v02.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.9.v02.total_claims",
+                "T4E.9.v02.creditor_distributions",
+                "T4E.9.v02.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v02.ev",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            }
+          ],
+          "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+          "scenario": "Downside 3.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Downside 3.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.5": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.5",
+          "gap_count": 5,
+          "hatched": true,
+          "kind": "na",
+          "module_case": "fixture_ebitda_missing",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c01.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v03.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.9.v03.total_claims",
+                "T4E.9.v03.creditor_distributions",
+                "T4E.9.v03.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v03.ev",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            }
+          ],
+          "reason": "Not calculable: downside FY2026 EBITDA is missing in CP-2G (synthetic upstream fixture)",
+          "scenario": "Stress 2.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Stress 2.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        }
+      },
+      "fixture_ev_zero": {
+        "DR.3": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.3",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_ev_zero",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "50.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "50",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "20.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "20",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "10.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "10",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v01.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "43.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "43.6",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.9.v01.total_claims",
+                "T4E.9.v01.creditor_distributions",
+                "T4E.9.v01.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v01.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "123.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "123.6",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Base 4.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Base 4.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.4": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.4",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_ev_zero",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v02.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.9.v02.total_claims",
+                "T4E.9.v02.creditor_distributions",
+                "T4E.9.v02.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v02.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Downside 3.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Downside 3.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.5": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.5",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "fixture_ev_zero",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v03.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.9.v03.total_claims",
+                "T4E.9.v03.creditor_distributions",
+                "T4E.9.v03.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v03.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Stress 2.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Stress 2.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        }
+      },
+      "gap": {
+        "DR.3": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.3",
+          "gap_count": 4,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "gap",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 6,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "50.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "50",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Administrative and priority claims",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c04",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c04.claim",
+                "T4E.2.c04.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c04.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v01.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.9.v01.total_claims",
+                "T4E.9.v01.creditor_distributions",
+                "T4E.9.v01.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v01.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "123.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "123.6",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Base 4.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Base 4.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.4": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.4",
+          "gap_count": 4,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "gap",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 6,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "50.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "50",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Administrative and priority claims",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c04",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c04.claim",
+                "T4E.2.c04.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c04.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v02.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: no supplied source states the claim of Administrative and priority claims",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.9.v02.total_claims",
+                "T4E.9.v02.creditor_distributions",
+                "T4E.9.v02.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v02.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "55.62",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "55.62",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Downside 3.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Downside 3.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.5": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": null,
+            "rule": "not asserted: a gap blocks the identity; no gap is replaced by 0"
+          },
+          "currency": "USD",
+          "fig_id": "DR.5",
+          "gap_count": 6,
+          "hatched": true,
+          "kind": "na",
+          "module_case": "gap",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 6,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c01.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: the EV multiple was not assessed",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Administrative and priority claims",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c02.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: the EV multiple was not assessed",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c03.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: the EV multiple was not assessed",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c04",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c04.claim",
+                "T4E.2.c04.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c04.distribution",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: the EV multiple was not assessed",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v03.equity_residual",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: the EV multiple was not assessed",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.9.v03.total_claims",
+                "T4E.9.v03.creditor_distributions",
+                "T4E.9.v03.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v03.ev",
+              "gap_rule": "never zero; the G# reference is bound at run time in report order",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "reason": "Not calculable: the EV multiple was not assessed",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "∅ G#",
+              "state": "gap",
+              "unit": "MILLIONS",
+              "value": null,
+              "value_class": null
+            }
+          ],
+          "reason": "Not calculable: the EV multiple was not assessed",
+          "scenario": "Stress",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Stress",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        }
+      },
+      "positive": {
+        "DR.3": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.3",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "positive",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "50.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "50",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "20.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "20",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.4.v01c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v01c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "10.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "10",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v01.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "43.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "43.6",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v01.scenario",
+                "T4E.3.v01.multiple",
+                "T4E.9.v01.total_claims",
+                "T4E.9.v01.creditor_distributions",
+                "T4E.9.v01.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v01.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "123.60",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "123.6",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Base 4.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Base 4.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.4": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.4",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "positive",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "50.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "50",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "3.75",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "3.7466666666666666666666666666666666667",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.4.v02c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v02c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "1.87",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "1.8733333333333333333333333333333333333",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v02.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v02.scenario",
+                "T4E.3.v02.multiple",
+                "T4E.9.v02.total_claims",
+                "T4E.9.v02.creditor_distributions",
+                "T4E.9.v02.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v02.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "55.62",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "55.62",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Downside 3.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Downside 3.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        },
+        "DR.5": {
+          "axis_label": "US$ m",
+          "conservation": {
+            "holds": true,
+            "rule": "sum of class distributions + equity residual == enterprise value (T4E.9 balance 0)"
+          },
+          "currency": "USD",
+          "fig_id": "DR.5",
+          "gap_count": 0,
+          "hatched": true,
+          "kind": "waterfall",
+          "module_case": "positive",
+          "order_basis": "inference: ChartMark carries the settled non-negative cell text, so the waterfall builds up to EV; the brief's order (EV first, then allocations as deductions) would need negated marks that no settled cell carries (flagged)",
+          "point_count": 5,
+          "points": [
+            {
+              "category": "Senior secured term loan",
+              "class_row": "c01",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c01.claim",
+                "T4E.2.c01.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c01.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "37.08",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "37.08",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Trade payables",
+              "class_row": "c02",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c02.claim",
+                "T4E.2.c02.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c02.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Other current liabilities",
+              "class_row": "c03",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.4.v03c03.claim",
+                "T4E.2.c03.name"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.4.v03c03.distribution",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "value",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Residual to equity",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.9.v03.equity_residual",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "residual",
+              "series": "Value allocation",
+              "shown": "0.00",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "0",
+              "value_class": "calculated"
+            },
+            {
+              "category": "Enterprise value",
+              "companion_fact_ids": [
+                "T4E.3.v03.scenario",
+                "T4E.3.v03.multiple",
+                "T4E.9.v03.total_claims",
+                "T4E.9.v03.creditor_distributions",
+                "T4E.9.v03.balance"
+              ],
+              "currency": "USD",
+              "fact_id": "T4E.3.v03.ev",
+              "period": "FY2026: 2026-01-01 to 2026-12-31",
+              "role": "total",
+              "series": "Value allocation",
+              "shown": "37.08",
+              "state": "known",
+              "unit": "MILLIONS",
+              "value": "37.08",
+              "value_class": "calculated"
+            }
+          ],
+          "reason": null,
+          "scenario": "Stress 2.00x",
+          "series": [
+            "Value allocation"
+          ],
+          "step_order": "classes by (rank, id), then equity residual (role residual), then enterprise value (role total)",
+          "title": "Value allocation, Stress 2.00x",
+          "unit": "MILLIONS",
+          "unit_class": "amount"
+        }
+      }
+    }
+  },
+  "figure": "DR.3-5",
+  "figure_group": "B",
+  "questions": [
+    "Step order (build-up to EV) departs from the brief's 'EV, then allocation, then residual'; the brief's order needs negated marks."
+  ],
+  "render": {
+    "distressed_restructuring": {
+      "block_id": "value-allocation-claims",
+      "block_kind": "dense",
+      "design": {
+        "lines": [
+          40,
+          41
+        ],
+        "page": "design/reference/rbot-fp-05-distressed-restructuring.dc.html"
+      },
+      "figure_order": "DR.3 Base, DR.4 Downside, DR.5 Stress (scenario row order v01, v02, v03)",
+      "figures": [
+        {
+          "chart_kind": "waterfall",
+          "fig_id": "DR.3",
+          "placement": "above"
+        },
+        {
+          "chart_kind": "waterfall",
+          "fig_id": "DR.4",
+          "placement": "above"
+        },
+        {
+          "chart_kind": "waterfall",
+          "fig_id": "DR.5",
+          "placement": "above"
+        }
+      ],
+      "owner": "CP-4C",
+      "pathway": "distressed_restructuring",
+      "primary_tab": "T4E.2",
+      "producers": [
+        "CP-4C"
+      ],
+      "state": "populated",
+      "tabs": [
+        "T4E.3",
+        "T4E.4",
+        "T4E.6"
+      ],
+      "tabs_source": "cases/cp4c-owner/expected.json#cases.positive.FP05"
+    }
+  },
+  "review_phase": "pre-implementation; independent of candidate renderer output; derived from the frozen module oracles only",
+  "schema_version": "independent-stage3-chart-expectations/1",
+  "scope_limits": [
+    "Draws distributions, equity residual and EV only; claims, shortfalls and value available (T4E.2/T4E.4 tabs) stay tables.",
+    "Step order builds up to the enterprise value rather than starting from it (inference, flagged): marks keep the settled non-negative texts.",
+    "Lease claims are excluded; the design's 'Merger value (cited EV)' scenario does not exist in CP-4C."
+  ],
+  "source_authority": {
+    "authority_order": "approved page decides figure and look; brief decides the provider and chart ids; CP-4C oracle decides every number; inference marked per field",
+    "briefs": [
+      {
+        "file": "docs/design-pack/content/05-distressed-restructuring.md",
+        "line": 26,
+        "sha256": "1990e9fd9a4c1b3e9703cb5c9aaaf8c59127fe642ebe7697391cb49b19eb3276",
+        "what": "Value allocation waterfalls per scenario: charts.fig-value-allocation-merger, -downside, -stress (EV, per-class allocation, residual)"
+      }
+    ],
+    "design": [
+      {
+        "lines": [
+          40,
+          41
+        ],
+        "page": "design/reference/rbot-fp-05-distressed-restructuring.dc.html",
+        "sha256": "cae34879e839be531affa30bf5f513ecfb748c1c75a874b70c179c7734984f18",
+        "what": "header 'CP-4C · Fig. DR.3-5 · US$ m', scenario tabs, waterfall figure"
+      },
+      {
+        "lines": [
+          69,
+          85
+        ],
+        "page": "design/reference/lib/charts.js",
+        "sha256": "c892cbe3a4e2dc0d5b2f560b469356ca8502d4a14f07d9f4cfdf19d95be40f03",
+        "what": "waterfall: total, value and residual bars"
+      }
+    ],
+    "modules": [
+      {
+        "path": "cases/cp4c-owner/expected.json",
+        "schema_version": "cp4c-owner-expected/1",
+        "sha256": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6"
+      }
+    ],
+    "rulings": [
+      "Q-C4 (scenario labels)",
+      "item 7 of questions.md"
+    ]
+  },
+  "table_twins": {
+    "fixture_debt_missing": {
+      "DR.3": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "123.60"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.4": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "55.62"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.5": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "37.08"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      }
+    },
+    "fixture_ebitda_missing": {
+      "DR.3": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "50.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "20.00"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "10.00"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "43.60"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "123.60"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.4": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.5": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      }
+    },
+    "fixture_ev_zero": {
+      "DR.3": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "50.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "20.00"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "10.00"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "43.60"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "123.60"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.4": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.5": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      }
+    },
+    "gap": {
+      "DR.3": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "50.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Administrative and priority claims"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "123.60"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.4": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "50.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Administrative and priority claims"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "55.62"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.5": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Administrative and priority claims"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "∅ G#"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      }
+    },
+    "positive": {
+      "DR.3": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "50.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "20.00"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "10.00"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "43.60"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "123.60"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.4": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "50.00"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "3.75"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "1.87"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "55.62"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      },
+      "DR.5": {
+        "columns": [
+          "Step",
+          "US$ m"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "37.08"
+            ],
+            "label": "Senior secured term loan"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Trade payables"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Other current liabilities"
+          },
+          {
+            "cells": [
+              "0.00"
+            ],
+            "label": "Residual to equity"
+          },
+          {
+            "cells": [
+              "37.08"
+            ],
+            "label": "Enterprise value"
+          }
+        ]
+      }
+    }
+  },
+  "twin_rule": "One row per waterfall step with one cell (the settled text), in mark order."
+}

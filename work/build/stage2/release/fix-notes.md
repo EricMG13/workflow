@@ -23,3 +23,13 @@
   - The CP-DR gap id of 139-153 characters wedges compose (`cpdr.py:481`; probe `a04_cpdr_long_gap_id.py`). It is the sibling of the approved question_id fix, and the user is asked whether to fix it here.
   - CP-1 accepts blank limitations (`a05_cp1_scope_limitation_sink.py`).
 - **The W3 verbatim-sink question is closed.** CP-1's absence rule covers scope limitations (`source_context.py:333, 374-398`).
+
+## Lane B (REQUEST CHANGES)
+- **M1.** Re-insert the four D12 records that 0daac2c overwrote: `live/submission.py` @bb4553b, and `cp3_relative_value.py`, `cp4_legal.py` and `business_context.py` @cffdf9f. Each goes just before its file's 93c1ffc record. Probe `release-review-B/probe_d12_chain.py` must exit 0 (`probe_d12_fix.py` shows the target).
+- **L1, ruled: restore.** `cases/legal/manifest.json:290` `immutable_inspection.files["src/deploy_vii/readiness.py"]` goes back to the imported 1038a37a. The block records imported bytes (manifest :333), and the W1/W3 re-pin was a misread. The cascade (legal manifest, render-expected, source-host-expected, the cp2d/cp4/cp4c builder pins, lease headers) re-runs in the integration chain. Probe `probe_legal_inspection_pin.py` must exit 0.
+- **L2.** The same as lane C L3 (the item 21 heading).
+- **I1.** CP-2D r05/r06 currency: no change.
+- **S1a, ruled: fix here.** These test-only failures predate Stage 2 (235c208), but the release gate needs the fast set to exit 0.
+  - **cp0 pair:** substitute the oracle's `<<PreparedPack.content_hash(), bound at run time>>` with `closed.pack.content_hash()` before comparing, and assert that exactly one fact carries it.
+  - **`test_cp2_invalid_submission_without_a_read_refuses`:** use `valid, _ = _verify_submissions(...)` and assert `"credit_synthesis"` is not among the valid steps.
+  - Probes `probe_s1a_cp0_placeholder.py` and `probe_s1a_verify_submissions_valid.py`.

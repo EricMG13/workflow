@@ -64,6 +64,7 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
 - **CP-1D lease.**
   - `parse_bridge(pages)` (round 5 item 13).
   - Add the TOOL-CONTRACT row (cp1d/report.md).
+- **CP-8 lease :85.** It says "both recorded in receipt", which cannot hold for `stale_binding`: `write_receipt` itself raises `stale_binding`. Reword it (fix-infra-report CP-8 L-b).
 - **CP-2A lease.** The unit rule applies to settled operands only (lows.md).
 - `MODULES.csv`: record the D3 closures once runs are accepted.
 

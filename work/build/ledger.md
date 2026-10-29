@@ -401,3 +401,4 @@
 - 01:10 Review lane A: CP-2G REQUEST CHANGES (M1 D3 facts), CP-2H APPROVE, CP-4C REQUEST CHANGES (M2 D3 facts). All lanes in. Fix batch: 3 parallel mx-feature fixers (src, tests, infra).
 - 01:17 Fix 1 (src) 545e28a: CP-DR/CP-3D RunText (xfails removed), CP-2G T2H.7 ValueError, CP-2D/CP-1D json_object, CP-1D L1/L6. Gates 0.
 - 01:17 Fix 2 (tests) ca9457e: CP-3C 19/19 mutants killed; CP-2G m1, CP-4C m3/m7/m8b/m9 killed; GAP_CURRENCY tripwire; CP-1C A1; method notes. Gates 0.
+- 01:38 Fix 3 (infra) acdaee7: hide_row, SHIPPED_MAPS pin, G1 I2 closed, D12 first-parent provenance, legal_render cleanup, CP-8 L-a/L-b, CP-1D L2/L3/L5 (type: ignore 8->5), shared Info.

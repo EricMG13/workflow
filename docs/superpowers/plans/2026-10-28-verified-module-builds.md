@@ -78,12 +78,12 @@ Plus a CP-1C follow-up: rebase d1103da onto the 9bfe85e oracle (manifest 121a0ab
 LEAD amendment 1 (2026-10-28) is running for CP-L10 (F1–F5) and CP-1C (T1C.1 `total` → T1C.8). Until it is re-frozen, Stage 1 tests only the untouched parts: the CP-L10 topic rows and arithmetic, refusals r01–r12, and the CP-1C peer tables T1C.2–T1C.7. A follow-up Stage 1 task adds the amended parts.
 
 For each module:
-- [ ] Dispatch the Opus implementer with the brief.
-- [ ] It writes the test from the oracle's `cases` first and confirms it fails.
-- [ ] It writes the pure calculation, then runs the test file (seconds) and the static gates.
-- [ ] It runs confidence-review and commits.
-- [ ] `mx-adversary` reviews arithmetic against the lease. Any fix round goes to an Opus agent.
-- [ ] Merge into the lane branch.
+- [x] Dispatch the Opus implementer with the brief.
+- [x] It writes the test from the oracle's `cases` first and confirms it fails.
+- [x] It writes the pure calculation, then runs the test file (seconds) and the static gates.
+- [x] It runs confidence-review and commits.
+- [x] `mx-adversary` reviews arithmetic against the lease. Any fix round goes to an Opus agent.
+- [x] Merge into the lane branch.
 
 **Rulings rounds** (LEAD `docs/rulings/2026-10-28-stage1.md`, 2d27e50; a ruling beats the lease). Each module gets one rulings round after its current review returns. The original implementer merges the lane tip, applies its section test-first and runs the reviewer's probes. The round is not counted as a fix round. Review is scoped to the ruling diff: `mx-adversary` for financial arithmetic (CP-2D, CP-2A, CP-1D, CP-1C), `mx-precise` for wording-only rounds (CP-2E, CP-DR, CP-3D). The merged modules (CP-2E, CP-DR, CP-3D) are reworked on their own branches and merged again.
 
@@ -102,29 +102,31 @@ For each module:
 LEAD round 2 is committed at 842c911 (merged d9cada2), and round 3 at f5ee633 (merged 2b4b393). Stage 2 `methods/<cp>.md` notes: cp1d (1D4), cpl10 (L10-b), cp2d (2D-a stem list). CP-4 T4C.7 `stated_value` display is open in QUEUE for the CP-4 build (engine-side; owner decides). `methodology.json`: merge `lead/methodology-serialised` when LEAD sends the commit, before the Stage 2 builds of CP-L10, CP-1C, CP-1D and CP-2A. No module build edits it.
 
 Then:
-- [ ] **Stage 1 review.** An Opus reviewer (`mx-precise` or `mx-autonomous`) checks every module's calculation against its lease, the input-field lists against `manifest.fact_bindings`, and that nothing reaches into a store, the host or a renderer. Its findings go to the module's implementer as a fix round.
+- [x] **Stage 1 review.** An Opus reviewer (`mx-precise` or `mx-autonomous`) checks every module's calculation against its lease, the input-field lists against `manifest.fact_bindings`, and that nothing reaches into a store, the host or a renderer. Its findings go to the module's implementer as a fix round.
 
 Other modules join Stage 1 once LEAD freezes their leases: CP-1C, CP-L10, CP-8, CP-2G, CP-3C, the CP-6 half of CP-3, then CP-2H, CP-4C, CP-3B and CP-6A. CP-OS is navigation, not a calculation, so it starts in Stage 3.
 
 ## Stage 2 — Connections (needs S1a integrated)
 
+Closed 2026-10-29: the Stage 2 close release `claude/s2-release` ab9777f merged into the lane at 7249a64 (fast set, S1a, render suites and `test_source_tools.py` exit 0; reviews in `work/build/stage2/release/`).
+
 S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
 - LEAD integrates S1a after fix round 4, if its genuine-path probes pass, and then sends the integration SHA and the deferred-findings list.
 - The adversary review that follows does not block G1-X. Anything it finds goes to Stage 4.
 
-- [ ] **G1-X.** One Opus agent, brief `work/build/g1x/brief.md`, rebased on the S1a integration commit, then `mx-adversary`.
-- [ ] **H1.** `_SOURCE_STEPS["CP-3"]`, the `*-submission` producer rule and the fixed source mappings for CP-DR, CP-1D and CP-3D (`work/lead/cp3-cp6-owner-preparation/review-precise-r3-1.md` Q6).
+- [x] **G1-X.** One Opus agent, brief `work/build/g1x/brief.md`, rebased on the S1a integration commit, then `mx-adversary`.
+- [x] **H1.** `_SOURCE_STEPS["CP-3"]`, the `*-submission` producer rule and the fixed source mappings for CP-DR, CP-1D and CP-3D (`work/lead/cp3-cp6-owner-preparation/review-precise-r3-1.md` Q6).
   - H1 also stops `host._execution_state` (host.py:645) from calling `step_chain` for owner-only modules; a `_SOURCE_STEPS` row alone is not enough (protocol §5, LEAD 4d709bf; G1-X adversary L3, `work/build/g1x/review-adversary.md`).
-- [ ] **Per module.** One `mx-feature` (Sonnet) agent per module adds three things:
+- [x] **Per module.** One `mx-feature` (Sonnet) agent per module adds three things:
   - the plug-in parts and a store adapter (settled head → Stage 1 input object);
   - the `owner_workflow.py` registrations, `bindings/<cp>.py`, `shipped.py` and `_Spec` rows;
   - the run driver (`tests/<cp>_runs.py`) with consumption proof (D3), as the lease lists it.
 
   It reports any `methodology.json` edit to LEAD's serialised change. `mx-adversary` reviews the store adapter and the consumption proof; `mx-precise` reviews the rest. Fix rounds go to `mx-feature`. Modules merge serially.
-- [ ] **CP-2D notes** (LEAD):
+- [x] **CP-2D notes** (LEAD):
   - CP-1 T4.13 has no consumers on the S1 store, so `earnings_quality_metrics` reads `not_ready` unless the run's CP-1 readiness literal assesses CP-2D.
   - A stale, not blocked, required head re-raises at begin (`owner_workflow.py:452-456`), so lease :99 holds only for the blocked half.
-- [ ] **Stage 2 review.** An Opus reviewer (`mx-precise` or `mx-autonomous`) checks the full connection chain on the merged branch:
+- [x] **Stage 2 review.** An Opus reviewer (`mx-precise` or `mx-autonomous`) checks the full connection chain on the merged branch:
   1. core seams = protocol §2
   2. registration rows
   3. CP-0 consumer delta and upstream edges = `methodology.json`

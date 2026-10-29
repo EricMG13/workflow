@@ -318,6 +318,14 @@ def test_blocked_attempt_issue(attempt: str) -> None:
     assert issues[0] == EXPECTED["negative_cases"]["blocked_cp2e"][f"{attempt}_issue"]
 
 
+def test_blocked_result_names_the_blocked_head() -> None:
+    """Stage 2 ruling 8: the store holds a blocked head with status `blocked` (as CP-1A in S1a),
+    so the oracle never says the blocked module has no head."""
+    result = EXPECTED["negative_cases"]["blocked_cp2e"]["result"]
+    assert "no head" not in result
+    assert "blocked head" in result and "status blocked" in result
+
+
 # --- rulings round (docs/rulings/2026-10-28-stage1.md, CP-2E E1-E5) -------------------------
 def _claim(result: cp2e.MacroFxResult, claim_id: str) -> cp2e.ClaimText:
     (claim,) = [c for c in result.claims if c.claim_id == claim_id]

@@ -2327,7 +2327,9 @@ def cp1d_module(report: EarningsQualityReport, *, inputs: Sequence[Input], attem
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The exact `read_inputs` view (lease key tree): the upstream statuses, the bridge rows as
     the table rule reads them, the seven CP-1 facts a `{ref|unit}` may name, the CP-1 T4.17 row
-    count and the limitations settlement will inherit. No quote or citation text is in it."""
+    count and `inherited_limitations`: what the bound upstream heads pass on, computed with no
+    own limitations (`inherited_limitations(..., (), ...)`), so settlement's list can be shorter by
+    any line that repeats one of CP-1D's own limitations. No quote or citation text is in it."""
     source = next((s for s in pack.sources if s.source_id == BRIDGE_SOURCE_ID), None)
     bridge = (
         parse_bridge(_pages(source)) if source is not None and source.status == "ready" else None

@@ -1000,11 +1000,11 @@
       "31"
      ]
     ],
-    "issue": "amortisation: the simple margin convention requires zero amortisation",
+    "issue": "amortisation: value_text 31 does not occur in the quote",
     "all_issues": [
-     "amortisation: the simple margin convention requires zero amortisation"
+     "amortisation: value_text 31 does not occur in the quote"
     ],
-    "note": "value_text 31 is the day-of-month numeral of 'December 31' in the quote, not an amortisation figure; the quote's other numerals are the zero and the year"
+    "note": "value_text 31 is the day-of-month numeral of 'December 31, 2029' in the quote; under the comma-space join '31, 2029' is one run, so 31 is no figure of the quote and the refusal is the text-occurrence one (round 13 addendum 2, re-pinned at the Stage 2 close). The nonzero-amortisation branch itself is pinned by tests/test_method_cp3d.py::test_amortisation_above_zero_is_refused_on_a_page_without_a_date"
    }
   ]
  },

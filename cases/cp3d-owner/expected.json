@@ -7578,7 +7578,7 @@
   },
   {
    "id": "amortisation_nonzero",
-   "issue": "amortisation: the simple margin convention requires zero amortisation"
+   "issue": "amortisation: value_text 31 does not occur in the quote"
   }
  ],
  "tool_use_refusals": [

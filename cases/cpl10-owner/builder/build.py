@@ -422,11 +422,12 @@ def composed_case(name):
                     formula=formula, calculation_id=f"calc:{table}.{row}.{field}" if vclass == "calculated" else None,
                     derives_from=list(derives))
 
-    def gapf(table, row, field, label, unit, reason, status="missing", period=None):
+    def gapf(table, row, field, label, unit, reason, status="missing", period=None, derives=()):
         # fact_spelling: a missing cell reads `∅ G#`; a not_applicable cell reads `∅ G# n.m.`
+        extra = {"derives_from": list(derives)} if derives else {}
         return fact(table, row, field, label, status=status, unit=unit, period=period,
                     shown="∅ G#" if status == "missing" else "∅ G# n.m.", limitation=reason,
-                    value_class="calculated" if status != "missing" else None)
+                    value_class="calculated" if status != "missing" else None, **extra)
 
     def na(table, row, field, label, reason):
         """A not_applicable text cell (F1: the overall row's cells that have no meaning for it); nothing is derived, so no value class."""
@@ -469,8 +470,8 @@ def composed_case(name):
         else:
             ends = 'either quarter' if fa['status'] == fb['status'] == 'missing' else 'the starting quarter' if fa['status'] == 'missing' else 'the closing quarter'
             reason = f"Not calculable: CP-1 carries no known value for {ends} ({fa['limitation'] or fb['limitation']})"  # CP-1's own limitation text
-            ids.append(gapf("TL10.2", tid, "change", f"{r['label']} · Change", UNIT[ucl], reason, period=pair_period))
-            ids.append(gapf("TL10.2", tid, "change_pct", f"{r['label']} · Change on starting level", "PERCENT", reason, period=pair_period))
+            ids.append(gapf("TL10.2", tid, "change", f"{r['label']} · Change", UNIT[ucl], reason, period=pair_period, derives=derives))
+            ids.append(gapf("TL10.2", tid, "change_pct", f"{r['label']} · Change on starting level", "PERCENT", reason, period=pair_period, derives=derives))
         ids.append(text("TL10.2", tid, "materiality", "Materiality", r["materiality"], "calculated", derives))
         ids.append(text("TL10.2", tid, "evidence_status", "Evidence status", r["evidence"], "calculated", derives))
         ids.append(text("TL10.2", tid, "disposition", "Disposition", DISPOSITION[r["materiality"]], "calculated", derives))
@@ -990,7 +991,7 @@ def main():
                           "issue_order": "per gap in order: topic, missing item, digit (field order gap, why_it_matters, affected_analysis, action), repeat",
                           "literal_consequence": "the positive gap's affected_analysis is `overall` (it was `Earnings and cash generation topics`, which the topic rule now refuses; r16 reuses that text)"},
             "claim_citations": CLAIM_CITATION_RULE,
-            "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell has none either, so a claim that references only counts or only a missing change carries no citations as the facts stand (a derives_from on those cells would be a fact-value change outside amendment 1)",
+            "lineage_citations": "a calculated own fact's citations follow the same rule over its derives_from (the CP-1C L3 rule); a count fact has no derives_from, and a missing change or change_pct cell lists the same two CP-1 labels as its known siblings (Stage 2 close: the lineage queued at the CP-L10 freeze), so a claim that names a missing change carries their citations; only a claim that references counts alone carries none",
             "submission_types": {"note": "the field types decide shape versus content; pinned here, frozen with the lease",
                                  "comparison.from_period, to_period": "Text (contracts.Text: str, min_length 1)",
                                  "assessments[].topic_id, assessment, credit_transmission, overall.rationale, gaps[].*": "Text (contracts.Text); whitespace-only text passes the type and is a content refusal",

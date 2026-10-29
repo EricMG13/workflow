@@ -543,6 +543,25 @@ def test_cells_equal_oracle(composed: tuple[dict[str, Any], cpl10.ScreenResult])
         _assert_cell(cells[fact_id], fact)
 
 
+def test_missing_change_cells_derive_from_both_cp1_labels(
+    composed: tuple[dict[str, Any], cpl10.ScreenResult],
+) -> None:
+    """Stage 2 close (CP-L10 missing-change lineage): a missing `change` or `change_pct` cell lists
+    the two CP-1 labels its known siblings list, so the claim that names it carries their lineage."""
+    _, result = composed
+    cells = {c.fact.fact_id: c for c in result.cells}
+    missing = [t for t in result.topics if t.screen.change is None]
+    assert missing
+    for topic in missing:
+        for field in ("change", "change_pct"):
+            cell = cells[f"TL10.2.{topic.topic.topic_id}.{field}"]
+            assert cell.fact.status == "missing"
+            assert cell.derives_from == (topic.start.label, topic.close.label)
+            assert cell.fact.citations == tuple(
+                dict.fromkeys((*topic.start.citations, *topic.close.citations))
+            )
+
+
 def test_copied_cells_keep_cp1_lineage_but_not_its_formula(
     composed: tuple[dict[str, Any], cpl10.ScreenResult],
 ) -> None:

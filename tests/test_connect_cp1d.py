@@ -15,6 +15,8 @@ import re
 from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, cast
 
 import cp1d_runs as runs
 import pytest
@@ -1001,3 +1003,29 @@ def test_run_driver_binds_the_oracle_figures_over_the_view_of_a_real_store(
     expected = {n: (ids[f["label"]], f["unit_token"]) for n, f in figures.items()}
     assert runs.fig_bindings(store, json.loads(body), names) == {n: expected[n] for n in names}
     assert runs.fig_bindings(store, json.loads(body), figures) == expected  # all seven
+
+
+def test_validate_step_reads_the_payload_only_through_json_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Protocol section 6: the step validator parses the bounded `json_object` document, never raw
+    text; text it refuses is refused with a bounded issue even if Pydantic would parse it."""
+    seen: list[str] = []
+
+    def refuse(text: str) -> None:
+        seen.append(text)
+
+    monkeypatch.setattr(cp1d, "json_object", refuse)
+    store = SimpleNamespace(payload=lambda sha: "{}")
+    attempt = SimpleNamespace(steps=[SimpleNamespace(payload_sha256="x")])
+    out = cp1d._validate_step(cast(Any, store), cast(Any, None), cast(Any, attempt))
+    assert seen == ["{}"] and out.output is None
+    assert out.issues and all(len(i) <= 600 for i in out.issues)
+
+
+def test_cp1_facts_note_says_where_cp1_references_bind() -> None:
+    """Low L6: assessment rationales bind module facts only, so a CP-1 `{ref|unit}` there is an
+    unresolved reference; the note must admit CP-1 references only where the core binds them."""
+    block = cp1d.context_block(pack=_pack("positive"), upstream=_upstream())
+    note = str(block["cp1_facts_note"])
+    assert "overall rationale" in note and "assessment" in note

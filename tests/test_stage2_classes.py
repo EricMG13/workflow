@@ -216,18 +216,7 @@ STORE_CASES: Mapping[str, Case] = {
     ),
 }
 
-FINDINGS: Mapping[str, str] = {
-    "CP-DR": (
-        "Finding: gaps.*.questions.*.answer is built as Claim.text (CPDR-ANS-<question_id>, "
-        "RunText) without a RunText check; a hostile value raises pydantic ValidationError in "
-        "cpdr.submit after the step is journaled, and the run is wedged (stale_binding)"
-    ),
-    "CP-3D": (
-        "Finding: summary.text is built as Claim.text (CP-3D-VIEW-01, RunText) without a RunText "
-        "check; a hostile value raises pydantic ValidationError in cp3d.submit after the step is "
-        "journaled, and the run is wedged (stale_binding)"
-    ),
-}
+FINDINGS: Mapping[str, str] = {}
 
 
 def params(cases: Mapping[str, Case], findings: Mapping[str, str]) -> list[Any]:

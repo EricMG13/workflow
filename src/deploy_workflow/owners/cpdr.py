@@ -19,7 +19,7 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal, get_args
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from deploy_vii.contracts import (
     Citation,
@@ -31,6 +31,7 @@ from deploy_vii.contracts import (
     Module,
     ReportTable,
     Run,
+    RunText,
     Source,
     TableColumn,
     TableRow,
@@ -302,7 +303,33 @@ def validate_research(
                 issues.append(_line("question_id appears twice: ", question.question_id))
             seen.add(question.question_id)
             issues += _question_issues(question, ready, pack, f"gaps[{g}].questions[{q}]")
+    if not issues:
+        issues += _model_text_issues(submission)
     return tuple(dict.fromkeys(issues))
+
+
+_RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
+
+
+def _model_text_issues(submission: ResearchSubmission) -> list[str]:
+    """An answer becomes `Claim.text` (`CPDR-ANS-<id>`), so once the content rules pass it is
+    also checked as `RunText` (one `TypeAdapter`); no composition can raise after the binding
+    write. Lines are `<path>: <msg>` without the input value."""
+    found: list[str] = []
+    for g, gap in enumerate(submission.gaps):
+        for q, question in enumerate(gap.questions):
+            if not question.answer:
+                continue
+            try:
+                _RUN_TEXT.validate_python(question.answer)
+            except ValidationError as error:
+                found += [
+                    clipped((f"gaps[{g}].questions[{q}].answer: ", e["msg"]))
+                    for e in error.errors(
+                        include_input=False, include_url=False, include_context=False
+                    )
+                ]
+    return found
 
 
 # --- bookkeeping (Method 2-3, 5) ------------------------------------------------------------------

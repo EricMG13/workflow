@@ -56,7 +56,7 @@ from deploy_vii.execution import (
     inherited_limitations,
     text_sha256,
 )
-from deploy_vii.live.schema import normalise
+from deploy_vii.live.schema import exact_json, json_object, normalise
 from deploy_vii.live.submission import Submitted
 from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
 from deploy_vii.preparation import PreparedPack
@@ -2604,15 +2604,27 @@ def view(store: Execution, attempt: Attempt) -> tuple[str, str]:
 # --- the journal: validator, probe and submit -------------------------------------------------
 
 
+def _parsed(payload: str) -> tuple[LiquidityBridgeSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue and is refused even if
+    Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            LiquidityBridgeSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return LiquidityBridgeSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
 def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
     """The step validator: the retained response against the bound upstream; the output of a
     valid step is the composed report (what the verifier recomputes)."""
-    try:
-        submission = LiquidityBridgeSubmission.model_validate_json(
-            store.payload(attempt.steps[0].payload_sha256)
-        )
-    except ValidationError as error:
-        return StepValidation(issues=shape_issues(error))
+    submission, shape = _parsed(store.payload(attempt.steps[0].payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
     upstream = cp2d_upstream(store=store, attempt=attempt)
     issues = validate_liquidity_bridge(submission=submission, upstream=upstream)
     if issues:

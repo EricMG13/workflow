@@ -1333,6 +1333,10 @@ def test_basis_quote_with_a_hidden_run_is_refused(line: str) -> None:
         ("25bps", True),
         ("2.5M", True),
         ("The 1.5\u200bnd", False),  # L3: Cf between run and suffix is skipped, so ordinal
+        ("The 2" + "\u0301" * 31 + "nd", False),  # L1: marks inside the 32-char window
+        ("The 2" + "\u0301" * 40 + "nd", False),  # L1: marks past the window are skipped first
+        ("The 2" + "\u200b" * 40 + "th", False),
+        ("The 2" + "\u0301" * 40 + "nds", True),  # a letter after the folded suffix reads
         ("The 1.5\u0304", True),
         ("Q2", False),  # a run touching a letter before it, nothing else
         ("a saving of 2\u00bd", False),  # numeric with no digit value

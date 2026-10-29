@@ -418,3 +418,4 @@
 - 08:41 Release review C: REQUEST CHANGES (M1 round 3 not applied to CP-L10/CP-2A/CP-2D sum copies -> in scope per item 17; L1 cites, L2 method notes, L3 heading). v08 reading accepted.
 - 08:45 Release review A: APPROVE (0d-d verified: 7 digests, edge differential, timing real). 2 Lows + Infos to fix batch; 2 owner items (CP-DR gap id wedge, CP-1 blank limitations). Q-C1 approved (user via peer): preparer dispatched (a5f86934). Storage + Q-C14 agent dispatched (a60eb148).
 - 08:46 Release review B: REQUEST CHANGES (M1 D12 records deleted by 0d-d; L1 legal inspection pin misread -> restore; L2 heading). S1a failures origin 235c208 (Stage 1, never run) -> test-only fixes in fix batch. All oracle moves traced; double rebuild identical.
+- 08:47 Release fix batch dispatched: fix1 (a69aa877, round 3 CP-L10/CP-2A/CP-2D/CP-1D helper) and fix2 (ab2c12cc, D12 records, legal pin restore + cascade, S1a tests, F1/timing tests, cites, notes, heading) from 5a6a746.

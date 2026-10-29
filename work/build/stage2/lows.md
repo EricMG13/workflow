@@ -16,3 +16,5 @@
 - **CP-1D L6 (predates).** CP-1 references refused in assessment rationales while `cp1_facts_note` admits them; align the note or the core (`p9_cp1_ref_in_assessment.py`).
 - **CP-1D I1.** `context_block` docstring overstates `inherited_limitations` (computed with own=()).
 - **CP-2G Info (batch).** `cp2g_reader` uses `next(...)` without a default on T2H.7; a head without the table raises StopIteration, not ValueError. Source: batch/cp2h-report.md release 3.
+- **CP-2D (protocol §6).** `_validate_step` uses raw `model_validate_json`, not the `json_object` path. Source: batch/cp3c-report.md item 7.
+- **Tests.** `s1a_runs.drive_cp1` hard-codes the readiness literal; `cp3c_runs` and `cp4_runs` duplicate `drive_cp1` (jscpd).

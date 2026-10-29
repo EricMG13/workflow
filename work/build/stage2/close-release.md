@@ -28,7 +28,20 @@ Each item names its source. Applied once, at the Stage 2 close, with the re-pin 
 - **CP-4C v08.** The refusal cites identity page:1, which is outside the step's scope, so at run level the journal holds a second line: "Cited page not read through read_pages: identity page:1". The oracle `refusal_rules` say the limitations equal the issues. Re-pin to the two-line form. Both test files pin it now.
 - **CP-4C view tree.** Commit `cases/cp4c-owner/cp4c-view-tree.json`.
 
+- **CP-3C oracle.**
+  - Re-pin the principal periods to q4-2025 (`PRINCIPAL_PERIOD_DELTA`) and the gap-cell currency to USD (`GAP_CURRENCY`).
+  - Add CP-1A to `expected.cp3c_module.attempt_inputs` and `manifest edges.bound_in_attempt_inputs` (`CP1A_BOUND`).
+  - Apply `fact_copy_rule` and `frozen_inputs[8]`.
+- **FP04 render oracle** (`cases/legal/render-expected.json`). Re-pin it with the CP-2D blocks (`CP2D_D7_DELTA`) and the CP-3C `refinancing-paths` and `lme-creditor-exposure` blocks (`CP3C_D7_DELTA`, round 5 item 18).
+- **CP-3C view tree.** Commit `cases/cp3c-owner/cp3c-view-tree.json`.
+
 ## Leases and contract text
+- **CP-3C lease.**
+  - Acceptance 1 adds CP-1A.
+  - :185 "CP-4C has no core" is stale.
+  - Add the `cp3c_closed(case, root, template)` signature.
+  - Add the TOOL-CONTRACT row.
+- **CP-2D lease.** Add a `cp2d_reader` pin extension for run_rate (T2E.3.r01).
 - **CP-4C lease.**
   - `Claims.from_sources` is `claim_classes` in the core.
   - `Upstream` gains `inherited`.

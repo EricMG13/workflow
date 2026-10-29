@@ -19,6 +19,8 @@ from uuid import uuid4
 
 import pytest
 
+import deploy_vii.cp_model_workflow as cp_model_module
+import deploy_vii.execution as execution_module
 from deploy_vii.contracts import Fact, Input, Module, Run
 from deploy_vii.cp2_synthesis import _validate_step as cp2_validate_step
 from deploy_vii.cp_model_workflow import verify_cp_model_publication
@@ -2016,19 +2018,34 @@ def _publish_forged_cp_model(
     root: Path,
     monkeypatch: pytest.MonkeyPatch,
     forge: Any,
+    *,
+    fail_first_write: bool = False,
 ) -> OwnerWorkflow:
     """The positive run driven to CP-MODEL, whose publisher attempt a patched `Execution.begin`
-    starts on `forge(inputs)` (adv-4's `drop-cp1` and `other-cp1`); the run is then published."""
+    starts on `forge(inputs)` (adv-4's `drop-cp1` and `other-cp1`); the run is then published.
+
+    The patched runtime also lets `Execution.finish` and `interrupt` take the forged inputs of a
+    pending CP-MODEL attempt (`execution.current_inputs` as `execution.py` sees it); without that
+    the genuine producer refuses "Ticket inputs have changed", `publish` ends `failed` and no
+    receipt exists to verify. With `fail_first_write` only the first attempt is forged and its
+    publication fails (the files cannot be written); the second publication is genuine and
+    begins another attempt 0 on the true inputs, so the final head is genuine and only the
+    replay of the first publication's `begin` can refuse."""
     workflow = runs.clone_workflow(promoted[0], root)
     assert runs.drive_cp1a(workflow, promoted[1], "positive")["status"] == "valid"
     outcome = runs.drive_cp2(workflow, "positive", runs.read_cp2(workflow))
     assert outcome["status"] == "valid", outcome["issues"]
     real = Execution.begin
+    real_inputs = execution_module.current_inputs
+    real_write = cp_model_module._write
+    begun = [0]
+    writes = [0]
 
     def begin(self: Execution, module_id: str) -> Attempt:
         attempt = real(self, module_id)
-        if module_id != "CP-MODEL":
+        if module_id != "CP-MODEL" or (fail_first_write and begun[0] > 0):
             return attempt
+        begun[0] += 1
         snapshot = self.read()
         forged = attempt.model_copy(update={"inputs": forge(attempt.inputs, snapshot)})
         self._write(
@@ -2043,8 +2060,31 @@ def _publish_forged_cp_model(
         )
         return forged
 
+    def forged_inputs(snapshot: Any, module_id: str) -> tuple[Input, ...]:
+        pending = [
+            a for a in snapshot.attempts if a.module_id == module_id and a.status == "pending"
+        ]
+        if module_id == "CP-MODEL" and pending:
+            return cast(tuple[Input, ...], pending[-1].inputs)
+        return real_inputs(snapshot, module_id)
+
+    def failing_once(output: Path, files: dict[str, str]) -> None:
+        writes[0] += 1
+        if writes[0] == 1:
+            raise OSError("disk full")
+        real_write(output, files)
+
     monkeypatch.setattr(Execution, "begin", begin)
-    workflow.publish()
+    monkeypatch.setattr(execution_module, "current_inputs", forged_inputs)
+    if fail_first_write:
+        monkeypatch.setattr(cp_model_module, "_write", failing_once)
+    first = workflow.publish()
+    second = workflow.publish() if fail_first_write else first
+    monkeypatch.setattr(execution_module, "current_inputs", real_inputs)
+    # The forged run must reach the verifier: a publication that failed in the producer would
+    # leave no receipt to verify (the vacuous form this helper replaced).
+    assert second["status"] == "ok" and workflow._phase == "complete", second
+    assert (first["status"] == "refused") is fail_first_write, first
     return workflow
 
 
@@ -2080,6 +2120,26 @@ def test_forgery_cp_model_attempt_bound_to_another_cp1_refuses(
         )
 
     workflow = _publish_forged_cp_model(positive_promoted, tmp_path, monkeypatch, other)
+    with pytest.raises(WorkflowError) as caught:
+        workflow.write_receipt(tmp_path / "owner-receipt.json")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses(
+    positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stage 4 class A (adversary P-F): the first publisher attempt binds no CP-1 and its
+    publication fails; the second, genuine, publication begins another attempt 0 and publishes,
+    so the final head is genuine. Only the replay of the first publication's `begin` refuses."""
+    workflow = _publish_forged_cp_model(
+        positive_promoted,
+        tmp_path,
+        monkeypatch,
+        lambda inputs, snapshot: tuple(i for i in inputs if i.input_id != "CP-1"),
+        fail_first_write=True,
+    )
     with pytest.raises(WorkflowError) as caught:
         workflow.write_receipt(tmp_path / "owner-receipt.json")
     assert caught.value.code == "identity_mismatch"

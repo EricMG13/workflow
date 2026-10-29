@@ -528,3 +528,4 @@
 - 19:17 Dispatched batch 1 fix round 1 (mx-feature a2b07df1, isolated, claude/s4-batch1-fix1 from 515a8c6; brief work/build/stage4/batch1-fix1-brief.md).
 - 20:02 I6 G2 shard 4: 6 passed, 2 failed (cp2g positive and cp2a_blocked: tests/cp2g_runs.py binds the oracle's readiness note; driver never run before). Rulings item 34. Dispatching CP-2G driver fix (mx-feature, isolated, claude/s3-cp2g-driver from a020996).
 - 20:02 Dispatched CP-2G driver fix (mx-feature a7b022fb, isolated, claude/s3-cp2g-driver from a020996; brief work/build/stage3/cp2g-driver-brief.md).
+- 20:10 Batch 1 stray run (pid 79376, b2of8s4bh) ended on its own (~2h). Its terminal summary crashed (ModuleNotFoundError: hypothesis, after the worktree .venv link was removed), so it gives no pass/fail counts: no result recorded. The user's stop question is moot.

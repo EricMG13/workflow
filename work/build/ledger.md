@@ -468,3 +468,4 @@
 - 12:30 G2 rev 3 preparer dispatched (mx-feature a69493a7, isolated worktree, claude/s3-g2rev3 from b6730b7).
 - 12:31 W2a done claude/s3-w2a aad1480 (S.5 producer + credit_snapshot registration; maturity-wall chart + T4.18 binding; tripwire now passing; 239 + 423 passed; cp1_chart_series now requires S.5 rows - render suites to confirm). agent=mx-feature a8576502 fix-rounds=0 gates-first-pass=n. Integration I3 dispatched (mx-feature a24d283c, isolated worktree, claude/s3-int from 697fe8a; brief work/build/stage3/int-brief.md).
 - 12:35 G2 rev 3 preparer done claude/s3-g2rev3 4a9649f (cp1-model sections model-chart-strip, capital-structure, financials-credit-metrics; figure rule per chart oracle, table of 10 rows). Review: mx-precise a6a7d04d (reviewed rev 2; not preparer/builder).
+- 12:38 G2 rev 3 review REVISE (a6a7d04d): M1 S.1-S.4 strip oracle lacks mark text/twin; L1 refs/fact-id keys; L2 build base s3-int. Fix round 1 to preparer a69493a7.

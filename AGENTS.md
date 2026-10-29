@@ -80,6 +80,14 @@ Five ideas. The plan is `docs/superpowers/plans/2026-10-28-verified-module-build
    check and the Stage 4 class-level plan and review, never for code; `mx-autonomous`
    stands in if Fable has no credits. LEAD's lane dispatches no Fable.
 
+LEAD stopped (user, 2026-10-29): the Modules controller takes over LEAD's module
+work: rulings on the questions files, oracle and lease freezes and amendments
+(including LEAD-frozen ones and new leases such as CP-3B), and stage-close
+releases. Independence still holds: a separate preparer writes each oracle or lease
+change, an independent `mx-precise` review approves it, and no agent that builds
+the module prepares or reviews it. Shared interfaces, `src/deploy_vii` changes and
+anything outside the module plan go to the user.
+
 Chart oracles (user, 2026-10-29): Modules, not LEAD, freezes the Stage 3 chart
 oracles listed in `work/build/stage3/charts-inventory.md`, following
 `docs/CP1-CHART-SLICE.md`. Independence still holds: a separate preparer agent

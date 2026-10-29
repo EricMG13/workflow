@@ -423,11 +423,11 @@ def test_the_real_worst_case_record_bound_holds_for_escaped_characters():
     """F1: a control-character id is stored as six bytes a character, so two rules at one step
     exceed the 64 KiB the ASCII tests assert, and stay within `WORST_CASE`."""
     ident = "\x01" * 700
-    absence = ",".join(
-        f'{{"event_scan":"no_events_identified","source_id":"{ident}{i}"}}' for i in range(30)
-    )
-    pages = ",".join(f'{{"source_id":"{ident}","locator":"page:{i}"}}' for i in range(30))
-    payload = '{"sources":[' + absence + '],"c":[' + pages + "]}"
+    absence = [
+        {"event_scan": "no_events_identified", "source_id": f"{ident}{i}"} for i in range(30)
+    ]
+    pages = [{"source_id": ident, "locator": f"page:{i}"} for i in range(30)]
+    payload = json.dumps({"sources": absence, "c": pages})
     issues = _issues("source_context", payload)
     assert len(issues) == 2 * MAX_ISSUES
     assert max(len(line) for line in issues) <= MAX_ISSUE_CHARS

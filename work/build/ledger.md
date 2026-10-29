@@ -426,3 +426,4 @@
 - 08:57 Q-C1 review (mx-precise a66dbdc5): REQUEST CHANGES (High kind=chart crash; Medium interim pin unreachable; Low route). Ruled: dense, option (a) + strict-xfail tripwire, no route. Back to preparer a5f86934.
 - 08:58 Q-C1 preparer revision 300fcdb (stage3_pending, no route, dense target). Scoped re-review by a66dbdc5.
 - 08:59 Q-C14 re-checked against DEPLOY VII PF-1 workbook (7260b22; acef417d): C-01 current 2.37 (workbook wins), Fits withdrawn, Caesars existing exposure a gap (holdings partial 5/320), portfolio.py import pulls rv_quotes+preparation -> user confirmation pending.
+- 08:59 Q-C1 oracle re-review APPROVE (a66dbdc5). Builder dispatched (separate mx-feature; id in next line on return).

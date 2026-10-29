@@ -81,7 +81,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.owners import cp2g
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-4C"
@@ -1332,7 +1332,7 @@ class _Book:
                         if dep.startswith(_UPSTREAM)
                         else cited(dep, (*trail, fid))
                     )
-                out = list(_one_per_page(out))
+                out = list(one_per_page(out))
             memo[fid] = tuple(out)
             return memo[fid]
 
@@ -1351,15 +1351,6 @@ class _Book:
             shown = fact_spelling(fact, None)[2] if fact.status == "known" else None
             out.append(Cell(fact=fact, derives_from=d.derives, quoted=d.quoted, shown=shown))
         return tuple(out)
-
-
-def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
-    """One Citation per (source, page), quoting the first input quote on that page, in input
-    order. No quote is invented."""
-    first: dict[tuple[str, str], Citation] = {}
-    for citation in citations:
-        first.setdefault((citation.source_id, citation.locator), citation)
-    return tuple(first.values())
 
 
 def _copy_status(f: Fact) -> CellStatus:

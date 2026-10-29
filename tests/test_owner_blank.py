@@ -7,7 +7,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from deploy_workflow.owners.blank import is_blank
+from deploy_vii.contracts import Citation
+from deploy_workflow.owners.blank import is_blank, one_per_page
 
 ZWSP = "\u200b"  # ZERO WIDTH SPACE
 BOM = "\ufeff"  # ZERO WIDTH NO-BREAK SPACE (byte order mark)
@@ -88,3 +89,16 @@ def test_neighbours_of_the_extended_set_are_not_blank(text: str) -> None:
 
 def test_one_visible_character_among_the_extended_set_is_not_blank() -> None:
     assert not is_blank("⠀a\x00")
+
+
+def test_one_per_page_keeps_the_first_quote_of_each_source_page_in_input_order() -> None:
+    first = Citation(source_id="bridge", source_sha256="a" * 64, locator="page:1", quote="first")
+    again = first.model_copy(update={"quote": "second"})
+    other_page = first.model_copy(update={"locator": "page:2", "quote": "other"})
+    other_source = first.model_copy(update={"source_id": "plan", "quote": "plan"})
+    assert one_per_page([first, other_page, again, other_source]) == (
+        first,
+        other_page,
+        other_source,
+    )
+    assert one_per_page(()) == ()

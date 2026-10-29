@@ -60,7 +60,7 @@ from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-1C"
@@ -1250,15 +1250,6 @@ def _limitations(
     return tuple(out)
 
 
-def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
-    """One Citation per (source, page), quoting the first input quote on that page, in input
-    order. No quote is invented."""
-    first: dict[tuple[str, str], Citation] = {}
-    for citation in citations:
-        first.setdefault((citation.source_id, citation.locator), citation)
-    return tuple(first.values())
-
-
 def _with_lineage(items: Sequence[PeerFact]) -> tuple[PeerFact, ...]:
     """A calculated fact's citations: one Citation per (source, page), the first quote on that
     page among the citations of the facts it derives from, in derives_from order, transitively
@@ -1277,7 +1268,7 @@ def _with_lineage(items: Sequence[PeerFact]) -> tuple[PeerFact, ...]:
                 found: list[Citation] = []
                 for parent in item.derives_from:
                     found += cites(parent)
-                memo[fact_id] = _one_per_page(found)
+                memo[fact_id] = one_per_page(found)
             else:
                 memo[fact_id] = item.fact.citations
         return memo[fact_id]

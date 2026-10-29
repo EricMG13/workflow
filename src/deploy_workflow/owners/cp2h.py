@@ -78,7 +78,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2g import cp2g_reader
 
@@ -757,7 +757,7 @@ class _Book:
                 raise ValueError(f"CP-2H: a known fact derives from the unsettled fact {ref}")
             out += cell.fact.citations
         cites = tuple(dict.fromkeys(out))
-        return _one_per_page(cites) if derives else cites
+        return one_per_page(cites) if derives else cites
 
     def number(
         self,
@@ -2014,15 +2014,6 @@ class RatingTriggersReport(Contract):
     facts: tuple[Fact, ...]
     claims: tuple[ModuleClaim, ...]
     limitations: tuple[Text, ...]
-
-
-def _one_per_page(citations: Sequence[Citation]) -> tuple[Citation, ...]:
-    """One Citation per (source, page), quoting the first input quote on that page, in input
-    order. No quote is invented."""
-    first: dict[tuple[str, str], Citation] = {}
-    for citation in citations:
-        first.setdefault((citation.source_id, citation.locator), citation)
-    return tuple(first.values())
 
 
 _UPSTREAM_REF = ("cp1:", "cp2g:")

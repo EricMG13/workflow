@@ -71,7 +71,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.owners.blank import is_blank
+from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 
 MODULE_ID = "CP-2G"
@@ -2515,15 +2515,6 @@ def _own_limitations(
     return tuple(out)
 
 
-def _one_per_page(citations: tuple[Citation, ...]) -> tuple[Citation, ...]:
-    """One Citation per (source, page), quoting the first input quote on that page, in input
-    order. No quote is invented."""
-    first: dict[tuple[str, str], Citation] = {}
-    for citation in citations:
-        first.setdefault((citation.source_id, citation.locator), citation)
-    return tuple(first.values())
-
-
 def _cite(b: _Book, run: _Run) -> None:
     """Lease :132 (lineage_rule; rulings stage2 round 3 item 3): a calculated fact gets one
     Citation per (source, page), the first quote on that page among the citations of the facts
@@ -2548,7 +2539,7 @@ def _cite(b: _Book, run: _Run) -> None:
             fact = cell.fact
             calculated = fact.status == "known" and fact.value_class == "calculated"
             done[ref] = (
-                _one_per_page(tuple(c for d in cell.derives_from for c in of(d, (*path, ref))))
+                one_per_page(tuple(c for d in cell.derives_from for c in of(d, (*path, ref))))
                 if calculated
                 else fact.citations
             )

@@ -97,6 +97,8 @@ none of the five and still makes no claim over them. CP-4C's blocks (`recovery-b
 `value-allocation-claims`) are not among the five. The FP04 render oracle's `other_front_sections`
 is re-pinned for these five in the same release (`cases/legal/render-expected.json`).
 
+Amended by Modules 2026-10-29 (Q-C1, user-approved): the amendment above calls `maturity-wall` CP-2D's; in FP-04 it is MODEL-owned (producer CP-1, Fig. S.4), so only `liquidity-runway` and `funding-gap` are CP-2D's, and the CP-2D T2E.4 table is a non-primary tab. The oracle's `other_front_sections.blocks["maturity-wall"]` is re-pinned to owner MODEL, producer CP-1.
+
 Documents primary label is Document register and second tab Facility coverage.
 T4.9 row_header Covenant; exact eight columns: Test formula,Threshold,Comparison,
 CP-1 metric,Current,Headroom,Headroom share,Test on CP-1 metric. T4.13 is unkeyed

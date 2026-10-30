@@ -7,7 +7,7 @@
 label=$1; targets=$2
 py="/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python"
 out=$PWD/work/perf-sweep/runs/$label; mkdir -p $out; tree=${TREE:-.}
-base=${TMPDIR:-/tmp}/perf-sweep-$label; rm -rf $base; mkdir -p $base
+base=${BASE_ROOT:-${TMPDIR:-/tmp}}/perf-sweep-$label; rm -rf "${base:?}"; mkdir -p "$base"
 head=${HEAD_LABEL:-$(git -C $tree rev-parse --short HEAD 2>/dev/null || echo snapshot)}; n=0
 while IFS= read -r target; do
   [[ -z $target || $target == \#* ]] && continue
@@ -18,5 +18,5 @@ while IFS= read -r target; do
   rss=$(awk '/maximum resident set size/ {print $1}' $out/$n.log)
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$target" $code $(( $(date +%s) - start )) "$before" \
     "$(sysctl -n vm.loadavg | tr -d '{}' | xargs)" $head "$rss" >> $out/summary.tsv
-  rm -rf $base/$n
+  [[ -n $KEEP ]] || rm -rf "${base:?}/${n:?}"  # KEEP=1 keeps each test tmp tree
 done < $targets

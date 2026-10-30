@@ -614,6 +614,38 @@ def test_a_known_window_figure_renders_as_the_figure_and_a_positive_line_is_unch
     assert line[-1][1] == " after the decision." and not any(run[0] == "gap" for run in line)
 
 
+def _payload_facts(view: View) -> dict[str, dict[str, Any]]:
+    from deploy_vii import render as core_render
+
+    page = core_render.render(view)
+    found = re.search(r'<script[^>]*id="report-data"[^>]*>(.*?)</script>', page, flags=re.S)
+    assert found
+    return {f["fact_id"]: f for f in json.loads(found.group(1))["modules"][0]["facts"]}
+
+
+def test_the_module_table_and_inspector_spell_the_outcome_as_the_block_does() -> None:
+    view = _what_changed_view("no_outcome")
+    _, index = build_index(view)
+    gap = gap_refs(index)[("CP-8", "T7.3.window.realized_value")]
+    fact = _payload_facts(view)["cp8.what_changed.outcome.value"]
+    block = "".join(
+        run[1]
+        for line in _what_changed_lines(view)
+        if line[0][1].startswith("No realized outcome is recorded")
+        for run in line
+    )
+    for field in ("display", "table_display"):
+        assert "[" not in fact[field] and "]" not in fact[field]
+        assert fact[field] == block and f"\u2205 {gap}" in fact[field]
+
+
+def test_a_known_window_figure_is_spelled_in_the_module_table_as_the_block_does() -> None:
+    token = "Window {T7.3.window.realized_value|days} after the decision."
+    view = _what_changed_view("positive", {"cp8.what_changed.attribution.value": token})
+    fact = _payload_facts(view)["cp8.what_changed.attribution.value"]
+    assert fact["display"] == fact["table_display"] == "Window 109 days after the decision."
+
+
 def test_a_well_formed_token_beside_a_non_token_bracket_fails_closed() -> None:
     text = "Window {T7.3.window.realized_value|days} then [Not a token]."
     view = _what_changed_view("positive", {"cp8.what_changed.attribution.value": text})

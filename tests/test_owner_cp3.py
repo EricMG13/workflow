@@ -51,6 +51,7 @@ EXPECTED: dict[str, Any] = ORACLE["expected"]
 S1_EXPECTED: dict[str, Any] = ORACLE["s1"]["expected"]
 S1_TREE: dict[str, Any] = ORACLE["s1"]["tree"]
 CASES = ("positive", "gap")
+PACK_HASH_PLACEHOLDER = "<<PreparedPack.content_hash(), bound at run time>>"
 RUN = MANIFEST["runs"][runs.RUN]
 LABEL = re.compile(r"<label and period of FIG:([a-z0-9_]+)>")
 ALIAS = ["CP-1", "CP-MODEL", "CP-1A", "CP-2", "CP-3B"]
@@ -160,6 +161,13 @@ def test_cp0_r3_equals_the_oracle(closed: Closed) -> None:
     want = closed.expected["upstream"]["CP-0"][runs.RUN]
     module = head_module(closed.store, "CP-0")
     assert module.status == want["status"]
+    # the oracle binds the pack hash at run time; bind it to this run's pack before comparing
+    pack_hash = closed.pack.content_hash()
+    bound_facts = [
+        {**fact, "text": fact["text"].replace(PACK_HASH_PLACEHOLDER, pack_hash)}
+        for fact in want["facts"]
+    ]
+    assert sum(pack_hash in fact["text"] for fact in bound_facts) == 1
     assert [
         {
             "fact_id": f.fact_id,
@@ -167,7 +175,7 @@ def test_cp0_r3_equals_the_oracle(closed: Closed) -> None:
             "cites": [[c.source_id, c.locator] for c in f.citations],
         }
         for f in module.facts
-    ] == want["facts"]
+    ] == bound_facts
     assert list(module.limitations) == want["limitations"]
     head = next(h for h in closed.store.read().heads if h.module_id == "CP-0")
     assert {c.row_id: c.text for c in head.commands} == want["exact_commands"]
@@ -243,7 +251,7 @@ def test_cp2_read_body_register_counts_follow_the_oracle(closed: Closed) -> None
         got[prefix] += 1
     assert got == wanted
     assert len(body["cp1a_rows"]) == counts["cp1a_rows"]
-    assert body["cp1a_signals"] == frozen["cp1a_signals"]
+    assert len(body["cp1a_signals"]) == frozen["cp1a_signals"]
     assert body["upstream"] == [
         {"module_id": m, "status": "restricted"} for m in ("CP-0", "CP-1", "CP-1A")
     ]

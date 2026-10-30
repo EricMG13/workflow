@@ -339,6 +339,7 @@ class Figure(Contract):
     chart: ChartSpec
     placement: FigurePlacement = "below"
     summary: Text | None = None  # the sentence under the caption (FP 01 S.5)
+    status_chip: Text | None = None  # block-head chip the producer asks for (DR.6, OI-13)
 
     @property
     def gaps_note(self) -> str | None:

@@ -1971,8 +1971,12 @@ def validate_market_implied(
     summary becomes `Claim.text` (`CP-3D-VIEW-01`), so it is also checked as `RunText` (the
     type's message, never the input) whatever the content rules found, as CP-2E does, and no
     composition can raise after the binding write. A well-formed reference is refused too: the
-    summary claim names no fact, so settlement would reject the module after a valid step."""
+    summary claim names no fact, so settlement would reject the module after a valid step. Blank
+    text is not checked again: `analyst_text` already refused it as empty, and RunText's length
+    message would repeat that fault."""
     issues = submission_issues(submission=submission, context=upstream.context)
+    if is_blank(submission.summary.text):
+        return tuple(dict.fromkeys(issues))
     try:
         _RUN_TEXT.validate_python(submission.summary.text)
     except ValidationError as error:

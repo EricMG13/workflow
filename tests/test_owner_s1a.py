@@ -2069,7 +2069,7 @@ def _publish_forged_cp_model(
         finished = real_interrupt(self, ticket_id, reason)
         if forge_interrupted is None:
             return finished
-        forged = forge_interrupted(finished)
+        forged: Attempt = forge_interrupted(finished)
         snapshot = self.read()
         self._write(
             snapshot.model_copy(

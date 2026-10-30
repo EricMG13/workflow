@@ -262,6 +262,10 @@ def validate_tables(tables: tuple[ReportTable, ...], facts: tuple[Fact, ...]) ->
     if len(facts_by_id) != len(facts):
         raise ValueError("Duplicate fact identity")
 
+    ids_by_table: dict[str, set[str]] = {}
+    for canonical in facts:
+        ids_by_table.setdefault(canonical.table_id, set()).add(canonical.fact_id)
+
     for table in tables:
         if table.interface_id and (
             table.row_header is not None
@@ -287,8 +291,7 @@ def validate_tables(tables: tuple[ReportTable, ...], facts: tuple[Fact, ...]) ->
                 if (fact.table_id, fact.row_id, fact.field) != (table.table_id, row.row_id, field):
                     raise ValueError("Report cell differs from its canonical fact coordinates")
                 referenced_fact_ids.add(fact_id)
-        canonical_fact_ids = {fact.fact_id for fact in facts if fact.table_id == table.table_id}
-        if referenced_fact_ids != canonical_fact_ids:
+        if referenced_fact_ids != ids_by_table.get(table.table_id, set()):
             raise ValueError("Declared report table omits canonical facts")
 
 

@@ -90,3 +90,6 @@ the full suite on the branch (only the 18 heavy tests, the new tests, and the re
 
 The reviewer probes under `probes/review/` read a real settled CP-1 Module blob (44 MB, not committed);
 any current earnings owner store holds one under `blobs/` (the CP-1 head's `result_sha256`).
+
+Measured on `05c3b27`. Later tip `b6c7053` (post-Stage-5): no file overlap, merges cleanly
+(`git merge-tree`), and adds nothing that interacts with P3's cache; timings not re-run there.

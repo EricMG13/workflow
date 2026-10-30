@@ -1597,22 +1597,35 @@ def _clip(text: str) -> str:
     return text if len(text) <= _SUMMARY_LIMIT else text[: _SUMMARY_LIMIT - 1] + "…"
 
 
-#: Tables whose known text facts are producer-composed run text (the same strings the module's
-#: claims carry). Only ``Claim.text`` is ``RunText`` in the contract; ``Fact.text`` is a plain
-#: string, so analyst free text and verbatim quotes may hold ``[sic]`` or ``[Reserved]``.
-#: Every CP-8 line in ``cp8.what_changed`` comes from the producer's resolved claim text.
-_RUN_TEXT_TABLES = frozenset({("CP-8", "cp8.what_changed")})
+#: Fields whose known text facts are producer-composed or analyst run text, checked by the
+#: module's own reference validation before storage and stored with its tokens: CP-8's resolved
+#: claim text (``owners/cp8.py:2145-2186``), CP-L10's TL10.3 analyst text (``cpl10.py:1060-1073``,
+#: stored at :804-826) and CP-2H's T2R.10 gap text (``cp2h.py:1523-1541``, :1608-1614, stored at
+#: :1413-1424). Keyed by (module, table, field): a table mixes run text with free text (TL10.3
+#: ``source_refs``, T2R.10 ``id``), and ``Fact.text`` is a plain string, so free text and verbatim
+#: quotes may hold ``[sic]`` or ``[Reserved]`` and are shown as written.
+_RUN_TEXT_FIELDS = frozenset(
+    {
+        ("CP-8", "cp8.what_changed", "value"),
+        ("CP-L10", "TL10.3", "assessment"),
+        ("CP-L10", "TL10.3", "credit_transmission"),
+        ("CP-2H", "T2R.10", "gap"),
+        ("CP-2H", "T2R.10", "why_it_matters"),
+        ("CP-2H", "T2R.10", "affected_analysis"),
+        ("CP-2H", "T2R.10", "action"),
+    }
+)
 
 
 def _carries_reference(module_id: str, fact: Fact) -> bool:
     """Whether a known text fact is run text that must go through ``resolve``.
 
-    Only a fact in a registered run-text table qualifies, and then any reserved character
+    Only a fact in a registered run-text field qualifies, and then any reserved character
     (``[ ] { }``) sends it to ``resolve``, so a malformed or unbalanced reference fails closed.
     Every other text fact is shown as written, whatever brackets it holds.
     """
     return (
-        (module_id, fact.table_id) in _RUN_TEXT_TABLES
+        (module_id, fact.table_id, fact.field) in _RUN_TEXT_FIELDS
         and fact.text is not None
         and prose._RESERVED.search(fact.text) is not None
     )

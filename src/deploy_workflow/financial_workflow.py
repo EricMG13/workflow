@@ -14,6 +14,7 @@ import tempfile
 from collections import Counter
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import date
 from pathlib import Path
 from threading import Lock
 from typing import Any, Literal, TextIO
@@ -378,19 +379,17 @@ def _evidence_issues(
         key = (table.source_id, table.locator)
         if key not in required:
             continue
+        page_text = next(
+            span.text
+            for source in pack.sources
+            if source.source_id == table.source_id
+            for span in source.spans
+            if span.locator == table.locator
+        )
         if table.lines:
             measured.add(key)
         for extracted in table.lines:
-            caption = (extracted.caption or "").upper()
-            statement = (
-                "IS"
-                if "INCOME" in caption or "OPERATIONS" in caption
-                else "CFS"
-                if "CASH FLOW" in caption
-                else "BS"
-                if "BALANCE SHEET" in caption
-                else None
-            )
+            statement = _statement(extracted.caption, page_text)
             covered = False
             for book in submission.financial.books:
                 columns = _column_periods(table.headers, book.periods)
@@ -398,7 +397,7 @@ def _evidence_issues(
                     continue
                 if all(
                     any(
-                        line.period_id == period_id
+                        line.period_id in period_ids
                         and line.statement == statement
                         and " ".join(line.label.split()) == " ".join(extracted.label.split())
                         and line.value.amount == value
@@ -410,7 +409,7 @@ def _evidence_issues(
                         )
                         for line in book.statement_lines
                     )
-                    for period_id, value in zip(columns, extracted.values, strict=True)
+                    for period_ids, value in zip(columns, extracted.values, strict=True)
                 ):
                     covered = True
                     break
@@ -423,53 +422,200 @@ def _evidence_issues(
     return tuple(issues)
 
 
-def _column_periods(headers: tuple[str, ...], periods: Any) -> tuple[str, ...] | None:
-    """Map explicit quarter, FY and date headings; no inferred periods or arithmetic."""
-    for header in headers:
-        cells = re.split(r"\s{2,}", header.strip())[1:]
-        if not cells:
+_STATEMENT_KINDS = (
+    ("IS", ("INCOME STATEMENT", "STATEMENTS OF OPERATIONS")),
+    ("CFS", ("CASH FLOW STATEMENT", "STATEMENTS OF CASH FLOWS")),
+    ("BS", ("BALANCE SHEET",)),
+)
+
+
+def _statement(caption: str | None, page_text: str) -> str | None:
+    """A line's statement: its caption when that names one, else the page's one heading kind."""
+    upper = (caption or "").upper()
+    if "INCOME" in upper or "OPERATIONS" in upper:
+        return "IS"
+    if "CASH FLOW" in upper:
+        return "CFS"
+    if "BALANCE SHEET" in upper:
+        return "BS"
+    kinds = {
+        kind
+        for heading in STATEMENT_HEADING.finditer(page_text)
+        for kind, words in _STATEMENT_KINDS
+        if any(word in heading.group() for word in words)
+    }
+    return kinds.pop() if len(kinds) == 1 else None
+
+
+_MONTHS = {
+    name: number
+    for number, name in enumerate(
+        [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ],
+        1,
+    )
+}
+_FLOW_TYPES = {"Three": "QUARTER", "Six": "YTD", "Nine": "YTD", "Year": "FY"}
+_SPAN_CELL = re.compile(
+    r"(?:(Three|Six|Nine) Months Ended|(Year)s? Ended) ([A-Z][a-z]+) (\d{1,2}),?|"
+    r"([A-Z][a-z]+) (\d{1,2}),?"
+)
+_DATE_CELL = re.compile(r"([A-Z][a-z]+) (\d{1,2}), (\d{4})")
+_YEAR_CELL = re.compile(r"(?:19|20)\d{2}")
+
+
+def _iso(year: str, month: str, day: str) -> str | None:
+    """The ISO date of an English month name, day and year, or None when it is not a date."""
+    if month not in _MONTHS:
+        return None
+    try:
+        return date(int(year), _MONTHS[month], int(day)).isoformat()
+    except ValueError:
+        return None
+
+
+def _header_cells(header: str) -> list[str]:
+    return re.split(r"\s*\|\s*|\s{2,}", header.strip())
+
+
+def _span(cell: str) -> tuple[str | None, str, str] | None:
+    """(period type, or None for a balance date; month; day) of a span cell."""
+    found = _SPAN_CELL.fullmatch(cell)
+    if found is None or (found[3] or found[5]) not in _MONTHS:
+        return None
+    if found[5] is not None:
+        return None, found[5], found[6]
+    return _FLOW_TYPES[found[1] or found[2]], found[3], found[4]
+
+
+def _is_column_cell(cell: str) -> bool:
+    return bool(
+        re.fullmatch(r"Q[1-4] \d{4}|FY \d{4}|(?:Opening|Q[1-4]|FY) \d{4}-\d{2}-\d{2}", cell)
+        or _date_cell(cell)
+    )
+
+
+def _date_cell(cell: str) -> str | None:
+    found = _DATE_CELL.fullmatch(cell)
+    return _iso(found[3], found[1], found[2]) if found else None
+
+
+def _hit(spec: tuple[str, ...], period: Any) -> bool:
+    kind, end = spec[0], str(period.end_date)
+    year = re.findall(r"\d{4}", period.fiscal_year)
+    if kind == "quarter":
+        return (
+            period.period_type == "QUARTER"
+            and period.fiscal_quarter == int(spec[1])
+            and year == [spec[2]]
+        )
+    if kind == "annual":
+        return period.period_type == "FY" and year == [spec[1]]
+    if kind == "dated":
+        return end == spec[2] and (
+            (spec[1] == "Opening" and period.period_type == "PERIOD_END")
+            or (spec[1] == "FY" and period.period_type == "FY")
+            or (
+                spec[1].startswith("Q")
+                and period.period_type == "QUARTER"
+                and period.fiscal_quarter == int(spec[1][1])
+            )
+        )
+    if kind == "flow":
+        return end == spec[2] and period.period_type == spec[1]
+    if kind == "balance":
+        return end == spec[1] and period.period_type != "LTM"
+    return False
+
+
+def _matching(spec: tuple[str, ...], periods: Any) -> frozenset[str] | None:
+    """Period ids for one column spec; all but a balance need exactly one match."""
+    ids = [period.period_id for period in periods if _hit(spec, period)]
+    if not ids or (spec[0] != "balance" and len(ids) != 1):
+        return None
+    return frozenset(ids)
+
+
+def _single_spec(cell: str) -> tuple[str, ...]:
+    quarter = re.fullmatch(r"Q([1-4]) (\d{4})", cell)
+    annual = re.fullmatch(r"FY (\d{4})", cell)
+    dated = re.fullmatch(r"(Opening|Q[1-4]|FY) (\d{4}-\d{2}-\d{2})", cell)
+    if quarter:
+        return ("quarter", quarter[1], quarter[2])
+    if annual:
+        return ("annual", annual[1])
+    if dated:
+        return ("dated", dated[1], dated[2])
+    iso = _date_cell(cell)
+    return ("balance", iso) if iso else ("unsupported",)
+
+
+def _span_specs(
+    spans: list[tuple[str | None, str, str]], years: list[str]
+) -> list[tuple[str, ...]]:
+    """One spec per year column: span i covers the year columns i*n/k to (i+1)*n/k - 1."""
+    width = len(years) // len(spans)
+    specs: list[tuple[str, ...]] = []
+    for index, year in enumerate(years):
+        kind, month, day = spans[index // width]
+        iso = _iso(year, month, day)
+        if iso is None:
+            return []
+        specs.append(("balance", iso) if kind is None else ("flow", kind, iso))
+    return specs
+
+
+def _drop_label(cells: list[str], keep: Any) -> list[str]:
+    return cells if cells and keep(cells[0]) else cells[1:]
+
+
+def _spec_row(headers: tuple[str, ...], index: int) -> list[tuple[str, ...]] | None:
+    """The column specs of header `index`: a single row of columns, or a span row over a year row."""
+    cells = _header_cells(headers[index])
+    spans = [_span(cell) for cell in _drop_label(cells, lambda c: _span(c) is not None)]
+    if spans and all(spans):
+        if index + 1 == len(headers):
+            return None
+        row = _drop_label(_header_cells(headers[index + 1]), _YEAR_CELL.fullmatch)
+        count = len(row)
+        if not count or count % len(spans) or not all(_YEAR_CELL.fullmatch(c) for c in row):
+            return None
+        return _span_specs([s for s in spans if s], row) or None
+    specs = [_single_spec(cell) for cell in _drop_label(cells, _is_column_cell)]
+    return specs or None
+
+
+def _column_periods(headers: tuple[str, ...], periods: Any) -> tuple[frozenset[str], ...] | None:
+    """One set of acceptable period ids per column from explicit headings; nothing is inferred.
+
+    A column is `Q<n> <yyyy>`, `FY <yyyy>`, `(Opening|Q<n>|FY) <date>`, a full date (a balance:
+    any non-LTM period ending then), or a year under a span row (`Three Months Ended`, `Six or
+    Nine Months Ended`, `Years Ended` give one period of that type ending then; a bare month and
+    day is a balance date). The column sets must be pairwise disjoint.
+    """
+    for index in range(len(headers)):
+        specs = _spec_row(headers, index)
+        if specs is None:
             continue
         found = []
-        for cell in cells:
-            quarter = re.fullmatch(r"Q([1-4]) (\d{4})", cell)
-            annual = re.fullmatch(r"FY (\d{4})", cell)
-            dated = re.fullmatch(r"(Opening|Q[1-4]|FY) (\d{4}-\d{2}-\d{2})", cell)
-            match_count = 0
-            for period in periods:
-                if (
-                    quarter
-                    and period.period_type == "QUARTER"
-                    and period.fiscal_quarter == int(quarter[1])
-                    and re.findall(r"\d{4}", period.fiscal_year) == [quarter[2]]
-                ):
-                    match_id = period.period_id
-                elif (
-                    annual
-                    and period.period_type == "FY"
-                    and re.findall(r"\d{4}", period.fiscal_year) == [annual[1]]
-                ):
-                    match_id = period.period_id
-                elif (
-                    dated
-                    and str(period.end_date) == dated[2]
-                    and (
-                        (dated[1] == "Opening" and period.period_type == "PERIOD_END")
-                        or (dated[1] == "FY" and period.period_type == "FY")
-                        or (
-                            dated[1].startswith("Q")
-                            and period.period_type == "QUARTER"
-                            and period.fiscal_quarter == int(dated[1][1])
-                        )
-                    )
-                ):
-                    match_id = period.period_id
-                else:
-                    continue
-                match_count += 1
-            if match_count != 1:
+        for spec in specs:
+            ids = _matching(spec, periods)
+            if ids is None:
                 break
-            found.append(match_id)
-        if len(found) == len(cells) and len(set(found)) == len(found):
+            found.append(ids)
+        if len(found) == len(specs) and len(frozenset[str]().union(*found)) == sum(map(len, found)):
             return tuple(found)
     return None
 

@@ -1436,11 +1436,19 @@ def test_column_period_identity_and_ambiguity():
         end_date=date(2025, 12, 31),
     )
     periods = (q4, fy)
-    assert _column_periods(("Period  Q4 2025  FY 2025",), periods) == ("q4", "fy")
-    assert _column_periods(("Period end  Q4 2025-12-31  FY 2025-12-31",), periods) == ("q4", "fy")
+    assert _column_periods(("Period  Q4 2025  FY 2025",), periods) == (
+        frozenset({"q4"}),
+        frozenset({"fy"}),
+    )
+    assert _column_periods(("Period end  Q4 2025-12-31  FY 2025-12-31",), periods) == (
+        frozenset({"q4"}),
+        frozenset({"fy"}),
+    )
     assert _column_periods(("Period  Q4 2025",), (*periods, q4)) is None
     assert _column_periods(("Period  FY 2025  FY 2025",), periods) is None
-    assert _column_periods(("Unknown  unsupported", "Period  FY 2025"), periods) == ("fy",)
+    assert _column_periods(("Unknown  unsupported", "Period  FY 2025"), periods) == (
+        frozenset({"fy"}),
+    )
     assert _column_periods(("Unknown  unsupported", "Period  FY 2025"), iter(periods)) is None
 
 

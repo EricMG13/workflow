@@ -568,3 +568,4 @@
 - 03:19 Stage 4 review (Fable a04f4989): REVISE, Medium 1 (CP-8 token in module table/inspector via render.py). Item 45, applied recommendation: item 30 extended to render.py. Info 1 to owner lows. s4-int2 lane A: fast 10331 passed, g2fast 153. Preparer for item 44 = mx-autonomous a2fe49b1.
 - 03:26 G2 gaps spec received (mx-autonomous a2fe49b1, agent=mx-autonomous; test only). Item 46 rules its six questions. Spec review mx-precise dispatched.
 - 03:30 G2 gaps spec review (mx-precise aed2c984): REVISE, Medium 2 (cites scope misses cp8/cp4 real cites; missing index entry falls back), Low 4. Back to preparer a2fe49b1 for revision 1.
+- 03:35 G2 gaps spec revision 1 (preparer a2fe49b1): all 7 items; 2 deviations with code evidence (required-entry rule; SYNTH order in rails). Re-review to mx-precise aed2c984.

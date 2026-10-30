@@ -76,7 +76,7 @@ def check(payload, case):
                     if "cites" not in wcell:
                         continue  # gap cells carry no cites (build_s1_oracle.cell_view)
                     module_id, fact_id = resolve_fact(payload, reg, ri, ci)
-                    assert C.cites_of(payload, module_id, fact_id) == wcell["cites"], (bid, fact_id)
+                    assert C.cites_of(payload, module_id, fact_id, {"status": "known", "cites": wcell["cites"]}) == wcell["cites"], (bid, fact_id)
                     n += 1
     return n
 

@@ -67,21 +67,43 @@ def module_payload(payload: dict[str, Any], module_id: str) -> dict[str, Any]:
     return m
 
 
-def cites_of(payload: dict[str, Any], module_id: str, fact_id: str) -> list[list[str]]:
+def cites_of(payload: dict[str, Any], module_id: str, fact_id: str, want: dict[str, Any]) -> list[list[str]]:
     """Acceptance 1: Source and Locator from the passports of the fact's index refs (C/S only),
-    in index order, no de-duplication."""
-    (entry,) = [
+    in index order, no de-duplication. No fallback: build_index (report_view.py:772-871) gives a
+    fact an entry exactly when it has a ref (a G# for a gap, a C/S per citation, a K# for a
+    calculation). The oracle fact says which: an entry is required iff status != known, or
+    list cites are non-empty, or calculation_id is set; required -> exactly one entry, else none."""
+    entries = [
         e for e in payload["report"]["index"]["facts"]
         if e["coord"]["module_id"] == module_id and e["coord"]["fact_id"] == fact_id
-    ] or [{"ref_ids": []}]
+    ]
+    required = want["status"] != "known" or bool(want.get("cites")) or bool(want.get("calculation_id"))
+    assert len(entries) == (1 if required else 0), (fact_id, len(entries), required)
+    if not entries:
+        return []
     passports = {p["ref_id"]: p for p in payload["report"]["passports"]}
     out = []
-    for ref in entry["ref_ids"]:
+    for ref in entries[0]["ref_ids"]:
         if ref[0] not in "CS":
             continue
         fields = {f["name"]: f["value"] for f in passports[ref]["fields"]}
         out.append([fields["Source"], fields["Locator"]])
     return out
+
+
+def assert_table_cites(payload: dict[str, Any], module_id: str, tables: list[dict[str, Any]]) -> int:
+    """Every oracle fact with list cites, keyed by fact_id (prose run-time cites are skipped).
+    Returns the number of non-empty cites checked; the caller asserts it is at least 1."""
+    nonempty = 0
+    for t in tables:
+        for r in t["rows"]:
+            for f in r["facts"]:
+                cites = f.get("cites")
+                if not (isinstance(cites, list) and all(isinstance(c, list) for c in cites)):
+                    continue
+                assert cites_of(payload, module_id, f["fact_id"], f) == cites, f["fact_id"]
+                nonempty += bool(cites)
+    return nonempty
 
 
 def assert_register_equals_table(reg, label, table, module_id, payload, *, cites=True):
@@ -108,4 +130,4 @@ def assert_register_equals_table(reg, label, table, module_id, payload, *, cites
             else:
                 assert re.fullmatch(gap_pattern(want["status"]), cell["text"]), (fid, cell["text"])
             if cites:
-                assert cites_of(payload, module_id, fid) == want["cites"], (fid,)
+                assert cites_of(payload, module_id, fid, want) == want["cites"], (fid,)

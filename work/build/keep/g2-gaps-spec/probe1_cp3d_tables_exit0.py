@@ -19,14 +19,17 @@ def check(payload, case):
     assert len(regs) == len(node["tabs"])
     for reg, (tid, label) in zip(regs, node["tabs"], strict=True):
         C.assert_register_equals_table(reg, label, tables[tid], "CP-3D", payload)
+    n = C.assert_table_cites(payload, "CP-3D", E["cases"][case]["tables"])
+    assert n >= 1
+    return n
 
 
 for case in ("positive", "gap_no_recovery", "gap_no_market"):
     pack = base._pack(case)
     view = C.view_with(pack.run, [base._module(case)])
     payload = C.payload_of(view)
-    check(payload, case)
-    print(case, "accepts")
+    n = check(payload, case)
+    print(case, "accepts;", n, "non-empty cites checked over all tables")
     # perturbations: one field each
     perturbs = []
     p = copy.deepcopy(payload); b = [x for x in p["report"]["blocks"] if x["block_id"] == "market-against-fundamentals"][0]
@@ -44,6 +47,19 @@ for case in ("positive", "gap_no_recovery", "gap_no_market"):
     gapcell = next((c for r in [*b["rows"], *[r for t in b["tabs"] for r in t["rows"]]] for c in r["cells"] if c["state"] != "known"), None)
     if gapcell is not None:
         gapcell["text"] = "0"; perturbs.append(("gap cell -> 0", p))
+    def drop_entry(p, pred):
+        facts = {f["fact_id"]: f for t in E["cases"][case]["tables"] for r in t["rows"] for f in r["facts"]}
+        idx = p["report"]["index"]["facts"]
+        hit = [e for e in idx if e["coord"]["module_id"] == "CP-3D" and pred(facts.get(e["coord"]["fact_id"]))]
+        assert hit
+        idx.remove(hit[0])
+    p = copy.deepcopy(payload); drop_entry(p, lambda f: f is not None and not f["cites"])
+    perturbs.append(("index entry of a fact whose oracle cites are [] removed (review M2)", p))
+    p = copy.deepcopy(payload); drop_entry(p, lambda f: f is not None and f["status"] != "known")
+    perturbs.append(("index entry of a gap fact removed", p))
+    p = copy.deepcopy(payload); idx = p["report"]["index"]["facts"]
+    e = next(e for e in idx if e["coord"]["module_id"] == "CP-3D"); idx.append(copy.deepcopy(e))
+    perturbs.append(("index entry duplicated", p))
     for name, p in perturbs:
         try:
             check(p, case)

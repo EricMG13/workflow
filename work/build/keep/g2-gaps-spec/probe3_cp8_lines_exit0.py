@@ -49,6 +49,9 @@ def check(payload, case):
             assert chip is not None and chip["ref_id"][0] in "CS", runs
         else:
             assert chip is None, runs
+    n = C.assert_table_cites(payload, "CP-8", E["cases"][case]["tables"])
+    assert n >= 1
+    return n
 
 
 fails = 0
@@ -58,8 +61,8 @@ for case in ("positive", "no_outcome"):
                           tables=out.tables, claims=out.claims, limitations=out.limitations)
     mod = cp8.cp8_module(report=lo, inputs=c8._attempt().inputs, attempt=0).model_copy(update={"status": "restricted"})
     payload = C.payload_of(C.view_with(lo.run, [mod]))
-    check(payload, case)
-    print(case, "accepts")
+    n = check(payload, case)
+    print(case, "accepts;", n, "non-empty cites checked over all tables")
 
     def mutate(fn):
         p = copy.deepcopy(payload); fn(p); return p
@@ -73,12 +76,34 @@ for case in ("positive", "no_outcome"):
         ("line dropped", mutate(lambda p: lines(p).pop(2))),
         ("calc passport", mutate(lambda p: next(x for x in p["report"]["passports"] if x["ref_id"] == lines(p)[1]["runs"][-1]["ref_id"])["fields"][0].update(value="calc:other"))),
     ]
+    rail = set(E["render"]["rails"]["evidence"]) | set(E["render"]["rails"]["limitations"])
+    def rail_entry(p):
+        return next(e for e in p["report"]["index"]["facts"] if e["coord"]["module_id"] == "CP-8"
+                    and e["coord"]["table_id"] in rail and any(r[0] in "CS" for r in e["ref_ids"]))
+    def drop_rail(p):
+        p["report"]["index"]["facts"].remove(rail_entry(p))
+    def swap_rail_order(p):
+        e = next(e for e in p["report"]["index"]["facts"] if e["coord"]["module_id"] == "CP-8"
+                 and e["coord"]["table_id"] in rail and sum(r[0] in "CS" for r in e["ref_ids"]) >= 2
+                 and len({tuple(sorted((f["name"], f["value"]) for f in x["fields"] if f["name"] in ("Source", "Locator")))
+                          for x in p["report"]["passports"] if x["ref_id"] in e["ref_ids"]}) >= 2)
+        e["ref_ids"] = list(reversed(e["ref_ids"]))
+    def rail_locator(p):
+        ref = next(r for r in rail_entry(p)["ref_ids"] if r[0] in "CS")
+        pp = next(x for x in p["report"]["passports"] if x["ref_id"] == ref)
+        next(f for f in pp["fields"] if f["name"] == "Locator").update(value="page:99")
+    perturbs.append(("rail-table cited fact: index entry removed", mutate(drop_rail)))
+    perturbs.append(("rail-table cited fact: passport Locator", mutate(rail_locator)))
+    try:
+        perturbs.append(("rail-table fact: ref order reversed", mutate(swap_rail_order)))
+    except StopIteration:
+        print("  (no rail fact with two distinct Source/Locator pairs in this case)")
     if case == "no_outcome":
         perturbs.append(("token gap -> text 0", mutate(lambda p: lines(p)[1]["runs"][1].update(text="0", kind="text"))))
     for name, p in perturbs:
         try:
             check(p, case)
-        except (AssertionError, KeyError):
+        except (AssertionError, KeyError, StopIteration):
             print("  fails:", name)
         else:
             print("  ACCEPTED (bad):", name); fails += 1

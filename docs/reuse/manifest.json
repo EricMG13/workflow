@@ -1715,6 +1715,15 @@
       "sha256": "9b152b587f6f32cf3407175127766391291d4f9166725df7f854cadc632983a3",
       "reason": "Stage 4 batch 2 fix round 4: the run-text registry is keyed by (module, table, field) and adds CP-L10 TL10.3 assessment and credit_transmission and CP-2H T2R.10 gap, why_it_matters, affected_analysis and action, so analyst run text resolves to its figure while free fields in the same tables are shown as written (rulings 2026-10-29-stage3 items 56, 58 and 59).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.css",
+      "imported_sha256": "ea3a8198f9f6f4b4c9a354427460a29cc6b555047a095a916949f8775e75f1ac",
+      "prior_project_sha256": "ea3a8198f9f6f4b4c9a354427460a29cc6b555047a095a916949f8775e75f1ac",
+      "project_commit": "71782af37e5fafb13a840d7655874d2e9c4d5707",
+      "sha256": "14aa4a822ef30a8827a0152b4b7470883967e558dff409aacea4dcc8c0a5cfd4",
+      "reason": "Add flex-shrink:0 to .module-list so a long outline cannot shrink the navigator module rows to 0px and cover them (ruling item 61).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

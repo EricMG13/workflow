@@ -30,3 +30,4 @@
 
 - Stage 3 review (item 22): ruff check findings on untouched lines (statement_extract.py 234-263 TRY004; financial_workflow.py 439, 446, 768; test_legal_render.py:220) and D12 report_view records 3e5b537 (item 19), 24f879a (item 19), 8aef58d (chain fork) predate Stage 3: owner.
 - Stage 3 Low L1 (item 32): `ruff check tests/test_cp1_chart_render.py` FURB157 at :125, :229, :267, :269 and C408 at :433, on lines untouched since 25ddb67 (2026-10-27); predate Stage 3: owner.
+- Stage 4 owner fixes (item 41): tests/defect_classes.py:858 and :863 mypy --strict 'Cannot infer type of lambda' (also at ff9070e; the file is imported by the owner suites, not changed): owner.

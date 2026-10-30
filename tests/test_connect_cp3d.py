@@ -35,6 +35,7 @@ from deploy_vii.contracts import (
 from deploy_vii.execution import Head, head_of
 from deploy_vii.live.tools import Seen
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import tokenize
 from deploy_vii.quotes import quoted
 from deploy_vii.report_view import _RELATIVE_VALUE, _Spec, _spec_of, fact_spelling
 from deploy_workflow import host
@@ -732,6 +733,62 @@ def test_a_malformed_summary_is_reported_beside_a_content_issue() -> None:
         upstream=_upstream("positive"),
     )
     assert only == issues[1:]
+
+
+_REFERENCE = "summary.text: text carries a reference"
+_PROHIBITED_ISSUE = "summary.text: text carries a prohibited conclusion"
+_MALFORMED_ISSUE = "summary.text: Value error, Malformed run text: unbalanced or empty reference"
+
+
+def _summary_issues(text: str) -> tuple[str, ...]:
+    raw = copy.deepcopy(base.SUBMISSIONS["positive"])
+    raw["summary"]["text"] = text
+    return cp3d.validate_market_implied(
+        submission=cp3d.MarketImpliedSubmission.model_validate_json(json.dumps(raw)),
+        upstream=_upstream("positive"),
+    )
+
+
+@pytest.mark.parametrize(
+    "text", ["A summary naming {fact_a|x} here", "A summary naming [fact_a] here"]
+)
+def test_a_summary_reference_is_refused_at_validation(text: str) -> None:
+    """The summary claim names no fact (every CP-3D fact id carries digits, analyst text refuses
+    digits), so a reference could never resolve and settle would reject the module after a valid
+    step; it is refused with the step, and the message never echoes the input."""
+    assert _summary_issues(text) == (_REFERENCE,)
+    raw = copy.deepcopy(base.SUBMISSIONS["positive"])
+    raw["summary"]["text"] = text
+    store = _PayloadStore("positive", json.dumps(raw))
+    outcome = cp3d.ENTRY_VALIDATOR(
+        cast(Any, store), _pack("positive"), _attempt_with_payload("p" * 64)
+    )
+    assert outcome.output is None
+    assert outcome.issues == (_REFERENCE,)
+
+
+def test_a_summary_reference_is_reported_beside_a_prohibited_conclusion() -> None:
+    assert _summary_issues("Undervalued, see [fact_a]") == (_PROHIBITED_ISSUE, _REFERENCE)
+
+
+def test_a_malformed_summary_reference_keeps_only_the_run_text_message() -> None:
+    assert _summary_issues("A summary naming [fact_a here") == (_MALFORMED_ISSUE,)
+
+
+def test_no_frozen_summary_text_carries_a_reference() -> None:
+    """Parity: the rule changes no frozen CP-3D oracle outcome (the refusal cases are also
+    reproduced issue for issue by the oracle-refusals test above)."""
+    texts = [base.SUBMISSIONS[case]["summary"]["text"] for case in CASES]
+    for entry in base.MUTATIONS["entries"]:
+        edited = base._edited(base.SUBMISSIONS[base.MUTATIONS["base"]], entry["edits"])
+        texts.append(edited["summary"]["text"])
+    assert len(texts) >= 4
+    for text in texts:
+        try:
+            runs = tokenize(text)
+        except ValueError:
+            continue  # malformed: RunText's own message, not the reference rule
+        assert all(run.kind == "text" for run in runs)
 
 
 def test_entry_validator_refuses_text_json_object_refuses_even_if_the_schema_parses_it(

@@ -20,6 +20,7 @@ from test_method_cp2e import (
     _cited,
     _inputs,
     _issues_with,
+    _mutated,
     _names,
     _pages,
     _reference_rate_adapter,
@@ -669,6 +670,32 @@ def test_a_summary_reference_is_a_journaled_issue(summary: str) -> None:
     module after a valid step; it is refused with the step instead."""
     raw = _set(_positive(), ("summary", "text"), summary)
     assert _validate(raw).issues == ("summary.text: text carries a reference",)
+
+
+_EMPTY = "summary.text: empty text"
+
+
+@pytest.mark.parametrize("summary", ["", " ", "​"], ids=["empty", "space", "zwsp"])
+def test_an_empty_or_blank_summary_gets_exactly_one_issue(summary: str) -> None:
+    """`chk.prose` already refuses it as empty text; RunText's own length message would only
+    repeat the same fault, so `run_text` does not run on text refused as empty/blank."""
+    raw = _set(_positive(), ("summary", "text"), summary)
+    assert cp2e.validate_macro_fx(submission=raw, pages=_pages("positive")) == (_EMPTY,)
+    out = _validate(raw)
+    assert out.output is None
+    assert out.issues == (_EMPTY,)
+
+
+def test_the_empty_summary_fix_changes_no_frozen_cp2e_outcome() -> None:
+    """Parity over cases/cp2e-owner: the valid cases stay valid, and every refusal and blocked
+    mutation keeps its frozen issues."""
+    for case in CASES:
+        raw = copy.deepcopy(SUBMISSIONS[case])
+        assert cp2e.validate_macro_fx(submission=raw, pages=_pages(case)) == ()
+    for entry in SUBMISSIONS["refusal_mutations"]["entries"]:
+        raw = _mutated(entry["edits"])
+        issues = cp2e.validate_macro_fx(submission=raw, pages=_pages("positive"))
+        assert list(issues) == entry["all_issues"]
 
 
 def test_a_plain_summary_still_passes() -> None:

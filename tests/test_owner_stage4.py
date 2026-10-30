@@ -266,3 +266,28 @@ def test_a_failed_publication_with_a_rewritten_interruption_is_refused(
     with pytest.raises(WorkflowError) as caught:
         owner._verify_publications(store, receipt, False, g.MODULE)
     assert caught.value.code == "identity_mismatch"
+
+
+def test_a_failed_publication_with_an_overlong_interruption_and_no_issues_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """The producer shortens an interruption to 300 characters, so a longer stored one is a
+    forgery even when its issues are empty (the replay must not compare `() == ()`)."""
+    store, receipt = _failed_publication(tmp_path, interruption="y" * 301, issues=())
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_publications(store, receipt, False, g.MODULE)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_failed_publication_with_a_blank_interruption_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """`Execution.interrupt` refuses a reason that is blank, so no genuine attempt stores one,
+    even with the issues that reason would produce."""
+    blank = "   "
+    store, receipt = _failed_publication(
+        tmp_path, interruption=blank, issues=(f"Interrupted: {blank}",)
+    )
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_publications(store, receipt, False, g.MODULE)
+    assert caught.value.code == "identity_mismatch"

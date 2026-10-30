@@ -57,3 +57,6 @@ Recorded per entry in `work/build/open-items/closed.md` with the commit that clo
 
 ## OI-17 (B4: bb4553b and 1a1a140 kept as records)
 - The preparer filled their chains from the lane's first-parent history rather than folding them; both pass the strict probe. Folding would discard records that are consistent once the chain is filled.
+
+## OI-18 (CP-3D empty summary: same double issue as CP-2E, folded into B2)
+- B2's builder found by reading that `cp3d.py` gives `""` the same two issues as CP-2E (`summary.text: empty text` from `analyst_text`, then RunText's "at least 1 character"). It is the owner item's defect class in the file B2 already changes, so the same rule applies there, test-first. CP-DR does not have it (an empty answer skips `_model_text_issues`).

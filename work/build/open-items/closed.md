@@ -1,0 +1,41 @@
+# Owner list closures (one line per `work/build/stage2/lows.md` entry not already marked Closed, plus item 64's user items)
+
+Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "closed by <sha>" = fixed (the commit is in the lane); "decided" = left, with the ruling; "builds" = this branch.
+
+## Already closed in the lane before this session (owner list not updated)
+- [G1-X guards] Low, test gap (`==`→`<=`): closed by 0e4fd3f (`tests/test_owner_g1x.py:604-614`).
+- [G1-X guards] Info, docstring lengths (:563/:565/:566): closed by 0e4fd3f (reflowed); the three other >100-character lines ride with B3.
+- CP-2E (fix1 re-review) Info (a) stale docstring: closed by 0e4fd3f. (b) `Cite`/`Cites` copy/asdict: decided, OI-3. (c) empty summary two issues: B2.
+- CP-2A (close release, lease text): closed by a70ee52 (`docs/CP2A-OWNER-LEASE.md:69`).
+- CP-2A Low (forged `Upstream`): decided, OI-4.
+- Shared defect test Info (`test_defect_classes_selfcheck.py`): closed by acdaee7 (:543-554, `TWO_NOTES`).
+- CP-8 L-a: closed by acdaee7 (`tests/test_owner_cp8.py:214-217`).
+- CP-8 L-b: closed by acdaee7 (`tests/test_owner_cp8.py:220-259`) with the lease note a70ee52 (`docs/CP8-OWNER-LEASE.md:87`).
+- CP-1D L1 (ordinal window): closed by 545e28a (`owners/cp1d.py:644-648`; `tests/test_method_cp1d.py:1336-1339`).
+- CP-1D L2 (surviving mutants): closed by acdaee7 (`tests/test_connect_cp1d.py:727, :744, :767`).
+- CP-1D L3 (tamper spy, edited output): closed by acdaee7 (`tests/test_owner_cp1d.py:361-381`).
+- CP-1D L5 (`type: ignore` in cp1d tests): closed by acdaee7 (none left; totals 13/5).
+- CP-1D L6 (note vs core): closed by 545e28a (note aligned to ruling B3; `tests/test_connect_cp1d.py:1111`).
+- CP-1D I1 (`context_block` docstring): closed by c824206.
+- CP-2G Info (`next(...)` StopIteration): closed by 545e28a (`owners/cp2g.py:3182-3184`; `tests/test_connect_cp2g.py:740`).
+- CP-2D (protocol §6): closed by 545e28a.
+- Tests (`drive_cp1` literal; cp3c/cp4 duplicates): closed by 0e4fd3f (`tests/s1a_runs.py:282-324`; thin wrappers).
+- CP-1D (protocol §6, Info): closed by 545e28a.
+- CP-3D (protocol §6): closed by 30a1f7a (`owners/cp3d.py:2126-2138`).
+- Owner (predates, D12) `bindings/shipped.py` sha: closed by 5977ae4; the last shipped.py record has carried 8cd0dbc9 since then, and 5c71a311 is the next (report_view) record. The W1 finding was a false positive.
+- Stage 3 review (item 22) ruff `financial_workflow.py` 439, 446: closed by 3d93a4c.
+- (item 64) G2 R2.5 secondary pointers for cp3d, cp4, cp8 and the `cites` normaliser: closed by 715f5a4 (items 44-48; genuine reruns item 50).
+- (item 64) the 11 CP-3C promotion tests: ran green in Stage 5.1 s5 (62 passed with cp3; gated on `CP3C_STORE_RUNS=1`). Stale docstring `tests/test_owner_cp3c.py:11` rides with B1.
+
+## Built on this branch
+(filled in as each batch is reviewed and merged)
+- Owner (predates, D12) report_view records 3e5b537, 24f879a, 8aef58d (item 22) and (5.3 lens B Low 1) the LEAD records cffdf9f ×9, 1a1a140, bb4553b ×2: closed by a8eb490 (merge 0fc097c; OI-6, OI-17); strict probe df26ea8..HEAD exit 0.
+- CP-1 chart oracle `cases/charts/expected.json` not pinned: closed by 1efec9b (merge 0fc097c; OI-7); PINS 87.
+
+## Decided
+- CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
+- CP-2A Low forged `Upstream`: OI-4.
+- (item 35) cp2d plain-string `tabs`: OI-10.
+- `financial_workflow.py:914` RUF100 (Stage 3 item 22 :768): CZR-blocked, OI-11.
+- (5.3 round 3) `report_view.py` SIM102 and (item 22) `statement_extract.py` TRY004: OI-16.
+- (item 55) rewrite-tournament readability rewrites: OI-15 (the user, "Leave unapplied").

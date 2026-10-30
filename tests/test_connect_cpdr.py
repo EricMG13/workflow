@@ -1153,6 +1153,62 @@ def test_question_id_max_is_the_longest_id_the_composer_accepts() -> None:
         cpdr.compose(inputs)
 
 
+# --- gap_id length (Stage 5) ---------------------------------------------------------------------
+
+# The CP-0 fact `T5.<gap>.gap` is itself an `Identifier`, so the longest agenda gap id a CP-0
+# module can carry is 160 less `T5.` and `.gap`.
+CP0_GAP_ID_LONGEST = cpdr.IDENTIFIER_MAX - len("T5.") - len(".gap")
+
+
+def _with_gap_id(gap_id: str) -> tuple[dict[str, Any], Module]:
+    """A submission payload and a CP-0 module whose single agenda gap carries `gap_id`."""
+    (fact, other) = cp0_facts(empty=False)
+    renamed = fact.model_copy(update={"fact_id": f"T5.{gap_id}.gap", "row_id": gap_id})
+    module = cp0_module(empty=False).model_copy(update={"facts": (renamed, other)})
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    payload["gaps"][0]["gap_id"] = gap_id
+    return payload, module
+
+
+def test_the_longest_accepted_gap_id_composes() -> None:
+    """Every id Python derives from a gap id (`TDR.1.<id>.<field>`, `cpdr-<id>-<field>`) is an
+    `Identifier`: the longest id the validator accepts composes."""
+    payload, module = _with_gap_id("g" * cpdr.GAP_ID_MAX)
+    sub = submission(payload)
+    attempt, store = attempt_of(module)
+    inputs = cpdr._inputs(store, attempt, sub)
+    assert validate_research(submission=sub, upstream=inputs.agenda, pack=sources()) == ()
+    assert cpdr.compose(inputs).facts
+
+
+@pytest.mark.parametrize("length_of", ["one-past", "longest-cp0-gap"])
+def test_a_gap_id_too_long_to_compose_is_refused_at_validation(length_of: str) -> None:
+    gap_id = "g" * (cpdr.GAP_ID_MAX + 1 if length_of == "one-past" else CP0_GAP_ID_LONGEST)
+    payload, module = _with_gap_id(gap_id)
+    expected = (
+        f"gap_id is too long to compose its fact ids (at most {cpdr.GAP_ID_MAX} "
+        f"characters): {gap_id}"
+    )
+    attempt, store = attempt_of(module, json.dumps(payload))
+    inputs = cpdr._inputs(store, attempt, submission(payload))
+    assert (
+        validate_research(submission=inputs.submission, upstream=inputs.agenda, pack=sources())
+        == (expected,)
+    )
+    outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
+    assert outcome.output is None
+    assert expected in outcome.issues
+
+
+def test_gap_id_max_is_the_longest_id_the_composer_accepts() -> None:
+    """The constant is tight: one more character makes `Fact` raise."""
+    payload, module = _with_gap_id("g" * (cpdr.GAP_ID_MAX + 1))
+    attempt, store = attempt_of(module)
+    inputs = cpdr._inputs(store, attempt, submission(payload))
+    with pytest.raises(ValueError, match="Fact"):
+        cpdr.compose(inputs)
+
+
 def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
     """The RunText check is unconditional (as CP-2E's): a content issue no longer masks it."""
     payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])

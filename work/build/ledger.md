@@ -636,3 +636,4 @@
 - 10:07 Stage 5.1 s1 (cp4c never-wedges alone) 1 passed, exit 0 (4h46m). Item 66: 5.1 closed, plan box ticked. Stages 5.1-5.3 done; 5.4 waits for the MODULES.csv review.
 - 10:10 MODULES.csv review APPROVE (mx-precise ad90e3a3; Lows L1 CP-OS skip-link fix 41a8fdb, L2 CP-2H final-code G2 l1, L3 hit-test wording per page; Info cp3d skips). Low batch + CP-4C s1 pass applied by mx-scaffold (brief work/build/stage5/modules-csv-lows-brief.md).
 - 10:11 MODULES.csv Low batch (mx-scaffold a6beca84) 5d882da applied as worded; claude/s5-modules-csv-lows merged into the lane. Item 67. Release to the PR manager next.
+- 10:12 Stage 5 release sent to the PR manager (local_73a216ba): lane 05d3d2e (merge-base 9f71bfa). 5.4 box ticks when the PM reports the merge.

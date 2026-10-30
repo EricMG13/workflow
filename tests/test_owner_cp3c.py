@@ -9,7 +9,8 @@ The store-run group needs a real CP-1 promotion (11 to 26 minutes) and a receipt
 plan, so it is written here and run only with `CP3C_STORE_RUNS=1` (Stage 5): the three store
 runs against the oracle, the receipt verifier, store bytes unchanged, the CP-1 readiness
 re-assertion, D3 and the reader on the closed heads, the blocked and refused-begin receipts and
-the tamper test. A7 (the rendered page) waits for G2 Stage 3 and the D7 ruling.
+the tamper test. A7 (the rendered page) is checked by G2's genuine deferred cases for
+`cp3c-fp04-refinancing` in tests/test_owner_rendering.py (`DEFERRED`, `_check_scope_run`).
 """
 
 import hashlib

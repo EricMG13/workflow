@@ -580,3 +580,4 @@
 - 05:05 Fix round 2 re-review APPROVE (mx-precise a4580e0b). Item 49: Stage 4 review closed. s4-int3: pins 0; D12 owner records only; G2 genuine cp8 positive, no_outcome, refused no_record 3 passed; tests/test_owner_cp8.py 86 passed.
 - 05:08 s4-int3 fast set: 10292 + 41 (test_cp2g_driver, test_cp1_chart_render; added to work/build/keep/fast-set.txt) = 10333 passed, 19 skipped, 1 xfailed (= s4-int2's 10331 + fix round 2's 2 tests); g2fast 170 passed. Exit 0.
 - 05:19 G2 genuine cp4 x3 on 715f5a4 passed (1h03m); cpl10 positive on s4-int3 passed (15m). Item 50: Stage 4 closed; plan boxes ticked; s4-int3 merged into the lane.
+- 05:19 Stage 4 release sent to the PR manager (local_73a216ba): lane 9f71bfa (merges claude/s4-int3 5cf7f0c).

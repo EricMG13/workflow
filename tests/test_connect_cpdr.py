@@ -1221,6 +1221,80 @@ def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
     assert check(submission(payload)) == issues[1:]
 
 
+REFERENCE_ISSUE = "gaps[0].questions[0].answer: text carries a reference"
+
+
+def _answer_payload(answer: str, limitation: str | None = None) -> dict[str, Any]:
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    question = payload["gaps"][0]["questions"][0]
+    question["answer"] = answer
+    if limitation is not None:
+        question["limitation"] = limitation
+    return payload
+
+
+@pytest.mark.parametrize("answer", ["Rates matter {fact_a|x} a lot", "Rates matter [fact_a] a lot"])
+def test_an_answer_with_a_well_formed_reference_is_refused(answer: str) -> None:
+    """A reference in the answer names no fact of the module (`CPDR-ANS-<id>` cites none), so
+    settle would reject the module after a valid step; it is refused with the step instead."""
+    payload = _answer_payload(answer)
+    assert check(submission(payload)) == (REFERENCE_ISSUE,)
+    attempt, store = attempt_of(cp0_module(empty=False), json.dumps(payload))
+    outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
+    assert outcome.output is None
+    assert outcome.issues == (REFERENCE_ISSUE,)
+
+
+def test_a_reference_in_an_answer_is_reported_beside_a_content_issue() -> None:
+    payload = _answer_payload("Rates matter [fact_a] a lot", "Some limitation text")
+    assert check(submission(payload)) == (
+        "an answered question carries no limitation: transactions",
+        REFERENCE_ISSUE,
+    )
+
+
+def test_a_malformed_reference_keeps_the_run_text_message_only() -> None:
+    issues = check(submission(_answer_payload("Rates matter [a lot")))
+    assert issues == (
+        "gaps[0].questions[0].answer: Value error, Malformed run text: unbalanced or empty reference",
+    )
+
+
+def _frozen_answers() -> list[tuple[str, str]]:
+    cases = SUBMISSIONS["cpdr"]
+    payloads = {k: v for k, v in cases.items() if k != "blocked"}
+    payloads["blocked-0"] = cases["blocked"]["attempt_0"]
+    payloads["blocked-1"] = cases["blocked"]["attempt_1"]
+    return [
+        (name, q["answer"])
+        for name, payload in payloads.items()
+        for gap in payload["gaps"]
+        for q in gap["questions"]
+        if q.get("answer")
+    ]
+
+
+def test_no_frozen_cpdr_answer_carries_a_reference() -> None:
+    """The new rule moves no frozen text: every recorded answer is reference-free."""
+    from deploy_vii.prose import tokenize
+
+    answers = _frozen_answers()
+    assert answers
+    for name, answer in answers:
+        assert all(run.kind == "text" for run in tokenize(answer)), name
+
+
+@pytest.mark.parametrize("name", ["partial", "unresolved"])
+def test_check_of_a_frozen_submission_never_carries_the_reference_issue(name: str) -> None:
+    sub = submission(SUBMISSIONS["cpdr"][name])
+    assert not any(i.endswith("text carries a reference") for i in check(sub))
+
+
+def test_no_pinned_refusal_carries_the_reference_issue() -> None:
+    for item in EXPECTED["refusals"].values():
+        assert not any(i.endswith("text carries a reference") for i in item["step_issues"])
+
+
 # --- free text is not run text (rulings item 56) ----------------------------------------------------
 
 

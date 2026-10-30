@@ -205,3 +205,89 @@ def test_a_genuine_repair_is_accepted(g1x: SimpleNamespace, tmp_path: Path) -> N
     receipt = _repaired_run(tmp_path).write_receipt(tmp_path / "receipt.json")
     assert g._verdict(tmp_path, receipt) == "accepted"
     assert [a.number for a in g._fake_attempts(tmp_path)] == [0, 1]
+
+
+# OI-5 (Stage 4 Info 1): a failed publication's attempt must carry the issues the producer's own
+# `Execution.interrupt` writes for its interruption. The attempt is the real producer output
+# (the g1x fake module stands for the publisher: `_verify_publications` takes the module id and
+# replays `Execution.begin`); only the receipt wrapper is a stand-in, as the function reads just
+# its `publications` and `model`.
+def _failed_publication(
+    root: Path, reason: str = "CP-MODEL publication failed: disk full", **forge: Any
+) -> tuple[Execution, Any]:
+    workflow = g._start(root)
+    store = workflow._store
+    begun = store.read()
+    pending = [a for a in begun.attempts if a.module_id == g.MODULE]
+    assert [a.status for a in pending] == ["pending"]
+    before = owner._snapshot(store, begun.parent)
+    assert not [a for a in before.attempts if a.module_id == g.MODULE]
+    ticket = pending[0].ticket_id
+    store.interrupt(ticket, reason)
+    if forge:
+        _rewrite(store, ticket, **forge)
+    call = owner.PublicationCall(
+        snapshot_before_sha256=before.content_hash(),
+        snapshot_after_sha256=store.read().content_hash(),
+        status="failed",
+        reason=reason,
+        ticket_id=ticket,
+        files={},
+    )
+    return store, SimpleNamespace(publications=(call,), model=None)
+
+
+def test_a_genuine_failed_publication_verifies(g1x: SimpleNamespace, tmp_path: Path) -> None:
+    store, receipt = _failed_publication(tmp_path)
+    owner._verify_publications(store, receipt, False, g.MODULE)
+
+
+def test_a_genuine_failed_publication_with_a_long_reason_verifies(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """The producer shortens the interruption to 300 characters; the replay agrees."""
+    store, receipt = _failed_publication(tmp_path, "CP-MODEL publication failed: " + "x" * 500)
+    owner._verify_publications(store, receipt, False, g.MODULE)
+
+
+def test_a_failed_publication_with_rewritten_issues_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    store, receipt = _failed_publication(tmp_path, issues=("Looks fine, nothing to repair",))
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_publications(store, receipt, False, g.MODULE)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_failed_publication_with_a_rewritten_interruption_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    store, receipt = _failed_publication(tmp_path, interruption="something else entirely")
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_publications(store, receipt, False, g.MODULE)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_failed_publication_with_an_overlong_interruption_and_no_issues_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """The producer shortens an interruption to 300 characters, so a longer stored one is a
+    forgery even when its issues are empty (the replay must not compare `() == ()`)."""
+    store, receipt = _failed_publication(tmp_path, interruption="y" * 301, issues=())
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_publications(store, receipt, False, g.MODULE)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_failed_publication_with_a_blank_interruption_is_refused(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """`Execution.interrupt` refuses a reason that is blank, so no genuine attempt stores one,
+    even with the issues that reason would produce."""
+    blank = "   "
+    store, receipt = _failed_publication(
+        tmp_path, interruption=blank, issues=(f"Interrupted: {blank}",)
+    )
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_publications(store, receipt, False, g.MODULE)
+    assert caught.value.code == "identity_mismatch"

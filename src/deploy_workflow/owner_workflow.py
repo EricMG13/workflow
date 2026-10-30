@@ -6,11 +6,12 @@ It generalises `financial_workflow` (which stays the reference and is imported, 
 edited): the walk follows `registry.plan`, each module's steps come from a declared
 `OwnerSpec`, and paths are supplied by trusted setup, never by a message.
 G1 shipped CP-0, CP-1 and CP-MODEL; S1a adds CP-1A and CP-2 and Stage 2 adds CP-4 (their
-probes and views live in `deploy_workflow.owners`). G1-X (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves
-owner cores: an owner-only module (no live step contract) is entered through its registered
-core (`_CORES`), any module may register a precheck gate (`_PRECHECKS`), and every module with
-a `_VIEWS` entry may be read through `module_context` or `step_context`. No durable resume exists (an
-interrupted run is refused and a new run starts).
+probes and views live in `deploy_workflow.owners`). G1-X
+(`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves owner cores: an owner-only module (no live step
+contract) is entered through its registered core (`_CORES`), any module may register a
+precheck gate (`_PRECHECKS`), and every module with a `_VIEWS` entry may be read through
+`module_context` or `step_context`. No durable resume exists (an interrupted run is refused
+and a new run starts).
 """
 
 import argparse
@@ -42,6 +43,7 @@ from deploy_vii.cp_model_workflow import (
     verify_cp_model_publication,
 )
 from deploy_vii.execution import (
+    MAX_INTERRUPTION_CHARS,
     WITHIN_ATTEMPT_REPAIR,
     Attempt,
     Execution,
@@ -54,6 +56,7 @@ from deploy_vii.execution import (
     current_inputs,
     head_of,
     settle,
+    shortened,
     text_sha256,
 )
 from deploy_vii.live.schema import normalise
@@ -208,7 +211,8 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
-# `inputs="step_context"`, rulings stage2 Q4). Both are served as `_VIEWS[step](historical, attempt)`.
+# `inputs="step_context"`, rulings stage2 Q4). Both are served as
+# `_VIEWS[step](historical, attempt)`.
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
     "research": cpdr.view,
@@ -256,8 +260,9 @@ class StepSpec:
     """One journal step. `sources`: pack tools (SourceSession); `extract`: statement
     extraction is offered; `upstream_grant`: frozen-upstream grant (none yet);
     `inputs`: `projection` lets `read_inputs` return the adopted CP-1 view and
-    `module_context` and `step_context` the step's exact view (its `_VIEWS` entry); any `inputs` other than
-    `none` must be read before the step is submitted, with or without a source session;
+    `module_context` and `step_context` the step's exact view (its `_VIEWS` entry); any
+    `inputs` other than `none` must be read before the step is submitted, with or without a
+    source session;
     `rules`: `precheck` applies the evidence rules of `financial_workflow._evidence_issues`
     before the journal (a failing submit is refused and writes nothing; CP-0 and CP-1 only);
     `journaled` hands the tool-loop rules to the journal (a failing submit is retained as an
@@ -1723,6 +1728,16 @@ def _verify_walk(store: Execution, receipt: OwnerRunReceipt, analytical: tuple[s
             raise WorkflowError("identity_mismatch")
 
 
+def _interrupted_issues(interruption: str) -> tuple[str, ...]:
+    """The issues `execution.settle` writes for an interruption (its own rule, replayed). The
+    stored interruption is already shortened, so a stored value over the bound is a forgery:
+    it matches no reason `settle` could have written."""
+    reason = shortened(interruption, MAX_INTERRUPTION_CHARS)
+    if reason != interruption:
+        return ()
+    return bounded_issues(tuple(dict.fromkeys((f"Interrupted: {reason}",))))
+
+
 def _verify_publications(
     store: Execution, receipt: OwnerRunReceipt, terminal_refusal: bool, deterministic: str | None
 ) -> None:
@@ -1794,9 +1809,9 @@ def _verify_publications(
                 raise WorkflowError("identity_mismatch")
         elif (
             attempt.status != "finished"
-            or not attempt.issues
             or attempt.interruption is None
             or not publication.reason
+            or attempt.issues != _interrupted_issues(attempt.interruption)
         ):
             raise WorkflowError("identity_mismatch")
 

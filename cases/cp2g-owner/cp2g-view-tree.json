@@ -1,5 +1,5 @@
 {
- "_note": "Stage 2 close release W2-D (Modules, 2026-10-29): key tree of the body `owners.cp2g.view(historical, attempt)` serves for `read_inputs`, observed on real stores whose upstream heads were settled through the product store (`Execution.begin/finish`) from the oracle facts of each upstream module, as the module's connect tests seed them. Shape only, not values: dict keys in order, scalar type names, a list keeps its distinct element shapes. No `quote`, `citations` or `record_json` key at any depth. Checked by tests/test_connect_cp2g.py::test_view_equals_the_committed_view_tree; the genuine run's body is checked in tests/test_owner_cp2g.py.",
+ "_note": "Stage 2 close release W2-D (Modules, 2026-10-29): key tree of the body `owners.cp2g.view(historical, attempt)` serves for `read_inputs`, observed on real stores whose upstream heads were settled through the product store (`Execution.begin/finish`) from the oracle facts of each upstream module, as the module's connect tests seed them. Cause C (Stage 4, 2026-10-30): the known cash_interest and cash_taxes cells carry a str limitation in every case, following genuine CP-1 heads (src/deploy_vii/statement_history.py:75, model/history.py:222: sign normalised). Shape only, not values: dict keys in order, scalar type names, a list keeps its distinct element shapes. No `quote`, `citations` or `record_json` key at any depth. Checked by tests/test_connect_cp2g.py::test_view_equals_the_committed_view_tree; the genuine run's body is checked in tests/test_owner_cp2g.py.",
  "positive": {
   "top_level_keys": [
    "upstream",
@@ -41,13 +41,13 @@
       "ref": "str",
       "shown": "str",
       "status": "str",
-      "limitation": "NoneType"
+      "limitation": "str"
      },
      "cash_taxes": {
       "ref": "str",
       "shown": "str",
       "status": "str",
-      "limitation": "NoneType"
+      "limitation": "str"
      },
      "working_capital_change": {
       "ref": "str",
@@ -264,13 +264,13 @@
       "ref": "str",
       "shown": "str",
       "status": "str",
-      "limitation": "NoneType"
+      "limitation": "str"
      },
      "cash_taxes": {
       "ref": "str",
       "shown": "str",
       "status": "str",
-      "limitation": "NoneType"
+      "limitation": "str"
      },
      "working_capital_change": {
       "ref": "str",
@@ -470,13 +470,13 @@
       "ref": "str",
       "shown": "str",
       "status": "str",
-      "limitation": "NoneType"
+      "limitation": "str"
      },
      "cash_taxes": {
       "ref": "str",
       "shown": "str",
       "status": "str",
-      "limitation": "NoneType"
+      "limitation": "str"
      },
      "working_capital_change": {
       "ref": "str",

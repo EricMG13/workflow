@@ -999,7 +999,9 @@ def _check_specs(
                 raise WorkflowError("not_permitted")
             seen_deterministic = True
             continue
-        if module_id not in SUPPORTED_ANALYTICAL or spec.publish:
+        # A module the verifier cannot re-settle (`_PROBES[module]`) is refused here, not left to
+        # a lookup failure at the end of a run.
+        if module_id not in SUPPORTED_ANALYTICAL or spec.publish or module_id not in _PROBES:
             raise WorkflowError("not_permitted")
         if seen_deterministic:
             # An analytical module may follow the deterministic one only when neither consumes
@@ -1515,8 +1517,37 @@ def _verify_audit(store: Execution, receipt: OwnerRunReceipt) -> None:
         raise WorkflowError("identity_mismatch")
 
 
+def _expected_begin(before: ExecutionSnapshot, module_id: str, ticket_id: str) -> Attempt:
+    """What `Execution.begin(module_id)` yields on `before` (execution.py `begin`), with the
+    ticket id taken from the record because a uuid cannot be replayed: no pending attempt; the
+    inputs `current_inputs` binds; `previous` = attempts of the same module and inputs, and a
+    begin is refused when `previous` holds two or its last one is not rejected. A begin that
+    succeeded cannot have raised, so each refusal here is a forged record (R4-4)."""
+    if any(a.status == "pending" for a in before.attempts):
+        raise WorkflowError("identity_mismatch")
+    try:
+        inputs = current_inputs(before, module_id)
+    except NotAuthorized:
+        raise WorkflowError("identity_mismatch") from None
+    except ValueError:
+        raise WorkflowError("identity_mismatch") from None
+    previous = [a for a in before.attempts if a.module_id == module_id and a.inputs == inputs]
+    if previous and (len(previous) >= 2 or not previous[-1].issues):
+        raise WorkflowError("identity_mismatch")
+    return Attempt(
+        ticket_id=ticket_id,
+        module_id=module_id,
+        inputs=inputs,
+        number=len(previous),
+        repair_of=previous[-1].ticket_id if previous else None,
+        repair_issues=previous[-1].issues if previous else (),
+    )
+
+
 def _verify_begins(store: Execution, receipt: OwnerRunReceipt, analytical: frozenset[str]) -> None:
-    """Each analytical attempt has exactly one retained begin that added exactly it."""
+    """Each analytical attempt has exactly one retained begin, and that begin is what
+    `Execution.begin` yields on its `before`: the attempt list grows by exactly `_expected_begin`
+    and nothing else changes in it."""
     snapshot = store.read()
     attempts = Counter(a.ticket_id for a in snapshot.attempts if a.module_id in analytical)
     if Counter(b.ticket_id for b in receipt.begins) != attempts:
@@ -1524,14 +1555,8 @@ def _verify_begins(store: Execution, receipt: OwnerRunReceipt, analytical: froze
     for begin in receipt.begins:
         before = _snapshot(store, begin.snapshot_before_sha256)
         after = _snapshot(store, begin.snapshot_after_sha256)
-        known = {a.ticket_id for a in before.attempts}
-        added = [a for a in after.attempts if a.ticket_id not in known]
-        if (
-            len(added) != 1
-            or (added[0].ticket_id, added[0].module_id, added[0].number)
-            != (begin.ticket_id, begin.module_id, begin.attempt)
-            or tuple(a for a in after.attempts if a.ticket_id != begin.ticket_id) != before.attempts
-        ):
+        expected = _expected_begin(before, begin.module_id, begin.ticket_id)
+        if begin.attempt != expected.number or after.attempts != (*before.attempts, expected):
             raise WorkflowError("identity_mismatch")
 
 
@@ -1565,6 +1590,15 @@ def _verify_transition(
         ):
             raise WorkflowError("identity_mismatch")
         module_id = attempt.module_id
+        # The attempt keeps the identity it was begun with: a step may not relabel a repair as a
+        # first try (or the reverse). `Execution.begin` fixes these fields; nothing later changes
+        # them.
+        begun = next(a for a in after.attempts if a.ticket_id == ticket_id)
+        if any(
+            getattr(begun, field) != getattr(attempt, field)
+            for field in ("module_id", "inputs", "number", "repair_of", "repair_issues")
+        ):
+            raise WorkflowError("identity_mismatch")
     if (
         tuple(h for h in after.heads if h.module_id != module_id)
         != tuple(h for h in before.heads if h.module_id != module_id)
@@ -1736,6 +1770,18 @@ def _verify_publications(
         ):
             raise WorkflowError("identity_mismatch")
         attempt = added[0]
+        # The publisher's `begin` obeys the producer's rule at its own `before`; the finished
+        # attempt is compared on the identity fields `begin` sets (the rest is the publication's).
+        expected = _expected_begin(before, deterministic, attempt.ticket_id)
+        if (attempt.module_id, attempt.inputs, attempt.number) != (
+            expected.module_id,
+            expected.inputs,
+            expected.number,
+        ) or (attempt.repair_of, attempt.repair_issues) != (
+            expected.repair_of,
+            expected.repair_issues,
+        ):
+            raise WorkflowError("identity_mismatch")
         if publication.status == "published":
             if (
                 index != len(receipt.publications) - 1
@@ -2180,6 +2226,22 @@ def _verify(
             raise WorkflowError("identity_mismatch")
         if _settled(store, head.module_id) not in receipt.heads:
             raise WorkflowError("identity_mismatch")
+    # A sealed run holds no begun, never finished attempt (S1a adv-4 LOW 1).
+    if any(a.status == "pending" for a in snapshot.attempts):
+        raise WorkflowError("identity_mismatch")
+    # The deterministic head binds the final snapshot's inputs, as an analytical one does in
+    # `_verify_settlements` (S1a adv-4 MEDIUM 1): the same explicit exception mapping.
+    for head in snapshot.heads:
+        if head.module_id != deterministic:
+            continue
+        try:
+            bound = current_inputs(snapshot, head.module_id)
+        except NotAuthorized:
+            raise WorkflowError("identity_mismatch") from None
+        except ValueError:
+            raise WorkflowError("identity_mismatch") from None
+        if bound != _result_attempt(snapshot, head).inputs:
+            raise WorkflowError("identity_mismatch")
     retained = Counter(
         (a.ticket_id, s.content_hash())
         for a in snapshot.attempts
@@ -2329,7 +2391,13 @@ def verify_owner_run_receipt(
     historical snapshot (R4-2), every settlement rebuilt and bound to the final snapshot (R5-1),
     the recorded coordinates form one gapless chain of own-ticket transitions from the created
     snapshot to the final one and every head binds the final snapshot's inputs (R6-1), and only
-    planned modules appear anywhere in it (R6-2); nothing is written.
+    planned modules appear anywhere in it (R6-2); every begin is what `Execution.begin` yields on
+    its `before` (Stage 4 class A); nothing is written.
+
+    Known gap (Stage 4 class D, ruling D1; `docs/G1X-OWNER-CORE-PROTOCOL.md` section 4): refused
+    submissions and refused calls after a binding's last submit change no snapshot, so their
+    presence, completeness and order are not anchored; each record given is checked, the set is
+    not. Nothing a head, attempt, input or publication depends on is affected.
 
     Exception mapping (S1a R4-4, as B1 N2): a tamper cause refuses `identity_mismatch`. Those are
     evidence that fails to parse or to hash (`ValueError`: pydantic, JSON, UTF-8, the store's

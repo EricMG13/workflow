@@ -99,9 +99,6 @@ MAX_LESSONS = 2
 DECISIONS_REQUIRED = 3  # r14 REF_CP-8_06: at least three comparable decisions (a schema rule)
 INTERIM = "Interim"
 WHAT_CHANGED = "cp8.what_changed"
-# The report-wide gap number is bound at render time; the oracle pins a resolved line's gap
-# chip with this placeholder (expected.json cases.no_outcome cp8.what_changed.outcome.value).
-GAP_PLACEHOLDER = "G#"
 
 METRIC_NAME: Mapping[str, str] = {
     "total_leverage": "Total leverage",
@@ -2154,7 +2151,7 @@ class _Composer:
         return [Claim(claim_id=cid, text=text, citations=()) for cid, text in texts]
 
     def _resolved(self, text: str) -> str:
-        """Run text spelled by Python: each figure as its cell, each gap chip as ``∅ G#``."""
+        """Run text spelled by Python for known figures only; a gap chip is the page's to resolve."""
         facts = {fact.fact_id: fact for fact in self.cells.facts}
         gaps = {fid for fid, fact in facts.items() if fact.status != "known"}
         out: list[str] = []
@@ -2162,10 +2159,7 @@ class _Composer:
             if run.kind == "text":
                 out.append(run.text)
             elif run.kind == "gap":
-                fact = facts[run.text]
-                out.append(
-                    f"∅ {GAP_PLACEHOLDER}" + (" n.m." if fact.status == "not_applicable" else "")
-                )
+                out.append(f"[{run.text}]")  # kept as the chip token; report_view resolves it
             else:
                 fact = facts[run.text]
                 unit_class, _, shown = fact_spelling(fact, None)

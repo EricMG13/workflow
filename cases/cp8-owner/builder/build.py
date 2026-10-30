@@ -966,8 +966,8 @@ def N(amount, unit, decimals, cites=(), vc="calculated", calc=None, formula=None
             "cites": trace(cites), "vc": vc, "calc": calc, "formula": formula}
 
 
-def T(text, cites=(), vc=None, calc=None):
-    return {"kind": "text", "text": text, "cites": trace(cites), "vc": vc, "calc": calc}
+def T(text, cites=(), vc=None, calc=None, shown=None):
+    return {"kind": "text", "text": text, "cites": trace(cites), "vc": vc, "calc": calc, "shown": shown}
 
 
 def G(reason, unit=None, status="missing", cites=()):
@@ -982,7 +982,7 @@ def fact(tid, rid, field, label, c, per_q):
         f.update(amount=c["amount"], period=c["per"] or per_q, unit=c["unit"], decimals=c["decimals"],
                  calculation_id=c["calc"], formula=c["formula"], shown=spell(c["amount"], c["unit"], c["decimals"]))
     elif c["kind"] == "text":
-        f.update(text=c["text"], shown=c["text"], calculation_id=c.get("calc"))
+        f.update(text=c["text"], shown=c["shown"] if c.get("shown") is not None else c["text"], calculation_id=c.get("calc"))
     else:
         f.update(unit=c["unit"], status=c["status"], limitation=c["reason"], value_class=None,
                  shown="∅ G#" if c["status"] == "missing" else "∅ G# n.m.")
@@ -1296,7 +1296,12 @@ def compose_case(case, sub, inp, d, cp6=None):
                    "CP-8-OUT-01": "outcome", "CP-8-ATT-01": "attribution"}[c["claim_id"]]
             lab = {"total_leverage": "Total leverage", "interest_cover": "Interest cover", "loan_mid": "Term loan quotation",
                    "outcome": "Outcome", "attribution": "Attribution"}[row]
-            lines.append((row, lab, T(c["resolved"], [], "calculated", f"calc:cp8.what_changed.{row}.value")))
+            if row == "outcome":
+                # A7 (as CP-2D): stored as the claim's token form; shown carries the gap pattern '∅ G#',
+                # the number being assigned by the report at run time.
+                lines.append((row, lab, T(c["text"], [], "calculated", f"calc:cp8.what_changed.{row}.value", shown=c["resolved"])))
+            else:
+                lines.append((row, lab, T(c["resolved"], [], "calculated", f"calc:cp8.what_changed.{row}.value")))
     lines.append(("summary", "Summary", T(sub["synthesis"]["text"], [], "analyst_judgment")))
     tables.append(table("cp8.what_changed", "What changed since the last Report",
                         [("value", "Value")], [(rid, lab, [cell]) for rid, lab, cell in lines], "Change"))

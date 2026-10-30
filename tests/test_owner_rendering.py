@@ -7,6 +7,7 @@ once per branch. Every expected value is read from an oracle file, the lease or 
 from `owner_rendering`.
 """
 
+import copy
 import hashlib
 import html as html_lib
 import importlib
@@ -17,11 +18,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
 
@@ -29,9 +31,19 @@ import pytest
 import test_cp1_chart_render
 
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Run
-from deploy_vii.execution import Attempt, Execution, current_inputs
+from deploy_vii.contracts import (
+    Citation,
+    Fact,
+    Module,
+    ModuleView,
+    ReportTable,
+    Run,
+    TableColumn,
+    TableRow,
+)
+from deploy_vii.execution import Attempt, Execution, current_inputs, inherited_limitations
 from deploy_vii.registry import modules as registry_modules
+from deploy_vii.render import empty_view, render
 from deploy_vii.report_view import build, pathways
 from deploy_workflow import owner_rendering as g2
 from deploy_workflow.owner_workflow import BeginRecord, OwnerRunReceipt
@@ -2037,7 +2049,7 @@ _RENDER_NODE_SCOPES = {"cp3d-fp03-market", "cp4-fp04-covenants", "cp8-fp01-what-
 
 def assert_render_node_owner(block: dict[str, Any], node: dict[str, Any], scope_id: str) -> None:
     """cp3d, cp4 and cp8 oracles are render nodes, not block dicts: owner, kind where present,
-    and for cp3d the tab labels. Their secondary-pointer checks are deferred (ruling item 28)."""
+    and for cp3d the tab labels. Their secondary pointers are `_assert_secondary_pointers`."""
     assert block["owner"] == node["owner"], scope_id
     if "kind" in node:
         assert block["kind"] == node["kind"], scope_id
@@ -2078,6 +2090,422 @@ def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) ->
             assert _matches_oracle_text(_line_text(line), want["text"]), line
             has_chip = any(_is_synthetic_chip(run) for run in line["runs"])
             assert has_chip == bool(want.get("synthetic_ref")), line
+
+
+_CELL_STATE = {"known": "known", "missing": "gap", "not_applicable": "not_meaningful"}
+
+
+def _gap_pattern(status: str) -> str:
+    return r"∅ G\d+ n\.m\." if status == "not_applicable" else r"∅ G\d+"
+
+
+def _registers(block: dict[str, Any]) -> list[dict[str, Any]]:
+    """The block's registers in page order: the block's own `tab_label`/`rows` first, then `tabs`.
+    An untabbed block has one register whose label is None."""
+    first = {key: block[key] for key in ("columns", "row_header", "rows")}
+    first["label"] = block["tab_label"]
+    return [first, *block["tabs"]]
+
+
+def _module_of(payload: dict[str, Any], module_id: str) -> dict[str, Any]:
+    (module,) = [m for m in payload["modules"] if m["module_id"] == module_id]
+    found: dict[str, Any] = module
+    return found
+
+
+def _page_cites(
+    payload: dict[str, Any], module_id: str, fact_id: str, want: dict[str, Any]
+) -> list[list[str]]:
+    """Acceptance 1: `[Source, Locator]` from the passport of each C/S ref of the fact's
+    `report.index.facts` entry, in index order, without de-duplication. No fallback: `build_index`
+    (report_view.py:803-869) gives a fact an entry exactly when it has a ref (a G# for a fact that
+    is not known, a C/S per citation, a K# for a calculation). The oracle fact `want` says which:
+    an entry is required iff its status is not known, or its list `cites` are non-empty, or it
+    has a `calculation_id`; if required there must be exactly one entry, else none.
+    Not modelled: `build_index`'s strict-parse G# branch for (T4.9, threshold), where a known fact
+    whose text fails the strict parse also gets a G#. In the cp4 oracle the only such fact is
+    `4.00x`, which parses and carries cites, so an entry is required either way."""
+    entries = [
+        e
+        for e in payload["report"]["index"]["facts"]
+        if e["coord"]["module_id"] == module_id and e["coord"]["fact_id"] == fact_id
+    ]
+    required = (
+        want["status"] != "known" or bool(want.get("cites")) or bool(want.get("calculation_id"))
+    )
+    assert len(entries) == (1 if required else 0), (fact_id, len(entries), required)
+    if not entries:
+        return []
+    passports = {p["ref_id"]: p for p in payload["report"]["passports"]}
+    cites: list[list[str]] = []
+    for ref in entries[0]["ref_ids"]:
+        if ref[0] not in "CS":
+            continue
+        fields = {f["name"]: f["value"] for f in passports[ref]["fields"]}
+        cites.append([fields["Source"], fields["Locator"]])
+    return cites
+
+
+def assert_table_cites(
+    payload: dict[str, Any], module_id: str, tables: list[dict[str, Any]]
+) -> int:
+    """Every oracle fact whose `cites` is a list of pairs, found by its `fact_id` (prose run-time
+    cites are skipped). Returns the number of non-empty cites checked; callers assert it is >= 1."""
+    checked = 0
+    for table in tables:
+        for row in table["rows"]:
+            for fact in row["facts"]:
+                cites = fact.get("cites")
+                if not (isinstance(cites, list) and all(isinstance(c, list) for c in cites)):
+                    continue
+                assert _page_cites(payload, module_id, fact["fact_id"], fact) == cites, fact[
+                    "fact_id"
+                ]
+                checked += bool(cites)
+    return checked
+
+
+_S1A_BLOCKS_WITH_CITES = ("company-operating-model", "company-profile")
+
+
+def _resolve_cell_fact(
+    payload: dict[str, Any], register: dict[str, Any], row_index: int, cell_index: int
+) -> tuple[str, str]:
+    """A page register cell -> (module_id, fact_id). A one-value register (columns ["Value"]) whose
+    row id is a fact id is that fact; otherwise the unique module table whose `(row_id, label)`
+    rows and column labels equal the register's gives `rows[r].fact_ids[c]`. Anything but exactly
+    one match asserts."""
+    row = register["rows"][row_index]
+    labels = [(r["row_id"], r["label"]) for r in register["rows"]]
+    hits: list[tuple[str, str]] = []
+    for module in payload["modules"]:
+        if register["columns"] == ["Value"] and row["row_id"] in {
+            f["fact_id"] for f in module["facts"]
+        }:
+            hits.append((module["module_id"], row["row_id"]))
+            continue
+        for table in module["tables"]:
+            same_rows = [(r["row_id"], r["label"]) for r in table["rows"]] == labels
+            if same_rows and [c["label"] for c in table["columns"]] == register["columns"]:
+                hits.append((module["module_id"], table["rows"][row_index]["fact_ids"][cell_index]))
+    assert len(hits) == 1, (register["label"], row["row_id"], hits)
+    return hits[0]
+
+
+def assert_cells_cite_oracle(
+    payload: dict[str, Any],
+    oracle_blocks: dict[str, Any],
+    calculations: Mapping[tuple[str, str], str | None],
+) -> int:
+    """Acceptance 1 for s1a: every oracle cell with `cites` equals `_page_cites` of the fact it
+    shows. Gap cells carry no `cites` and are skipped. The expected fact is known, with the cell's
+    cites and the `calculation_id` of the settled head fact (`calculations`, read from the run's
+    store), not an assumed None. Returns the number of cells checked; the caller asserts >= 1."""
+    checked = 0
+    for block_id, oracle in oracle_blocks.items():
+        wanted = [oracle["primary"], *oracle["tabs"]]
+        registers = _registers(_page_block(payload, block_id))
+        assert [r["label"] for r in registers] == [w["tab"] for w in wanted], block_id
+        for register, want in zip(registers, wanted, strict=True):
+            for row_index, want_row in enumerate(want["rows"]):
+                for cell_index, want_cell in enumerate(want_row["cells"]):
+                    if "cites" not in want_cell:
+                        continue
+                    module_id, fact_id = _resolve_cell_fact(
+                        payload, register, row_index, cell_index
+                    )
+                    fact = {
+                        "status": "known",
+                        "cites": want_cell["cites"],
+                        "calculation_id": calculations[(module_id, fact_id)],
+                    }
+                    assert _page_cites(payload, module_id, fact_id, fact) == want_cell["cites"], (
+                        block_id,
+                        fact_id,
+                    )
+                    checked += 1
+    return checked
+
+
+def _assert_register_equals_table(
+    register: dict[str, Any],
+    label: str | None,
+    table: dict[str, Any],
+    module_id: str,
+    payload: dict[str, Any],
+) -> None:
+    """One page register against one oracle table (`#/cases/<c>/tables` shape): label, headers,
+    row ids and labels, the payload table's fact ids and fields, and each cell's state and text."""
+    table_id = table["table_id"]
+    assert register["label"] == label, (register["label"], label)
+    assert register["row_header"] == table["row_header"], table_id
+    columns = [c["label"] for c in table["columns"]]
+    assert register["columns"] == columns, table_id
+    assert [(r["row_id"], r["label"]) for r in register["rows"]] == [
+        (r["row_id"], r["label"]) for r in table["rows"]
+    ], table_id
+    module = _module_of(payload, module_id)
+    (layout,) = [t for t in module["tables"] if t["table_id"] == table_id]
+    facts = {f["fact_id"]: f for f in module["facts"]}
+    rows = zip(register["rows"], layout["rows"], table["rows"], strict=True)
+    for page_row, layout_row, want_row in rows:
+        assert layout_row["row_id"] == want_row["row_id"]
+        assert layout_row["fact_ids"] == [f["fact_id"] for f in want_row["facts"]], want_row[
+            "row_id"
+        ]
+        cells = zip(page_row["cells"], layout_row["fact_ids"], want_row["facts"], strict=True)
+        for cell, fact_id, want in cells:
+            column = table["columns"][columns.index(want["column"])]
+            assert facts[fact_id]["field"] == column["field"], fact_id
+            assert cell["state"] == _CELL_STATE[want["status"]], (fact_id, cell["state"])
+            if want["status"] == "known":
+                assert _matches_oracle_text(cell["text"], want["shown"]), (fact_id, cell["text"])
+            else:
+                assert re.fullmatch(_gap_pattern(want["status"]), cell["text"]), (fact_id, cell)
+
+
+def assert_cp3d_tables(payload: dict[str, Any], case: str) -> int:
+    """R2.5 cp3d secondary pointer `#/cases/<c>/tables`: the page's registers are the entries of
+    `render.blocks.market-against-fundamentals.tabs`, in order, each equal to its oracle table;
+    `cites` are checked on every oracle table. Returns the non-empty cites checked."""
+    oracle = _oracle("cp3d-owner")
+    tabs = oracle["render"]["blocks"][_CP3D_BLOCK]["tabs"]
+    tables = {t["table_id"]: t for t in oracle["cases"][case]["tables"]}
+    registers = _registers(_page_block(payload, _CP3D_BLOCK))
+    assert len(registers) == len(tabs)
+    for register, (table_id, label) in zip(registers, tabs, strict=True):
+        _assert_register_equals_table(register, label, tables[table_id], "CP-3D", payload)
+    checked = assert_table_cites(payload, "CP-3D", oracle["cases"][case]["tables"])
+    assert checked >= 1
+    return checked
+
+
+_CP4_GAP_PROSE = {"gap spelling, a G# gap id (never 0)", "gap spelling (G#)"}
+_CP4_DEFINITION_PROSE = "names the missing incorporated Schedule A"
+
+
+def _cp4_key(case: str) -> str:
+    """The oracle key whose tables and literals a case equals: `gap_false_same_definition` is
+    `corrected_resubmission.expected_same_as` (`gap.CP-4`); the others are their own key."""
+    if case != "gap_false_same_definition":
+        return case
+    node = _oracle("cp4-owner")[case]["CP-4"]["corrected_resubmission"]
+    key = str(node["expected_same_as"]).split(".")[0]
+    assert key in {"positive", "gap"}, key
+    return key
+
+
+def _assert_cp4_section_tables(payload: dict[str, Any], oracle: dict[str, Any], key: str) -> None:
+    """`sections/<id>/tables`: owner and kind match; register j equals oracle table
+    `sections[id].tables[j]` (no tab labels in this oracle). A known fact with `text` shows that
+    exact text (`cell_notation.text`); numeric cells are checked by `displayed_literals`."""
+    tables = {t["table_id"]: t for t in oracle[key]["CP-4"]["tables"]}
+    module = _module_of(payload, "CP-4")
+    facts = {f["fact_id"]: f for f in module["facts"]}
+    layouts = {t["table_id"]: t for t in module["tables"]}
+    for section_id, section in oracle["render"]["sections"].items():
+        block = _page_block(payload, section_id)
+        assert (block["owner"], block["kind"]) == (section["owner"], section["kind"]), section_id
+        registers = _registers(block)
+        assert len(registers) == len(section["tables"]), section_id
+        for register, table_id in zip(registers, section["tables"], strict=True):
+            table = tables[table_id]
+            labels = [c["label"] for c in table["columns"]]
+            assert register["row_header"] == table["row_header"], table_id
+            assert register["columns"] == labels, table_id
+            assert [(r["row_id"], r["label"]) for r in register["rows"]] == [
+                (r["row_id"], r["label"]) for r in table["rows"]
+            ], table_id
+            rows = zip(register["rows"], layouts[table_id]["rows"], table["rows"], strict=True)
+            for page_row, layout_row, want_row in rows:
+                ids = [f["fact_id"] for f in want_row["facts"]]
+                assert layout_row["fact_ids"] == ids, table_id
+                for cell, want in zip(page_row["cells"], want_row["facts"], strict=True):
+                    column = table["columns"][labels.index(want["column"])]
+                    assert facts[want["fact_id"]]["field"] == column["field"], want["fact_id"]
+                    assert cell["state"] == _CELL_STATE[want["status"]], want["fact_id"]
+                    if want["status"] != "known":
+                        assert re.fullmatch(_gap_pattern(want["status"]), cell["text"]), want
+                    elif want.get("text") is not None:
+                        assert cell["text"] == want["text"], want["fact_id"]
+
+
+def _assert_cp4_literals(payload: dict[str, Any], oracle: dict[str, Any], key: str) -> None:
+    """`displayed_literals/<key>`: every row's cell of each listed field equals the literal. Two
+    prose literals have a closed mapping (a G# gap spelling; the T4C.6 definition text naming the
+    missing Schedule A); any other non-literal prose fails loudly via the equality."""
+    tables = {t["table_id"]: t for t in oracle[key]["CP-4"]["tables"]}
+    sections = oracle["render"]["sections"]
+    for table_id, fields in oracle["render"]["displayed_literals"][key].items():
+        (section_id,) = [s for s, sec in sections.items() if table_id in sec["tables"]]
+        table = tables[table_id]
+        registers = _registers(_page_block(payload, section_id))
+        register = registers[sections[section_id]["tables"].index(table_id)]
+        for field, literal in fields.items():
+            column = [c["field"] for c in table["columns"]].index(field)
+            for page_row, want_row in zip(register["rows"], table["rows"], strict=True):
+                cell = page_row["cells"][column]
+                if literal in _CP4_GAP_PROSE:
+                    assert cell["state"] == "gap", (table_id, field)
+                    assert re.fullmatch(r"∅ G\d+", cell["text"]), (table_id, field)
+                elif literal == _CP4_DEFINITION_PROSE:
+                    assert cell["text"] == want_row["facts"][column]["text"], (table_id, field)
+                    assert "Schedule A" in cell["text"], (table_id, field)
+                else:
+                    assert cell["text"] == literal, (table_id, field, cell["text"], literal)
+
+
+def _cp4_expected_limitations(oracle_cp4: dict[str, Any], cp1: Module) -> list[str]:
+    """`#/<key>/CP-4/inherited_limitations/rule` word for word: the CP-0 literal head, then the
+    CP-1 head's limitations then its inherited_limitations, de-duplicated, own findings removed;
+    the page shows settled + inherited (execution.py:957). `cp1` is the store's CP-1 head module
+    (`store.head_module`, ruling item 46.4)."""
+    settled = oracle_cp4["settled_limitations"]
+    literal = oracle_cp4["inherited_limitations"]["literal_head_from_CP-0"]
+    inherited = dict.fromkeys([*literal, *cp1.limitations, *cp1.inherited_limitations])
+    return list(dict.fromkeys([*settled, *(x for x in inherited if x not in settled)]))
+
+
+def assert_cp4_pointers(payload: dict[str, Any], case: str, cp1: Module) -> int:
+    """R2.5 cp4 secondary pointers: `sections/<id>/tables`, `displayed_literals/<key>`,
+    `gap_false_same_definition`, `evidence_rail_tables`, `limitations_rail_tables`,
+    `limitations_rail_module_limitations`, and `cites` on `#/<key>/CP-4/tables`.
+    Returns the non-empty cites checked."""
+    oracle = _oracle("cp4-owner")
+    key = _cp4_key(case)
+    _assert_cp4_section_tables(payload, oracle, key)
+    _assert_cp4_literals(payload, oracle, key)
+    if case == "gap_false_same_definition":  # the refused values never show
+        refused = oracle[case]["CP-4"]["semantic_acceptance"][
+            "values_the_documented_rules_would_compose_from_these_inputs_and_that_must_not_qualify"
+        ]
+        shown = [
+            c["text"] for c in _page_block(payload, "covenant-tests-headroom")["rows"][0]["cells"]
+        ]
+        assert "3.00x" not in shown and "75.0%" not in shown, shown
+        assert refused["verdict"] not in shown, shown
+    module = _module_of(payload, "CP-4")
+    layouts = {t["table_id"] for t in module["tables"]}
+    for name in ("evidence_rail_tables", "limitations_rail_tables"):
+        assert set(oracle["render"][name]) <= layouts, name
+    assert module["limitations"] == _cp4_expected_limitations(oracle[key]["CP-4"], cp1)
+    checked = assert_table_cites(payload, "CP-4", oracle[key]["CP-4"]["tables"])
+    assert checked >= 1
+    return checked
+
+
+_CHIP = re.compile(r"[CKS]\d+")
+# execution.py:477; pinned in the cp4 oracle's settled_limitations. Settle moves it into a
+# synthetic run's own limitations (execution.py:476-481), so the page shows it between own and
+# inherited.
+_SYNTHETIC_LIMITATION = "Synthetic case; not real issuer qualification"
+
+
+def _visible_line_text(runs: list[dict[str, Any]]) -> str:
+    """What the reader sees: the runs joined by one space inside a `<p>` (app.js:251-263), with
+    white space collapsed as HTML shows it (token runs carry their own spaces)."""
+    return re.sub(r"\s+", " ", " ".join(run["text"] for run in runs)).strip()
+
+
+def _assert_cp8_gap_line(runs: list[dict[str, Any]], want: dict[str, Any]) -> None:
+    """A gap fact's runs are exactly the label run `<column>:` and the gap run (report_view.py:1645)."""
+    assert [r["kind"] for r in runs] == ["text", "gap"], runs
+    assert runs[0]["text"] == f"{want['column']}:", runs
+    assert re.fullmatch(_gap_pattern(want["status"]), runs[1]["text"]), runs
+
+
+def _assert_cp8_known_line(
+    runs: list[dict[str, Any]], want: dict[str, Any], passports: dict[str, dict[str, str]]
+) -> None:
+    last = runs[-1]
+    is_chip = (
+        last["kind"] == "fig"
+        and _CHIP.fullmatch(last["ref_id"] or "") is not None
+        and last["text"] == last["ref_id"]
+    )
+    chip = last if is_chip else None
+    body = runs[:-1] if chip else runs
+    shown = _visible_line_text(body)
+    assert _matches_oracle_text(shown, want["shown"]), (shown, want["shown"])
+    allowed = {"pen"} if want["value_class"] == "analyst_judgment" else {"text", "gap", "fig"}
+    assert all(r["kind"] in allowed for r in body), body
+    if want["calculation_id"]:
+        assert chip is not None and chip["ref_id"][0] == "K", runs
+        assert passports[chip["ref_id"]]["Calculation"] == want["calculation_id"], runs
+    elif want["cites"]:
+        assert chip is not None and chip["ref_id"][0] in "CS", runs
+    else:
+        assert chip is None, runs
+
+
+def assert_cp8_lines(payload: dict[str, Any], case: str) -> int:
+    """R2.5 cp8 secondary pointers: the what-changed lines map 1:1 to the `cp8.what_changed`
+    rows of `#/cases/<c>/tables` (for `positive`, their `shown` list also equals `lines_positive`);
+    gap lines, known lines and chips as above; `cites` on every oracle table. Returns the number
+    of lines checked."""
+    oracle = _oracle("cp8-owner")
+    tables = oracle["cases"][case]["tables"]
+    (table,) = [t for t in tables if t["table_id"] == "cp8.what_changed"]
+    wants = [row["facts"][0] for row in table["rows"]]
+    if case == "positive":
+        assert [w["shown"] for w in wants] == oracle["render"]["lines_positive"]
+    passports = {
+        p["ref_id"]: {f["name"]: f["value"] for f in p["fields"]}
+        for p in payload["report"]["passports"]
+    }
+    lines = _page_block(payload, "what-changed")["lines"]
+    assert len(lines) == len(wants)
+    for line, want in zip(lines, wants, strict=True):
+        if want["status"] == "known":
+            _assert_cp8_known_line(line["runs"], want, passports)
+        else:
+            _assert_cp8_gap_line(line["runs"], want)
+    assert assert_table_cites(payload, "CP-8", tables) >= 1
+    return len(lines)
+
+
+def _assert_rails(
+    payload: dict[str, Any],
+    module_id: str,
+    rails: list[str],
+    node: dict[str, Any],
+    synthetic: bool,
+) -> int:
+    """Every rail table is a table of the module's payload; the module's limitations are the
+    oracle's own, then the synthetic limitation for a synthetic run, then the oracle's inherited
+    (settle moves it into own: execution.py:476-481, :366, :957). The oracle's inherited list
+    must contain the synthetic limitation, which is what makes this order the oracle's split."""
+    assert rails
+    module = _module_of(payload, module_id)
+    assert set(rails) <= {t["table_id"] for t in module["tables"]}, module_id
+    if synthetic:
+        assert _SYNTHETIC_LIMITATION in node["inherited_limitations"]
+    expected = dict.fromkeys(
+        [
+            *node["own_limitations"],
+            *((_SYNTHETIC_LIMITATION,) if synthetic else ()),
+            *node["inherited_limitations"],
+        ]
+    )
+    assert module["limitations"] == list(expected), module_id
+    return len(rails)
+
+
+def assert_rails_cp3d(payload: dict[str, Any], case: str, synthetic: bool) -> int:
+    """R2.8 item 2 for cp3d: rails are `render.blocks["evidence rail"]` and `["limitations rail"]`;
+    limitations as `_assert_rails`, from `#/cases/<c>`. Returns the rail tables checked."""
+    oracle = _oracle("cp3d-owner")
+    blocks = oracle["render"]["blocks"]
+    rails = [*blocks["evidence rail"], *blocks["limitations rail"]]
+    return _assert_rails(payload, "CP-3D", rails, oracle["cases"][case], synthetic)
+
+
+def assert_rails_cp8(payload: dict[str, Any], case: str, synthetic: bool) -> int:
+    """R2.8 item 2 for cp8: rails are `render.rails.evidence` and `.limitations`; limitations as
+    `_assert_rails`, from `#/cases/<c>`. Returns the rail tables checked."""
+    oracle = _oracle("cp8-owner")
+    rails = [*oracle["render"]["rails"]["evidence"], *oracle["render"]["rails"]["limitations"]]
+    return _assert_rails(payload, "CP-8", rails, oracle["cases"][case], synthetic)
 
 
 def _run(kind: str, text: str, ref_id: str | None = None) -> dict[str, Any]:
@@ -2138,6 +2566,586 @@ def test_fast_block_rule_handles_s_chip_gap_placeholder_and_tabs_only_oracle() -
         assert_block_equals_oracle(
             {**untabbed, "rows": [{"label": "A", "cells": [{"text": "9x"}]}]}, one_tab
         )
+
+
+# ---------------------------------------------------------------- G2 coverage gaps (ruling item 28)
+
+
+def _fast_page(run: Run, modules: list[Any]) -> dict[str, Any]:
+    """The real renderer's page payload for an empty view with `modules` settled into it."""
+    view = empty_view(run)
+    by_id = {m.module_id: m for m in modules}
+    shown = []
+    for slot in view.modules:
+        mod = by_id.get(slot.module_id)
+        if mod is None:
+            shown.append(slot)
+            continue
+        shown.append(
+            ModuleView(
+                module_id=slot.module_id,
+                title=slot.title,
+                aliases=slot.aliases,
+                status=mod.status,
+                artifact_sha256=mod.content_hash(),
+                facts=mod.facts,
+                tables=mod.tables,
+                claims=mod.claims,
+                limitations=tuple(dict.fromkeys((*mod.limitations, *mod.inherited_limitations))),
+            )
+        )
+    return _payload(render(view.model_copy(update={"modules": tuple(shown)})))
+
+
+def _page_block(payload: dict[str, Any], block_id: str) -> dict[str, Any]:
+    (block,) = [b for b in payload["report"]["blocks"] if b["block_id"] == block_id]
+    found: dict[str, Any] = block
+    return found
+
+
+def _mutated(payload: dict[str, Any], change: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
+    page: dict[str, Any] = copy.deepcopy(payload)
+    change(page)
+    return page
+
+
+def _assert_rejected(rule: Callable[[dict[str, Any]], object], pages: list[dict[str, Any]]) -> None:
+    assert pages
+    for page in pages:
+        with pytest.raises(AssertionError):
+            rule(page)
+
+
+def _index_entry_removed(
+    module_id: str, want: Callable[[str], bool]
+) -> Callable[[dict[str, Any]], None]:
+    def change(page: dict[str, Any]) -> None:
+        index = page["report"]["index"]["facts"]
+        hit = next(
+            e for e in index if e["coord"]["module_id"] == module_id and want(e["coord"]["fact_id"])
+        )
+        index.remove(hit)
+
+    return change
+
+
+def _index_entry_duplicated(module_id: str) -> Callable[[dict[str, Any]], None]:
+    def change(page: dict[str, Any]) -> None:
+        index = page["report"]["index"]["facts"]
+        index.append(copy.deepcopy(next(e for e in index if e["coord"]["module_id"] == module_id)))
+
+    return change
+
+
+def _passport_locator_changed(page: dict[str, Any]) -> None:
+    passport = next(p for p in page["report"]["passports"] if p["kind"] == "synthetic")
+    next(f for f in passport["fields"] if f["name"] == "Locator")["value"] = "page:99"
+
+
+def _facts_of_tables(tables: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {f["fact_id"]: f for t in tables for r in t["rows"] for f in r["facts"]}
+
+
+def _block_cells(page: dict[str, Any], block_id: str, known: bool) -> list[dict[str, Any]]:
+    block = _page_block(page, block_id)
+    rows = [*block["rows"], *(r for t in block["tabs"] for r in t["rows"])]
+    return [c for r in rows for c in r["cells"] if (c["state"] == "known") == known]
+
+
+_CP3D_CASES = ["positive", "gap_no_recovery", "gap_no_market"]
+_CP3D_BLOCK = "market-against-fundamentals"
+
+
+def _cp3d_page(case: str) -> dict[str, Any]:
+    base = importlib.import_module("test_connect_cp3d")
+    return _fast_page(base._pack(case).run, [base._module(case)])
+
+
+@pytest.mark.parametrize("case", _CP3D_CASES)
+def test_fast_cp3d_tables_rule_on_real_pages(case: str) -> None:
+    payload = _cp3d_page(case)
+    assert assert_cp3d_tables(payload, case) >= 1
+    facts = _facts_of_tables(_oracle("cp3d-owner")["cases"][case]["tables"])
+
+    def known_text(page: dict[str, Any]) -> None:
+        _block_cells(page, _CP3D_BLOCK, True)[0]["text"] += "0"
+
+    def row_label(page: dict[str, Any]) -> None:
+        _page_block(page, _CP3D_BLOCK)["tabs"][2]["rows"][0]["label"] = "X"
+
+    def column_label(page: dict[str, Any]) -> None:
+        _page_block(page, _CP3D_BLOCK)["tabs"][0]["columns"][0] += " x"
+
+    def gap_to_zero(page: dict[str, Any]) -> None:
+        _block_cells(page, _CP3D_BLOCK, False)[0]["text"] = "0"
+
+    changes = [
+        known_text,
+        row_label,
+        column_label,
+        _passport_locator_changed,
+        _index_entry_removed("CP-3D", lambda f: f in facts and not facts[f]["cites"]),
+        _index_entry_removed("CP-3D", lambda f: f in facts and facts[f]["status"] != "known"),
+        _index_entry_duplicated("CP-3D"),
+    ]
+    if _block_cells(payload, _CP3D_BLOCK, False):
+        changes.append(gap_to_zero)
+    _assert_rejected(
+        lambda page: assert_cp3d_tables(page, case), [_mutated(payload, c) for c in changes]
+    )
+
+
+_S1A_CASES = ["positive", "gap_business_without_ownership_transaction"]
+_S1A_CITED_TABLES = (
+    "operating_model",
+    "company_description",
+    "ownership_register",
+    "revenue_business_mix",
+)
+
+
+def _s1a_fixture_module(case: str) -> Module:
+    """A CP-1A module rebuilt from the snapshot oracle's own CP-1A tables. The oracle stores no
+    quotes, so each citation carries a test-only quote; the normaliser reads Source and Locator
+    only and ignores quotes, so these quotes are test data standing in for nothing real."""
+    facts: list[Fact] = []
+    tables: list[ReportTable] = []
+    for table in _oracle("snapshot")[case]["CP-1A"]["tables"]:
+        rows: list[TableRow] = []
+        for row in table["rows"]:
+            for fact in row["facts"]:
+                cites = fact["cites"] if isinstance(fact["cites"], list) else []
+                facts.append(
+                    Fact(
+                        fact_id=fact["fact_id"],
+                        label=fact["column"],
+                        table_id=table["table_id"],
+                        row_id=row["row_id"],
+                        field=fact["fact_id"].rsplit(".", 1)[1],
+                        text=fact["text"],
+                        status=fact["status"],
+                        limitation=fact["limitation"] if fact["status"] != "known" else None,
+                        value_class=fact.get("value_class"),
+                        citations=tuple(
+                            Citation(
+                                source_id=source,
+                                source_sha256=H,
+                                locator=locator,
+                                quote=f"test quote {fact['fact_id']} {k}",
+                            )
+                            for k, (source, locator) in enumerate(cites)
+                        ),
+                    )
+                )
+            rows.append(
+                TableRow(
+                    row_id=row["row_id"],
+                    label=row["label"],
+                    fact_ids=tuple(f["fact_id"] for f in row["facts"]),
+                )
+            )
+        tables.append(
+            ReportTable(
+                table_id=table["table_id"],
+                title=table["title"],
+                row_header=table["row_header"],
+                columns=tuple(
+                    TableColumn(field=c["field"], label=c["label"]) for c in table["columns"]
+                ),
+                rows=tuple(rows),
+            )
+        )
+    return Module(
+        run_id="g2-gaps",
+        issuer_id="northbridge-synthetic",
+        as_of=date(2025, 12, 31),
+        module_id="CP-1A",
+        status="restricted",
+        facts=tuple(facts),
+        tables=tuple(tables),
+        limitations=("fixture",),
+    )
+
+
+def _s1a_fast_page(module: Module) -> dict[str, Any]:
+    run = Run(
+        run_id="g2-gaps",
+        issuer_id="northbridge-synthetic",
+        issuer_name="Northbridge Synthetic Group",
+        as_of=date(2025, 12, 31),
+        case_kind="synthetic",
+        pathway="credit_snapshot",
+        requested_modules=("CP-1A",),
+    )
+    return _fast_page(run, [module])
+
+
+def _calculations(module: Module) -> dict[tuple[str, str], str | None]:
+    return {(module.module_id, f.fact_id): f.calculation_id for f in module.facts}
+
+
+@pytest.mark.parametrize("case", _S1A_CASES)
+def test_fast_cites_normaliser_on_s1a_page(case: str) -> None:
+    module = _s1a_fixture_module(case)
+    payload = _s1a_fast_page(module)
+    calculations = _calculations(module)
+    oracle_blocks = {b: _oracle("snapshot")[case]["FP01"][b] for b in _S1A_BLOCKS_WITH_CITES}
+    assert assert_cells_cite_oracle(payload, oracle_blocks, calculations) >= 1
+
+    def cited_entry(page: dict[str, Any]) -> dict[str, Any]:
+        entry: dict[str, Any] = next(
+            e
+            for e in page["report"]["index"]["facts"]
+            if e["coord"]["module_id"] == "CP-1A"
+            and e["coord"]["table_id"] in _S1A_CITED_TABLES
+            and any(r[0] in "CS" for r in e["ref_ids"])
+        )
+        return entry
+
+    def source_changed(page: dict[str, Any]) -> None:
+        ref = next(r for r in cited_entry(page)["ref_ids"] if r[0] in "CS")
+        passport = next(p for p in page["report"]["passports"] if p["ref_id"] == ref)
+        next(f for f in passport["fields"] if f["name"] == "Source")["value"] = "other-source"
+
+    def ref_dropped(page: dict[str, Any]) -> None:
+        entry = cited_entry(page)
+        entry["ref_ids"] = [r for r in entry["ref_ids"] if r[0] not in "CS"]
+
+    def ref_duplicated(page: dict[str, Any]) -> None:
+        entry = cited_entry(page)
+        entry["ref_ids"] = [*entry["ref_ids"], next(r for r in entry["ref_ids"] if r[0] in "CS")]
+
+    _assert_rejected(
+        lambda page: assert_cells_cite_oracle(page, oracle_blocks, calculations),
+        [_mutated(payload, c) for c in (source_changed, ref_dropped, ref_duplicated)],
+    )
+    # A known fact with a calculation but no cites gets a K# index entry: the expected
+    # calculation_id comes from the store's head fact, not an assumed None.
+    calc_module = module.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"calculation_id": f"calc:{f.fact_id}"})
+                if f.status == "known" and not f.citations
+                else f
+                for f in module.facts
+            )
+        }
+    )
+    calc_payload = _s1a_fast_page(calc_module)
+    assert assert_cells_cite_oracle(calc_payload, oracle_blocks, _calculations(calc_module)) >= 1
+    with pytest.raises(AssertionError):
+        assert_cells_cite_oracle(calc_payload, oracle_blocks, calculations)
+
+
+def test_fast_cites_normaliser_on_real_cp3d_page() -> None:
+    payload = _cp3d_page("positive")
+    tables = _oracle("cp3d-owner")["cases"]["positive"]["tables"]
+    assert assert_table_cites(payload, "CP-3D", tables) >= 1
+    facts = _facts_of_tables(tables)
+
+    changes = [
+        _passport_locator_changed,
+        _index_entry_removed("CP-3D", lambda f: bool(facts[f]["cites"])),
+    ]
+    _assert_rejected(
+        lambda page: assert_table_cites(page, "CP-3D", tables),
+        [_mutated(payload, c) for c in changes],
+    )
+
+
+_CP4_CASES = ["positive", "gap", "gap_false_same_definition"]
+_CP1_ONLY_LIMITATION = "Test CP-1 inherited-only limitation"
+
+
+def _cp4_page(case: str) -> tuple[dict[str, Any], Module]:
+    """The real cp4 fast page with the settled head's limitations built by `inherited_limitations`
+    (the code settle runs) over a CP-0 head holding the oracle literal and a test CP-1 head whose
+    inherited list holds an entry the CP-0 literal lacks (the stand-in for the store's CP-1 head)."""
+    key = _cp4_key(case)
+    oracle = _oracle("cp4-owner")[key]["CP-4"]
+    view = importlib.import_module("test_connect_cp4")._expected_view(key)
+    run = view.run
+    literal = oracle["inherited_limitations"]["literal_head_from_CP-0"]
+
+    def head(module_id: str, own: list[str], inherited: list[str]) -> Module:
+        return Module(
+            run_id=run.run_id,
+            issuer_id=run.issuer_id,
+            as_of=run.as_of,
+            module_id=module_id,
+            status="restricted",
+            limitations=tuple(own),
+            inherited_limitations=tuple(inherited),
+        )
+
+    cp1 = head("CP-1", ["Test CP-1 own limitation", literal[0]], [_CP1_ONLY_LIMITATION])
+    heads = {"CP-0": head("CP-0", literal, []), "CP-1": cp1}
+    snapshot: Any = SimpleNamespace(heads=tuple(SimpleNamespace(module_id=m) for m in heads))
+    attempt: Any = SimpleNamespace(
+        inputs=(
+            SimpleNamespace(input_id="prepared-pack", status=None),
+            *(SimpleNamespace(input_id=m, status="restricted") for m in heads),
+        )
+    )
+    own = tuple(oracle["settled_limitations"])
+    inherited = inherited_limitations(snapshot, attempt, own, lambda h: heads[h.module_id])
+    shown = tuple(dict.fromkeys((*own, *inherited)))
+    modules = tuple(
+        m.model_copy(update={"limitations": shown}) if m.module_id == "CP-4" else m
+        for m in view.modules
+    )
+    return _payload(render(view.model_copy(update={"modules": modules}))), cp1
+
+
+@pytest.mark.parametrize("case", _CP4_CASES)
+def test_fast_cp4_pointer_rule_on_real_pages(case: str) -> None:
+    payload, cp1 = _cp4_page(case)
+    assert assert_cp4_pointers(payload, case, cp1) >= 1
+    key = _cp4_key(case)
+    oracle = _oracle("cp4-owner")
+    rail = set(oracle["render"]["evidence_rail_tables"]) | set(
+        oracle["render"]["limitations_rail_tables"]
+    )
+    cited = {
+        f["fact_id"]
+        for t in oracle[key]["CP-4"]["tables"]
+        if t["table_id"] in rail
+        for r in t["rows"]
+        for f in r["facts"]
+        if isinstance(f.get("cites"), list) and f["cites"]
+    }
+
+    def cell_text(
+        block_id: str, row: int, cell: int, text: str
+    ) -> Callable[[dict[str, Any]], None]:
+        def change(page: dict[str, Any]) -> None:
+            _page_block(page, block_id)["rows"][row]["cells"][cell]["text"] = text
+
+        return change
+
+    def tab_row_label(page: dict[str, Any]) -> None:
+        _page_block(page, "documents-structure")["tabs"][0]["rows"][0]["label"] = "X"
+
+    def limitation_dropped(page: dict[str, Any]) -> None:
+        _module_of(page, "CP-4")["limitations"].pop()
+
+    def cp1_limitation_dropped(page: dict[str, Any]) -> None:
+        _module_of(page, "CP-4")["limitations"].remove(_CP1_ONLY_LIMITATION)
+
+    def rail_table_missing(page: dict[str, Any]) -> None:
+        tables = _module_of(page, "CP-4")["tables"]
+        tables.pop(next(i for i, t in enumerate(tables) if t["table_id"] == "T4D.5"))
+
+    def fact_field_changed(page: dict[str, Any]) -> None:
+        facts = _module_of(page, "CP-4")["facts"]
+        next(f for f in facts if f["fact_id"] == "T4.9.r01.threshold")["field"] = "comparison"
+
+    def rail_locator_changed(page: dict[str, Any]) -> None:
+        entry = next(
+            e
+            for e in page["report"]["index"]["facts"]
+            if e["coord"]["module_id"] == "CP-4" and e["coord"]["fact_id"] in cited
+        )
+        ref = next(r for r in entry["ref_ids"] if r[0] in "CS")
+        passport = next(p for p in page["report"]["passports"] if p["ref_id"] == ref)
+        next(f for f in passport["fields"] if f["name"] == "Locator")["value"] = "page:99"
+
+    changes = [
+        cell_text("covenant-tests-headroom", 0, 1, "4.0x"),
+        cell_text("covenant-tests-headroom", 0, 4, "1.0x"),
+        cell_text("capacity", 1, 2, "0"),
+        cell_text("lender-protection-score", 0, 0, "Weak"),
+        tab_row_label,
+        limitation_dropped,
+        cp1_limitation_dropped,
+        rail_table_missing,
+        fact_field_changed,
+        rail_locator_changed,
+        _index_entry_removed("CP-4", lambda f: f in cited),
+    ]
+    if key == "gap":
+        changes.append(cell_text("covenant-tests-headroom", 0, 5, "3.00x"))
+        changes.append(cell_text("ebitda-definition", 0, 0, "Same definition"))
+    _assert_rejected(
+        lambda page: assert_cp4_pointers(page, case, cp1), [_mutated(payload, c) for c in changes]
+    )
+
+
+_CP8_CASES = ["positive", "no_outcome"]
+
+
+def _settled_limitations(run: Run, candidate: tuple[str, ...], cp0: list[str]) -> tuple[str, ...]:
+    """The limitations a settled head shows: own = candidate + the synthetic limitation
+    (execution.py:476-481), inherited = `inherited_limitations` over a CP-0 head holding the oracle's
+    CP-0 limitations, view = own then inherited (execution.py:957)."""
+    own = tuple(
+        dict.fromkeys(
+            (*candidate, *((_SYNTHETIC_LIMITATION,) if run.case_kind == "synthetic" else ()))
+        )
+    )
+    cp0_head = Module(
+        run_id=run.run_id,
+        issuer_id=run.issuer_id,
+        as_of=run.as_of,
+        module_id="CP-0",
+        status="restricted",
+        limitations=tuple(cp0),
+    )
+    snapshot: Any = SimpleNamespace(heads=(SimpleNamespace(module_id="CP-0"),))
+    attempt: Any = SimpleNamespace(inputs=(SimpleNamespace(input_id="CP-0", status="restricted"),))
+    inherited = inherited_limitations(snapshot, attempt, own, lambda h: cp0_head)
+    return tuple(dict.fromkeys((*own, *inherited)))
+
+
+def _cp8_page(case: str, *, settled: bool = False) -> tuple[dict[str, Any], Run]:
+    method = importlib.import_module("test_method_cp8")
+    connect = importlib.import_module("test_connect_cp8")
+    cp8 = importlib.import_module("deploy_workflow.owners.cp8")
+    out = method.report_of(case)
+    run = connect._run(case)
+    report = cp8.LedgerOutput(
+        run=run,
+        submission_sha256="a" * 64,
+        facts=out.facts,
+        tables=out.tables,
+        claims=out.claims,
+        limitations=out.limitations,
+    )
+    module = cp8.cp8_module(report=report, inputs=connect._attempt().inputs, attempt=0)
+    module = module.model_copy(update={"status": "restricted"})
+    if settled:
+        cp0 = _oracle("cp8-owner")["cp0"][case]["limitations"]
+        limits = _settled_limitations(run, module.limitations, cp0)
+        module = module.model_copy(update={"limitations": limits})
+    return _fast_page(run, [module]), run
+
+
+@pytest.mark.parametrize("case", _CP8_CASES)
+def test_fast_cp8_lines_rule_on_real_pages(case: str) -> None:
+    payload, _ = _cp8_page(case)
+    assert assert_cp8_lines(payload, case) >= 1
+    oracle = _oracle("cp8-owner")["cases"][case]["tables"]
+    facts = _facts_of_tables(oracle)
+    cited = {
+        fact_id for fact_id, f in facts.items() if isinstance(f.get("cites"), list) and f["cites"]
+    }
+
+    def lines(page: dict[str, Any]) -> list[dict[str, Any]]:
+        found: list[dict[str, Any]] = _page_block(page, "what-changed")["lines"]
+        return found
+
+    def line_text(page: dict[str, Any]) -> None:
+        run = lines(page)[1]["runs"][0]
+        run["text"] += "!"
+
+    def chip_dropped(page: dict[str, Any]) -> None:
+        lines(page)[1]["runs"].pop()
+
+    def gap_label(page: dict[str, Any]) -> None:
+        lines(page)[0]["runs"][0]["text"] = "Decision:"
+
+    def gap_to_zero(page: dict[str, Any]) -> None:
+        lines(page)[0]["runs"][1]["text"] = "0"
+
+    def pen_to_text(page: dict[str, Any]) -> None:
+        lines(page)[-1]["runs"][0]["kind"] = "text"
+
+    def line_dropped(page: dict[str, Any]) -> None:
+        lines(page).pop(2)
+
+    def calculation_passport(page: dict[str, Any]) -> None:
+        ref = lines(page)[1]["runs"][-1]["ref_id"]
+        passport = next(p for p in page["report"]["passports"] if p["ref_id"] == ref)
+        passport["fields"][0]["value"] = "calc:other"
+
+    def token_gap_to_text(page: dict[str, Any]) -> None:
+        lines(page)[1]["runs"][1].update(text="0", kind="text")
+
+    changes = [
+        line_text,
+        chip_dropped,
+        gap_label,
+        gap_to_zero,
+        pen_to_text,
+        line_dropped,
+        calculation_passport,
+        _passport_locator_changed,
+        _index_entry_removed("CP-8", lambda f: f in cited),
+        _index_entry_removed("CP-8", lambda f: f in facts and f not in cited),
+    ]
+    if case == "no_outcome":
+        changes.append(token_gap_to_text)
+    _assert_rejected(
+        lambda page: assert_cp8_lines(page, case), [_mutated(payload, c) for c in changes]
+    )
+
+
+def test_fast_cp8_lines_gap_run_label_is_the_column_with_its_colon() -> None:
+    payload, _ = _cp8_page("positive")
+    assert assert_cp8_lines(payload, "positive") >= 1
+    first = _page_block(payload, "what-changed")["lines"][0]["runs"][0]
+    assert first["text"] == "Value:"  # the oracle column label plus the colon (ruling item 46.1)
+    for wrong in ("Value", "Value :", "value:"):
+
+        def relabel(page: dict[str, Any], text: str = wrong) -> None:
+            _page_block(page, "what-changed")["lines"][0]["runs"][0]["text"] = text
+
+        page = _mutated(payload, relabel)
+        with pytest.raises(AssertionError):
+            assert_cp8_lines(page, "positive")
+
+
+def _cp3d_settled_page(case: str) -> tuple[dict[str, Any], Run]:
+    base = importlib.import_module("test_connect_cp3d")
+    run = base._pack(case).run
+    module = base._module(case)
+    cp0 = _oracle("cp3d-owner")["cp0"][case]["limitations"]
+    limits = _settled_limitations(run, module.limitations, cp0)
+    module = module.model_copy(update={"limitations": limits, "inherited_limitations": ()})
+    return _fast_page(run, [module]), run
+
+
+def _rails_perturbations(module_id: str, last_rail: str) -> list[Callable[[dict[str, Any]], None]]:
+    def rail_table_missing(page: dict[str, Any]) -> None:
+        tables = _module_of(page, module_id)["tables"]
+        tables.pop(next(i for i, t in enumerate(tables) if t["table_id"] == last_rail))
+
+    def inherited_dropped(page: dict[str, Any]) -> None:
+        _module_of(page, module_id)["limitations"].pop()
+
+    def own_reworded(page: dict[str, Any]) -> None:
+        limits = _module_of(page, module_id)["limitations"]
+        limits[0] += "."
+
+    def reversed_order(page: dict[str, Any]) -> None:
+        _module_of(page, module_id)["limitations"].reverse()
+
+    return [rail_table_missing, inherited_dropped, own_reworded, reversed_order]
+
+
+@pytest.mark.parametrize("case", _CP3D_CASES)
+def test_fast_rails_rule_on_real_cp3d_pages(case: str) -> None:
+    payload, run = _cp3d_settled_page(case)
+    synthetic = run.case_kind == "synthetic"
+    assert assert_rails_cp3d(payload, case, synthetic) >= 1
+    rails = _oracle("cp3d-owner")["render"]["blocks"]
+    last = rails["limitations rail"][-1]
+    _assert_rejected(
+        lambda page: assert_rails_cp3d(page, case, synthetic),
+        [_mutated(payload, c) for c in _rails_perturbations("CP-3D", last)],
+    )
+
+
+@pytest.mark.parametrize("case", _CP8_CASES)
+def test_fast_rails_rule_on_real_cp8_pages(case: str) -> None:
+    payload, run = _cp8_page(case, settled=True)
+    synthetic = run.case_kind == "synthetic"
+    assert assert_rails_cp8(payload, case, synthetic) >= 1
+    last = _oracle("cp8-owner")["render"]["rails"]["limitations"][-1]
+    _assert_rejected(
+        lambda page: assert_rails_cp8(page, case, synthetic),
+        [_mutated(payload, c) for c in _rails_perturbations("CP-8", last)],
+    )
 
 
 def _s1a(case: str, root: Path) -> tuple[Path, Path, Path | None]:
@@ -2327,6 +3335,40 @@ def test_fast_cp3c_comparator_takes_collapsed_from_the_oracle() -> None:
             _assert_cp3c_blocks(widened)
 
 
+def _head_modules(store: Path) -> dict[str, Module]:
+    """The run's settled head modules as the store knows them (`store.head_module`)."""
+    execution = Execution(store)
+    return {head.module_id: execution.head_module(head) for head in execution.read().heads}
+
+
+def _assert_secondary_pointers(
+    scope_id: str, case: str, payload: dict[str, Any], store: Path
+) -> None:
+    """The R2.5 secondary pointers and R2.8 rails of a complete run, and Acceptance 1 `cites`:
+    s1a cells against the store's CP-1A head (calculation ids); cp3d tables and rails; cp4
+    pointers with the CP-1 limitations from the store's CP-1 head (ruling item 46.4); cp8 lines
+    and rails."""
+    heads = _head_modules(store)
+    synthetic = Execution(store).view().run.case_kind == "synthetic"
+    if scope_id == "s1a-credit-snapshot":
+        oracle = _oracle("snapshot")[_oracle_case_key(scope_id, case)]["FP01"]
+        calculations = {
+            (module_id, fact.fact_id): fact.calculation_id
+            for module_id, module in heads.items()
+            for fact in module.facts
+        }
+        wanted = {block_id: oracle[block_id] for block_id in _S1A_BLOCKS_WITH_CITES}
+        assert assert_cells_cite_oracle(payload, wanted, calculations) >= 1
+    elif scope_id == "cp3d-fp03-market":
+        assert assert_cp3d_tables(payload, case) >= 1
+        assert assert_rails_cp3d(payload, case, synthetic) >= 1
+    elif scope_id == "cp4-fp04-covenants":
+        assert assert_cp4_pointers(payload, case, heads["CP-1"]) >= 1
+    elif scope_id == "cp8-fp01-what-changed":
+        assert assert_cp8_lines(payload, case) >= 1
+        assert assert_rails_cp8(payload, case, synthetic) >= 1
+
+
 def _check_scope_run(
     tmp_path: Path, scope_id: str, case: str, outcome: str, build: Adapter
 ) -> None:
@@ -2372,6 +3414,7 @@ def _check_scope_run(
                 assert_render_node_owner(blocks[section_id], oracle_block, scope_id)
             else:
                 assert_block_equals_oracle(blocks[section_id], oracle_block)
+        _assert_secondary_pointers(scope_id, case, payload, store)
     for rail in wire.rails:
         for fact in rail.facts:
             module = next(m for m in payload["modules"] if m["module_id"] == fact.module_id)

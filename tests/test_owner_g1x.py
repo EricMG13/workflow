@@ -41,6 +41,7 @@ from deploy_vii.execution import (
     Qualification,
     StepValidation,
     bounded_issues,
+    current_inputs,
     settle,
 )
 from deploy_vii.live.schema import normalise
@@ -1174,3 +1175,111 @@ def test_verifier_replays_a_non_str_discriminator_tag_as_invalid(
         m.setattr(owner, "normalise", raising)
         with pytest.raises(TypeError):
             owner.verify_owner_run_receipt(Execution(tmp_path / "store"), receipt)
+
+
+# --- Stage 4 class A: the verifier replays `Execution.begin` (S1a adv-4 HIGH 1, LOW 1) ----------
+
+
+def _lenient_begin(
+    module: str, mutate: Callable[[Attempt, int], Attempt] | None = None
+) -> Callable[..., Attempt]:
+    """A patched `Execution.begin` as adv-4 probed it: for `module` it starts a number-0 attempt
+    on the current inputs without the producer's pending, settled and repair-used refusals
+    (`mutate` may then alter the attempt; its index counts that module's begins); every other
+    module takes the real `begin`."""
+    real = Execution.begin
+    count = [0]
+
+    def begin(self: Execution, module_id: str) -> Attempt:
+        if module_id != module:
+            return real(self, module_id)
+        with self._locked():
+            snapshot = self.read()
+            attempt = Attempt(
+                ticket_id=str(uuid4()),
+                module_id=module_id,
+                inputs=current_inputs(snapshot, module_id),
+                number=0,
+            )
+            if mutate is not None:
+                attempt = mutate(attempt, count[0])
+            count[0] += 1
+            self._write(
+                snapshot.model_copy(
+                    update={
+                        "parent": snapshot.content_hash(),
+                        "attempts": (*snapshot.attempts, attempt),
+                    }
+                )
+            )
+            return attempt
+
+    return begin
+
+
+def _seal_code(root: Path, workflow: Any) -> str:
+    """The code `write_receipt` refuses with, or `sealed` when it seals the run."""
+    try:
+        workflow.write_receipt(root / "receipt.json")
+    except WorkflowError as error:
+        return str(error.code)
+    return "sealed"
+
+
+def test_forgery_third_try_three_attempt_zeros_then_a_head_refuses(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """Two rejected attempt-0s and a third attempt 0 that settles: the producer allows one repair
+    only, so the begin of the second and third attempt breaks `Execution.begin`'s rule."""
+    g1x.monkeypatch.setattr(Execution, "begin", _lenient_begin(MODULE))
+    workflow = _start(tmp_path)
+    for _ in range(2):
+        workflow.read_inputs()
+        assert workflow.submit_review(_sourced())["status"] == "invalid"  # page never read
+    _drive(workflow)
+    assert [a.number for a in _fake_attempts(tmp_path)] == [0, 0, 0]
+    assert _seal_code(tmp_path, workflow) == "identity_mismatch"
+
+
+def test_forgery_dangling_pending_attempt_in_the_sealed_snapshot_refuses(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """A settled run whose final snapshot also holds a begun, never finished attempt."""
+    g1x.monkeypatch.setattr(Execution, "begin", _lenient_begin(MODULE))
+    workflow = _start(tmp_path)
+    _drive(workflow)
+    workflow._begin(MODULE)
+    assert [a.status for a in _fake_attempts(tmp_path)] == ["finished", "pending"]
+    assert _seal_code(tmp_path, workflow) == "identity_mismatch"
+
+
+def test_forgery_begin_on_a_before_whose_inputs_differ_refuses(
+    g1x: SimpleNamespace, tmp_path: Path
+) -> None:
+    """A begin record whose added attempt carries inputs `current_inputs(before)` does not yield
+    (the CP-0 input dropped). The producer's own submit path would refuse such an attempt, so the
+    forgery is written straight into the store and only `_verify_begins` is asked."""
+    receipt = _sealed(tmp_path)
+    store = Execution(tmp_path / "store")
+    record = next(b for b in receipt.begins if b.module_id == MODULE)
+    before = owner._snapshot(store, record.snapshot_before_sha256)
+    genuine = next(a for a in _fake_attempts(tmp_path))
+    forged_attempt = genuine.model_copy(
+        update={"inputs": genuine.inputs[:1], "status": "pending", "steps": ()}
+    )
+    forged = before.model_copy(
+        update={
+            "parent": before.content_hash(),
+            "attempts": (*before.attempts, forged_attempt),
+        }
+    )
+    store._write(forged)
+    moved = record.model_copy(update={"snapshot_after_sha256": forged.content_hash()})
+    others = tuple(b for b in receipt.begins if b is not record)
+    analytical = frozenset({"CP-0", MODULE})
+    assert genuine.inputs != forged_attempt.inputs
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_begins(
+            store, receipt.model_copy(update={"begins": (*others, moved)}), analytical
+        )
+    assert caught.value.code == "identity_mismatch"

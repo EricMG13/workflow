@@ -41,6 +41,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_workflow import owner_workflow as ow
 from deploy_workflow.owner_workflow import OwnerRunReceipt, OwnerWorkflow
 from deploy_workflow.owners import cpl10
+from deploy_workflow.owners.blank import one_per_page
 from deploy_workflow.workflow import WorkflowError
 
 fw: Any = importlib.import_module("test_financial_workflow")
@@ -166,7 +167,7 @@ def _expected_text(text: str | None, heads: dict[str, Any]) -> str | None:
 
 
 def _cites(cp1: dict[str, Fact], labels: list[str]) -> tuple[Citation, ...]:
-    return tuple(dict.fromkeys(c for label in labels for c in cp1[label].citations))
+    return one_per_page(tuple(c for label in labels for c in cp1[label].citations))
 
 
 @pytest.mark.parametrize("case", [POSITIVE, LIMITED])
@@ -207,7 +208,8 @@ def test_closed_run_equals_the_oracle_cell_for_cell(
         if calculation_id == "{{CP1_CALCULATION_ID}}":
             assert copied is not None
             calculation_id = cp1[copied].calculation_id
-        citations = _cites(cp1, [copied] if copied else w.get("derives_from") or [])
+        # a copied cell keeps CP-1's own citations; a derived cell is one per (source, page)
+        citations = cp1[copied].citations if copied else _cites(cp1, w.get("derives_from") or [])
         exact = w.get("amount_exact")
         assert (
             fact.label,

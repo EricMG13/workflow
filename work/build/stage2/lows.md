@@ -1,3 +1,5 @@
+> **Open-items fold (rulings item 77, 2026-10-30).** Every entry below that is not marked **Closed** was closed or decided by the open-items sub-session (`claude/open-items-fd69c5`, merged as f25f62d). The per-entry record (closed by `<sha>`, or decided with its ruling) is `work/build/open-items/closed.md`; the rulings are `docs/rulings/2026-10-30-open-items.md`. Still open after the fold: the item 75 CZR design question (needs the user's word, `src/deploy_vii`) and the never-wedges rerun of `test_owner_cp4c.py` (optional, behaviour-preserving).
+
 # Stage 2 Lows: one batch at the end of the stage, or riding with the module's next fix
 
 - **[G1-X guards] Low, test gap.** No test covers a step that has a scope row while its `sources` is `False`. The mutant `==` → `<=` at owner_workflow.py:614 survives. Probe: `<S>/s2-g1x-review/p_one_direction.sh`. Source: stage2/g1x-guards-review.md.

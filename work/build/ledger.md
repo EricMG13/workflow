@@ -669,3 +669,4 @@
 - 16:19 Deferred runs: j07 G2 cp2h+cp3d 27 passed exit 0; j01 CZR partial reproduces the same CP-1 QA Blocked refusal after B6/B7 (exit 0); j00 fast set did not run (exit 4: runner passed unexpanded globs without a shell, a controller error; rerun after the queue drains). Test-speed asked to hold new heavy runs until ~18:30Z; the queue stays within 6 and nothing else heavy starts.
 - 19:25 Deferred runs PASSED (item 78): fast 10505, cp2h 47, cp4c 57, s1a+workflow 91, cp4+cp2a 53, cp3d+cp2e 90, cpos/tools/fin 200, G2 27, earnings 242; CZR partial unchanged. The machine was handed to the test-speed session for 15 min. Release next.
 - 19:25 Post-Stage-5 release sent to the PR manager (local_73a216ba): lane 1d3bfa6 (merge-base 05d3d2e), items 69-78. The merge into codex/checkpoint waits for the user's approval via the PM.
+- 20:09 Item 79: the user confirmed CZR is done (item 75 stands). Only the release merge approval via the PM remains.

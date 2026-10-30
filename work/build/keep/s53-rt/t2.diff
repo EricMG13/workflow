@@ -1,0 +1,122 @@
+--- orig/owner_workflow.py	2026-10-30 05:39:12
++++ tree/src/deploy_workflow/owner_workflow.py	2026-10-30 05:41:25
+@@ -2020,8 +2020,63 @@
+ 
+     attempt: Attempt
+     result: Module | None
++
++
++def _replayed_binding(
++    store: Execution, receipt: OwnerRunReceipt, submission: OwnerSubmission, spec: StepSpec
++) -> tuple[_FrozenExecution, str, SourceEvidence]:
++    """The submission's binding replayed at its historical snapshot: its input read (R4-3, G1-X
++    §3: a step whose inputs are not "none" is read on its own binding before its payload is
++    filled or its gate runs), the journaled fill, and the call prefix and source evidence it
++    names. Returns the historical store, the filled payload and that evidence."""
++    binding = submission.binding
++    if spec.inputs != "none" and not any(r.binding == binding.binding for r in receipt.input_reads):
++        raise WorkflowError("identity_mismatch")
++    historical = _hist(store, binding.binding)
++    raw = _raw(store, binding.payload_sha256)
++    filled, resolved, paths, kinds = _fill(historical, binding.binding, raw)
++    if (filled, resolved, paths, kinds) != (
++        _raw(store, submission.stored_payload_sha256),
++        submission.nulls_resolved,
++        submission.prefilled,
++        submission.prefilled_kinds,
++    ):
++        raise WorkflowError("identity_mismatch")
++    scoped = [c for c in receipt.calls if c.binding == binding.binding]
++    prefix = scoped[: len(binding.call_ids)]
++    evidence = prefix[-1].source_evidence if prefix else SourceEvidence()
++    if (
++        binding.call_ids != tuple(c.call_id for c in prefix)
++        or binding.successful_call_ids != tuple(c.call_id for c in prefix if c.status == "ok")
++        or binding.source_evidence != evidence
++    ):
++        raise WorkflowError("identity_mismatch")
++    return historical, filled, evidence
+ 
+ 
++def _submitted_step(
++    after: ExecutionSnapshot, historical: _FrozenExecution, submission: OwnerSubmission
++) -> tuple[Attempt, StepSubmission]:
++    """The submission's attempt at `after` and the one step it added there: the last new step,
++    or else the last new within-attempt repair, matching the recorded step, payload and output."""
++    ticket_id = submission.binding.binding.ticket_id
++    attempt = _attempt_of(after, ticket_id)
++    before_attempt = _attempt_of(historical.read(), ticket_id)
++    candidates = (
++        attempt.steps
++        if len(attempt.steps) > len(before_attempt.steps)
++        else attempt.step_repairs[len(before_attempt.step_repairs) :]
++    )
++    matches = [s for s in candidates[-1:] if s.content_hash() == submission.step_sha256]
++    if (
++        len(matches) != 1
++        or matches[0].payload_sha256 != submission.stored_payload_sha256
++        or matches[0].output_sha256 != submission.step_output_sha256
++    ):
++        raise WorkflowError("identity_mismatch")
++    return attempt, matches[0]
++
++
+ def _verify_submissions(
+     store: Execution, receipt: OwnerRunReceipt, specs: Mapping[str, OwnerSpec]
+ ) -> tuple[list[tuple[str, str, str]], dict[str, _Settlement]]:
+@@ -2034,31 +2089,7 @@
+             raise WorkflowError("identity_mismatch")
+         binding = submission.binding
+         spec = _step(specs, binding.binding.module_id, binding.binding.step_id)
+-        # R4-3, G1-X §3: as at runtime, a step whose inputs are not "none" is read on its own
+-        # binding before its payload is filled or its gate runs.
+-        if spec.inputs != "none" and not any(
+-            r.binding == binding.binding for r in receipt.input_reads
+-        ):
+-            raise WorkflowError("identity_mismatch")
+-        historical = _hist(store, binding.binding)
+-        raw = _raw(store, binding.payload_sha256)
+-        filled, resolved, paths, kinds = _fill(historical, binding.binding, raw)
+-        if (filled, resolved, paths, kinds) != (
+-            _raw(store, submission.stored_payload_sha256),
+-            submission.nulls_resolved,
+-            submission.prefilled,
+-            submission.prefilled_kinds,
+-        ):
+-            raise WorkflowError("identity_mismatch")
+-        scoped = [c for c in receipt.calls if c.binding == binding.binding]
+-        prefix = scoped[: len(binding.call_ids)]
+-        evidence = prefix[-1].source_evidence if prefix else SourceEvidence()
+-        if (
+-            binding.call_ids != tuple(c.call_id for c in prefix)
+-            or binding.successful_call_ids != tuple(c.call_id for c in prefix if c.status == "ok")
+-            or binding.source_evidence != evidence
+-        ):
+-            raise WorkflowError("identity_mismatch")
++        historical, filled, evidence = _replayed_binding(store, receipt, submission, spec)
+         # G1-X §4: the gate is recomputed for every submission. A refused record must reproduce
+         # exactly its issues; a journaled (valid or invalid) step must yield none.
+         issues = _gate(historical, binding.binding, spec, filled, evidence)
+@@ -2089,21 +2120,7 @@
+             if spec.rules == "journaled"
+             else ()
+         )
+-        attempt = _attempt_of(after, binding.binding.ticket_id)
+-        before_attempt = _attempt_of(historical.read(), binding.binding.ticket_id)
+-        candidates = (
+-            attempt.steps
+-            if len(attempt.steps) > len(before_attempt.steps)
+-            else attempt.step_repairs[len(before_attempt.step_repairs) :]
+-        )
+-        matches = [s for s in candidates[-1:] if s.content_hash() == submission.step_sha256]
+-        if (
+-            len(matches) != 1
+-            or matches[0].payload_sha256 != submission.stored_payload_sha256
+-            or matches[0].output_sha256 != submission.step_output_sha256
+-        ):
+-            raise WorkflowError("identity_mismatch")
+-        step = matches[0]
++        attempt, step = _submitted_step(after, historical, submission)
+         result: Module | None = None
+         if submission.disposition == "valid":
+             if step.status != "valid" or submission.issues or journaled:

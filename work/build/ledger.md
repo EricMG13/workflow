@@ -593,3 +593,4 @@
 - 05:46 5.3 confidence review (mx-autonomous a5858cd2): REVISE, Medium 1 (any _TOKEN-matching known text fact fails closed; free text '[sic]' makes a settled run unrenderable). Item 54: render-side fix in both paths; batch 2 round 3 via ladder: mx-autonomous plan (brief work/build/stage5/token-class-plan-brief.md) then fresh mx-feature.
 - 05:47 CP-4 owner fix (mx-feature a67210e3) claude/s5-cp4-owner 98800a0: probe on genuine stores exit 0; ruff/format/mypy 0; suppressions 13/5. Genuine -k 'tables_claims or d3_cp4_reads' running (scratchpad s5cp4/). Review mx-feature dispatched.
 - 05:48 CP-4 owner fix review APPROVE (mx-feature a2f75c58; mutant killed for all 3 cases). Awaiting the genuine rerun before merging.
+- 05:51 5.3 rewrite tournament (mx-autonomous a62b1bee): 2c readability wins verified on all 3 targets (copy only). Item 55 (applied recommendation): not applied in this branch; patches to owner follow-up.

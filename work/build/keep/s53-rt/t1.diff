@@ -1,0 +1,139 @@
+--- orig/owner_workflow.py	2026-10-30 05:39:12
++++ tree/src/deploy_workflow/owner_workflow.py	2026-10-30 05:40:41
+@@ -2195,28 +2195,16 @@
+     return expected
+ 
+ 
+-def _verify(
++def _verify_final_heads(
+     store: Execution,
++    snapshot: ExecutionSnapshot,
+     receipt: OwnerRunReceipt,
+-    *,
+-    publication_directory: Path | None,
+-    sealed: bool,
++    deterministic: str | None,
+ ) -> None:
+-    snapshot = store.read()
+-    if (snapshot.run, snapshot.pack_sha256, snapshot.content_hash()) != (
+-        receipt.run,
+-        receipt.pack_sha256,
+-        receipt.snapshot_sha256,
+-    ):
+-        raise WorkflowError("stale_binding")
+-    store.pack(snapshot)
+-    planned = plan(snapshot.run.requested_modules)
+-    # A run `create` could not have opened (a planned module without a spec) is evidence that
+-    # does not bind (R4-4), not a raw lookup failure.
+-    if receipt.plan != planned or any(m not in OWNER_SPECS for m in planned):
+-        raise WorkflowError("identity_mismatch")
+-    analytical = tuple(m for m in planned if OWNER_SPECS[m].kind == "analytical")
+-    deterministic = next((m for m in planned if OWNER_SPECS[m].kind == "deterministic"), None)
++    """Every final head is its module's settled head and is named in the receipt; no begun attempt
++    is left unfinished (S1a adv-4 LOW 1); the deterministic head binds the final snapshot's
++    inputs, as an analytical one does in `_verify_settlements` (S1a adv-4 MEDIUM 1), with the
++    same explicit exception mapping."""
+     if len(receipt.heads) != len(snapshot.heads) or {h.module_id for h in snapshot.heads} != {
+         h.module_id for h in receipt.heads
+     }:
+@@ -2226,11 +2214,8 @@
+             raise WorkflowError("identity_mismatch")
+         if _settled(store, head.module_id) not in receipt.heads:
+             raise WorkflowError("identity_mismatch")
+-    # A sealed run holds no begun, never finished attempt (S1a adv-4 LOW 1).
+     if any(a.status == "pending" for a in snapshot.attempts):
+         raise WorkflowError("identity_mismatch")
+-    # The deterministic head binds the final snapshot's inputs, as an analytical one does in
+-    # `_verify_settlements` (S1a adv-4 MEDIUM 1): the same explicit exception mapping.
+     for head in snapshot.heads:
+         if head.module_id != deterministic:
+             continue
+@@ -2242,6 +2227,12 @@
+             raise WorkflowError("identity_mismatch") from None
+         if bound != _result_attempt(snapshot, head).inputs:
+             raise WorkflowError("identity_mismatch")
++
++
++def _verify_retained(
++    snapshot: ExecutionSnapshot, receipt: OwnerRunReceipt, analytical: tuple[str, ...]
++) -> None:
++    """Every analytical step the final snapshot retains is a journaled submission, and back."""
+     retained = Counter(
+         (a.ticket_id, s.content_hash())
+         for a in snapshot.attempts
+@@ -2255,10 +2246,18 @@
+     )
+     if retained != recorded:
+         raise WorkflowError("identity_mismatch")
+-    # R6-2: every attempt and head in every snapshot of the run is a planned module, and the only
+-    # non-analytical one is the planned deterministic module.
+-    allowed = frozenset(analytical) | frozenset(() if deterministic is None else (deterministic,))
+-    ancestors = set()
++
++
++def _ancestry(
++    store: Execution,
++    receipt: OwnerRunReceipt,
++    snapshot: ExecutionSnapshot,
++    allowed: frozenset[str],
++) -> tuple[set[str], list[ExecutionSnapshot]]:
++    """R6-2: the parent chain from the final snapshot back to the created one, oldest first, and
++    its digests. Every snapshot in it appears once, is of this run and pack, and holds attempts
++    and heads of `allowed` modules only."""
++    ancestors: set[str] = set()
+     chain: list[ExecutionSnapshot] = []
+     cursor = snapshot
+     while True:
+@@ -2277,6 +2276,12 @@
+             break
+         cursor = _snapshot(store, cursor.parent)
+     chain.reverse()
++    return ancestors, chain
++
++
++def _receipt_coordinates(receipt: OwnerRunReceipt) -> list[str]:
++    """Every snapshot digest the receipt records: each call, read and submission binding, each
++    submission's `after`, each refused begin, and both ends of every begin and publication."""
+     bindings = (
+         [c.binding for c in receipt.calls]
+         + [r.binding for r in receipt.input_reads]
+@@ -2291,8 +2296,38 @@
+     coordinates += [
+         x for p in receipt.publications for x in (p.snapshot_before_sha256, p.snapshot_after_sha256)
+     ]
+-    if any(digest not in ancestors for digest in coordinates):
++    return coordinates
++
++
++def _verify(
++    store: Execution,
++    receipt: OwnerRunReceipt,
++    *,
++    publication_directory: Path | None,
++    sealed: bool,
++) -> None:
++    snapshot = store.read()
++    if (snapshot.run, snapshot.pack_sha256, snapshot.content_hash()) != (
++        receipt.run,
++        receipt.pack_sha256,
++        receipt.snapshot_sha256,
++    ):
++        raise WorkflowError("stale_binding")
++    store.pack(snapshot)
++    planned = plan(snapshot.run.requested_modules)
++    # A run `create` could not have opened (a planned module without a spec) is evidence that
++    # does not bind (R4-4), not a raw lookup failure.
++    if receipt.plan != planned or any(m not in OWNER_SPECS for m in planned):
+         raise WorkflowError("identity_mismatch")
++    analytical = tuple(m for m in planned if OWNER_SPECS[m].kind == "analytical")
++    deterministic = next((m for m in planned if OWNER_SPECS[m].kind == "deterministic"), None)
++    _verify_final_heads(store, snapshot, receipt, deterministic)
++    _verify_retained(snapshot, receipt, analytical)
++    # R6-2: the only non-analytical module anywhere in the run is the planned deterministic one.
++    allowed = frozenset(analytical) | frozenset(() if deterministic is None else (deterministic,))
++    ancestors, chain = _ancestry(store, receipt, snapshot, allowed)
++    if any(digest not in ancestors for digest in _receipt_coordinates(receipt)):
++        raise WorkflowError("identity_mismatch")
+     if (
+         sealed
+         and (store.directory / AUDIT / "receipt.sha256").read_text() != receipt.content_hash()

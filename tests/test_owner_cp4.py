@@ -494,9 +494,7 @@ def test_each_tamper_refuses_on_its_own(
 # --- A7 ---------------------------------------------------------------------------------------
 
 
-@pytest.mark.skip(
-    reason="blocked on G2 (Stage 3): owner_rendering and report_view.build over a verified receipt"
-)
-def test_a7_render_of_the_six_sections_and_two_rails() -> None:
-    """Lease A7: the six FP04 sections and the evidence and limitations rails, for both packs,
-    from the verified run only. Not written until G2 lands."""
+# A7 (the six FP04 sections and the evidence and limitations rails) is covered by G2's genuine
+# cases in tests/test_owner_rendering.py (DEFERRED, _check_scope_run):
+# test_genuine_deferred_complete_cases[cp4-fp04-covenants-positive], [...-gap] and
+# [...-gap_false_same_definition].

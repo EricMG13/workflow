@@ -15,6 +15,7 @@ from deploy_vii.financial_contracts import Currency, Located, Unit
 from deploy_vii.financial_periods import _id
 from deploy_vii.financial_validation import records
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import is_blank
 from deploy_vii.readiness import absence_issues, citation_issues
 
 EvidenceClass = Literal[
@@ -212,6 +213,7 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
         )
         if is_incomplete and not entity.limitations:
             issues.append(f"Incomplete entity context requires limitation: {entity.entity_id}")
+        issues.extend(_blank_limitations(entity.limitations, entity.entity_id))
     # Built once (0d-d): each event's cited sources, and every (source, event) a scan lists.
     event_sources = {key: {c.source_id for c in event.citations} for key, event in events.items()}
     scanned = {(s.source_id, event_id) for s in review.sources for event_id in s.event_ids}
@@ -280,6 +282,10 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
                     f"Historical reporting scope ends after publication: {scope.scope_id}"
                 )
             issues.extend(_lacks(assessment, scope))
+            issues.extend(_blank_limitations(scope.limitations, scope.scope_id))
+        issues.extend(_blank_limitations(assessment.limitations, source.source_id))
+        if is_blank(assessment.event_scan_explanation):
+            issues.append(f"Empty event scan explanation: {source.source_id}")
         source_event_ids = set(assessment.event_ids)
         if (
             len(source_event_ids) != len(assessment.event_ids)
@@ -330,8 +336,18 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
                 issues.append(
                     f"Event evidence omitted by source scan: {source_id} {event.event_id}"
                 )
+    issues.extend(_blank_limitations(review.limitations, "review"))
     issues.extend(absence_issues(pack, _prose_scopes(review)))
     return tuple(issues)
+
+
+def _blank_limitations(limitations: tuple[str, ...], where: str) -> Iterator[str]:
+    """OI-14: `Text` refuses only `""`; a limitation of whitespace or invisible characters
+    (`prose.is_blank`) renders a blank gap row. One issue per blank limitation; the text is
+    not echoed."""
+    for limitation in limitations:
+        if is_blank(limitation):
+            yield f"Empty limitation text: {where}"
 
 
 def _lacks(assessment: SourceContext, scope: ReportingScope) -> Iterator[str]:

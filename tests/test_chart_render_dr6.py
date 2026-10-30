@@ -139,25 +139,28 @@ def test_tabs_are_unchanged_behind_the_frame(tmp_path: Path) -> None:
     assert [t.label for t in block.tabs] == [labels[t] for t in RENDER["tabs"]]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="Open seam question: no figure or block field carries the design's status chip",
-)
-def test_the_block_shows_the_not_computable_chip(tmp_path: Path) -> None:
-    """Tripwire for the oracle target 'the block shows the chip text Not computable'. The
-    seam has no chip field (``Figure`` and ``Block`` carry none; ``block_state_display`` has no
-    such word), so the text is nowhere in the view. Adding one is a seam change outside group
-    d; when it lands this XPASSes, strict fails, and the marker is removed."""
-    report, _module = _settled("positive", tmp_path)
+@pytest.mark.parametrize("case", ["positive", "gap"])
+def test_the_block_shows_the_not_computable_chip(case: str, tmp_path: Path) -> None:
+    """The oracle target 'the block shows the chip text Not computable' (OI-13): the producer
+    sets ``Figure.status_chip`` beside ``reason`` on the n/a frame, in both oracle cases."""
+    report, _module = _settled(case, tmp_path)
     assert FRAME["status_chip"] == "Not computable"
-    assert FRAME["status_chip"] in _block(report).model_dump_json()
+    block = _block(report)
+    assert [f.status_chip for f in block.figures] == [FRAME["status_chip"]]
+    assert FRAME["status_chip"] in block.model_dump_json()
+
+
+def test_only_the_na_frame_carries_a_chip(tmp_path: Path) -> None:
+    report, _module = _settled("positive", tmp_path)
+    chipped = [(b.block_id, f.fig_id) for b in report.blocks for f in b.figures if f.status_chip]
+    assert chipped == [(BLOCK_ID, "DR.6")]
 
 
 def test_no_cp2h_head_means_no_frame_and_the_honest_state() -> None:
     run = support.view_with(support.composer_module("positive")).run
     block = _block(_report(empty_view(run, candidate=False)))
     assert block.figures == () and block.state != "populated" and block.note
+    assert FRAME["status_chip"] not in block.model_dump_json()
 
 
 def test_a_blocked_producer_shows_its_first_limitation_and_no_frame(tmp_path: Path) -> None:
@@ -170,6 +173,7 @@ def test_a_blocked_producer_shows_its_first_limitation_and_no_frame(tmp_path: Pa
     assert module.status == "blocked"
     block = _block(_report(view))
     assert block.figures == () and block.state == "blocked"
+    assert FRAME["status_chip"] not in block.model_dump_json()
     assert block.note is not None and module.limitations[0] in block.note
 
 

@@ -122,7 +122,7 @@ def chart_case(monkeypatch: pytest.MonkeyPatch) -> ChartCase:
                 table_id="T4.18",
                 row_id="term-loan",
                 field="principal",
-                amount=Decimal("50"),
+                amount=Decimal(50),
                 unit="MILLIONS",
                 currency="USD",
                 scale=Decimal(1000000),
@@ -226,7 +226,7 @@ def test_shared_consumer_replaces_na_with_four_real_figures(chart_case: ChartCas
             mark.text for mark in figure.chart.marks
         ]
         assert all(report.passport(cast(str, mark.ref_id)) for mark in figure.chart.marks)
-    assert [mark.value for mark in strip.figures[3].chart.marks] == [Decimal("50")]
+    assert [mark.value for mark in strip.figures[3].chart.marks] == [Decimal(50)]
 
 
 def _changed_fact(view: View, fact_id: str, **updates: Any) -> View:
@@ -264,9 +264,9 @@ def test_exact_values_zero_gaps_human_labels_and_companion_dates(chart_case: Cha
     assert liquidity.series == ("Cash", "Undrawn RCF", "Total liquidity")
     assert [m.value for m in leverage.marks if m.label == "Q4 25"] == [
         Decimal(EXPECTED["quarters"][3]["total_leverage_reported"]["amount"]),
-        Decimal("1"),
+        Decimal(1),
     ]
-    assert [m.value for m in cover.marks if m.label == "Q4 25"] == [Decimal("6")]
+    assert [m.value for m in cover.marks if m.label == "Q4 25"] == [Decimal(6)]
     assert [m.value for m in liquidity.marks if m.series == "Cash"] == [
         Decimal(q["cash_millions"]) for q in EXPECTED["quarters"]
     ]
@@ -430,9 +430,11 @@ def test_canonical_model_caller_uses_identical_shared_chart_payload(
 
     view, _, _ = chart_case
     cp1 = next(m for m in view.modules if m.module_id == "CP-1")
-    identity: dict[str, Any] = dict(
-        run_id=view.run.run_id, issuer_id=view.run.issuer_id, as_of=view.run.as_of
-    )
+    identity: dict[str, Any] = {
+        "run_id": view.run.run_id,
+        "issuer_id": view.run.issuer_id,
+        "as_of": view.run.as_of,
+    }
     module = Module(
         **identity,
         module_id="CP-1",

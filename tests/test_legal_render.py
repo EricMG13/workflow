@@ -217,16 +217,16 @@ def test_all_31_existing_maps_are_exact_unique_and_shipped_once():
     maps = [m for m in SHIPPED_MAPS if m.module_id == "CP-4"]
     assert len(maps) == 1 and len(maps[0].entries) == 31
     actual = [
-        dict(
-            module_id=e.fact_coord.module_id,
-            table_id=e.fact_coord.table_id,
-            row_id=e.fact_coord.row_id,
-            fact_id=e.fact_coord.fact_id,
-            block_id=e.block_id,
-            cell_slot=e.cell_slot,
-            label=e.label,
-            unit_class=e.unit_class,
-        )
+        {
+            "module_id": e.fact_coord.module_id,
+            "table_id": e.fact_coord.table_id,
+            "row_id": e.fact_coord.row_id,
+            "fact_id": e.fact_coord.fact_id,
+            "block_id": e.block_id,
+            "cell_slot": e.cell_slot,
+            "label": e.label,
+            "unit_class": e.unit_class,
+        }
         for e in maps[0].entries
     ]
     assert actual == ORACLE["bindings"]

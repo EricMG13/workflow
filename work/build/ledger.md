@@ -596,3 +596,4 @@
 - 05:51 5.3 rewrite tournament (mx-autonomous a62b1bee): 2c readability wins verified on all 3 targets (copy only). Item 55 (applied recommendation): not applied in this branch; patches to owner follow-up.
 - 05:56 Round 3 plan (mx-autonomous ad924d32): option (b) run-text tables registry. Item 56 (applied recommendation). Fresh mx-feature dispatched (brief work/build/stage5/round3-fix-brief.md).
 - 05:59 Round 3 fix (mx-feature a6031124) claude/s5-round3 ca17721: RED x4 then GREEN; probes c1, rule, payload exit 0; 11 render files 1158 passed; format/mypy 0; ruff 1 predating SIM102 (owner lows); D12 owner records only. agent=mx-feature fix-rounds=0 gates-first-pass=n. Review mx-precise dispatched.
+- 05:59 CP-4 owner fix genuine rerun: 6 passed, exit 0 (12m). Item 57; claude/s5-cp4-owner merged into the lane.

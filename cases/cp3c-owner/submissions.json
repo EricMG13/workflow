@@ -1,6 +1,6 @@
 {
   "schema_version": "cp3c-owner-submissions/1",
-  "note": "Literal analyst input only. {{FACT:name}} tokens are replaced by offered refs at run time (manifest.fact_bindings). CP-0, CP-1, CP-1A and CP-2 literals are those of cases/snapshot/submissions.json, the CP-2D step and the CP-2D CP-0 entry are those of cases/cp2d-owner/submissions.json, unchanged.",
+  "note": "Literal analyst input only. {{FACT:name}} tokens are replaced by offered refs at run time (manifest.fact_bindings). CP-0, CP-1, CP-1A and CP-2 literals are those of cases/snapshot/submissions.json (CP-0 and CP-1A with the consumer deltas below appended), the CP-2D step and the CP-2D CP-0 entry are those of cases/cp2d-owner/submissions.json, unchanged.",
   "cp0_consumer_deltas": [
     {
       "module_id": "CP-2D",
@@ -69,6 +69,18 @@
       "limitations": [
         "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
       ]
+    }
+  ],
+  "cp1a_consumer_deltas": [
+    {
+      "module_id": "CP-3C",
+      "status": "READY_WITH_LIMITATIONS",
+      "handoff_item": "None: the refinancing assessment does not read business and ownership context",
+      "why_it_matters": "Business and ownership context would inform the owner-support and asset-sale path, which stays Insufficient Information without it",
+      "gap": "Business and ownership context is not read by the refinancing assessment",
+      "required_action": "State the owner-support and asset-sale path as Insufficient Information and list business context as an own limitation",
+      "citations": [],
+      "flag_topics": []
     }
   ],
   "cp3c": {

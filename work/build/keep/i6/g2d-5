@@ -1,0 +1,8 @@
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp1c-fp03-peers-positive]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp1d-fp02-quality-positive]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp2g-fp05-forward-gap-gap]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp3c-fp04-refinancing-gap_minimum_cash]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp8-fp01-what-changed-no_outcome]
+tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[slice-cpl10-screen-positive]
+tests/test_owner_rendering.py::test_genuine_deferred_refused_cases[cp8-fp01-what-changed-no_record]
+tests/test_owner_rendering.py::test_genuine_deferred_blocked_cases_are_refused[cp2h-fp05-ratings-blocked]

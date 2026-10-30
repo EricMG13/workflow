@@ -1,0 +1,7 @@
+runs refused ok complete [(0, 'finished', True, False), (0, 'finished', False, True)]
+VERDICT p5-failed-first-forged write_receipt:identity_mismatch
+.runs refused ok complete [(0, 'finished', True, False), (0, 'finished', False, True)]
+VERDICT p6-publication-replay-lenient accepted
+.
+2 passed in 801.26s (0:13:21)
+exit=0

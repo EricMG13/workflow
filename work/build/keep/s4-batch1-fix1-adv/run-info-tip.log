@@ -1,0 +1,29 @@
+ROWS 11 ['CP-0', 'CP-1', 'CP-1A']
+............MUTANT cp1-drop-financials rows 5 survived []
+.MUTANT cp1-add-narrative rows 5 survived []
+.MUTANT cp0-empty rows 5 survived []
+.MUTANT cp1a-extra rows 1 survived []
+.MUTANT cp0-renamed rows 5 survived []
+..
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_rows_exist
+PASSED ::test_unmutated_rows_pass[cp1c-owner:CP-0]
+PASSED ::test_unmutated_rows_pass[cp1c-owner:CP-1]
+PASSED ::test_unmutated_rows_pass[cp1d-owner:CP-0]
+PASSED ::test_unmutated_rows_pass[cp1d-owner:CP-1]
+PASSED ::test_unmutated_rows_pass[cp2a-owner:CP-0]
+PASSED ::test_unmutated_rows_pass[cp2a-owner:CP-1]
+PASSED ::test_unmutated_rows_pass[cp3-cp6-owner:CP-0]
+PASSED ::test_unmutated_rows_pass[cp3-cp6-owner:CP-1]
+PASSED ::test_unmutated_rows_pass[cp3-cp6-owner:CP-1A]
+PASSED ::test_unmutated_rows_pass[cp4-owner:CP-0]
+PASSED ::test_unmutated_rows_pass[cp4-owner:CP-1]
+PASSED ::test_mutant_fails_its_rows[cp1-drop-financials]
+PASSED ::test_mutant_fails_its_rows[cp1-add-narrative]
+PASSED ::test_mutant_fails_its_rows[cp0-empty]
+PASSED ::test_mutant_fails_its_rows[cp1a-extra]
+PASSED ::test_mutant_fails_its_rows[cp0-renamed]
+PASSED ::test_unrelated_mutant_leaves_rows_passing
+18 passed in 1.16s
+exit=0 elapsed=1s

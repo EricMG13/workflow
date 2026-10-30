@@ -1,0 +1,10 @@
+SRC /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/mut-head/src/deploy_workflow/owner_workflow.py pub-lenient False head-lenient True
+....
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_which_src
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_bound_to_another_cp1_refuses
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses
+4 passed, 65 deselected in 412.42s (0:06:52)
+exit=0 elapsed=413s

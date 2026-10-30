@@ -441,8 +441,98 @@ def make_store(root: Path, cp1: Module) -> Execution:
     return store
 
 
-def make_upstream(root: Path, case: str = "positive") -> tuple[Execution, Attempt]:
-    store = make_store(root, cp1_module(tm._operands(case)))
+_CHART_BASIS = "IFRS \u00b7 consolidated group"
+_CHART_METRICS = (
+    "total_leverage_reported",
+    "net_leverage_reported",
+    "interest_coverage_reported",
+    "cash_closing",
+    "undrawn_rcf",
+    "liquidity",
+    "revenue",
+    "adjusted_ebitda",
+)
+
+
+def with_chart_identity(module: Module) -> Module:
+    """The CP-1 head with the full chart identity ``cp1_chart_series`` reads (S.4, FP 04).
+
+    Adds the ten T4.14 period fields of each period row, the T4.18 identity fields the facility
+    rows lack (period_id, facility_type, lease_classification), the IFRS group basis the chart
+    checks, and the T4.10 metric identity rows. CP-2D reads none of these, so its selection is
+    unchanged; the plain fixture stays as it was for every other test.
+    """
+    facts: list[Fact] = []
+    for f in module.facts:
+        if f.table_id in {"T4.14", "T4.18"}:
+            f = f.model_copy(update={"basis": _CHART_BASIS})
+        facts.append(f)
+
+    def text(table: str, row: str, field: str, value: str, period: str) -> Fact:
+        return Fact(
+            fact_id=f"chart:{table}:{row}:{field}",
+            label=field,
+            table_id=table,
+            row_id=row,
+            field=field,
+            text=value,
+            period=period,
+            basis=_CHART_BASIS,
+            citations=(CITATION,),
+            value_class="source",
+        )
+
+    for pid, quarter in (("q4-2025", True), ("fy-2025", False)):
+        row = "period-" + pid
+        for field, value in (
+            ("fiscal_year", "2025"),
+            ("start_date", "2025-10-01" if quarter else "2025-01-01"),
+            ("currency", "USD"),
+            ("unit", "MILLIONS"),
+            ("accounting_basis", "IFRS"),
+            ("entity_perimeter", "consolidated group"),
+        ):
+            facts.append(text("T4.14", row, field, value, pid))
+        if quarter:
+            facts.append(text("T4.14", row, "fiscal_quarter", "Q4", pid))
+        else:
+            facts.append(
+                Fact(
+                    fact_id=f"chart:T4.14:{row}:fiscal_quarter",
+                    label="fiscal_quarter",
+                    table_id="T4.14",
+                    row_id=row,
+                    field="fiscal_quarter",
+                    status="not_applicable",
+                    limitation="A full year has no quarter",
+                    period=pid,
+                    basis=_CHART_BASIS,
+                    citations=(CITATION,),
+                    value_class="source",
+                )
+            )
+    rows = {(f.row_id, f.period) for f in module.facts if f.table_id == "T4.18"}
+    for row, pid in sorted(rows, key=lambda item: str(item)):
+        for field, value in (
+            ("period_id", str(pid)),
+            ("facility_type", "TERM_LOAN"),
+            ("lease_classification", "NOT_LEASE"),
+        ):
+            facts.append(text("T4.18", row, field, value, str(pid)))
+    # The KPI register keys every T4.10 row by its field_1 identity; the fixture's own T4.10 rows
+    # (one stand-in fact each) get theirs, then the chart metrics follow.
+    for row in sorted({f.row_id for f in module.facts if f.table_id == "T4.10"}):
+        facts.append(text("T4.10", row, "field_1", row, "dashboard"))
+    for metric in _CHART_METRICS:
+        facts.append(text("T4.10", f"T4.10.{metric}", "field_1", metric, "dashboard"))
+    return module.model_copy(update={"facts": tuple(facts)})
+
+
+def make_upstream(
+    root: Path, case: str = "positive", *, charts: bool = False
+) -> tuple[Execution, Attempt]:
+    cp1 = cp1_module(tm._operands(case))
+    store = make_store(root, with_chart_identity(cp1) if charts else cp1)
     return store, store.begin("CP-2D")
 
 
@@ -1160,10 +1250,11 @@ def test_spec_rows_serve_the_three_blocks() -> None:
             ("CP-2D",),
             "Full analysis",
         ),
-        # Q-C1: the maturity wall is Model-owned (approved FP 04 page, "MODEL · Fig. S.4"); kind
-        # stays dense until the Stage 3 S.4 task adds the strip figure and the CP-1 binding.
-        ("maturity-wall", "Maturity wall", "MODEL", "dense", ("CP-1",), None),
-        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D",), "Full analysis"),
+        # Q-C1: the maturity wall is Model-owned (approved FP 04 page, "MODEL · Fig. S.4"); the
+        # Stage 3 S.4 wiring made it a chart strip with the CP-1 T4.18 binding.
+        ("maturity-wall", "Maturity wall", "MODEL", "chart", ("CP-1",), None),
+        # Stage 3 ruling item 6.1: CP-3C joins the funding-gap producers (CR.3, T3D.1 tab).
+        ("funding-gap", "Funding gap", "CP-2D", "dense", ("CP-2D", "CP-3C"), "Full analysis"),
     ):
         spec = _spec_of(block)
         assert (spec.title, spec.owner, spec.kind, spec.producers, spec.route_label) == (
@@ -1175,16 +1266,18 @@ def test_spec_rows_serve_the_three_blocks() -> None:
         )
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="Stage 3 S.4 wiring")
 def test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab(tmp_path: Path) -> None:
-    """Tripwire for Q-C1. The release flips only the owner, so a populated FP 04 render still
-    leads with CP-2D's T2E.4 rows under a MODEL owner. Once the Stage 3 S.4 task wires the CP-1
-    strip into ``maturity-wall``, the Model figure leads and T2E.4 is a further tab: this then
-    XPASSes, strict fails, and the task removes the marker."""
+    """Q-C1 tripwire, flipped by the Stage 3 S.4 wiring: the Model figure leads, the CP-1 T4.18
+    register is the primary tab and CP-2D's T2E.4 is a further tab under its binding label.
+    Labels are the frozen ``cases/charts/s4fp04-expected.json`` ones."""
     from deploy_vii import report_view
     from deploy_vii.bindings.shipped import SHIPPED_MAPS
 
-    store, attempt = make_upstream(tmp_path)
+    oracle = json.loads(
+        (Path(__file__).parents[1] / "cases/charts/s4fp04-expected.json").read_text()
+    )
+    render = oracle["render"]
+    store, attempt = make_upstream(tmp_path, charts=True)
     _submit(store, attempt, _literal("positive"))
     view = store.view()
     assert {m.module_id: m.status for m in view.modules}["CP-2D"] in {"accepted", "restricted"}
@@ -1192,10 +1285,22 @@ def test_fp04_maturity_wall_shows_model_content_first_with_t2e4_as_a_tab(tmp_pat
     block = {b.block_id: b for b in report_view.build(view, pathway, SHIPPED_MAPS).blocks}[
         "maturity-wall"
     ]
-    assert block.owner == "MODEL"
+    assert block.owner == render["owner"] == "MODEL"
     assert block.figures and block.figures[0].fig_id == "S.4"
-    assert [tab.label for tab in block.tabs] == ["T2E.4"]
-    assert block.tab_label != "T2E.4"
+    assert block.tab_label == render["primary_tab"]["label"] == "Capital structure"
+    assert [tab.label for tab in block.tabs] == [t["label"] for t in render["tabs"]]
+    assert [tab.label for tab in block.tabs] == ["Maturity wall"]
+    point = oracle["chart_series"][0]["points"][0]
+    chart = block.figures[0].chart
+    assert chart.kind == "grouped"
+    assert chart.series == tuple(oracle["chart_series"][0]["series"])
+    (mark,) = chart.marks
+    assert (mark.label, mark.value, mark.text) == (
+        point["category"],
+        Decimal(point["amount_exact"]),
+        point["shown"],
+    )
+    assert [c.text for r in chart.table_twin.rows for c in r.cells] == [point["shown"]]
 
 
 # --- the run driver (its runs are deferred; its assembly is cheap) -----------------------------

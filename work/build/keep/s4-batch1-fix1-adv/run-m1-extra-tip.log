@@ -1,0 +1,18 @@
+LOADED /private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-fix1-adv/tip/src/deploy_workflow/owner_workflow.py
+.SHAPE [(0, False, 'finished', True), (0, False, 'finished', True)]
+VERDICT blocked-number0 applied=True runtime-stop:ValueError:Input set is settled or its one repair has been consumed seal=not_permitted@write_receipt:1458 verify=identity_mismatch@_verify_transition:1601
+.SHAPE [(0, False, 'finished', True), (1, True, 'finished', False)] head-module-attempt 0
+VERDICT mid-settle applied=True  seal=ValueError:Settled payload is not the retained response@_verify_settlements:2190 verify=identity_mismatch@verify_owner_run_receipt:2413
+.SHAPE [(0, False, 'finished', True), (1, True, 'finished', True)] heads ['CP-0']
+VERDICT mid-rejected applied=True  seal=identity_mismatch@_verify_walk:1685 verify=identity_mismatch@_verify_walk:1685
+.VERDICT mid-sourced applied=True  seal=accepted verify=accepted SHAPE [(0, False, 'finished', True), (1, True, 'finished', False)]
+.
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_loaded_from_copy
+PASSED ::test_blocked_number0
+PASSED ::test_mid_settle
+PASSED ::test_mid_rejected
+PASSED ::test_mid_sourced_control
+5 passed in 1.58s
+exit=0 elapsed=2s

@@ -1,0 +1,23 @@
+F..
+=================================== FAILURES ===================================
+________ test_valid_step_relabelling_a_repair_as_a_first_try_is_refused ________
+
+g1x = namespace(core=<module 'g1x_fake_core'>, spec=OwnerSpec(module_id='CP-3D', steps=(StepSpec(step_id='g1x_sourced', sche...ry='owner_core', kind='analytical', publish=None), monkeypatch=<_pytest.monkeypatch.MonkeyPatch object at 0x1086e09d0>)
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-23/test_valid_step_relabelling_a_0')
+
+    def test_valid_step_relabelling_a_repair_as_a_first_try_is_refused(
+        g1x: SimpleNamespace, tmp_path: Path
+    ) -> None:
+        _relabel_core(g1x, number=0, repair_of=None, repair_issues=())
+>       with pytest.raises(WorkflowError) as caught:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE WorkflowError
+
+tests/test_owner_stage4.py:190: Failed
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_owner_stage4.py::test_valid_step_rewriting_repair_issues_is_refused
+PASSED tests/test_owner_stage4.py::test_a_genuine_repair_is_accepted
+FAILED tests/test_owner_stage4.py::test_valid_step_relabelling_a_repair_as_a_first_try_is_refused
+1 failed, 2 passed, 31 deselected in 1.41s
+exit=1 elapsed=2s

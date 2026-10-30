@@ -1,0 +1,64 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______ test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses ______
+
+positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10ac86f90>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
+tmp_path = PosixPath('/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-adv/bt-cpmodel/test_forgery_cp_model_attempt_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11cc41810>
+
+    def test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses(
+        positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Stage 4 class A (MEDIUM 1, `drop-cp1`): the publisher attempt binds no CP-1."""
+        workflow = _publish_forged_cp_model(
+            positive_promoted,
+            tmp_path,
+            monkeypatch,
+            lambda inputs, snapshot: tuple(i for i in inputs if i.input_id != "CP-1"),
+        )
+        with pytest.raises(WorkflowError) as caught:
+            workflow.write_receipt(tmp_path / "owner-receipt.json")
+>       assert caught.value.code == "identity_mismatch"
+E       AssertionError: assert 'not_permitted' == 'identity_mismatch'
+E         
+E         - identity_mismatch
+E         + not_permitted
+
+tests/test_owner_s1a.py:2065: AssertionError
+__________ test_forgery_cp_model_attempt_bound_to_another_cp1_refuses __________
+
+positive_promoted = (<deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10ac86f90>, PreparedPack(schema_version='prepared-pack/1', ...=None, note=None)), limitation=None, extractor='supplied-representation', extraction_status='complete', coverage=()))))
+tmp_path = PosixPath('/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-module-dev-status-review-0981b6/23b694e3-18f9-4a89-b4fc-e92c726d3861/scratchpad/s4-batch1-adv/bt-cpmodel/test_forgery_cp_model_attempt_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ae16c40>
+
+    def test_forgery_cp_model_attempt_bound_to_another_cp1_refuses(
+        positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Stage 4 class A (MEDIUM 1, `other-cp1`): the publisher attempt binds a CP-1 hash that is not
+        the final snapshot's CP-1 head (here the CP-1A hash)."""
+    
+        def other(inputs: tuple[Input, ...], snapshot: Any) -> tuple[Input, ...]:
+            stranger = next(h.result_sha256 for h in snapshot.heads if h.module_id == "CP-1A")
+            return tuple(
+                i.model_copy(update={"sha256": stranger}) if i.input_id == "CP-1" else i for i in inputs
+            )
+    
+        workflow = _publish_forged_cp_model(positive_promoted, tmp_path, monkeypatch, other)
+        with pytest.raises(WorkflowError) as caught:
+            workflow.write_receipt(tmp_path / "owner-receipt.json")
+>       assert caught.value.code == "identity_mismatch"
+E       AssertionError: assert 'not_permitted' == 'identity_mismatch'
+E         
+E         - identity_mismatch
+E         + not_permitted
+
+tests/test_owner_s1a.py:2085: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses
+FAILED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_bound_to_another_cp1_refuses
+2 failed, 65 deselected in 296.36s (0:04:56)
+exit=1

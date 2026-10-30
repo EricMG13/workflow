@@ -1,0 +1,10 @@
+VERDICT p1-second-attempt refused ok [(0, 'finished', True, True, False), (1, 'finished', False, False, True)] accepted
+.publish {'status': 'ok', 'error_code': None, 'snapshot_sha256': 'd411a9520f21222b539781b40f2353e54e46b1bb3fdf48fcb71bd0e1183af9b0'} complete
+VERDICT p2-drop-cp1 complete write_receipt:identity_mismatch
+.publish {'status': 'ok', 'error_code': None, 'snapshot_sha256': '8151bd07d3c947edfab931b5ea5b983a42b63827e5435f5eb85a183f169fe5d4'} complete
+VERDICT p3-other-cp1 complete write_receipt:identity_mismatch
+.publish {'status': 'ok', 'error_code': None, 'snapshot_sha256': 'e7682a1a90914619230633f53e2af1e053a7d8ab439a511aef8cb5dd707a8c10'} complete
+VERDICT p4-final-binding-alone complete write_receipt:identity_mismatch
+.
+4 passed in 976.78s (0:16:16)
+exit=0

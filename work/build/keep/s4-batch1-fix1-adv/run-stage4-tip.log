@@ -1,0 +1,39 @@
+..................................
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_owner_stage4.py::test_analytical_spec_without_a_probe_is_refused_at_create
+PASSED tests/test_owner_stage4.py::test_every_registered_analytical_spec_has_a_probe_row
+PASSED tests/test_owner_stage4.py::test_the_oracle_sections_are_found
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1c-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1c-owner:CP-1]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1c-owner:CP-1C]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1d-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1d-owner:CP-1]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp1d-owner:CP-1D]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2a-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2a-owner:CP-1]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2a-owner:CP-2A]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2d-owner:CP-2D]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2e-owner:CP-2E]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2g-owner:CP-2G]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp2h-owner:CP-2H]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-1]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-1A]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-2]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3-cp6-owner:CP-3]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3c-owner:CP-3C]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp3d-owner:CP-3D]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4-owner:CP-0]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4-owner:CP-1]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4-owner:CP-4]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp4c-owner:CP-4C]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp5-owner:CP-5]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cp8-owner:CP-8]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cpdr-owner:CP-DR]
+PASSED tests/test_owner_stage4.py::test_tool_use_sections_match_registrations[cpl10-owner:CP-L10]
+PASSED tests/test_owner_stage4.py::test_valid_step_relabelling_a_repair_as_a_first_try_is_refused
+PASSED tests/test_owner_stage4.py::test_valid_step_rewriting_repair_issues_is_refused
+PASSED tests/test_owner_stage4.py::test_a_genuine_repair_is_accepted
+34 passed in 1.84s
+exit=0 elapsed=2s

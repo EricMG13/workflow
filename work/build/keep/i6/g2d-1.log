@@ -1,0 +1,144 @@
+..FF....F                                                                [100%]
+=================================== FAILURES ===================================
+_________ test_genuine_deferred_complete_cases[cp1d-fp02-quality-gap] __________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2333/test_genuine_deferred_complete2')
+scope_id = 'cp1d-fp02-quality', case = 'gap'
+
+    @pytest.mark.parametrize(("scope_id", "case"), _COMPLETE_CASES)
+    def test_genuine_deferred_complete_cases(tmp_path: Path, scope_id: str, case: str) -> None:
+>       _check_scope_run(tmp_path, scope_id, case, "complete", DEFERRED[scope_id][0])
+
+tests/test_owner_rendering.py:2380: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_owner_rendering.py:2365: in _check_scope_run
+    assert_block_equals_oracle(blocks[section_id], oracle_block)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+block = {'block_id': 'restated-leverage', 'title': 'Cash conversion and restated leverage', 'owner': 'CP-1D', 'fig_id': None, ...}
+oracle = {'title': 'Cash conversion and restated leverage', 'owner': 'CP-1D', 'kind': 'dense', 'state': 'populated', ...}
+
+    def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) -> None:
+        """title, owner, kind, state, numbered, summary, tabs and rows/lines against one oracle block.
+        The gap spelling is a pattern; G numbers are the renderer's."""
+        for key in ("title", "owner", "kind", "state", "numbered", "summary"):
+            if key in oracle:
+                assert block[key] == oracle[key], key
+        if "primary" in oracle:
+            assert block["tab_label"] == oracle["primary"]["tab"]
+            _register_ok(block["rows"], oracle["primary"]["rows"])
+            for got, want in zip(block["tabs"], oracle.get("tabs", []), strict=False):
+                assert got["label"] == want["tab"]
+                if "rows" in want:
+                    _register_ok(got["rows"], want["rows"])
+        elif "tabs" in oracle:  # tabs-only oracle: the primary tab is tabs[0]
+            pages = [
+                (block["tab_label"], block["rows"]),
+                *((t["label"], t["rows"]) for t in block["tabs"]),
+            ]
+            wants = [(t["label"], t["rows"]) for t in oracle["tabs"]]
+>           assert [label for label, _ in pages] == [label for label, _ in wants]
+E           AssertionError: assert [None] == ['Cash conver...and leverage']
+E             
+E             At index 0 diff: None != 'Cash conversion and leverage'
+E             Use -v to get more diff
+
+tests/test_owner_rendering.py:2081: AssertionError
+_________ test_genuine_deferred_complete_cases[cp2h-fp05-ratings-gap] __________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2333/test_genuine_deferred_complete3')
+scope_id = 'cp2h-fp05-ratings', case = 'gap'
+
+    @pytest.mark.parametrize(("scope_id", "case"), _COMPLETE_CASES)
+    def test_genuine_deferred_complete_cases(tmp_path: Path, scope_id: str, case: str) -> None:
+>       _check_scope_run(tmp_path, scope_id, case, "complete", DEFERRED[scope_id][0])
+
+tests/test_owner_rendering.py:2380: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_owner_rendering.py:2326: in _check_scope_run
+    store, receipt, publication = build(case, root)
+                                  ^^^^^^^^^^^^^^^^^
+tests/test_owner_rendering.py:2141: in run
+    built = getattr(importlib.import_module(module), function)(case, root)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cp2h_runs.py:299: in cp2h_closed
+    workflow = ready(case, root)
+               ^^^^^^^^^^^^^^^^^
+tests/cp2h_runs.py:213: in ready
+    workflow, _ = promoted(case, root)
+                  ^^^^^^^^^^^^^^^^^^^^
+tests/cp2h_runs.py:184: in promoted
+    drive_cp1(workflow, pack, case)
+tests/cp2h_runs.py:174: in drive_cp1
+    s1a.submit_valid(workflow, readiness_literal(workflow, case, ready_read))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cp2h_runs.py:155: in readiness_literal
+    return json.dumps(bind(literal), ensure_ascii=False)
+                      ^^^^^^^^^^^^^
+tests/cp2h_runs.py:146: in bind
+    return {k: bind(v) for k, v in value.items()}
+               ^^^^^^^
+tests/cp2h_runs.py:152: in bind
+    return scalar(value) if isinstance(value, str) else value
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = "The CP-2A and CP-2G consumer entries are the frozen literals of cases/cp2g-owner/submissions.json cases.gap.cp1_readi...s the frozen CP-2G entry already uses. {{INPUTS_SHA256}} is the content hash of the step's prefilled DownstreamInputs."
+
+    def scalar(value: str) -> str:
+        if value == "{{INPUTS_SHA256}}":
+            return str(read["inputs_sha256"])
+        if match := EVID.fullmatch(value):
+            return str(cp2a_runs._marker(inputs, match[1]))
+        if "{{" in value:
+>           raise RuntimeError(f"unbound readiness marker {value}")
+E           RuntimeError: unbound readiness marker The CP-2A and CP-2G consumer entries are the frozen literals of cases/cp2g-owner/submissions.json cases.gap.cp1_readiness, unchanged; CP-2H is new with the CP-2A marker style ({{EVID:kpi <key>, LTM Q4 25 basis}} and {{ALL narrative gap ids}}, bound by cases/cp2a-owner/manifest.json run_time_bindings.cp1_readiness). The kpi keys ebitda, fcf, total_debt and cash_closing are the ones the frozen CP-2G entry already uses. {{INPUTS_SHA256}} is the content hash of the step's prefilled DownstreamInputs.
+
+tests/cp2h_runs.py:141: RuntimeError
+_ test_genuine_deferred_blocked_cases_are_refused[cp4c-fp05-recovery-blocked] __
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2333/test_genuine_deferred_blocked_1')
+scope_id = 'cp4c-fp05-recovery', case = 'blocked'
+
+    @pytest.mark.parametrize(("scope_id", "case"), _BLOCKED_CASES)
+    def test_genuine_deferred_blocked_cases_are_refused(
+        tmp_path: Path, scope_id: str, case: str
+    ) -> None:
+        root = tmp_path / "blocked"
+        root.mkdir()
+>       store, receipt, publication = DEFERRED[scope_id][0](case, root)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_owner_rendering.py:2395: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_owner_rendering.py:2141: in run
+    built = getattr(importlib.import_module(module), function)(case, root)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cp4c_runs.py:330: in cp4c_closed
+    workflow = ready(case, root)
+               ^^^^^^^^^^^^^^^^^
+tests/cp4c_runs.py:236: in ready
+    workflow, _ = promoted(case, root)
+                  ^^^^^^^^^^^^^^^^^^^^
+tests/cp4c_runs.py:198: in promoted
+    drive_cp1(workflow, pack, case)
+tests/cp4c_runs.py:188: in drive_cp1
+    s1a.submit_valid(workflow, readiness_literal(workflow, case, ready))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+workflow = <deploy_workflow.owner_workflow.OwnerWorkflow object at 0x10b00e210>
+payload = '{"inputs_sha256": "60ff2c4213d65bff56f2117456a9a5aea3281132b9da37f6b3cfd0089075c8e3", "consumers": [{"entry": "CP-2A"...ses/cp2g-owner (gap) unchanged; CP-4C new with the same marker style; CP-4 has no CP-1 readiness entry in its oracle"}'
+
+    def submit_valid(workflow: OwnerWorkflow, payload: str) -> dict[str, Any]:
+        outcome = workflow.submit_review(payload)
+        if outcome["status"] != "valid":
+>           raise RuntimeError(f"submission not valid: {outcome['status']} {outcome['issues']}")
+E           RuntimeError: submission not valid: invalid ['note: Extra inputs are not permitted']
+
+tests/s1a_runs.py:221: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp1d-fp02-quality-gap]
+FAILED tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp2h-fp05-ratings-gap]
+FAILED tests/test_owner_rendering.py::test_genuine_deferred_blocked_cases_are_refused[cp4c-fp05-recovery-blocked]
+3 failed, 6 passed in 7369.67s (2:02:49)
+exit=1

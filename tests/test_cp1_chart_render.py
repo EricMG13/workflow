@@ -2,18 +2,20 @@
 
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from typing import Any, cast
 
 import pytest
 
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Citation, Fact, Module, ModuleView, Run, View
+from deploy_vii.contracts import Citation, Fact, Module, ModuleView, PathwayId, Run, View
 from deploy_vii.render import empty_view, render
-from deploy_vii.report_view import build, pathways
+from deploy_vii.report_view import Block, ReportView, build, pathways
 
 EXPECTED = json.loads((Path(__file__).parents[1] / "cases/charts/expected.json").read_text())
 
@@ -38,10 +40,13 @@ class ComponentFigure:
     reason: str | None = None
 
 
+ChartCase = tuple[View, list[ComponentFigure], list[Any]]
+
+
 @pytest.fixture
-def chart_case(monkeypatch):
+def chart_case(monkeypatch: pytest.MonkeyPatch) -> ChartCase:
     """Typed projection seam only: values are independent literals, not a fake analyst run."""
-    facts = []
+    facts: list[Fact] = []
     definitions = (
         ("S.1", "Leverage", "multiple", "x", ("total_leverage_reported", "net_leverage_reported")),
         ("S.2", "Interest cover", "multiple", "x", ("interest_coverage_reported",)),
@@ -53,7 +58,7 @@ def chart_case(monkeypatch):
         locator="page:4",
         quote="RCF commitment  0  0  0  0  0  0",
     )
-    figures = []
+    figures: list[ComponentFigure] = []
     for number, quarter in enumerate(EXPECTED["quarters"], 1):
         facts.append(
             Fact(
@@ -147,7 +152,7 @@ def chart_case(monkeypatch):
     figures.append(
         ComponentFigure(
             "S.4",
-            "Maturity wall — current principal at 2025-12-31 (not a forecast)",
+            "Maturity wall — principal at 2025-12-31 (not a forecast)",
             "grouped",
             "amount",
             "US$ m",
@@ -187,10 +192,10 @@ def chart_case(monkeypatch):
             update={"modules": tuple(module if m.module_id == "CP-1" else m for m in base.modules)}
         ).model_dump()
     )
-    producer = ModuleType("deploy_workflow.financial_series")
-    calls = []
+    producer: Any = ModuleType("deploy_workflow.financial_series")
+    calls: list[Any] = []
 
-    def project(selected):
+    def project(selected: Any) -> tuple[ComponentFigure, ...]:
         calls.append(selected)
         return tuple(figures)
 
@@ -199,16 +204,16 @@ def chart_case(monkeypatch):
     return view, figures, calls
 
 
-def _report(view):
+def _report(view: View) -> ReportView:
     pathway = next(item for item in pathways() if item.id == view.run.pathway)
     return build(view, pathway, SHIPPED_MAPS)
 
 
-def _strip(report):
+def _strip(report: ReportView) -> Block:
     return next(block for block in report.blocks if block.block_id == "model-chart-strip")
 
 
-def test_shared_consumer_replaces_na_with_four_real_figures(chart_case):
+def test_shared_consumer_replaces_na_with_four_real_figures(chart_case: ChartCase) -> None:
     view, _, calls = chart_case
     report = _report(view)
     strip = _strip(report)
@@ -220,11 +225,11 @@ def test_shared_consumer_replaces_na_with_four_real_figures(chart_case):
         assert [cell.text for row in figure.chart.table_twin.rows for cell in row.cells] == [
             mark.text for mark in figure.chart.marks
         ]
-        assert all(report.passport(mark.ref_id) for mark in figure.chart.marks)
+        assert all(report.passport(cast(str, mark.ref_id)) for mark in figure.chart.marks)
     assert [mark.value for mark in strip.figures[3].chart.marks] == [Decimal("50")]
 
 
-def _changed_fact(view, fact_id, **updates):
+def _changed_fact(view: View, fact_id: str, **updates: Any) -> View:
     modules = tuple(
         module.model_copy(
             update={
@@ -241,7 +246,7 @@ def _changed_fact(view, fact_id, **updates):
     return View.model_validate(view.model_copy(update={"modules": modules}).model_dump())
 
 
-def _payload(html):
+def _payload(html: str) -> Any:
     return json.loads(
         html.split('<script id="report-data" type="application/json">', 1)[1].split("</script>", 1)[
             0
@@ -249,7 +254,7 @@ def _payload(html):
     )
 
 
-def test_exact_values_zero_gaps_human_labels_and_companion_dates(chart_case):
+def test_exact_values_zero_gaps_human_labels_and_companion_dates(chart_case: ChartCase) -> None:
     view, _, _ = chart_case
     report = _report(view)
     strip = _strip(report)
@@ -267,13 +272,13 @@ def test_exact_values_zero_gaps_human_labels_and_companion_dates(chart_case):
     ]
     assert [m.value for m in liquidity.marks if m.series == "Undrawn RCF"] == [Decimal(0)] * 4
     assert all(
-        m.ref_id.startswith("G")
+        cast(str, m.ref_id).startswith("G")
         for chart in (leverage, cover)
         for m in chart.marks
         if m.value is None
     )
     assert all(
-        m.ref_id.startswith("K")
+        cast(str, m.ref_id).startswith("K")
         for chart in (leverage, cover, liquidity)
         for m in chart.marks
         if m.value is not None
@@ -285,7 +290,7 @@ def test_exact_values_zero_gaps_human_labels_and_companion_dates(chart_case):
 
 
 @pytest.mark.parametrize("target", ["primary", "companion"])
-def test_missing_or_foreign_selected_fact_refuses(chart_case, target):
+def test_missing_or_foreign_selected_fact_refuses(chart_case: ChartCase, target: str) -> None:
     view, figures, _ = chart_case
     point = figures[0].points[0]
     point = replace(
@@ -311,14 +316,16 @@ def test_missing_or_foreign_selected_fact_refuses(chart_case, target):
         {"citations": (), "calculation_id": None},
     ],
 )
-def test_numeric_dimension_or_passport_mismatch_refuses(chart_case, updates):
+def test_numeric_dimension_or_passport_mismatch_refuses(
+    chart_case: ChartCase, updates: dict[str, Any]
+) -> None:
     view, _, _ = chart_case
     view = _changed_fact(view, "cash_closing.q4", **updates)
     with pytest.raises(ValueError):
         _report(view)
 
 
-def test_duplicate_or_undeclared_point_series_refuses(chart_case):
+def test_duplicate_or_undeclared_point_series_refuses(chart_case: ChartCase) -> None:
     view, figures, _ = chart_case
     original = figures[0]
     figures[0] = replace(original, points=(*original.points, original.points[0]))
@@ -343,26 +350,28 @@ def test_duplicate_or_undeclared_point_series_refuses(chart_case):
         "duplicate_series",
     ],
 )
-def test_malformed_producer_metadata_refuses(chart_case, variant):
+def test_malformed_producer_metadata_refuses(chart_case: ChartCase, variant: str) -> None:
     view, figures, _ = chart_case
     if variant == "missing_figure":
         figures.pop()
     elif variant == "wrong_order":
         figures.reverse()
     else:
-        change = {
+        changes: dict[str, dict[str, Any]] = {
             "wrong_kind": {"kind": "stacked"},
             "wrong_unit": {"unit": "USD"},
             "empty_without_reason": {"points": ()},
             "points_with_reason": {"reason": "Unavailable"},
             "duplicate_series": {"series": ("same", "same")},
-        }[variant]
-        figures[0] = replace(figures[0], **change)
+        }
+        figures[0] = replace(figures[0], **changes[variant])
     with pytest.raises(ValueError):
         _report(view)
 
 
-def test_unavailable_figure_names_real_reason_without_invented_points(chart_case):
+def test_unavailable_figure_names_real_reason_without_invented_points(
+    chart_case: ChartCase,
+) -> None:
     view, figures, _ = chart_case
     reason = "Four reported QUARTER identities are unavailable"
     figures[0] = replace(figures[0], points=(), reason=reason)
@@ -370,12 +379,12 @@ def test_unavailable_figure_names_real_reason_without_invented_points(chart_case
     first = _strip(report).figures[0]
     assert first.chart.marks == () and first.chart.table_twin.rows == ()
     assert first.chart.reason == reason
-    assert reason in _strip(report).note
+    assert reason in cast(str, _strip(report).note)
     assert reason in render(view, report)
 
 
 @pytest.mark.parametrize("status", ["candidate", "blocked", "stale"])
-def test_nonsettled_cp1_never_invokes_numeric_producer(chart_case, status):
+def test_nonsettled_cp1_never_invokes_numeric_producer(chart_case: ChartCase, status: str) -> None:
     view, _, calls = chart_case
     modules = tuple(
         m.model_copy(update={"status": status}) if m.module_id == "CP-1" else m
@@ -391,7 +400,7 @@ def test_nonsettled_cp1_never_invokes_numeric_producer(chart_case, status):
     )
 
 
-def test_metric_strip_has_only_its_three_pathway_figures(chart_case):
+def test_metric_strip_has_only_its_three_pathway_figures(chart_case: ChartCase) -> None:
     view, _, _ = chart_case
     run = view.run.model_copy(update={"pathway": "earnings_update"})
     view = View.model_validate(view.model_copy(update={"run": run}).model_dump())
@@ -399,7 +408,7 @@ def test_metric_strip_has_only_its_three_pathway_figures(chart_case):
     assert [fig.fig_id for fig in strip.figures] == ["S.1", "S.2", "S.3"]
 
 
-def test_shared_core_html_serializes_svg_marks_and_exact_twins(chart_case):
+def test_shared_core_html_serializes_svg_marks_and_exact_twins(chart_case: ChartCase) -> None:
     view, _, _ = chart_case
     payload = _payload(render(view))
     strip = next(b for b in payload["report"]["blocks"] if b["block_id"] == "model-chart-strip")
@@ -414,14 +423,16 @@ def test_shared_core_html_serializes_svg_marks_and_exact_twins(chart_case):
 
 
 def test_canonical_model_caller_uses_identical_shared_chart_payload(
-    chart_case, monkeypatch, tmp_path
-):
+    chart_case: ChartCase, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """Component envelope-read seam; this is not actual publication authentication."""
     from deploy_vii import cp1_render
 
     view, _, _ = chart_case
     cp1 = next(m for m in view.modules if m.module_id == "CP-1")
-    identity = dict(run_id=view.run.run_id, issuer_id=view.run.issuer_id, as_of=view.run.as_of)
+    identity: dict[str, Any] = dict(
+        run_id=view.run.run_id, issuer_id=view.run.issuer_id, as_of=view.run.as_of
+    )
     module = Module(
         **identity,
         module_id="CP-1",
@@ -431,17 +442,17 @@ def test_canonical_model_caller_uses_identical_shared_chart_payload(
     )
     envelope = SimpleNamespace(run=view.run, module=module)
     monkeypatch.setattr(cp1_render, "read_cp1_envelope", lambda *_: envelope)
-    store = SimpleNamespace(read=lambda: SimpleNamespace(run=view.run))
+    store: Any = SimpleNamespace(read=lambda: SimpleNamespace(run=view.run))
     model = Module(**identity, module_id="CP-MODEL", status="accepted")
     canonical = _payload(cp1_render.model_destination_html(store, tmp_path, model))
     delivered = _payload(render(view))
-    select = lambda payload: next(
+    select: Callable[[Any], Any] = lambda payload: next(
         b["figures"] for b in payload["report"]["blocks"] if b["block_id"] == "model-chart-strip"
     )
     assert select(canonical) == select(delivered)
 
 
-def test_raw_series_cannot_masquerade_as_a_human_caption(chart_case):
+def test_raw_series_cannot_masquerade_as_a_human_caption(chart_case: ChartCase) -> None:
     view, figures, _ = chart_case
     first = figures[0]
     aliased = replace(first.points[0], series="Total leverage (reported)")
@@ -451,7 +462,9 @@ def test_raw_series_cannot_masquerade_as_a_human_caption(chart_case):
 
 
 @pytest.mark.parametrize("provided_reason", [None, "All trailing ratios are unavailable"])
-def test_all_gap_figure_names_canonical_limitations(chart_case, provided_reason):
+def test_all_gap_figure_names_canonical_limitations(
+    chart_case: ChartCase, provided_reason: str | None
+) -> None:
     view, figures, _ = chart_case
     reason = "Trailing EBITDA denominator is unavailable"
     for key in ("total_leverage_reported.q4", "net_leverage_reported.q4"):
@@ -461,13 +474,13 @@ def test_all_gap_figure_names_canonical_limitations(chart_case, provided_reason)
     first = _strip(report).figures[0].chart
     assert first.marks and all(mark.value is None for mark in first.marks)
     assert first.reason is not None and reason in first.reason
-    assert reason in _strip(report).note
+    assert reason in cast(str, _strip(report).note)
     payload = _payload(render(view, report))
     strip = next(b for b in payload["report"]["blocks"] if b["block_id"] == "model-chart-strip")
     assert reason in strip["figures"][0]["chart"]["svg"]
 
 
-def test_override_excluded_preset_module_reads_not_requested_not_outside_pathway():
+def test_override_excluded_preset_module_reads_not_requested_not_outside_pathway() -> None:
     """A preset module left out by ``requested_modules`` was not requested; it is not outside."""
     run = Run(
         run_id="override-slice",
@@ -491,7 +504,7 @@ def test_override_excluded_preset_module_reads_not_requested_not_outside_pathway
     assert foreign.note == "Not in this Pathway: CP-9 is not part of Credit Snapshot."
 
 
-def _spec_pathway_foreign():
+def _spec_pathway_foreign() -> SimpleNamespace:
     from deploy_vii.report_view import _honest_state, _Spec
 
     pathway = next(item for item in pathways() if item.id == "credit_snapshot")
@@ -511,7 +524,7 @@ def _spec_pathway_foreign():
     return SimpleNamespace(note=note)
 
 
-def test_skip_link_focuses_main_without_reaching_the_hash_router():
+def test_skip_link_focuses_main_without_reaching_the_hash_router() -> None:
     """``href="#workbench"`` is not a route: the default jump set the hash and routed to
     "Unknown destination", so the skip link needs a handler that focuses and stops there."""
     run = Run(
@@ -532,7 +545,7 @@ def test_skip_link_focuses_main_without_reaching_the_hash_router():
     assert '$("workbench").focus()' in handler
 
 
-def test_loading_the_shell_at_the_skip_link_hash_is_the_default_view():
+def test_loading_the_shell_at_the_skip_link_hash_is_the_default_view() -> None:
     """A URL ending in ``#workbench`` (the skip link without JS) must not route to
     "Unknown destination": the router maps it to the Front Page like ``#overview``."""
     run = Run(
@@ -546,7 +559,7 @@ def test_loading_the_shell_at_the_skip_link_hash_is_the_default_view():
     assert 'return route === "overview" || route === "workbench" ? "front" : route;' in html
 
 
-def test_call_band_script_says_cp6_was_not_requested_for_the_not_requested_state():
+def test_call_band_script_says_cp6_was_not_requested_for_the_not_requested_state() -> None:
     """The shipped call band must not say the Pathway "does not make this call" when CP-6 was
     only left out by the run's ``requested_modules`` override."""
     html = render(empty_view(_override_run("credit_snapshot", ("CP-1",))))
@@ -556,7 +569,7 @@ def test_call_band_script_says_cp6_was_not_requested_for_the_not_requested_state
     assert '" CP-6 was not requested in this run."' in branch
 
 
-def test_navigator_footer_groups_outside_rows_by_word():
+def test_navigator_footer_groups_outside_rows_by_word() -> None:
     """One summary per word: override-excluded ("Not run") and foreign ("Not in this Pathway")
     rows must not share the first row's word and the total count."""
     html = render(empty_view(_override_run("credit_snapshot", ("CP-1",))))
@@ -568,7 +581,7 @@ def test_navigator_footer_groups_outside_rows_by_word():
     assert "outside[0].word" not in html
 
 
-def test_module_payload_word_follows_the_not_requested_rule():
+def test_module_payload_word_follows_the_not_requested_rule() -> None:
     """The module payload word (shown in the shell) matches the navigator: a preset module the
     override left out reads "Not run"; a module outside the preset keeps "Not in this Pathway"."""
     html = render(empty_view(_override_run("credit_snapshot", ("CP-1",))))
@@ -577,7 +590,7 @@ def test_module_payload_word_follows_the_not_requested_rule():
     assert modules["CP-8"]["status_word"] == "Not in this Pathway"
 
 
-def _override_run(pathway_id: str, requested: tuple[str, ...]) -> Run:
+def _override_run(pathway_id: PathwayId, requested: tuple[str, ...]) -> Run:
     return Run(
         run_id="override-call",
         issuer_id="northbridge-synthetic",
@@ -589,7 +602,7 @@ def _override_run(pathway_id: str, requested: tuple[str, ...]) -> Run:
     )
 
 
-def test_call_band_under_override_reads_not_requested_not_outside_pathway():
+def test_call_band_under_override_reads_not_requested_not_outside_pathway() -> None:
     """CP-6 is in the credit_snapshot preset; ``requested_modules=("CP-1",)`` only left it out."""
     from deploy_vii.report_view import call_state
 
@@ -603,7 +616,7 @@ def test_call_band_under_override_reads_not_requested_not_outside_pathway():
     assert words == ("unrun", "Not run")
 
 
-def test_call_band_outside_the_preset_keeps_not_in_this_pathway():
+def test_call_band_outside_the_preset_keeps_not_in_this_pathway() -> None:
     from deploy_vii.report_view import call_state
 
     run = _override_run("earnings_update", ("CP-1",))
@@ -614,7 +627,7 @@ def test_call_band_outside_the_preset_keeps_not_in_this_pathway():
     assert call_state(report) == ("outside", ("na", "Not in this Pathway"))
 
 
-def test_navigator_word_distinguishes_override_excluded_from_foreign_module():
+def test_navigator_word_distinguishes_override_excluded_from_foreign_module() -> None:
     from deploy_vii.report_view import navigator
 
     rows = {

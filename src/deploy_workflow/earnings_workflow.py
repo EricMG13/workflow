@@ -84,7 +84,12 @@ from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, citation_issues
 from deploy_vii.source_context import SourceContextReview
 from deploy_workflow.earnings import EarningsDeltaReport, build_earnings_delta
-from deploy_workflow.financial_workflow import FinancialBinding, FinancialCall, InputRead
+from deploy_workflow.financial_workflow import (
+    STATEMENT_HEADING,
+    FinancialBinding,
+    FinancialCall,
+    InputRead,
+)
 from deploy_workflow.host import SourceSession
 from deploy_workflow.tools.upstream import UpstreamTools
 from deploy_workflow.workflow import SourceEvidence
@@ -1104,11 +1109,7 @@ def _source_issues(
         for s in pack.sources
         if s.source_id in financial_ids and s.status == "ready"
         for span in s.spans
-        if re.search(
-            r"^\s*(?:CONSOLIDATED\s+)?(?:INCOME STATEMENT|CASH FLOW STATEMENT|BALANCE SHEET)\s*$",
-            span.text,
-            re.MULTILINE,
-        )
+        if STATEMENT_HEADING.search(span.text)
     }
     if not required or not required <= set(evidence.extracted):
         issues.append("Financials must extract every located statement page in this epoch")
@@ -1128,7 +1129,7 @@ def _source_issues(
             caption = (extracted.caption or "").upper()
             statement = (
                 "IS"
-                if "INCOME" in caption
+                if "INCOME" in caption or "OPERATIONS" in caption
                 else "CFS"
                 if "CASH FLOW" in caption
                 else "BS"

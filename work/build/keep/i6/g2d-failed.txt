@@ -1,0 +1,16 @@
+cp1d-fp02-quality-gap
+cp1d-fp02-quality-positive
+cp1d-fp02-quality-statements_only
+cp2g-fp05-forward-cp1d_blocked
+cp2g-fp05-forward-gap-blocked
+cp2g-fp05-forward-gap-cp2a_blocked
+cp2g-fp05-forward-gap-gap
+cp2g-fp05-forward-positive
+cp2h-fp05-ratings-blocked
+cp2h-fp05-ratings-cp2g_blocked
+cp2h-fp05-ratings-gap
+cp2h-fp05-ratings-positive
+cp4c-fp05-recovery-blocked
+cp4c-fp05-recovery-cp2g_blocked
+cp4c-fp05-recovery-gap
+cp4c-fp05-recovery-positive

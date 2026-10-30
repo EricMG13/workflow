@@ -1,0 +1,48 @@
+F
+=================================== FAILURES ===================================
+______ test_genuine_deferred_complete_cases[s1a-credit-snapshot-positive] ______
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-2291/test_genuine_deferred_complete0')
+scope_id = 's1a-credit-snapshot', case = 'positive'
+
+    @pytest.mark.parametrize(("scope_id", "case"), _COMPLETE_CASES)
+    def test_genuine_deferred_complete_cases(tmp_path: Path, scope_id: str, case: str) -> None:
+>       _check_scope_run(tmp_path, scope_id, case, "complete", DEFERRED[scope_id][0])
+
+tests/test_owner_rendering.py:2221: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_owner_rendering.py:2206: in _check_scope_run
+    assert_block_equals_oracle(blocks[section_id], oracle_block)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+block = {'block_id': 'transaction-summary', 'title': 'Transaction summary and new debt issues', 'owner': 'Primary', 'fig_id': None, ...}
+oracle = {'title': 'Transaction summary and new debt issues', 'owner': 'Primary', 'kind': 'prose', 'state': 'collapsed', ...}
+
+    def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) -> None:
+        """title, owner, kind, state, numbered, summary, tabs and rows/lines against one oracle block.
+        The gap spelling is a pattern; G numbers are the renderer's."""
+        for key in ("title", "owner", "kind", "state", "numbered", "summary"):
+            if key in oracle:
+                assert block[key] == oracle[key], key
+        if "primary" in oracle:
+            assert block["tab_label"] == oracle["primary"]["tab"]
+            _register_ok(block["rows"], oracle["primary"]["rows"])
+        for got, want in zip(block["tabs"], oracle.get("tabs", []), strict=False):
+            assert got["label"] == want["tab"]
+            if "rows" in want:
+                _register_ok(got["rows"], want["rows"])
+        if "lines" in oracle:
+>           assert [_line_text(line) for line in block["lines"]] == [
+                line["text"] for line in oracle["lines"]
+            ]
+E           AssertionError: assert ['Northbridge...rerS124', ...] == ['Northbridge...acturer', ...]
+E             
+E             At index 0 diff: 'Northbridge Term Loan: the only borrowing of the group, a senior secured term loan with final maturity on December 31, 2029; no new financing, acquisition, disposal or change of ownership is announced or pendingS110' != 'Northbridge Term Loan: the only borrowing of the group, a senior secured term loan with final maturity on December 31, 2029; no new financing, acquisition, disposal or change of ownership is announced or pending'
+E             Use -v to get more diff
+
+tests/test_owner_rendering.py:2014: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[s1a-credit-snapshot-positive]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 162 deselected in 1390.20s (0:23:10)
+exit=1

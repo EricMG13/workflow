@@ -1,0 +1,2 @@
+15:23 cpos exit=0 38m free=18G | 44 passed in 2289.17s (0:38:09)
+16:50 g2cp1 exit=1 86m free=19G | 2 failed, 6 passed, 187 deselected in 5199.87s (1:26:39)

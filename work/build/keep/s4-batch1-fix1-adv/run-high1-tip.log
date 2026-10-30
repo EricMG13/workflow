@@ -1,0 +1,8 @@
+...
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_with_cp1_dropped_from_inputs_refuses
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_attempt_bound_to_another_cp1_refuses
+PASSED tests/test_owner_s1a.py::test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses
+3 passed, 65 deselected in 424.85s (0:07:04)
+exit=0 elapsed=426s

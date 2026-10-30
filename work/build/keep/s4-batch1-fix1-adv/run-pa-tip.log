@@ -1,0 +1,53 @@
+VERDICT a1-relabel write_receipt:identity_mismatch [(0, None, 'finished', True), (0, None, 'finished', False)] head.attempt= 0 restricted
+FVERDICT a2-repair-issues write_receipt:identity_mismatch
+.VERDICT a3-begin-repair-issues write_receipt:identity_mismatch
+.VERDICT a4-older-ancestor identity_mismatch
+.VERDICT a5-swapped-tickets identity_mismatch
+.VERDICT a6-not-authorized identity_mismatch
+VERDICT a6-typeerror-propagates ok
+.VERDICT a7-relabel-finished-interrupted write_receipt:identity_mismatch
+.VERDICT a8-genuine-repair accepted
+.
+=================================== FAILURES ===================================
+____________ test_a1_repair_relabelled_attempt_zero_in_a_valid_step ____________
+
+g1x = namespace(core=<module 'g1x_fake_core'>, spec=OwnerSpec(module_id='CP-3D', steps=(StepSpec(step_id='g1x_sourced', sche...ry='owner_core', kind='analytical', publish=None), monkeypatch=<_pytest.monkeypatch.MonkeyPatch object at 0x10a984050>)
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-12/test_a1_repair_relabelled_atte0')
+
+    def test_a1_repair_relabelled_attempt_zero_in_a_valid_step(g1x: SimpleNamespace, tmp_path: Path) -> None:
+        _relabel_core(
+            g1x,
+            lambda step_id, att: step_id == SOURCED and att.number == 1 and att.status == "pending",
+            number=0,
+            repair_of=None,
+            repair_issues=(),
+        )
+        workflow = g._start(tmp_path)
+        _reject_first_try(workflow)
+        g._drive(workflow)
+        attempts = g._fake_attempts(tmp_path)
+        shape = [(a.number, a.repair_of, a.status, bool(a.issues)) for a in attempts]
+        head = next(h for h in Execution(tmp_path / "store").read().heads if h.module_id == MODULE)
+        result = Execution(tmp_path / "store").head_module(head)
+        verdict = _seal_and_verdict(tmp_path, workflow)
+        print("VERDICT a1-relabel", verdict, shape, "head.attempt=", result.attempt, head.status)
+        assert [a.number for a in attempts] == [0, 0] and attempts[0].inputs == attempts[1].inputs
+>       assert verdict == "accepted"
+E       AssertionError: assert 'write_receip...tity_mismatch' == 'accepted'
+E         
+E         - accepted
+E         + write_receipt:identity_mismatch
+
+../../s4-batch1-adv/probes/probe_class_a.py:86: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ::test_a2_repair_issues_rewritten_in_a_valid_step
+PASSED ::test_a3_repair_issues_rewritten_at_begin
+PASSED ::test_a4_begin_on_an_older_ancestor
+PASSED ::test_a5_swapped_ticket_ids
+PASSED ::test_a6_not_authorized_and_programming_error
+PASSED ::test_a7_pending_relabelled_finished_interrupted
+PASSED ::test_a8_genuine_repair_control
+FAILED ::test_a1_repair_relabelled_attempt_zero_in_a_valid_step - AssertionEr...
+1 failed, 7 passed in 2.71s
+exit=1 elapsed=4s

@@ -1,0 +1,2 @@
+18:43 fast exit=0 6m free=17G | 10247 passed, 19 skipped, 1 xfailed in 360.03s (0:06:00)
+18:44 g2fast exit=0 0m free=18G | 153 passed, 59 deselected in 13.93s

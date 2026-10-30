@@ -1790,6 +1790,24 @@
       "sha256": "14aa4a822ef30a8827a0152b4b7470883967e558dff409aacea4dcc8c0a5cfd4",
       "reason": "Add flex-shrink:0 to .module-list so a long outline cannot shrink the navigator module rows to 0px and cover them (ruling item 61).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "9b152b587f6f32cf3407175127766391291d4f9166725df7f854cadc632983a3",
+      "project_commit": "2d12ea5a13872529ff4ef60c3645c6ca3a93fa48",
+      "sha256": "5dc981d72a690f3d0ce04fbd7711b56609bd99b3745a756069c795f84aa99514",
+      "reason": "Add the optional Figure.status_chip field so a producer can carry the design's block-head chip text (open-items ruling OI-13, DR.6 Not computable).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.js",
+      "imported_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "prior_project_sha256": "0f0fe30bf97384d46ebfba4d6d09bc1b179918d6c36cba03b7ef8ee149bf7706",
+      "project_commit": "2d12ea5a13872529ff4ef60c3645c6ca3a93fa48",
+      "sha256": "d31738e4f7e5f0c80e6a24357e16f0febe2e90ab8d0a5190dbaa4f3b6b0a8549",
+      "reason": "renderBlock appends the existing chip for each figure's status_chip in the block head, after the state chip (open-items ruling OI-13, DR.6 Not computable).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

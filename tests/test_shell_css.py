@@ -38,7 +38,11 @@ _GOOD = ".module-list{flex-shrink:0}"
 _CASES = [
     pytest.param(_GOOD, True, id="plain"),
     pytest.param(".a,.module-list{flex-shrink:0}", True, id="comma-list"),
-    pytest.param("@media (max-width:600px){.module-list{flex-shrink:0}}", True, id="in-media"),
+    pytest.param(
+        _GOOD + "@media (max-width:600px){.module-list{flex-shrink:0}}",
+        True,
+        id="media-zero",
+    ),
     pytest.param(_GOOD + ".module-list-item{flex-shrink:1}", True, id="item-neighbour-after"),
     pytest.param(".module-list-item{flex-shrink:1}" + _GOOD, True, id="item-neighbour-before"),
     pytest.param(_GOOD + "/* .module-list{flex-shrink:1} */", True, id="comment-override"),
@@ -56,6 +60,34 @@ _CASES = [
     pytest.param("", False, id="rule-removed"),
     pytest.param(".module-list-item{flex-shrink:0}", False, id="only-item-rule"),
     pytest.param("/* .module-list{flex-shrink:0} */", False, id="only-commented-out"),
+    pytest.param(
+        "@media (max-width:600px){.module-list{flex-shrink:0}}",
+        False,
+        id="only-in-media",
+    ),
+    pytest.param(_GOOD + ".module-list{flex:1}", False, id="flex-shorthand-later"),
+    pytest.param(".module-list{flex-shrink:0;flex:1 1 auto}", False, id="flex-shorthand-same-rule"),
+    pytest.param(_GOOD + ".module-list{flex:1 30%}", False, id="flex-grow-basis"),
+    pytest.param(_GOOD + ".module-list{flex:inherit}", False, id="flex-inherit"),
+    pytest.param(".module-list{flex:none}", True, id="flex-none"),
+    pytest.param(".module-list{flex:0 0 auto}", True, id="flex-zero-zero-auto"),
+    pytest.param(".module-list{flex-shrink:var(--s)}", False, id="var-unreadable"),
+    pytest.param(".x .module-list{flex-shrink:0}", False, id="scoped-zero-only"),
+    pytest.param(
+        ".x .module-list{flex-shrink:0}.module-list{display:flex}", False, id="scoped-zero-base-unfixed"
+    ),
+    pytest.param(".module-list{flex-shrink:0 !important}", True, id="important-zero"),
+    pytest.param(".module-list{flex-shrink:1 !important}", False, id="important-one"),
+    pytest.param(".module-list{FLEX-SHRINK:0}", True, id="uppercase-zero"),
+    pytest.param(_GOOD + ".module-list{FLEX-SHRINK:1}", False, id="uppercase-override"),
+    pytest.param(
+        ".module-list{flex-shrink:1}.module-list::before{flex-shrink:0}",
+        False,
+        id="pseudo-element-good",
+    ),
+    pytest.param(_GOOD + ".module-list::before{flex-shrink:1}", True, id="pseudo-element-ignored"),
+    pytest.param(".nav .module-list{flex-shrink:1}" + _GOOD, False, id="earlier-specific-override"),
+    pytest.param(_GOOD + ".module-list{&:hover{color:red}flex-shrink:1}", False, id="nesting"),
 ]
 
 

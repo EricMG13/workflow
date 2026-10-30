@@ -19,6 +19,7 @@ Times are UTC from `date -u +%H:%M`. Lines record `agent=<name> fix-rounds=<n> g
 - 13:23 (between 13:02 and 13:23; exact time not taken) Gates: B2 a55a897 8-file set 2347 passed, ruff/format/mypy 0, suppressions 13/5 (first run at f589c14 had one ruff PLE2515). agent=mx-feature fix-rounds=0 gates-first-pass=n.
 - 13:23 Reviews dispatched: mx-precise B1, B2, B3, B5, B6; mx-adversary B3 (receipt verifier).
 - 13:24 B5 review mx-precise APPROVE (no High/Medium; probe scratchpad/review-b5/d12_shas.sh exit 0). Merged claude/oi-b5-dr6-chip 0abbab9 as 3236818; pins 87, D12 strict 0. Lows for the end batch: L-B5a the two new manifest records cite `review` docs/rulings/2026-10-29-stage3.md, should be docs/rulings/2026-10-30-open-items.md (OI-13); L-B5b OI-13 said `Block`, the code uses `Figure` -> ruling reworded now. Info: the two added negative asserts in test_chart_render_dr6 (:163, :176) duplicate `figures == ()`.
+- 13:25 B2 review mx-precise APPROVE (no High/Medium; Info only; probe scratchpad/review-b2/probe_payload_types.py exit 0). Merged claude/oi-b2-validators 9bc9c09. B1 review REVISE (Medium M1 flex shorthand, M2 scoped descendant alone; Lows) -> ruling OI-19, fix round 1 sent to the B1 builder. B3 review mx-precise REVISE (High: over-long stored interruption with issues=() passes, regression) -> fix round 1 after the adversary review.
 
 ## Deferred runs
 (genuine owner-suite, G2 genuine and other long runs each closed item needs; run only when Modules says the machine is free)

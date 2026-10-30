@@ -34,6 +34,11 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 
 - (items 12, 19, 64) DR.6 "Not computable" chip xfail tripwire: closed by 2d12ea5 (RED 2eba590, D12 0abbab9; merge 3236818; OI-13, the user directly).
 
+- CP-2E (fix1 re-review) Info (c) empty summary gets two issues: closed by f589c14 (RED c2d643e; merge of claude/oi-b2-validators); CP-3D's copy by a55a897 (OI-18).
+- Owner (predates, Info) well-formed unresolved reference passes the CP-3D validator (CP-DR's copy closed in item 73): closed by f589c14 (OI-1).
+- CP-DR (item 73 review, Info, predates) `validate_research` order docstring: closed by f589c14.
+- (found by triage, same class as the CP-2D/1D/3D protocol §6 entries) CP-2A `_validate_step` raw `model_validate_json`: closed by f589c14 (OI-2).
+
 ## Decided
 - CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
 - CP-2A Low forged `Upstream`: OI-4.

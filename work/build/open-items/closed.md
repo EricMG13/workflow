@@ -41,6 +41,9 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 
 - Owner (predates, Low) CP-1 accepts a blank scope or source limitation: closed by c34f81a (RED 84229e8; merge 8b7207a; OI-14, the user directly). Entity and review limitations are covered too.
 
+- (Stage 4 review Info 1) `_verify_publications`: a failed CP-MODEL publication's issues and interruption are not replayed: closed by 3fdda57 + da2bb04 (fast RED e3874bc, cc49257; merge of claude/oi-b3-verifier; OI-5). The interruption text itself stays the forger's choice within the producer's bounds (OI-5 residual).
+- [G1-X guards] Info, the three remaining >100-character lines in `owner_workflow.py` (:12, :211, :259): closed by 3fdda57.
+
 ## Decided
 - CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
 - CP-2A Low forged `Upstream`: OI-4.

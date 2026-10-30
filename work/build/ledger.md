@@ -569,3 +569,4 @@
 - 03:26 G2 gaps spec received (mx-autonomous a2fe49b1, agent=mx-autonomous; test only). Item 46 rules its six questions. Spec review mx-precise dispatched.
 - 03:30 G2 gaps spec review (mx-precise aed2c984): REVISE, Medium 2 (cites scope misses cp8/cp4 real cites; missing index entry falls back), Low 4. Back to preparer a2fe49b1 for revision 1.
 - 03:35 G2 gaps spec revision 1 (preparer a2fe49b1): all 7 items; 2 deviations with code evidence (required-entry rule; SYNTH order in rails). Re-review to mx-precise aed2c984.
+- 03:38 G2 gaps spec re-review APPROVE (mx-precise aed2c984); item 47 freezes it. s4-int2 r-1 (cp4c+cpl10 5 tests) passed, exit 0. Builder mx-feature dispatched.

@@ -43,6 +43,7 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 - (5.1 s0, l3, l2) always-skipped "blocked on G2" placeholders `test_owner_cp4c.py:615`, `test_owner_cp4.py:497`, `test_owner_cp2h.py:640`: closed by 89eb960 (OI-8; each comment names its G2 genuine cases).
 - (item 64, stale docstring) `tests/test_owner_cp3c.py:11`: closed by a1d5c7b.
 - (item 62 Low) `tests/test_shell_css.py:9` first-block parser: closed by 71fc5a3, 51bf88c, 9586860 (RED 8139d49, c9b4746, 24fcdd9; OI-9, OI-19).
+- (B6 review Info, OI-20) a blank `event_scan_explanation` passes `validate_source_context` and renders a blank `event_scan` gap row: closed by 4b2fcc2 (RED b6f3469, D12 236260e; merge 8dafc41; OI-20, the user directly).
 
 ## Decided
 - CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
@@ -52,5 +53,5 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 - (5.3 round 3) `report_view.py` SIM102 and (item 22) `statement_extract.py` TRY004: OI-16.
 - (item 55) rewrite-tournament readability rewrites: OI-15 (the user, "Leave unapplied").
 
-## Needs the user (new, found during this branch)
-- (B6 review Info) a blank `event_scan_explanation` passes `validate_source_context` and renders a blank `event_scan` gap row (`src/deploy_vii/source_context.py:107`, :513-518): OI-20, recommend the same `is_blank` refusal; `src/deploy_vii`, so not built.
+## Needs the user
+None left: OI-20 was approved by the user and built (B7).

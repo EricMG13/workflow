@@ -13,6 +13,7 @@ from deploy_vii.display import format_date, format_value
 from deploy_vii.registry import idle_statuses, modules
 from deploy_vii.report_view import (
     ReportView,
+    _carries_reference,
     block_state_display,
     build,
     call_state,
@@ -162,6 +163,17 @@ def render(view: View, report: ReportView | None = None) -> str:
             fact_payload["table_display"] = table_display(
                 fact, gap_ids.get((module.module_id, fact.fact_id))
             )
+            if fact.status == "known" and fact.text is not None and _carries_reference(fact.text):
+                # Item 45: a text fact holding [ref]/{ref|unit} is spelled as the block spells it.
+                spelled = "".join(
+                    run.text
+                    for run in resolve(
+                        fact.text,
+                        prose.bind(module.facts),
+                        module_refs(report.index, module.module_id),
+                    )
+                )
+                fact_payload["display"] = fact_payload["table_display"] = spelled
         # Decision 0005 MC-2: the page draws claim runs, never the raw run text.
         refs, bound = module_refs(report.index, module.module_id), prose.bind(module.facts)
         for claim_payload, claim in zip(module_payload["claims"], module.claims, strict=True):

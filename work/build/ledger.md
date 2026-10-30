@@ -620,3 +620,10 @@
 - 08:07 Nav fix builder mx-feature dispatched (brief work/build/stage5/navfix-brief.md; branch claude/s5-navfix from 64cfca9).
 - 08:10 Nav fix built (mx-feature a3ed59a4) claude/s5-navfix 3c90773: RED then GREEN (.module-list flex-shrink:0), manifest patch record; new test 1, render set 446 passed; pins 0; ruff 0; suppressions 13/5; D12 owner records only. agent=mx-feature fix-rounds=0 gates-first-pass=y. Review mx-precise dispatched. Integration claude/s5-int2 3c90773 (= s5-int + navfix; worktree ../s5-int2); regenerating deliveries cp3d, cpl10, s1a positive there for the native recheck.
 - 08:12 Nav fix review APPROVE (mx-precise a1846dcd; 1 Low on the test parser, carried to lows). Item 62. Native recheck pending on s5-int2 deliveries.
+- 08:12 5.2 native recheck on s5-int2: cp3d positive regenerated with the fix passes all checks incl. hit test (old page: 2 covered, fixed: 0); real mouse click from #CP-3D (27 outline items) on the CP-0 row lands on CP-0 · Source readiness. Waiting on cpl10 and s1a regenerated pages.
+- 08:13 Stage 5.1/5.2 d1 (8 G2 deliveries + cp1-model delivery) 9 passed, exit 0 (2h52m).
+- 08:14 5.2: cp1-model owner-slice page (scope cp1-model) and financial slice page (historical-financials) pass all checks except the pre-fix covered rows (6 each; fixed on s5-int2). expect.py extended for the financial receipt.
+- 08:15 s5-int l1 (G2 cpl10 positive, cp2h x3, owner cpl10) 14 passed, exit 0 (1h34m) on the final code. Round 4 merge waits for l2 (owner cp2h).
+- 08:33 Stage 5.1/5.2 d0 (8 G2 deliveries + cp8 refused no_record) 9 passed, exit 0 (3h12m).
+- 08:42 5.2: cp2g positive, cp2g gap, cp8 refused no_record pages pass all checks (run in parts: ~2 s per route on the cp2g pages) except the pre-fix covered rows (cp2g 20 and 12; cp8 refused 0). All 18 s4-int3 deliveries checked. check.js gained resumable parts.
+- 08:44 5.2 native recheck on s5-int2: cpl10 positive (fixed) passes all checks incl. hit test; real mouse click from #limitations (55 outline items) on the CP-L10 row lands on CP-L10 (failed before the fix); narrow drawer (407 px) real click from #limitations on CP-0 lands on CP-0. s1a fixed page pending.

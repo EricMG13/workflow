@@ -17,6 +17,10 @@
   const click = async (a, want) => { a.click(); return settle(want); };
   const rail = href => document.querySelector(`a.rail-btn[href="${href}"]`);
   const bad = [], visited = new Set(), res = { page: location.pathname, scope: E.scope };
+  // Optional part for slow pages (localStorage "phase"): {rows:[a,b]} | {part:"rails"|"blocks"|"calc"} | {part:"hashes", known:[...]}.
+  const P = JSON.parse(localStorage.getItem("phase") || "null");
+  const on = part => !P || P.part === part || (part === "rows" && !!P.rows);
+  if (P) res.phase = P;
   const wordOf = id => E.heads[id];
   const banner = document.getElementById("delivery-scope-banner")?.dataset.deliveryScope;
   if (banner !== E.scope) bad.push({ what: "delivery scope banner", banner, scope: E.scope });
@@ -35,7 +39,7 @@
   // Run at a desktop viewport (1440x900): below 1350px the navigator is a closed drawer and cannot be hit-tested.
   if (getComputedStyle(nav).display === "none") bad.push({ what: "navigator hidden; run at 1440x900", vw: innerWidth });
   const hitTest = () => { nav.scrollTop = 0; for (const n of nav.querySelectorAll("a.module-link")) { n.scrollIntoView({ block: "nearest" }); const b = n.getBoundingClientRect(), t = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2); if (!n.contains(t)) covered.push(`${location.hash || "#front"}>${n.getAttribute("href")}`); } };
-  for (const r of rows) {
+  for (const r of on("rows") ? (P?.rows ? rows.slice(...P.rows) : rows) : []) {
     const id = r.a.getAttribute("href").slice(1), want = E.titles[id];
     hitTest();
     const v = await click(r.a, want); visited.add("#" + id);
@@ -54,6 +58,7 @@
 
   // The six rail destinations.
   const rails = [...document.querySelectorAll("a.rail-btn")];
+  if (on("rails")) {
   const fixed = { "#front": E.issuer, "#analysis": "Analysis", "#FIT": "Portfolio Fit", "#evidence": "Evidence", "#limitations": "Limitations" };
   for (const a of rails) {
     const href = a.getAttribute("href"), want = fixed[href] ?? E.titles[href.slice(1)];
@@ -63,8 +68,10 @@
   }
   res.rails = rails.length;
   if (rails.length !== 6) bad.push({ what: "rail count", n: rails.length });
+  }
 
   // Front Page block links (re-found after each return to the front page).
+  if (on("blocks")) {
   await click(rail("#front"), E.issuer);
   const blocks = [...root.querySelectorAll("a.full")].map(a => [a.getAttribute("href"), a.textContent.trim()]);
   const seenBlocks = [];
@@ -79,11 +86,15 @@
   // every drawn link must be one of them.
   if (E.oracle) for (const s of seenBlocks) if (!E.oracle.blocks.some(b => s[0] === b[0] && s[1] === b[1] && s[2] === b[2])) bad.push({ what: "block link outside the oracle", s });
   res.blocks = blocks.length;
+  }
 
   // Every other '#' link drawn on any page visited so far, then the skip link.
+  if (on("hashes")) {
   const all = new Set();
+  const collect0 = () => document.querySelectorAll("a[href^='#']").forEach(a => all.add(a.getAttribute("href")));
+  if (P?.known) { for (const h of P.known) visited.add(h); location.hash = "#front"; await settle(); collect0(); }
   const collect = () => document.querySelectorAll("a[href^='#']").forEach(a => all.add(a.getAttribute("href")));
-  for (const h of [...visited]) { location.hash = h; await settle(); collect(); }
+  for (const h of P?.known ? [] : [...visited]) { location.hash = h; await settle(); collect(); }
   for (const h of [...all].filter(h => h !== "#workbench" && !visited.has(h))) {
     location.hash = h; const v = await settle(); visited.add(h);
     if (!v.h1 || v.unknown) bad.push({ what: "hash", h, ...v });
@@ -92,9 +103,10 @@
   const skip = document.querySelector("a.skip[href='#workbench']");
   if (skip) { skip.click(); await sleep(100); if (document.activeElement?.id !== "workbench") bad.push({ what: "skip link focus", active: document.activeElement?.id }); }
   else bad.push({ what: "no skip link" });
+  }
 
   // calculation.json link on the Model destination (the CP-1 page).
-  if (E.calc) {
+  if (!on("calc")) {} else if (E.calc) {
     await click(document.querySelector("a.module-link[href='#CP-1']"), E.titles["CP-1"]);
     const link = root.querySelector("a[href='calculation.json']");
     if (!link || !E.calc_on_disk) bad.push({ what: "calculation.json link", drawn: !!link, onDisk: E.calc_on_disk });

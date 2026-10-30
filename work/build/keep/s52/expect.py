@@ -38,5 +38,21 @@ for rr in sorted(root.glob("dom*/*/out/*/render-receipt.json")):
             "blocks": [[b["link"]["href"], b["link"]["page_title"], b["link"]["status_chip_word"]] for b in case["block_links"] if b["link"]],
         }
     out["/" + str((d / "report.html").relative_to(root))] = e
+# The CP-1/Model financial slice page (cp1-model-slice-render/1): statuses from its financial receipt.
+for rr in sorted(root.glob("dom*/*/financial-delivery/render-receipt.json")):
+    d = rr.parent
+    fin = json.loads((d / "financial-slice.json").read_text())
+    heads = {m: words[fin[k]["status"]] for m, k in (("CP-0", "cp0"), ("CP-1", "cp1")) if fin.get(k)}
+    if fin.get("model"):
+        heads["CP-MODEL"] = heads["CP-1"]  # published from the CP-1 head; the page's chip is compared with this
+    out["/" + str((d / "report.html").relative_to(root))] = {
+        "scope": "historical-financials",
+        "issuer": fin["run"]["issuer_name"],
+        "heads": heads,
+        "plan": [m for m in order if m in heads],
+        "titles": titles,
+        "calc": "calculation.json" in ((fin.get("model") or {}).get("files") or {}),
+        "calc_on_disk": (d / "calculation.json").is_file(),
+    }
 (root / "expect.json").write_text(json.dumps(out, ensure_ascii=False))
 print(len(out), "pages;", sum("oracle" in e for e in out.values()), "with the CP-OS oracle case")

@@ -1768,6 +1768,15 @@
       "companion_test": "tests/test_upstream_tools.py",
       "companion_test_sha256": "b95bc0a2816a16fdfe775023af773e232af8872c762e6cb280e6b76f5239b665",
       "reason": "Add the admitted v2 CP-5 integrity upstream transport over CP-1/CP-1B; preserves baseline, A2 and CP1B pager project bytes."
+    },
+    {
+      "destination": "src/deploy_vii/render.py",
+      "imported_sha256": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+      "prior_project_sha256": "7bf8d889fb8f5b74d84f0239664c801a1c0fcfbc3a40e32da6ea49f1cd8bf253",
+      "project_commit": "d394ac1a792984d415fcd1ee1308c593f61dc0cc",
+      "sha256": "1887bcb2e97baf14a44e225238f41a08ead5041db3c846a70c5ef878d7bdcd89",
+      "reason": "Stage 4 batch 2 fix round 2: a known text fact that carries [ref] tokens gets display and table_display from resolve(), so the module table and inspector show the page's gap number, as the what-changed block does (rulings 2026-10-29-stage3 item 45, extending item 30).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ]
 }

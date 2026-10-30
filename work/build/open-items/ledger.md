@@ -23,6 +23,9 @@ Times are UTC from `date -u +%H:%M`. Lines record `agent=<name> fix-rounds=<n> g
 - 13:26 B6 review mx-precise APPROVE (no High/Medium; probe scratchpad/review-b6/probe_parity_scan.py exit 0). Merged claude/oi-b6-cp1-blank 747d1c6 as 8b7207a; manifest conflict with B5's records resolved by keeping both (82 records); D12 strict 0, pins 87. New owner item OI-20 (blank event_scan_explanation; src/deploy_vii) -> user.
 - 13:26 B1 fix round 1 RED c9b4746: tests/test_shell_css.py 16 failed (as listed), 19 passed. OI-19 addendum: !important non-zero fails closed.
 
+- 13:28 B1 fix round 1 at 51bf88c (controller): tests/test_shell_css.py 36 passed, ruff/format/mypy 0, reviewer probe review-b1/probe_shell_css_evasions.py exit 0. Scoped re-review (same mx-precise) dispatched.
+- 13:28 B3 adversary review REVISE (Medium 1 = the mx-precise High: over-long stored interruption with issues=() accepted, base refused; Info: whitespace-only interruption the producer refuses is accepted; free interruption text is the OI-5 residual). Fix round 1 sent to the B3 builder (raise identity_mismatch for an interruption the producer could not store or would refuse).
+
 ## Deferred runs
 (genuine owner-suite, G2 genuine and other long runs each closed item needs; run only when Modules says the machine is free)
 - B1 (placeholders removed; defect_classes partial): `tests/test_owner_cp4c.py`, `tests/test_owner_cp4.py`, `tests/test_owner_cp2h.py` in full (each loses one always-skipped test; expect 0 skipped from the placeholder); optional, behaviour-preserving: the `a3` never-wedges tests that use `tests/defect_classes.py` (`test_owner_cp1c.py`, `test_owner_cp2g.py`, `test_owner_cp2h.py`, `test_owner_cp3c.py`, `test_owner_cp4c.py` `-k "a3 or never_wedges"`).

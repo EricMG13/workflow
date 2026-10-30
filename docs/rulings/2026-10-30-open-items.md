@@ -39,3 +39,21 @@ Limits (the user's 2026-10-30 narrowing): no `src/deploy_vii` change, no DEPLOY 
 
 ## Closed before this session (owner list not updated)
 Recorded per entry in `work/build/open-items/closed.md` with the commit that closed it.
+
+## OI-12 (the user, directly, 2026-10-30: "Yes, you run them")
+- Build agents in isolated worktrees are refused the venv interpreter (B2's builder, 12:44, the same refusal text as items 71-72). The controller runs each builder's RED and gate commands in the builder's worktree, one pytest process at a time, and sends the output. Builders run no Python and commit with plain git. No symlink, wrapper or permission change.
+
+## OI-13 (the user, directly: DR.6 chip, "Draw the chip")
+- Items 12 and 19 deferred the "Not computable" chip to after Stage 5. It is drawn now: a `Block` field in `src/deploy_vii/report_view.py`, set on the DR.6 n/a-frame block, rendered by `app.js` in the block head; the strict xfail tripwire XPASSes and its marker is removed. `src/deploy_vii` change approved directly; D12 records for every reused file touched. Deferred: G2 genuine `cp2h-fp05-ratings` cases and a native DOM recheck of the CP-2H page.
+
+## OI-14 (the user, directly: CP-1 blank limitation, "Fix in source_context")
+- `validate_source_context` (`src/deploy_vii/source_context.py`) refuses a blank (`is_blank`) scope or source limitation, test-first, with a D12 record. CZR's CP-1 validates through it; only a blank limitation is newly refused.
+
+## OI-15 (the user, directly: item 55 rewrites, "Leave unapplied")
+- Decided: the three verified readability patches stay in `work/build/keep/s53-rt/` and are not applied. They give no behaviour gain, and two touch the receipt verifier, which would reopen mx-adversary review and every genuine owner suite. Apply with the next functional change to those functions.
+
+## OI-16 (ruff findings in `src/deploy_vii`: decided, leave)
+- `statement_extract.py` TRY004 (:234-263) and `report_view.py` SIM102 (:312) are import-era style findings under ruff's default rules; the project gate checks changed files only. TRY004's fix changes the public exception type of `extract_pack_statements`; SIM102's moves report_view bytes for no behaviour gain. A `noqa` would breach the cap. The user can overrule; it would need their word for `src/deploy_vii`.
+
+## OI-17 (B4: bb4553b and 1a1a140 kept as records)
+- The preparer filled their chains from the lane's first-parent history rather than folding them; both pass the strict probe. Folding would discard records that are consistent once the chain is filled.

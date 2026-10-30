@@ -1682,10 +1682,10 @@ def _own_limits(gap: bool) -> tuple[str, ...]:
     )
 
 
-def _reference(producer: Module, fact: Fact) -> FactReference:
+def _reference(producer_sha256: str, fact: Fact) -> FactReference:
     return FactReference(
         producer_module_id="CP-1",
-        producer_sha256=producer.content_hash(),
+        producer_sha256=producer_sha256,
         fact_id=fact.fact_id,
         table_id=fact.table_id,
         row_id=fact.row_id,
@@ -1695,13 +1695,14 @@ def _reference(producer: Module, fact: Fact) -> FactReference:
 
 def _operands(producer: Module, report: EarningsDeltaReport) -> tuple[OperandLineage, ...]:
     facts = {f.fact_id: f for f in producer.facts}
+    producer_sha256 = producer.content_hash()
 
     def operand(fid: str, pid: str, basis: str) -> OperandReference:
         fact = facts[fid]
         if fact.period is None or fact.basis is None:
             raise OwnerError("identity_mismatch")
         return OperandReference(
-            fact=_reference(producer, fact),
+            fact=_reference(producer_sha256, fact),
             period_id=pid,
             basis_id=basis,
             source_period=fact.period,
@@ -1722,7 +1723,9 @@ def _operands(producer: Module, report: EarningsDeltaReport) -> tuple[OperandLin
             if p.prior_fact_id is not None and report.prior_basis_id is not None
             else None,
             current=operand(p.current_fact_id, report.current_period_id, report.current_basis_id),
-            companions=tuple(_reference(producer, facts[fid]) for fid in p.companion_fact_ids),
+            companions=tuple(
+                _reference(producer_sha256, facts[fid]) for fid in p.companion_fact_ids
+            ),
         )
         for p in report.points
     )

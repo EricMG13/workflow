@@ -39,3 +39,4 @@
 - (5.1 l3) `tests/test_owner_cp4.py:497` `test_a7_render_of_the_six_sections_and_two_rails`: always-skipped placeholder "blocked on G2 (Stage 3)"; G2 genuine `cp4-fp04-covenants` deferred cases now cover it: owner.
 - (Item 62 Low, mx-precise a1846dcd) `tests/test_shell_css.py:9` takes the first `.module-list{` block only; a later override or a compound selector would pass it (probe `work/build/keep/navfix-review/probe_parser_mutations.py`). Harden if app.css gains more `.module-list` rules.
 - (5.1 l2) `tests/test_owner_cp2h.py:640`: always-skipped placeholder "blocked on G2 (Stage 3)"; G2 genuine `cp2h-fp05-ratings` deferred cases cover it: owner.
+- **CP-DR (item 69 review, Low, docstring).** `cpdr.py:285-289`: the `validate_research` order docstring (ruling R2) lists rules 1-7 and omits the gap-id length issue, which sits between rule 1 and rule 2. Rides with the next CP-DR change or the end batch.

@@ -573,3 +573,4 @@
 - 03:45 s4-int2 e37b73e: the 14 owner tests that failed on ff9070e all pass (r-0 cp2g+cp3 9 passed 38m, r-1 cp4c+cpl10 5 passed 30m; exit 0).
 - 04:13 PM merged the Stage 3 release (lane 127d8b5) into codex/checkpoint as dafcbfb (--no-ff, local, not pushed; user approved directly; PM ran no tests). Stage 4 not merged.
 - 04:16 G2 gaps build (mx-feature a543732f) claude/s5-g2-gaps 715f5a4: fast 170, ruff/format/mypy 0, suppressions 13/5, genuine cp3d-positive 1.8s (plan is CP-0 + CP-3D, no CP-1) and s1a-positive 28m pass. agent=mx-feature fix-rounds=0 gates-first-pass=y. Review mx-precise dispatched; genuine s1a-gap, cp3d x2, cp4 x3 running (s5g2/g-0, g-1).
+- 04:19 G2 gaps build review APPROVE (mx-precise a35e1a14; no finding). Item 48.

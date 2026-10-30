@@ -558,3 +558,4 @@
 - 00:41 Owner shard cp-2 done: 112 passed, 7 failed (cp2g 5, cpl10 2), 12 skipped (cp2g, cp3d, cp3c, cpl10). Tracebacks pointed to the RCA agent.
 - 00:59 Owner shard cp-3 done: 123 passed, 1 skipped (test_owner_cp2e.py, test_owner_cpos.py, test_owner_cp1d.py all green).
 - 01:06 Owner-suite RCA done (mx-autonomous a6b93aa0): six causes A-F, all predating ab9777f, none product. Rulings item 41 (applied recommendation: fix now). Probes kept in work/build/keep/owner-rca/.
+- 01:06 Dispatched: owner test/driver fixes A,B,D,E,F (mx-feature a3b503dc, isolated, claude/s4-owner-tests from ff9070e, brief work/build/stage4/owner-tests-fix-brief.md); CP-2G view-tree oracle preparer C (mx-feature aeb0053d, isolated, claude/s4-cp2g-tree from ff9070e, brief work/build/stage4/cp2g-tree-oracle-brief.md; independent mx-precise review to follow).

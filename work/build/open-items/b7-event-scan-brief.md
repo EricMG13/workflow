@@ -1,0 +1,10 @@
+# B7: CP-1 refuses a blank `event_scan_explanation` (OI-20; the user directly: "Yes, fix OI-20"; mx-feature, test-first)
+
+Branch `claude/oi-b7-event-scan` from 881e1bf (the open-items tip, which holds B6). Edit only `src/deploy_vii/source_context.py`, `tests/test_source_context_blank.py` and `docs/reuse/manifest.json`.
+
+- Finding (B6 review Info): a blank `event_scan_explanation` (`" "`, U+200B, U+2800) passes `validate_source_context` and renders a blank `event_scan` gap row when `event_scan == "unassessed"` (`source_context.py` :107, :512-518). Probe: `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-open-items-fd69c5/7a3d4eea-24de-4c3f-a6a4-0645dfde9f6b/scratchpad/review-b6/probe_event_scan_blank.py` (exit 1 today).
+- Rule: a blank `event_scan_explanation` is refused whatever the scan state (the field is a required explanation), one issue per source in the module's `Phrase: id` style (as B6's `Empty limitation text: <id>`; e.g. `Empty event scan explanation: <source_id>`), never echoing the input. Nothing else changes.
+- RED in `tests/test_source_context_blank.py`: per blank form, for an `unassessed` source and for a scanned source, exactly that one issue; a non-blank explanation unchanged; parity: no frozen `cp1_source_context` holds a blank explanation (extend the existing parity test). If a frozen case holds one, stop and report.
+- D12: one `post_import_patches` record for `source_context.py` (prior = the B6 record's sha d50e1bad…, from git), review `docs/rulings/2026-10-30-open-items.md`; strict probe exit 0.
+- Interpreter (OI-12): no project Python; the controller runs RED and gates; system `python3 -I` only for the D12 probe. Plain git commits ending `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Escape invisible characters in test source (`​`, `⠀`) — ruff PLE2515.
+- Gates the controller runs: the test file + `tests/test_readiness_linear.py tests/test_connected_render.py tests/test_defect_classes_cp1.py`; ruff check/format, mypy on the two .py files; pins; suppressions. Deferred: as B6 (earnings, source tools, financial workflow, owner s1a; CZR CP-1).

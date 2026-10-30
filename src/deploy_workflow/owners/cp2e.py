@@ -817,7 +817,8 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
         if s not in sections:
             chk.add(f"assessments: section {s} is missing")
     chk.prose("summary.text", sub["summary"]["text"])
-    chk.run_text("summary.text", sub["summary"]["text"])
+    if not is_blank(sub["summary"]["text"]):  # chk.prose refused blank text; RunText would repeat
+        chk.run_text("summary.text", sub["summary"]["text"])
     if _PROHIBITED.search(sub["summary"]["text"]):
         chk.add("summary.text: text carries a prohibited conclusion")
 

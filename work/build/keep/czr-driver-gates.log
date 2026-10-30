@@ -1,0 +1,70 @@
+F.........sssssss................F...................................... [ 26%]
+........................................................................ [ 53%]
+........................................................................ [ 79%]
+.......................................................                  [100%]
+=================================== FAILURES ===================================
+______________________ test_pack_builds_deterministically ______________________
+
+    def test_pack_builds_deterministically() -> None:
+        again = czr_runs.make_pack()
+        assert again.content_hash() == PACK.content_hash()
+        assert again == PACK
+        run = PACK.run
+        assert (run.case_kind, run.pathway, run.requested_modules) == (
+            "public",
+            "earnings_update",
+            ("CP-1", "CP-2", "CP-5"),
+        )
+        assert str(run.as_of) == czr_runs.manifest()["run"]["as_of"]
+>       assert run.run_id == czr_runs.RUN_ID != czr_runs.manifest()["run"]["run_id"]
+E       AssertionError: assert 'czr-2026q2-earnings-update-v1' != 'czr-2026q2-earnings-update-v1'
+E        +  where 'czr-2026q2-earnings-update-v1' = czr_runs.RUN_ID
+
+tests/test_czr_driver.py:46: AssertionError
+________ test_a_step_with_inputs_must_have_read_them_before_submitting _________
+
+    def test_a_step_with_inputs_must_have_read_them_before_submitting() -> None:
+>       with pytest.raises(RuntimeError, match="read_inputs.*financials"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'read_inputs.*financials'
+E         Actual message: "step 'financials' declares inputs 'projection': read_inputs not called"
+
+tests/test_czr_driver.py:284: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_czr_driver.py::test_pack_builds_deterministically - Asserti...
+FAILED tests/test_czr_driver.py::test_a_step_with_inputs_must_have_read_them_before_submitting
+SKIPPED [7] tests/test_czr_driver.py:136: not a CP-1 key
+2 failed, 262 passed, 7 skipped in 1.14s
+pytest exit=1
+FURB157 [*] Verbose expression in `Decimal` constructor
+   --> tests/test_czr_driver.py:174:24
+    |
+172 |         table_id="T1",
+173 |         period=period,
+174 |         amount=Decimal("2900"),
+    |                        ^^^^^^
+175 |         unit="USD",
+176 |         scale=Decimal(1000000),
+    |
+help: Replace with `2900`
+    |
+173 |         period=period,
+    -         amount=Decimal("2900"),
+174 +         amount=Decimal(2900),
+175 |         unit="USD",
+    |
+
+Found 1 error.
+[*] 1 fixable with `--fix`.
+ruff check exit=1
+2 files already formatted
+ruff format exit=0
+tests/czr_runs.py:71: error: Skipping analyzing "deploy_vii.contracts": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+tests/czr_runs.py:71: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+tests/czr_runs.py:72: error: Skipping analyzing "deploy_vii.preparation": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+tests/czr_runs.py:73: error: Skipping analyzing "deploy_workflow.owner_workflow": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+tests/czr_runs.py:222: error: Returning Any from function declared to return "tuple[Any, ...]"  [no-any-return]
+Found 4 errors in 1 file (checked 1 source file)
+mypy exit=1
+noqa=13 type_ignore=5

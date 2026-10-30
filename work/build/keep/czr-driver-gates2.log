@@ -1,0 +1,16 @@
+..........sssssss....................................................... [ 24%]
+........................................................................ [ 48%]
+........................................................................ [ 72%]
+........................................................................ [ 97%]
+........                                                                 [100%]
+=========================== short test summary info ============================
+SKIPPED [7] tests/test_czr_driver.py:136: not a CP-1 key
+289 passed, 7 skipped in 1.06s
+pytest exit=0
+All checks passed!
+ruff check exit=0
+2 files already formatted
+ruff format exit=0
+Success: no issues found in 1 source file
+mypy exit=0
+noqa=13 type_ignore=5

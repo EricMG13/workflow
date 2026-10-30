@@ -1,0 +1,56 @@
+........................................................................ [ 41%]
+........................................................................ [ 82%]
+.....................FFF......                                           [100%]
+=================================== FAILURES ===================================
+_ test_an_answer_with_a_well_formed_reference_is_refused[Rates matter {fact_a|x} a lot] _
+
+answer = 'Rates matter {fact_a|x} a lot'
+
+    @pytest.mark.parametrize("answer", ["Rates matter {fact_a|x} a lot", "Rates matter [fact_a] a lot"])
+    def test_an_answer_with_a_well_formed_reference_is_refused(answer: str) -> None:
+        """A reference in the answer names no fact of the module (`CPDR-ANS-<id>` cites none), so
+        settle would reject the module after a valid step; it is refused with the step instead."""
+        payload = _answer_payload(answer)
+>       assert check(submission(payload)) == (REFERENCE_ISSUE,)
+E       AssertionError: assert () == ('gaps[0].que...a reference',)
+E         
+E         Right contains one more item: 'gaps[0].questions[0].answer: text carries a reference'
+E         Use -v to get more diff
+
+tests/test_connect_cpdr.py:1241: AssertionError
+_ test_an_answer_with_a_well_formed_reference_is_refused[Rates matter [fact_a] a lot] _
+
+answer = 'Rates matter [fact_a] a lot'
+
+    @pytest.mark.parametrize("answer", ["Rates matter {fact_a|x} a lot", "Rates matter [fact_a] a lot"])
+    def test_an_answer_with_a_well_formed_reference_is_refused(answer: str) -> None:
+        """A reference in the answer names no fact of the module (`CPDR-ANS-<id>` cites none), so
+        settle would reject the module after a valid step; it is refused with the step instead."""
+        payload = _answer_payload(answer)
+>       assert check(submission(payload)) == (REFERENCE_ISSUE,)
+E       AssertionError: assert () == ('gaps[0].que...a reference',)
+E         
+E         Right contains one more item: 'gaps[0].questions[0].answer: text carries a reference'
+E         Use -v to get more diff
+
+tests/test_connect_cpdr.py:1241: AssertionError
+_______ test_a_reference_in_an_answer_is_reported_beside_a_content_issue _______
+
+    def test_a_reference_in_an_answer_is_reported_beside_a_content_issue() -> None:
+        payload = _answer_payload("Rates matter [fact_a] a lot", "Some limitation text")
+>       assert check(submission(payload)) == (
+            "an answered question carries no limitation: transactions",
+            REFERENCE_ISSUE,
+        )
+E       AssertionError: assert ('an answered...ransactions',) == ('an answered... a reference')
+E         
+E         Right contains one more item: 'gaps[0].questions[0].answer: text carries a reference'
+E         Use -v to get more diff
+
+tests/test_connect_cpdr.py:1250: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_connect_cpdr.py::test_an_answer_with_a_well_formed_reference_is_refused[Rates matter {fact_a|x} a lot]
+FAILED tests/test_connect_cpdr.py::test_an_answer_with_a_well_formed_reference_is_refused[Rates matter [fact_a] a lot]
+FAILED tests/test_connect_cpdr.py::test_a_reference_in_an_answer_is_reported_beside_a_content_issue
+3 failed, 171 passed in 1.66s
+exit=1

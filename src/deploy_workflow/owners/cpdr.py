@@ -52,6 +52,7 @@ from deploy_vii.live.schema import json_object, normalise
 from deploy_vii.live.submission import Submitted, _with_rules
 from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import tokenize
 from deploy_vii.readiness import GapKind, GapSeverity, citation_issues, shape_issues
 from deploy_vii.registry import modules
 from deploy_workflow.financial_workflow import _FrozenExecution
@@ -285,9 +286,13 @@ def validate_research(
     """Content issues of a submission against the CP-0 agenda (``upstream``) and the pack
     sources (``pack``).
 
-    Order (ruling R2): rule 1 per submitted gap; rule 2 per agenda gap; then per question in
-    submission order rule 3, 4, 5 per searched source in listed order, 6 per citation in order,
-    the round 11 blank-text frames (text, answer, limitation), and 7. G1-X appends the de-duplicated RULES issues after these (Stage 2).
+    Order (ruling R2): rule 1 per submitted gap; the gap-id length issue per agenda gap; rule 2
+    per agenda gap; then per question in submission order the `question_id appears twice` issue
+    (before rules 3-7), rule 3, 4, 5 per searched source in listed order, 6 per citation in
+    order, the round 11 blank-text frames (text, answer, limitation), and 7. Last, unconditionally
+    (a content issue never masks it), `_model_text_issues`: each answer's `RunText` issues, or
+    `text carries a reference`. G1-X appends the de-duplicated RULES issues after these
+    (Stage 2).
     """
     agenda_ids = {gap.gap_id for gap in upstream}
     issues: list[str] = []
@@ -299,6 +304,16 @@ def validate_research(
             issues.append(_line("gap_id appears twice: ", gap.gap_id))
         else:
             counted[gap.gap_id] = len(gap.questions)
+    issues += [
+        _line(
+            "gap_id is too long to compose its fact ids (at most ",
+            str(GAP_ID_MAX),
+            " characters): ",
+            gap.gap_id,
+        )
+        for gap in upstream
+        if len(gap.gap_id) > GAP_ID_MAX
+    ]
     issues += [
         _line("a gap takes 1 to 4 research questions: ", gap.gap_id)
         for gap in upstream
@@ -322,7 +337,8 @@ _RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
 def _model_text_issues(submission: ResearchSubmission) -> list[str]:
     """An answer becomes `Claim.text` (`CPDR-ANS-<id>`), so it is also checked as `RunText` (one
     `TypeAdapter`), whatever other issues the submission has, as CP-2E does; no composition can
-    raise after the binding write. Lines are `<path>: <msg>` without the input value."""
+    raise after the binding write; a well-formed reference is refused too, as `CPDR-ANS-<id>`
+    cites no fact. Lines are `<path>: <msg>` without the input value."""
     found: list[str] = []
     for g, gap in enumerate(submission.gaps):
         for q, question in enumerate(gap.questions):
@@ -337,6 +353,11 @@ def _model_text_issues(submission: ResearchSubmission) -> list[str]:
                         include_input=False, include_url=False, include_context=False
                     )
                 ]
+                continue
+            if any(run.kind != "text" for run in tokenize(question.answer)):
+                found.append(
+                    clipped((f"gaps[{g}].questions[{q}].answer: ", "text carries a reference"))
+                )
     return found
 
 
@@ -455,6 +476,8 @@ IDENTIFIER_MAX = 160  # `contracts.Identifier` max_length
 QUESTION_ID_MAX = IDENTIFIER_MAX - max(
     len("TDR.2.") + len(f".{field}") for field, _ in TDR2_COLUMNS
 )
+# A gap id likewise sits in `TDR.1.<id>.<field>` (the longest field decides) and `cpdr-<id>-<field>`.
+GAP_ID_MAX = IDENTIFIER_MAX - max(len("TDR.1.") + len(f".{field}") for field, _ in TDR1_COLUMNS)
 TOTAL_FIELDS = (
     "gaps_total",
     "gaps_resolved",

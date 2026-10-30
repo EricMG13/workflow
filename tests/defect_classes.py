@@ -65,6 +65,7 @@ carrying its own soft hyphen, or a joined value against a wrapped quote.
 """
 
 import copy
+import functools
 import json
 import unicodedata
 from collections.abc import Callable, Mapping, Sequence
@@ -855,12 +856,12 @@ def model_text_failures(
     payload = json.loads(positive)
     failures: list[str] = []
     cases: list[tuple[TextPath, Callable[[str], Any]]] = [
-        (path, lambda value, path=path: with_text(payload, path, value))
+        (path, functools.partial(with_text, payload, path))
         for path in free_text_paths(payload, schema)
     ]
     if fill_absent:
         cases += [
-            (path, lambda value, path=path: with_absent_text(payload, path, value))
+            (path, functools.partial(with_absent_text, payload, path))
             for path in absent_free_text_paths(payload, schema)
         ]
     paths = [path for path, _ in cases]

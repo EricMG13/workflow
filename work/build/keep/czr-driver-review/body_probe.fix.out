@@ -1,0 +1,2 @@
+quality body = QualityInputs.model_dump_json() -> _read_body gives dict
+CP-5 shape: FIG rev: f1 is not a ref of the read body

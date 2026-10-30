@@ -1153,6 +1153,61 @@ def test_question_id_max_is_the_longest_id_the_composer_accepts() -> None:
         cpdr.compose(inputs)
 
 
+# --- gap_id length (Stage 5) ---------------------------------------------------------------------
+
+# The CP-0 fact `T5.<gap>.gap` is itself an `Identifier`, so the longest agenda gap id a CP-0
+# module can carry is 160 less `T5.` and `.gap`.
+CP0_GAP_ID_LONGEST = cpdr.IDENTIFIER_MAX - len("T5.") - len(".gap")
+
+
+def _with_gap_id(gap_id: str) -> tuple[dict[str, Any], Module]:
+    """A submission payload and a CP-0 module whose single agenda gap carries `gap_id`."""
+    (fact, other) = cp0_facts(empty=False)
+    renamed = fact.model_copy(update={"fact_id": f"T5.{gap_id}.gap", "row_id": gap_id})
+    module = cp0_module(empty=False).model_copy(update={"facts": (renamed, other)})
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    payload["gaps"][0]["gap_id"] = gap_id
+    return payload, module
+
+
+def test_the_longest_accepted_gap_id_composes() -> None:
+    """Every id Python derives from a gap id (`TDR.1.<id>.<field>`, `cpdr-<id>-<field>`) is an
+    `Identifier`: the longest id the validator accepts composes."""
+    payload, module = _with_gap_id("g" * cpdr.GAP_ID_MAX)
+    sub = submission(payload)
+    attempt, store = attempt_of(module)
+    inputs = cpdr._inputs(store, attempt, sub)
+    assert cpdr.validate_research(submission=sub, upstream=inputs.agenda, pack=sources()) == ()
+    assert cpdr.compose(inputs).facts
+
+
+@pytest.mark.parametrize("length_of", ["one-past", "longest-cp0-gap"])
+def test_a_gap_id_too_long_to_compose_is_refused_at_validation(length_of: str) -> None:
+    gap_id = "g" * (cpdr.GAP_ID_MAX + 1 if length_of == "one-past" else CP0_GAP_ID_LONGEST)
+    payload, module = _with_gap_id(gap_id)
+    expected = (
+        f"gap_id is too long to compose its fact ids (at most {cpdr.GAP_ID_MAX} "
+        f"characters): {gap_id}"
+    )
+    attempt, store = attempt_of(module, json.dumps(payload))
+    inputs = cpdr._inputs(store, attempt, submission(payload))
+    assert cpdr.validate_research(
+        submission=inputs.submission, upstream=inputs.agenda, pack=sources()
+    ) == (expected,)
+    outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
+    assert outcome.output is None
+    assert expected in outcome.issues
+
+
+def test_gap_id_max_is_the_longest_id_the_composer_accepts() -> None:
+    """The constant is tight: one more character makes `Fact` raise."""
+    payload, module = _with_gap_id("g" * (cpdr.GAP_ID_MAX + 1))
+    attempt, store = attempt_of(module)
+    inputs = cpdr._inputs(store, attempt, submission(payload))
+    with pytest.raises(ValueError, match="Fact"):
+        cpdr.compose(inputs)
+
+
 def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
     """The RunText check is unconditional (as CP-2E's): a content issue no longer masks it."""
     payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
@@ -1164,6 +1219,80 @@ def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
     assert issues == ("an answered question carries no limitation: transactions", malformed)
     question["limitation"] = None
     assert check(submission(payload)) == issues[1:]
+
+
+REFERENCE_ISSUE = "gaps[0].questions[0].answer: text carries a reference"
+
+
+def _answer_payload(answer: str, limitation: str | None = None) -> dict[str, Any]:
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    question = payload["gaps"][0]["questions"][0]
+    question["answer"] = answer
+    if limitation is not None:
+        question["limitation"] = limitation
+    return payload
+
+
+@pytest.mark.parametrize("answer", ["Rates matter {fact_a|x} a lot", "Rates matter [fact_a] a lot"])
+def test_an_answer_with_a_well_formed_reference_is_refused(answer: str) -> None:
+    """A reference in the answer names no fact of the module (`CPDR-ANS-<id>` cites none), so
+    settle would reject the module after a valid step; it is refused with the step instead."""
+    payload = _answer_payload(answer)
+    assert check(submission(payload)) == (REFERENCE_ISSUE,)
+    attempt, store = attempt_of(cp0_module(empty=False), json.dumps(payload))
+    outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
+    assert outcome.output is None
+    assert outcome.issues == (REFERENCE_ISSUE,)
+
+
+def test_a_reference_in_an_answer_is_reported_beside_a_content_issue() -> None:
+    payload = _answer_payload("Rates matter [fact_a] a lot", "Some limitation text")
+    assert check(submission(payload)) == (
+        "an answered question carries no limitation: transactions",
+        REFERENCE_ISSUE,
+    )
+
+
+def test_a_malformed_reference_keeps_the_run_text_message_only() -> None:
+    issues = check(submission(_answer_payload("Rates matter [a lot")))
+    assert issues == (
+        "gaps[0].questions[0].answer: Value error, Malformed run text: unbalanced or empty reference",
+    )
+
+
+def _frozen_answers() -> list[tuple[str, str]]:
+    cases = SUBMISSIONS["cpdr"]
+    payloads = {k: v for k, v in cases.items() if k != "blocked"}
+    payloads["blocked-0"] = cases["blocked"]["attempt_0"]
+    payloads["blocked-1"] = cases["blocked"]["attempt_1"]
+    return [
+        (name, q["answer"])
+        for name, payload in payloads.items()
+        for gap in payload["gaps"]
+        for q in gap["questions"]
+        if q.get("answer")
+    ]
+
+
+def test_no_frozen_cpdr_answer_carries_a_reference() -> None:
+    """The new rule moves no frozen text: every recorded answer is reference-free."""
+    from deploy_vii.prose import tokenize
+
+    answers = _frozen_answers()
+    assert answers
+    for name, answer in answers:
+        assert all(run.kind == "text" for run in tokenize(answer)), name
+
+
+@pytest.mark.parametrize("name", ["partial", "unresolved"])
+def test_check_of_a_frozen_submission_never_carries_the_reference_issue(name: str) -> None:
+    sub = submission(SUBMISSIONS["cpdr"][name])
+    assert not any(i.endswith("text carries a reference") for i in check(sub))
+
+
+def test_no_pinned_refusal_carries_the_reference_issue() -> None:
+    for item in EXPECTED["refusals"].values():
+        assert not any(i.endswith("text carries a reference") for i in item["step_issues"])
 
 
 # --- free text is not run text (rulings item 56) ----------------------------------------------------

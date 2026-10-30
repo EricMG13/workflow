@@ -1706,6 +1706,15 @@
       "sha256": "9805c343101a2f1d1de76ca6a6378cc97bf2952fe936e195f2acc4d45bf299ba",
       "reason": "Stage 4 batch 2 fix round 3: the fact path asks _carries_reference(module_id, fact) and passes the issuer name to resolve(), so free text and verbatim quotes render as written and run text with a digit-bearing issuer name resolves (rulings 2026-10-29-stage3 items 54 and 56).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "c2040a50d5cb912cc9f9addcd1db9cccc164db143fa57e00974067fbf5d2704b",
+      "project_commit": "759880511daf0932238905bf3b04142b87cff73f",
+      "sha256": "9b152b587f6f32cf3407175127766391291d4f9166725df7f854cadc632983a3",
+      "reason": "Stage 4 batch 2 fix round 4: the run-text registry is keyed by (module, table, field) and adds CP-L10 TL10.3 assessment and credit_transmission and CP-2H T2R.10 gap, why_it_matters, affected_analysis and action, so analyst run text resolves to its figure while free fields in the same tables are shown as written (rulings 2026-10-29-stage3 items 56, 58 and 59).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

@@ -911,7 +911,7 @@ class FinancialWorkflow:
                 )
                 status = "published"
                 self._phase = "complete"
-            except Exception as error:  # noqa: BLE001 - finalize every owned partial publication
+            except Exception as error:  # fail-open by design: finalize owned partial publications
                 reason = str(error)
                 after = self._store.read()
                 new = [

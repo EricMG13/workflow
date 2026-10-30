@@ -39,6 +39,8 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 - CP-DR (item 73 review, Info, predates) `validate_research` order docstring: closed by f589c14.
 - (found by triage, same class as the CP-2D/1D/3D protocol §6 entries) CP-2A `_validate_step` raw `model_validate_json`: closed by f589c14 (OI-2).
 
+- Owner (predates, Low) CP-1 accepts a blank scope or source limitation: closed by c34f81a (RED 84229e8; merge 8b7207a; OI-14, the user directly). Entity and review limitations are covered too.
+
 ## Decided
 - CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
 - CP-2A Low forged `Upstream`: OI-4.

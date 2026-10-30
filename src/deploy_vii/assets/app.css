@@ -69,7 +69,7 @@ kbd{font-family:var(--rb-font-mono);font-weight:500}
 .chips .chip-lim{color:var(--rb-caut)}
 .chips .chip-pass{color:var(--rb-pos)}
 .chips .chip-blocked{color:var(--rb-neg)}
-.module-list{display:flex;flex-direction:column;gap:3px;min-height:0}
+.module-list{display:flex;flex-direction:column;gap:3px;min-height:0;flex-shrink:0}
 .module-link{display:grid;grid-template-columns:18px 16px minmax(0,1fr) auto;align-items:center;gap:var(--rb-s-2);padding:0 var(--rb-s-2);min-height:var(--rb-target);border-left:3px solid var(--rb-ink-3);border-radius:var(--rb-r-tile);color:var(--rb-ink);text-decoration:none;font-size:12px}
 .module-link:hover{background:var(--rb-head)}
 .module-link .n{font-size:var(--rb-fs-micro);color:var(--rb-ink-2)}

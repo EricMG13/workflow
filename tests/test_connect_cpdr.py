@@ -1164,3 +1164,41 @@ def test_a_malformed_answer_is_reported_beside_a_content_issue() -> None:
     assert issues == ("an answered question carries no limitation: transactions", malformed)
     question["limitation"] = None
     assert check(submission(payload)) == issues[1:]
+
+
+# --- free text is not run text (rulings item 56) ----------------------------------------------------
+
+
+def test_a_question_with_a_bracketed_citation_renders_as_written() -> None:
+    from deploy_vii.contracts import ModuleView as _MV
+    from deploy_vii.render import empty_view, render
+
+    payload = copy.deepcopy(SUBMISSIONS["cpdr"]["partial"])
+    question = payload["gaps"][0]["questions"][0]
+    question["text"] = question["text"].rstrip("?") + " [sic]?"
+    attempt, store = attempt_of(cp0_module(empty=False), json.dumps(payload))
+    assert cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt).issues == ()
+    inputs = cpdr._inputs(store, attempt, submission(payload))
+    run = store.read().run
+    module = cpdr.research_module(
+        report=cpdr.compose(inputs), inputs=inputs, attempt=attempt, run=run
+    )
+    base = empty_view(run, candidate=False)
+    mods = tuple(
+        _MV(
+            module_id=m.module_id,
+            title=m.title,
+            aliases=m.aliases,
+            status="restricted",
+            artifact_sha256=module.content_hash(),
+            facts=module.facts,
+            tables=module.tables,
+            claims=module.claims,
+            limitations=module.limitations,
+        )
+        if m.module_id == "CP-DR"
+        else m
+        for m in base.modules
+    )
+    page = render(base.model_copy(update={"modules": mods}))
+    assert "[sic]?" in page

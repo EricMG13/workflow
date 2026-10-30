@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 from collections.abc import Callable
+from decimal import Decimal
 from pathlib import Path
 
 import czr_runs
@@ -165,7 +166,15 @@ BODY: dict[str, object] = {"cp1_facts": [{"ref": "f1", "unit": "USD_M", "shown":
 
 
 def _fact(fact_id: str, label: str = "Revenue", period: str = "Q2 26") -> Fact:
-    return Fact(fact_id=fact_id, label=label, table_id="T1", period=period)
+    return Fact(
+        fact_id=fact_id,
+        label=label,
+        table_id="T1",
+        period=period,
+        amount=Decimal("2900"),
+        unit="USD",
+        scale=Decimal(1000000),
+    )
 
 
 def _facts_of(*facts: Fact) -> Callable[[str], tuple[Fact, ...]]:

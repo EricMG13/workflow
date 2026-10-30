@@ -34,3 +34,9 @@ before/after harness: `heavy-targets.txt` (whole test functions, so all parametr
 module scope), not the test body. Every earnings heavy test settles or re-settles a CP-1B
 owner (`submit_review` → `_complete_intent` / `_verify_outcome`), the product path P1–P3 target.
 The 410afa2 run also had 3 `test_owner_s1a` file failures (PR manager); not this sweep's rows.
+
+## Follow-up rows found while applying
+
+| Row | Location | Finding | Status |
+|---|---|---|---|
+| F1 | `src/deploy_workflow/host.py:492-527` `_ParsedExecution.result` | already caches parsed results (4 entries, `_load` every call; commit 7d0b671). After P3 the base `Execution.result` does the same, so this override is a second cache layer: up to 8 parsed CP-1 Modules (≈ 1.6–1.9 GiB) in a process that uses both. Deleting the override (and later `pack`) is a `deploy_workflow` host change outside the approved P1–P3. | deferred (owner) |

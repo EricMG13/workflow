@@ -653,3 +653,11 @@
 - 12:12 CZR driver re-review APPROVE (mx-precise aac22ee3; wiring_probe added). Merged claude/s5-czr-driver2 as 4f8678f; lane CZR+CP-DR fast set 484 passed 7 skipped exit 0. agent=mx-feature fix-rounds=1 gates-first-pass=n. Item 74: handed to Workflow Test (local_9ec5eca0).
 - 12:12 CZR hand-off delivered to Workflow Test (local_9ec0625f; the first send used a mistyped id and was not delivered). A correction followed: the reply-to is the Modules session local_d457766d.
 - 12:13 Final verification held. Waiting on Workflow Test (writing the CZR submissions, running) and on the test-speed session's timing window (asked to signal when the machine is free for the long suites).
+- 12:16 Final verification armed (work/build/keep/s5-final/run.sh on ../s5-final at 892cac9). It starts at 13:08Z per the test-speed session (local_e65d75e8: quiet machine until ~13:05Z, then at most 6 pytest processes). Shards:
+  - f1: the fast set + test_shell_css;
+  - f2: test_financial_workflow;
+  - f3: test_financial_render;
+  - f4: test_owner_s1a;
+  - f5: test_owner_cp2a;
+  - f6: test_owner_cpl10.
+  Scope: the post-Stage-5 delta. CP-DR is already run (341 passed). The CP-1 precheck reaches owner runs through owner_workflow._evidence_issues; earnings_workflow keeps its own copy (unaffected). The mx-precise differential probe found no output change on any synthetic page. Other owner and G2 genuine suites are not rerun.

@@ -637,11 +637,9 @@ def test_a7_bindings_and_fp05_cells_on_the_settled_head(
                     assert (state, text.replace("G1", "G#")) == (cell["state"], cell["shown"])
 
 
-@pytest.mark.skip(reason="blocked on G2 (Stage 3): render_owner_slice and the DeliveryScope row")
-def test_a7_g2_renders_the_rating_triggers_block() -> None:
-    """DeliveryScope(scope_id="cp2h-fp05-ratings", pathway="distressed_restructuring",
-    requested_modules=("CP-2H",), sections=("rating-triggers",), rails=("evidence","limitations"))
-    renders rating-triggers populated; the other FP05 blocks come from their own heads."""
+# A7 (the rating-triggers block rendered) is covered by G2's genuine cases in
+# tests/test_owner_rendering.py (DEFERRED, _check_scope_run):
+# test_genuine_deferred_complete_cases[cp2h-fp05-ratings-positive] and [cp2h-fp05-ratings-gap].
 
 
 def test_driver_cases_are_the_manifest_runs() -> None:

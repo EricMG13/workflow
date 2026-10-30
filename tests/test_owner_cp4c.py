@@ -612,10 +612,9 @@ def test_a7_bindings_and_fp05_cells_on_the_settled_head(
                     assert (state, text.replace("G1", "G#")) == (cell["state"], cell["shown"])
 
 
-@pytest.mark.skip(reason="blocked on G2 (Stage 3): render_owner_slice and the DeliveryScope row")
-def test_a7_g2_renders_the_two_recovery_blocks() -> None:
-    """DeliveryScope(scope_id="cp4c-fp05-recovery", ...) renders recovery-by-class and
-    value-allocation-claims populated, every other FP05 block idle (lease Rendered sections)."""
+# A7 (the two recovery blocks rendered) is covered by G2's genuine cases in
+# tests/test_owner_rendering.py (DEFERRED, _check_scope_run):
+# test_genuine_deferred_complete_cases[cp4c-fp05-recovery-positive] and [cp4c-fp05-recovery-gap].
 
 
 def test_driver_cases_are_the_manifest_runs() -> None:

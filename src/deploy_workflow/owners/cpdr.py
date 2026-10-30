@@ -300,6 +300,16 @@ def validate_research(
         else:
             counted[gap.gap_id] = len(gap.questions)
     issues += [
+        _line(
+            "gap_id is too long to compose its fact ids (at most ",
+            str(GAP_ID_MAX),
+            " characters): ",
+            gap.gap_id,
+        )
+        for gap in upstream
+        if len(gap.gap_id) > GAP_ID_MAX
+    ]
+    issues += [
         _line("a gap takes 1 to 4 research questions: ", gap.gap_id)
         for gap in upstream
         if not MIN_QUESTIONS <= counted.get(gap.gap_id, 0) <= MAX_QUESTIONS
@@ -455,6 +465,8 @@ IDENTIFIER_MAX = 160  # `contracts.Identifier` max_length
 QUESTION_ID_MAX = IDENTIFIER_MAX - max(
     len("TDR.2.") + len(f".{field}") for field, _ in TDR2_COLUMNS
 )
+# A gap id likewise sits in `TDR.1.<id>.<field>` (the longest field decides) and `cpdr-<id>-<field>`.
+GAP_ID_MAX = IDENTIFIER_MAX - max(len("TDR.1.") + len(f".{field}") for field, _ in TDR1_COLUMNS)
 TOTAL_FIELDS = (
     "gaps_total",
     "gaps_resolved",

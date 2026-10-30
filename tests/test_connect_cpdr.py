@@ -1177,7 +1177,7 @@ def test_the_longest_accepted_gap_id_composes() -> None:
     sub = submission(payload)
     attempt, store = attempt_of(module)
     inputs = cpdr._inputs(store, attempt, sub)
-    assert validate_research(submission=sub, upstream=inputs.agenda, pack=sources()) == ()
+    assert cpdr.validate_research(submission=sub, upstream=inputs.agenda, pack=sources()) == ()
     assert cpdr.compose(inputs).facts
 
 
@@ -1191,10 +1191,9 @@ def test_a_gap_id_too_long_to_compose_is_refused_at_validation(length_of: str) -
     )
     attempt, store = attempt_of(module, json.dumps(payload))
     inputs = cpdr._inputs(store, attempt, submission(payload))
-    assert (
-        validate_research(submission=inputs.submission, upstream=inputs.agenda, pack=sources())
-        == (expected,)
-    )
+    assert cpdr.validate_research(
+        submission=inputs.submission, upstream=inputs.agenda, pack=sources()
+    ) == (expected,)
     outcome = cpdr.ENTRY_VALIDATOR(store, store.pack(), attempt)
     assert outcome.output is None
     assert expected in outcome.issues

@@ -1,0 +1,8 @@
+== stores by location: {'lane/work/build/keep': 1, 'scratchpads': 47}
+== CP-1 source_context store payloads by location: {'lane/work/build/keep': 2, 'scratchpads': 74}
+== JSON files mentioning event_scan_explanation by location: {'other-worktrees/cases': 979, 'other-worktrees/other': 5, 'lane/cases (control)': 9, 'lane/other': 1, 'lane/work/build/keep': 16, 'scratchpads': 149}
+== embedded SourceContextReview payloads in JSON by location: {'other-worktrees/cases': 2078, 'lane/cases (control)': 18, 'lane/work/build/keep': 34, 'scratchpads': 212}
+== distinct JSON payloads: 13 packs collected: 16
+== json payloads without a matching pack (blank checks only): 2342
+== status counts: {('store', 'valid'): 38, ('store', 'pending'): 38, ('json', 'template'): 2342}
+== blank failures: 0 errors: 0

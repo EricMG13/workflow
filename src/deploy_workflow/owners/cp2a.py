@@ -61,7 +61,7 @@ from deploy_vii.execution import (
     current_inputs,
     inherited_limitations,
 )
-from deploy_vii.live.schema import normalise
+from deploy_vii.live.schema import exact_json, json_object, normalise
 from deploy_vii.live.submission import Submitted
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
@@ -1620,14 +1620,28 @@ def cp2a_module(report: DownsideReport, *, inputs: Sequence[Input], attempt: int
     )
 
 
+def _parsed(payload: str) -> tuple[DownsideSubmission | None, tuple[str, ...]]:
+    """The submission, or its shape issues (protocol section 6: model text is read only through
+    `json_object`). The schema validates the bounded document's exact re-serialisation, never the
+    raw text; text `json_object` refuses keeps Pydantic's own shape issue and is refused even if
+    Pydantic would parse it."""
+    document = json_object(payload)
+    try:
+        if document is None:
+            DownsideSubmission.model_validate_json(payload)  # for its shape issue only
+            return None, ("(root): not a bounded JSON object",)
+        return DownsideSubmission.model_validate_json(exact_json(document)), ()
+    except ValidationError as error:
+        return None, shape_issues(error)
+
+
 def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> StepValidation:
     """The step validator `submit` hands the journal and the verifier replays (its last step is
     the one under validation)."""
     step = attempt.steps[-1]
-    try:
-        submission = DownsideSubmission.model_validate_json(store.payload(step.payload_sha256))
-    except ValidationError as error:
-        return StepValidation(issues=shape_issues(error))
+    submission, shape = _parsed(store.payload(step.payload_sha256))
+    if submission is None:
+        return StepValidation(issues=shape)
     upstream = cp2a_upstream(store, attempt)
     issues = validate_downside(pack=pack, submission=submission, upstream=upstream)
     if issues:

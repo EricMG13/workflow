@@ -51,6 +51,7 @@ from deploy_vii.live.schema import normalise as normalise_payload
 from deploy_vii.live.submission import Submitted, _with_rules
 from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.prose import tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
@@ -1969,7 +1970,8 @@ def validate_market_implied(
     """The validator issues of a submission against the bound upstream (empty: valid). The
     summary becomes `Claim.text` (`CP-3D-VIEW-01`), so it is also checked as `RunText` (the
     type's message, never the input) whatever the content rules found, as CP-2E does, and no
-    composition can raise after the binding write."""
+    composition can raise after the binding write. A well-formed reference is refused too: the
+    summary claim names no fact, so settlement would reject the module after a valid step."""
     issues = submission_issues(submission=submission, context=upstream.context)
     try:
         _RUN_TEXT.validate_python(submission.summary.text)
@@ -1981,6 +1983,9 @@ def validate_market_implied(
                 for e in error.errors(include_input=False, include_url=False, include_context=False)
             ),
         )
+    else:
+        if any(run.kind != "text" for run in tokenize(submission.summary.text)):
+            issues = (*issues, "summary.text: text carries a reference")
     return tuple(dict.fromkeys(issues))
 
 

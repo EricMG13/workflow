@@ -672,3 +672,4 @@
 - 20:09 Item 79: the user confirmed CZR is done (item 75 stands). Only the release merge approval via the PM remains.
 - 20:11 User approved the release merge in the Modules session: "Yes, merge 6cda54b" (local, no push). Forwarded word for word to the PR manager.
 - 21:05 PM merged lane 6cda54b into codex/checkpoint as b6c7053 (user-approved in the PM session; parents 05c3b27 and 6cda54b; differs from 6cda54b only in AGENTS.md, checkpoint's version). Item 80: goal closed.
+- 21:12 Stored-journal probe (mx-precise a68e8240; work/build/keep/journal-probe/probe.py, exit 0 on controller rerun): 48 stores (76 CP-1 payloads: 38 valid, 38 pending) plus 2342 embedded template reviews across the worktrees, keep and scratchpads. None fails the OI-14/OI-20 blank checks; the 38 valid steps pass full validation and rebuild source_context().

@@ -32,6 +32,8 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 - Owner (predates, D12) report_view records 3e5b537, 24f879a, 8aef58d (item 22) and (5.3 lens B Low 1) the LEAD records cffdf9f ×9, 1a1a140, bb4553b ×2: closed by a8eb490 (merge 0fc097c; OI-6, OI-17); strict probe df26ea8..HEAD exit 0.
 - CP-1 chart oracle `cases/charts/expected.json` not pinned: closed by 1efec9b (merge 0fc097c; OI-7); PINS 87.
 
+- (items 12, 19, 64) DR.6 "Not computable" chip xfail tripwire: closed by 2d12ea5 (RED 2eba590, D12 0abbab9; merge 3236818; OI-13, the user directly).
+
 ## Decided
 - CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
 - CP-2A Low forged `Upstream`: OI-4.

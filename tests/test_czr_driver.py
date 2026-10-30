@@ -280,6 +280,22 @@ def test_binder_takes_refs_from_every_list() -> None:
     assert out == "{f1|USD_M}"
 
 
+def test_a_figure_in_a_projection_step_with_an_object_body_raises_naming_it() -> None:
+    body = czr_runs.figure_body("projection", BODY)
+    assert body is None
+    with pytest.raises(RuntimeError, match="FIG rev"):
+        czr_runs.bind_stage_figures("{{FIG:rev}}", {"rev": SELECTOR}, body, _facts_of(_fact("f1")))
+    assert czr_runs.figure_body("module_context", BODY) == BODY
+
+
+def test_no_settled_head_error_names_the_figure() -> None:
+    def no_head(module_id: str) -> tuple[Fact, ...]:
+        raise RuntimeError(f"0 settled heads for {module_id}, expected one")
+
+    with pytest.raises(RuntimeError, match="FIG rev: 0 settled heads for CP-1"):
+        czr_runs.bind_stage_figures("{{FIG:rev}}", {"rev": SELECTOR}, BODY, no_head)
+
+
 def test_a_step_with_inputs_must_have_read_them_before_submitting() -> None:
     with pytest.raises(RuntimeError, match="financials.*read_inputs not called"):
         czr_runs.require_read("financials", "projection", read_made=False)

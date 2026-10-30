@@ -40,17 +40,25 @@ The calls run in order. A tool call must return status ok. `{"tool": "read_input
 `arguments`) calls `workflow.read_inputs()`; it has no status and must not raise: the workflow
 raises `WorkflowError` when it refuses (a step whose spec declares `inputs` "none", a wrong
 phase, a call limit), the driver does not catch it, and the raise ends the run. Its parsed
-`body` is the stage's read body: a JSON object, or, when the body is not a JSON object (the
-CP-1 `projection` text), no read body. Every step whose spec declares `inputs` other than
-"none" must have made this call before its submission, else the run raises naming it.
+`body` is the stage's read body when it is a JSON object (else the stage has none). Every step
+whose spec declares `inputs` other than "none" must have made this call before its
+submission, else the run raises naming it. By the specs: CP-1 `narrative`, `readiness` and
+`quality` (`inputs="projection"`), CP-2 `credit_synthesis` and CP-5 `integrity_review`
+(`inputs="module_context"`) must call `read_inputs`; CP-0 `source_readiness`, CP-1
+`source_context` and `financials`, and CP-1A `business_context` declare `inputs="none"` and
+must not (the workflow raises `WorkflowError`).
 
-A `{{FIG:name}}` token in a stage's submission is replaced by `{<fact_id>|<unit_token>}`. The
-fact is the one fact of the settled head (accepted or restricted) of the figure's `module_id`
-whose `table_id`, `period` and `label` all equal the selector. It must be a `ref` of the stage's
-read body (refs are collected from every list of `{ref, unit, shown, ...}` entries of the JSON
-object; one ref shown two ways raises) with the selector's `unit_token` and `spelled`. A token
-in a stage with no JSON-object read body (every CP-1 step), an unknown name, zero or several
-candidates, or a mismatch raises naming the figure; nothing falls back. Then the one run-time
+A `{{FIG:name}}` token in a stage's submission is replaced by `{<fact_id>|<unit_token>}`. FIG is
+meant for CP-2 `credit_synthesis`; CP-5 cites bare fact ids in `upstream_refs` and needs none.
+It binds only in a stage whose spec declares `inputs="module_context"`; in any other stage a
+token raises naming the figure, whatever the body parses to (CP-1 `quality`'s projection body
+is a JSON object). The fact is the one fact of the settled head (accepted or restricted) of
+the figure's `module_id` whose `table_id`, `period` and `label` all equal the selector. It must
+be a `ref` of the stage's read body (refs are collected from the TOP-LEVEL lists of the JSON
+object only, each entry `{ref, unit, shown, ...}`; one ref shown two ways raises) with the
+selector's `unit_token` and `spelled`. A token in a stage that does not bind, an unknown name,
+zero or several candidates, no settled head, or a mismatch raises naming the figure; nothing
+falls back. Then the one run-time
 token `PACK_PLACEHOLDER` is replaced by `PreparedPack.content_hash()` and the submission must be
 valid.
 
@@ -190,10 +198,14 @@ def bind_stage_figures(
         if selector is None:
             raise RuntimeError(f"FIG {name}: not in the submissions figures")
         if read_body is None:
-            raise RuntimeError(f"FIG {name}: the stage has no JSON-object read body")
+            raise RuntimeError(f"FIG {name}: the stage has no module_context read body")
         if refs is None:
             refs = _read_refs(read_body)
-        fact = _figure_fact(facts_of(selector["module_id"]), name, selector)
+        try:
+            facts = facts_of(selector["module_id"])
+        except RuntimeError as error:
+            raise RuntimeError(f"FIG {name}: {error}") from error
+        fact = _figure_fact(facts, name, selector)
         shown = refs.get(fact.fact_id)
         if shown is None:
             raise RuntimeError(f"FIG {name}: {fact.fact_id} is not a ref of the read body")
@@ -222,6 +234,11 @@ def _settled_facts(workflow: OwnerWorkflow) -> Callable[[str], tuple[Fact, ...]]
         return store.head_module(heads[0]).facts
 
     return facts_of
+
+
+def figure_body(inputs: str, read_body: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The read body FIG may bind against: only a `module_context` stage's, else None."""
+    return read_body if inputs == "module_context" else None
 
 
 def _read_body(done: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -260,7 +277,8 @@ def czr_closed(root: Path, submissions_path: Path = SUBMISSIONS) -> tuple[Path, 
                 raise RuntimeError(f"{current} {call['tool']}: {done['error_code']}")
         require_read(current, workflow._spec.inputs, read_made=read_made)
         payload = json.dumps(stage["submission"], ensure_ascii=False)
-        payload = bind_stage_figures(payload, figures, read_body, facts_of)
+        body = figure_body(workflow._spec.inputs, read_body)
+        payload = bind_stage_figures(payload, figures, body, facts_of)
         submit_valid(workflow, payload.replace(PACK_PLACEHOLDER, pack.content_hash()))
     finish(workflow, root / "owner-receipt.json")
     return root / "store", root / "owner-receipt.json", root / "model"

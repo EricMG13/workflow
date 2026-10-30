@@ -574,3 +574,4 @@
 - 04:13 PM merged the Stage 3 release (lane 127d8b5) into codex/checkpoint as dafcbfb (--no-ff, local, not pushed; user approved directly; PM ran no tests). Stage 4 not merged.
 - 04:16 G2 gaps build (mx-feature a543732f) claude/s5-g2-gaps 715f5a4: fast 170, ruff/format/mypy 0, suppressions 13/5, genuine cp3d-positive 1.8s (plan is CP-0 + CP-3D, no CP-1) and s1a-positive 28m pass. agent=mx-feature fix-rounds=0 gates-first-pass=y. Review mx-precise dispatched; genuine s1a-gap, cp3d x2, cp4 x3 running (s5g2/g-0, g-1).
 - 04:19 G2 gaps build review APPROVE (mx-precise a35e1a14; no finding). Item 48.
+- 04:40 Stopped old shard cp-1 (ff9070e) at tests/test_owner_cp4c.py::test_a3_model_text_is_refused_or_verbatim_and_never_wedges after 3h40m at 100% CPU: its cp4c tests use the pre-item-41 driver (cause B), so not evidence; cp4/cp2d/cp2a behind it rerun in Stage 5.1 on the final tip. Result so far: 51 run, 3 known cp4c failures (fixed by item 41, green on s4-int2).

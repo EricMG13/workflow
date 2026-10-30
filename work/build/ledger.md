@@ -599,3 +599,4 @@
 - 05:59 CP-4 owner fix genuine rerun: 6 passed, exit 0 (12m). Item 57; claude/s5-cp4-owner merged into the lane.
 - 06:02 Narrowed authority relayed by LEAD-session peer (user 2026-10-30 "direct check"; shared memories updated): applied recommendations no longer authorise src/deploy_vii changes or imports. Round 3 (item 56, report_view/render) held unmerged pending the user's own word; asked the user about it and about items 45 and 51 (src/deploy_vii decisions made before the narrowing).
 - 06:03 User (direct): round 3 'Yes, merge' after review; items 45 and 51 'Both stand'. Item 58.
+- 06:03 PM merged the Stage 4 release (lane 9f71bfa) into codex/checkpoint as 2bbf633 (--no-ff, local, not pushed; user approved directly; PM ran no tests).

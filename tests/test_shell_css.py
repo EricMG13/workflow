@@ -5,18 +5,33 @@ from importlib.resources import files
 
 import pytest
 
+_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+_RULE = re.compile(r"([^{}]+)\{([^{}]*)\}")
+_CLASS_TOKEN = re.compile(r"(?<![\w-])\.module-list(?![\w-])")
 
-def _declarations(css: str, rule_selector: str) -> dict[str, str] | None:
-    match = re.search(re.escape(rule_selector) + r"\s*\{([^}]*)\}", css)
-    if not match:
-        return None
-    pairs = (d.split(":", 1) for d in match.group(1).split(";") if d.strip())
-    return {k.strip(): v.strip() for k, v in pairs}
+
+def _applies_to_module_list(selectors: str) -> bool:
+    """True when a selector of the comma list ends in a compound carrying the class token."""
+    return any(
+        _CLASS_TOKEN.search(re.split(r"[\s>+~]+", selector.strip())[-1])
+        for selector in selectors.split(",")
+    )
 
 
 def module_list_passes(css: str) -> bool:
-    declared = _declarations(css, ".module-list")
-    return declared is not None and declared.get("flex-shrink") == "0"
+    """At least one rule applies to `.module-list` (also inside `@media`, or as an override) and
+    the last `flex-shrink` declared by those rules, in source order, is `0`."""
+    applying = False
+    shrinks: list[str] = []
+    for selectors, body in _RULE.findall(_COMMENT.sub("", css)):
+        if not _applies_to_module_list(selectors):
+            continue
+        applying = True
+        for declaration in body.split(";"):
+            name, _, value = declaration.partition(":")
+            if name.strip() == "flex-shrink":
+                shrinks.append(value.strip())
+    return applying and bool(shrinks) and shrinks[-1] == "0"
 
 
 _GOOD = ".module-list{flex-shrink:0}"

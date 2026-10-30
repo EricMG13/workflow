@@ -44,3 +44,8 @@
 - **CP-DR (item 69 review, Low, docstring).** `cpdr.py:285-289`: the `validate_research` order docstring (ruling R2) lists rules 1-7 and omits the gap-id length issue, which sits between rule 1 and rule 2. Rides with the next CP-DR change or the end batch. **Closed** (item 73, eb7e517).
 - **CP-DR (item 73 review, Info, predates).** The `validate_research` order docstring (`cpdr.py:289-291`) still omits the `question_id appears twice` line and the closing `_model_text_issues` lines (RunText and the reference issue, after rule 7). It is accurate about what it names.
 - **CZR design question (item 75, needs the user's own word; `src/deploy_vii`).** CP-1 QA blocks the real CZR filings on 138 reconciliation BLOCK gaps whose inputs 10-Q/10-K filings do not print (FY_QUARTERS, EBITDA/adjusted EBITDA bridges, cash and balance identities, DEBT_TOTAL_EX_LEASES). Should such checks become WARN or a limitation for public filed packs (`financial_reconciliation.py`, `cp1_workflow.py:346`)? Option (b), widening the pack with more 10-Qs, clears the quarter and balance checks but not EBITDA_BRIDGE.
+- **[MODULES.csv, owner] Low, stale text that predates the Stage 6 tail (review 2026-10-30 21:40).** Three next_evidence cells still list items that `closed.md` or this file show as closed. They understate the evidence rather than overclaim it:
+  - CP-DR: "L2b and L2f untested". Both are now tested (`tests/test_connect_cpdr.py:1088`, `:1108`).
+  - CP-2A: "Lease narrowing 'every settled operand'". Closed by a70ee52 (`docs/CP2A-OWNER-LEASE.md:69`).
+  - CP-3D: "raw model_validate_json in _validate_step; RunText check masked". Closed by 30a1f7a.
+  These are docs only. They can ride with the next MODULES.csv edit.

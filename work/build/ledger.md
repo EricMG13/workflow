@@ -566,3 +566,4 @@
 - 03:10 Stage 4 review dispatched: Fable mx-architect a04f4989 over 3429790..e37b73e (brief work/build/stage4/review-arch-brief.md). s4-int2 reruns of the 14 owner tests and lane A running.
 - 03:11 Item 44 (applied recommendation): G2 R2.5 secondary pointers and cites normaliser built in Stage 5. Preparer mx-autonomous dispatched (brief work/build/stage5/g2-gaps-spec-brief.md).
 - 03:19 Stage 4 review (Fable a04f4989): REVISE, Medium 1 (CP-8 token in module table/inspector via render.py). Item 45, applied recommendation: item 30 extended to render.py. Info 1 to owner lows. s4-int2 lane A: fast 10331 passed, g2fast 153. Preparer for item 44 = mx-autonomous a2fe49b1.
+- 03:26 G2 gaps spec received (mx-autonomous a2fe49b1, agent=mx-autonomous; test only). Item 46 rules its six questions. Spec review mx-precise dispatched.

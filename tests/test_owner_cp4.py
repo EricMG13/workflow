@@ -128,11 +128,17 @@ def test_statuses_and_plan(closed: dict[str, tuple[Path, Path]], case: str) -> N
 def test_tables_claims_and_limitations_equal_the_oracle(
     closed: dict[str, tuple[Path, Path]], case: str
 ) -> None:
-    module, attempt, inputs = _cp4(Execution(closed[case][0]))
+    store = Execution(closed[case][0])
+    module, attempt, inputs = _cp4(store)
     want = EXPECTED[WANT_KEY[case]]["CP-4"]
     assert [t.table_id for t in module.tables] == EXPECTED["table_order"]
     facts = {f.fact_id: f for f in module.facts}
+    # The real upstream holds every CP-1 fact, so bind the metric as cp4_runs.metric_ref does.
+    cp1 = store.head_module(_head(store, "CP-1"))
+    metric = s1a.figure_fact(cp1.facts, runs.METRIC)
     ctx = stage1._ctx(inputs)
+    ctx["metric"] = next(f for f in inputs.upstream.facts if f.fact_id == metric.fact_id)
+    ctx["metric_row"] = inputs.upstream.rows[(metric.table_id, metric.row_id)]
     bound = sum(
         stage1._check_table(t, w, facts, ctx)
         for t, w in zip(module.tables, want["tables"], strict=True)
@@ -149,7 +155,15 @@ def test_tables_claims_and_limitations_equal_the_oracle(
     ]
     assert got == want["claims"]
     assert list(module.limitations) == want["settled_limitations"]
-    assert list(module.inherited_limitations) == want["inherited_limitations"]
+    rule = want["inherited_limitations"]
+    wanted = [
+        x
+        for x in dict.fromkeys(
+            [*rule["literal_head_from_CP-0"], *cp1.limitations, *cp1.inherited_limitations]
+        )
+        if x not in want["settled_limitations"]
+    ]
+    assert list(module.inherited_limitations) == wanted
     assert [i.input_id for i in module.inputs] == want["settled_module_inputs"]
     assert [i.input_id for i in attempt.inputs] == want["attempt_inputs_in_order"]
 
@@ -163,8 +177,10 @@ def test_d3_cp4_reads_its_upstream_heads(closed: dict[str, tuple[Path, Path]], c
     bound = {i.input_id: i.sha256 for i in attempt.inputs}
     assert bound["CP-0"] == _head(store, "CP-0").result_sha256
     assert bound["CP-1"] == _head(store, "CP-1").result_sha256
-    metric = inputs.upstream.facts[0]
-    assert metric.fact_id in {f.fact_id for f in store.head_module(_head(store, "CP-1")).facts}
+    cp1_facts = store.head_module(_head(store, "CP-1")).facts
+    metric = s1a.figure_fact(cp1_facts, runs.METRIC)
+    assert metric.fact_id in {f.fact_id for f in cp1_facts}
+    assert metric.fact_id in {f.fact_id for f in inputs.upstream.facts}
     texts = {f.text for f in module.facts}
     assert inputs.upstream.cp0_sha256 in texts and inputs.upstream.cp1_sha256 in texts
 

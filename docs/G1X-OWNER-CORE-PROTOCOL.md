@@ -86,8 +86,11 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
 ## 6. D12 amendment
 A new `src/deploy_vii/bindings/<cp>.py` holding only FP block bindings (no arithmetic, reads
 facts by table id from the store, never imports `deploy_workflow`) is admitted alongside the
-one-line registrations, following `bindings/cp4.py`. `src/deploy_vii` never imports
-`deploy_workflow`.
+one-line registrations, following `bindings/cp4.py`. `bindings/` files never import
+`deploy_workflow`. The chart seam's figure producers (`report_view.py`'s chart registrations and
+`distressed_figures.py`, rulings 2026-10-29 items 8 and 51) may lazily import
+`deploy_workflow.*_series` leaf modules, as the CP1 chart slice does; no other `src/deploy_vii`
+module imports `deploy_workflow`.
 - **Composition is authenticated at the receipt verifier, not the H1 host.** `_verify_settlements` runs `_PROBES[m]` on every settled head. The host's job is provenance (`docs/OWNER-WORKFLOW-LEASE.md:193-194`), so it does not repeat the rebuild (rulings round 10 item 3, H1 I1).
 - **The H1 failed-head branch** accepts a rejected or validator-blocked producer: no tail, non-empty issues, no interruption. It refuses an interruption-blocked producer, which therefore fails closed. A lease that interrupts an analytical step adds the interruption to this replay in its own amendment (rulings round 10 item 4, H1 I2).
 - **`_check_steps` refuses `not_permitted` at create** in two cases (rulings round 10 item 6; rides with the next G1-X change):

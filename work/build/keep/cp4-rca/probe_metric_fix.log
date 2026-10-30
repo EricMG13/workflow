@@ -1,0 +1,9 @@
+== positive: upstream.facts=231 facts[0]=interface-fact:3588e12db9607f88ce38cac93a1602e437ac3b040f26c538b2ae98b25129fbb0 bound=interface-fact:723fc2656fec8cd166091b0d19cb02795bb68ff22210cb7160107f39f5cab4bf at index 140
+  bound 11 want 11
+  inherited by rule: True
+== gap: upstream.facts=231 facts[0]=interface-fact:3588e12db9607f88ce38cac93a1602e437ac3b040f26c538b2ae98b25129fbb0 bound=interface-fact:723fc2656fec8cd166091b0d19cb02795bb68ff22210cb7160107f39f5cab4bf at index 140
+  bound 9 want 9
+  inherited by rule: True
+== gap_false_same_definition: upstream.facts=231 facts[0]=interface-fact:3588e12db9607f88ce38cac93a1602e437ac3b040f26c538b2ae98b25129fbb0 bound=interface-fact:723fc2656fec8cd166091b0d19cb02795bb68ff22210cb7160107f39f5cab4bf at index 140
+  bound 9 want 9
+  inherited by rule: True

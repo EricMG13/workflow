@@ -1790,6 +1790,15 @@
       "sha256": "14aa4a822ef30a8827a0152b4b7470883967e558dff409aacea4dcc8c0a5cfd4",
       "reason": "Add flex-shrink:0 to .module-list so a long outline cannot shrink the navigator module rows to 0px and cover them (ruling item 61).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "prior_project_sha256": "d9fb02de160c9710378308a3dc2d4f32096cfb90de5680bf8a48e7d50c9bb9d0",
+      "project_commit": "c34f81ad814525c031a2e79d20934d7807f5a3b6",
+      "sha256": "d50e1bad2ad94af799e9e0f71becba19a37dfa3a37e1caeeec2d936cbf1ac76b",
+      "reason": "OI-14 (B6): validate_source_context refuses a blank scope, source, entity or review limitation (prose.is_blank), one issue per blank limitation; no other rule changes.",
+      "review": "docs/rulings/2026-10-30-open-items.md"
     }
   ],
   "local_patch_lineage": [
@@ -1816,15 +1825,6 @@
       "companion_test": "tests/test_upstream_tools.py",
       "companion_test_sha256": "b95bc0a2816a16fdfe775023af773e232af8872c762e6cb280e6b76f5239b665",
       "reason": "Add the admitted v2 CP-5 integrity upstream transport over CP-1/CP-1B; preserves baseline, A2 and CP1B pager project bytes."
-    },
-    {
-      "destination": "src/deploy_vii/source_context.py",
-      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
-      "prior_project_sha256": "d9fb02de160c9710378308a3dc2d4f32096cfb90de5680bf8a48e7d50c9bb9d0",
-      "project_commit": "c34f81ad814525c031a2e79d20934d7807f5a3b6",
-      "sha256": "d50e1bad2ad94af799e9e0f71becba19a37dfa3a37e1caeeec2d936cbf1ac76b",
-      "reason": "OI-14 (B6): validate_source_context refuses a blank scope, source, entity or review limitation (prose.is_blank), one issue per blank limitation; no other rule changes.",
-      "review": "docs/rulings/2026-10-30-open-items.md"
     }
   ]
 }

@@ -1798,7 +1798,7 @@
       "project_commit": "2d12ea5a13872529ff4ef60c3645c6ca3a93fa48",
       "sha256": "5dc981d72a690f3d0ce04fbd7711b56609bd99b3745a756069c795f84aa99514",
       "reason": "Add the optional Figure.status_chip field so a producer can carry the design's block-head chip text (open-items ruling OI-13, DR.6 Not computable).",
-      "review": "docs/rulings/2026-10-29-stage3.md"
+      "review": "docs/rulings/2026-10-30-open-items.md"
     },
     {
       "destination": "src/deploy_vii/assets/app.js",
@@ -1807,7 +1807,7 @@
       "project_commit": "2d12ea5a13872529ff4ef60c3645c6ca3a93fa48",
       "sha256": "d31738e4f7e5f0c80e6a24357e16f0febe2e90ab8d0a5190dbaa4f3b6b0a8549",
       "reason": "renderBlock appends the existing chip for each figure's status_chip in the block head, after the state chip (open-items ruling OI-13, DR.6 Not computable).",
-      "review": "docs/rulings/2026-10-29-stage3.md"
+      "review": "docs/rulings/2026-10-30-open-items.md"
     },
     {
       "destination": "src/deploy_vii/source_context.py",

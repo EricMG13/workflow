@@ -1808,6 +1808,15 @@
       "sha256": "d31738e4f7e5f0c80e6a24357e16f0febe2e90ab8d0a5190dbaa4f3b6b0a8549",
       "reason": "renderBlock appends the existing chip for each figure's status_chip in the block head, after the state chip (open-items ruling OI-13, DR.6 Not computable).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "prior_project_sha256": "d9fb02de160c9710378308a3dc2d4f32096cfb90de5680bf8a48e7d50c9bb9d0",
+      "project_commit": "c34f81ad814525c031a2e79d20934d7807f5a3b6",
+      "sha256": "d50e1bad2ad94af799e9e0f71becba19a37dfa3a37e1caeeec2d936cbf1ac76b",
+      "reason": "OI-14 (B6): validate_source_context refuses a blank scope, source, entity or review limitation (prose.is_blank), one issue per blank limitation; no other rule changes.",
+      "review": "docs/rulings/2026-10-30-open-items.md"
     }
   ],
   "local_patch_lineage": [

@@ -555,3 +555,4 @@
 - 00:10 Batch 1 lane B1 on 715dc98: workflow exit=0 (test_owner_workflow.py 22 passed, 16m). Batch 1 deferred: s1a 67 passed 1 skipped, workflow 22 passed; owner suites on s4-int running.
 - 00:13 Owner suites so far: 11 failures (cp2g 5, cp4c 2, cp3 4; cp8 86 all passed; list scratchpad s4int/failed-so-far.txt). Dispatching root cause (mx-autonomous, brief work/build/stage4/owner-suites-rca-brief.md).
 - 00:23 Owner shard cp-0 done: 120 passed, 4 failed (test_owner_cp8.py 86/86 passed; test_owner_cp3.py: R3 oracle test does not bind the run-time pack-hash marker (:163); register-count test compares [] to 0 (:246)). Tracebacks sent to the RCA agent.
+- 00:41 Owner shard cp-2 done: 112 passed, 7 failed (cp2g 5, cpl10 2), 12 skipped (cp2g, cp3d, cp3c, cpl10). Tracebacks pointed to the RCA agent.

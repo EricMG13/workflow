@@ -22,7 +22,15 @@ Branch claude/oi-b1-tests, base 559ba54. Ledger: agent=mx-feature fix-rounds=0 g
 - suppressions: noqa 13 (<=13), type: ignore 5 (<=5)
 - collect-only 559ba54 -> branch: cp2h 48->47, cp3c 24->24, cp4 38->37, cp4c 59->58, exit 0; all seven G2 ids named in comments exist in tests/test_owner_rendering.py.
 
+## Review fix rounds (shell-css checker, ruling OI-19)
+Gates above are for 71fc5a3 (round 0). mx-precise found M1 (flex shorthand), M2 (scoped rule alone) and Lows; re-review found a mixed-selector-list Medium and flex:NONE.
+- Round 1 RED c9b4746 (`pytest -q tests/test_shell_css.py`): 16 failed, 19 passed, exit 1; failed: only-in-media, flex-shorthand-later, flex-shorthand-same-rule, flex-grow-basis, flex-inherit, flex-none, flex-zero-zero-auto, scoped-zero-only, scoped-zero-base-unfixed, important-zero, uppercase-zero, uppercase-override, pseudo-element-good, pseudo-element-ignored, earlier-specific-override, nesting; guards passed.
+- Round 1 fix 51bf88c: brace scanner (nesting fails closed), plain-rule chain plus rule (2) for every other applying rule, flex shorthand grammar, case-insensitive properties, !important stripped and non-zero !important fails, ::pseudo-element not counted; adds important-earlier-bad.
+- Round 2 RED 24fcdd9: 3 failed, 37 passed, exit 1; failed: mixed-list-descendant, mixed-list-compound, flex-none-upper; mixed-list-zero passed.
+- Round 2 fix 9586860: each selector of a list judged separately (plain feeds the plain chain, any other applying selector is held to rule (2)); flex keywords case-insensitive.
+- Gate output for 51bf88c and 9586860 was not available to the author when this was written; the controller holds it.
+
 ## Deferred genuine runs
 cp4c, cp4, cp2h each lose one always-skipped test; owner suites were collect-only. The a3 never-wedges tests using defect_classes are in the 747-passed set.
 
-Not verified: owner suites were only collected, not run; the real-store/G2 genuine cases were not run on this branch; the coverage gate and full suite were not run.
+Not verified: gates after 71fc5a3 (the controller ran them, not recorded here); owner suites were only collected, not run; the real-store/G2 genuine cases were not run on this branch; the coverage gate and full suite were not run.

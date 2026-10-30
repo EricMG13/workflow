@@ -1729,12 +1729,14 @@ def _verify_walk(store: Execution, receipt: OwnerRunReceipt, analytical: tuple[s
 
 
 def _interrupted_issues(interruption: str) -> tuple[str, ...]:
-    """The issues `execution.settle` writes for an interruption (its own rule, replayed). The
-    stored interruption is already shortened, so a stored value over the bound is a forgery:
-    it matches no reason `settle` could have written."""
+    """The issues `execution.settle` writes for an interruption (its own rule, replayed).
+
+    An interruption the producer could not have stored is a forgery: a blank reason, which
+    `Execution.interrupt` refuses (execution.py:890), or one over the bound, since the stored
+    value is already shortened."""
     reason = shortened(interruption, MAX_INTERRUPTION_CHARS)
-    if reason != interruption:
-        return ()
+    if not interruption.strip() or reason != interruption:
+        raise WorkflowError("identity_mismatch")
     return bounded_issues(tuple(dict.fromkeys((f"Interrupted: {reason}",))))
 
 

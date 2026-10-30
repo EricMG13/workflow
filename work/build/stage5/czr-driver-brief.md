@@ -53,3 +53,11 @@ Edit only `tests/czr_runs.py` and `tests/test_czr_driver.py`. Do not edit `src/*
 - each gate's command, tail and exit code;
 - a `Not verified:` line;
 - ledger line `agent=mx-feature fix-rounds=0 gates-first-pass=<y|n>`.
+
+## Addendum (item 71; a fresh build after the first agent was refused the interpreter)
+- **Start state.** A first agent wrote RED-side test edits but could not run Python. They sit uncommitted in `/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/agent-ad058d4133d99b253/tests/test_czr_driver.py`. Read that file as a reference only, never edit it, and bring what holds into your own worktree. It expects `czr_runs.bind_stage_figures(text, figures, read_body, facts_of)` and `czr_runs.czr_closed(root, submissions_path)`. You may keep or change those names.
+- **Rulings (controller):**
+  1. `read_inputs` must not raise; the docstring says so. Before `submit_review`, a step whose spec declares `inputs` other than `none` must already have made the `read_inputs` call, and a clear error names it when it has not.
+  2. `{{FIG:...}}` is bound only in a stage whose read body is a JSON object holding `{ref, ...}` entries (CP-2, CP-5). A token in a stage with a text-only body (the CP-1 `projection` steps) raises, naming the figure.
+  3. Refs are collected from every list of `{ref, ...}` entries in the body. The same ref under two keys with a different `unit` or `shown` raises. Add one binder test for it.
+- **Interpreter.** Run Python only as one plain command from your worktree root (no `cd`, `&&`, `$(...)`, pipes, wrappers or symlinks), as in Gates. If the sandbox refuses it, stop at once and report the exact refusal text; do not work around it.

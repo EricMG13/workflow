@@ -51,6 +51,10 @@ def test_undeclared_tables_are_allowed() -> None:
     validate_tables((), FACTS)
 
 
+def test_declared_table_without_facts_passes() -> None:
+    validate_tables((*TABLES, table("tc", ())), FACTS)
+
+
 CASES = {
     "Duplicate report table": (TABLES + (TABLES[0],), FACTS),
     "Duplicate table interface identity": (

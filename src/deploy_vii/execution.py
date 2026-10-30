@@ -540,8 +540,10 @@ def _put_once(folder: Path, name: str, raw: bytes, what: str) -> None:
 # Parsed settled modules, memoised per (hash, bytes) for this process only. `Execution._load`
 # still reads and hash-checks the blob on every call, so a missing or tampered blob refuses as
 # before; only the parse of bytes already proven identical is skipped. Exceptions are not cached.
-# ponytail: 4 entries, and one parsed CP-1 Module keeps about 233 MiB alive (about 1 GiB worst
-# case); upgrade path is to cap by summed blob size instead of entry count.
+# Every caller of the same blob gets the same Module object: never write through it.
+# ponytail: 4 entries; one parsed CP-1 Module measured about 322 MiB RSS and its key keeps the
+# 42 MiB blob alive, so about 1.4 GiB worst case (host._ParsedExecution keeps its own 4). Upgrade
+# path is to cap by summed blob size instead of entry count.
 @lru_cache(maxsize=4)
 def _canonical_result(sha256: str, raw: bytes) -> Module:
     module = Module.model_validate_json(raw)

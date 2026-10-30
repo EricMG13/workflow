@@ -46,7 +46,7 @@ def _is_zero(name: str, value: str) -> bool:
     tokens = value.split()
     if name == "flex-shrink":
         return len(tokens) == 1 and bool(_NUMBER.fullmatch(tokens[0])) and float(tokens[0]) == 0
-    if tokens == ["none"]:
+    if [t.lower() for t in tokens] == ["none"]:
         return True
     shrink = tokens[1] if len(tokens) in (2, 3) and _NUMBER.fullmatch(tokens[1]) else "1"
     return float(shrink) == 0
@@ -75,15 +75,16 @@ def module_list_passes(css: str) -> bool:
         return False
     plain_zero: bool | None = None
     for selectors, body, in_at_rule in rules:
-        names = [selector.strip() for selector in selectors.split(",")]
-        if not any(map(_applies_to_module_list, names)):
+        applying = [s.strip() for s in selectors.split(",") if _applies_to_module_list(s)]
+        if not applying:
             continue
         zero, important = _effect(body)
         if important:
             return False
-        if not in_at_rule and ".module-list" in names:
-            plain_zero = zero if zero is not None else plain_zero
-        elif zero is False:
+        plain = not in_at_rule and ".module-list" in applying
+        if plain and zero is not None:
+            plain_zero = zero
+        if zero is False and any(s != ".module-list" or in_at_rule for s in applying):
             return False
     return plain_zero is True
 

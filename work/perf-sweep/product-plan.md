@@ -70,8 +70,10 @@ min of 3; the ratios are the evidence, the absolute seconds are loaded-machine f
 - Same output: equal sha256 ⇒ equal verified bytes ⇒ the same deterministic parse. Callers
   receive one shared frozen `Module`; `head_module` (:627) already derives the stale variant
   with `model_copy`, which returns a new object and never mutates the cached one.
-- Cost to watch: memory, ≤ 4 parsed Modules (≈ 233 MiB RSS per parsed 44 MB CP-1 blob, probe;
-  measure RSS before/after in the same run).
+- Cost to watch: memory, ≤ 4 parsed Modules. First estimate ≈ 233 MiB per parsed 44 MB CP-1 blob
+  (micro-trial, 3 parses) set Ruling 1 (maxsize 4, not 32); the adversarial review then measured
+  ≈ 322 MiB per entry plus the 42 MiB raw key (`probes/adv_p3_memory.py`), so ≈ 1.4 GiB worst case.
+  E-NO-YOY peak RSS: 5.72 GB base vs 5.87 GB with P1–P3 (`runs/ident-T0`, `runs/ident-T3`).
 - Risk 3 (cache on a store read path). Confidence 2.
 
 ## P4 — instance cache on `Contract.content_hash`: not recommended

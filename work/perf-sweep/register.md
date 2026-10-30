@@ -21,7 +21,7 @@ Seconds below are profiled cumulative seconds in that one test unless marked oth
 
 | Row | Location | Finding | Status |
 |---|---|---|---|
-| T1 | new `tests/conftest.py` | `heavy` tier marker registered in conftest (no `pyproject.toml` change) | pending tip + durations |
+| T1 | `heavy`/`fast` tier markers | Not added: the project already keeps a per-change fast set, `work/build/keep/fast-set.txt` (10,360 passed in 5m10s, `work/build/ledger.md` 06:41), which excludes the heavy owner suites. Markers would be a second list of the same thing. | not-needed (ruling; Modules owns the fast set) |
 | T2 | `tests/test_earnings_workflow.py:1261,1315,1576` | owner history is already shared at module scope with per-test `copytree` (`reopen_component` :1269). The two tests that rebuild (`:1586` fresh cases, `:1684` negative fresh case) assert a fresh execution; sharing would weaken them. | not-a-defect for this file; other files pending durations |
 | T3 | `pytest-xdist` | new dependency | decision (decision record + user's word) |
 

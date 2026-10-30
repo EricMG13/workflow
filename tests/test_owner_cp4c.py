@@ -147,7 +147,11 @@ def _assert_head_equals_oracle(store: Execution, case: str) -> None:
         cell = cp4c.Cell(fact, tuple(e.get("derives_from", ())), (), e["shown"])
         assert stage1._record(cell) == {k: v for k, v in e.items() if k != "citations"}, e
         _uc, _state, text = fact_spelling(fact, "G1")
-        assert text.replace("G1", "G#") == e["shown"], fact.fact_id
+        if e["shown"] is None:  # unsettled: the manifest's cell_notation spelling
+            shown = {"missing": "∅ G#", "not_applicable": "∅ G# n.m."}[e["status"]]
+        else:
+            shown = e["shown"]
+        assert text.replace("G1", "G#") == shown, fact.fact_id
     for table, e in zip(module.tables, want["tables"], strict=False):
         assert (table.table_id, table.title) == (e["table_id"], e["title"])
         assert [(r.row_id, r.label, list(r.fact_ids)) for r in table.rows] == [

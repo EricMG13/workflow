@@ -33,6 +33,11 @@ Times are UTC from `date -u +%H:%M`. Lines record `agent=<name> fix-rounds=<n> g
 - 13:30 Merged claude/oi-b3-verifier 4ab202c (report updated). agent=mx-feature fix-rounds=1 gates-first-pass=y. B1 round 2 at 9586860: tests/test_shell_css.py 40 passed, ruff/format/mypy 0, both reviewer probes exit 0; scoped re-review (mx-precise) dispatched.
 - 13:30 B1 round 2 re-review mx-precise: Medium and Low ADDRESSED, no new breakage (both probes exit 0). Merged claude/oi-b1-tests f778158. agent=mx-feature fix-rounds=2 gates-first-pass=y.
 
+- 13:35 Whole-branch confidence review (mx-precise, 559ba54..368fb17): PASS, no High/Medium/Low (Info only; rewrite assess: leave all changed functions). Probes scratchpad/review-branch/*.py exit 0: CP-2A frozen reparse identical (21), no frozen CP-2E/CP-3D summary blank or carrying a reference, 0 blank limitations in 94 case files, manifest tail ok.
+- 13:35 Static gates on the tip 368fb17 (controller): ruff check on the 24 changed .py files only predating findings (ISC004 x2 source_context, SIM102 report_view; base had those plus C408 x2, FURB157 x4); ruff format 24 files ok; mypy on the 8 changed src files and 7 changed test files exit 0; pins 87 ok; D12 strict df26ea8..HEAD exit 0; suppressions noqa 13, type: ignore 5.
+
+- 13:37 Fast set on the tip 368fb17 (controller; fast-set.txt + test_shell_css + test_source_context_blank, one process): 10529 passed, 19 skipped, 0 xfailed (the DR.6 tripwire now passes), exit 0 (4m30s). G2 fast (`tests/test_owner_rendering.py -k fast`) 170 passed, exit 0. Branch done pending the deferred runs below.
+
 ## Deferred runs
 (genuine owner-suite, G2 genuine and other long runs each closed item needs; run only when Modules says the machine is free)
 - B1 (placeholders removed; defect_classes partial): `tests/test_owner_cp4c.py`, `tests/test_owner_cp4.py`, `tests/test_owner_cp2h.py` in full (each loses one always-skipped test; expect 0 skipped from the placeholder); optional, behaviour-preserving: the `a3` never-wedges tests that use `tests/defect_classes.py` (`test_owner_cp1c.py`, `test_owner_cp2g.py`, `test_owner_cp2h.py`, `test_owner_cp3c.py`, `test_owner_cp4c.py` `-k "a3 or never_wedges"`).
@@ -40,3 +45,4 @@ Times are UTC from `date -u +%H:%M`. Lines record `agent=<name> fix-rounds=<n> g
 - B3 (verifier): `tests/test_owner_s1a.py` in full, including `::test_forgery_cp_model_failed_publication_rewritten_issues_refuses` and `::test_forgery_cp_model_failed_publication_rewritten_interruption_refuses`; `tests/test_owner_workflow.py` in full.
 - B5 (DR.6 chip): `tests/test_owner_rendering.py::test_genuine_deferred_complete_cases[cp2h-fp05-ratings-positive]`, `[cp2h-fp05-ratings-gap]` and the refused/blocked cp2h G2 cases; `tests/test_owner_cpos.py` genuine cases; a native DOM check of the CP-2H page (chip visible in the `rating-triggers` head).
 - B6 (CP-1 blank limitation): `tests/test_earnings_workflow.py`, `tests/test_source_tools.py`, `tests/test_financial_workflow.py`, `tests/test_owner_s1a.py`; the CZR CP-1 run (Workflow Test).
+- Note for Modules (B6, branch review): a CP-1 journal written before this branch that holds a blank limitation would now make `source_context()` raise when canonical gaps, rendering or the narrative rebuild it. No frozen case holds one (0 of 94 case files); stored CZR or Workflow Test journals outside `cases/` were not checked.

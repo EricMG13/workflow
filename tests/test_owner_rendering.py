@@ -7,6 +7,7 @@ once per branch. Every expected value is read from an oracle file, the lease or 
 from `owner_rendering`.
 """
 
+import copy
 import hashlib
 import html as html_lib
 import importlib
@@ -17,7 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -29,9 +30,19 @@ import pytest
 import test_cp1_chart_render
 
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import Run
+from deploy_vii.contracts import (
+    Citation,
+    Fact,
+    Module,
+    ModuleView,
+    ReportTable,
+    Run,
+    TableColumn,
+    TableRow,
+)
 from deploy_vii.execution import Attempt, Execution, current_inputs
 from deploy_vii.registry import modules as registry_modules
+from deploy_vii.render import empty_view, render
 from deploy_vii.report_view import build, pathways
 from deploy_workflow import owner_rendering as g2
 from deploy_workflow.owner_workflow import BeginRecord, OwnerRunReceipt
@@ -2080,6 +2091,194 @@ def assert_block_equals_oracle(block: dict[str, Any], oracle: dict[str, Any]) ->
             assert has_chip == bool(want.get("synthetic_ref")), line
 
 
+_CELL_STATE = {"known": "known", "missing": "gap", "not_applicable": "not_meaningful"}
+
+
+def _gap_pattern(status: str) -> str:
+    return r"∅ G\d+ n\.m\." if status == "not_applicable" else r"∅ G\d+"
+
+
+def _registers(block: dict[str, Any]) -> list[dict[str, Any]]:
+    """The block's registers in page order: the block's own `tab_label`/`rows` first, then `tabs`.
+    An untabbed block has one register whose label is None."""
+    first = {key: block[key] for key in ("columns", "row_header", "rows")}
+    first["label"] = block["tab_label"]
+    return [first, *block["tabs"]]
+
+
+def _module_of(payload: dict[str, Any], module_id: str) -> dict[str, Any]:
+    (module,) = [m for m in payload["modules"] if m["module_id"] == module_id]
+    found: dict[str, Any] = module
+    return found
+
+
+def _page_cites(
+    payload: dict[str, Any], module_id: str, fact_id: str, want: dict[str, Any]
+) -> list[list[str]]:
+    """Acceptance 1: `[Source, Locator]` from the passport of each C/S ref of the fact's
+    `report.index.facts` entry, in index order, without de-duplication. No fallback: `build_index`
+    (report_view.py:803-869) gives a fact an entry exactly when it has a ref (a G# for a fact that
+    is not known, a C/S per citation, a K# for a calculation). The oracle fact `want` says which:
+    an entry is required iff its status is not known, or its list `cites` are non-empty, or it
+    has a `calculation_id`; if required there must be exactly one entry, else none.
+    Not modelled: `build_index`'s strict-parse G# branch for (T4.9, threshold), where a known fact
+    whose text fails the strict parse also gets a G#. In the cp4 oracle the only such fact is
+    `4.00x`, which parses and carries cites, so an entry is required either way."""
+    entries = [
+        e
+        for e in payload["report"]["index"]["facts"]
+        if e["coord"]["module_id"] == module_id and e["coord"]["fact_id"] == fact_id
+    ]
+    required = (
+        want["status"] != "known" or bool(want.get("cites")) or bool(want.get("calculation_id"))
+    )
+    assert len(entries) == (1 if required else 0), (fact_id, len(entries), required)
+    if not entries:
+        return []
+    passports = {p["ref_id"]: p for p in payload["report"]["passports"]}
+    cites: list[list[str]] = []
+    for ref in entries[0]["ref_ids"]:
+        if ref[0] not in "CS":
+            continue
+        fields = {f["name"]: f["value"] for f in passports[ref]["fields"]}
+        cites.append([fields["Source"], fields["Locator"]])
+    return cites
+
+
+def assert_table_cites(
+    payload: dict[str, Any], module_id: str, tables: list[dict[str, Any]]
+) -> int:
+    """Every oracle fact whose `cites` is a list of pairs, found by its `fact_id` (prose run-time
+    cites are skipped). Returns the number of non-empty cites checked; callers assert it is >= 1."""
+    checked = 0
+    for table in tables:
+        for row in table["rows"]:
+            for fact in row["facts"]:
+                cites = fact.get("cites")
+                if not (isinstance(cites, list) and all(isinstance(c, list) for c in cites)):
+                    continue
+                assert _page_cites(payload, module_id, fact["fact_id"], fact) == cites, fact[
+                    "fact_id"
+                ]
+                checked += bool(cites)
+    return checked
+
+
+_S1A_BLOCKS_WITH_CITES = ("company-operating-model", "company-profile")
+
+
+def _resolve_cell_fact(
+    payload: dict[str, Any], register: dict[str, Any], row_index: int, cell_index: int
+) -> tuple[str, str]:
+    """A page register cell -> (module_id, fact_id). A one-value register (columns ["Value"]) whose
+    row id is a fact id is that fact; otherwise the unique module table whose `(row_id, label)`
+    rows and column labels equal the register's gives `rows[r].fact_ids[c]`. Anything but exactly
+    one match asserts."""
+    row = register["rows"][row_index]
+    labels = [(r["row_id"], r["label"]) for r in register["rows"]]
+    hits: list[tuple[str, str]] = []
+    for module in payload["modules"]:
+        if register["columns"] == ["Value"] and row["row_id"] in {
+            f["fact_id"] for f in module["facts"]
+        }:
+            hits.append((module["module_id"], row["row_id"]))
+            continue
+        for table in module["tables"]:
+            same_rows = [(r["row_id"], r["label"]) for r in table["rows"]] == labels
+            if same_rows and [c["label"] for c in table["columns"]] == register["columns"]:
+                hits.append((module["module_id"], table["rows"][row_index]["fact_ids"][cell_index]))
+    assert len(hits) == 1, (register["label"], row["row_id"], hits)
+    return hits[0]
+
+
+def assert_cells_cite_oracle(
+    payload: dict[str, Any],
+    oracle_blocks: dict[str, Any],
+    calculations: Mapping[tuple[str, str], str | None],
+) -> int:
+    """Acceptance 1 for s1a: every oracle cell with `cites` equals `_page_cites` of the fact it
+    shows. Gap cells carry no `cites` and are skipped. The expected fact is known, with the cell's
+    cites and the `calculation_id` of the settled head fact (`calculations`, read from the run's
+    store), not an assumed None. Returns the number of cells checked; the caller asserts >= 1."""
+    checked = 0
+    for block_id, oracle in oracle_blocks.items():
+        wanted = [oracle["primary"], *oracle["tabs"]]
+        registers = _registers(_page_block(payload, block_id))
+        assert [r["label"] for r in registers] == [w["tab"] for w in wanted], block_id
+        for register, want in zip(registers, wanted, strict=True):
+            for row_index, want_row in enumerate(want["rows"]):
+                for cell_index, want_cell in enumerate(want_row["cells"]):
+                    if "cites" not in want_cell:
+                        continue
+                    module_id, fact_id = _resolve_cell_fact(
+                        payload, register, row_index, cell_index
+                    )
+                    fact = {
+                        "status": "known",
+                        "cites": want_cell["cites"],
+                        "calculation_id": calculations[(module_id, fact_id)],
+                    }
+                    assert _page_cites(payload, module_id, fact_id, fact) == want_cell["cites"], (
+                        block_id,
+                        fact_id,
+                    )
+                    checked += 1
+    return checked
+
+
+def _assert_register_equals_table(
+    register: dict[str, Any],
+    label: str | None,
+    table: dict[str, Any],
+    module_id: str,
+    payload: dict[str, Any],
+) -> None:
+    """One page register against one oracle table (`#/cases/<c>/tables` shape): label, headers,
+    row ids and labels, the payload table's fact ids and fields, and each cell's state and text."""
+    table_id = table["table_id"]
+    assert register["label"] == label, (register["label"], label)
+    assert register["row_header"] == table["row_header"], table_id
+    columns = [c["label"] for c in table["columns"]]
+    assert register["columns"] == columns, table_id
+    assert [(r["row_id"], r["label"]) for r in register["rows"]] == [
+        (r["row_id"], r["label"]) for r in table["rows"]
+    ], table_id
+    module = _module_of(payload, module_id)
+    (layout,) = [t for t in module["tables"] if t["table_id"] == table_id]
+    facts = {f["fact_id"]: f for f in module["facts"]}
+    rows = zip(register["rows"], layout["rows"], table["rows"], strict=True)
+    for page_row, layout_row, want_row in rows:
+        assert layout_row["row_id"] == want_row["row_id"]
+        assert layout_row["fact_ids"] == [f["fact_id"] for f in want_row["facts"]], want_row[
+            "row_id"
+        ]
+        cells = zip(page_row["cells"], layout_row["fact_ids"], want_row["facts"], strict=True)
+        for cell, fact_id, want in cells:
+            column = table["columns"][columns.index(want["column"])]
+            assert facts[fact_id]["field"] == column["field"], fact_id
+            assert cell["state"] == _CELL_STATE[want["status"]], (fact_id, cell["state"])
+            if want["status"] == "known":
+                assert _matches_oracle_text(cell["text"], want["shown"]), (fact_id, cell["text"])
+            else:
+                assert re.fullmatch(_gap_pattern(want["status"]), cell["text"]), (fact_id, cell)
+
+
+def assert_cp3d_tables(payload: dict[str, Any], case: str) -> int:
+    """R2.5 cp3d secondary pointer `#/cases/<c>/tables`: the page's registers are the entries of
+    `render.blocks.market-against-fundamentals.tabs`, in order, each equal to its oracle table;
+    `cites` are checked on every oracle table. Returns the non-empty cites checked."""
+    oracle = _oracle("cp3d-owner")
+    tabs = oracle["render"]["blocks"][_CP3D_BLOCK]["tabs"]
+    tables = {t["table_id"]: t for t in oracle["cases"][case]["tables"]}
+    registers = _registers(_page_block(payload, _CP3D_BLOCK))
+    assert len(registers) == len(tabs)
+    for register, (table_id, label) in zip(registers, tabs, strict=True):
+        _assert_register_equals_table(register, label, tables[table_id], "CP-3D", payload)
+    checked = assert_table_cites(payload, "CP-3D", oracle["cases"][case]["tables"])
+    assert checked >= 1
+    return checked
+
+
 def _run(kind: str, text: str, ref_id: str | None = None) -> dict[str, Any]:
     return {"kind": kind, "text": text, "ref_id": ref_id}
 
@@ -2138,6 +2337,291 @@ def test_fast_block_rule_handles_s_chip_gap_placeholder_and_tabs_only_oracle() -
         assert_block_equals_oracle(
             {**untabbed, "rows": [{"label": "A", "cells": [{"text": "9x"}]}]}, one_tab
         )
+
+
+# ---------------------------------------------------------------- G2 coverage gaps (ruling item 28)
+
+
+def _fast_page(run: Run, modules: list[Any]) -> dict[str, Any]:
+    """The real renderer's page payload for an empty view with `modules` settled into it."""
+    view = empty_view(run)
+    by_id = {m.module_id: m for m in modules}
+    shown = []
+    for slot in view.modules:
+        mod = by_id.get(slot.module_id)
+        if mod is None:
+            shown.append(slot)
+            continue
+        shown.append(
+            ModuleView(
+                module_id=slot.module_id,
+                title=slot.title,
+                aliases=slot.aliases,
+                status=mod.status,
+                artifact_sha256=mod.content_hash(),
+                facts=mod.facts,
+                tables=mod.tables,
+                claims=mod.claims,
+                limitations=tuple(dict.fromkeys((*mod.limitations, *mod.inherited_limitations))),
+            )
+        )
+    return _payload(render(view.model_copy(update={"modules": tuple(shown)})))
+
+
+def _page_block(payload: dict[str, Any], block_id: str) -> dict[str, Any]:
+    (block,) = [b for b in payload["report"]["blocks"] if b["block_id"] == block_id]
+    found: dict[str, Any] = block
+    return found
+
+
+def _mutated(payload: dict[str, Any], change: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
+    page: dict[str, Any] = copy.deepcopy(payload)
+    change(page)
+    return page
+
+
+def _assert_rejected(rule: Callable[[dict[str, Any]], object], pages: list[dict[str, Any]]) -> None:
+    assert pages
+    for page in pages:
+        with pytest.raises((AssertionError, KeyError, StopIteration, ValueError)):
+            rule(page)
+
+
+def _index_entry_removed(
+    module_id: str, want: Callable[[str], bool]
+) -> Callable[[dict[str, Any]], None]:
+    def change(page: dict[str, Any]) -> None:
+        index = page["report"]["index"]["facts"]
+        hit = next(
+            e for e in index if e["coord"]["module_id"] == module_id and want(e["coord"]["fact_id"])
+        )
+        index.remove(hit)
+
+    return change
+
+
+def _index_entry_duplicated(module_id: str) -> Callable[[dict[str, Any]], None]:
+    def change(page: dict[str, Any]) -> None:
+        index = page["report"]["index"]["facts"]
+        index.append(copy.deepcopy(next(e for e in index if e["coord"]["module_id"] == module_id)))
+
+    return change
+
+
+def _passport_locator_changed(page: dict[str, Any]) -> None:
+    passport = next(p for p in page["report"]["passports"] if p["kind"] == "synthetic")
+    next(f for f in passport["fields"] if f["name"] == "Locator")["value"] = "page:99"
+
+
+def _facts_of_tables(tables: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {f["fact_id"]: f for t in tables for r in t["rows"] for f in r["facts"]}
+
+
+def _block_cells(page: dict[str, Any], block_id: str, known: bool) -> list[dict[str, Any]]:
+    block = _page_block(page, block_id)
+    rows = [*block["rows"], *(r for t in block["tabs"] for r in t["rows"])]
+    return [c for r in rows for c in r["cells"] if (c["state"] == "known") == known]
+
+
+_CP3D_CASES = ["positive", "gap_no_recovery", "gap_no_market"]
+_CP3D_BLOCK = "market-against-fundamentals"
+
+
+def _cp3d_page(case: str) -> dict[str, Any]:
+    base = importlib.import_module("test_connect_cp3d")
+    return _fast_page(base._pack(case).run, [base._module(case)])
+
+
+@pytest.mark.parametrize("case", _CP3D_CASES)
+def test_fast_cp3d_tables_rule_on_real_pages(case: str) -> None:
+    payload = _cp3d_page(case)
+    assert assert_cp3d_tables(payload, case) >= 1
+    facts = _facts_of_tables(_oracle("cp3d-owner")["cases"][case]["tables"])
+
+    def known_text(page: dict[str, Any]) -> None:
+        _block_cells(page, _CP3D_BLOCK, True)[0]["text"] += "0"
+
+    def row_label(page: dict[str, Any]) -> None:
+        _page_block(page, _CP3D_BLOCK)["tabs"][2]["rows"][0]["label"] = "X"
+
+    def column_label(page: dict[str, Any]) -> None:
+        _page_block(page, _CP3D_BLOCK)["tabs"][0]["columns"][0] += " x"
+
+    def gap_to_zero(page: dict[str, Any]) -> None:
+        _block_cells(page, _CP3D_BLOCK, False)[0]["text"] = "0"
+
+    changes = [
+        known_text,
+        row_label,
+        column_label,
+        _passport_locator_changed,
+        _index_entry_removed("CP-3D", lambda f: f in facts and not facts[f]["cites"]),
+        _index_entry_removed("CP-3D", lambda f: f in facts and facts[f]["status"] != "known"),
+        _index_entry_duplicated("CP-3D"),
+    ]
+    if _block_cells(payload, _CP3D_BLOCK, False):
+        changes.append(gap_to_zero)
+    _assert_rejected(
+        lambda page: assert_cp3d_tables(page, case), [_mutated(payload, c) for c in changes]
+    )
+
+
+_S1A_CASES = ["positive", "gap_business_without_ownership_transaction"]
+_S1A_CITED_TABLES = (
+    "operating_model",
+    "company_description",
+    "ownership_register",
+    "revenue_business_mix",
+)
+
+
+def _s1a_fixture_module(case: str) -> Module:
+    """A CP-1A module rebuilt from the snapshot oracle's own CP-1A tables. The oracle stores no
+    quotes, so each citation carries a test-only quote; the normaliser reads Source and Locator
+    only and ignores quotes, so these quotes are test data standing in for nothing real."""
+    facts: list[Fact] = []
+    tables: list[ReportTable] = []
+    for table in _oracle("snapshot")[case]["CP-1A"]["tables"]:
+        rows: list[TableRow] = []
+        for row in table["rows"]:
+            for fact in row["facts"]:
+                cites = fact["cites"] if isinstance(fact["cites"], list) else []
+                facts.append(
+                    Fact(
+                        fact_id=fact["fact_id"],
+                        label=fact["column"],
+                        table_id=table["table_id"],
+                        row_id=row["row_id"],
+                        field=fact["fact_id"].rsplit(".", 1)[1],
+                        text=fact["text"],
+                        status=fact["status"],
+                        limitation=fact["limitation"] if fact["status"] != "known" else None,
+                        value_class=fact.get("value_class"),
+                        citations=tuple(
+                            Citation(
+                                source_id=source,
+                                source_sha256=H,
+                                locator=locator,
+                                quote=f"test quote {fact['fact_id']} {k}",
+                            )
+                            for k, (source, locator) in enumerate(cites)
+                        ),
+                    )
+                )
+            rows.append(
+                TableRow(
+                    row_id=row["row_id"],
+                    label=row["label"],
+                    fact_ids=tuple(f["fact_id"] for f in row["facts"]),
+                )
+            )
+        tables.append(
+            ReportTable(
+                table_id=table["table_id"],
+                title=table["title"],
+                row_header=table["row_header"],
+                columns=tuple(
+                    TableColumn(field=c["field"], label=c["label"]) for c in table["columns"]
+                ),
+                rows=tuple(rows),
+            )
+        )
+    return Module(
+        run_id="g2-gaps",
+        issuer_id="northbridge-synthetic",
+        as_of=date(2025, 12, 31),
+        module_id="CP-1A",
+        status="restricted",
+        facts=tuple(facts),
+        tables=tuple(tables),
+        limitations=("fixture",),
+    )
+
+
+def _s1a_fast_page(module: Module) -> dict[str, Any]:
+    run = Run(
+        run_id="g2-gaps",
+        issuer_id="northbridge-synthetic",
+        issuer_name="Northbridge Synthetic Group",
+        as_of=date(2025, 12, 31),
+        case_kind="synthetic",
+        pathway="credit_snapshot",
+        requested_modules=("CP-1A",),
+    )
+    return _fast_page(run, [module])
+
+
+def _calculations(module: Module) -> dict[tuple[str, str], str | None]:
+    return {(module.module_id, f.fact_id): f.calculation_id for f in module.facts}
+
+
+@pytest.mark.parametrize("case", _S1A_CASES)
+def test_fast_cites_normaliser_on_s1a_page(case: str) -> None:
+    module = _s1a_fixture_module(case)
+    payload = _s1a_fast_page(module)
+    calculations = _calculations(module)
+    oracle_blocks = {b: _oracle("snapshot")[case]["FP01"][b] for b in _S1A_BLOCKS_WITH_CITES}
+    assert assert_cells_cite_oracle(payload, oracle_blocks, calculations) >= 1
+
+    def cited_entry(page: dict[str, Any]) -> dict[str, Any]:
+        entry: dict[str, Any] = next(
+            e
+            for e in page["report"]["index"]["facts"]
+            if e["coord"]["module_id"] == "CP-1A"
+            and e["coord"]["table_id"] in _S1A_CITED_TABLES
+            and any(r[0] in "CS" for r in e["ref_ids"])
+        )
+        return entry
+
+    def source_changed(page: dict[str, Any]) -> None:
+        ref = next(r for r in cited_entry(page)["ref_ids"] if r[0] in "CS")
+        passport = next(p for p in page["report"]["passports"] if p["ref_id"] == ref)
+        next(f for f in passport["fields"] if f["name"] == "Source")["value"] = "other-source"
+
+    def ref_dropped(page: dict[str, Any]) -> None:
+        entry = cited_entry(page)
+        entry["ref_ids"] = [r for r in entry["ref_ids"] if r[0] not in "CS"]
+
+    def ref_duplicated(page: dict[str, Any]) -> None:
+        entry = cited_entry(page)
+        entry["ref_ids"] = [*entry["ref_ids"], next(r for r in entry["ref_ids"] if r[0] in "CS")]
+
+    _assert_rejected(
+        lambda page: assert_cells_cite_oracle(page, oracle_blocks, calculations),
+        [_mutated(payload, c) for c in (source_changed, ref_dropped, ref_duplicated)],
+    )
+    # A known fact with a calculation but no cites gets a K# index entry: the expected
+    # calculation_id comes from the store's head fact, not an assumed None.
+    calc_module = module.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"calculation_id": f"calc:{f.fact_id}"})
+                if f.status == "known" and not f.citations
+                else f
+                for f in module.facts
+            )
+        }
+    )
+    calc_payload = _s1a_fast_page(calc_module)
+    assert assert_cells_cite_oracle(calc_payload, oracle_blocks, _calculations(calc_module)) >= 1
+    with pytest.raises(AssertionError):
+        assert_cells_cite_oracle(calc_payload, oracle_blocks, calculations)
+
+
+def test_fast_cites_normaliser_on_real_cp3d_page() -> None:
+    payload = _cp3d_page("positive")
+    tables = _oracle("cp3d-owner")["cases"]["positive"]["tables"]
+    assert assert_table_cites(payload, "CP-3D", tables) >= 1
+    facts = _facts_of_tables(tables)
+
+    changes = [
+        _passport_locator_changed,
+        _index_entry_removed("CP-3D", lambda f: bool(facts[f]["cites"])),
+    ]
+    _assert_rejected(
+        lambda page: assert_table_cites(page, "CP-3D", tables),
+        [_mutated(payload, c) for c in changes],
+    )
 
 
 def _s1a(case: str, root: Path) -> tuple[Path, Path, Path | None]:

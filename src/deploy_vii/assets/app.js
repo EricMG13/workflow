@@ -418,6 +418,7 @@
     if (hasPen(block)) { const pen = node("span", null, "pen-tag"); pen.append(icon("pen", 10), document.createTextNode("Model-written")); head.append(pen); }
     const state = report.block_states[block.state];
     if (state && !collapsedKind) { head.append(chip(state.glyph, state.word)); section.dataset.stateWord = state.word.toLowerCase(); }
+    block.figures.forEach(item => { if (item.status_chip) head.append(chip("na", item.status_chip)); });
     if (block.note) { const note = node("span", block.note, "block-note"); head.append(note); }
     const summary = collapsedKind && block.summary ? node("span", block.summary, "summary") : null;
     if (summary) head.append(summary);

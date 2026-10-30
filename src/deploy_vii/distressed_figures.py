@@ -32,6 +32,7 @@ _Refs = Mapping[tuple[str, str], tuple[str, ...]]
 # agency report in the Source Pack" (G31) is not true here: CP-2H reads one synthetic agency
 # source, so the frame says a chart waits for a real report.
 DR6_TITLE = "Rating trigger headroom"
+DR6_CHIP = "Not computable"  # the design's block-head chip for the n/a frame (OI-13)
 DR6_SYNTHETIC = "agency source is synthetic; a headroom chart waits for a real agency report"
 DR6_UNSTATED = (
     "a trigger threshold is not stated in the synthetic agency source; "
@@ -190,7 +191,11 @@ def rating_trigger_figures(block_id: str, view: View, refs: _Refs) -> tuple[Figu
         unit_class="multiple",
         reason=reason,
     )
-    return (Figure(fig_id="DR.6", title=DR6_TITLE, chart=chart, placement="above"),)
+    return (
+        Figure(
+            fig_id="DR.6", title=DR6_TITLE, chart=chart, placement="above", status_chip=DR6_CHIP
+        ),
+    )
 
 
 # block id -> producer, for report_view's group d registration block.

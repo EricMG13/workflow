@@ -22,7 +22,7 @@ fw = importlib.import_module("test_financial_workflow")
 
 pack = fw.make_pack()
 CONTEXT = json.loads(fw.context(pack))
-BLANKS = (" ", "​", "⠀")
+BLANKS = (" ", "\u200b", "\u2800")
 FIELDS = ("scope", "source", "entity", "review")
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -64,7 +64,7 @@ def test_blank_limitation_is_one_issue(field: str, blank: str) -> None:
 
 @pytest.mark.parametrize("field", FIELDS)
 def test_each_blank_limitation_counts_once(field: str) -> None:
-    doc, expected = _with(field, ["Figures are unaudited.", " ", "⠀"])
+    doc, expected = _with(field, ["Figures are unaudited.", " ", "\u2800"])
     assert _issues(doc) == (expected, expected)
 
 
@@ -82,8 +82,8 @@ def test_absent_limitation_is_unchanged() -> None:
 
 
 def test_message_does_not_echo_the_input() -> None:
-    doc, _ = _with("review", ["​"])
-    assert all("​" not in issue for issue in _issues(doc))
+    doc, _ = _with("review", ["\u200b"])
+    assert all("\u200b" not in issue for issue in _issues(doc))
 
 
 def _reviews(node: object) -> Iterator[dict[str, Any]]:

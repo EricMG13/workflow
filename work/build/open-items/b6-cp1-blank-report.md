@@ -17,6 +17,8 @@ Parity: a stdlib scan of cases/**/*.json found no blank limitation in any frozen
 
 D12 probe: exit 0. prior sha d9fb02de -> d50e1bad, project_commit c34f81a.
 
-Not verified: no project Python was run, so the GREEN, lint, type and fast gates are the controller's. The deferred files were not run.
+Gates (run by the controller at 6dbe99d): pytest on the new test plus 6 fast files, 114 passed; ruff format --check exit 0; mypy clean; pins 87 ok; D12 strict exit 0; suppressions 13/5. ruff check exit 1: ISC004 at source_context.py:595/:597 predates this change (same rule at :581/:583 at base); 3 new PLE2515 in the test (literal U+200B), fixed by writing the characters as `​` and `⠀` escapes (the file is now ASCII only). The controller re-runs ruff check.
 
-agent=mx-feature fix-rounds=0 gates-first-pass=n
+Not verified: the ruff check after the escape fix (no project Python was run by me). The deferred files were not run.
+
+agent=mx-feature fix-rounds=1 gates-first-pass=n

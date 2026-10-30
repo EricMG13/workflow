@@ -15,9 +15,11 @@ import re
 from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal
 
 import pytest
+from pydantic import ValidationError
 from test_method_cp2a import (
     EXPECTED,
     ISSUER,
@@ -36,7 +38,9 @@ from deploy_vii.bindings.shipped import SHIPPED_MAPS
 from deploy_vii.business_context import CP1_REFERENCES
 from deploy_vii.contracts import Citation, Fact, Input, Module, ModuleView, Run, View
 from deploy_vii.execution import Attempt, Execution, Head, Qualification, head_of
+from deploy_vii.live.schema import exact_json
 from deploy_vii.preparation import PreparedPack
+from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import _PRESETS, _spec_of, fact_spelling
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.owners import cp2a
@@ -504,6 +508,64 @@ def test_entry_validator_is_the_one_submit_journals_with(tmp_path: Path) -> None
     finished = _finished(store, attempt)
     outcome = cp2a.ENTRY_VALIDATOR(store, pack, finished)
     assert outcome.issues == () and outcome.retained_as(finished.steps[0])
+
+
+def test_validate_step_reads_the_payload_only_through_json_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Protocol section 6: text `json_object` refuses is refused with the bounded issue, even a
+    payload the schema alone would parse (as in CP-1D, CP-2D and CP-3D)."""
+    seen: list[str] = []
+
+    def refuse(text: str) -> None:
+        seen.append(text)
+
+    payload = json.dumps(_positive_payload())
+    assert cp2a.DownsideSubmission.model_validate_json(payload) is not None
+    monkeypatch.setattr(cp2a, "json_object", refuse)
+    store: Any = SimpleNamespace(payload=lambda sha: payload)
+    attempt: Any = SimpleNamespace(steps=[SimpleNamespace(payload_sha256="x")])
+    pack: Any = None
+    out = cp2a.ENTRY_VALIDATOR(store, pack, attempt)
+    assert seen == [payload] and out.output is None
+    assert out.issues == ("(root): not a bounded JSON object",)
+
+
+def test_a_bounded_document_validates_its_exact_reserialisation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The schema reads `exact_json(document)`, never the raw text."""
+    payload = json.dumps(_positive_payload(), indent=2)
+    seen: list[Any] = []
+
+    def spy(document: Any) -> str:
+        seen.append(document)
+        return exact_json(document)
+
+    monkeypatch.setattr(cp2a, "exact_json", spy)
+    submission, issues = cp2a._parsed(payload)
+    assert issues == () and len(seen) == 1
+    assert submission == cp2a.DownsideSubmission.model_validate_json(exact_json(seen[0]))
+    assert submission == cp2a.DownsideSubmission.model_validate_json(payload)
+
+
+@pytest.mark.parametrize("name", ["positive", "gap", *(r["id"] for r in SUBMISSIONS["refusals"])])
+def test_reading_through_json_object_changes_no_frozen_cp2a_payload(name: str) -> None:
+    """Parity over cases/cp2a-owner: every frozen payload gives the schema result it gave when
+    the raw text was parsed directly (the submission, or the same shape issues)."""
+    raw = (
+        SUBMISSIONS[name]["downside_pathway"]
+        if name in ("positive", "gap")
+        else REFUSALS[name]["payload"]
+    )
+    text = json.dumps(raw)
+    submission, issues = cp2a._parsed(text)
+    try:
+        direct = cp2a.DownsideSubmission.model_validate_json(text)
+    except ValidationError as error:
+        assert submission is None and issues == shape_issues(error)
+    else:
+        assert submission == direct and issues == ()
 
 
 # --- the exact `read_inputs` view -------------------------------------------------------------

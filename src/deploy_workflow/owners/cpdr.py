@@ -287,9 +287,12 @@ def validate_research(
     sources (``pack``).
 
     Order (ruling R2): rule 1 per submitted gap; the gap-id length issue per agenda gap; rule 2
-    per agenda gap; then per question in
-    submission order rule 3, 4, 5 per searched source in listed order, 6 per citation in order,
-    the round 11 blank-text frames (text, answer, limitation), and 7. G1-X appends the de-duplicated RULES issues after these (Stage 2).
+    per agenda gap; then per question in submission order the `question_id appears twice` issue
+    (before rules 3-7), rule 3, 4, 5 per searched source in listed order, 6 per citation in
+    order, the round 11 blank-text frames (text, answer, limitation), and 7. Last, unconditionally
+    (a content issue never masks it), `_model_text_issues`: each answer's `RunText` issues, or
+    `text carries a reference`. G1-X appends the de-duplicated RULES issues after these
+    (Stage 2).
     """
     agenda_ids = {gap.gap_id for gap in upstream}
     issues: list[str] = []

@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
 
@@ -40,7 +41,7 @@ from deploy_vii.contracts import (
     TableColumn,
     TableRow,
 )
-from deploy_vii.execution import Attempt, Execution, current_inputs
+from deploy_vii.execution import Attempt, Execution, current_inputs, inherited_limitations
 from deploy_vii.registry import modules as registry_modules
 from deploy_vii.render import empty_view, render
 from deploy_vii.report_view import build, pathways
@@ -2279,6 +2280,120 @@ def assert_cp3d_tables(payload: dict[str, Any], case: str) -> int:
     return checked
 
 
+_CP4_GAP_PROSE = {"gap spelling, a G# gap id (never 0)", "gap spelling (G#)"}
+_CP4_DEFINITION_PROSE = "names the missing incorporated Schedule A"
+
+
+def _cp4_key(case: str) -> str:
+    """The oracle key whose tables and literals a case equals: `gap_false_same_definition` is
+    `corrected_resubmission.expected_same_as` (`gap.CP-4`); the others are their own key."""
+    if case != "gap_false_same_definition":
+        return case
+    node = _oracle("cp4-owner")[case]["CP-4"]["corrected_resubmission"]
+    key = str(node["expected_same_as"]).split(".")[0]
+    assert key in {"positive", "gap"}, key
+    return key
+
+
+def _assert_cp4_section_tables(payload: dict[str, Any], oracle: dict[str, Any], key: str) -> None:
+    """`sections/<id>/tables`: owner and kind match; register j equals oracle table
+    `sections[id].tables[j]` (no tab labels in this oracle). A known fact with `text` shows that
+    exact text (`cell_notation.text`); numeric cells are checked by `displayed_literals`."""
+    tables = {t["table_id"]: t for t in oracle[key]["CP-4"]["tables"]}
+    module = _module_of(payload, "CP-4")
+    facts = {f["fact_id"]: f for f in module["facts"]}
+    layouts = {t["table_id"]: t for t in module["tables"]}
+    for section_id, section in oracle["render"]["sections"].items():
+        block = _page_block(payload, section_id)
+        assert (block["owner"], block["kind"]) == (section["owner"], section["kind"]), section_id
+        registers = _registers(block)
+        assert len(registers) == len(section["tables"]), section_id
+        for register, table_id in zip(registers, section["tables"], strict=True):
+            table = tables[table_id]
+            labels = [c["label"] for c in table["columns"]]
+            assert register["row_header"] == table["row_header"], table_id
+            assert register["columns"] == labels, table_id
+            assert [(r["row_id"], r["label"]) for r in register["rows"]] == [
+                (r["row_id"], r["label"]) for r in table["rows"]
+            ], table_id
+            rows = zip(register["rows"], layouts[table_id]["rows"], table["rows"], strict=True)
+            for page_row, layout_row, want_row in rows:
+                ids = [f["fact_id"] for f in want_row["facts"]]
+                assert layout_row["fact_ids"] == ids, table_id
+                for cell, want in zip(page_row["cells"], want_row["facts"], strict=True):
+                    column = table["columns"][labels.index(want["column"])]
+                    assert facts[want["fact_id"]]["field"] == column["field"], want["fact_id"]
+                    assert cell["state"] == _CELL_STATE[want["status"]], want["fact_id"]
+                    if want["status"] != "known":
+                        assert re.fullmatch(_gap_pattern(want["status"]), cell["text"]), want
+                    elif want.get("text") is not None:
+                        assert cell["text"] == want["text"], want["fact_id"]
+
+
+def _assert_cp4_literals(payload: dict[str, Any], oracle: dict[str, Any], key: str) -> None:
+    """`displayed_literals/<key>`: every row's cell of each listed field equals the literal. Two
+    prose literals have a closed mapping (a G# gap spelling; the T4C.6 definition text naming the
+    missing Schedule A); any other non-literal prose fails loudly via the equality."""
+    tables = {t["table_id"]: t for t in oracle[key]["CP-4"]["tables"]}
+    sections = oracle["render"]["sections"]
+    for table_id, fields in oracle["render"]["displayed_literals"][key].items():
+        (section_id,) = [s for s, sec in sections.items() if table_id in sec["tables"]]
+        table = tables[table_id]
+        registers = _registers(_page_block(payload, section_id))
+        register = registers[sections[section_id]["tables"].index(table_id)]
+        for field, literal in fields.items():
+            column = [c["field"] for c in table["columns"]].index(field)
+            for page_row, want_row in zip(register["rows"], table["rows"], strict=True):
+                cell = page_row["cells"][column]
+                if literal in _CP4_GAP_PROSE:
+                    assert cell["state"] == "gap", (table_id, field)
+                    assert re.fullmatch(r"∅ G\d+", cell["text"]), (table_id, field)
+                elif literal == _CP4_DEFINITION_PROSE:
+                    assert cell["text"] == want_row["facts"][column]["text"], (table_id, field)
+                    assert "Schedule A" in cell["text"], (table_id, field)
+                else:
+                    assert cell["text"] == literal, (table_id, field, cell["text"], literal)
+
+
+def _cp4_expected_limitations(oracle_cp4: dict[str, Any], cp1: Module) -> list[str]:
+    """`#/<key>/CP-4/inherited_limitations/rule` word for word: the CP-0 literal head, then the
+    CP-1 head's limitations then its inherited_limitations, de-duplicated, own findings removed;
+    the page shows settled + inherited (execution.py:957). `cp1` is the store's CP-1 head module
+    (`store.head_module`, ruling item 46.4)."""
+    settled = oracle_cp4["settled_limitations"]
+    literal = oracle_cp4["inherited_limitations"]["literal_head_from_CP-0"]
+    inherited = dict.fromkeys([*literal, *cp1.limitations, *cp1.inherited_limitations])
+    return list(dict.fromkeys([*settled, *(x for x in inherited if x not in settled)]))
+
+
+def assert_cp4_pointers(payload: dict[str, Any], case: str, cp1: Module) -> int:
+    """R2.5 cp4 secondary pointers: `sections/<id>/tables`, `displayed_literals/<key>`,
+    `gap_false_same_definition`, `evidence_rail_tables`, `limitations_rail_tables`,
+    `limitations_rail_module_limitations`, and `cites` on `#/<key>/CP-4/tables`.
+    Returns the non-empty cites checked."""
+    oracle = _oracle("cp4-owner")
+    key = _cp4_key(case)
+    _assert_cp4_section_tables(payload, oracle, key)
+    _assert_cp4_literals(payload, oracle, key)
+    if case == "gap_false_same_definition":  # the refused values never show
+        refused = oracle[case]["CP-4"]["semantic_acceptance"][
+            "values_the_documented_rules_would_compose_from_these_inputs_and_that_must_not_qualify"
+        ]
+        shown = [
+            c["text"] for c in _page_block(payload, "covenant-tests-headroom")["rows"][0]["cells"]
+        ]
+        assert "3.00x" not in shown and "75.0%" not in shown, shown
+        assert refused["verdict"] not in shown, shown
+    module = _module_of(payload, "CP-4")
+    layouts = {t["table_id"] for t in module["tables"]}
+    for name in ("evidence_rail_tables", "limitations_rail_tables"):
+        assert set(oracle["render"][name]) <= layouts, name
+    assert module["limitations"] == _cp4_expected_limitations(oracle[key]["CP-4"], cp1)
+    checked = assert_table_cites(payload, "CP-4", oracle[key]["CP-4"]["tables"])
+    assert checked >= 1
+    return checked
+
+
 def _run(kind: str, text: str, ref_id: str | None = None) -> dict[str, Any]:
     return {"kind": kind, "text": text, "ref_id": ref_id}
 
@@ -2621,6 +2736,124 @@ def test_fast_cites_normaliser_on_real_cp3d_page() -> None:
     _assert_rejected(
         lambda page: assert_table_cites(page, "CP-3D", tables),
         [_mutated(payload, c) for c in changes],
+    )
+
+
+_CP4_CASES = ["positive", "gap", "gap_false_same_definition"]
+_CP1_ONLY_LIMITATION = "Test CP-1 inherited-only limitation"
+
+
+def _cp4_page(case: str) -> tuple[dict[str, Any], Module]:
+    """The real cp4 fast page with the settled head's limitations built by `inherited_limitations`
+    (the code settle runs) over a CP-0 head holding the oracle literal and a test CP-1 head whose
+    inherited list holds an entry the CP-0 literal lacks (the stand-in for the store's CP-1 head)."""
+    key = _cp4_key(case)
+    oracle = _oracle("cp4-owner")[key]["CP-4"]
+    view = importlib.import_module("test_connect_cp4")._expected_view(key)
+    run = view.run
+    literal = oracle["inherited_limitations"]["literal_head_from_CP-0"]
+
+    def head(module_id: str, own: list[str], inherited: list[str]) -> Module:
+        return Module(
+            run_id=run.run_id,
+            issuer_id=run.issuer_id,
+            as_of=run.as_of,
+            module_id=module_id,
+            status="restricted",
+            limitations=tuple(own),
+            inherited_limitations=tuple(inherited),
+        )
+
+    cp1 = head("CP-1", ["Test CP-1 own limitation", literal[0]], [_CP1_ONLY_LIMITATION])
+    heads = {"CP-0": head("CP-0", literal, []), "CP-1": cp1}
+    snapshot = SimpleNamespace(heads=tuple(SimpleNamespace(module_id=m) for m in heads))
+    attempt = SimpleNamespace(
+        inputs=(
+            SimpleNamespace(input_id="prepared-pack", status=None),
+            *(SimpleNamespace(input_id=m, status="restricted") for m in heads),
+        )
+    )
+    own = tuple(oracle["settled_limitations"])
+    inherited = inherited_limitations(snapshot, attempt, own, lambda h: heads[h.module_id])
+    shown = tuple(dict.fromkeys((*own, *inherited)))
+    modules = tuple(
+        m.model_copy(update={"limitations": shown}) if m.module_id == "CP-4" else m
+        for m in view.modules
+    )
+    return _payload(render(view.model_copy(update={"modules": modules}))), cp1
+
+
+@pytest.mark.parametrize("case", _CP4_CASES)
+def test_fast_cp4_pointer_rule_on_real_pages(case: str) -> None:
+    payload, cp1 = _cp4_page(case)
+    assert assert_cp4_pointers(payload, case, cp1) >= 1
+    key = _cp4_key(case)
+    oracle = _oracle("cp4-owner")
+    rail = set(oracle["render"]["evidence_rail_tables"]) | set(
+        oracle["render"]["limitations_rail_tables"]
+    )
+    cited = {
+        f["fact_id"]
+        for t in oracle[key]["CP-4"]["tables"]
+        if t["table_id"] in rail
+        for r in t["rows"]
+        for f in r["facts"]
+        if isinstance(f.get("cites"), list) and f["cites"]
+    }
+
+    def cell_text(
+        block_id: str, row: int, cell: int, text: str
+    ) -> Callable[[dict[str, Any]], None]:
+        def change(page: dict[str, Any]) -> None:
+            _page_block(page, block_id)["rows"][row]["cells"][cell]["text"] = text
+
+        return change
+
+    def tab_row_label(page: dict[str, Any]) -> None:
+        _page_block(page, "documents-structure")["tabs"][0]["rows"][0]["label"] = "X"
+
+    def limitation_dropped(page: dict[str, Any]) -> None:
+        _module_of(page, "CP-4")["limitations"].pop()
+
+    def cp1_limitation_dropped(page: dict[str, Any]) -> None:
+        _module_of(page, "CP-4")["limitations"].remove(_CP1_ONLY_LIMITATION)
+
+    def rail_table_missing(page: dict[str, Any]) -> None:
+        tables = _module_of(page, "CP-4")["tables"]
+        tables.pop(next(i for i, t in enumerate(tables) if t["table_id"] == "T4D.5"))
+
+    def fact_field_changed(page: dict[str, Any]) -> None:
+        facts = _module_of(page, "CP-4")["facts"]
+        next(f for f in facts if f["fact_id"] == "T4.9.r01.threshold")["field"] = "comparison"
+
+    def rail_locator_changed(page: dict[str, Any]) -> None:
+        entry = next(
+            e
+            for e in page["report"]["index"]["facts"]
+            if e["coord"]["module_id"] == "CP-4" and e["coord"]["fact_id"] in cited
+        )
+        ref = next(r for r in entry["ref_ids"] if r[0] in "CS")
+        passport = next(p for p in page["report"]["passports"] if p["ref_id"] == ref)
+        next(f for f in passport["fields"] if f["name"] == "Locator")["value"] = "page:99"
+
+    changes = [
+        cell_text("covenant-tests-headroom", 0, 1, "4.0x"),
+        cell_text("covenant-tests-headroom", 0, 4, "1.0x"),
+        cell_text("capacity", 1, 2, "0"),
+        cell_text("lender-protection-score", 0, 0, "Weak"),
+        tab_row_label,
+        limitation_dropped,
+        cp1_limitation_dropped,
+        rail_table_missing,
+        fact_field_changed,
+        rail_locator_changed,
+        _index_entry_removed("CP-4", lambda f: f in cited),
+    ]
+    if key == "gap":
+        changes.append(cell_text("covenant-tests-headroom", 0, 5, "3.00x"))
+        changes.append(cell_text("ebitda-definition", 0, 0, "Same definition"))
+    _assert_rejected(
+        lambda page: assert_cp4_pointers(page, case, cp1), [_mutated(payload, c) for c in changes]
     )
 
 

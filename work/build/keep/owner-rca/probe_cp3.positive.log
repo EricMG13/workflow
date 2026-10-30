@@ -1,0 +1,35 @@
+Traceback (most recent call last):
+  File "<string>", line 37, in <module>
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp3.py", line 246, in test_cp2_read_body_register_counts_follow_the_oracle
+    assert body["cp1a_signals"] == frozen["cp1a_signals"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Traceback (most recent call last):
+  File "<string>", line 37, in <module>
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp3.py", line 163, in test_cp0_r3_equals_the_oracle
+    assert [
+           ^
+    ...<6 lines>...
+    ] == want["facts"]
+    ^^^^^^^^^^^^^^^^^^
+AssertionError
+CP0 ok status
+CP0 MISMATCH facts
+  got  {"fact_id": "T7.run.preparation", "text": "38ee3a5a9fa99fc6ef0752b429bfcdeeca479c93f0e03b865fbe64c10ef02858", "cites": []}
+  want {"fact_id": "T7.run.preparation", "text": "<<PreparedPack.content_hash(), bound at run time>>", "cites": []}
+CP0 ok limitations
+CP0 ok commands
+CP0 ok plan
+test_cp2_read_body_register_counts_follow_the_oracle FAIL
+test_cp0_r3_equals_the_oracle FAIL
+CP2 keys True ['upstream', 'cp1_facts', 'cp1_facts_note', 'cp1a_rows', 'cp1a_rows_note', 'cp1a_signals', 'cp1a_signals_note', 'inherited_limitations']
+CP2 shape diffs []
+CP2 counts got  {'source_classification': 4, 'T2D.1': 4, 'company_description': 1, 'transaction_summary': 1, 'revenue_business_mix': 2, 'ownership_register': 1, 'operating_model': 7, 'events_timeline': 4, 'credit_translation': 5, 'gaps_ledger': 3, 'T2D.2': 1, 'T2D.3': 3, 'T2D.4': 1, 'T2D.5': 2, 'T2D.7': 5, 'T2D.8': 10, 'T2D.9': 5, 'downstream_readiness': 3, 'T2D.10': 3, 'T2D.11': 3, 'cp1a.cp_model_snapshot_fields': 6}
+CP2 counts want {'source_classification': 4, 'T2D.1': 4, 'company_description': 1, 'transaction_summary': 1, 'revenue_business_mix': 2, 'ownership_register': 1, 'operating_model': 7, 'events_timeline': 4, 'credit_translation': 5, 'gaps_ledger': 3, 'T2D.2': 1, 'T2D.3': 3, 'T2D.4': 1, 'T2D.5': 2, 'T2D.7': 5, 'T2D.8': 10, 'T2D.9': 5, 'downstream_readiness': 3, 'T2D.10': 3, 'T2D.11': 3, 'cp1a.cp_model_snapshot_fields': 6}
+CP2 stray []
+CP2 rows 74 74
+CP2 signals eq False
+ got []
+ want 0
+CP2 upstream [{'module_id': 'CP-0', 'status': 'restricted'}, {'module_id': 'CP-1', 'status': 'restricted'}, {'module_id': 'CP-1A', 'status': 'restricted'}]
+exit=1

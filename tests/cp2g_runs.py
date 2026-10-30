@@ -328,9 +328,7 @@ def bound_literal(workflow: OwnerWorkflow, payload: Any, body: Mapping[str, Any]
 
     def replace(match: re.Match[str]) -> str:
         hit = bindings.get(match[1])
-        return (
-            match[0] if hit is None or hit[1] != match[2] else "{" + hit[0] + "|" + match[2] + "}"
-        )
+        return match[0] if hit is None else "{" + hit[0] + "|" + match[2] + "}"
 
     return FIG.sub(replace, text)
 

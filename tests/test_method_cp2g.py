@@ -99,6 +99,14 @@ def _page_line(locator: str, prefix: str) -> str:
     return next(line for line in page.split("\n") if line.startswith(prefix))
 
 
+def _limitation(metric: str, rec: dict[str, Any]) -> str | None:
+    """Genuine CP-1 notes a known cash_interest or cash_taxes "sign normalised"
+    (outflows written positive are read negative); the oracle record omits it."""
+    if rec["status"] == "known" and metric in ("cash_interest", "cash_taxes"):
+        return "sign normalised"
+    return rec["limitation"]
+
+
 def _cp1_fact(metric: str, rec: dict[str, Any]) -> Fact:
     known = rec["status"] == "known"
     amount_unit = rec["unit_class"] == "amount"
@@ -130,7 +138,7 @@ def _cp1_fact(metric: str, rec: dict[str, Any]) -> Fact:
         if known and rec["value_class"] == "calculated"
         else None,
         value_class=rec["value_class"],
-        limitation=rec["limitation"],
+        limitation=_limitation(metric, rec),
     )
 
 

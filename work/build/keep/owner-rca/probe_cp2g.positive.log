@@ -1,0 +1,46 @@
+Traceback (most recent call last):
+  File "<string>", line 20, in run
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp2g.py", line 189, in test_a1_positive_heads_inputs_and_the_cp2g_head
+    _assert_head_equals_oracle(store, "positive")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp2g.py", line 155, in _assert_head_equals_oracle
+    assert text.replace("G1", "G#") == e["shown"], fact.fact_id
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: T2H.6.a25.liquidity_headroom
+Traceback (most recent call last):
+  File "<string>", line 20, in run
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp2g.py", line 201, in test_a1_one_ok_read_and_no_ok_pack_call_in_the_cp2g_step
+    view_tree.check("cp2g", "positive", reads[0].body)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/view_tree.py", line 50, in check
+    assert entry(body) == frozen, f"{slug} {case}: the view no longer matches {path(slug).name}"
+           ^^^^^^^^^^^^^^^^^^^^^
+AssertionError: cp2g positive: the view no longer matches cp2g-view-tree.json
+Traceback (most recent call last):
+  File "<string>", line 20, in run
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/view_tree.py", line 50, in check
+    assert entry(body) == frozen, f"{slug} {case}: the view no longer matches {path(slug).name}"
+           ^^^^^^^^^^^^^^^^^^^^^
+AssertionError: cp2g positive: the view no longer matches cp2g-view-tree.json
+Traceback (most recent call last):
+  File "<string>", line 20, in run
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp2g.py", line 332, in test_a3_each_refusal_is_journaled_with_the_oracle_issues
+    assert list(outcome["issues"]) == _expected_issues(workflow._store, rid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+positive cp2g outcome valid []
+FAIL orig a1_positive
+FAIL orig a1_one_ok_read
+reads 1 calls []
+keys body ['upstream', 'base', 'drivers', 'cp2a', 'cp1d', 'break_metrics_offered', 'cp1_facts', 'cp1d_facts', 'inherited_limitations']
+keys want ['upstream', 'base', 'drivers', 'cp2a', 'cp1d', 'break_metrics_offered', 'cp1_facts', 'cp1d_facts', 'inherited_limitations']
+FAIL view_tree.check
+quotes 109 leaked 0 []
+patched T2H record/spelling mismatches: []
+patched all mismatches: []
+PASS patched head positive
+FAIL orig a3 v10
+v10 fixed-binding outcome invalid ["base_drivers.revenue_growth.rationale: Unit x differs from the fact's unit US$ m: interface-fact:5a317bc25cf858b8edd5c976f3964b8291a82a4aeff8160907006dcc6287fae7"]
+v10 expected ["base_drivers.revenue_growth.rationale: Unit x differs from the fact's unit US$ m: interface-fact:5a317bc25cf858b8edd5c976f3964b8291a82a4aeff8160907006dcc6287fae7"]
+v10 current-driver issues ['base_drivers.revenue_growth.rationale: Malformed run text: unbalanced or empty reference']
+exit=0

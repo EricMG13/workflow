@@ -8161,7 +8161,7 @@
          "amount": null,
          "unit": null,
          "decimals": null,
-         "text": "No realized outcome is recorded, so the window since the decision ∅ G# and every variance are missing.",
+         "text": "No realized outcome is recorded, so the window since the decision [T7.3.window.realized_value] and every variance are missing.",
          "shown": "No realized outcome is recorded, so the window since the decision ∅ G# and every variance are missing.",
          "status": "known",
          "cites": [],

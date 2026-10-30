@@ -26,6 +26,10 @@ Times are UTC from `date -u +%H:%M`. Lines record `agent=<name> fix-rounds=<n> g
 - 13:28 B1 fix round 1 at 51bf88c (controller): tests/test_shell_css.py 36 passed, ruff/format/mypy 0, reviewer probe review-b1/probe_shell_css_evasions.py exit 0. Scoped re-review (same mx-precise) dispatched.
 - 13:28 B3 adversary review REVISE (Medium 1 = the mx-precise High: over-long stored interruption with issues=() accepted, base refused; Info: whitespace-only interruption the producer refuses is accepted; free interruption text is the OI-5 residual). Fix round 1 sent to the B3 builder (raise identity_mismatch for an interruption the producer could not store or would refuse).
 
+- 13:29 B1 re-review: M1, M2, Lows ADDRESSED; new Medium in the fix diff (comma list mixing plain and other selectors judged wholly plain) + Low (flex:NONE). Fix round 2 RED 24fcdd9: 3 failed (as listed), 37 passed.
+- 13:29 B3 fix round 1 RED cc49257 2 failed (DID NOT RAISE); fix da2bb04: stage4+g1x 69 passed, ruff/format/mypy 0, suppressions 13/5; reviewers' hole probes now raise identity_mismatch, other 20 probes pass. Scoped re-review: mx-adversary.
+- 13:29 Low batch (mx-scaffold) claude/oi-lows 4cc6ce5: B5's two D12 records cite docs/rulings/2026-10-30-open-items.md; JSON loads, D12 strict 0. Fast-forwarded onto the branch. agent=mx-scaffold fix-rounds=0 gates-first-pass=n/a (no test applies).
+
 ## Deferred runs
 (genuine owner-suite, G2 genuine and other long runs each closed item needs; run only when Modules says the machine is free)
 - B1 (placeholders removed; defect_classes partial): `tests/test_owner_cp4c.py`, `tests/test_owner_cp4.py`, `tests/test_owner_cp2h.py` in full (each loses one always-skipped test; expect 0 skipped from the placeholder); optional, behaviour-preserving: the `a3` never-wedges tests that use `tests/defect_classes.py` (`test_owner_cp1c.py`, `test_owner_cp2g.py`, `test_owner_cp2h.py`, `test_owner_cp3c.py`, `test_owner_cp4c.py` `-k "a3 or never_wedges"`).

@@ -651,3 +651,4 @@
 - 12:07 CP-DR refs review APPROVE (mx-precise a4a2bb05; Info only, predates). Merged claude/s5-cpdr-refs into the lane. Item 73 closed.
 - 12:10 CZR driver review REVISE (mx-precise aac22ee3): M1 the docstring says no CP-1 step has a JSON body, but quality's body is JSON (ruling: FIG only in module_context steps); L1 settled-head error names no figure; L2 refs top-level only (docstring); L3 name the read_inputs steps (the brief wrongly listed financials). Fix round 1 sent to the builder.
 - 12:12 CZR driver re-review APPROVE (mx-precise aac22ee3; wiring_probe added). Merged claude/s5-czr-driver2 as 4f8678f; lane CZR+CP-DR fast set 484 passed 7 skipped exit 0. agent=mx-feature fix-rounds=1 gates-first-pass=n. Item 74: handed to Workflow Test (local_9ec5eca0).
+- 12:12 CZR hand-off delivered to Workflow Test (local_9ec0625f; the first send used a mistyped id and was not delivered). A correction followed: the reply-to is the Modules session local_d457766d.

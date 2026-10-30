@@ -775,6 +775,13 @@ def test_a_malformed_summary_reference_keeps_only_the_run_text_message() -> None
     assert _summary_issues("A summary naming [fact_a here") == (_MALFORMED_ISSUE,)
 
 
+@pytest.mark.parametrize("text", ["", " ", ZWSP], ids=["empty", "space", "zwsp"])
+def test_an_empty_or_blank_summary_gets_exactly_one_issue(text: str) -> None:
+    """`analyst_text` already refuses it as empty text; RunText's length message would only
+    repeat the same fault (as CP-2E), so the RunText check does not run on blank text."""
+    assert _summary_issues(text) == ("summary.text: empty text",)
+
+
 def test_no_frozen_summary_text_carries_a_reference() -> None:
     """Parity: the rule changes no frozen CP-3D oracle outcome (the refusal cases are also
     reproduced issue for issue by the oracle-refusals test above)."""

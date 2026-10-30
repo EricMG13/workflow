@@ -675,7 +675,7 @@ def test_a_summary_reference_is_a_journaled_issue(summary: str) -> None:
 _EMPTY = "summary.text: empty text"
 
 
-@pytest.mark.parametrize("summary", ["", " ", "​"], ids=["empty", "space", "zwsp"])
+@pytest.mark.parametrize("summary", ["", " ", "\u200b"], ids=["empty", "space", "zwsp"])
 def test_an_empty_or_blank_summary_gets_exactly_one_issue(summary: str) -> None:
     """`chk.prose` already refuses it as empty text; RunText's own length message would only
     repeat the same fault, so `run_text` does not run on text refused as empty/blank."""

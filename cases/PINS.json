@@ -7,6 +7,7 @@
   "cases/charts/dr2-expected.json": "d9cea27143cfa8a924515bef0a56b42eba0f366fc230a5193558657d83049528",
   "cases/charts/dr345-expected.json": "1531c289e1f93b9772dc8ec4fc66f915405d3f1f0fb0f8e6e492d1d99e6e39d6",
   "cases/charts/dr6-expected.json": "ee40e24c77c7089375adc0be88bf185a3871802d163019eaf1430c567aeb5e45",
+  "cases/charts/expected.json": "2ca2606c46c09ab285d0602b5f95d06a36d61a6aa4e467fbb45e71afbf665276",
   "cases/charts/rv3-expected.json": "e22dd80b2aacb0617cd07068a71d928ff54c348fe8a1f376c269c89b94834851",
   "cases/charts/s4fp04-expected.json": "d47a7d874b1c5d2bed1233f624f007624216973a3d61ad12b1afe9d25184f2e6",
   "cases/charts/s5-expected.json": "031ad25f84323fa241b333751f110d4351c869ecf2492929b0c92f6776edd01b",

@@ -1120,3 +1120,49 @@ def test_submit_revalidates_the_retained_step_before_it_settles(
     base.search(workflow, "prior_case", runs.SEARCH_QUERY)
     with pytest.raises(ValueError, match="differs from trusted validation"):
         workflow.submit_review(payload)
+
+
+# --- run-text tables: only a registered table's text is run text (rulings item 56) ----------------
+
+
+def _thesis_fact_id(view: View) -> str:
+    return next(
+        f.fact_id
+        for f in view.modules[0].facts
+        if f.table_id == "T7.2" and f.status == "known" and f.text
+    )
+
+
+def test_a_verbatim_quote_holding_brackets_is_shown_as_written_in_block_and_payload() -> None:
+    quote = "Section 7.11 [Reserved]; see [sic] and [1]."
+    fact_id = _thesis_fact_id(_what_changed_view("positive"))
+    view = _what_changed_view("positive", {fact_id: quote})
+    fact = _payload_facts(view)[fact_id]
+    assert fact["display"] == fact["table_display"] == quote
+    assert _what_changed_lines(view)  # the block renders too
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "No realized outcome is recorded [T7.3.window.realized_valu].",
+        "No realized outcome is recorded [T7.3.window.realized_value",
+    ],
+)
+def test_malformed_run_text_in_the_what_changed_table_fails_closed_on_both_paths(bad: str) -> None:
+    view = _what_changed_view("no_outcome", {"cp8.what_changed.outcome.value": bad})
+    for step in (_what_changed_lines, _payload_facts):
+        with pytest.raises(ValueError, match="does not resolve"):
+            step(view)
+
+
+def test_run_text_naming_an_issuer_with_digits_renders_on_both_paths() -> None:
+    text = (
+        "No realized outcome is recorded for 3M Company, "
+        "so the window [T7.3.window.realized_value] is missing."
+    )
+    view = _what_changed_view("no_outcome", {"cp8.what_changed.outcome.value": text})
+    run = view.run.model_copy(update={"issuer_name": "3M Company"})
+    view = view.model_copy(update={"run": run})
+    assert _what_changed_lines(view)
+    assert "3M Company" in _payload_facts(view)["cp8.what_changed.outcome.value"]["display"]

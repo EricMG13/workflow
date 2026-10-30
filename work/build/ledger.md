@@ -589,3 +589,4 @@
 - 05:38 Docs batch done (mx-feature a501135c) claude/s5-docs fbfc905: G1X §6 amended; shipped.py D12 chain corrected along first parent (9 records folded into e1d0630 and ab89173 merge records, reasons kept); probes flag only owner records; pins 0. agent=mx-feature fix-rounds=0 gates-first-pass=y. Review mx-feature dispatched.
 - 05:39 Docs batch review APPROVE (mx-feature a32d1278). Item 52. claude/s5-docs merged into the lane.
 - 05:41 Stage 5.1 s2: tests/test_owner_cp4.py::test_tables_claims_and_limitations_equal_the_oracle fails for all 3 cases (first end-to-end run of this suite). RCA mx-autonomous dispatched (brief work/build/stage5/cp4-owner-rca-brief.md).
+- 05:44 CP-4 owner RCA (mx-autonomous a7e4849c): two test causes (metric facts[0]; inherited compared with the rule object). Item 53. Fix mx-feature dispatched.

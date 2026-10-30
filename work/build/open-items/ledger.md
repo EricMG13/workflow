@@ -31,6 +31,7 @@ Times are UTC from `date -u +%H:%M`. Lines record `agent=<name> fix-rounds=<n> g
 - 13:29 Low batch (mx-scaffold) claude/oi-lows 4cc6ce5: B5's two D12 records cite docs/rulings/2026-10-30-open-items.md; JSON loads, D12 strict 0. Fast-forwarded onto the branch. agent=mx-scaffold fix-rounds=0 gates-first-pass=n/a (no test applies).
 - 13:31 B3 scoped re-review mx-adversary: Medium 1 (= mx-precise High) and Info 1 ADDRESSED, no new breakage (probe scratchpad/review-b3-adv/test_probe_b3_fix1.py exit 0; 10 genuine reasons verify). Out of scope (OI-5 residual): a forger still picks any non-blank interruption up to 300 characters; failed-publication result/payload blobs are not checked.
 - 13:30 Merged claude/oi-b3-verifier 4ab202c (report updated). agent=mx-feature fix-rounds=1 gates-first-pass=y. B1 round 2 at 9586860: tests/test_shell_css.py 40 passed, ruff/format/mypy 0, both reviewer probes exit 0; scoped re-review (mx-precise) dispatched.
+- 13:30 B1 round 2 re-review mx-precise: Medium and Low ADDRESSED, no new breakage (both probes exit 0). Merged claude/oi-b1-tests f778158. agent=mx-feature fix-rounds=2 gates-first-pass=y.
 
 ## Deferred runs
 (genuine owner-suite, G2 genuine and other long runs each closed item needs; run only when Modules says the machine is free)

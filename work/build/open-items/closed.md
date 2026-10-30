@@ -44,6 +44,12 @@ Modules folds these into `lows.md` when it merges `claude/open-items-fd69c5`. "c
 - (Stage 4 review Info 1) `_verify_publications`: a failed CP-MODEL publication's issues and interruption are not replayed: closed by 3fdda57 + da2bb04 (fast RED e3874bc, cc49257; merge of claude/oi-b3-verifier; OI-5). The interruption text itself stays the forger's choice within the producer's bounds (OI-5 residual).
 - [G1-X guards] Info, the three remaining >100-character lines in `owner_workflow.py` (:12, :211, :259): closed by 3fdda57.
 
+- Stage 4 owner fixes (item 41/43) `tests/defect_classes.py:858`, `:863` mypy "Cannot infer type of lambda": closed by e585af3 (merge of claude/oi-b1-tests).
+- Stage 3 review (item 22) ruff `tests/test_legal_render.py:220` and Stage 3 Low L1 (item 32) `tests/test_cp1_chart_render.py` FURB157 ×4, C408 :433: closed by 81fd883.
+- (5.1 s0, l3, l2) always-skipped "blocked on G2" placeholders `test_owner_cp4c.py:615`, `test_owner_cp4.py:497`, `test_owner_cp2h.py:640`: closed by 89eb960 (OI-8; each comment names its G2 genuine cases).
+- (item 64, stale docstring) `tests/test_owner_cp3c.py:11`: closed by a1d5c7b.
+- (item 62 Low) `tests/test_shell_css.py:9` first-block parser: closed by 71fc5a3, 51bf88c, 9586860 (RED 8139d49, c9b4746, 24fcdd9; OI-9, OI-19).
+
 ## Decided
 - CP-2E Info (b) `Cite`/`Cites` copy/asdict: OI-3.
 - CP-2A Low forged `Upstream`: OI-4.

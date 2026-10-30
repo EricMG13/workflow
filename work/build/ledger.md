@@ -570,3 +570,4 @@
 - 03:30 G2 gaps spec review (mx-precise aed2c984): REVISE, Medium 2 (cites scope misses cp8/cp4 real cites; missing index entry falls back), Low 4. Back to preparer a2fe49b1 for revision 1.
 - 03:35 G2 gaps spec revision 1 (preparer a2fe49b1): all 7 items; 2 deviations with code evidence (required-entry rule; SYNTH order in rails). Re-review to mx-precise aed2c984.
 - 03:38 G2 gaps spec re-review APPROVE (mx-precise aed2c984); item 47 freezes it. s4-int2 r-1 (cp4c+cpl10 5 tests) passed, exit 0. Builder mx-feature dispatched.
+- 03:45 s4-int2 e37b73e: the 14 owner tests that failed on ff9070e all pass (r-0 cp2g+cp3 9 passed 38m, r-1 cp4c+cpl10 5 passed 30m; exit 0).

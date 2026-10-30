@@ -167,6 +167,6 @@ Fable writes one class-level plan first (verify by replaying the producer's rule
 ## Stage 5 — Final verification
 
 - [ ] **5.1** Run every command in `work/build/deferred-runs.md` (no heavy-job lock since the user removed it on 2026-10-28). Log each run in `work/build/ledger.md`.
-- [ ] **5.2** Native DOM proof for each delivery scope and the CP-OS nav rows.
-- [ ] **5.3** Whole-branch Opus review (`mx-precise` or `mx-autonomous`, unless the user says otherwise); failures go to `mx-feature` fix rounds, test-first. Then `confidence-review` and `rewrite-tournament` on the branch diff.
+- [x] **5.2** Native DOM proof for each delivery scope and the CP-OS nav rows.
+- [x] **5.3** Whole-branch Opus review (`mx-precise` or `mx-autonomous`, unless the user says otherwise); failures go to `mx-feature` fix rounds, test-first. Then `confidence-review` and `rewrite-tournament` on the branch diff.
 - [ ] **5.4** PM integrates the branch. LEAD updates `docs/MODULES.csv`.

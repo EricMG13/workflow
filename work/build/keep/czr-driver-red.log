@@ -1,0 +1,378 @@
+F.........sssssss.FFFFFFFFFFFFFFFF                                       [100%]
+=================================== FAILURES ===================================
+______________________ test_pack_builds_deterministically ______________________
+
+    def test_pack_builds_deterministically() -> None:
+        again = czr_runs.make_pack()
+        assert again.content_hash() == PACK.content_hash()
+        assert again == PACK
+        run = PACK.run
+>       assert (run.case_kind, run.pathway, run.requested_modules) == (
+            "public",
+            "earnings_update",
+            ("CP-1", "CP-2", "CP-5"),
+        )
+E       AssertionError: assert ('public', 'e...e', ('CP-1',)) == ('public', 'e...P-2', 'CP-5'))
+E         
+E         At index 2 diff: ('CP-1',) != ('CP-1', 'CP-2', 'CP-5')
+E         Use -v to get more diff
+
+tests/test_czr_driver.py:40: AssertionError
+_________________________ test_item_70_run_id_and_plan _________________________
+
+    def test_item_70_run_id_and_plan() -> None:
+>       assert czr_runs.RUN_ID == "czr-2026q2-earnings-update-v1"
+E       AssertionError: assert 'czr-2026q2-e...update-cp1-v1' == 'czr-2026q2-e...ngs-update-v1'
+E         
+E         - czr-2026q2-earnings-update-v1
+E         + czr-2026q2-earnings-update-cp1-v1
+E         ?                            ++++
+
+tests/test_czr_driver.py:150: AssertionError
+_____________________ test_binder_binds_exactly_one_match ______________________
+
+    def test_binder_binds_exactly_one_match() -> None:
+        facts_of = _facts_of(_fact("f1"), _fact("f2", label="Other"), _fact("f3", period="Q1 26"))
+>       out = czr_runs.bind_stage_figures(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "rev {{FIG:rev}} and {{FIG:rev}}", {"rev": SELECTOR}, BODY, facts_of
+        )
+E       AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:190: AttributeError
+_ test_binder_refuses_without_fallback[facts0-body0-selector0-{{FIG:rev}}-rev] _
+
+facts = (Fact(fact_id='f9', label='Other', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None, ...ne, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None),)
+body = {'cp1_facts': [{'ref': 'f1', 'unit': 'USD_M', 'shown': '$2,900'}]}
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:rev}}', figure = 'rev'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_ test_binder_refuses_without_fallback[facts1-body1-selector1-{{FIG:rev}}-rev] _
+
+facts = (Fact(fact_id='f1', label='Revenue', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None...one, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None))
+body = {'cp1_facts': [{'ref': 'f1', 'unit': 'USD_M', 'shown': '$2,900'}]}
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:rev}}', figure = 'rev'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_ test_binder_refuses_without_fallback[facts2-body2-selector2-{{FIG:rev}}-rev] _
+
+facts = (Fact(fact_id='f1', label='Revenue', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None...ne, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None),)
+body = {'cp1_facts': [{'ref': 'f1', 'unit': 'USD_M', 'shown': '$2,900'}]}
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:rev}}', figure = 'rev'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_ test_binder_refuses_without_fallback[facts3-body3-selector3-{{FIG:rev}}-rev] _
+
+facts = (Fact(fact_id='f1', label='Revenue', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None...ne, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None),)
+body = {'cp1_facts': [{'ref': 'f1', 'unit': 'USD_M', 'shown': '$2,900'}]}
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:rev}}', figure = 'rev'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_ test_binder_refuses_without_fallback[facts4-body4-selector4-{{FIG:rev}}-rev] _
+
+facts = (Fact(fact_id='f1', label='Revenue', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None...ne, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None),)
+body = {'cp1_facts': []}
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:rev}}', figure = 'rev'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_ test_binder_refuses_without_fallback[facts5-body5-selector5-{{FIG:nope}}-nope] _
+
+facts = (Fact(fact_id='f1', label='Revenue', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None...ne, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None),)
+body = {'cp1_facts': [{'ref': 'f1', 'unit': 'USD_M', 'shown': '$2,900'}]}
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:nope}}', figure = 'nope'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_ test_binder_refuses_without_fallback[facts6-None-selector6-{{FIG:rev}}-rev] __
+
+facts = (Fact(fact_id='f1', label='Revenue', table_id='T1', row_id='summary', field='value', amount=Decimal('2900'), text=None...ne, value_class=None, source_amount=None, stated_amount=None, calculation_status=None, formula=None, limitation=None),)
+body = None
+selector = {'module_id': 'CP-1', 'table_id': 'T1', 'period': 'Q2 26', 'label': 'Revenue', ...}
+text = '{{FIG:rev}}', figure = 'rev'
+
+    @pytest.mark.parametrize(
+        ("facts", "body", "selector", "text", "figure"),
+        [
+            ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+            ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+            ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+        ],
+    )
+    def test_binder_refuses_without_fallback(
+        facts: tuple[Fact, ...],
+        body: dict[str, object] | None,
+        selector: dict[str, str],
+        text: str,
+        figure: str,
+    ) -> None:
+        with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+>           czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:216: AttributeError
+_________________ test_binder_leaves_text_without_tokens_alone _________________
+
+    def test_binder_leaves_text_without_tokens_alone() -> None:
+>       assert czr_runs.bind_stage_figures("plain", {}, None, _facts_of()) == "plain"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:220: AttributeError
+______________________ test_czr_closed_wrong_step_raises _______________________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-134/test_czr_closed_wrong_step_rai0')
+
+    def test_czr_closed_wrong_step_raises(tmp_path: Path) -> None:
+        sub = _write(tmp_path / "s.json", [{"step": "financials", "calls": [], "submission": {}}])
+        with pytest.raises(RuntimeError, match="'financials'.*'source_readiness'"):
+>           czr_runs.czr_closed(tmp_path / "run", sub)
+E           TypeError: czr_closed() takes 1 positional argument but 2 were given
+
+tests/test_czr_driver.py:234: TypeError
+____________ test_czr_closed_read_inputs_call_reaches_the_workflow _____________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-134/test_czr_closed_read_inputs_ca0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cc7c050>
+
+    def test_czr_closed_read_inputs_call_reaches_the_workflow(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: list[str] = []
+        real = OwnerWorkflow.read_inputs
+    
+        def spy(self: OwnerWorkflow) -> dict[str, object]:
+            seen.append("read_inputs")
+            return real(self)
+    
+        monkeypatch.setattr(OwnerWorkflow, "read_inputs", spy)
+        sub = _write(
+            tmp_path / "s.json",
+            [{"step": "source_readiness", "calls": [{"tool": "read_inputs"}], "submission": {}}],
+        )
+        # source_readiness declares no inputs, so the workflow itself refuses the call
+        with pytest.raises(WorkflowError):
+>           czr_runs.czr_closed(tmp_path / "run", sub)
+E           TypeError: czr_closed() takes 1 positional argument but 2 were given
+
+tests/test_czr_driver.py:254: TypeError
+____________________ test_czr_closed_missing_file_names_it _____________________
+
+tmp_path = PosixPath('/private/var/folders/81/bwblpst93lb6wb3lwrk8k6800000gn/T/pytest-of-ericguei/pytest-134/test_czr_closed_missing_file_n0')
+
+    def test_czr_closed_missing_file_names_it(tmp_path: Path) -> None:
+        missing = tmp_path / "absent-submissions.json"
+        with pytest.raises(FileNotFoundError, match="absent-submissions.json"):
+>           czr_runs.czr_closed(tmp_path / "run", missing)
+E           TypeError: czr_closed() takes 1 positional argument but 2 were given
+
+tests/test_czr_driver.py:261: TypeError
+__________________ test_binder_refuses_one_ref_shown_two_ways __________________
+
+    def test_binder_refuses_one_ref_shown_two_ways() -> None:
+        body: dict[str, object] = {
+            "cp1_facts": [{"ref": "f1", "unit": "USD_M", "shown": "$2,900"}],
+            "other_facts": [{"ref": "f1", "unit": "USD_M", "shown": "$2.9B"}],
+        }
+        with pytest.raises(RuntimeError, match="f1"):
+>           czr_runs.bind_stage_figures("{{FIG:rev}}", {"rev": SELECTOR}, body, _facts_of(_fact("f1")))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:270: AttributeError
+____________________ test_binder_takes_refs_from_every_list ____________________
+
+    def test_binder_takes_refs_from_every_list() -> None:
+        body: dict[str, object] = {
+            "cp1_facts": [],
+            "more": [{"ref": "f1", "unit": "USD_M", "shown": "$2,900"}],
+        }
+        facts_of = _facts_of(_fact("f1"))
+>       out = czr_runs.bind_stage_figures("{{FIG:rev}}", {"rev": SELECTOR}, body, facts_of)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'czr_runs' has no attribute 'bind_stage_figures'
+
+tests/test_czr_driver.py:279: AttributeError
+________ test_a_step_with_inputs_must_have_read_them_before_submitting _________
+
+    def test_a_step_with_inputs_must_have_read_them_before_submitting() -> None:
+        with pytest.raises(RuntimeError, match="read_inputs.*financials"):
+>           czr_runs.require_read("financials", "projection", read_made=False)
+            ^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'czr_runs' has no attribute 'require_read'
+
+tests/test_czr_driver.py:285: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_czr_driver.py::test_pack_builds_deterministically - Asserti...
+FAILED tests/test_czr_driver.py::test_item_70_run_id_and_plan - AssertionErro...
+FAILED tests/test_czr_driver.py::test_binder_binds_exactly_one_match - Attrib...
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts0-body0-selector0-{{FIG:rev}}-rev]
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts1-body1-selector1-{{FIG:rev}}-rev]
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts2-body2-selector2-{{FIG:rev}}-rev]
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts3-body3-selector3-{{FIG:rev}}-rev]
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts4-body4-selector4-{{FIG:rev}}-rev]
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts5-body5-selector5-{{FIG:nope}}-nope]
+FAILED tests/test_czr_driver.py::test_binder_refuses_without_fallback[facts6-None-selector6-{{FIG:rev}}-rev]
+FAILED tests/test_czr_driver.py::test_binder_leaves_text_without_tokens_alone
+FAILED tests/test_czr_driver.py::test_czr_closed_wrong_step_raises - TypeErro...
+FAILED tests/test_czr_driver.py::test_czr_closed_read_inputs_call_reaches_the_workflow
+FAILED tests/test_czr_driver.py::test_czr_closed_missing_file_names_it - Type...
+FAILED tests/test_czr_driver.py::test_binder_refuses_one_ref_shown_two_ways
+FAILED tests/test_czr_driver.py::test_binder_takes_refs_from_every_list - Att...
+FAILED tests/test_czr_driver.py::test_a_step_with_inputs_must_have_read_them_before_submitting
+SKIPPED [7] tests/test_czr_driver.py:136: not a CP-1 key
+17 failed, 10 passed, 7 skipped in 0.92s
+exit=1

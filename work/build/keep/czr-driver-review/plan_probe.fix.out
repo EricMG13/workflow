@@ -1,0 +1,12 @@
+plan ('CP-0', 'CP-1', 'CP-1A', 'CP-2', 'CP-5')
+create ok; plan ('CP-0', 'CP-1', 'CP-1A', 'CP-2', 'CP-5') first step source_readiness
+('CP-0', 'source_readiness') none
+('CP-1', 'source_context') none
+('CP-1', 'financials') none
+('CP-1', 'narrative') projection
+('CP-1', 'readiness') projection
+('CP-1', 'quality') projection
+('CP-1A', 'business_context') none
+('CP-2', 'credit_synthesis') module_context
+('CP-5', 'integrity_review') module_context
+unsettled head error: 0 settled heads for CP-1, expected one | names a figure: False

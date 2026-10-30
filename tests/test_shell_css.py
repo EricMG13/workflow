@@ -147,6 +147,12 @@ _CASES = [
     pytest.param(_GOOD + ".module-list::before{flex-shrink:1}", True, id="pseudo-element-ignored"),
     pytest.param(".nav .module-list{flex-shrink:1}" + _GOOD, False, id="earlier-specific-override"),
     pytest.param(_GOOD + ".module-list{&:hover{color:red}flex-shrink:1}", False, id="nesting"),
+    pytest.param(
+        ".x .module-list,.module-list{flex-shrink:1}" + _GOOD, False, id="mixed-list-descendant"
+    ),
+    pytest.param(".module-list.open,.module-list{flex:1}" + _GOOD, False, id="mixed-list-compound"),
+    pytest.param(".x .module-list,.module-list{flex-shrink:0}", True, id="mixed-list-zero"),
+    pytest.param(".module-list{flex:NONE}", True, id="flex-none-upper"),
 ]
 
 

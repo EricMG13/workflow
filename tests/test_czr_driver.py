@@ -1,17 +1,23 @@
 """CZR driver: the pack builds deterministically, hashes and pages hold, the CP-1 precheck
 locates the statement pages and the extractor reads them; every CP-1 citation key lies in
-exactly one page. No run is driven here (`czr_closed` needs Workflow Test's submissions)."""
+exactly one page; the item 70 run plans CP-0, CP-1, CP-1A, CP-2, CP-5; the figure binder and
+the stage loop are tested over a `submissions.json` written under tmp_path. No full run is
+driven here (`czr_closed` needs Workflow Test's submissions in `cases/`)."""
 
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
 
 import czr_runs
 import pytest
 
+from deploy_vii.contracts import Fact
+from deploy_vii.registry import plan
 from deploy_vii.statement_extract import extract_statement_lines
 from deploy_workflow.financial_workflow import STATEMENT_HEADING
+from deploy_workflow.owner_workflow import OwnerWorkflow, WorkflowError
 
 CASE = czr_runs.CASE
 QUALIFICATION = json.loads((CASE / "qualification.json").read_text(encoding="utf-8"))
@@ -33,7 +39,7 @@ def test_pack_builds_deterministically() -> None:
     assert (run.case_kind, run.pathway, run.requested_modules) == (
         "public",
         "earnings_update",
-        ("CP-1",),
+        ("CP-1", "CP-2", "CP-5"),
     )
     assert str(run.as_of) == czr_runs.manifest()["run"]["as_of"]
     assert run.run_id == czr_runs.RUN_ID != czr_runs.manifest()["run"]["run_id"]
@@ -137,3 +143,136 @@ def test_czr_closed_without_submissions_raises_naming_the_file(tmp_path: Path) -
     with pytest.raises(FileNotFoundError, match="submissions.json"):
         czr_runs.czr_closed(tmp_path)
     assert not any(tmp_path.iterdir())
+
+
+def test_item_70_run_id_and_plan() -> None:
+    assert czr_runs.RUN_ID == "czr-2026q2-earnings-update-v1"
+    assert PACK.run.run_id == czr_runs.RUN_ID
+    assert plan(PACK.run.requested_modules) == ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-5")
+
+
+# --- figure binder ---------------------------------------------------------------------------
+
+SELECTOR = {
+    "module_id": "CP-1",
+    "table_id": "T1",
+    "period": "Q2 26",
+    "label": "Revenue",
+    "unit_token": "USD_M",
+    "spelled": "$2,900",
+}
+BODY: dict[str, object] = {"cp1_facts": [{"ref": "f1", "unit": "USD_M", "shown": "$2,900"}]}
+
+
+def _fact(fact_id: str, label: str = "Revenue", period: str = "Q2 26") -> Fact:
+    return Fact(fact_id=fact_id, label=label, table_id="T1", period=period)
+
+
+def _facts_of(*facts: Fact) -> Callable[[str], tuple[Fact, ...]]:
+    def facts_of(module_id: str) -> tuple[Fact, ...]:
+        assert module_id == "CP-1"
+        return facts
+
+    return facts_of
+
+
+def test_binder_binds_exactly_one_match() -> None:
+    facts_of = _facts_of(_fact("f1"), _fact("f2", label="Other"), _fact("f3", period="Q1 26"))
+    out = czr_runs.bind_stage_figures(
+        "rev {{FIG:rev}} and {{FIG:rev}}", {"rev": SELECTOR}, BODY, facts_of
+    )
+    assert out == "rev {f1|USD_M} and {f1|USD_M}"
+
+
+@pytest.mark.parametrize(
+    ("facts", "body", "selector", "text", "figure"),
+    [
+        ((_fact("f9", label="Other"),), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+        ((_fact("f1"), _fact("f2")), BODY, SELECTOR, "{{FIG:rev}}", "rev"),
+        ((_fact("f1"),), BODY, {**SELECTOR, "unit_token": "USD_B"}, "{{FIG:rev}}", "rev"),
+        ((_fact("f1"),), BODY, {**SELECTOR, "spelled": "$1"}, "{{FIG:rev}}", "rev"),
+        ((_fact("f1"),), {"cp1_facts": []}, SELECTOR, "{{FIG:rev}}", "rev"),
+        ((_fact("f1"),), BODY, SELECTOR, "{{FIG:nope}}", "nope"),
+        ((_fact("f1"),), None, SELECTOR, "{{FIG:rev}}", "rev"),
+    ],
+)
+def test_binder_refuses_without_fallback(
+    facts: tuple[Fact, ...],
+    body: dict[str, object] | None,
+    selector: dict[str, str],
+    text: str,
+    figure: str,
+) -> None:
+    with pytest.raises(RuntimeError, match=f"FIG {figure}"):
+        czr_runs.bind_stage_figures(text, {"rev": selector}, body, _facts_of(*facts))
+
+
+def test_binder_leaves_text_without_tokens_alone() -> None:
+    assert czr_runs.bind_stage_figures("plain", {}, None, _facts_of()) == "plain"
+
+
+# --- stage loop ------------------------------------------------------------------------------
+
+
+def _write(path: Path, stages: list[dict[str, object]]) -> Path:
+    path.write_text(json.dumps({"stages": stages}), encoding="utf-8")
+    return path
+
+
+def test_czr_closed_wrong_step_raises(tmp_path: Path) -> None:
+    sub = _write(tmp_path / "s.json", [{"step": "financials", "calls": [], "submission": {}}])
+    with pytest.raises(RuntimeError, match="'financials'.*'source_readiness'"):
+        czr_runs.czr_closed(tmp_path / "run", sub)
+
+
+def test_czr_closed_read_inputs_call_reaches_the_workflow(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[str] = []
+    real = OwnerWorkflow.read_inputs
+
+    def spy(self: OwnerWorkflow) -> dict[str, object]:
+        seen.append("read_inputs")
+        return real(self)
+
+    monkeypatch.setattr(OwnerWorkflow, "read_inputs", spy)
+    sub = _write(
+        tmp_path / "s.json",
+        [{"step": "source_readiness", "calls": [{"tool": "read_inputs"}], "submission": {}}],
+    )
+    # source_readiness declares no inputs, so the workflow itself refuses the call
+    with pytest.raises(WorkflowError):
+        czr_runs.czr_closed(tmp_path / "run", sub)
+    assert seen == ["read_inputs"]
+
+
+def test_czr_closed_missing_file_names_it(tmp_path: Path) -> None:
+    missing = tmp_path / "absent-submissions.json"
+    with pytest.raises(FileNotFoundError, match="absent-submissions.json"):
+        czr_runs.czr_closed(tmp_path / "run", missing)
+
+
+def test_binder_refuses_one_ref_shown_two_ways() -> None:
+    body: dict[str, object] = {
+        "cp1_facts": [{"ref": "f1", "unit": "USD_M", "shown": "$2,900"}],
+        "other_facts": [{"ref": "f1", "unit": "USD_M", "shown": "$2.9B"}],
+    }
+    with pytest.raises(RuntimeError, match="f1"):
+        czr_runs.bind_stage_figures("{{FIG:rev}}", {"rev": SELECTOR}, body, _facts_of(_fact("f1")))
+
+
+def test_binder_takes_refs_from_every_list() -> None:
+    body: dict[str, object] = {
+        "cp1_facts": [],
+        "more": [{"ref": "f1", "unit": "USD_M", "shown": "$2,900"}],
+    }
+    facts_of = _facts_of(_fact("f1"))
+    out = czr_runs.bind_stage_figures("{{FIG:rev}}", {"rev": SELECTOR}, body, facts_of)
+    assert out == "{f1|USD_M}"
+
+
+def test_a_step_with_inputs_must_have_read_them_before_submitting() -> None:
+    with pytest.raises(RuntimeError, match="read_inputs.*financials"):
+        czr_runs.require_read("financials", "projection", read_made=False)
+    czr_runs.require_read("financials", "projection", read_made=True)
+    czr_runs.require_read("source_readiness", "none", read_made=False)

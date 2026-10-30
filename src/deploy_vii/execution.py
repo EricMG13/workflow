@@ -14,6 +14,7 @@ import re
 import tempfile
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal, Self
 from uuid import uuid4
@@ -536,6 +537,19 @@ def _put_once(folder: Path, name: str, raw: bytes, what: str) -> None:
         raise ValueError(f"Existing {what} is corrupt")
 
 
+# Parsed settled modules, memoised per (hash, bytes) for this process only. `Execution._load`
+# still reads and hash-checks the blob on every call, so a missing or tampered blob refuses as
+# before; only the parse of bytes already proven identical is skipped. Exceptions are not cached.
+# ponytail: 4 entries, and one parsed CP-1 Module keeps about 233 MiB alive (about 1 GiB worst
+# case); upgrade path is to cap by summed blob size instead of entry count.
+@lru_cache(maxsize=4)
+def _canonical_result(sha256: str, raw: bytes) -> Module:
+    module = Module.model_validate_json(raw)
+    if module.content_hash() != sha256:
+        raise ValueError("Execution result blob is not the canonical module")
+    return module
+
+
 class Execution:
     def __init__(self, directory: Path) -> None:
         self.directory = directory
@@ -606,10 +620,7 @@ class Execution:
 
     def result(self, sha256: str) -> Module:
         """Return a settled module from its blob; the bytes must be its canonical JSON."""
-        module = Module.model_validate_json(self._load(sha256))
-        if module.content_hash() != sha256:
-            raise ValueError("Execution result blob is not the canonical module")
-        return module
+        return _canonical_result(sha256, self._load(sha256))
 
     def head_module(self, head: Head) -> Module:
         """The head's module as currently known: its blob, checked against the head record,

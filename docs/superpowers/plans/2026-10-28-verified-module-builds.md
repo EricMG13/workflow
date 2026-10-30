@@ -147,7 +147,7 @@ S1a deferral (the user, to LEAD, 2026-10-28: "After fix-4"):
 
 Fable writes one class-level plan first (verify by replaying the producer's rules, within the threat model's limits) and writes no code; `mx-feature` implements, `mx-adversary` attacks. `mx-autonomous` stands in if Fable has no credits.
 
-- [ ] **Receipt hardening.** The receipt verifier's tamper and forgery cases (S1a's adversary findings, B1-class hardening) and each module's `tamper`/`refusals`/`tool_use` oracle sections. This stage owns them, if LEAD accepts the deferral proposed on 2026-10-28.
+- [x] **Receipt hardening.** The receipt verifier's tamper and forgery cases (S1a's adversary findings, B1-class hardening) and each module's `tamper`/`refusals`/`tool_use` oracle sections. This stage owns them, if LEAD accepts the deferral proposed on 2026-10-28.
   - S1a review-adversary-4 (the user ruled these known gaps owned here; LEAD 1879180, `docs/reviews/s1a-owner-run.md`, full report and RED tests in `/Users/ericguei/Documents/Deploy Workflow Sessions/s1a-build/work/s1a/review-adversary-4.md`):
     - **HIGH 1.** The verifier never replays `Execution.begin`'s rule (`owner_workflow.py` `_verify_begins` :1007-1024, `_verify_attempts` :1427-1429, the :1632 exemption). Replay begin on `before`:
       - refuse a pending attempt;
@@ -162,7 +162,7 @@ Fable writes one class-level plan first (verify by replaying the producer's rule
     - **Known gap (owner, via LEAD 3f59be2).** Refused records can be dropped, duplicated or reordered across tickets without detection; §4 records them "exactly as for today's".
     - **0d product defect (owner approved; LEAD branch `lead/0d-normalise`, `live/schema.py` only).** A `normalise` TypeError or RecursionError escapes `submit_review` after the binding audit write, and RecursionError escapes the verifier. When the fix lands, remove G1-X's recorded-payload `_fill` TypeError mapping in a later G1-X change (plus any caller diff LEAD sends).
   - CP-8 `cp8.what_changed.outcome.value`: the rails line binds the number of `T7.3.window.realized_value`, never the pinned literal `∅ G#` (rulings round 5, LEAD notes).
-- [ ] **Stage 4 review.** Fable reviews (`mx-autonomous` if Fable has no credits). Findings go to `mx-feature` fix rounds.
+- [x] **Stage 4 review.** Fable reviews (`mx-autonomous` if Fable has no credits). Findings go to `mx-feature` fix rounds.
 
 ## Stage 5 — Final verification
 

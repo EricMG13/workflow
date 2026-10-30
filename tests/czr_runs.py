@@ -75,7 +75,7 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases/czr-2026q2-earnings-update"
 SUBMISSIONS = CASE / "submissions.json"
-RUN_ID = "czr-2026q2-earnings-update-v1"
+RUN_ID = "czr-2026q2-earnings-update-no-cp1b-v1"
 PAGE_NUMBER = re.compile(r"[0-9]{1,3}")
 STATEMENT_HEADING = re.compile(
     r"CONSOLIDATED (?:CONDENSED )?(?:BALANCE SHEETS|STATEMENTS OF OPERATIONS"

@@ -147,7 +147,7 @@ def test_czr_closed_without_submissions_raises_naming_the_file(tmp_path: Path) -
 
 
 def test_item_70_run_id_and_plan() -> None:
-    assert czr_runs.RUN_ID == "czr-2026q2-earnings-update-v1"
+    assert czr_runs.RUN_ID == "czr-2026q2-earnings-update-no-cp1b-v1"
     assert PACK.run.run_id == czr_runs.RUN_ID
     assert plan(PACK.run.requested_modules) == ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-5")
 
@@ -171,7 +171,7 @@ def _fact(fact_id: str, label: str = "Revenue", period: str = "Q2 26") -> Fact:
         label=label,
         table_id="T1",
         period=period,
-        amount=Decimal("2900"),
+        amount=Decimal(2900),
         unit="USD",
         scale=Decimal(1000000),
     )
@@ -281,7 +281,7 @@ def test_binder_takes_refs_from_every_list() -> None:
 
 
 def test_a_step_with_inputs_must_have_read_them_before_submitting() -> None:
-    with pytest.raises(RuntimeError, match="read_inputs.*financials"):
+    with pytest.raises(RuntimeError, match="financials.*read_inputs not called"):
         czr_runs.require_read("financials", "projection", read_made=False)
     czr_runs.require_read("financials", "projection", read_made=True)
     czr_runs.require_read("source_readiness", "none", read_made=False)

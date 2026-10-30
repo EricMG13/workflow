@@ -2,36 +2,90 @@
 
 import re
 from importlib.resources import files
+from typing import Any
 
 import pytest
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
-_RULE = re.compile(r"([^{}]+)\{([^{}]*)\}")
+_TOKENS = re.compile(r"([^{}]*)\{|(\})|([^{}]+)")
 _CLASS_TOKEN = re.compile(r"(?<![\w-])\.module-list(?![\w-])")
+_IMPORTANT = re.compile(r"\s*!\s*important\s*$", re.IGNORECASE)
+_NUMBER = re.compile(r"[+-]?(\d+\.?\d*|\.\d+)")
 
 
-def _applies_to_module_list(selectors: str) -> bool:
-    """True when a selector of the comma list ends in a compound carrying the class token."""
-    return any(
-        _CLASS_TOKEN.search(re.split(r"[\s>+~]+", selector.strip())[-1])
-        for selector in selectors.split(",")
-    )
+def _rules(css: str) -> list[tuple[str, str, bool]] | None:
+    """Style rules as (selectors, body, inside an at-rule); None when the braces are not a flat
+    list of rules and at-rule blocks (CSS nesting is not modelled, so it fails closed)."""
+    stack: list[list[Any]] = []  # [prelude, is at-rule, body text]
+    rules: list[tuple[str, str, bool]] = []
+    for opened, closed, text in _TOKENS.findall(_COMMENT.sub("", css)):
+        if closed:
+            if not stack:
+                return None
+            prelude, is_at, body = stack.pop()
+            if not is_at:
+                rules.append((prelude, body, any(frame[1] for frame in stack)))
+        elif text:
+            if stack and not stack[-1][1]:
+                stack[-1][2] += text
+        else:
+            if stack and not stack[-1][1]:
+                return None
+            prelude = opened.rsplit(";", 1)[-1].strip()
+            stack.append([prelude, prelude.startswith("@"), ""])
+    return None if stack else rules
+
+
+def _applies_to_module_list(selector: str) -> bool:
+    last = re.split(r"[\s>+~]+", selector.strip())[-1]
+    return bool(_CLASS_TOKEN.search(last)) and "::" not in last
+
+
+def _is_zero(name: str, value: str) -> bool:
+    """The effective shrink is 0; a value that cannot be read is not 0."""
+    tokens = value.split()
+    if name == "flex-shrink":
+        return len(tokens) == 1 and bool(_NUMBER.fullmatch(tokens[0])) and float(tokens[0]) == 0
+    if tokens == ["none"]:
+        return True
+    shrink = tokens[1] if len(tokens) in (2, 3) and _NUMBER.fullmatch(tokens[1]) else "1"
+    return float(shrink) == 0
+
+
+def _effect(body: str) -> tuple[bool | None, bool]:
+    """(last shrink declaration is 0 or None if none, a non-zero shrink is `!important`)."""
+    zero: bool | None = None
+    important = False
+    for declaration in body.split(";"):
+        name, _, value = declaration.partition(":")
+        name = name.strip().lower()
+        if name not in ("flex-shrink", "flex"):
+            continue
+        flagged = bool(_IMPORTANT.search(value))
+        zero = _is_zero(name, _IMPORTANT.sub("", value).strip())
+        important = important or (flagged and not zero)
+    return zero, important
 
 
 def module_list_passes(css: str) -> bool:
-    """At least one rule applies to `.module-list` (also inside `@media`, or as an override) and
-    the last `flex-shrink` declared by those rules, in source order, is `0`."""
-    applying = False
-    shrinks: list[str] = []
-    for selectors, body in _RULE.findall(_COMMENT.sub("", css)):
-        if not _applies_to_module_list(selectors):
+    """Ruling OI-19: the last shrink of the plain `.module-list` rules (outside at-rules) is 0, and
+    no other rule that applies to the list sets a non-zero or unreadable shrink, in any order."""
+    rules = _rules(css)
+    if rules is None:
+        return False
+    plain_zero: bool | None = None
+    for selectors, body, in_at_rule in rules:
+        names = [selector.strip() for selector in selectors.split(",")]
+        if not any(map(_applies_to_module_list, names)):
             continue
-        applying = True
-        for declaration in body.split(";"):
-            name, _, value = declaration.partition(":")
-            if name.strip() == "flex-shrink":
-                shrinks.append(value.strip())
-    return applying and bool(shrinks) and shrinks[-1] == "0"
+        zero, important = _effect(body)
+        if important:
+            return False
+        if not in_at_rule and ".module-list" in names:
+            plain_zero = zero if zero is not None else plain_zero
+        elif zero is False:
+            return False
+    return plain_zero is True
 
 
 _GOOD = ".module-list{flex-shrink:0}"
@@ -74,7 +128,12 @@ _CASES = [
     pytest.param(".module-list{flex-shrink:var(--s)}", False, id="var-unreadable"),
     pytest.param(".x .module-list{flex-shrink:0}", False, id="scoped-zero-only"),
     pytest.param(
-        ".x .module-list{flex-shrink:0}.module-list{display:flex}", False, id="scoped-zero-base-unfixed"
+        ".x .module-list{flex-shrink:0}.module-list{display:flex}",
+        False,
+        id="scoped-zero-base-unfixed",
+    ),
+    pytest.param(
+        ".module-list{flex-shrink:1!important}" + _GOOD, False, id="important-earlier-bad"
     ),
     pytest.param(".module-list{flex-shrink:0 !important}", True, id="important-zero"),
     pytest.param(".module-list{flex-shrink:1 !important}", False, id="important-one"),

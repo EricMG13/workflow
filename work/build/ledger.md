@@ -679,3 +679,4 @@
 - 21:52 Fix round 1 sent to the tail builder (a18111ab; work/build/stage6/tail-fix-brief.md): the Medium plus three Lows; the CP-2H cell now cites the DOM check.
 - 21:52 Fix round 1 done (a18111ab; claude/s6-tail 3890cad, 3 rows): controller probe_rows 0 (27 rows x 11), no placeholder left. Scoped re-review of the Medium fix (mx-precise) dispatched. agent=mx-feature fix-rounds=1 gates-first-pass=y.
 - 21:54 Scoped re-review (mx-precise a893fbe5): APPROVE (rereview_probe.py exit 0 on controller rerun). Merged claude/s6-tail 3890cad into the lane as 16bc1ad (noqa 12; probe_rows 0). Item 81 recorded. Stage 6 tail closed; release to codex/checkpoint not sent (user's call).
+- 22:18 User: "Yes, send release". Stage 6 tail release sent to the PR manager (local_73a216ba): lane faac233 (merge-base 6cda54b; 10 commits, 16 files; the only src change is the comment at financial_workflow.py:914). The merge into codex/checkpoint waits for the user's approval via the PM.

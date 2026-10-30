@@ -1688,6 +1688,24 @@
       "sha256": "1887bcb2e97baf14a44e225238f41a08ead5041db3c846a70c5ef878d7bdcd89",
       "reason": "Stage 4 batch 2 fix round 2: a known text fact that carries [ref] tokens gets display and table_display from resolve(), so the module table and inspector show the page's gap number, as the what-changed block does (rulings 2026-10-29-stage3 item 45, extending item 30).",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "8506ef09e8ac1b5585f664f02bfe2ec50e90b80c328b23532e8d586fb15f01eb",
+      "project_commit": "c4da4da8e332da1a2f680804085520d98605ddbe",
+      "sha256": "c2040a50d5cb912cc9f9addcd1db9cccc164db143fa57e00974067fbf5d2704b",
+      "reason": "Stage 4 batch 2 fix round 3: _carries_reference takes (module_id, fact) and holds a private _RUN_TEXT_TABLES registry, so only CP-8 cp8.what_changed text goes to resolve() and analyst free text and verbatim quotes holding brackets are shown as written; _token_runs passes the issuer name (rulings 2026-10-29-stage3 items 54 and 56).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/render.py",
+      "imported_sha256": "8bad4ede8529232eb243474ce05ac686903a6ae77d433a11467521d44ec5ba5f",
+      "prior_project_sha256": "1887bcb2e97baf14a44e225238f41a08ead5041db3c846a70c5ef878d7bdcd89",
+      "project_commit": "c4da4da8e332da1a2f680804085520d98605ddbe",
+      "sha256": "9805c343101a2f1d1de76ca6a6378cc97bf2952fe936e195f2acc4d45bf299ba",
+      "reason": "Stage 4 batch 2 fix round 3: the fact path asks _carries_reference(module_id, fact) and passes the issuer name to resolve(), so free text and verbatim quotes render as written and run text with a digit-bearing issuer name resolves (rulings 2026-10-29-stage3 items 54 and 56).",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

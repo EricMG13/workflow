@@ -31,6 +31,7 @@ from defect_classes import (
     path_matches,
     with_text,
 )
+from test_connect_cp8 import _payload_facts, _what_changed_view
 
 from deploy_vii import prose
 from deploy_vii.bindings import validate_bindings
@@ -1306,3 +1307,49 @@ def test_d3_cp2h_consumes_the_genuine_cp2g_head(tmp_path: Path) -> None:
             fact.model_copy(update={"citations": tuple(own)}), lineage[fact.fact_id], e["shown"]
         )
         stage1._assert_cell(bare, e)
+
+
+# --- round 4: the T2R.10 gap fields are run text; the id is free text ---------------------------
+
+_GAP_FIELDS = ("gap", "why_it_matters", "affected_analysis", "action")
+
+
+def _gap_facts() -> tuple[Fact, ...]:
+    payload = _payload()
+    for name in _GAP_FIELDS:
+        payload["gaps"][0][name] = f"Headroom of {{T2R.4.t01.headroom|x}} is in {name}."
+    rep = cp2h.compute(stage1.inputs("positive", payload))
+    facts = [c.fact for c in rep.cells]
+    facts += [cp2h._moved(r.fact, cp2h.CP1_REFERENCES[0], r.row_id) for r in rep.cp1_references]
+    return tuple(facts)
+
+
+def _gap_page(facts: tuple[Fact, ...]) -> dict[str, dict[str, Any]]:
+    module = ModuleView(
+        module_id="CP-2H",
+        title="CP-2H",
+        aliases=(),
+        status="restricted",
+        artifact_sha256="c" * 64,
+        facts=facts,
+        limitations=(),
+    )
+    base = _what_changed_view("positive")
+    return _payload_facts(base.model_copy(update={"modules": (module,)}))
+
+
+@pytest.mark.parametrize("name", _GAP_FIELDS)
+def test_t2r10_gap_run_text_shows_the_figure_not_the_reference(name: str) -> None:
+    shown = _gap_page(_gap_facts())[f"T2R.10.g01.{name}"]
+    for key in ("display", "table_display"):
+        assert "{T2R.4.t01.headroom|x}" not in shown[key]
+        assert "1.08x" in shown[key]
+
+
+def test_t2r10_free_id_with_brackets_is_shown_as_written() -> None:
+    sic = "CP-2H-GAP-001 [sic]"
+    facts = tuple(
+        f.model_copy(update={"text": sic}) if f.fact_id == "T2R.10.g01.id" else f
+        for f in _gap_facts()
+    )
+    assert _gap_page(facts)["T2R.10.g01.id"]["display"] == sic

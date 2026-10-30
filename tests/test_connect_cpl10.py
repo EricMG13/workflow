@@ -20,7 +20,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_method_cpl10 import EXPECTED, MANIFEST, SUBMISSIONS, UPSTREAM, _cp1_facts
+from test_connect_cp8 import _payload_facts, _what_changed_view
+from test_method_cpl10 import (
+    EXPECTED,
+    MANIFEST,
+    SUBMISSIONS,
+    UPSTREAM,
+    _cp1_facts,
+)
+from test_method_cpl10 import _payload as _stage1_payload
 
 from deploy_vii import registry, report_view
 from deploy_vii.bindings import RAIL_DESTINATIONS, validate_bindings
@@ -860,3 +868,124 @@ def test_reader_reports_the_status_of_the_head_it_is_given(settled: Path, tmp_pa
     got = cpl10.cpl10_reader(store, stale)
     assert got.status == "stale" and got.result_sha256 == head.result_sha256
     assert dict(got.counts) == POSITIVE["counts"]
+
+
+# --- round 4: analyst run text in TL10.3 is resolved, free fields are shown as written ---------
+
+
+def _tl10_3_facts(
+    edit: dict[str, str] | None = None, *, token: str = "{TL10.2.%s.change|US$ m}"
+) -> tuple[dict[str, Any], str, tuple[Fact, ...]]:
+    sub = json.loads(_stage1_payload("positive"))
+    first = sub["assessments"][0]
+    topic = first["topic_id"]
+    tok = token % topic if "%s" in token else token
+    first = dict(
+        first,
+        assessment=f"The balance moved by {tok} in the quarter.",
+        credit_transmission=f"A move of {tok} reaches the credit view.",
+    )
+    overall = dict(sub["overall"], rationale=f"Overall, the balance moved by {tok}.")
+    sub = dict(sub, assessments=[first, *sub["assessments"][1:]], overall=overall)
+    res = cpl10.change_screen(submission=sub, upstream=UPSTREAM)
+    facts = tuple(c.fact for c in res.cells)
+    facts = tuple(
+        f.model_copy(update={"text": edit[f.fact_id]}) if edit and f.fact_id in edit else f
+        for f in facts
+    )
+    return sub, topic, facts
+
+
+def _tl10_3_page(facts: tuple[Fact, ...]) -> dict[str, dict[str, Any]]:
+    base = _what_changed_view("positive")
+    module = ModuleView(
+        module_id="CP-L10",
+        title="CP-L10",
+        aliases=(),
+        status="restricted",
+        artifact_sha256="c" * 64,
+        facts=facts,
+        limitations=(),
+    )
+    return _payload_facts(base.model_copy(update={"modules": (module,)}))
+
+
+@pytest.mark.parametrize("field", ["assessment", "credit_transmission", "overall"])
+def test_tl10_3_analyst_run_text_shows_the_figure_not_the_reference(field: str) -> None:
+    _, topic, facts = _tl10_3_facts()
+    fact_id = "TL10.3.overall.assessment" if field == "overall" else f"TL10.3.{topic}.{field}"
+    shown = _tl10_3_page(facts)[fact_id]
+    token = "{TL10.2." + topic + ".change|US$ m}"
+    for key in ("display", "table_display"):
+        assert token not in shown[key]
+        assert "3.75 US$ m" in shown[key]
+
+
+@pytest.mark.parametrize("broken", ["{TL10.2.%s.chang|US$ m}", "{TL10.2.%s.change|US$ m"])
+def test_tl10_3_malformed_reference_in_run_text_fails_closed(broken: str) -> None:
+    _, topic, facts = _tl10_3_facts()
+    bad = broken % topic
+    edited = tuple(
+        f.model_copy(update={"text": f"Moved by {bad}."})
+        if f.fact_id == f"TL10.3.{topic}.assessment"
+        else f
+        for f in facts
+    )
+    with pytest.raises(ValueError, match="does not resolve"):
+        _tl10_3_page(edited)
+
+
+def test_tl10_3_free_source_refs_with_brackets_is_shown_as_written() -> None:
+    _, topic, facts = _tl10_3_facts()
+    fact_id = f"TL10.3.{topic}.source_refs"
+    edited = tuple(
+        f.model_copy(update={"text": "CP-1 Cash [sic]"}) if f.fact_id == fact_id else f
+        for f in facts
+    )
+    assert _tl10_3_page(edited)[fact_id]["display"] == "CP-1 Cash [sic]"
+
+
+def _fact(table_id: str, field: str, text: str) -> Fact:
+    return Fact(
+        fact_id=f"{table_id}.x.{field}",
+        label=field,
+        text=text,
+        table_id=table_id,
+        row_id="x",
+        field=field,
+        citations=(),
+    )
+
+
+@pytest.mark.parametrize(
+    ("module_id", "table_id", "field"),
+    [
+        ("CP-8", "cp8.what_changed", "value"),
+        ("CP-L10", "TL10.3", "assessment"),
+        ("CP-L10", "TL10.3", "credit_transmission"),
+        ("CP-2H", "T2R.10", "gap"),
+        ("CP-2H", "T2R.10", "why_it_matters"),
+        ("CP-2H", "T2R.10", "affected_analysis"),
+        ("CP-2H", "T2R.10", "action"),
+    ],
+)
+def test_carries_reference_is_true_for_every_registered_run_text_field(
+    module_id: str, table_id: str, field: str
+) -> None:
+    assert report_view._carries_reference(module_id, _fact(table_id, field, "a {X.y|x} b"))
+    assert not report_view._carries_reference(module_id, _fact(table_id, field, "no brackets"))
+
+
+@pytest.mark.parametrize(
+    ("module_id", "table_id", "field"),
+    [
+        ("CP-L10", "TL10.3", "source_refs"),
+        ("CP-2A", "T2B.9", "gap"),
+        ("CP-1C", "T1C.7", "gap"),
+        ("CP-2H", "T2R.10", "id"),
+    ],
+)
+def test_carries_reference_is_false_for_free_text_fields(
+    module_id: str, table_id: str, field: str
+) -> None:
+    assert not report_view._carries_reference(module_id, _fact(table_id, field, "a [sic] b"))

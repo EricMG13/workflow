@@ -1,0 +1,34 @@
+src/deploy_vii/bindings/cp1.py file@rev f1d39b51
+   pip @65cc982 prior=d94f6a46 -> f1d39b51 chain=ok item19=ok
+src/deploy_vii/charts.py file@rev a1805bca
+   pip @80ab9f5 prior=9c10704c -> a1805bca chain=ok item19=ok
+src/deploy_vii/render.py file@rev 1887bcb2
+   pip @b4ae187 prior=8bad4ede -> 7bf8d889 chain=ok item19=ok
+   pip @d394ac1 prior=7bf8d889 -> 1887bcb2 chain=ok item19=ok
+src/deploy_vii/report_view.py file@rev 8506ef09
+   pip @3e5b537 prior=None -> 571ee44c chain=ok item19=BAD(fp=c934d501,at=571ee44c)
+   pip @0d6c714 prior=571ee44c -> 21dc5c34 chain=ok item19=ok
+   pip @4e84ffc prior=21dc5c34 -> 19705fb0 chain=ok item19=ok
+   pip @41a8fdb prior=19705fb0 -> a1fc47cd chain=ok item19=ok
+   pip @b4ae187 prior=a1fc47cd -> 51a6853e chain=ok item19=ok
+   pip @883a595 prior=51a6853e -> 1a00120d chain=ok item19=ok
+   pip @b9d937e prior=1a00120d -> 09ab059d chain=ok item19=ok
+   pip @8aef58d prior=51a6853e -> 4edad0a3 chain=GAP item19=ok
+   pip @24f879a prior=4edad0a3 -> 8ed326cb chain=ok item19=BAD(fp=09ab059d,at=8ed326cb)
+   pip @7831ef1 prior=8ed326cb -> 974e5a5c chain=ok item19=ok
+   pip @1c512aa prior=974e5a5c -> fc9c1828 chain=ok item19=ok
+   pip @8c31a5a prior=fc9c1828 -> a073edd7 chain=ok item19=ok
+   pip @b2f2308 prior=a073edd7 -> 3cbf1c08 chain=ok item19=ok
+   pip @49c5865 prior=3cbf1c08 -> c68c0587 chain=ok item19=ok
+   pip @44596ba prior=c68c0587 -> 26e6b5e4 chain=ok item19=ok
+   pip @64bf670 prior=26e6b5e4 -> 5c71a311 chain=ok item19=ok
+   pip @ff1dbce prior=5c71a311 -> c6b5b931 chain=ok item19=ok
+   pip @80ab9f5 prior=c6b5b931 -> ec311130 chain=ok item19=ok
+   pip @65cc982 prior=ec311130 -> 0812b2c0 chain=ok item19=ok
+   pip @e79d9d8 prior=0812b2c0 -> ac9565d9 chain=ok item19=ok
+   pip @70ea110 prior=ac9565d9 -> fedb5fa0 chain=ok item19=ok
+   pip @f5477b4 prior=fedb5fa0 -> 1f50c7b9 chain=ok item19=ok
+   pip @8abfb0c prior=1f50c7b9 -> cbb4c368 chain=ok item19=ok
+   pip @f1f6bce prior=cbb4c368 -> 8506ef09 chain=ok item19=ok
+src/deploy_vii/statement_extract.py file@rev d7e15269
+   pip @c81932f prior=f4b2c224 -> d7e15269 chain=ok item19=ok

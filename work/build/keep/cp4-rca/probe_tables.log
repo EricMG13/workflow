@@ -1,0 +1,132 @@
+===== positive
+ok   133 table_order
+ok   137 _check_table T4.2
+ok   137 _check_table T4.3
+FAIL 137 _check_table T4.9: ['    assert actual.amount == metric.amount and actual.unit == metric.unit', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4.10
+ok   137 _check_table T4.11
+ok   137 _check_table T4.12
+ok   137 _check_table T4.13
+ok   137 _check_table T4C.2
+ok   137 _check_table T4C.3
+ok   137 _check_table T4C.4
+ok   137 _check_table T4C.5
+ok   137 _check_table T4C.6
+ok   137 _check_table T4C.7
+FAIL 137 _check_table T4C.8: ['    assert _plain(actual, want["column"]) == {**want, "text": metric.fact_id}', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4C.9
+ok   137 _check_table T4C.11
+ok   137 _check_table T4C.12
+ok   137 _check_table T4D.1
+ok   137 _check_table T4D.2
+ok   137 _check_table T4D.3
+ok   137 _check_table T4D.4
+ok   137 _check_table T4D.5
+ok   137 _check_table T4D.6
+ok   137 _check_table T4D.7
+ok   137 _check_table T4D.8
+ok   137 _check_table T4F.1
+FAIL 137 _check_table T4F.2: ['    assert got.label == f"{ctx[\'metric_row\']} · {metric.period}"', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+FAIL 137 _check_table T4F.3: ['    assert _plain(actual, want["column"]) == {**want, "text": metric.fact_id}', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4F.4
+ok   137 _check_table T4F.5
+ok   137 _check_table T4F.6
+FAIL 140 bound count:
+  got =4
+  want=11
+ok   150 claims
+ok   151 settled_limitations
+FAIL 152 inherited_limitations:
+  got =["Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.", "CP-1 QA Restricted: confidence 59 (Low)", "Statement subartifact: Statement preview only. Source and derived periods are included; the remaining CP-1 registers, canonical Markdown and final module validation are not delivered here. This preview does not accept CP-1 or qualify analytical judgments.", "Statement subartifact: Source artifact: Source and sign-normalized statements only; no calculated or analyst-judgment figures are presented as source values", "Statement subartifact: Source artifact: Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Model interface subartifact: Model interface preview only; not the full canonical Markdown handoff or CP-1 acceptance.", "Model interface subartifact: Primary row locator shown; all field-specific citations remain inspectable.", "Model interface subartifact: Readiness applies only to the explicitly retained historical quarter scope", "Model interface subartifact: A ready row does not qualify pro forma, projections, analytical interpretation or report delivery", "Model interface subartifact: No downstream consumer other than CP-MODEL is assessed here", "Model interface subartifact: Source-backed exceptions and full CP-1 acceptance remain separate", "Narrative: Structural evidence binding cannot prove issuer-specific meaning, materiality or reasoning quality", "Narrative: All numeric evidence is supplied by prior registers; prose still requires semantic review", "Narrative: Funding classification is an analyst synthesis over prior balance-sheet rows, not new extraction", "Narrative: No consumer readiness, analytical qualification or completed Module acceptance is inferred", "Readiness concerns CP-1 input sufficiency, not completion of downstream Modules", "Sufficiency and warning relevance are evidence-bound analytical judgments; semantic qualification remains unrun", "Relevant BLOCK gaps prevent readiness; warning or gap exclusions require an explicit evidence-bound scope judgment and never delete the original gap", "The CP-MODEL row assesses selected historical quarters only; it does not qualify forecasts, pro forma or workbook delivery", "Consumers absent from Step 12 require explicit consumer-specific assessment"]
+  want={"rule": "execution.py:345-366 over the bound inputs in order: CP-0 head (limitations then inherited), then CP-1 head (limitations then inherited_limitations); de-duplicated; own findings removed", "literal_head_from_CP-0": ["Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.", "Synthetic case; not real issuer qualification"], "then": "CP-1 head: its limitations then its inherited_limitations (bound at run time)"}
+ok   153 settled_module_inputs
+ok   154 attempt_inputs
+rule-built inherited == genuine: True 21
+===== gap
+ok   133 table_order
+ok   137 _check_table T4.2
+ok   137 _check_table T4.3
+FAIL 137 _check_table T4.9: ['    assert actual.amount == metric.amount and actual.unit == metric.unit', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4.10
+ok   137 _check_table T4.11
+ok   137 _check_table T4.12
+ok   137 _check_table T4.13
+ok   137 _check_table T4C.2
+ok   137 _check_table T4C.3
+ok   137 _check_table T4C.4
+ok   137 _check_table T4C.5
+ok   137 _check_table T4C.6
+ok   137 _check_table T4C.7
+FAIL 137 _check_table T4C.8: ['    assert _plain(actual, want["column"]) == {**want, "text": metric.fact_id}', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4C.9
+ok   137 _check_table T4C.11
+ok   137 _check_table T4C.12
+ok   137 _check_table T4D.1
+ok   137 _check_table T4D.2
+ok   137 _check_table T4D.3
+ok   137 _check_table T4D.4
+ok   137 _check_table T4D.5
+ok   137 _check_table T4D.6
+ok   137 _check_table T4D.7
+ok   137 _check_table T4D.8
+ok   137 _check_table T4F.1
+FAIL 137 _check_table T4F.2: ['    assert got.label == f"{ctx[\'metric_row\']} · {metric.period}"', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+FAIL 137 _check_table T4F.3: ['    assert _plain(actual, want["column"]) == {**want, "text": metric.fact_id}', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4F.4
+ok   137 _check_table T4F.5
+ok   137 _check_table T4F.6
+FAIL 140 bound count:
+  got =4
+  want=9
+ok   150 claims
+ok   151 settled_limitations
+FAIL 152 inherited_limitations:
+  got =["Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.", "Covenant EBITDA is defined in incorporated Schedule A, which is not supplied", "Schedule A defining Covenant EBITDA is not supplied, so its add-backs, exclusions and relationship to reported EBITDA are not stated", "CP-1 QA Restricted: confidence 59 (Low)", "Statement subartifact: Statement preview only. Source and derived periods are included; the remaining CP-1 registers, canonical Markdown and final module validation are not delivered here. This preview does not accept CP-1 or qualify analytical judgments.", "Statement subartifact: Source artifact: Source and sign-normalized statements only; no calculated or analyst-judgment figures are presented as source values", "Statement subartifact: Source artifact: Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Model interface subartifact: Model interface preview only; not the full canonical Markdown handoff or CP-1 acceptance.", "Model interface subartifact: Primary row locator shown; all field-specific citations remain inspectable.", "Model interface subartifact: Readiness applies only to the explicitly retained historical quarter scope", "Model interface subartifact: A ready row does not qualify pro forma, projections, analytical interpretation or report delivery", "Model interface subartifact: No downstream consumer other than CP-MODEL is assessed here", "Model interface subartifact: Source-backed exceptions and full CP-1 acceptance remain separate", "Narrative: Structural evidence binding cannot prove issuer-specific meaning, materiality or reasoning quality", "Narrative: All numeric evidence is supplied by prior registers; prose still requires semantic review", "Narrative: Funding classification is an analyst synthesis over prior balance-sheet rows, not new extraction", "Narrative: No consumer readiness, analytical qualification or completed Module acceptance is inferred", "Readiness concerns CP-1 input sufficiency, not completion of downstream Modules", "Sufficiency and warning relevance are evidence-bound analytical judgments; semantic qualification remains unrun", "Relevant BLOCK gaps prevent readiness; warning or gap exclusions require an explicit evidence-bound scope judgment and never delete the original gap", "The CP-MODEL row assesses selected historical quarters only; it does not qualify forecasts, pro forma or workbook delivery", "Consumers absent from Step 12 require explicit consumer-specific assessment"]
+  want={"rule": "execution.py:345-366 over the bound inputs in order: CP-0 head (limitations then inherited), then CP-1 head (limitations then inherited_limitations); de-duplicated; own findings removed", "literal_head_from_CP-0": ["Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.", "Covenant EBITDA is defined in incorporated Schedule A, which is not supplied", "Schedule A defining Covenant EBITDA is not supplied, so its add-backs, exclusions and relationship to reported EBITDA are not stated", "Synthetic case; not real issuer qualification"], "then": "CP-1 head: its limitations then its inherited_limitations (bound at run time)"}
+ok   153 settled_module_inputs
+ok   154 attempt_inputs
+rule-built inherited == genuine: True 23
+===== gap_false_same_definition
+ok   133 table_order
+ok   137 _check_table T4.2
+ok   137 _check_table T4.3
+FAIL 137 _check_table T4.9: ['    assert actual.amount == metric.amount and actual.unit == metric.unit', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4.10
+ok   137 _check_table T4.11
+ok   137 _check_table T4.12
+ok   137 _check_table T4.13
+ok   137 _check_table T4C.2
+ok   137 _check_table T4C.3
+ok   137 _check_table T4C.4
+ok   137 _check_table T4C.5
+ok   137 _check_table T4C.6
+ok   137 _check_table T4C.7
+FAIL 137 _check_table T4C.8: ['    assert _plain(actual, want["column"]) == {**want, "text": metric.fact_id}', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4C.9
+ok   137 _check_table T4C.11
+ok   137 _check_table T4C.12
+ok   137 _check_table T4D.1
+ok   137 _check_table T4D.2
+ok   137 _check_table T4D.3
+ok   137 _check_table T4D.4
+ok   137 _check_table T4D.5
+ok   137 _check_table T4D.6
+ok   137 _check_table T4D.7
+ok   137 _check_table T4D.8
+ok   137 _check_table T4F.1
+FAIL 137 _check_table T4F.2: ['    assert got.label == f"{ctx[\'metric_row\']} · {metric.period}"', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+FAIL 137 _check_table T4F.3: ['    assert _plain(actual, want["column"]) == {**want, "text": metric.fact_id}', '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', 'AssertionError']
+ok   137 _check_table T4F.4
+ok   137 _check_table T4F.5
+ok   137 _check_table T4F.6
+FAIL 140 bound count:
+  got =4
+  want=9
+ok   150 claims
+ok   151 settled_limitations
+FAIL 152 inherited_limitations:
+  got =["Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.", "Covenant EBITDA is defined in incorporated Schedule A, which is not supplied", "Schedule A defining Covenant EBITDA is not supplied, so its add-backs, exclusions and relationship to reported EBITDA are not stated", "CP-1 QA Restricted: confidence 59 (Low)", "Statement subartifact: Statement preview only. Source and derived periods are included; the remaining CP-1 registers, canonical Markdown and final module validation are not delivered here. This preview does not accept CP-1 or qualify analytical judgments.", "Statement subartifact: Source artifact: Source and sign-normalized statements only; no calculated or analyst-judgment figures are presented as source values", "Statement subartifact: Source artifact: Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Model interface subartifact: Model interface preview only; not the full canonical Markdown handoff or CP-1 acceptance.", "Model interface subartifact: Primary row locator shown; all field-specific citations remain inspectable.", "Model interface subartifact: Readiness applies only to the explicitly retained historical quarter scope", "Model interface subartifact: A ready row does not qualify pro forma, projections, analytical interpretation or report delivery", "Model interface subartifact: No downstream consumer other than CP-MODEL is assessed here", "Model interface subartifact: Source-backed exceptions and full CP-1 acceptance remain separate", "Narrative: Structural evidence binding cannot prove issuer-specific meaning, materiality or reasoning quality", "Narrative: All numeric evidence is supplied by prior registers; prose still requires semantic review", "Narrative: Funding classification is an analyst synthesis over prior balance-sheet rows, not new extraction", "Narrative: No consumer readiness, analytical qualification or completed Module acceptance is inferred", "Readiness concerns CP-1 input sufficiency, not completion of downstream Modules", "Sufficiency and warning relevance are evidence-bound analytical judgments; semantic qualification remains unrun", "Relevant BLOCK gaps prevent readiness; warning or gap exclusions require an explicit evidence-bound scope judgment and never delete the original gap", "The CP-MODEL row assesses selected historical quarters only; it does not qualify forecasts, pro forma or workbook delivery", "Consumers absent from Step 12 require explicit consumer-specific assessment"]
+  want={"rule": "execution.py:345-366 over the bound inputs in order: CP-0 head (limitations then inherited), then CP-1 head (limitations then inherited_limitations); de-duplicated; own findings removed", "literal_head_from_CP-0": ["Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.", "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.", "Covenant EBITDA is defined in incorporated Schedule A, which is not supplied", "Schedule A defining Covenant EBITDA is not supplied, so its add-backs, exclusions and relationship to reported EBITDA are not stated", "Synthetic case; not real issuer qualification"], "then": "CP-1 head: its limitations then its inherited_limitations (bound at run time)"}
+ok   153 settled_module_inputs
+ok   154 attempt_inputs
+rule-built inherited == genuine: True 23

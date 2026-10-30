@@ -1,0 +1,103 @@
+docs/templates/README.md file@rev 9cec0e89
+docs/templates/portfolio.template.xlsx file@rev c3564078
+scripts/build_templates.py file@rev af185904
+src/deploy_vii/bindings/cp1.py file@rev f1d39b51
+   pip @65cc982 prior=d94f6a46 -> f1d39b51 chain=ok item19=ok
+src/deploy_vii/bindings/shipped.py file@rev 8cd0dbc9
+   pip @0d6c714 prior=304230a5 -> 4ef3f9ff chain=ok item19=ok
+   pip @b22972d prior=4ef3f9ff -> 4765995a chain=ok item19=BAD(fp=4765995a,at=4765995a)
+   pip @883a595 prior=4765995a -> 8afa15fc chain=ok item19=ok
+   pip @8aef58d prior=4ef3f9ff -> 0b74f88e chain=GAP item19=ok
+   pip @0fa5b4a prior=4ef3f9ff -> 01ebc258 chain=GAP item19=ok
+   pip @b48a3c5 prior=01ebc258 -> 80adfaf6 chain=ok item19=BAD(fp=8afa15fc,at=80adfaf6)
+   pip @fb7819b prior=80adfaf6 -> a290b945 chain=ok item19=ok
+   pip @b9d937e prior=a290b945 -> 99fbe495 chain=ok item19=ok
+   pip @24f879a prior=99fbe495 -> f51954d7 chain=ok item19=ok
+   pip @6b679ca prior=4ef3f9ff -> 2be6922a chain=GAP item19=ok
+   pip @ab89173 prior=2be6922a -> 11185049 chain=ok item19=BAD(fp=f51954d7,at=11185049)
+   pip @7831ef1 prior=11185049 -> 9e6ee6cd chain=ok item19=ok
+   pip @8c31a5a prior=9e6ee6cd -> 0899560e chain=ok item19=ok
+   pip @b2f2308 prior=0899560e -> 1ba09023 chain=ok item19=ok
+   pip @54b3d90 prior=1ba09023 -> 635e25ed chain=ok item19=ok
+   pip @44596ba prior=635e25ed -> 2242fd10 chain=ok item19=ok
+   pip @64bf670 prior=2242fd10 -> 8cd0dbc9 chain=ok item19=ok
+src/deploy_vii/business_context.py file@rev 895cab5e
+   pip @cffdf9f prior=None -> 1672ba97 chain=ok item19=BAD(fp=1d8f0cc5,at=1672ba97)
+   pip @93c1ffc prior=1672ba97 -> 895cab5e chain=ok item19=ok
+src/deploy_vii/charts.py file@rev a1805bca
+   pip @80ab9f5 prior=9c10704c -> a1805bca chain=ok item19=ok
+src/deploy_vii/contracts.py file@rev 3b33bfc2
+   pip @ff1dbce prior=ee1b27f9 -> 3b33bfc2 chain=ok item19=ok
+src/deploy_vii/cp2_synthesis.py file@rev ac8856fd
+   pip @cffdf9f prior=None -> ac8856fd chain=ok item19=BAD(fp=26ebc1e3,at=ac8856fd)
+src/deploy_vii/cp3_relative_value.py file@rev 6c804843
+   pip @cffdf9f prior=None -> 5811d454 chain=ok item19=BAD(fp=0abc723d,at=5811d454)
+   pip @93c1ffc prior=5811d454 -> 6c804843 chain=ok item19=ok
+src/deploy_vii/cp4_legal.py file@rev 17c96b6f
+   pip @cffdf9f prior=None -> 5b005aaf chain=ok item19=BAD(fp=1b2246ff,at=5b005aaf)
+   pip @93c1ffc prior=5b005aaf -> 17c96b6f chain=ok item19=ok
+src/deploy_vii/cp5_integrity.py file@rev eb3a766f
+   pip @cffdf9f prior=None -> eb3a766f chain=ok item19=BAD(fp=84fbe447,at=eb3a766f)
+src/deploy_vii/cp6_committee.py file@rev e97d5074
+   pip @cffdf9f prior=None -> e97d5074 chain=ok item19=BAD(fp=2854f2a4,at=e97d5074)
+src/deploy_vii/execution.py file@rev dd81024e
+   pip @bb4553b prior=752ae7c7 -> ab6dba88 chain=ok item19=ok
+   pip @30a1f7a prior=ab6dba88 -> dd81024e chain=ok item19=ok
+src/deploy_vii/inputs/__init__.py file@rev 78db8912
+src/deploy_vii/inputs/portfolio.py file@rev ed239e92
+src/deploy_vii/inputs/rv_quotes.py file@rev 7ff92137
+src/deploy_vii/live/schema.py file@rev 68fb91b0
+   pip @1a1a140 prior=None -> 68fb91b0 chain=ok item19=BAD(fp=9854394f,at=68fb91b0)
+src/deploy_vii/live/submission.py file@rev 173547f9
+   pip @bb4553b prior=6656846f -> 1b4aaa09 chain=ok item19=BAD(fp=1d92f7d5,at=1b4aaa09)
+   pip @93c1ffc prior=1b4aaa09 -> 173547f9 chain=ok item19=ok
+src/deploy_vii/live/tools.py file@rev f03f7d04
+   pip @bb4553b prior=None -> a50a3f8c chain=ok item19=BAD(fp=2d607ea2,at=a50a3f8c)
+   pip @30a1f7a prior=a50a3f8c -> f03f7d04 chain=ok item19=ok
+src/deploy_vii/methodology.json file@rev 0932d9fb
+   pip @266440a prior=e52360e4 -> 348fbc4b chain=ok item19=ok
+   pip @ede9ffe prior=348fbc4b -> 1bb6c0bc chain=ok item19=ok
+   pip @e22dafe prior=1bb6c0bc -> 0932d9fb chain=ok item19=ok
+src/deploy_vii/narrative.py file@rev d766f0fa
+   pip @cffdf9f prior=None -> d766f0fa chain=ok item19=BAD(fp=f118fe08,at=d766f0fa)
+src/deploy_vii/prose.py file@rev 8dcb2a51
+   pip @cffdf9f prior=None -> 99c638b6 chain=ok item19=BAD(fp=33f4de89,at=99c638b6)
+   pip @30a1f7a prior=99c638b6 -> 8dcb2a51 chain=ok item19=ok
+src/deploy_vii/quality.py file@rev d1934a59
+   pip @cffdf9f prior=None -> d1934a59 chain=ok item19=BAD(fp=79865e93,at=d1934a59)
+src/deploy_vii/readiness.py file@rev 01616654
+   pip @93c1ffc prior=1038a37a -> 119058ff chain=ok item19=ok
+   pip @30a1f7a prior=119058ff -> 01616654 chain=ok item19=ok
+src/deploy_vii/render.py file@rev 1887bcb2
+   pip @b4ae187 prior=8bad4ede -> 7bf8d889 chain=ok item19=ok
+   pip @d394ac1 prior=7bf8d889 -> 1887bcb2 chain=ok item19=ok
+src/deploy_vii/report_view.py file@rev 8506ef09
+   pip @3e5b537 prior=None -> 571ee44c chain=ok item19=BAD(fp=c934d501,at=571ee44c)
+   pip @0d6c714 prior=571ee44c -> 21dc5c34 chain=ok item19=ok
+   pip @4e84ffc prior=21dc5c34 -> 19705fb0 chain=ok item19=ok
+   pip @41a8fdb prior=19705fb0 -> a1fc47cd chain=ok item19=ok
+   pip @b4ae187 prior=a1fc47cd -> 51a6853e chain=ok item19=ok
+   pip @883a595 prior=51a6853e -> 1a00120d chain=ok item19=ok
+   pip @b9d937e prior=1a00120d -> 09ab059d chain=ok item19=ok
+   pip @8aef58d prior=51a6853e -> 4edad0a3 chain=GAP item19=ok
+   pip @24f879a prior=4edad0a3 -> 8ed326cb chain=ok item19=BAD(fp=09ab059d,at=8ed326cb)
+   pip @7831ef1 prior=8ed326cb -> 974e5a5c chain=ok item19=ok
+   pip @1c512aa prior=974e5a5c -> fc9c1828 chain=ok item19=ok
+   pip @8c31a5a prior=fc9c1828 -> a073edd7 chain=ok item19=ok
+   pip @b2f2308 prior=a073edd7 -> 3cbf1c08 chain=ok item19=ok
+   pip @49c5865 prior=3cbf1c08 -> c68c0587 chain=ok item19=ok
+   pip @44596ba prior=c68c0587 -> 26e6b5e4 chain=ok item19=ok
+   pip @64bf670 prior=26e6b5e4 -> 5c71a311 chain=ok item19=ok
+   pip @ff1dbce prior=5c71a311 -> c6b5b931 chain=ok item19=ok
+   pip @80ab9f5 prior=c6b5b931 -> ec311130 chain=ok item19=ok
+   pip @65cc982 prior=ec311130 -> 0812b2c0 chain=ok item19=ok
+   pip @e79d9d8 prior=0812b2c0 -> ac9565d9 chain=ok item19=ok
+   pip @70ea110 prior=ac9565d9 -> fedb5fa0 chain=ok item19=ok
+   pip @f5477b4 prior=fedb5fa0 -> 1f50c7b9 chain=ok item19=ok
+   pip @8abfb0c prior=1f50c7b9 -> cbb4c368 chain=ok item19=ok
+   pip @f1f6bce prior=cbb4c368 -> 8506ef09 chain=ok item19=ok
+src/deploy_vii/source_context.py file@rev d9fb02de
+   pip @93c1ffc prior=bef10963 -> d9fb02de chain=ok item19=ok
+src/deploy_vii/statement_extract.py file@rev d7e15269
+   pip @c81932f prior=f4b2c224 -> d7e15269 chain=ok item19=ok
+tests/product/test_inputs_portfolio.py file@rev 5f8c08fe

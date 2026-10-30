@@ -670,3 +670,4 @@
 - 19:25 Deferred runs PASSED (item 78): fast 10505, cp2h 47, cp4c 57, s1a+workflow 91, cp4+cp2a 53, cp3d+cp2e 90, cpos/tools/fin 200, G2 27, earnings 242; CZR partial unchanged. The machine was handed to the test-speed session for 15 min. Release next.
 - 19:25 Post-Stage-5 release sent to the PR manager (local_73a216ba): lane 1d3bfa6 (merge-base 05d3d2e), items 69-78. The merge into codex/checkpoint waits for the user's approval via the PM.
 - 20:09 Item 79: the user confirmed CZR is done (item 75 stands). Only the release merge approval via the PM remains.
+- 20:11 User approved the release merge in the Modules session: "Yes, merge 6cda54b" (local, no push). Forwarded word for word to the PR manager.

@@ -2020,6 +2020,7 @@ def _publish_forged_cp_model(
     forge: Any,
     *,
     fail_first_write: bool = False,
+    forge_interrupted: Any = None,
 ) -> OwnerWorkflow:
     """The positive run driven to CP-MODEL, whose publisher attempt a patched `Execution.begin`
     starts on `forge(inputs)` (adv-4's `drop-cp1` and `other-cp1`); the run is then published.
@@ -2030,7 +2031,9 @@ def _publish_forged_cp_model(
     receipt exists to verify. With `fail_first_write` only the first attempt is forged and its
     publication fails (the files cannot be written); the second publication is genuine and
     begins another attempt 0 on the true inputs, so the final head is genuine and only the
-    replay of the first publication's `begin` can refuse."""
+    replay of the first publication's `begin` can refuse. With `forge_interrupted` (an
+    `Attempt -> Attempt` map) the first publication's interrupted attempt is rewritten in the
+    store, as a forger who re-hashes it would; everything else stays genuine."""
     workflow = runs.clone_workflow(promoted[0], root)
     assert runs.drive_cp1a(workflow, promoted[1], "positive")["status"] == "valid"
     outcome = runs.drive_cp2(workflow, "positive", runs.read_cp2(workflow))
@@ -2060,6 +2063,26 @@ def _publish_forged_cp_model(
         )
         return forged
 
+    real_interrupt = Execution.interrupt
+
+    def interrupt(self: Execution, ticket_id: str, reason: str) -> Attempt:
+        finished = real_interrupt(self, ticket_id, reason)
+        if forge_interrupted is None:
+            return finished
+        forged = forge_interrupted(finished)
+        snapshot = self.read()
+        self._write(
+            snapshot.model_copy(
+                update={
+                    "parent": snapshot.content_hash(),
+                    "attempts": tuple(
+                        forged if a.ticket_id == ticket_id else a for a in snapshot.attempts
+                    ),
+                }
+            )
+        )
+        return forged
+
     def forged_inputs(snapshot: Any, module_id: str) -> tuple[Input, ...]:
         pending = [
             a for a in snapshot.attempts if a.module_id == module_id and a.status == "pending"
@@ -2076,6 +2099,8 @@ def _publish_forged_cp_model(
 
     monkeypatch.setattr(Execution, "begin", begin)
     monkeypatch.setattr(execution_module, "current_inputs", forged_inputs)
+    if forge_interrupted is not None:
+        monkeypatch.setattr(Execution, "interrupt", interrupt)
     if fail_first_write:
         monkeypatch.setattr(cp_model_module, "_write", failing_once)
     first = workflow.publish()
@@ -2143,6 +2168,55 @@ def test_forgery_cp_model_failed_first_publication_on_forged_inputs_refuses(
     with pytest.raises(WorkflowError) as caught:
         workflow.write_receipt(tmp_path / "owner-receipt.json")
     assert caught.value.code == "identity_mismatch"
+
+
+def _verify_forged_failed_publication(
+    positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    forge: Any,
+) -> None:
+    workflow = _publish_forged_cp_model(
+        positive_promoted,
+        tmp_path,
+        monkeypatch,
+        lambda inputs, snapshot: inputs,
+        fail_first_write=True,
+        forge_interrupted=forge,
+    )
+    with pytest.raises(WorkflowError) as caught:
+        workflow.write_receipt(tmp_path / "owner-receipt.json")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_forgery_cp_model_failed_publication_rewritten_issues_refuses(
+    positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OI-5 (Stage 4 Info 1): a failed publication's attempt carries issues that are not the
+    ones `Execution.interrupt` writes for its interruption; the verifier refuses."""
+    _verify_forged_failed_publication(
+        positive_promoted,
+        tmp_path,
+        monkeypatch,
+        lambda attempt: attempt.model_copy(update={"issues": ("Looks fine, nothing to repair",)}),
+    )
+
+
+def test_forgery_cp_model_failed_publication_rewritten_interruption_refuses(
+    positive_promoted: tuple[OwnerWorkflow, PreparedPack],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OI-5: the interruption alone is rewritten (issues left genuine), so the issues no longer
+    follow from it; the verifier refuses."""
+    _verify_forged_failed_publication(
+        positive_promoted,
+        tmp_path,
+        monkeypatch,
+        lambda attempt: attempt.model_copy(update={"interruption": "something else entirely"}),
+    )
 
 
 def test_forgery_unblock_restricted_head_replacing_blocked_refuses(

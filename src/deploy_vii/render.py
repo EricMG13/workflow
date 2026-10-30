@@ -163,7 +163,11 @@ def render(view: View, report: ReportView | None = None) -> str:
             fact_payload["table_display"] = table_display(
                 fact, gap_ids.get((module.module_id, fact.fact_id))
             )
-            if fact.status == "known" and fact.text is not None and _carries_reference(fact.text):
+            if (
+                fact.status == "known"
+                and fact.text is not None
+                and _carries_reference(module.module_id, fact)
+            ):
                 # Item 45: a text fact holding [ref]/{ref|unit} is spelled as the block spells it.
                 spelled = "".join(
                     run.text
@@ -171,6 +175,7 @@ def render(view: View, report: ReportView | None = None) -> str:
                         fact.text,
                         prose.bind(module.facts),
                         module_refs(report.index, module.module_id),
+                        names=(view.run.issuer_name,),
                     )
                 )
                 fact_payload["display"] = fact_payload["table_display"] = spelled

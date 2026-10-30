@@ -1597,14 +1597,25 @@ def _clip(text: str) -> str:
     return text if len(text) <= _SUMMARY_LIMIT else text[: _SUMMARY_LIMIT - 1] + "…"
 
 
-def _carries_reference(text: str) -> bool:
-    """Whether a known text fact holds a well-formed ``[ref]``/``{ref|unit}`` reference.
+#: Tables whose known text facts are producer-composed run text (the same strings the module's
+#: claims carry). Only ``Claim.text`` is ``RunText`` in the contract; ``Fact.text`` is a plain
+#: string, so analyst free text and verbatim quotes may hold ``[sic]`` or ``[Reserved]``.
+#: Every CP-8 line in ``cp8.what_changed`` comes from the producer's resolved claim text.
+_RUN_TEXT_TABLES = frozenset({("CP-8", "cp8.what_changed")})
 
-    Text whose brackets are not reference syntax (a label such as ``[Insufficient Information]``)
-    is plain prose and shown as written, as before. Text holding any reference goes to
-    ``resolve``: a malformed mix, or a reference to a fact outside the module, fails closed.
+
+def _carries_reference(module_id: str, fact: Fact) -> bool:
+    """Whether a known text fact is run text that must go through ``resolve``.
+
+    Only a fact in a registered run-text table qualifies, and then any reserved character
+    (``[ ] { }``) sends it to ``resolve``, so a malformed or unbalanced reference fails closed.
+    Every other text fact is shown as written, whatever brackets it holds.
     """
-    return prose._TOKEN.search(text) is not None  # the grammar resolve() parses
+    return (
+        (module_id, fact.table_id) in _RUN_TEXT_TABLES
+        and fact.text is not None
+        and prose._RESERVED.search(fact.text) is not None
+    )
 
 
 def _token_runs(
@@ -1613,13 +1624,14 @@ def _token_runs(
     refs: Mapping[tuple[str, str], tuple[str, ...]],
     *,
     judged: bool,
+    names: tuple[str, ...] = (),
 ) -> list[TextRun]:
     """A known text fact that carries ``[ref]``/``{ref|unit}`` tokens, resolved as a claim is:
     a known fact becomes its figure, an unsettled one the page's ``G#``; a token that names a
     fact outside the module fails closed (``resolve``)."""
     by_fact = {fact_id: ids for (owner, fact_id), ids in refs.items() if owner == module.module_id}
     out: list[TextRun] = []
-    for run in resolve(text, prose.bind(module.facts), by_fact):
+    for run in resolve(text, prose.bind(module.facts), by_fact, names=names):
         if run.kind == "text":
             out.append(TextRun(text=run.text, kind="pen" if judged else "text"))
         else:
@@ -1651,8 +1663,10 @@ def _prose_lines(
                 runs.append(TextRun(text=item.text, kind="gap", ref_id=item.gap_ref))
             elif fact.text is not None:
                 judged = fact.value_class == "analyst_judgment"
-                if _carries_reference(fact.text):
-                    runs += _token_runs(fact.text, module, refs, judged=judged)
+                if _carries_reference(module.module_id, fact):
+                    runs += _token_runs(
+                        fact.text, module, refs, judged=judged, names=(view.run.issuer_name,)
+                    )
                 else:
                     runs.append(TextRun(text=item.text, kind="pen" if judged else "text"))
                 if item.ref_id:

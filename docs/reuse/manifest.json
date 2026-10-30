@@ -1342,28 +1342,10 @@
       "destination": "src/deploy_vii/bindings/shipped.py",
       "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
       "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
-      "project_commit": "b22972d6d8c7f97825d70fbc6bc59de41a2f5ba5",
-      "sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
-      "reason": "Register the CP-DR rails binding map (D12 one-line registration, appended last) with the CP-DR owner core.",
+      "project_commit": "e1d06303b5926d04ff2690c91c709a0086556e1f",
+      "sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
+      "reason": "Merge e1d0630 (Stage 2 integration) folds the branch records for b22972d, 883a595, 0fa5b4a, b48a3c5, fb7819b and b9d937e into one record (round 5 item 19). Their reasons: Register the CP-DR rails binding map (D12 one-line registration, appended last) with the CP-DR owner core. | Register the CP-3D binding map (D12 one-line registration, directly after CP-3) with the CP-3D owner core. | Register the CP-2E rails binding map (D12 one-line registration, appended last) with the CP-2E owner core. | Merged registration tail: CP-2E appended after CP-DR in SHIPPED_MAPS (CP-3D, CP-DR, CP-2E rows all retained). | Register the CP-8 binding map (D12 one-line registration, appended last after CP-2E) with the CP-8 owner core; merged tail retains CP-3D, CP-DR and CP-2E. | Register the CP-2A binding map (D12 one-line registration, SHIPPED_MAPS += CP2A, appended last after CP-8); merged tail retains CP-3D, CP-DR, CP-2E and CP-8.",
       "review": "docs/CPDR-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "4765995accbef6630f01016f9b4ec2973739f3f3ccae3bafa30130fa3392efb2",
-      "project_commit": "883a595236a94c02c5dff8375a61e11fedc77423",
-      "sha256": "8afa15fc82db7580e03c6405f43eee7adfa3344d2b2acfb7f490562084791cc1",
-      "reason": "Register the CP-3D binding map (D12 one-line registration, directly after CP-3) with the CP-3D owner core.",
-      "review": "docs/CP3D-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
-      "project_commit": "8aef58d8e8e5d81cbefca08744dd90ff32fea405",
-      "sha256": "0b74f88e8ab98a21e43a675335121a27a88cf0badac8e699f8cf7281dbf1f48b",
-      "reason": "Register the CP-2D binding map after CP-2 (docs/CP2D-OWNER-LEASE.md, Files); new bindings/cp2d.py holds FP block bindings only.",
-      "review": "docs/CP2D-OWNER-LEASE.md"
     },
     {
       "destination": "src/deploy_vii/report_view.py",
@@ -1373,42 +1355,6 @@
       "sha256": "1a00120d13cfda613fb4561b4237dc396f5a89f60a763558d1c8b87506d184c3",
       "reason": "Add the CP-3D relative-value mapping and one _spec_of loop entry (D12 registration, rows only).",
       "review": "docs/CP3D-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
-      "project_commit": "0fa5b4aae6b2393a642d8b5e2f5c39b27d1b5872",
-      "sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
-      "reason": "Register the CP-2E rails binding map (D12 one-line registration, appended last) with the CP-2E owner core.",
-      "review": "docs/CP2E-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "01ebc258fd3e6c87d70e49a80fb3ec9952079a0b392fdbf7167592805a254946",
-      "project_commit": "b48a3c5be974bdebbd9f0213e2d589e8ffd456ce",
-      "sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
-      "reason": "Merged registration tail: CP-2E appended after CP-DR in SHIPPED_MAPS (CP-3D, CP-DR, CP-2E rows all retained).",
-      "review": "docs/CP2E-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "80adfaf66578dd8a8cc137b4a14cad36025c40256ee05c72a9bfa540d91166f1",
-      "project_commit": "fb7819b4986b38cbf77665420ae44b1ba02ff4e1",
-      "sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
-      "reason": "Register the CP-8 binding map (D12 one-line registration, appended last after CP-2E) with the CP-8 owner core; merged tail retains CP-3D, CP-DR and CP-2E.",
-      "review": "docs/CP8-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "a290b945aded773126ebe49dda70d72b5249b75c13526d4b15e0dd261214c199",
-      "project_commit": "b9d937eb714325bc5e85123d896141fff855f8a0",
-      "sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
-      "reason": "Register the CP-2A binding map (D12 one-line registration, SHIPPED_MAPS += CP2A, appended last after CP-8); merged tail retains CP-3D, CP-DR, CP-2E and CP-8.",
-      "review": "docs/CP2A-OWNER-LEASE.md"
     },
     {
       "destination": "src/deploy_vii/report_view.py",
@@ -1434,7 +1380,7 @@
       "prior_project_sha256": "99fbe495be8d01940cb7ea57a028ac0173c1eb7f0d3f9c18c4901b5ccb7d8c9a",
       "project_commit": "24f879acb473f4f516b503f417a9739ceec0a46b",
       "sha256": "f51954d7b2cd4569f1e1ffbe06713a8d2c5c04f828ce8bf8df3737da4583b48a",
-      "reason": "Merged registration tail: CP-2D directly after CP-2 per its lease; CP-3D, CP-DR, CP-2E, CP-8 and CP-2A rows all retained.",
+      "reason": "Merged registration tail: CP-2D directly after CP-2 per its lease; CP-3D, CP-DR, CP-2E, CP-8 and CP-2A rows all retained. Folds the branch record for 8aef58d (round 5 item 19): Register the CP-2D binding map after CP-2 (docs/CP2D-OWNER-LEASE.md, Files); new bindings/cp2d.py holds FP block bindings only.",
       "review": "docs/CP2D-OWNER-LEASE.md"
     },
     {
@@ -1449,19 +1395,10 @@
     {
       "destination": "src/deploy_vii/bindings/shipped.py",
       "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "4ef3f9ffdc9a6e10461dbe722e8222c8803ccba1ab49f42b9cd9db07bf9d4fec",
-      "project_commit": "6b679cab982521bd0d73a213e7294d45927d6894",
-      "sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
-      "reason": "Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
-      "review": "docs/CPL10-OWNER-LEASE.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/shipped.py",
-      "imported_sha256": "304230a5eab8f58cea77e8c00cdd69830d5bd57bd7e549e58e026d8f5655f951",
-      "prior_project_sha256": "2be6922addd6c9789b72b84d3476bf01823fc1533d2bfd50bd0fe5b3fa0ba465",
+      "prior_project_sha256": "f51954d7b2cd4569f1e1ffbe06713a8d2c5c04f828ce8bf8df3737da4583b48a",
       "project_commit": "ab8917343a7b9a3d002a80a519d7c28d29678cad",
       "sha256": "111850491b3e181127f1df8646e9b8dae4e77a75bf4becfaa823d3743d6946c9",
-      "reason": "Merged registration tail: CP-L10 appended last (D12 one-line registration); all earlier rows retained.",
+      "reason": "Merged registration tail: CP-L10 appended last (D12 one-line registration); all earlier rows retained. Folds the branch record for 6b679ca (round 5 item 19): Register the CP-L10 rails binding map (D12 one-line registration, appended last) with the CP-L10 owner core.",
       "review": "docs/CPL10-OWNER-LEASE.md"
     },
     {

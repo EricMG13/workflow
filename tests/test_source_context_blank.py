@@ -86,6 +86,29 @@ def test_message_does_not_echo_the_input() -> None:
     assert all("\u200b" not in issue for issue in _issues(doc))
 
 
+@pytest.mark.parametrize("index", (0, 1))
+@pytest.mark.parametrize("blank", BLANKS)
+def test_blank_event_scan_explanation_is_one_issue(index: int, blank: str) -> None:
+    """OI-20: source 0 is unassessed, source 1 is scanned; both refuse a blank explanation."""
+    doc = copy.deepcopy(CONTEXT)
+    source = doc["sources"][index]
+    source["event_scan_explanation"] = blank
+    assert _issues(doc) == (f"Empty event scan explanation: {source['source_id']}",)
+
+
+@pytest.mark.parametrize("index", (0, 1))
+def test_non_blank_event_scan_explanation_is_unchanged(index: int) -> None:
+    doc = copy.deepcopy(CONTEXT)
+    doc["sources"][index]["event_scan_explanation"] = "No events were scanned."
+    assert _issues(doc) == ()
+
+
+def test_event_scan_message_does_not_echo_the_input() -> None:
+    doc = copy.deepcopy(CONTEXT)
+    doc["sources"][0]["event_scan_explanation"] = "\u200b"
+    assert all("\u200b" not in issue for issue in _issues(doc))
+
+
 def _reviews(node: object) -> Iterator[dict[str, Any]]:
     if isinstance(node, dict):
         for key, value in node.items():
@@ -116,4 +139,6 @@ def test_frozen_cp1_submissions_hold_no_blank_limitation() -> None:
             seen += 1
             blanks = [text for text in _limitations(review) if is_blank(text)]
             assert blanks == [], path
+            explanations = [s.get("event_scan_explanation", "x") for s in review["sources"]]
+            assert not any(is_blank(text) for text in explanations), path
     assert seen > 0

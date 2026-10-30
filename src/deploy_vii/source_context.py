@@ -284,6 +284,8 @@ def validate_source_context(pack: PreparedPack, review: SourceContextReview) -> 
             issues.extend(_lacks(assessment, scope))
             issues.extend(_blank_limitations(scope.limitations, scope.scope_id))
         issues.extend(_blank_limitations(assessment.limitations, source.source_id))
+        if is_blank(assessment.event_scan_explanation):
+            issues.append(f"Empty event scan explanation: {source.source_id}")
         source_event_ids = set(assessment.event_ids)
         if (
             len(source_event_ids) != len(assessment.event_ids)

@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "<string>", line 19, in run
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp4c.py", line 184, in test_a1_positive_heads_inputs_and_the_cp4c_head
+    _assert_head_equals_oracle(store, "positive")
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp4c.py", line 150, in _assert_head_equals_oracle
+    assert text.replace("G1", "G#") == e["shown"], fact.fact_id
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: T4E.2.c02.facility
+Traceback (most recent call last):
+  File "<string>", line 19, in run
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s4-int/tests/test_owner_cp4c.py", line 329, in test_a3_each_refusal_is_journaled_with_the_oracle_issues
+    assert list(outcome["issues"]) == _expected_issues(workflow._store, rid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+positive cp4c outcome valid []
+FAIL orig a1_positive
+patched all mismatches: []
+PASS patched head positive
+T4E count 256
+FAIL orig a3 v17
+v17 fixed-binding outcome invalid ["claims[0].rationale: Unit x differs from the fact's unit US$ m: interface-fact:bbc6e1b3025422d9b23af5e7317ff1932447154a4ae358dd3fba8b2638ddc6c8"]
+v17 expected ["claims[0].rationale: Unit x differs from the fact's unit US$ m: interface-fact:bbc6e1b3025422d9b23af5e7317ff1932447154a4ae358dd3fba8b2638ddc6c8"]
+exit=0

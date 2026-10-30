@@ -557,3 +557,4 @@
 - 00:23 Owner shard cp-0 done: 120 passed, 4 failed (test_owner_cp8.py 86/86 passed; test_owner_cp3.py: R3 oracle test does not bind the run-time pack-hash marker (:163); register-count test compares [] to 0 (:246)). Tracebacks sent to the RCA agent.
 - 00:41 Owner shard cp-2 done: 112 passed, 7 failed (cp2g 5, cpl10 2), 12 skipped (cp2g, cp3d, cp3c, cpl10). Tracebacks pointed to the RCA agent.
 - 00:59 Owner shard cp-3 done: 123 passed, 1 skipped (test_owner_cp2e.py, test_owner_cpos.py, test_owner_cp1d.py all green).
+- 01:06 Owner-suite RCA done (mx-autonomous a6b93aa0): six causes A-F, all predating ab9777f, none product. Rulings item 41 (applied recommendation: fix now). Probes kept in work/build/keep/owner-rca/.

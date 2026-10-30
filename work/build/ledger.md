@@ -661,3 +661,4 @@
   - f5: test_owner_cp2a;
   - f6: test_owner_cpl10.
   Scope: the post-Stage-5 delta. CP-DR is already run (341 passed). The CP-1 precheck reaches owner runs through owner_workflow._evidence_issues; earnings_workflow keeps its own copy (unaffected). The mx-precise differential probe found no output change on any synthetic page. Other owner and G2 genuine suites are not rerun.
+- 12:30 User asked for a sub-session to close the remaining open items: started 'Close remaining open owner items' (local_281c5f7c, own worktree from the lane at 559ba54). It must keep clear of the CZR files and the Modules records, run at most one fast pytest at a time, make no src/deploy_vii change, and report to Modules for the merge.

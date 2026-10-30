@@ -618,7 +618,7 @@ def _payload_facts(view: View) -> dict[str, dict[str, Any]]:
     from deploy_vii import render as core_render
 
     page = core_render.render(view)
-    found = re.search(r'<script[^>]*id="report-data"[^>]*>(.*?)</script>', page, flags=re.S)
+    found = re.search(r'<script[^>]*id="report-data"[^>]*>(.*?)</script>', page, flags=re.DOTALL)
     assert found
     return {f["fact_id"]: f for f in json.loads(found.group(1))["modules"][0]["facts"]}
 

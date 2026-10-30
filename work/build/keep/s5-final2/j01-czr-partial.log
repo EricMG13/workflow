@@ -1,0 +1,13 @@
+start 14:47
+Traceback (most recent call last):
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s5-final2/cases/czr-2026q2-earnings-update/partial-builder/run.py", line 17, in <module>
+    r = czr_runs.czr_closed(root, sub)
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s5-final2/tests/czr_runs.py", line 282, in czr_closed
+    submit_valid(workflow, payload.replace(PACK_PLACEHOLDER, pack.content_hash()))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ericguei/Documents/Deploy Workflow/.claude/worktrees/s5-final2/tests/s1a_runs.py", line 221, in submit_valid
+    raise RuntimeError(f"submission not valid: {outcome['status']} {outcome['issues']}")
+RuntimeError: submission not valid: invalid ['CP-1 QA Blocked: confidence 39 (Insufficient Information); a Blocked handoff is not promoted']
+RAISED RuntimeError submission not valid: invalid ['CP-1 QA Blocked: confidence 39 (Insufficient Information); a Blocked handoff is not promoted']
+wall 63.7 s
+exit=0 end 14:49

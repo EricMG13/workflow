@@ -66,3 +66,11 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   a refused CP-DR makes CP-5 (and CP-6) refuse for a missing producer and no report renders: the same
   outcome as any other refused module (O3's open item, for the user). Cost if wrong: a run with a
   refused CP-DR ends without a report; the user reruns without `cp_dr=True` or after repairing it.
+- **B14 D12 records for repo-authored `src/deploy_vii` files.** B1 and B6-B9 require a D12
+  `post_import_patches` record for each approved file. For a file not in the manifest's `files[]`
+  (repo-authored: `bindings/*.py`, `methods/cp2h.md`, `methods/cpdr.md`, `methods/cp1c.md` …) the record is
+  still written, with `imported_sha256` = `prior_project_sha256` = the file's sha256 at the commit before
+  the plan's first change to it, and a `reason` that begins "repo-authored (not in files[])"; the other
+  fields as usual. Where another file pins its hash (`cases/PINS.json`, leases), the re-pin runs through
+  the oracle process in the same commit. Cost if wrong: one manifest shape the PR Manager may ask to
+  change (no test reads `post_import_patches` today).

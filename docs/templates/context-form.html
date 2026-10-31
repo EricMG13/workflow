@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run context</title>
+<style>
+/* Fonts: relative to this file; the token stacks fall back to system-ui when the files are absent. */
+@font-face{font-family:'Red Hat Text';font-weight:400;src:url('../../src/deploy_vii/assets/fonts/RedHatText-Regular.woff2') format('woff2')}
+@font-face{font-family:'Red Hat Text';font-weight:500;src:url('../../src/deploy_vii/assets/fonts/RedHatText-Medium.woff2') format('woff2')}
+@font-face{font-family:'Red Hat Text';font-weight:600;src:url('../../src/deploy_vii/assets/fonts/RedHatText-SemiBold.woff2') format('woff2')}
+@font-face{font-family:'Red Hat Display';font-weight:600;src:url('../../src/deploy_vii/assets/fonts/RedHatDisplay-SemiBold.woff2') format('woff2')}
+@font-face{font-family:'Red Hat Display';font-weight:700;src:url('../../src/deploy_vii/assets/fonts/RedHatDisplay-Bold.woff2') format('woff2')}
+@font-face{font-family:'Red Hat Mono';font-weight:500;src:url('../../src/deploy_vii/assets/fonts/RedHatMono-Medium.woff2') format('woff2')}
+@font-face{font-family:'Red Hat Mono';font-weight:600;src:url('../../src/deploy_vii/assets/fonts/RedHatMono-SemiBold.woff2') format('woff2')}
+
+/* Tokens: copied verbatim from src/deploy_vii/assets/tokens.css */
+:root {
+  /* brand: structure and action, never a verdict */
+  --rb-navy: #000533;        --rb-blue: #0017E5;
+  --rb-blue-hover: #0012B8;  --rb-logo-field: #001AFF;
+  /* neutrals */
+  --rb-ground: #EEF0F5;  --rb-panel: #FFFFFF;  --rb-head: #F6F7FA;
+  --rb-rule: #DDE1EA;    --rb-rule-soft: #EEF0F5;  --rb-select: #E7ECFF;
+  --rb-ink: #000533;     --rb-ink-2: #4A5068;  --rb-ink-3: #9AA0B4;
+  --rb-on-navy: #FFFFFF; --rb-on-navy-2: #C7CBE0;
+  /* signal: meaning for the creditor; never alone */
+  --rb-pos: #0E7A46;  --rb-pos-tint: #DCF5E7;  --rb-pos-navy: #7EE2A8;
+  --rb-caut: #8A5300; --rb-caut-tint: #FFF1C7; --rb-caut-navy: #FFD166;
+  --rb-neg: #B3261E;  --rb-neg-tint: #FBE0DD;  --rb-neg-navy: #FFB4B0;
+  --rb-neu: #4A5068;  --rb-neu-tint: #EEF0F5;  --rb-neu-navy: #C7CBE0;
+  /* chart */
+  --rb-ch-1: #0017E5; /* issuer */   --rb-ch-2: #C4410C; /* comparison */
+  --rb-ch-3: #000533; --rb-ch-4: #4A5068; --rb-ch-5: #9AA0B4;
+  --rb-ch-grid: #DDE1EA; --rb-ch-track: #EEF0F5; --rb-ch-hatch: 45deg 2/6px;
+  /* type */
+  --rb-font-display: 'Red Hat Display', system-ui, sans-serif;
+  --rb-font-text: 'Red Hat Text', system-ui, sans-serif;
+  --rb-font-mono: 'Red Hat Mono', ui-monospace, monospace;
+  --rb-fs-page: 20px; --rb-fs-call: 16px; --rb-fs-issuer: 15px;
+  --rb-fs-body: 13.5px; --rb-fs-table: 12px; --rb-fs-label: 11px;
+  --rb-fs-micro: 10.5px; --rb-lh-body: 1.5; --rb-lh-table: 1.45;
+  /* space */
+  --rb-s-1: 4px; --rb-s-2: 6px; --rb-s-3: 8px; --rb-s-4: 10px;
+  --rb-s-5: 12px; --rb-s-6: 18px; --rb-s-7: 24px;
+  /* radius */
+  --rb-r-panel: 0; --rb-r-tag: 2px; --rb-r-tile: 3px; --rb-r-nav: 4px;
+  /* motion */
+  --rb-t-fast: 120ms; --rb-t-base: 180ms; --rb-t-slow: 260ms;
+  --rb-ease: cubic-bezier(.2,.7,.2,1);
+  /* layout */
+  --rb-rail: 56px; --rb-navigator: 236px; --rb-inspector: 300px;
+  --rb-call-min: 56px; --rb-target: 24px; --rb-focus: 2px solid var(--rb-blue);
+}
+
+/* Base: matches src/deploy_vii/assets/app.css lines 1-25 */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--rb-ground);color:var(--rb-ink);font-family:var(--rb-font-text);font-weight:400;font-size:var(--rb-fs-body);line-height:var(--rb-lh-body);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button,a{touch-action:manipulation}
+button{cursor:pointer}
+a{color:var(--rb-blue);text-underline-offset:3px}
+a:hover{color:var(--rb-blue-hover)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:var(--rb-focus);outline-offset:2px}
+h1,h2,h3,h4{font-family:var(--rb-font-display);font-weight:600;line-height:1.2;margin:0}
+h1{font-size:var(--rb-fs-page)}
+h2{font-size:18px}
+h3{font-size:15px}
+h4{font-size:var(--rb-fs-body)}
+p{margin:var(--rb-s-3) 0}
+.num{font-family:var(--rb-font-mono);font-weight:500}
+.muted{color:var(--rb-ink-2)}
+.caps{font-size:var(--rb-fs-label);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--rb-ink-2)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* Header */
+.top{background:var(--rb-navy);color:var(--rb-on-navy);padding:var(--rb-s-6) var(--rb-s-7)}
+.top p{margin:var(--rb-s-1) 0 var(--rb-s-5);color:var(--rb-on-navy-2)}
+.stepper{display:flex;flex-wrap:wrap;gap:var(--rb-s-2);margin:0;padding:0;list-style:none}
+.step{display:inline-flex;align-items:center;gap:var(--rb-s-2);min-height:var(--rb-target);padding:2px var(--rb-s-4);border:1px solid var(--rb-on-navy-2);border-radius:var(--rb-r-tag);background:transparent;color:var(--rb-on-navy);font-size:var(--rb-fs-table)}
+.step:hover{background:rgba(255,255,255,.1)}
+.step .sn{font-family:var(--rb-font-mono);font-weight:600}
+.step .sstate{font-weight:600;color:var(--rb-on-navy-2)}
+.step.done{border-color:var(--rb-pos-navy)}
+.step.done .sstate{color:var(--rb-pos-navy)}
+.step.needs-attention{border-color:var(--rb-neg-navy)}
+.step.needs-attention .sstate{color:var(--rb-neg-navy)}
+.step[aria-current=step]{background:var(--rb-on-navy);color:var(--rb-navy)}
+.step[aria-current=step] .sstate{color:var(--rb-blue)}
+.step[aria-disabled=true]{border-style:dashed;color:var(--rb-on-navy-2);cursor:not-allowed}
+.step[aria-disabled=true]:hover{background:transparent}
+.step:focus-visible{outline:2px solid var(--rb-on-navy);outline-offset:2px}
+.stepsum{display:none}
+.stepsum .prog{height:4px;margin-top:var(--rb-s-3);background:rgba(255,255,255,.25)}
+.stepsum .prog span{display:block;height:100%;background:var(--rb-on-navy)}
+
+.notice{margin:var(--rb-s-6) var(--rb-s-7) 0;padding:var(--rb-s-4) var(--rb-s-5);background:var(--rb-caut-tint);border:1px solid var(--rb-caut);color:var(--rb-ink)}
+.notice b{color:var(--rb-caut)}
+
+/* Layout: form column and sticky panel; one column under 900px */
+.layout{display:flex;gap:var(--rb-s-6);align-items:flex-start;padding:var(--rb-s-6) var(--rb-s-7) 48px}
+.main{flex:1 1 auto;max-width:760px;min-width:0}
+.panel{flex:0 0 320px;width:320px;position:sticky;top:var(--rb-s-5);max-height:calc(100vh - 24px);overflow:auto;background:var(--rb-panel);border:1px solid var(--rb-rule);border-radius:var(--rb-r-panel)}
+.panel>summary{display:none}
+.panel .body{padding:var(--rb-s-5)}
+@media (max-width:899px){
+  .layout{flex-direction:column;padding:var(--rb-s-5)}
+  .panel{order:-1;position:static;width:100%;flex-basis:auto;max-height:none}
+  .panel>summary{display:block;padding:var(--rb-s-4) var(--rb-s-5);font-family:var(--rb-font-display);font-weight:600;cursor:pointer;min-height:var(--rb-target)}
+  .main{width:100%;max-width:none}
+  .top{padding:var(--rb-s-5)}
+  .stepper{display:none}
+  .stepsum{display:block}
+  .notice{margin:var(--rb-s-5) var(--rb-s-5) 0}
+}
+
+/* Section cards */
+.sec{background:var(--rb-panel);border:1px solid var(--rb-rule);border-radius:var(--rb-r-panel);padding:var(--rb-s-6);margin-bottom:var(--rb-s-5);scroll-margin-top:var(--rb-s-5)}
+.sec>h2{display:flex;align-items:baseline;gap:var(--rb-s-3);flex-wrap:wrap;margin-bottom:var(--rb-s-3)}
+.sec>h2 .n{font-family:var(--rb-font-mono);color:var(--rb-ink-2);font-weight:600}
+.sec>h2 .req{font-size:var(--rb-fs-label);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--rb-ink-2)}
+.sec details>summary{cursor:pointer;min-height:var(--rb-target);font-weight:600}
+fieldset{border:0;margin:var(--rb-s-5) 0 0;padding:0;min-width:0}
+legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
+.f{margin:var(--rb-s-4) 0;min-width:0}
+.f label{display:block;font-weight:500;margin-bottom:var(--rb-s-1)}
+.f input[type=text],.f input[type=date],.f select{width:100%;min-height:30px;padding:3px var(--rb-s-3);border:1px solid var(--rb-ink-3);border-radius:var(--rb-r-tile);background:var(--rb-panel)}
+.f input[aria-invalid=true],.f select[aria-invalid=true]{border-color:var(--rb-neg);background:var(--rb-neg-tint)}
+.help{margin:var(--rb-s-1) 0 0;font-size:var(--rb-fs-table);color:var(--rb-ink-2)}
+.err{margin:var(--rb-s-1) 0 0;font-size:var(--rb-fs-table);font-weight:600;color:var(--rb-neg)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 var(--rb-s-5)}
+#rows-q .grid .f:first-child{grid-column:1/-1}
+@media (max-width:599px){.grid{grid-template-columns:minmax(0,1fr)}}
+.row{border:1px solid var(--rb-rule);background:var(--rb-head);padding:var(--rb-s-4) var(--rb-s-5);margin:var(--rb-s-4) 0}
+.rowhead{display:flex;justify-content:space-between;align-items:center;gap:var(--rb-s-3)}
+.btn{min-height:32px;padding:4px var(--rb-s-5);border:1px solid var(--rb-blue);border-radius:var(--rb-r-nav);background:var(--rb-panel);color:var(--rb-blue);font-weight:600}
+.btn:hover{background:var(--rb-select)}
+.btn.primary{background:var(--rb-blue);color:var(--rb-on-navy)}
+.btn.primary:hover{background:var(--rb-blue-hover)}
+.btn.primary:disabled{background:var(--rb-ink-3);border-color:var(--rb-ink-3);cursor:not-allowed}
+.btn.sm{min-height:var(--rb-target);padding:1px var(--rb-s-3);font-size:var(--rb-fs-table)}
+.linkbtn{background:none;border:0;padding:0 var(--rb-s-1);min-height:var(--rb-target);color:var(--rb-blue);text-decoration:underline;text-underline-offset:3px}
+
+/* Radio cards */
+.cards{display:grid;gap:var(--rb-s-3)}
+.card{display:flex;gap:var(--rb-s-4);align-items:flex-start;padding:var(--rb-s-4) var(--rb-s-5);border:1px solid var(--rb-rule);border-left:4px solid var(--rb-rule);border-radius:var(--rb-r-tile);background:var(--rb-panel);cursor:pointer;min-height:var(--rb-target);transition:background var(--rb-t-fast) var(--rb-ease)}
+.card:hover{background:var(--rb-head)}
+.card input{margin:3px 0 0;flex:none;width:16px;height:16px;accent-color:var(--rb-blue)}
+.card:has(input:checked){background:var(--rb-select);border-left-color:var(--rb-blue)}
+.card:has(input:focus-visible){outline:var(--rb-focus);outline-offset:2px}
+.card:has(input:disabled){opacity:.6;cursor:not-allowed}
+.ctl{display:flex;gap:var(--rb-s-3);align-items:center;flex-wrap:wrap}
+.imp{display:block;margin-top:var(--rb-s-1);font-size:var(--rb-fs-table);color:var(--rb-ink-2);line-height:var(--rb-lh-table)}
+.tag{display:inline-block;padding:0 var(--rb-s-2);border-radius:var(--rb-r-tag);font-size:var(--rb-fs-label);font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:1.7}
+.tag.def{background:var(--rb-pos-tint);color:var(--rb-pos)}
+.tag.pl{background:var(--rb-neu-tint);color:var(--rb-neu);border:1px solid var(--rb-ink-3);cursor:help}
+.plnote{font-size:var(--rb-fs-table);color:var(--rb-ink-2)}
+.mult{font-size:var(--rb-fs-table);color:var(--rb-ink-2)}
+#rows-peers[data-mode=user_list] .comps{display:none}
+.mod{border-top:1px solid var(--rb-rule);padding-top:var(--rb-s-3);margin-top:var(--rb-s-5)}
+.checks label.chk{display:flex;gap:var(--rb-s-3);align-items:flex-start;min-height:var(--rb-target);margin:var(--rb-s-3) 0;font-weight:500}
+.checks input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--rb-blue)}
+
+/* Actions */
+.filebtn{display:inline-flex;align-items:center;gap:var(--rb-s-3);font-weight:500;min-height:var(--rb-target)}
+.filebtn input{max-width:260px}
+#loadmsg{margin:var(--rb-s-3) 0;font-weight:500}
+#loadmsg.bad{color:var(--rb-neg)}
+.legend{margin:0 0 var(--rb-s-5);padding:var(--rb-s-3) var(--rb-s-5);background:var(--rb-panel);border:1px solid var(--rb-rule);font-size:var(--rb-fs-table)}
+.stepline{margin:var(--rb-s-1) 0;font-weight:600;color:var(--rb-ink-2)}
+.intro{margin:var(--rb-s-1) 0 var(--rb-s-4)}
+.steperr{margin:0 0 var(--rb-s-5);padding:var(--rb-s-4) var(--rb-s-5);background:var(--rb-neg-tint);border:1px solid var(--rb-neg)}
+.steperr ul{margin:var(--rb-s-2) 0 0;padding-left:var(--rb-s-7)}
+.steperr a{color:var(--rb-neg);font-weight:600}
+.stepnav{display:flex;flex-wrap:wrap;gap:var(--rb-s-4);align-items:center;background:var(--rb-panel);border:1px solid var(--rb-rule);padding:var(--rb-s-5) var(--rb-s-6)}
+.stepnav .live{flex:1 1 160px;color:var(--rb-ink-2);font-weight:500}
+.rtag{display:inline-block;margin-left:var(--rb-s-3);padding:0 var(--rb-s-2);border-radius:var(--rb-r-tag);font-size:var(--rb-fs-label);font-weight:600;line-height:1.6}
+.rtag.req{background:var(--rb-neg-tint);color:var(--rb-neg)}
+.rtag.rec{background:var(--rb-caut-tint);color:var(--rb-caut)}
+.rtag.opt{background:var(--rb-neu-tint);color:var(--rb-ink-2)}
+.exrow{margin:var(--rb-s-3) 0;padding:var(--rb-s-3) var(--rb-s-5);border:1px dashed var(--rb-ink-3);background:var(--rb-head);color:var(--rb-ink-2);font-size:var(--rb-fs-table)}
+.exrow .tag{background:var(--rb-neu-tint);color:var(--rb-ink-2);margin-right:var(--rb-s-3)}
+.load{margin-top:var(--rb-s-6);padding-top:var(--rb-s-4);border-top:1px solid var(--rb-rule)}
+.rv{border-top:1px solid var(--rb-rule);padding:var(--rb-s-4) 0}
+.rv header{display:flex;gap:var(--rb-s-4);align-items:baseline}
+.rv ul{margin:var(--rb-s-2) 0 0;padding-left:var(--rb-s-7)}
+.rv .skip{color:var(--rb-ink-2)}
+
+/* Panel */
+.panel h2{margin-bottom:var(--rb-s-3)}
+.panel .sig{list-style:none;margin:0;padding:0}
+.panel .sig li{margin:var(--rb-s-3) 0;padding:var(--rb-s-3) var(--rb-s-4);border-left:4px solid;background:var(--rb-head);font-size:var(--rb-fs-table);line-height:var(--rb-lh-table)}
+.panel .sig li b{display:block;text-transform:uppercase;letter-spacing:.06em;font-size:var(--rb-fs-label)}
+.sig .blocked{border-color:var(--rb-neg);background:var(--rb-neg-tint)!important}
+.sig .blocked b{color:var(--rb-neg)}
+.sig .limited{border-color:var(--rb-caut);background:var(--rb-caut-tint)!important}
+.sig .limited b{color:var(--rb-caut)}
+.sig .ok{border-color:var(--rb-pos);background:var(--rb-pos-tint)!important}
+.sig .ok b{color:var(--rb-pos)}
+.mchips{display:flex;flex-wrap:wrap;gap:var(--rb-s-2);margin:var(--rb-s-3) 0;padding:0;list-style:none}
+.mchips li{padding:1px var(--rb-s-3);border:1px solid var(--rb-rule);background:var(--rb-head);border-radius:var(--rb-r-tag);font-family:var(--rb-font-mono);font-weight:500;font-size:var(--rb-fs-table)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Run context</h1>
+  <p>Tell the workflow what the filings can't.</p>
+  <nav aria-label="Steps"><ol class="stepper" id="stepper"></ol><div class="stepsum"><span id="stepsum-t"></span><div class="prog" aria-hidden="true"><span id="prog-b"></span></div></div></nav>
+</header>
+
+<div class="notice" role="note"><b>Not read yet.</b> This form writes context.json (schema context/1). The workflow does not read it yet: see docs/CONTEXT-FILE-PROPOSAL.md. Options tagged <span class="tag pl" title="Not built yet">Planned</span> need features that are not built.</div>
+
+<div class="layout">
+<div class="main">
+<p class="legend"><span class="rtag req">Required</span> fields must be filled to continue. <span class="rtag rec">Recommended</span> fields improve the analysis. Everything else is optional.</p>
+<p id="loadmsg" role="status" aria-live="polite"></p>
+<div id="steperr" class="steperr" role="alert" hidden></div>
+<form id="f" novalidate autocomplete="off">
+
+<section class="sec" id="sec1" data-n="1">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Run type</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Choose the kind of run; this sets the pathway and which steps follow.</p>
+  <fieldset><legend>What kind of run is this?</legend><div data-cards="run_type"></div></fieldset>
+  <div class="f">
+    <label for="s1-pathway">Pathway</label>
+    <select id="s1-pathway" data-k="pathway" aria-describedby="s1-pathway-h">
+      <option value="credit_snapshot" selected>Credit Snapshot</option>
+      <option value="earnings_update">Earnings Update</option>
+      <option value="relative_value">Relative Value</option>
+      <option value="covenant_refinancing">Covenant &amp; Refinancing</option>
+      <option value="distressed_restructuring">Distressed &amp; Restructuring</option>
+      <option value="portfolio_decision">Portfolio Decision</option>
+    </select>
+    <p class="help" id="s1-pathway-h"><span id="pathnote"></span> Modules this pathway runs: <span class="num" id="pathmods"></span></p>
+  </div>
+  <fieldset><legend>Filing status</legend><div data-cards="case_kind"></div></fieldset>
+  <div class="load">
+    <h3>Start from a saved file <span class="rtag opt">Optional</span></h3>
+    <label class="filebtn">Load existing context.json <input type="file" id="load" accept=".json,application/json"></label>
+    <p class="help">A context.json saved from this form. After loading you land on the first step that needs attention.</p>
+  </div>
+</section>
+
+<section class="sec" id="sec2" data-n="2">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Issuer identity</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Name the issuer so CP-0 can confirm it and the filings can be matched.</p>
+  <div class="grid">
+    <div class="f"><label for="s2-issuer_name">Issuer (company name)</label><input type="text" id="s2-issuer_name" placeholder="e.g. Northbridge Group" data-k="issuer_name" aria-describedby="s2-issuer_name-h"><p class="help" id="s2-issuer_name-h">The marketing or group name. May differ from the borrower. Plain text.</p></div>
+    <div class="f"><label for="s2-issuer_id">Issuer ID</label><input type="text" id="s2-issuer_id" placeholder="e.g. northbridge-group" data-k="issuer_id" aria-describedby="s2-issuer_id-h"><p class="help" id="s2-issuer_id-h">Filled from the name; lowercase letters, digits, hyphens. Edit if you want.</p></div>
+    <div class="f"><label for="s2-borrower_name">Borrower (legal entity)</label><input type="text" id="s2-borrower_name" placeholder="e.g. Northbridge Holdings LLC" data-k="borrower_name" aria-describedby="s2-borrower_name-h"><p class="help" id="s2-borrower_name-h">The entity that signs the credit agreement. Left blank, CP-1 looks for it in the filings and records a gap if not found.</p></div>
+    <div class="f"><label for="s2-parent_name">Parent</label><input type="text" id="s2-parent_name" placeholder="e.g. Northbridge Topco Ltd" data-k="parent_name" aria-describedby="s2-parent_name-h"><p class="help" id="s2-parent_name-h">Plain text; the ultimate parent, if different.</p></div>
+    <div class="f"><label for="s2-guarantors">Guarantors</label><input type="text" id="s2-guarantors" placeholder="e.g. Northbridge Opco LLC, Northbridge IP LLC" data-k="guarantors" aria-describedby="s2-guarantors-h"><p class="help" id="s2-guarantors-h">Comma-separated names.</p></div>
+    <div class="f"><label for="s2-aliases">Aliases</label><input type="text" id="s2-aliases" placeholder="e.g. Northbridge, NBG" data-k="aliases" aria-describedby="s2-aliases-h"><p class="help" id="s2-aliases-h">Other names and tickers, so peer tables and filings match the issuer. Comma-separated.</p></div>
+  </div>
+  <fieldset><legend>Listed equity</legend><div data-cards="listed_equity"></div></fieldset>
+  <div class="grid">
+    <div class="f" id="tickerf" hidden><label for="s2-ticker">Ticker</label><input type="text" id="s2-ticker" placeholder="e.g. NBG" data-k="ticker" aria-describedby="s2-ticker-h"><p class="help" id="s2-ticker-h">The listed ticker symbol.</p></div>
+    <div class="f"><label for="s2-sector">Sector</label><input type="text" id="s2-sector" placeholder="e.g. Gaming &amp; Leisure" data-k="sector" list="sectors" aria-describedby="s2-sector-h"><p class="help" id="s2-sector-h">Pick a suggestion or type your own.</p></div>
+    <div class="f"><label for="s2-country">Country</label><input type="text" id="s2-country" placeholder="e.g. United States" data-k="country" aria-describedby="s2-country-h"><p class="help" id="s2-country-h">Country of the head office.</p></div>
+    <div class="f"><label for="s2-sponsor">Sponsor</label><input type="text" id="s2-sponsor" placeholder="e.g. Harbour Peak Capital" data-k="sponsor" aria-describedby="s2-sponsor-h"><p class="help" id="s2-sponsor-h">Private equity owner, if any.</p></div>
+  </div>
+  <datalist id="sectors"><option value="Aerospace and defense"><option value="Automotive"><option value="Business services"><option value="Chemicals"><option value="Consumer and retail"><option value="Energy"><option value="Financials"><option value="Healthcare"><option value="Industrials"><option value="Media and telecom"><option value="Metals and mining"><option value="Real estate"><option value="Technology"><option value="Transportation"><option value="Utilities"></datalist>
+</section>
+
+<section class="sec" id="sec3" data-n="3">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Dates, periods, currency</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Set the as-of date, reporting periods and currency the run is anchored to.</p>
+  <div class="grid">
+    <div class="f"><label for="s3-as_of">As-of date</label><input type="date" id="s3-as_of" data-k="as_of" aria-describedby="s3-as_of-h"><p class="help" id="s3-as_of-h">Sources and quotes dated after this are refused. Format YYYY-MM-DD, for example 2026-10-31.</p></div>
+    <div class="f"><label for="s3-current_period">Current period</label><input type="text" id="s3-current_period" placeholder="e.g. q3-2026" data-k="current_period" aria-describedby="s3-current_period-h"><p class="help" id="s3-current_period-h">For example q3-2026 or fy-2025. Required for Earnings update. Format q3-2026, h1-2026 or fy-2025.</p></div>
+    <div class="f"><label for="s3-prior_period">Prior period</label><input type="text" id="s3-prior_period" placeholder="e.g. q2-2026" data-k="prior_period" aria-describedby="s3-prior_period-h"><p class="help" id="s3-prior_period-h">Must be earlier than the current period (same kind: quarter, half or year).</p></div>
+    <div class="f"><label for="s3-reporting_currency">Reporting currency</label><input type="text" id="s3-reporting_currency" placeholder="e.g. USD" data-k="reporting_currency" value="USD" maxlength="3" aria-describedby="s3-reporting_currency-h"><p class="help" id="s3-reporting_currency-h">Three uppercase letters. <span id="ccynote"></span></p></div>
+  </div>
+</section>
+
+<section class="sec" id="sec4" data-n="4">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Deal terms and price talk</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Enter the terms and price talk of each facility in the new issue.</p>
+  <p class="muted">One row per facility. Money is in millions of the stated currency.</p>
+  <p class="exrow"><span class="tag">Example</span>tlb-2031 · Term loan B · USD · size 1250 · 7 years · talk spread 325 to 350 bps · OID 99.0 to 99.5 · floor 0.50% · 101 soft call, 6 months · Refinance 2027 term loan · Lead arranger</p>
+  <div id="rows-deal"></div>
+  <button type="button" class="btn sm" id="add-deal" data-add="deal" data-label="Facility rows">Add facility</button>
+</section>
+
+<section class="sec" id="sec5" data-n="5">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Market quotes</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Add the quotes you have seen; each needs a date and a provider.</p>
+  <p class="muted">One row per quote. Each row needs a date and a provider.</p>
+  <p class="exrow"><span class="tag">Example</span>tlb-2031 · observed · bid 98.50 · ask 99.00 · yield 8.25% · spread 340 bps · 2026-10-30 · Lead arranger</p>
+  <div id="rows-quote"></div>
+  <button type="button" class="btn sm" id="add-quote" data-add="quote">Add quote</button>
+</section>
+
+<section class="sec" id="sec6" data-n="6">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Ratings</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Add agency ratings if you have them.</p>
+  <p class="plnote"><span class="tag pl" title="Not built yet">Planned</span> CP-2H reads real agency names (today only the synthetic test headers parse).</p>
+  <p class="exrow"><span class="tag">Example</span>S&amp;P · issuer · B+ · Stable · 2026-09-15</p>
+  <div id="rows-rating"></div>
+  <button type="button" class="btn sm" id="add-rating" data-add="rating">Add rating</button>
+</section>
+
+<section class="sec" id="sec7" data-n="7">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Valuation and peers</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Choose how the issuer is valued: which peers, and which multiple.</p>
+  <fieldset><legend>Where do peers come from?</legend><div data-cards="peer_source"></div></fieldset>
+  <div id="rows-peers" data-mode="">
+    <p class="muted" id="peers-intro"></p>
+    <p class="exrow"><span class="tag">Example</span>Harbour Leisure Inc · HLI · EV 5400 · EBITDA 600 · 2026-09-30 · Company 10-K</p>
+    <div id="rows-peer"></div>
+    <button type="button" class="btn sm" id="add-peer" data-add="peer">Add peer</button>
+  </div>
+  <fieldset><legend>Valuation basis</legend><div data-cards="basis"></div></fieldset>
+  <div id="prec" hidden>
+    <h3>Precedent transactions</h3>
+    <p class="exrow"><span class="tag">Example</span>Target Casinos Ltd · Acquirer Group · 2025-06-30 · EV 1800 · EBITDA 200 · Press release</p>
+    <div id="rows-prec"></div>
+    <button type="button" class="btn sm" id="add-prec" data-add="prec">Add precedent</button>
+  </div>
+  <div id="im" hidden>
+    <h3>Issuer market data</h3>
+    <div class="grid">
+      <div class="f"><label for="im-market_cap_m">Market cap (m)</label><input type="text" id="im-market_cap_m" placeholder="e.g. 3200" data-k="market_cap_m" inputmode="decimal" aria-describedby="im-market_cap_m-h"><p class="help" id="im-market_cap_m-h">Millions of the reporting currency; a plain number.</p></div>
+      <div class="f"><label for="im-net_debt_m">Net debt (m)</label><input type="text" id="im-net_debt_m" placeholder="e.g. 2200" data-k="net_debt_m" inputmode="decimal" aria-describedby="im-net_debt_m-h"><p class="help" id="im-net_debt_m-h">Negative if net cash.</p></div>
+      <div class="f"><label for="im-ev_m">Enterprise value (m)</label><input type="text" id="im-ev_m" placeholder="e.g. 5400" data-k="ev_m" inputmode="decimal" aria-describedby="im-ev_m-h"><p class="help" id="im-ev_m-h">Give EV, or market cap and net debt. Millions; a plain number.</p></div>
+      <div class="f"><label for="im-as_of">As-of</label><input type="date" id="im-as_of" data-k="as_of" aria-describedby="im-as_of-h"><p class="help" id="im-as_of-h">Date of the figures, YYYY-MM-DD; not after the run as-of date.</p></div>
+      <div class="f"><label for="im-source">Source</label><input type="text" id="im-source" placeholder="e.g. Company 10-K, 2026-09-30" data-k="source" aria-describedby="im-source-h"><p class="help" id="im-source-h">Where the figures come from.</p></div>
+    </div>
+    <fieldset><legend>EBITDA basis</legend><div data-cards="ebitda_basis" data-name="im-basis"></div></fieldset>
+  </div>
+  <div id="um" hidden>
+    <h3>Your multiple</h3>
+    <div class="grid">
+      <div class="f"><label for="um-value">EV/EBITDA multiple</label><input type="text" id="um-value" placeholder="e.g. 8.5" data-k="value" inputmode="decimal" aria-describedby="um-value-h"><p class="help" id="um-value-h">Above 0, up to 99.99.</p></div>
+      <div class="f"><label for="um-rationale">Rationale</label><input type="text" id="um-rationale" placeholder="e.g. Mid-point of 2024-26 sector LBO multiples" data-k="rationale" aria-describedby="um-rationale-h"><p class="help" id="um-rationale-h">Say why you chose this multiple.</p></div>
+    </div>
+    <fieldset><legend>EBITDA basis</legend><div data-cards="ebitda_basis" data-name="um-basis"></div></fieldset>
+  </div>
+</section>
+
+<section class="sec" id="sec8" data-n="8">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Pinned assumptions</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Pin your own stress and recovery assumptions instead of letting the analyst model choose.</p>
+  <div>
+    <p class="plnote"><span class="tag pl" title="Not built yet">Planned</span> Every option in this section needs a feature that is not built.</p>
+
+    <div class="mod" id="as-cp2a"><fieldset><legend>CP-2A downside</legend><div data-cards="asm" data-name="mode-cp2a" data-key="mode"></div></fieldset>
+      <div class="uf" hidden>
+        <p class="muted">1 to 4 scenarios.</p>
+        <p class="exrow"><span class="tag">Example</span>EBITDA decline 20% · interest increase 10%</p>
+        <div id="rows-cp2a"></div>
+        <button type="button" class="btn sm" id="add-cp2a" data-add="scen" data-label="CP-2A scenarios">Add scenario</button>
+        <div class="f"><label for="as-cp2a-rationale">Rationale</label><input type="text" id="as-cp2a-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp2a-rationale-h"><p class="help" id="as-cp2a-rationale-h">Say why you chose these values.</p></div>
+      </div></div>
+
+    <div class="mod" id="as-cp2d"><fieldset><legend>CP-2D liquidity</legend><div data-cards="asm" data-name="mode-cp2d" data-key="mode"></div></fieldset>
+      <div class="uf" hidden><div class="grid">
+        <div class="f"><label for="as-cp2d-horizon_months">Horizon (months)</label><input type="text" id="as-cp2d-horizon_months" placeholder="e.g. 12" data-k="horizon_months" inputmode="numeric" aria-describedby="as-cp2d-horizon_months-h"><p class="help" id="as-cp2d-horizon_months-h">Whole number, 1 to 60.</p></div>
+        <div class="f"><label for="as-cp2d-minimum_cash_m">Minimum cash (m)</label><input type="text" id="as-cp2d-minimum_cash_m" placeholder="e.g. 150" data-k="minimum_cash_m" inputmode="decimal" aria-describedby="as-cp2d-minimum_cash_m-h"><p class="help" id="as-cp2d-minimum_cash_m-h">0 or more.</p></div>
+        <div class="f"><label for="as-cp2d-rationale">Rationale</label><input type="text" id="as-cp2d-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp2d-rationale-h"><p class="help" id="as-cp2d-rationale-h">Say why you chose these values.</p></div>
+      </div></div></div>
+
+    <div class="mod" id="as-cp2e"><fieldset><legend>CP-2E macro and FX</legend><div data-cards="asm" data-name="mode-cp2e" data-key="mode"></div></fieldset>
+      <div class="uf" hidden><div class="grid">
+        <div class="f"><label for="as-cp2e-rate_shocks_bps">Rate shocks (bps)</label><input type="text" id="as-cp2e-rate_shocks_bps" placeholder="e.g. 100, 200" data-k="rate_shocks_bps" aria-describedby="as-cp2e-rate_shocks_bps-h"><p class="help" id="as-cp2e-rate_shocks_bps-h">1 to 3 whole numbers, each 1 to 1000, comma-separated.</p></div>
+        <div class="f"><label for="as-cp2e-fx_shocks_pct">FX shocks (%)</label><input type="text" id="as-cp2e-fx_shocks_pct" placeholder="e.g. 10, 20" data-k="fx_shocks_pct" aria-describedby="as-cp2e-fx_shocks_pct-h"><p class="help" id="as-cp2e-fx_shocks_pct-h">1 to 3 values, each 1 to 50, comma-separated.</p></div>
+        <div class="f"><label for="as-cp2e-hedge_ratio_pct">Hedge ratio (%)</label><input type="text" id="as-cp2e-hedge_ratio_pct" placeholder="e.g. 50" data-k="hedge_ratio_pct" inputmode="decimal" aria-describedby="as-cp2e-hedge_ratio_pct-h"><p class="help" id="as-cp2e-hedge_ratio_pct-h">Optional, 0 to 100.</p></div>
+        <div class="f"><label for="as-cp2e-rationale">Rationale</label><input type="text" id="as-cp2e-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp2e-rationale-h"><p class="help" id="as-cp2e-rationale-h">Say why you chose these values.</p></div>
+      </div></div></div>
+
+    <div class="mod" id="as-cp3c"><fieldset><legend>CP-3C refinancing</legend><div data-cards="asm" data-name="mode-cp3c" data-key="mode"></div></fieldset>
+      <div class="uf" hidden><div class="grid">
+        <div class="f"><label for="as-cp3c-repricing_bps">Repricing step-up (bps)</label><input type="text" id="as-cp3c-repricing_bps" placeholder="e.g. 150" data-k="repricing_bps" inputmode="decimal" aria-describedby="as-cp3c-repricing_bps-h"><p class="help" id="as-cp3c-repricing_bps-h">0 to 1000.</p></div>
+        <div class="f"><label for="as-cp3c-rationale">Rationale</label><input type="text" id="as-cp3c-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp3c-rationale-h"><p class="help" id="as-cp3c-rationale-h">Say why you chose these values.</p></div>
+      </div></div></div>
+
+    <div class="mod" id="as-cp3d"><fieldset><legend>CP-3D market</legend><div data-cards="asm" data-name="mode-cp3d" data-key="mode"></div></fieldset>
+      <div class="uf" hidden><div class="grid">
+        <div class="f"><label for="as-cp3d-recovery_pct">Recovery (%)</label><input type="text" id="as-cp3d-recovery_pct" placeholder="e.g. 40" data-k="recovery_pct" inputmode="decimal" aria-describedby="as-cp3d-recovery_pct-h"><p class="help" id="as-cp3d-recovery_pct-h">0 or more, below 100.</p></div>
+        <div class="f"><label for="as-cp3d-rationale">Rationale</label><input type="text" id="as-cp3d-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp3d-rationale-h"><p class="help" id="as-cp3d-rationale-h">Say why you chose these values.</p></div>
+      </div></div></div>
+
+    <div class="mod" id="as-cp4c"><fieldset><legend>CP-4C recovery</legend><div data-cards="asm" data-name="mode-cp4c" data-key="mode"></div></fieldset>
+      <div class="uf" hidden><div class="grid">
+        <div class="f"><label for="as-cp4c-ev_multiple">EV multiple</label><input type="text" id="as-cp4c-ev_multiple" placeholder="e.g. 6.5" data-k="ev_multiple" inputmode="decimal" aria-describedby="as-cp4c-ev_multiple-h"><p class="help" id="as-cp4c-ev_multiple-h">Above 0, up to 99.99.</p></div>
+        <div class="f"><label for="as-cp4c-rationale">Rationale</label><input type="text" id="as-cp4c-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp4c-rationale-h"><p class="help" id="as-cp4c-rationale-h">Say why you chose these values.</p></div>
+      </div></div></div>
+  </div>
+</section>
+
+<section class="sec" id="sec9" data-n="9">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Other inputs you will attach</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Tell the workflow which other files you will attach.</p>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" id="s9-portfolio_workbook" data-k="portfolio_workbook"><span>Portfolio workbook (docs/templates/portfolio.template.xlsx)</span></label>
+    <label class="chk"><input type="checkbox" id="s9-prior_case" data-k="prior_case"><span>Prior decision record</span></label>
+    <label class="chk"><input type="checkbox" id="s9-management_bridge" data-k="management_bridge"><span>Management EBITDA bridge</span></label>
+  </div>
+  <fieldset><legend>Legal documents</legend><div data-cards="legal_documents"></div></fieldset>
+</section>
+
+<section class="sec" id="sec10" data-n="10">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Research questions</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Ask the questions you want researched.</p>
+  <p class="plnote"><span class="tag pl" title="Not built yet">Planned</span> CP-DR answers your questions (today it researches only the gaps CP-0 finds).</p>
+  <p class="exrow"><span class="tag">Example</span>How much of 2025 adjusted EBITDA is run-rate cost savings?</p>
+  <div id="rows-q"></div>
+  <button type="button" class="btn sm" id="add-q" data-add="q">Add question</button>
+</section>
+
+<section class="sec" id="sec11" data-n="11">
+  <h2 tabindex="-1"><span class="n"></span> <span class="nm">Review &amp; download</span></h2>
+  <p class="stepline"></p>
+  <p class="intro">Check your answers, then download context.json.</p>
+  <div id="rv-steps"></div>
+  <h3>What this run will do</h3>
+  <ul class="sig" id="rv-list"></ul>
+  <p><button type="button" class="btn primary" id="download">Download context.json</button></p>
+  <p id="dlnote" class="muted"></p>
+</section>
+</form>
+<div class="stepnav">
+  <button type="button" class="btn" id="back">Back</button>
+  <button type="button" class="btn primary" id="next">Next</button>
+  <span id="nextlive" class="live" role="status" aria-live="polite"></span>
+  <button type="button" class="btn" id="reset">Reset</button>
+</div>
+</div>
+
+<details class="panel" id="panel">
+  <summary>What this run will do</summary>
+  <div class="body">
+    <h2>What this run will do</h2>
+    <p id="pn-run"></p>
+    <ul class="mchips" id="pn-mods" aria-label="Modules in this run"></ul>
+    <ul class="sig" id="pn-list"></ul>
+  </div>
+</details>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const PLANNED = '<span class="tag pl" title="Not built yet">Planned</span>';
+
+/* ---- Reference data ---- */
+// Module lists mirror src/deploy_vii/contracts.py:48-71.
+const PATHWAYS = {
+  credit_snapshot: ['CP-0','CP-1','CP-MODEL','CP-1A','CP-2','CP-4','CP-3','CP-5','CP-6'],
+  earnings_update: ['CP-0','CP-1','CP-MODEL','CP-1B','CP-1D','CP-5'],
+  relative_value: ['CP-0','CP-1','CP-MODEL','CP-1C','CP-2','CP-2D','CP-3','CP-3C','CP-3D','CP-5'],
+  covenant_refinancing: ['CP-0','CP-1','CP-MODEL','CP-1A','CP-2','CP-2D','CP-4','CP-3C','CP-5'],
+  distressed_restructuring: ['CP-0','CP-1','CP-1A','CP-2','CP-2A','CP-2G','CP-2H','CP-4','CP-4C','CP-5'],
+  portfolio_decision: ['CP-0','CP-1','CP-MODEL','CP-2','CP-3','CP-5','CP-6','CP-8']
+};
+const MODULE_IDS = ['CP-0','CP-1','CP-MODEL','CP-1A','CP-1B','CP-1C','CP-1D','CP-2','CP-2A','CP-2D','CP-2G','CP-2H','CP-3','CP-3C','CP-3D','CP-4','CP-4C','CP-5','CP-6','CP-8','CP-DR'];
+const RUN_DEFAULT_PATH = {primary:'credit_snapshot', secondary:'relative_value', research:'credit_snapshot', earnings:'earnings_update'};
+const RUN_LABEL = {primary:'Primary (new issue)', secondary:'Secondary (trading)', research:'Research', earnings:'Earnings update'};
+const PATH_LABEL = {credit_snapshot:'Credit Snapshot', earnings_update:'Earnings Update', relative_value:'Relative Value', covenant_refinancing:'Covenant & Refinancing', distressed_restructuring:'Distressed & Restructuring', portfolio_decision:'Portfolio Decision'};
+
+const OPTIONS = {
+  run_type: [
+    {v:'primary', label:'Primary (new issue)', text:'Deal terms and price talk expected. Talk alone caps relative-value confidence below High. Legal documents are usually drafts; CP-4 accepts only executed or filed documents today (draft mode Planned). Default pathway: Credit Snapshot. Shows section 4.'},
+    {v:'secondary', label:'Secondary (trading)', text:'Observed quotes expected. Without them CP-3 relative value states Insufficient Information. Default pathway: Relative Value. Shows section 5.'},
+    {v:'research', label:'Research', def:true, text:'No market inputs needed. Relative-value and portfolio sections show gaps where quotes or holdings are absent. Default pathway: Credit Snapshot.'},
+    {v:'earnings', label:'Earnings update', text:'Current and prior periods required; CP-1B compares them (period pair from this form is Planned; today only fixed test periods run). Default pathway: Earnings Update.'}
+  ],
+  case_kind: [
+    {v:'public', label:'Public', def:true, text:'Filings are public (10-K/10-Q).'},
+    {v:'private', label:'Private', text:'Private lender materials.'},
+    {v:'synthetic', label:'Synthetic', text:'Synthetic test case: every section carries a synthetic-case limitation.'}
+  ],
+  listed_equity: [
+    {v:'no', label:'No (private)', def:true, text:'Valuation uses peer multiples (section 7).'},
+    {v:'yes', label:'Yes', text:"Give the issuer's market cap and net debt in section 7."}
+  ],
+  peer_source: [
+    {v:'cp_dr_public', label:'CP-DR finds public peers', def:true, planned:true, text:'CP-DR researches listed peers; CP-1C computes their EV/EBITDA (Planned).'},
+    {v:'user_list', label:"I'll name the peers", text:'You list peer names and tickers; CP-DR looks up the figures.'},
+    {v:'user_comps', label:"I'll give peer figures", text:'You give each peer\'s EV, EBITDA, date and source; they replace any sourced set and are labelled user-supplied.'},
+    {v:'none', label:'No peers', text:'CP-1C has no peer universe and no peer multiple is formed.'}
+  ],
+  basis: [
+    {v:'auto', label:'Automatic', planned:true, text:'Uses public multiples, private-deal multiples or both, by evidence quality and availability; states Insufficient Information if neither qualifies (Planned).'},
+    {v:'public_comps', label:'Public comps', text:'Listed peer EV/EBITDA only.'},
+    {v:'precedents', label:'Precedents', text:'Private-transaction multiples only (web-sourced by CP-DR, Planned, or rows you add).'},
+    {v:'blend', label:'Blend', text:'Both, combined.'},
+    {v:'issuer_trading', label:"Issuer's own trading multiple", text:"The issuer's own EV/EBITDA from the market data below. Only selectable when listed equity is Yes."},
+    {v:'user_multiple', label:'My own multiple', text:'Your multiple replaces any sourced one and is labelled user-supplied.'}
+  ],
+  ebitda_basis: [
+    {v:'LTM', label:'LTM', def:true, text:'Last twelve months.'},
+    {v:'NTM', label:'NTM', text:'Next twelve months.'}
+  ],
+  asm: [
+    {v:'model', label:'Let the analyst model choose', def:true, planned:true, text:'Labelled analyst assumption.'},
+    {v:'user', label:'Use my values', planned:true, text:'Labelled user-supplied assumption. A rationale is required.'}
+  ],
+  legal_documents: [
+    {v:'executed', label:'Executed or filed', def:true, text:'Executed or filed documents.'},
+    {v:'draft', label:'Drafts only', planned:true, text:'CP-4 refuses them today (draft mode Planned).'},
+    {v:'none', label:'None', text:'No legal documents: CP-4 has no sources.'}
+  ],
+  deal_kind: [
+    {v:'observed', label:'Observed', def:true, text:'A quote seen in the market.'},
+    {v:'indicative_talk', label:'Indicative talk', text:'Price talk, not a trade; caps confidence below High.'}
+  ],
+  scope: [
+    {v:'issuer', label:'Issuer', def:true, text:'Rating applies to the issuer'},
+    {v:'facility', label:'Facility', text:'Rating applies to one facility'}
+  ]
+};
+// Pinned-assumption key to the module it steers.
+const ASM_MODULE = {cp2a:'CP-2A', cp2d:'CP-2D', cp2e:'CP-2E', cp3c:'CP-3C', cp3d:'CP-3D', cp4c:'CP-4C'};
+const BASIS_DEFAULT = {no:'auto', yes:'issuer_trading'};
+
+/* ---- Rendering helpers ---- */
+let uid = 0;
+function cards(name, k, opts, hideDefaultTags) {
+  return '<div class="cards">' + opts.map(o => {
+    const id = name + '-' + o.v;
+    return `<label class="card" for="${id}"><input type="radio" id="${id}" name="${name}" data-k="${k}" value="${o.v}"${o.def ? ' checked' : ''}>` +
+      `<span class="ct"><span class="ctl"><b>${o.label}</b>` +
+      (o.def || hideDefaultTags ? `<span class="tag def" data-deftag="${o.v}"${o.def || !hideDefaultTags ? '' : ' hidden'}>Default</span>` : '') +
+      (o.planned ? PLANNED : '') + `</span>` +
+      (o.text ? `<span class="imp">${o.text}</span>` : '') + `</span></label>`;
+  }).join('') + '</div>';
+}
+function F(id, k, label, attrs, help) {
+  return `<div class="f"><label for="${id}">${label}</label><input type="text" id="${id}" data-k="${k}" ${attrs || ''}${help ? ` aria-describedby="${id}-h"` : ''}>` +
+    (help ? `<p class="help" id="${id}-h">${help}</p>` : '') + '</div>';
+}
+function D(id, k, label, help) {
+  return F(id, k, label, '', help).replace('type="text"', 'type="date"');
+}
+function S(id, k, label, opts) {
+  return `<div class="f"><label for="${id}">${label}</label><select id="${id}" data-k="${k}"><option value=""></option>` +
+    opts.map(o => `<option>${o}</option>`).join('') + '</select></div>';
+}
+function rowShell(title, body, extraCls) {
+  return `<div class="row ${extraCls || ''}" data-row><div class="rowhead"><h4 data-title="${title}"></h4><button type="button" class="btn sm" data-remove>Remove</button></div>${body}</div>`;
+}
+const NUMA = 'inputmode="decimal"';
+const P = t => ` placeholder="${t}"`;
+const NP = t => NUMA + P(t);
+const INSTRUMENTS = ['Term loan B','Term loan A','Revolver','Senior secured notes','Senior unsecured notes','Other'];
+
+const ROWS = {
+  deal: {box:'rows-deal', title:'Facility', max:20, make() {
+    const p = 'd' + (++uid);
+    return rowShell('Facility', '<div class="grid">' + F(p+'a','facility_id','Facility ID',P('e.g. tlb-2031'),'Your own short label; reuse it in quotes.') + S(p+'b','instrument','Instrument',INSTRUMENTS) +
+      F(p+'c','currency','Currency','value="USD" maxlength="3"' + P('e.g. USD'),'Three uppercase letters.') + F(p+'d','size_m','Size (m)',NP('e.g. 1250'),'Millions of the stated currency.') + F(p+'e','tenor_years','Tenor (years)',NP('e.g. 7'),'Years.') +
+      F(p+'f','talk_spread_bps_low','Talk spread low (bps)',NP('e.g. 325'),'Basis points over the reference rate.') + F(p+'g','talk_spread_bps_high','Talk spread high (bps)',NP('e.g. 350'),'Basis points over the reference rate.') +
+      F(p+'h','talk_oid_low','Talk OID low',NP('e.g. 99.0'),'Price per 100.') + F(p+'i','talk_oid_high','Talk OID high',NP('e.g. 99.5'),'Price per 100.') + F(p+'j','floor_pct','Floor (%)',NP('e.g. 0.50'),'Percent.') +
+      F(p+'k','call_protection','Call protection',P('e.g. 101 soft call, 6 months'),'Plain text.') + F(p+'l','use_of_proceeds','Use of proceeds',P('e.g. Refinance 2027 term loan'),'Plain text.') +
+      D(p+'m','as_of','As-of','Date of the talk, YYYY-MM-DD; not after the run as-of date.') + F(p+'n','provider','Provider',P('e.g. Lead arranger'),'Who gave the talk.') + '</div>');
+  }},
+  quote: {box:'rows-quote', title:'Quote', max:40, make() {
+    const p = 'q' + (++uid);
+    return rowShell('Quote', '<div class="grid">' + F(p+'a','facility_id','Facility ID',P('e.g. tlb-2031'),'Match the facility ID you used.') + F(p+'b','bid','Bid',NP('e.g. 98.50'),'Price per 100.') + F(p+'c','ask','Ask',NP('e.g. 99.00'),'Price per 100; not below the bid.') +
+      F(p+'d','price','Price',NP('e.g. 98.75'),'Price per 100.') + F(p+'e','yield_pct','Yield (%)',NP('e.g. 8.25'),'Percent.') + F(p+'f','spread_bps','Spread (bps)',NP('e.g. 340'),'Basis points.') +
+      D(p+'g','as_of','As-of','Date of the quote, YYYY-MM-DD.') + F(p+'h','provider','Provider',P('e.g. Lead arranger'),'Who gave the quote.') + '</div>' +
+      `<fieldset><legend>Kind</legend>${cards('qk' + p, 'kind', OPTIONS.deal_kind)}</fieldset>`);
+  }},
+  rating: {box:'rows-rating', title:'Rating', max:20, make() {
+    const p = 'r' + (++uid);
+    return rowShell('Rating', '<div class="grid">' + S(p+'a','agency','Agency',['S&P',"Moody's",'Fitch','Other']) + F(p+'b','rating','Rating',P('e.g. B+ or B1'),'As the agency writes it.') +
+      S(p+'c','outlook','Outlook',['Positive','Stable','Negative','Developing','Watch']) + D(p+'d','as_of','As-of','Date of the rating, YYYY-MM-DD.') + '</div>' +
+      `<fieldset><legend>Scope</legend>${cards('rs' + p, 'scope', OPTIONS.scope)}</fieldset>`);
+  }},
+  peer: {box:'rows-peer', title:'Peer', max:30, make() {
+    const p = 'p' + (++uid);
+    return rowShell('Peer', '<div class="grid">' + F(p+'a','name','Name',P('e.g. Harbour Leisure Inc'),'Plain text.') + F(p+'b','ticker','Ticker',P('e.g. HLI'),'The listed ticker symbol.') +
+      '</div><div class="grid comps">' + F(p+'c','ev_m','EV (m)',NP('e.g. 5400'),'Millions.') + F(p+'d','ebitda_m','EBITDA (m)',NP('e.g. 600'),'Millions; above 0.') + D(p+'e','as_of','As-of','YYYY-MM-DD.') + F(p+'f','source','Source',P('e.g. Company 10-K, 2026-09-30'),'Where the figures come from.') +
+      '</div><p class="mult comps">EV/EBITDA: <span class="num" data-mult>n/a</span> (display only, Python recomputes)</p>');
+  }},
+  prec: {box:'rows-prec', title:'Precedent', max:30, make() {
+    const p = 'x' + (++uid);
+    return rowShell('Precedent', '<div class="grid">' + F(p+'a','target','Target',P('e.g. Target Casinos Ltd'),'Plain text.') + F(p+'b','acquirer','Acquirer',P('e.g. Acquirer Group'),'Plain text.') + D(p+'c','date','Date','Deal date, YYYY-MM-DD.') +
+      F(p+'d','ev_m','EV (m)',NP('e.g. 1800'),'Millions.') + F(p+'e','ebitda_m','EBITDA (m)',NP('e.g. 200'),'Millions; above 0.') + F(p+'f','source','Source',P('e.g. Press release, 2025-06-30'),'Where the figures come from.') + '</div>');
+  }},
+  scen: {box:'rows-cp2a', title:'Scenario', max:4, make() {
+    const p = 's' + (++uid);
+    return rowShell('Scenario', '<div class="grid">' + F(p+'a','ebitda_decline_pct','EBITDA decline (%)',NP('e.g. 20'),'0 to 100.') + F(p+'b','interest_increase_pct','Interest increase (%)',NP('e.g. 10'),'0 to 100.') + '</div>');
+  }},
+  q: {box:'rows-q', title:'Question', max:10, make() {
+    const p = 'z' + (++uid);
+    return rowShell('Question', '<div class="grid">' + F(p+'a','text','Question',P('e.g. How much of 2025 adjusted EBITDA is run-rate cost savings?'),'One question, plain text.') + S(p+'b','focus_module','Focus module',MODULE_IDS) + '</div>');
+  }}
+};
+function addRow(kind) {
+  const r = ROWS[kind], box = $(r.box);
+  if (box.children.length >= r.max) return null;
+  box.insertAdjacentHTML('beforeend', r.make());
+  return box.lastElementChild;
+}
+function renumber() {
+  for (const kind in ROWS) {
+    const r = ROWS[kind], box = $(r.box);
+    [...box.children].forEach((row, i) => {
+      row.querySelector('[data-title]').textContent = r.title + ' ' + (i + 1);
+      row.querySelector('[data-remove]').setAttribute('aria-label', 'Remove ' + r.title.toLowerCase() + ' ' + (i + 1));
+    });
+    const add = document.querySelector(`[data-add="${kind}"]`);
+    add.disabled = box.children.length >= r.max;
+  }
+}
+
+/* ---- Field access: every input carries data-k inside its scope ---- */
+function els(scope, k) { return scope.querySelectorAll(`[data-k="${k}"]`); }
+function getV(scope, k) {
+  const e = els(scope, k);
+  if (!e.length) return '';
+  if (e[0].type === 'radio') { const c = [...e].find(x => x.checked); return c ? c.value : ''; }
+  if (e[0].type === 'checkbox') return e[0].checked;
+  return e[0].value.trim();
+}
+function keysOf(scope) { return [...new Set([...scope.querySelectorAll('[data-k]')].map(e => e.dataset.k))]; }
+function setV(scope, k, v, path, warn) {
+  const e = els(scope, k);
+  if (!e.length) return;
+  const t = e[0].type;
+  if (t === 'radio') {
+    const m = [...e].find(x => x.value === v);
+    if (m) m.checked = true; else warn.push(`${path}: unknown value "${v}", default kept`);
+  } else if (t === 'checkbox') {
+    if (typeof v === 'boolean') e[0].checked = v; else warn.push(`${path}: expected true or false`);
+  } else if (e[0].tagName === 'SELECT') {
+    if (v === '' || [...e[0].options].some(o => o.value === v)) e[0].value = v; else warn.push(`${path}: unknown value "${v}", left blank`);
+  } else {
+    e[0].value = v;
+  }
+}
+
+/* ---- Validation ---- */
+let errs = [];
+const NUM = /^\d+(\.\d+)?$/, SNUM = /^-?\d+(\.\d+)?$/;
+function bad(el, msg) {
+  const row = el.closest('[data-row]');
+  const lab = el.type === 'radio' ? (el.closest('fieldset') || {querySelector: () => null}).querySelector('legend') : (el.labels && el.labels[0]);
+  let name = el.dataset.label || el.dataset.k;
+  if (lab) { const c = lab.cloneNode(true); c.querySelectorAll('.rtag').forEach(x => x.remove()); name = c.textContent.trim(); }
+  const ctx = row ? row.querySelector('[data-title]').textContent + ': ' : '';
+  errs.push({el, short: msg, msg: ctx + name + ': ' + msg, sec: el.closest('section').dataset.n});
+}
+function numMsg(v, r) {
+  if (v.includes(',')) return 'no thousands separators; write 1250, not 1,250.';
+  if (!(r.signed ? SNUM : NUM).test(v)) return 'enter a plain number such as 1250 or 99.5.';
+  if (r.int && !/^-?\d+$/.test(v)) return 'enter a whole number.';
+  const x = Number(v);
+  if (r.min !== undefined && x < r.min) return 'must be ' + r.min + ' or more.';
+  if (r.minEx !== undefined && x <= r.minEx) return 'must be above ' + r.minEx + '.';
+  if (r.max !== undefined && x > r.max) return 'must be ' + r.max + ' or less.';
+  if (r.maxEx !== undefined && x >= r.maxEx) return 'must be below ' + r.maxEx + '.';
+  return '';
+}
+function validDate(v) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)) && new Date(v + 'T00:00:00Z').toISOString().slice(0, 10) === v;
+}
+function pkey(p) {
+  const m = /^(q[1-4]|h[12]|fy)-(\d{4})$/.exec(p);
+  return m ? {kind: m[1][0] === 'q' ? 'q' : m[1][0] === 'h' ? 'h' : 'fy', n: m[1] === 'fy' ? 0 : +m[1][1], y: +m[2]} : null;
+}
+let runAsOf = '';
+// Read one field, record any problem against its element, return the trimmed value (or array for lists).
+function fld(scope, k, r) {
+  r = r || {};
+  const el = els(scope, k)[0];
+  let v = getV(scope, k);
+  if (typeof v !== 'string') return v;
+  if (r.t === 'list') {
+    const items = v.split(',').map(s => s.trim()).filter(Boolean);
+    if (r.req && !items.length) bad(el, 'required.');
+    if (r.minN && items.length && items.length < r.minN) bad(el, 'give at least ' + r.minN + '.');
+    if (r.maxN && items.length > r.maxN) bad(el, 'give at most ' + r.maxN + ' values.');
+    if (r.item) items.forEach(it => { const m = numMsg(it, r.item); if (m) bad(el, '"' + it + '": ' + m); });
+    return items;
+  }
+  if (v === '') { if (r.req) bad(el, 'required.'); return ''; }
+  if (r.t === 'num') { const m = numMsg(v, r); if (m) bad(el, m); }
+  else if (r.t === 'date') {
+    if (!validDate(v)) bad(el, 'enter a date as YYYY-MM-DD.');
+    else if (r.after && validDate(runAsOf) && v > runAsOf) bad(el, 'is after the run as-of date (' + runAsOf + '); sources dated after it are refused.');
+  }
+  else if (r.t === 'cur' && !/^[A-Z]{3}$/.test(v)) bad(el, 'use three uppercase letters, such as USD.');
+  else if (r.t === 'period' && !pkey(v)) bad(el, 'use q1-2026, h2-2026 or fy-2025 (lowercase).');
+  else if (r.t === 'slug' && !/^[a-z0-9-]+$/.test(v)) bad(el, 'use lowercase letters, digits and hyphens only.');
+  return v;
+}
+function readSpec(scope, spec) {
+  const o = {};
+  for (const [k, r] of spec) o[k] = fld(scope, k, r);
+  return o;
+}
+function le(scope, a, b, msg) {
+  const x = getV(scope, a), y = getV(scope, b);
+  if (NUM.test(x) && NUM.test(y) && Number(x) > Number(y)) bad(els(scope, a)[0], msg);
+}
+const rowsOf = id => [...$(id).children];
+const N0 = {t:'num', min:0};
+const DEAL_SPEC = [['facility_id'],['instrument'],['currency',{t:'cur'}],['size_m',N0],['tenor_years',N0],['talk_spread_bps_low',N0],['talk_spread_bps_high',N0],
+  ['talk_oid_low',N0],['talk_oid_high',N0],['floor_pct',N0],['call_protection'],['use_of_proceeds'],['as_of',{t:'date',after:true}],['provider']];
+const QUOTE_SPEC = [['facility_id'],['kind'],['bid',N0],['ask',N0],['price',N0],['yield_pct',N0],['spread_bps',N0],['as_of',{t:'date',req:true,after:true}],['provider',{req:true}]];
+const RATING_SPEC = [['agency',{req:true}],['scope'],['rating',{req:true}],['outlook'],['as_of',{t:'date',after:true}]];
+
+// Reads the whole form into the context/1 object and records every problem in errs.
+function build() {
+  errs = [];
+  const s1 = $('sec1'), s2 = $('sec2'), s3 = $('sec3');
+  const run_type = getV(s1, 'run_type'), pathway = getV(s1, 'pathway'), case_kind = getV(s1, 'case_kind');
+  const as_of = fld(s3, 'as_of', {t:'date', req:true});
+  runAsOf = as_of;
+  const earn = run_type === 'earnings';
+  const current_period = fld(s3, 'current_period', {t:'period', req:earn});
+  const prior_period = fld(s3, 'prior_period', {t:'period', req:earn});
+  const a = pkey(current_period), b = pkey(prior_period);
+  if (a && b && a.kind === b.kind && (b.y > a.y || (b.y === a.y && b.n >= a.n))) bad(els(s3, 'prior_period')[0], 'must be earlier than the current period.');
+  const reporting_currency = fld(s3, 'reporting_currency', {t:'cur', req:true});
+  const run = {run_type, pathway, case_kind, as_of, current_period, prior_period, reporting_currency};
+
+  const listed = getV(s2, 'listed_equity') === 'yes';
+  const identity = {
+    issuer_name: fld(s2, 'issuer_name', {req:true}), issuer_id: fld(s2, 'issuer_id', {t:'slug', req:true}), borrower_name: fld(s2, 'borrower_name'),
+    parent_name: fld(s2, 'parent_name'), guarantors: fld(s2, 'guarantors', {t:'list'}), aliases: fld(s2, 'aliases', {t:'list'}),
+    listed_equity: listed, ticker: listed ? fld(s2, 'ticker') : '', sector: fld(s2, 'sector'), country: fld(s2, 'country'), sponsor: fld(s2, 'sponsor')
+  };
+
+  const primary = run_type === 'primary';
+  if (primary && !$('rows-deal').children.length) bad($('add-deal'), 'add at least one facility row.');
+  const deal_terms = !primary ? [] : rowsOf('rows-deal').map(r => {
+    const o = readSpec(r, DEAL_SPEC);
+    le(r, 'talk_spread_bps_low', 'talk_spread_bps_high', 'low must not exceed high.');
+    le(r, 'talk_oid_low', 'talk_oid_high', 'low must not exceed high.');
+    return o;
+  });
+  const quotes = rowsOf('rows-quote').map(r => {
+    const o = readSpec(r, QUOTE_SPEC);
+    le(r, 'bid', 'ask', 'bid must not exceed ask.');
+    return o;
+  });
+  const ratings = rowsOf('rows-rating').map(r => readSpec(r, RATING_SPEC));
+
+  const sec7 = $('sec7');
+  const peer_source = getV(sec7, 'peer_source'), basis = getV(sec7, 'basis');
+  const NREQ = {t:'num', req:true, min:0}, EBREQ = {t:'num', req:true, minEx:0};
+  let peers = [];
+  if (peer_source === 'user_list') {
+    peers = rowsOf('rows-peer').map(r => ({name: fld(r, 'name', {req:true}), ticker: fld(r, 'ticker'), ev_m:'', ebitda_m:'', as_of:'', source:''}));
+  } else if (peer_source === 'user_comps') {
+    peers = rowsOf('rows-peer').map(r => readSpec(r, [['name',{req:true}],['ticker'],['ev_m',NREQ],['ebitda_m',EBREQ],['as_of',{t:'date',req:true,after:true}],['source',{req:true}]]));
+  }
+  const precedents = (basis === 'precedents' || basis === 'blend')
+    ? rowsOf('rows-prec').map(r => readSpec(r, [['target',{req:true}],['acquirer'],['date',{t:'date',after:true}],['ev_m',NREQ],['ebitda_m',EBREQ],['source',{req:true}]])) : [];
+  let issuer_market = {market_cap_m:'', net_debt_m:'', ev_m:'', ebitda_basis:'LTM', as_of:'', source:''};
+  if (basis === 'issuer_trading') {
+    const im = $('im');
+    issuer_market = readSpec(im, [['market_cap_m',N0],['net_debt_m',{t:'num',signed:true}],['ev_m',{t:'num',minEx:0}],['ebitda_basis'],['as_of',{t:'date',req:true,after:true}],['source',{req:true}]]);
+    if (!issuer_market.ev_m && !(issuer_market.market_cap_m && issuer_market.net_debt_m)) bad(els(im, 'ev_m')[0], 'give EV, or both market cap and net debt.');
+  }
+  let user_multiple = {value:'', basis:'LTM', rationale:''};
+  if (basis === 'user_multiple') {
+    user_multiple = readSpec($('um'), [['value',{t:'num',req:true,minEx:0,max:99.99}],['ebitda_basis'],['rationale',{req:true}]]);
+    user_multiple = {value: user_multiple.value, basis: user_multiple.ebitda_basis, rationale: user_multiple.rationale};
+  }
+  const valuation = {peer_source, basis, issuer_market, peers, precedents, user_multiple};
+
+  const assumptions = {
+    cp2a: asm('cp2a', [], sc => ({scenarios: rowsOf('rows-cp2a').map(r => readSpec(r, [['ebitda_decline_pct',{t:'num',req:true,min:0,max:100}],['interest_increase_pct',{t:'num',req:true,min:0,max:100}]]))}),
+      sc => { if (!$('rows-cp2a').children.length) bad($('add-cp2a'), 'add 1 to 4 scenarios.'); }),
+    cp2d: asm('cp2d', [['horizon_months',{t:'num',req:true,int:true,min:1,max:60}],['minimum_cash_m',{t:'num',req:true,min:0}]]),
+    cp2e: asm('cp2e', [['rate_shocks_bps',{t:'list',req:true,maxN:3,item:{t:'num',int:true,min:1,max:1000}}],['fx_shocks_pct',{t:'list',req:true,maxN:3,item:{t:'num',min:1,max:50}}],['hedge_ratio_pct',{t:'num',min:0,max:100}]]),
+    cp3c: asm('cp3c', [['repricing_bps',{t:'num',req:true,min:0,max:1000}]]),
+    cp3d: asm('cp3d', [['recovery_pct',{t:'num',req:true,min:0,maxEx:100}]]),
+    cp4c: asm('cp4c', [['ev_multiple',{t:'num',req:true,minEx:0,max:99.99}]])
+  };
+
+  const s9 = $('sec9');
+  const attachments = {portfolio_workbook: getV(s9, 'portfolio_workbook'), prior_case: getV(s9, 'prior_case'),
+    management_bridge: getV(s9, 'management_bridge'), legal_documents: getV(s9, 'legal_documents')};
+  const research_questions = rowsOf('rows-q').map(r => readSpec(r, [['text',{req:true}],['focus_module']]));
+  return {schema:'context/1', run, identity, deal_terms, quotes, ratings, valuation, assumptions, attachments, research_questions};
+}
+// One pinned-assumption block: null when the model chooses, otherwise the values plus rationale.
+function asm(key, spec, extra, check) {
+  const sc = $('as-' + key);
+  if (getV(sc, 'mode') !== 'user') return null;
+  const o = readSpec(sc, spec);
+  if (extra) Object.assign(o, extra(sc));
+  if (check) check(sc);
+  o.rationale = fld(sc, 'rationale', {req:true});
+  return o;
+}
+
+/* ---- Show state: field errors, summary, chips ---- */
+function clearErrors() {
+  document.querySelectorAll('.err').forEach(e => e.remove());
+  document.querySelectorAll('[aria-invalid]').forEach(e => {
+    e.removeAttribute('aria-invalid');
+    if (e.dataset.base) e.setAttribute('aria-describedby', e.dataset.base); else e.removeAttribute('aria-describedby');
+  });
+}
+function showErrors() {
+  clearErrors();
+  errs.forEach((er, i) => {
+    const el = er.el;
+    if (!el.id) el.id = 'auto-' + uid++;
+    if (!(tried[er.sec] || el.dataset.touched)) return;
+    if (el.dataset.base === undefined) el.dataset.base = el.getAttribute('aria-describedby') || '';
+    const id = 'err-' + i;
+    const p = document.createElement('p');
+    p.className = 'err'; p.id = id; p.textContent = er.short;
+    const host = el.type === 'radio' ? el.closest('fieldset') : el.closest('.f') || el.parentNode;
+    host.appendChild(p);
+    el.setAttribute('aria-invalid', 'true');
+    el.setAttribute('aria-describedby', (el.dataset.base + ' ' + id).trim());
+  });
+  const mine = errs.filter(e => +e.sec === cur), box = $('steperr');
+  box.hidden = !(tried[cur] && mine.length);
+  const key = box.hidden ? '' : cur + '|' + mine.map(e => e.el.id + e.msg).join('|');
+  if (key !== box._key) {
+    box._key = key;
+    box.innerHTML = '';
+  if (!box.hidden) {
+    const b = document.createElement('b'), ul = document.createElement('ul');
+    b.textContent = 'Fix these to continue:';
+    mine.forEach(er => {
+      const li = document.createElement('li'), a = document.createElement('a');
+      a.href = '#' + er.el.id; a.dataset.go = er.el.id; a.textContent = er.msg;
+      li.appendChild(a); ul.appendChild(li);
+    });
+    box.append(b, ul);
+  }
+  }
+  $('download').disabled = errs.length > 0;
+  $('dlnote').textContent = errs.length ? 'Fix the steps marked Needs attention before you can download.' : '';
+}
+function go(id) {
+  const el = $(id);
+  if (!el) return;
+  let d = el.closest('details');
+  while (d) { d.open = true; d = d.parentElement.closest('details'); }
+  el.scrollIntoView({block:'center'});
+  el.focus();
+}
+/* ---- Steps: one section at a time, gated on the steps before it ---- */
+const STEP_SHORT = {1:'Run type', 2:'Issuer', 3:'Dates', 4:'Deal terms', 5:'Quotes', 6:'Ratings', 7:'Valuation', 8:'Assumptions', 9:'Attachments', 10:'Questions', 11:'Review'};
+const OPT_STEPS = new Set([5, 6, 8, 9, 10]);
+let cur = 1;
+const visited = new Set([1]);
+let tried = {};
+const seqFor = rt => [1, 2, 3].concat(rt === 'primary' ? [4] : [], [5, 6, 7, 8, 9, 10, 11]);
+const stepBad = n => errs.some(e => +e.sec === n);
+function optionalStep(n, o) { return OPT_STEPS.has(n) || (n === 7 && !['issuer_trading', 'user_multiple'].includes(o.valuation.basis)); }
+function entered(n, o) {
+  const a = o.attachments;
+  return {4: o.deal_terms.length > 0, 5: o.quotes.length > 0, 6: o.ratings.length > 0, 8: Object.values(o.assumptions).some(Boolean),
+    9: a.portfolio_workbook || a.prior_case || a.management_bridge || a.legal_documents !== 'executed', 10: o.research_questions.length > 0}[n] || false;
+}
+function stepState(n, sq, o) {
+  if (n === cur) return {word:'Current', locked:false};
+  if (sq.slice(0, sq.indexOf(n)).some(stepBad)) return {word:'Locked', locked:true};
+  if (n === 11) return {word:'Ready', locked:false};
+  if (stepBad(n)) return {word: visited.has(n) ? 'Needs attention' : 'To do', locked:false};
+  if (!visited.has(n)) return {word: optionalStep(n, o) ? 'Optional' : 'To do', locked:false};
+  return {word:'Done', locked:false};
+}
+function stepLine(n, o) {
+  const earn = o.run.run_type === 'earnings';
+  switch (n) {
+    case 1: return '3 required choices, all pre-selected';
+    case 2: return '2 required fields';
+    case 3: return earn ? '4 required fields' : '2 required fields';
+    case 4: return 'Required: at least one facility row';
+    case 5: return o.run.run_type === 'secondary' ? 'Recommended: without quotes CP-3 states Insufficient Information' : 'Optional step: you can skip it';
+    case 7: return optionalStep(7, o) ? 'Defaults need nothing; fields appear only where your choice needs them' : 'Required: the fields for your chosen basis';
+    case 11: return 'Nothing to fill in here';
+    default: return 'Optional step: you can skip it';
+  }
+}
+function renderSteps(sq, o) {
+  const ol = $('stepper');
+  document.querySelectorAll('section.sec').forEach(x => { x.hidden = true; });
+  // Rebuild the buttons only when the sequence itself changes; otherwise update them in place.
+  if (ol.dataset.seq !== sq.join(',')) {
+    ol.dataset.seq = sq.join(',');
+    ol.innerHTML = '';
+    sq.forEach(n => {
+      const li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button'; b.dataset.step = n;
+      b.innerHTML = '<span class="sn"></span><span class="nm"></span><span class="sstate"></span>';
+      li.appendChild(b); ol.appendChild(li);
+    });
+  }
+  sq.forEach((n, i) => {
+    const st = stepState(n, sq, o), b = ol.children[i].firstChild;
+    b.className = 'step ' + st.word.toLowerCase().replace(/ /g, '-');
+    if (n === cur) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    if (st.locked) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+    b.children[0].textContent = i + 1;
+    b.children[1].textContent = STEP_SHORT[n];
+    b.children[2].textContent = (st.word === 'Done' ? '\u2713 ' : '') + st.word;
+    const sec = $('sec' + n);
+    sec.hidden = n !== cur;
+    sec.querySelector('.n').textContent = i + 1;
+    sec.querySelector('.stepline').textContent = stepLine(n, o);
+  });
+  const pos = sq.indexOf(cur) + 1;
+  $('stepsum-t').textContent = `Step ${pos} of ${sq.length} · ${STEP_SHORT[cur]}`;
+  $('prog-b').style.width = (pos / sq.length * 100) + '%';
+}
+function renderNav(sq, o) {
+  const i = sq.indexOf(cur), nx = $('next');
+  $('back').hidden = i === 0;
+  nx.hidden = cur === 11;
+  $('nextlive').hidden = cur === 11;
+  nx.textContent = sq[i + 1] === 11 ? 'Review' : (OPT_STEPS.has(cur) && !entered(cur, o)) ? 'Skip' : 'Next';
+  const mine = errs.filter(e => +e.sec === cur);
+  const req = mine.filter(e => e.short === 'required.' || e.short.startsWith('add ')).length, oth = mine.length - req;
+  const text = !mine.length ? 'Ready' : [req && `${req} required field${req > 1 ? 's' : ''} left`, oth && `${oth} to correct`].filter(Boolean).join(', ');
+  if ($('nextlive').textContent !== text) $('nextlive').textContent = text;
+}
+function gotoStep(n) {
+  cur = n; visited.add(n);
+  update();
+  $('sec' + n).querySelector('h2').focus();
+  window.scrollTo(0, 0);
+}
+function goNext() {
+  const o = update(), sq = seqFor(o.run.run_type);
+  if (stepBad(cur)) {
+    tried[cur] = true;
+    update();
+    const first = errs.find(e => +e.sec === cur);
+    if (first) go(first.el.id);
+    return;
+  }
+  gotoStep(sq[sq.indexOf(cur) + 1]);
+}
+function goBack() { const sq = seqFor(getV($('sec1'), 'run_type')); gotoStep(sq[sq.indexOf(cur) - 1]); }
+
+/* ---- Required / Recommended / Optional tags ---- */
+const REQ = ['req', 'Required'], REC = ['rec', 'Recommended'], OPT = ['opt', 'Optional'];
+function tagFor(el, c) {
+  const n = +el.closest('section').dataset.n, k = el.dataset.k, row = el.closest('[data-row]');
+  switch (n) {
+    case 1: return REQ;
+    case 2:
+      if (k === 'issuer_name' || k === 'issuer_id') return REQ;
+      if (k === 'borrower_name' || k === 'sector') return REC;
+      return k === 'ticker' ? ['rec', 'Recommended when listed'] : OPT;
+    case 3:
+      if (k === 'as_of' || k === 'reporting_currency') return REQ;
+      return c.earn ? ['req', 'Required for Earnings update'] : REC;
+    case 5: return (k === 'as_of' || k === 'provider') ? REQ : OPT;
+    case 6: return (k === 'agency' || k === 'rating') ? REQ : OPT;
+    case 7:
+      if (k === 'peer_source' || k === 'basis') return REQ;
+      if (el.closest('#im')) return k === 'ev_m' ? ['req', 'Required unless market cap and net debt are given'] : (k === 'as_of' || k === 'source' || k === 'ebitda_basis') ? REQ : OPT;
+      if (el.closest('#um')) return REQ;
+      if (row && row.parentNode.id === 'rows-peer') {
+        const need = c.ps === 'user_list' ? ['name'] : ['name', 'ev_m', 'ebitda_m', 'as_of', 'source'];
+        return need.includes(k) ? REQ : OPT;
+      }
+      if (row && row.parentNode.id === 'rows-prec') return ['target', 'ev_m', 'ebitda_m', 'source'].includes(k) ? REQ : OPT;
+      return OPT;
+    case 8: return (k === 'mode' || k === 'hedge_ratio_pct') ? OPT : ['req', 'Required when you pin values'];
+    case 10: return k === 'text' ? REQ : OPT;
+    default: return OPT;
+  }
+}
+function setTag(host, t) {
+  if (!host) return;
+  if (!host._tag) { host._tag = document.createElement('span'); host.appendChild(host._tag); }
+  host._tag.className = 'rtag ' + t[0];
+  host._tag.textContent = t[1];
+}
+function applyTags(o) {
+  const c = {earn: o.run.run_type === 'earnings', ps: o.valuation.peer_source};
+  document.querySelectorAll('section.sec [data-k]').forEach(el => {
+    const t = tagFor(el, c);
+    if (el.type === 'radio') {
+      const fs = el.closest('fieldset');
+      if (fs.querySelector('input[type=radio]') === el) setTag(fs.querySelector('legend'), t);
+      return;
+    }
+    setTag(el.labels && el.labels[0], t);
+    if (t[0] === 'req') el.setAttribute('aria-required', 'true'); else el.removeAttribute('aria-required');
+  });
+}
+
+/* ---- Review step ---- */
+const nz = obj => Object.entries(obj).filter(([, v]) => v !== '' && !(Array.isArray(v) && !v.length))
+  .map(([k, v]) => k.replace(/_/g, ' ') + ': ' + (Array.isArray(v) ? v.map(x => isObj(x) ? '(' + nz(x) + ')' : x).join(', ') : v)).join('; ');
+function summaryLines(n, o) {
+  const v = o.valuation, a = o.attachments;
+  switch (n) {
+    case 1: return ['Run type: ' + RUN_LABEL[o.run.run_type], 'Pathway: ' + PATH_LABEL[o.run.pathway], 'Filing status: ' + o.run.case_kind];
+    case 2: return [nz(o.identity)];
+    case 3: return [nz({as_of:o.run.as_of, current_period:o.run.current_period, prior_period:o.run.prior_period, reporting_currency:o.run.reporting_currency})];
+    case 4: return o.deal_terms.map((r, i) => 'Facility ' + (i + 1) + ': ' + nz(r));
+    case 5: return o.quotes.map((r, i) => 'Quote ' + (i + 1) + ': ' + nz(r));
+    case 6: return o.ratings.map((r, i) => 'Rating ' + (i + 1) + ': ' + nz(r));
+    case 7: {
+      const l = ['Peers: ' + v.peer_source, 'Basis: ' + v.basis];
+      if (v.basis === 'issuer_trading') l.push('Issuer market data: ' + nz(v.issuer_market));
+      if (v.basis === 'user_multiple') l.push('Your multiple: ' + nz(v.user_multiple));
+      v.peers.forEach((r, i) => l.push('Peer ' + (i + 1) + ': ' + nz(r)));
+      v.precedents.forEach((r, i) => l.push('Precedent ' + (i + 1) + ': ' + nz(r)));
+      return l;
+    }
+    case 8: return Object.keys(ASM_MODULE).filter(k => o.assumptions[k]).map(k => ASM_MODULE[k] + ': ' + nz(o.assumptions[k]));
+    case 9: return entered(9, o) ? [nz(a)] : [];
+    case 10: return o.research_questions.map((r, i) => 'Question ' + (i + 1) + ': ' + nz(r));
+    default: return [];
+  }
+}
+function renderReview(sq, o) {
+  const box = $('rv-steps');
+  box.innerHTML = '';
+  sq.filter(n => n !== 11).forEach((n, i) => {
+    const d = document.createElement('div'), hd = document.createElement('header'), h = document.createElement('h3'), ed = document.createElement('button');
+    d.className = 'rv';
+    h.textContent = (i + 1) + ' ' + STEP_SHORT[n];
+    ed.type = 'button'; ed.className = 'linkbtn'; ed.dataset.edit = n; ed.textContent = 'Edit';
+    ed.setAttribute('aria-label', 'Edit ' + STEP_SHORT[n]);
+    hd.append(h, ed); d.appendChild(hd);
+    const lines = summaryLines(n, o).filter(Boolean);
+    if (stepBad(n)) { const p = document.createElement('p'); p.className = 'err'; p.textContent = 'Needs attention'; d.appendChild(p); }
+    if (!lines.length) { const p = document.createElement('p'); p.className = 'skip'; p.textContent = 'Skipped: optional'; d.appendChild(p); }
+    else { const ul = document.createElement('ul'); lines.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); d.appendChild(ul); }
+    box.appendChild(d);
+  });
+}
+
+/* ---- "What this run will do" ---- */
+function panel(o) {
+  const mods = PATHWAYS[o.run.pathway] || [];
+  const has = m => mods.includes(m);
+  $('pn-run').textContent = (RUN_LABEL[o.run.run_type] || '') + ' run, ' + (PATH_LABEL[o.run.pathway] || '') + ' pathway.';
+  $('pn-mods').innerHTML = mods.map(m => `<li>${m}</li>`).join('');
+  const items = [];
+  const add = (kind, text) => items.push([kind, text]);
+  const att = o.attachments, v = o.valuation;
+  const observed = o.quotes.some(q => q.kind === 'observed');
+  const talk = o.deal_terms.some(d => d.talk_spread_bps_low || d.talk_spread_bps_high || d.talk_oid_low || d.talk_oid_high) || o.quotes.some(q => q.kind === 'indicative_talk');
+
+  if (!o.identity.issuer_name) add('blocked', 'CP-0 cannot confirm the issuer: issuer name is missing.');
+  if (has('CP-8') && !att.prior_case) add('blocked', 'CP-8 is blocked: it needs the prior decision.');
+  if (has('CP-4') && att.legal_documents === 'draft') add('blocked', 'CP-4 refuses drafts: it accepts only executed or filed documents today.');
+  if (has('CP-4') && att.legal_documents === 'none') add('blocked', 'CP-4 has no sources: no legal documents.');
+
+  if (has('CP-3')) {
+    if (observed) add('ok', 'CP-3 has observed quotes for relative value.');
+    else if (talk) add('limited', 'CP-3 has price talk only: relative-value confidence is capped below High.');
+    else add('limited', 'CP-3 relative value states Insufficient Information: no quotes and no price talk.');
+  }
+  if (o.run.reporting_currency && o.run.reporting_currency !== 'USD' && has('CP-2D')) add('limited', 'CP-2D liquidity treats non-USD facilities as Not calculable today (USD fixed).');
+  if (has('CP-2H') && !o.ratings.length) add('limited', "CP-2H ratings: 'Rating register not found'.");
+  if (has('CP-1D') && !att.management_bridge) add('limited', 'CP-1D: every management-bridge cell is not applicable.');
+  if (has('CP-1C') && v.peer_source === 'none') add('limited', 'CP-1C has no peer universe and no peer multiple is formed.');
+  if (o.run.pathway === 'portfolio_decision' && !att.portfolio_workbook) add('limited', 'Portfolio fit shows gaps.');
+
+  const pinnedN = Object.keys(ASM_MODULE).filter(k => o.assumptions[k] && has(ASM_MODULE[k])).length;
+  const planned = [];
+  if (has('CP-1B') && o.run.run_type === 'earnings') planned.push('CP-1B period pair from this form');
+  if (has('CP-2D') && o.run.reporting_currency && o.run.reporting_currency !== 'USD') planned.push('non-USD currency');
+  if (has('CP-1C') && v.peer_source === 'cp_dr_public') planned.push('CP-DR public peer sourcing and CP-1C EV/EBITDA');
+  if (has('CP-1C') && v.basis === 'auto') planned.push('valuation basis selection');
+  if (has('CP-4') && att.legal_documents === 'draft') planned.push('CP-4 draft-document mode');
+  if (has('CP-2A') && o.assumptions.cp2a || has('CP-2D') && o.assumptions.cp2d || has('CP-2E') && o.assumptions.cp2e || has('CP-3C') && o.assumptions.cp3c || has('CP-3D') && o.assumptions.cp3d || has('CP-4C') && o.assumptions.cp4c) planned.push('pinned assumptions');
+  if (has('CP-2H') && o.ratings.length) planned.push('real agency names in CP-2H');
+  if (has('CP-3') && o.quotes.length) planned.push('quotes replacing rv_quotes');
+  if (o.research_questions.length) planned.push('CP-DR user questions');
+  planned.forEach(p => add('limited', 'Needs a Planned feature: ' + p + '.'));
+
+  if (pinnedN) add('ok', pinnedN + (pinnedN === 1 ? ' module assumption' : ' module assumptions') + ' pinned by you.');
+  if (has('CP-1C') || has('CP-4C') || v.basis === 'user_multiple') {
+    const label = {auto:'Automatic: public and private multiples by evidence quality', public_comps:'Public comps only', precedents:'Precedent transactions only', blend:'Blend of public and private multiples',
+      issuer_trading:"Issuer's own trading multiple", user_multiple:'Your own multiple (user-supplied)'}[v.basis];
+    add('ok', 'Valuation basis: ' + label + '.');
+  }
+  const word = {blocked:'Blocked', limited:'Limited', ok:'OK'}, glyph = {blocked:'✕', limited:'!', ok:'✓'};
+  const html = items.map(([k, t]) => `<li class="${k}"><b><span aria-hidden="true">${glyph[k]} </span>${word[k]}</b>${t}</li>`).join('');
+  $('pn-list').innerHTML = html;
+  $('rv-list').innerHTML = html;
+}
+
+/* ---- Visibility, defaults that follow other choices ---- */
+let pathTouched = false, basisTouched = false, idTouched = false;
+function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+function setRadio(scope, k, v) { const m = [...els(scope, k)].find(x => x.value === v); if (m) m.checked = true; }
+function vis() {
+  const s1 = $('sec1'), s2 = $('sec2'), s7 = $('sec7');
+  const rt = getV(s1, 'run_type');
+  if (!pathTouched) $('s1-pathway').value = RUN_DEFAULT_PATH[rt];
+  const path = getV(s1, 'pathway');
+  $('pathnote').textContent = path === RUN_DEFAULT_PATH[rt] ? 'Default for this run type; follows it until you change it.' : 'Set by you; no longer follows the run type.';
+  $('pathmods').textContent = PATHWAYS[path].join(', ');
+  if (!idTouched) $('s2-issuer_id').value = slug($('s2-issuer_name').value);
+  const listed = getV(s2, 'listed_equity');
+  $('tickerf').hidden = listed !== 'yes';
+  $('sec3').querySelector('#ccynote').textContent = getV($('sec3'), 'reporting_currency') && getV($('sec3'), 'reporting_currency') !== 'USD' ? 'CP-2D liquidity treats non-USD facilities as Not calculable today (USD fixed).' : '';
+  const trading = [...els(s7, 'basis')].find(x => x.value === 'issuer_trading');
+  trading.disabled = listed !== 'yes';
+  if (listed !== 'yes' && trading.checked) { setRadio(s7, 'basis', 'auto'); basisTouched = false; }
+  if (!basisTouched) setRadio(s7, 'basis', BASIS_DEFAULT[listed]);
+  s7.querySelectorAll('[data-cards="basis"] [data-deftag]').forEach(t => { t.hidden = t.dataset.deftag !== BASIS_DEFAULT[listed]; });
+  const basis = getV(s7, 'basis'), ps = getV(s7, 'peer_source');
+  $('prec').hidden = !(basis === 'precedents' || basis === 'blend');
+  $('im').hidden = basis !== 'issuer_trading';
+  $('um').hidden = basis !== 'user_multiple';
+  const peers = $('rows-peers');
+  peers.hidden = !(ps === 'user_list' || ps === 'user_comps');
+  peers.dataset.mode = ps;
+  $('peers-intro').textContent = ps === 'user_list' ? 'Name each peer you want CP-DR to look up.' : 'One row per peer. EV/EBITDA is shown for checking only; Python recomputes it.';
+  document.querySelectorAll('.mod').forEach(m => { m.querySelector('.uf').hidden = getV(m, 'mode') !== 'user'; });
+  $('rows-peer').querySelectorAll('[data-row]').forEach(r => {
+    const ev = getV(r, 'ev_m'), eb = getV(r, 'ebitda_m');
+    r.querySelector('[data-mult]').textContent = NUM.test(ev) && NUM.test(eb) && Number(eb) > 0 ? (Number(ev) / Number(eb)).toFixed(1) + 'x' : 'n/a';
+  });
+  renumber();
+}
+function update() {
+  vis();
+  const o = build();
+  const sq = seqFor(o.run.run_type);
+  if (!sq.includes(cur)) cur = 1;
+  applyTags(o);
+  showErrors();
+  renderSteps(sq, o);
+  renderNav(sq, o);
+  if (cur === 11) renderReview(sq, o);
+  panel(o);
+  return o;
+}
+
+/* ---- Events ---- */
+function onField(e) {
+  const t = e.target;
+  if (t.id === 's1-pathway') pathTouched = true;
+  if (t.dataset && t.dataset.k === 'basis' && t.type === 'radio') basisTouched = true;
+  if (t.id === 's2-issuer_id') { idTouched = t.value !== ''; if (!idTouched) $('s2-issuer_id').value = slug($('s2-issuer_name').value); }
+  if (t.id === 's2-issuer_name' && !idTouched) $('s2-issuer_id').value = slug(t.value);
+  update();
+}
+$('f').addEventListener('input', onField);
+$('f').addEventListener('change', onField);
+$('f').addEventListener('submit', e => e.preventDefault());
+$('f').addEventListener('click', e => {
+  const t = e.target;
+  if (!(t instanceof Element)) return;
+  if (t.dataset.add) { const r = addRow(t.dataset.add); update(); if (r) r.querySelector('input,select').focus(); }
+  else if (t.hasAttribute('data-remove')) {
+    const row = t.closest('[data-row]'), add = document.querySelector(`[data-add="${Object.keys(ROWS).find(k => ROWS[k].box === row.parentNode.id)}"]`);
+    row.remove(); update(); add.focus();
+  }
+  else if (t.dataset.edit) gotoStep(+t.dataset.edit);
+  else if (t.dataset.go) { e.preventDefault(); go(t.dataset.go); }
+});
+$('f').addEventListener('focusout', e => {
+  const t = e.target;
+  if (t.matches && t.matches('input, select')) { t.dataset.touched = '1'; update(); }
+});
+$('steperr').addEventListener('click', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.go) { e.preventDefault(); go(t.dataset.go); }
+});
+$('stepper').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.getAttribute('aria-disabled') === 'true') return;
+  gotoStep(+b.dataset.step);
+});
+$('next').addEventListener('click', goNext);
+$('back').addEventListener('click', goBack);
+
+$('download').addEventListener('click', () => {
+  const o = update();
+  if (errs.length) return;
+  const blob = new Blob([JSON.stringify(o, null, 2) + '\n'], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'context.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  loadMsg('Downloaded context.json.', false);
+});
+
+/* ---- Load / reset ---- */
+function loadMsg(text, isErr) {
+  const m = $('loadmsg');
+  m.textContent = text; m.className = isErr ? 'bad' : '';
+  m.setAttribute('role', isErr ? 'alert' : 'status');
+}
+const isObj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+function shapeProblem(o) {
+  if (!isObj(o)) return 'the file is not a JSON object.';
+  if (o.schema !== 'context/1') return 'unsupported schema ' + JSON.stringify(o.schema) + '; this form reads context/1 only.';
+  for (const k of ['run','identity','valuation','assumptions','attachments']) if (!isObj(o[k])) return k + ' is missing or not an object.';
+  for (const k of ['deal_terms','quotes','ratings','research_questions']) if (!Array.isArray(o[k]) || !o[k].every(isObj)) return k + ' is missing or not a list of objects.';
+  const v = o.valuation;
+  if (!isObj(v.issuer_market) || !isObj(v.user_multiple)) return 'valuation.issuer_market and valuation.user_multiple must be objects.';
+  for (const k of ['peers','precedents']) if (!Array.isArray(v[k]) || !v[k].every(isObj)) return 'valuation.' + k + ' is not a list of objects.';
+  if (!Array.isArray(o.identity.guarantors) || !Array.isArray(o.identity.aliases)) return 'identity.guarantors and identity.aliases must be lists.';
+  const scalar = x => x === null || ['string', 'number', 'boolean'].includes(typeof x);
+  const flat = (obj, name) => Object.keys(obj).find(k => !scalar(obj[k])) === undefined ? '' : name + '.' + Object.keys(obj).find(k => !scalar(obj[k])) + ' must be a plain value.';
+  const checks = [flat(o.run, 'run'), flat(o.attachments, 'attachments'), flat(v.issuer_market, 'valuation.issuer_market'), flat(v.user_multiple, 'valuation.user_multiple'),
+    flat(Object.fromEntries(Object.entries(o.identity).filter(([k]) => k !== 'guarantors' && k !== 'aliases')), 'identity')];
+  for (const [name, list] of [['deal_terms', o.deal_terms], ['quotes', o.quotes], ['ratings', o.ratings], ['research_questions', o.research_questions], ['valuation.peers', v.peers], ['valuation.precedents', v.precedents]]) {
+    list.forEach((row, i) => checks.push(flat(row, name + '[' + i + ']')));
+  }
+  if (o.identity.guarantors.concat(o.identity.aliases).some(x => !scalar(x))) checks.push('identity.guarantors and identity.aliases must hold plain values.');
+  for (const k of Object.keys(o.assumptions)) {
+    const a = o.assumptions[k];
+    if (a !== null && !isObj(a)) checks.push('assumptions.' + k + ' must be null or an object.');
+    else if (a) {
+      const bad = Object.keys(a).find(f => f !== 'scenarios' && !scalar(a[f]) && !(Array.isArray(a[f]) && a[f].every(scalar)));
+      if (bad) checks.push('assumptions.' + k + '.' + bad + ' must be a plain value or a list of them.');
+      if (k === 'cp2a' && a.scenarios !== undefined && !(Array.isArray(a.scenarios) && a.scenarios.every(r => isObj(r) && flat(r, 'x') === ''))) checks.push('assumptions.cp2a.scenarios must be a list of objects with plain values.');
+    }
+  }
+  return checks.find(Boolean) || '';
+}
+function resetAll() {
+  $('f').reset();
+  for (const k in ROWS) $(ROWS[k].box).innerHTML = '';
+  document.querySelectorAll('[data-touched]').forEach(e => delete e.dataset.touched);
+  visited.clear(); visited.add(1); tried = {}; cur = 1;
+  pathTouched = basisTouched = idTouched = false;
+  $('s3-as_of').value = today();
+}
+function today() { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+const txt = x => (x === null || x === undefined) ? '' : String(x);
+function fillRows(kind, list, path, warn) {
+  const box = $(ROWS[kind].box);
+  list.slice(0, ROWS[kind].max).forEach((item, i) => {
+    const row = addRow(kind);
+    for (const k of keysOf(row)) if (k in item) setV(row, k, txt(item[k]), `${path}[${i}].${k}`, warn);
+  });
+  if (list.length > ROWS[kind].max) warn.push(`${path}: only the first ${ROWS[kind].max} rows were loaded`);
+}
+function fill(o) {
+  const warn = [];
+  resetAll();
+  const s1 = $('sec1'), s2 = $('sec2'), s3 = $('sec3'), s7 = $('sec7'), s9 = $('sec9');
+  const run = o.run, id = o.identity, v = o.valuation;
+  setV(s1, 'run_type', txt(run.run_type), 'run.run_type', warn);
+  setV(s1, 'pathway', txt(run.pathway), 'run.pathway', warn);
+  pathTouched = getV(s1, 'pathway') !== RUN_DEFAULT_PATH[getV(s1, 'run_type')];
+  setV(s1, 'case_kind', txt(run.case_kind), 'run.case_kind', warn);
+  for (const k of ['as_of','current_period','prior_period','reporting_currency']) if (k === 'as_of' || txt(run[k]) !== '') setV(s3, k, txt(run[k]), 'run.' + k, warn);
+  for (const k of ['issuer_name','issuer_id','borrower_name','parent_name','ticker','sector','country','sponsor']) setV(s2, k, txt(id[k]), 'identity.' + k, warn);
+  setV(s2, 'guarantors', id.guarantors.map(txt).join(', '), 'identity.guarantors', warn);
+  setV(s2, 'aliases', id.aliases.map(txt).join(', '), 'identity.aliases', warn);
+  setV(s2, 'listed_equity', id.listed_equity === true ? 'yes' : 'no', 'identity.listed_equity', warn);
+  if (typeof id.listed_equity !== 'boolean') warn.push('identity.listed_equity: expected true or false, treated as No');
+  idTouched = txt(id.issuer_id) !== '' && txt(id.issuer_id) !== slug(txt(id.issuer_name));
+  fillRows('deal', o.deal_terms, 'deal_terms', warn);
+  fillRows('quote', o.quotes, 'quotes', warn);
+  fillRows('rating', o.ratings, 'ratings', warn);
+  setV(s7, 'peer_source', txt(v.peer_source), 'valuation.peer_source', warn);
+  vis();
+  setV(s7, 'basis', txt(v.basis), 'valuation.basis', warn);
+  basisTouched = getV(s7, 'basis') !== BASIS_DEFAULT[getV(s2, 'listed_equity')];
+  if (getV(s7, 'basis') === 'issuer_trading' && getV(s2, 'listed_equity') !== 'yes') warn.push('valuation.basis: issuer_trading needs identity.listed_equity true; reset to auto');
+  if (o.deal_terms.length && getV(s1, 'run_type') !== 'primary') warn.push('deal_terms: section 4 is shown only for Primary, so these rows will not be written');
+  for (const k of keysOf($('im'))) if (k in v.issuer_market) setV($('im'), k, txt(v.issuer_market[k]), 'valuation.issuer_market.' + k, warn);
+  for (const k of keysOf($('um'))) {
+    const src = k === 'ebitda_basis' ? 'basis' : k;
+    if (src in v.user_multiple) setV($('um'), k, txt(v.user_multiple[src]), 'valuation.user_multiple.' + src, warn);
+  }
+  fillRows('peer', v.peers, 'valuation.peers', warn);
+  fillRows('prec', v.precedents, 'valuation.precedents', warn);
+  fillAssumptions(o.assumptions, warn);
+  for (const k of ['portfolio_workbook','prior_case','management_bridge','legal_documents']) setV(s9, k, o.attachments[k], 'attachments.' + k, warn);
+  fillRows('q', o.research_questions, 'research_questions', warn);
+  return warn;
+}
+function fillAssumptions(a, warn) {
+  for (const key of ['cp2a','cp2d','cp2e','cp3c','cp3d','cp4c']) {
+    const sc = $('as-' + key), val = a[key];
+    if (val === null || val === undefined) continue;
+    if (!isObj(val)) { warn.push(`assumptions.${key}: expected null or an object, left as "model chooses"`); continue; }
+    setRadio(sc, 'mode', 'user');
+    if (key === 'cp2a' && Array.isArray(val.scenarios)) fillRows('scen', val.scenarios, 'assumptions.cp2a.scenarios', warn);
+    for (const k of keysOf(sc)) {
+      if (k === 'mode' || !(k in val)) continue;
+      setV(sc, k, Array.isArray(val[k]) ? val[k].map(txt).join(', ') : txt(val[k]), `assumptions.${key}.${k}`, warn);
+    }
+  }
+}
+$('load').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onerror = () => loadMsg('Could not read ' + file.name + ': ' + (rd.error && rd.error.message), true);
+  rd.onload = () => {
+    let o;
+    try { o = JSON.parse(rd.result); }
+    catch (err) { loadMsg('Not loaded. ' + file.name + ' is not valid JSON: ' + err.message, true); return; }
+    const p = shapeProblem(o);
+    if (p) { loadMsg('Not loaded. ' + file.name + ': ' + p + ' Nothing was changed.', true); return; }
+    const warn = fill(o);
+    const loaded = update(), sq = seqFor(loaded.run.run_type), target = sq.find(stepBad) || 11;
+    sq.slice(0, sq.indexOf(target)).forEach(n => visited.add(n));
+    if (target !== 11) tried[target] = true;
+    gotoStep(target);
+    loadMsg('Loaded ' + file.name + '.' + (warn.length ? ' ' + warn.length + ' note(s): ' + warn.join('; ') + '.' : ''), false);
+  };
+  rd.readAsText(file);
+  e.target.value = '';
+});
+$('reset').addEventListener('click', () => {
+  if (!window.confirm('Clear every field and return to the defaults?')) return;
+  resetAll(); gotoStep(1); loadMsg('Form reset to defaults.', false);
+});
+
+/* ---- Panel: always open on wide screens, collapsible on narrow ---- */
+const wide = window.matchMedia('(min-width:900px)');
+function syncPanel() { if (wide.matches) $('panel').open = true; }
+wide.addEventListener('change', syncPanel);
+
+/* ---- Init ---- */
+document.querySelectorAll('[data-cards]').forEach(box => {
+  const key = box.dataset.cards, name = box.dataset.name || key, k = box.dataset.key || key;
+  box.innerHTML = cards(name, k, OPTIONS[key], key === 'basis');
+});
+$('s3-as_of').value = today();
+syncPanel();
+update();
+</script>
+</body>
+</html>

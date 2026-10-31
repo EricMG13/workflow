@@ -538,7 +538,8 @@ def _date_cell(cell: str) -> str | None:
 
 def _months(period: Any) -> int | None:
     """The calendar months a period spans, or None unless it runs from a first to a last day."""
-    start, end = period.start_date, period.end_date
+    start: date = period.start_date
+    end: date = period.end_date
     if start.day != 1 or (end + timedelta(days=1)).day != 1:
         return None
     return (end.year - start.year) * 12 + end.month - start.month + 1
@@ -594,6 +595,20 @@ def _single_spec(cell: str) -> tuple[str, ...]:
     return ("balance", iso) if iso else ("unsupported",)
 
 
+def _is_year_or_date(cell: str) -> bool:
+    return bool(_YEAR_CELL.fullmatch(cell) or _DATE_CELL.fullmatch(cell))
+
+
+def _column_year(cell: str, span: tuple[str | None, str, str, int]) -> str | None:
+    """The year of a column cell: a bare year, or a full date on a flow span's own month and day."""
+    if _YEAR_CELL.fullmatch(cell):
+        return cell
+    found = _DATE_CELL.fullmatch(cell)
+    if found is None or span[0] is None or found[1] != span[1] or int(found[2]) != int(span[2]):
+        return None
+    return found[3]
+
+
 def _span_specs(
     spans: list[tuple[str | None, str, str, int]], years: list[str]
 ) -> list[tuple[str, ...]]:
@@ -620,11 +635,16 @@ def _spec_row(headers: tuple[str, ...], index: int) -> list[tuple[str, ...]] | N
     if spans and all(spans):
         if index + 1 == len(headers):
             return None
-        row = _drop_label(_header_cells(headers[index + 1]), _YEAR_CELL.fullmatch)
+        row = _drop_label(_header_cells(headers[index + 1]), _is_year_or_date)
         count = len(row)
-        if not count or count % len(spans) or not all(_YEAR_CELL.fullmatch(c) for c in row):
+        if not count or count % len(spans):
             return None
-        return _span_specs([s for s in spans if s], row) or None
+        found = [s for s in spans if s]
+        width = count // len(found)
+        years = [_column_year(cell, found[i // width]) for i, cell in enumerate(row)]
+        if not all(years):
+            return None
+        return _span_specs(found, [y for y in years if y]) or None
     specs = [_single_spec(cell) for cell in _drop_label(cells, _is_column_cell)]
     return specs or None
 

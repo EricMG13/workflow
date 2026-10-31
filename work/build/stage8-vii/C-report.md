@@ -11,3 +11,11 @@
 - ruff format --check: **tests/test_cash_scope.py would be reformatted**; others clean.
 - mypy (strict) on the 5 src files: 0. **On the 2 new test files: not clean** — ~30 `no-untyped-def`/`no-untyped-call` (helpers `scope_of`, `line`, test fns without `-> None`), test_czr_cash_scope.py:99 `canonical_audit.reconcile_financials` not explicitly exported (attr-defined), :115 comparison-overlap (tuple of Decimal vs int).
 - Not yet run: schema/enum-sensitive suites the builder named (tests/test_schema_normalise_escapes.py, tests/defect_classes.py walks, tests/test_connect_cp2e.py schema hash, tests/test_connect_cp2d.py, tests/test_financial_workflow.py BS item list / pinned financials); the fast set.
+
+## Fix round 1 (C-fix1.md): RED 45d1a456 (tests), fix 1309b27b (code; L1 import order in it)
+- RED @45d1a456 (tests on the dd91959f code): 6 failed, 17 passed — the new G2 text, A3 split citations, A1 not_applicable/missing, A2 account-only cash, A4 label.
+- Fix @1309b27b: tests/test_cash_scope.py 23 passed.
+- Adversary probes (cwd builder worktree, lane venv): p1_g3_status_bypass 0, p2_g3_account_cash_skip 0, p3_g1_g2_split 0, p6_constructed_boundary 0, p7_mislabel_and_double_count 0, p5_roundtrip 0; p8_guards_hold 1 — only its case 3, which asserts the old G2 text that the ruling replaced (it now prints the new text).
+- Byte identity without a declaration: p4_dump base (5a1d2e2f src) vs head with the pre-round test helpers (dd91959f's tests/test_cash_scope.py; the rewritten file imports CashScope at module level so base cannot load it): 5 rows, no differing field. Reviewer p1_undeclared_bytes: base and head outputs identical (25 lines).
+- ruff check: only the predating SIM102 ×1, ISC004 ×6 (I001 gone). ruff format --check: tests/test_cash_scope.py still differs in 2 places (MISSING_2024 wrap, `scope_of` signature). mypy strict (MYPYPATH=src:tests) on all 7 files: 0.
+- Info not applied: `pytest.raises(RuntimeError, match=...)` — builder found no stable message text.

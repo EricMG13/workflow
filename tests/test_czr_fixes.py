@@ -200,7 +200,7 @@ def test_filed_page_lines_belong_to_the_page_statement(
     assert {fw._statement(line.caption, text) for line in table.lines} == {statement}
 
 
-def test_statement_caption_wins_and_unknown_page_gives_none() -> None:
+def test_page_heading_wins_over_caption_and_unknown_page_gives_none() -> None:
     assert fw._statement("CASH FLOW ITEMS", "INCOME STATEMENT") == "IS"
     assert fw._statement("Income", "BALANCE SHEET") == "BS"
     assert fw._statement(None, "x\nINCOME STATEMENT\ny") == "IS"
@@ -223,6 +223,10 @@ def test_caption_decides_only_when_it_names_a_statement_outright() -> None:
     assert fw._statement("STATEMENTS OF OPERATIONS", none) == "IS"
     assert fw._statement("STATEMENT OF INCOME", both) == "IS"
     assert fw._statement("INCOME STATEMENT", none) == "IS"
+    assert fw._statement("STATEMENTS OF EARNINGS", none) == "IS"
+    assert fw._statement("STATEMENT OF EARNINGS", both) == "IS"
+    assert fw._statement("STATEMENTS OF FINANCIAL POSITION", none) == "BS"
+    assert fw._statement("COMPREHENSIVE INCOME", none) is None
     assert fw._statement("Income", none) is None
     assert fw._statement("Income", both) is None
 
@@ -239,11 +243,38 @@ def test_six_month_header_is_not_satisfied_by_a_nine_month_period() -> None:
     assert fw._column_periods(nine_headers, (six,)) is None
 
 
-def test_period_span_not_on_month_boundaries_never_matches_a_flow_column() -> None:
-    odd = _period("odd", "YTD", date(2026, 6, 30))
-    odd.start_date = date(2026, 1, 2)
+def _spanning(period_id: str, kind: str, start: date, end: date, quarter: int | None = None):
+    period = _period(period_id, kind, end, quarter)
+    period.start_date = start
+    return period
+
+
+def test_flow_column_matches_by_inclusive_day_count_window() -> None:
     headers = ("Six Months Ended June 30,", "(In millions) | 2026")
-    assert fw._column_periods(headers, (odd,)) is None
+    inside = _spanning("in", "YTD", date(2026, 1, 2), date(2026, 6, 30))  # 180 days
+    assert fw._column_periods(headers, (inside,)) == _sets("in")
+    outside = _spanning("out", "YTD", date(2026, 3, 1), date(2026, 6, 30))  # 122 days
+    assert fw._column_periods(headers, (outside,)) is None
+
+
+def test_period_without_a_start_or_end_date_never_matches_a_flow_column() -> None:
+    headers = ("Six Months Ended June 30,", "(In millions) | 2026")
+    no_start = _spanning("none", "YTD", None, date(2026, 6, 30))
+    assert fw._column_periods(headers, (no_start,)) is None
+    no_end = _spanning("none", "YTD", date(2026, 1, 1), date(2026, 6, 30))
+    no_end.end_date = None
+    assert fw._column_periods(headers, (no_end,)) is None
+
+
+def test_thirteen_week_quarter_and_fifty_two_week_year_map() -> None:
+    quarter = _spanning("q1", "QUARTER", date(2025, 9, 29), date(2025, 12, 28), 1)  # 91 days
+    headers = ("Three Months Ended December 28,", "(In millions) | 2025")
+    assert fw._column_periods(headers, (quarter,)) == _sets("q1")
+    year = _spanning("fy", "FY", date(2024, 9, 30), date(2025, 9, 28))  # 364 days
+    headers = ("Years Ended September 28,", "(In millions) | 2025")
+    assert fw._column_periods(headers, (year,)) == _sets("fy")
+    six = ("Six Months Ended September 28,", "(In millions) | 2025")
+    assert fw._column_periods(six, (year,)) is None
 
 
 def test_annual_header_with_full_date_cells_does_not_fall_back_to_balances() -> None:

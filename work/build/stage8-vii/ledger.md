@@ -30,3 +30,5 @@
 - Ruling: separator rows of only nil dashes and pipes are never omitted candidates (need a letter or digit) — otherwise every table rule needs a disposition — cost if wrong: a printed nil-only row without label is not recorded (it carries no value).
 - 09:38 B fix round 1: RED 4cd7357f 3 failed/22 passed (separator rows); fix 4ed0f63c 25 passed; mypy 0; reviewer probes exit 0. Stopped the stale long suite run (worktree changed under it). mx-feature scoped re-review dispatched.
 - Task B: fix round 1/2 (M1 Medium, L1 Low, I1 Info addressed pending re-review; commits 0a4917e..4ed0f63) agent=mx-feature
+- 09:38 B re-review (mx-feature): M1, L1, I1 ADDRESSED; no new breakage; APPROVE.
+- Task B: complete (commits 5a1d2e2..4ed0f63, review clean after 1 fix round). agent=mx-feature fix-rounds=1 gates-first-pass=n (mypy)

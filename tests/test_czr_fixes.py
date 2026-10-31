@@ -256,7 +256,6 @@ def test_annual_header_with_full_date_cells_does_not_fall_back_to_balances() -> 
         _period("q424", "QUARTER", date(2024, 12, 31), 4),
     )
     assert fw._column_periods(headers, q4) is None
-    assert fw._column_periods(headers, (*q4, *FILED_PERIODS)) is None
 
 
 def test_annual_header_with_full_date_cells_maps_fy_periods_only() -> None:

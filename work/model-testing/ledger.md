@@ -1,0 +1,30 @@
+- 10:56 goldens stage contract and six briefs written (work/model-testing/goldens/)
+- 10:57 dispatched (mx-feature x7): checker ae85e6e3; preparers tdg a65d8732, shc a45d3d0a, bgs ac6670a7, lth a298fa44, ihrt adf25695, natl a5ec1f3e
+- 11:01 checker done (ae85e6e3): cases/goldens/check.py + tests/test_goldens_check.py; pytest 43 passed exit 0; ruff check 0; ruff format --check 0. agent=mx-feature fix-rounds=0 gates-first-pass=y. Normalisation clarified to preparers (block-tag spaces; run checker before return).
+- 11:03 shc (a45d3d0a) and bgs (ac6670a7) returned: check.py exit 0 each; controller findings G-1..G-4 recorded (goldens/controller-findings.md); checker scale/zero-width change dispatched (mx-scaffold a7240248)
+- 11:04 tdg (a65d8732) returned: check.py exit 0; derive.py 0; G-5, G-6 recorded
+- 11:04 checker change (mx-scaffold a7240248): scale thousands + zero-width deletion; pytest 46 passed exit 0; ruff check 0; format 0. agent=mx-scaffold fix-rounds=0 gates-first-pass=y
+- 11:06 ihrt (adf25695) 153 facts check 0; natl (a5ec1f3e) 118 facts check 0; G-7, G-8 recorded; HANDOFF.md written
+- 11:06 dispatched checker fix2 (mx-scaffold a246edb0), reviews ihrt (ad606b35) natl (a746f3aa); asked tdg/shc/bgs reviewers + lth preparer to write reports to files
+- 11:07 lth (a298fa44) 165 facts check 0 derive 0; G-9; lth review dispatched
+- 11:07 checker fix2 (mx-scaffold a246edb0): pytest 51 passed exit 0; ruff 0/0; check.py all six cases exit 0. agent=mx-scaffold fix-rounds=0 gates-first-pass=y
+- 11:07 shc review (mx-precise a906417d): APPROVE; SHC-R1 Low, SHC-R2 Info; report saved by controller
+- 11:08 tdg review (mx-precise aa8d24aa): REVISE; R1, R2 Medium; R3, R4 Low; R5 Info; report saved by controller
+- 11:08 bgs review (mx-precise a2f0b9d6): REVISE; R1 Medium (Codex gap, ours correct), R2-R4 Low, R5-R6 Info; report saved by controller. Fix rounds dispatched: shc (mx-feature a9827d55), tdg (mx-feature af476463)
+- 11:09 shc fix round 1 (mx-feature a9827d55): G-1, R1, R2 fixed; controller rerun check.py 0, derive.py 0; review had no High/Medium, so no re-review; SHC DONE. agent=mx-feature fix-rounds=1
+- 11:09 tdg fix round 1 (mx-feature af476463): R1-R5, G-5, G-6 fixed; controller rerun check.py 0, derive.py 0; probe_tdg 0; scoped re-review of R1/R2 dispatched
+- 11:09 bgs fix round 1 (mx-feature ae40544c): G-1, G-3, R1-R5 fixed; controller rerun check.py 0, derive.py 0; probe_gaps 0; R1 (Medium) was a report note, verified by controller grep; BGS DONE. agent=mx-feature fix-rounds=1
+- 11:10 tdg scoped re-review R1/R2 (mx-feature a6dbbfd7): APPROVE; check.py 0; TDG DONE. agent=mx-feature fix-rounds=1
+- 11:11 natl review (mx-precise a746f3aa): REVISE; R1 Medium (guarantors printed), R2-R3 Low, R4 Info; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-8 + R1-R4
+- 11:12 ihrt review (mx-precise ad606b35): REVISE; R1 High (ABL trigger greater-of), R2-R4 Low, R5 Info; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-7 + R1-R5; R1 ruling: fixed + pct + text facts
+- 11:13 natl fix round 1 (mx-feature a3113fd2): G-8 (13 CP-0 facts, sector from filing wording), R1 guarantors known (7 names), R2-R4 fixed; controller rerun check.py 0, derive.py 0; probes 0/0/0; deletions inspected (all replacements); scoped re-review of R1 + G-8 dispatched
+- 11:14 lth review (mx-precise af4f89b7): REVISE; R1 Medium (13th amendment covenant definition changes), R2-R4 Low, R5-R6 Info; redline readings all confirmed post-amendment; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-9 + R1-R6
+- 11:14 natl scoped re-review R1/G-8 (mx-feature a84b0092): APPROVE; check.py 0; RR1 Low (inference wording) to end batch; NATL DONE. agent=mx-feature fix-rounds=1
+- 11:15 ihrt fix round 1 (mx-feature a25bea84): R1 three facts (fixed 40.0, 10 pct, rule text; no derived 45.0 since check.py product treats percent operand as 10 not 0.10), G-7 9 derived facts + 3.9 billions, R2-R5 fixed; controller rerun check.py 0, derive.py 0; probes r2 0, r4 0, p5 0, r3/r5 source-only 1 by design, r1 KeyError (old id removed); mx-precise re-review of R1 + G-7 dispatched
+- 11:17 lth fix round 1 (mx-feature a79f9e8c): G-9 (15 CP-0 facts, sector from 10-Q wording, redline limitation), R1 4 facts, R2 LTF casing, R3, R4 3 facts, R5, R6 note; 165->187 facts; controller rerun check.py 0, derive.py 0; probes r1-r5 0, r6 1 by design (Codex file property); deletions inspected (replacements); scoped re-review of R1 + G-9 dispatched
+- 11:18 ihrt re-review R1/G-7 (mx-precise a2a27b85): APPROVE; check.py 0, derive.py 0; RR1 Low (subject wording) and RR2 Info (check.py percent operand latent, 0 affected) to end batch; IHRT DONE. agent=mx-feature fix-rounds=1
+- 11:18 lth re-review R1/G-9 (mx-feature a19eccfa): APPROVE; check.py 0; RR1 Low to end batch; LTH DONE. agent=mx-feature fix-rounds=1. All six goldens approved.
+- 11:20 end batch (mx-feature a0395ece): check.py refuses percent/bps operands in product/ratio (test failed 3/3 first, then pytest 54 passed); NATL-RR1, IHRT-RR1, LTH-RR1 wording; LTH 15th date confirmed. Controller rerun: check.py six cases 0; six derive.py 0; pytest 54 passed; ruff/format on check.py + test 0. derive.py files fail ruff (4 errors, 6 unformatted), but there is no repo ruff gate (no Makefile/CI/pre-commit ruff; repo-wide ruff has 768 pre-existing errors). agent=mx-feature fix-rounds=0 gates-first-pass=y. GOLDENS STAGE COMPLETE.
+- 11:28 ruling: budget plan adopted (user "Adopt it")
+- 11:50 deploy V CP-OS review (mx-autonomous abf83579): CP-OS is a navigation guide, not the orchestrator; Deploy V has no model connection; prompts should come from methods/*.md; CP-5 has a prompt; design 10.3 web-peers contradiction. Saved recon/deploy-v-cpos.md
+- 11:57 orchestration gaps (mx-autonomous abc6d3ef): only distressed_restructuring passes OwnerWorkflow spec checks; G1-G10. User: CP-DR here is old; new v2.4 (Codex link) adds research + peer pack -> G11. Wrote recon/orchestration-gaps.md; spec 10.3 updated

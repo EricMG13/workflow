@@ -1,0 +1,13 @@
+# Brief: IHRT, distressed_restructuring (case_id `ihrt-distressed-restructuring`)
+- Issuer: iHeartMedia, Inc. (CIK 0001400891). The borrower is iHeartCommunications, Inc.; keep borrower and parent distinct. Calendar fiscal year. Cutoff and as_of: 2024-12-23.
+- Periods: FY2023Q4, FY2024Q1, FY2024Q2, FY2024Q3, FY2023. The latest balance sheet is 2024-09-30.
+- Sources: `IHRT/` (5 filings, the exchange 8-K, the closing release, and the new credit agreement).
+- Pathway modules: CP-0, CP-1, CP-1A, CP-2, CP-2A, CP-2G, CP-2H, CP-4, CP-4C, CP-5.
+- context.json: run_type `research`, pathway `distressed_restructuring`.
+- Scope:
+  - **CP-2:** the pre-exchange debt stack at 2024-09-30 per instrument (principal, maturity, rate, ranking), plus cash and revolver/ABL availability.
+  - **The exchange (CP-2, CP-4, CP-4C):** the old instruments exchanged, the principal tendered or exchanged and participation, the new instruments issued (type, principal, maturity, rate, ranking), and the post-exchange stack by priority as disclosed.
+  - **CP-4:** key new credit agreement terms (borrower, guarantors, maturity, pricing, financial covenants if any) and the closing date.
+  - **CP-4C:** claim ranking classes and principal per class after the exchange.
+  - **CP-2H:** ratings if any filing discloses them; otherwise user input.
+  - **not_golden:** CP-2A, CP-2G, CP-5.

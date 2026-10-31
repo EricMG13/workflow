@@ -1,0 +1,2414 @@
+{
+  "schema_version": "module-golden/1",
+  "case_id": "shc-earnings-update",
+  "issuer_id": "shc",
+  "pathway": "earnings_update",
+  "cutoff": "2025-08-08",
+  "context_file": "context.json",
+  "financial_gold": {
+    "path": "/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1-codex-gold-20261031/shc/financial_gold.json",
+    "sha256": "24bec29cfdd580da0421a9638d6547f8270ae53a07189bd8ed34b42e3b34c840"
+  },
+  "sources": [
+    {
+      "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+      "file": "SHC/SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630.htm",
+      "sha256": "aa9f66f99bd44d760d1ba092ab6bfd0a519813e2513d4a01a430918ffb8296fd",
+      "url": "https://www.sec.gov/Archives/edgar/data/1822479/000182247925000044/shc-20250630.htm",
+      "form": "10-Q",
+      "period_end": "2025-06-30",
+      "filed": "2025-08-08"
+    },
+    {
+      "source_id": "SHC_2024-12-31_10-K_0001822479-25-000015_shc-20241231",
+      "file": "SHC/SHC_2024-12-31_10-K_0001822479-25-000015_shc-20241231.htm",
+      "sha256": "bd2f996338041de2ceb296da8d2a47d743d60ac9893341aee75a7c6b9480080d",
+      "url": "https://www.sec.gov/Archives/edgar/data/1822479/000182247925000015/shc-20241231.htm",
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "filed": "2025-02-27"
+    },
+    {
+      "source_id": "SHC_legal_event_amendment_no4",
+      "file": "SHC/SHC_legal_event_amendment_no4.html",
+      "sha256": "f85e07f7aeda9a0ec2edf208f5cd1db690b30c19856d6a89c3f0631c38ef8766",
+      "url": "https://www.sec.gov/Archives/edgar/data/1822479/000182247924000041/shc20240630_exhibitx10x1.htm",
+      "form": "10-Q Exhibit 10.1 (Amendment No. 4 to First Lien Credit Agreement, dated 2024-05-30)",
+      "period_end": "",
+      "filed": "2024-08-05"
+    },
+    {
+      "source_id": "SHC_legal_event_term_loan_closing_SEC_8K_exhibit_99_1",
+      "file": "SHC/SHC_legal_event_term_loan_closing_SEC_8K_exhibit_99_1.html",
+      "sha256": "6185c3e474be953212171d5e4842100ab0483ae5c9ee099742d5606c5feb7371",
+      "url": "https://www.sec.gov/Archives/edgar/data/1822479/000182247924000029/shc_20240530xexhibitx99x1.htm",
+      "form": "8-K Exhibit 99.1",
+      "period_end": "",
+      "filed": "2024-05-30"
+    }
+  ],
+  "facts": [
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_revenues.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "net_revenues",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "294341",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Total net revenues > 2025 column",
+          "quote": "Total net revenues $ 294,341 $ 276,594 $ 17,747 6.4 %",
+          "printed": "294,341"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_revenues.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "net_revenues",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "276594",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Total net revenues > 2024 column",
+          "quote": "Total net revenues $ 294,341 $ 276,594 $ 17,747 6.4 %",
+          "printed": "276,594"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_revenues_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "net_revenues_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "17747",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Total net revenues > $ Change column (printed; cross-check only)",
+          "quote": "Total net revenues $ 294,341 $ 276,594 $ 17,747 6.4 %",
+          "printed": "17,747"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Consolidated.net_revenues.2025-06-30",
+          "CP-1B.period_comparison.Consolidated.net_revenues.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.net_revenues.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Sterigenics",
+      "field": "net_revenues",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "194839",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Sterigenics > 2025 column",
+          "quote": "Sterigenics $ 194,839 $ 176,354 $ 18,485 10.5 %",
+          "printed": "194,839"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.net_revenues.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Sterigenics",
+      "field": "net_revenues",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "176354",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Sterigenics > 2024 column",
+          "quote": "Sterigenics $ 194,839 $ 176,354 $ 18,485 10.5 %",
+          "printed": "176,354"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.net_revenues_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Sterigenics",
+      "field": "net_revenues_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "18485",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Sterigenics > $ Change column (printed; cross-check only)",
+          "quote": "Sterigenics $ 194,839 $ 176,354 $ 18,485 10.5 %",
+          "printed": "18,485"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Sterigenics.net_revenues.2025-06-30",
+          "CP-1B.period_comparison.Sterigenics.net_revenues.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.net_revenues.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nordion",
+      "field": "net_revenues",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "42431",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nordion > 2025 column",
+          "quote": "Nordion 42,431 41,244 1,187 2.9 %",
+          "printed": "42,431"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.net_revenues.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nordion",
+      "field": "net_revenues",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "41244",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nordion > 2024 column",
+          "quote": "Nordion 42,431 41,244 1,187 2.9 %",
+          "printed": "41,244"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.net_revenues_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nordion",
+      "field": "net_revenues_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "1187",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nordion > $ Change column (printed; cross-check only)",
+          "quote": "Nordion 42,431 41,244 1,187 2.9 %",
+          "printed": "1,187"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Nordion.net_revenues.2025-06-30",
+          "CP-1B.period_comparison.Nordion.net_revenues.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.net_revenues.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nelson Labs",
+      "field": "net_revenues",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "57071",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nelson Labs > 2025 column",
+          "quote": "Nelson Labs 57,071 58,996 (1,925) (3.3) %",
+          "printed": "57,071"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.net_revenues.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nelson Labs",
+      "field": "net_revenues",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "58996",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nelson Labs > 2024 column",
+          "quote": "Nelson Labs 57,071 58,996 (1,925) (3.3) %",
+          "printed": "58,996"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.net_revenues_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nelson Labs",
+      "field": "net_revenues_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "-1925",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nelson Labs > $ Change column (printed; cross-check only)",
+          "quote": "Nelson Labs 57,071 58,996 (1,925) (3.3) %",
+          "printed": "(1,925)"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Nelson Labs.net_revenues.2025-06-30",
+          "CP-1B.period_comparison.Nelson Labs.net_revenues.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Sterigenics",
+      "field": "segment_income",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "107745",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Sterigenics > 2025 column",
+          "quote": "Sterigenics $ 107,745 $ 96,778 $ 10,967 11.3 %",
+          "printed": "107,745"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Sterigenics",
+      "field": "segment_income",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "96778",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Sterigenics > 2024 column",
+          "quote": "Sterigenics $ 107,745 $ 96,778 $ 10,967 11.3 %",
+          "printed": "96,778"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Sterigenics",
+      "field": "segment_income_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "10967",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Sterigenics > $ Change column (printed; cross-check only)",
+          "quote": "Sterigenics $ 107,745 $ 96,778 $ 10,967 11.3 %",
+          "printed": "10,967"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Sterigenics.segment_income.2025-06-30",
+          "CP-1B.period_comparison.Sterigenics.segment_income.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.segment_income.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nordion",
+      "field": "segment_income",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "23477",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nordion > 2025 column",
+          "quote": "Nordion 23,477 23,420 57 0.2 %",
+          "printed": "23,477"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.segment_income.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nordion",
+      "field": "segment_income",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "23420",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nordion > 2024 column",
+          "quote": "Nordion 23,477 23,420 57 0.2 %",
+          "printed": "23,420"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.segment_income_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nordion",
+      "field": "segment_income_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "57",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nordion > $ Change column (printed; cross-check only)",
+          "quote": "Nordion 23,477 23,420 57 0.2 %",
+          "printed": "57"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Nordion.segment_income.2025-06-30",
+          "CP-1B.period_comparison.Nordion.segment_income.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nelson Labs",
+      "field": "segment_income",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "19513",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nelson Labs > 2025 column",
+          "quote": "Nelson Labs 19,513 17,137 2,376 13.9 %",
+          "printed": "19,513"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nelson Labs",
+      "field": "segment_income",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "17137",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nelson Labs > 2024 column",
+          "quote": "Nelson Labs 19,513 17,137 2,376 13.9 %",
+          "printed": "17,137"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Nelson Labs",
+      "field": "segment_income_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "2376",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nelson Labs > $ Change column (printed; cross-check only)",
+          "quote": "Nelson Labs 19,513 17,137 2,376 13.9 %",
+          "printed": "2,376"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Nelson Labs.segment_income.2025-06-30",
+          "CP-1B.period_comparison.Nelson Labs.segment_income.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_income.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "net_income",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "7962",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Net income > 2025 column",
+          "quote": "Net income 7,962 8,754 (792) (9.0) %",
+          "printed": "7,962"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_income.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "net_income",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "8754",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Net income > 2024 column",
+          "quote": "Net income 7,962 8,754 (792) (9.0) %",
+          "printed": "8,754"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_income_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "net_income_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "-792",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Net income > $ Change column (printed; cross-check only)",
+          "quote": "Net income 7,962 8,754 (792) (9.0) %",
+          "printed": "(792)"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Consolidated.net_income.2025-06-30",
+          "CP-1B.period_comparison.Consolidated.net_income.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "adjusted_ebitda",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "150735",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Adjusted EBITDA (non-GAAP) > 2025 column",
+          "quote": "Adjusted EBITDA(a) 150,735 137,335 13,400 9.8 %",
+          "printed": "150,735"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2024-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "adjusted_ebitda",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "137335",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Adjusted EBITDA (non-GAAP) > 2024 column",
+          "quote": "Adjusted EBITDA(a) 150,735 137,335 13,400 9.8 %",
+          "printed": "137,335"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.adjusted_ebitda_change.2025-06-30",
+      "module": "CP-1B",
+      "topic": "period_comparison",
+      "subject": "Consolidated",
+      "field": "adjusted_ebitda_change",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "13400",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Adjusted EBITDA (non-GAAP) > $ Change column (printed; cross-check only)",
+          "quote": "Adjusted EBITDA(a) 150,735 137,335 13,400 9.8 %",
+          "printed": "13,400"
+        }
+      ],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2025-06-30",
+          "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2024-06-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Net income (loss).amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Net income (loss)",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "7962",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Net income (loss) > three months 2025 column",
+          "quote": "Net income (loss) $ 7,962 $ 8,754 $ (5,298) $ 15,077",
+          "printed": "7,962"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Net income (loss).amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Net income (loss)",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "8754",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Net income (loss) > three months 2024 column",
+          "quote": "Net income (loss) $ 7,962 $ 8,754 $ (5,298) $ 15,077",
+          "printed": "8,754"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Amortization of intangible assets.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Amortization of intangible assets",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "11924",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Amortization of intangible assets > three months 2025 column",
+          "quote": "Amortization of intangible assets 11,924 19,755 30,598 39,879",
+          "printed": "11,924"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Amortization of intangible assets.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Amortization of intangible assets",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "19755",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Amortization of intangible assets > three months 2024 column",
+          "quote": "Amortization of intangible assets 11,924 19,755 30,598 39,879",
+          "printed": "19,755"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Share-based compensation.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Share-based compensation",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "8149",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Share-based compensation > three months 2025 column",
+          "quote": "Share-based compensation(a) 8,149 10,206 15,418 18,863",
+          "printed": "8,149"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Share-based compensation.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Share-based compensation",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "10206",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Share-based compensation > three months 2024 column",
+          "quote": "Share-based compensation(a) 8,149 10,206 15,418 18,863",
+          "printed": "10,206"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Loss on refinancing of debt.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Loss on refinancing of debt",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "80",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Loss on refinancing of debt > three months 2025 column",
+          "quote": "Loss on refinancing of debt(b) 80 23,400 80 24,090",
+          "printed": "80"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Loss on refinancing of debt.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Loss on refinancing of debt",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "23400",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Loss on refinancing of debt > three months 2024 column",
+          "quote": "Loss on refinancing of debt(b) 80 23,400 80 24,090",
+          "printed": "23,400"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.(Gain) loss on FX and derivatives not designated as hedges, net.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "(Gain) loss on FX and derivatives not designated as hedges, net",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "-3018",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > (Gain) loss on FX and derivatives not designated as hedges, net > three months 2025 column",
+          "quote": "(Gain) loss on foreign currency and derivatives not designated as hedging instruments, net(c) (3,018) (698) (1,127) 532",
+          "printed": "(3,018)"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.(Gain) loss on FX and derivatives not designated as hedges, net.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "(Gain) loss on FX and derivatives not designated as hedges, net",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "-698",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > (Gain) loss on FX and derivatives not designated as hedges, net > three months 2024 column",
+          "quote": "(Gain) loss on foreign currency and derivatives not designated as hedging instruments, net(c) (3,018) (698) (1,127) 532",
+          "printed": "(698)"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Business optimization expenses.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Business optimization expenses",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "2430",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Business optimization expenses > three months 2025 column",
+          "quote": "Business optimization expenses(d) 2,430 613 4,477 1,784",
+          "printed": "2,430"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Business optimization expenses.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Business optimization expenses",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "613",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Business optimization expenses > three months 2024 column",
+          "quote": "Business optimization expenses(d) 2,430 613 4,477 1,784",
+          "printed": "613"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Professional services relating to EO sterilization facilities.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Professional services relating to EO sterilization facilities",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "14035",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Professional services relating to EO sterilization facilities > three months 2025 column",
+          "quote": "Professional services relating to EO sterilization facilities(e) 14,035 7,818 26,363 14,157",
+          "printed": "14,035"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Professional services relating to EO sterilization facilities.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Professional services relating to EO sterilization facilities",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "7818",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Professional services relating to EO sterilization facilities > three months 2024 column",
+          "quote": "Professional services relating to EO sterilization facilities(e) 14,035 7,818 26,363 14,157",
+          "printed": "7,818"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Illinois EO litigation settlements.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Illinois EO litigation settlements",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "34000",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Illinois EO litigation settlements > three months 2025 column",
+          "quote": "Illinois EO litigation settlements(f) 34,000 — 64,943 —",
+          "printed": "34,000"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Illinois EO litigation settlements.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Illinois EO litigation settlements",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "0",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Illinois EO litigation settlements > three months 2024 column",
+          "quote": "Illinois EO litigation settlements(f) 34,000 — 64,943 —",
+          "printed": "—"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Accretion of asset retirement obligations.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Accretion of asset retirement obligations",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "563",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Accretion of asset retirement obligations > three months 2025 column",
+          "quote": "Accretion of asset retirement obligations(g) 563 636 1,137 1,278",
+          "printed": "563"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Accretion of asset retirement obligations.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Accretion of asset retirement obligations",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "636",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Accretion of asset retirement obligations > three months 2024 column",
+          "quote": "Accretion of asset retirement obligations(g) 563 636 1,137 1,278",
+          "printed": "636"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax benefit associated with pre-tax adjustments.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Income tax benefit associated with pre-tax adjustments",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "-20063",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Income tax benefit associated with pre-tax adjustments > three months 2025 column",
+          "quote": "Income tax benefit associated with pre-tax adjustments(h) (20,063) (15,297) (41,485) (24,844)",
+          "printed": "(20,063)"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax benefit associated with pre-tax adjustments.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Income tax benefit associated with pre-tax adjustments",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "-15297",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Income tax benefit associated with pre-tax adjustments > three months 2024 column",
+          "quote": "Income tax benefit associated with pre-tax adjustments(h) (20,063) (15,297) (41,485) (24,844)",
+          "printed": "(15,297)"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted Net Income.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Adjusted Net Income",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "56062",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Adjusted Net Income > three months 2025 column",
+          "quote": "Adjusted Net Income 56,062 55,187 95,106 90,816",
+          "printed": "56,062"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted Net Income.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Adjusted Net Income",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "55187",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Adjusted Net Income > three months 2024 column",
+          "quote": "Adjusted Net Income 56,062 55,187 95,106 90,816",
+          "printed": "55,187"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Interest expense, net.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Interest expense, net",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "40651",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Interest expense, net > three months 2025 column",
+          "quote": "Adjusted Net Income 56,062 55,187 95,106 90,816 Interest expense, net 40,651 40,388 81,527 82,159",
+          "printed": "40,651"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Interest expense, net.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Interest expense, net",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "40388",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Interest expense, net > three months 2024 column",
+          "quote": "Adjusted Net Income 56,062 55,187 95,106 90,816 Interest expense, net 40,651 40,388 81,527 82,159",
+          "printed": "40,388"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Depreciation.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Depreciation",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "23024",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Depreciation > three months 2025 column",
+          "quote": "Depreciation(i) 23,024 20,075 45,084 40,381",
+          "printed": "23,024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Depreciation.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Depreciation",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "20075",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Depreciation > three months 2024 column",
+          "quote": "Depreciation(i) 23,024 20,075 45,084 40,381",
+          "printed": "20,075"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax provision applicable to Adjusted Net Income.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Income tax provision applicable to Adjusted Net Income",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "30998",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Income tax provision applicable to Adjusted Net Income > three months 2025 column",
+          "quote": "Income tax provision applicable to Adjusted Net Income(j) 30,998 21,685 50,857 35,923",
+          "printed": "30,998"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax provision applicable to Adjusted Net Income.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Income tax provision applicable to Adjusted Net Income",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "21685",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Income tax provision applicable to Adjusted Net Income > three months 2024 column",
+          "quote": "Income tax provision applicable to Adjusted Net Income(j) 30,998 21,685 50,857 35,923",
+          "printed": "21,685"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted EBITDA.amount.2025-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Adjusted EBITDA",
+      "field": "amount",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "150735",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Adjusted EBITDA > three months 2025 column",
+          "quote": "Adjusted EBITDA(k) $ 150,735 $ 137,335 $ 272,574 $ 249,279",
+          "printed": "150,735"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted EBITDA.amount.2024-06-30",
+      "module": "CP-1D",
+      "topic": "ebitda_reconciliation",
+      "subject": "Adjusted EBITDA",
+      "field": "amount",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "137335",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Non-GAAP Financial Measures > reconciliation table (three months ended June 30) > Adjusted EBITDA > three months 2024 column",
+          "quote": "Adjusted EBITDA(k) $ 150,735 $ 137,335 $ 272,574 $ 249,279",
+          "printed": "137,335"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).principal_outstanding_gross.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "principal_outstanding_gross",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "1498030",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 Long-Term Debt > table as of June 30, 2025 > Term loan due 2031 > Gross Amount",
+          "quote": "Term loan due 2031 1,498,030 (6,001) (21,140) 1,470,889",
+          "printed": "1,498,030"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).carrying_amount_net.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "carrying_amount_net",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "1470889",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 Long-Term Debt > table as of June 30, 2025 > Term loan due 2031 > Net Amount",
+          "quote": "Term loan due 2031 1,498,030 (6,001) (21,140) 1,470,889",
+          "printed": "1,470,889"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Secured notes due 2031.principal_outstanding_gross.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Secured notes due 2031",
+      "field": "principal_outstanding_gross",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "750000",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 Long-Term Debt > table as of June 30, 2025 > Secured notes due 2031 > Gross Amount",
+          "quote": "Secured notes due 2031 $ 750,000 $ (3,418) $ — 746,582",
+          "printed": "750,000"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Total long-term debt (term loan + secured notes).principal_outstanding_gross.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Total long-term debt (term loan + secured notes)",
+      "field": "principal_outstanding_gross",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "2248030",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "thousands",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 Long-Term Debt > table as of June 30, 2025 > total row > Gross Amount",
+          "quote": "2,248,030 (9,419) (21,140) 2,217,471",
+          "printed": "2,248,030"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).original_principal_at_amendment_no4",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "original_principal_at_amendment_no4",
+      "period_end": null,
+      "status": "known",
+      "value": "1509350000",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "units",
+      "evidence": [
+        {
+          "source_id": "SHC_legal_event_amendment_no4",
+          "locator": "Schedule I / Section 1.01 \"2024 Refinancing Term Loans\"",
+          "quote": "The aggregate principal amount of 2024 Refinancing Term Loans outstanding on the Amendment No. 4 Effective Date is $1,509,350,000.",
+          "printed": "$1,509,350,000"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).amendment_no4_date",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "amendment_no4_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2024-05-30",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_legal_event_amendment_no4",
+          "locator": "Amendment preamble",
+          "quote": "AMENDMENT NO. 4 TO FIRST LIEN CREDIT AGREEMENT, dated as of May 30,2024",
+          "printed": "dated as of May 30,2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_term_sofr_initial",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "margin_term_sofr_initial",
+      "period_end": null,
+      "status": "known",
+      "value": "3.25",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph",
+          "quote": "(iii) Term SOFR plus 3.25% for Term Benchmark Loans",
+          "printed": "3.25%"
+        },
+        {
+          "source_id": "SHC_legal_event_amendment_no4",
+          "locator": "Annex A > Applicable Rate for 2024 Refinancing Term Loans > Category 1 (net leverage > 3.30:1.00)",
+          "quote": "Category 1 Greater than 3.30:1.00 2.25% 3.25% 3.25%",
+          "printed": "3.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_abr_initial",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "margin_abr_initial",
+      "period_end": null,
+      "status": "known",
+      "value": "2.25",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph",
+          "quote": "(i) ABR plus 2.25% for ABR Loans",
+          "printed": "2.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).rate_floor",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "rate_floor",
+      "period_end": null,
+      "status": "known",
+      "value": "0.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph",
+          "quote": "in each case with a 0.00% applicable floor",
+          "printed": "0.00%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "margin_step_down",
+      "period_end": null,
+      "status": "known",
+      "value": "0.25",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph",
+          "quote": "pricing step-down of 0.25% when the Senior Secured Leverage Ratio (as defined in the Credit Agreement) is less than or equal to 3.30:1.00",
+          "printed": "0.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down_threshold_senior_secured_leverage",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "margin_step_down_threshold_senior_secured_leverage",
+      "period_end": null,
+      "status": "known",
+      "value": "3.30:1.00",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_legal_event_amendment_no4",
+          "locator": "Annex A > Applicable Rate for 2024 Refinancing Term Loans > Category 2",
+          "quote": "Category 2 Less than or equal to 2.00% 3.00% 3.00% 3.30:1.00",
+          "printed": "3.30:1.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_tier_in_effect_at_2025-06-30.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "margin_tier_in_effect_at_2025-06-30",
+      "period_end": "2025-06-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "The 10-Q prints the margin grid and step-down condition but not the Senior Secured Leverage Ratio or which pricing category applied at 2025-06-30; only the weighted average rate (separate fact) is printed."
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).weighted_average_interest_rate_three_months.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "weighted_average_interest_rate_three_months",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "7.55",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph > three months ended June 30, 2025",
+          "quote": "for the three months ended June 30, 2025 and 2024 was 7.55% and 8.58%",
+          "printed": "7.55%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).weighted_average_interest_rate_three_months.2024-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "weighted_average_interest_rate_three_months",
+      "period_end": "2024-06-30",
+      "status": "known",
+      "value": "8.58",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph > three months ended June 30, 2024",
+          "quote": "for the three months ended June 30, 2025 and 2024 was 7.55% and 8.58%",
+          "printed": "8.58%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).amortization_rate_per_annum",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "amortization_rate_per_annum",
+      "period_end": null,
+      "status": "known",
+      "value": "1.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph",
+          "quote": "The Refinancing Term Loans amortize at a rate of 1.00% per annum and mature on May 30, 2031.",
+          "printed": "1.00%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).maturity_date",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Term loan due 2031 (Refinancing Term Loans)",
+      "field": "maturity_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2031-05-30",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 4 paragraph",
+          "quote": "mature on May 30, 2031",
+          "printed": "May 30, 2031"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Secured notes due 2031.coupon_fixed",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Secured notes due 2031",
+      "field": "coupon_fixed",
+      "period_end": null,
+      "status": "known",
+      "value": "7.375",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Indenture paragraph",
+          "quote": "at a rate of 7.375% per year, and will mature on June 1, 2031",
+          "printed": "7.375%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Secured notes due 2031.maturity_date",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Secured notes due 2031",
+      "field": "maturity_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2031-06-01",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Indenture paragraph",
+          "quote": "at a rate of 7.375% per year, and will mature on June 1, 2031",
+          "printed": "June 1, 2031"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.total_commitments.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Revolving Credit Facility",
+      "field": "total_commitments",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "600.0",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Senior Secured Credit Facilities paragraph (commitment, after Amendment No. 5 of 2025-04-30)",
+          "quote": "Amendment No. 5 increased the total borrowing capacity under the Revolving Credit Facility to $600.0 million.",
+          "printed": "$600.0 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.drawn_balance.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Revolving Credit Facility",
+      "field": "drawn_balance",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "0",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Item 2 MD&A > Liquidity > Revolving Credit Facility",
+          "quote": "As of June 30, 2025, there were no outstanding borrowings on the Revolving Credit Facility.",
+          "printed": "no outstanding borrowings"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.letters_of_credit_issued.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Revolving Credit Facility",
+      "field": "letters_of_credit_issued",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "14.2",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > letters of credit paragraph",
+          "quote": "the Company had $14.2 million of letters of credit issued against the Revolving Credit Facility, resulting in total availability under the Revolving Credit Facility of $585.8 million",
+          "printed": "$14.2 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.availability.2025-06-30",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Revolving Credit Facility",
+      "field": "availability",
+      "period_end": "2025-06-30",
+      "status": "known",
+      "value": "585.8",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > letters of credit paragraph (availability net of letters of credit)",
+          "quote": "the Company had $14.2 million of letters of credit issued against the Revolving Credit Facility, resulting in total availability under the Revolving Credit Facility of $585.8 million",
+          "printed": "$585.8 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.maturity_date",
+      "module": "CP-1B",
+      "topic": "debt_context",
+      "subject": "Revolving Credit Facility",
+      "field": "maturity_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2030-04-30",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > Amendment No. 5 paragraph",
+          "quote": "for the extension of the maturity date of the Revolving Credit Facility to April 30, 2030",
+          "printed": "April 30, 2030"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1B.guidance.FY2025 company outlook.guidance",
+      "module": "CP-1B",
+      "topic": "guidance",
+      "subject": "FY2025 company outlook",
+      "field": "guidance",
+      "period_end": null,
+      "status": "missing",
+      "value": null,
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "The Q2 2025 10-Q (and the other corpus filings) contain no 2025 financial guidance; guidance is normally issued in the earnings release (8-K Ex. 99.1), which is not in the corpus. Missing here means not in these sources, not that none was issued. The only outlook text in the corpus is the 2024-05-30 8-K saying a 2024 interest-expense outlook of $165M - $175M; it is stale and not 2025 guidance."
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.legal_name",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "legal_name",
+      "period_end": null,
+      "status": "known",
+      "value": "SOTERA HEALTH COMPANY",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "SOTERA HEALTH COMPANY (Exact name of registrant as specified in its charter)",
+          "printed": "SOTERA HEALTH COMPANY"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.ticker_exchange",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "ticker_exchange",
+      "period_end": null,
+      "status": "known",
+      "value": "SHC; The Nasdaq Stock Market LLC",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page > Securities registered under Section 12(b)",
+          "quote": "Common Stock, $0.01 par value per share SHC The Nasdaq Stock Market LLC",
+          "printed": "SHC The Nasdaq Stock Market LLC"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.state_of_incorporation",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "state_of_incorporation",
+      "period_end": null,
+      "status": "known",
+      "value": "Delaware",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "Delaware 47-3531161 (State or other jurisdiction of incorporation or organization)",
+          "printed": "Delaware"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.commission_file_number",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "commission_file_number",
+      "period_end": null,
+      "status": "known",
+      "value": "001-39729",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "Commission File Number 001-39729",
+          "printed": "001-39729"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.filer_category",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "filer_category",
+      "period_end": null,
+      "status": "known",
+      "value": "Large accelerated filer",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "Large accelerated filer ☒ Accelerated filer ☐",
+          "printed": "Large accelerated filer ☒"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.shares_outstanding_2025-07-29",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "shares_outstanding_2025-07-29",
+      "period_end": null,
+      "status": "known",
+      "value": "284046606",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": "units",
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "As of July 29, 2025, there were 284,046,606 shares of the registrant’s common stock",
+          "printed": "284,046,606"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.principal_executive_office",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "principal_executive_office",
+      "period_end": null,
+      "status": "known",
+      "value": "9100 South Hills Blvd, Suite 300, Broadview Heights, Ohio 44147",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "9100 South Hills Blvd, Suite 300 Broadview Heights, Ohio 44147",
+          "printed": "Broadview Heights, Ohio 44147"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.sponsors",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "sponsors",
+      "period_end": null,
+      "status": "known",
+      "value": "Investment funds and entities affiliated with Warburg Pincus and GTCR",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2024-12-31_10-K_0001822479-25-000015_shc-20241231",
+          "locator": "Item 1A Risk Factors summary (as of the FY2024 10-K)",
+          "quote": "certain investment funds and entities affiliated with Warburg Pincus and GTCR, which we refer to collectively as the “Sponsors,”",
+          "printed": "Warburg Pincus and GTCR"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Credit borrower.borrower_name",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Credit borrower",
+      "field": "borrower_name",
+      "period_end": null,
+      "status": "known",
+      "value": "Sotera Health Holdings, LLC",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_legal_event_amendment_no4",
+          "locator": "Preamble",
+          "quote": "SOTERA HEALTH HOLDINGS, LLC, a Delaware limited liability company (the “Borrower”)",
+          "printed": "SOTERA HEALTH HOLDINGS, LLC"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Listed parent (Holdings).parent_name",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Listed parent (Holdings)",
+      "field": "parent_name",
+      "period_end": null,
+      "status": "known",
+      "value": "Sotera Health Company (f/k/a Sotera Health Topco, Inc.)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_legal_event_amendment_no4",
+          "locator": "Preamble",
+          "quote": "Sotera Health Company (f/k/a Sotera Health Topco, Inc.), a Delaware corporation (“Holdings”)",
+          "printed": "Sotera Health Company (f/k/a Sotera Health Topco, Inc.)"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Credit borrower.guarantors",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Credit borrower",
+      "field": "guarantors",
+      "period_end": null,
+      "status": "known",
+      "value": "Sotera Health Company and each existing and subsequently acquired or organized direct or indirect wholly owned domestic restricted subsidiary (individual subsidiaries not named in the 10-Q)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 8 > guarantee paragraph",
+          "quote": "are unconditionally guaranteed by the Company and each existing and subsequently acquired or organized direct or indirect wholly owned domestic restricted subsidiary",
+          "printed": "guaranteed by the Company and each existing and subsequently acquired or organized direct or indirect wholly owned domestic restricted subsidiary"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Registrant.reportable_segments",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Registrant",
+      "field": "reportable_segments",
+      "period_end": null,
+      "status": "known",
+      "value": "Sterigenics; Nordion; Nelson Labs",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Note 16 Segment Information",
+          "quote": "We have three reportable segments: Sterigenics, Nordion and Nelson Labs.",
+          "printed": "Sterigenics, Nordion and Nelson Labs"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.period_end",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Q2 2025 Form 10-Q",
+      "field": "period_end",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-06-30",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Cover page",
+          "quote": "For the quarterly period ended June 30, 2025",
+          "printed": "June 30, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.signature_date",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Q2 2025 Form 10-Q",
+      "field": "signature_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-08-08",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Signatures",
+          "quote": "Name: Jonathan M. Lyons Title: Senior Vice President and Chief Financial Officer (Principal Financial Officer) Date: August 8, 2025",
+          "printed": "August 8, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Registrant.fiscal_year_end",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Registrant",
+      "field": "fiscal_year_end",
+      "period_end": null,
+      "status": "known",
+      "value": "12-31",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2024-12-31_10-K_0001822479-25-000015_shc-20241231",
+          "locator": "Cover page",
+          "quote": "For the fiscal year ended December 31, 2024",
+          "printed": "December 31, 2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.reporting_unit",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Q2 2025 Form 10-Q",
+      "field": "reporting_unit",
+      "period_end": null,
+      "status": "known",
+      "value": "USD thousands",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
+          "locator": "Segment note table headings",
+          "quote": "(thousands of U.S. dollars) Three Months Ended June 30, 2025",
+          "printed": "thousands of U.S. dollars"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    }
+  ],
+  "not_golden": [
+    {
+      "module": "CP-1",
+      "why": "covered by financial_gold (Codex public-financial-gold/1 snapshot, same cutoff)."
+    },
+    {
+      "module": "CP-MODEL",
+      "why": "Judgment module: model-owned analytical block; no source-fixed answer."
+    },
+    {
+      "module": "CP-5",
+      "why": "Judgment module: narrative and conclusions; the checkable inputs it needs are the CP-1B, CP-1D and debt facts above."
+    }
+  ],
+  "needs_user_input": [
+    {
+      "context_path": "valuation.issuer_market",
+      "modules": [
+        "CP-1C (not in this pathway)"
+      ],
+      "why": "Market cap, net debt, EV and share price are market data, not in the filings. Not needed for earnings_update; left empty."
+    },
+    {
+      "context_path": "ratings",
+      "modules": [
+        "CP-2H (not in this pathway)"
+      ],
+      "why": "Agency ratings are not in the corpus. Left empty."
+    },
+    {
+      "context_path": "quotes",
+      "modules": [
+        "CP-3 (not in this pathway)"
+      ],
+      "why": "No observed or indicative quotes in the corpus. Left empty."
+    },
+    {
+      "context_path": "identity.guarantors (subsidiary names)",
+      "modules": [
+        "CP-1"
+      ],
+      "why": "The 10-Q names the Company as guarantor and describes the others only by class; the subsidiary list (10-K Exhibit 22 if any) was not extracted. Only the parent is listed."
+    },
+    {
+      "context_path": "attachments.management_bridge",
+      "modules": [
+        "CP-1D"
+      ],
+      "why": "No management bridge was supplied, so the form marks CP-1D management-bridge cells not applicable. The golden CP-1D facts are the company's own net income to Adjusted EBITDA reconciliation printed in the 10-Q."
+    },
+    {
+      "context_path": "research_questions",
+      "modules": [
+        "CP-5"
+      ],
+      "why": "No user research questions supplied."
+    },
+    {
+      "context_path": "guidance",
+      "modules": [
+        "CP-5"
+      ],
+      "why": "FY2025 guidance is not in the corpus (recorded as a missing fact). The user would need to supply the earnings release."
+    }
+  ],
+  "limitations": [
+    "Scale: the 10-Q prints P&L and debt-table amounts in USD thousands. Those values are stored exactly as printed (e.g. 294,341 -> value \"294341\", scale thousands), with evidence.printed matching. Amounts printed in millions stay millions; the Amendment No. 4 amount is printed in dollars (scale units).",
+    "Prior period is the same quarter a year earlier (three months ended 2024-06-30), the side-by-side comparison the 10-Q prints. The Codex cp1b_delta_inputs.json instead uses Q1 2025 vs Q2 2025 (sequential); that pair is not covered here.",
+    "The brief dates Amendment No. 4 at 2024-08-05; that is the filing date of the 10-Q carrying it as Exhibit 10.1. The amendment is dated 2024-05-30 (effective date) and the 8-K closing release is dated 2024-05-30.",
+    "The Term loan due 2031 row in Note 8 is the Refinancing Term Loans created by Amendment No. 4 (original principal $1,509,350,000); 1,498,030 is the 2025-06-30 gross principal after scheduled amortisation.",
+    "Revolver total commitments of $600.0 million come from Amendment No. 5 (2025-04-30), which postdates Amendment No. 4; the 10-Q text does not print drawn capacity separately, only that no borrowings were outstanding.",
+    "A dash printed for Illinois EO litigation settlements in Q2 2024 is recorded as value 0 (printed \"—\").",
+    "Net income to Adjusted EBITDA reconciliation is the registrant's own (Adjusted Net Income path); consolidated Adjusted EBITDA equals total segment income as printed in Note 16.",
+    "Prior-year (Q2 2024) CP-1D reconciliation column follows the restated presentation in the Q2 2025 10-Q. The as-filed Q2 2024 10-Q splits Business optimization 593 and Secondary offering costs 20 (USD thousands), which sum to 613."
+  ],
+  "preparer": "mx-feature (SHC earnings_update gap-layer preparer)"
+}

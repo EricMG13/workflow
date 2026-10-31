@@ -1,0 +1,13 @@
+# Brief: TDG, credit_snapshot (case_id `tdg-credit-snapshot`)
+- Issuer: TransDigm Group Incorporated (CIK 0001260221). The fiscal year ends around Sep 30. Cutoff and as_of: 2025-02-04.
+- Periods (match Codex ids): FY2024Q2, FY2024Q3, FY2024Q4, FY2025Q1, FY2024. The latest balance sheet is 2024-12-28.
+- Sources: `TDG/` (4 filings plus the FY2024 annual-report PDF; the PDF is companion only, so prefer the HTML filings).
+- Pathway modules: CP-0, CP-1, CP-MODEL, CP-1A, CP-2, CP-4, CP-3, CP-5, CP-6.
+- context.json: run_type `research`, pathway `credit_snapshot`.
+- Scope:
+  - **CP-0:** identity (legal name, ticker, exchange, fiscal year end, filer status) and the in-scope documents.
+  - **CP-1A:** business segments and their names, sector, country, sponsor or ownership if disclosed, recent material acquisitions or financings.
+  - **CP-2:** the debt stack at 2024-12-28, per instrument: name, secured or unsecured, principal, carrying amount, maturity, rate terms. Also: revolver commitment, drawn and LCs, availability, cash, and the maturity schedule by year if printed.
+  - **CP-4:** covenant terms as disclosed in the filings (no credit agreement is in the corpus, so say so in limitations).
+  - **CP-3:** quotes are not in the filings, so list them in `needs_user_input`.
+  - **not_golden:** CP-5, CP-6, CP-MODEL.

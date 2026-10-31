@@ -1,0 +1,3274 @@
+{
+  "schema_version": "module-golden/1",
+  "case_id": "natl-portfolio-decision",
+  "issuer_id": "natl",
+  "pathway": "portfolio_decision",
+  "cutoff": "2025-11-06",
+  "context_file": "context.json",
+  "financial_gold": {
+    "path": "/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1-codex-gold-20261031/natl/financial_gold.json",
+    "sha256": "4a76596209dda34461a3ace596a6397a2f0cb20ceaa2cbea632525c832833ce1"
+  },
+  "sources": [
+    {
+      "source_id": "natl-10q-2025-09-30",
+      "file": "NATL/NATL_2025-09-30_10-Q_0001628280-25-050175_natl-20250930.htm",
+      "sha256": "105fb17c77911eb579db4a3deab55d907dda8de8b9af3842d5d8c56affb904c1",
+      "url": "https://www.sec.gov/Archives/edgar/data/1974138/000162828025050175/natl-20250930.htm",
+      "form": "10-Q",
+      "period_end": "2025-09-30",
+      "filed": "2025-11-06"
+    },
+    {
+      "source_id": "natl-10ka-2024-12-31",
+      "file": "NATL/NATL_2024-12-31_10-K-A_0001628280-25-049577_ncr-20241231.htm",
+      "sha256": "3c0e5e51275f1bacc69e5dda83061777253ee4ca2b5c0194e81f70b87b939623",
+      "url": "https://www.sec.gov/Archives/edgar/data/1974138/000162828025049577/ncr-20241231.htm",
+      "form": "10-K/A",
+      "period_end": "2024-12-31",
+      "filed": "2025-11-05"
+    },
+    {
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+      "file": "NATL/NATL_legal_event_restated_credit_agreement.html",
+      "sha256": "6305d30a09f5904a7e8958e29ef5901da2e009a3b74a20308f72e2578f9f8e4b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1974138/000162828025050175/exhibit101ncratleos-2025re.htm",
+      "form": "Exhibit 10.1 to 10-Q (Refinancing Facility Agreement and conformed Credit Agreement)",
+      "period_end": "",
+      "filed": "2025-11-06"
+    }
+  ],
+  "facts": [
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (aggregate)",
+      "field": "principal_outstanding",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "1334",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "had an aggregate principal amount of $1,580 million, of which $1,334 million remained outstanding",
+          "printed": "$1,334 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.aggregate_principal_amount_stated.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (aggregate)",
+      "field": "aggregate_principal_amount_stated",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "1580",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "had an aggregate principal amount of $1,580 million, of which $1,334 million remained outstanding",
+          "printed": "$1,580 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.current_portion_of_senior_secured_credit_facility.principal_current_portion.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Current portion of Senior Secured Credit Facility",
+      "field": "principal_current_portion",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "78",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Short-Term Borrowings > Current portion of Senior Secured Credit Facility > September 30, 2025 Amount",
+          "quote": "Current portion of Senior Secured Credit Facility $ 78 6.81 %",
+          "printed": "$ 78"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_long_term_portion.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (aggregate)",
+      "field": "principal_long_term_portion",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "1256",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Long-Term Borrowings > Term loan facilities > September 30, 2025 Amount",
+          "quote": "Term loan facilities $ 1,256 6.86 %",
+          "printed": "$ 1,256"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.weighted_average_rate_long_term_portion.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (aggregate)",
+      "field": "weighted_average_rate_long_term_portion",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "6.86",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Term loan facilities > Weighted Average Interest Rate",
+          "quote": "Term loan facilities $ 1,256 6.86 %",
+          "printed": "6.86 %"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.current_portion_of_senior_secured_credit_facility.weighted_average_rate.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Current portion of Senior Secured Credit Facility",
+      "field": "weighted_average_rate",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "6.81",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Current portion > Weighted Average Interest Rate",
+          "quote": "Current portion of Senior Secured Credit Facility $ 78 6.81 %",
+          "printed": "6.81 %"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.carrying_amount.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (aggregate)",
+      "field": "carrying_amount",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "The 10-Q table shows term loan principal; discount and deferred financing fees of (43) are one aggregate line, not allocated to instruments."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_outstanding_from_table_lines.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (aggregate)",
+      "field": "principal_outstanding_from_table_lines",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "1334",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "sum",
+        "operands": [
+          "CP-2.debt_stack.current_portion_of_senior_secured_credit_facility.principal_current_portion.2025-09-30",
+          "CP-2.debt_stack.term_loan_facilities_aggregate.principal_long_term_portion.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_a_1.original_aggregate_principal",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term A-1",
+      "field": "original_aggregate_principal",
+      "period_end": null,
+      "status": "known",
+      "value": "835",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "aggregate principal amount of $835 million (the loans thereunder being “Term A-1 Loans”)",
+          "printed": "$835 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_a_2.original_aggregate_principal",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term A-2",
+      "field": "original_aggregate_principal",
+      "period_end": null,
+      "status": "known",
+      "value": "300",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "aggregate principal amount of $300 million (the loans thereunder being “Term A-2 Loans”)",
+          "printed": "$300 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_b_before_2025_refinancing.original_aggregate_principal",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term B (before 2025 refinancing)",
+      "field": "original_aggregate_principal",
+      "period_end": null,
+      "status": "known",
+      "value": "445",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "aggregate principal amount of $445 million (the loans thereunder being “Term B Loans”",
+          "printed": "$445 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_sum_of_original_tranche_amounts.original_aggregate_principal",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term loan facilities (sum of original tranche amounts)",
+      "field": "original_aggregate_principal",
+      "period_end": null,
+      "status": "known",
+      "value": "1580",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "sum",
+        "operands": [
+          "CP-2.debt_stack.term_a_1.original_aggregate_principal",
+          "CP-2.debt_stack.term_a_2.original_aggregate_principal",
+          "CP-2.debt_stack.term_b_before_2025_refinancing.original_aggregate_principal"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_a_1.principal_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term A-1",
+      "field": "principal_outstanding",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million), not a per-tranche split; no filing in the corpus states one."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_a_2.principal_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term A-2",
+      "field": "principal_outstanding",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million), not a per-tranche split; no filing in the corpus states one."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_b.principal_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Term B",
+      "field": "principal_outstanding",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "No filing states a Term B balance at 2025-09-30. The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million). Exhibit 10.1 (Schedule I) prints $320,000,000.00 of Term B Commitments on 2025-09-18, when the existing Term B Loans were refinanced and replaced in their entirety; the 10-Q (Note 4) says the Term B Loans are not subject to amortization. That $320,000,000 is a 2025-09-18 commitment/refinanced amount, not a 2025-09-30 balance."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.commitment.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "commitment",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "600",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "revolving credit facility with commitments in an aggregate principal amount of $600 million",
+          "printed": "$600 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "drawn_principal",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "225",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "there was $225 million outstanding under the Revolving Credit Facility",
+          "printed": "$225 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "letters_of_credit_outstanding",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "27",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "outstanding letters of credit were $27 million",
+          "printed": "$27 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_stated.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "availability_stated",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "348",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "Our borrowing capacity under the Revolving Credit Facility as of September 30, 2025 was $348 million",
+          "printed": "$348 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_commitment_less_drawn_less_letters_of_credit.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "availability_commitment_less_drawn_less_letters_of_credit",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "348",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-2.debt_stack.revolving_credit_facility.commitment.2025-09-30",
+          "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-09-30",
+          "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_outstanding.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_share_of_commitment.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "drawn_share_of_commitment",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "0.375",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": null,
+      "evidence": [],
+      "derivation": {
+        "op": "ratio",
+        "operands": [
+          "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-09-30",
+          "CP-2.debt_stack.revolving_credit_facility.commitment.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.weighted_average_rate.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "weighted_average_rate",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "7.07",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Revolving credit facility > Weighted Average Interest Rate",
+          "quote": "Revolving credit facility 225 7.07 %",
+          "printed": "7.07 %"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.maturity",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Revolving Credit Facility",
+      "field": "maturity",
+      "period_end": null,
+      "status": "known",
+      "value": "2028-10-16",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "The Revolving Credit Facility and the Term B Loans are not subject to amortization and will mature on October 16, 2028 and April 16, 2029, respectively.",
+          "printed": "October 16, 2028"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.principal_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "9.500% Senior Secured Notes due 2029",
+      "field": "principal_outstanding",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "1350",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Senior Secured Notes",
+          "quote": "9.500% Senior Secured Notes due 2029 1,350 1,350",
+          "printed": "1,350"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.coupon",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "9.500% Senior Secured Notes due 2029",
+      "field": "coupon",
+      "period_end": null,
+      "status": "known",
+      "value": "9.500",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Senior Secured Notes",
+          "quote": "9.500% Senior Secured Notes due 2029",
+          "printed": "9.500%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.maturity",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "9.500% Senior Secured Notes due 2029",
+      "field": "maturity",
+      "period_end": null,
+      "status": "known",
+      "value": "2029-04-01",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
+          "quote": "The Notes mature on April 1, 2029.",
+          "printed": "April 1, 2029"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.ranking_and_security",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "9.500% Senior Secured Notes due 2029",
+      "field": "ranking_and_security",
+      "period_end": null,
+      "status": "known",
+      "value": "Senior secured; guaranteed by the Subsidiary Guarantors that guarantee the Amended Credit Agreement; secured by first-priority liens on the Collateral (subject to permitted liens and exceptions)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
+          "quote": "are unconditionally guaranteed on a senior secured basis, subject to certain limitations, by the Subsidiary Guarantors",
+          "printed": "unconditionally guaranteed on a senior secured basis"
+        },
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
+          "quote": "by first-priority liens on the Collateral",
+          "printed": "first-priority liens on the Collateral"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.interest_payment_dates",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "9.500% Senior Secured Notes due 2029",
+      "field": "interest_payment_dates",
+      "period_end": null,
+      "status": "known",
+      "value": "Semi-annually in arrears on April 1 and October 1",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
+          "quote": "Interest is payable on the Notes semi-annually in arrears on April 1 and October 1.",
+          "printed": "April 1 and October 1"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.carrying_amount.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "9.500% Senior Secured Notes due 2029",
+      "field": "carrying_amount",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "Discount and deferred financing fees of (43) are one aggregate line in the 10-Q; no per-instrument carrying amount is printed."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_atmaas_financing_program.principal_outstanding.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Other debt (ATMaaS financing program)",
+      "field": "principal_outstanding",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "3",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Other Debt paragraph",
+          "quote": "total debt outstanding under the financing program was $3 million with a weighted average interest rate of 7.17%",
+          "printed": "$3 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_atmaas_financing_program.weighted_average_rate.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Other debt (ATMaaS financing program)",
+      "field": "weighted_average_rate",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "7.17",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Other Debt paragraph",
+          "quote": "total debt outstanding under the financing program was $3 million with a weighted average interest rate of 7.17%",
+          "printed": "7.17%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_short_term_line.principal_current.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Other debt (short-term line)",
+      "field": "principal_current",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Short-Term Borrowings > Other",
+          "quote": "Other 2 7.17 % 3 7.19 %",
+          "printed": "Other 2"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_long_term_line.principal_long_term.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Other debt (long-term line)",
+      "field": "principal_long_term",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "1",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table > Long-Term Borrowings > Other",
+          "quote": "Other 1 7.17 % 3 7.17 % Total long-term debt",
+          "printed": "Other 1"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.principal_stated.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Total debt (the company's \"our debt totaled\" figure: funded borrowings, finance leases excluded)",
+      "field": "principal_stated",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2912",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Item 2 MD&A > Liquidity",
+          "quote": "our cash and cash equivalents totaled $412 million and our debt totaled $2,912 million",
+          "printed": "$2,912 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.principal_from_components.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Total debt",
+      "field": "principal_from_components",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2912",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "sum",
+        "operands": [
+          "CP-2.debt_stack.term_loan_facilities_aggregate.principal_outstanding.2025-09-30",
+          "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-09-30",
+          "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.principal_outstanding.2025-09-30",
+          "CP-2.debt_stack.other_debt_atmaas_financing_program.principal_outstanding.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_short_term_borrowings.carrying_amount.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Total short-term borrowings",
+      "field": "carrying_amount",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "80",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table",
+          "quote": "Total short-term borrowings $ 80 $ 81",
+          "printed": "$ 80"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_long_term_debt.carrying_amount.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Total long-term debt",
+      "field": "carrying_amount",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2789",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table",
+          "quote": "Total long-term debt $ 2,789 $ 2,859",
+          "printed": "$ 2,789"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.discount_and_deferred_financing_fees.amount.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Discount and deferred financing fees",
+      "field": "amount",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "-43",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > table",
+          "quote": "Discount and deferred financing fees (43) (54)",
+          "printed": "(43)"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.carrying_amount_from_balance_sheet_lines.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Total debt",
+      "field": "carrying_amount_from_balance_sheet_lines",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2869",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "sum",
+        "operands": [
+          "CP-2.debt_stack.total_short_term_borrowings.carrying_amount.2025-09-30",
+          "CP-2.debt_stack.total_long_term_debt.carrying_amount.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.principal_less_carrying.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Total debt",
+      "field": "principal_less_carrying",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "43",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-2.debt_stack.total_debt.principal_stated.2025-09-30",
+          "CP-2.debt_stack.total_debt.carrying_amount_from_balance_sheet_lines.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.long_term_debt.fair_value_level_2.2025-09-30",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Long-term debt",
+      "field": "fair_value_level_2",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "3072",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Fair Value of Debt",
+          "quote": "long-term debt, which, as of September 30, 2025 and December 31, 2024 was $3,072 million and $3,126 million",
+          "printed": "$3,072 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.cash_and_cash_equivalents.balance.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Cash and cash equivalents",
+      "field": "balance",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "412",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Condensed Consolidated Balance Sheets > Current assets",
+          "quote": "Cash and cash equivalents $ 412 $ 419",
+          "printed": "$ 412"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.restricted_cash_current.balance.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Restricted cash (current)",
+      "field": "balance",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "162",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Condensed Consolidated Balance Sheets > Current assets",
+          "quote": "Restricted cash 162 210",
+          "printed": "162"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.long_term_restricted_cash_in_other_assets.balance.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Long term restricted cash (in Other assets)",
+      "field": "balance",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "13",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 1 > Cash, Cash Equivalents, and Restricted Cash table",
+          "quote": "Long term restricted cash Other Assets 13 10",
+          "printed": "13"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.cash_held_by_foreign_subsidiaries.balance.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Cash held by foreign subsidiaries",
+      "field": "balance",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "288",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Item 2 MD&A > Cash and Cash Equivalents Held by Foreign Subsidiaries",
+          "quote": "was $288 million and $329 million",
+          "printed": "$288 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.total_debt_principal_less_cash_and_cash_equivalents.amount.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Total debt principal less cash and cash equivalents",
+      "field": "amount",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2500",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [],
+      "derivation": {
+        "op": "difference",
+        "operands": [
+          "CP-2.debt_stack.total_debt.principal_stated.2025-09-30",
+          "CP-2.liquidity.cash_and_cash_equivalents.balance.2025-09-30"
+        ],
+        "script": "derive.py"
+      },
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.trade_receivables_facility.purchase_commitment_limit.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Trade receivables facility",
+      "field": "purchase_commitment_limit",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "200",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 5 Trade Receivables Facility",
+          "quote": "increased the facility limit to $200 million",
+          "printed": "$200 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.liquidity.trade_receivables_facility.receivables_sold_and_derecognized.2025-09-30",
+      "module": "CP-2",
+      "topic": "liquidity",
+      "subject": "Trade receivables facility",
+      "field": "receivables_sold_and_derecognized",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "200",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 5 Trade Receivables Facility",
+          "quote": "approximately $200 million and $166 million as of September 30, 2025 and December 31, 2024",
+          "printed": "$200 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.obligor_structure.borrower.legal_name",
+      "module": "CP-2",
+      "topic": "obligor_structure",
+      "subject": "Borrower",
+      "field": "legal_name",
+      "period_end": null,
+      "status": "known",
+      "value": "NCR Atleos Corporation (Maryland corporation), the Company under the Credit Agreement; Foreign Borrowers may also be party",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Refinancing Facility Agreement > preamble",
+          "quote": "among NCR ATLEOS CORPORATION, a Maryland corporation (the “Company”), the Foreign Borrowers from time to time party thereto",
+          "printed": "NCR ATLEOS CORPORATION, a Maryland corporation"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.obligor_structure.listed_issuer.ticker_and_exchange",
+      "module": "CP-2",
+      "topic": "obligor_structure",
+      "subject": "Listed issuer",
+      "field": "ticker_and_exchange",
+      "period_end": null,
+      "status": "known",
+      "value": "NATL, New York Stock Exchange; the borrower and the listed registrant are the same entity (NCR Atleos Corporation)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
+          "printed": "NATL New York Stock Exchange"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.obligor_structure.credit_facility_collateral_and_guarantors.collateral_and_guarantors",
+      "module": "CP-2",
+      "topic": "obligor_structure",
+      "subject": "Credit facility collateral and guarantors",
+      "field": "collateral_and_guarantors",
+      "period_end": null,
+      "status": "known",
+      "value": "Secured by substantially all assets of the Company and its wholly-owned domestic subsidiaries (the Subsidiary Guarantors), subject to customary exceptions",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "are secured by substantially all of the Company’s assets and the assets of the Company’s wholly-owned domestic subsidiaries (the “Subsidiary Guarantors”)",
+          "printed": "the “Subsidiary Guarantors”"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "module": "CP-2",
+      "topic": "obligor_structure",
+      "subject": "Subsidiary Guarantors (Loan Parties other than the Company signing the 2025-09-18 Refinancing Facility Agreement; Loan Party status inferred, see limitations)",
+      "field": "names",
+      "period_end": null,
+      "status": "known",
+      "value": "ATM NATIONAL, LLC; CARDTRONICS HOLDINGS, LLC; CARDTRONICS, INC.; CARDTRONICS USA, INC.; CATM HOLDINGS LLC; ATM DEPLOYER SERVICES, L.L.C.; NCR FOREIGN INVESTCO 1, LLC",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > Section 9 Reaffirmation",
+          "quote": "The Company and each other Loan Party party hereto (collectively, the “Reaffirming Loan Parties”) hereby acknowledges",
+          "printed": "Reaffirming Loan Parties"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "ATM NATIONAL, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "ATM NATIONAL, LLC"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CARDTRONICS HOLDINGS, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CARDTRONICS HOLDINGS, LLC"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CARDTRONICS, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CARDTRONICS, INC."
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CARDTRONICS USA, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CARDTRONICS USA, INC."
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CATM HOLDINGS LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CATM HOLDINGS LLC"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "ATM DEPLOYER SERVICES, L.L.C. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "ATM DEPLOYER SERVICES, L.L.C."
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "NCR FOREIGN INVESTCO 1, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "NCR FOREIGN INVESTCO 1, LLC"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.revolving_credit_facility.maturity",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Revolving Credit Facility",
+      "field": "maturity",
+      "period_end": null,
+      "status": "known",
+      "value": "2028-10-16",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Maturity Date”",
+          "quote": "“Maturity Date” means, as the context requires, (a) with respect to the Revolving Credit Facility, October 16, 2028, (b) with respect to the Term A-1 Facility, October 16, 2028, (c) with respect to the Term A-2 Facility, October 16, 2028, (d) with respect to the Term B Facility, April 16, 2029",
+          "printed": "(a) with respect to the Revolving Credit Facility, October 16, 2028"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_1_facility.maturity",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A-1 Facility",
+      "field": "maturity",
+      "period_end": null,
+      "status": "known",
+      "value": "2028-10-16",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Maturity Date”",
+          "quote": "“Maturity Date” means, as the context requires, (a) with respect to the Revolving Credit Facility, October 16, 2028, (b) with respect to the Term A-1 Facility, October 16, 2028, (c) with respect to the Term A-2 Facility, October 16, 2028, (d) with respect to the Term B Facility, April 16, 2029",
+          "printed": "(b) with respect to the Term A-1 Facility, October 16, 2028"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_2_facility.maturity",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A-2 Facility",
+      "field": "maturity",
+      "period_end": null,
+      "status": "known",
+      "value": "2028-10-16",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Maturity Date”",
+          "quote": "“Maturity Date” means, as the context requires, (a) with respect to the Revolving Credit Facility, October 16, 2028, (b) with respect to the Term A-1 Facility, October 16, 2028, (c) with respect to the Term A-2 Facility, October 16, 2028, (d) with respect to the Term B Facility, April 16, 2029",
+          "printed": "(c) with respect to the Term A-2 Facility, October 16, 2028"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_b_facility.maturity",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term B Facility",
+      "field": "maturity",
+      "period_end": null,
+      "status": "known",
+      "value": "2029-04-16",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Maturity Date”",
+          "quote": "“Maturity Date” means, as the context requires, (a) with respect to the Revolving Credit Facility, October 16, 2028, (b) with respect to the Term A-1 Facility, October 16, 2028, (c) with respect to the Term A-2 Facility, October 16, 2028, (d) with respect to the Term B Facility, April 16, 2029",
+          "printed": "(d) with respect to the Term B Facility, April 16, 2029"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.refinancing_facility_agreement.agreement_date",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Refinancing Facility Agreement",
+      "field": "agreement_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-09-18",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > cover",
+          "quote": "REFINANCING FACILITY AGREEMENT dated as of September 18, 2025",
+          "printed": "September 18, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.refinancing_facility_agreement.effective_date",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Refinancing Facility Agreement",
+      "field": "effective_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-09-18",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > definitions",
+          "quote": "“2025 Refinancing Facility Effective Date” means September 18, 2025.",
+          "printed": "September 18, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.base_credit_agreement.dated",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Base Credit Agreement",
+      "field": "dated",
+      "period_end": null,
+      "status": "known",
+      "value": "2023-09-27",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > cover",
+          "quote": "to the Credit Agreement dated as of September 27, 2023",
+          "printed": "September 27, 2023"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.base_credit_agreement.closing_date",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Base Credit Agreement",
+      "field": "closing_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2023-10-16",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Closing Date”",
+          "quote": "“Closing Date” means October 16, 2023.",
+          "printed": "October 16, 2023"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.first_amendment.effective_date",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "First Amendment",
+      "field": "effective_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2024-10-17",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “First Amendment Effective Date”",
+          "quote": "“First Amendment Effective Date” means October 17, 2024.",
+          "printed": "October 17, 2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.administrative_agent.name",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Administrative Agent",
+      "field": "name",
+      "period_end": null,
+      "status": "known",
+      "value": "Bank of America, N.A.",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > cover",
+          "quote": "BANK OF AMERICA, N.A., as Administrative Agent",
+          "printed": "BANK OF AMERICA, N.A."
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.new_term_b_loans.commitment_principal_at_2025_refinancing",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "New Term B Loans",
+      "field": "commitment_principal_at_2025_refinancing",
+      "period_end": null,
+      "status": "known",
+      "value": "320000000",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "units",
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > recitals",
+          "quote": "in an aggregate principal amount equal to $320,000,000 (the “New Term B Loans”)",
+          "printed": "$320,000,000"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Schedule I Term B Commitments",
+          "quote": "Total $ 320,000,000.00",
+          "printed": "320,000,000.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.new_term_b_loans.funding_mechanics",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "New Term B Loans",
+      "field": "funding_mechanics",
+      "period_end": null,
+      "status": "known",
+      "value": "Proceeds prepay the Existing Term B Loans in full; converting Existing Term B lenders are deemed to make New Term B Loans cashless; Wells Fargo Bank, N.A. commits $6,198,242.61 and Converting Term B Lenders $313,801,757.39",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 2(c)",
+          "quote": "The proceeds of the New Term B Loans will be used by the Company to prepay in full the Existing Term B Loans.",
+          "printed": "to prepay in full the Existing Term B Loans"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Schedule I",
+          "quote": "Wells Fargo Bank, N.A. $ 6,198,242.61 Converting Term B Lenders1 $ 313,801,757.39",
+          "printed": "$ 313,801,757.39"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_b_loans_from_2025_refinancing_facility_effective_date.margin_term_sofr",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term B Loans (from 2025 Refinancing Facility Effective Date)",
+      "field": "margin_term_sofr",
+      "period_end": null,
+      "status": "known",
+      "value": "3.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (a)(iii)",
+          "quote": "(iii) on and after the 2025 Refinancing Facility Effective Date, (x) 2.00% per annum, in the case of any Base Rate Loan or (y) 3.00% per annum, in the case of a Term SOFR Loan",
+          "printed": "(y) 3.00% per annum, in the case of a Term SOFR Loan"
+        },
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "a margin of 3.00% per annum for SOFR-based Term B Loans",
+          "printed": "3.00% per annum for SOFR-based Term B Loans"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_b_loans_from_2025_refinancing_facility_effective_date.margin_base_rate",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term B Loans (from 2025 Refinancing Facility Effective Date)",
+      "field": "margin_base_rate",
+      "period_end": null,
+      "status": "known",
+      "value": "2.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (a)(iii)",
+          "quote": "(iii) on and after the 2025 Refinancing Facility Effective Date, (x) 2.00% per annum, in the case of any Base Rate Loan or (y) 3.00% per annum, in the case of a Term SOFR Loan",
+          "printed": "(x) 2.00% per annum, in the case of any Base Rate Loan"
+        },
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "and 2.00% for Base Rate-based Term B Loans",
+          "printed": "2.00% for Base Rate-based Term B Loans"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_b_loans_prior_to_2025_refinancing_from_first_amendment.margin_term_sofr",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term B Loans (prior to 2025 refinancing, from First Amendment)",
+      "field": "margin_term_sofr",
+      "period_end": null,
+      "status": "known",
+      "value": "3.75",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (a)(ii)",
+          "quote": "(ii) on and after the First Amendment Effective Date and prior to the 2025 Refinancing Facility Effective Date, (x) 2.75% per annum, in the case of any Base Rate Loan or (y) 3.75% per annum, in the case of a Term SOFR Loan",
+          "printed": "(y) 3.75% per annum, in the case of a Term SOFR Loan"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_i_from_first_amendment_effective_date.leverage_ratio_band",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level I (from First Amendment Effective Date)",
+      "field": "leverage_ratio_band",
+      "period_end": null,
+      "status": "known",
+      "value": "Less than 2.5 to 1.0",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level I",
+          "quote": "I Less than 2.5 to 1.0 1.00% 2.00% 0.25%",
+          "printed": "Less than 2.5 to 1.0"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_i_from_first_amendment_effective_date.margin_base_rate_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level I (from First Amendment Effective Date)",
+      "field": "margin_base_rate_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "1.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level I",
+          "quote": "I Less than 2.5 to 1.0 1.00% 2.00% 0.25%",
+          "printed": "1.00%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_i_from_first_amendment_effective_date.margin_term_sofr_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level I (from First Amendment Effective Date)",
+      "field": "margin_term_sofr_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "2.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level I",
+          "quote": "I Less than 2.5 to 1.0 1.00% 2.00% 0.25%",
+          "printed": "2.00%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_i_from_first_amendment_effective_date.commitment_fee",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level I (from First Amendment Effective Date)",
+      "field": "commitment_fee",
+      "period_end": null,
+      "status": "known",
+      "value": "0.25",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level I",
+          "quote": "I Less than 2.5 to 1.0 1.00% 2.00% 0.25%",
+          "printed": "0.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_ii_from_first_amendment_effective_date.leverage_ratio_band",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level II (from First Amendment Effective Date)",
+      "field": "leverage_ratio_band",
+      "period_end": null,
+      "status": "known",
+      "value": "Greater than or equal to 2.5 to 1.0, but less than 3.0 to 1.0",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level II",
+          "quote": "II Greater than or equal to 2.5 to 1.0, but less than 3.0 to 1.0 1.25% 2.25% 0.30%",
+          "printed": "Greater than or equal to 2.5 to 1.0, but less than 3.0 to 1.0"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_ii_from_first_amendment_effective_date.margin_base_rate_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level II (from First Amendment Effective Date)",
+      "field": "margin_base_rate_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "1.25",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level II",
+          "quote": "II Greater than or equal to 2.5 to 1.0, but less than 3.0 to 1.0 1.25% 2.25% 0.30%",
+          "printed": "1.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_ii_from_first_amendment_effective_date.margin_term_sofr_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level II (from First Amendment Effective Date)",
+      "field": "margin_term_sofr_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "2.25",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level II",
+          "quote": "II Greater than or equal to 2.5 to 1.0, but less than 3.0 to 1.0 1.25% 2.25% 0.30%",
+          "printed": "2.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_ii_from_first_amendment_effective_date.commitment_fee",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level II (from First Amendment Effective Date)",
+      "field": "commitment_fee",
+      "period_end": null,
+      "status": "known",
+      "value": "0.30",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level II",
+          "quote": "II Greater than or equal to 2.5 to 1.0, but less than 3.0 to 1.0 1.25% 2.25% 0.30%",
+          "printed": "0.30%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iii_from_first_amendment_effective_date.leverage_ratio_band",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level III (from First Amendment Effective Date)",
+      "field": "leverage_ratio_band",
+      "period_end": null,
+      "status": "known",
+      "value": "Greater than or equal to 3.0 to 1.0, but less than 3.5 to 1.0",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level III",
+          "quote": "III Greater than or equal to 3.0 to 1.0, but less than 3.5 to 1.0 1.50% 2.50% 0.375%",
+          "printed": "Greater than or equal to 3.0 to 1.0, but less than 3.5 to 1.0"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iii_from_first_amendment_effective_date.margin_base_rate_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level III (from First Amendment Effective Date)",
+      "field": "margin_base_rate_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "1.50",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level III",
+          "quote": "III Greater than or equal to 3.0 to 1.0, but less than 3.5 to 1.0 1.50% 2.50% 0.375%",
+          "printed": "1.50%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iii_from_first_amendment_effective_date.margin_term_sofr_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level III (from First Amendment Effective Date)",
+      "field": "margin_term_sofr_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "2.50",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level III",
+          "quote": "III Greater than or equal to 3.0 to 1.0, but less than 3.5 to 1.0 1.50% 2.50% 0.375%",
+          "printed": "2.50%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iii_from_first_amendment_effective_date.commitment_fee",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level III (from First Amendment Effective Date)",
+      "field": "commitment_fee",
+      "period_end": null,
+      "status": "known",
+      "value": "0.375",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level III",
+          "quote": "III Greater than or equal to 3.0 to 1.0, but less than 3.5 to 1.0 1.50% 2.50% 0.375%",
+          "printed": "0.375%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iv_from_first_amendment_effective_date.leverage_ratio_band",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level IV (from First Amendment Effective Date)",
+      "field": "leverage_ratio_band",
+      "period_end": null,
+      "status": "known",
+      "value": "Greater than or equal to 3.5 to 1.0, but less than 4.25 to 1.0",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level IV",
+          "quote": "IV Greater than or equal to 3.5 to 1.0, but less than 4.25 to 1.0 1.75% 2.75% 0.45%",
+          "printed": "Greater than or equal to 3.5 to 1.0, but less than 4.25 to 1.0"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iv_from_first_amendment_effective_date.margin_base_rate_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level IV (from First Amendment Effective Date)",
+      "field": "margin_base_rate_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "1.75",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level IV",
+          "quote": "IV Greater than or equal to 3.5 to 1.0, but less than 4.25 to 1.0 1.75% 2.75% 0.45%",
+          "printed": "1.75%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iv_from_first_amendment_effective_date.margin_term_sofr_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level IV (from First Amendment Effective Date)",
+      "field": "margin_term_sofr_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "2.75",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level IV",
+          "quote": "IV Greater than or equal to 3.5 to 1.0, but less than 4.25 to 1.0 1.75% 2.75% 0.45%",
+          "printed": "2.75%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_iv_from_first_amendment_effective_date.commitment_fee",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level IV (from First Amendment Effective Date)",
+      "field": "commitment_fee",
+      "period_end": null,
+      "status": "known",
+      "value": "0.45",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level IV",
+          "quote": "IV Greater than or equal to 3.5 to 1.0, but less than 4.25 to 1.0 1.75% 2.75% 0.45%",
+          "printed": "0.45%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_v_from_first_amendment_effective_date.leverage_ratio_band",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level V (from First Amendment Effective Date)",
+      "field": "leverage_ratio_band",
+      "period_end": null,
+      "status": "known",
+      "value": "Greater than or equal to 4.25 to 1.0",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level V",
+          "quote": "V Greater than or equal to 4.25 to 1.0 2.00% 3.00% 0.50%",
+          "printed": "Greater than or equal to 4.25 to 1.0"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_v_from_first_amendment_effective_date.margin_base_rate_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level V (from First Amendment Effective Date)",
+      "field": "margin_base_rate_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "2.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level V",
+          "quote": "V Greater than or equal to 4.25 to 1.0 2.00% 3.00% 0.50%",
+          "printed": "2.00%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_v_from_first_amendment_effective_date.margin_term_sofr_loans",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level V (from First Amendment Effective Date)",
+      "field": "margin_term_sofr_loans",
+      "period_end": null,
+      "status": "known",
+      "value": "3.00",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level V",
+          "quote": "V Greater than or equal to 4.25 to 1.0 2.00% 3.00% 0.50%",
+          "printed": "3.00%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans_pricing_grid_level_v_from_first_amendment_effective_date.commitment_fee",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans pricing grid, Level V (from First Amendment Effective Date)",
+      "field": "commitment_fee",
+      "period_end": null,
+      "status": "known",
+      "value": "0.50",
+      "value_type": "percent",
+      "unit": "percent",
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Applicable Rate” clause (b) > grid “From and after the First Amendment Effective Date” > Level V",
+          "quote": "V Greater than or equal to 4.25 to 1.0 2.00% 3.00% 0.50%",
+          "printed": "0.50%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_loans_and_revolving_credit_loans.applicable_pricing_level.2025-09-30",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A Loans and Revolving Credit Loans",
+      "field": "applicable_pricing_level",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "The level depends on the Leverage Ratio delivered under Section 5.01; no filing in the corpus states the level or the delivered ratio."
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_1_facility.amortization",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A-1 Facility",
+      "field": "amortization",
+      "period_end": null,
+      "status": "known",
+      "value": "Quarterly: 1.875% of the Closing Date principal through March 31, 2027, then 2.50%; balance at maturity",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 2.07(a)(i)",
+          "quote": "in an aggregate principal amount for each such date equal to (A) on or prior to March 31, 2027, 1.875% and (B) following March 31, 2027, 2.50%",
+          "printed": "(A) on or prior to March 31, 2027, 1.875% and (B) following March 31, 2027, 2.50%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_a_2_facility.amortization",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term A-2 Facility",
+      "field": "amortization",
+      "period_end": null,
+      "status": "known",
+      "value": "Quarterly from March 31, 2025: 1.25% of the principal funded on the First Amendment Effective Date; balance at maturity",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 2.07(a)(ii)",
+          "quote": "beginning with March 31, 2025",
+          "printed": "beginning with March 31, 2025"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 2.07(a)(ii)",
+          "quote": "equal to 1.25% of the aggregate principal amount of the Term A-2 Loans funded on the First Amendment Effective Date",
+          "printed": "1.25%"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.term_b_facility_and_revolving_credit_facility.amortization",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Term B Facility and Revolving Credit Facility",
+      "field": "amortization",
+      "period_end": null,
+      "status": "known",
+      "value": "None scheduled; Term B Loans due at the Term B maturity date",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "The Revolving Credit Facility and the Term B Loans are not subject to amortization",
+          "printed": "not subject to amortization"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.letter_of_credit_sublimit.amount",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Letter of Credit Sublimit",
+      "field": "amount",
+      "period_end": null,
+      "status": "known",
+      "value": "75000000",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "units",
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Letter of Credit Sublimit”",
+          "quote": "“Letter of Credit Sublimit” means an amount equal to $75,000,000.",
+          "printed": "$75,000,000"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.foreign_borrower_exposure.cap_on_revolving_credit_exposure",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Foreign Borrower Exposure",
+      "field": "cap_on_revolving_credit_exposure",
+      "period_end": null,
+      "status": "known",
+      "value": "200000000",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "units",
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 2.01(c)",
+          "quote": "the Foreign Borrower Exposure shall not exceed $200,000,000",
+          "printed": "$200,000,000"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.credit_agreement.revolving_credit_facility.commitment_per_credit_agreement_text",
+      "module": "CP-4",
+      "topic": "credit_agreement",
+      "subject": "Revolving Credit Facility",
+      "field": "commitment_per_credit_agreement_text",
+      "period_end": null,
+      "status": "missing",
+      "value": null,
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "units",
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "Exhibit 10.1 text refers to Schedule 2.01 and the First Amendment schedules for commitments and prints no revolver amount; the $600 million is stated only in the Q3 10-Q."
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.leverage_ratio_covenant_section_6_13.type_and_test",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Leverage Ratio covenant (Section 6.13)",
+      "field": "type_and_test",
+      "period_end": null,
+      "status": "known",
+      "value": "Maintenance covenant: Leverage Ratio (Consolidated Total Debt to Consolidated EBITDA for the four most recent fiscal quarters) must not exceed the Permitted Leverage Ratio on the last day of each fiscal quarter; for the sole benefit of the Revolving Credit Lenders and Term A Lenders",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 6.13",
+          "quote": "The Company will not permit the Leverage Ratio on the last day of any fiscal quarter of the Company",
+          "printed": "on the last day of any fiscal quarter"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Section 6.13",
+          "quote": "solely for the benefit of the Revolving Credit Lenders and the Term A Lenders",
+          "printed": "solely for the benefit of the Revolving Credit Lenders and the Term A Lenders"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Leverage Ratio”",
+          "quote": "“Leverage Ratio” means, on any date, the ratio of (a) Consolidated Total Debt as of such date to (b) Consolidated EBITDA for the period of four consecutive fiscal quarters",
+          "printed": "ratio of (a) Consolidated Total Debt"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.permitted_leverage_ratio_quarters_ending_on_or_after_2025_09_30.maximum",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Permitted Leverage Ratio, quarters ending on or after 2025-09-30",
+      "field": "maximum",
+      "period_end": null,
+      "status": "known",
+      "value": "4.25",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Permitted Leverage Ratio”",
+          "quote": "ending on or after September 30, 2025, 4.25 to 1.00",
+          "printed": "4.25 to 1.00"
+        },
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
+          "quote": "in the case of any fiscal quarter ending on or following September 30, 2025, 4.25 to 1.00",
+          "printed": "4.25 to 1.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.permitted_leverage_ratio_quarters_ending_2024_09_30_to_before_2025_09_30.maximum",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Permitted Leverage Ratio, quarters ending 2024-09-30 to before 2025-09-30",
+      "field": "maximum",
+      "period_end": null,
+      "status": "known",
+      "value": "4.50",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Permitted Leverage Ratio”",
+          "quote": "ending on or after September 30, 2024, and prior to September 30, 2025, 4.50 to 1.00",
+          "printed": "4.50 to 1.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.permitted_leverage_ratio_quarters_ending_before_2024_09_30.maximum",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Permitted Leverage Ratio, quarters ending before 2024-09-30",
+      "field": "maximum",
+      "period_end": null,
+      "status": "known",
+      "value": "4.75",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Permitted Leverage Ratio”",
+          "quote": "ending prior to September 30, 2024, 4.75 to 1.00",
+          "printed": "4.75 to 1.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.permitted_leverage_ratio_material_acquisition_step_up.increase",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Permitted Leverage Ratio, Material Acquisition step-up",
+      "field": "increase",
+      "period_end": null,
+      "status": "known",
+      "value": "0.25",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Permitted Leverage Ratio”",
+          "quote": "the maximum Permitted Leverage Ratio shall be increased by 0.25 to 1.00",
+          "printed": "0.25 to 1.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.permitted_leverage_ratio_absolute_cap.maximum",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Permitted Leverage Ratio, absolute cap",
+      "field": "maximum",
+      "period_end": null,
+      "status": "known",
+      "value": "5.00",
+      "value_type": "decimal",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Permitted Leverage Ratio”",
+          "quote": "shall at no time exceed 5.00 to 1.00",
+          "printed": "5.00 to 1.00"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.permitted_leverage_ratio_material_acquisition_step_up.duration",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Permitted Leverage Ratio, Material Acquisition step-up",
+      "field": "duration",
+      "period_end": null,
+      "status": "known",
+      "value": "Applies at the end of the quarter of the Material Acquisition and each of the following three consecutive fiscal quarters, if the Company elects by notice within 45 days",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Permitted Leverage Ratio”",
+          "quote": "at the end of and for the fiscal quarter during which such Material Acquisition shall have been consummated and at the end of and for each of the following three consecutive fiscal quarters",
+          "printed": "each of the following three consecutive fiscal quarters"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.consolidated_total_debt_covenant_definition.receivables_facility_and_cash_netting",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Consolidated Total Debt (covenant definition)",
+      "field": "receivables_facility_and_cash_netting",
+      "period_end": null,
+      "status": "known",
+      "value": "Includes Third Party Interests in Permitted Receivables Facilities; deducts Unrestricted Cash above $150,000,000",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Consolidated Total Debt”",
+          "quote": "the amount of Third Party Interests in respect of Permitted Receivables Facilities",
+          "printed": "Third Party Interests in respect of Permitted Receivables Facilities"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Article I > “Consolidated Total Debt” clause (c)",
+          "quote": "minus (c) the excess, if any, of the amount of Unrestricted Cash owned by the Company and its consolidated Restricted Subsidiaries as of such date over $150,000,000",
+          "printed": "over $150,000,000"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.leverage_ratio_covenant_section_6_13.actual_ratio_and_compliance.2025-09-30",
+      "module": "CP-4",
+      "topic": "financial_covenant",
+      "subject": "Leverage Ratio covenant (Section 6.13)",
+      "field": "actual_ratio_and_compliance",
+      "period_end": "2025-09-30",
+      "status": "missing",
+      "value": null,
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [],
+      "derivation": null,
+      "gap_reason": "Neither the Q3 10-Q nor Exhibit 10.1 states the Leverage Ratio achieved or a compliance conclusion at 2025-09-30 (Consolidated EBITDA is covenant-defined and not reported)."
+    },
+    {
+      "fact_id": "CP-1.restatement.form_10_k_a_for_fy2024.purpose",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Form 10-K/A for FY2024",
+      "field": "purpose",
+      "period_end": null,
+      "status": "known",
+      "value": "Amends the FY2024 10-K to restate Item 9A (controls not effective due to a material weakness) and, in connection with it, to revise previously issued financial statements",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Explanatory Note",
+          "quote": "to amend and restate Part II, Item 9A of the Original Report to update management’s evaluation of disclosure controls and procedures",
+          "printed": "to amend and restate Part II, Item 9A of the Original Report"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Explanatory Note",
+          "quote": "management is also revising the Company’s previously issued consolidated financial statements as of December 31, 2024 and 2023 and for each of the three years in the period ended December 31, 2024",
+          "printed": "management is also revising the Company’s previously issued consolidated financial statements"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.original_fy2024_10_k.filed_date",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Original FY2024 10-K",
+      "field": "filed_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-03-03",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Explanatory Note",
+          "quote": "as filed with the Securities and Exchange Commission (the “SEC”) on March 3, 2025",
+          "printed": "March 3, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.form_10_k_a_for_fy2024.filed_date",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Form 10-K/A for FY2024",
+      "field": "filed_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-11-05",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "2024 Form 10-K/A filed with the SEC on November 5, 2025",
+          "printed": "November 5, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.misstatements.materiality_and_form_of_correction",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Misstatements",
+      "field": "materiality_and_form_of_correction",
+      "period_end": null,
+      "status": "known",
+      "value": "Determined immaterial to each previously issued interim and annual period, but corrected by revising all periods presented because correcting the cumulative error in the current period would be material to the period ended 2025-09-30 and expected material for FY2025",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "The Company determined that the misstatements were not material to any previously issued interim or annual financial statements. However, the Company is revising the financial statements for all periods presented",
+          "printed": "not material to any previously issued interim or annual financial statements"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "correcting the cumulative misstatement in the current period would be material to its results of operations for the period ended September 30, 2025",
+          "printed": "would be material to its results of operations for the period ended September 30, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.misstatements.primary_cause",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Misstatements",
+      "field": "primary_cause",
+      "period_end": null,
+      "status": "known",
+      "value": "Subscription software-related revenue",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "misstatements in its previously issued financial statements related to subscription software-related revenue",
+          "printed": "subscription software-related revenue"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.misstatements.other_causes",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Misstatements",
+      "field": "other_causes",
+      "period_end": null,
+      "status": "known",
+      "value": "Incorrect treatment of certain network-related revenue and costs; remeasurement of indirect taxes denominated in foreign currencies (previously disclosed and revised in Q2 2025)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "relating primarily to the incorrect treatment of certain network-related revenue and costs and remeasurement of indirect taxes denominated in foreign currencies",
+          "printed": "incorrect treatment of certain network-related revenue and costs"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.periods_revised_in_the_10_k_a.annual_and_quarterly",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Periods revised in the 10-K/A",
+      "field": "annual_and_quarterly",
+      "period_end": null,
+      "status": "known",
+      "value": "Years ended 2024, 2023 and 2022 (balance sheets at 2024 and 2023); quarterly information for all quarters of fiscal 2024 and 2023 (Note 19)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 Revision of Previously Issued Consolidated Financial Statements",
+          "quote": "management is revising the Company’s previously issued consolidated financial statements as of and for the years ended December 31, 2024, December 31, 2023, and December 31, 2022",
+          "printed": "years ended December 31, 2024, December 31, 2023, and December 31, 2022"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 Revision of Previously Issued Consolidated Financial Statements",
+          "quote": "financial information for the quarterly periods within fiscal years 2024 and 2023",
+          "printed": "quarterly periods within fiscal years 2024 and 2023"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.periods_revised_in_the_q3_2025_10_q.prior_year_comparatives",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Periods revised in the Q3 2025 10-Q",
+      "field": "prior_year_comparatives",
+      "period_end": null,
+      "status": "known",
+      "value": "Three and nine months ended 2024-09-30 shown as retrospectively adjusted (as reported, adjustments, as revised)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 15 Revisions of Previously Issued Financial Statements",
+          "quote": "results of operations for the three and nine months ended September 30, 2024, which have been retrospectively adjusted",
+          "printed": "three and nine months ended September 30, 2024, which have been retrospectively adjusted"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.q1_and_q2_2025_interim_periods.revision_status",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Q1 and Q2 2025 interim periods",
+      "field": "revision_status",
+      "period_end": null,
+      "status": "known",
+      "value": "Not yet revised: revisions for the quarters ended 2025-03-31 and 2025-06-30 will appear in the 10-Qs for the quarters ending 2026-03-31 and 2026-06-30, so the Q1 and Q2 2025 10-Qs in the corpus carry the original (unrevised) figures",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "The revisions for the quarterly periods ended March 31, 2025 and June 30, 2025 will be included in our future Quarterly Reports on Form 10-Q for the quarterly periods ending March 31, 2026 and June 30, 2026.",
+          "printed": "quarterly periods ended March 31, 2025 and June 30, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.material_weakness_as_of_2024_12_31.description",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Material weakness (as of 2024-12-31)",
+      "field": "description",
+      "period_end": null,
+      "status": "known",
+      "value": "Controls over contract cancellations and customer credits affecting revenue from subscription software arrangements and the related unbilled accounts receivable and contract liabilities reconciliations were not designed and maintained effectively; management and the auditor now conclude internal control over financial reporting was not effective",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Report of Independent Registered Public Accounting Firm",
+          "quote": "related to the Company not designing and maintaining effective controls over contract cancellations and customer credits affecting the amount of revenue derived from subscription software arrangements",
+          "printed": "contract cancellations and customer credits"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Report of Independent Registered Public Accounting Firm",
+          "quote": "Management and we previously concluded that the Company maintained effective internal control over financial reporting as of December 31, 2024.",
+          "printed": "previously concluded that the Company maintained effective internal control over financial reporting"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.fy2024_income_statement_lines_adjusted.line_items",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "FY2024 income statement lines adjusted",
+      "field": "line_items",
+      "period_end": null,
+      "status": "known",
+      "value": "Product revenue; service revenue (hence total revenue); cost of products; selling, general and administrative expenses; research and development expenses; loss on extinguishment of debt; other (expense) income, net; income tax expense; net income and EPS (cost of services unchanged in 2024)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Statements of Operations, year ended 2024 (as reported, adjustments, as revised)",
+          "quote": "Product revenue $ 995 $ (2) $ 993 $ 1,030 $ — $ 1,030 Service revenue 3,322 (10) 3,312 3,161 (5) 3,156 Total revenue 4,317 (12) 4,305 4,191 (5) 4,186 Cost of products 839 1 840",
+          "printed": "Product revenue $ 995 $ (2) $ 993"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Statements of Operations, year ended 2024",
+          "quote": "Selling, general and administrative expenses 518 3 521 585 — 585 Research and development expenses 66 (4) 62",
+          "printed": "Research and development expenses 66 (4) 62"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Statements of Operations, year ended 2024",
+          "quote": "Income tax expense 47 (3) 44 239 (2) 237 Net income 92 (11) 81",
+          "printed": "Income tax expense 47 (3) 44"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.fy2024_balance_sheet_lines_adjusted.line_items",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "FY2024 balance sheet lines adjusted",
+      "field": "line_items",
+      "period_end": null,
+      "status": "known",
+      "value": "Accounts receivable, net; other current assets; accounts payable; payroll and benefits liabilities; contract liabilities; settlement liabilities; other current liabilities; long-term borrowings; retained earnings; accumulated other comprehensive income (loss)",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Balance Sheets, December 31, 2024 (as reported, adjustments, as revised)",
+          "quote": "Accounts receivable, net $ 588 $ (7) $ 581 $ 710 $ (3) $ 707 Other current assets 242 (10) 232 254 (10) 244 Total current assets 1,766 (17) 1,749 1,874 (13) 1,861 Total assets 5,552 (17) 5,535",
+          "printed": "Accounts receivable, net $ 588 $ (7) $ 581"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Balance Sheets, December 31, 2024",
+          "quote": "Accounts payable 562 2 564 505 — 505 Payroll and benefits liabilities 147 (2) 145 149 — 149 Contract liabilities 315 13 328 325 7 332 Settlement liabilities 156 15 171 218 16 234 Other current liabilities 441 (8) 433 486 (9) 477 Total current liabilities 1,702 20 1,722",
+          "printed": "Contract liabilities 315 13 328"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Balance Sheets, December 31, 2024",
+          "quote": "Long-term borrowings 2,855 4 2,859 2,938 — 2,938 Total liabilities 5,288 24 5,312",
+          "printed": "Long-term borrowings 2,855 4 2,859"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Balance Sheets, December 31, 2024",
+          "quote": "Retained earnings 231 (43) 188 147 (30) 117 Accumulated other comprehensive income (loss) (19) 2 (17) 86 3 89 Total Atleos stockholders’ equity 260 (41) 219",
+          "printed": "Retained earnings 231 (43) 188"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.fy2024_debt_related_items_revised.line_items",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "FY2024 debt-related items revised",
+      "field": "line_items",
+      "period_end": null,
+      "status": "known",
+      "value": "Long-term borrowings increased by 4 (2,855 to 2,859) and loss on extinguishment of debt increased by 4 (20 to 24); amounts are in USD millions and detailed in the financial gold",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Balance Sheets",
+          "quote": "Long-term borrowings 2,855 4 2,859",
+          "printed": "Long-term borrowings 2,855 4 2,859"
+        },
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 18 > Statements of Cash Flows, year ended 2024",
+          "quote": "Loss on debt extinguishment 20 4 24",
+          "printed": "Loss on debt extinguishment 20 4 24"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.cash_flows.effect_on_operating_cash_flow",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Cash flows",
+      "field": "effect_on_operating_cash_flow",
+      "period_end": null,
+      "status": "known",
+      "value": "No impact on net cash provided by operating activities, or on total operating, investing or financing cash flows, in any period presented",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Note 1 > Revision of Previously Issued Financial Statements",
+          "quote": "with no impact to net cash provided by operating activities, as the adjustments did not impact the total operating, investing, or financing cash flows for any period presented",
+          "printed": "no impact to net cash provided by operating activities"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-1.restatement.executive_compensation.clawback",
+      "module": "CP-1",
+      "topic": "restatement",
+      "subject": "Executive compensation",
+      "field": "clawback",
+      "period_end": null,
+      "status": "known",
+      "value": "Preliminary analysis expects incentive compensation to be clawed back from five current and former executives",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "MD&A > Revision",
+          "quote": "we expect there will be certain incentive compensation that is required to be clawed back from five current and former executives",
+          "printed": "clawed back from five current and former executives"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.legal_name",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "legal_name",
+      "period_end": null,
+      "status": "known",
+      "value": "NCR ATLEOS CORPORATION",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > registrant name",
+          "quote": "NCR ATLEOS CORPORATION (Exact name of registrant as specified in its charter)",
+          "printed": "NCR ATLEOS CORPORATION"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.ticker",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "ticker",
+      "period_end": null,
+      "status": "known",
+      "value": "NATL",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > Section 12(b) securities",
+          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
+          "printed": "NATL"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.exchange",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "exchange",
+      "period_end": null,
+      "status": "known",
+      "value": "New York Stock Exchange",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > Section 12(b) securities",
+          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
+          "printed": "New York Stock Exchange"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.state_of_incorporation",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "state_of_incorporation",
+      "period_end": null,
+      "status": "known",
+      "value": "Maryland",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "Maryland 92-3588560 (State or other jurisdiction of incorporation or organization)",
+          "printed": "Maryland"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.principal_executive_offices",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "principal_executive_offices",
+      "period_end": null,
+      "status": "known",
+      "value": "864 Spring Street NW Atlanta, GA 30308",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "864 Spring Street NW Atlanta, GA 30308 (Address of principal executive offices)",
+          "printed": "864 Spring Street NW Atlanta, GA 30308"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.commission_file_number",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "commission_file_number",
+      "period_end": null,
+      "status": "known",
+      "value": "001-41728",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "Commission File Number: 001-41728",
+          "printed": "001-41728"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.filer_status",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "filer_status",
+      "period_end": null,
+      "status": "known",
+      "value": "Large accelerated filer",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > filer check boxes",
+          "quote": "Large accelerated filer ☑ Accelerated filer ☐",
+          "printed": "Large accelerated filer ☑"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.fiscal_year_end",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "fiscal_year_end",
+      "period_end": null,
+      "status": "known",
+      "value": "December 31",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Cover page",
+          "quote": "For the fiscal year ended December 31, 2024",
+          "printed": "December 31, 2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.business_description",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "business_description",
+      "period_end": null,
+      "status": "known",
+      "value": "Industry-leading financial technology company providing self-directed banking solutions",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 1 Basis of Presentation",
+          "quote": "is an industry-leading financial technology company providing self-directed banking solutions to a global customer base",
+          "printed": "financial technology company providing self-directed banking solutions"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Credit_Agreement.borrower_entity",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Credit Agreement",
+      "field": "borrower_entity",
+      "period_end": null,
+      "status": "known",
+      "value": "NCR Atleos Corporation (the Company), a Borrower alongside Foreign Borrowers",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > conformed Credit Agreement > cover",
+          "quote": "among NCR ATLEOS CORPORATION, as the Company and as a Borrower, The FOREIGN BORROWERS from time to time Party Hereto",
+          "printed": "NCR ATLEOS CORPORATION, as the Company and as a Borrower"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2025_09_30.period_covered.2025-09-30",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Form 10-Q 2025-09-30",
+      "field": "period_covered",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2025-09-30",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "For the quarterly period ended September 30, 2025",
+          "printed": "September 30, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_K/A_2024_12_31.period_covered.2024-12-31",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Form 10-K/A 2024-12-31",
+      "field": "period_covered",
+      "period_end": "2024-12-31",
+      "status": "known",
+      "value": "2024-12-31",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Cover page",
+          "quote": "For the fiscal year ended December 31, 2024",
+          "printed": "December 31, 2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Refinancing_Facility_Agreement_and_conformed_Credit_Agreement.agreement_date",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Refinancing Facility Agreement and conformed Credit Agreement",
+      "field": "agreement_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-09-18",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > conformed Credit Agreement > cover",
+          "quote": "as amended as of September 18, 2025, among NCR ATLEOS CORPORATION",
+          "printed": "September 18, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Other_debt_ATMaaS_financing_program.master_loan_agreement_capacity",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Other debt (ATMaaS financing program)",
+      "field": "master_loan_agreement_capacity",
+      "period_end": null,
+      "status": "known",
+      "value": "20",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Other Debt paragraph",
+          "quote": "The total amount available under the master loan agreement is $20 million",
+          "printed": "$20 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    }
+  ],
+  "not_golden": [
+    {
+      "module": "CP-1",
+      "why": "Covered by financial_gold (Codex reviewed history incl. original-versus-revised values); this file adds only the restatement narrative as CP-1 text facts."
+    },
+    {
+      "module": "CP-MODEL",
+      "why": "Judgment module: forecast and model drivers are analyst choices, not filing facts."
+    },
+    {
+      "module": "CP-5",
+      "why": "Judgment module: credit assessment and risk synthesis."
+    },
+    {
+      "module": "CP-6",
+      "why": "Judgment module: portfolio recommendation; also depends on user-supplied holdings, NAV and limits."
+    },
+    {
+      "module": "CP-3",
+      "why": "Relative-value quotes are user input; the filings carry no market quotes or price talk. Only the fair value of debt (a filing disclosure, not a quote) is recorded under CP-2."
+    },
+    {
+      "module": "CP-8",
+      "why": "User input: needs a prior decision record (attachments.prior_case); none exists for this issuer."
+    }
+  ],
+  "needs_user_input": [
+    {
+      "context_path": "attachments.prior_case",
+      "modules": [
+        "CP-8"
+      ],
+      "why": "CP-8 requires a prior decision record; none is available, so the flag stays false."
+    },
+    {
+      "context_path": "attachments.portfolio_workbook",
+      "modules": [
+        "CP-6",
+        "CP-8"
+      ],
+      "why": "Portfolio holdings, NAV and limits are user-supplied; the flag stays false."
+    },
+    {
+      "context_path": "quotes",
+      "modules": [
+        "CP-3"
+      ],
+      "why": "Observed quotes or price talk (bid, ask, price, yield, spread, date, provider) are third-party or user data absent from filings; the Q3 10-Q gives only a Level 2 fair value of long-term debt ($3,072 million)."
+    },
+    {
+      "context_path": "valuation.issuer_market",
+      "modules": [
+        "CP-3"
+      ],
+      "why": "Share price, market cap and EV are market data not in the filings (the Q3 10-Q cover gives only 73,904,136 shares at 2025-10-31); valuation basis stays at the form default auto."
+    },
+    {
+      "context_path": "ratings",
+      "modules": [
+        "CP-5"
+      ],
+      "why": "Agency ratings are not in the three cited sources; left empty rather than recalled from memory."
+    },
+    {
+      "context_path": "assumptions",
+      "modules": [
+        "CP-MODEL",
+        "CP-5"
+      ],
+      "why": "Pinned assumptions are optional user choices; all stay null so the model chooses and labels them."
+    }
+  ],
+  "limitations": [
+    "Only the Q3 2025 10-Q, the FY2024 10-K/A and Exhibit 10.1 (as extracted from the corpus HTML) were used; Q1/Q2 2025 and Q3 2024 10-Qs were not mined for module facts.",
+    "The original FY2024 10-K (filed 2025-03-03) is not in the corpus; as-reported amounts appear only through Note 18 of the 10-K/A.",
+    "The Exhibit 10.1 conformed text shows deleted and added text without markup in the extracted text; pricing and maturity quotes were chosen where the post-amendment clause is self-identifying (e.g. clause (a)(iii) of Applicable Rate, the Maturity Date definition).",
+    "Per-tranche outstanding balances, the applicable pricing level, the achieved leverage ratio and covenant compliance at 2025-09-30 are not stated in the sources and are recorded as missing.",
+    "Exhibit 10.1 does not print the revolver commitment (Schedule 2.01 is not in the text); the 600 comes from the Q3 10-Q.",
+    "Amounts are as printed: USD millions in the 10-Q and 10-K/A, exact USD in Exhibit 10.1 (scale units). Derived values are computed by derive.py in exact Decimal.",
+    "Sector and the Q3 revision of 2024 comparatives are summarised, not quantified, to avoid duplicating financial_gold.",
+    "2,912 is the company's own \"our debt totaled\" figure (10-Q MD&A): principal of funded borrowings, excluding finance leases. Codex's financial_gold marks total_debt FY2025Q3 missing because finance-lease liabilities are not located; its funded_borrowing_carrying_ex_finance_lease (2,869) matches this golden's derived carrying amount, so the two do not contradict.",
+    "The Subsidiary Guarantor names are the Loan Parties (other than the Company) that signed the 2025-09-18 Refinancing Facility Agreement; the source does not show whether that list is complete. Loan Party status of the seven is inferred from Section 9 (\"Reaffirming Loan Parties\"), the parties clause, and their being the only signatories other than the Company, the Administrative Agent and the Lenders.",
+    "identity.sector is set from the filing's own description of the business (CP-0 identity business_description), not a classification label."
+  ],
+  "preparer": "mx-feature (Sonnet) goldens preparer: natl"
+}

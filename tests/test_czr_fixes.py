@@ -259,6 +259,21 @@ def test_annual_header_with_full_date_cells_does_not_fall_back_to_balances() -> 
     assert fw._column_periods(headers, (*q4, *FILED_PERIODS)) is None
 
 
+def test_annual_header_with_full_date_cells_maps_fy_periods_only() -> None:
+    headers = (
+        "Years Ended December 31,",
+        "(In millions) | December 31, 2025 | December 31, 2024",
+    )
+    fy25 = _period("fy25", "FY", date(2025, 12, 31))
+    fy24 = _period("fy24", "FY", date(2024, 12, 31))
+    q425 = _period("q425", "QUARTER", date(2025, 12, 31), 4)
+    q424 = _period("q424", "QUARTER", date(2024, 12, 31), 4)
+    assert fw._column_periods(headers, (fy25, fy24, q425, q424)) == _sets("fy25", "fy24")
+    assert fw._column_periods(headers, (q425, q424)) is None
+    wrong_day = ("Years Ended December 31,", "(In millions) | December 30, 2025")
+    assert fw._column_periods(wrong_day, (fy25,)) is None
+
+
 def test_balance_date_is_wider_than_a_three_months_column() -> None:
     periods = FILED_PERIODS[:1] + FILED_PERIODS[2:3]  # q2_26 and ytd26, both 2026-06-30
     assert fw._column_periods(("(In millions) | June 30, 2026",), periods) == _sets("q2_26 ytd26")

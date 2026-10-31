@@ -14,3 +14,4 @@
 - 11:09 shc fix round 1 (mx-feature a9827d55): G-1, R1, R2 fixed; controller rerun check.py 0, derive.py 0; review had no High/Medium, so no re-review; SHC DONE. agent=mx-feature fix-rounds=1
 - 11:09 tdg fix round 1 (mx-feature af476463): R1-R5, G-5, G-6 fixed; controller rerun check.py 0, derive.py 0; probe_tdg 0; scoped re-review of R1/R2 dispatched
 - 11:09 bgs fix round 1 (mx-feature ae40544c): G-1, G-3, R1-R5 fixed; controller rerun check.py 0, derive.py 0; probe_gaps 0; R1 (Medium) was a report note, verified by controller grep; BGS DONE. agent=mx-feature fix-rounds=1
+- 11:10 tdg scoped re-review R1/R2 (mx-feature a6dbbfd7): APPROVE; check.py 0; TDG DONE. agent=mx-feature fix-rounds=1

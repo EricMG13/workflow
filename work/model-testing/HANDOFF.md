@@ -116,3 +116,4 @@ Prerequisites before any live run:
   - resume the framework design (section 4).
 - **SHC done (~12:20):** fix round 1 applied; check and derive exit 0; no re-review needed (Low/Info only).
 - **BGS done (~12:30):** fix round 1 applied; check and derive exit 0. **TDG:** fix round 1 applied (check 0); scoped re-review of R1/R2 running.
+- **TDG done (~12:35):** scoped re-review APPROVE. **Three goldens done (TDG, SHC, BGS).** Left: IHRT, NATL, LTH (reviews then fix rounds).

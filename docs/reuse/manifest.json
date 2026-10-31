@@ -1826,6 +1826,123 @@
       "sha256": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
       "reason": "OI-20 (B7): validate_source_context refuses a blank event_scan_explanation (prose.is_blank), one issue per source whatever the scan state; no other rule changes.",
       "review": "docs/rulings/2026-10-30-open-items.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "5dc981d72a690f3d0ce04fbd7711b56609bd99b3745a756069c795f84aa99514",
+      "project_commit": "a147d8163c39a4d1752627af8e1a3e7a3222989e",
+      "sha256": "b6c5e3edf84fb80f2dd3f920f0da8627baed778f6cf4fa7c6f474e604f54224c",
+      "reason": "H03 (s8-vii A): _RUN_TEXT_FIELDS adds (\"CP-L10\", \"TL10.4\", \"decision_impact\"), the validated TL10.3 credit_transmission text; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "prior_project_sha256": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
+      "project_commit": "a147d8163c39a4d1752627af8e1a3e7a3222989e",
+      "sha256": "d0cf155b79767c4ec70c731a87a3aa77e596c05169d966176d276b199898b4be",
+      "reason": "H09 (s8-vii A): _lacks treats a prose.is_blank scope dimension as missing; _disagreements skips blank values; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/statement_extract.py",
+      "imported_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "prior_project_sha256": "d7e15269089f8d5597586206ba2efa730eaa4694c5c2b285871aa283c15c8ff5",
+      "project_commit": "0a4917edc602a52328ff62d91e2268d4fcb3bcca",
+      "sha256": "d9127518468eb4b7d043f1f642a930b58ac5a0b447c6cd9ae2128ff7d8dc9d9f",
+      "reason": "D1-D3 (s8-vii B): year-valued labelled rows are data unless the label is a period/unit caption (D2); a (n<=2 digits) footnote marker before N+1 values is dropped and flagged (D3); ExtractedTable.omitted records unparsed candidate lines (D1); user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/statement_extract.py",
+      "imported_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "prior_project_sha256": "d9127518468eb4b7d043f1f642a930b58ac5a0b447c6cd9ae2128ff7d8dc9d9f",
+      "project_commit": "4ed0f63cc3928290df06d620c050395edd78b474",
+      "sha256": "3fd324ec36dba89b49051d46973f860a8e394524b80a4c4686075da54d2d96de",
+      "reason": "D1-D3 fix 1 (s8-vii B): mypy-strict rename; separator rows of only nil dashes and pipes are not omitted candidates; literal word sets.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/cash_bridge.py",
+      "imported_sha256": "cda9bacb342bb6460e322aff078a61ab993c518604aca30ce99a6ecd1eb6207e",
+      "prior_project_sha256": "cda9bacb342bb6460e322aff078a61ab993c518604aca30ce99a6ecd1eb6207e",
+      "project_commit": "d6ca9b631717913fed168d809de9343aeaa35fac",
+      "sha256": "1bae3af59e926a996672376bbb606e126fc932b8201a813370c20f1e2283ffc8",
+      "reason": "CZR cash scope (s8-vii C): CashMovementBridge.cash_scope declares restricted-cash balances in the CFS cash scope (dropped from JSON when None); optional BS item restricted_cash_noncurrent; NCF_CASH_MOVEMENT single and constructed checks sum each declared balance's change; guards in cash_bridge; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/financial_contracts.py",
+      "imported_sha256": "5881b5287e8c871c078d7f64cb9c14bb191b107b556930308aa226a5d191d8a9",
+      "prior_project_sha256": "5881b5287e8c871c078d7f64cb9c14bb191b107b556930308aa226a5d191d8a9",
+      "project_commit": "d6ca9b631717913fed168d809de9343aeaa35fac",
+      "sha256": "527090d4c2a6ed38f21eb5e2022d7508a1b2421f07240e31bb58e6a4695a375b",
+      "reason": "CZR cash scope (s8-vii C): CashMovementBridge.cash_scope declares restricted-cash balances in the CFS cash scope (dropped from JSON when None); optional BS item restricted_cash_noncurrent; NCF_CASH_MOVEMENT single and constructed checks sum each declared balance's change; guards in cash_bridge; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/financial_reconciliation.py",
+      "imported_sha256": "03e6ea036882a6dbcf3df689d4f81b6876244851e253f88a25d568e6da5a54fc",
+      "prior_project_sha256": "03e6ea036882a6dbcf3df689d4f81b6876244851e253f88a25d568e6da5a54fc",
+      "project_commit": "d6ca9b631717913fed168d809de9343aeaa35fac",
+      "sha256": "11590b9f2efdb73b53d8da73688482bd17dfbe104ea0192958410bc39a1c658a",
+      "reason": "CZR cash scope (s8-vii C): CashMovementBridge.cash_scope declares restricted-cash balances in the CFS cash scope (dropped from JSON when None); optional BS item restricted_cash_noncurrent; NCF_CASH_MOVEMENT single and constructed checks sum each declared balance's change; guards in cash_bridge; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/period_reconciliation.py",
+      "imported_sha256": "e3c0e5d9f0e91537e7aaeddac0aebcb426a4bdbdc11dac4b2b86716e782302c0",
+      "prior_project_sha256": "e3c0e5d9f0e91537e7aaeddac0aebcb426a4bdbdc11dac4b2b86716e782302c0",
+      "project_commit": "d6ca9b631717913fed168d809de9343aeaa35fac",
+      "sha256": "c28a050079da88379fd27aa0dd7a314aea42029a11b954ade960d4bb2c87897b",
+      "reason": "CZR cash scope (s8-vii C): CashMovementBridge.cash_scope declares restricted-cash balances in the CFS cash scope (dropped from JSON when None); optional BS item restricted_cash_noncurrent; NCF_CASH_MOVEMENT single and constructed checks sum each declared balance's change; guards in cash_bridge; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/statement_validation.py",
+      "imported_sha256": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
+      "prior_project_sha256": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
+      "project_commit": "d6ca9b631717913fed168d809de9343aeaa35fac",
+      "sha256": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
+      "reason": "CZR cash scope (s8-vii C): CashMovementBridge.cash_scope declares restricted-cash balances in the CFS cash scope (dropped from JSON when None); optional BS item restricted_cash_noncurrent; NCF_CASH_MOVEMENT single and constructed checks sum each declared balance's change; guards in cash_bridge; user-approved in session s8-vii.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/cash_bridge.py",
+      "imported_sha256": "cda9bacb342bb6460e322aff078a61ab993c518604aca30ce99a6ecd1eb6207e",
+      "prior_project_sha256": "1bae3af59e926a996672376bbb606e126fc932b8201a813370c20f1e2283ffc8",
+      "project_commit": "1309b27b0aef3208fc6790f769e5049b6418cf61",
+      "sha256": "adbf06c77ff7d8560f4d0d9593f2f827d45b62d77af5c44df90a5084cfbb71d0",
+      "reason": "CZR cash scope fix 1 (s8-vii C): G3 needs a known or conflicting, restricted-labelled row for each declared item at every check date; G2 needs one citation that is the period's CFS cash line and names restricted cash (mx-adversary A1-A4); import order.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/period_reconciliation.py",
+      "imported_sha256": "e3c0e5d9f0e91537e7aaeddac0aebcb426a4bdbdc11dac4b2b86716e782302c0",
+      "prior_project_sha256": "c28a050079da88379fd27aa0dd7a314aea42029a11b954ade960d4bb2c87897b",
+      "project_commit": "1309b27b0aef3208fc6790f769e5049b6418cf61",
+      "sha256": "14677c4bb96e342cadbb89997250af9ccee7869fb17f8166adc8a81699815f35",
+      "reason": "CZR cash scope fix 1 (s8-vii C): G3 needs a known or conflicting, restricted-labelled row for each declared item at every check date; G2 needs one citation that is the period's CFS cash line and names restricted cash (mx-adversary A1-A4); import order.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "b6c5e3edf84fb80f2dd3f920f0da8627baed778f6cf4fa7c6f474e604f54224c",
+      "project_commit": "3f335106363c7713928eb048b1da1debd68ea219",
+      "sha256": "dbf8de0750e9acbe729406c0afd92137ab1c63b8785767f49fb1cc80762e89e2",
+      "reason": "Stage 8-vii Low batch: comment and docstring rewrap only; no behaviour change.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/source_context.py",
+      "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
+      "prior_project_sha256": "d0cf155b79767c4ec70c731a87a3aa77e596c05169d966176d276b199898b4be",
+      "project_commit": "3f335106363c7713928eb048b1da1debd68ea219",
+      "sha256": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
+      "reason": "Stage 8-vii Low batch: comment and docstring rewrap only; no behaviour change.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
     }
   ],
   "local_patch_lineage": [

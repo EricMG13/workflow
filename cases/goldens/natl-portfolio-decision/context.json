@@ -14,7 +14,15 @@
     "issuer_id": "natl",
     "borrower_name": "NCR Atleos Corporation",
     "parent_name": "",
-    "guarantors": [],
+    "guarantors": [
+      "ATM NATIONAL, LLC",
+      "CARDTRONICS HOLDINGS, LLC",
+      "CARDTRONICS, INC.",
+      "CARDTRONICS USA, INC.",
+      "CATM HOLDINGS LLC",
+      "ATM DEPLOYER SERVICES, L.L.C.",
+      "NCR FOREIGN INVESTCO 1, LLC"
+    ],
     "aliases": [
       "NCR Atleos",
       "Atleos",
@@ -22,7 +30,7 @@
     ],
     "listed_equity": true,
     "ticker": "NATL",
-    "sector": "Technology",
+    "sector": "Financial technology (self-directed banking solutions)",
     "country": "United States",
     "sponsor": ""
   },

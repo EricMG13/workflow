@@ -4,9 +4,9 @@ Case `natl-portfolio-decision`; cutoff and as_of 2025-11-06; preparer: mx-featur
 
 ## Coverage
 - CP-1 (restatement text only; history is in financial_gold): 15 known. Nature, causes, periods revised, Q1/Q2 2025 not yet revised, material weakness, line items affected (income statement, balance sheet, debt items), cash-flow effect, clawback.
-- CP-2 (debt stack and liquidity at 2025-09-30): 46 known (8 derived by derive.py), 6 missing. Per-tranche outstanding (A-1, A-2, B) and per-instrument carrying amounts (term loans, notes) are missing; the Subsidiary Guarantor names are missing.
+- CP-2 (debt stack and liquidity at 2025-09-30): 46 known (8 derived by derive.py), 6 missing. Per-tranche outstanding (A-1, A-2, B) and per-instrument carrying amounts (term loans, notes) are missing; the Subsidiary Guarantor names are known (see Fix round 1).
 - CP-4 terms (Exhibit 10.1 and Q3 10-Q): 48 known, 3 missing. Dates, maturities, Term B margins, the Term A/revolver grid (5 levels), amortization, covenant levels, covenant definition. Missing: pricing level, achieved ratio and compliance at 2025-09-30, and the revolver commitment per the agreement text.
-- CP-3: no facts; quotes are user input. CP-0, CP-1 (values), CP-MODEL, CP-5, CP-6, CP-8 are in `not_golden`.
+- CP-3: no facts; quotes are user input. CP-1 (values), CP-MODEL, CP-5, CP-6, CP-8 are in `not_golden`.
 
 ## Period labelling
 Calendar fiscal year. Context uses q3-2025 (current) and q2-2025 (prior); fiscal years are fy-YYYY.
@@ -17,13 +17,20 @@ Calendar fiscal year. Context uses q3-2025 (current) and q2-2025 (prior); fiscal
 - Term B at 2025-09-30: the 10-Q gives only the aggregate term loan outstanding (1,334). The New Term B commitment (320,000,000, scale units) is recorded as a commitment, not as a balance.
 - Revolver commitment 600 comes from the 10-Q; the agreement text does not print it, so that fact is missing for the agreement.
 - Principal and carrying amounts are kept apart: 2,912 principal vs 2,869 carrying (derived difference 43 equals the printed discount and fees).
-- Sector set to "Technology" (the filings say financial technology); free text, change if preferred.
+- Sector: the unsourced "Technology" label was replaced by the filing's own wording ("financial technology company providing self-directed banking solutions"), cited by CP-0 business_description.
 - `valuation` keeps the form defaults (cp_dr_public, auto) with empty issuer_market; ratings left empty.
 
 ## Open questions
-See `needs_user_input` in module_golden.json: prior_case, portfolio_workbook, quotes, valuation.issuer_market, ratings, guarantors, assumptions.
+See `needs_user_input` in module_golden.json: prior_case, portfolio_workbook, quotes, valuation.issuer_market, ratings, assumptions (guarantors resolved in fix round 1).
+
+## Fix round 1 (review NATL-R1..R4, controller G-8)
+- G-8: CP-0 removed from `not_golden`; 13 CP-0 facts added: identity (legal_name, ticker, exchange, state_of_incorporation, principal_executive_offices, commission_file_number, filer_status, fiscal_year_end December 31, business_description), `CP-0.identity.Credit_Agreement.borrower_entity`, and documents (10-Q and 10-K/A period_covered, Exhibit 10.1 agreement_date 2025-09-18). context.json `identity.sector` now "Financial technology (self-directed banking solutions)" from the filing's description.
+- R1: `CP-2.obligor_structure.subsidiary_guarantors.names` is known (seven Loan Parties from the signature pages, with the Section 9 "Reaffirming Loan Parties" clause); `identity.guarantors` filled in context.json; guarantor entry removed from `needs_user_input`; limitation added that completeness is not shown by the source.
+- R2: Term B 2025-09-30 balance stays missing; gap_reason now cites $320,000,000 on 2025-09-18 (Exhibit 10.1, Schedule I) and no amortization (10-Q Note 4).
+- R3: total-debt principal_stated subject and a limitation state that 2,912 is the "our debt totaled" figure (funded borrowings, finance leases excluded) and that Codex marks FY2025Q3 total_debt missing for that reason.
+- R4: added `CP-2.debt_stack.other_debt_atmaas_financing_program.master_loan_agreement_capacity` = 20 (USD millions).
 
 ## Checks
-`python3 -I cases/goldens/check.py cases/goldens/natl-portfolio-decision` exit 0; `python3 -I derive.py` exit 0.
+`python3 -I cases/goldens/check.py cases/goldens/natl-portfolio-decision` exit 0; `python3 -I derive.py` exit 0 (re-run after fix round 1).
 
-Not verified: no model run against these goldens; the choice of post-amendment clauses in Exhibit 10.1 rests on reading the merged text, not the strike/underline markup; Q1/Q2 2025 and Q3 2024 10-Qs were not mined for module facts; the sector label is my own classification; no other source corroborates the figures.
+Not verified: no model run against these goldens; the choice of post-amendment clauses in Exhibit 10.1 rests on reading the merged text, not the strike/underline markup; Q1/Q2 2025 and Q3 2024 10-Qs were not mined for module facts; no other source corroborates the figures.

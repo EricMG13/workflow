@@ -355,7 +355,7 @@
       "scale": "millions",
       "evidence": [],
       "derivation": null,
-      "gap_reason": "The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million), not a per-tranche split; no filing in the corpus states one."
+      "gap_reason": "No filing states a Term B balance at 2025-09-30. The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million). Exhibit 10.1 (Schedule I) prints $320,000,000.00 of Term B Commitments on 2025-09-18, when the existing Term B Loans were refinanced and replaced in their entirety; the 10-Q (Note 4) says the Term B Loans are not subject to amortization. That $320,000,000 is a 2025-09-18 commitment/refinanced amount, not a 2025-09-30 balance."
     },
     {
       "fact_id": "CP-2.debt_stack.revolving_credit_facility.commitment.2025-09-30",
@@ -775,7 +775,7 @@
       "fact_id": "CP-2.debt_stack.total_debt.principal_stated.2025-09-30",
       "module": "CP-2",
       "topic": "debt_stack",
-      "subject": "Total debt",
+      "subject": "Total debt (the company's \"our debt totaled\" figure: funded borrowings, finance leases excluded)",
       "field": "principal_stated",
       "period_end": "2025-09-30",
       "status": "known",
@@ -1191,17 +1191,66 @@
       "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
       "module": "CP-2",
       "topic": "obligor_structure",
-      "subject": "Subsidiary Guarantors",
+      "subject": "Subsidiary Guarantors (Loan Parties other than the Company signing the 2025-09-18 Refinancing Facility Agreement)",
       "field": "names",
       "period_end": null,
-      "status": "missing",
-      "value": null,
+      "status": "known",
+      "value": "ATM NATIONAL, LLC; CARDTRONICS HOLDINGS, LLC; CARDTRONICS, INC.; CARDTRONICS USA, INC.; CATM HOLDINGS LLC; ATM DEPLOYER SERVICES, L.L.C.; NCR FOREIGN INVESTCO 1, LLC",
       "value_type": "text",
       "unit": null,
       "scale": null,
-      "evidence": [],
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > Section 9 Reaffirmation",
+          "quote": "The Company and each other Loan Party party hereto (collectively, the “Reaffirming Loan Parties”) hereby acknowledges",
+          "printed": "Reaffirming Loan Parties"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "ATM NATIONAL, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "ATM NATIONAL, LLC"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CARDTRONICS HOLDINGS, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CARDTRONICS HOLDINGS, LLC"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CARDTRONICS, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CARDTRONICS, INC."
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CARDTRONICS USA, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CARDTRONICS USA, INC."
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "CATM HOLDINGS LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "CATM HOLDINGS LLC"
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "ATM DEPLOYER SERVICES, L.L.C. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "ATM DEPLOYER SERVICES, L.L.C."
+        },
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
+          "quote": "NCR FOREIGN INVESTCO 1, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+          "printed": "NCR FOREIGN INVESTCO 1, LLC"
+        }
+      ],
       "derivation": null,
-      "gap_reason": "No cited source names the individual Subsidiary Guarantors (the Q3 10-Q and Exhibit 10.1 text describe them by class only)."
+      "gap_reason": null
     },
     {
       "fact_id": "CP-4.credit_agreement.revolving_credit_facility.maturity",
@@ -2813,13 +2862,331 @@
       ],
       "derivation": null,
       "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.legal_name",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "legal_name",
+      "period_end": null,
+      "status": "known",
+      "value": "NCR ATLEOS CORPORATION",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > registrant name",
+          "quote": "NCR ATLEOS CORPORATION (Exact name of registrant as specified in its charter)",
+          "printed": "NCR ATLEOS CORPORATION"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.ticker",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "ticker",
+      "period_end": null,
+      "status": "known",
+      "value": "NATL",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > Section 12(b) securities",
+          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
+          "printed": "NATL"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.exchange",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "exchange",
+      "period_end": null,
+      "status": "known",
+      "value": "New York Stock Exchange",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > Section 12(b) securities",
+          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
+          "printed": "New York Stock Exchange"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.state_of_incorporation",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "state_of_incorporation",
+      "period_end": null,
+      "status": "known",
+      "value": "Maryland",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "Maryland 92-3588560 (State or other jurisdiction of incorporation or organization)",
+          "printed": "Maryland"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.principal_executive_offices",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "principal_executive_offices",
+      "period_end": null,
+      "status": "known",
+      "value": "864 Spring Street NW Atlanta, GA 30308",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "864 Spring Street NW Atlanta, GA 30308 (Address of principal executive offices)",
+          "printed": "864 Spring Street NW Atlanta, GA 30308"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.commission_file_number",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "commission_file_number",
+      "period_end": null,
+      "status": "known",
+      "value": "001-41728",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "Commission File Number: 001-41728",
+          "printed": "001-41728"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.filer_status",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "filer_status",
+      "period_end": null,
+      "status": "known",
+      "value": "Large accelerated filer",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page > filer check boxes",
+          "quote": "Large accelerated filer ☑ Accelerated filer ☐",
+          "printed": "Large accelerated filer ☑"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.fiscal_year_end",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "fiscal_year_end",
+      "period_end": null,
+      "status": "known",
+      "value": "December 31",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Cover page",
+          "quote": "For the fiscal year ended December 31, 2024",
+          "printed": "December 31, 2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.business_description",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "NCR Atleos Corporation",
+      "field": "business_description",
+      "period_end": null,
+      "status": "known",
+      "value": "Industry-leading financial technology company providing self-directed banking solutions",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 1 Basis of Presentation",
+          "quote": "is an industry-leading financial technology company providing self-directed banking solutions to a global customer base",
+          "printed": "financial technology company providing self-directed banking solutions"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.identity.Credit_Agreement.borrower_entity",
+      "module": "CP-0",
+      "topic": "identity",
+      "subject": "Credit Agreement",
+      "field": "borrower_entity",
+      "period_end": null,
+      "status": "known",
+      "value": "NCR Atleos Corporation (the Company), a Borrower alongside Foreign Borrowers",
+      "value_type": "text",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > conformed Credit Agreement > cover",
+          "quote": "among NCR ATLEOS CORPORATION, as the Company and as a Borrower, The FOREIGN BORROWERS from time to time Party Hereto",
+          "printed": "NCR ATLEOS CORPORATION, as the Company and as a Borrower"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2025_09_30.period_covered.2025-09-30",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Form 10-Q 2025-09-30",
+      "field": "period_covered",
+      "period_end": "2025-09-30",
+      "status": "known",
+      "value": "2025-09-30",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Cover page",
+          "quote": "For the quarterly period ended September 30, 2025",
+          "printed": "September 30, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_K/A_2024_12_31.period_covered.2024-12-31",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Form 10-K/A 2024-12-31",
+      "field": "period_covered",
+      "period_end": "2024-12-31",
+      "status": "known",
+      "value": "2024-12-31",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-10ka-2024-12-31",
+          "locator": "Cover page",
+          "quote": "For the fiscal year ended December 31, 2024",
+          "printed": "December 31, 2024"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-0.documents.Refinancing_Facility_Agreement_and_conformed_Credit_Agreement.agreement_date",
+      "module": "CP-0",
+      "topic": "documents",
+      "subject": "Refinancing Facility Agreement and conformed Credit Agreement",
+      "field": "agreement_date",
+      "period_end": null,
+      "status": "known",
+      "value": "2025-09-18",
+      "value_type": "date",
+      "unit": null,
+      "scale": null,
+      "evidence": [
+        {
+          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
+          "locator": "Exhibit 10.1 > conformed Credit Agreement > cover",
+          "quote": "as amended as of September 18, 2025, among NCR ATLEOS CORPORATION",
+          "printed": "September 18, 2025"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Other_debt_ATMaaS_financing_program.master_loan_agreement_capacity",
+      "module": "CP-2",
+      "topic": "debt_stack",
+      "subject": "Other debt (ATMaaS financing program)",
+      "field": "master_loan_agreement_capacity",
+      "period_end": null,
+      "status": "known",
+      "value": "20",
+      "value_type": "decimal",
+      "unit": "USD",
+      "scale": "millions",
+      "evidence": [
+        {
+          "source_id": "natl-10q-2025-09-30",
+          "locator": "Note 4 Debt Obligations > Other Debt paragraph",
+          "quote": "The total amount available under the master loan agreement is $20 million",
+          "printed": "$20 million"
+        }
+      ],
+      "derivation": null,
+      "gap_reason": null
     }
   ],
   "not_golden": [
-    {
-      "module": "CP-0",
-      "why": "Source intake and readiness gating: the golden is the `sources` list (three filings, hashes verified) plus the context file; no module-level numeric facts."
-    },
     {
       "module": "CP-1",
       "why": "Covered by financial_gold (Codex reviewed history incl. original-versus-revised values); this file adds only the restatement narrative as CP-1 text facts."
@@ -2883,14 +3250,6 @@
       "why": "Agency ratings are not in the three cited sources; left empty rather than recalled from memory."
     },
     {
-      "context_path": "identity.guarantors",
-      "modules": [
-        "CP-0",
-        "CP-2"
-      ],
-      "why": "The Subsidiary Guarantors are described by class only in the cited sources; names left empty."
-    },
-    {
       "context_path": "assumptions",
       "modules": [
         "CP-MODEL",
@@ -2906,7 +3265,10 @@
     "Per-tranche outstanding balances, the applicable pricing level, the achieved leverage ratio and covenant compliance at 2025-09-30 are not stated in the sources and are recorded as missing.",
     "Exhibit 10.1 does not print the revolver commitment (Schedule 2.01 is not in the text); the 600 comes from the Q3 10-Q.",
     "Amounts are as printed: USD millions in the 10-Q and 10-K/A, exact USD in Exhibit 10.1 (scale units). Derived values are computed by derive.py in exact Decimal.",
-    "Sector and the Q3 revision of 2024 comparatives are summarised, not quantified, to avoid duplicating financial_gold."
+    "Sector and the Q3 revision of 2024 comparatives are summarised, not quantified, to avoid duplicating financial_gold.",
+    "2,912 is the company's own \"our debt totaled\" figure (10-Q MD&A): principal of funded borrowings, excluding finance leases. Codex's financial_gold marks total_debt FY2025Q3 missing because finance-lease liabilities are not located; its funded_borrowing_carrying_ex_finance_lease (2,869) matches this golden's derived carrying amount, so the two do not contradict.",
+    "The Subsidiary Guarantor names are the Loan Parties (other than the Company) that signed the 2025-09-18 Refinancing Facility Agreement; the source does not show whether that list is complete.",
+    "identity.sector is set from the filing's own description of the business (CP-0 identity business_description), not a classification label."
   ],
   "preparer": "mx-feature (Sonnet) goldens preparer: natl"
 }

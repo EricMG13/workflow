@@ -15,3 +15,6 @@
 - 11:09 tdg fix round 1 (mx-feature af476463): R1-R5, G-5, G-6 fixed; controller rerun check.py 0, derive.py 0; probe_tdg 0; scoped re-review of R1/R2 dispatched
 - 11:09 bgs fix round 1 (mx-feature ae40544c): G-1, G-3, R1-R5 fixed; controller rerun check.py 0, derive.py 0; probe_gaps 0; R1 (Medium) was a report note, verified by controller grep; BGS DONE. agent=mx-feature fix-rounds=1
 - 11:10 tdg scoped re-review R1/R2 (mx-feature a6dbbfd7): APPROVE; check.py 0; TDG DONE. agent=mx-feature fix-rounds=1
+- 11:11 natl review (mx-precise a746f3aa): REVISE; R1 Medium (guarantors printed), R2-R3 Low, R4 Info; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-8 + R1-R4
+- 11:12 ihrt review (mx-precise ad606b35): REVISE; R1 High (ABL trigger greater-of), R2-R4 Low, R5 Info; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-7 + R1-R5; R1 ruling: fixed + pct + text facts
+- 11:13 natl fix round 1 (mx-feature a3113fd2): G-8 (13 CP-0 facts, sector from filing wording), R1 guarantors known (7 names), R2-R4 fixed; controller rerun check.py 0, derive.py 0; probes 0/0/0; deletions inspected (all replacements); scoped re-review of R1 + G-8 dispatched

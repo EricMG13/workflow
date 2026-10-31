@@ -8,3 +8,4 @@
 - 08:57 Golden for the seven CZR pages generated at 71a20021 (= 5a1d2e2f code) with the lane venv: czr-extract-golden.json (27/27/33/33/29/38/27 lines).
 - Ruling: D1 omitted excludes lines in the returned headers and header-shaped lines ending in a bare year, not every _is_header line — a single-value row naming a month would otherwise vanish silently — cost if wrong: extra omitted candidates Modules must dispose of.
 - A built: claude/s8-vii-a RED 4be0c0b7, fix a147d816 (mx-feature).
+- 08:59 A RED @4be0c0b7: 6 failed/34 passed for the reported causes; fix @a147d816: 854 passed, 1 skipped; ruff new PLE2515 x2 (tests, literal U+200B) + 2 over-long lines → batched into A's fix round; format 0; mypy 0. mx-precise review dispatched.

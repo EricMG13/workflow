@@ -89,13 +89,16 @@ def _states(replies: list[dict]) -> list[tuple[object, object]]:
 
 
 @pytest.mark.parametrize("kind", ["owner", "financial"])
-@pytest.mark.parametrize("name", [
+@pytest.mark.parametrize(
+    "name",
+    [
         "surrogate_query",
         "surrogate_key",
         "surrogate_tool",
         "surrogate_tool_bad_args",
         "deep_args",
-    ],)
+    ],
+)
 def test_bad_frame_then_good_frame_stays_in_sequence(kind, name, tmp_path):
     replies = _run(kind, tmp_path, [_bad_frames()[name], GOOD])
     assert _states(replies) == [("refused", "bad_arguments"), ("ok", None)]

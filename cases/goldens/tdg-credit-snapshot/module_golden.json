@@ -331,14 +331,21 @@
    "subject": "Term Loans Facility and revolving credit facility",
    "field": "borrower_entity",
    "period_end": null,
-   "status": "missing",
-   "value": null,
+   "status": "known",
+   "value": "TransDigm Inc.",
    "value_type": "text",
    "unit": null,
    "scale": null,
-   "evidence": [],
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 15 Exhibit index > 10.37",
+     "quote": "Amendment No. 2 to the Second Amended and Restated Credit Agreement, dated as of March 6, 2017, among TransDigm Inc., as borrower, TransDigm Group Incorporated, as guarantor",
+     "printed": "TransDigm Inc., as borrower"
+    }
+   ],
    "derivation": null,
-   "gap_reason": "The filings use 'TransDigm' or 'the Company' for the Credit Agreement borrower without naming the legal borrower; the Credit Agreement is not in the corpus."
+   "gap_reason": null
   },
   {
    "fact_id": "CP-0.documents.Form_10_Q_2024_03_30.period_covered.2024-03-30",
@@ -748,11 +755,11 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-1A.acquisitions.Product_lines_acquired_in_Q1_FY2025.cash_paid.2024-12-28",
+   "fact_id": "CP-1A.acquisitions.Product_lines_acquired_in_Q1_FY2025.purchase_price.2024-12-28",
    "module": "CP-1A",
    "topic": "acquisitions",
    "subject": "Product lines acquired in Q1 FY2025",
-   "field": "cash_paid",
+   "field": "purchase_price",
    "period_end": "2024-12-28",
    "status": "known",
    "value": "29",
@@ -3864,8 +3871,8 @@
    "subject": "Revolving credit facility springing financial covenant",
    "field": "ratio_definition",
    "period_end": "2024-12-28",
-   "status": "known",
-   "value": "Net debt to trailing four-quarter EBITDA As Defined",
+   "status": "conflicting",
+   "value": null,
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3875,6 +3882,12 @@
      "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
      "quote": "maintain a maximum consolidated net leverage ratio of net debt to trailing four-quarter EBITDA As Defined of 7.50x (or, solely with respect to the first four fiscal quarters ending after the consummation of any material acquisition, 8.00x)",
      "printed": "net debt to trailing four-quarter EBITDA As Defined"
+    },
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Non-GAAP EBITDA As Defined",
+     "quote": "a financial covenant that measures the ratio of the amount of our secured indebtedness to the amount of our Consolidated EBITDA",
+     "printed": "ratio of the amount of our secured indebtedness to the amount of our Consolidated EBITDA"
     }
    ],
    "derivation": null,
@@ -4033,6 +4046,98 @@
    "evidence": [],
    "derivation": null,
    "gap_reason": "The filings contain no dated bid, ask, price, yield or spread quotes. Note 10 fair values (notes: 'based upon quoted market prices'; term loans: agent-provided) are period-end fair values, not quotes for CP-3; the user must supply quotes."
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Tranche_K_replacement_of_Tranche_H_and_Tranche_I_repricing_Amendment_No_15.tranche_i_repriced_principal.2024-03-22",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Tranche K replacement of Tranche H and Tranche I repricing (Amendment No. 15)",
+   "field": "tranche_i_repriced_principal",
+   "period_end": "2024-03-22",
+   "status": "known",
+   "value": "4525",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "MD&A > Significant Transactions of Fiscal 2024",
+     "quote": "On March 22, 2024, the Company repriced all of its $4,525 million in existing Tranche I term loans maturing August 2028",
+     "printed": "$4,525 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Tranche_K_replacement_of_Tranche_H_and_Tranche_I_repricing_Amendment_No_15.tranche_h_replaced_by_tranche_k_principal.2024-03-22",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Tranche K replacement of Tranche H and Tranche I repricing (Amendment No. 15)",
+   "field": "tranche_h_replaced_by_tranche_k_principal",
+   "period_end": "2024-03-22",
+   "status": "known",
+   "value": "1708",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "MD&A > Significant Transactions of Fiscal 2024",
+     "quote": "replaced all of its $1,708 million in existing Tranche H term loans due February 2027 with new Tranche K term loans maturing March 2030",
+     "printed": "$1,708 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Tranche_J_and_I_term_loans_Amendment_No_16.tranche_j_repriced_principal.2024-06-04",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Tranche J and I term loans (Amendment No. 16)",
+   "field": "tranche_j_repriced_principal",
+   "period_end": "2024-06-04",
+   "status": "known",
+   "value": "997",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "MD&A > Significant Transactions of Fiscal 2024",
+     "quote": "On June 4, 2024, the Company repriced all of its $997 million in existing Tranche J term loans",
+     "printed": "$997 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Tranche_J_and_I_term_loans_Amendment_No_16.tranche_i_extended_to_tranche_j_principal.2024-06-04",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Tranche J and I term loans (Amendment No. 16)",
+   "field": "tranche_i_extended_to_tranche_j_principal",
+   "period_end": "2024-06-04",
+   "status": "known",
+   "value": "2644",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "MD&A > Significant Transactions of Fiscal 2024",
+     "quote": "amended and extended $2,644 million in existing Tranche I term loans maturing August 24, 2028 and converting such loans into Tranche J term loans maturing February 28, 2031",
+     "printed": "$2,644 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
   }
  ],
  "not_golden": [
@@ -4062,13 +4167,6 @@
    "why": "No observed quotes or price talk in the filings; relative value needs dated quotes from the user."
   },
   {
-   "context_path": "attachments.legal_documents",
-   "modules": [
-    "CP-4"
-   ],
-   "why": "The Credit Agreement and indentures are not in the corpus (only referenced as exhibits); set to 'none'. CP-4 covenant facts come from 10-K/10-Q descriptions only."
-  },
-  {
    "context_path": "identity.guarantors",
    "modules": [
     "CP-1A",
@@ -4092,13 +4190,14 @@
   }
  ],
  "limitations": [
-  "No Credit Agreement, indenture or Exhibit 22.1 in the corpus: CP-4 covenant terms and borrower identity for the term loans rest on 10-K/10-Q descriptions.",
+  "No Credit Agreement, indenture or Exhibit 22.1 in the corpus: CP-4 covenant terms rest on 10-K/10-Q descriptions; the term-loan borrower comes from the 10-K exhibit index.",
   "Covenant text read in all four filings was identical (7.50x springing test, 7.25x and 5.00x incurrence tests); only the 2024-12-28 filing is cited.",
   "Debt-stack table total (24,578) excludes the securitization facility; the debt maturity schedule (10-K, 2024-09-30) excludes finance leases and the securitization facility; no 2024-12-28 schedule is printed.",
-  "The MD&A non-GAAP paragraph says the revolver covenant measures secured indebtedness to Consolidated EBITDA, while the covenant paragraph says net debt to EBITDA As Defined; the covenant paragraph is used.",
+  "The MD&A non-GAAP paragraph says the revolver covenant measures secured indebtedness to Consolidated EBITDA, while the covenant paragraph says net debt to EBITDA As Defined; the ratio_definition fact is marked conflicting (both quotes, null value).",
   "Revolver drawn balance is derived (commitments less letters of credit less availability), and the Note 8 table has no revolver line; the filings do not print a drawn amount.",
   "The FY2024 annual-report PDF is listed nowhere as a source and was not parsed.",
-  "Hedging instruments, interest swaps and leases beyond the finance-lease balance are not covered."
+  "Hedging instruments, interest swaps and leases beyond the finance-lease balance are not covered.",
+  "The Credit Agreement and indentures are not in the corpus; context.json sets attachments.legal_documents to 'executed' (form default, per ruling G-6) and CP-4 covenant facts come from the filed 10-K/10-Q descriptions only."
  ],
  "preparer": "mx-feature subagent g-tdg (Claude Sonnet 5.5)"
 }

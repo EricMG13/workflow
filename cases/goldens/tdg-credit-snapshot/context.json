@@ -13,10 +13,10 @@
   "issuer_name": "TransDigm Group Incorporated",
   "issuer_id": "tdg",
   "borrower_name": "TransDigm Inc.",
-  "parent_name": "",
+  "parent_name": "TransDigm Group Incorporated",
   "guarantors": [
    "TransDigm Group Incorporated",
-   "TransDigm UK Holdings plc",
+   "TransDigm UK",
    "TransDigm Inc.'s Domestic Restricted Subsidiaries"
   ],
   "aliases": [
@@ -64,7 +64,7 @@
   "portfolio_workbook": false,
   "prior_case": false,
   "management_bridge": false,
-  "legal_documents": "none"
+  "legal_documents": "executed"
  },
  "research_questions": []
 }

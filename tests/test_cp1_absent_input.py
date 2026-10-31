@@ -256,6 +256,21 @@ def test_child_difference_blocker_is_not_an_absent_input() -> None:
     assert result is None
 
 
+def test_cash_scope_blocker_is_not_an_absent_input() -> None:
+    """Item 88: a cash-scope BLOCK (as `period_reconciliation.py:310` on claude/s8-vii builds it)
+    stays BLOCK."""
+    from deploy_vii.canonical_audit import CASH_SCOPE_BLOCKER, absent_input_limitation
+
+    assert CASH_SCOPE_BLOCKER == "Cash scope differs across source periods: "
+    explanation = "Cash scope differs across source periods: fy-2025"
+    check = _period_check().model_copy(update={"explanation": explanation})
+    none: frozenset[str] = frozenset()
+    result = absent_input_limitation(
+        check, public=True, conflicting=none, shadowed=none, normalised=none
+    )
+    assert result is None
+
+
 def test_period_term_with_fx_normalised_id_is_not_an_absent_input() -> None:
     """L2: the period hop sees FX normalisation through the ids that feed it."""
     from deploy_vii.canonical_audit import absent_input_limitation

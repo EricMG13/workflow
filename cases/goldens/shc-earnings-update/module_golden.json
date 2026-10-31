@@ -56,10 +56,10 @@
       "field": "net_revenues",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "294.341",
+      "value": "294341",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -79,10 +79,10 @@
       "field": "net_revenues",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "276.594",
+      "value": "276594",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -102,10 +102,10 @@
       "field": "net_revenues_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "17.747",
+      "value": "17747",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -132,10 +132,10 @@
       "field": "net_revenues",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "194.839",
+      "value": "194839",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -155,10 +155,10 @@
       "field": "net_revenues",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "176.354",
+      "value": "176354",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -178,10 +178,10 @@
       "field": "net_revenues_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "18.485",
+      "value": "18485",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -208,10 +208,10 @@
       "field": "net_revenues",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "42.431",
+      "value": "42431",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -231,10 +231,10 @@
       "field": "net_revenues",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "41.244",
+      "value": "41244",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -254,10 +254,10 @@
       "field": "net_revenues_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "1.187",
+      "value": "1187",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -284,10 +284,10 @@
       "field": "net_revenues",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "57.071",
+      "value": "57071",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -307,10 +307,10 @@
       "field": "net_revenues",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "58.996",
+      "value": "58996",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -330,10 +330,10 @@
       "field": "net_revenues_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "-1.925",
+      "value": "-1925",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -360,10 +360,10 @@
       "field": "segment_income",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "107.745",
+      "value": "107745",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -383,10 +383,10 @@
       "field": "segment_income",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "96.778",
+      "value": "96778",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -406,10 +406,10 @@
       "field": "segment_income_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "10.967",
+      "value": "10967",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -436,10 +436,10 @@
       "field": "segment_income",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "23.477",
+      "value": "23477",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -459,10 +459,10 @@
       "field": "segment_income",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "23.42",
+      "value": "23420",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -482,10 +482,10 @@
       "field": "segment_income_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "0.057",
+      "value": "57",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -512,10 +512,10 @@
       "field": "segment_income",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "19.513",
+      "value": "19513",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -535,10 +535,10 @@
       "field": "segment_income",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "17.137",
+      "value": "17137",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -558,10 +558,10 @@
       "field": "segment_income_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "2.376",
+      "value": "2376",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -588,10 +588,10 @@
       "field": "net_income",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "7.962",
+      "value": "7962",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -611,10 +611,10 @@
       "field": "net_income",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "8.754",
+      "value": "8754",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -634,10 +634,10 @@
       "field": "net_income_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "-0.792",
+      "value": "-792",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -664,10 +664,10 @@
       "field": "adjusted_ebitda",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "150.735",
+      "value": "150735",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -687,10 +687,10 @@
       "field": "adjusted_ebitda",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "137.335",
+      "value": "137335",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -710,10 +710,10 @@
       "field": "adjusted_ebitda_change",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "13.4",
+      "value": "13400",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -740,10 +740,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "7.962",
+      "value": "7962",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -763,10 +763,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "8.754",
+      "value": "8754",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -786,10 +786,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "11.924",
+      "value": "11924",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -809,10 +809,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "19.755",
+      "value": "19755",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -832,10 +832,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "8.149",
+      "value": "8149",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -855,10 +855,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "10.206",
+      "value": "10206",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -878,10 +878,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "0.08",
+      "value": "80",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -901,10 +901,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "23.4",
+      "value": "23400",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -924,10 +924,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "-3.018",
+      "value": "-3018",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -947,10 +947,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "-0.698",
+      "value": "-698",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -970,10 +970,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "2.43",
+      "value": "2430",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -993,10 +993,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "0.613",
+      "value": "613",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1016,10 +1016,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "14.035",
+      "value": "14035",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1039,10 +1039,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "7.818",
+      "value": "7818",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1062,10 +1062,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "34",
+      "value": "34000",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1088,7 +1088,7 @@
       "value": "0",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1108,10 +1108,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "0.563",
+      "value": "563",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1131,10 +1131,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "0.636",
+      "value": "636",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1154,10 +1154,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "-20.063",
+      "value": "-20063",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1177,10 +1177,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "-15.297",
+      "value": "-15297",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1200,10 +1200,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "56.062",
+      "value": "56062",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1223,10 +1223,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "55.187",
+      "value": "55187",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1246,10 +1246,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "40.651",
+      "value": "40651",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1269,10 +1269,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "40.388",
+      "value": "40388",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1292,10 +1292,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "23.024",
+      "value": "23024",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1315,10 +1315,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "20.075",
+      "value": "20075",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1338,10 +1338,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "30.998",
+      "value": "30998",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1361,10 +1361,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "21.685",
+      "value": "21685",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1384,10 +1384,10 @@
       "field": "amount",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "150.735",
+      "value": "150735",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1407,10 +1407,10 @@
       "field": "amount",
       "period_end": "2024-06-30",
       "status": "known",
-      "value": "137.335",
+      "value": "137335",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1430,10 +1430,10 @@
       "field": "principal_outstanding_gross",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "1498.03",
+      "value": "1498030",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1453,10 +1453,10 @@
       "field": "carrying_amount_net",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "1470.889",
+      "value": "1470889",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1476,10 +1476,10 @@
       "field": "principal_outstanding_gross",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "750",
+      "value": "750000",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -1499,10 +1499,10 @@
       "field": "principal_outstanding_gross",
       "period_end": "2025-06-30",
       "status": "known",
-      "value": "2248.03",
+      "value": "2248030",
       "value_type": "decimal",
       "unit": "USD",
-      "scale": "millions",
+      "scale": "thousands",
       "evidence": [
         {
           "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
@@ -2401,13 +2401,14 @@
     }
   ],
   "limitations": [
-    "Scale: the 10-Q prints P&L and debt-table amounts in USD thousands, but the checker enum allows only millions|units. Those values are stored as exact decimal millions (printed thousands / 1000, lossless, e.g. 294,341 -> 294.341, same convention as Codex financial_gold); evidence.printed keeps the thousands text. Amounts printed in millions stay millions; the Amendment No. 4 amount is printed in dollars (scale units).",
+    "Scale: the 10-Q prints P&L and debt-table amounts in USD thousands. Those values are stored exactly as printed (e.g. 294,341 -> value \"294341\", scale thousands), with evidence.printed matching. Amounts printed in millions stay millions; the Amendment No. 4 amount is printed in dollars (scale units).",
     "Prior period is the same quarter a year earlier (three months ended 2024-06-30), the side-by-side comparison the 10-Q prints. The Codex cp1b_delta_inputs.json instead uses Q1 2025 vs Q2 2025 (sequential); that pair is not covered here.",
     "The brief dates Amendment No. 4 at 2024-08-05; that is the filing date of the 10-Q carrying it as Exhibit 10.1. The amendment is dated 2024-05-30 (effective date) and the 8-K closing release is dated 2024-05-30.",
     "The Term loan due 2031 row in Note 8 is the Refinancing Term Loans created by Amendment No. 4 (original principal $1,509,350,000); 1,498,030 is the 2025-06-30 gross principal after scheduled amortisation.",
     "Revolver total commitments of $600.0 million come from Amendment No. 5 (2025-04-30), which postdates Amendment No. 4; the 10-Q text does not print drawn capacity separately, only that no borrowings were outstanding.",
     "A dash printed for Illinois EO litigation settlements in Q2 2024 is recorded as value 0 (printed \"—\").",
-    "Net income to Adjusted EBITDA reconciliation is the registrant's own (Adjusted Net Income path); consolidated Adjusted EBITDA equals total segment income as printed in Note 16."
+    "Net income to Adjusted EBITDA reconciliation is the registrant's own (Adjusted Net Income path); consolidated Adjusted EBITDA equals total segment income as printed in Note 16.",
+    "Prior-year (Q2 2024) CP-1D reconciliation column follows the restated presentation in the Q2 2025 10-Q. The as-filed Q2 2024 10-Q splits Business optimization 593 and Secondary offering costs 20 (USD thousands), which sum to 613."
   ],
   "preparer": "mx-feature (SHC earnings_update gap-layer preparer)"
 }

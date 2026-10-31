@@ -11,3 +11,4 @@
 - 11:07 shc review (mx-precise a906417d): APPROVE; SHC-R1 Low, SHC-R2 Info; report saved by controller
 - 11:08 tdg review (mx-precise aa8d24aa): REVISE; R1, R2 Medium; R3, R4 Low; R5 Info; report saved by controller
 - 11:08 bgs review (mx-precise a2f0b9d6): REVISE; R1 Medium (Codex gap, ours correct), R2-R4 Low, R5-R6 Info; report saved by controller. Fix rounds dispatched: shc (mx-feature a9827d55), tdg (mx-feature af476463)
+- 11:09 shc fix round 1 (mx-feature a9827d55): G-1, R1, R2 fixed; controller rerun check.py 0, derive.py 0; review had no High/Medium, so no re-review; SHC DONE. agent=mx-feature fix-rounds=1

@@ -114,3 +114,4 @@ Prerequisites before any live run:
   - re-snapshot Codex TDG/SHC gold when Codex freezes them;
   - report BGS-R1 (Codex marks BGS FY2025Q2 principal missing, but Note 6 prints 2,011,375) to the user, since it is Codex's defect;
   - resume the framework design (section 4).
+- **SHC done (~12:20):** fix round 1 applied; check and derive exit 0; no re-review needed (Low/Info only).

@@ -1,7 +1,8 @@
 """Receipt for every derived value in module_golden.json (exact Decimal, stdlib only).
 
 Run: python3 -I derive.py   (exit 0 only when every derivation and every check agrees)
-Stored values are USD millions (printed thousands / 1000, exact); evidence.printed stays in thousands as printed.
+Values are stored as printed (thousands or millions per fact scale). Operands and results are compared in
+the unit of the fact being derived; mixed scales are converted exactly with Decimal.
 """
 import json
 import sys
@@ -43,23 +44,26 @@ def main():
     data = json.loads((here / "module_golden.json").read_text())
     facts = {f["fact_id"]: f for f in data["facts"]}
     bad = 0
+    mult = {"thousands": Decimal("0.001"), "millions": Decimal(1), "units": Decimal("0.000001")}
+
+    def v(fid):
+        """Fact value in USD millions, converted exactly from its stored scale."""
+        return Decimal(facts[fid]["value"]) * mult[facts[fid]["scale"]]
+
     print("== derivations ==")
     for f in data["facts"]:
         d = f.get("derivation")
         if not d:
             continue
-        vals = [Decimal(facts[o]["value"]) for o in d["operands"]]
+        vals = [v(o) for o in d["operands"]]  # USD millions
         got = apply_op(d["op"], vals)
-        ok = got == Decimal(f["value"])
+        ok = got == v(f["fact_id"])
         # cross-check against the printed change, where the filing prints one
         for e in f.get("evidence", []):
             if parse_printed(e["printed"]) != got * 1000:
                 ok = False
         bad += not ok
         print(f"{'OK ' if ok else 'BAD'} {f['fact_id']} = {d['op']}({', '.join(o.split('.', 3)[-1] for o in d['operands'])}) = {got}")
-
-    def v(fid):
-        return Decimal(facts[fid]["value"])
 
     print("== consistency checks (printed subtotals vs printed lines) ==")
     for pe in ("2025-06-30", "2024-06-30"):

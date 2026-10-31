@@ -53,6 +53,7 @@ def _bad_frames() -> dict[str, str]:
         "surrogate_tool_bad_args": json.dumps(
             {"operation": "invoke", "tool": "\ud800", "arguments": [1]}
         ),
+        "non_str_tool_bad_args": json.dumps({"operation": "invoke", "tool": 5, "arguments": [1]}),
         "deep_args": _search('{"query":"x","extra":' + _nested(210) + "}"),
     }
 
@@ -88,6 +89,11 @@ def _states(replies: list[dict]) -> list[tuple[object, object]]:
     return [(reply.get("status"), reply.get("error_code")) for reply in replies]
 
 
+# An unrepresentable tool name is refused not_permitted with "" and {}: exactly what
+# receipt verification produces when it replays invoke(call.tool, call.arguments).
+UNREPRESENTABLE_TOOL = {"surrogate_tool", "surrogate_tool_bad_args", "non_str_tool_bad_args"}
+
+
 @pytest.mark.parametrize("kind", ["owner", "financial"])
 @pytest.mark.parametrize(
     "name",
@@ -96,13 +102,17 @@ def _states(replies: list[dict]) -> list[tuple[object, object]]:
         "surrogate_key",
         "surrogate_tool",
         "surrogate_tool_bad_args",
+        "non_str_tool_bad_args",
         "deep_args",
     ],
 )
 def test_bad_frame_then_good_frame_stays_in_sequence(kind, name, tmp_path):
     replies = _run(kind, tmp_path, [_bad_frames()[name], GOOD])
-    assert _states(replies) == [("refused", "bad_arguments"), ("ok", None)]
+    code = "not_permitted" if name in UNREPRESENTABLE_TOOL else "bad_arguments"
+    assert _states(replies) == [("refused", code), ("ok", None)]
     assert replies[0]["arguments"] == {}
+    if name in UNREPRESENTABLE_TOOL:
+        assert replies[0]["tool"] == ""
 
 
 # search_pack refuses any unknown key at tool level, so a deep `extra` is never "ok".
@@ -126,3 +136,23 @@ def test_bound_matches_host():
     from deploy_workflow.host import MAX_ARGUMENT_DEPTH
 
     assert MAX_ARGUMENT_DEPTH == DEPTH_BOUND
+
+
+def test_surrogate_tool_run_can_still_be_sealed_and_verified(tmp_path):
+    """Financial gap run (as in the financial workflow tests): a refused surrogate-tool
+    call must replay during receipt verification. Owner has no equivalent helper here;
+    its replay is covered by the verification loop over `_verify_calls_reads`."""
+    from test_financial_workflow import read_sources, readiness, start
+
+    from deploy_vii.execution import Execution
+    from deploy_workflow.financial_workflow import verify_financial_slice_receipt
+
+    workflow, pack = start(tmp_path, gap=True)
+    workflow._participant, workflow._transport = "h05", "python-api"
+    refused = workflow.invoke("\ud800", {"query": "x"})
+    assert (refused["status"], refused["error_code"]) == ("refused", "not_permitted")
+    read_sources(workflow, gap=True)
+    assert workflow.submit_review(readiness(pack, gap=True))["status"] == "valid"
+    workflow.publish_model()
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    verify_financial_slice_receipt(Execution(tmp_path / "store"), receipt, model_directory=None)

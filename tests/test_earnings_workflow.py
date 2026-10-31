@@ -3797,3 +3797,79 @@ def test_refused_open_leaves_a_tampered_store_byte_identical(tmp_path, tamper):
     # Every check that can refuse runs before the recovered record is retained, so a
     # refused open writes nothing: names and bytes are exactly as tampered.
     assert file_tree(directory) == tampered
+
+
+def test_operands_hash_the_producer_once(monkeypatch):
+    from datetime import date
+
+    from deploy_vii.contracts import Fact, Module
+    from deploy_workflow.earnings import EarningsDeltaReport
+
+    def fact(fact_id):
+        return Fact(
+            fact_id=fact_id,
+            label=fact_id,
+            text="x",
+            period="FY2025",
+            basis="IFRS",
+        )
+
+    producer = Module(
+        run_id="run-1",
+        issuer_id="issuer-1",
+        as_of=date(2025, 12, 31),
+        module_id="CP-1",
+        facts=tuple(
+            fact(f)
+            for f in (
+                "prior.revenue",
+                "current.revenue",
+                "metric.revenue",
+                "current.ebitda",
+            )
+        ),
+    )
+    with_prior = point_data()
+    without_prior = {
+        **point_data(),
+        "measure_id": "ebitda",
+        "prior_fact_id": None,
+        "current_fact_id": "current.ebitda",
+        "companion_fact_ids": (),
+    }
+    core = api()
+    from deploy_workflow.earnings import EarningsDeltaPoint
+
+    report = EarningsDeltaReport(
+        producer_sha256=producer.content_hash(),
+        prior_period_id="FY2024",
+        current_period_id="FY2025",
+        prior_basis_id="IFRS",
+        current_basis_id="IFRS",
+        points=(EarningsDeltaPoint(**with_prior), EarningsDeltaPoint(**without_prior)),
+        limitations=(),
+    )
+    expected = producer.content_hash()
+    original = type(producer).content_hash
+    hashed = []
+
+    def counting(self):
+        if self is producer:
+            hashed.append(1)
+        return original(self)
+
+    monkeypatch.setattr(type(producer), "content_hash", counting)
+    lineages = core._operands(producer, report)
+
+    assert len(hashed) == 1
+    references = [
+        ref
+        for lineage in lineages
+        for ref in (
+            *(() if lineage.prior is None else (lineage.prior.fact,)),
+            lineage.current.fact,
+            *lineage.companions,
+        )
+    ]
+    assert len(references) == 4
+    assert {ref.producer_sha256 for ref in references} == {expected}

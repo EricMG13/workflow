@@ -1871,6 +1871,33 @@
       "sha256": "3595cf287f2586e11bb192c0d43998f79d3000efac7aa3c3d1af33b05a228690",
       "reason": "Item 82 fix 2: CASH_SCOPE_BLOCKER; absent_input_limitation also refuses an explanation carrying the cash-scope blocker (period_reconciliation.py:310 on claude/s8-vii), so it stays BLOCK; no other rule changes.",
       "review": "docs/rulings/2026-10-29-stage3.md item 88"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "imported_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "prior_project_sha256": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+      "project_commit": "2ded26ca3ff8a81cc952f4dae4f1386d5c999880",
+      "sha256": "618229c6da7db278f1bfa0688da2998bec2c4486a55fe8f1e50258715db76390",
+      "reason": "perf(contracts): group canonical fact ids once in validate_tables",
+      "review": "docs/rulings/2026-10-29-stage3.md item 86"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "dd81024e407a325415c294467cc5f69db22b4fcc67878b35e245c4cc2682c0b6",
+      "project_commit": "4af08ceb9e41804caa4de81af4fd8637d1f53be7",
+      "sha256": "9c1296f39691c54cbc52fde0f6de764a4c8f328cbb94434d48d431cfbb0206cf",
+      "reason": "perf(execution): parse each verified result blob once per process",
+      "review": "docs/rulings/2026-10-29-stage3.md item 86"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "9c1296f39691c54cbc52fde0f6de764a4c8f328cbb94434d48d431cfbb0206cf",
+      "project_commit": "66cce2a3293216fd324e0e5f578287acc60bc37b",
+      "sha256": "b2d5396c820c95669dda6afee5aec0e84fb4f6abcbe991b2a4ed99a1041e84d4",
+      "reason": "chore(perf): correct the result-cache memory note; pin validate_tables empty-table default",
+      "review": "docs/rulings/2026-10-29-stage3.md item 86"
     }
   ],
   "local_patch_lineage": [

@@ -13,8 +13,14 @@ from deploy_vii.contracts import PREFILLED_MARKER, Citation, Contract, Hash, Ide
 from deploy_vii.facility_fx import FacilityNormalization, normalize_facilities
 from deploy_vii.financial_contracts import FinancialBook, FinancialReview, Located, Observation
 from deploy_vii.financial_periods import _id
-from deploy_vii.financial_reconciliation import ReconciliationReport, reconcile_financials
+from deploy_vii.financial_reconciliation import (
+    Reconciliation,
+    ReconciliationReport,
+    ReconciliationTerm,
+    reconcile_financials,
+)
 from deploy_vii.financial_validation import records, validate_financial_review
+from deploy_vii.period_reconciliation import PeriodCheck, PeriodTerm
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues
 from deploy_vii.statement_output import StatementReport, statement_report
@@ -397,6 +403,46 @@ def _normalizations(
     return tuple(rows)
 
 
+ABSENT_INPUT_PREFIX = (
+    "Absent input, stated as a limitation on a public filed pack (rulings item 82): "
+)
+
+
+def conflicting_observation_ids(book: FinancialBook) -> frozenset[str]:
+    """The observation ids the book marks as conflicting."""
+    return frozenset(
+        o.observation_id for o in records(book, Observation) if o.status == "conflicting"
+    )
+
+
+def absent_input_limitation(
+    check: Reconciliation | PeriodCheck, *, public: bool, conflicting: frozenset[str]
+) -> str | None:
+    """The limitation text for a BLOCK check that only lacks an input, else None (stays BLOCK).
+
+    Rulings item 82: on a public filed pack a check that cannot be computed because an input is
+    absent is a stated limitation. A check that computed a difference, a term that is a
+    conflicting observation, an FX-normalised term, a non-public case and a WARN check all stay
+    as they are.
+    """
+    if not public or check.status != "BLOCK" or check.difference is not None:
+        return None
+    terms: tuple[ReconciliationTerm | PeriodTerm, ...] = (check.reported, *check.components)
+    for term in terms:
+        if isinstance(term, ReconciliationTerm):
+            if term.normalization is not None:
+                return None
+            ids = {term.observation_id} if term.observation_id else set()
+        else:
+            ids = set(term.observation_ids)
+        if ids & conflicting:
+            return None
+    absent = "; ".join(
+        f"{t.label} ({t.reason})" if t.reason else t.label for t in terms if t.amount is None
+    )
+    return ABSENT_INPUT_PREFIX + check.explanation + (f"; absent: {absent}" if absent else "")
+
+
 def canonical_audit(
     pack: PreparedPack,
     review: FinancialReview,
@@ -490,14 +536,17 @@ def canonical_audit(
                 f"{cell.statement} {cell.item_id}: required statement item not supplied",
                 (cell.period_id,),
             )
+    public = pack.run.case_kind == "public"
+    conflicting = conflicting_observation_ids(book)
     for check in reconciliation.checks:
         if check.status != "PASS":
+            limitation = absent_input_limitation(check, public=public, conflicting=conflicting)
             gap(
                 "reconciliation",
                 check.check_id,
-                check.explanation,
+                check.explanation if limitation is None else limitation,
                 (check.period_id,),
-                check.status,
+                check.status if limitation is None else "WARN",
                 tuple(dict.fromkeys(records(check, Citation))),
             )
     for row in definitions:

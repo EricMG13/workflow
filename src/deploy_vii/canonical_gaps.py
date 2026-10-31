@@ -6,7 +6,13 @@ This register does not grant consumer readiness or analytical acceptance.
 from datetime import date
 from typing import Literal
 
-from deploy_vii.canonical_audit import CanonicalAuditReport, DefinitionReview, canonical_audit
+from deploy_vii.canonical_audit import (
+    CanonicalAuditReport,
+    DefinitionReview,
+    absent_input_limitation,
+    canonical_audit,
+    conflicting_observation_ids,
+)
 from deploy_vii.canonical_kpis import CanonicalKpiReport, canonical_kpis
 from deploy_vii.context_binding import FinancialContextBinding, validate_financial_context
 from deploy_vii.contracts import Citation, Contract, Hash, Identifier, Text
@@ -59,7 +65,11 @@ class CanonicalGapReport(Contract):
 
 
 def _calculation_gaps(
-    kpis: CanonicalKpiReport, reconciliation: PeriodReconciliationReport
+    kpis: CanonicalKpiReport,
+    reconciliation: PeriodReconciliationReport,
+    *,
+    public: bool,
+    conflicting: frozenset[str],
 ) -> tuple[GapDetail, ...]:
     """Keep calculation failures, caveats and original basis identities together."""
     historical = kpis.historical
@@ -238,14 +248,15 @@ def _calculation_gaps(
             )
     for check in reconciliation.checks:
         if check.status != "PASS":
+            limitation = absent_input_limitation(check, public=public, conflicting=conflicting)
             append(
                 "period_reconciliation",
                 check_hash,
                 check.check_id,
                 check.metric_id,
                 (constructions[check.construction_id],),
-                check.explanation,
-                check.status,
+                check.explanation if limitation is None else limitation,
+                check.status if limitation is None else "WARN",
                 tuple(dict.fromkeys(records(check, Citation))),
             )
     for basis in kpis.bases:
@@ -428,7 +439,14 @@ def canonical_gaps(
     else:
         kpis = canonical_kpis(pack, financial, book.book_id)
         reconciliation = reconcile_periods(pack, financial, book.book_id)
-        details.extend(_calculation_gaps(kpis, reconciliation))
+        details.extend(
+            _calculation_gaps(
+                kpis,
+                reconciliation,
+                public=pack.run.case_kind == "public",
+                conflicting=conflicting_observation_ids(book),
+            )
+        )
     for origin, report, report_hash in (
         ("context", context_report, context_hash),
         ("source_audit", audit, audit_hash),

@@ -6,11 +6,22 @@ import copy
 import json
 import re
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from deploy_workflow.context import SCHEMA, ContextRefused, RunContext, amount, load_context
+from deploy_workflow.context import (
+    NUM,
+    PERIOD,
+    SCHEMA,
+    SLUG,
+    SNUM,
+    ContextRefused,
+    RunContext,
+    amount,
+    load_context,
+)
 
 MINIMAL: dict[str, Any] = {
     "schema": SCHEMA,
@@ -511,3 +522,27 @@ def test_form_rules_refused(changes: dict[str, Any], path: str, message: str) ->
     assert any(p.startswith(path) and message in p for p in caught.value.problems), (
         caught.value.problems
     )
+
+
+REPO = Path(__file__).resolve().parents[2]
+CASES = REPO / "cases/context"
+GOLDENS = REPO / "cases/goldens"
+FORM = REPO / "docs/templates/context-form.html"
+
+
+@pytest.mark.parametrize("name", ["research-minimal.json", "primary-full.json"])
+def test_form_output_loads(name: str) -> None:
+    raw = (CASES / name).read_bytes()
+    assert {"schema": SCHEMA, **load_context(raw).model_dump(mode="json")} == json.loads(raw)
+
+
+def test_form_regexes_match_reader() -> None:
+    html = FORM.read_text()
+    assert f"const NUM = /{NUM}/, SNUM = /{SNUM}/;" in html
+    assert f"/{PERIOD}/.exec(p)" in html
+    assert f"/{SLUG}/.test(v)" in html
+
+
+@pytest.mark.parametrize("case", sorted(p.parent.name for p in GOLDENS.glob("*/context.json")))
+def test_golden_contexts_load(case: str) -> None:
+    load_context((GOLDENS / case / "context.json").read_bytes())

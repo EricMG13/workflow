@@ -32,3 +32,9 @@
 - Task B: fix round 1/2 (M1 Medium, L1 Low, I1 Info addressed pending re-review; commits 0a4917e..4ed0f63) agent=mx-feature
 - 09:38 B re-review (mx-feature): M1, L1, I1 ADDRESSED; no new breakage; APPROVE.
 - Task B: complete (commits 5a1d2e2..4ed0f63, review clean after 1 fix round). agent=mx-feature fix-rounds=1 gates-first-pass=n (mypy)
+- 09:39 C @1309b27b: tests/test_czr_cash_scope.py + schema_normalise_escapes + connect_cp2e + connect_cp2d: 331 passed, exit 0 (163 s).
+- 09:46 C re-review (mx-adversary): A1-A4 ADDRESSED; no new breakage; RED claim confirmed; CZR books validate (r1 exit 0); G3 row = _statement_balance row over 228 orderings (r3 exit 0); APPROVE. Remaining Low (predates fix 1): partial-scope LTM gives a structural 'Cash scope differs across source periods' blocker that item 82 would downgrade (r2 exit 1).
+- Task C: complete (commits 5a1d2e2..1309b27, review clean after 1 fix round; 1 Low parked). agent=mx-feature fix-rounds=1 gates-first-pass=n (fixture error, then lint)
+- Task C: parked — partial-scope LTM blocker downgradable by item 82 — Ruling: the fix belongs in item 82's classifier (Modules' canonical_audit.py): keep the 'Cash scope differs across source periods' blocker BLOCK; sent to Modules. It hides a difference only if the CFS scope truly differs between years — cost if wrong: one LTM check may show WARN instead of BLOCK until Modules adds the exception.
+- Task C: parked — Info pytest.raises(RuntimeError) without match= — Ruling: no stable message text exists to match; the captured PASS assertions bound it — cost if wrong: a different RuntimeError would also satisfy the raise.
+- 09:46 Merged A, B, C into claude/s8-vii (2c43a6c5). TL10.4 string confirmed: 'A move of 3.75 US$ m reaches the credit view.' End-of-branch Low batch (L-batch.md) to mx-scaffold.

@@ -1943,6 +1943,15 @@
       "sha256": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
       "reason": "Stage 8-vii Low batch: comment and docstring rewrap only; no behaviour change.",
       "review": "docs/rulings/2026-10-31-s8-vii.md"
+    },
+    {
+      "destination": "src/deploy_vii/statement_extract.py",
+      "imported_sha256": "f4b2c224e0b55662704ca6529b46d6ff3b3ae67ed8ebb95518d8cdf3c88a25b1",
+      "prior_project_sha256": "3fd324ec36dba89b49051d46973f860a8e394524b80a4c4686075da54d2d96de",
+      "project_commit": "6673b51ab9c197e62489e4be5af13481fab4c52e",
+      "sha256": "1afd96ec69b631944314ea829bc8f22c2fbe553ecf97293fa4adf9c2e5a77e53",
+      "reason": "D2/D3 fix 2 (s8-vii B, whole-branch review): a footnote marker must also end left of the leftmost header year column; note/notes are header words.",
+      "review": "docs/rulings/2026-10-31-s8-vii.md"
     }
   ],
   "local_patch_lineage": [

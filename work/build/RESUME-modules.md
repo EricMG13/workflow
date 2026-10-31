@@ -26,7 +26,7 @@ Each branch is in its own agent worktree (`.claude/worktrees/agent-<id>`). Merge
    - Ledger: `agent=mx-feature fix-rounds=2`.
 2. **T2** (H06+H07 render), `claude/s8-render` @fe71420a (agent-a1ceb9b5c3b9c048d).
    - Review APPROVE. Passing so far: fast 10547; method 931; owner cp8 86.
-   - **Waits for:** `N/s8t2/owner-cp2h.log` and `N/s8t2/g2.log`.
+   - **Waits for:** `N/s8t2/owner-cp2h.log`. g2 passed: 8 passed, exit 0, at 10:41.
    - Ledger: `fix-rounds=1`.
 3. **Item 82** (absent input becomes a limitation on public packs).
    - The final branch is `claude/s7-absent-input-3` @683bf950 (agent-ad578b923e77abaf6), built on `claude/s7-absent-input-2` @81e224f1.
@@ -36,7 +36,7 @@ Each branch is in its own agent worktree (`.claude/worktrees/agent-<id>`). Merge
    - Ledger: `fix-rounds=2`.
 4. **T6** (speed-branch merge, D12, F1 parse cache, F2 cpos-owner re-pin), `claude/s8-speed` @88fbda46 (agent-a85e6cee38aa83cb0).
    - Review APPROVE. D12 exit 0; the builder reruns identically.
-   - **Waits for:** `N/s8t6/fast.log`, `src.log` and `earn.log`.
+   - **Waits for:** `N/s8t6/earn.log`. The fast set passed (10602 passed, 19 skipped, exit 0) and so did source workflow+tools (167 passed, exit 0).
    - Ledger: `fix-rounds=1`.
 5. **T4** (CP-1 quality read serves `quality_scope` narrowed to {kind, reference}; ruling item 87), `claude/s8-quality` @3a13df85 (agent-afdd823d6e7d9d80d), built on T6.
    - RED is correct. Lint and mypy are clean.

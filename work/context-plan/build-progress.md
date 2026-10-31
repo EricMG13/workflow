@@ -11,14 +11,14 @@ diffs too) → phase gate → PR Manager.
 
 | Phase | Plan file | State | Commits | Sent to PR Manager |
 |---|---|---|---|---|
-| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | plan drafted (mx-feature); plan review running (mx-autonomous) | — | — |
-| O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | plan drafted; plan review running; provider docs in work/context-plan/provider-docs-2026-10-31.md | — | — |
-| O2 | — | waiting on O1, O5 | — | — |
+| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | plan approved 8e17789b (2 review rounds); building: Task 1 dispatched (BASE 01ee8514) | — | — |
+| O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | plan approved 01ee8514 (3 rounds); provider docs in work/context-plan/provider-docs-2026-10-31.md; builds after O1 | — | — |
+| O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | plan drafting (mx-feature) | — | — |
 | O3 | — | — | — | — |
 | O4 | — | — | — | — |
 | O6 | — | — | — | — |
 | O7a-d | — | — | — | — |
-| Phases 2-8 | — | questions being researched (mx-autonomous) | — | — |
+| Phases 2-8 | — | questions researched and ruled: work/context-plan/reviews/phases-2-8-questions.md; user rulings B6-B9 | — | — |
 
 Notes:
 - Modules (2026-10-31): not editing owner_workflow.py or the listed modules. Overlap risks:

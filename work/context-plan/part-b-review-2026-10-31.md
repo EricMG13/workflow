@@ -19,6 +19,11 @@ Plan B items for the testing session (not yet sent; it is paused until 2026-11-0
 - Task 3 `account_spend` counts records only from runs whose `run.json` `mode` is `live` (M5).
 - Task 4/6 goldens: re-cut the quotes O2's plan lists as holding in no converted line (M3).
 - R1 no longer claims Task 6 maps against converted text (Info).
+- Stopped-run file set (O2 review M7): a stopped run may also hold `publication/` (a fault after
+  CP-MODEL published) and `delivery/` (a verify failure after the rename); a blocked walk ends
+  `stopped` with `stopped_reason` `render: owner_render_blocked` and keeps `owner-run.json`, so
+  Task 8 scores from `receipt.plan` with `rendered=false`.
+- `run.json` `sources` includes a `context` entry (`media_type` `text/plain`, `converted_sha256` null).
 
 | Id | Sev | Finding (verified) | Proposed amendment |
 |---|---|---|---|

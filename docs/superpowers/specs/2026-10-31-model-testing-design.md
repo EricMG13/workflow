@@ -1,6 +1,6 @@
 # Model testing framework: design
 
-Date: 2026-10-31. Status: draft for builder check, then user approval. Source conversation: session "Codex findings review" (branch `claude/codex-findings-review-64c673`); state and history in `work/model-testing/HANDOFF.md`.
+Date: 2026-10-31. Status: approved by the user 2026-10-31 ("approve and commit"). Source conversation: session "Codex findings review" (branch `claude/codex-findings-review-64c673`); state and history in `work/model-testing/HANDOFF.md`.
 
 ## 1. Intent
 

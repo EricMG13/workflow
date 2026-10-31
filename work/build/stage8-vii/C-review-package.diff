@@ -1,0 +1,987 @@
+dd91959f test: fix cash scope fixtures
+d6ca9b63 fix: cash scope
+caadd630 test: RED cash scope
+ src/deploy_vii/cash_bridge.py              |  43 ++-
+ src/deploy_vii/financial_contracts.py      |  43 ++-
+ src/deploy_vii/financial_reconciliation.py |  37 ++-
+ src/deploy_vii/period_reconciliation.py    |  25 +-
+ src/deploy_vii/statement_validation.py     |   8 +-
+ tests/test_cash_scope.py                   | 424 +++++++++++++++++++++++++++++
+ tests/test_czr_cash_scope.py               | 119 ++++++++
+ 7 files changed, 685 insertions(+), 14 deletions(-)
+diff --git a/src/deploy_vii/cash_bridge.py b/src/deploy_vii/cash_bridge.py
+index 0aa2c8a5..48bec579 100644
+--- a/src/deploy_vii/cash_bridge.py
++++ b/src/deploy_vii/cash_bridge.py
+@@ -1,13 +1,17 @@
+ """Validate explicitly sourced cash movement adjustments, without inferring FX."""
+ 
+-from deploy_vii.financial_contracts import FinancialBook
++from datetime import timedelta
++
++from deploy_vii.financial_contracts import CashMovementBridge, FinancialBook, FinancialPeriod
++
++CASH_LINE_ITEMS = {"net_cash_change", "opening_cash", "closing_cash"}
+ 
+ 
+ def cash_bridge_issues(book: FinancialBook) -> tuple[str, ...]:
+     if not book.cash_movement_bridges:
+         return ()
+     periods = {p.period_id: p for p in book.periods}
+     lines = {(r.period_id, r.line_id): r for r in book.statement_lines}
+     targets = {(r.period_id, r.target_line_id) for r in book.statement_identities}
+     ids: set[str] = set()
+     assessed: set[str] = set()
+@@ -33,11 +37,48 @@ def cash_bridge_issues(book: FinancialBook) -> tuple[str, ...]:
+                 issues.append(f"Unknown cash adjustment line: {bridge_id} {line_id}")
+             elif (
+                 line.statement != "CFS"
+                 or line.line_kind != "detail"
+                 or key in targets
+                 or not (line.item_id == "fx_cash_effect" or line.item_id.startswith("other:"))
+             ):
+                 issues.append(
+                     f"Cash adjustment requires a source FX/perimeter detail: {bridge_id} {line_id}"
+                 )
++        if bridge.cash_scope is not None:
++            issues.extend(_scope_issues(book, bridge, period))
+     return tuple(issues)
++
++
++def _scope_issues(
++    book: FinancialBook, bridge: CashMovementBridge, period: FinancialPeriod | None
++) -> list[str]:
++    """A declared scope cites the period's CFS cash line and has its balances where checked."""
++    scope = bridge.cash_scope
++    assert scope is not None
++    bridge_id = bridge.bridge_id
++    issues: list[str] = []
++    cfs_cash = {
++        c
++        for r in book.statement_lines
++        if r.period_id == bridge.period_id and r.statement == "CFS" and r.item_id in CASH_LINE_ITEMS
++        for c in r.value.citations
++    }
++    if not cfs_cash.intersection(scope.citations):
++        issues.append(f"Cash scope citation must cite the period's CFS cash line: {bridge_id}")
++    if period is None or period.end_date is None:
++        return issues
++    days = [period.end_date]
++    if period.start_date is not None and period.start_date.toordinal() > 1:
++        days.append(period.start_date - timedelta(days=1))
++    for day in days:
++        ids = {p.period_id for p in book.periods if p.end_date == day}
++        stated = {
++            r.item_id for r in book.statement_lines if r.statement == "BS" and r.period_id in ids
++        }
++        if "cash_and_equivalents" in stated:
++            issues.extend(
++                f"Declared cash scope balance missing: {bridge_id} {item} {day.isoformat()}"
++                for item in scope.items
++                if item not in stated
++            )
++    return issues
+diff --git a/src/deploy_vii/financial_contracts.py b/src/deploy_vii/financial_contracts.py
+index fb0b8cf2..388730d6 100644
+--- a/src/deploy_vii/financial_contracts.py
++++ b/src/deploy_vii/financial_contracts.py
+@@ -1,22 +1,28 @@
+ """CP-1 source observations, before Python normalization or calculation.
+ 
+ One book is one entity perimeter/accounting basis/currency/unit. Multiple books
+ preserve industrial/finance and other distinct perimeters without blending them.
+ """
+ 
+ from collections.abc import Callable
+ from datetime import date
+ from decimal import Decimal
+-from typing import Annotated, Literal, Self
+-
+-from pydantic import Field, field_validator, model_validator
++from typing import Annotated, Any, Literal, Self
++
++from pydantic import (
++    Field,
++    SerializerFunctionWrapHandler,
++    field_validator,
++    model_serializer,
++    model_validator,
++)
+ from pydantic.config import JsonDict
+ 
+ from deploy_vii.contracts import (
+     PREFILLED_MARKER,
+     Citation,
+     Claim,
+     Contract,
+     Hash,
+     Identifier,
+     Text,
+@@ -357,32 +363,63 @@ class StatementIdentity(Contract):
+     explanation: Text
+     citations: Located
+ 
+ 
+ class StatementDisclosure(Contract):
+     statement: Literal["IS", "CFS", "BS"]
+     period_id: Identifier
+     disclosure: Disclosure
+ 
+ 
++class CashScope(Contract):
++    """The balance-sheet lines, besides cash and equivalents, that the cash flow statement's cash
++    line includes. Cite the CFS cash line and the source span that names restricted cash."""
++
++    items: Annotated[
++        tuple[Literal["restricted_cash", "restricted_cash_noncurrent"], ...],
++        Field(min_length=1, max_length=2),
++    ]
++    citations: Located
++
++    @model_validator(mode="after")
++    def named_restricted_cash(self) -> Self:
++        if len(set(self.items)) != len(self.items):
++            raise ValueError("cash scope items must be distinct")
++        if not any("restricted cash" in " ".join(c.quote.split()).lower() for c in self.citations):
++            raise ValueError("cash scope requires a citation whose quote names restricted cash")
++        return self
++
++
+ class CashMovementBridge(Contract):
+     """Cash delta = reported NCF + signed source adjustments; never a plug.
+ 
+     An empty component list explicitly assesses that no adjustment is needed.
+     Components reference detail lines in the same period's source CFS.
++    `cash_scope` is null unless the CFS cash line includes restricted cash; then it lists the
++    balance-sheet restricted cash items (`restricted_cash`, `restricted_cash_noncurrent`) that
++    line adds to cash and equivalents, and the check sums every listed item's change.
+     """
+ 
+     bridge_id: Identifier
+     period_id: Identifier
+     components: Annotated[tuple[StatementContribution, ...], Field(max_length=20000)]
+     explanation: Text
+     citations: Located
++    cash_scope: CashScope | None = None
++
++    # `content_hash` dumps defaults: without this, an undeclared scope would change every hash.
++    @model_serializer(mode="wrap")
++    def _omit_absent_cash_scope(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
++        data: dict[str, Any] = handler(self)
++        if self.cash_scope is None:
++            data.pop("cash_scope", None)
++        return data
+ 
+ 
+ class BalanceMovement(Contract):
+     """One sourced equity/other balance movement, never a calculated residual."""
+ 
+     movement_id: Identifier
+     label: Text
+     period_id: Identifier
+     role: Literal["distribution", "capital_transaction", "oci", "perimeter", "period_flow", "other"]
+     value: Observation
+diff --git a/src/deploy_vii/financial_reconciliation.py b/src/deploy_vii/financial_reconciliation.py
+index 95faf17c..9243a694 100644
+--- a/src/deploy_vii/financial_reconciliation.py
++++ b/src/deploy_vii/financial_reconciliation.py
+@@ -503,79 +503,106 @@ def _ncf(book: FinancialBook, period: FinancialPeriod) -> Reconciliation:
+         "net_cash_change",
+         _account(book, period.period_id, "net_cash_change"),
+         terms,
+         "independent operating + investing + financing source equation leaves; "
+         "FX only if explicitly in the equation; canonical target sign conversion",
+         blocker="; ".join(blockers) or None,
+         context=(*contexts, *(target.sign_citations if target else ())),
+     )
+ 
+ 
++CASH_SCOPE = ("cash_and_equivalents", "restricted_cash", "restricted_cash_noncurrent")
++
++
++def cash_scope(bridge: CashMovementBridge | None) -> tuple[str, ...]:
++    """Cash and equivalents first, then the bridge's declared restricted cash items in order."""
++    declared = bridge.cash_scope.items if bridge and bridge.cash_scope else ()
++    return (CASH_SCOPE[0], *(item for item in CASH_SCOPE[1:] if item in declared))
++
++
+ def _cash_movement(book: FinancialBook, period: FinancialPeriod) -> Reconciliation:
+     opening = (
+         period.start_date - timedelta(days=1)
+         if period.start_date and period.start_date.toordinal() > 1
+         else None
+     )
+     bridge = next((b for b in book.cash_movement_bridges if b.period_id == period.period_id), None)
+     lines = {r.line_id: r for r in book.statement_lines if r.period_id == period.period_id}
+     adjustments = tuple(
+         _term(
+             part.line_id,
+             lines[part.line_id].value,
+             coefficient=-1 if part.coefficient == 1 else 1,
+             outflow=lines[part.line_id].sign_convention == "outflow_magnitude",
+         )
+         for part in (bridge.components if bridge else ())
+     )
++    scope = cash_scope(bridge)
++    formula = (
++        "closing cash - opening cash - signed source adjustments"
++        if bridge
++        else "closing cash - opening cash; no inferred FX or other cash adjustment"
++    )
++    if bridge and bridge.cash_scope:
++        names = " + ".join(scope)
++        formula = f"closing cash scope - opening cash scope ({names}) - signed source adjustments"
+     ncf = _check(
+         period,
+         "NCF_CASH_MOVEMENT",
+         "net_cash_change",
+         _account(book, period.period_id, "net_cash_change"),
+         (
+             _balance(book, period.end_date, "cash_and_equivalents"),
+             _balance(book, opening, "cash_and_equivalents", sign=-1),
++            *(
++                term
++                for item in scope[1:]
++                for term in (
++                    _statement_balance(book, period.end_date, item),
++                    _statement_balance(book, opening, item, sign=-1),
++                )
++            ),
+             *adjustments,
+         ),
+-        "closing cash - opening cash - signed source adjustments"
+-        if bridge
+-        else "closing cash - opening cash; no inferred FX or other cash adjustment",
++        formula,
+         context=(
+             *bridge.citations,
++            *(bridge.cash_scope.citations if bridge.cash_scope else ()),
+             *(c for part in bridge.components for c in lines[part.line_id].sign_citations),
+         )
+         if bridge
+         else (),
+     )
+     return ncf.model_copy(update={"cash_movement_bridges": (bridge,) if bridge else ()})
+ 
+ 
+ def _cash(book: FinancialBook, period: FinancialPeriod) -> tuple[Reconciliation, ...]:
+     return (
+         _statement_check(book, period, "CFS", "cfo_ncfo", "CFO_IDENTITY"),
+         _ncf(book, period),
+         _cash_movement(book, period),
+     )
+ 
+ 
+-def _statement_balance(book: FinancialBook, day: date | None, item: str) -> ReconciliationTerm:
++def _statement_balance(
++    book: FinancialBook, day: date | None, item: str, *, sign: Literal[-1, 1] = 1
++) -> ReconciliationTerm:
+     """Exact dated BS observation, retaining same-date conflicts and all evidence."""
+     ids = {p.period_id for p in book.periods if day is not None and p.end_date == day}
+     rows = [
+         r.value
+         for r in book.statement_lines
+         if r.period_id in ids and r.statement == "BS" and r.item_id == item
+     ]
+     conflict = next((v for v in rows if v.status == "conflicting"), None)
+     value = conflict or next((v for v in rows if v.amount is not None), next(iter(rows), None))
+-    term = _term(item, value)
++    term = _term(item, value, coefficient=sign)
+     return term.model_copy(
+         update={
+             "citations": tuple(dict.fromkeys(c for v in rows for c in _term(item, v).citations))
+         }
+     )
+ 
+ 
+ def _balance_movements(book: FinancialBook, period: FinancialPeriod) -> tuple[Reconciliation, ...]:
+     """Step 7: equity always checked; other sourced opening/closing bridges retained."""
+     bridges = {
+diff --git a/src/deploy_vii/period_reconciliation.py b/src/deploy_vii/period_reconciliation.py
+index 88ba9770..4f8939f5 100644
+--- a/src/deploy_vii/period_reconciliation.py
++++ b/src/deploy_vii/period_reconciliation.py
+@@ -21,25 +21,28 @@ from deploy_vii.financial_periods import (
+     HistoricalReport,
+     HistoricalValue,
+     PeriodConstruction,
+     _id,
+     historical_report,
+ )
+ from deploy_vii.financial_reconciliation import (
+     CheckType,
+     Reconciliation,
+     ReconciliationTerm,
++    CASH_SCOPE,
+     _account,
+     _balance,
+     _cash_movement,
+     _ncf,
++    _statement_balance,
+     _statement_check,
++    cash_scope,
+ )
+ from deploy_vii.model._cells import CONTEXT
+ from deploy_vii.model.dates import fiscal_year_number
+ from deploy_vii.model.history import FLOW_METRICS
+ from deploy_vii.preparation import PreparedPack
+ 
+ 
+ class PeriodTerm(Contract):
+     label: Text
+     value_id: Identifier | None
+@@ -271,48 +274,62 @@ def _period_cash(
+ 
+     Unadjusted legacy comparisons keep their own opening/closing boundary. Once
+     any contributing source uses a bridge, every contribution must be assessed
+     and its cash check must pass before the constructed check can agree.
+     """
+     opening = (
+         node.start_date - timedelta(days=1)
+         if node.start_date and node.start_date.toordinal() > 1
+         else None
+     )
+-    parts = [closing, _source(_balance(book, opening, "cash_and_equivalents", sign=-1))]
+     sources = _source_periods(report, node)
+-    assessments = {b.period_id for b in book.cash_movement_bridges}
++    assessments = {b.period_id: b for b in book.cash_movement_bridges}
+     adjusted = any(pid in assessments for pid, _ in sources)
++    # The restricted cash items any assessed source declares, in `CASH_SCOPE` order.
++    declared = {
++        item for pid, _ in sources if pid in assessments for item in cash_scope(assessments[pid])
++    }
++    scope = tuple(item for item in CASH_SCOPE if item in declared or item == CASH_SCOPE[0])
++    parts = [closing, _source(_balance(book, opening, "cash_and_equivalents", sign=-1))]
++    for item in scope[1:]:
++        parts.append(_source(_statement_balance(book, node.end_date, item)))
++        parts.append(_source(_statement_balance(book, opening, item, sign=-1)))
+     bridges: list[CashMovementBridge] = []
+     contexts: list[Citation] = []
+     blockers: list[str] = []
+     if adjusted:
+         periods = {p.period_id: p for p in book.periods}
+         for pid, sign in sources:
+             if pid not in assessments:
+                 parts.append(_cell(None, f"Unassessed cash bridge: {pid}", 1 if sign == 1 else -1))
+                 blockers.append(f"Unassessed cash bridge: {pid}")
+                 continue
+             assert pid is not None
+             source = _cash_movement(book, periods[pid])
+-            parts.extend(_source(term, sign) for term in source.components[2:])
++            own = cash_scope(assessments[pid])
++            if own != scope:
++                blockers.append(f"Cash scope differs across source periods: {pid}")
++            parts.extend(_source(term, sign) for term in source.components[2 * len(own) :])
+             bridges.extend(source.cash_movement_bridges)
+             contexts.extend(source.context_citations)
+             if source.status != "PASS":
+                 blockers.append(f"{pid}: {source.explanation}")
+     check = _compare(
+         node,
+         "NCF_CASH_MOVEMENT",
+         "net_cash_change",
+         reported,
+         tuple(parts),
+-        "closing cash - opening cash - signed period combination of source adjustments"
++        f"closing cash scope - opening cash scope ({' + '.join(scope)}) - signed period "
++        "combination of source adjustments"
++        if adjusted and len(scope) > 1
++        else "closing cash - opening cash - signed period combination of source adjustments"
+         if adjusted
+         else "closing cash - opening cash; no inferred FX plug",
+         blocker=node.limitation or "; ".join(blockers) or None,
+         context=tuple(contexts),
+     )
+     return check.model_copy(update={"cash_movement_bridges": tuple(bridges)})
+ 
+ 
+ def _bridges(
+     book: FinancialBook,
+diff --git a/src/deploy_vii/statement_validation.py b/src/deploy_vii/statement_validation.py
+index 9e95aa1f..a02dc452 100644
+--- a/src/deploy_vii/statement_validation.py
++++ b/src/deploy_vii/statement_validation.py
+@@ -86,21 +86,27 @@ OPTIONAL_ITEMS: dict[str, tuple[str, ...]] = {
+     "CFS": (
+         "investing_cash_flow",
+         "financing_cash_flow",
+         "fx_cash_effect",
+         "opening_cash",
+         "closing_cash",
+         "net_income",
+         "lease_payments_in_financing",
+         "interest_paid_in_financing",
+     ),
+-    "BS": ("rcf_drawn", "rcf_commitment", "net_accounts_receivable", "accounts_payable"),
++    "BS": (
++        "rcf_drawn",
++        "rcf_commitment",
++        "net_accounts_receivable",
++        "accounts_payable",
++        "restricted_cash_noncurrent",
++    ),
+ }
+ # Only identities with the same meaning are linked. IS cash interest/tax are
+ # deliberately not aliases of the CFS cash-paid observations.
+ ACCOUNT_LINKS: dict[tuple[str, str], str] = {
+     **{
+         ("IS", key): key
+         for key in (
+             "revenue",
+             "cogs",
+             "gross_profit",
+diff --git a/tests/test_cash_scope.py b/tests/test_cash_scope.py
+new file mode 100644
+index 00000000..ced96e6a
+--- /dev/null
++++ b/tests/test_cash_scope.py
+@@ -0,0 +1,424 @@
++"""A declared cash scope: NCF_CASH_MOVEMENT sums the change in each declared scope balance.
++
++The books carry the CZR filing numbers (10-K FY2025, 10-Q Q2 2026). A missing scope balance is an
++absent input, never zero; a book without a declaration is byte-identical to the old contract.
++"""
++
++import hashlib
++from datetime import date
++from decimal import Decimal
++
++import pytest
++from pydantic import ValidationError
++
++from deploy_vii.cash_bridge import cash_bridge_issues
++from deploy_vii.contracts import Citation
++from deploy_vii.financial_contracts import (
++    CashMovementBridge,
++    Disclosure,
++    FinancialBook,
++    FinancialPeriod,
++    Observation,
++    StatementLine,
++)
++from deploy_vii.financial_periods import HistoricalReport, PeriodConstruction, PeriodReference
++from deploy_vii.financial_reconciliation import _cash_movement
++from deploy_vii.period_reconciliation import PeriodTerm, _period_cash
++
++SHA = "a" * 64
++BOTH = ("restricted_cash", "restricted_cash_noncurrent")
++D = Decimal
++# date -> (cash and equivalents, restricted cash, restricted and escrow cash in other LT assets)
++BALANCES = {
++    date(2024, 12, 31): (866, 95, 55),
++    date(2025, 6, 30): (982, 85, 19),
++    date(2025, 12, 31): (887, 85, 12),
++    date(2026, 6, 30): (965, 96, 16),
++}
++BS_QUOTES = {
++    "cash_and_equivalents": "Cash and cash equivalents",
++    "restricted_cash": "Restricted cash",
++    "restricted_cash_noncurrent": "Restricted and escrow cash included in other long-term assets",
++}
++FLOWS = {  # period -> (type, quarter, fiscal year, start, end, reported NCF)
++    "fy-2025": ("FY", None, "FY2025", date(2025, 1, 1), date(2025, 12, 31), -32),
++    "h1-2026": ("YTD", 2, "FY2026", date(2026, 1, 1), date(2026, 6, 30), 93),
++    "h1-2025": ("YTD", 2, "FY2025", date(2025, 1, 1), date(2025, 6, 30), 70),
++}
++NCF_QUOTE = {
++    "fy-2025": "Decrease in cash, cash equivalents and restricted cash | (32) | (127) | (160)",
++    "h1-2026": "Increase in cash, cash equivalents and restricted cash | 93 | 70",
++    "h1-2025": "Increase in cash, cash equivalents and restricted cash | 70 | 12",
++}
++SCOPE_FORMULA = (
++    "closing cash scope - opening cash scope "
++    "(cash_and_equivalents + restricted_cash + restricted_cash_noncurrent) "
++    "- signed source adjustments"
++)
++
++
++def cite(quote: str, locator: str = "page:60") -> Citation:
++    return Citation(source_id="k", source_sha256=SHA, locator=locator, quote=quote)
++
++
++def observation(name: str, amount: int, citation: Citation) -> Observation:
++    return Observation(
++        observation_id=name, status="known", amount=D(amount), citations=(citation,)
++    )
++
++
++def period(pid: str, kind: str, quarter, year: str, start, end) -> FinancialPeriod:
++    return FinancialPeriod(
++        period_id=pid,
++        fiscal_year=year,
++        fiscal_quarter=quarter,
++        period_type=kind,
++        start_date=start,
++        end_date=end,
++        day_count=None,
++        audit_status="unaudited",
++        currency="USD",
++        unit="MILLIONS",
++        accounting_basis="US GAAP",
++        entity_perimeter="Consolidated",
++        citations=(cite("period", "page:1"),),
++        limitation="Point-in-time balance sheet date, not a duration" if start is None else None,
++    )
++
++
++def line(lid, statement, item, pid, amount, citation, *, kind="detail", priority=1):
++    return StatementLine(
++        line_id=lid,
++        statement=statement,
++        item_id=item,
++        label=item,
++        period_id=pid,
++        display_priority=priority,
++        line_kind=kind,
++        value=observation(f"obs-{lid}", amount, citation),
++    )
++
++
++def scope_of(items=BOTH, citations=None):
++    from deploy_vii.financial_contracts import CashScope
++
++    return CashScope(items=items, citations=citations or ())
++
++
++def bridge(pid: str, items=BOTH, citations=None) -> CashMovementBridge:
++    quote = cite(NCF_QUOTE[pid])
++    extra = {"cash_scope": scope_of(items, citations or (quote,))} if items else {}
++    return CashMovementBridge(
++        bridge_id=f"b-{pid}",
++        period_id=pid,
++        components=(),
++        explanation="no FX or perimeter adjustment is printed",
++        citations=(quote,),
++        **extra,
++    )
++
++
++def book(
++    flows=("fy-2025", "h1-2026"),
++    scopes=None,
++    *,
++    drop=(),
++    extra_lines=(),
++    declare=True,
++    ncf_citations=None,
++) -> FinancialBook:
++    """`scopes` maps a bridged period to its declared items (None: bridge without scope)."""
++    scopes = scopes if scopes is not None else {pid: BOTH if declare else None for pid in flows}
++    periods, lines, order = [], [], 1
++    for day, values in BALANCES.items():
++        pid = f"bs-{day.isoformat()}"
++        periods.append(period(pid, "PERIOD_END", None, f"FY{day.year}", None, day))
++        for item, amount in zip(BS_QUOTES, values, strict=True):
++            if (day, item) in drop:
++                continue
++            quote = f"{BS_QUOTES[item]} | {amount}"
++            lines.append(line(f"{pid}-{item}", "BS", item, pid, amount, cite(quote, "page:61"),
++                              priority=order))
++            order += 1
++    for pid in flows:
++        kind, quarter, year, start, end, ncf = FLOWS[pid]
++        periods.append(period(pid, kind, quarter, year, start, end))
++        citation = (ncf_citations or {}).get(pid) or cite(NCF_QUOTE[pid])
++        lines.append(line(f"cfs-ncf-{pid}", "CFS", "net_cash_change", pid, ncf, citation,
++                          kind="total", priority=order))
++        order += 1
++    disclosure = Disclosure(
++        status="not_applicable", explanation="none", citations=(cite("none", "page:1"),)
++    )
++    return FinancialBook(
++        book_id="czr",
++        entity_perimeter="Consolidated",
++        accounting_basis="US GAAP",
++        currency="USD",
++        unit="MILLIONS",
++        periods=tuple(periods),
++        accounts=(),
++        addbacks=(),
++        segments=(),
++        kpis=(),
++        facilities=(),
++        pro_forma=(),
++        statement_lines=(*lines, *extra_lines),
++        cash_movement_bridges=tuple(bridge(pid, items) for pid, items in scopes.items()),
++        segment_allocation=(),
++        addback_disclosure=disclosure,
++        segment_disclosure=disclosure,
++    )
++
++
++def signed(check) -> list[Decimal]:
++    return [t.amount * t.coefficient for t in check.components]
++
++
++def flow(b: FinancialBook, pid: str) -> FinancialPeriod:
++    return next(p for p in b.periods if p.period_id == pid)
++
++
++def test_declared_fy_2025_sums_the_change_in_each_scope_balance():
++    b = book()
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert signed(check) == [887, -866, 85, -95, 12, -55]
++    assert check.calculated_value == D(-32)
++    assert check.difference == D(0)
++    assert check.status == "PASS"
++    assert check.formula == SCOPE_FORMULA
++    assert check.cash_movement_bridges == (b.cash_movement_bridges[0],)
++
++
++def test_declared_h1_2026_sums_the_change_in_each_scope_balance():
++    b = book()
++    check = _cash_movement(b, flow(b, "h1-2026"))
++    assert signed(check) == [965, -887, 96, -85, 16, -12]
++    assert check.calculated_value == D(93)
++    assert check.difference == D(0)
++    assert check.status == "PASS"
++    assert check.formula == SCOPE_FORMULA
++
++
++def test_restricted_cash_only_scope_passes_without_a_noncurrent_balance():
++    b = book(flows=("fy-2025",), scopes={"fy-2025": ("restricted_cash",)})
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert signed(check) == [887, -866, 85, -95]
++    assert check.calculated_value == D(11)
++    assert check.formula == (
++        "closing cash scope - opening cash scope (cash_and_equivalents + restricted_cash) "
++        "- signed source adjustments"
++    )
++
++
++@pytest.mark.parametrize(
++    ("pid", "calculated", "difference"), [("fy-2025", 21, 53), ("h1-2026", 78, -15)]
++)
++def test_undeclared_scope_keeps_the_cash_only_check(pid, calculated, difference):
++    b = book(declare=False)
++    bridge_ = b.cash_movement_bridges[0 if pid == "fy-2025" else 1]
++    assert bridge_.cash_scope is None
++    assert "cash_scope" not in bridge_.model_dump_json()
++    check = _cash_movement(b, flow(b, pid))
++    assert [t.label for t in check.components] == ["cash_and_equivalents"] * 2
++    assert check.calculated_value == D(calculated)
++    assert check.difference == D(difference)
++    assert check.status == "BLOCK"
++    assert check.formula == "closing cash - opening cash - signed source adjustments"
++
++
++def test_undeclared_scope_without_a_bridge_keeps_the_old_formula():
++    b = book(scopes={})
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert check.formula == "closing cash - opening cash; no inferred FX or other cash adjustment"
++    assert [t.label for t in check.components] == ["cash_and_equivalents"] * 2
++
++
++def test_a_missing_scope_balance_is_an_absent_input_never_zero():
++    b = book(drop={(date(2024, 12, 31), "restricted_cash_noncurrent")})
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    missing = check.components[5]
++    assert (missing.label, missing.amount, missing.reason) == (
++        "restricted_cash_noncurrent",
++        None,
++        "Not supplied",
++    )
++    assert check.calculated_value is None
++    assert check.difference is None
++    assert check.status == "BLOCK"
++    assert check.explanation == "Missing reported value or complete independent components"
++
++
++def test_a_not_applicable_scope_balance_carries_its_reason():
++    day = date(2024, 12, 31)
++    absent = Observation(
++        observation_id="obs-na",
++        status="not_applicable",
++        amount=None,
++        citations=(),
++        reason="No such balance at that date",
++    )
++    na = StatementLine(
++        line_id="bs-na",
++        statement="BS",
++        item_id="restricted_cash_noncurrent",
++        label="restricted_cash_noncurrent",
++        period_id="bs-2024-12-31",
++        display_priority=99,
++        line_kind="detail",
++        value=absent,
++    )
++    b = book(drop={(day, "restricted_cash_noncurrent")}, extra_lines=(na,))
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert check.components[5].amount is None
++    assert check.components[5].reason == "No such balance at that date"
++    assert check.calculated_value is None
++    assert check.status == "BLOCK"
++
++
++def test_cash_scope_contract_refuses_a_quote_that_does_not_name_restricted_cash():
++    with pytest.raises(ValidationError, match="names restricted cash"):
++        scope_of(BOTH, (cite("Total cash and cash equivalents | 887"),))
++
++
++def test_cash_scope_contract_accepts_the_quote_across_whitespace_and_case():
++    scope = scope_of(("restricted_cash",), (cite("Increase in cash and Restricted\n  CASH | 93"),))
++    assert scope.items == ("restricted_cash",)
++
++
++def test_cash_scope_contract_refuses_duplicate_items():
++    with pytest.raises(ValidationError, match="distinct"):
++        scope_of(("restricted_cash", "restricted_cash"), (cite(NCF_QUOTE["fy-2025"]),))
++
++
++def test_scope_citation_must_cite_the_period_cfs_cash_line():
++    other = cite("Net cash used in operating activities, excluding restricted cash | 1")
++    b = book(
++        flows=("fy-2025",),
++        extra_lines=(line("cfs-cfo", "CFS", "cfo_ncfo", "fy-2025", 1, other, kind="total"),),
++    )
++    assert cash_bridge_issues(b) == ()
++    off = b.model_copy(
++        update={"cash_movement_bridges": (bridge("fy-2025", BOTH, (other,)),)}
++    )
++    assert cash_bridge_issues(off) == (
++        "Cash scope citation must cite the period's CFS cash line: b-fy-2025",
++    )
++
++
++def test_declared_item_without_a_balance_where_cash_is_stated_is_refused():
++    b = book(flows=("fy-2025",), drop={(date(2024, 12, 31), "restricted_cash_noncurrent")})
++    assert cash_bridge_issues(b) == (
++        "Declared cash scope balance missing: b-fy-2025 restricted_cash_noncurrent 2024-12-31",
++    )
++
++
++def test_a_book_without_any_declaration_serializes_as_before():
++    expected = (
++        '{"bridge_id":"b-fy-2025","period_id":"fy-2025","components":[],'
++        '"explanation":"no FX or perimeter adjustment is printed","citations":[{"source_id":"k",'
++        f'"source_sha256":"{SHA}","locator":"page:60","quote":"{NCF_QUOTE["fy-2025"]}"}}]}}'
++    )
++    b = book(declare=False)
++    assert b.cash_movement_bridges[0].model_dump_json() == expected
++    assert b.cash_movement_bridges[0].content_hash() == hashlib.sha256(expected.encode()).hexdigest()
++    rec = _cash_movement(b, flow(b, "fy-2025"))
++    assert f'"cash_movement_bridges":[{expected}]' in rec.model_dump_json()
++
++
++def historical(b: FinancialBook, node: PeriodConstruction) -> HistoricalReport:
++    return HistoricalReport(
++        run_id="r",
++        issuer_id="czr",
++        as_of=date(2026, 6, 30),
++        pack_sha256=SHA,
++        review_sha256=SHA,
++        book_id=b.book_id,
++        entity_perimeter=b.entity_perimeter,
++        accounting_basis=b.accounting_basis,
++        currency=b.currency,
++        scale="MILLIONS",
++        periods=b.periods,
++        observations=(),
++        facility_normalizations=(),
++        input_rows=(),
++        columns=(),
++        constructions=(node,),
++        values=(),
++        limitations=(),
++    )
++
++
++def ltm_node() -> PeriodConstruction:
++    terms = (("fy-2025", 1), ("h1-2026", 1), ("h1-2025", -1))
++    return PeriodConstruction(
++        construction_id="ltm-2026-06-30",
++        column_key="ltm",
++        label="LTM",
++        kind="LTM",
++        fiscal_year="FY2026",
++        fiscal_quarter=2,
++        start_date=date(2025, 7, 1),
++        end_date=date(2026, 6, 30),
++        days=365,
++        own_period_id=None,
++        stated_period_id=None,
++        terms=tuple(PeriodReference(kind="period", reference=r, coefficient=c) for r, c in terms),
++        formula="fy-2025 + h1-2026 - h1-2025",
++        limitation=None,
++    )
++
++
++def term(label: str, amount: int) -> PeriodTerm:
++    return PeriodTerm(
++        label=label,
++        value_id=None,
++        amount=D(amount),
++        observation_ids=(),
++        citations=(),
++        reason=None,
++    )
++
++
++def constructed(b: FinancialBook):
++    node = ltm_node()
++    return _period_cash(
++        b, historical(b, node), node, term("net_cash_change", -9), term("cash_and_equivalents", 965)
++    )
++
++
++def test_constructed_period_sums_scope_balances_at_the_construction_boundaries():
++    b = book(flows=tuple(FLOWS), scopes={pid: BOTH for pid in FLOWS})
++    check = constructed(b)
++    assert [t.amount * t.coefficient for t in check.components] == [965, -982, 96, -85, 16, -19]
++    assert check.calculated_value == D(-9)
++    assert check.difference == D(0)
++    assert check.status == "PASS"
++    assert check.formula == (
++        "closing cash scope - opening cash scope "
++        "(cash_and_equivalents + restricted_cash + restricted_cash_noncurrent) "
++        "- signed period combination of source adjustments"
++    )
++    assert [br.bridge_id for br in check.cash_movement_bridges] == [
++        "b-fy-2025",
++        "b-h1-2026",
++        "b-h1-2025",
++    ]
++
++
++def test_constructed_period_refuses_sources_with_different_scopes():
++    scopes = {"fy-2025": BOTH, "h1-2026": BOTH, "h1-2025": None}
++    check = constructed(book(flows=tuple(FLOWS), scopes=scopes))
++    assert check.status == "BLOCK"
++    assert check.calculated_value is None
++    assert "Cash scope differs across source periods: h1-2025" in check.explanation
++
++
++def test_constructed_period_without_any_scope_keeps_the_adjusted_formula_and_bytes():
++    b = book(flows=tuple(FLOWS), scopes={pid: None for pid in FLOWS})
++    check = constructed(b)
++    assert [t.label for t in check.components[:2]] == ["cash_and_equivalents"] * 2
++    assert check.formula == (
++        "closing cash - opening cash - signed period combination of source adjustments"
++    )
++    assert '"cash_scope"' not in check.model_dump_json()
+diff --git a/tests/test_czr_cash_scope.py b/tests/test_czr_cash_scope.py
+new file mode 100644
+index 00000000..a3db7de7
+--- /dev/null
++++ b/tests/test_czr_cash_scope.py
+@@ -0,0 +1,119 @@
++"""CZR with the filing's printed cash scope declared: both NCF_CASH_MOVEMENT checks agree.
++
++The recorded partial submission is loaded and extended in memory (the "restricted and escrow cash
++included in other long-term assets" balance, one scope declaration per flow period, and the two
++pages that print the balance); nothing under `cases/**` is edited. The run still stops at the
++calculation gate for the other open checks, so the reconciliation is captured as the audit builds it.
++"""
++
++import copy
++import json
++from typing import Any
++
++import pytest
++from czr_runs import CASE, czr_closed
++
++from deploy_vii import canonical_audit
++from deploy_vii.financial_reconciliation import Reconciliation, ReconciliationReport
++
++NONCURRENT = "bs-restricted-and-escrow-cash-included-in-other-long-term-assets-net"
++BOTH = ["restricted_cash", "restricted_cash_noncurrent"]
++K_QUOTE = "Restricted and escrow cash included in other long-term assets, net | 12 | 55 | 16"
++Q_QUOTE = "Restricted and escrow cash included in other long-term assets, net | 16 | 19"
++# period -> (amount, source id, locator, quote)
++BALANCES = {
++    "bs-2025-12-31": ("12", "czr-fy2025-10k", "page:61", K_QUOTE),
++    "bs-2024-12-31": ("55", "czr-fy2025-10k", "page:61", K_QUOTE),
++    "bs-2026-06-30": ("16", "czr-q2-2026-10q", "page:10", Q_QUOTE),
++}
++
++
++def _declared(data: dict[str, Any]) -> dict[str, Any]:
++    stage = next(s for s in data["stages"] if s["step"] == "financials")
++    book = stage["submission"]["financial"]["books"][0]
++    shas = {
++        c["source_id"]: c["source_sha256"]
++        for row in book["statement_lines"]
++        for c in row["value"]["citations"]
++    }
++    top = max(row["display_priority"] for row in book["statement_lines"])
++    for period, (amount, source, locator, quote) in BALANCES.items():
++        citation = {
++            "source_id": source,
++            "source_sha256": shas[source],
++            "locator": locator,
++            "quote": quote,
++        }
++        book["statement_lines"].append(
++            {
++                "line_id": NONCURRENT,
++                "statement": "BS",
++                "item_id": "restricted_cash_noncurrent",
++                "label": "Restricted and escrow cash included in other long-term assets, net",
++                "period_id": period,
++                "display_priority": top + 1,
++                "line_kind": "detail",
++                "value": {
++                    "observation_id": f"{NONCURRENT}--{period}",
++                    "status": "known",
++                    "amount": amount,
++                    "citations": [citation],
++                },
++            }
++        )
++    for period in ("fy-2025", "h1-2026"):
++        line = next(
++            r
++            for r in book["statement_lines"]
++            if r["item_id"] == "net_cash_change" and r["period_id"] == period
++        )
++        citation = line["value"]["citations"][0]
++        book["cash_movement_bridges"].append(
++            {
++                "bridge_id": f"bridge-{period}",
++                "period_id": period,
++                "components": [],
++                "explanation": "No FX or perimeter adjustment is printed in the cash flow statement.",
++                "citations": [citation],
++                "cash_scope": {"items": BOTH, "citations": [citation]},
++            }
++        )
++    stage["calls"] += [
++        {
++            "tool": "read_pages",
++            "arguments": {"source_id": "czr-fy2025-10k", "first_page": 61, "last_page": 61},
++        },
++        {
++            "tool": "read_pages",
++            "arguments": {"source_id": "czr-q2-2026-10q", "first_page": 10, "last_page": 10},
++        },
++    ]
++    return data
++
++
++def test_czr_cash_movement_agrees_with_the_declared_scope(tmp_path, monkeypatch):
++    data = _declared(copy.deepcopy(json.loads((CASE / "submissions-partial.json").read_text())))
++    path = tmp_path / "submissions.json"
++    path.write_text(json.dumps(data), encoding="utf-8")
++    captured: list[ReconciliationReport] = []
++    original = canonical_audit.reconcile_financials
++
++    def spy(*args: Any, **kwargs: Any) -> ReconciliationReport:
++        report = original(*args, **kwargs)
++        captured.append(report)
++        return report
++
++    monkeypatch.setattr(canonical_audit, "reconcile_financials", spy)
++    with pytest.raises(RuntimeError):
++        czr_closed(tmp_path / "run", path)
++    assert captured, "the audit never reconciled the financials"
++    checks: dict[str, Reconciliation] = {
++        c.period_id: c for c in captured[-1].checks if c.check_type == "NCF_CASH_MOVEMENT"
++    }
++    for period, calculated in (("fy-2025", -32), ("h1-2026", 93)):
++        check = checks[period]
++        assert (check.status, check.calculated_value, check.difference) == (
++            "PASS",
++            calculated,
++            0,
++        )

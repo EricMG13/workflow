@@ -132,3 +132,10 @@ Prerequisites before any live run:
   - OpenRouter: DeepSeek on all six, estimated 9.97; about 8 left for reruns.
   - Anthropic cannot fund a full round even at one effort (Opus medium all six estimated 154.65). Plan: pilot (earnings_update) at both Opus efforts, 47.58; then Opus medium only on portfolio_decision, credit_snapshot and covenant_refinancing, 77.33; total 124.91 of 135. Opus does not cover relative_value or distressed_restructuring unless the pilot measures it cheaper than estimated, or the user adds credit (about USD 100 more covers Opus medium on all six).
   - Order: pilot on all five configurations first; re-estimate from measured per-module cost; then the rest.
+- **Recommended budget plan (controller, 2026-10-31; supersedes the line above; user asked for my suggestion, not yet confirmed):**
+  - Split the work in two passes. **Repair pass** on the cheap configurations (DeepSeek, Sol medium): run every pathway end to end, fix faults, rerun until the deliverables match the goldens. **Comparison pass** on the fixed product: Sol high and Opus medium run each pathway once, with no repair reruns.
+  - **Drop Opus high.** The medium/high effort comparison comes from Sol; Opus high costs about 1.44x medium and would squeeze Opus coverage to the pilot.
+  - OpenAI (usable 117): Sol medium about 2 rounds incl. reruns (67.68) + Sol high once (48.88) = 116.56.
+  - OpenRouter (usable 18): DeepSeek about 1.8 rounds incl. reruns.
+  - Anthropic (usable 135): Opus medium once on 5 pathways, cheapest first (earnings_update, portfolio_decision, credit_snapshot, covenant_refinancing, relative_value) = 125.72; distressed_restructuring only if the measured cost allows (all six = 154.65).
+  - earnings_update goes first on all four configurations as the pilot; re-estimate from measured cost before continuing.

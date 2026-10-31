@@ -19,3 +19,9 @@
 - mypy strict (MYPYPATH=src:tests) on both files: 0; reviewer `probe_mypy.sh` exit 0; `probe_omitted_czr.py` exit 0 (7 filed CZR pages `omitted == ()`).
 - ruff: SIM905 gone; FLY002 ×4 in the test file kept (page bytes must stay as printed; Info); TRY004 ×5 predating. format 0.
 - The long `test_source_tools`/`test_czr_*` run at 0a4917ed was stopped (the worktree changed under it); these suites run once on the integrated branch.
+
+## Fix round 2 (B-fix2.md, from the whole-branch review): branch claude/s8-vii-b2 from 2f7c56ad; RED 09e2392f, fix 6673b51a
+- RED @09e2392f: 2 failed (change-column first value taken as a marker; `Notes  2025  2024` read as data), 26 passed.
+- Fix @6673b51a: tests/test_statement_extract_d1_d3.py + tests/test_czr_fixes.py: 72 passed.
+- Whole-branch-review probes at the fix: p4_footnote_change_column exit 0, p5_notes_header exit 0, p2_extract_diff (all page-like texts in cases/ and tests/, base vs head) "pages with lines: 10 omitted total: 1 changed: 0"; probe_omitted_czr exit 0.
+- ruff: FLY002 ×6 in the test file (Info, kept: page bytes), TRY004 ×5 predating; format 0; mypy strict 0.

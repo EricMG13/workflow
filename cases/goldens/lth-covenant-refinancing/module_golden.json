@@ -295,7 +295,7 @@
    "field": "incremental_commitments_split",
    "period_end": null,
    "status": "conflicting",
-   "value": "",
+   "value": null,
    "value_type": "decimal",
    "unit": "USD",
    "scale": "units",

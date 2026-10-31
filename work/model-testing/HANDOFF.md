@@ -95,3 +95,7 @@ Prerequisites before any live run:
   - LTH: the preparer was still running. When it finishes, it needs a review.
 - **Missing report:** if any `<issuer>-review.md` is absent, rerun that review.
 - **Next:** one fix round per case with mx-feature, using its review plus G-1..G-8, then a scoped re-review, `check.py` on all six, and the commit.
+- **LTH done (~11:55):** 165 facts, check.py exit 0, prepare-report.md written. Its review was dispatched; report to `goldens/reports/lth-review.md`. G-9 recorded.
+- **Checker fix 2 done (~12:00):** 51 tests pass, ruff is clean, and **all six cases pass check.py** (exit 0). Report: `goldens/reports/checker-fix2.md`.
+  - Info: a product now recomputes in units (scale-aware). That is correct for money × unitless rate, which is the only meaningful product.
+- **Remaining:** the six reviews (tdg, shc, bgs, ihrt, natl, lth) were running; their reports go to `goldens/reports/<issuer>-review.md`. Rerun any that are missing. Then run the fix round per case (G-1..G-9 plus the review findings), re-review, and commit.

@@ -6,3 +6,5 @@
 - 11:04 checker change (mx-scaffold a7240248): scale thousands + zero-width deletion; pytest 46 passed exit 0; ruff check 0; format 0. agent=mx-scaffold fix-rounds=0 gates-first-pass=y
 - 11:06 ihrt (adf25695) 153 facts check 0; natl (a5ec1f3e) 118 facts check 0; G-7, G-8 recorded; HANDOFF.md written
 - 11:06 dispatched checker fix2 (mx-scaffold a246edb0), reviews ihrt (ad606b35) natl (a746f3aa); asked tdg/shc/bgs reviewers + lth preparer to write reports to files
+- 11:07 lth (a298fa44) 165 facts check 0 derive 0; G-9; lth review dispatched
+- 11:07 checker fix2 (mx-scaffold a246edb0): pytest 51 passed exit 0; ruff 0/0; check.py all six cases exit 0. agent=mx-scaffold fix-rounds=0 gates-first-pass=y

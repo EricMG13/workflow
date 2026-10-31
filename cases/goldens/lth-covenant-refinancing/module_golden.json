@@ -876,7 +876,7 @@
    "field": "cure_mechanism",
    "period_end": null,
    "status": "known",
-   "value": "Cure: Borrower may designate Net Proceeds of a Permitted Equity Issuance or common-equity contribution (Cure Amount) as an increase to Run-Rate Adjusted EBITDA for the fiscal quarter; Cure Amount must be received after the last Business Day of the quarter and by the tenth Business Day after financial statements are due (Cure Expiration Date); notice to the Administrative Agent; capped at the amount needed to cure",
+   "value": "Cure: Borrower may designate Net Proceeds of a Permitted Equity Issuance or common-equity contribution (Cure Amount) as an increase to Run-Rate Adjusted EBITDA for the fiscal quarter; Cure Amount must be actually received by the Borrower on or after the last Business Day of the applicable fiscal quarter and on or prior to the tenth Business Day after financial statements are due (Cure Expiration Date); notice to the Administrative Agent; capped at the amount needed to cure",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -886,6 +886,12 @@
      "locator": "Section 8.04(1)",
      "quote": "the Borrower may on one or more occasions designate any portion of the Net Proceeds from any Permitted Equity Issuance",
      "printed": "Permitted Equity Issuance"
+    },
+    {
+     "source_id": "a13",
+     "locator": "Section 8.04(1)(a)",
+     "quote": "such amounts to be designated are actually received by the Borrower (i) on or after the last Business Day of the applicable fiscal quarter",
+     "printed": "on or after the last Business Day of the applicable fiscal quarter"
     }
    ],
    "derivation": null,
@@ -3200,7 +3206,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Club Operations Company, Inc.",
+   "value": "LTF Club Operations Company, Inc.",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3223,7 +3229,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Operations Holdings, Inc.",
+   "value": "LTF Operations Holdings, Inc.",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3246,7 +3252,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Management Services, LLC",
+   "value": "LTF Management Services, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3269,7 +3275,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Construction Company, LLC",
+   "value": "LTF Construction Company, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3292,7 +3298,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Restaurant Company, LLC",
+   "value": "LTF Restaurant Company, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3315,7 +3321,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Club Management Company, LLC",
+   "value": "LTF Club Management Company, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3338,7 +3344,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Triathlon Series, LLC",
+   "value": "LTF Triathlon Series, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3384,7 +3390,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Architecture, LLC",
+   "value": "LTF Architecture, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3407,7 +3413,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Lease Company, LLC",
+   "value": "LTF Lease Company, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3430,7 +3436,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Real Estate Holdings, LLC",
+   "value": "LTF Real Estate Holdings, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3453,7 +3459,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Real Estate Company, Inc.",
+   "value": "LTF Real Estate Company, Inc.",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3476,7 +3482,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Educational Programs, LLC",
+   "value": "LTF Educational Programs, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3499,7 +3505,7 @@
    "field": "name",
    "period_end": null,
    "status": "known",
-   "value": "Ltf Ground Lease Company, LLC",
+   "value": "LTF Ground Lease Company, LLC",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -3798,13 +3804,521 @@
    ],
    "derivation": null,
    "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.legal_name",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "legal_name",
+   "period_end": null,
+   "status": "known",
+   "value": "Life Time Group Holdings, Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page > registrant name",
+     "quote": "Life Time Group Holdings, Inc. (Exact name of registrant as specified in its charter)",
+     "printed": "Life Time Group Holdings, Inc."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.ticker",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "ticker",
+   "period_end": null,
+   "status": "known",
+   "value": "LTH",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page > Section 12(b) securities",
+     "quote": "Common stock, par value $0.01 per share LTH The New York Stock Exchange",
+     "printed": "LTH"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.exchange",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "exchange",
+   "period_end": null,
+   "status": "known",
+   "value": "The New York Stock Exchange",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page > Section 12(b) securities",
+     "quote": "Common stock, par value $0.01 per share LTH The New York Stock Exchange",
+     "printed": "The New York Stock Exchange"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.state_of_incorporation",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "state_of_incorporation",
+   "period_end": null,
+   "status": "known",
+   "value": "Delaware",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page",
+     "quote": "Delaware 47-3481985 (State or other jurisdiction of incorporation or organization)",
+     "printed": "Delaware"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.principal_executive_offices",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "principal_executive_offices",
+   "period_end": null,
+   "status": "known",
+   "value": "2902 Corporate Place Chanhassen, Minnesota 55317",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page",
+     "quote": "2902 Corporate Place Chanhassen, Minnesota 55317 (952) 947-0000 (Address of principal executive offices",
+     "printed": "2902 Corporate Place Chanhassen, Minnesota 55317"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.commission_file_number",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "commission_file_number",
+   "period_end": null,
+   "status": "known",
+   "value": "001-40887",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page",
+     "quote": "Commission File Number: 001-40887",
+     "printed": "001-40887"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.filer_status",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "filer_status",
+   "period_end": null,
+   "status": "known",
+   "value": "Large accelerated filer",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page > filer check boxes",
+     "quote": "Large accelerated filer ☒ Accelerated filer ☐",
+     "printed": "Large accelerated filer ☒"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.fiscal_year_end",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "fiscal_year_end",
+   "period_end": null,
+   "status": "known",
+   "value": "December 31",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Cover page",
+     "quote": "For the fiscal year ended December 31, 2024",
+     "printed": "December 31, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.business_description",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "business_description",
+   "period_end": null,
+   "status": "known",
+   "value": "Primarily dedicated to providing premium health, fitness and wellness experiences at athletic country club destinations",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 1 Nature of Business",
+     "quote": "We are primarily dedicated to providing premium health, fitness and wellness experiences at our athletic country club destinations",
+     "printed": "premium health, fitness and wellness experiences"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.borrower_entity",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Credit Agreement",
+   "field": "borrower_entity",
+   "period_end": null,
+   "status": "known",
+   "value": "Life Time, Inc. (formerly Life Time Fitness, Inc.), a Minnesota corporation; the Borrower under the Credit Agreement, not the listed parent",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Preamble",
+     "quote": "LIFE TIME, INC. (formerly known as LIFE TIME FITNESS, INC.), a Minnesota corporation and successor in interest to LTF MERGER SUB, INC., as borrower (the “Borrower”)",
+     "printed": "LIFE TIME, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.Form_10_Q_2025_06_30.period_covered",
+   "module": "CP-0",
+   "topic": "documents.Form_10_Q_2025_06_30",
+   "subject": "Form 10-Q 2025-06-30",
+   "field": "period_covered",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "2025-06-30",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page",
+     "quote": "For the quarterly period ended June 30, 2025",
+     "printed": "June 30, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.Form_10_K_2024_12_31.period_covered",
+   "module": "CP-0",
+   "topic": "documents.Form_10_K_2024_12_31",
+   "subject": "Form 10-K 2024-12-31",
+   "field": "period_covered",
+   "period_end": "2024-12-31",
+   "status": "known",
+   "value": "2024-12-31",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Cover page",
+     "quote": "For the fiscal year ended December 31, 2024",
+     "printed": "December 31, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.13th_Amendment.agreement_date",
+   "module": "CP-0",
+   "topic": "documents.13th_Amendment",
+   "subject": "13th Amendment to the Credit Agreement",
+   "field": "agreement_date",
+   "period_end": null,
+   "status": "known",
+   "value": "2024-09-20",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Amendment preamble",
+     "quote": "This THIRTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of September 20, 2024",
+     "printed": "September 20, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.14th_Amendment.agreement_date",
+   "module": "CP-0",
+   "topic": "documents.14th_Amendment",
+   "subject": "14th Amendment to the Credit Agreement",
+   "field": "agreement_date",
+   "period_end": null,
+   "status": "known",
+   "value": "2024-11-05",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Amendment preamble",
+     "quote": "This FOURTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of November 5, 2024",
+     "printed": "November 5, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.15th_Amendment.agreement_date",
+   "module": "CP-0",
+   "topic": "documents.15th_Amendment",
+   "subject": "15th Amendment to the Credit Agreement",
+   "field": "agreement_date",
+   "period_end": null,
+   "status": "known",
+   "value": "2025-08-18",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Amendment preamble",
+     "quote": "This FIFTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of August 18, 2025",
+     "printed": "August 18, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.first_lien_net_leverage_ratio_numerator_addback_struck",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment covenant definition changes (Section 7.12 and defined terms)",
+   "field": "first_lien_net_leverage_ratio_numerator_addback_struck",
+   "period_end": null,
+   "status": "known",
+   "value": "Annex I strikes from the First Lien Net Leverage Ratio numerator (pari passu Consolidated Total Debt) the add-back \"plus, Existing Mortgage Debt and Capitalized Lease Obligations or any Refinancing Indebtedness thereof\"; after the amendment the numerator is such pari passu Consolidated Total Debt minus unrestricted cash and Cash Equivalents",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"First Lien Net Leverage Ratio\" (add-back struck)",
+     "quote": "secured by a Lien that is pari passu in priority with the Liens securing the Obligations, plus, Existing Mortgage Debt and Capitalized Lease Obligations or any Refinancing Indebtedness thereof",
+     "printed": "plus, Existing Mortgage Debt and Capitalized Lease Obligations or any Refinancing Indebtedness thereof"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.test_period_definition_change",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment covenant definition changes (Section 7.12 and defined terms)",
+   "field": "test_period_definition_change",
+   "period_end": null,
+   "status": "known",
+   "value": "Annex I rewrites \"Test Period\": the four fiscal quarters for which financial statements were required to and have been delivered under Section 6.01(1) or (2) or, at the Borrower's option, the most recent four quarters for which internal financial statements are available (as determined in good faith by the Borrower); before, only the latest four quarters for which internal financial statements were available",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Test Period\" (inserted text)",
+     "quote": "financial statements were required to and have been delivered pursuant to Section 6.01(1) or (2) (or, at the Borrower’s option, the most recently ended four consecutive fiscal quarters (taken as one accounting period) for which internal financial statements are available",
+     "printed": "financial statements were required to and have been delivered pursuant to Section 6.01(1) or (2)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.covenant_modification_period_carveout_deleted",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment covenant definition changes (Section 7.12 and defined terms)",
+   "field": "covenant_modification_period_carveout_deleted",
+   "period_end": null,
+   "status": "known",
+   "value": "Section 7.12(1)(a) deletes the parenthetical excluding any Test Period ending during the Covenant Modification Period",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Section 7.12(1)(a) (struck text)",
+     "quote": "(other than any Test Period ending during the Covenant Modification Period)",
+     "printed": "(other than any Test Period ending during the Covenant Modification Period)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.run_rate_adjusted_ebitda_annualisation_proviso_deleted",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment covenant definition changes (Section 7.12 and defined terms)",
+   "field": "run_rate_adjusted_ebitda_annualisation_proviso_deleted",
+   "period_end": null,
+   "status": "known",
+   "value": "Section 7.12(1)(a) deletes the proviso that, for the first three Test Periods after the Covenant Modification Period, Run-Rate Adjusted EBITDA is the preceding one quarter times four, two quarters times two, then three quarters",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Section 7.12(1)(a) (struck proviso)",
+     "quote": "for the first three Test Periods following the end of the Covenant Modification Period, Run-Rate Adjusted EBITDA shall be calculated in the following manner",
+     "printed": "for the first three Test Periods following the end of the Covenant Modification Period"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_base_before",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_initial_margin_base_before",
+   "period_end": null,
+   "status": "known",
+   "value": "3.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Applicable Rate\" (b)(i)(B), struck text",
+     "quote": "(B) 3.251.50% for Base Rate Loans and (C) 0.500.25% Commitment Fee Rate",
+     "printed": "3.25"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_commitment_fee_before",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_commitment_fee_before",
+   "period_end": null,
+   "status": "known",
+   "value": "0.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Applicable Rate\" (b)(i)(C), struck text",
+     "quote": "(B) 3.251.50% for Base Rate Loans and (C) 0.500.25% Commitment Fee Rate",
+     "printed": "0.50"
+    },
+    {
+     "source_id": "k24",
+     "locator": "Item 1 / Note on Debt",
+     "quote": "reduce the undrawn commitment fee rate from 50 basis points to 25 basis points",
+     "printed": "50 basis points"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_margin_grid_before",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_margin_grid_before",
+   "period_end": null,
+   "status": "known",
+   "value": "Revolver grid before the 13th Amendment, leverage only (no ratings condition), SOFR/CORRA/LC, Base, Commitment Fee: first lien net leverage >3.50x 4.25%/3.25%/0.500%; <=3.50x and >3.00x 4.00%/3.00%/0.500%; <=3.00x 3.50%/2.50%/0.500%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Applicable Rate\" (b)(ii) table, struck text",
+     "quote": "1 > 3.502.25 to 1.00 and Otherwise 4.252.50% 3.251.50% 0.5000.250% 2 ≤ 3.50 to 1.00 and > 3.002.25 to 1.00 and At least Ba3 or BB- from any two of Moody’s, S&P and Fitch 4.002.25% 3.001.25% 0.5000.250% 3 ≤ 3.002.25 to 1.00 and Otherwise 3.502.25% 2.501.25% 0.5000.250%",
+     "printed": "4.252.50% 3.251.50% 0.5000.250%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
   }
  ],
  "not_golden": [
-  {
-   "module": "CP-0",
-   "why": "Source intake and classification; produces no filing-derived value to grade."
-  },
   {
    "module": "CP-1",
    "why": "covered by financial_gold"
@@ -3850,14 +4364,16 @@
   }
  ],
  "limitations": [
-  "Visible text cannot tell struck-out from inserted text in the redlined credit agreement pages; before/after values were read from the style markup (line-through / underline) and the struck figure is quoted as it appears concatenated with the inserted one (for example 6.504.75).",
-  "Scale: the checker only allows millions, units or null. Values printed in USD thousands (10-Q tables) carry scale null with the thousands noted in the locator; amounts printed as $X million use millions; credit agreement dollar amounts use units.",
   "The 15th Amendment includes only Annex II changed pages. Maturity Date, Section 7.12, Section 8.04 and the revolving commitments are not restated; operative terms are taken from the credit agreement as conformed in the 14th Amendment and cannot be shown to be unchanged from any 15th page beyond Section 1(b) listing only Annex II as the amendment.",
   "The 13th Amendment recital gives $175,000,000 of incremental revolving commitments while its Schedule A totals $277,500,000 incremental and $372,500,000 refinancing; both total $650,000,000. The split is recorded as conflicting.",
   "The agreement states the springing test as Revolving Loans exceeding 30% of commitments; the 10-Q describes it as 30.00% or more. The agreement text is used.",
   "The 14th and 15th Amendments are dated and effective on their dates; the 15th is dated the cutoff date, 2025-08-18, and is treated as in scope.",
   "The 10-K (filed 2025-02-27) is the only corpus source for the 6.000% notes call terms and the ownership percentages (as of 2024-12-31); the 10-Q after that date does not update them.",
-  "The 2024-06-30 10-Q is in the corpus folder but not in the manifest and was not used."
+  "The 2024-06-30 10-Q is in the corpus folder but not in the manifest and was not used.",
+  "Scale: the checker allows millions, units, thousands or null. Values printed in USD thousands (10-Q tables) use scale \"thousands\"; amounts printed as $X million use millions; credit agreement dollar amounts use units; percents and ratios use null.",
+  "Redline reading: the 13th, 14th and 15th Amendment annexes are redlines, and visible text carries struck and inserted figures together with no separator (for example \"6.504.75\" is 6.50 struck and 4.75 inserted). Quotes keep that concatenated text because the checker reads visible text only. Struck versus inserted was read from the line-through and underline styles in the HTML. Every fact whose field is not a \"before\", \"removed\" or \"struck\" value holds the post-amendment (inserted) figure; \"before\" and \"struck\" facts hold the struck figure.",
+  "Codex financial_gold marks LTH:FY2025Q2:principal as missing; this golden holds 1,534,149 (thousands) from the 10-Q maturity table \"Total future maturities of long-term debt $ 1,534,149\", equal to the component sum. Scoring must not treat that difference as a conflict.",
+  "CP-0 identity facts are from the 2025-06-30 10-Q cover (and the 10-K cover for the fiscal year end); the filings print no sector label, so context.json identity.sector uses the 10-Q's own wording \"premium health, fitness and wellness experiences\"."
  ],
  "preparer": "mx-feature (Sonnet) subagent g-lth"
 }

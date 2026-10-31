@@ -668,15 +668,19 @@ def preparation_request(
             [f"sources: id {CONTEXT_SOURCE_ID!r} is reserved for the context file"]
         )
     run, identity = context.run, context.identity
-    return PreparationRequest(
-        run=Run(
+    try:
+        run_model = Run(
             run_id=run_id,
             issuer_id=identity.issuer_id,
             issuer_name=identity.issuer_name,
             as_of=dt.date.fromisoformat(run.as_of),
             case_kind=run.case_kind,
             pathway=run.pathway,
-        ),
+        )
+    except ValidationError as error:
+        raise ContextRefused([f"run_id: {_first_message(error)}"]) from None
+    return PreparationRequest(
+        run=run_model,
         sources=(
             *sources,
             SourceRequest(source_id=CONTEXT_SOURCE_ID, path=context_path, media_type="text/plain"),
@@ -698,6 +702,12 @@ _MEDIA: dict[
 }
 
 
+def _first_message(error: ValidationError) -> str:
+    first = error.errors()[0]
+    where = ".".join(str(part) for part in first["loc"])
+    return f"{where}: {first['msg']}"
+
+
 def _parse_source(spec: str) -> SourceRequest:
     """``ID=RELPATH:MEDIA``; ``MEDIA`` is split off the last colon."""
     source_id, eq, rest = spec.partition("=")
@@ -706,7 +716,10 @@ def _parse_source(spec: str) -> SourceRequest:
         raise ContextRefused([f"--source {spec!r}: expected ID=RELPATH:MEDIA"])
     if media not in _MEDIA:
         raise ContextRefused([f"--source {spec!r}: MEDIA {media!r} is not one of text, pdf, xlsx"])
-    return SourceRequest(source_id=source_id, path=path, media_type=_MEDIA[media])
+    try:
+        return SourceRequest(source_id=source_id, path=path, media_type=_MEDIA[media])
+    except ValidationError as error:
+        raise ContextRefused([f"--source {spec!r}: {_first_message(error)}"]) from None
 
 
 def _run_prepare(args: argparse.Namespace) -> int:

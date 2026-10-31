@@ -88,7 +88,11 @@ def test_cli_refuses_invalid_context_before_writing(tmp_path: Path) -> None:
     dest = tmp_path / "pack"
     done = _cli(*_args(root, dest, "--source", "filing=filing.txt:text"))
     assert done.returncode == 2
-    assert done.stderr.strip()
+    with pytest.raises(ContextRefused) as refused:
+        load_context(b'{"schema": "context/1"}')
+    expected = list(refused.value.problems)
+    assert len(expected) > 1
+    assert done.stderr.splitlines() == expected
     assert "Traceback" not in done.stderr
     assert not dest.exists()
 
@@ -111,6 +115,7 @@ def test_cli_prepares_pack(tmp_path: Path) -> None:
     ("extra", "context", "needle"),
     [
         (("--source", "nocolon"), "context.json", "--source"),
+        (("--source", "Bad Id=filing.txt:text"), "context.json", "Bad Id"),
         (("--source", "a=filing.txt:docx"), "context.json", "docx"),
         (("--source", "a=filing.txt:text", "--source", "a=filing.txt:text"), "context.json", "a"),
         (("--source", "context=filing.txt:text"), "context.json", "context"),
@@ -127,5 +132,17 @@ def test_cli_refuses_bad_arguments_before_writing(
     done = _cli(*_args(root, dest, *extra, context=context))
     assert done.returncode == 2
     assert needle in done.stderr
+    assert "Traceback" not in done.stderr
+    assert not dest.exists()
+
+
+def test_cli_refuses_bad_run_id_before_writing(tmp_path: Path) -> None:
+    root = _setup(tmp_path)
+    dest = tmp_path / "pack"
+    args = _args(root, dest)
+    args[args.index("--run-id") + 1] = "Bad Run"
+    done = _cli(*args)
+    assert done.returncode == 2
+    assert "run_id" in done.stderr
     assert "Traceback" not in done.stderr
     assert not dest.exists()

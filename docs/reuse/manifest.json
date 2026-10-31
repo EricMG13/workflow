@@ -1826,6 +1826,24 @@
       "sha256": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
       "reason": "OI-20 (B7): validate_source_context refuses a blank event_scan_explanation (prose.is_blank), one issue per source whatever the scan state; no other rule changes.",
       "review": "docs/rulings/2026-10-30-open-items.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "imported_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "prior_project_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "project_commit": "157dc6d1910e9e83803fbe7506d2c8eae6dcb07a",
+      "sha256": "d93009ef0ba055493d0030ca8d4f1c8c1b10cc5ceb8047c7d4d1b9a8b7c9500f",
+      "reason": "Item 82: ABSENT_INPUT_PREFIX, absent_input_limitation and conflicting_observation_ids; on a public case a BLOCK reconciliation check that only lacks an input (no difference, no conflicting or FX-normalised term) becomes a prefixed WARN gap at the audit hop; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_gaps.py",
+      "imported_sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "prior_project_sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "project_commit": "157dc6d1910e9e83803fbe7506d2c8eae6dcb07a",
+      "sha256": "e94f1f17715005213d28093376f42680d295dc2570fdd356533dfd193e62cd55",
+      "reason": "Item 82: _calculation_gaps takes public and conflicting and applies absent_input_limitation to period reconciliation checks; calculation_gate stays BLOCK; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

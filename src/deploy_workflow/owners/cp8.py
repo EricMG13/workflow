@@ -64,7 +64,7 @@ from deploy_vii.prose import bind, issues, tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.registry import modules
-from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_vii.report_view import _FORBIDDEN_TEXT, fact_spelling, figure_unit
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
 
@@ -623,6 +623,8 @@ class _Checker:
         hit = _PROHIBITED.search(text)
         if is_blank(text):  # round 12 B10: whitespace and Cf characters
             self.found.append(f"{path}: text is empty")
+        elif text.strip().lower() in _FORBIDDEN_TEXT:  # the renderer's own null spellings
+            self.found.append(f"{path}: text is a null spelling")
         elif any(char.isnumeric() for char in text):
             self.found.append(f"{path}: digits are not allowed")
         elif _REFERENCE.search(text):

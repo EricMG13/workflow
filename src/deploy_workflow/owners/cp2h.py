@@ -1611,7 +1611,14 @@ def _gap_issues(
     issues: list[str] = []
     for i, g in enumerate(sub.gaps):
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
-            issues += _prose(f"gaps[{i}].{name}", getattr(g, name), bound, names)
+            found = _prose(f"gaps[{i}].{name}", getattr(g, name), bound, names)
+            issues += found
+            if name == "gap" and not found:  # becomes a limitation, which `compute` spells
+                issues += (
+                    f"gaps[{i}].gap: reference {run.text} names a fact that is not settled"
+                    for run in prose.tokenize(g.gap)
+                    if run.kind != "text" and bound[run.text].status != "known"
+                )
     return issues
 
 
@@ -1834,8 +1841,28 @@ NOT_CALCULABLE_LINE = (
 )
 
 
+def _spelled_gap(text: str, bound: Mapping[str, Fact]) -> str:
+    """A stored gap text with each reference spelled as rendered (`business_context.spelled`
+    for a figure, the cell spelling for a chip), never as raw braces. A reference to an
+    unsettled fact has no report-wide gap id here, so it fails closed."""
+    parts = []
+    for run in prose.tokenize(text):
+        if run.kind == "text":
+            parts.append(run.text)
+        elif run.text in bound and bound[run.text].status == "known":
+            fact = bound[run.text]
+            parts.append(spelled(fact) if run.figure else fact_spelling(fact, None)[2])
+        else:
+            raise ValueError(f"CP-2H: gap text reference {run.text} does not name a known fact")
+    return "".join(parts)
+
+
 def _own_limitations(
-    source: RatingsSource, up: TriggerUpstream, mechanics: _Mechanics, gaps: Sequence[SynthesisGap]
+    source: RatingsSource,
+    up: TriggerUpstream,
+    mechanics: _Mechanics,
+    gaps: Sequence[SynthesisGap],
+    bound: Mapping[str, Fact],
 ) -> tuple[str, ...]:
     out = list(_FIXED_LIMITATIONS)
     if up.cp1d_status is not None:
@@ -1859,7 +1886,7 @@ def _own_limitations(
         )
     if any(NOT_CALCULABLE in (o.base.first, o.down.first) for o in mechanics.outcomes):
         out.append(NOT_CALCULABLE_LINE)
-    out += (f"Gap ({g.severity}): {g.gap}" for g in gaps)
+    out += (f"Gap ({g.severity}): {_spelled_gap(g.gap, bound)}" for g in gaps)
     return tuple(dict.fromkeys(out))
 
 
@@ -1894,7 +1921,7 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
         cp1_references=_cp1_references(up, mechanics.tests, texts),
         cp2g_references=_cp2g_references(up, mechanics.tests),
         claims=_claims(book, mechanics, views, sub.overall, cp1_ids),
-        own_limitations=_own_limitations(source, up, mechanics, sub.gaps),
+        own_limitations=_own_limitations(source, up, mechanics, sub.gaps, _bound(book, up)),
         outcomes=mechanics.outcomes,
         totals=mechanics.totals,
     )

@@ -63,3 +63,9 @@
     - Probe: `rereview/probe_l2_period_fx.py` (exits 1 while open).
     - Fix: decide on the cell's series (a `fac:<id>` whose currency differs from the book's).
   - Info: the comment for `CHILD_BASIS_DIFFERENCE_BLOCKER` (`canonical_audit.py:422`) describes a branch that never fires.
+- **[Item 70 precheck, owner] H08, H01 and H02 from the Codex review.** Consolidated by the "Codex findings review" session (`.claude/worktrees/codex-findings-review-64c673/work/codex-review/CONSOLIDATED.md`, probes `probes/v-cp1/probe_h01_h02_h08.py`). mx-precise confirmed all three at 3888fe0. They predate item 82, and our item 70 code (`src/deploy_workflow/financial_workflow.py`) is the cause.
+  - **H08 (controller confirmed by reading the code).** `_statement` (:432-447) lets any caption containing INCOME or OPERATIONS win over the page heading. So on a cash-flow page, "ADJUSTMENTS TO RECONCILE NET INCOME …" classifies `Depreciation` as IS. That refuses a correct CFS line and accepts a mislabelled IS one.
+    - Ruling item 70 says the page's statement heading wins over the caption. The build and `tests/test_czr_fixes.py:193-195` pinned the reverse ("caption wins"), and the review did not catch the mismatch.
+  - **H01 (Medium).** A 6-month source satisfies a 9-month YTD period, because the duration is dropped (:470, :493, :536, :565).
+  - **H02 (Medium).** An annual header with full-date cells falls through to the balance specs, so Q4 satisfies FY (:588-611, `_hit` :538).
+  - Recommended as one task (ruling item 84).

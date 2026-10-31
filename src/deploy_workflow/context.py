@@ -20,7 +20,7 @@ from typing import Any, Literal
 from pydantic import ValidationError
 
 from deploy_vii.contracts import Contract, PathwayId, Run
-from deploy_vii.preparation import PreparationRequest, SourceRequest, prepare
+from deploy_vii.preparation import PreparationRequest, PreparedPack, SourceRequest, prepare
 
 SCHEMA = "context/1"
 CONTEXT_SOURCE_ID = "context"
@@ -686,6 +686,46 @@ def preparation_request(
             SourceRequest(source_id=CONTEXT_SOURCE_ID, path=context_path, media_type="text/plain"),
         ),
     )
+
+
+def context_facts(pack: PreparedPack) -> RunContext | None:
+    """The typed context frozen in ``pack``; ``None`` when the pack carries none.
+
+    Owners read this, never the user's live file. The bytes are rebuilt from the frozen spans
+    (``splitlines`` on write, ``"\\n".join`` here), which is exact because the reader refuses
+    U+0085/U+2028/U+2029 (R-P1b). The context must agree with ``pack.run``.
+    """
+    found = [s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID]
+    if not found:
+        return None
+    if len(found) > 1:
+        raise ContextRefused(
+            [
+                f"sources: {len(found)} sources named {CONTEXT_SOURCE_ID!r}; cannot tell which is the run's"
+            ]
+        )
+    source = found[0]
+    if source.status != "ready":
+        raise ContextRefused(
+            [f"sources.{CONTEXT_SOURCE_ID}: status is {source.status}: {source.limitation}"]
+        )
+    context = load_context("\n".join(span.text for span in source.spans).encode("utf-8"))
+    run = pack.run
+    pairs: tuple[tuple[str, object, object], ...] = (
+        ("identity.issuer_name", context.identity.issuer_name, run.issuer_name),
+        ("identity.issuer_id", context.identity.issuer_id, run.issuer_id),
+        ("run.as_of", context.run.as_of, run.as_of.isoformat()),
+        ("run.case_kind", context.run.case_kind, run.case_kind),
+        ("run.pathway", context.run.pathway, run.pathway),
+    )
+    problems = [
+        f"{path}: context has {theirs!r} but the run has {ours!r}"
+        for path, theirs, ours in pairs
+        if theirs != ours
+    ]
+    if problems:
+        raise ContextRefused(problems)
+    return context
 
 
 _MEDIA: dict[

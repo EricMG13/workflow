@@ -405,8 +405,10 @@ def test_declared_item_is_required_where_cash_is_only_an_explicit_account() -> N
 def test_declared_item_row_must_be_labelled_restricted() -> None:
     b = book(flows=("fy-2025",), labels={NONCURRENT_2024: "Other long-term assets, net"})
     assert cash_bridge_issues(b) == (
-        "Declared cash scope balance must be labelled restricted: "
-        "b-fy-2025 restricted_cash_noncurrent 2024-12-31",
+        (
+            "Declared cash scope balance must be labelled restricted: "
+            "b-fy-2025 restricted_cash_noncurrent 2024-12-31"
+        ),
     )
 
 

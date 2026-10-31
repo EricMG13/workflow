@@ -27,8 +27,8 @@ Rules (docs/development/live-runner.md, "Statement extraction"):
   years or a month name, with the adjacent such lines above them (blank lines between allowed).
 - A line whose numeric cells are all bare four-digit years from 1900 to 2099 with no `$` is a
   header line, not data, only when its label is empty, wholly parenthesised (`(In millions)`),
-  or made only of month names, period words (`Year ended December 31`) and unit or scale words
-  (`in millions, except per share data`). Any other label makes it a data line, read like any
+  or made only of month names, period words (`Year ended December 31`, `Notes`) and unit or scale
+  words (`in millions, except per share data`). Any other label makes it a data line, read like any
   other (`Net revenues  2025  1998`), so `headers` never holds a returned data line.
 - `omitted` lists, in page order, each candidate line the rules did not return as data: a
   non-blank line of two or more whitespace-separated tokens (after the pipe rewrite) whose
@@ -46,8 +46,9 @@ Flags (task 8.10b, review risks 1-2) inform the model and never drop a line:
   dash). Two numbers one space apart are one text cell, so the scan stops there and they stay
   in the label; a label ending in a year (`Balance, January 1, 2023`) is flagged too.
 - `footnote_marker`: the header lines hold N > 0 four-digit years and the line has N + 1 raw
-  values whose first is `(n)` (one or two digits, no `$`): that first cell is a footnote
-  marker, dropped from `raw_values` and `values` (the label is unchanged), and the line does
+  values whose first is `(n)` (one or two digits, no `$`) and ends left of the column where the
+  leftmost four-digit year of the header lines starts (both read after the pipe rewrite): that
+  first cell is a footnote marker, dropped from `raw_values` and `values` (the label is unchanged), and the line does
   not also get `more_values_than_header_years`. With no year in the headers the marker still
   reads as -1 and is flagged as above.
 
@@ -85,7 +86,7 @@ _HEADER_WORDS = frozenset(
         *("quarter", "quarters", "period", "periods", "three", "six", "nine", "twelve"),
         *("for", "the", "as", "of", "at", "and"),
         *("in", "millions", "thousands", "billions", "dollars", "usd", "except", "per"),
-        *("share", "data", "par", "value", "amounts", "unaudited"),
+        *("share", "data", "par", "value", "amounts", "unaudited", "note", "notes"),
     )
 )
 LineFlag = Literal["more_values_than_header_years", "label_ends_numeric", "footnote_marker"]
@@ -139,6 +140,7 @@ class _Cells:
     raw_values: tuple[str, ...]
     values: tuple[Decimal | None, ...]
     first_dollar: bool  # a `$` is folded into the first cell
+    first_end: int  # the column where the first cell ends, in the line as read
 
 
 def _value(raw: str) -> Decimal | None:
@@ -156,12 +158,14 @@ def _cells(line: str) -> _Cells | None:
         line = _PIPE.sub("  ", line)
     found: list[tuple[str, bool]] = []  # (raw, a `$` is folded in), right to left
     start = len(line)
+    first_end = start
     for cell in reversed(list(_CELL.finditer(line))):
         text = cell.group()
         if text == "$" and found and not found[-1][1]:
             found[-1] = (found[-1][0], True)
         elif match := _NUMERIC_CELL.fullmatch(text):
             found.append((match["raw"], match["dollar"] is not None))
+            first_end = cell.end()
         else:
             break
         start = cell.start()
@@ -178,6 +182,7 @@ def _cells(line: str) -> _Cells | None:
         raw_values=raws,
         values=tuple(_value(raw) for raw in raws),
         first_dollar=found[-1][1],
+        first_end=first_end,
     )
 
 
@@ -254,11 +259,25 @@ def _flags(line: ExtractedLine, years: int, footnote: bool) -> tuple[LineFlag, .
     return tuple(flags)
 
 
-def _footnote_marker(line: ExtractedLine, first_dollar: bool, years: int) -> bool:
+def _year_column(headers: Sequence[str]) -> int | None:
+    """The column where the leftmost four-digit year of the header lines starts."""
+    starts = [
+        match.start()
+        for header in headers
+        if (match := _YEAR.search(_PIPE.sub("  ", header) if "|" in header else header))
+    ]
+    return min(starts, default=None)
+
+
+def _footnote_marker(
+    line: ExtractedLine, cells: _Cells, years: int, year_column: int | None
+) -> bool:
     return (
         years > 0
+        and year_column is not None
+        and cells.first_end < year_column
         and len(line.raw_values) == years + 1
-        and not first_dollar
+        and not cells.first_dollar
         and _FOOTNOTE.fullmatch(line.raw_values[0]) is not None
     )
 
@@ -269,7 +288,7 @@ def extract_statement_lines(
     """The printed data lines of one page's text (module docstring rules); prose yields none."""
     lines = [line.removesuffix("\r") for line in text.split("\n")]
     found: list[ExtractedLine] = []
-    first_dollars: list[bool] = []
+    read: list[_Cells] = []
     first: int | None = None
     caption: str | None = None
     pending: list[str] = []  # continuation lines directly above the current line
@@ -290,7 +309,7 @@ def extract_statement_lines(
                     caption=caption,
                 )
             )
-            first_dollars.append(cells.first_dollar)
+            read.append(cells)
             pending = []
         elif _is_caption(stripped):
             caption = stripped
@@ -303,8 +322,9 @@ def extract_statement_lines(
     headers = tuple(lines[index] for index in header_at)
     years = sum(len(_YEAR.findall(header)) for header in headers)
     flagged: list[ExtractedLine] = []
-    for printed, first_dollar in zip(found, first_dollars, strict=True):
-        footnote = _footnote_marker(printed, first_dollar, years)
+    year_column = _year_column(headers)
+    for printed, parsed in zip(found, read, strict=True):
+        footnote = _footnote_marker(printed, parsed, years, year_column)
         data = (
             replace(printed, raw_values=printed.raw_values[1:], values=printed.values[1:])
             if footnote

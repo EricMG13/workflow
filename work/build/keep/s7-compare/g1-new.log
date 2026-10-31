@@ -1,0 +1,14 @@
+.........                                                                [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_cp1_absent_input.py::test_public_absent_input_is_a_limitation_not_a_qa_block
+PASSED tests/test_cp1_absent_input.py::test_downgrade_restricts_not_passes
+PASSED tests/test_cp1_absent_input.py::test_public_disagreeing_cash_check_still_blocks
+PASSED tests/test_cp1_absent_input.py::test_synthetic_case_still_blocks
+PASSED tests/test_cp1_absent_input.py::test_shadowing_missing_account_keeps_the_disagreement_blocked
+PASSED tests/test_cp1_absent_input.py::test_child_difference_blocker_is_not_an_absent_input
+PASSED tests/test_cp1_absent_input.py::test_period_term_with_fx_normalised_id_is_not_an_absent_input
+PASSED tests/test_cp1_absent_input.py::test_shadowed_account_id_is_not_an_absent_input
+PASSED tests/test_cp1_absent_input.py::test_absent_input_limitation_refuses_non_absent_cases
+9 passed in 386.95s (0:06:26)
+exit=0 start=02:31 end=02:38

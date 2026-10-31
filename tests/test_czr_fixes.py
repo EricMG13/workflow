@@ -128,12 +128,22 @@ def test_space_rows_extract_as_before() -> None:
 # --- CP-1 precheck on the filed statement pages ------------------------------------------------
 
 
-def _period(period_id: str, kind: str, end: date, quarter: int | None = None) -> SimpleNamespace:
+def _period(
+    period_id: str,
+    kind: str,
+    end: date,
+    quarter: int | None = None,
+    months: int | None = None,
+) -> SimpleNamespace:
+    """A period ending `end`; its span is `months` calendar months (default: the type's span)."""
+    span = months or {"QUARTER": 3, "YTD": end.month, "FY": 12, "LTM": 12}.get(kind, 1)
+    index = end.year * 12 + end.month - span
     return SimpleNamespace(
         period_id=period_id,
         period_type=kind,
         fiscal_year=str(end.year),
         fiscal_quarter=quarter,
+        start_date=date(index // 12, index % 12 + 1, 1),
         end_date=end,
     )
 
@@ -190,13 +200,108 @@ def test_filed_page_lines_belong_to_the_page_statement(
     assert {fw._statement(line.caption, text) for line in table.lines} == {statement}
 
 
-def test_statement_caption_wins_and_unknown_page_gives_none() -> None:
-    assert fw._statement("CASH FLOW ITEMS", "INCOME STATEMENT") == "CFS"
-    assert fw._statement("Income", "BALANCE SHEET") == "IS"
+def test_page_heading_wins_over_caption_and_unknown_page_gives_none() -> None:
+    assert fw._statement("CASH FLOW ITEMS", "INCOME STATEMENT") == "IS"
+    assert fw._statement("Income", "BALANCE SHEET") == "BS"
     assert fw._statement(None, "x\nINCOME STATEMENT\ny") == "IS"
     assert fw._statement("ASSETS", "no heading here") is None
     both = "CONSOLIDATED BALANCE SHEETS\nCONSOLIDATED STATEMENTS OF OPERATIONS"
     assert fw._statement("ASSETS", both) is None
+
+
+def test_reconciliation_caption_on_a_cash_flow_page_is_cfs() -> None:
+    page = "CONSOLIDATED STATEMENTS OF CASH FLOWS\nSix Months Ended June 30,"
+    caption = "ADJUSTMENTS TO RECONCILE NET INCOME TO NET CASH PROVIDED BY OPERATING ACTIVITIES:"
+    assert fw._statement(caption, page) == "CFS"
+
+
+def test_caption_decides_only_when_it_names_a_statement_outright() -> None:
+    none = "no heading here"
+    both = "CONSOLIDATED BALANCE SHEETS\nCONSOLIDATED STATEMENTS OF OPERATIONS"
+    assert fw._statement("CASH FLOW ITEMS", none) == "CFS"
+    assert fw._statement("CONSOLIDATED BALANCE SHEET", both) == "BS"
+    assert fw._statement("STATEMENTS OF OPERATIONS", none) == "IS"
+    assert fw._statement("STATEMENT OF INCOME", both) == "IS"
+    assert fw._statement("INCOME STATEMENT", none) == "IS"
+    assert fw._statement("STATEMENTS OF EARNINGS", none) == "IS"
+    assert fw._statement("STATEMENT OF EARNINGS", both) == "IS"
+    assert fw._statement("STATEMENTS OF FINANCIAL POSITION", none) == "BS"
+    assert fw._statement("COMPREHENSIVE INCOME", none) is None
+    assert fw._statement("Income", none) is None
+    assert fw._statement("Income", both) is None
+
+
+def test_six_month_header_is_not_satisfied_by_a_nine_month_period() -> None:
+    six = _period("six", "YTD", date(2026, 6, 30))
+    nine = _period("nine", "YTD", date(2026, 6, 30), months=9)
+    headers = ("Six Months Ended June 30,", "(In millions) | 2026")
+    assert fw._column_periods(headers, (six,)) == _sets("six")
+    assert fw._column_periods(headers, (nine,)) is None
+    assert fw._column_periods(headers, (six, nine)) == _sets("six")
+    nine_headers = ("Nine Months Ended June 30,", "(In millions) | 2026")
+    assert fw._column_periods(nine_headers, (six, nine)) == _sets("nine")
+    assert fw._column_periods(nine_headers, (six,)) is None
+
+
+def _spanning(period_id: str, kind: str, start: date, end: date, quarter: int | None = None):
+    period = _period(period_id, kind, end, quarter)
+    period.start_date = start
+    return period
+
+
+def test_flow_column_matches_by_inclusive_day_count_window() -> None:
+    headers = ("Six Months Ended June 30,", "(In millions) | 2026")
+    inside = _spanning("in", "YTD", date(2026, 1, 2), date(2026, 6, 30))  # 180 days
+    assert fw._column_periods(headers, (inside,)) == _sets("in")
+    outside = _spanning("out", "YTD", date(2026, 3, 1), date(2026, 6, 30))  # 122 days
+    assert fw._column_periods(headers, (outside,)) is None
+
+
+def test_period_without_a_start_or_end_date_never_matches_a_flow_column() -> None:
+    headers = ("Six Months Ended June 30,", "(In millions) | 2026")
+    no_start = _spanning("none", "YTD", None, date(2026, 6, 30))
+    assert fw._column_periods(headers, (no_start,)) is None
+    no_end = _spanning("none", "YTD", date(2026, 1, 1), date(2026, 6, 30))
+    no_end.end_date = None
+    assert fw._column_periods(headers, (no_end,)) is None
+
+
+def test_thirteen_week_quarter_and_fifty_two_week_year_map() -> None:
+    quarter = _spanning("q1", "QUARTER", date(2025, 9, 29), date(2025, 12, 28), 1)  # 91 days
+    headers = ("Three Months Ended December 28,", "(In millions) | 2025")
+    assert fw._column_periods(headers, (quarter,)) == _sets("q1")
+    year = _spanning("fy", "FY", date(2024, 9, 30), date(2025, 9, 28))  # 364 days
+    headers = ("Years Ended September 28,", "(In millions) | 2025")
+    assert fw._column_periods(headers, (year,)) == _sets("fy")
+    six = ("Six Months Ended September 28,", "(In millions) | 2025")
+    assert fw._column_periods(six, (year,)) is None
+
+
+def test_annual_header_with_full_date_cells_does_not_fall_back_to_balances() -> None:
+    headers = (
+        "Years Ended December 31,",
+        "(In millions) | December 31, 2025 | December 31, 2024",
+    )
+    q4 = (
+        _period("q425", "QUARTER", date(2025, 12, 31), 4),
+        _period("q424", "QUARTER", date(2024, 12, 31), 4),
+    )
+    assert fw._column_periods(headers, q4) is None
+
+
+def test_annual_header_with_full_date_cells_maps_fy_periods_only() -> None:
+    headers = (
+        "Years Ended December 31,",
+        "(In millions) | December 31, 2025 | December 31, 2024",
+    )
+    fy25 = _period("fy25", "FY", date(2025, 12, 31))
+    fy24 = _period("fy24", "FY", date(2024, 12, 31))
+    q425 = _period("q425", "QUARTER", date(2025, 12, 31), 4)
+    q424 = _period("q424", "QUARTER", date(2024, 12, 31), 4)
+    assert fw._column_periods(headers, (fy25, fy24, q425, q424)) == _sets("fy25", "fy24")
+    assert fw._column_periods(headers, (q425, q424)) is None
+    wrong_day = ("Years Ended December 31,", "(In millions) | December 30, 2025")
+    assert fw._column_periods(wrong_day, (fy25,)) is None
 
 
 def test_balance_date_is_wider_than_a_three_months_column() -> None:

@@ -1,0 +1,3 @@
+(a) hostile name ESCAPED invoke: RuntimeError caller code ran inside invoke
+(a) next good call REFUSED identity_mismatch  <-- DESYNC
+(b) lock receipt ('refused', 'not_permitted') replays as ('ok', None) MISMATCH (pre-existing)

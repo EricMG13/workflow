@@ -1,0 +1,45 @@
+search_pack        good           ('search_pack', {'query': 'x'}, 'ok', None) SEALED+VERIFIED
+search_pack        depth101       ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+search_pack        surrogate_val  ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+search_pack        non_dict       ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+search_pack        empty          ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+read_pages         good           ('read_pages', {'query': 'x'}, 'refused', 'bad_arguments') SEALED+VERIFIED
+read_pages         depth101       ('read_pages', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+read_pages         surrogate_val  ('read_pages', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+read_pages         non_dict       ('read_pages', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+read_pages         empty          ('read_pages', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+extract_statements good           ('extract_statements', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+extract_statements depth101       ('extract_statements', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+extract_statements surrogate_val  ('extract_statements', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+extract_statements non_dict       ('extract_statements', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+extract_statements empty          ('extract_statements', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+empty              good           ('', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+empty              depth101       ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+empty              surrogate_val  ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+empty              non_dict       ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+empty              empty          ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+unknown            good           ('foo', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+unknown            depth101       ('foo', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+unknown            surrogate_val  ('foo', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+unknown            non_dict       ('foo', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- DESYNC
+unknown            empty          ('foo', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int                good           ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int                depth101       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int                surrogate_val  ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int                non_dict       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int                empty          ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+none               good           ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+none               depth101       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+none               surrogate_val  ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+none               non_dict       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+none               empty          ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+surrogate          good           ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+surrogate          depth101       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+surrogate          surrogate_val  ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+surrogate          non_dict       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+surrogate          empty          ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass       good           ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass       depth101       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass       surrogate_val  ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass       non_dict       ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass       empty          ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED

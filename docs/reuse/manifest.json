@@ -1826,6 +1826,78 @@
       "sha256": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
       "reason": "OI-20 (B7): validate_source_context refuses a blank event_scan_explanation (prose.is_blank), one issue per source whatever the scan state; no other rule changes.",
       "review": "docs/rulings/2026-10-30-open-items.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "imported_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "prior_project_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "project_commit": "157dc6d1910e9e83803fbe7506d2c8eae6dcb07a",
+      "sha256": "d93009ef0ba055493d0030ca8d4f1c8c1b10cc5ceb8047c7d4d1b9a8b7c9500f",
+      "reason": "Item 82: ABSENT_INPUT_PREFIX, absent_input_limitation and conflicting_observation_ids; on a public case a BLOCK reconciliation check that only lacks an input (no difference, no conflicting or FX-normalised term) becomes a prefixed WARN gap at the audit hop; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_gaps.py",
+      "imported_sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "prior_project_sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "project_commit": "157dc6d1910e9e83803fbe7506d2c8eae6dcb07a",
+      "sha256": "e94f1f17715005213d28093376f42680d295dc2570fdd356533dfd193e62cd55",
+      "reason": "Item 82: _calculation_gaps takes public and conflicting and applies absent_input_limitation to period reconciliation checks; calculation_gate stays BLOCK; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "imported_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "prior_project_sha256": "d93009ef0ba055493d0030ca8d4f1c8c1b10cc5ceb8047c7d4d1b9a8b7c9500f",
+      "project_commit": "0b6ab8a82710a9ded658e2d7a0758708d921179a",
+      "sha256": "b672260594c312cc68400acc5a255dc317a245b12f1cc4a899607db64b3e493b",
+      "reason": "Item 82 fix 1: shadowed_account_ids and fx_normalised_ids; absent_input_limitation takes shadowed and normalised and also refuses a term citing a shadowing explicit account, a period term fed by FX normalisation and an explanation quoting a child difference; the audit hop passes shadowed; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_gaps.py",
+      "imported_sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "prior_project_sha256": "e94f1f17715005213d28093376f42680d295dc2570fdd356533dfd193e62cd55",
+      "project_commit": "0b6ab8a82710a9ded658e2d7a0758708d921179a",
+      "sha256": "67ddca4a8419582ea7d452b5527f7497d495d80dbc2e1d7e60143279ecab7a5a",
+      "reason": "Item 82 fix 1: _calculation_gaps also takes shadowed and normalised (from shadowed_account_ids and fx_normalised_ids) and passes them to absent_input_limitation; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "imported_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "prior_project_sha256": "b672260594c312cc68400acc5a255dc317a245b12f1cc4a899607db64b3e493b",
+      "project_commit": "037ae12be912e4e5b19191600bf825323cb236d7",
+      "sha256": "3595cf287f2586e11bb192c0d43998f79d3000efac7aa3c3d1af33b05a228690",
+      "reason": "Item 82 fix 2: CASH_SCOPE_BLOCKER; absent_input_limitation also refuses an explanation carrying the cash-scope blocker (period_reconciliation.py:310 on claude/s8-vii), so it stays BLOCK; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md item 88"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "imported_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "prior_project_sha256": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+      "project_commit": "2ded26ca3ff8a81cc952f4dae4f1386d5c999880",
+      "sha256": "618229c6da7db278f1bfa0688da2998bec2c4486a55fe8f1e50258715db76390",
+      "reason": "perf(contracts): group canonical fact ids once in validate_tables",
+      "review": "docs/rulings/2026-10-29-stage3.md item 86"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "dd81024e407a325415c294467cc5f69db22b4fcc67878b35e245c4cc2682c0b6",
+      "project_commit": "4af08ceb9e41804caa4de81af4fd8637d1f53be7",
+      "sha256": "9c1296f39691c54cbc52fde0f6de764a4c8f328cbb94434d48d431cfbb0206cf",
+      "reason": "perf(execution): parse each verified result blob once per process",
+      "review": "docs/rulings/2026-10-29-stage3.md item 86"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "9c1296f39691c54cbc52fde0f6de764a4c8f328cbb94434d48d431cfbb0206cf",
+      "project_commit": "66cce2a3293216fd324e0e5f578287acc60bc37b",
+      "sha256": "b2d5396c820c95669dda6afee5aec0e84fb4f6abcbe991b2a4ed99a1041e84d4",
+      "reason": "chore(perf): correct the result-cache memory note; pin validate_tables empty-table default",
+      "review": "docs/rulings/2026-10-29-stage3.md item 86"
     }
   ],
   "local_patch_lineage": [

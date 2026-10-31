@@ -1,0 +1,44 @@
+offered           good             ('search_pack', {'query': 'x'}, 'ok', None) SEALED+VERIFIED
+offered           depth            ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+offered           surrogate_val    ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+offered           non_dict         ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+offered           empty            ('search_pack', {}, 'refused', 'bad_arguments') SEALED+VERIFIED
+empty             good             ('', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+empty             depth            ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+empty             surrogate_val    ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+empty             non_dict         ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+empty             empty            ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+unknown           good             ('foo', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+unknown           depth            ('foo', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+unknown           surrogate_val    ('foo', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+unknown           non_dict         ('foo', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+unknown           empty            ('foo', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+offered_not_here  good             ('extract_statements', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+offered_not_here  depth            ('extract_statements', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+offered_not_here  surrogate_val    ('extract_statements', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+offered_not_here  non_dict         ('extract_statements', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+offered_not_here  empty            ('extract_statements', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int               good             ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int               depth            ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int               surrogate_val    ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int               non_dict         ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+int               empty            ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass      good             ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass      depth            ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass      surrogate_val    ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass      non_dict         ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+str_subclass      empty            ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+looks_empty       good             ('', {'query': 'x'}, 'refused', 'not_permitted') SEALED+VERIFIED
+looks_empty       depth            ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+looks_empty       surrogate_val    ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+looks_empty       non_dict         ('', {}, 'refused', 'bad_arguments') REFUSED identity_mismatch  <-- FAIL
+looks_empty       empty            ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+hostile           good             ('ESCAPED', 'RuntimeError') FAIL  <-- FAIL
+hostile           depth            ('ESCAPED', 'RuntimeError') FAIL  <-- FAIL
+hostile           surrogate_val    ('ESCAPED', 'RuntimeError') FAIL  <-- FAIL
+hostile           non_dict         ('ESCAPED', 'RuntimeError') FAIL  <-- FAIL
+hostile           empty            ('ESCAPED', 'RuntimeError') FAIL  <-- FAIL
+offered           unencodable_name ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+empty             unencodable_name ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+unknown           unencodable_name ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED
+offered_not_here  unencodable_name ('', {}, 'refused', 'not_permitted') SEALED+VERIFIED

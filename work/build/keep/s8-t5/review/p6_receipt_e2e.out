@@ -1,0 +1,3 @@
+none (None, 'SEALED+VERIFIED')
+int_tool (('', 'refused', 'not_permitted'), 'SEALED+VERIFIED')
+surrogate_tool (('', 'refused', 'bad_arguments'), 'write_receipt refused identity_mismatch')

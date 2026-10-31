@@ -1139,7 +1139,24 @@ def test_a_verbatim_quote_holding_brackets_is_shown_as_written_in_block_and_payl
     view = _what_changed_view("positive", {fact_id: quote})
     fact = _payload_facts(view)[fact_id]
     assert fact["display"] == fact["table_display"] == quote
-    assert _what_changed_lines(view)  # the block renders too
+    # T7.2 is not a bound block table: the quote reaches the payload, not the block, which is
+    # exactly what the unedited fixture renders.
+    lines = _what_changed_lines(view)
+    assert lines == _what_changed_lines(_what_changed_view("positive"))
+    assert quote not in repr(lines)
+
+
+def test_an_edited_bound_fact_shows_exactly_as_written_in_block_and_payload() -> None:
+    text = "No realized outcome is recorded, and the committee has not yet reviewed the window."
+    view = _what_changed_view("no_outcome", {"cp8.what_changed.outcome.value": text})
+    fact = _payload_facts(view)["cp8.what_changed.outcome.value"]
+    assert fact["display"] == fact["table_display"] == text
+    block = [
+        "".join(run[1] for run in line)
+        for line in _what_changed_lines(view)
+        if line[0][1].startswith("No realized outcome is recorded")
+    ]
+    assert block == [text]
 
 
 @pytest.mark.parametrize(

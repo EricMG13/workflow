@@ -12,10 +12,18 @@ def spy(self):
     (root / f"read-{count[0]}-{self._binding.step_id}.txt").write_text(r["body"])
     return r
 OwnerWorkflow.read_inputs = spy
+EXPECTED_REFUSAL = (
+    "submission not valid: invalid ['CP-1 QA Blocked: confidence 39 (Insufficient Information); "
+    "a Blocked handoff is not promoted']"
+)
 t = time.time()
 try:
     r = czr_runs.czr_closed(root, sub)
     print("CLOSED", r)
 except BaseException as e:
+    # Only the recorded CP-1 QA refusal is the expected partial outcome; anything else fails.
+    if not (type(e) is RuntimeError and str(e) == EXPECTED_REFUSAL):
+        raise
     import traceback; traceback.print_exc(limit=-3); print("RAISED", type(e).__name__, str(e)[:6000])
-print("wall", round(time.time() - t, 1), "s")
+finally:
+    print("wall", round(time.time() - t, 1), "s")

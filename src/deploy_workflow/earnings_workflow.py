@@ -89,6 +89,7 @@ from deploy_workflow.financial_workflow import (
     FinancialBinding,
     FinancialCall,
     InputRead,
+    _quality_read,
 )
 from deploy_workflow.host import SourceSession
 from deploy_workflow.tools.upstream import UpstreamTools
@@ -970,8 +971,7 @@ def _projection(store: Execution, binding: FinancialBinding) -> tuple[str, str]:
     historical = _historical(store, binding)
     attempt = next(a for a in historical.read().attempts if a.ticket_id == binding.ticket_id)
     if binding.step_id == "quality":
-        inputs = cp1_quality_inputs(cp1_registers(historical, attempt.ticket_id))
-        return inputs.content_hash(), inputs.model_dump_json()
+        return _quality_read(cp1_registers(historical, attempt.ticket_id))
     if binding.step_id not in {"narrative", "readiness"}:
         raise OwnerError("not_permitted")
     for index, step in enumerate(attempt.steps, 1):

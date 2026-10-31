@@ -1,0 +1,493 @@
+source_readiness search_pack            good_search  ('search_pack', 'ok', None, False) REPLAYS
+source_readiness search_pack            good_extract ('search_pack', 'refused', 'bad_arguments', False) REPLAYS
+source_readiness search_pack            empty        ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness search_pack            deep         ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness search_pack            surr_val     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness search_pack            surr_key     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness search_pack            non_dict     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness search_pack            nan          ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness search_pack            tuple        ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             good_search  ('read_pages', 'refused', 'bad_arguments', False) REPLAYS
+source_readiness read_pages             good_extract ('read_pages', 'refused', 'bad_arguments', False) REPLAYS
+source_readiness read_pages             empty        ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             deep         ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             surr_val     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             surr_key     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             non_dict     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             nan          ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness read_pages             tuple        ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_readiness extract_statements     good_search  ('extract_statements', 'refused', 'not_permitted', False) REPLAYS
+source_readiness extract_statements     good_extract ('extract_statements', 'refused', 'not_permitted', False) REPLAYS
+source_readiness extract_statements     empty        ('extract_statements', 'refused', 'not_permitted', True) REPLAYS
+source_readiness extract_statements     deep         ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements     surr_val     ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements     surr_key     ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements     non_dict     ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements     nan          ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements     tuple        ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness                        good_search  ('', 'refused', 'not_permitted', False) REPLAYS
+source_readiness                        good_extract ('', 'refused', 'not_permitted', False) REPLAYS
+source_readiness                        empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness                        deep         ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness                        surr_val     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness                        surr_key     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness                        non_dict     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness                        nan          ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness                        tuple        ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness foo                    good_search  ('foo', 'refused', 'not_permitted', False) REPLAYS
+source_readiness foo                    good_extract ('foo', 'refused', 'not_permitted', False) REPLAYS
+source_readiness foo                    empty        ('foo', 'refused', 'not_permitted', True) REPLAYS
+source_readiness foo                    deep         ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness foo                    surr_val     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness foo                    surr_key     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness foo                    non_dict     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness foo                    nan          ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness foo                    tuple        ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness shell                  good_search  ('shell', 'refused', 'not_permitted', False) REPLAYS
+source_readiness shell                  good_extract ('shell', 'refused', 'not_permitted', False) REPLAYS
+source_readiness shell                  empty        ('shell', 'refused', 'not_permitted', True) REPLAYS
+source_readiness shell                  deep         ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness shell                  surr_val     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness shell                  surr_key     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness shell                  non_dict     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness shell                  nan          ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness shell                  tuple        ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness SEARCH_PACK            good_search  ('SEARCH_PACK', 'refused', 'not_permitted', False) REPLAYS
+source_readiness SEARCH_PACK            good_extract ('SEARCH_PACK', 'refused', 'not_permitted', False) REPLAYS
+source_readiness SEARCH_PACK            empty        ('SEARCH_PACK', 'refused', 'not_permitted', True) REPLAYS
+source_readiness SEARCH_PACK            deep         ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness SEARCH_PACK            surr_val     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness SEARCH_PACK            surr_key     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness SEARCH_PACK            non_dict     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness SEARCH_PACK            nan          ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness SEARCH_PACK            tuple        ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            good_search  ('search_pack ', 'refused', 'not_permitted', False) REPLAYS
+source_readiness search_pack            good_extract ('search_pack ', 'refused', 'not_permitted', False) REPLAYS
+source_readiness search_pack            empty        ('search_pack ', 'refused', 'not_permitted', True) REPLAYS
+source_readiness search_pack            deep         ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            surr_val     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            surr_key     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            non_dict     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            nan          ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            tuple        ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            good_search  ('search_pack\x00', 'refused', 'not_permitted', False) REPLAYS
+source_readiness search_pack            good_extract ('search_pack\x00', 'refused', 'not_permitted', False) REPLAYS
+source_readiness search_pack            empty        ('search_pack\x00', 'refused', 'not_permitted', True) REPLAYS
+source_readiness search_pack            deep         ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            surr_val     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            surr_key     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            non_dict     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            nan          ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness search_pack            tuple        ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements
+    good_search  ('extract_statements\n', 'refused', 'not_permitted', False) REPLAYS
+source_readiness extract_statements
+    good_extract ('extract_statements\n', 'refused', 'not_permitted', False) REPLAYS
+source_readiness extract_statements
+    empty        ('extract_statements\n', 'refused', 'not_permitted', True) REPLAYS
+source_readiness extract_statements
+    deep         ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements
+    surr_val     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements
+    surr_key     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements
+    non_dict     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements
+    nan          ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness extract_statements
+    tuple        ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_readiness S(search_pack)         good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(search_pack)         tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S(extract)             tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness S('')                  tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness int5                   tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc                  tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness unenc_ext              tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_readiness offers('search_pack') = True stage(n, {}) -> bad_arguments AGREE
+source_readiness offers('read_pages') = True stage(n, {}) -> bad_arguments AGREE
+source_readiness offers('extract_statements') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('foo') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('shell') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('SEARCH_PACK') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('search_pack ') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('search_pack\x00') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('extract_statements\n') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_readiness offers('read_pages') = True stage(n, {}) -> bad_arguments AGREE
+source_context   search_pack            good_search  ('search_pack', 'ok', None, False) REPLAYS
+source_context   search_pack            good_extract ('search_pack', 'refused', 'bad_arguments', False) REPLAYS
+source_context   search_pack            empty        ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   search_pack            deep         ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   search_pack            surr_val     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   search_pack            surr_key     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   search_pack            non_dict     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   search_pack            nan          ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   search_pack            tuple        ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             good_search  ('read_pages', 'refused', 'bad_arguments', False) REPLAYS
+source_context   read_pages             good_extract ('read_pages', 'refused', 'bad_arguments', False) REPLAYS
+source_context   read_pages             empty        ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             deep         ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             surr_val     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             surr_key     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             non_dict     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             nan          ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   read_pages             tuple        ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+source_context   extract_statements     good_search  ('extract_statements', 'refused', 'not_permitted', False) REPLAYS
+source_context   extract_statements     good_extract ('extract_statements', 'refused', 'not_permitted', False) REPLAYS
+source_context   extract_statements     empty        ('extract_statements', 'refused', 'not_permitted', True) REPLAYS
+source_context   extract_statements     deep         ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements     surr_val     ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements     surr_key     ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements     non_dict     ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements     nan          ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements     tuple        ('extract_statements', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements', 'refused', 'bad_arguments'), ('extract_statements', 'refused', 'not_permitted'))]  <-- FAIL
+source_context                          good_search  ('', 'refused', 'not_permitted', False) REPLAYS
+source_context                          good_extract ('', 'refused', 'not_permitted', False) REPLAYS
+source_context                          empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context                          deep         ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_context                          surr_val     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_context                          surr_key     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_context                          non_dict     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_context                          nan          ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_context                          tuple        ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   foo                    good_search  ('foo', 'refused', 'not_permitted', False) REPLAYS
+source_context   foo                    good_extract ('foo', 'refused', 'not_permitted', False) REPLAYS
+source_context   foo                    empty        ('foo', 'refused', 'not_permitted', True) REPLAYS
+source_context   foo                    deep         ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   foo                    surr_val     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   foo                    surr_key     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   foo                    non_dict     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   foo                    nan          ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   foo                    tuple        ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   shell                  good_search  ('shell', 'refused', 'not_permitted', False) REPLAYS
+source_context   shell                  good_extract ('shell', 'refused', 'not_permitted', False) REPLAYS
+source_context   shell                  empty        ('shell', 'refused', 'not_permitted', True) REPLAYS
+source_context   shell                  deep         ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   shell                  surr_val     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   shell                  surr_key     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   shell                  non_dict     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   shell                  nan          ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   shell                  tuple        ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   SEARCH_PACK            good_search  ('SEARCH_PACK', 'refused', 'not_permitted', False) REPLAYS
+source_context   SEARCH_PACK            good_extract ('SEARCH_PACK', 'refused', 'not_permitted', False) REPLAYS
+source_context   SEARCH_PACK            empty        ('SEARCH_PACK', 'refused', 'not_permitted', True) REPLAYS
+source_context   SEARCH_PACK            deep         ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   SEARCH_PACK            surr_val     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   SEARCH_PACK            surr_key     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   SEARCH_PACK            non_dict     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   SEARCH_PACK            nan          ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   SEARCH_PACK            tuple        ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            good_search  ('search_pack ', 'refused', 'not_permitted', False) REPLAYS
+source_context   search_pack            good_extract ('search_pack ', 'refused', 'not_permitted', False) REPLAYS
+source_context   search_pack            empty        ('search_pack ', 'refused', 'not_permitted', True) REPLAYS
+source_context   search_pack            deep         ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            surr_val     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            surr_key     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            non_dict     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            nan          ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            tuple        ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            good_search  ('search_pack\x00', 'refused', 'not_permitted', False) REPLAYS
+source_context   search_pack            good_extract ('search_pack\x00', 'refused', 'not_permitted', False) REPLAYS
+source_context   search_pack            empty        ('search_pack\x00', 'refused', 'not_permitted', True) REPLAYS
+source_context   search_pack            deep         ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            surr_val     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            surr_key     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            non_dict     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            nan          ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   search_pack            tuple        ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements
+    good_search  ('extract_statements\n', 'refused', 'not_permitted', False) REPLAYS
+source_context   extract_statements
+    good_extract ('extract_statements\n', 'refused', 'not_permitted', False) REPLAYS
+source_context   extract_statements
+    empty        ('extract_statements\n', 'refused', 'not_permitted', True) REPLAYS
+source_context   extract_statements
+    deep         ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements
+    surr_val     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements
+    surr_key     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements
+    non_dict     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements
+    nan          ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   extract_statements
+    tuple        ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+source_context   S(search_pack)         good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(search_pack)         tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S(extract)             tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   S('')                  tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   int5                   tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc                  tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              empty        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              deep         ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              nan          ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   unenc_ext              tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+source_context   offers('search_pack') = True stage(n, {}) -> bad_arguments AGREE
+source_context   offers('read_pages') = True stage(n, {}) -> bad_arguments AGREE
+source_context   offers('extract_statements') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('foo') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('shell') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('SEARCH_PACK') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('search_pack ') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('search_pack\x00') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('extract_statements\n') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+source_context   offers('read_pages') = True stage(n, {}) -> bad_arguments AGREE
+financials       search_pack            good_search  ('search_pack', 'ok', None, False) REPLAYS
+financials       search_pack            good_extract ('search_pack', 'refused', 'bad_arguments', False) REPLAYS
+financials       search_pack            empty        ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       search_pack            deep         ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       search_pack            surr_val     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       search_pack            surr_key     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       search_pack            non_dict     ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       search_pack            nan          ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       search_pack            tuple        ('search_pack', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             good_search  ('read_pages', 'refused', 'bad_arguments', False) REPLAYS
+financials       read_pages             good_extract ('read_pages', 'refused', 'bad_arguments', False) REPLAYS
+financials       read_pages             empty        ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             deep         ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             surr_val     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             surr_key     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             non_dict     ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             nan          ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       read_pages             tuple        ('read_pages', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     good_search  ('extract_statements', 'refused', 'bad_arguments', False) REPLAYS
+financials       extract_statements     good_extract ('extract_statements', 'ok', None, False) REPLAYS
+financials       extract_statements     empty        ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     deep         ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     surr_val     ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     surr_key     ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     non_dict     ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     nan          ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials       extract_statements     tuple        ('extract_statements', 'refused', 'bad_arguments', True) REPLAYS
+financials                              good_search  ('', 'refused', 'not_permitted', False) REPLAYS
+financials                              good_extract ('', 'refused', 'not_permitted', False) REPLAYS
+financials                              empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials                              deep         ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+financials                              surr_val     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+financials                              surr_key     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+financials                              non_dict     ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+financials                              nan          ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+financials                              tuple        ('', 'refused', 'bad_arguments', True) MISMATCH [(2, ('', 'refused', 'bad_arguments'), ('', 'refused', 'not_permitted'))]  <-- FAIL
+financials       foo                    good_search  ('foo', 'refused', 'not_permitted', False) REPLAYS
+financials       foo                    good_extract ('foo', 'refused', 'not_permitted', False) REPLAYS
+financials       foo                    empty        ('foo', 'refused', 'not_permitted', True) REPLAYS
+financials       foo                    deep         ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+financials       foo                    surr_val     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+financials       foo                    surr_key     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+financials       foo                    non_dict     ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+financials       foo                    nan          ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+financials       foo                    tuple        ('foo', 'refused', 'bad_arguments', True) MISMATCH [(2, ('foo', 'refused', 'bad_arguments'), ('foo', 'refused', 'not_permitted'))]  <-- FAIL
+financials       shell                  good_search  ('shell', 'refused', 'not_permitted', False) REPLAYS
+financials       shell                  good_extract ('shell', 'refused', 'not_permitted', False) REPLAYS
+financials       shell                  empty        ('shell', 'refused', 'not_permitted', True) REPLAYS
+financials       shell                  deep         ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+financials       shell                  surr_val     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+financials       shell                  surr_key     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+financials       shell                  non_dict     ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+financials       shell                  nan          ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+financials       shell                  tuple        ('shell', 'refused', 'bad_arguments', True) MISMATCH [(2, ('shell', 'refused', 'bad_arguments'), ('shell', 'refused', 'not_permitted'))]  <-- FAIL
+financials       SEARCH_PACK            good_search  ('SEARCH_PACK', 'refused', 'not_permitted', False) REPLAYS
+financials       SEARCH_PACK            good_extract ('SEARCH_PACK', 'refused', 'not_permitted', False) REPLAYS
+financials       SEARCH_PACK            empty        ('SEARCH_PACK', 'refused', 'not_permitted', True) REPLAYS
+financials       SEARCH_PACK            deep         ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+financials       SEARCH_PACK            surr_val     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+financials       SEARCH_PACK            surr_key     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+financials       SEARCH_PACK            non_dict     ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+financials       SEARCH_PACK            nan          ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+financials       SEARCH_PACK            tuple        ('SEARCH_PACK', 'refused', 'bad_arguments', True) MISMATCH [(2, ('SEARCH_PACK', 'refused', 'bad_arguments'), ('SEARCH_PACK', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            good_search  ('search_pack ', 'refused', 'not_permitted', False) REPLAYS
+financials       search_pack            good_extract ('search_pack ', 'refused', 'not_permitted', False) REPLAYS
+financials       search_pack            empty        ('search_pack ', 'refused', 'not_permitted', True) REPLAYS
+financials       search_pack            deep         ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            surr_val     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            surr_key     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            non_dict     ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            nan          ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            tuple        ('search_pack ', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack ', 'refused', 'bad_arguments'), ('search_pack ', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            good_search  ('search_pack\x00', 'refused', 'not_permitted', False) REPLAYS
+financials       search_pack            good_extract ('search_pack\x00', 'refused', 'not_permitted', False) REPLAYS
+financials       search_pack            empty        ('search_pack\x00', 'refused', 'not_permitted', True) REPLAYS
+financials       search_pack            deep         ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            surr_val     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            surr_key     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            non_dict     ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            nan          ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+financials       search_pack            tuple        ('search_pack\x00', 'refused', 'bad_arguments', True) MISMATCH [(2, ('search_pack\x00', 'refused', 'bad_arguments'), ('search_pack\x00', 'refused', 'not_permitted'))]  <-- FAIL
+financials       extract_statements
+    good_search  ('extract_statements\n', 'refused', 'not_permitted', False) REPLAYS
+financials       extract_statements
+    good_extract ('extract_statements\n', 'refused', 'not_permitted', False) REPLAYS
+financials       extract_statements
+    empty        ('extract_statements\n', 'refused', 'not_permitted', True) REPLAYS
+financials       extract_statements
+    deep         ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+financials       extract_statements
+    surr_val     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+financials       extract_statements
+    surr_key     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+financials       extract_statements
+    non_dict     ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+financials       extract_statements
+    nan          ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+financials       extract_statements
+    tuple        ('extract_statements\n', 'refused', 'bad_arguments', True) MISMATCH [(2, ('extract_statements\n', 'refused', 'bad_arguments'), ('extract_statements\n', 'refused', 'not_permitted'))]  <-- FAIL
+financials       S(search_pack)         good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         deep         ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         nan          ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(search_pack)         tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             deep         ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             nan          ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S(extract)             tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  deep         ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  nan          ('', 'refused', 'not_permitted', True) REPLAYS
+financials       S('')                  tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   deep         ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   nan          ('', 'refused', 'not_permitted', True) REPLAYS
+financials       int5                   tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  deep         ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  nan          ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc                  tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              good_search  ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              good_extract ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              empty        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              deep         ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              surr_val     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              surr_key     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              non_dict     ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              nan          ('', 'refused', 'not_permitted', True) REPLAYS
+financials       unenc_ext              tuple        ('', 'refused', 'not_permitted', True) REPLAYS
+financials       offers('search_pack') = True stage(n, {}) -> bad_arguments AGREE
+financials       offers('read_pages') = True stage(n, {}) -> bad_arguments AGREE
+financials       offers('extract_statements') = True stage(n, {}) -> bad_arguments AGREE
+financials       offers('') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('foo') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('shell') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('SEARCH_PACK') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('search_pack ') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('search_pack\x00') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('extract_statements\n') = True stage(n, {}) -> not_permitted DISAGREE <-- FAIL
+financials       offers('read_pages') = True stage(n, {}) -> bad_arguments AGREE
+EXIT 1

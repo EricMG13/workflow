@@ -65,6 +65,16 @@ To save time under load, you can merge T6, then T4 and T5, into the lane and run
 - **never-wedges cp4c rerun:** log `N/s7wedge/run.log`, started 08:00 in worktree s5-final2, about 5 hours or more under load. Record its result.
 - **Disk monitor:** it alerts below 15 GB. About 65 GB were free at 09:24.
 
+## s8-vii final tip (reported 2026-10-31 ~10:45 by the vii-fixes session, whose usage is also nearly exhausted)
+- **Tip.** `claude/s8-vii` tip f2f97a0c, not pushed. The code tip is 90636d43; 6448011a and f2f97a0c hold the D12 records only. Strict D12 `5a1d2e2f..HEAD` exits 0.
+- **Approvals.** The user approved all four groups directly in that session (`docs/rulings/2026-10-31-s8-vii.md`). Its reports are in `work/build/stage8-vii/`, and its hand-over note is `s8-vii-handover.md` in the shared notes folder.
+- **Gates at 90636d43:** fast set + shell_css + the new and affected files gave 10687 passed, 19 skipped. Still running in the detached worktree `.claude/worktrees/s8vii-run` (logs in its scratchpad `final2/g2-g5`): test_financial_workflow, test_earnings_workflow, test_source_tools and test_financial_render.
+- **Not verified there:** the G2 owner suites (cp2a, cp2g, cp2h, cp4c); a live provider accepting the nullable `cash_scope` schema; ponytail-review.
+- **Size:** src 331 lines; src + tests 1224, plus a 3631-line golden JSON. That is over the global 800-line PR cap, so it is an owner decision.
+- **Merge into the lane only on the user's own word.** When asking, name `refs/heads/claude/s8-vii`.
+  - Item 82 must ship with its fix 2 (`claude/s7-absent-input-3`).
+  - Expect a conflict in `docs/reuse/manifest.json`; keep both sides' records, then rerun the strict D12 probe.
+
 ## Next tasks after the merges
 - Releases to the PM (the PR manager session).
 - The Stage 8 and item 82 end batch: the Lows on `lows.md`.

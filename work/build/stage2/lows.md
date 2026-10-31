@@ -69,3 +69,8 @@
   - **H01 (Medium).** A 6-month source satisfies a 9-month YTD period, because the duration is dropped (:470, :493, :536, :565).
   - **H02 (Medium).** An annual header with full-date cells falls through to the balance specs, so Q4 satisfies FY (:588-611, `_hit` :538).
   - Recommended as one task (ruling item 84).
+- **[Stage 8 end batch] Lows from the T3 review (mx-feature a8551092, APPROVE) and from T2 lint:**
+  - `test_connect_cp8.py:1142` test name says "in block and payload" but now checks the payload only (rename);
+  - `test_connect_cpl10.py:649-656` list may repeat `value`, and `len(exponents) >= 2` is weaker than "distinct" (optional);
+  - `partial-builder/run.py` prints `wall` on failure paths too (cosmetic);
+  - T2 `tests/test_codex_render_fixes.py:58` FURB167 (`re.S` → `re.DOTALL`).

@@ -136,7 +136,6 @@ def source_api() -> Any:
 def fresh_cp1_cache(monkeypatch):
     """The host's in-process CP-1 memo must never carry across tests (copied histories repeat)."""
     monkeypatch.setattr(source_api(), "_CP1_VERIFIED", {}, raising=False)
-    monkeypatch.setattr(source_api(), "_PARSED_MODULES", {}, raising=False)
     monkeypatch.setattr(source_api(), "_PARSED_PACKS", {}, raising=False)
 
 

@@ -490,17 +490,17 @@ def _verify_cp1_attempt(
         raise ValueError("CP1 envelope differs")
 
 
-# In-process parse cache, never persisted. Key: a blob's SHA-256. Every `result`/`pack` call below
+# In-process pack parse cache, never persisted. Key: a pack blob's SHA-256. Every `pack` call below
 # still re-reads the blob and checks its bytes against that digest (`Execution._load`), so a
 # missing (SH-R12) or tampered (SH-R16) blob refuses exactly as before; only the pydantic parse
 # of bytes already proven identical to a previously parsed and canonical-hash-checked blob is
-# skipped. The cached models are frozen with tuple fields. No store or writer handle is cached.
-# ponytail: the ceiling is an entry count, not bytes: 4 entries is one history's working set, and a
-# cached CP-1 result can keep ~200 MiB alive (44 MB blob), so the worst case is ~800 MiB. Upgrade
-# path if that matters: cap by the summed blob size instead of the entry count.
+# skipped. The cached packs are frozen with tuple fields. No store or writer handle is cached.
+# Result modules are not cached here: `deploy_vii.execution._canonical_result` is the only result
+# parse cache, so a settled module is parsed once per process.
+# ponytail: the ceiling is an entry count, not bytes: 4 entries is one history's working set.
+# Upgrade path if memory matters: cap by the summed blob size instead of the entry count.
 _PARSED_LIMIT = 4
 _PARSED_LOCK = Lock()
-_PARSED_MODULES: dict[str, Module] = {}
 _PARSED_PACKS: dict[str, PreparedPack] = {}
 
 
@@ -512,19 +512,7 @@ def _remember(cache: dict[str, Any], digest: str, value: Any) -> None:
 
 
 class _ParsedExecution(Execution):
-    """Same store directory; `result` and `pack` skip re-parsing blobs proven byte-identical."""
-
-    def result(self, sha256: str) -> Module:
-        raw = self._load(sha256)  # reads and hash-checks the bytes on every call
-        with _PARSED_LOCK:
-            cached = _PARSED_MODULES.get(sha256)
-        if cached is not None:
-            return cached
-        module = Module.model_validate_json(raw)
-        if module.content_hash() != sha256:
-            raise ValueError("Execution result blob is not the canonical module")
-        _remember(_PARSED_MODULES, sha256, module)
-        return module
+    """Same store directory; `pack` skips re-parsing blobs proven byte-identical."""
 
     def pack(self, snapshot: ExecutionSnapshot | None = None) -> PreparedPack:
         snapshot = self.read() if snapshot is None else snapshot

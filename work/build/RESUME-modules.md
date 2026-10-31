@@ -41,7 +41,9 @@ Each branch is in its own agent worktree (`.claude/worktrees/agent-<id>`). Merge
 5. **T4** (CP-1 quality read serves `quality_scope` narrowed to {kind, reference}; ruling item 87), `claude/s8-quality` @3a13df85 (agent-afdd823d6e7d9d80d), built on T6.
    - RED is correct. Lint and mypy are clean.
    - **Waits for:**
-     - the GREEN result in `N/s8t4/red.log` (it was still running);
+     - **GREEN at 3a13df85 FAILED (finished 10:40):** both earnings cases passed, but `tests/test_financial_workflow.py::test_quality_read_serves_narrowed_quality_scope_bound_to_full_inputs` fails with `ValueError: All CP-1 source, financial, narrative and readiness stages must be valid`. The log kept only the E lines.
+       - Rerun that one test with `--tb=long` in agent-afdd823d6e7d9d80d to locate the cause. Is it the test calling `cp1_registers`/`cp1_quality_inputs` on the wrong store or ticket, or before the quality step?
+       - Then send fix round 1 to a fresh mx-feature, since the T4 builder's context is gone. If the cause is in product code, apply the ladder.
      - a review: none has been dispatched yet. Use mx-precise, with the brief built from `work/build/stage8/T4-plan.md` and `T4-quality.md`;
      - suites: fast, financial_workflow, earnings, and the owner workflow tests.
 6. **T5** (H05 frame validation and replay-consistent refusals).

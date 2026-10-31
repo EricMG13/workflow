@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import subprocess
@@ -10,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+import deploy_workflow.context as context_module
 from deploy_vii.contracts import PATHWAY_MODULES
 from deploy_vii.preparation import SourceRequest, load_pack
 from deploy_workflow.context import (
@@ -95,6 +97,47 @@ def test_cli_refuses_invalid_context_before_writing(tmp_path: Path) -> None:
     assert done.stderr.splitlines() == expected
     assert "Traceback" not in done.stderr
     assert not dest.exists()
+
+
+def test_cli_refuses_huge_integer_without_traceback(tmp_path: Path) -> None:
+    root = _setup(tmp_path, b'{"schema": "context/1", "x": ' + b"1" * 5000 + b"}")
+    dest = tmp_path / "pack"
+    done = _cli(*_args(root, dest, "--source", "filing=filing.txt:text"))
+    assert done.returncode == 2
+    assert "Traceback" not in done.stderr
+    assert done.stderr.splitlines() == ["$: not valid JSON (ValueError)"]
+    assert not dest.exists()
+
+
+def test_cli_refuses_oversize_context_before_writing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup(tmp_path, b" " * 65)
+    dest = tmp_path / "pack"
+    monkeypatch.setattr(context_module, "MAX_BYTES", 64)
+    args = argparse.Namespace(
+        context=str(root / "context.json"),
+        root=str(root),
+        run_id="ctx-run-1",
+        source=[],
+        destination=str(dest),
+    )
+    with pytest.raises(ContextRefused, match="larger than 64 bytes"):
+        context_module._run_prepare(args)
+    assert not dest.exists()
+
+
+def test_run_field_errors_use_context_paths() -> None:
+    raw = json.loads(FIX_MINIMAL)
+    raw["identity"]["issuer_id"] = "a" * 161
+    with pytest.raises(ContextRefused) as refused:
+        preparation_request(
+            load_context(json.dumps(raw).encode()),
+            run_id="ok-run",
+            context_path="context.json",
+            sources=(),
+        )
+    assert refused.value.problems[0].startswith("identity.issuer_id:")
 
 
 def test_cli_prepares_pack(tmp_path: Path) -> None:

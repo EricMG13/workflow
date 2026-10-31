@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import functools
 import json
 import re
 import sys
@@ -20,7 +21,13 @@ from typing import Any, Literal
 from pydantic import ValidationError
 
 from deploy_vii.contracts import Contract, PathwayId, Run
-from deploy_vii.preparation import PreparationRequest, PreparedPack, SourceRequest, prepare
+from deploy_vii.preparation import (
+    MAX_BYTES,
+    PreparationRequest,
+    PreparedPack,
+    SourceRequest,
+    prepare,
+)
 
 SCHEMA = "context/1"
 CONTEXT_SOURCE_ID = "context"
@@ -264,16 +271,13 @@ def _refuse_constant(name: str) -> Any:
 
 
 def _path(loc: tuple[int | str, ...]) -> str:
-    out = ""
-    for part in loc:
-        out += f"[{part}]" if isinstance(part, int) else (f".{part}" if out else str(part))
-    return out
+    return functools.reduce(_join, loc, "")
 
 
 def _join(base: str, key: str | int) -> str:
     if isinstance(key, int):
         return f"{base}[{key}]"
-    return f"{base}.{key}" if base else key
+    return f"{base}.{key}" if base else str(key)
 
 
 def _line_break_problems(node: Any, path: str, out: list[str]) -> None:
@@ -302,6 +306,10 @@ def load_context(raw: bytes) -> RunContext:
         obj = json.loads(text, object_pairs_hook=_no_duplicates, parse_constant=_refuse_constant)
     except json.JSONDecodeError as exc:
         raise ContextRefused([f"$: not valid JSON ({exc.msg} at line {exc.lineno})"]) from exc
+    except ContextRefused:
+        raise
+    except (ValueError, RecursionError) as exc:
+        raise ContextRefused([f"$: not valid JSON ({type(exc).__name__})"]) from exc
     if not isinstance(obj, dict):
         raise ContextRefused(["$: the top level must be an object."])
 
@@ -659,6 +667,15 @@ def _num_message(
     return ""
 
 
+_RUN_FIELD_PATHS = {
+    "issuer_id": "identity.issuer_id",
+    "issuer_name": "identity.issuer_name",
+    "as_of": "run.as_of",
+    "case_kind": "run.case_kind",
+    "pathway": "run.pathway",
+}
+
+
 def preparation_request(
     context: RunContext, *, run_id: str, context_path: str, sources: Sequence[SourceRequest]
 ) -> PreparationRequest:
@@ -678,7 +695,10 @@ def preparation_request(
             pathway=run.pathway,
         )
     except ValidationError as error:
-        raise ContextRefused([f"run_id: {_first_message(error)}"]) from None
+        first = error.errors()[0]
+        field = str(first["loc"][0]) if first["loc"] else "run_id"
+        where = _RUN_FIELD_PATHS.get(field, field)
+        raise ContextRefused([f"{where}: {first['msg']}"]) from None
     return PreparationRequest(
         run=run_model,
         sources=(
@@ -744,7 +764,7 @@ _MEDIA: dict[
 
 def _first_message(error: ValidationError) -> str:
     first = error.errors()[0]
-    where = ".".join(str(part) for part in first["loc"])
+    where = _path(first["loc"])
     return f"{where}: {first['msg']}"
 
 
@@ -777,11 +797,14 @@ def _run_prepare(args: argparse.Namespace) -> int:
             [f"--context {args.context}: does not resolve inside --root {args.root}"]
         ) from None
     try:
-        raw = (root / relative).read_bytes()
+        with (root / relative).open("rb") as handle:
+            raw = handle.read(MAX_BYTES + 1)
     except OSError as error:
         raise ContextRefused(
             [f"--context {args.context}: cannot read ({error.strerror})"]
         ) from None
+    if len(raw) > MAX_BYTES:
+        raise ContextRefused([f"--context {args.context}: larger than {MAX_BYTES} bytes"])
     request = preparation_request(
         load_context(raw),
         run_id=args.run_id,

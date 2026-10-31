@@ -500,6 +500,26 @@ def test_unreadable_files_refused(raw: bytes) -> None:
         load_context(raw)
 
 
+def test_huge_integer_refused_as_context_refused() -> None:
+    raw = b'{"schema": "context/1", "x": ' + b"1" * 5000 + b"}"
+    with pytest.raises(ContextRefused, match=r"not valid JSON \(ValueError\)"):
+        load_context(raw)
+
+
+def test_deep_nesting_refused_as_context_refused() -> None:
+    raw = b'{"schema": "context/1", "run": ' + b"[" * 100000 + b"]" * 100000 + b"}"
+    with pytest.raises(ContextRefused, match=r"not valid JSON \(RecursionError\)"):
+        load_context(raw)
+
+
+def test_form_shaped_user_list_peer_loads() -> None:
+    peer = row(PEER, ev_m="", ebitda_m="", as_of="", source="", ticker="PEER")
+    obj = with_changes({"valuation.peer_source": "user_list", "valuation.peers": [peer]})
+    ctx = load_context(json.dumps(obj).encode())
+    assert ctx.valuation.peers[0].name == "Peer"
+    assert ctx.valuation.peers[0].ticker == "PEER"
+
+
 def test_every_problem_is_listed() -> None:
     bad = with_changes(
         {
@@ -541,6 +561,10 @@ def test_form_regexes_match_reader() -> None:
     assert f"const NUM = /{NUM}/, SNUM = /{SNUM}/;" in html
     assert f"/{PERIOD}/.exec(p)" in html
     assert f"/{SLUG}/.test(v)" in html
+
+
+def test_golden_contexts_exist() -> None:
+    assert list(GOLDENS.glob("*/context.json"))
 
 
 @pytest.mark.parametrize("case", sorted(p.parent.name for p in GOLDENS.glob("*/context.json")))

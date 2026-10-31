@@ -39,3 +39,6 @@ ratings; valuation.issuer_market; assumptions.cp4c.ev_multiple; assumptions.cp2a
 `python3 -I cases/goldens/check.py cases/goldens/ihrt-distressed-restructuring` exits 0. derive.py exits 0 (0 mismatches).
 
 Not verified: the effective ABL floor (45.0 millions) is not a fact; derived percentages and the rolled-forward total rest on 2024-09-30 balances and the 8-K's approximate amounts; quotes are checked against the checker's visible text, not against the rendered filings; no second-person review of values; Section 7.11 and rating-grid readings were not checked against the full credit agreement exhibits (omitted); no financial_gold cross-agreement check of period labels beyond ids.
+
+## Batch fixes
+IHRT-RR1 Low wording: CP-4C ...AllFive.principal_outstanding_derived.2024-12-20 subject now ends "(includes approximate Term Loan remnant)". No values changed.

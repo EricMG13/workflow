@@ -511,6 +511,19 @@ def test_percent_ratio_passes_and_fails(env):
     assert "recomputes to" in problems(run(env, mutated(env, lambda g: f(g, "0.9"))))
 
 
+@pytest.mark.parametrize(
+    ("vtype", "op"), [("percent", "product"), ("bps", "ratio"), ("percent", "ratio")]
+)
+def test_percent_or_bps_operand_refused(env, vtype, op):
+    def f(g):
+        g["facts"][1].update(value_type=vtype, unit=vtype, scale=None, evidence=[ev(printed="900")])
+        g["facts"].append(derived("CP-2.t.d", "1", op, ["CP-2.t.a", "CP-2.t.b"]))
+
+    text = problems(run(env, mutated(env, f)))
+    assert "operand 'CP-2.t.b'" in text
+    assert "percent/bps" in text
+
+
 def test_derivation_operand_rules(env):
     def f(g):
         g["facts"][1].update(status="missing", value=None, evidence=[], gap_reason="x")

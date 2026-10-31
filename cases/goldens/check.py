@@ -582,6 +582,16 @@ def check_derivation(out, file, fact, path, by_id, case_dir):
             and SNUM.fullmatch(op["value"])
         ):
             out.bad(file, f"{dpath}.operands[{i}]", f"operand {oid!r} is not a known decimal fact")
+        elif der["op"] in ("product", "ratio") and (
+            op["value_type"] in ("percent", "bps") or op["unit"] in ("percent", "bps")
+        ):
+            # ponytail: refused, not converted; ceiling: convert percent/100 and bps/10000
+            # here when a golden needs a percent or bps operand in a product or ratio.
+            out.bad(
+                file,
+                f"{dpath}.operands[{i}]",
+                f"operand {oid!r} is percent/bps; {der['op']} refuses it (no conversion)",
+            )
         else:
             vals.append(decimal.Decimal(op["value"]).scaleb(SCALE_EXP[op["scale"]], _CTX))
     if len(vals) != len(der["operands"]) or not isinstance(fact["value"], str):

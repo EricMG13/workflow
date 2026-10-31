@@ -34,3 +34,6 @@ See `needs_user_input` in module_golden.json: prior_case, portfolio_workbook, qu
 `python3 -I cases/goldens/check.py cases/goldens/natl-portfolio-decision` exit 0; `python3 -I derive.py` exit 0 (re-run after fix round 1).
 
 Not verified: no model run against these goldens; the choice of post-amendment clauses in Exhibit 10.1 rests on reading the merged text, not the strike/underline markup; Q1/Q2 2025 and Q3 2024 10-Qs were not mined for module facts; no other source corroborates the figures.
+
+## Batch fixes
+NATL-RR1 Low wording: CP-2.obligor_structure.subsidiary_guarantors.names subject and limitation now say Loan Party status of the seven is inferred from Section 9 (Reaffirming Loan Parties), the parties clause, and their being the only signatories besides the Company, Administrative Agent and Lenders; list-completeness note was already in limitations only.

@@ -124,3 +124,4 @@ Prerequisites before any live run:
   - check.py `product` reads a percent operand as its printed number (10, not 0.10); IHRT re-review is assessing whether that is a checker defect.
 - **11:17:** NATL DONE (3e8f103a). IHRT fix 1 committed c16d87fb, mx-precise re-review running. LTH fix 1 committed 1a5478a2, scoped re-review running.
 - **11:19:** **All six goldens approved** (TDG, SHC, BGS, NATL, IHRT, LTH; one fix round each). End batch running: NATL-RR1, IHRT-RR1, LTH-RR1 wording + LTH 15th date check + check.py refuses percent/bps operands in product/ratio (test first). After it: commit, then framework design (section 4).
+- **11:20: Goldens stage complete.** End batch committed; check.py all six 0; derive.py all six 0; pytest 54 passed. Next: framework design (section 4), brainstorming one question at a time.

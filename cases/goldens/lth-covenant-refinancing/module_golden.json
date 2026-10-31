@@ -4227,7 +4227,7 @@
    "field": "run_rate_adjusted_ebitda_annualisation_proviso_deleted",
    "period_end": null,
    "status": "known",
-   "value": "Section 7.12(1)(a) deletes the proviso that, for the first three Test Periods after the Covenant Modification Period, Run-Rate Adjusted EBITDA is the preceding one quarter times four, two quarters times two, then three quarters",
+   "value": "Section 7.12(1)(a) deletes the proviso that, for the first three Test Periods after the Covenant Modification Period, Run-Rate Adjusted EBITDA is the preceding one quarter times four, two quarters times two, and for the third the immediately preceding three fiscal quarters times four thirds",
    "value_type": "text",
    "unit": null,
    "scale": null,

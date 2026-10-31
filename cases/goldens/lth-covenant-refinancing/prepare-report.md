@@ -40,3 +40,6 @@ Periods in context.json: calendar fiscal year, `q2-2025` current, `q1-2025` prio
 - Scale `thousands` is used for the 10-Q table values per the coordinator ruling (limitation text updated).
 
 Not verified: that the redline markup reading (struck vs inserted) is right where only the concatenated text is quoted; that the 15th Amendment leaves Sections 7.12/8.04 and the maturity unchanged (not shown in the provided pages); the amortization dollar amount and soft-call expiry date (no derive op for date or percent arithmetic, not recorded); any value outside the corpus.
+
+## Batch fixes
+LTH-RR1 Low wording: ...run_rate_adjusted_ebitda_annualisation_proviso_deleted value completed from the struck text (third Test Period: preceding three fiscal quarters times four thirds); quote unchanged and still contains printed. Checked CP-0.documents.15th_Amendment.agreement_date 2025-08-18: its quote prints "dated as of August 18, 2025"; no change needed.

@@ -1191,7 +1191,7 @@
       "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
       "module": "CP-2",
       "topic": "obligor_structure",
-      "subject": "Subsidiary Guarantors (Loan Parties other than the Company signing the 2025-09-18 Refinancing Facility Agreement)",
+      "subject": "Subsidiary Guarantors (Loan Parties other than the Company signing the 2025-09-18 Refinancing Facility Agreement; Loan Party status inferred, see limitations)",
       "field": "names",
       "period_end": null,
       "status": "known",
@@ -3267,7 +3267,7 @@
     "Amounts are as printed: USD millions in the 10-Q and 10-K/A, exact USD in Exhibit 10.1 (scale units). Derived values are computed by derive.py in exact Decimal.",
     "Sector and the Q3 revision of 2024 comparatives are summarised, not quantified, to avoid duplicating financial_gold.",
     "2,912 is the company's own \"our debt totaled\" figure (10-Q MD&A): principal of funded borrowings, excluding finance leases. Codex's financial_gold marks total_debt FY2025Q3 missing because finance-lease liabilities are not located; its funded_borrowing_carrying_ex_finance_lease (2,869) matches this golden's derived carrying amount, so the two do not contradict.",
-    "The Subsidiary Guarantor names are the Loan Parties (other than the Company) that signed the 2025-09-18 Refinancing Facility Agreement; the source does not show whether that list is complete.",
+    "The Subsidiary Guarantor names are the Loan Parties (other than the Company) that signed the 2025-09-18 Refinancing Facility Agreement; the source does not show whether that list is complete. Loan Party status of the seven is inferred from Section 9 (\"Reaffirming Loan Parties\"), the parties clause, and their being the only signatories other than the Company, the Administrative Agent and the Lenders.",
     "identity.sector is set from the filing's own description of the business (CP-0 identity business_description), not a classification label."
   ],
   "preparer": "mx-feature (Sonnet) goldens preparer: natl"

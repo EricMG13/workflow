@@ -3783,7 +3783,7 @@
    "fact_id": "CP-4C.post_exchange_remaining_existing.AllFive.principal_outstanding_derived.2024-12-20",
    "module": "CP-4C",
    "topic": "post_exchange_remaining_existing",
-   "subject": "Existing instruments remaining after the exchange (2028N + 2027N + 2026N + UnsN + Term Loans)",
+   "subject": "Existing instruments remaining after the exchange (2028N + 2027N + 2026N + UnsN + Term Loans) (includes approximate Term Loan remnant)",
    "field": "principal_outstanding_derived",
    "period_end": "2024-12-20",
    "status": "known",

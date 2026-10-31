@@ -156,3 +156,78 @@ def test_surrogate_tool_run_can_still_be_sealed_and_verified(tmp_path):
     workflow.publish_model()
     receipt = workflow.write_receipt(tmp_path / "receipt.json")
     verify_financial_slice_receipt(Execution(tmp_path / "store"), receipt, model_directory=None)
+
+
+def _deep(depth):
+    value = []
+    for _ in range(depth):
+        value = [value]
+    return value
+
+
+def _seal_and_verify(workflow, pack, tmp_path):
+    from test_financial_workflow import read_sources, readiness
+
+    from deploy_vii.execution import Execution
+    from deploy_workflow.financial_workflow import verify_financial_slice_receipt
+
+    read_sources(workflow, gap=True)
+    assert workflow.submit_review(readiness(pack, gap=True))["status"] == "valid"
+    workflow.publish_model()
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    verify_financial_slice_receipt(Execution(tmp_path / "store"), receipt, model_directory=None)
+
+
+_REFUSED_ARGUMENTS = {
+    "deep": lambda: {"query": "x", "extra": _deep(105)},
+    "surrogate_value": lambda: {"query": "\ud800"},
+    "non_dict": lambda: [1],
+}
+
+
+@pytest.mark.parametrize("name", ["search_pack", "", "foo", "extract_statements"])
+@pytest.mark.parametrize("kind", ["deep", "surrogate_value", "non_dict", "unencodable_name"])
+def test_refused_arguments_replay_to_the_same_receipt(tmp_path, name, kind):
+    """Replay re-runs invoke(name, {}); a refused-arguments receipt must carry the code
+    stage(name, {}) gives: bad_arguments if the name is offered, else not_permitted."""
+    from test_financial_workflow import start
+
+    workflow, pack = start(tmp_path, gap=True)
+    workflow._participant, workflow._transport = "t5", "python-api"
+    if kind == "unencodable_name":
+        reply = workflow.invoke(name + "\ud800", {"query": "x"})
+        expected = ("", {}, "refused", "not_permitted")
+    else:
+        reply = workflow.invoke(name, _REFUSED_ARGUMENTS[kind]())
+        code = "bad_arguments" if name == "search_pack" else "not_permitted"
+        expected = (name, {}, "refused", code)
+    assert (reply["tool"], reply["arguments"], reply["status"], reply["error_code"]) == expected
+    _seal_and_verify(workflow, pack, tmp_path)
+
+
+class _Hostile:
+    __hash__ = None
+
+    def __eq__(self, other):
+        raise RuntimeError("caller code ran")
+
+    def __ne__(self, other):
+        raise RuntimeError("caller code ran")
+
+
+class _LooksEmpty:
+    __hash__ = None
+
+    def __eq__(self, other):
+        return other == ""
+
+
+@pytest.mark.parametrize("make_name", [_Hostile, _LooksEmpty])
+def test_non_str_tool_name_with_deep_arguments_is_refused_and_seals(tmp_path, make_name):
+    from test_financial_workflow import start
+
+    workflow, pack = start(tmp_path, gap=True)
+    workflow._participant, workflow._transport = "t5", "python-api"
+    reply = workflow.invoke(make_name(), _deep(105))
+    assert (reply["tool"], reply["arguments"], reply["error_code"]) == ("", {}, "not_permitted")
+    _seal_and_verify(workflow, pack, tmp_path)

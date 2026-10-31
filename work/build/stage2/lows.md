@@ -74,3 +74,7 @@
   - `test_connect_cpl10.py:649-656` list may repeat `value`, and `len(exponents) >= 2` is weaker than "distinct" (optional);
   - `partial-builder/run.py` prints `wall` on failure paths too (cosmetic);
   - T2 `tests/test_codex_render_fixes.py:58` FURB167 (`re.S` → `re.DOTALL`).
+- **[T1 review, predates T1; owner] Precheck header gaps found by mx-precise a7cd4a1a (probe `scratchpad/s8-review-T1/probe_t1.py`, case 4).**
+  - When the period length sits on its own row ("Three Months Ended" / "June 30," / "2026"), "June 30," parses as a balance span. A 3-month column then accepts a YTD period, at both base and tip.
+  - `STATEMENT_HEADING` (financial_workflow.py:85-90) does not know STATEMENTS OF EARNINGS / FINANCIAL POSITION / COMPREHENSIVE INCOME.
+  - Open question: should a COMPREHENSIVE INCOME caption map to IS? Left unmapped (None).

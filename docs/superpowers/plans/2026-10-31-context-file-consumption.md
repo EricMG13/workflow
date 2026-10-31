@@ -1,5 +1,7 @@
 # Context File Consumption Implementation Plan
 
+**Status:** approved 2026-10-31 (D1-D5 as recommended); outstanding, not started (PLAN.md "Outstanding").
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the workflow read the context form's `context.json` (schema `context/1`):

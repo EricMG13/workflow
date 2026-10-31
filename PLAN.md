@@ -404,3 +404,12 @@ source/gap context. Model is not selected and no publication/download is invente
 Disjoint leaf implementation is admitted and active;
 full runtime requires accepted B1/A4 public implementations. Three actual fresh
 cases and native proof remain unverified, with broader PLAN still active.
+
+## Outstanding — run context file consumption (user, 2026-10-31)
+
+Plan approved, not started: [docs/superpowers/plans/2026-10-31-context-file-consumption.md](docs/superpowers/plans/2026-10-31-context-file-consumption.md)
+(spec docs/CONTEXT-FILE-PROPOSAL.md; form docs/templates/context-form.html; decisions D1-D5
+as recommended). Nothing reads `context.json` yet.
+
+- [ ] Phase 1 foundation: `deploy_workflow.context` reader, pack preparation, frozen-pack reader, CP-0 acceptance, run guide (Tasks 1-5).
+- [ ] Phases 2-8 module consumers (identity/periods, market evidence, ratings, attachments/modes, pinned assumptions, valuation, periods/currency), each after its questions, oracle and lease.

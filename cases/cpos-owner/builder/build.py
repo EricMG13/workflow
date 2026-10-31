@@ -31,7 +31,7 @@ PINS = {
     "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
     "src/deploy_vii/registry.py": "adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc",
     # Pinned for the credit_snapshot preset (PATHWAY_MODULES), which 0d's module_display reads.
-    "src/deploy_vii/contracts.py": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+    "src/deploy_vii/contracts.py": "618229c6da7db278f1bfa0688da2998bec2c4486a55fe8f1e50258715db76390",
 }
 
 

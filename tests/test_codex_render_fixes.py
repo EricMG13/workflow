@@ -10,7 +10,7 @@ import test_method_cp2h as m2h
 import test_method_cp8 as m8
 
 from deploy_vii import prose, render
-from deploy_vii.contracts import Claim, ModuleView, View
+from deploy_vii.contracts import Claim, Fact, ModuleView, View
 from deploy_workflow.owners import cp2h, cp8
 
 TOKEN = "{T2R.4.t01.headroom|x}"
@@ -55,7 +55,7 @@ def test_h06_no_token_reaches_the_rendered_limitations() -> None:
     )
     assert not prose.prose_issues(module)
     html = render.render(View(run=connect8._run("positive"), mode="accepted", modules=(module,)))
-    found = re.search(r'<script[^>]*id="report-data"[^>]*>(.*?)</script>', html, re.S)
+    found = re.search(r'<script[^>]*id="report-data"[^>]*>(.*?)</script>', html, re.DOTALL)
     assert found is not None
     data = json.loads(found.group(1))
     limitations = data["modules"][0]["limitations"]
@@ -84,3 +84,34 @@ def test_h07_normal_text_is_still_accepted() -> None:
         pack=m8.pack("positive"),
     )
     assert issues == ()
+
+
+def _bound_of(case: str) -> dict[str, Fact]:
+    inputs = m2h.inputs(case)
+    ratings = cp2h.ratings_source(inputs.pack)
+    source = cp2h.parse_ratings(cp2h.source_pages(ratings))
+    book, _ = cp2h._compose(ratings, source, inputs.upstream, None)
+    return cp2h._bound(book, inputs.upstream)
+
+
+def test_h06_gap_text_naming_an_unsettled_fact_is_a_validation_issue() -> None:
+    ref = next(k for k, f in sorted(_bound_of("gap").items()) if f.status != "known")
+    payload = copy.deepcopy(m2h.raw_payload("gap"))
+    payload["gaps"][0]["gap"] = f"Coverage is missing for [{ref}]."
+    issues = cp2h.validate(m2h.inputs("gap", payload))
+    assert issues == (f"gaps[0].gap: reference {ref} names a fact that is not settled",)
+
+
+def test_h06_gap_limitation_spells_a_chip_naming_a_settled_fact() -> None:
+    ref, fact = next(
+        (k, f)
+        for k, f in sorted(_bound_of("positive").items())
+        if f.status == "known" and f.text is not None and f.amount is None
+    )
+    payload = copy.deepcopy(m2h.raw_payload("positive"))
+    payload["gaps"][0]["gap"] = f"Coverage of [{ref}] is noted."
+    inputs = m2h.inputs("positive", payload)
+    assert cp2h.validate(inputs) == ()
+    severity = payload["gaps"][0]["severity"]
+    expected = f"Gap ({severity}): Coverage of {fact.text} is noted."
+    assert expected in cp2h.compute(inputs).own_limitations

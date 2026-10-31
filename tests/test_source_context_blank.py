@@ -142,3 +142,32 @@ def test_frozen_cp1_submissions_hold_no_blank_limitation() -> None:
             explanations = [s.get("event_scan_explanation", "x") for s in review["sources"]]
             assert not any(is_blank(text) for text in explanations), path
     assert seen > 0
+
+
+@pytest.mark.parametrize("field", ("accounting_basis", "entity_perimeter"))
+@pytest.mark.parametrize("blank", (" ", "​"))
+def test_blank_scope_dimension_is_lacking(field: str, blank: str) -> None:
+    """H09: a blank `accounting_basis` or `entity_perimeter` on a financial historical scope is
+    rule 1's issue, as a null is; it must not pass and settle facts `publish_model` then refuses."""
+    doc = copy.deepcopy(CONTEXT)
+    scope = doc["sources"][1]["scopes"][0]
+    assert scope["period_kind"] in ("historical_duration", "period_end")
+    scope[field] = blank
+    assert _issues(doc) == (f"Financial scope lacks {field}: {scope['scope_id']}",)
+
+
+def test_blank_dimension_beside_stated_sibling_is_lacking_not_disagreement() -> None:
+    """H09: a blank is rule 1's issue alone; rule 2 must not count it as a second stated value."""
+    doc = copy.deepcopy(CONTEXT)
+    scopes = doc["sources"][1]["scopes"]
+    assert len(scopes) > 1
+    assert all(s["accounting_basis"] == "IFRS" for s in scopes)
+    scopes[0]["accounting_basis"] = "​"
+    assert _issues(doc) == (f"Financial scope lacks accounting_basis: {scopes[0]['scope_id']}",)
+
+
+def test_visible_scope_dimensions_give_no_issue() -> None:
+    doc = copy.deepcopy(CONTEXT)
+    scope = doc["sources"][1]["scopes"][0]
+    assert (scope["accounting_basis"], scope["entity_perimeter"]) == ("IFRS", "consolidated group")
+    assert _issues(doc) == ()

@@ -1,0 +1,3631 @@
+[
+ {
+  "source_id": "czr-q2-2026-10q",
+  "locator": "page:2",
+  "headers": [
+   "(In millions) | June 30, 2026 | December 31, 2025"
+  ],
+  "lines": [
+   {
+    "line_no": 6,
+    "label": "Cash and cash equivalents",
+    "raw_values": [
+     "965",
+     "887"
+    ],
+    "values": [
+     "965",
+     "887"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 7,
+    "label": "Restricted cash",
+    "raw_values": [
+     "96",
+     "85"
+    ],
+    "values": [
+     "96",
+     "85"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Accounts receivable, net",
+    "raw_values": [
+     "485",
+     "476"
+    ],
+    "values": [
+     "485",
+     "476"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Inventories",
+    "raw_values": [
+     "49",
+     "43"
+    ],
+    "values": [
+     "49",
+     "43"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 10,
+    "label": "Prepayments and other current assets",
+    "raw_values": [
+     "382",
+     "312"
+    ],
+    "values": [
+     "382",
+     "312"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 11,
+    "label": "Total current assets",
+    "raw_values": [
+     "1,977",
+     "1,803"
+    ],
+    "values": [
+     "1977",
+     "1803"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "Investments in and advances to unconsolidated affiliates",
+    "raw_values": [
+     "124",
+     "133"
+    ],
+    "values": [
+     "124",
+     "133"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Property and equipment, net",
+    "raw_values": [
+     "14,125",
+     "14,358"
+    ],
+    "values": [
+     "14125",
+     "14358"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "Goodwill",
+    "raw_values": [
+     "10,441",
+     "10,441"
+    ],
+    "values": [
+     "10441",
+     "10441"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "Intangible assets other than goodwill",
+    "raw_values": [
+     "3,959",
+     "3,985"
+    ],
+    "values": [
+     "3959",
+     "3985"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "Deferred tax asset",
+    "raw_values": [
+     "68",
+     "67"
+    ],
+    "values": [
+     "68",
+     "67"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 17,
+    "label": "Other long-term assets, net",
+    "raw_values": [
+     "1,048",
+     "852"
+    ],
+    "values": [
+     "1048",
+     "852"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 18,
+    "label": "Total assets",
+    "raw_values": [
+     "31,742",
+     "31,639"
+    ],
+    "values": [
+     "31742",
+     "31639"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Accounts payable",
+    "raw_values": [
+     "290",
+     "297"
+    ],
+    "values": [
+     "290",
+     "297"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 22,
+    "label": "Accrued interest",
+    "raw_values": [
+     "222",
+     "224"
+    ],
+    "values": [
+     "222",
+     "224"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 23,
+    "label": "Accrued other liabilities",
+    "raw_values": [
+     "1,696",
+     "1,618"
+    ],
+    "values": [
+     "1696",
+     "1618"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 24,
+    "label": "Current portion of long-term debt",
+    "raw_values": [
+     "114",
+     "114"
+    ],
+    "values": [
+     "114",
+     "114"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Total current liabilities",
+    "raw_values": [
+     "2,322",
+     "2,253"
+    ],
+    "values": [
+     "2322",
+     "2253"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Long-term financing obligations",
+    "raw_values": [
+     "13,157",
+     "13,096"
+    ],
+    "values": [
+     "13157",
+     "13096"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Long-term debt",
+    "raw_values": [
+     "11,585",
+     "11,670"
+    ],
+    "values": [
+     "11585",
+     "11670"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Deferred tax liability",
+    "raw_values": [
+     "57",
+     "58"
+    ],
+    "values": [
+     "57",
+     "58"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Other long-term liabilities",
+    "raw_values": [
+     "1,069",
+     "876"
+    ],
+    "values": [
+     "1069",
+     "876"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Total liabilities",
+    "raw_values": [
+     "28,190",
+     "27,953"
+    ],
+    "values": [
+     "28190",
+     "27953"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 33,
+    "label": "Caesars stockholders’ equity",
+    "raw_values": [
+     "3,375",
+     "3,504"
+    ],
+    "values": [
+     "3375",
+     "3504"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS’ EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Noncontrolling interests",
+    "raw_values": [
+     "177",
+     "182"
+    ],
+    "values": [
+     "177",
+     "182"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS’ EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Total stockholders’ equity",
+    "raw_values": [
+     "3,552",
+     "3,686"
+    ],
+    "values": [
+     "3552",
+     "3686"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS’ EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 36,
+    "label": "Total liabilities and stockholders’ equity",
+    "raw_values": [
+     "31,742",
+     "31,639"
+    ],
+    "values": [
+     "31742",
+     "31639"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS’ EQUITY:",
+    "flags": []
+   }
+  ]
+ },
+ {
+  "source_id": "czr-q2-2026-10q",
+  "locator": "page:4",
+  "headers": [
+   "Three Months Ended June 30, | Six Months Ended June 30,",
+   "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+  ],
+  "lines": [
+   {
+    "line_no": 6,
+    "label": "Casino",
+    "raw_values": [
+     "1,759",
+     "1,668",
+     "3,425",
+     "3,262"
+    ],
+    "values": [
+     "1759",
+     "1668",
+     "3425",
+     "3262"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 7,
+    "label": "Food and beverage",
+    "raw_values": [
+     "426",
+     "428",
+     "850",
+     "863"
+    ],
+    "values": [
+     "426",
+     "428",
+     "850",
+     "863"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Hotel",
+    "raw_values": [
+     "495",
+     "509",
+     "982",
+     "991"
+    ],
+    "values": [
+     "495",
+     "509",
+     "982",
+     "991"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Other",
+    "raw_values": [
+     "313",
+     "302",
+     "606",
+     "585"
+    ],
+    "values": [
+     "313",
+     "302",
+     "606",
+     "585"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 10,
+    "label": "Net revenues",
+    "raw_values": [
+     "2,993",
+     "2,907",
+     "5,863",
+     "5,701"
+    ],
+    "values": [
+     "2993",
+     "2907",
+     "5863",
+     "5701"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "Casino",
+    "raw_values": [
+     "955",
+     "887",
+     "1,857",
+     "1,748"
+    ],
+    "values": [
+     "955",
+     "887",
+     "1857",
+     "1748"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Food and beverage",
+    "raw_values": [
+     "281",
+     "275",
+     "555",
+     "550"
+    ],
+    "values": [
+     "281",
+     "275",
+     "555",
+     "550"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "Hotel",
+    "raw_values": [
+     "163",
+     "155",
+     "319",
+     "306"
+    ],
+    "values": [
+     "163",
+     "155",
+     "319",
+     "306"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "Other",
+    "raw_values": [
+     "95",
+     "105",
+     "190",
+     "200"
+    ],
+    "values": [
+     "95",
+     "105",
+     "190",
+     "200"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "General and administrative",
+    "raw_values": [
+     "521",
+     "477",
+     "1,025",
+     "960"
+    ],
+    "values": [
+     "521",
+     "477",
+     "1025",
+     "960"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 17,
+    "label": "Corporate",
+    "raw_values": [
+     "94",
+     "84",
+     "182",
+     "166"
+    ],
+    "values": [
+     "94",
+     "84",
+     "182",
+     "166"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 18,
+    "label": "Depreciation and amortization",
+    "raw_values": [
+     "355",
+     "364",
+     "702",
+     "721"
+    ],
+    "values": [
+     "355",
+     "364",
+     "702",
+     "721"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 19,
+    "label": "Transaction and other costs, net",
+    "raw_values": [
+     "16",
+     "34",
+     "20",
+     "36"
+    ],
+    "values": [
+     "16",
+     "34",
+     "20",
+     "36"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 20,
+    "label": "Total operating expenses",
+    "raw_values": [
+     "2,480",
+     "2,381",
+     "4,850",
+     "4,687"
+    ],
+    "values": [
+     "2480",
+     "2381",
+     "4850",
+     "4687"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Operating income",
+    "raw_values": [
+     "513",
+     "526",
+     "1,013",
+     "1,014"
+    ],
+    "values": [
+     "513",
+     "526",
+     "1013",
+     "1014"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 23,
+    "label": "Interest expense, net",
+    "raw_values": [
+     "(573)",
+     "(579)",
+     "(1,142)",
+     "(1,153)"
+    ],
+    "values": [
+     "-573",
+     "-579",
+     "-1142",
+     "-1153"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 24,
+    "label": "Other income",
+    "raw_values": [
+     "7",
+     "1",
+     "5",
+     "—"
+    ],
+    "values": [
+     "7",
+     "1",
+     "5",
+     null
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Total other expense",
+    "raw_values": [
+     "(566)",
+     "(578)",
+     "(1,137)",
+     "(1,153)"
+    ],
+    "values": [
+     "-566",
+     "-578",
+     "-1137",
+     "-1153"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Loss before income taxes",
+    "raw_values": [
+     "(53)",
+     "(52)",
+     "(124)",
+     "(139)"
+    ],
+    "values": [
+     "-53",
+     "-52",
+     "-124",
+     "-139"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Benefit (provision) for income taxes",
+    "raw_values": [
+     "12",
+     "(13)",
+     "—",
+     "(24)"
+    ],
+    "values": [
+     "12",
+     "-13",
+     null,
+     "-24"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Net loss",
+    "raw_values": [
+     "(41)",
+     "(65)",
+     "(124)",
+     "(163)"
+    ],
+    "values": [
+     "-41",
+     "-65",
+     "-124",
+     "-163"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Net income attributable to noncontrolling interests",
+    "raw_values": [
+     "(21)",
+     "(17)",
+     "(36)",
+     "(34)"
+    ],
+    "values": [
+     "-21",
+     "-17",
+     "-36",
+     "-34"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Net loss attributable to Caesars",
+    "raw_values": [
+     "(62)",
+     "(82)",
+     "(160)",
+     "(197)"
+    ],
+    "values": [
+     "-62",
+     "-82",
+     "-160",
+     "-197"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 32,
+    "label": "Basic loss per share",
+    "raw_values": [
+     "(0.30)",
+     "(0.39)",
+     "(0.78)",
+     "(0.93)"
+    ],
+    "values": [
+     "-0.30",
+     "-0.39",
+     "-0.78",
+     "-0.93"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 33,
+    "label": "Diluted loss per share",
+    "raw_values": [
+     "(0.30)",
+     "(0.39)",
+     "(0.78)",
+     "(0.93)"
+    ],
+    "values": [
+     "-0.30",
+     "-0.39",
+     "-0.78",
+     "-0.93"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Weighted average basic shares outstanding",
+    "raw_values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Weighted average diluted shares outstanding",
+    "raw_values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   }
+  ]
+ },
+ {
+  "source_id": "czr-q2-2026-10q",
+  "locator": "page:9",
+  "headers": [
+   "Six Months Ended June 30,",
+   "(In millions) | 2026 | 2025"
+  ],
+  "lines": [
+   {
+    "line_no": 6,
+    "label": "Net loss",
+    "raw_values": [
+     "(124)",
+     "(163)"
+    ],
+    "values": [
+     "-124",
+     "-163"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Depreciation and amortization",
+    "raw_values": [
+     "702",
+     "721"
+    ],
+    "values": [
+     "702",
+     "721"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Amortization of deferred financing costs and discounts",
+    "raw_values": [
+     "88",
+     "89"
+    ],
+    "values": [
+     "88",
+     "89"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 10,
+    "label": "Provision for credit losses",
+    "raw_values": [
+     "24",
+     "23"
+    ],
+    "values": [
+     "24",
+     "23"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 11,
+    "label": "Non-cash lease amortization",
+    "raw_values": [
+     "14",
+     "12"
+    ],
+    "values": [
+     "14",
+     "12"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "(Gain) loss on investments",
+    "raw_values": [
+     "(4)",
+     "1"
+    ],
+    "values": [
+     "-4",
+     "1"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Stock-based compensation expense",
+    "raw_values": [
+     "47",
+     "50"
+    ],
+    "values": [
+     "47",
+     "50"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "(Gain) loss on sale or disposal of property and equipment",
+    "raw_values": [
+     "(8)",
+     "3"
+    ],
+    "values": [
+     "-8",
+     "3"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "Deferred income taxes",
+    "raw_values": [
+     "—",
+     "24"
+    ],
+    "values": [
+     null,
+     "24"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "Other non-cash adjustments to net loss",
+    "raw_values": [
+     "7",
+     "1"
+    ],
+    "values": [
+     "7",
+     "1"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 18,
+    "label": "Accounts receivable",
+    "raw_values": [
+     "(24)",
+     "(37)"
+    ],
+    "values": [
+     "-24",
+     "-37"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 19,
+    "label": "Prepaid expenses and other assets",
+    "raw_values": [
+     "(88)",
+     "(47)"
+    ],
+    "values": [
+     "-88",
+     "-47"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 20,
+    "label": "Income taxes receivable and payable, net",
+    "raw_values": [
+     "(11)",
+     "(58)"
+    ],
+    "values": [
+     "-11",
+     "-58"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Accounts payable, accrued expenses and other liabilities",
+    "raw_values": [
+     "52",
+     "61"
+    ],
+    "values": [
+     "52",
+     "61"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 22,
+    "label": "Net cash provided by operating activities",
+    "raw_values": [
+     "675",
+     "680"
+    ],
+    "values": [
+     "675",
+     "680"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 24,
+    "label": "Purchase of property and equipment",
+    "raw_values": [
+     "(335)",
+     "(453)"
+    ],
+    "values": [
+     "-335",
+     "-453"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Cash paid for asset acquisitions",
+    "raw_values": [
+     "(98)",
+     "—"
+    ],
+    "values": [
+     "-98",
+     null
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Proceeds from sale of property and equipment",
+    "raw_values": [
+     "20",
+     "3"
+    ],
+    "values": [
+     "20",
+     "3"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Proceeds from sale of investments",
+    "raw_values": [
+     "2",
+     "1"
+    ],
+    "values": [
+     "2",
+     "1"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Investments in unconsolidated affiliate",
+    "raw_values": [
+     "(2)",
+     "(3)"
+    ],
+    "values": [
+     "-2",
+     "-3"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Distributions from unconsolidated affiliate",
+    "raw_values": [
+     "—",
+     "23"
+    ],
+    "values": [
+     null,
+     "23"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Other",
+    "raw_values": [
+     "2",
+     "(5)"
+    ],
+    "values": [
+     "2",
+     "-5"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 31,
+    "label": "Net cash used in investing activities",
+    "raw_values": [
+     "(411)",
+     "(434)"
+    ],
+    "values": [
+     "-411",
+     "-434"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 33,
+    "label": "Proceeds from long-term debt and revolving credit facilities",
+    "raw_values": [
+     "885",
+     "590"
+    ],
+    "values": [
+     "885",
+     "590"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Repayments of long-term debt and revolving credit facilities",
+    "raw_values": [
+     "(983)",
+     "(612)"
+    ],
+    "values": [
+     "-983",
+     "-612"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Repurchase of common stock",
+    "raw_values": [
+     "—",
+     "(100)"
+    ],
+    "values": [
+     null,
+     "-100"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 36,
+    "label": "Financing obligation payments",
+    "raw_values": [
+     "(19)",
+     "(8)"
+    ],
+    "values": [
+     "-19",
+     "-8"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 37,
+    "label": "Distributions to noncontrolling interest owners",
+    "raw_values": [
+     "(41)",
+     "(30)"
+    ],
+    "values": [
+     "-41",
+     "-30"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 38,
+    "label": "Taxes paid related to net share settlement of equity awards",
+    "raw_values": [
+     "(13)",
+     "(16)"
+    ],
+    "values": [
+     "-13",
+     "-16"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 39,
+    "label": "Net cash used in financing activities",
+    "raw_values": [
+     "(171)",
+     "(176)"
+    ],
+    "values": [
+     "-171",
+     "-176"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 40,
+    "label": "Increase in cash, cash equivalents and restricted cash",
+    "raw_values": [
+     "93",
+     "70"
+    ],
+    "values": [
+     "93",
+     "70"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 41,
+    "label": "Cash, cash equivalents and restricted cash, beginning of period",
+    "raw_values": [
+     "984",
+     "1,016"
+    ],
+    "values": [
+     "984",
+     "1016"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 42,
+    "label": "Cash, cash equivalents and restricted cash, end of period",
+    "raw_values": [
+     "1,077",
+     "1,086"
+    ],
+    "values": [
+     "1077",
+     "1086"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   }
+  ]
+ },
+ {
+  "source_id": "czr-fy2025-10k",
+  "locator": "page:54",
+  "headers": [
+   "December 31,",
+   "(Dollars in millions, except par value) | 2025 | 2024"
+  ],
+  "lines": [
+   {
+    "line_no": 6,
+    "label": "Cash and cash equivalents",
+    "raw_values": [
+     "887",
+     "866"
+    ],
+    "values": [
+     "887",
+     "866"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 7,
+    "label": "Restricted cash",
+    "raw_values": [
+     "85",
+     "95"
+    ],
+    "values": [
+     "85",
+     "95"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Accounts receivable, net",
+    "raw_values": [
+     "476",
+     "470"
+    ],
+    "values": [
+     "476",
+     "470"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Inventories",
+    "raw_values": [
+     "43",
+     "45"
+    ],
+    "values": [
+     "43",
+     "45"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 10,
+    "label": "Prepayments and other current assets",
+    "raw_values": [
+     "312",
+     "271"
+    ],
+    "values": [
+     "312",
+     "271"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 11,
+    "label": "Total current assets",
+    "raw_values": [
+     "1,803",
+     "1,747"
+    ],
+    "values": [
+     "1803",
+     "1747"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "Investments in and advances to unconsolidated affiliates",
+    "raw_values": [
+     "133",
+     "131"
+    ],
+    "values": [
+     "133",
+     "131"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Property and equipment, net",
+    "raw_values": [
+     "14,358",
+     "14,812"
+    ],
+    "values": [
+     "14358",
+     "14812"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "Goodwill",
+    "raw_values": [
+     "10,441",
+     "10,601"
+    ],
+    "values": [
+     "10441",
+     "10601"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "Intangible assets other than goodwill",
+    "raw_values": [
+     "3,985",
+     "4,133"
+    ],
+    "values": [
+     "3985",
+     "4133"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "Deferred tax asset",
+    "raw_values": [
+     "67",
+     "62"
+    ],
+    "values": [
+     "67",
+     "62"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 17,
+    "label": "Other long-term assets, net",
+    "raw_values": [
+     "852",
+     "1,104"
+    ],
+    "values": [
+     "852",
+     "1104"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 18,
+    "label": "Total assets",
+    "raw_values": [
+     "31,639",
+     "32,590"
+    ],
+    "values": [
+     "31639",
+     "32590"
+    ],
+    "indent": 0,
+    "caption": "CURRENT ASSETS:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Accounts payable",
+    "raw_values": [
+     "297",
+     "296"
+    ],
+    "values": [
+     "297",
+     "296"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 22,
+    "label": "Accrued interest",
+    "raw_values": [
+     "224",
+     "242"
+    ],
+    "values": [
+     "224",
+     "242"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 23,
+    "label": "Accrued other liabilities",
+    "raw_values": [
+     "1,618",
+     "1,625"
+    ],
+    "values": [
+     "1618",
+     "1625"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 24,
+    "label": "Current portion of long-term debt",
+    "raw_values": [
+     "114",
+     "109"
+    ],
+    "values": [
+     "114",
+     "109"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Total current liabilities",
+    "raw_values": [
+     "2,253",
+     "2,272"
+    ],
+    "values": [
+     "2253",
+     "2272"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Long-term financing obligations",
+    "raw_values": [
+     "13,096",
+     "12,899"
+    ],
+    "values": [
+     "13096",
+     "12899"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Long-term debt",
+    "raw_values": [
+     "11,670",
+     "12,033"
+    ],
+    "values": [
+     "11670",
+     "12033"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Deferred tax liability",
+    "raw_values": [
+     "58",
+     "130"
+    ],
+    "values": [
+     "58",
+     "130"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Other long-term liabilities",
+    "raw_values": [
+     "876",
+     "880"
+    ],
+    "values": [
+     "876",
+     "880"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Total liabilities",
+    "raw_values": [
+     "27,953",
+     "28,214"
+    ],
+    "values": [
+     "27953",
+     "28214"
+    ],
+    "indent": 0,
+    "caption": "CURRENT LIABILITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 33,
+    "label": "Preferred stock, $0.00001 par value, 150,000,000 shares authorized, no shares issued and outstanding",
+    "raw_values": [
+     "—",
+     "—"
+    ],
+    "values": [
+     null,
+     null
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Common stock, $0.00001 par value, 500,000,000 shares authorized, 202,629,159 and 211,325,086 issued and outstanding",
+    "raw_values": [
+     "—",
+     "—"
+    ],
+    "values": [
+     null,
+     null
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Additional paid-in capital",
+    "raw_values": [
+     "6,709",
+     "6,862"
+    ],
+    "values": [
+     "6709",
+     "6862"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 36,
+    "label": "Accumulated deficit",
+    "raw_values": [
+     "(3,303)",
+     "(2,801)"
+    ],
+    "values": [
+     "-3303",
+     "-2801"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 37,
+    "label": "Treasury stock, at cost",
+    "raw_values": [
+     "—",
+     "—"
+    ],
+    "values": [
+     null,
+     null
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 38,
+    "label": "Accumulated other comprehensive income",
+    "raw_values": [
+     "98",
+     "96"
+    ],
+    "values": [
+     "98",
+     "96"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 39,
+    "label": "Caesars stockholders' equity",
+    "raw_values": [
+     "3,504",
+     "4,157"
+    ],
+    "values": [
+     "3504",
+     "4157"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 40,
+    "label": "Noncontrolling interests",
+    "raw_values": [
+     "182",
+     "219"
+    ],
+    "values": [
+     "182",
+     "219"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 41,
+    "label": "Total stockholders’ equity",
+    "raw_values": [
+     "3,686",
+     "4,376"
+    ],
+    "values": [
+     "3686",
+     "4376"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   },
+   {
+    "line_no": 42,
+    "label": "Total liabilities and stockholders’ equity",
+    "raw_values": [
+     "31,639",
+     "32,590"
+    ],
+    "values": [
+     "31639",
+     "32590"
+    ],
+    "indent": 0,
+    "caption": "STOCKHOLDERS' EQUITY:",
+    "flags": []
+   }
+  ]
+ },
+ {
+  "source_id": "czr-fy2025-10k",
+  "locator": "page:56",
+  "headers": [
+   "Years Ended December 31,",
+   "(In millions, except per share data) | 2025 | 2024 | 2023"
+  ],
+  "lines": [
+   {
+    "line_no": 5,
+    "label": "Casino",
+    "raw_values": [
+     "6,617",
+     "6,267",
+     "6,367"
+    ],
+    "values": [
+     "6617",
+     "6267",
+     "6367"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 6,
+    "label": "Food and beverage",
+    "raw_values": [
+     "1,714",
+     "1,716",
+     "1,728"
+    ],
+    "values": [
+     "1714",
+     "1716",
+     "1728"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 7,
+    "label": "Hotel",
+    "raw_values": [
+     "1,945",
+     "2,016",
+     "2,090"
+    ],
+    "values": [
+     "1945",
+     "2016",
+     "2090"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Other",
+    "raw_values": [
+     "1,210",
+     "1,246",
+     "1,343"
+    ],
+    "values": [
+     "1210",
+     "1246",
+     "1343"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Net revenues",
+    "raw_values": [
+     "11,486",
+     "11,245",
+     "11,528"
+    ],
+    "values": [
+     "11486",
+     "11245",
+     "11528"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 11,
+    "label": "Casino",
+    "raw_values": [
+     "3,602",
+     "3,370",
+     "3,342"
+    ],
+    "values": [
+     "3602",
+     "3370",
+     "3342"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "Food and beverage",
+    "raw_values": [
+     "1,106",
+     "1,073",
+     "1,049"
+    ],
+    "values": [
+     "1106",
+     "1073",
+     "1049"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Hotel",
+    "raw_values": [
+     "615",
+     "580",
+     "570"
+    ],
+    "values": [
+     "615",
+     "580",
+     "570"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "Other",
+    "raw_values": [
+     "420",
+     "396",
+     "434"
+    ],
+    "values": [
+     "420",
+     "396",
+     "434"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "General and administrative",
+    "raw_values": [
+     "1,926",
+     "1,920",
+     "2,012"
+    ],
+    "values": [
+     "1926",
+     "1920",
+     "2012"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "Corporate",
+    "raw_values": [
+     "322",
+     "307",
+     "306"
+    ],
+    "values": [
+     "322",
+     "307",
+     "306"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 17,
+    "label": "Impairment charges",
+    "raw_values": [
+     "182",
+     "302",
+     "95"
+    ],
+    "values": [
+     "182",
+     "302",
+     "95"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 18,
+    "label": "Depreciation and amortization",
+    "raw_values": [
+     "1,417",
+     "1,324",
+     "1,261"
+    ],
+    "values": [
+     "1417",
+     "1324",
+     "1261"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 19,
+    "label": "Transaction and other costs, net",
+    "raw_values": [
+     "38",
+     "(331)",
+     "(13)"
+    ],
+    "values": [
+     "38",
+     "-331",
+     "-13"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 20,
+    "label": "Total operating expenses",
+    "raw_values": [
+     "9,628",
+     "8,941",
+     "9,056"
+    ],
+    "values": [
+     "9628",
+     "8941",
+     "9056"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Operating income",
+    "raw_values": [
+     "1,858",
+     "2,304",
+     "2,472"
+    ],
+    "values": [
+     "1858",
+     "2304",
+     "2472"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 23,
+    "label": "Interest expense, net",
+    "raw_values": [
+     "(2,304)",
+     "(2,366)",
+     "(2,342)"
+    ],
+    "values": [
+     "-2304",
+     "-2366",
+     "-2342"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 24,
+    "label": "Loss on extinguishment of debt",
+    "raw_values": [
+     "(4)",
+     "(89)",
+     "(200)"
+    ],
+    "values": [
+     "-4",
+     "-89",
+     "-200"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Other income",
+    "raw_values": [
+     "2",
+     "27",
+     "10"
+    ],
+    "values": [
+     "2",
+     "27",
+     "10"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Total other expense",
+    "raw_values": [
+     "(2,306)",
+     "(2,428)",
+     "(2,532)"
+    ],
+    "values": [
+     "-2306",
+     "-2428",
+     "-2532"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Loss before income taxes",
+    "raw_values": [
+     "(448)",
+     "(124)",
+     "(60)"
+    ],
+    "values": [
+     "-448",
+     "-124",
+     "-60"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Benefit (provision) for income taxes",
+    "raw_values": [
+     "11",
+     "(87)",
+     "888"
+    ],
+    "values": [
+     "11",
+     "-87",
+     "888"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Net income (loss)",
+    "raw_values": [
+     "(437)",
+     "(211)",
+     "828"
+    ],
+    "values": [
+     "-437",
+     "-211",
+     "828"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Net income attributable to noncontrolling interests",
+    "raw_values": [
+     "(65)",
+     "(67)",
+     "(42)"
+    ],
+    "values": [
+     "-65",
+     "-67",
+     "-42"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 31,
+    "label": "Net income (loss) attributable to Caesars",
+    "raw_values": [
+     "(502)",
+     "(278)",
+     "786"
+    ],
+    "values": [
+     "-502",
+     "-278",
+     "786"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 33,
+    "label": "Basic income (loss) per share",
+    "raw_values": [
+     "(2.42)",
+     "(1.29)",
+     "3.65"
+    ],
+    "values": [
+     "-2.42",
+     "-1.29",
+     "3.65"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Diluted income (loss) per share",
+    "raw_values": [
+     "(2.42)",
+     "(1.29)",
+     "3.64"
+    ],
+    "values": [
+     "-2.42",
+     "-1.29",
+     "3.64"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Weighted average basic shares outstanding",
+    "raw_values": [
+     "208",
+     "215",
+     "215"
+    ],
+    "values": [
+     "208",
+     "215",
+     "215"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 36,
+    "label": "Weighted average diluted shares outstanding",
+    "raw_values": [
+     "208",
+     "215",
+     "216"
+    ],
+    "values": [
+     "208",
+     "215",
+     "216"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   }
+  ]
+ },
+ {
+  "source_id": "czr-fy2025-10k",
+  "locator": "page:60",
+  "headers": [
+   "Years Ended December 31,",
+   "(In millions) | 2025 | 2024 | 2023"
+  ],
+  "lines": [
+   {
+    "line_no": 5,
+    "label": "Net income (loss)",
+    "raw_values": [
+     "(437)",
+     "(211)",
+     "828"
+    ],
+    "values": [
+     "-437",
+     "-211",
+     "828"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 7,
+    "label": "Depreciation and amortization",
+    "raw_values": [
+     "1,417",
+     "1,324",
+     "1,261"
+    ],
+    "values": [
+     "1417",
+     "1324",
+     "1261"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Amortization of deferred financing costs and discounts",
+    "raw_values": [
+     "178",
+     "179",
+     "200"
+    ],
+    "values": [
+     "178",
+     "179",
+     "200"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Provision for credit losses",
+    "raw_values": [
+     "43",
+     "49",
+     "41"
+    ],
+    "values": [
+     "43",
+     "49",
+     "41"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 10,
+    "label": "Loss on extinguishment of debt",
+    "raw_values": [
+     "4",
+     "89",
+     "200"
+    ],
+    "values": [
+     "4",
+     "89",
+     "200"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 11,
+    "label": "Non-cash lease amortization",
+    "raw_values": [
+     "24",
+     "26",
+     "51"
+    ],
+    "values": [
+     "24",
+     "26",
+     "51"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "Gain on investments",
+    "raw_values": [
+     "(1)",
+     "(7)",
+     "(5)"
+    ],
+    "values": [
+     "-1",
+     "-7",
+     "-5"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Stock-based compensation expense",
+    "raw_values": [
+     "95",
+     "94",
+     "104"
+    ],
+    "values": [
+     "95",
+     "94",
+     "104"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "(Gain) loss on sale or disposal of property, equipment, trademark and businesses",
+    "raw_values": [
+     "17",
+     "(359)",
+     "22"
+    ],
+    "values": [
+     "17",
+     "-359",
+     "22"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "Impairment charges",
+    "raw_values": [
+     "182",
+     "302",
+     "95"
+    ],
+    "values": [
+     "182",
+     "302",
+     "95"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "Deferred income taxes",
+    "raw_values": [
+     "(11)",
+     "87",
+     "(888)"
+    ],
+    "values": [
+     "-11",
+     "87",
+     "-888"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 17,
+    "label": "Other non-cash adjustments to net (income) loss",
+    "raw_values": [
+     "(8)",
+     "(23)",
+     "(40)"
+    ],
+    "values": [
+     "-8",
+     "-23",
+     "-40"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 19,
+    "label": "Accounts receivable",
+    "raw_values": [
+     "(53)",
+     "86",
+     "(82)"
+    ],
+    "values": [
+     "-53",
+     "86",
+     "-82"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 20,
+    "label": "Prepaid expenses and other assets",
+    "raw_values": [
+     "(49)",
+     "(13)",
+     "39"
+    ],
+    "values": [
+     "-49",
+     "-13",
+     "39"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Income taxes receivable and payable, net",
+    "raw_values": [
+     "(81)",
+     "(48)",
+     "(27)"
+    ],
+    "values": [
+     "-81",
+     "-48",
+     "-27"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 22,
+    "label": "Accounts payable, accrued expenses and other liabilities",
+    "raw_values": [
+     "(18)",
+     "(500)",
+     "10"
+    ],
+    "values": [
+     "-18",
+     "-500",
+     "10"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 23,
+    "label": "Net cash provided by operating activities",
+    "raw_values": [
+     "1,302",
+     "1,075",
+     "1,809"
+    ],
+    "values": [
+     "1302",
+     "1075",
+     "1809"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM OPERATING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Purchase of property and equipment",
+    "raw_values": [
+     "(805)",
+     "(1,296)",
+     "(1,264)"
+    ],
+    "values": [
+     "-805",
+     "-1296",
+     "-1264"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Acquisition of intangible assets",
+    "raw_values": [
+     "(4)",
+     "(15)",
+     "(30)"
+    ],
+    "values": [
+     "-4",
+     "-15",
+     "-30"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Proceeds from sale of property, equipment, trademark and businesses",
+    "raw_values": [
+     "218",
+     "554",
+     "1"
+    ],
+    "values": [
+     "218",
+     "554",
+     "1"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Proceeds from the sale of investments",
+    "raw_values": [
+     "8",
+     "14",
+     "4"
+    ],
+    "values": [
+     "8",
+     "14",
+     "4"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Distributions from unconsolidated affiliate",
+    "raw_values": [
+     "23",
+     "39",
+     "—"
+    ],
+    "values": [
+     "23",
+     "39",
+     null
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Investments in unconsolidated affiliates",
+    "raw_values": [
+     "(6)",
+     "—",
+     "(3)"
+    ],
+    "values": [
+     "-6",
+     null,
+     "-3"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 31,
+    "label": "Other",
+    "raw_values": [
+     "(5)",
+     "—",
+     "36"
+    ],
+    "values": [
+     "-5",
+     null,
+     "36"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 32,
+    "label": "Net cash used in investing activities",
+    "raw_values": [
+     "(571)",
+     "(704)",
+     "(1,256)"
+    ],
+    "values": [
+     "-571",
+     "-704",
+     "-1256"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM INVESTING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Proceeds from long-term debt and revolving credit facilities",
+    "raw_values": [
+     "1,580",
+     "7,525",
+     "5,460"
+    ],
+    "values": [
+     "1580",
+     "7525",
+     "5460"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Repayments of long-term debt and revolving credit facilities",
+    "raw_values": [
+     "(1,969)",
+     "(7,670)",
+     "(6,106)"
+    ],
+    "values": [
+     "-1969",
+     "-7670",
+     "-6106"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 36,
+    "label": "Financing obligation payments",
+    "raw_values": [
+     "(26)",
+     "(8)",
+     "(8)"
+    ],
+    "values": [
+     "-26",
+     "-8",
+     "-8"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 37,
+    "label": "Debt issuance and extinguishment costs",
+    "raw_values": [
+     "—",
+     "(121)",
+     "(79)"
+    ],
+    "values": [
+     null,
+     "-121",
+     "-79"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 38,
+    "label": "Repurchase of common stock",
+    "raw_values": [
+     "(229)",
+     "(191)",
+     "—"
+    ],
+    "values": [
+     "-229",
+     "-191",
+     null
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 39,
+    "label": "Taxes paid related to net share settlement of equity awards",
+    "raw_values": [
+     "(17)",
+     "(17)",
+     "(27)"
+    ],
+    "values": [
+     "-17",
+     "-17",
+     "-27"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 40,
+    "label": "Payments to acquire ownership interest in subsidiary",
+    "raw_values": [
+     "—",
+     "—",
+     "(66)"
+    ],
+    "values": [
+     null,
+     null,
+     "-66"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 41,
+    "label": "Contributions from noncontrolling interest owners",
+    "raw_values": [
+     "—",
+     "—",
+     "116"
+    ],
+    "values": [
+     null,
+     null,
+     "116"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 42,
+    "label": "Distributions to noncontrolling interest owners",
+    "raw_values": [
+     "(102)",
+     "(16)",
+     "(3)"
+    ],
+    "values": [
+     "-102",
+     "-16",
+     "-3"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 43,
+    "label": "Net cash used in financing activities",
+    "raw_values": [
+     "(763)",
+     "(498)",
+     "(713)"
+    ],
+    "values": [
+     "-763",
+     "-498",
+     "-713"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 44,
+    "label": "Decrease in cash, cash equivalents and restricted cash",
+    "raw_values": [
+     "(32)",
+     "(127)",
+     "(160)"
+    ],
+    "values": [
+     "-32",
+     "-127",
+     "-160"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 45,
+    "label": "Cash, cash equivalents and restricted cash, beginning of period",
+    "raw_values": [
+     "1,016",
+     "1,143",
+     "1,303"
+    ],
+    "values": [
+     "1016",
+     "1143",
+     "1303"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   },
+   {
+    "line_no": 46,
+    "label": "Cash, cash equivalents and restricted cash, end of period",
+    "raw_values": [
+     "984",
+     "1,016",
+     "1,143"
+    ],
+    "values": [
+     "984",
+     "1016",
+     "1143"
+    ],
+    "indent": 0,
+    "caption": "CASH FLOWS FROM FINANCING ACTIVITIES:",
+    "flags": []
+   }
+  ]
+ },
+ {
+  "source_id": "czr-q2-2026-release",
+  "locator": "page:6",
+  "headers": [
+   "Three Months Ended June 30, | Six Months Ended June 30,",
+   "(In millions, except per share data) | 2026 | 2025 | 2026 | 2025"
+  ],
+  "lines": [
+   {
+    "line_no": 6,
+    "label": "Casino",
+    "raw_values": [
+     "1,759",
+     "1,668",
+     "3,425",
+     "3,262"
+    ],
+    "values": [
+     "1759",
+     "1668",
+     "3425",
+     "3262"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 7,
+    "label": "Food and beverage",
+    "raw_values": [
+     "426",
+     "428",
+     "850",
+     "863"
+    ],
+    "values": [
+     "426",
+     "428",
+     "850",
+     "863"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 8,
+    "label": "Hotel",
+    "raw_values": [
+     "495",
+     "509",
+     "982",
+     "991"
+    ],
+    "values": [
+     "495",
+     "509",
+     "982",
+     "991"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 9,
+    "label": "Other",
+    "raw_values": [
+     "313",
+     "302",
+     "606",
+     "585"
+    ],
+    "values": [
+     "313",
+     "302",
+     "606",
+     "585"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 10,
+    "label": "Net revenues",
+    "raw_values": [
+     "2,993",
+     "2,907",
+     "5,863",
+     "5,701"
+    ],
+    "values": [
+     "2993",
+     "2907",
+     "5863",
+     "5701"
+    ],
+    "indent": 0,
+    "caption": "NET REVENUES:",
+    "flags": []
+   },
+   {
+    "line_no": 12,
+    "label": "Casino",
+    "raw_values": [
+     "955",
+     "887",
+     "1,857",
+     "1,748"
+    ],
+    "values": [
+     "955",
+     "887",
+     "1857",
+     "1748"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 13,
+    "label": "Food and beverage",
+    "raw_values": [
+     "281",
+     "275",
+     "555",
+     "550"
+    ],
+    "values": [
+     "281",
+     "275",
+     "555",
+     "550"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 14,
+    "label": "Hotel",
+    "raw_values": [
+     "163",
+     "155",
+     "319",
+     "306"
+    ],
+    "values": [
+     "163",
+     "155",
+     "319",
+     "306"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 15,
+    "label": "Other",
+    "raw_values": [
+     "95",
+     "105",
+     "190",
+     "200"
+    ],
+    "values": [
+     "95",
+     "105",
+     "190",
+     "200"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 16,
+    "label": "General and administrative",
+    "raw_values": [
+     "521",
+     "477",
+     "1,025",
+     "960"
+    ],
+    "values": [
+     "521",
+     "477",
+     "1025",
+     "960"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 17,
+    "label": "Corporate",
+    "raw_values": [
+     "94",
+     "84",
+     "182",
+     "166"
+    ],
+    "values": [
+     "94",
+     "84",
+     "182",
+     "166"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 18,
+    "label": "Depreciation and amortization",
+    "raw_values": [
+     "355",
+     "364",
+     "702",
+     "721"
+    ],
+    "values": [
+     "355",
+     "364",
+     "702",
+     "721"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 19,
+    "label": "Transaction and other costs, net",
+    "raw_values": [
+     "16",
+     "34",
+     "20",
+     "36"
+    ],
+    "values": [
+     "16",
+     "34",
+     "20",
+     "36"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 20,
+    "label": "Total operating expenses",
+    "raw_values": [
+     "2,480",
+     "2,381",
+     "4,850",
+     "4,687"
+    ],
+    "values": [
+     "2480",
+     "2381",
+     "4850",
+     "4687"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 21,
+    "label": "Operating income",
+    "raw_values": [
+     "513",
+     "526",
+     "1,013",
+     "1,014"
+    ],
+    "values": [
+     "513",
+     "526",
+     "1013",
+     "1014"
+    ],
+    "indent": 0,
+    "caption": "OPERATING EXPENSES:",
+    "flags": []
+   },
+   {
+    "line_no": 23,
+    "label": "Interest expense, net",
+    "raw_values": [
+     "(573)",
+     "(579)",
+     "(1,142)",
+     "(1,153)"
+    ],
+    "values": [
+     "-573",
+     "-579",
+     "-1142",
+     "-1153"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 24,
+    "label": "Other income",
+    "raw_values": [
+     "7",
+     "1",
+     "5",
+     "—"
+    ],
+    "values": [
+     "7",
+     "1",
+     "5",
+     null
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 25,
+    "label": "Total other expense",
+    "raw_values": [
+     "(566)",
+     "(578)",
+     "(1,137)",
+     "(1,153)"
+    ],
+    "values": [
+     "-566",
+     "-578",
+     "-1137",
+     "-1153"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 26,
+    "label": "Loss before income taxes",
+    "raw_values": [
+     "(53)",
+     "(52)",
+     "(124)",
+     "(139)"
+    ],
+    "values": [
+     "-53",
+     "-52",
+     "-124",
+     "-139"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 27,
+    "label": "Benefit (provision) for income taxes",
+    "raw_values": [
+     "12",
+     "(13)",
+     "—",
+     "(24)"
+    ],
+    "values": [
+     "12",
+     "-13",
+     null,
+     "-24"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 28,
+    "label": "Net loss",
+    "raw_values": [
+     "(41)",
+     "(65)",
+     "(124)",
+     "(163)"
+    ],
+    "values": [
+     "-41",
+     "-65",
+     "-124",
+     "-163"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 29,
+    "label": "Net income attributable to noncontrolling interests",
+    "raw_values": [
+     "(21)",
+     "(17)",
+     "(36)",
+     "(34)"
+    ],
+    "values": [
+     "-21",
+     "-17",
+     "-36",
+     "-34"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 30,
+    "label": "Net loss attributable to Caesars",
+    "raw_values": [
+     "(62)",
+     "(82)",
+     "(160)",
+     "(197)"
+    ],
+    "values": [
+     "-62",
+     "-82",
+     "-160",
+     "-197"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 32,
+    "label": "Basic loss per share",
+    "raw_values": [
+     "(0.30)",
+     "(0.39)",
+     "(0.78)",
+     "(0.93)"
+    ],
+    "values": [
+     "-0.30",
+     "-0.39",
+     "-0.78",
+     "-0.93"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 33,
+    "label": "Diluted loss per share",
+    "raw_values": [
+     "(0.30)",
+     "(0.39)",
+     "(0.78)",
+     "(0.93)"
+    ],
+    "values": [
+     "-0.30",
+     "-0.39",
+     "-0.78",
+     "-0.93"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 34,
+    "label": "Weighted average basic shares outstanding",
+    "raw_values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   },
+   {
+    "line_no": 35,
+    "label": "Weighted average diluted shares outstanding",
+    "raw_values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "values": [
+     "204",
+     "209",
+     "204",
+     "210"
+    ],
+    "indent": 0,
+    "caption": "OTHER EXPENSE:",
+    "flags": []
+   }
+  ]
+ }
+]

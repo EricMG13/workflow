@@ -1,0 +1,20 @@
+{
+ "schema": "context/1",
+ "run": {"run_type": "secondary", "pathway": "relative_value", "case_kind": "public",
+         "as_of": "2025-08-04", "current_period": "q2-2025", "prior_period": "q1-2025",
+         "reporting_currency": "USD"},
+ "identity": {"issuer_name": "B&G Foods, Inc.", "issuer_id": "bgs", "borrower_name": "B&G Foods, Inc.",
+              "parent_name": "", "guarantors": [], "aliases": ["B&G Foods", "BGS"],
+              "listed_equity": true, "ticker": "BGS", "sector": "Consumer and retail",
+              "country": "United States", "sponsor": ""},
+ "deal_terms": [],
+ "quotes": [],
+ "ratings": [],
+ "valuation": {"peer_source": "user_list", "basis": "auto",
+               "issuer_market": {"market_cap_m": "", "net_debt_m": "", "ev_m": "", "ebitda_basis": "LTM", "as_of": "", "source": ""},
+               "peers": [], "precedents": [],
+               "user_multiple": {"value": "", "basis": "LTM", "rationale": ""}},
+ "assumptions": {"cp2a": null, "cp2d": null, "cp2e": null, "cp3c": null, "cp3d": null, "cp4c": null},
+ "attachments": {"portfolio_workbook": false, "prior_case": false, "management_bridge": false, "legal_documents": "executed"},
+ "research_questions": []
+}

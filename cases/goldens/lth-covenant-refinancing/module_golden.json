@@ -1,0 +1,3863 @@
+{
+ "schema_version": "module-golden/1",
+ "case_id": "lth-covenant-refinancing",
+ "issuer_id": "lth",
+ "pathway": "covenant_refinancing",
+ "cutoff": "2025-08-18",
+ "context_file": "context.json",
+ "financial_gold": {
+  "path": "/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1-codex-gold-20261031/lth/financial_gold.json",
+  "sha256": "becee3250b7543237c756eec1098bf27c5659b82f02a6255a1365907fb79b09e"
+ },
+ "sources": [
+  {
+   "source_id": "k24",
+   "file": "LTH/LTH_2024-12-31_10-K_0001869198-25-000009_lth-20241231.htm",
+   "sha256": "22832c2f04461577f478613308f588983bd03e3acd4df0357189fb53b105640a",
+   "url": "https://www.sec.gov/Archives/edgar/data/1869198/000186919825000009/lth-20241231.htm",
+   "form": "10-K",
+   "period_end": "2024-12-31",
+   "filed": "2025-02-27"
+  },
+  {
+   "source_id": "q225",
+   "file": "LTH/LTH_2025-06-30_10-Q_0001869198-25-000034_lth-20250630.htm",
+   "sha256": "e9a0d446481530f9128a5c5e8f33fdddcbce77619bf1d68843c5ead72e2763e0",
+   "url": "https://www.sec.gov/Archives/edgar/data/1869198/000186919825000034/lth-20250630.htm",
+   "form": "10-Q",
+   "period_end": "2025-06-30",
+   "filed": "2025-08-05"
+  },
+  {
+   "source_id": "a13",
+   "file": "LTH/LTH_legal_event_13th_credit_amendment.html",
+   "sha256": "f60a0158edc2780e224778a76f5a2405174603f553c8702333182058c2ac1fa4",
+   "url": "https://www.sec.gov/Archives/edgar/data/1869198/000186919824000038/thirteenthamendmentandcred.htm",
+   "form": "8-K Ex-10.1 (13th Amendment)",
+   "period_end": "",
+   "filed": "2024-09-23"
+  },
+  {
+   "source_id": "a14",
+   "file": "LTH/LTH_legal_event_14th_credit_amendment.html",
+   "sha256": "31c3348001aeaf96bb931e22c5958ae0fb72fde863f976ece08779105b7c19c0",
+   "url": "https://www.sec.gov/Archives/edgar/data/1869198/000186919824000055/lifetime-fourteenthamendme.htm",
+   "form": "8-K Ex-10.1 (14th Amendment)",
+   "period_end": "",
+   "filed": "2024-11-06"
+  },
+  {
+   "source_id": "a15",
+   "file": "LTH/LTH_legal_event_15th_amendment_annex_ii.html",
+   "sha256": "efd1da7c7083568f1b2836d979436074dca01460e510012bdddc9446c0f1a3db",
+   "url": "https://www.sec.gov/Archives/edgar/data/1869198/000186919825000037/lifetime-fifteenthamendmen.htm",
+   "form": "8-K Ex-10.1 (15th Amendment, Annex II)",
+   "period_end": "",
+   "filed": "2025-08-18"
+  }
+ ],
+ "facts": [
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.date",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "date",
+   "period_end": null,
+   "status": "known",
+   "value": "2024-09-20",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Amendment preamble",
+     "quote": "This THIRTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of September 20, 2024",
+     "printed": "September 20, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.effective_date",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "effective_date",
+   "period_end": null,
+   "status": "known",
+   "value": "2024-09-20",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > definitions",
+     "quote": "“Amendment No. 13 Effective Date” means September 20, 2024.",
+     "printed": "September 20, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.what_changed",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "what_changed",
+   "period_end": null,
+   "status": "known",
+   "value": "Refinancing and incremental amendment: establishes the 2024 Initial Revolving Commitments (new Class refinancing the Existing Revolving Commitments plus incremental commitments); Existing Term Loans repaid at the Amendment Date Term Loan Repayment; amends the Credit Agreement per Annex I",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Recitals",
+     "quote": "refinance in full the aggregate amount of Revolving Commitments outstanding immediately prior to the Thirteenth Amendment Effective Date",
+     "printed": "refinance in full"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.existing_revolving_commitments",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "existing_revolving_commitments",
+   "period_end": null,
+   "status": "known",
+   "value": "475000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Recital 3",
+     "quote": "there are Revolving Commitments under the Credit Agreement in effect in an aggregate committed amount of $475,000,000",
+     "printed": "$475,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.incremental_commitments_per_recital",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "incremental_commitments_per_recital",
+   "period_end": null,
+   "status": "known",
+   "value": "175000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Recital 4",
+     "quote": "provide for Incremental Revolving Commitments in an aggregate principal amount of $175,000,000",
+     "printed": "$175,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.new_total_revolving_commitments",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "new_total_revolving_commitments",
+   "period_end": null,
+   "status": "known",
+   "value": "650000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Recital 5",
+     "quote": "in an aggregate principal amount of $650,000,000",
+     "printed": "$650,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.recital_existing_plus_incremental",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "recital_existing_plus_incremental",
+   "period_end": null,
+   "status": "known",
+   "value": "650000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-4.amendment_13.13th_amendment.existing_revolving_commitments",
+     "CP-4.amendment_13.13th_amendment.incremental_commitments_per_recital"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.schedule_a_refinancing_total",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "schedule_a_refinancing_total",
+   "period_end": null,
+   "status": "known",
+   "value": "372500000.00",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Schedule A > Total row, column 2024 Refinancing Revolving Commitments",
+     "quote": "Total $372,500,000.00 $277,500,000.00",
+     "printed": "$372,500,000.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.schedule_a_incremental_total",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "schedule_a_incremental_total",
+   "period_end": null,
+   "status": "known",
+   "value": "277500000.00",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Schedule A > Total row, column 2024 Incremental Revolving Commitments",
+     "quote": "Total $372,500,000.00 $277,500,000.00",
+     "printed": "$277,500,000.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.schedule_a_sum",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "schedule_a_sum",
+   "period_end": null,
+   "status": "known",
+   "value": "650000000.00",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-4.amendment_13.13th_amendment.schedule_a_refinancing_total",
+     "CP-4.amendment_13.13th_amendment.schedule_a_incremental_total"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.incremental_commitments_split",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "incremental_commitments_split",
+   "period_end": null,
+   "status": "conflicting",
+   "value": "",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Recital 4",
+     "quote": "provide for Incremental Revolving Commitments in an aggregate principal amount of $175,000,000",
+     "printed": "$175,000,000"
+    },
+    {
+     "source_id": "a13",
+     "locator": "Schedule A > Total row, incremental column",
+     "quote": "Total $372,500,000.00 $277,500,000.00",
+     "printed": "$277,500,000.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_maturity_after",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_maturity_after",
+   "period_end": null,
+   "status": "known",
+   "value": "2029-09-20",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Maturity Date\" (iv) (text unchanged in the 14th; set by the 13th)",
+     "quote": "(iv) with respect to the Revolving Loans under the 2024 Initial Revolving Facility, September 20, 2029",
+     "printed": "September 20, 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_maturity_before",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_maturity_before",
+   "period_end": null,
+   "status": "known",
+   "value": "2026-12-02",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Maturity Date\" (iv), struck text",
+     "quote": "with respect to the Revolving Loans under the 2021-22024 Initial Revolving Facility, December 2, 2026September 20, 2029",
+     "printed": "December 2, 2026"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_springing_maturity",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_springing_maturity",
+   "period_end": null,
+   "status": "known",
+   "value": "Springing earlier maturity of the 2024 Initial Revolving Facility to a Trigger Date if, on October 16, 2025 or later, New 2023 Refinancing Term Loans or Secured Notes of $100,000,000 or more remain outstanding, or on January 14, 2026 if 2021 Senior Notes of $100,000,000 or more remain outstanding",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Maturity Date\" (iv) provisos",
+     "quote": "if, on October 16, 2025 or any subsequent date (such date, the “2024 Initial TL Revolving Facility Trigger Date”)",
+     "printed": "October 16, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_sofr_corra_lc",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_initial_margin_sofr_corra_lc",
+   "period_end": null,
+   "status": "known",
+   "value": "2.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Applicable Rate\" (b)(i)(A) (4.25 struck, 2.50 inserted)",
+     "quote": "(A) 4.252.50% for SOFR Loans, CORRA Loans and Letter of Credit fees",
+     "printed": "2.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_base",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_initial_margin_base",
+   "period_end": null,
+   "status": "known",
+   "value": "1.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (b)(i)(B)",
+     "quote": "(B) 1.50% for Base Rate Loans",
+     "printed": "1.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_commitment_fee_after",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_commitment_fee_after",
+   "period_end": null,
+   "status": "known",
+   "value": "0.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (b)(i)(C)",
+     "quote": "(C) 0.25% Commitment Fee Rate for unused Revolving Commitments",
+     "printed": "0.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_before",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_initial_margin_before",
+   "period_end": null,
+   "status": "known",
+   "value": "4.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"Applicable Rate\" (b)(i)(A), struck text",
+     "quote": "(A) 4.252.50% for SOFR Loans, CORRA Loans and Letter of Credit fees",
+     "printed": "4.25"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.revolver_margin_grid_after",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "revolver_margin_grid_after",
+   "period_end": null,
+   "status": "known",
+   "value": "Revolver margin grid: >2.25x first lien net leverage and ratings otherwise 2.50% SOFR/1.50% base/0.250% fee; >2.25x with at least Ba3 or BB- from any two agencies 2.25%/1.25%/0.250%; <=2.25x otherwise 2.25%/1.25%/0.250%; <=2.25x and at least Ba3 or BB- from any two agencies 2.00%/1.00%/0.250%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (b)(ii) table, Pricing Level 4",
+     "quote": "4 ≤ 2.25 to 1.00 and At least Ba3 or BB- from any two of Moody’s, S&P and Fitch 2.00% 1.00% 0.250%",
+     "printed": "2.00% 1.00% 0.250%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.lc_sublimit_after",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "lc_sublimit_after",
+   "period_end": null,
+   "status": "known",
+   "value": "90000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"L/C Sublimit\"",
+     "quote": "L/C Sublimit” means a Dollar Amount equal to the lesser of (a) $90,000,000",
+     "printed": "$90,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_13.13th_amendment.lc_sublimit_before",
+   "module": "CP-4",
+   "topic": "amendment_13",
+   "subject": "13th Amendment",
+   "field": "lc_sublimit_before",
+   "period_end": null,
+   "status": "known",
+   "value": "65000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > \"L/C Sublimit\", struck text",
+     "quote": "L/C Sublimit” means a Dollar Amount equal to the lesser of (a) $65,000,00090,000,000",
+     "printed": "$65,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.first_lien_net_leverage_max_before",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment financial covenant changes (Section 7.12)",
+   "field": "first_lien_net_leverage_max_before",
+   "period_end": null,
+   "status": "known",
+   "value": "6.50",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > Section 7.12(1)(a), struck text",
+     "quote": "will not permit the First Lien Net Leverage Ratio as of the last day of any Test Period to exceed 6.504.75 to 1.00",
+     "printed": "6.50"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.first_lien_net_leverage_max_after",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment financial covenant changes (Section 7.12)",
+   "field": "first_lien_net_leverage_max_after",
+   "period_end": null,
+   "status": "known",
+   "value": "4.75",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a) as conformed in the 14th",
+     "quote": "will not permit the First Lien Net Leverage Ratio as of the last day of any Test Period to exceed 4.75 to 1.00",
+     "printed": "4.75 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.lc_carveout_before",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment financial covenant changes (Section 7.12)",
+   "field": "lc_carveout_before",
+   "period_end": null,
+   "status": "known",
+   "value": "20.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > Section 7.12(1)(a), struck text",
+     "quote": "up to $20.090.0 million",
+     "printed": "$20.0"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.lc_carveout_after",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment financial covenant changes (Section 7.12)",
+   "field": "lc_carveout_after",
+   "period_end": null,
+   "status": "known",
+   "value": "90.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a) as conformed in the 14th",
+     "quote": "undrawn amounts under any other Letters of Credit, up to $90.0 million",
+     "printed": "$90.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.liquidity_covenant_removed",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "13th Amendment financial covenant changes (Section 7.12)",
+   "field": "liquidity_covenant_removed",
+   "period_end": null,
+   "status": "known",
+   "value": "100000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Annex I > Section 7.12(1)(b), struck text",
+     "quote": "During the Covenant Modification Period, the Borrower shall not permit Liquidity to be less than $100,000,000 on the last Business Day of any calendar month",
+     "printed": "$100,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.type",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "type",
+   "period_end": null,
+   "status": "known",
+   "value": "Financial maintenance covenant tested only when a springing revolver-usage condition is met; for the benefit of the Revolving Lenders only",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(2)",
+     "quote": "The provisions of this Section 7.12 are for the benefit of the Revolving Lenders only",
+     "printed": "for the benefit of the Revolving Lenders only"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.level_max_first_lien_net_leverage_ratio",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "level_max_first_lien_net_leverage_ratio",
+   "period_end": null,
+   "status": "known",
+   "value": "4.75",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a) (conformed through the 14th)",
+     "quote": "will not permit the First Lien Net Leverage Ratio as of the last day of any Test Period to exceed 4.75 to 1.00",
+     "printed": "4.75 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.springing_threshold_pct_of_revolving_commitments",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "springing_threshold_pct_of_revolving_commitments",
+   "period_end": null,
+   "status": "known",
+   "value": "30",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a)",
+     "quote": "exceeds (or exceeded) 30% of the then outstanding Revolving Commitments in effect on such date",
+     "printed": "30%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.springing_lc_carveout",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "springing_lc_carveout",
+   "period_end": null,
+   "status": "known",
+   "value": "90.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a)",
+     "quote": "excluding all cash-collateralized Letters of Credit and undrawn amounts under any other Letters of Credit, up to $90.0 million",
+     "printed": "$90.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.springing_test_condition",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "springing_test_condition",
+   "period_end": null,
+   "status": "known",
+   "value": "Springing test condition: aggregate principal amount of Revolving Loans (including drawn Letters of Credit; excluding cash-collateralized Letters of Credit and undrawn amounts under other Letters of Credit up to $90.0 million) on the fifth Business Day following the last day of the Test Period exceeds 30% of the then outstanding Revolving Commitments",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a)",
+     "quote": "on the fifth Business Day following the last day of such Test Period exceeds (or exceeded) 30%",
+     "printed": "fifth Business Day"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.test_period",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "test_period",
+   "period_end": null,
+   "status": "known",
+   "value": "Tested as of the last day of any Test Period (four consecutive fiscal quarters), commencing with the Test Period ending September 30, 2015",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Test Period\"",
+     "quote": "“Test Period” in effect at any time means the Borrower’s most recently ended four consecutive fiscal quarters",
+     "printed": "four consecutive fiscal quarters"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.defined_term_first_lien_net_leverage_ratio",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "defined_term_first_lien_net_leverage_ratio",
+   "period_end": null,
+   "status": "known",
+   "value": "First Lien Net Leverage Ratio = (Consolidated Total Debt secured by a Lien pari passu with the Obligations, minus cash and Cash Equivalents on the balance sheet excluding Restricted cash) / Run-Rate Adjusted EBITDA of the Borrower for the Test Period, pro forma per Section 1.07",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > \"First Lien Net Leverage Ratio\"",
+     "quote": "“First Lien Net Leverage Ratio” means, with respect to any Test Period, the ratio of (a) Consolidated Total Debt outstanding as of the last day of such Test Period that is secured by a Lien that is pari passu",
+     "printed": "pari passu"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.defined_term_run_rate_adjusted_ebitda",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "defined_term_run_rate_adjusted_ebitda",
+   "period_end": null,
+   "status": "known",
+   "value": "Run-Rate Adjusted EBITDA = Adjusted EBITDA for the period increased by the Total New Facility Run-Rate Adjustment (sum of New Facility EBITDA Adjustments)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Run-Rate Adjusted EBITDA\"",
+     "quote": "“Run-Rate Adjusted EBITDA” means, with respect to any Person for any period, the Adjusted EBITDA of such Person and its Restricted Subsidiaries for such period increased by the Total New Facility Run-Rate Adjustment.",
+     "printed": "increased by the Total New Facility Run-Rate Adjustment"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.defined_term_consolidated_total_debt",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "defined_term_consolidated_total_debt",
+   "period_end": null,
+   "status": "known",
+   "value": "Consolidated Total Debt = aggregate principal amount of Indebtedness for borrowed money, capitalized leases, notes and similar guarantees of the Borrower and Restricted Subsidiaries; excludes Non-Recourse Indebtedness, undrawn/unreimbursed letters of credit and hedging obligations except unpaid termination payments",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Consolidated Total Debt\"",
+     "quote": "“Consolidated Total Debt” means, as of any date of determination, the aggregate principal amount of Indebtedness of the Borrower and the Restricted Subsidiaries outstanding on such date",
+     "printed": "aggregate principal amount of Indebtedness"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_mechanism",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "cure_mechanism",
+   "period_end": null,
+   "status": "known",
+   "value": "Cure: Borrower may designate Net Proceeds of a Permitted Equity Issuance or common-equity contribution (Cure Amount) as an increase to Run-Rate Adjusted EBITDA for the fiscal quarter; Cure Amount must be received after the last Business Day of the quarter and by the tenth Business Day after financial statements are due (Cure Expiration Date); notice to the Administrative Agent; capped at the amount needed to cure",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Section 8.04(1)",
+     "quote": "the Borrower may on one or more occasions designate any portion of the Net Proceeds from any Permitted Equity Issuance",
+     "printed": "Permitted Equity Issuance"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_deadline",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "cure_deadline",
+   "period_end": null,
+   "status": "known",
+   "value": "Cure Expiration Date is the tenth (10th) Business Day after the date on which financial statements are required to be delivered for the quarter",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Section 8.04(1)(a)",
+     "quote": "on or prior to the tenth (10th) Business Day after the date on which financial statements are required to be delivered with respect to such applicable fiscal quarter (the “Cure Expiration Date”)",
+     "printed": "tenth (10th) Business Day"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_max_quarters_in_any_four",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "cure_max_quarters_in_any_four",
+   "period_end": null,
+   "status": "known",
+   "value": "2",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Section 8.04(2)",
+     "quote": "In each period of four consecutive fiscal quarters, there shall be no more than two (2) fiscal quarters in which the cure right",
+     "printed": "two (2)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_max_quarters_over_term",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "cure_max_quarters_over_term",
+   "period_end": null,
+   "status": "known",
+   "value": "5",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a13",
+     "locator": "Section 8.04(3)",
+     "quote": "There can be no more than five (5) fiscal quarters in which the cure rights set forth in Section 8.04(1) are exercised during the term of the Facilities",
+     "printed": "five (5)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.term_loan_cross_default",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "term_loan_cross_default",
+   "period_end": null,
+   "status": "known",
+   "value": "A Financial Covenant Event of Default is not an Event of Default for Term Loans unless and until the Revolving Lenders have terminated the Revolving Commitments and accelerated the Revolving Facility (Financial Covenant Cross Default); subject to cure under Section 8.04",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Section 8.01(2)",
+     "quote": "provided that the Borrower’s failure to comply with any financial covenant set forth in Section 7.12(1) (a “Financial Covenant Event of Default”)",
+     "printed": "Financial Covenant Event of Default"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.amendment_waiver_threshold",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "amendment_waiver_threshold",
+   "period_end": null,
+   "status": "known",
+   "value": "Required Revolving Lenders = Lenders holding more than 50% of the aggregate Revolving Commitments (excluding Defaulting Lenders); only they may amend or waive Section 7.12 or waive a breach",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Required Revolving Lenders\"",
+     "quote": "“Required Revolving Lenders” means, as of any date of determination, Lenders having or holding more than 50% of the aggregate Revolving Commitments (or after termination of the Revolving Commitments, the aggregate Revolving Exposure) of all Lenders;",
+     "printed": "more than 50% of the aggregate Revolving Commitments"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.confirmed_in_15th_annex_ii",
+   "module": "CP-4",
+   "topic": "financial_covenant",
+   "subject": "Section 7.12(1)(a) First Lien Net Leverage covenant",
+   "field": "confirmed_in_15th_annex_ii",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "The 15th Amendment Annex II reproduces changed pages only and does not contain Section 7.12 or Section 8.04; the covenant terms above come from the Credit Agreement as conformed in the 14th Amendment (2024-11-05) and are not restated in any 15th Amendment page."
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.date",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "date",
+   "period_end": null,
+   "status": "known",
+   "value": "2024-11-05",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Amendment preamble",
+     "quote": "This FOURTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of November 5, 2024",
+     "printed": "November 5, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.effective_date",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "effective_date",
+   "period_end": null,
+   "status": "known",
+   "value": "2024-11-05",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > definitions",
+     "quote": "“Amendment No. 14 Effective Date” means November 5, 2024.",
+     "printed": "November 5, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.what_changed",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "what_changed",
+   "period_end": null,
+   "status": "known",
+   "value": "Incremental Term Loan amendment: $1,000,000,000 of 2024 New Term Loans (Closing Date Term Loans), incurred under clause (1) of the Permitted Incremental Amount; reprices the term loan to the 2024 New Term Loan margin, resets the maturity and soft-call, and adds the 2024 Secured Notes defined terms",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Recitals",
+     "quote": "provide for Incremental Term Loans in an aggregate principal amount of $1,000,000,000",
+     "printed": "$1,000,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.new_term_loans_principal",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "new_term_loans_principal",
+   "period_end": null,
+   "status": "known",
+   "value": "1000000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Schedule A",
+     "quote": "2024 NEW TERM LOAN COMMITMENT SCHEDULE 2024 New Term Lender 2024 New Term Loan Commitment DEUTSCHE BANK AG NEW YORK BRANCH $1,000,000,000",
+     "printed": "$1,000,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_sofr_level1_otherwise",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_margin_sofr_level1_otherwise",
+   "period_end": null,
+   "status": "known",
+   "value": "2.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (a), Pricing Level 1 (4.25/3.25 struck, 2.50/1.50 inserted)",
+     "quote": "1 Otherwise 4.252.50% 3.251.50%",
+     "printed": "2.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_base_level1_otherwise",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_margin_base_level1_otherwise",
+   "period_end": null,
+   "status": "known",
+   "value": "1.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (a), Pricing Level 1 (4.25/3.25 struck, 2.50/1.50 inserted)",
+     "quote": "1 Otherwise 4.252.50% 3.251.50%",
+     "printed": "1.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_sofr_level2_ratings",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_margin_sofr_level2_ratings",
+   "period_end": null,
+   "status": "known",
+   "value": "2.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (a), Pricing Level 2 (4.00/3.00 struck, 2.25/1.25 inserted)",
+     "quote": "respectively 4.002.25% 3.001.25%",
+     "printed": "2.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_base_level2_ratings",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_margin_base_level2_ratings",
+   "period_end": null,
+   "status": "known",
+   "value": "1.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Applicable Rate\" (a), Pricing Level 2 (4.00/3.00 struck, 2.25/1.25 inserted)",
+     "quote": "respectively 4.002.25% 3.001.25%",
+     "printed": "1.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_floor_after",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_floor_after",
+   "period_end": null,
+   "status": "known",
+   "value": "0.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Floor\"",
+     "quote": "“Floor” means, (a) with respect to the 2024 New 2023 Refinancing Term Loans, 0.500.00% per annum",
+     "printed": "0.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_floor_before",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_floor_before",
+   "period_end": null,
+   "status": "known",
+   "value": "0.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Floor\", struck text",
+     "quote": "“Floor” means, (a) with respect to the 2024 New 2023 Refinancing Term Loans, 0.500.00% per annum",
+     "printed": "0.50"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_maturity_rule",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_maturity_rule",
+   "period_end": null,
+   "status": "known",
+   "value": "Closing Date Term Loans (which include the 2024 New Term Loans) mature seven years after the Amendment No. 14 Effective Date",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"Maturity Date\" (i)",
+     "quote": "in each case that have not been extended pursuant to Section 2.16, the date that is seven years after the ClosingAmendment No. 14 Effective Date",
+     "printed": "seven years after"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_amortization",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "term_loan_amortization",
+   "period_end": null,
+   "status": "known",
+   "value": "0.25% of the aggregate principal amount of the 2024 New Term Loans outstanding on the Amendment No. 14 Effective Date, payable on the last Business Day of each March, June, September and December commencing with the first full fiscal quarter ending after that date",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 2.07(1)(a)",
+     "quote": "an aggregate principal amount equal to $2,125,0000.25% of the aggregate principal amount of the New 2024 Term Loans outstanding on the Amendment No. 14 Effective Date",
+     "printed": "0.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.revolver_and_covenant_effect",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "revolver_and_covenant_effect",
+   "period_end": null,
+   "status": "known",
+   "value": "Revolver commitments, margins, maturity and financial covenant are reproduced in the 14th Annex I as already amended by the 13th; no revolver commitment change by the 14th",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 7.12(1)(a)",
+     "quote": "Commencing with the Test Period ending September 30, 2015, the Borrower will not permit the First Lien Net Leverage Ratio as of the last day of any Test Period to exceed 4.75 to 1.00",
+     "printed": "4.75 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_14.14th_amendment.related_secured_notes",
+   "module": "CP-4",
+   "topic": "amendment_14",
+   "subject": "14th Amendment",
+   "field": "related_secured_notes",
+   "period_end": null,
+   "status": "known",
+   "value": "Borrower issued $500,000,000 6.000% senior secured notes due 2031 (2024 Secured Notes) alongside; use of proceeds of the 2024 New Term Loans: redeem or defease the Secured Notes and 2021 Senior Notes, pay fees",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"2024 Secured Notes\"",
+     "quote": "“2024 Secured Notes” means the $500,000,000 6.000% senior secured notes of the Borrower due 2031.",
+     "printed": "6.000%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.date",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "date",
+   "period_end": null,
+   "status": "known",
+   "value": "2025-08-18",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Amendment preamble",
+     "quote": "This FIFTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of August 18, 2025",
+     "printed": "August 18, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.effective_date",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "effective_date",
+   "period_end": null,
+   "status": "known",
+   "value": "2025-08-18",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > definitions",
+     "quote": "“Amendment No. 15 Effective Date” means August 18, 2025.",
+     "printed": "August 18, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.what_changed",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "what_changed",
+   "period_end": null,
+   "status": "known",
+   "value": "Refinancing Amendment: refinances in full the Existing Term Loans with a new Class of 2025 Refinancing Term Loans (new-money commitment plus cashless conversion) with the same principal; cuts the term loan margin to a flat 2.00% (SOFR) / 1.00% (base rate), floor 0.00%; moves amortization dates; resets the 1.00% soft call to six months from August 18, 2025",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Section 1(a)(iii)",
+     "quote": "The 2025 Refinancing Term Loans shall be designated as a new Class of Term Loans under the Credit Agreement, with terms and provisions identical to the Existing Term Loans, except as set forth herein.",
+     "printed": "new Class of Term Loans"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.existing_term_loans_refinanced",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "existing_term_loans_refinanced",
+   "period_end": null,
+   "status": "known",
+   "value": "995000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Recital 2",
+     "quote": "there are outstanding Term Loans under the Credit Agreement in an aggregate principal amount of $995,000,000 (the “Existing Term Loans”)",
+     "printed": "$995,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.refinancing_term_loans_principal",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "refinancing_term_loans_principal",
+   "period_end": null,
+   "status": "known",
+   "value": "995000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Recital 4",
+     "quote": "in an aggregate principal amount of $995,000,000; and",
+     "printed": "$995,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.new_money_commitment_non_converting_lenders",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "new_money_commitment_non_converting_lenders",
+   "period_end": null,
+   "status": "known",
+   "value": "205528469.96",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Schedule A > Total",
+     "quote": "Total $205,528,469.96",
+     "printed": "$205,528,469.96"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.cashless_converted_principal",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "cashless_converted_principal",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Schedule A lists only lenders that are not Converting Lenders; each existing lender elects a cashless roll or assignment option on its Refinancing Lender Consent, and the elections are not filed."
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_margin_sofr",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "term_loan_margin_sofr",
+   "period_end": null,
+   "status": "known",
+   "value": "2.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > \"Applicable Rate\" (a)",
+     "quote": "(a) with respect to 2025 Refinancing Term Loans, (i) 2.00% for SOFR Loans and (ii) 1.00% for Base Rate Loans.",
+     "printed": "2.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_margin_base",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "term_loan_margin_base",
+   "period_end": null,
+   "status": "known",
+   "value": "1.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > \"Applicable Rate\" (a)",
+     "quote": "(a) with respect to 2025 Refinancing Term Loans, (i) 2.00% for SOFR Loans and (ii) 1.00% for Base Rate Loans.",
+     "printed": "1.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_floor",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "term_loan_floor",
+   "period_end": null,
+   "status": "known",
+   "value": "0.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > \"Floor\"",
+     "quote": "“Floor” means, (a) with respect to the 2024 New2025 Refinancing Term Loans, 0.00% per annum",
+     "printed": "0.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_amortization",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "term_loan_amortization",
+   "period_end": null,
+   "status": "known",
+   "value": "0.25% of the principal amount of the 2025 Refinancing Term Loans outstanding on the Amendment No. 15 Effective Date, payable on the fifth calendar day (or next Business Day) of each January, April, July and October, commencing with the first such date after the effective date",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > Section 2.07(1)(a)",
+     "quote": "of each of January, April, July and October (commencing with the first full fiscal quarter endingsuch date after the Amendment No. 1415 Effective Date), an aggregate principal amount equal to 0.25% of the aggregate principal amount of the",
+     "printed": "0.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_maturity_rule",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "term_loan_maturity_rule",
+   "period_end": null,
+   "status": "known",
+   "value": "2025 Refinancing Term Loans are “Closing Date Term Loans”; the Maturity Date page is not among the Annex II changed pages, so the maturity is the Closing Date Term Loan rule in the 14th (seven years after the Amendment No. 14 Effective Date, i.e. November 2031 per the 10-Q)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Section 6(b)(iii)",
+     "quote": "(iii) the 2025 Refinancing Term Loans shall constitute “Closing Date Term Loans” under (and as defined in) the Credit Agreement",
+     "printed": "“Closing Date Term Loans”"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_maturity_confirmed_in_annex_ii",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "term_loan_maturity_confirmed_in_annex_ii",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Annex II reproduces changed pages only and omits the “Maturity Date” definition page; the maturity of the 2025 Refinancing Term Loans is not stated in any 15th Amendment page. The Q2 2025 10-Q (filed 2025-08-05, before the amendment) gives “maturing November 2031” for the pre-refinancing Term Loan Facility."
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.revolver_commitments_and_maturity_confirmed_in_annex_ii",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "revolver_commitments_and_maturity_confirmed_in_annex_ii",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Annex II changed pages do not restate the revolving commitments or the Revolving Loan Maturity Date; they stand as set by the 13th (maintained in the 10-Q at 2025-06-30: $650.0 million, September 2029)."
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.initial_interest_period",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "initial_interest_period",
+   "period_end": null,
+   "status": "known",
+   "value": "Initial Interest Period one month ending September 5, 2025 (SOFR Rate Loans)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Section 6(e)",
+     "quote": "the 2025 Refinancing Term Loans shall be funded as SOFR Rate Loans with an initial Interest Period of one month ending on September 5, 2025",
+     "printed": "September 5, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.collateral_and_guarantee",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "collateral_and_guarantee",
+   "period_end": null,
+   "status": "known",
+   "value": "Guarantors reaffirm their guarantees and each Loan Party reaffirms the security interests; the 2025 Refinancing Term Loans are secured as Obligations",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Section 5(a)",
+     "quote": "Each Loan Party hereby confirms that the security interests granted by such Loan Party under the terms and conditions of the Security Agreement secure each of the 2025 Refinancing Term Loans as part of the Obligations",
+     "printed": "secure each of the 2025 Refinancing Term Loans"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.amendment_15.15th_amendment.engagement_and_fee_letter_terms",
+   "module": "CP-4",
+   "topic": "amendment_15",
+   "subject": "15th Amendment",
+   "field": "engagement_and_fee_letter_terms",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "The Engagement Letter dated August 11, 2025 and its Fee Letter (arranger fees, any OID) are referenced in Section 2(b) but are not in the corpus."
+  },
+  {
+   "fact_id": "CP-4.operative_terms.operative_terms_at_2025_08_18.term_loan_principal_at_effective_date",
+   "module": "CP-4",
+   "topic": "operative_terms",
+   "subject": "Operative terms at 2025-08-18",
+   "field": "term_loan_principal_at_effective_date",
+   "period_end": null,
+   "status": "known",
+   "value": "995000000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "units",
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Section 1(a) / Recital 4",
+     "quote": "in an aggregate principal amount of $995,000,000; and",
+     "printed": "$995,000,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.operative_terms.operative_terms_at_2025_08_18.chain_completeness",
+   "module": "CP-4",
+   "topic": "operative_terms",
+   "subject": "Operative terms at 2025-08-18",
+   "field": "chain_completeness",
+   "period_end": null,
+   "status": "known",
+   "value": "Chain shown: 13th (revolver, covenant) and 14th (term loan, conformed text) in full; 15th shows only Annex II changed pages. Items the 15th pages do not show (Maturity Date, Section 7.12, Section 8.04, revolving commitments) must be read from the 14th conformed text; the chain from the 15th is incomplete.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II cover",
+     "quote": "ANNEX II AMENDMENTS TO CREDIT AGREEMENT [Changed pages to Conformed Credit Agreement follow]",
+     "printed": "[Changed pages to Conformed Credit Agreement follow]"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_premium_prepayment",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "soft_call_premium_prepayment",
+   "period_end": null,
+   "status": "known",
+   "value": "1.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > Section 2.18",
+     "quote": "a prepayment premium of 1.00% of the aggregate principal amount of the Closing Date Term Loans being prepaid",
+     "printed": "1.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_payment_on_amendment",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "soft_call_payment_on_amendment",
+   "period_end": null,
+   "status": "known",
+   "value": "1.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > Section 2.18",
+     "quote": "a payment equal to 1.00% of the aggregate principal amount of the applicable Closing Date Term Loans outstanding",
+     "printed": "1.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_period",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "soft_call_period",
+   "period_end": null,
+   "status": "known",
+   "value": "On or prior to the six-month anniversary of the Amendment No. 15 Effective Date (August 18, 2025)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > Section 2.18",
+     "quote": "on or prior to the six-month anniversary of the Amendment No. 1415 Effective Date",
+     "printed": "six-month anniversary"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.repricing_transaction_definition",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "repricing_transaction_definition",
+   "period_end": null,
+   "status": "known",
+   "value": "Repricing Transaction = new debt or conversion with an All-In Yield below that of the 2025 Refinancing Term Loans used to prepay them, or any effective reduction in their All-In Yield by amendment or waiver; excludes events not primarily to lower All-In Yield (incl. Change of Control, Qualifying IPO, Enterprise Transformative Event) and Sale-Leaseback Transactions",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > \"Repricing Transaction\"",
+     "quote": "provided that a Repricing Transaction shall not include (i) any event described in clause (1) or (2) above that is not consummated for the primary purpose of lowering",
+     "printed": "primary purpose of lowering"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.all_in_yield_definition",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "all_in_yield_definition",
+   "period_end": null,
+   "status": "known",
+   "value": "All-In Yield includes margin, OID and upfront fees (equated to a 4-year life), and any floor to the extent the reference rate is below it; excludes arrangement, underwriting and similar fees",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > \"All-In Yield\"",
+     "quote": "OID and upfront fees shall be equated to an interest rate assuming a 4-year life to maturity",
+     "printed": "4-year life"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_bps",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "incremental_mfn_bps",
+   "period_end": null,
+   "status": "known",
+   "value": "50",
+   "value_type": "bps",
+   "unit": "bps",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > Section 2.14(8)",
+     "quote": "exceeds the All-In Yield of any 2024 New2025 Refinancing Term Loans by more than 50 basis points",
+     "printed": "50 basis points"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_sunset",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2025 Refinancing Term Loans (15th)",
+   "field": "incremental_mfn_sunset",
+   "period_end": null,
+   "status": "known",
+   "value": "MFN applies only prior to the one year anniversary of the Amendment No. 14 Effective Date (November 5, 2024) while the term loans remain outstanding",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > Section 2.14(8)",
+     "quote": "prior to the one year anniversary of the Amendment No. 14 Effective Date",
+     "printed": "one year anniversary"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_premium",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2024 New Term Loans (14th), prior soft call",
+   "field": "soft_call_premium",
+   "period_end": null,
+   "status": "known",
+   "value": "1.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 2.18",
+     "quote": "a prepayment premium of 1.00% of the aggregate principal amount of the Closing Date Term Loans being prepaid",
+     "printed": "1.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_period",
+   "module": "CP-3C",
+   "topic": "repricing_protection",
+   "subject": "2024 New Term Loans (14th), prior soft call",
+   "field": "soft_call_period",
+   "period_end": null,
+   "status": "known",
+   "value": "Six-month anniversary of the Amendment No. 14 Effective Date (November 5, 2024); lapsed before the 15th Amendment reset it",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a14",
+     "locator": "Annex I > Section 2.18",
+     "quote": "on or prior to the six-month anniversary of the Amendment No. 1114 Effective Date",
+     "printed": "six-month anniversary"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_at_2025_06_30.2025-06-30",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Term loan margin step-downs",
+   "field": "term_loan_margin_at_2025_06_30",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "2.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Term Loan Facility",
+     "quote": "our applicable margin was reduced by 0.25% to 2.25% effective on June 19, 2025",
+     "printed": "2.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Term loan margin step-downs",
+   "field": "term_loan_margin_after_15th",
+   "period_end": null,
+   "status": "known",
+   "value": "2.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Annex II > \"Applicable Rate\" (a)",
+     "quote": "(a) with respect to 2025 Refinancing Term Loans, (i) 2.00% for SOFR Loans",
+     "printed": "2.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_initial_14th.2024-12-31",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Term loan margin step-downs",
+   "field": "term_loan_margin_initial_14th",
+   "period_end": "2024-12-31",
+   "status": "known",
+   "value": "2.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > New Term Loan Facility",
+     "quote": "bear interest at a rate per annum of equal to SOFR plus an applicable margin of 2.50% (subject to a certain ratings-based step-down)",
+     "printed": "2.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_2025_06_30",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Term loan margin step-downs",
+   "field": "margin_cut_by_15th_vs_2025_06_30",
+   "period_end": null,
+   "status": "known",
+   "value": "0.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_at_2025_06_30.2025-06-30",
+     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_initial_14th",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Term loan margin step-downs",
+   "field": "margin_cut_by_15th_vs_initial_14th",
+   "period_end": null,
+   "status": "known",
+   "value": "0.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_initial_14th.2024-12-31",
+     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.ratings_step_down_event.2025-06-30",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Term loan margin step-downs",
+   "field": "ratings_step_down_event",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "Ratings-based step-down of 0.25% (S&P issuer credit rating upgrade on June 18, 2025) took the term loan margin from 2.50% to 2.25% effective June 19, 2025; revolver margin stepped down 0.25% on the same date",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Term Loan Facility",
+     "quote": "With the upgrade of our issuer credit rating by S&P Global Ratings on June 18, 2025, our applicable margin was reduced by 0.25% to 2.25% effective on June 19, 2025.",
+     "printed": "June 18, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_sofr_at_2025_06_30.2025-06-30",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Revolving Credit Facility margin",
+   "field": "revolver_margin_sofr_at_2025_06_30",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "2.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Revolving Credit Facility",
+     "quote": "SOFR plus an applicable margin of 2.00% or base rate plus 1.00% (after the ratings-based step down of 0.25% effective June 19, 2025)",
+     "printed": "2.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_base_at_2025_06_30.2025-06-30",
+   "module": "CP-3C",
+   "topic": "margin",
+   "subject": "Revolving Credit Facility margin",
+   "field": "revolver_margin_base_at_2025_06_30",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Revolving Credit Facility",
+     "quote": "SOFR plus an applicable margin of 2.00% or base rate plus 1.00% (after the ratings-based step down of 0.25% effective June 19, 2025)",
+     "printed": "1.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.make_whole",
+   "module": "CP-3C",
+   "topic": "notes_call_protection",
+   "subject": "6.000% Senior Secured Notes due 2031",
+   "field": "make_whole",
+   "period_end": null,
+   "status": "known",
+   "value": "Before November 15, 2027: redeem some or all at 100% plus a make-whole premium plus accrued interest",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > 6.000% Senior Secured Notes",
+     "quote": "At any time prior to November 15, 2027, we may redeem some or all of the 6.000% Senior Secured Notes at a redemption price equal to 100% of the principal amount of the 6.000% Senior Secured Notes redeemed plus a “make-whole” premium",
+     "printed": "make-whole"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.annual_10pct_redemption_price",
+   "module": "CP-3C",
+   "topic": "notes_call_protection",
+   "subject": "6.000% Senior Secured Notes due 2031",
+   "field": "annual_10pct_redemption_price",
+   "period_end": null,
+   "status": "known",
+   "value": "103",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > 6.000% Senior Secured Notes",
+     "quote": "we may redeem up to 10% of the original aggregate principal amount of the 6.000% Senior Secured Notes during each calendar year at a redemption price equal to 103% of the principal amount",
+     "printed": "103%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.equity_clawback_price_40pct",
+   "module": "CP-3C",
+   "topic": "notes_call_protection",
+   "subject": "6.000% Senior Secured Notes due 2031",
+   "field": "equity_clawback_price_40pct",
+   "period_end": null,
+   "status": "known",
+   "value": "106",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > 6.000% Senior Secured Notes",
+     "quote": "we may choose to redeem up to 40.0% of the aggregate principal amount of the 6.000% Senior Secured Notes outstanding with the proceeds of certain equity offerings at a redemption price equal to 106% of the principal amount",
+     "printed": "106%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.redemption_prices_from_2027_11_15",
+   "module": "CP-3C",
+   "topic": "notes_call_protection",
+   "subject": "6.000% Senior Secured Notes due 2031",
+   "field": "redemption_prices_from_2027_11_15",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "percent",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "The 10-K says that from November 15, 2027 the notes are redeemable “at the redemption prices set forth in the Indenture”; the price schedule is in the Indenture, which is not in the corpus."
+  },
+  {
+   "fact_id": "CP-3C.notes_call_protection.market_pricing_quotes_for_the_term_loan_and_notes.market_price",
+   "module": "CP-3C",
+   "topic": "notes_call_protection",
+   "subject": "Market pricing / quotes for the term loan and notes",
+   "field": "market_price",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "No market quote, price talk or OID for the 2025 Refinancing Term Loans or the notes is in the corpus; user-supplied (context quotes)."
+  },
+  {
+   "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.principal_outstanding.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term Loan Facility (2024 New Term Loans)",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "995000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Term Loan Facility row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Term Loan Facility, maturing November 2031 $ 995,000",
+     "printed": "995,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "drawn_principal",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Revolving Credit Facility row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Revolving Credit Facility, maturing September 2029 —",
+     "printed": "—"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.principal_outstanding.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "6.000% Senior Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "500000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > 6.000% Senior Secured Notes row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "6.000% Senior Secured Notes, maturing November 2031 500,000",
+     "printed": "500,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.mortgage_notes.principal_outstanding.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Mortgage Notes",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "35713",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Mortgage Notes row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Mortgage Notes, various maturities 35,713",
+     "printed": "35,713"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.other_debt.principal_outstanding.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Other debt",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "3436",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Other debt row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Other debt 3,436",
+     "printed": "3,436"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.fair_value_adjustment.carrying_adjustment.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Fair value adjustment",
+   "field": "carrying_adjustment",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "207",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Fair value adjustment row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Fair value adjustment 207",
+     "printed": "207"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.total_debt_before_discounts.carrying_total_incl_fair_value_adjustment.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total debt before discounts",
+   "field": "carrying_total_incl_fair_value_adjustment",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1534356",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Total debt row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Total debt 1,534,356",
+     "printed": "1,534,356"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.unamortized_debt_discounts_and_issuance_costs.amount.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Unamortized debt discounts and issuance costs",
+   "field": "amount",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "-18445",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Less unamortized row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Less unamortized debt discounts and issuance costs (18,445)",
+     "printed": "(18,445)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.total_debt_less_unamortized_discounts_and_issuance_costs.carrying_amount.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total debt less unamortized discounts and issuance costs",
+   "field": "carrying_amount",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1515911",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Total debt less row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Total debt less unamortized debt discounts and issuance costs 1,515,911",
+     "printed": "1,515,911"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.current_maturities_of_debt.amount.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Current maturities of debt",
+   "field": "amount",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "-22873",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Less current row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Less current maturities (22,873)",
+     "printed": "(22,873)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.long_term_debt_less_current_maturities.carrying_amount.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Long-term debt less current maturities",
+   "field": "carrying_amount",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1493038",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Long-term debt row, June 30, 2025 column (USD thousands as printed)",
+     "quote": "Long-term debt, less current maturities $ 1,493,038",
+     "printed": "$ 1,493,038"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.total_debt_principal_sum_of_components_excluding_fair_value_adjustment.principal_total.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total debt principal (sum of components, excluding fair value adjustment)",
+   "field": "principal_total",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1534149",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.principal_outstanding.2025-06-30",
+     "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-06-30",
+     "CP-2.debt_stack.6_000_senior_secured_notes.principal_outstanding.2025-06-30",
+     "CP-2.debt_stack.mortgage_notes.principal_outstanding.2025-06-30",
+     "CP-2.debt_stack.other_debt.principal_outstanding.2025-06-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.total_future_maturities_of_long_term_debt.principal_total_per_maturity_table.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total future maturities of long-term debt",
+   "field": "principal_total_per_maturity_table",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1534149",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "Total future maturities of long-term debt $ 1,534,149",
+     "printed": "$ 1,534,149"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.maturity_per_10q.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term Loan Facility (2024 New Term Loans)",
+   "field": "maturity_per_10q",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "November 2031",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table",
+     "quote": "Term Loan Facility, maturing November 2031",
+     "printed": "November 2031"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.maturity_per_10q.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "maturity_per_10q",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "September 2029",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table",
+     "quote": "Revolving Credit Facility, maturing September 2029",
+     "printed": "September 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.maturity",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "6.000% Senior Secured Notes",
+   "field": "maturity",
+   "period_end": null,
+   "status": "known",
+   "value": "2031-11-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > 6.000% Senior Secured Notes",
+     "quote": "The 6.000% Senior Secured Notes mature on November 15, 2031",
+     "printed": "November 15, 2031"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.coupon",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "6.000% Senior Secured Notes",
+   "field": "coupon",
+   "period_end": null,
+   "status": "known",
+   "value": "6.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > 6.000% Senior Secured Notes",
+     "quote": "bear interest at a rate of 6.00% per annum payable semi-annually in arrears on May 15 and November 15",
+     "printed": "6.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.guarantee",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "6.000% Senior Secured Notes",
+   "field": "guarantee",
+   "period_end": null,
+   "status": "known",
+   "value": "Guaranteed on a senior secured basis by LTF Intermediate Holdings, Inc. and each wholly owned domestic restricted subsidiary that guarantees the New Term Loan Facility; pari passu first lien with the Credit Facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Note 8 > 6.000% Senior Secured Notes",
+     "quote": "guaranteed on a senior secured basis by LTF Intermediate Holdings, Inc., the direct parent of the Issuer",
+     "printed": "LTF Intermediate Holdings, Inc."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.mortgage_notes.maturity_per_10q.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Mortgage Notes",
+   "field": "maturity_per_10q",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "Mortgage Notes: various maturities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 Debt > \"Debt consisted of the following\" table",
+     "quote": "Mortgage Notes, various maturities",
+     "printed": "various maturities"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.commitments_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "commitments_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "650.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Revolving Credit Facility",
+     "quote": "there were no outstanding borrowings under our $650.0 million Revolving Credit Facility",
+     "printed": "$650.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "drawn_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Revolving Credit Facility",
+     "quote": "there were no outstanding borrowings under our $650.0 million Revolving Credit Facility",
+     "printed": "no outstanding borrowings"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "letters_of_credit_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "31.5",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Revolving Credit Facility",
+     "quote": "there were $31.5 million of outstanding letters of credit",
+     "printed": "$31.5 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_usd_millions_printed.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "availability_usd_millions_printed",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "618.5",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Revolving Credit Facility",
+     "quote": "resulting in total revolver availability of $618.5 million",
+     "printed": "$618.5 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_recomputed_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving Credit Facility",
+   "field": "availability_recomputed_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "618.5",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-2.debt_stack.revolving_credit_facility.commitments_usd_millions.2025-06-30",
+     "CP-2.debt_stack.revolving_credit_facility.drawn_usd_millions.2025-06-30",
+     "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_usd_millions.2025-06-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.cash_and_cash_equivalents.amount_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Cash and cash equivalents",
+   "field": "amount_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "175.5",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "MD&A Liquidity",
+     "quote": "Total cash and cash equivalents at June 30, 2025 was $175.5 million",
+     "printed": "$175.5 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.cash_plus_revolver_availability.amount_usd_millions_printed.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Cash plus revolver availability",
+   "field": "amount_usd_millions_printed",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "794.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "MD&A Liquidity",
+     "quote": "resulting in total cash and availability under our Revolving Credit Facility of $794.0 million",
+     "printed": "$794.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.cash_plus_revolver_availability.recomputed_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Cash plus revolver availability",
+   "field": "recomputed_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "794.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-2.debt_stack.cash_and_cash_equivalents.amount_usd_millions.2025-06-30",
+     "CP-2.debt_stack.revolving_credit_facility.availability_usd_millions_printed.2025-06-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.cash_and_cash_equivalents.balance_sheet_amount.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Cash and cash equivalents",
+   "field": "balance_sheet_amount",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "175509",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Condensed Consolidated Balance Sheets > Cash and cash equivalents (USD thousands as printed)",
+     "quote": "Cash and cash equivalents $ 175,509",
+     "printed": "$ 175,509"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.restricted_cash_and_cash_equivalents.balance_sheet_amount.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Restricted cash and cash equivalents",
+   "field": "balance_sheet_amount",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "20740",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Condensed Consolidated Balance Sheets > Restricted cash (USD thousands as printed)",
+     "quote": "Restricted cash and cash equivalents 20,740",
+     "printed": "20,740"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.future_maturities_july_2025_through_june_2026.principal_due.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Future maturities: July 2025 through June 2026",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "22873",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "July 2025 through June 2026 $ 22,873",
+     "printed": "$ 22,873"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.future_maturities_july_2026_through_june_2027.principal_due.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Future maturities: July 2026 through June 2027",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "31824",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "July 2026 through June 2027 31,824",
+     "printed": "31,824"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.future_maturities_july_2027_through_june_2028.principal_due.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Future maturities: July 2027 through June 2028",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "11504",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "July 2027 through June 2028 11,504",
+     "printed": "11,504"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.future_maturities_july_2028_through_june_2029.principal_due.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Future maturities: July 2028 through June 2029",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "10189",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "July 2028 through June 2029 10,189",
+     "printed": "10,189"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.future_maturities_july_2029_through_june_2030.principal_due.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Future maturities: July 2029 through June 2030",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "10199",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "July 2029 through June 2030 10,199",
+     "printed": "10,199"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.future_maturities_thereafter.principal_due.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Future maturities: Thereafter",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "1447560",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "Thereafter 1,447,560",
+     "printed": "1,447,560"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.notional_usd_millions.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Interest rate swaps on Term Loan Facility",
+   "field": "notional_usd_millions",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "995.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 6 > Interest Rate Swaps",
+     "quote": "At June 30, 2025, the aggregate notional amount associated with these interest rate swaps was $995.0 million",
+     "printed": "$995.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.fixed_rate_paid.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Interest rate swaps on Term Loan Facility",
+   "field": "fixed_rate_paid",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "3.409",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 6 > Interest Rate Swaps",
+     "quote": "we make fixed interest payments at 3.409% in exchange for receiving variable interest payments based on SOFR",
+     "printed": "3.409%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.effective_fixed_rate_after_swaps.2025-06-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term Loan Facility (2024 New Term Loans)",
+   "field": "effective_fixed_rate_after_swaps",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "5.659",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Term Loan Facility",
+     "quote": "the effective fixed interest rate associated with our outstanding Term Loan Facility borrowings at June 30, 2025 was 5.659%",
+     "printed": "5.659%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.borrower.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Borrower",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Life Time, Inc. (formerly Life Time Fitness, Inc.), a Minnesota corporation, successor to LTF Merger Sub, Inc.; the Borrower (not the listed parent)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Preamble",
+     "quote": "LIFE TIME, INC. (formerly known as LIFE TIME FITNESS, INC.), a Minnesota corporation and successor in interest to LTF MERGER SUB, INC., as borrower (the “Borrower”)",
+     "printed": "LIFE TIME, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.holdings.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Holdings",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "LTF Intermediate Holdings, Inc., a Delaware corporation (Holdings and Guarantor; direct parent of the Borrower)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Preamble",
+     "quote": "LTF INTERMEDIATE HOLDINGS, INC., a Delaware corporation (“Holdings”)",
+     "printed": "LTF INTERMEDIATE HOLDINGS, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.administrative_agent.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Administrative Agent",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Deutsche Bank AG New York Branch, Administrative Agent",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Preamble",
+     "quote": "DEUTSCHE BANK AG NEW YORK BRANCH, as administrative agent",
+     "printed": "DEUTSCHE BANK AG NEW YORK BRANCH"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_club_operations_company_inc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF CLUB OPERATIONS COMPANY, INC.",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Club Operations Company, Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF CLUB OPERATIONS COMPANY, INC., as Guarantor",
+     "printed": "LTF CLUB OPERATIONS COMPANY, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_operations_holdings_inc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF OPERATIONS HOLDINGS, INC.",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Operations Holdings, Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF OPERATIONS HOLDINGS, INC., as Guarantor",
+     "printed": "LTF OPERATIONS HOLDINGS, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_management_services_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF MANAGEMENT SERVICES, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Management Services, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF MANAGEMENT SERVICES, LLC, as Guarantor",
+     "printed": "LTF MANAGEMENT SERVICES, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_construction_company_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF CONSTRUCTION COMPANY, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Construction Company, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF CONSTRUCTION COMPANY, LLC, as Guarantor",
+     "printed": "LTF CONSTRUCTION COMPANY, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_restaurant_company_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF RESTAURANT COMPANY, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Restaurant Company, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF RESTAURANT COMPANY, LLC, as Guarantor",
+     "printed": "LTF RESTAURANT COMPANY, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_club_management_company_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF CLUB MANAGEMENT COMPANY, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Club Management Company, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF CLUB MANAGEMENT COMPANY, LLC, as Guarantor",
+     "printed": "LTF CLUB MANAGEMENT COMPANY, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_triathlon_series_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF TRIATHLON SERIES, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Triathlon Series, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF TRIATHLON SERIES, LLC, as Guarantor",
+     "printed": "LTF TRIATHLON SERIES, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_athlinks_inc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor ATHLINKS, INC.",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Athlinks, Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "ATHLINKS, INC., as Guarantor",
+     "printed": "ATHLINKS, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_architecture_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF ARCHITECTURE, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Architecture, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF ARCHITECTURE, LLC, as Guarantor",
+     "printed": "LTF ARCHITECTURE, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_lease_company_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF LEASE COMPANY, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Lease Company, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF LEASE COMPANY, LLC, as Guarantor",
+     "printed": "LTF LEASE COMPANY, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_holdings_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF REAL ESTATE HOLDINGS, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Real Estate Holdings, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF REAL ESTATE HOLDINGS, LLC, as Guarantor",
+     "printed": "LTF REAL ESTATE HOLDINGS, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_company_inc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF REAL ESTATE COMPANY, INC.",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Real Estate Company, Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF REAL ESTATE COMPANY, INC., as Guarantor",
+     "printed": "LTF REAL ESTATE COMPANY, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_educational_programs_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF EDUCATIONAL PROGRAMS, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Educational Programs, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF EDUCATIONAL PROGRAMS, LLC, as Guarantor",
+     "printed": "LTF EDUCATIONAL PROGRAMS, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_ground_lease_company_llc.name",
+   "module": "CP-2",
+   "topic": "obligors",
+   "subject": "Subsidiary Guarantor LTF GROUND LEASE COMPANY, LLC",
+   "field": "name",
+   "period_end": null,
+   "status": "known",
+   "value": "Ltf Ground Lease Company, LLC",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Signature pages (Subsidiary Guarantors)",
+     "quote": "LTF GROUND LEASE COMPANY, LLC, as Guarantor",
+     "printed": "LTF GROUND LEASE COMPANY, LLC"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2D.user_input.minimum_cash.minimum_cash_m",
+   "module": "CP-2D",
+   "topic": "user_input",
+   "subject": "Minimum cash",
+   "field": "minimum_cash_m",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "User input (context assumptions.cp2d.minimum_cash_m); no minimum cash requirement appears in the filings read."
+  },
+  {
+   "fact_id": "CP-2D.user_input.projection_horizon.horizon_months",
+   "module": "CP-2D",
+   "topic": "user_input",
+   "subject": "Projection horizon",
+   "field": "horizon_months",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "User input (context assumptions.cp2d.horizon_months)."
+  },
+  {
+   "fact_id": "CP-2D.near_term_debt_service.principal_due_july_2025_through_june_2026.principal_due.2025-06-30",
+   "module": "CP-2D",
+   "topic": "near_term_debt_service",
+   "subject": "Principal due July 2025 through June 2026",
+   "field": "principal_due",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "22873",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "thousands",
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
+     "quote": "July 2025 through June 2026 $ 22,873",
+     "printed": "$ 22,873"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.life_time_group_holdings_inc.legal_form_and_role",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "legal_form_and_role",
+   "period_end": null,
+   "status": "known",
+   "value": "Holding company incorporated in Delaware; all assets and operations are through Life Time, Inc. and its subsidiaries",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 1 Nature of Business",
+     "quote": "Life Time Group Holdings, Inc. (collectively with its direct and indirect subsidiaries, “Life Time,” “we,” “our,” or the “Company”) is a holding company incorporated in the state of Delaware",
+     "printed": "holding company incorporated in the state of Delaware"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.life_time_group_holdings_inc.business_sector",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "business_sector",
+   "period_end": null,
+   "status": "known",
+   "value": "Premium health, fitness and wellness experiences at athletic country club destinations and via a digital platform and athletic events",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 1 Nature of Business",
+     "quote": "We are primarily dedicated to providing premium health, fitness and wellness experiences at our athletic country club destinations",
+     "printed": "premium health, fitness and wellness experiences"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.centers_operated.count.2025-06-30",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Centers operated",
+   "field": "count",
+   "period_end": "2025-06-30",
+   "status": "known",
+   "value": "184",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 1 Nature of Business",
+     "quote": "As of June 30, 2025, we operated 184 centers in 31 states and one Canadian province.",
+     "printed": "184"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.geography_of_centers.countries",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Geography of centers",
+   "field": "countries",
+   "period_end": null,
+   "status": "known",
+   "value": "United States (31 states) and one Canadian province",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Note 1 Nature of Business",
+     "quote": "we operated 184 centers in 31 states and one Canadian province",
+     "printed": "31 states and one Canadian province"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.principal_executive_offices.location",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Principal executive offices",
+   "field": "location",
+   "period_end": null,
+   "status": "known",
+   "value": "Chanhassen, Minnesota, United States (principal executive offices)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page",
+     "quote": "2902 Corporate Place Chanhassen, Minnesota 55317",
+     "printed": "Chanhassen, Minnesota"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.life_time_group_holdings_inc.listing",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Life Time Group Holdings, Inc.",
+   "field": "listing",
+   "period_end": null,
+   "status": "known",
+   "value": "Common stock listed on The New York Stock Exchange under ticker LTH",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "q225",
+     "locator": "Cover page",
+     "quote": "Common stock, par value $0.01 per share LTH The New York Stock Exchange",
+     "printed": "LTH"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.voting_group.share_of_common_stock.2024-12-31",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Voting Group",
+   "field": "share_of_common_stock",
+   "period_end": "2024-12-31",
+   "status": "known",
+   "value": "62.7",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Item 1A Risk Factors",
+     "quote": "the Voting Group held approximately 62.7% of such shares",
+     "printed": "62.7%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.leonard_green_partners_and_tpg_funds.share_of_common_stock.2024-12-31",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Leonard Green & Partners and TPG funds",
+   "field": "share_of_common_stock",
+   "period_end": "2024-12-31",
+   "status": "known",
+   "value": "42.5",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Item 1A Risk Factors",
+     "quote": "The Voting Group includes investment funds affiliated with Leonard Green & Partners, L.P. and its affiliates (“LGP”) and TPG Inc. and its affiliates (“TPG”), which collectively held approximately 42.5% of our common stock",
+     "printed": "42.5%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.ownership_sponsor.sponsor_and_control",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Ownership / sponsor",
+   "field": "sponsor_and_control",
+   "period_end": null,
+   "status": "known",
+   "value": "Investment funds affiliated with Leonard Green & Partners, L.P. (LGP) and TPG Inc. (TPG) are members of the Voting Group; the company is a “controlled company” under NYSE rules",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k24",
+     "locator": "Item 1A Risk Factors",
+     "quote": "We are a “controlled company” within the meaning of the NYSE rules and the rules of the SEC.",
+     "printed": "controlled company"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.borrower_vs_listed_parent.borrower_is_subsidiary",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "Borrower vs listed parent",
+   "field": "borrower_is_subsidiary",
+   "period_end": null,
+   "status": "known",
+   "value": "Revolving Credit Facility and the Term Loan Facility are obligations of Life Time, Inc. (the Borrower), a subsidiary of the listed holding company",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "a15",
+     "locator": "Preamble",
+     "quote": "LIFE TIME, INC. (formerly known as LIFE TIME FITNESS, INC.), a Minnesota corporation",
+     "printed": "LIFE TIME, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  }
+ ],
+ "not_golden": [
+  {
+   "module": "CP-0",
+   "why": "Source intake and classification; produces no filing-derived value to grade."
+  },
+  {
+   "module": "CP-1",
+   "why": "covered by financial_gold"
+  },
+  {
+   "module": "CP-MODEL",
+   "why": "Judgment module (model construction and forecast choices); no source-derivable answer."
+  },
+  {
+   "module": "CP-5",
+   "why": "Judgment module (credit view and recommendation); graded by rubric, not facts."
+  }
+ ],
+ "needs_user_input": [
+  {
+   "context_path": "assumptions.cp2d",
+   "modules": [
+    "CP-2D"
+   ],
+   "why": "Horizon (months) and minimum cash are user choices; the filings do not state them."
+  },
+  {
+   "context_path": "ratings",
+   "modules": [
+    "CP-3C",
+    "CP-4"
+   ],
+   "why": "The pricing grids step on public corporate family ratings (Ba3/BB- from two agencies). The 10-Q says S&P upgraded the issuer rating on 2025-06-18 but gives no rating, outlook or Moody/Fitch rating."
+  },
+  {
+   "context_path": "quotes",
+   "modules": [
+    "CP-3C"
+   ],
+   "why": "No market price, OID or price talk for the 2025 Refinancing Term Loans or the 6.000% notes is in the filings; repricing economics need dated market data."
+  },
+  {
+   "context_path": "assumptions.cp3c",
+   "modules": [
+    "CP-3C"
+   ],
+   "why": "Optional pinned repricing step (bps); the model otherwise chooses."
+  }
+ ],
+ "limitations": [
+  "Visible text cannot tell struck-out from inserted text in the redlined credit agreement pages; before/after values were read from the style markup (line-through / underline) and the struck figure is quoted as it appears concatenated with the inserted one (for example 6.504.75).",
+  "Scale: the checker only allows millions, units or null. Values printed in USD thousands (10-Q tables) carry scale null with the thousands noted in the locator; amounts printed as $X million use millions; credit agreement dollar amounts use units.",
+  "The 15th Amendment includes only Annex II changed pages. Maturity Date, Section 7.12, Section 8.04 and the revolving commitments are not restated; operative terms are taken from the credit agreement as conformed in the 14th Amendment and cannot be shown to be unchanged from any 15th page beyond Section 1(b) listing only Annex II as the amendment.",
+  "The 13th Amendment recital gives $175,000,000 of incremental revolving commitments while its Schedule A totals $277,500,000 incremental and $372,500,000 refinancing; both total $650,000,000. The split is recorded as conflicting.",
+  "The agreement states the springing test as Revolving Loans exceeding 30% of commitments; the 10-Q describes it as 30.00% or more. The agreement text is used.",
+  "The 14th and 15th Amendments are dated and effective on their dates; the 15th is dated the cutoff date, 2025-08-18, and is treated as in scope.",
+  "The 10-K (filed 2025-02-27) is the only corpus source for the 6.000% notes call terms and the ownership percentages (as of 2024-12-31); the 10-Q after that date does not update them.",
+  "The 2024-06-30 10-Q is in the corpus folder but not in the manifest and was not used."
+ ],
+ "preparer": "mx-feature (Sonnet) subagent g-lth"
+}

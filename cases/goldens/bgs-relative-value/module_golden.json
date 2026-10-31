@@ -1,0 +1,2494 @@
+{
+ "schema_version": "module-golden/1",
+ "case_id": "bgs-relative-value",
+ "issuer_id": "bgs",
+ "pathway": "relative_value",
+ "cutoff": "2025-08-04",
+ "context_file": "context.json",
+ "financial_gold": {
+  "path": "/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1-codex-gold-20261031/bgs/financial_gold.json",
+  "sha256": "935649dfd72c1628eb473c41684a8324f15ba5a0fd9d0a352dce718501f17e6c"
+ },
+ "sources": [
+  {
+   "source_id": "bgs-10q-2025-06-28",
+   "file": "BGS/BGS_2025-06-28_10-Q_0001558370-25-010103_bgs-20250628x10q.htm",
+   "sha256": "ce28cd0d8bae7ff2dd63e736b06d552ca33b86c44956c15c7e6a438484991708",
+   "url": "https://www.sec.gov/Archives/edgar/data/1278027/000155837025010103/bgs-20250628x10q.htm",
+   "form": "10-Q",
+   "period_end": "2025-06-28",
+   "filed": "2025-08-04"
+  }
+ ],
+ "facts": [
+  {
+   "fact_id": "CP-0.identity.Registrant.legal_name",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Registrant",
+   "field": "legal_name",
+   "period_end": null,
+   "status": "known",
+   "value": "B&G FOODS, INC.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Cover page > registrant name",
+     "quote": "Commission file number 001-32316 ​ B&G FOODS, INC. ​ (Exact name of Registrant as specified in its charter)",
+     "printed": "B&G FOODS, INC."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Registrant.ticker_exchange",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Registrant",
+   "field": "ticker_exchange",
+   "period_end": null,
+   "status": "known",
+   "value": "BGS, New York Stock Exchange",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Cover page > Section 12(b) securities",
+     "quote": "Common Stock, par value $0.01 per share BGS New York Stock Exchange",
+     "printed": "BGS New York Stock Exchange"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.principal_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "235000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > Revolving credit loans due 2028 > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Long-term debt consists of the following, as of the dates indicated (in thousands): ​ ​ ​ ​ ​ ​ ​ ​ June 28, 2025 December 28, 2024 Revolving credit loans due 2028 $ 235,000",
+     "printed": "235,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.principal_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "447750",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > Tranche B term loans due 2029 > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Tranche B term loans due 2029 ​ ​ 447,750",
+     "printed": "447,750"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.principal_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.25% senior notes due 2027",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "529310",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > 5.25% senior notes due 2027 > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "5.25% senior notes due 2027 ​ ​ 529,310",
+     "printed": "529,310"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.principal_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "799315",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > 8.00% senior secured notes due 2028 > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "8.00% senior secured notes due 2028 ​ ​ 799,315",
+     "printed": "799,315"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Unamortized_deferred_debt_financing_costs.amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Unamortized deferred debt financing costs",
+   "field": "amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "-15933",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > Unamortized deferred debt financing costs > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Unamortized deferred debt financing costs ​ ​ (15,933)",
+     "printed": "(15,933)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Unamortized_discount.amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Unamortized discount",
+   "field": "amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "-4961",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > Unamortized discount > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Unamortized discount ​ (4,961)",
+     "printed": "(4,961)"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Total_long-term_debt_net_of_costs_and_discount.carrying_amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total long-term debt net of costs and discount",
+   "field": "carrying_amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "1990481",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > Total > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Total long-term debt, net of unamortized deferred debt financing costs and discount ​ ​ 1,990,481",
+     "printed": "1,990,481"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Current_portion_of_long-term_debt.amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Current portion of long-term debt",
+   "field": "amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "5625",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Condensed consolidated balance sheet > Current liabilities > Current portion of long-term debt > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Current portion of long-term debt 5,625",
+     "printed": "5,625"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Total_contractual_maturities_aggregate_principal_.principal_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total contractual maturities (aggregate principal)",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2011375",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Total [amounts in USD thousands as printed]",
+     "quote": "Total $ 2,011,375",
+     "printed": "2,011,375"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Sum_of_four_instrument_principal_balances.principal_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Sum of four instrument principal balances",
+   "field": "principal_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2011375",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-2.debt_stack.Revolving_credit_loans_due_2028.principal_outstanding.2025-06-28",
+     "CP-2.debt_stack.Tranche_B_term_loans_due_2029.principal_outstanding.2025-06-28",
+     "CP-2.debt_stack.5.25_senior_notes_due_2027.principal_outstanding.2025-06-28",
+     "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.principal_outstanding.2025-06-28"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Total_principal_less_unamortized_costs_and_discount.carrying_amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Total principal less unamortized costs and discount",
+   "field": "carrying_amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "1990481",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-2.debt_stack.Total_contractual_maturities_aggregate_principal_.principal_outstanding.2025-06-28",
+     "CP-2.debt_stack.Unamortized_deferred_debt_financing_costs.amount.2025-06-28",
+     "CP-2.debt_stack.Unamortized_discount.amount.2025-06-28"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.carrying_amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "carrying_amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "235000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > Revolving credit loans > Carrying Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Revolving credit loans ​ $ 235,000",
+     "printed": "235,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.carrying_amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "carrying_amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "443702",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > Tranche B term loans due 2029 > Carrying Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Tranche B term loans due 2029 ​ ​ 443,702 (2)",
+     "printed": "443,702"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.carrying_amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.25% senior notes due 2027",
+   "field": "carrying_amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "529310",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > 5.25% senior notes due 2027 > Carrying Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "5.25% senior notes due 2027 ​ ​ 529,310 ​ ​ 480,349 (3)",
+     "printed": "529,310"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.carrying_amount.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "carrying_amount",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "798402",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > 8.00% senior secured notes due 2028 > Carrying Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "8.00% senior secured notes due 2028 ​ $ 798,402 (4)",
+     "printed": "798,402"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.maturity_date.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "maturity_date",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2028-12-16",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The revolving credit facility matures on December 16, 2028",
+     "printed": "December 16, 2028"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.maturity_date.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "maturity_date",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2029-10-10",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The tranche B term loans mature on October 10, 2029",
+     "printed": "October 10, 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.maturity_date.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.25% senior notes due 2027",
+   "field": "maturity_date",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2027-09-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "The 5.25% senior notes due 2027 will mature on September 15, 2027",
+     "printed": "September 15, 2027"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.maturity_date.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "maturity_date",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2028-09-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "The 8.00% senior secured notes due 2028 will mature on September 15, 2028",
+     "printed": "September 15, 2028"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.coupon_fixed.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.25% senior notes due 2027",
+   "field": "coupon_fixed",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "5.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > instrument caption",
+     "quote": "5.25% Senior Notes due 2027. Interest on the 5.25% senior notes due 2027 is payable on March 15 and September 15",
+     "printed": "5.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.coupon_fixed.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "coupon_fixed",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "8.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > instrument caption",
+     "quote": "8.00% Senior Secured Notes due 2028. Interest on the 8.00% senior secured notes due 2028 is payable on March 15 and September 15",
+     "printed": "8.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.margin_sofr.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "margin_sofr",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "3.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "and SOFR plus an applicable margin of 3.50%",
+     "printed": "3.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.margin_base_rate.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "margin_base_rate",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "a base rate per annum plus an applicable margin of 2.50%",
+     "printed": "2.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.weighted_average_interest_rate.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "weighted_average_interest_rate",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "7.83",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "the weighted average interest rate on our tranche B term loans was 7.83%",
+     "printed": "7.83%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.amortization_per_calendar_quarter_of_original_principal.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "amortization_per_calendar_quarter_of_original_principal",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "0.25",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The tranche B term loans are subject to amortization at the rate of 0.25% of the original principal amount per calendar quarter",
+     "printed": "0.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_sofr_low.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "margin_sofr_low",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "1.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "SOFR plus an applicable margin ranging from 1.50% to 2.00%",
+     "printed": "1.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_sofr_high.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "margin_sofr_high",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "2.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "SOFR plus an applicable margin ranging from 1.50% to 2.00%",
+     "printed": "2.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_base_rate_low.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "margin_base_rate_low",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "0.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "a base rate per annum plus an applicable margin ranging from 0.50% to 1.00%",
+     "printed": "0.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_base_rate_high.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "margin_base_rate_high",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "1.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "a base rate per annum plus an applicable margin ranging from 0.50% to 1.00%",
+     "printed": "1.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.weighted_average_interest_rate.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "weighted_average_interest_rate",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "6.31",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "the weighted average interest rate on our revolving credit loans was 6.31%",
+     "printed": "6.31%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.commitment_fee_on_unused.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "commitment_fee_on_unused",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "0.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "We are required to pay a commitment fee of 0.50% per annum on the unused portion of the revolving credit facility",
+     "printed": "0.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.sofr_floor.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "sofr_floor",
+   "period_end": "2025-06-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "No SOFR or base-rate floor is stated in the filed 10-K or 10-Qs in the corpus; the credit agreement itself is not in the corpus."
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.sofr_floor.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "sofr_floor",
+   "period_end": "2025-06-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "No SOFR or base-rate floor is stated in the filed 10-K or 10-Qs in the corpus; the credit agreement itself is not in the corpus."
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.ranking.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Revolving credit loans due 2028",
+   "field": "ranking",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior secured",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The credit agreement is secured by substantially all of our and our domestic subsidiaries’ assets except our and our domestic subsidiaries’ real property",
+     "printed": "secured by substantially all"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.ranking.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Tranche B term loans due 2029",
+   "field": "ranking",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior secured",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The credit agreement is secured by substantially all of our and our domestic subsidiaries’ assets except our and our domestic subsidiaries’ real property",
+     "printed": "secured by substantially all"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.ranking.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.25% senior notes due 2027",
+   "field": "ranking",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior unsecured",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > ranking paragraph",
+     "quote": "The 5.25% senior notes due 2027 and the subsidiary guarantees are our and the guarantors’ general unsecured obligations",
+     "printed": "general unsecured obligations"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.ranking.2025-06-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "ranking",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior secured",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > ranking paragraph",
+     "quote": "The 8.00% senior secured notes due 2028 are our senior secured obligations",
+     "printed": "senior secured obligations"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.commitment.2025-06-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "commitment",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "475.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph (amendment sentence; commitment before 2025-07-01 reduction)",
+     "quote": "On July 1, 2025, we amended our credit agreement to, among other things, reduce the revolving credit facility commitments from $475.0 million to $430.0 million",
+     "printed": "$475.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.commitment_after_2025-07-01_amendment.2025-07-01",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "commitment_after_2025-07-01_amendment",
+   "period_end": "2025-07-01",
+   "status": "known",
+   "value": "430.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph (subsequent event, effective after balance sheet date)",
+     "quote": "On July 1, 2025, we amended our credit agreement to, among other things, reduce the revolving credit facility commitments from $475.0 million to $430.0 million",
+     "printed": "$430.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.drawn_balance.2025-06-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "drawn_balance",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "235000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > table of long-term debt (in thousands) > Revolving credit loans due 2028 > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Long-term debt consists of the following, as of the dates indicated (in thousands): ​ ​ ​ ​ ​ ​ ​ ​ June 28, 2025 December 28, 2024 Revolving credit loans due 2028 $ 235,000",
+     "printed": "235,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.letters_of_credit_outstanding.2025-06-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "letters_of_credit_outstanding",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "7.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "net of outstanding letters of credit of $7.0 million",
+     "printed": "$7.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.available_borrowing_capacity.2025-06-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "available_borrowing_capacity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "233.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "the available borrowing capacity under the revolving credit facility, net of outstanding letters of credit of $7.0 million, was $233.0 million",
+     "printed": "$233.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2025-06-28",
+   "module": "CP-2",
+   "topic": "liquidity",
+   "subject": "Cash and cash equivalents",
+   "field": "balance",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "54084",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Condensed consolidated balance sheet > Current assets > Cash and cash equivalents > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Cash and cash equivalents $ 54,084",
+     "printed": "54,084"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.letter_of_credit_sublimit.2025-06-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "letter_of_credit_sublimit",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "50.0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The maximum letter of credit capacity under the revolving credit facility is $50.0 million",
+     "printed": "$50.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2025_remaining.aggregate_contractual_maturity.2025-06-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2025 remaining",
+   "field": "aggregate_contractual_maturity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "3375",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Fiscal 2025 remaining [amounts in USD thousands as printed]",
+     "quote": "2025 remaining $ 3,375",
+     "printed": "3,375"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2026.aggregate_contractual_maturity.2025-06-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2026",
+   "field": "aggregate_contractual_maturity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "4500",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Fiscal 2026 [amounts in USD thousands as printed]",
+     "quote": "2026 4,500",
+     "printed": "4,500"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2027.aggregate_contractual_maturity.2025-06-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2027",
+   "field": "aggregate_contractual_maturity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "533810",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Fiscal 2027 [amounts in USD thousands as printed]",
+     "quote": "2027 533,810",
+     "printed": "533,810"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2028.aggregate_contractual_maturity.2025-06-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2028",
+   "field": "aggregate_contractual_maturity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "1037690",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Fiscal 2028 [amounts in USD thousands as printed]",
+     "quote": "2028 1,037,690",
+     "printed": "1,037,690"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2029.aggregate_contractual_maturity.2025-06-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2029",
+   "field": "aggregate_contractual_maturity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "432000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Fiscal 2029 [amounts in USD thousands as printed]",
+     "quote": "2029 432,000",
+     "printed": "432,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2030_and_thereafter.aggregate_contractual_maturity.2025-06-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2030 and thereafter",
+   "field": "aggregate_contractual_maturity",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > aggregate contractual maturities table > Thereafter [amounts in USD thousands as printed]",
+     "quote": "Thereafter — Total $ 2,011,375",
+     "printed": "—"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarter_ending_2025-06-28_through_quarter_ending_2026-10-03_.maximum_ratio.2025-07-01",
+   "module": "CP-2",
+   "topic": "covenants",
+   "subject": "Maximum consolidated leverage ratio (quarter ending 2025-06-28 through quarter ending 2026-10-03)",
+   "field": "maximum_ratio",
+   "period_end": "2025-07-01",
+   "status": "known",
+   "value": "7.50",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph > as amended 2025-07-01",
+     "quote": "is 7.50 to 1.00 for the quarter ending June 28, 2025 through the quarter ending October 3, 2026",
+     "printed": "7.50 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.covenants.Minimum_consolidated_interest_coverage_ratio.minimum_ratio.2025-06-28",
+   "module": "CP-2",
+   "topic": "covenants",
+   "subject": "Minimum consolidated interest coverage ratio",
+   "field": "minimum_ratio",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "1.75",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "of at least 1.75 to 1.00",
+     "printed": "1.75 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.covenants.Maximum_senior_secured_leverage_ratio_for_incremental_facility.maximum_ratio.2025-06-28",
+   "module": "CP-2",
+   "topic": "covenants",
+   "subject": "Maximum senior secured leverage ratio for incremental facility",
+   "field": "maximum_ratio",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "4.00",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "maximum senior secured leverage ratio of 4.00 to 1.00",
+     "printed": "4.00 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_principal_repurchased_open_market.2025-06-28",
+   "module": "CP-3",
+   "topic": "repurchase_transactions",
+   "subject": "5.25% senior notes due 2027",
+   "field": "q2_2025_principal_repurchased_open_market",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "20.7",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% senior notes due 2027 paragraph",
+     "quote": "we repurchased $20.7 million aggregate principal amount of 5.25% senior notes due 2027 in open market purchases for $18.6 million",
+     "printed": "$20.7 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_cash_paid_for_repurchase.2025-06-28",
+   "module": "CP-3",
+   "topic": "repurchase_transactions",
+   "subject": "5.25% senior notes due 2027",
+   "field": "q2_2025_cash_paid_for_repurchase",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "18.6",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% senior notes due 2027 paragraph",
+     "quote": "we repurchased $20.7 million aggregate principal amount of 5.25% senior notes due 2027 in open market purchases for $18.6 million",
+     "printed": "$18.6 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_average_repurchase_price_pct_of_principal.2025-06-28",
+   "module": "CP-3",
+   "topic": "repurchase_transactions",
+   "subject": "5.25% senior notes due 2027",
+   "field": "q2_2025_average_repurchase_price_pct_of_principal",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "89.98",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% senior notes due 2027 paragraph",
+     "quote": "an average discounted repurchase price of 89.98% of such principal amount",
+     "printed": "89.98%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Revolving credit loans due 2028",
+   "field": "fair_value",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "235000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > Revolving credit loans due 2028 > Fair Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Revolving credit loans ​ $ 235,000 ​ $ 235,000 (1) $ 245,000 ​ $ 245,000 (1)",
+     "printed": "235,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Revolving credit loans due 2028",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "245000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > Revolving credit loans due 2028 > Fair Value > December 28, 2024 [amounts in USD thousands as printed]",
+     "quote": "Revolving credit loans ​ $ 235,000 ​ $ 235,000 (1) $ 245,000 ​ $ 245,000 (1)",
+     "printed": "245,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Tranche B term loans due 2029",
+   "field": "fair_value",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "403769",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > Tranche B term loans due 2029 > Fair Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "Tranche B term loans due 2029 ​ ​ 443,702 (2) ​ 403,769 (3) ​ 445,568 (2) ​ 445,568 (3)",
+     "printed": "403,769"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Tranche B term loans due 2029",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "445568",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > Tranche B term loans due 2029 > Fair Value > December 28, 2024 [amounts in USD thousands as printed]",
+     "quote": "Tranche B term loans due 2029 ​ ​ 443,702 (2) ​ 403,769 (3) ​ 445,568 (2) ​ 445,568 (3)",
+     "printed": "445,568"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "5.25% senior notes due 2027",
+   "field": "fair_value",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "480349",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > 5.25% senior notes due 2027 > Fair Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "5.25% senior notes due 2027 ​ ​ 529,310 ​ ​ 480,349 (3) ​ 550,000 ​ ​ 522,500 (3)",
+     "printed": "480,349"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "5.25% senior notes due 2027",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "522500",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > 5.25% senior notes due 2027 > Fair Value > December 28, 2024 [amounts in USD thousands as printed]",
+     "quote": "5.25% senior notes due 2027 ​ ​ 529,310 ​ ​ 480,349 (3) ​ 550,000 ​ ​ 522,500 (3)",
+     "printed": "522,500"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "fair_value",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "763472",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > 8.00% senior secured notes due 2028 > Fair Value > June 28, 2025 [amounts in USD thousands as printed]",
+     "quote": "8.00% senior secured notes due 2028 ​ $ 798,402 (4) $ 763,472 (3) $ 798,283 (4) $ 818,240 (3)",
+     "printed": "763,472"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "818240",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > carrying value and fair value table > 8.00% senior secured notes due 2028 > Fair Value > December 28, 2024 [amounts in USD thousands as printed]",
+     "quote": "8.00% senior secured notes due 2028 ​ $ 798,402 (4) $ 763,472 (3) $ 798,283 (4) $ 818,240 (3)",
+     "printed": "818,240"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.hierarchy_level.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Revolving credit loans due 2028",
+   "field": "hierarchy_level",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "Level 2",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (1)",
+     "quote": "(1) Fair values are estimated based on Level 2 inputs, which were quoted prices for identical or similar instruments in markets that are not active.",
+     "printed": "Level 2"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.hierarchy_level.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Revolving credit loans due 2028",
+   "field": "hierarchy_level",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Level 2",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (1)",
+     "quote": "(1) Fair values are estimated based on Level 2 inputs, which were quoted prices for identical or similar instruments in markets that are not active.",
+     "printed": "Level 2"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.valuation_basis_as_disclosed.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Tranche B term loans due 2029",
+   "field": "valuation_basis_as_disclosed",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "quoted market prices",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (3)",
+     "quote": "(3) Fair values are estimated based on quoted market prices.",
+     "printed": "quoted market prices"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.hierarchy_level.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Tranche B term loans due 2029",
+   "field": "hierarchy_level",
+   "period_end": "2025-06-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Note 7 says fair value is estimated from quoted market prices but does not assign the instrument to a hierarchy level (Level 1/2/3); only the revolving credit loans are tagged Level 2."
+  },
+  {
+   "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.valuation_basis_as_disclosed.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Tranche B term loans due 2029",
+   "field": "valuation_basis_as_disclosed",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "quoted market prices",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (3)",
+     "quote": "(3) Fair values are estimated based on quoted market prices.",
+     "printed": "quoted market prices"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.hierarchy_level.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "Tranche B term loans due 2029",
+   "field": "hierarchy_level",
+   "period_end": "2024-12-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Note 7 says fair value is estimated from quoted market prices but does not assign the instrument to a hierarchy level (Level 1/2/3); only the revolving credit loans are tagged Level 2."
+  },
+  {
+   "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.valuation_basis_as_disclosed.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "5.25% senior notes due 2027",
+   "field": "valuation_basis_as_disclosed",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "quoted market prices",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (3)",
+     "quote": "(3) Fair values are estimated based on quoted market prices.",
+     "printed": "quoted market prices"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.hierarchy_level.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "5.25% senior notes due 2027",
+   "field": "hierarchy_level",
+   "period_end": "2025-06-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Note 7 says fair value is estimated from quoted market prices but does not assign the instrument to a hierarchy level (Level 1/2/3); only the revolving credit loans are tagged Level 2."
+  },
+  {
+   "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.valuation_basis_as_disclosed.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "5.25% senior notes due 2027",
+   "field": "valuation_basis_as_disclosed",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "quoted market prices",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (3)",
+     "quote": "(3) Fair values are estimated based on quoted market prices.",
+     "printed": "quoted market prices"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.hierarchy_level.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "5.25% senior notes due 2027",
+   "field": "hierarchy_level",
+   "period_end": "2024-12-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Note 7 says fair value is estimated from quoted market prices but does not assign the instrument to a hierarchy level (Level 1/2/3); only the revolving credit loans are tagged Level 2."
+  },
+  {
+   "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.valuation_basis_as_disclosed.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "valuation_basis_as_disclosed",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "quoted market prices",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (3)",
+     "quote": "(3) Fair values are estimated based on quoted market prices.",
+     "printed": "quoted market prices"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.hierarchy_level.2025-06-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "hierarchy_level",
+   "period_end": "2025-06-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Note 7 says fair value is estimated from quoted market prices but does not assign the instrument to a hierarchy level (Level 1/2/3); only the revolving credit loans are tagged Level 2."
+  },
+  {
+   "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.valuation_basis_as_disclosed.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "valuation_basis_as_disclosed",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "quoted market prices",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 7 Fair Value Measurements > footnote (3)",
+     "quote": "(3) Fair values are estimated based on quoted market prices.",
+     "printed": "quoted market prices"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.hierarchy_level.2024-12-28",
+   "module": "CP-3",
+   "topic": "fair_value",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "hierarchy_level",
+   "period_end": "2024-12-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "Note 7 says fair value is estimated from quoted market prices but does not assign the instrument to a hierarchy level (Level 1/2/3); only the revolving credit loans are tagged Level 2."
+  },
+  {
+   "fact_id": "CP-3.observed_quotes.All_instruments.observed_bid_ask_or_price",
+   "module": "CP-3",
+   "topic": "observed_quotes",
+   "subject": "All instruments",
+   "field": "observed_bid_ask_or_price",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "No dated market quotes (bid, ask, price, yield) are in the filings; a fair value is not a quote. User input is required, otherwise CP-3 states Insufficient Information."
+  },
+  {
+   "fact_id": "CP-3C.call_terms.5.25_senior_notes_due_2027.optional_redemption_price_pct_of_principal.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "5.25% senior notes due 2027",
+   "field": "optional_redemption_price_pct_of_principal",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "100",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "We may redeem some or all of the 5.25% senior notes due 2027 at a redemption price of 100%",
+     "printed": "100%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.5.25_senior_notes_due_2027.change_of_control_or_asset_sale_repurchase.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "5.25% senior notes due 2027",
+   "field": "change_of_control_or_asset_sale_repurchase",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "offer to repurchase at the repurchase price set forth in the indenture plus accrued and unpaid interest",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "if we undergo a change of control or upon certain asset sales, we may be required to offer to repurchase the 5.25% senior notes due 2027 at the repurchase price set forth in the indenture plus accrued and unpaid interest",
+     "printed": "at the repurchase price set forth in the indenture plus accrued and unpaid interest"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2025-09-15.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "optional_redemption_price_pct_from_2025-09-15",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "104.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "We may redeem some or all of the 8.00% senior secured notes due 2028 at a redemption price of 104.00% of the principal amount beginning September 15, 2025 and thereafter at prices declining annually to 102.00% on or after September 15, 2026 and 100.00% on or after September 15, 2027",
+     "printed": "104.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2026-09-15.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "optional_redemption_price_pct_from_2026-09-15",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "102.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "We may redeem some or all of the 8.00% senior secured notes due 2028 at a redemption price of 104.00% of the principal amount beginning September 15, 2025 and thereafter at prices declining annually to 102.00% on or after September 15, 2026 and 100.00% on or after September 15, 2027",
+     "printed": "102.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2027-09-15.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "optional_redemption_price_pct_from_2027-09-15",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "100.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "We may redeem some or all of the 8.00% senior secured notes due 2028 at a redemption price of 104.00% of the principal amount beginning September 15, 2025 and thereafter at prices declining annually to 102.00% on or after September 15, 2026 and 100.00% on or after September 15, 2027",
+     "printed": "100.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.equity_clawback_redemption_price_pct_before_2025-09-15.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "equity_clawback_redemption_price_pct_before_2025-09-15",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "108.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "up to 40% of the aggregate principal amount of the 8.00% senior secured notes due 2028 prior to September 15, 2025 at a redemption price of 108.00%",
+     "printed": "108.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.equity_clawback_max_share_of_principal.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "equity_clawback_max_share_of_principal",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "40",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "up to 40% of the aggregate principal amount of the 8.00% senior secured notes due 2028 prior to September 15, 2025 at a redemption price of 108.00%",
+     "printed": "40%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.make_whole_before_2025-09-15.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "make_whole_before_2025-09-15",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "redeemable at the make-whole amount set forth in the indenture plus accrued and unpaid interest",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "at any time prior to September 15, 2025 at a redemption price equal to the make-whole amount set forth in the indenture plus accrued and unpaid interest",
+     "printed": "make-whole amount set forth in the indenture"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.change_of_control_repurchase_price_pct.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "change_of_control_repurchase_price_pct",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "101.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "we may be required to offer to repurchase the 8.00% senior secured notes due 2028 at 101.00% of the aggregate principal amount",
+     "printed": "101.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.asset_disposition_offer_price_pct.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "asset_disposition_offer_price_pct",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "100.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "we may be required to offer to purchase a portion of the 8.00% senior secured notes due 2028 at 100.00% of the aggregate principal amount",
+     "printed": "100.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.Tranche_B_term_loans_due_2029.voluntary_prepayment_premium.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "Tranche B term loans due 2029",
+   "field": "voluntary_prepayment_premium",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "none (prepayable at any time without premium or penalty, other than breakage costs on SOFR loans)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "We may prepay term loans or revolving loans at any time without premium or penalty (other than customary “breakage” costs with respect to the early termination of SOFR loans)",
+     "printed": "without premium or penalty"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3C.call_terms.Revolving_credit_loans_due_2028.voluntary_prepayment_premium.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "Revolving credit loans due 2028",
+   "field": "voluntary_prepayment_premium",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "none (prepayable at any time without premium or penalty, other than breakage costs on SOFR loans)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "We may prepay term loans or revolving loans at any time without premium or penalty (other than customary “breakage” costs with respect to the early termination of SOFR loans)",
+     "printed": "without premium or penalty"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.guarantors.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "Tranche B term loans due 2029",
+   "field": "guarantors",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "all existing and certain future domestic subsidiaries (other than a domestic subsidiary that is a holding company for one or more foreign subsidiaries); joint and several, full and unconditional, senior basis",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "guaranteed on a senior basis by all of our existing and certain future domestic subsidiaries (other than a domestic subsidiary that is a holding company for one or more foreign subsidiaries)",
+     "printed": "all of our existing and certain future domestic subsidiaries"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.collateral.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "Tranche B term loans due 2029",
+   "field": "collateral",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "substantially all assets of the borrower and its domestic subsidiaries except real property",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The credit agreement is secured by substantially all of our and our domestic subsidiaries’ assets except our and our domestic subsidiaries’ real property",
+     "printed": "substantially all of our and our domestic subsidiaries’ assets except our and our domestic subsidiaries’ real property"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.priority.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "Tranche B term loans due 2029",
+   "field": "priority",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior secured, pari passu with the 8.00% senior secured notes due 2028 on the shared collateral",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "which assets also secure (and will continue to secure) our credit agreement on a pari passu basis",
+     "printed": "pari passu basis"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.guarantors.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "Revolving credit loans due 2028",
+   "field": "guarantors",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "all existing and certain future domestic subsidiaries (other than a domestic subsidiary that is a holding company for one or more foreign subsidiaries); joint and several, full and unconditional, senior basis",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "guaranteed on a senior basis by all of our existing and certain future domestic subsidiaries (other than a domestic subsidiary that is a holding company for one or more foreign subsidiaries)",
+     "printed": "all of our existing and certain future domestic subsidiaries"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.collateral.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "Revolving credit loans due 2028",
+   "field": "collateral",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "substantially all assets of the borrower and its domestic subsidiaries except real property",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "The credit agreement is secured by substantially all of our and our domestic subsidiaries’ assets except our and our domestic subsidiaries’ real property",
+     "printed": "substantially all of our and our domestic subsidiaries’ assets except our and our domestic subsidiaries’ real property"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.priority.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "Revolving credit loans due 2028",
+   "field": "priority",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior secured, pari passu with the 8.00% senior secured notes due 2028 on the shared collateral",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "which assets also secure (and will continue to secure) our credit agreement on a pari passu basis",
+     "printed": "pari passu basis"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.guarantors.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "5.25% senior notes due 2027",
+   "field": "guarantors",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "all existing and certain future domestic subsidiaries; foreign subsidiaries are not guarantors",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "guaranteed on a senior basis by all of our existing and certain future domestic subsidiaries. The 5.25% senior notes due 2027 and the subsidiary guarantees",
+     "printed": "all of our existing and certain future domestic subsidiaries"
+    },
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "Our foreign subsidiaries are not guarantors, and any future foreign or partially owned domestic subsidiaries will not be guarantors, of the 5.25% senior notes due 2027",
+     "printed": "Our foreign subsidiaries are not guarantors"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.collateral.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "5.25% senior notes due 2027",
+   "field": "collateral",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "unsecured",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "are our and the guarantors’ general unsecured obligations and are effectively junior in right of payment to all of our and the guarantors’ secured indebtedness",
+     "printed": "general unsecured obligations"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.priority.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "5.25% senior notes due 2027",
+   "field": "priority",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "senior unsecured; effectively junior to secured debt and to non-guarantor subsidiary liabilities; pari passu with other senior unsecured debt",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "are effectively junior in right of payment to all of our and the guarantors’ secured indebtedness and to all existing and future indebtedness and other liabilities of our non-guarantor subsidiaries",
+     "printed": "effectively junior in right of payment to all of our and the guarantors’ secured indebtedness"
+    },
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 5.25% Senior Notes due 2027 paragraph",
+     "quote": "are pari passu in right of payment to all of our and the guarantors’ existing and future unsecured senior debt",
+     "printed": "pari passu in right of payment"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.guarantors.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "guarantors",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "each existing and future domestic subsidiary (other than immaterial subsidiaries); same guarantors as the credit agreement",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "guaranteed on a senior secured basis by each of our existing and future domestic subsidiaries (other than immaterial subsidiaries). The 8.00% senior secured notes due 2028 have the same guarantors as our credit agreement",
+     "printed": "The 8.00% senior secured notes due 2028 have the same guarantors as our credit agreement"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.collateral.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "collateral",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "first-priority security interests in certain collateral (most of the borrower and guarantors' property, except real property and certain intangible assets), pari passu with the credit agreement",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "are secured by, subject to permitted liens, first-priority security interests in certain collateral (which generally includes most of our and our guarantors’ right or interest in or to property of any kind, except for our and our guarantors’ real property and certain intangible assets)",
+     "printed": "first-priority security interests in certain collateral"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.priority.2025-06-28",
+   "module": "CP-3D",
+   "topic": "priority_structure",
+   "subject": "8.00% senior secured notes due 2028",
+   "field": "priority",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "pari passu with all existing and future senior debt incl. the credit agreement; effectively senior to senior unsecured debt (incl. 5.25% notes) to the extent of collateral value; structurally subordinated to non-guarantor subsidiary liabilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "rank (1) pari passu (equally and ratably) in right of payment to all of our and the guarantors’ existing and future senior debt, including existing and future senior debt under our existing or any future senior secured credit agreement",
+     "printed": "pari passu (equally and ratably)"
+    },
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "(2) effectively senior in right of payment to our and such guarantors’ existing and future senior unsecured debt, including our 5.25% senior notes due 2027 to the extent of the value of the collateral",
+     "printed": "effectively senior in right of payment"
+    },
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "(5) structurally subordinated to all existing and future indebtedness and other liabilities of our subsidiaries that do not guarantee the 8.00% senior secured notes due 2028",
+     "printed": "structurally subordinated"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  }
+ ],
+ "not_golden": [
+  {
+   "module": "CP-1",
+   "why": "covered by financial_gold"
+  },
+  {
+   "module": "CP-1C",
+   "why": "Peers and peer multiples are user input (context valuation.peers); the filings supply no peer data. Not golden."
+  },
+  {
+   "module": "CP-2D",
+   "why": "Horizon and minimum cash are user input (context assumptions.cp2d). Its inputs (cash, maturity schedule, revolver availability) are CP-2 facts; the projection itself is a judgment output."
+  },
+  {
+   "module": "CP-MODEL",
+   "why": "Judgment module; no filing-derived answer key."
+  },
+  {
+   "module": "CP-5",
+   "why": "Judgment module (synthesis); no filing-derived answer key."
+  }
+ ],
+ "needs_user_input": [
+  {
+   "context_path": "quotes",
+   "modules": [
+    "CP-3"
+   ],
+   "why": "Observed dated quotes are not in the filings; without them CP-3 states Insufficient Information. Fair value in Note 7 is not a quote."
+  },
+  {
+   "context_path": "valuation.peers",
+   "modules": [
+    "CP-1C"
+   ],
+   "why": "Peer names/figures are user input for a relative-value run."
+  },
+  {
+   "context_path": "valuation.issuer_market",
+   "modules": [
+    "CP-1C"
+   ],
+   "why": "BGS is NYSE-listed, but market cap, EV and price are not in the corpus filings as of the cutoff."
+  },
+  {
+   "context_path": "assumptions.cp2d",
+   "modules": [
+    "CP-2D"
+   ],
+   "why": "Horizon (months) and minimum cash are user choices."
+  },
+  {
+   "context_path": "assumptions.cp3c",
+   "modules": [
+    "CP-3C"
+   ],
+   "why": "Repricing step-up (bps) is a user assumption; the filings disclose call/prepayment terms only."
+  },
+  {
+   "context_path": "assumptions.cp3d",
+   "modules": [
+    "CP-3D"
+   ],
+   "why": "Recovery percentage is a user assumption."
+  },
+  {
+   "context_path": "identity.guarantors",
+   "modules": [
+    "CP-1",
+    "CP-3D"
+   ],
+   "why": "Filings describe guarantors as all existing and certain future domestic subsidiaries; individual names are not listed in the 10-Q text used."
+  },
+  {
+   "context_path": "ratings",
+   "modules": [
+    "CP-3",
+    "CP-3D"
+   ],
+   "why": "No agency ratings are disclosed in the filings."
+  }
+ ],
+ "limitations": [
+  "Only the 2025-06-28 10-Q (filed 2025-08-04) is cited. The other four corpus filings were not used for module facts; December 28, 2024 comparatives are taken from this 10-Q.",
+  "Amounts are as printed. The checker scale enum has no 'thousands': facts printed in USD thousands carry scale null and the locator says 'amounts in USD thousands as printed'; facts printed in millions carry scale millions. Ratios (x) carry unit null.",
+  "Quotes keep zero-width spaces (U+200B) present in the filing HTML, because the normalisation does not remove them.",
+  "Revolver commitment 475.0 is the balance-sheet-date figure; the 430.0 figure took effect on 2025-07-01 (Note 18) and is recorded separately.",
+  "The credit agreement and indentures are not in the corpus; floors, financial definitions and exact guarantor names are not golden."
+ ],
+ "preparer": "mx-feature (goldens/bgs)"
+}

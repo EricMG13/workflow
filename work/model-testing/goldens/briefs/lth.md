@@ -1,0 +1,13 @@
+# Brief: LTH, covenant_refinancing (case_id `lth-covenant-refinancing`)
+- Issuer: Life Time Group Holdings, Inc. (CIK 0001869198). Calendar fiscal year. Cutoff and as_of: 2025-08-18.
+- Periods: FY2024Q3, FY2024Q4, FY2025Q1, FY2025Q2, FY2024. The latest balance sheet is 2025-06-30.
+- Sources: `LTH/` (4 filings plus the 13th, 14th and 15th credit agreement amendments; the 15th includes Annex II).
+- Pathway modules: CP-0, CP-1, CP-MODEL, CP-1A, CP-2, CP-2D, CP-4, CP-3C, CP-5.
+- context.json: run_type `research`, pathway `covenant_refinancing`. attachments.legal_documents is `executed`.
+- Scope (the core of this case is CP-4 and CP-3C):
+  - **CP-4:** for each amendment, record its date and what it changed: maturity, margins, commitments, and the financial covenant. For the financial covenant record the type, level, springing test condition and threshold, cure, and the defined terms named. Then the operative terms at cutoff, as far as Annex II shows them; if the chain is incomplete, say so.
+  - **CP-3C:** repricing terms, step-downs and soft-call or premium terms.
+  - **CP-2:** the debt stack at 2025-06-30 (term loan, notes, revolver commitment, drawn and availability, cash, maturities).
+  - **CP-1A:** business, sector, country and sponsor or ownership as disclosed.
+  - **CP-2D:** minimum cash and horizon are user input.
+  - **not_golden:** CP-5, CP-MODEL.

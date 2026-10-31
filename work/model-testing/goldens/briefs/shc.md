@@ -1,0 +1,13 @@
+# Brief: SHC, earnings_update (case_id `shc-earnings-update`)
+- Issuer: Sotera Health Company (CIK 0001822479). Calendar fiscal year. Cutoff and as_of: 2025-08-08.
+- Periods: FY2024Q3, FY2024Q4, FY2025Q1, FY2025Q2, FY2024. The latest balance sheet is 2025-06-30.
+- Sources: `SHC/` (5 filings, Amendment No. 4, 8-K Exhibit 99.1).
+- Pathway modules: CP-0, CP-1, CP-MODEL, CP-1B, CP-1D, CP-5.
+- context.json: run_type `earnings`, current_period `q2-2025`. Choose prior_period from what the 10-Q prints side by side (normally `q2-2024`) and justify it in the report. The form requires prior to be the same kind as current and earlier.
+- Scope:
+  - **CP-0:** identity and documents.
+  - **CP-1B:** current vs prior for consolidated revenue, segment revenue (each segment), segment income, adjusted EBITDA and net income, as printed. Store each side as a fact. Compute any change in `derive.py`; printed % changes are evidence only.
+  - **CP-1D:** the net income → adjusted EBITDA reconciliation, line by line, for both periods.
+  - **Guidance:** none is in the 10-Q, so record it `missing` with that reason. It does not mean none was issued.
+  - **Debt facts** the earnings narrative needs: term loan principal and rate after Amendment No. 4 (2024-08-05), and revolver availability at 2025-06-30.
+  - **not_golden:** CP-5, CP-MODEL.

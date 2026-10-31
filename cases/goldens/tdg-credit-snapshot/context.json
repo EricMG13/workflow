@@ -1,0 +1,70 @@
+{
+ "schema": "context/1",
+ "run": {
+  "run_type": "research",
+  "pathway": "credit_snapshot",
+  "case_kind": "public",
+  "as_of": "2025-02-04",
+  "current_period": "q1-2025",
+  "prior_period": "",
+  "reporting_currency": "USD"
+ },
+ "identity": {
+  "issuer_name": "TransDigm Group Incorporated",
+  "issuer_id": "tdg",
+  "borrower_name": "TransDigm Inc.",
+  "parent_name": "",
+  "guarantors": [
+   "TransDigm Group Incorporated",
+   "TransDigm UK Holdings plc",
+   "TransDigm Inc.'s Domestic Restricted Subsidiaries"
+  ],
+  "aliases": [
+   "TD Group",
+   "TransDigm",
+   "TDG"
+  ],
+  "listed_equity": true,
+  "ticker": "TDG",
+  "sector": "Aerospace and defense: highly engineered aircraft components",
+  "country": "United States",
+  "sponsor": ""
+ },
+ "deal_terms": [],
+ "quotes": [],
+ "ratings": [],
+ "valuation": {
+  "peer_source": "cp_dr_public",
+  "basis": "auto",
+  "issuer_market": {
+   "market_cap_m": "",
+   "net_debt_m": "",
+   "ev_m": "",
+   "ebitda_basis": "LTM",
+   "as_of": "",
+   "source": ""
+  },
+  "peers": [],
+  "precedents": [],
+  "user_multiple": {
+   "value": "",
+   "basis": "LTM",
+   "rationale": ""
+  }
+ },
+ "assumptions": {
+  "cp2a": null,
+  "cp2d": null,
+  "cp2e": null,
+  "cp3c": null,
+  "cp3d": null,
+  "cp4c": null
+ },
+ "attachments": {
+  "portfolio_workbook": false,
+  "prior_case": false,
+  "management_bridge": false,
+  "legal_documents": "none"
+ },
+ "research_questions": []
+}

@@ -1,0 +1,4104 @@
+{
+ "schema_version": "module-golden/1",
+ "case_id": "tdg-credit-snapshot",
+ "issuer_id": "TDG",
+ "pathway": "credit_snapshot",
+ "cutoff": "2025-02-04",
+ "context_file": "context.json",
+ "financial_gold": {
+  "path": "/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1-codex-gold-20261031/tdg/financial_gold.json",
+  "sha256": "f2cd650a0e17a74b74849a5c35b23378729efd4836b0a419dce8de29a743e845"
+ },
+ "sources": [
+  {
+   "source_id": "Q2FY24",
+   "file": "TDG/TDG_2024-03-30_10-Q_0001260221-24-000046_tdg-20240330.htm",
+   "sha256": "7e902c48d87067b4ea96c388ab2ca460c9c1c3c2e2960da09629377a7b359b0d",
+   "url": "https://www.sec.gov/Archives/edgar/data/1260221/000126022124000046/tdg-20240330.htm",
+   "form": "10-Q",
+   "period_end": "2024-03-30",
+   "filed": "2024-05-07"
+  },
+  {
+   "source_id": "Q3FY24",
+   "file": "TDG/TDG_2024-06-29_10-Q_0001260221-24-000069_tdg-20240629.htm",
+   "sha256": "74876b8874a3a396efd700114b280f45fcfcd3f11ceae31adee98c93bfacbf03",
+   "url": "https://www.sec.gov/Archives/edgar/data/1260221/000126022124000069/tdg-20240629.htm",
+   "form": "10-Q",
+   "period_end": "2024-06-29",
+   "filed": "2024-08-06"
+  },
+  {
+   "source_id": "K24",
+   "file": "TDG/TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm",
+   "sha256": "fe8e1ae9f3fa8c44445b21396c0423153ae9cf80ef6e8c908574d84a63e14121",
+   "url": "https://www.sec.gov/Archives/edgar/data/1260221/000126022124000083/tdg-20240930.htm",
+   "form": "10-K",
+   "period_end": "2024-09-30",
+   "filed": "2024-11-07"
+  },
+  {
+   "source_id": "Q1FY25",
+   "file": "TDG/TDG_2024-12-28_10-Q_0001260221-25-000014_tdg-20241228.htm",
+   "sha256": "9bdfd29ebc3c57b72d506e7dff2a2ca2e3179035deb4941dcd026523a5b8595a",
+   "url": "https://www.sec.gov/Archives/edgar/data/1260221/000126022125000014/tdg-20241228.htm",
+   "form": "10-Q",
+   "period_end": "2024-12-28",
+   "filed": "2025-02-04"
+  }
+ ],
+ "facts": [
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.legal_name",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "legal_name",
+   "period_end": null,
+   "status": "known",
+   "value": "TransDigm Group Incorporated",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page > registrant name",
+     "quote": "TransDigm Group Incorporated (Exact name of registrant as specified in its charter)",
+     "printed": "TransDigm Group Incorporated"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.ticker",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "ticker",
+   "period_end": null,
+   "status": "known",
+   "value": "TDG",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page > Section 12(b) securities",
+     "quote": "Common Stock, $0.01 par value TDG New York Stock Exchange",
+     "printed": "TDG"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.exchange",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "exchange",
+   "period_end": null,
+   "status": "known",
+   "value": "New York Stock Exchange",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page > Section 12(b) securities",
+     "quote": "Common Stock, $0.01 par value TDG New York Stock Exchange",
+     "printed": "New York Stock Exchange"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.state_of_incorporation",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "state_of_incorporation",
+   "period_end": null,
+   "status": "known",
+   "value": "Delaware",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page",
+     "quote": "Delaware (State or other jurisdiction of incorporation or organization) 41-2101738 (I.R.S. Employer Identification No.) 1350 Euclid Avenue, Suite 1600, Cleveland, Ohio 44115",
+     "printed": "Delaware"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.principal_executive_offices",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "principal_executive_offices",
+   "period_end": null,
+   "status": "known",
+   "value": "1350 Euclid Avenue, Suite 1600, Cleveland, Ohio 44115",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page",
+     "quote": "Delaware (State or other jurisdiction of incorporation or organization) 41-2101738 (I.R.S. Employer Identification No.) 1350 Euclid Avenue, Suite 1600, Cleveland, Ohio 44115",
+     "printed": "1350 Euclid Avenue"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.fiscal_year_end",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "fiscal_year_end",
+   "period_end": null,
+   "status": "known",
+   "value": "September 30",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Part I intro > definitions",
+     "quote": "References to “fiscal year” mean the year ending or ended September 30.",
+     "printed": "September 30"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.filer_status",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "filer_status",
+   "period_end": null,
+   "status": "known",
+   "value": "Large Accelerated Filer",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page > filer check boxes",
+     "quote": "Large Accelerated Filer ☒ Accelerated Filer ☐",
+     "printed": "Large Accelerated Filer ☒"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.commission_file_number",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Group Incorporated",
+   "field": "commission_file_number",
+   "period_end": null,
+   "status": "known",
+   "value": "001-32833",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page",
+     "quote": "Commission File Number 001-32833",
+     "printed": "001-32833"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TransDigm_Inc.relationship_to_listed_parent",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TransDigm Inc.",
+   "field": "relationship_to_listed_parent",
+   "period_end": null,
+   "status": "known",
+   "value": "Wholly-owned operating subsidiary of TD Group (TransDigm Group Incorporated, the listed registrant)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > The Company",
+     "quote": "TD Group, through its wholly-owned subsidiary, TransDigm Inc., is a leading global designer, producer and supplier",
+     "printed": "wholly-owned subsidiary, TransDigm Inc."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.TD_Group.holding_company_status",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "TD Group",
+   "field": "holding_company_status",
+   "period_end": null,
+   "status": "known",
+   "value": "No significant operations or assets separate from its investment in TransDigm Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Guarantor Information",
+     "quote": "TD Group has no significant operations or assets separate from its investment in TransDigm Inc.",
+     "printed": "no significant operations or assets separate from its investment in TransDigm Inc."
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Subordinated_Notes.issuer_entity",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Subordinated Notes",
+   "field": "issuer_entity",
+   "period_end": null,
+   "status": "known",
+   "value": "TransDigm Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Subordinated Notes",
+     "quote": "TransDigm Inc.'s 5.50% 2027 Notes, 4.625% 2029 Notes, and 4.875% 2029 Notes (collectively, the “Subordinated Notes”) are jointly and severally guaranteed",
+     "printed": "TransDigm Inc.'s 5.50% 2027 Notes"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.2031_Secured_Notes.issuer_entity",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "2031 Secured Notes",
+   "field": "issuer_entity",
+   "period_end": null,
+   "status": "known",
+   "value": "TransDigm Inc.",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Issuance of $1,000 million of Senior Secured Notes due 2031",
+     "quote": "amongst TransDigm Inc., as issuer, TransDigm Group and the other subsidiaries of TransDigm Inc. named therein, as guarantors. The 2031 Secured Notes",
+     "printed": "TransDigm Inc., as issuer"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.identity.Term_Loans_Facility_and_revolving_credit_facility.borrower_entity",
+   "module": "CP-0",
+   "topic": "identity",
+   "subject": "Term Loans Facility and revolving credit facility",
+   "field": "borrower_entity",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "The filings use 'TransDigm' or 'the Company' for the Credit Agreement borrower without naming the legal borrower; the Credit Agreement is not in the corpus."
+  },
+  {
+   "fact_id": "CP-0.documents.Form_10_Q_2024_03_30.period_covered.2024-03-30",
+   "module": "CP-0",
+   "topic": "documents",
+   "subject": "Form 10-Q 2024-03-30",
+   "field": "period_covered",
+   "period_end": "2024-03-30",
+   "status": "known",
+   "value": "2024-03-30",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q2FY24",
+     "locator": "Cover page",
+     "quote": "For the quarterly period ended March 30, 2024",
+     "printed": "March 30, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.Form_10_Q_2024_06_29.period_covered.2024-06-29",
+   "module": "CP-0",
+   "topic": "documents",
+   "subject": "Form 10-Q 2024-06-29",
+   "field": "period_covered",
+   "period_end": "2024-06-29",
+   "status": "known",
+   "value": "2024-06-29",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q3FY24",
+     "locator": "Cover page",
+     "quote": "For the quarterly period ended June 29, 2024",
+     "printed": "June 29, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.Form_10_K_2024_09_30.period_covered.2024-09-30",
+   "module": "CP-0",
+   "topic": "documents",
+   "subject": "Form 10-K 2024-09-30",
+   "field": "period_covered",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "2024-09-30",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Cover page",
+     "quote": "For the fiscal year ended September 30, 2024",
+     "printed": "September 30, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-0.documents.Form_10_Q_2024_12_28.period_covered.2024-12-28",
+   "module": "CP-0",
+   "topic": "documents",
+   "subject": "Form 10-Q 2024-12-28",
+   "field": "period_covered",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2024-12-28",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Cover page",
+     "quote": "For the quarterly period ended December 28, 2024",
+     "printed": "December 28, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.segments.TransDigm.reporting_segment_count.2024-09-30",
+   "module": "CP-1A",
+   "topic": "segments",
+   "subject": "TransDigm",
+   "field": "reporting_segment_count",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "3",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > Segments",
+     "quote": "three reporting segments: Power & Control, Airframe and Non-aviation.",
+     "printed": "three"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.segments.Power_Control.reporting_segment_name.2024-09-30",
+   "module": "CP-1A",
+   "topic": "segments",
+   "subject": "Power & Control",
+   "field": "reporting_segment_name",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "Power & Control",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > Segments",
+     "quote": "The Power & Control segment includes operations that primarily develop, produce and market systems and components that predominately provide power to or control power of the aircraft",
+     "printed": "Power & Control"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.segments.Airframe.reporting_segment_name.2024-09-30",
+   "module": "CP-1A",
+   "topic": "segments",
+   "subject": "Airframe",
+   "field": "reporting_segment_name",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "Airframe",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > Segments",
+     "quote": "The Airframe segment includes operations that primarily develop, produce and market systems and components that are used in non-power airframe applications",
+     "printed": "Airframe"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.segments.Non_aviation.reporting_segment_name.2024-09-30",
+   "module": "CP-1A",
+   "topic": "segments",
+   "subject": "Non-aviation",
+   "field": "reporting_segment_name",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "Non-aviation",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > Segments",
+     "quote": "The Non-aviation segment includes operations that primarily develop, produce and market products for non-aviation markets.",
+     "printed": "Non-aviation"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.TransDigm.sector_description",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "TransDigm",
+   "field": "sector_description",
+   "period_end": null,
+   "status": "known",
+   "value": "Designer, producer and supplier of highly engineered aircraft components (commercial and military aerospace)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > The Company",
+     "quote": "is a leading global designer, producer and supplier of highly engineered aircraft components",
+     "printed": "highly engineered aircraft components"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.TransDigm.aftermarket_share_of_net_sales.2024-09-30",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "TransDigm",
+   "field": "aftermarket_share_of_net_sales",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "55",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > The Company",
+     "quote": "We estimate that approximately 55% of our net sales in fiscal year 2024 were generated from the aftermarket",
+     "printed": "55%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.TransDigm.proprietary_share_of_net_sales.2024-09-30",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "TransDigm",
+   "field": "proprietary_share_of_net_sales",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "90",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > The Company",
+     "quote": "We estimate that approximately 90% of our net sales for fiscal year 2024 were generated by proprietary products.",
+     "printed": "90%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.TransDigm.businesses_acquired_since_1993.2024-09-30",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "TransDigm",
+   "field": "businesses_acquired_since_1993",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "93",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Item 1 Business > The Company",
+     "quote": "Since the inception of our company in 1993, we have acquired 93 businesses and various product lines.",
+     "printed": "93 businesses"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.profile.TransDigm.sponsor_or_controlling_holder",
+   "module": "CP-1A",
+   "topic": "profile",
+   "subject": "TransDigm",
+   "field": "sponsor_or_controlling_holder",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "No sponsor or controlling holder is named in the four filings; beneficial ownership sits in the proxy statement, which is incorporated by reference and not in the corpus."
+  },
+  {
+   "fact_id": "CP-1A.acquisitions.CPI_s_Electron_Device_Business.purchase_price.2024-06-06",
+   "module": "CP-1A",
+   "topic": "acquisitions",
+   "subject": "CPI's Electron Device Business",
+   "field": "purchase_price",
+   "period_end": "2024-06-06",
+   "status": "known",
+   "value": "1385",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 2 Acquisitions",
+     "quote": "On June 6, 2024, the Company acquired all the outstanding stock of the Electron Device Business of Communications & Power Industries (“CPI's Electron Device Business”) for approximately $1,385 million in cash.",
+     "printed": "$1,385 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.acquisitions.CPI_s_Electron_Device_Business.segment.2024-06-06",
+   "module": "CP-1A",
+   "topic": "acquisitions",
+   "subject": "CPI's Electron Device Business",
+   "field": "segment",
+   "period_end": "2024-06-06",
+   "status": "known",
+   "value": "Power & Control",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 2 Acquisitions",
+     "quote": "The operating results of CPI’s Electron Device Business are included within TransDigm's Power & Control segment.",
+     "printed": "Power & Control"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.acquisitions.Raptor_Scientific.purchase_price_as_first_reported.2024-07-31",
+   "module": "CP-1A",
+   "topic": "acquisitions",
+   "subject": "Raptor Scientific",
+   "field": "purchase_price_as_first_reported",
+   "period_end": "2024-07-31",
+   "status": "known",
+   "value": "647",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 2 Acquisitions",
+     "quote": "On July 31, 2024, the Company acquired all the outstanding stock of Raptor Scientific for approximately $647 million in cash.",
+     "printed": "$647 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.acquisitions.Raptor_Scientific.purchase_price_latest.2024-07-31",
+   "module": "CP-1A",
+   "topic": "acquisitions",
+   "subject": "Raptor Scientific",
+   "field": "purchase_price_latest",
+   "period_end": "2024-07-31",
+   "status": "known",
+   "value": "646",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 2 Acquisitions",
+     "quote": "On July 31, 2024, the Company acquired all the outstanding stock of Raptor Scientific for approximately $646 million, which includes a working capital settlement of $1 million received in the first quarter of fiscal 2025.",
+     "printed": "$646 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.acquisitions.Raptor_Scientific.segment.2024-07-31",
+   "module": "CP-1A",
+   "topic": "acquisitions",
+   "subject": "Raptor Scientific",
+   "field": "segment",
+   "period_end": "2024-07-31",
+   "status": "known",
+   "value": "Airframe",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 2 Acquisitions",
+     "quote": "The operating results of Raptor Scientific are included within TransDigm's Airframe segment.",
+     "printed": "Airframe"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.acquisitions.Product_lines_acquired_in_Q1_FY2025.cash_paid.2024-12-28",
+   "module": "CP-1A",
+   "topic": "acquisitions",
+   "subject": "Product lines acquired in Q1 FY2025",
+   "field": "cash_paid",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "29",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Investing Activities",
+     "quote": "acquisitions of certain product lines completed during the first quarter of 2025 for $29 million",
+     "printed": "$29 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.7_125_Senior_Secured_Notes_due_2031_issuance.principal.2023-11-28",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "7.125% Senior Secured Notes due 2031 issuance",
+   "field": "principal",
+   "period_end": "2023-11-28",
+   "status": "known",
+   "value": "1000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "On November 28, 2023, the Company entered into a purchase agreement in connection with a private offering of $1,000 million in aggregate principal amount of 7.125% senior secured notes due 2031",
+     "printed": "$1,000 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Tranche_J_term_loans_Amendment_No_13.principal.2023-11-28",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Tranche J term loans (Amendment No. 13)",
+   "field": "principal",
+   "period_end": "2023-11-28",
+   "status": "known",
+   "value": "1000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "the Company, among other things, issued $1,000 million in Tranche J term loans maturing February 28, 2031",
+     "printed": "$1,000 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Revolving_credit_facility_refinancing_Amendment_No_14.commitments_after.2024-02-27",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Revolving credit facility refinancing (Amendment No. 14)",
+   "field": "commitments_after",
+   "period_end": "2024-02-27",
+   "status": "known",
+   "value": "910",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "increased the total commitments capacity thereunder from $810 million to $910 million",
+     "printed": "$910 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.6_375_Senior_Secured_Notes_due_2029_initial.principal.2024-02-27",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "6.375% Senior Secured Notes due 2029 (initial)",
+   "field": "principal",
+   "period_end": "2024-02-27",
+   "status": "known",
+   "value": "2200",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "private offerings of $2,200 million in aggregate principal amount of 6.375% senior secured notes due 2029",
+     "printed": "$2,200 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.6_625_Senior_Secured_Notes_due_2032.principal.2024-02-27",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "6.625% Senior Secured Notes due 2032",
+   "field": "principal",
+   "period_end": "2024-02-27",
+   "status": "known",
+   "value": "2200",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "$2,200 million in aggregate principal amount of 6.625% senior secured notes due 2032",
+     "printed": "$2,200 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.6_25_Secured_Notes_due_2026_redemption.principal_redeemed.2024-03-28",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "6.25% Secured Notes due 2026 redemption",
+   "field": "principal_redeemed",
+   "period_end": "2024-03-28",
+   "status": "known",
+   "value": "4400",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "On March 28, 2024, the Company redeemed all $4,400 million aggregate principal amount of its outstanding 2026 Secured Notes",
+     "printed": "$4,400 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.2029_Secured_Notes_add_on.principal.2024-03-22",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "2029 Secured Notes add-on",
+   "field": "principal",
+   "period_end": "2024-03-22",
+   "status": "known",
+   "value": "550",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "a private offering of $550 million in aggregate principal amount consisting of 6.375% senior secured notes due 2029",
+     "printed": "$550 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.7_50_Senior_Subordinated_Notes_due_2027_redemption.principal_redeemed.2024-04-22",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "7.50% Senior Subordinated Notes due 2027 redemption",
+   "field": "principal_redeemed",
+   "period_end": "2024-04-22",
+   "status": "known",
+   "value": "550",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "On April 22, 2024, the Company redeemed all $550 million aggregate principal of its outstanding 7.50% senior subordinated notes due 2027",
+     "printed": "$550 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.6_00_Senior_Secured_Notes_due_2033.principal.2024-09-19",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "6.00% Senior Secured Notes due 2033",
+   "field": "principal",
+   "period_end": "2024-09-19",
+   "status": "known",
+   "value": "1500",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "On September 19, 2024, the Company entered into a purchase agreement in connection with a private offering of $1,500 million in aggregate principal amount of 6.00% senior secured notes due 2033",
+     "printed": "$1,500 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Tranche_L_term_loans_Amendment_No_17.principal.2024-09-19",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Tranche L term loans (Amendment No. 17)",
+   "field": "principal",
+   "period_end": "2024-09-19",
+   "status": "known",
+   "value": "1500",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt",
+     "quote": "issued $1,500 million in Tranche L term loans maturing January 19, 2032",
+     "printed": "$1,500 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Special_cash_dividend_75_00_per_share.amount_paid.2024-10-18",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Special cash dividend $75.00 per share",
+   "field": "amount_paid",
+   "period_end": "2024-10-18",
+   "status": "known",
+   "value": "4216",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Significant Transactions of Fiscal 2025",
+     "quote": "On October 18, 2024, the Company paid the special cash dividend of $75.00 per outstanding share of common stock declared in September 2024, totaling $4,216 million",
+     "printed": "$4,216 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Common_stock_repurchases_Q1_FY2025.amount.2024-12-28",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Common stock repurchases Q1 FY2025",
+   "field": "amount",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "316",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Significant Transactions of Fiscal 2025",
+     "quote": "the Company repurchased 252,800 shares of common stock at an average price of 1,248.65 per share for a total amount of $316 million",
+     "printed": "$316 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-1A.financing_events.Trade_receivable_securitization_facility_draw_Q1_FY2025.amount_drawn.2024-12-28",
+   "module": "CP-1A",
+   "topic": "financing_events",
+   "subject": "Trade receivable securitization facility draw Q1 FY2025",
+   "field": "amount_drawn",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "163",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Financing Activities",
+     "quote": "During the first quarter of fiscal 2025, the Company drew the remaining $163 million available under the Securitization Facility",
+     "printed": "$163 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5_50_2027_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.50% 2027 Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2650",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "5.50% senior subordinated notes due 2027 (“5.50% 2027 Notes”) 2,650 (9) — 2,641",
+     "printed": "2,650"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5_50_2027_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.50% 2027 Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2641",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "5.50% senior subordinated notes due 2027 (“5.50% 2027 Notes”) 2,650 (9) — 2,641",
+     "printed": "2,641"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5_50_2027_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.50% 2027 Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2603",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "5.50% 2027 Notes (5) 1 2,641 2,603",
+     "printed": "2,603"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5_50_2027_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.50% 2027 Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2027-11-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "5.50% 2027 Notes $2,650 million November 15, 2027 5.50%",
+     "printed": "November 15, 2027"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5_50_2027_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.50% 2027 Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "5.50",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "5.50% 2027 Notes $2,650 million November 15, 2027 5.50%",
+     "printed": "5.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.5_50_2027_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "5.50% 2027 Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior subordinated, unsecured; subordinated to senior debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Subordinated Notes represent our unsecured obligations ranking subordinate to our senior debt, as defined in the applicable indentures.",
+     "printed": "unsecured obligations ranking subordinate"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2028_Secured_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2028 Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2100",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "6.75% secured notes due 2028 (“2028 Secured Notes”) 2,100 (14) (7) 2,079",
+     "printed": "2,100"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2028_Secured_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2028 Secured Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2079",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "6.75% secured notes due 2028 (“2028 Secured Notes”) 2,100 (14) (7) 2,079",
+     "printed": "2,079"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2028_Secured_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2028 Secured Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2116",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "2028 Secured Notes (5) 1 2,079 2,116",
+     "printed": "2,116"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2028_Secured_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2028 Secured Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2028-08-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "2028 Secured Notes $2,100 million August 15, 2028 6.75%",
+     "printed": "August 15, 2028"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2028_Secured_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2028 Secured Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "6.75",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "2028 Secured Notes $2,100 million August 15, 2028 6.75%",
+     "printed": "6.75%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2028_Secured_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2028 Secured Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured; ranks equally with senior secured debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Secured Notes represent our secured obligations ranking equally to all existing and future senior debt, as defined in the applicable indentures.",
+     "printed": "secured obligations ranking equally"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_625_2029_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.625% 2029 Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1200",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "4.625% senior subordinated notes due 2029 (“4.625% 2029 Notes”) 1,200 (6) — 1,194",
+     "printed": "1,200"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_625_2029_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.625% 2029 Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1194",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "4.625% senior subordinated notes due 2029 (“4.625% 2029 Notes”) 1,200 (6) — 1,194",
+     "printed": "1,194"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_625_2029_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.625% 2029 Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1122",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "4.625% 2029 Notes (5) 1 1,194 1,122",
+     "printed": "1,122"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_625_2029_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.625% 2029 Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2029-01-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "4.625% 2029 Notes $1,200 million January 15, 2029 4.625%",
+     "printed": "January 15, 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_625_2029_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.625% 2029 Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "4.625",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "4.625% 2029 Notes $1,200 million January 15, 2029 4.625%",
+     "printed": "4.625%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_625_2029_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.625% 2029 Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior subordinated, unsecured; subordinated to senior debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Subordinated Notes represent our unsecured obligations ranking subordinate to our senior debt, as defined in the applicable indentures.",
+     "printed": "unsecured obligations ranking subordinate"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2029_Secured_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2029 Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2750",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "6.375% secured notes due 2029 (“2029 Secured Notes”) 2,750 (21) (1) 2,728",
+     "printed": "2,750"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2029_Secured_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2029 Secured Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2728",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "6.375% secured notes due 2029 (“2029 Secured Notes”) 2,750 (21) (1) 2,728",
+     "printed": "2,728"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2029_Secured_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2029 Secured Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2757",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "2029 Secured Notes (5) 1 2,728 2,757",
+     "printed": "2,757"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2029_Secured_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2029 Secured Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2029-03-01",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "2029 Secured Notes $2,750 million March 1, 2029 6.375%",
+     "printed": "March 1, 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2029_Secured_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2029 Secured Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "6.375",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "2029 Secured Notes $2,750 million March 1, 2029 6.375%",
+     "printed": "6.375%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2029_Secured_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2029 Secured Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured; ranks equally with senior secured debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Secured Notes represent our secured obligations ranking equally to all existing and future senior debt, as defined in the applicable indentures.",
+     "printed": "secured obligations ranking equally"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_875_2029_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.875% 2029 Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "750",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "4.875% senior subordinated notes due 2029 (“4.875% 2029 Notes”) 750 (4) — 746",
+     "printed": "750"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_875_2029_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.875% 2029 Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "746",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "4.875% senior subordinated notes due 2029 (“4.875% 2029 Notes”) 750 (4) — 746",
+     "printed": "746"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_875_2029_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.875% 2029 Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "707",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "4.875% 2029 Notes (5) 1 746 707",
+     "printed": "707"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_875_2029_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.875% 2029 Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2029-05-01",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "4.875% 2029 Notes $750 million May 1, 2029 4.875%",
+     "printed": "May 1, 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_875_2029_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.875% 2029 Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "4.875",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "4.875% 2029 Notes $750 million May 1, 2029 4.875%",
+     "printed": "4.875%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.4_875_2029_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "4.875% 2029 Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior subordinated, unsecured; subordinated to senior debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Subordinated Notes represent our unsecured obligations ranking subordinate to our senior debt, as defined in the applicable indentures.",
+     "printed": "unsecured obligations ranking subordinate"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2030_Secured_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2030 Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1450",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "6.875% secured notes due 2030 (“2030 Secured Notes”) 1,450 (12) — 1,438",
+     "printed": "1,450"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2030_Secured_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2030 Secured Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1438",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "6.875% secured notes due 2030 (“2030 Secured Notes”) 1,450 (12) — 1,438",
+     "printed": "1,438"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2030_Secured_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2030 Secured Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1472",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "2030 Secured Notes (5) 1 1,438 1,472",
+     "printed": "1,472"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2030_Secured_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2030 Secured Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2030-12-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "2030 Secured Notes $1,450 million December 15, 2030 6.875%",
+     "printed": "December 15, 2030"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2030_Secured_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2030 Secured Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "6.875",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "2030 Secured Notes $1,450 million December 15, 2030 6.875%",
+     "printed": "6.875%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2030_Secured_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2030 Secured Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured; ranks equally with senior secured debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Secured Notes represent our secured obligations ranking equally to all existing and future senior debt, as defined in the applicable indentures.",
+     "printed": "secured obligations ranking equally"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2031_Secured_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2031 Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1000",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "7.125% secured notes due 2031 (“2031 Secured Notes”) 1,000 (8) (6) 986",
+     "printed": "1,000"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2031_Secured_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2031 Secured Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "986",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "7.125% secured notes due 2031 (“2031 Secured Notes”) 1,000 (8) (6) 986",
+     "printed": "986"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2031_Secured_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2031 Secured Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1024",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "2031 Secured Notes (5) 1 986 1,024",
+     "printed": "1,024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2031_Secured_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2031 Secured Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2031-12-01",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "2031 Secured Notes $1,000 million December 1, 2031 7.125%",
+     "printed": "December 1, 2031"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2031_Secured_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2031 Secured Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "7.125",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "2031 Secured Notes $1,000 million December 1, 2031 7.125%",
+     "printed": "7.125%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2031_Secured_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2031 Secured Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured; ranks equally with senior secured debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Secured Notes represent our secured obligations ranking equally to all existing and future senior debt, as defined in the applicable indentures.",
+     "printed": "secured obligations ranking equally"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2032_Secured_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2032 Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2200",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "6.625% secured notes due 2032 (“2032 Secured Notes”) 2,200 (19) — 2,181",
+     "printed": "2,200"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2032_Secured_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2032 Secured Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2181",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "6.625% secured notes due 2032 (“2032 Secured Notes”) 2,200 (19) — 2,181",
+     "printed": "2,181"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2032_Secured_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2032 Secured Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2219",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "2032 Secured Notes (5) 1 2,181 2,219",
+     "printed": "2,219"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2032_Secured_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2032 Secured Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2032-03-01",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "2032 Secured Notes $2,200 million March 1, 2032 6.625%",
+     "printed": "March 1, 2032"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2032_Secured_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2032 Secured Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "6.625",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "2032 Secured Notes $2,200 million March 1, 2032 6.625%",
+     "printed": "6.625%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2032_Secured_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2032 Secured Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured; ranks equally with senior secured debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Secured Notes represent our secured obligations ranking equally to all existing and future senior debt, as defined in the applicable indentures.",
+     "printed": "secured obligations ranking equally"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2033_Secured_Notes.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2033 Secured Notes",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1500",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "6.00% secured notes due 2033 (“2033 Secured Notes”) 1,500 (14) — 1,486",
+     "printed": "1,500"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2033_Secured_Notes.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2033 Secured Notes",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1486",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "6.00% secured notes due 2033 (“2033 Secured Notes”) 1,500 (14) — 1,486",
+     "printed": "1,486"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2033_Secured_Notes.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2033 Secured Notes",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1470",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "2033 Secured Notes (5) 1 1,486 1,470",
+     "printed": "1,470"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2033_Secured_Notes.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2033 Secured Notes",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2033-01-15",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Maturity Date",
+     "quote": "2033 Secured Notes $1,500 million January 15, 2033 6.00%",
+     "printed": "January 15, 2033"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2033_Secured_Notes.interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2033 Secured Notes",
+   "field": "interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "6.00",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures table > Interest Rate (fixed coupon)",
+     "quote": "2033 Secured Notes $1,500 million January 15, 2033 6.00%",
+     "printed": "6.00%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.2033_Secured_Notes.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "2033 Secured Notes",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured; ranks equally with senior secured debt including the senior secured credit facilities",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Indentures",
+     "quote": "The Secured Notes represent our secured obligations ranking equally to all existing and future senior debt, as defined in the applicable indentures.",
+     "printed": "secured obligations ranking equally"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loans.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loans",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "8702",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "Term loans $ 8,702 $ (24) $ (33) $ 8,645",
+     "printed": "8,702"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loans.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loans",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "8645",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "Term loans $ 8,702 $ (24) $ (33) $ 8,645",
+     "printed": "8,645"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loans.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loans",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "8729",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "Term loans (5) 2 8,645 8,729",
+     "printed": "8,729"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_I.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche I",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1871",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Aggregate Principal",
+     "quote": "Tranche I $1,871 million August 24, 2028 Term SOFR plus 2.75%",
+     "printed": "$1,871 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_I.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche I",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2028-08-24",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Maturity Date",
+     "quote": "Tranche I $1,871 million August 24, 2028 Term SOFR plus 2.75%",
+     "printed": "August 24, 2028"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_I.interest_rate_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche I",
+   "field": "interest_rate_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Term SOFR plus 2.75%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Interest Rate",
+     "quote": "Tranche I $1,871 million August 24, 2028 Term SOFR plus 2.75%",
+     "printed": "Term SOFR plus 2.75%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_J.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche J",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "3632",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Aggregate Principal",
+     "quote": "Tranche J $3,632 million February 28, 2031 Term SOFR plus 2.50%",
+     "printed": "$3,632 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_J.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche J",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2031-02-28",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Maturity Date",
+     "quote": "Tranche J $3,632 million February 28, 2031 Term SOFR plus 2.50%",
+     "printed": "February 28, 2031"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_J.interest_rate_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche J",
+   "field": "interest_rate_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Term SOFR plus 2.50%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Interest Rate",
+     "quote": "Tranche J $3,632 million February 28, 2031 Term SOFR plus 2.50%",
+     "printed": "Term SOFR plus 2.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_K.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche K",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1699",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Aggregate Principal",
+     "quote": "Tranche K $1,699 million March 22, 2030 Term SOFR plus 2.75%",
+     "printed": "$1,699 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_K.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche K",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2030-03-22",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Maturity Date",
+     "quote": "Tranche K $1,699 million March 22, 2030 Term SOFR plus 2.75%",
+     "printed": "March 22, 2030"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_K.interest_rate_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche K",
+   "field": "interest_rate_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Term SOFR plus 2.75%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Interest Rate",
+     "quote": "Tranche K $1,699 million March 22, 2030 Term SOFR plus 2.75%",
+     "printed": "Term SOFR plus 2.75%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_L.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche L",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "1500",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Aggregate Principal",
+     "quote": "Tranche L $1,500 million January 19, 2032 Term SOFR plus 2.50%",
+     "printed": "$1,500 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_L.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche L",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2032-01-19",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Maturity Date",
+     "quote": "Tranche L $1,500 million January 19, 2032 Term SOFR plus 2.50%",
+     "printed": "January 19, 2032"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_loan_Tranche_L.interest_rate_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term loan Tranche L",
+   "field": "interest_rate_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Term SOFR plus 2.50%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility table > Interest Rate",
+     "quote": "Tranche L $1,500 million January 19, 2032 Term SOFR plus 2.50%",
+     "printed": "Term SOFR plus 2.50%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_Loans_Facility.sofr_floor.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term Loans Facility",
+   "field": "sofr_floor",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "No floor",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Description of Senior Secured Term Loans",
+     "quote": "The adjusted Term SOFR related to the Term Loans Facility are not subject to a floor.",
+     "printed": "not subject to a floor"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_Loans_Facility.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term Loans Facility",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Senior secured",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > heading",
+     "quote": "Description of Senior Secured Term Loans and Indentures",
+     "printed": "Senior Secured Term Loans"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Term_Loans_Facility.scheduled_quarterly_amortization.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Term Loans Facility",
+   "field": "scheduled_quarterly_amortization",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "22",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Term Loans Facility",
+     "quote": "The Term Loans Facility requires quarterly aggregate principal payments of $22 million.",
+     "printed": "$22 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "650",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "Short-term borrowings—trade receivable securitization facility $ 650 $ (1) $ — $ 649",
+     "printed": "650"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "649",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "Short-term borrowings—trade receivable securitization facility $ 650 $ (1) $ — $ 649",
+     "printed": "649"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.fair_value.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "fair_value",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "649",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 10 Fair Value Measurements > table December 28, 2024 > Fair Value",
+     "quote": "Short-term borrowings - trade receivable securitization facility (5) 2 649",
+     "printed": "649"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.drawn_and_capacity_status.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "drawn_and_capacity_status",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Fully drawn ($650 million borrowing capacity)",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Trade Receivable Securitization Facility",
+     "quote": "As of December 28, 2024, the Company has borrowed $650 million under the Securitization Facility, which is fully drawn.",
+     "printed": "fully drawn"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2025-07-11",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > Trade Receivable Securitization Facility",
+     "quote": "extend the maturity date to July 11, 2025 at an interest rate of Term SOFR plus 1.45%",
+     "printed": "July 11, 2025"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.interest_rate_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "interest_rate_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Term SOFR plus 1.45%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > Trade Receivable Securitization Facility",
+     "quote": "extend the maturity date to July 11, 2025 at an interest rate of Term SOFR plus 1.45%",
+     "printed": "Term SOFR plus 1.45%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.applicable_interest_rate.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "applicable_interest_rate",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "6.08",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > Trade Receivable Securitization Facility",
+     "quote": "At December 28, 2024 and September 30, 2024, the applicable interest rate was 6.08% and 6.73%, respectively.",
+     "printed": "6.08%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Trade_receivable_securitization_facility.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Trade receivable securitization facility",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Secured by substantially all domestic trade accounts receivable",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Trade Receivable Securitization Facility",
+     "quote": "The Securitization Facility is collateralized by substantially all of the Company’s domestic operations’ trade accounts receivable.",
+     "printed": "collateralized by substantially all of the Company’s domestic operations’ trade accounts receivable"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Government_refundable_advances.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Government refundable advances",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "16",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "Government refundable advances 16 — — 16",
+     "printed": "16"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Government_refundable_advances.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Government refundable advances",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "16",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "Government refundable advances 16 — — 16",
+     "printed": "16"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Government_refundable_advances.repayment_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Government refundable advances",
+   "field": "repayment_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Repayment depends on year-over-year commercial aviation revenue growth for certain product lines at CMC Electronics; no fixed maturity or rate printed",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > Government Refundable Advances",
+     "quote": "The requirement to repay this advance is based on year-over-year commercial aviation revenue growth for certain product lines at CMC Electronics",
+     "printed": "based on year-over-year commercial aviation revenue growth"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Finance_lease_obligations.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Finance lease obligations",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "260",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Gross Amount",
+     "quote": "Finance lease obligations 260 — — 260",
+     "printed": "260"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Finance_lease_obligations.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Finance lease obligations",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "260",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table December 28, 2024 > Net Amount",
+     "quote": "Finance lease obligations 260 — — 260",
+     "printed": "260"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Debt_excluding_securitization_facility.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Debt excluding securitization facility",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "24578",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table > total row (before current portion)",
+     "quote": "24,578 (131) (47) 24,400",
+     "printed": "24,578"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Debt_excluding_securitization_facility.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Debt excluding securitization facility",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "24400",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table > total row (before current portion)",
+     "quote": "24,578 (131) (47) 24,400",
+     "printed": "24,400"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Current_portion_of_long_term_debt.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Current portion of long-term debt",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "98",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table > Less: current portion > Net Amount",
+     "quote": "Less: current portion 99 (1) — 98 Long-term debt $ 24,479 $ (130) $ (47) $ 24,302",
+     "printed": "98"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Long_term_debt.carrying_amount_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Long-term debt",
+   "field": "carrying_amount_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "24302",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > table > Long-term debt > Net Amount",
+     "quote": "Less: current portion 99 (1) — 98 Long-term debt $ 24,479 $ (130) $ (47) $ 24,302",
+     "printed": "24,302"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Total_debt_per_MD_A_includes_issuance_costs_and_OID_effect.total_debt_net.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Total debt per MD&A (includes issuance costs and OID effect)",
+   "field": "total_debt_net",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "25049",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > Selected Balance Sheet Data",
+     "quote": "Total debt (1) 25,049 24,880",
+     "printed": "25,049"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Total_gross_principal_including_securitization_facility.principal_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Total gross principal including securitization facility",
+   "field": "principal_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "25228",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-2.debt_stack.Trade_receivable_securitization_facility.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.Term_loans.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.5_50_2027_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.2028_Secured_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.4_625_2029_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.2029_Secured_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.4_875_2029_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.2030_Secured_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.2031_Secured_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.2032_Secured_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.2033_Secured_Notes.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.Government_refundable_advances.principal_outstanding.2024-12-28",
+     "CP-2.debt_stack.Finance_lease_obligations.principal_outstanding.2024-12-28"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Accrued_interest.amount.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Accrued interest",
+   "field": "amount",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "386",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "Note 8 Debt > after table",
+     "quote": "Accrued interest, which is classified as a component of accrued and other current liabilities on the condensed consolidated balance sheets, was $386 million",
+     "printed": "$386 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Gross_debt.fixed_rate_share.2024-12-28",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Gross debt",
+   "field": "fixed_rate_share",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "75",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity",
+     "quote": "approximately 75% of our gross debt was fixed rate",
+     "printed": "75%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.commitments.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "commitments",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "910",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "TransDigm has $8,702 million in fully drawn term loans (the “Term Loans Facility”) and an $910 million revolving credit facility.",
+     "printed": "$910 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.letters_of_credit_outstanding.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "letters_of_credit_outstanding",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "61",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "At December 28, 2024, the Company had $61 million in letters of credit outstanding and $849 million in borrowings available under the revolving commitments.",
+     "printed": "$61 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.availability.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "availability",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "849",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "At December 28, 2024, the Company had $61 million in letters of credit outstanding and $849 million in borrowings available under the revolving commitments.",
+     "printed": "$849 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.drawn_balance.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "drawn_balance",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "0",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-2.revolver.Revolving_credit_facility.commitments.2024-12-28",
+     "CP-2.revolver.Revolving_credit_facility.letters_of_credit_outstanding.2024-12-28",
+     "CP-2.revolver.Revolving_credit_facility.availability.2024-12-28"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.maturity_date.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "maturity_date",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2029-02-27",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "The maturity date of the revolving credit facility is February 27, 2029.",
+     "printed": "February 27, 2029"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.drawn_rate_terms.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "drawn_rate_terms",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Term SOFR plus 2.25%",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "Draws on the revolving commitments are subject to an interest rate of Term SOFR plus 2.25%. The unused portion of the revolving commitments is subject to a fee of 0.5% per annum.",
+     "printed": "Term SOFR plus 2.25%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.unused_commitment_fee.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "unused_commitment_fee",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "0.5",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "Draws on the revolving commitments are subject to an interest rate of Term SOFR plus 2.25%. The unused portion of the revolving commitments is subject to a fee of 0.5% per annum.",
+     "printed": "0.5% per annum"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.multicurrency_commitments_up_to.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "multicurrency_commitments_up_to",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "139",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Description of Senior Secured Term Loans",
+     "quote": "up to $139 million of multicurrency revolving commitments",
+     "printed": "$139 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.revolver.Revolving_credit_facility.security_and_ranking.2024-12-28",
+   "module": "CP-2",
+   "topic": "revolver",
+   "subject": "Revolving credit facility",
+   "field": "security_and_ranking",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Part of the senior secured credit facility",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Non-GAAP Financial Measures",
+     "quote": "the revolving credit facility under our senior secured credit facility",
+     "printed": "senior secured credit facility"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2024-12-28",
+   "module": "CP-2",
+   "topic": "liquidity",
+   "subject": "Cash and cash equivalents",
+   "field": "balance",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2459",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > cash liquidity table",
+     "quote": "Cash and cash equivalents $ 2,459 Availability on revolving credit facility 849 Cash liquidity $ 3,308",
+     "printed": "2,459"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.liquidity.Cash_liquidity_cash_plus_revolver_availability.amount.2024-12-28",
+   "module": "CP-2",
+   "topic": "liquidity",
+   "subject": "Cash liquidity (cash plus revolver availability)",
+   "field": "amount",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "3308",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity > cash liquidity table",
+     "quote": "Cash and cash equivalents $ 2,459 Availability on revolving credit facility 849 Cash liquidity $ 3,308",
+     "printed": "3,308"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.liquidity.Term_loans_and_notes.earliest_maturity_statement.2024-12-28",
+   "module": "CP-2",
+   "topic": "liquidity",
+   "subject": "Term loans and notes",
+   "field": "earliest_maturity_statement",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "No maturity on any tranche of term loans or notes until November 2027",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Liquidity",
+     "quote": "There is no maturity on any tranche of term loans or notes until November 2027.",
+     "printed": "until November 2027"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2025.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2025",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "93",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "93"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2026.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2026",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "92",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "92"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2027.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2027",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "92",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "92"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2028.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2028",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "6637",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "6,637"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Fiscal_2029.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Fiscal 2029",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "4768",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "4,768"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Thereafter.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Thereafter",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "12637",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "12,637"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Total.scheduled_maturity.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Total",
+   "field": "scheduled_maturity",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "24319",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > Debt Repayment Schedule (at September 30, 2024; excludes finance leases)",
+     "quote": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafter 12,637 Total $ 24,319",
+     "printed": "24,319"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_totals.Debt_excluding_securitization_facility.principal_outstanding.2024-09-30",
+   "module": "CP-2",
+   "topic": "debt_totals",
+   "subject": "Debt excluding securitization facility",
+   "field": "principal_outstanding",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "24581",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > table September 30, 2024 > total row",
+     "quote": "24,581 (136) (51) 24,394",
+     "printed": "24,581"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.debt_stack.Finance_lease_obligations.principal_outstanding.2024-09-30",
+   "module": "CP-2",
+   "topic": "debt_stack",
+   "subject": "Finance lease obligations",
+   "field": "principal_outstanding",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "262",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "K24",
+     "locator": "Note 10 Debt > table September 30, 2024",
+     "quote": "Finance lease obligations 262 — — 262",
+     "printed": "262"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Reconciliation_gross_debt_excl_securitization_less_finance_leases.amount.2024-09-30",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Reconciliation: gross debt excl. securitization less finance leases",
+   "field": "amount",
+   "period_end": "2024-09-30",
+   "status": "known",
+   "value": "24319",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-2.debt_totals.Debt_excluding_securitization_facility.principal_outstanding.2024-09-30",
+     "CP-2.debt_stack.Finance_lease_obligations.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.maturity_schedule.Maturity_schedule_at_2024_12_28.scheduled_maturity_by_year.2024-12-28",
+   "module": "CP-2",
+   "topic": "maturity_schedule",
+   "subject": "Maturity schedule at 2024-12-28",
+   "field": "scheduled_maturity_by_year",
+   "period_end": "2024-12-28",
+   "status": "missing",
+   "value": null,
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "The 10-Q for 2024-12-28 prints no debt repayment schedule by year; it refers to the 10-K and reports no material change to contractual obligations. The schedule above is as of 2024-09-30."
+  },
+  {
+   "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.maintenance_covenants_elsewhere.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Revolving credit facility springing financial covenant",
+   "field": "maintenance_covenants_elsewhere",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "None: the revolver covenant is the only maintenance covenant in the term loan and indenture agreements",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "With the exception of the revolving credit facility, the Company has no maintenance covenants in its existing term loan and indenture agreements. Under the Credit Agreement, if the usage of the revolving credit facility exceeds 40% (or, currently, $364 million) of the total revolving commitments",
+     "printed": "has no maintenance covenants"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.test_trigger_usage.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Revolving credit facility springing financial covenant",
+   "field": "test_trigger_usage",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "40",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "With the exception of the revolving credit facility, the Company has no maintenance covenants in its existing term loan and indenture agreements. Under the Credit Agreement, if the usage of the revolving credit facility exceeds 40% (or, currently, $364 million) of the total revolving commitments",
+     "printed": "40%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.test_trigger_usage_amount.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Revolving credit facility springing financial covenant",
+   "field": "test_trigger_usage_amount",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "364",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "With the exception of the revolving credit facility, the Company has no maintenance covenants in its existing term loan and indenture agreements. Under the Credit Agreement, if the usage of the revolving credit facility exceeds 40% (or, currently, $364 million) of the total revolving commitments",
+     "printed": "$364 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.maximum_consolidated_net_leverage_ratio.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Revolving credit facility springing financial covenant",
+   "field": "maximum_consolidated_net_leverage_ratio",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "7.50",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "maintain a maximum consolidated net leverage ratio of net debt to trailing four-quarter EBITDA As Defined of 7.50x (or, solely with respect to the first four fiscal quarters ending after the consummation of any material acquisition, 8.00x)",
+     "printed": "7.50x"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.maximum_net_leverage_after_material_acquisition.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Revolving credit facility springing financial covenant",
+   "field": "maximum_net_leverage_after_material_acquisition",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "8.00",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "maintain a maximum consolidated net leverage ratio of net debt to trailing four-quarter EBITDA As Defined of 7.50x (or, solely with respect to the first four fiscal quarters ending after the consummation of any material acquisition, 8.00x)",
+     "printed": "8.00x"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.ratio_definition.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Revolving credit facility springing financial covenant",
+   "field": "ratio_definition",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Net debt to trailing four-quarter EBITDA As Defined",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "maintain a maximum consolidated net leverage ratio of net debt to trailing four-quarter EBITDA As Defined of 7.50x (or, solely with respect to the first four fiscal quarters ending after the consummation of any material acquisition, 8.00x)",
+     "printed": "net debt to trailing four-quarter EBITDA As Defined"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Incremental_facilities_condition.maximum_consolidated_net_leverage_ratio.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Incremental facilities condition",
+   "field": "maximum_consolidated_net_leverage_ratio",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "7.25",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "our consolidated net leverage ratio would be no greater than 7.25x and the consolidated secured net debt ratio would be no greater than 5.00x, in each case, after giving effect to such incremental term loans or additional revolving commitments",
+     "printed": "7.25x"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Incremental_facilities_condition.maximum_consolidated_secured_net_debt_ratio.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Incremental facilities condition",
+   "field": "maximum_consolidated_secured_net_debt_ratio",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "5.00",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "our consolidated net leverage ratio would be no greater than 7.25x and the consolidated secured net debt ratio would be no greater than 5.00x, in each case, after giving effect to such incremental term loans or additional revolving commitments",
+     "printed": "5.00x"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Credit_Agreement_and_Indentures.restrictive_covenant_scope.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Credit Agreement and Indentures",
+   "field": "restrictive_covenant_scope",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Limits on additional indebtedness, special dividends, transactions with affiliates, asset sales, acquisitions, mergers and consolidations, liens and encumbrances, and prepayments of certain other indebtedness",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "contain restrictive covenants that, among other things, limit the incurrence of additional indebtedness, the payment of special dividends, transactions with affiliates, asset sales, acquisitions, mergers and consolidations, liens and encumbrances, and prepayments of certain other indebtedness",
+     "printed": "limit the incurrence of additional indebtedness"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Credit_Agreement.latest_amendment_affecting_covenants.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Credit Agreement",
+   "field": "latest_amendment_affecting_covenants",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "2024-03-22",
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "The most recent amendment that impacted the restrictive covenants contained in the Credit Agreement is Amendment No. 15, executed on March 22, 2024.",
+     "printed": "March 22, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Compliance.company_statement.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Compliance",
+   "field": "company_statement",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "In compliance with all debt covenants",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "As of December 28, 2024, the Company was in compliance with all of its debt covenants and expects to remain in compliance with its debt covenants in subsequent periods.",
+     "printed": "in compliance with all of its debt covenants"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.covenants.Event_of_default_remedies.collateral_includes_cash.2024-12-28",
+   "module": "CP-4",
+   "topic": "covenants",
+   "subject": "Event of default remedies",
+   "field": "collateral_includes_cash",
+   "period_end": "2024-12-28",
+   "status": "known",
+   "value": "Collateral securing the debt includes available cash",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "Q1FY25",
+     "locator": "MD&A > Certain Restrictive Covenants in Our Debt Documents",
+     "quote": "In addition, following an event of default under the Credit Agreement, the lenders thereunder and the holders of the Secured Notes will have the right to proceed against the collateral granted to them to secure the debt, which includes our available cash",
+     "printed": "which includes our available cash"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-3.market_quotes.TransDigm_debt_instruments.observed_quotes_or_price_talk",
+   "module": "CP-3",
+   "topic": "market_quotes",
+   "subject": "TransDigm debt instruments",
+   "field": "observed_quotes_or_price_talk",
+   "period_end": null,
+   "status": "missing",
+   "value": null,
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [],
+   "derivation": null,
+   "gap_reason": "The filings contain no dated bid, ask, price, yield or spread quotes. Note 10 fair values (notes: 'based upon quoted market prices'; term loans: agent-provided) are period-end fair values, not quotes for CP-3; the user must supply quotes."
+  }
+ ],
+ "not_golden": [
+  {
+   "module": "CP-1",
+   "why": "covered by financial_gold"
+  },
+  {
+   "module": "CP-MODEL",
+   "why": "Judgment module: forecast drivers and model choices have no single filed answer."
+  },
+  {
+   "module": "CP-5",
+   "why": "Judgment module: credit conclusions and narrative are analyst judgment, not a filed fact."
+  },
+  {
+   "module": "CP-6",
+   "why": "Judgment module: recommendation and portfolio action are analyst judgment."
+  }
+ ],
+ "needs_user_input": [
+  {
+   "context_path": "quotes",
+   "modules": [
+    "CP-3"
+   ],
+   "why": "No observed quotes or price talk in the filings; relative value needs dated quotes from the user."
+  },
+  {
+   "context_path": "attachments.legal_documents",
+   "modules": [
+    "CP-4"
+   ],
+   "why": "The Credit Agreement and indentures are not in the corpus (only referenced as exhibits); set to 'none'. CP-4 covenant facts come from 10-K/10-Q descriptions only."
+  },
+  {
+   "context_path": "identity.guarantors",
+   "modules": [
+    "CP-1A",
+    "CP-2"
+   ],
+   "why": "Full guarantor list is in Exhibit 22.1, not in the corpus; only the classes named in the debt note are filled."
+  },
+  {
+   "context_path": "identity.sponsor",
+   "modules": [
+    "CP-1A"
+   ],
+   "why": "No sponsor or controlling holder named in the filings; leave empty unless the user supplies one."
+  },
+  {
+   "context_path": "ratings",
+   "modules": [
+    "CP-3"
+   ],
+   "why": "Agency ratings are not in the filings; no ratings module is in this pathway but CP-3 or CP-5 narrative may cite them."
+  }
+ ],
+ "limitations": [
+  "No Credit Agreement, indenture or Exhibit 22.1 in the corpus: CP-4 covenant terms and borrower identity for the term loans rest on 10-K/10-Q descriptions.",
+  "Covenant text read in all four filings was identical (7.50x springing test, 7.25x and 5.00x incurrence tests); only the 2024-12-28 filing is cited.",
+  "Debt-stack table total (24,578) excludes the securitization facility; the debt maturity schedule (10-K, 2024-09-30) excludes finance leases and the securitization facility; no 2024-12-28 schedule is printed.",
+  "The MD&A non-GAAP paragraph says the revolver covenant measures secured indebtedness to Consolidated EBITDA, while the covenant paragraph says net debt to EBITDA As Defined; the covenant paragraph is used.",
+  "Revolver drawn balance is derived (commitments less letters of credit less availability), and the Note 8 table has no revolver line; the filings do not print a drawn amount.",
+  "The FY2024 annual-report PDF is listed nowhere as a source and was not parsed.",
+  "Hedging instruments, interest swaps and leases beyond the finance-lease balance are not covered."
+ ],
+ "preparer": "mx-feature subagent g-tdg (Claude Sonnet 5.5)"
+}

@@ -1,0 +1,8 @@
+- 10:56 goldens stage contract and six briefs written (work/model-testing/goldens/)
+- 10:57 dispatched (mx-feature x7): checker ae85e6e3; preparers tdg a65d8732, shc a45d3d0a, bgs ac6670a7, lth a298fa44, ihrt adf25695, natl a5ec1f3e
+- 11:01 checker done (ae85e6e3): cases/goldens/check.py + tests/test_goldens_check.py; pytest 43 passed exit 0; ruff check 0; ruff format --check 0. agent=mx-feature fix-rounds=0 gates-first-pass=y. Normalisation clarified to preparers (block-tag spaces; run checker before return).
+- 11:03 shc (a45d3d0a) and bgs (ac6670a7) returned: check.py exit 0 each; controller findings G-1..G-4 recorded (goldens/controller-findings.md); checker scale/zero-width change dispatched (mx-scaffold a7240248)
+- 11:04 tdg (a65d8732) returned: check.py exit 0; derive.py 0; G-5, G-6 recorded
+- 11:04 checker change (mx-scaffold a7240248): scale thousands + zero-width deletion; pytest 46 passed exit 0; ruff check 0; format 0. agent=mx-scaffold fix-rounds=0 gates-first-pass=y
+- 11:06 ihrt (adf25695) 153 facts check 0; natl (a5ec1f3e) 118 facts check 0; G-7, G-8 recorded; HANDOFF.md written
+- 11:06 dispatched checker fix2 (mx-scaffold a246edb0), reviews ihrt (ad606b35) natl (a746f3aa); asked tdg/shc/bgs reviewers + lth preparer to write reports to files

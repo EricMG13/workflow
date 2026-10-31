@@ -86,3 +86,16 @@ Target: `docs/superpowers/plans/2026-10-31-part-b-o7.md` draft (245 lines). Prob
 - **Low:** accepted.
 - **N1:** cross-plan (O3 Task 4 replays every module after CP-0 under a new `run_id`); sent for
   investigation before ruling; O7's replacement text waits on it.
+- **N1 investigation** (mx-autonomous, probe `scratchpad/o7probe/scripts/replay_identity_fields.py`, exit 1
+  at HEAD): CP-0 `pack_sha256` and CP-1 `financials.run_id` are model-written, unprefilled, run-bound;
+  every module but CP-OS descends from CP-0. Options: reuse the earlier `run_id` (breaks run identity,
+  `supersedes`), or rewrite an allowlist in `replay.py` (recommended).
+- **N1 ruling:** allowlist rewrite in O3 Task 4 (`REBOUND_FIELDS`), only when old values equal the earlier
+  run's and the pack differs only by `run_id` (else `ReplayPackChanged` before any write); `rebound`
+  recorded; a guard test from the probe. O3 plan Task 4 and O7 :15, :168, RED test amended. Cost if
+  wrong: a replay is not byte-identical to the earlier submission (the record shows the two paths).
+- Re-review of N1/N2/Low: N1, N2, Low fixed; new Medium: pack equality checked only ids/media/sha256/Run
+  fields, missing `Source.status`, `spans`, `extraction_status`, `extractor`, `limitation`, `name`
+  (contracts.py:115-125). Ruled and applied: whole `PreparedPack` JSON compared with `run.run_id` (and
+  hashes derived from it) masked; RED case with only `spans` / `extraction_status` changed.
+- Final: approve (O3 :151 whole-pack comparison, :159 RED). O7 plan approved.

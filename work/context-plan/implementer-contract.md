@@ -21,6 +21,8 @@ dispatch names; if not, stop and report NEEDS_CONTEXT.
 6. Do not dispatch subagents, not helpers and never a reviewer. Review is the controller's job.
 7. Commit with plain `git` (message from your brief, ending with the line
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`). Do not push, merge or switch branches.
+   Stage only the files you changed, by path (`git add <path>`); never `git add -A`, `.` or `-a`:
+   other agents' uncommitted files (plans, reviews) are in the tree.
 8. If the brief and the code disagree, or you need a decision, stop and report NEEDS_CONTEXT or
    BLOCKED with specifics. Do not guess.
 9. Self-review your diff (completeness, names, YAGNI, existing patterns, tests check behaviour).

@@ -76,3 +76,9 @@ Target: `docs/superpowers/plans/2026-10-31-part-b-o3-o4.md` draft (252 lines), c
 - **F9:** journal an `InternalError` fault before returning the unchanged receipt.
 - **F10/Q3:** cap = `MAX_LINE`; Step 0 measures the view, narrative and readiness bodies; a body over the
   cap goes to the user.
+
+## Amendment 2026-10-31 (from the O7 re-review, N1)
+- Task 4's L5 spike would fail for every rerun: CP-0 `pack_sha256` and CP-1 `financials.run_id` bind the
+  earlier run. Ruled: identity rebinding of exactly those two paths (`REBOUND_FIELDS`), pack must differ
+  only by `run_id` (`ReplayPackChanged` otherwise), `rebound` recorded, guard test from probe
+  `work/context-plan/probes/p5_replay_identity_fields.py`. See work/context-plan/reviews/o7-plan-review.md.

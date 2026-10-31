@@ -28,3 +28,5 @@
 - Task C: fix round 1/2 (A1 High, A2 Medium, A3 Medium, A4 Low + precise Lows addressed pending re-review; commits dd91959..1309b27)
 - 09:36 B mx-precise: spec ✅, REVISE: M1 Medium mypy strict 4 errors (reused variable); L1 separator rows omitted; Info SIM905/FLY002 (not in default ruff select), D2 'Notes 2025 2024' reads as data (Info, raise only if non-CZR packs show it), D3/label_ends_numeric no overlap. On the 7 filed CZR pages omitted == () (reviewer probe).
 - Ruling: separator rows of only nil dashes and pipes are never omitted candidates (need a letter or digit) — otherwise every table rule needs a disposition — cost if wrong: a printed nil-only row without label is not recorded (it carries no value).
+- 09:38 B fix round 1: RED 4cd7357f 3 failed/22 passed (separator rows); fix 4ed0f63c 25 passed; mypy 0; reviewer probes exit 0. Stopped the stale long suite run (worktree changed under it). mx-feature scoped re-review dispatched.
+- Task B: fix round 1/2 (M1 Medium, L1 Low, I1 Info addressed pending re-review; commits 0a4917e..4ed0f63) agent=mx-feature

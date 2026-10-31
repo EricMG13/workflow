@@ -12,3 +12,10 @@
 - ruff check: predating TRY004 ×5 (same as base). **New: SIM905 ×3** statement_extract.py:83-85 (`"...".split()` word sets), **FLY002 ×4** tests/test_statement_extract_d1_d3.py:18, :32, :107, :131.
 - ruff format --check: 0.
 - mypy strict on statement_extract.py: base 0; **fix 4 errors** :305 (`ExtractedLine` assigned to a `str` variable), :309 ×3 (`replace`/`append`/`_flags` on that variable) — a loop variable name reused for `str` and `ExtractedLine`.
+
+## Fix round 1 (B-fix1.md): RED 4cd7357f (tests), fix 4ed0f63c (code)
+- RED @4cd7357f: 3 failed (separator rows `- | - | -`, `| - | - |`, `  —  |  —  ` were omitted candidates), 22 passed.
+- Fix @4ed0f63c: tests/test_statement_extract_d1_d3.py 25 passed.
+- mypy strict (MYPYPATH=src:tests) on both files: 0; reviewer `probe_mypy.sh` exit 0; `probe_omitted_czr.py` exit 0 (7 filed CZR pages `omitted == ()`).
+- ruff: SIM905 gone; FLY002 ×4 in the test file kept (page bytes must stay as printed; Info); TRY004 ×5 predating. format 0.
+- The long `test_source_tools`/`test_czr_*` run at 0a4917ed was stopped (the worktree changed under it); these suites run once on the integrated branch.

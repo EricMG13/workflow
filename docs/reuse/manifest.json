@@ -1862,6 +1862,15 @@
       "sha256": "67ddca4a8419582ea7d452b5527f7497d495d80dbc2e1d7e60143279ecab7a5a",
       "reason": "Item 82 fix 1: _calculation_gaps also takes shadowed and normalised (from shadowed_account_ids and fx_normalised_ids) and passes them to absent_input_limitation; no other rule changes.",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "imported_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "prior_project_sha256": "b672260594c312cc68400acc5a255dc317a245b12f1cc4a899607db64b3e493b",
+      "project_commit": "037ae12be912e4e5b19191600bf825323cb236d7",
+      "sha256": "3595cf287f2586e11bb192c0d43998f79d3000efac7aa3c3d1af33b05a228690",
+      "reason": "Item 82 fix 2: CASH_SCOPE_BLOCKER; absent_input_limitation also refuses an explanation carrying the cash-scope blocker (period_reconciliation.py:310 on claude/s8-vii), so it stays BLOCK; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md item 88"
     }
   ],
   "local_patch_lineage": [

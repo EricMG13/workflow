@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
@@ -95,13 +96,13 @@ def test_every_mismatch_is_collected(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("status", ["missing", "unreadable"])
-def test_unready_context_refused(tmp_path: Path, status: str) -> None:
+def test_unready_context_refused(tmp_path: Path, status: Literal["missing", "unreadable"]) -> None:
     pack = _pack(tmp_path, FIX_MINIMAL)
     index = _context_index(pack)
     broken = Source(
         source_id=CONTEXT_SOURCE_ID,
         name="context.json",
-        status=status,  # type: ignore[arg-type]
+        status=status,
         limitation="not available",
     )
     sources = (*pack.sources[:index], broken, *pack.sources[index + 1 :])

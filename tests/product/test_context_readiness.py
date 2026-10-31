@@ -118,5 +118,6 @@ def test_readiness_accepts_context_source(tmp_path: Path) -> None:
 
 def test_readiness_refuses_review_without_context_assessment(tmp_path: Path) -> None:
     pack = make_pack(tmp_path)
-    with pytest.raises(ValueError, match="Assess every prepared source exactly once"):
+    with pytest.raises(ValueError, match=r"^Assess every prepared source exactly once$") as excinfo:
         build_readiness(pack, review(pack, with_context=False))
+    assert type(excinfo.value) is ValueError

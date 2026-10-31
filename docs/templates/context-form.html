@@ -698,7 +698,7 @@ function fld(scope, k, r) {
   }
   else if (r.t === 'cur' && !/^[A-Z]{3}$/.test(v)) bad(el, 'use three uppercase letters, such as USD.');
   else if (r.t === 'period' && !pkey(v)) bad(el, 'use q1-2026, h2-2026 or fy-2025 (lowercase).');
-  else if (r.t === 'slug' && !/^[a-z0-9][a-z0-9-]*$/.test(v)) bad(el, 'use lowercase letters, digits and hyphens only.');
+  else if (r.t === 'slug' && !/^[a-z0-9][a-z0-9-]*$/.test(v)) bad(el, 'use lowercase letters, digits and hyphens only, not starting with a hyphen.');
   return v;
 }
 function readSpec(scope, spec) {

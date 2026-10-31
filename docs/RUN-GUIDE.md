@@ -113,8 +113,8 @@ PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 .venv/bin/python \
   --destination "$PREPARED_PACK"
 ```
 
-The command validates the context first and refuses with one problem per line on
-stderr (exit 2) before writing anything. It builds the Run (issuer, as-of date,
+The command checks its arguments and the context, and refuses with one problem per
+line on stderr (exit 2) before writing anything. It builds the Run (issuer, as-of date,
 pathway and its modules) from the context and adds the context file itself to the
 pack as the source `context`. CP-0 then assesses that source like any other, with
 authority `unknown`. Start the existing workflow with the produced pack as

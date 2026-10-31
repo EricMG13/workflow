@@ -50,7 +50,10 @@ Each branch is in its own agent worktree (`.claude/worktrees/agent-<id>`). Merge
    - The final branch is `claude/s8-h05b` @2a65d959 (agent-ab4d6f24ed23cdb91), built on `claude/s8-h05` @af9ceea1, on T6.
    - The third fix follows the root-cause plan `work/build/stage8/T5-plan.md`. RED shows 13 failed; GREEN 38/38; every probe exits 0 (p9b is an owner-list Low).
    - **Waits for:**
-     - the scoped re-review, mx-adversary ac369373 (dispatched at 10:29 by the old session; if it never reports, re-dispatch it from that agent prompt in the ledger);
+     - **The re-review is done:** mx-adversary ac369373 APPROVE at 10:55.
+       - Its probes are in `work/build/keep/s8-t5/rereview3/` (q1, q2, q3 exit 0 per the reviewer). The controller's rerun of q1/q3/q4 was started; the results are in the `.out` files beside the probes, so check them.
+       - **Low, for the end batch:** `test_host_frames.py:188-205` covers an offered name only through `search_pack`. Add a `read_pages` cell and an `extract_statements`-in-`financials` cell.
+       - **Owner list (predates T5):** `host.py:955` `type(value) in (...)` runs a metaclass `__eq__`; probe q4 exits 1. Python-api callers only.
      - suites: fast, `tests/test_source_tools.py`, `tests/test_source_workflow.py`, `tests/test_financial_workflow.py`, earnings and owner.
    - Ledger: `fix-rounds=2 + mx-autonomous root cause`.
 

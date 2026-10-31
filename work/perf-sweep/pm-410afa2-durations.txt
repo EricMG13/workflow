@@ -1,0 +1,26 @@
+# Slowest tests of the PR manager's full run on 410afa2 (10h09m, 1096 tests, 1092 passed), from its transcript (pm-pytest2.log itself is deleted). The 1726.86 s E-NO-YOY line is the cProfile run on 2bbf633, not the full run.
+1884.52s call     tests/test_earnings_workflow.py::test_real_retained_owner_submission_resumes_exact_session_and_finishes_once[after_valid_step]
+1788.40s call     tests/test_earnings_workflow.py::test_real_retained_owner_submission_resumes_exact_session_and_finishes_once[pending_validation]
+1726.86s call     tests/test_earnings_workflow.py::test_fresh_actual_owner_cases_settle_exact_values_lineage_claim_and_immutable_receipt[E-NO-YOY]
+1696.76s call     tests/test_earnings_workflow.py::test_real_retained_owner_submission_resumes_exact_session_and_finishes_once[after_settlement]
+1547.00s call     tests/test_earnings_workflow.py::test_real_refused_session_then_same_session_completion_settles_without_retroactive_credit
+1545.38s setup    tests/test_earnings_workflow.py::test_actual_composed_new_money_figures_pass_and_old_numeric_chips_fail_existing_guard
+1525.92s call     tests/test_earnings_workflow.py::test_fresh_actual_owner_cases_settle_exact_values_lineage_claim_and_immutable_receipt[E-QOQ-FLAT]
+1277.13s call     tests/test_earnings_workflow.py::test_fresh_actual_owner_cases_settle_exact_values_lineage_claim_and_immutable_receipt[E-NO-YOY]
+672.17s call     tests/test_owner_s1a.py::test_tampering_refuses_with_identity_mismatch[gap]
+644.57s call     tests/test_owner_s1a.py::test_tampering_refuses_with_identity_mismatch[positive]
+629.46s call     tests/test_earnings_workflow.py::test_unresolved_empty_session_intent_reopens_same_epoch_and_exact_raw_bytes_only
+564.17s call     tests/test_financial_render.py::test_authentic_financial_delivery_preserves_state_and_raw_publication[False]
+511.08s call     tests/test_earnings_workflow.py::test_well_shaped_wrong_owner_review_uses_actual_core_rejection_and_one_repair[wrong_fact]
+493.42s call     tests/test_owner_s1a.py::test_cp1a_without_business_page3_read_is_invalid_and_repairs
+489.87s call     tests/test_earnings_workflow.py::test_well_shaped_wrong_owner_review_uses_actual_core_rejection_and_one_repair[reverse_period]
+477.77s call     tests/test_earnings_workflow.py::test_well_shaped_wrong_owner_review_uses_actual_core_rejection_and_one_repair[duplicated]
+189.51s call     tests/test_source_tools.py::test_cp4_genuine_promotion_legal_only_and_zero_writes[positive-locators0]
+77.73s call     tests/test_source_tools.py::test_cp4_fresh_epoch_and_retained_step_end_old_capability
+77.27s call     tests/test_source_tools.py::test_cp4_revalidates_named_bytes_after_prior_success[cp1-stage]
+76.47s call     tests/test_source_tools.py::test_cp4_authentic_blocked_repair_degrades_without_financial_disclosure[blocked-quality]
+69.95s call     tests/test_source_tools.py::test_cp4_revalidates_named_bytes_after_prior_success[cp1-output]
+68.76s call     tests/test_source_tools.py::test_cp4_revalidates_named_bytes_after_prior_success[candidate]
+65.94s call     tests/test_source_tools.py::test_cp4_revalidates_named_bytes_after_prior_success[cp0-review]
+65.76s call     tests/test_source_tools.py::test_cp4_revalidates_named_bytes_after_prior_success[result]
+64.31s call     tests/test_source_tools.py::test_cp4_cached_cp1_authentication_rereads_every_touched_blob[retained-repair-cp1-output-last-missing]

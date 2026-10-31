@@ -1,0 +1,9 @@
+refusal: submission not valid: invalid ['CP-1 QA Blocked: confidence 39 (Insufficient Information); a Blocked handoff is not promoted']
+narrative status: blocked | gaps: 1073
+  BLOCK calculation_gate       prefixed=False 1
+  BLOCK source_audit           prefixed=False 137
+  WARN  context                prefixed=False 14
+  WARN  narrative              prefixed=False 2
+  WARN  report_limitation      prefixed=False 11
+  WARN  source_audit           prefixed=False 908
+exit=0

@@ -14,7 +14,7 @@ import tempfile
 from collections import Counter
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 from threading import Lock
 from typing import Any, Literal, TextIO
@@ -425,13 +425,13 @@ def _evidence_issues(
 _STATEMENT_KINDS = (
     ("IS", ("INCOME STATEMENT", "STATEMENTS OF OPERATIONS")),
     ("CFS", ("CASH FLOW STATEMENT", "STATEMENTS OF CASH FLOWS")),
-    ("BS", ("BALANCE SHEET",)),
+    ("BS", ("BALANCE SHEET", "FINANCIAL POSITION")),
 )
 
 
 _CAPTION_PHRASES = (
     ("CFS", ("CASH FLOW",)),
-    ("BS", ("BALANCE SHEET",)),
+    ("BS", ("BALANCE SHEET", "FINANCIAL POSITION")),
     (
         "IS",
         (
@@ -440,6 +440,8 @@ _CAPTION_PHRASES = (
             "STATEMENTS OF OPERATIONS",
             "STATEMENT OF INCOME",
             "STATEMENTS OF INCOME",
+            "STATEMENT OF EARNINGS",
+            "STATEMENTS OF EARNINGS",
         ),
     ),
 )
@@ -536,13 +538,17 @@ def _date_cell(cell: str) -> str | None:
     return _iso(found[3], found[1], found[2]) if found else None
 
 
+_DAY_WINDOWS = {3: (84, 98), 6: (175, 189), 9: (266, 280), 12: (357, 371)}
+
+
 def _months(period: Any) -> int | None:
-    """The calendar months a period spans, or None unless it runs from a first to a last day."""
-    start: date = period.start_date
-    end: date = period.end_date
-    if start.day != 1 or (end + timedelta(days=1)).day != 1:
+    """The month count whose inclusive day-count window holds the period, else None."""
+    start: date | None = period.start_date
+    end: date | None = period.end_date
+    if start is None or end is None:
         return None
-    return (end.year - start.year) * 12 + end.month - start.month + 1
+    days = (end - start).days + 1
+    return next((m for m, (low, high) in _DAY_WINDOWS.items() if low <= days <= high), None)
 
 
 def _hit(spec: tuple[str, ...], period: Any) -> bool:

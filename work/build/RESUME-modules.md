@@ -72,6 +72,7 @@ To save time under load, you can merge T6, then T4 and T5, into the lane and run
 - **Not verified there:** the G2 owner suites (cp2a, cp2g, cp2h, cp4c); a live provider accepting the nullable `cash_scope` schema; ponytail-review.
 - **Size:** src 331 lines; src + tests 1224, plus a 3631-line golden JSON. That is over the global 800-line PR cap, so it is an owner decision.
 - **Merge into the lane only on the user's own word.** When asking, name `refs/heads/claude/s8-vii`.
+  - **The user's word was given at 10:50 as ruling item 89, "Yes, after suites".** Merge once its four long suites pass, after item 82 + fix 2 has merged. Find the suites' logs through the vii session's hand-over note `s8-vii-handover.md`, or rerun them at 90636d43. Do not push.
   - Item 82 must ship with its fix 2 (`claude/s7-absent-input-3`).
   - Expect a conflict in `docs/reuse/manifest.json`; keep both sides' records, then rerun the strict D12 probe.
 

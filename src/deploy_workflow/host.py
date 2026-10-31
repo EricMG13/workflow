@@ -941,25 +941,37 @@ def _execution_state(
         raise SourceError("identity_mismatch") from None
 
 
+# The owner and financial layers re-parse every call receipt with pydantic
+# `model_validate_json`, whose JSON parser (jiter) refuses nesting deeper than 200.
+# The receipt wraps `arguments` in further levels (call object, record wrappers), so
+# the bound sits well below 200 to leave margin; `arguments` itself is depth 1.
+MAX_ARGUMENT_DEPTH = 100
+
+
 def _json_arguments(arguments: Any) -> dict[str, Any]:
     """JSON input must round-trip without coercing tuples, keys or numeric sentinels."""
 
-    def check(value: Any) -> None:
+    def check(value: Any, depth: int) -> None:
         if type(value) in (str, int, float, bool, type(None)):
             return
+        if depth > MAX_ARGUMENT_DEPTH:
+            raise ValueError("arguments nested too deeply")
         if type(value) is list:
             for item in value:
-                check(item)
+                check(item, depth + 1)
             return
         if type(value) is dict and all(type(key) is str for key in value):
             for item in value.values():
-                check(item)
+                check(item, depth + 1)
             return
         raise ValueError("not JSON")
 
     if type(arguments) is not dict:
         raise ValueError("arguments must be an object")
-    check(arguments)
+    check(arguments, 1)
+    # A lone surrogate in a key or value is a str but cannot be encoded as UTF-8;
+    # refuse it here so every later layer can serialise and retain the receipt.
+    json.dumps(arguments, ensure_ascii=False).encode("utf-8")
     return _detached(arguments)
 
 
@@ -1047,11 +1059,24 @@ class SourceSession:
             self._sequence += 1
             sequence = self._sequence
         call_id = str(uuid4())
-        name = tool_name if type(tool_name) is str else ""
+        # A name that cannot be represented (not an exact str, or not UTF-8 encodable) is
+        # refused as "" with {} before the arguments are looked at; no caller-object method
+        # runs. Receipt verification replays invoke(call.tool, call.arguments), which yields
+        # exactly this receipt.
+        if type(tool_name) is not str:
+            return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
+        try:
+            tool_name.encode("utf-8")
+        except UnicodeEncodeError:
+            return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
+        name = tool_name
         try:
             copied = _json_arguments(arguments)
         except (ValueError, TypeError, RecursionError):
-            return self._receipt(sequence, call_id, name, {}, "refused", None, "bad_arguments")
+            # Replay runs stage(name, {}): not_permitted if the name is not offered,
+            # bad_arguments if it is. Record the same code.
+            code = "bad_arguments" if self._tools.offers(name) else "not_permitted"
+            return self._receipt(sequence, call_id, name, {}, "refused", None, code)
         if not self._operation.acquire(blocking=False):
             return self._receipt(sequence, call_id, name, copied, "refused", None, "not_permitted")
         try:

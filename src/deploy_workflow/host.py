@@ -1059,13 +1059,18 @@ class SourceSession:
             self._sequence += 1
             sequence = self._sequence
         call_id = str(uuid4())
-        name = tool_name if type(tool_name) is str else ""
-        try:
-            # A lone surrogate in a str name cannot be encoded; refuse it before any
-            # layer above tries to serialise the receipt.
-            name.encode("utf-8")
-        except UnicodeEncodeError:
-            return self._receipt(sequence, call_id, "", {}, "refused", None, "bad_arguments")
+        # A name that cannot be represented (non-str, or a str with a lone surrogate) is
+        # refused as "" with {} before the arguments are looked at. Receipt verification
+        # replays invoke(call.tool, call.arguments), which yields exactly this receipt.
+        name = ""
+        if type(tool_name) is str:
+            try:
+                tool_name.encode("utf-8")
+                name = tool_name
+            except UnicodeEncodeError:
+                pass
+        if not name and tool_name != "":
+            return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
         try:
             copied = _json_arguments(arguments)
         except (ValueError, TypeError, RecursionError):

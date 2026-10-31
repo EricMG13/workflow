@@ -340,6 +340,23 @@ plus a D12 `post_import_patches` record. Each phase gets its own detailed plan, 
 | O7 CP-DR (this repo's own version) | G11 | Spec: `work/model-testing/recon/cp-dr-v2.4-codex.md` (`claude/codex-findings-review-64c673` @ 80748343) read with the user's intended usage: independent research supporting CP-1C and CP-2, with an optional peer pack for CP-1C (user, 2026-10-31: "there will be no work version set, it need to make its version based on my intend usage and the information provided"). Decisions where the description is silent: table OD below. In order: **O7a** this repo's own method and version record (`cp-dr/2026-10-31` in `methods/cpdr.md` and the registry) and contracts, decision 0007 standalone mode replaced by LOCAL's two anchors; **O7b** base LOCAL research: explicit invocation after CP-1 (not auto-inserted into presets), validated non-Blocked CP-0 and CP-1 with issuer/run/period/hash match (stop on mismatch), locked versioned brief (default six questions: competition, metric definitions, valuation context, market demand, industry structure, regulation; max 32; cutoff; context `research_questions` seed it), orchestrator retrieval stage retaining evidence with hashes, locators, dates and evidence families, contrary-evidence and independence review, post-cutoff evidence rejected, Markdown dossier + brief JSON (TDR.1-3), `cp_dr_lineage: LOCAL`, never Committee Ready; **O7c** source-attachment mechanism (records the dossier hash, refreshes CP-1C/CP-2; not a dependency edge) and CP-1C/CP-2 consumption as supplied-source context; **O7d** opt-in TDR.4-6 peer pack (candidate peers, alignment observations, located peer/transaction figures) routed to CP-1C only, which verifies and admits peers itself. Acceptance cases: anchor mismatch, blocked inputs, cutoff violation, missing/contradictory evidence, dossier replacement, LOCAL readiness ceiling. | methods/cpdr.md, registry, decision 0007, execution.py input binding | O5, O6 | Every acceptance case passes offline; CP-1C admits peers from a TDR.4-6 pack on a synthetic case |
 
 Order with Part A: Part A Phase 1 → O1 → O2 → O3 → O4 → O5 → O6 → O7a → O7b → O7c → O7d.
+
+Interface contracts the testing framework reads (from
+`docs/superpowers/plans/2026-10-31-model-testing-framework.md` Tasks 2 and 8, branch
+`claude/codex-findings-review-64c673` @ 9ee77189, not yet reviewed by the user). O2 and O5 write
+exactly these shapes; a change goes back to that plan, never a fork:
+- **O5 per-call record** `model-call/1`, one JSON object per line in `calls.jsonl`: identity
+  (run_id, case_id, pathway, module_id, step_id, attempt 0|1, call_index, config_id); provider
+  (openai|anthropic|openrouter), requested_model, reported_model, requested_effort;
+  invocation_digest (64 hex), request_id, http_status, started_at, first_byte_at, finished_at;
+  input/cached_read/cache_write/output/reasoning tokens (`None` when unreported, never 0);
+  reserved_usd, settled_usd, cost_status (billed|computed|unknown; unknown → settled_usd `None`;
+  money as Decimal strings); tool_calls [{name, arguments_sha256, result_bytes, refusal_code}];
+  submit_sha256, error_class, error. No key material in any field. The digest's preimage (upstream
+  hashes, prompt hash, method version) is kept in the Execution audit keyed by invocation_digest.
+- **O2 run directory:** `execution/`, `owner-run.json` (OwnerRunReceipt), `publication/` (when
+  present), `delivery/` (rendered slice), `calls.jsonl`, `run.json` (case_id, pathway, config_id,
+  run_id; in live mode also the path and sha256 of the ruling that lifted the pause).
 Part A Phases 2-8 can interleave after O2, since each module change then runs through
 `run_pathway`. Phase 7 (valuation) needs O7 for public peers.
 

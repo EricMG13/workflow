@@ -184,3 +184,56 @@ def test_d1_labelled_single_nil_row_stays_a_candidate() -> None:
     row = "Goodwill                           —"
     table = extract_statement_lines(f"Cash  1  2\n{row}", "page:1")
     assert table.omitted == (OmittedLine(line_no=2, text=row),)
+
+
+def test_d3_first_value_under_a_change_column_is_not_a_footnote_marker() -> None:
+    year_row = "                                    2025        2024      Change"
+    page = "\n".join(
+        [
+            "                                    Year ended December 31,",
+            year_row,
+            "Revenues                            1,200       1,000       200",
+            "Other income (expense), net           (12)         (8)        (4)",
+            "Income tax benefit (provision)        (5)         10        (15)",
+        ]
+    )
+    table = extract_statement_lines(page, "page:1")
+    assert table.headers == (page.split("\n")[0], year_row)
+    assert [(line.label, line.raw_values, line.flags) for line in table.lines] == [
+        ("Revenues", ("1,200", "1,000", "200"), ("more_values_than_header_years",)),
+        (
+            "Other income (expense), net",
+            ("(12)", "(8)", "(4)"),
+            ("more_values_than_header_years",),
+        ),
+        (
+            "Income tax benefit (provision)",
+            ("(5)", "10", "(15)"),
+            ("more_values_than_header_years",),
+        ),
+    ]
+
+
+def test_d3_marker_right_of_the_first_year_column_is_a_value() -> None:
+    page = "Year ended December 31  2025  2024\nCost of revenues  900  (1)  800"
+    (line,) = extract_statement_lines(page, "page:1").lines
+    assert line.raw_values == ("900", "(1)", "800")
+    assert line.flags == ("more_values_than_header_years",)
+
+
+def test_d2_notes_header_row_stays_a_header() -> None:
+    year_row = "                       Notes        2025        2024"
+    page = "\n".join(
+        [
+            "CONSOLIDATED INCOME STATEMENT",
+            year_row,
+            "Revenue                    4       1,200       1,000",
+            "Cost of sales                       (700)       (600)",
+        ]
+    )
+    table = extract_statement_lines(page, "page:1")
+    assert table.headers == (year_row,)
+    assert [(line.label, line.raw_values, line.flags) for line in table.lines] == [
+        ("Revenue", ("4", "1,200", "1,000"), ("more_values_than_header_years",)),
+        ("Cost of sales", ("(700)", "(600)"), ()),
+    ]

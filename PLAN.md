@@ -412,4 +412,5 @@ Plan approved, not started: [docs/superpowers/plans/2026-10-31-context-file-cons
 as recommended). Nothing reads `context.json` yet.
 
 - [ ] Phase 1 foundation: `deploy_workflow.context` reader, pack preparation, frozen-pack reader, CP-0 acceptance, run guide (Tasks 1-5).
+- [ ] Part B orchestration O1-O7 (gaps G1-G11 from the Codex findings review; prerequisite for model testing; awaits the user's approval).
 - [ ] Phases 2-8 module consumers (identity/periods, market evidence, ratings, attachments/modes, pinned assumptions, valuation, periods/currency), each after its questions, oracle and lease.

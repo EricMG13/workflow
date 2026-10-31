@@ -1,6 +1,6 @@
 # Context File Consumption Implementation Plan
 
-**Status:** approved 2026-10-31 (D1-D5 as recommended); outstanding, not started (PLAN.md "Outstanding").
+**Status:** approved 2026-10-31 (D1-D5 as recommended); outstanding, not started (PLAN.md "Outstanding"). Part B (orchestration, G1-G11) added 2026-10-31 at the user's ruling relayed by the Codex findings session; Part B awaits the user's approval.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -28,7 +28,9 @@ hypothesis, ruff, mypy strict. No new dependency.
 - Closed stages stay closed: module behaviour changes (Phases 2-8) enter
   `work/build/stage<next>-backlog.md` and run under a lease, questions file, frozen oracle and
   `mx-precise` review per AGENTS.md "How work moves". The Modules controller owns them.
-- Live/paid/provider calls stay paused; nothing in this plan makes a network call.
+- Live/paid/provider calls stay paused; nothing in this plan makes a network call. Part B builds the
+  model connection (O5) but its first live call belongs to the model-testing session after the user
+  lifts the pause by a ruling in `docs/rulings/`.
 - Exact `Decimal` arithmetic; empty string means "not supplied", never zero.
 - Every task brief carries: no stub or fake value standing in for real behaviour; no catch-all
   that hides a failure; report ends with a `Not verified:` line.
@@ -44,7 +46,7 @@ hypothesis, ruff, mypy strict. No new dependency.
 | D2 | CP-0 authority of the context source | `unknown`, as CP-8's `prior_case`; consuming modules label figures "user-supplied" | new `user` authority value (`src/deploy_vii`) |
 | D3 | Run mapping | existing `Run` fields only; run type, periods, currency stay in the context source | add fields to `Run` (`src/deploy_vii`) |
 | D4 | Pinned assumptions (Phase 6) | the owner refuses a submission whose value differs from the pinned one (fail closed; the submission stays the record) | the owner substitutes the pinned value |
-| D5 | CP-DR web peer sourcing (Phase 7) | stays Planned while provider calls are paused; `cp_dr_public` gives Insufficient Information with the reason, users pick `user_list`/`user_comps` | unpause a provider for CP-DR only |
+| D5 | CP-DR peer sourcing (Phase 7) | superseded by the user's ruling (2026-10-31): peers come from the CP-DR v2.4 peer pack (TDR.4-6, Part B O7), which CP-1C admits; until O7 is built `cp_dr_public` gives the CP-1C gap and users may pick `user_list`/`user_comps` | — |
 
 ## Review Focus
 
@@ -300,8 +302,50 @@ behaviour exactly, so every frozen case stays green.
 | 4 Ratings | CP-2H | `ratings` rows feed the rating register; real agency names (S&P, Moody's, Fitch) replace the synthetic headers (`cp2h.py:161`) | Where do trigger terms come from when only a rating is given? | CP-2H states real agency ratings; no ratings → today's "Rating register not found" |
 | 5 Attachments and modes | CP-0, CP-4, CP-DR | `attachments` declare expected sources (a declared but absent source is a CP-0 gap); CP-4 draft-document mode for primary runs; CP-DR answers `research_questions` beside gap research | Draft authority value (`src/deploy_vii`: user decision); may a draft-only CP-4 reach High confidence? | A primary run with draft documents reaches CP-4 with a "draft" limitation |
 | 6 Pinned assumptions | CP-2A, CP-2D, CP-2E, CP-3C, CP-3D, CP-4C | A pinned value binds the submission (D4); the limitation reads "user-supplied assumption" | D4 confirmation; does a pin also feed the model prompt (live, paused)? | Each module refuses a differing submission and labels a pinned value |
-| 7 Valuation | CP-1C, CP-DR, CP-4C, new valuation step | CP-1C adds EV/EBITDA (new `ev` operand) from user comps; issuer trading multiple from `issuer_market`; precedents; basis selection (`auto` thresholds); CP-4C takes the selected multiple; CP-DR web peers per D5 | `auto` thresholds (minimum count, maximum age, blend weights); where valuation lives (CP-1C or a new module); D5 | A private-issuer run with user comps produces a peer EV/EBITDA range and CP-4C uses it |
+| 7 Valuation | CP-1C, CP-DR, CP-4C, new valuation step | CP-1C adds EV/EBITDA (new `ev` operand) from user comps; issuer trading multiple from `issuer_market`; precedents; basis selection (`auto` thresholds); CP-4C takes the selected multiple; public peers from the CP-DR v2.4 peer pack (O7) | `auto` thresholds (minimum count, maximum age, blend weights); where valuation lives (CP-1C or a new module); D5 | A private-issuer run with user comps produces a peer EV/EBITDA range and CP-4C uses it |
 | 8 Periods and currency | CP-2D, CP-2G, CP-2H, CP-3C, CP-4C | Replace hard-coded LTM Q4 25 / FY2026-28 / q4-2025 / USD with the context's periods and currency | FX source for non-USD; forecast years from the period or the as-of? | One non-2025 context runs these modules without a hard-coded period |
 
 Order: 2 → 3 → 4 → 5 → 6 → 7 → 8. Phase 8 can start after Phase 2 if real-issuer runs are
 the priority, since it removes the largest blocker for non-synthetic cases.
+
+---
+
+## Part B: Orchestration (prerequisite for model testing)
+
+User rulings (2026-10-31, relayed by the "Codex findings review" session): the orchestrator owns
+the model connection; this work is "required before any testing and could be implemented into
+the context form sessions plan"; runs are "100% orchestrated, so no human should be writing
+prompts". Source list with file:line references: `work/model-testing/recon/orchestration-gaps.md`
+on `claude/codex-findings-review-64c673` @ e636f71e (lines at base 3888fe0; re-check against
+`codex/checkpoint` before each brief). Orchestrator requirements: §1a and §7.5-7.7 of
+`docs/superpowers/specs/2026-10-31-model-testing-design.md` (same branch). That branch must be
+merged before Part B's first brief cites it.
+
+Headline: only `distressed_restructuring` passes `OwnerWorkflow` spec checks today; the other five
+presets are refused before any model is involved (G1). CP-OS stays the navigation proof; the new
+orchestrator is not named CP-OS.
+
+`src/deploy_vii` changes (marked **vii** below) need the user's own word in the building session
+plus a D12 `post_import_patches` record. Each phase gets its own detailed plan, written against
+`codex/checkpoint` when it starts, in this order:
+
+| Phase | Gaps | Change | vii | Depends on | Done when |
+|---|---|---|---|---|---|
+| O1 Every preset walks | G1a, G1b, G1c | CP-MODEL becomes a stop in the walk (publish phase inside `_advance`, drop the after-CP-MODEL refusal, CP-5 fan-in excludes CP-MODEL, verifiers extended); CP-6 owner core on `cp6_committee.py` + `bindings/cp6.py` + `_PROBES`; CP-1B moves into `_CORES` as an owner module (replaces the three-run-id `EarningsWorkflow` gate) | registry.py fan-in | — | All six presets pass `OwnerWorkflow` spec checks (probe: `_check_specs` per preset) |
+| O2 One entry point | G2 | `run_pathway(case, context, pathway, config, cap)`: manifest + `context.json` → `preparation_request` (Part A Task 3) → `prepare` → `OwnerWorkflow.create` → step loop → `publish` → `write_receipt` → render and verify | — | Part A Phase 1, O1 | One call runs a synthetic case end to end offline with a recorded test model |
+| O3 Resilient walk | G3, G4, G5 | A refused `begin` is recorded and the walk continues with every module that can still begin (verifier mirrors it); public `state()` and `open()` from the retained audit; rerun after repair = fresh run replaying retained upstream calls, repaired module live | execution.py (G4/G5) | O2 | A run with one refused module still settles CP-5; a killed run resumes from `state()` |
+| O4 Guards | G6, G7, G8 | U4 byte cap on `read_inputs` (refuse and record a fault, never truncate); call cap per attempt; orchestrator errors reach its journal (no `except Exception` relabelling); CP-0 prompt lists every planned `Run <id>` | execution.py (G8) | O2 | Oversized inputs, an internal error and a missing `Run <id>` each give a named, journaled fault |
+| O5 Model connection | G9 | Provider adapters (OpenAI, Anthropic, OpenRouter) over stdlib `urllib`, ported from DEPLOY VII `live/client.py` with tool calls; the tool loop (tool calls → `invoke` / `read_inputs` / submit); reserve → retain raw → validate → settle → seal order and `repair_prompt` from `live/runner.py`; per-call record keyed by an invocation digest (run, module, step, attempt, upstream hashes, prompt hash, method version, tokens, timings, cost); keys from env vars only; spend cap as a run input | — (new code in `src/deploy_workflow`) | O2 | Offline tests with a recorded-response adapter drive a full step; no live call |
+| O6 Prompts | G10 | Agent-written prompts for the 13 owner-only steps and CP-1B from `methods/<m>.md` + one rule per validator check + `StepSpec.schema` (as `STEP_CONTRACTS` does); settle how CP-5 is fed its scope; prompt rule "never use remembered facts"; context fields (run type, pinned assumptions, research questions) enter prompts as data | live/prompts.py, unless prompts live in `src/deploy_workflow` (recommended: they do, so no **vii**) | O5 | Every step in every preset has a prompt; a test checks each prompt names every validator rule |
+| O7 CP-DR v2.4 | G11 | LOCAL mode needing validated CP-0 + CP-1 with matching hashes; locked versioned research brief (default 6 questions, max 32, cutoff; context `research_questions` seed it); a **retrieval stage** in the orchestrator that retains verifiable evidence (hashes, locators, dates) before analysis; a source-attachment mechanism that rehashes and refreshes consumers; dossier + brief JSON (TDR.1-3); opt-in TDR.4-6 peer pack that CP-1C verifies and admits | methods/registry | O5, O6; **blocked** until the v2.4 source files are supplied and pinned with hashes (built at work, not local; Codex's read is the only description) | CP-1C admits peers from a TDR.4-6 pack on a synthetic case |
+
+Order with Part A: Part A Phase 1 → O1 → O2 → O3 → O4 → O5 → O6 → (O7 when v2.4 is pinned).
+Part A Phases 2-8 can interleave after O2, since each module change then runs through
+`run_pathway`. Phase 7 (valuation) needs O7 for public peers.
+
+Carry over from Deploy V as orchestrator behaviour: refuse a step whose blocking upstream is
+missing or stale, naming it; reject ambiguous retries; invalidate only downstream dependents on
+an upstream change; CP-DR reports BLOCKED when research is unavailable. Do not carry: Copilot
+memory prompt, retrieval index, `_RUNS`, Markdown handoffs, model-run scripts whose figures the
+model copies, model-supplied confidence counts, LITE/FULL profiles, Deploy V pathways,
+`REQUIRES_ANALYST_DECISION` placeholders, `live/credential.py`.

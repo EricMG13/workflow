@@ -510,6 +510,15 @@ def _ncf(book: FinancialBook, period: FinancialPeriod) -> Reconciliation:
     )
 
 
+CASH_SCOPE = ("cash_and_equivalents", "restricted_cash", "restricted_cash_noncurrent")
+
+
+def cash_scope(bridge: CashMovementBridge | None) -> tuple[str, ...]:
+    """Cash and equivalents first, then the bridge's declared restricted cash items in order."""
+    declared = bridge.cash_scope.items if bridge and bridge.cash_scope else ()
+    return (CASH_SCOPE[0], *(item for item in CASH_SCOPE[1:] if item in declared))
+
+
 def _cash_movement(book: FinancialBook, period: FinancialPeriod) -> Reconciliation:
     opening = (
         period.start_date - timedelta(days=1)
@@ -527,6 +536,15 @@ def _cash_movement(book: FinancialBook, period: FinancialPeriod) -> Reconciliati
         )
         for part in (bridge.components if bridge else ())
     )
+    scope = cash_scope(bridge)
+    formula = (
+        "closing cash - opening cash - signed source adjustments"
+        if bridge
+        else "closing cash - opening cash; no inferred FX or other cash adjustment"
+    )
+    if bridge and bridge.cash_scope:
+        names = " + ".join(scope)
+        formula = f"closing cash scope - opening cash scope ({names}) - signed source adjustments"
     ncf = _check(
         period,
         "NCF_CASH_MOVEMENT",
@@ -535,13 +553,20 @@ def _cash_movement(book: FinancialBook, period: FinancialPeriod) -> Reconciliati
         (
             _balance(book, period.end_date, "cash_and_equivalents"),
             _balance(book, opening, "cash_and_equivalents", sign=-1),
+            *(
+                term
+                for item in scope[1:]
+                for term in (
+                    _statement_balance(book, period.end_date, item),
+                    _statement_balance(book, opening, item, sign=-1),
+                )
+            ),
             *adjustments,
         ),
-        "closing cash - opening cash - signed source adjustments"
-        if bridge
-        else "closing cash - opening cash; no inferred FX or other cash adjustment",
+        formula,
         context=(
             *bridge.citations,
+            *(bridge.cash_scope.citations if bridge.cash_scope else ()),
             *(c for part in bridge.components for c in lines[part.line_id].sign_citations),
         )
         if bridge
@@ -558,7 +583,9 @@ def _cash(book: FinancialBook, period: FinancialPeriod) -> tuple[Reconciliation,
     )
 
 
-def _statement_balance(book: FinancialBook, day: date | None, item: str) -> ReconciliationTerm:
+def _statement_balance(
+    book: FinancialBook, day: date | None, item: str, *, sign: Literal[-1, 1] = 1
+) -> ReconciliationTerm:
     """Exact dated BS observation, retaining same-date conflicts and all evidence."""
     ids = {p.period_id for p in book.periods if day is not None and p.end_date == day}
     rows = [
@@ -568,7 +595,7 @@ def _statement_balance(book: FinancialBook, day: date | None, item: str) -> Reco
     ]
     conflict = next((v for v in rows if v.status == "conflicting"), None)
     value = conflict or next((v for v in rows if v.amount is not None), next(iter(rows), None))
-    term = _term(item, value)
+    term = _term(item, value, coefficient=sign)
     return term.model_copy(
         update={
             "citations": tuple(dict.fromkeys(c for v in rows for c in _term(item, v).citations))

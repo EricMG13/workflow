@@ -1,0 +1,166 @@
+a147d816 fix: H03 H09
+4be0c0b7 test: RED H03 H09
+ src/deploy_vii/report_view.py      |  4 +++-
+ src/deploy_vii/source_context.py   |  9 +++++----
+ tests/test_report_view_tl10_4.py   | 16 ++++++++++++++++
+ tests/test_source_context_blank.py | 29 +++++++++++++++++++++++++++++
+ 4 files changed, 53 insertions(+), 5 deletions(-)
+diff --git a/src/deploy_vii/report_view.py b/src/deploy_vii/report_view.py
+index f5ad8477..c79dc4e0 100644
+--- a/src/deploy_vii/report_view.py
++++ b/src/deploy_vii/report_view.py
+@@ -1595,28 +1595,30 @@ def _columns_structure(
+ 
+ 
+ def _clip(text: str) -> str:
+     return text if len(text) <= _SUMMARY_LIMIT else text[: _SUMMARY_LIMIT - 1] + "…"
+ 
+ 
+ #: Fields whose known text facts are producer-composed or analyst run text, checked by the
+ #: module's own reference validation before storage and stored with its tokens: CP-8's resolved
+ #: claim text (``owners/cp8.py:2145-2186``), CP-L10's TL10.3 analyst text (``cpl10.py:1060-1073``,
+ #: stored at :804-826) and CP-2H's T2R.10 gap text (``cp2h.py:1523-1541``, :1608-1614, stored at
+-#: :1413-1424). Keyed by (module, table, field): a table mixes run text with free text (TL10.3
++#: :1413-1424). CP-L10's TL10.4 ``decision_impact`` reuses the validated TL10.3
++#: ``credit_transmission`` text (``cpl10.py:860-870``, validated at :1060-1073). Keyed by (module, table, field): a table mixes run text with free text (TL10.3
+ #: ``source_refs``, T2R.10 ``id``), and ``Fact.text`` is a plain string, so free text and verbatim
+ #: quotes may hold ``[sic]`` or ``[Reserved]`` and are shown as written.
+ _RUN_TEXT_FIELDS = frozenset(
+     {
+         ("CP-8", "cp8.what_changed", "value"),
+         ("CP-L10", "TL10.3", "assessment"),
+         ("CP-L10", "TL10.3", "credit_transmission"),
++        ("CP-L10", "TL10.4", "decision_impact"),
+         ("CP-2H", "T2R.10", "gap"),
+         ("CP-2H", "T2R.10", "why_it_matters"),
+         ("CP-2H", "T2R.10", "affected_analysis"),
+         ("CP-2H", "T2R.10", "action"),
+     }
+ )
+ 
+ 
+ def _carries_reference(module_id: str, fact: Fact) -> bool:
+     """Whether a known text fact is run text that must go through ``resolve``.
+diff --git a/src/deploy_vii/source_context.py b/src/deploy_vii/source_context.py
+index 368fd31b..420b47d3 100644
+--- a/src/deploy_vii/source_context.py
++++ b/src/deploy_vii/source_context.py
+@@ -345,47 +345,48 @@ def _blank_limitations(limitations: tuple[str, ...], where: str) -> Iterator[str
+     """OI-14: `Text` refuses only `""`; a limitation of whitespace or invisible characters
+     (`prose.is_blank`) renders a blank gap row. One issue per blank limitation; the text is
+     not echoed."""
+     for limitation in limitations:
+         if is_blank(limitation):
+             yield f"Empty limitation text: {where}"
+ 
+ 
+ def _lacks(assessment: SourceContext, scope: ReportingScope) -> Iterator[str]:
+     """Task 7.14, rule 1: a historical or period-end scope of a financial source states all
+-    four dimensions; one issue per missing field. Forecast and unspecified scopes, and a
++    four dimensions; one issue per missing or blank (`prose.is_blank`) field. Forecast and unspecified scopes, and a
+     non-financial source's scopes, are not held to it."""
+     if assessment.classification == "financial" and scope.period_kind in STATED_KINDS:
+         for name in DIMENSIONS:
+-            if getattr(scope, name) is None:
++            value = getattr(scope, name)
++            if value is None or is_blank(value):
+                 yield f"Financial scope lacks {name}: {scope.scope_id}"
+ 
+ 
+ def _disagreements(review: SourceContextReview) -> Iterator[str]:
+     """Task 7.14 (batches e1-cp1-13/-14), rule 2: the historical and period-end scopes of one
+     entity, over every financial source, state the same four strings. Those are the scopes
+     `context_binding` and the financials prefill (`live.submission._period_scopes`) choose from
+     by entity and dates alone, so one book's periods must find one tuple. Compared exactly, with
+-    no normalisation; a null is rule 1's issue alone. One issue per entity and field, naming
++    no normalisation; a null or blank is rule 1's issue alone. One issue per entity and field, naming
+     the scope ids that share each stated value, in review order."""
+     by_entity: dict[str, list[ReportingScope]] = {}
+     for source in review.sources:
+         if source.classification == "financial":
+             for scope in source.scopes:
+                 if scope.period_kind in STATED_KINDS:
+                     by_entity.setdefault(scope.entity_id, []).append(scope)
+     for entity_id, scopes in by_entity.items():
+         for name in DIMENSIONS:
+             stated: dict[str, list[str]] = {}
+             for scope in scopes:
+                 value = getattr(scope, name)
+-                if value is not None:
++                if value is not None and not is_blank(value):
+                     stated.setdefault(value, []).append(scope.scope_id)
+             if len(stated) > 1:
+                 yield (
+                     f"Financial scopes of one entity disagree on {name}: {entity_id} "
+                     + " vs ".join(", ".join(ids) for ids in stated.values())
+                 )
+ 
+ 
+ def _prose(item: BaseModel) -> Iterator[str]:
+     """Every text value of a contract outside its citations (a quote is source text, not a
+diff --git a/tests/test_report_view_tl10_4.py b/tests/test_report_view_tl10_4.py
+new file mode 100644
+index 00000000..c9ce8d02
+--- /dev/null
++++ b/tests/test_report_view_tl10_4.py
+@@ -0,0 +1,16 @@
++"""H03: CP-L10 TL10.4 `decision_impact` is stored with the analyst's `{TL10.2...}` reference
++tokens (it reuses TL10.3 `credit_transmission`, which `cpl10._text_issues` validates), so the
++report view resolves it like TL10.3 and shows the figure, never the raw token."""
++
++from test_connect_cpl10 import _tl10_3_facts, _tl10_3_page
++
++
++def test_tl10_4_decision_impact_shows_the_figure_not_the_reference() -> None:
++    _, topic, facts = _tl10_3_facts()
++    page = _tl10_3_page(facts)
++    transmission = page[f"TL10.3.{topic}.credit_transmission"]
++    impact = page[f"TL10.4.{topic}.decision_impact"]
++    for key in ("display", "table_display"):
++        assert "{" not in impact[key]
++        assert "3.75 US$ m" in impact[key]
++        assert impact[key] == transmission[key]
+diff --git a/tests/test_source_context_blank.py b/tests/test_source_context_blank.py
+index 611841b8..6d890e4e 100644
+--- a/tests/test_source_context_blank.py
++++ b/tests/test_source_context_blank.py
+@@ -135,10 +135,39 @@ def test_frozen_cp1_submissions_hold_no_blank_limitation() -> None:
+     """Parity: with no blank limitation in any frozen submission, the new rule adds no issue."""
+     seen = 0
+     for path in sorted((ROOT / "cases").rglob("submissions.json")):
+         for review in _reviews(json.loads(path.read_text())):
+             seen += 1
+             blanks = [text for text in _limitations(review) if is_blank(text)]
+             assert blanks == [], path
+             explanations = [s.get("event_scan_explanation", "x") for s in review["sources"]]
+             assert not any(is_blank(text) for text in explanations), path
+     assert seen > 0
++
++
++@pytest.mark.parametrize("field", ("accounting_basis", "entity_perimeter"))
++@pytest.mark.parametrize("blank", (" ", "​"))
++def test_blank_scope_dimension_is_lacking(field: str, blank: str) -> None:
++    """H09: a blank `accounting_basis` or `entity_perimeter` on a financial historical scope is
++    rule 1's issue, as a null is; it must not pass and settle facts `publish_model` then refuses."""
++    doc = copy.deepcopy(CONTEXT)
++    scope = doc["sources"][1]["scopes"][0]
++    assert scope["period_kind"] in ("historical_duration", "period_end")
++    scope[field] = blank
++    assert _issues(doc) == (f"Financial scope lacks {field}: {scope['scope_id']}",)
++
++
++def test_blank_dimension_beside_stated_sibling_is_lacking_not_disagreement() -> None:
++    """H09: a blank is rule 1's issue alone; rule 2 must not count it as a second stated value."""
++    doc = copy.deepcopy(CONTEXT)
++    scopes = doc["sources"][1]["scopes"]
++    assert len(scopes) > 1
++    assert all(s["accounting_basis"] == "IFRS" for s in scopes)
++    scopes[0]["accounting_basis"] = "​"
++    assert _issues(doc) == (f"Financial scope lacks accounting_basis: {scopes[0]['scope_id']}",)
++
++
++def test_visible_scope_dimensions_give_no_issue() -> None:
++    doc = copy.deepcopy(CONTEXT)
++    scope = doc["sources"][1]["scopes"][0]
++    assert (scope["accounting_basis"], scope["entity_perimeter"]) == ("IFRS", "consolidated group")
++    assert _issues(doc) == ()

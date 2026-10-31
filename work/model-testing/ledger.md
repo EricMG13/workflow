@@ -8,3 +8,6 @@
 - 11:06 dispatched checker fix2 (mx-scaffold a246edb0), reviews ihrt (ad606b35) natl (a746f3aa); asked tdg/shc/bgs reviewers + lth preparer to write reports to files
 - 11:07 lth (a298fa44) 165 facts check 0 derive 0; G-9; lth review dispatched
 - 11:07 checker fix2 (mx-scaffold a246edb0): pytest 51 passed exit 0; ruff 0/0; check.py all six cases exit 0. agent=mx-scaffold fix-rounds=0 gates-first-pass=y
+- 11:07 shc review (mx-precise a906417d): APPROVE; SHC-R1 Low, SHC-R2 Info; report saved by controller
+- 11:08 tdg review (mx-precise aa8d24aa): REVISE; R1, R2 Medium; R3, R4 Low; R5 Info; report saved by controller
+- 11:08 bgs review (mx-precise a2f0b9d6): REVISE; R1 Medium (Codex gap, ours correct), R2-R4 Low, R5-R6 Info; report saved by controller. Fix rounds dispatched: shc (mx-feature a9827d55), tdg (mx-feature af476463)

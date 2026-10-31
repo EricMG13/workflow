@@ -99,3 +99,18 @@ Prerequisites before any live run:
 - **Checker fix 2 done (~12:00):** 51 tests pass, ruff is clean, and **all six cases pass check.py** (exit 0). Report: `goldens/reports/checker-fix2.md`.
   - Info: a product now recomputes in units (scale-aware). That is correct for money × unitless rate, which is the only meaningful product.
 - **Remaining:** the six reviews (tdg, shc, bgs, ihrt, natl, lth) were running; their reports go to `goldens/reports/<issuer>-review.md`. Rerun any that are missing. Then run the fix round per case (G-1..G-9 plus the review findings), re-review, and commit.
+
+## 7. Status at ~12:15 UTC (latest)
+- **Reviews saved** in `goldens/reports/`: tdg (REVISE: R1, R2 Medium), shc (APPROVE: R1 Low, R2 Info), bgs (REVISE: R1 Medium, a Codex gap; ours is correct).
+  - mx-precise reviewers will not write files; the controller saves their hand-back text as `reports/<issuer>-review.md`.
+- **Reviews still running at handoff:** ihrt and natl, then lth. Their reports are lost if this session ends: rerun them with `goldens/REVIEW-BRIEF.md` (known findings G-1..G-9).
+- **Fix round 1 running at handoff** (mx-feature): tdg, shc, bgs. Their briefs are the review reports plus controller-findings.md.
+  - **Check on resume:** run check.py and derive.py per case, and the reviewer probes in `scratchpad/r-<issuer>/` (scratch may be gone; then rerun the review).
+  - **Next for each case:** a scoped re-review of the Medium fixes only (mx-feature or mx-precise).
+- **Then:**
+  - fix rounds for ihrt, natl and lth once their reviews land;
+  - run check.py on all six;
+  - commit;
+  - re-snapshot Codex TDG/SHC gold when Codex freezes them;
+  - report BGS-R1 (Codex marks BGS FY2025Q2 principal missing, but Note 6 prints 2,011,375) to the user, since it is Codex's defect;
+  - resume the framework design (section 4).

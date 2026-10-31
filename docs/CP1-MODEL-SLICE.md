@@ -81,8 +81,9 @@ Full typed NarrativeInputs/DownstreamInputs remain internal for validation/hash.
 The analytical read_inputs body uses live.context.narrative_evidence(FinancialStage)
 and live.context.readiness_inputs(DownstreamInputs), with current identity/input
 hash; do not expose nested source citations/quotes or catalogue.record_json.
-Quality exposes only the actual QualityInputs JSON. Do not expose prompts.quality_scope,
-which includes raw record_json/citations. Record
+Quality serves prompts.quality_scope with each evidence record narrowed to kind and
+reference (no record_json, citations or quotes), and stays bound to the full
+QualityInputs hash (ruling item 87). Record
 actual request/body/current binding. Add causal no-quote/no-record_json disclosure
 checks; no arbitrary Execution/path access or wider data grant.
 

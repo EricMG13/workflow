@@ -1611,7 +1611,14 @@ def _gap_issues(
     issues: list[str] = []
     for i, g in enumerate(sub.gaps):
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
-            issues += _prose(f"gaps[{i}].{name}", getattr(g, name), bound, names)
+            found = _prose(f"gaps[{i}].{name}", getattr(g, name), bound, names)
+            issues += found
+            if name == "gap" and not found:  # becomes a limitation, which `compute` spells
+                issues += (
+                    f"gaps[{i}].gap: reference {run.text} names a fact that is not settled"
+                    for run in prose.tokenize(g.gap)
+                    if run.kind != "text" and bound[run.text].status != "known"
+                )
     return issues
 
 

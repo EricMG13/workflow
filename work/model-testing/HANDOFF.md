@@ -140,3 +140,4 @@ Prerequisites before any live run:
   - Anthropic (usable 135): Opus medium once on 5 pathways, cheapest first (earnings_update, portfolio_decision, credit_snapshot, covenant_refinancing, relative_value) = 125.72; distressed_restructuring only if the measured cost allows (all six = 154.65).
   - earnings_update goes first on all four configurations as the pilot; re-estimate from measured cost before continuing.
 - **Ruling (user, 2026-10-31, "Adopt it"):** the recommended budget plan above is adopted. Repair pass on DeepSeek + Sol medium; comparison pass on Sol high + Opus medium; Opus high dropped; earnings_update pilot first; 10% reserve per account.
+- **11:29:** design draft written: docs/superpowers/specs/2026-10-31-model-testing-design.md; builder check running. Next: sort its questions (answered / minor / user's), one round of user questions, then superpowers:writing-plans.

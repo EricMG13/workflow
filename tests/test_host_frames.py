@@ -43,6 +43,16 @@ def _bad_frames() -> dict[str, str]:
                 "arguments": {"query": "x", "\ud800": 1},
             }
         ),
+        "surrogate_tool": json.dumps(
+            {
+                "operation": "invoke",
+                "tool": "\ud800",
+                "arguments": {"query": "x"},
+            }
+        ),
+        "surrogate_tool_bad_args": json.dumps(
+            {"operation": "invoke", "tool": "\ud800", "arguments": [1]}
+        ),
         "deep_args": _search('{"query":"x","extra":' + _nested(210) + "}"),
     }
 
@@ -79,7 +89,13 @@ def _states(replies: list[dict]) -> list[tuple[object, object]]:
 
 
 @pytest.mark.parametrize("kind", ["owner", "financial"])
-@pytest.mark.parametrize("name", ["surrogate_query", "surrogate_key", "deep_args"])
+@pytest.mark.parametrize("name", [
+        "surrogate_query",
+        "surrogate_key",
+        "surrogate_tool",
+        "surrogate_tool_bad_args",
+        "deep_args",
+    ],)
 def test_bad_frame_then_good_frame_stays_in_sequence(kind, name, tmp_path):
     replies = _run(kind, tmp_path, [_bad_frames()[name], GOOD])
     assert _states(replies) == [("refused", "bad_arguments"), ("ok", None)]

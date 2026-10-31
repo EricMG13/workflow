@@ -52,7 +52,7 @@ def _deep_frame(total_depth: int) -> str:
     return _search('{"query":"x","extra":' + _nested(total_depth - 1) + "}")
 
 
-def _run(kind: str, tmp_path, frames: list[str]) -> list[tuple[object, object]]:
+def _run(kind: str, tmp_path, frames: list[str]) -> list[dict]:
     if kind == "owner":
         workflow = OwnerWorkflow.create(
             tmp_path / "store", make_pack(), publication_directory=tmp_path / "model"
@@ -71,27 +71,36 @@ def _run(kind: str, tmp_path, frames: list[str]) -> list[tuple[object, object]]:
         destination=tmp_path / "receipt.json",
         participant="h05",
     )
-    replies = [json.loads(line) for line in writer.getvalue().splitlines()]
+    return [json.loads(line) for line in writer.getvalue().splitlines()]
+
+
+def _states(replies: list[dict]) -> list[tuple[object, object]]:
     return [(reply.get("status"), reply.get("error_code")) for reply in replies]
 
 
 @pytest.mark.parametrize("kind", ["owner", "financial"])
 @pytest.mark.parametrize("name", ["surrogate_query", "surrogate_key", "deep_args"])
 def test_bad_frame_then_good_frame_stays_in_sequence(kind, name, tmp_path):
-    states = _run(kind, tmp_path, [_bad_frames()[name], GOOD])
-    assert states == [("refused", "bad_arguments"), ("ok", None)]
+    replies = _run(kind, tmp_path, [_bad_frames()[name], GOOD])
+    assert _states(replies) == [("refused", "bad_arguments"), ("ok", None)]
+    assert replies[0]["arguments"] == {}
+
+
+# search_pack refuses any unknown key at tool level, so a deep `extra` is never "ok".
+# A host-level refusal returns arguments == {}; a tool-level refusal keeps the arguments.
+@pytest.mark.parametrize("kind", ["owner", "financial"])
+def test_frame_at_depth_bound_passes_host_and_is_retained(kind, tmp_path):
+    frame = _deep_frame(DEPTH_BOUND)
+    replies = _run(kind, tmp_path, [frame, GOOD])
+    assert _states(replies) == [("refused", "bad_arguments"), ("ok", None)]
+    assert replies[0]["arguments"] == json.loads(frame)["arguments"]
 
 
 @pytest.mark.parametrize("kind", ["owner", "financial"])
-def test_frame_at_depth_bound_is_accepted_end_to_end(kind, tmp_path):
-    states = _run(kind, tmp_path, [_deep_frame(DEPTH_BOUND), GOOD])
-    assert states == [("ok", None), ("ok", None)]
-
-
-@pytest.mark.parametrize("kind", ["owner", "financial"])
-def test_frame_one_level_over_depth_bound_is_refused(kind, tmp_path):
-    states = _run(kind, tmp_path, [_deep_frame(DEPTH_BOUND + 1), GOOD])
-    assert states == [("refused", "bad_arguments"), ("ok", None)]
+def test_frame_one_level_over_depth_bound_is_refused_by_host(kind, tmp_path):
+    replies = _run(kind, tmp_path, [_deep_frame(DEPTH_BOUND + 1), GOOD])
+    assert _states(replies) == [("refused", "bad_arguments"), ("ok", None)]
+    assert replies[0]["arguments"] == {}
 
 
 def test_bound_matches_host():

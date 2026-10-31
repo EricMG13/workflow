@@ -393,7 +393,7 @@ INVALID_CASES: list[tuple[dict[str, Any], str, str]] = [
         "required",
     ),
     (
-        {"assumptions.cp4c": {"ev_multiple": "6", "rationale": "a b"}},
+        {"assumptions.cp4c": {"ev_multiple": "6", "rationale": "a\u2028b"}},
         "assumptions.cp4c.rationale",
         "line separator",
     ),
@@ -409,6 +409,33 @@ INVALID_CASES: list[tuple[dict[str, Any], str, str]] = [
         "required",
     ),
     ({"identity.issuer_name": "a\u0085b"}, "identity.issuer_name", "line separator"),
+    (
+        {"valuation.precedents": [PREC]},
+        "valuation.precedents",
+        "must be empty",
+    ),
+    (
+        {"valuation.basis": "blend", "valuation.precedents": [PREC] * 31},
+        "valuation.precedents",
+        "at most 30",
+    ),
+    (
+        {"valuation.issuer_market": row(MARKET, ev_m="-1")},
+        "valuation.issuer_market",
+        "must be blank",
+    ),
+    (
+        {"valuation.user_multiple": {"value": "x", "basis": "LTM", "rationale": ""}},
+        "valuation.user_multiple",
+        "must be blank",
+    ),
+    (
+        {"valuation.peer_source": "user_list", "valuation.peers": [row(PEER, ev_m="abc")]},
+        "valuation.peers[0].ev_m",
+        "must be blank",
+    ),
+    ({"identity.guarantors": [""]}, "identity.guarantors[0]", "must not be empty"),
+    ({"identity.aliases": ["a", " "]}, "identity.aliases[1]", "must not be empty"),
 ]
 
 

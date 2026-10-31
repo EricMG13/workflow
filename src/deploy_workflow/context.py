@@ -27,7 +27,7 @@ _DATE = r"^\d{4}-\d{2}-\d{2}$"
 _CURRENCY = r"^[A-Z]{3}$"
 _INT = r"^-?\d+$"
 # JSON.stringify writes these raw, and str.splitlines() splits on them (R-P1b).
-_LINE_BREAKS = ("\u0085", " ", " ")
+_LINE_BREAKS = ("\u0085", "\u2028", "\u2029")
 
 RunType = Literal["primary", "secondary", "research", "earnings"]
 CaseKind = Literal["public", "private", "synthetic"]
@@ -190,6 +190,12 @@ class Cp3dPins(Contract):
 class Cp4cPins(Contract):
     ev_multiple: str
     rationale: str
+
+
+_BLANK_MARKET = IssuerMarket(
+    market_cap_m="", net_debt_m="", ev_m="", ebitda_basis="LTM", as_of="", source=""
+)
+_BLANK_MULTIPLE = UserMultiple(value="", basis="LTM", rationale="")
 
 
 class Assumptions(Contract):
@@ -422,6 +428,10 @@ class _Rules:
                 "identity.issuer_id",
                 "use lowercase letters, digits and hyphens only, not starting with a hyphen.",
             )
+        for name in ("guarantors", "aliases"):
+            for i, item in enumerate(getattr(ident, name)):
+                if not item.strip():
+                    self.bad(f"identity.{name}[{i}]", "list items must not be empty.")
         if ident.ticker and not ident.listed_equity:
             self.bad("identity.ticker", "must be empty for an unlisted issuer.")
 
@@ -490,9 +500,16 @@ class _Rules:
                 self.number(f"{p}.ev_m", pr.ev_m, req=True, low="0")
                 self.number(f"{p}.ebitda_m", pr.ebitda_m, req=True, low_excl="0")
                 self.text(f"{p}.source", pr.source, req=True)
+        if val.basis not in ("precedents", "blend") and val.precedents:
+            self.bad("valuation.precedents", f"must be empty when basis is {val.basis}.")
         if val.basis == "issuer_trading":
             self.issuer_market(val.issuer_market)
-        if val.basis == "user_multiple":
+        elif val.issuer_market != _BLANK_MARKET:
+            self.bad("valuation.issuer_market", f"must be blank when basis is {val.basis}.")
+        if val.basis != "user_multiple":
+            if val.user_multiple != _BLANK_MULTIPLE:
+                self.bad("valuation.user_multiple", f"must be blank when basis is {val.basis}.")
+        else:
             um = val.user_multiple
             self.number(
                 "valuation.user_multiple.value", um.value, req=True, low_excl="0", high="99.99"
@@ -508,6 +525,10 @@ class _Rules:
         for i, peer in enumerate(val.peers):
             p = f"valuation.peers[{i}]"
             self.text(f"{p}.name", peer.name, req=True)
+            if val.peer_source == "user_list":
+                for name in ("ev_m", "ebitda_m", "as_of", "source"):
+                    if getattr(peer, name) != "":
+                        self.bad(f"{p}.{name}", "must be blank when peer_source is user_list.")
             if val.peer_source == "user_comps":
                 self.number(f"{p}.ev_m", peer.ev_m, req=True, low="0")
                 self.number(f"{p}.ebitda_m", peer.ebitda_m, req=True, low_excl="0")

@@ -109,6 +109,16 @@ def test_cli_refuses_huge_integer_without_traceback(tmp_path: Path) -> None:
     assert not dest.exists()
 
 
+def test_cli_refuses_deep_nesting_without_traceback(tmp_path: Path) -> None:
+    root = _setup(tmp_path, b'{"schema": "context/1", "run": ' + b"[" * 1499 + b"]" * 1499 + b"}")
+    dest = tmp_path / "pack"
+    done = _cli(*_args(root, dest, "--source", "filing=filing.txt:text"))
+    assert done.returncode == 2
+    assert "Traceback" not in done.stderr
+    assert done.stderr.splitlines() == ["$: nested too deeply (more than 32 levels)."]
+    assert not dest.exists()
+
+
 def test_cli_refuses_oversize_context_before_writing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

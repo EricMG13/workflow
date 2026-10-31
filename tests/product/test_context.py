@@ -512,6 +512,20 @@ def test_deep_nesting_refused_as_context_refused() -> None:
         load_context(raw)
 
 
+@pytest.mark.parametrize("depth", [1500, 33])
+def test_nested_too_deeply_refused(depth: int) -> None:
+    raw = b'{"schema": "context/1", "run": ' + b"[" * (depth - 1) + b"]" * (depth - 1) + b"}"
+    with pytest.raises(ContextRefused) as caught:
+        load_context(raw)
+    assert list(caught.value.problems) == ["$: nested too deeply (more than 32 levels)."]
+
+
+def test_root_validation_error_path_is_dollar() -> None:
+    from deploy_workflow.context import _path
+
+    assert _path(()) == "$"
+
+
 def test_form_shaped_user_list_peer_loads() -> None:
     peer = row(PEER, ev_m="", ebitda_m="", as_of="", source="", ticker="PEER")
     obj = with_changes({"valuation.peer_source": "user_list", "valuation.peers": [peer]})

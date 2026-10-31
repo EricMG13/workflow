@@ -271,7 +271,7 @@ def _refuse_constant(name: str) -> Any:
 
 
 def _path(loc: tuple[int | str, ...]) -> str:
-    return functools.reduce(_join, loc, "")
+    return functools.reduce(_join, loc, "") or "$"
 
 
 def _join(base: str, key: str | int) -> str:
@@ -290,6 +290,26 @@ def _line_break_problems(node: Any, path: str, out: list[str]) -> None:
     elif isinstance(node, list):
         for index, value in enumerate(node):
             _line_break_problems(value, _join(path, index), out)
+
+
+MAX_DEPTH = 32
+
+
+def _too_deep(root: Any) -> bool:
+    """Whether dicts/lists nest more than ``MAX_DEPTH`` levels; iterative, never recurses."""
+    stack: list[tuple[Any, int]] = [(root, 1)]
+    while stack:
+        node, depth = stack.pop()
+        if isinstance(node, dict):
+            children: Any = node.values()
+        elif isinstance(node, list):
+            children = node
+        else:
+            continue
+        if depth > MAX_DEPTH:
+            return True
+        stack.extend((child, depth + 1) for child in children)
+    return False
 
 
 def load_context(raw: bytes) -> RunContext:
@@ -312,6 +332,8 @@ def load_context(raw: bytes) -> RunContext:
         raise ContextRefused([f"$: not valid JSON ({type(exc).__name__})"]) from exc
     if not isinstance(obj, dict):
         raise ContextRefused(["$: the top level must be an object."])
+    if _too_deep(obj):
+        raise ContextRefused([f"$: nested too deeply (more than {MAX_DEPTH} levels)."])
 
     problems: list[str] = []
     if obj.pop("schema", None) != SCHEMA:

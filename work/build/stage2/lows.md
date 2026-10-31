@@ -54,3 +54,12 @@
   - At an estimated 4M+ tokens, no live model could run CP-1 quality on a real filing as wired. The peer measured peak RSS at 1.68 GB, without attributing it to a code path.
   - DEPLOY VII has a compact projection, `deploy_vii.live.prompts.quality_scope` (task 7.4; about 270 KB on a real pack). Nothing in `src/deploy_workflow` calls it; narrative and readiness already use compact projections.
   - Open questions: whether to serve `quality_scope`, and whether the review binding (`inputs_sha256` over the full inputs) and `promote_cp1` stay unchanged. Item 82 does not shrink this.
+- **[Item 82 period hop, end batch] Two Lows from the M1 re-review (mx-adversary ab26961a, APPROVE, 2026-10-31).** In each case QA still blocks through another gap; both concern how honest the period-hop label is.
+  - **Shadow through constructed cells.** A null constructed `PeriodTerm` has `observation_ids=()`, so `shadowed` cannot match it (`canonical_audit.py:482`, `canonical_gaps.py:458`). With fy-2025 revenue shadowed, the `LTM:fy-2025` SEGMENT_REVENUE and EBITDA_BRIDGE checks downgrade.
+    - Probe: `work/build/keep/s7-review/rereview/probe_v3_detail.py` (exits 1 while open).
+    - Possible Medium path, not reproduced: a YTD-anchored book with a stated LTM row and a shadowed prior-year flow metric.
+    - Fix: resolve a null term's construction and source periods, and refuse if any (period, metric) is shadowed.
+  - **L2 not closed on the real hop.** A null `fac:` cell carries no observation or normalisation ids, so the 6 period DEBT_TOTAL_EX_LEASES checks for a EUR facility with no FX row still downgrade. The `facility_fx` and `historical_input` gaps still block.
+    - Probe: `rereview/probe_l2_period_fx.py` (exits 1 while open).
+    - Fix: decide on the cell's series (a `fac:<id>` whose currency differs from the book's).
+  - Info: the comment for `CHILD_BASIS_DIFFERENCE_BLOCKER` (`canonical_audit.py:422`) describes a branch that never fires.

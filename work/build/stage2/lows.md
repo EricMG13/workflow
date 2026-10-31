@@ -79,3 +79,4 @@
   - `STATEMENT_HEADING` (financial_workflow.py:85-90) does not know STATEMENTS OF EARNINGS / FINANCIAL POSITION / COMPREHENSIVE INCOME.
   - Open question: should a COMPREHENSIVE INCOME caption map to IS? Left unmapped (None).
 - **[Stage 8 end batch] T2 re-review Low (mx-precise aabdf2f3, APPROVE).** In `owners/cp2h.py:1616`, an earlier gap-text issue (for example a bare figure) masks the "not settled" chip issue. The model then needs one extra retry. It is not a correctness hole. Fix: skip only on malformed syntax, and check `gap`-kind runs from `prose.tokenize(..., gaps=<unsettled>)`. Probe: `work/build/keep/s8-review/s8-rereview-T2/probe_gap_forms.py` (masked list).
+- `execution.py:545` comment "(host._ParsedExecution keeps its own 4)" is stale after T6/F1 (item 86); src/deploy_vii, owner to decide.

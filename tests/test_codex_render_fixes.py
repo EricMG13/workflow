@@ -68,15 +68,19 @@ def test_h07_null_spellings_are_refused(value: str) -> None:
     payload = copy.deepcopy(m8.SUBMISSIONS["positive"])
     payload["synthesis"]["text"] = value
     issues = cp8.validate_ledger(
-        submission=m8.submission(payload), upstream=m8.upstream("positive"), pack=m8.pack("positive")
+        submission=m8.submission(payload),
+        upstream=m8.upstream("positive"),
+        pack=m8.pack("positive"),
     )
-    assert issues == ["synthesis.text: text is a null spelling"]
+    assert issues == ("synthesis.text: text is a null spelling",)
 
 
 def test_h07_normal_text_is_still_accepted() -> None:
     payload = copy.deepcopy(m8.SUBMISSIONS["positive"])
     payload["synthesis"]["text"] = "No change."
     issues = cp8.validate_ledger(
-        submission=m8.submission(payload), upstream=m8.upstream("positive"), pack=m8.pack("positive")
+        submission=m8.submission(payload),
+        upstream=m8.upstream("positive"),
+        pack=m8.pack("positive"),
     )
-    assert issues == []
+    assert issues == ()

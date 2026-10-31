@@ -1844,6 +1844,24 @@
       "sha256": "e94f1f17715005213d28093376f42680d295dc2570fdd356533dfd193e62cd55",
       "reason": "Item 82: _calculation_gaps takes public and conflicting and applies absent_input_limitation to period reconciliation checks; calculation_gate stays BLOCK; no other rule changes.",
       "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_audit.py",
+      "imported_sha256": "e8facdfa23989531f8fadb82c2b6b695b51e51baca2713b38255ba9aa1f34475",
+      "prior_project_sha256": "d93009ef0ba055493d0030ca8d4f1c8c1b10cc5ceb8047c7d4d1b9a8b7c9500f",
+      "project_commit": "0b6ab8a82710a9ded658e2d7a0758708d921179a",
+      "sha256": "b672260594c312cc68400acc5a255dc317a245b12f1cc4a899607db64b3e493b",
+      "reason": "Item 82 fix 1: shadowed_account_ids and fx_normalised_ids; absent_input_limitation takes shadowed and normalised and also refuses a term citing a shadowing explicit account, a period term fed by FX normalisation and an explanation quoting a child difference; the audit hop passes shadowed; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
+    },
+    {
+      "destination": "src/deploy_vii/canonical_gaps.py",
+      "imported_sha256": "11adbac79a11c8b9c9e4e10fdadd74d99d7d46e45b857276a8d34a8951f94d4f",
+      "prior_project_sha256": "e94f1f17715005213d28093376f42680d295dc2570fdd356533dfd193e62cd55",
+      "project_commit": "0b6ab8a82710a9ded658e2d7a0758708d921179a",
+      "sha256": "67ddca4a8419582ea7d452b5527f7497d495d80dbc2e1d7e60143279ecab7a5a",
+      "reason": "Item 82 fix 1: _calculation_gaps also takes shadowed and normalised (from shadowed_account_ids and fx_normalised_ids) and passes them to absent_input_limitation; no other rule changes.",
+      "review": "docs/rulings/2026-10-29-stage3.md"
     }
   ],
   "local_patch_lineage": [

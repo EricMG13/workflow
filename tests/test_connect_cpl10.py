@@ -646,11 +646,12 @@ def _oracle_amounts() -> list[str]:
 @pytest.mark.parametrize("text", sorted(set(_oracle_amounts())))
 def test_every_oracle_amount_exact_round_trips_whatever_the_stored_padding(text: str) -> None:
     value = Decimal(text)
-    variants = {
-        value,
-        value.quantize(Decimal("0.01")) if value == value.quantize(Decimal("0.01")) else value,
-    }
-    variants.add(Decimal(f"{text}0") if "." in text else Decimal(f"{text}.00"))
+    padded = Decimal(f"{text}0") if "." in text else Decimal(f"{text}.00")
+    cents = value.quantize(Decimal("0.01"))
+    variants = [value, cents if value == cents else value, padded]
+    exponents = {v.as_tuple().exponent for v in variants}
+    assert len(exponents) >= 2, "the variants must differ in stored padding"
+    assert padded.as_tuple().exponent != value.as_tuple().exponent
     for variant in variants:
         assert cpl10._plain_text(variant) == text, variant
 

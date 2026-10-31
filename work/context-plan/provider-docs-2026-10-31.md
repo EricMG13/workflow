@@ -17,8 +17,12 @@ and developers.openai.com/api/docs/pricing. platform.openai.com returned 403 to 
   `input_tokens_details.cache_write_tokens`, `output_tokens`,
   `output_tokens_details.reasoning_tokens`, `total_tokens`.
 - Input-token count endpoint exists: `POST /v1/responses/input_tokens` (same `tools` shape).
-- `gpt-6.1-sol` standard, short context (≤ 272K input tokens), per 1M tokens: input USD 2.00,
-  cached input USD 0.10, output USD 10.00. Max output tokens: not stated on the page.
+- `gpt-6.1-sol` standard, per 1M tokens. Short context (≤ 272K input tokens): input USD 2.00,
+  output USD 10.00, cached input USD 0.10, 30-minute cache write USD 2.50, 12-hour cache write
+  USD 5.00. Long context (> 272K input): input USD 4.00, output USD 15.00, cached input USD 0.20,
+  30-minute write USD 5.00, 12-hour write USD 10.00. Max output tokens: not stated on the page.
+  Reservation rule (controller ruling, as B11): reserve at the long-context rates when the request
+  could exceed 272K input tokens, else short-context, at the 12-hour write rate.
 
 ## Anthropic (Messages API)
 Source: platform.claude.com/docs/en/api/messages and /docs/en/about-claude/pricing.

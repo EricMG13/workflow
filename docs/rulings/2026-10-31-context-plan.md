@@ -43,5 +43,14 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   briefs instead quote the needed lines from the pinned commits Part B names (`e636f71e`
   orchestration gaps, `efe43725` design spec and testing plan, `80748343` CP-DR description), read
   with `git show`. Cost if wrong: a brief cites text the user later changes on that branch.
+- **B10 One retry after a 5xx narrows spec §7.2 (the user's budget ruling).** A provider 5xx or a
+  cut stream with no usage is "sent, charge unknown": its reservation stays held and counted. R5's
+  one transient retry still goes out once per run, with a fresh reservation and the next
+  `call_index`, only while the cap admits both reservations; a failed retry, a timeout or any other
+  unknown charge stops the run. Spec §7.2 says an unknown charge stops the configuration; this lets
+  one retry go first. Cost if wrong: one extra reservation of exposure per run, still inside the cap.
+- **B11 Anthropic cache writes.** Reservations use the higher (1-hour) cache-write rate; settlement
+  prices the reported `ephemeral_5m_input_tokens` and `ephemeral_1h_input_tokens` at their own
+  rates. OpenAI `cache_write_tokens` are part of `input_tokens` (charged once, at the write rate).
 - **B5 One build branch, phase hand-offs.** All of Part B and Phases 2-8 build on
   `claude/context-plan-build`; each finished phase goes to the PR Manager as a lane integration.

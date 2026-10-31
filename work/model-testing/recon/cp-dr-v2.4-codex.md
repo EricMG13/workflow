@@ -24,4 +24,4 @@ Deploy VII-specific points (apply to Deploy Workflow's copies):
 
 Sequence: method/version record and contracts → base LOCAL research → CP-2 and CP-1C integration → optional peer pack. Acceptance cases: anchor mismatch, blocked inputs, cutoff violation, missing/contradictory evidence, dossier replacement, LOCAL readiness ceiling.
 
-Caveat (Codex): screenshots establish the design, not that the v2.4 scripts/build pass validation; pin source files and hashes before claiming exact v2.4 parity.
+Caveat (Codex): screenshots establish the design, not that the v2.4 scripts/build pass validation. User ruling 2026-10-31: "there will be no work version set, it need to make its version based on my intend usage and the information provided." This repo builds its own CP-DR version from this description; no parity check.

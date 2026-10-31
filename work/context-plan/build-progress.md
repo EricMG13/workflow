@@ -11,14 +11,13 @@ diffs too) → phase gate → PR Manager.
 
 | Phase | Plan file | State | Commits | Sent to PR Manager |
 |---|---|---|---|---|
-| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | plan approved 8e17789b (2 review rounds); building: Task 1 dispatched (BASE 01ee8514) | — | — |
+| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | plan approved 8e17789b (2 review rounds); building: Task 1 approved after fix 1 (tests at 4725c3b6 running); Task 2 next | 5a00d7be, 4725c3b6 | — |
 | O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | plan approved 01ee8514 (3 rounds); provider docs in work/context-plan/provider-docs-2026-10-31.md; builds after O1 | — | — |
-| O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | plan drafting (mx-feature) | — | — |
-| O3 | — | — | — | — |
-| O4 | — | — | — | — |
-| O6 | — | — | — | — |
-| O7a-d | — | — | — | — |
-| Phases 2-8 | — | questions researched and ruled: work/context-plan/reviews/phases-2-8-questions.md; user rulings B6-B9 | — | — |
+| O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | plan approved 5032faaa (2 rounds; new oracle cases/o2-synthetic) | — | — |
+| O3+O4 | docs/superpowers/plans/2026-10-31-part-b-o3-o4.md | plan approved (2 rounds); replay under a new run_id under investigation (O7 N1) | — | — |
+| O6 | docs/superpowers/plans/2026-10-31-part-b-o6.md | plan approved (2 rounds) | — | — |
+| O7a-d | docs/superpowers/plans/2026-10-31-part-b-o7.md | rev 2; re-review fix (N1 waits on the O3 replay investigation; N2 and Low ruled); rulings B12-B13 | — | — |
+| Phases 2-8 | docs/superpowers/plans/2026-10-31-phase-<N>-<slug>.md | Phases 3 and 4 plans drafting; questions researched and ruled: work/context-plan/reviews/phases-2-8-questions.md; user rulings B6-B9 | — | — |
 
 Notes:
 - Modules (2026-10-31): not editing owner_workflow.py or the listed modules. Overlap risks:

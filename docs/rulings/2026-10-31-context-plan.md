@@ -54,3 +54,15 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   rates. OpenAI `cache_write_tokens` are part of `input_tokens` (charged once, at the write rate).
 - **B5 One build branch, phase hand-offs.** All of Part B and Phases 2-8 build on
   `claude/context-plan-build`; each finished phase goes to the PR Manager as a lane integration.
+- **B12 CP-DR brief locks before analysis, not before retrieval (O7 Q9; amends OD4).** In the one-run
+  design the research manifest's files enter the pack before `prepare`, so the brief cannot precede
+  intake. The brief is CP-DR's first owner step, its source scope excludes every `ev-*` source, and
+  it is hash-locked before the `research` step starts. OD4's aim (questions are not shaped by the
+  evidence) holds; the brief does not choose what is retrieved (the user's manifest does). Cost if
+  wrong: a later brief-driven web search would need retrieval moved after the brief (a second pack).
+- **B13 A refused CP-DR does not stop CP-1C or CP-2 (O7 Q10).** The O3 walk continues; CP-1C and
+  CP-2 run without a CP-DR input, and `run.json` records `cp_dr_state` (`refused` or `blocked`) and
+  the cause, so the dossier's absence is visible. CP-5's fan-in includes CP-DR (registry.py:26), so
+  a refused CP-DR makes CP-5 (and CP-6) refuse for a missing producer and no report renders: the same
+  outcome as any other refused module (O3's open item, for the user). Cost if wrong: a run with a
+  refused CP-DR ends without a report; the user reruns without `cp_dr=True` or after repairing it.

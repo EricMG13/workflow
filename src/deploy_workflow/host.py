@@ -941,25 +941,37 @@ def _execution_state(
         raise SourceError("identity_mismatch") from None
 
 
+# The owner and financial layers re-parse every call receipt with pydantic
+# `model_validate_json`, whose JSON parser (jiter) refuses nesting deeper than 200.
+# The receipt wraps `arguments` in further levels (call object, record wrappers), so
+# the bound sits well below 200 to leave margin; `arguments` itself is depth 1.
+MAX_ARGUMENT_DEPTH = 100
+
+
 def _json_arguments(arguments: Any) -> dict[str, Any]:
     """JSON input must round-trip without coercing tuples, keys or numeric sentinels."""
 
-    def check(value: Any) -> None:
+    def check(value: Any, depth: int) -> None:
         if type(value) in (str, int, float, bool, type(None)):
             return
+        if depth > MAX_ARGUMENT_DEPTH:
+            raise ValueError("arguments nested too deeply")
         if type(value) is list:
             for item in value:
-                check(item)
+                check(item, depth + 1)
             return
         if type(value) is dict and all(type(key) is str for key in value):
             for item in value.values():
-                check(item)
+                check(item, depth + 1)
             return
         raise ValueError("not JSON")
 
     if type(arguments) is not dict:
         raise ValueError("arguments must be an object")
-    check(arguments)
+    check(arguments, 1)
+    # A lone surrogate in a key or value is a str but cannot be encoded as UTF-8;
+    # refuse it here so every later layer can serialise and retain the receipt.
+    json.dumps(arguments, ensure_ascii=False).encode("utf-8")
     return _detached(arguments)
 
 

@@ -1,0 +1,207 @@
+{
+  "schema": "context/1",
+  "run": {
+    "run_type": "primary",
+    "pathway": "credit_snapshot",
+    "case_kind": "private",
+    "as_of": "2026-10-31",
+    "current_period": "q3-2026",
+    "prior_period": "q2-2026",
+    "reporting_currency": "USD"
+  },
+  "identity": {
+    "issuer_name": "Northbridge Group",
+    "issuer_id": "northbridge-group",
+    "borrower_name": "Northbridge Holdings LLC",
+    "parent_name": "Northbridge Topco Ltd",
+    "guarantors": [
+      "Northbridge Opco LLC",
+      "Northbridge IP LLC"
+    ],
+    "aliases": [
+      "Northbridge",
+      "NBG"
+    ],
+    "listed_equity": false,
+    "ticker": "",
+    "sector": "Gaming & Leisure",
+    "country": "United States",
+    "sponsor": "Harbour Peak Capital"
+  },
+  "deal_terms": [
+    {
+      "facility_id": "tlb-2031",
+      "instrument": "Term loan B",
+      "currency": "USD",
+      "size_m": "1250",
+      "tenor_years": "7",
+      "talk_spread_bps_low": "325",
+      "talk_spread_bps_high": "350",
+      "talk_oid_low": "99.0",
+      "talk_oid_high": "99.5",
+      "floor_pct": "0.50",
+      "call_protection": "101 soft call, 6 months",
+      "use_of_proceeds": "Refinance 2027 term loan",
+      "as_of": "2026-10-28",
+      "provider": "Lead arranger"
+    },
+    {
+      "facility_id": "rcf-2029",
+      "instrument": "Revolver",
+      "currency": "USD",
+      "size_m": "250",
+      "tenor_years": "5",
+      "talk_spread_bps_low": "300",
+      "talk_spread_bps_high": "300",
+      "talk_oid_low": "",
+      "talk_oid_high": "",
+      "floor_pct": "0",
+      "call_protection": "",
+      "use_of_proceeds": "General corporate purposes",
+      "as_of": "2026-10-28",
+      "provider": "Lead arranger"
+    }
+  ],
+  "quotes": [
+    {
+      "facility_id": "tlb-2031",
+      "kind": "indicative_talk",
+      "bid": "98.50",
+      "ask": "99.00",
+      "price": "98.75",
+      "yield_pct": "8.25",
+      "spread_bps": "340",
+      "as_of": "2026-10-29",
+      "provider": "Lead arranger"
+    }
+  ],
+  "ratings": [
+    {
+      "agency": "S&P",
+      "scope": "issuer",
+      "rating": "B+",
+      "outlook": "Stable",
+      "as_of": "2026-09-15"
+    }
+  ],
+  "valuation": {
+    "peer_source": "user_comps",
+    "basis": "blend",
+    "issuer_market": {
+      "market_cap_m": "",
+      "net_debt_m": "",
+      "ev_m": "",
+      "ebitda_basis": "LTM",
+      "as_of": "",
+      "source": ""
+    },
+    "peers": [
+      {
+        "name": "Harbour Leisure Inc",
+        "ticker": "HLI",
+        "ev_m": "5400",
+        "ebitda_m": "600",
+        "as_of": "2026-09-30",
+        "source": "Company 10-Q, 2026-09-30"
+      },
+      {
+        "name": "Crestline Resorts Corp",
+        "ticker": "CRC",
+        "ev_m": "3150",
+        "ebitda_m": "375",
+        "as_of": "2026-09-30",
+        "source": "Company 10-Q, 2026-09-30"
+      },
+      {
+        "name": "Ridgeway Entertainment Inc",
+        "ticker": "RGE",
+        "ev_m": "2280",
+        "ebitda_m": "240",
+        "as_of": "2026-06-30",
+        "source": "Company 10-Q, 2026-06-30"
+      }
+    ],
+    "precedents": [
+      {
+        "target": "Target Casinos Ltd",
+        "acquirer": "Acquirer Group",
+        "date": "2025-06-30",
+        "ev_m": "1800",
+        "ebitda_m": "200",
+        "source": "Press release, 2025-06-30"
+      },
+      {
+        "target": "Lakeside Gaming LLC",
+        "acquirer": "Summit Leisure Partners",
+        "date": "2024-11-15",
+        "ev_m": "960",
+        "ebitda_m": "120",
+        "source": "Press release, 2024-11-15"
+      }
+    ],
+    "user_multiple": {
+      "value": "",
+      "basis": "LTM",
+      "rationale": ""
+    }
+  },
+  "assumptions": {
+    "cp2a": {
+      "scenarios": [
+        {
+          "ebitda_decline_pct": "20",
+          "interest_increase_pct": "10"
+        },
+        {
+          "ebitda_decline_pct": "35",
+          "interest_increase_pct": "25"
+        }
+      ],
+      "rationale": "Lender downside and severe cases."
+    },
+    "cp2d": {
+      "horizon_months": "18",
+      "minimum_cash_m": "50",
+      "rationale": "Covenant minimum liquidity."
+    },
+    "cp2e": {
+      "rate_shocks_bps": [
+        "100",
+        "200"
+      ],
+      "fx_shocks_pct": [
+        "10"
+      ],
+      "hedge_ratio_pct": "60",
+      "rationale": "Floating-rate exposure, partly hedged."
+    },
+    "cp3c": {
+      "repricing_bps": "50",
+      "rationale": "Recent repricings in the sector."
+    },
+    "cp3d": {
+      "recovery_pct": "65",
+      "rationale": "First-lien recovery in the sector."
+    },
+    "cp4c": {
+      "ev_multiple": "8.5",
+      "rationale": "Midpoint of peer and precedent ranges."
+    }
+  },
+  "attachments": {
+    "portfolio_workbook": false,
+    "prior_case": false,
+    "management_bridge": true,
+    "legal_documents": "draft"
+  },
+  "research_questions": [
+    {
+      "text": "How much of 2026 adjusted EBITDA is run-rate cost savings?",
+      "focus_module": "CP-1C"
+    },
+    {
+      "text": "Which peers report EBITDA after lease costs?",
+      "focus_module": "CP-DR"
+    }
+  ]
+}

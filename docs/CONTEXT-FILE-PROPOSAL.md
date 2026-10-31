@@ -116,8 +116,9 @@ means not supplied, never zero). Money is in millions of the stated currency.
 
 ## Built today vs planned
 
-Built: the form and its validation only. Planned, each needing its own lease:
-`context.json` reader and `Run` mapping; CP-DR web peer and precedent sourcing (live
-provider calls are paused); CP-1C EV/EBITDA; valuation basis selection; CP-1B period
-pair from context; CP-4 draft-document mode; CP-DR user questions; pinned assumptions;
-non-USD currency; real agency names in CP-2H; replacing `rv_quotes` with `quotes`.
+Built: the form, the `context/1` reader, pack preparation with the `Run` mapping, and
+the frozen-pack reader (Phase 1). Planned, each needing its own lease:
+CP-DR web peer and precedent sourcing (live provider calls are paused); CP-1C
+EV/EBITDA; valuation basis selection; CP-1B period pair from context; CP-4
+draft-document mode; CP-DR user questions; pinned assumptions; non-USD currency; real
+agency names in CP-2H; replacing `rv_quotes` with `quotes`.

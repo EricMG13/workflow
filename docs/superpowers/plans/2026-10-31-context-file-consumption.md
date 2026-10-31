@@ -131,12 +131,35 @@ cp3d recovery `100`; cp4c multiple `0`; a pin without rationale; `legal_document
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/product/test_context.py -q`
 Expected: FAIL (`ModuleNotFoundError: deploy_workflow.context`).
 
+Phase 1 rulings (controller, 2026-10-31, from the cross-plan review in
+`work/context-plan/cross-plan-review-2026-10-31.md`; the user approved adding them):
+- **R-P1a (regex semantics).** Match every pattern with `re.fullmatch(pattern, value, re.ASCII)`.
+  Python's `\d` matches non-ASCII digits and `$` matches before a trailing newline; the form's JS
+  does neither. The literals stay identical to the form's (Task 2 compares them). `INVALID_CASES`
+  gains a fullwidth-digit amount (`"１２５０"`) and trailing-newline values (`"1250\n"` in a number,
+  `"bgs\n"` in `issuer_id`).
+- **R-P1b (line boundaries).** Refuse, naming the field, any string value containing U+0085,
+  U+2028 or U+2029. JSON.stringify writes them raw, and `str.splitlines()` (which preparation
+  uses, `src/deploy_vii/preparation.py:78-80`) splits on them, so Task 4 could not rebuild the
+  file. `INVALID_CASES` gains one row with U+2028 in a rationale.
+- **R-P1c (validation order).** Decode with `utf-8-sig` (strict); `json.loads` with the
+  duplicate-key hook; check and remove the top-level `schema` key; then
+  `RunContext.model_validate_json(json.dumps(obj))`. `Contract` is strict, so validating the
+  decoded JSON (not Python objects) is what lets arrays fill tuple fields; raw bytes cannot be
+  validated directly (the `schema` key and a BOM are refused).
+- **R-P1d (list items).** List items (`guarantors`, `aliases`) may contain commas: add no comma
+  rule. Five golden cases carry such names (e.g. `iHeartMedia Capital I, LLC`); Task 2 tests that
+  every `cases/goldens/*/context.json` loads.
+- **No period-versus-as-of rule.** Do not add "a period ends before `run.as_of`": the form has none,
+  and fiscal periods (TDG: `q1-2025` with as-of 2025-02-04, fiscal year ending September) would be
+  refused.
+
 - [ ] **Step 3: Implement `load_context(raw: bytes) -> RunContext`**
 
 Parse with `json.loads(raw.decode("utf-8-sig"), object_pairs_hook=...)` refusing duplicate
-keys; validate shape with the contracts (`extra="forbid"` comes from `Contract`); then apply
-the cross-field rules above in one pass that collects every problem before raising. Compare
-numbers as `Decimal`, never `float`.
+keys; validate shape with the contracts (`extra="forbid"` comes from `Contract`) in the order
+R-P1c gives; then apply the cross-field rules above in one pass that collects every problem
+before raising. Compare numbers as `Decimal`, never `float`.
 
 - [ ] **Step 4: Run to verify they pass**
 
@@ -178,6 +201,10 @@ def test_form_regexes_match_reader():
     assert f"const NUM = /{NUM}/, SNUM = /{SNUM}/;" in html
     assert f"/{PERIOD}/.exec(p)" in html
     assert f"/{SLUG}/.test(v)" in html   # SLUG = r"^[a-z0-9][a-z0-9-]*$", exported by Task 1
+
+@pytest.mark.parametrize("case", sorted(p.parent.name for p in GOLDENS.glob("*/context.json")))
+def test_golden_contexts_load(case):   # R-P1d; GOLDENS = repo / "cases/goldens"; six cases today
+    load_context((GOLDENS / case / "context.json").read_bytes())
 ```
 
 - [ ] **Step 2: Run to verify they fail** — Expected: FAIL (fixtures absent).
@@ -243,7 +270,8 @@ def test_cli_prepares_pack(tmp_path):
 - Consumes: `load_context`, `CONTEXT_SOURCE_ID`, Task 3's CLI (to build test packs).
 - Produces: `def context_facts(pack: PreparedPack) -> RunContext | None` — `None` when the pack
   holds no `context` source (every existing case pack); otherwise rebuilds the bytes as
-  `"\n".join(span.text for span in source.spans)` and calls `load_context`. Raises
+  `"\n".join(span.text for span in source.spans)` and calls `load_context` (exact because
+  Task 1 refuses U+0085/U+2028/U+2029, R-P1b, and JSON has no other raw line breaks). Raises
   `ContextRefused` when the source is not `ready`, or when the context's issuer name, issuer id,
   as-of, case kind or pathway differ from `pack.run`.
 
@@ -297,7 +325,7 @@ behaviour exactly, so every frozen case stays green.
 
 | Phase | Modules | Change | Open questions | Done when |
 |---|---|---|---|---|
-| 2 Identity and periods | CP-0, CP-1, CP-1A, CP-1B, CP-L10 | CP-0 shows borrower/aliases beside the issuer gate; CP-1A shows context sector and sponsor as user-supplied beside its cited rows (cited rows still required); CP-1 compares located entity roles with the context names (a mismatch is an issue, never an override); CP-1B takes `current_period`/`prior_period` instead of `_case_parameters` (`earnings_workflow.py:1655`); CP-L10 offers the context periods | Does a borrower-name mismatch block CP-1 or record a gap? Which period kinds can CP-1B compare (q vs fy)? | An earnings run on a non-test `run_id` reaches CP-1B with the context's periods |
+| 2 Identity and periods | CP-0, CP-1, CP-1A, CP-1B, CP-L10 | CP-0 shows borrower/aliases beside the issuer gate; CP-1A shows context sector and sponsor as user-supplied beside its cited rows (cited rows still required); CP-1 compares located entity roles with the context names (a mismatch is an issue, never an override); CP-1B takes `current_period`/`prior_period` instead of `_case_parameters` (`earnings_workflow.py:1655`); CP-L10 offers the context periods | Does a borrower-name mismatch block CP-1 or record a gap? Which period kinds can CP-1B compare (q vs fy)? Before CP-1 compares names: the form's list fields split on commas (form `fld`, ~:686) and rejoin with `", "` (~:1265), so a loaded file's `LLC`-style names change on download (cross-plan review P1-4) | An earnings run on a non-test `run_id` reaches CP-1B with the context's periods |
 | 3 Market evidence | CP-3, CP-3D | `quotes` and `deal_terms` talk become the market evidence (observed / indicative_talk) with the context's dates; quote as-of checked against `Run.as_of`; `rv_quotes` retired | Is price talk one row per bound (low/high) or a range row? Staleness limit? | CP-3 runs on a secondary context with Python-read quotes; talk-only caps confidence |
 | 4 Ratings | CP-2H | `ratings` rows feed the rating register; real agency names (S&P, Moody's, Fitch) replace the synthetic headers (`cp2h.py:161`) | Where do trigger terms come from when only a rating is given? | CP-2H states real agency ratings; no ratings → today's "Rating register not found" |
 | 5 Attachments and modes | CP-0, CP-4, CP-DR | `attachments` declare expected sources (a declared but absent source is a CP-0 gap); CP-4 draft-document mode for primary runs; CP-DR answers `research_questions` beside gap research | Draft authority value (`src/deploy_vii`: user decision); may a draft-only CP-4 reach High confidence? | A primary run with draft documents reaches CP-4 with a "draft" limitation |

@@ -49,3 +49,8 @@
   - CP-2A: "Lease narrowing 'every settled operand'". Closed by a70ee52 (`docs/CP2A-OWNER-LEASE.md:69`).
   - CP-3D: "raw model_validate_json in _validate_step; RunText check masked". Closed by 30a1f7a.
   These are docs only. They can ride with the next MODULES.csv edit.
+- **[CP-1 quality read size, owner] Medium, predates item 82 (reported 2026-10-31 by the "Tool use vs M365 Copilot research" session; the controller checked the size).** `owner_workflow.read_inputs` serves the full `cp1_quality_inputs(...)` for the `quality` step (host.py:461, financial_workflow.py:306, earnings_workflow.py:973). It has no size cap; `lookup_upstream` is capped at 8,192 bytes.
+  - On CZR the quality read is 16.9 MB (`work/build/keep/s5-final2/czr-root/read-3-quality.txt`, 16,886,498 bytes): 5 claims, about 36k coverage slots, about 39.7k references and ceilings.
+  - At an estimated 4M+ tokens, no live model could run CP-1 quality on a real filing as wired. The peer measured peak RSS at 1.68 GB, without attributing it to a code path.
+  - DEPLOY VII has a compact projection, `deploy_vii.live.prompts.quality_scope` (task 7.4; about 270 KB on a real pack). Nothing in `src/deploy_workflow` calls it; narrative and readiness already use compact projections.
+  - Open questions: whether to serve `quality_scope`, and whether the review binding (`inputs_sha256` over the full inputs) and `promote_cp1` stay unchanged. Item 82 does not shrink this.

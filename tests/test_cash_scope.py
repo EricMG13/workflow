@@ -82,6 +82,7 @@ def period(pid: str, kind: str, quarter, year: str, start, end) -> FinancialPeri
         accounting_basis="US GAAP",
         entity_perimeter="Consolidated",
         citations=(cite("period", "page:1"),),
+        limitation="Point-in-time balance sheet date, not a duration" if start is None else None,
     )
 
 

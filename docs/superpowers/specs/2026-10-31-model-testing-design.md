@@ -10,6 +10,15 @@ The user wants to run the Deploy Workflow end to end with real models and find o
 
 Nothing has yet run the full workflow with a model. Today runs are Python replays of recorded submissions (`tests/czr_runs.py`, `tests/s1a_runs.py`, `tests/cp*_runs.py`).
 
+## 1a. Architecture ruling: the orchestrator calls the model (user, 2026-10-31)
+
+The user asked whether connecting the model should be "the responsibility of the orchestrator". Yes. Today the workflow orchestrator sequences modules, serves tools and validates submissions, but never calls a model, and nothing in the product calls `live/prompts.py`. The model connection is a product gap, not a testing concern.
+
+- **Product (orchestrator), built by the Modules session as product work:** for each step the orchestrator builds the prompt from the step contract, calls the configured model through a provider adapter (OpenAI, Anthropic, OpenRouter), runs the tool loop (tool calls → `invoke` / `read_inputs` / submit), validates the submission, retries within the two-tries limit, and emits a per-call record (tokens, timings, cost, ids). It also holds the agent-written prompts for every step, including the 15 that have none today. The orchestrator takes a model configuration and a spend cap as run inputs.
+- **Testing framework (this design):** chooses the configuration and budget per run, feeds the case's context form output, collects the orchestrator's per-call records into the journal, scores outputs against the goldens, classifies faults, routes product faults to Modules, and writes the report. It contains no provider client, no turn loop and no prompts.
+
+Where this document below describes adapters, the turn loop, prompts or reuse of DEPLOY VII clients (sections 7.5, 8, 10.2), read them as requirements on the orchestrator, built by Modules; the framework only drives and observes them.
+
 ## 2. Goals
 
 1. Every module in every pathway preset (`src/deploy_vii/contracts.py:36-71`) runs with a live model, driven by the case's `context.json` from the context form.

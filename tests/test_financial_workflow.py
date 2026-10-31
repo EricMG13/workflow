@@ -1010,9 +1010,12 @@ def quality_ready_case(root, *, invalid_context_retries=0):
         * 10,
         len(raw_qa["claims"]),
     )
-    coverage = Fraction(
-        sum(c["present"] for c in inputs["coverage"]) * 100, len(inputs["coverage"])
+    cell_groups = inputs["coverage_cells"]
+    present_slots = sum(s["present"] for s in inputs["coverage_slots"]) + sum(
+        g["slots"] for g in cell_groups if g["present"]
     )
+    total_slots = len(inputs["coverage_slots"]) + sum(g["slots"] for g in cell_groups)
+    coverage = Fraction(present_slots * 100, total_slots)
     multiplier = {"pass": Fraction(1), "partial": Fraction(7, 10), "fail": Fraction(0)}[
         inputs["source_gate"]
     ]
@@ -1233,6 +1236,44 @@ def test_repeated_identical_invalid_review_uses_core_repair(tmp_path):
         ]
         == "ok"
     )
+
+
+def _keys_at_any_depth(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield key
+            yield from _keys_at_any_depth(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _keys_at_any_depth(item)
+
+
+def test_quality_read_serves_narrowed_quality_scope_bound_to_full_inputs(
+    tmp_path, genuine_quality_case
+):
+    """Rulings items 85 and 87: the scope, each record narrowed to kind and reference."""
+    from deploy_vii.cp1_quality import cp1_quality_inputs
+    from deploy_vii.cp1_workflow import cp1_registers
+    from deploy_vii.live.prompts import quality_scope
+
+    workflow = clone_workflow(genuine_quality_case[0], tmp_path)
+    read = workflow.read_inputs()
+    store = Execution(tmp_path / "store")
+    attempt = next(a for a in store.read().attempts if a.module_id == "CP-1")
+    registers = cp1_registers(store, attempt.ticket_id)
+    inputs = cp1_quality_inputs(registers)
+    expected = quality_scope(registers, inputs)
+    for entry in expected["evidence"]:
+        entry["record"] = {k: entry["record"][k] for k in ("kind", "reference")}
+    expected_body = json.dumps(expected, sort_keys=True, separators=(",", ":"))
+    assert read["inputs_sha256"] == inputs.content_hash()
+    assert read["body"] == expected_body
+    assert workflow.read_inputs()["body"] == expected_body
+    body = json.loads(read["body"])
+    assert "coverage_cells" in body and "references" not in body
+    assert len(read["body"]) < 524_288
+    assert len(read["body"]) * 20 < len(inputs.model_dump_json())
+    assert not {"record_json", "citations", "quote"} & set(_keys_at_any_depth(body))
 
 
 def test_qa_lineage_upgrade_refuses_actual_promotion(tmp_path, genuine_quality_case):

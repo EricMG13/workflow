@@ -1024,6 +1024,27 @@ def downstream_review(read):
     return json.dumps({"consumers": consumers})
 
 
+def assert_quality_read_is_narrowed_scope(workflow, quality_read):
+    """Rulings items 85 and 87: the scope, each record narrowed to kind and reference."""
+    from deploy_vii.cp1_quality import cp1_quality_inputs
+    from deploy_vii.cp1_workflow import cp1_registers
+    from deploy_vii.live.prompts import quality_scope
+
+    registers = cp1_registers(workflow._store, quality_read.binding.ticket_id)
+    inputs = cp1_quality_inputs(registers)
+    expected = quality_scope(registers, inputs)
+    for entry in expected["evidence"]:
+        entry["record"] = {k: entry["record"][k] for k in ("kind", "reference")}
+    assert quality_read.inputs_sha256 == inputs.content_hash()
+    assert quality_read.body == json.dumps(expected, sort_keys=True, separators=(",", ":"))
+    body = json.loads(quality_read.body)
+    assert "coverage_cells" in body and "references" not in body
+    assert len(quality_read.body) < 524_288
+    assert len(quality_read.body) * 20 < len(inputs.model_dump_json())
+    for needle in ('"record_json"', '"citations"', '"quote"'):
+        assert needle not in quality_read.body
+
+
 def drive_fresh_foundation(core, directory, case_id="E-QOQ-FLAT"):
     from test_financial_workflow import context, financials, narrative, parsed_evidence
 
@@ -1091,6 +1112,7 @@ def drive_fresh_foundation(core, directory, case_id="E-QOQ-FLAT"):
     readiness_read = workflow.read_inputs()
     assert workflow.submit_review(downstream_review(readiness_read)).disposition == "valid"
     quality_read = workflow.read_inputs()
+    assert_quality_read_is_narrowed_scope(workflow, quality_read)
     inputs = json.loads(quality_read.body)
     calculated_ids = {r["evidence_id"] for r in observed if r["kind"] == "kpi"}
     observed_ids = {r["evidence_id"] for r in observed}

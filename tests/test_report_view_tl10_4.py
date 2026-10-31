@@ -12,5 +12,6 @@ def test_tl10_4_decision_impact_shows_the_figure_not_the_reference() -> None:
     impact = page[f"TL10.4.{topic}.decision_impact"]
     for key in ("display", "table_display"):
         assert "{" not in impact[key]
+        assert impact[key] == "A move of 3.75 US$ m reaches the credit view."
         assert "3.75 US$ m" in impact[key]
         assert impact[key] == transmission[key]

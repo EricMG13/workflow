@@ -352,8 +352,8 @@ def _blank_limitations(limitations: tuple[str, ...], where: str) -> Iterator[str
 
 def _lacks(assessment: SourceContext, scope: ReportingScope) -> Iterator[str]:
     """Task 7.14, rule 1: a historical or period-end scope of a financial source states all
-    four dimensions; one issue per missing or blank (`prose.is_blank`) field. Forecast and unspecified scopes, and a
-    non-financial source's scopes, are not held to it."""
+    four dimensions; one issue per missing or blank (`prose.is_blank`) field. Forecast and
+    unspecified scopes, and a non-financial source's scopes, are not held to it."""
     if assessment.classification == "financial" and scope.period_kind in STATED_KINDS:
         for name in DIMENSIONS:
             value = getattr(scope, name)
@@ -366,8 +366,8 @@ def _disagreements(review: SourceContextReview) -> Iterator[str]:
     entity, over every financial source, state the same four strings. Those are the scopes
     `context_binding` and the financials prefill (`live.submission._period_scopes`) choose from
     by entity and dates alone, so one book's periods must find one tuple. Compared exactly, with
-    no normalisation; a null or blank is rule 1's issue alone. One issue per entity and field, naming
-    the scope ids that share each stated value, in review order."""
+    no normalisation; a null or blank is rule 1's issue alone. One issue per entity and field,
+    naming the scope ids that share each stated value, in review order."""
     by_entity: dict[str, list[ReportingScope]] = {}
     for source in review.sources:
         if source.classification == "financial":

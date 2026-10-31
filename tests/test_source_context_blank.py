@@ -145,7 +145,7 @@ def test_frozen_cp1_submissions_hold_no_blank_limitation() -> None:
 
 
 @pytest.mark.parametrize("field", ("accounting_basis", "entity_perimeter"))
-@pytest.mark.parametrize("blank", (" ", "​"))
+@pytest.mark.parametrize("blank", (" ", "\u200b"))
 def test_blank_scope_dimension_is_lacking(field: str, blank: str) -> None:
     """H09: a blank `accounting_basis` or `entity_perimeter` on a financial historical scope is
     rule 1's issue, as a null is; it must not pass and settle facts `publish_model` then refuses."""
@@ -162,7 +162,7 @@ def test_blank_dimension_beside_stated_sibling_is_lacking_not_disagreement() -> 
     scopes = doc["sources"][1]["scopes"]
     assert len(scopes) > 1
     assert all(s["accounting_basis"] == "IFRS" for s in scopes)
-    scopes[0]["accounting_basis"] = "​"
+    scopes[0]["accounting_basis"] = "\u200b"
     assert _issues(doc) == (f"Financial scope lacks accounting_basis: {scopes[0]['scope_id']}",)
 
 

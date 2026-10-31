@@ -1603,9 +1603,10 @@ def _clip(text: str) -> str:
 #: claim text (``owners/cp8.py:2145-2186``), CP-L10's TL10.3 analyst text (``cpl10.py:1060-1073``,
 #: stored at :804-826) and CP-2H's T2R.10 gap text (``cp2h.py:1523-1541``, :1608-1614, stored at
 #: :1413-1424). CP-L10's TL10.4 ``decision_impact`` reuses the validated TL10.3
-#: ``credit_transmission`` text (``cpl10.py:860-870``, validated at :1060-1073). Keyed by (module, table, field): a table mixes run text with free text (TL10.3
-#: ``source_refs``, T2R.10 ``id``), and ``Fact.text`` is a plain string, so free text and verbatim
-#: quotes may hold ``[sic]`` or ``[Reserved]`` and are shown as written.
+#: ``credit_transmission`` text (``cpl10.py:860-870``, validated at :1060-1073). Keyed by
+#: (module, table, field): a table mixes run text with free text (TL10.3 ``source_refs``, T2R.10
+#: ``id``), and ``Fact.text`` is a plain string, so free text and verbatim quotes may hold
+#: ``[sic]`` or ``[Reserved]`` and are shown as written.
 _RUN_TEXT_FIELDS = frozenset(
     {
         ("CP-8", "cp8.what_changed", "value"),

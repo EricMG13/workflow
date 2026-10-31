@@ -128,12 +128,22 @@ def test_space_rows_extract_as_before() -> None:
 # --- CP-1 precheck on the filed statement pages ------------------------------------------------
 
 
-def _period(period_id: str, kind: str, end: date, quarter: int | None = None) -> SimpleNamespace:
+def _period(
+    period_id: str,
+    kind: str,
+    end: date,
+    quarter: int | None = None,
+    months: int | None = None,
+) -> SimpleNamespace:
+    """A period ending `end`; its span is `months` calendar months (default: the type's span)."""
+    span = months or {"QUARTER": 3, "YTD": end.month, "FY": 12, "LTM": 12}.get(kind, 1)
+    index = end.year * 12 + end.month - span
     return SimpleNamespace(
         period_id=period_id,
         period_type=kind,
         fiscal_year=str(end.year),
         fiscal_quarter=quarter,
+        start_date=date(index // 12, index % 12 + 1, 1),
         end_date=end,
     )
 
@@ -191,12 +201,62 @@ def test_filed_page_lines_belong_to_the_page_statement(
 
 
 def test_statement_caption_wins_and_unknown_page_gives_none() -> None:
-    assert fw._statement("CASH FLOW ITEMS", "INCOME STATEMENT") == "CFS"
-    assert fw._statement("Income", "BALANCE SHEET") == "IS"
+    assert fw._statement("CASH FLOW ITEMS", "INCOME STATEMENT") == "IS"
+    assert fw._statement("Income", "BALANCE SHEET") == "BS"
     assert fw._statement(None, "x\nINCOME STATEMENT\ny") == "IS"
     assert fw._statement("ASSETS", "no heading here") is None
     both = "CONSOLIDATED BALANCE SHEETS\nCONSOLIDATED STATEMENTS OF OPERATIONS"
     assert fw._statement("ASSETS", both) is None
+
+
+def test_reconciliation_caption_on_a_cash_flow_page_is_cfs() -> None:
+    page = "CONSOLIDATED STATEMENTS OF CASH FLOWS\nSix Months Ended June 30,"
+    caption = "ADJUSTMENTS TO RECONCILE NET INCOME TO NET CASH PROVIDED BY OPERATING ACTIVITIES:"
+    assert fw._statement(caption, page) == "CFS"
+
+
+def test_caption_decides_only_when_it_names_a_statement_outright() -> None:
+    none = "no heading here"
+    both = "CONSOLIDATED BALANCE SHEETS\nCONSOLIDATED STATEMENTS OF OPERATIONS"
+    assert fw._statement("CASH FLOW ITEMS", none) == "CFS"
+    assert fw._statement("CONSOLIDATED BALANCE SHEET", both) == "BS"
+    assert fw._statement("STATEMENTS OF OPERATIONS", none) == "IS"
+    assert fw._statement("STATEMENT OF INCOME", both) == "IS"
+    assert fw._statement("INCOME STATEMENT", none) == "IS"
+    assert fw._statement("Income", none) is None
+    assert fw._statement("Income", both) is None
+
+
+def test_six_month_header_is_not_satisfied_by_a_nine_month_period() -> None:
+    six = _period("six", "YTD", date(2026, 6, 30))
+    nine = _period("nine", "YTD", date(2026, 6, 30), months=9)
+    headers = ("Six Months Ended June 30,", "(In millions) | 2026")
+    assert fw._column_periods(headers, (six,)) == _sets("six")
+    assert fw._column_periods(headers, (nine,)) is None
+    assert fw._column_periods(headers, (six, nine)) == _sets("six")
+    nine_headers = ("Nine Months Ended June 30,", "(In millions) | 2026")
+    assert fw._column_periods(nine_headers, (six, nine)) == _sets("nine")
+    assert fw._column_periods(nine_headers, (six,)) is None
+
+
+def test_period_span_not_on_month_boundaries_never_matches_a_flow_column() -> None:
+    odd = _period("odd", "YTD", date(2026, 6, 30))
+    odd.start_date = date(2026, 1, 2)
+    headers = ("Six Months Ended June 30,", "(In millions) | 2026")
+    assert fw._column_periods(headers, (odd,)) is None
+
+
+def test_annual_header_with_full_date_cells_does_not_fall_back_to_balances() -> None:
+    headers = (
+        "Years Ended December 31,",
+        "(In millions) | December 31, 2025 | December 31, 2024",
+    )
+    q4 = (
+        _period("q425", "QUARTER", date(2025, 12, 31), 4),
+        _period("q424", "QUARTER", date(2024, 12, 31), 4),
+    )
+    assert fw._column_periods(headers, q4) is None
+    assert fw._column_periods(headers, (*q4, *FILED_PERIODS)) is None
 
 
 def test_balance_date_is_wider_than_a_three_months_column() -> None:

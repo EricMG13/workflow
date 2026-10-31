@@ -25,10 +25,10 @@ from deploy_vii.financial_periods import (
     historical_report,
 )
 from deploy_vii.financial_reconciliation import (
+    CASH_SCOPE,
     CheckType,
     Reconciliation,
     ReconciliationTerm,
-    CASH_SCOPE,
     _account,
     _balance,
     _cash_movement,

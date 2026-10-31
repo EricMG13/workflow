@@ -7,18 +7,23 @@ below is copied from it. Numbers stay strings in the model; ``amount`` turns one
 
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import json
 import re
-from collections.abc import Callable
+import sys
+from collections.abc import Callable, Sequence
 from decimal import Decimal
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import ValidationError
 
-from deploy_vii.contracts import Contract, PathwayId
+from deploy_vii.contracts import Contract, PathwayId, Run
+from deploy_vii.preparation import PreparationRequest, SourceRequest, prepare
 
 SCHEMA = "context/1"
+CONTEXT_SOURCE_ID = "context"
 NUM = r"^\d+(\.\d+)?$"
 SNUM = r"^-?\d+(\.\d+)?$"
 PERIOD = r"^(q[1-4]|h[12]|fy)-(\d{4})$"
@@ -652,3 +657,109 @@ def _num_message(
         if bound is not None and failed(x, Decimal(bound)):
             return template.format(bound)
     return ""
+
+
+def preparation_request(
+    context: RunContext, *, run_id: str, context_path: str, sources: Sequence[SourceRequest]
+) -> PreparationRequest:
+    """The pack request for ``context``: its run fields, ``sources``, then the file itself."""
+    if any(item.source_id == CONTEXT_SOURCE_ID for item in sources):
+        raise ContextRefused(
+            [f"sources: id {CONTEXT_SOURCE_ID!r} is reserved for the context file"]
+        )
+    run, identity = context.run, context.identity
+    return PreparationRequest(
+        run=Run(
+            run_id=run_id,
+            issuer_id=identity.issuer_id,
+            issuer_name=identity.issuer_name,
+            as_of=dt.date.fromisoformat(run.as_of),
+            case_kind=run.case_kind,
+            pathway=run.pathway,
+        ),
+        sources=(
+            *sources,
+            SourceRequest(source_id=CONTEXT_SOURCE_ID, path=context_path, media_type="text/plain"),
+        ),
+    )
+
+
+_MEDIA: dict[
+    str,
+    Literal[
+        "text/plain",
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
+] = {
+    "text": "text/plain",
+    "pdf": "application/pdf",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+
+def _parse_source(spec: str) -> SourceRequest:
+    """``ID=RELPATH:MEDIA``; ``MEDIA`` is split off the last colon."""
+    source_id, eq, rest = spec.partition("=")
+    path, colon, media = rest.rpartition(":")
+    if not (eq and colon and source_id and path):
+        raise ContextRefused([f"--source {spec!r}: expected ID=RELPATH:MEDIA"])
+    if media not in _MEDIA:
+        raise ContextRefused([f"--source {spec!r}: MEDIA {media!r} is not one of text, pdf, xlsx"])
+    return SourceRequest(source_id=source_id, path=path, media_type=_MEDIA[media])
+
+
+def _run_prepare(args: argparse.Namespace) -> int:
+    sources = [_parse_source(spec) for spec in args.source]
+    seen: set[str] = set()
+    for item in sources:
+        if item.source_id in seen:
+            raise ContextRefused([f"--source: duplicate source id {item.source_id!r}"])
+        seen.add(item.source_id)
+    root = Path(args.root).resolve()
+    try:
+        relative = Path(args.context).resolve().relative_to(root)
+    except ValueError:
+        raise ContextRefused(
+            [f"--context {args.context}: does not resolve inside --root {args.root}"]
+        ) from None
+    try:
+        raw = (root / relative).read_bytes()
+    except OSError as error:
+        raise ContextRefused(
+            [f"--context {args.context}: cannot read ({error.strerror})"]
+        ) from None
+    request = preparation_request(
+        load_context(raw),
+        run_id=args.run_id,
+        context_path=relative.as_posix(),
+        sources=sources,
+    )
+    try:
+        prepare(request, root, Path(args.destination))
+    except (ValueError, FileExistsError) as error:
+        raise ContextRefused([f"prepare: {error}"]) from None
+    print(args.destination)
+    return 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="python -m deploy_workflow.context")
+    commands = parser.add_subparsers(dest="command", required=True)
+    cmd = commands.add_parser("prepare", help="prepare a pack from a context file")
+    cmd.add_argument("--context", required=True)
+    cmd.add_argument("--root", required=True)
+    cmd.add_argument("--run-id", required=True)
+    cmd.add_argument("--source", action="append", default=[], metavar="ID=RELPATH:MEDIA")
+    cmd.add_argument("--destination", required=True)
+    args = parser.parse_args(argv)
+    try:
+        return _run_prepare(args)
+    except ContextRefused as refused:
+        for problem in refused.problems:
+            print(problem, file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -34,6 +34,9 @@ class SourceTools:
             "searched": list(tools.searched),
         }
 
+    def offers(self, name: str) -> bool:
+        return name in self._names
+
     def stage(self, name: str, arguments: Mapping[str, Any]) -> tuple[str, PackTools]:
         if name not in self._names:
             raise SourceError("not_permitted")

@@ -1059,22 +1059,24 @@ class SourceSession:
             self._sequence += 1
             sequence = self._sequence
         call_id = str(uuid4())
-        # A name that cannot be represented (non-str, or a str with a lone surrogate) is
-        # refused as "" with {} before the arguments are looked at. Receipt verification
-        # replays invoke(call.tool, call.arguments), which yields exactly this receipt.
-        name = ""
-        if type(tool_name) is str:
-            try:
-                tool_name.encode("utf-8")
-                name = tool_name
-            except UnicodeEncodeError:
-                pass
-        if not name and tool_name != "":
+        # A name that cannot be represented (not an exact str, or not UTF-8 encodable) is
+        # refused as "" with {} before the arguments are looked at; no caller-object method
+        # runs. Receipt verification replays invoke(call.tool, call.arguments), which yields
+        # exactly this receipt.
+        if type(tool_name) is not str:
             return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
+        try:
+            tool_name.encode("utf-8")
+        except UnicodeEncodeError:
+            return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
+        name = tool_name
         try:
             copied = _json_arguments(arguments)
         except (ValueError, TypeError, RecursionError):
-            return self._receipt(sequence, call_id, name, {}, "refused", None, "bad_arguments")
+            # Replay runs stage(name, {}): not_permitted if the name is not offered,
+            # bad_arguments if it is. Record the same code.
+            code = "bad_arguments" if self._tools.offers(name) else "not_permitted"
+            return self._receipt(sequence, call_id, name, {}, "refused", None, code)
         if not self._operation.acquire(blocking=False):
             return self._receipt(sequence, call_id, name, copied, "refused", None, "not_permitted")
         try:

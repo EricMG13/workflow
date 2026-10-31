@@ -21,6 +21,19 @@ The user's goal in this session: "complete the plan".
   `ruff format --check` and `mypy` with `PYTHONPATH=src "/Users/ericguei/Documents/Deploy
   Workflow/.venv/bin/python"`; the full suite runs once before each hand-off to the PR Manager.
 
+- **B6 Phase 3 CP-3** ("Change CP-3"): `src/deploy_vii/cp3_relative_value.py` may change so that
+  Python builds market evidence from the context's quotes (research:
+  `work/context-plan/reviews/phases-2-8-questions.md` Phase 3 item 3).
+- **B7 Phase 5 draft authority** ("Add draft authority"): `src/deploy_vii/readiness.py` and
+  `cp4_legal.py` may add a `draft` authority, admitted only when the context's `legal_documents` is
+  `draft`, with a fixed draft limitation on CP-4.
+- **B8 Phase 7 valuation** ("Add edge and tables"): `src/deploy_vii/methodology.json` (CP-4C upstream
+  CP-1C; new CP-1C EV/EBITDA tables), `bindings/cp1c.py` and `contracts.py` (CP-1C in the
+  distressed preset) may change.
+- **B9 Methods texts** ("Update them"): wording-only edits to `src/deploy_vii/methods/*.md` that
+  Phases 4, 6 and 8 make stale.
+- B6-B9 each carry D12 records; B6-B8 get an `mx-adversary` review, B9 an `mx-feature` review.
+
 ## Applied recommendations (user, 2026-10-29: "apply your recommendations for questions")
 
 These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or config changes.

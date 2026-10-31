@@ -75,7 +75,9 @@ SCOPE_FORMULA = (
 )
 FY_CASH_LINE = "Cash scope citation must cite the period's CFS cash line naming restricted cash: "
 NONCURRENT_2024 = (date(2024, 12, 31), "restricted_cash_noncurrent")
-MISSING_2024 = "Declared cash scope balance missing: b-fy-2025 restricted_cash_noncurrent 2024-12-31"
+MISSING_2024 = (
+    "Declared cash scope balance missing: b-fy-2025 restricted_cash_noncurrent 2024-12-31"
+)
 
 
 def cite(quote: str, locator: str = "page:60") -> Citation:
@@ -156,9 +158,7 @@ def unsettled(status: Literal["missing", "not_applicable"], pid: str) -> Stateme
     )
 
 
-def scope_of(
-    items: tuple[Item, ...] = BOTH, citations: tuple[Citation, ...] = ()
-) -> CashScope:
+def scope_of(items: tuple[Item, ...] = BOTH, citations: tuple[Citation, ...] = ()) -> CashScope:
     return CashScope(items=items, citations=citations)
 
 

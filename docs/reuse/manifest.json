@@ -1898,6 +1898,15 @@
       "sha256": "b2d5396c820c95669dda6afee5aec0e84fb4f6abcbe991b2a4ed99a1041e84d4",
       "reason": "chore(perf): correct the result-cache memory note; pin validate_tables empty-table default",
       "review": "docs/rulings/2026-10-29-stage3.md item 86"
+    },
+    {
+      "destination": "src/deploy_vii/registry.py",
+      "imported_sha256": "e351d5b917558d4988e582963063dbf8a237f5949ae8a132b9f1c4e5f559995a",
+      "prior_project_sha256": "adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc",
+      "project_commit": "01ee85143a72dcffb658f274aaba596a62698d1a",
+      "sha256": "19ec267dff71aa89cbfdfbece02e1a44f6800306572e15f16029d3bd23dc880a",
+      "reason": "Part B O1 G1a: CP-MODEL joins CP-5's non-fan-in set so CP-MODEL is a stop in the owner walk and CP-5 no longer consumes it.",
+      "review": "docs/rulings/2026-10-31-context-plan.md B1 (mx-adversary review pending)"
     }
   ],
   "local_patch_lineage": [

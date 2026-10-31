@@ -1,0 +1,66 @@
+"""Pathway presets against the owner walk (Part B O1; user ruling B1).
+
+Task 1 (G1a): CP-5's fan-in excludes CP-MODEL, so CP-MODEL is a stop in the walk and an
+analytical module may follow it. The other four presets are asserted in Task 4.
+"""
+
+import datetime as dt
+from pathlib import Path
+
+import pytest
+
+from deploy_vii.contracts import Run
+from deploy_vii.preparation import PreparedPack
+from deploy_vii.registry import dependencies, edge_rule
+from deploy_workflow import owner_workflow as ow
+
+PLANS = {
+    "relative_value": (
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-3D",
+        "CP-1C",
+        "CP-MODEL",
+        "CP-2",
+        "CP-2D",
+        "CP-3C",
+        "CP-3",
+        "CP-5",
+    ),
+    "covenant_refinancing": (
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-4",
+        "CP-MODEL",
+        "CP-2D",
+        "CP-3C",
+        "CP-5",
+    ),
+}
+
+
+def test_cp5_fan_in_excludes_cp_model() -> None:
+    assert dependencies(("CP-1", "CP-MODEL", "CP-5"))["CP-5"] == {"CP-0", "CP-1"}
+    with pytest.raises(ValueError, match="No dependency edge"):
+        edge_rule("CP-5", "CP-MODEL")
+    assert dependencies(("CP-1B", "CP-5"))["CP-5"] == {"CP-0", "CP-1", "CP-1B"}
+
+
+@pytest.mark.parametrize("pathway", sorted(PLANS))
+def test_check_specs_admits_relative_value_and_covenant_refinancing(
+    pathway: str, tmp_path: Path
+) -> None:
+    run = Run(
+        run_id="r1",
+        issuer_id="i1",
+        issuer_name="I",
+        as_of=dt.date(2026, 1, 1),
+        case_kind="synthetic",
+        pathway=pathway,  # type: ignore[arg-type]
+    )
+    pack = PreparedPack(run=run, sources=())
+    planned = ow._check_specs(pack, ow.OWNER_SPECS, tmp_path / "pub", tmp_path / "ex")
+    assert planned == PLANS[pathway]

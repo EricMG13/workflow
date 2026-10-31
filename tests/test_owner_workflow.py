@@ -205,10 +205,8 @@ def _requested(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
     return PreparedPack(run=run, sources=pack.sources)
 
 
-# On this branch CP-5 has no OWNER_SPECS row; once registered, round 2's rule refuses it through
-# the CP-5 -> CP-MODEL fan-in (DC-5 open on the CP-MODEL row). The ("CP-NOT-A-MODULE",) case is
-# refused earlier: `plan` raises ValueError for it.
-@pytest.mark.parametrize("modules", [("CP-1", "CP-5", "CP-MODEL"), ("CP-NOT-A-MODULE",)])
+# `plan` raises ValueError for an unknown module, so the selection is refused before any write.
+@pytest.mark.parametrize("modules", [("CP-NOT-A-MODULE",)])
 def test_unsupported_and_unknown_selection_write_nothing(
     tmp_path: Path, modules: tuple[str, ...]
 ) -> None:
@@ -219,6 +217,17 @@ def test_unsupported_and_unknown_selection_write_nothing(
         )
     assert caught.value.code == "not_permitted"
     assert list(tmp_path.iterdir()) == []
+
+
+def test_cp5_with_cp_model_is_admitted_now_that_the_fan_in_excludes_it(tmp_path: Path) -> None:
+    """Formerly refused through the CP-5 -> CP-MODEL fan-in plus the ordering rule; O1 G1a removed
+    both, so the selection opens; the plan no longer orders CP-5 after CP-MODEL."""
+    pack = _requested(fw.make_pack(), ("CP-1", "CP-5", "CP-MODEL"))
+    workflow = _owner().OwnerWorkflow.create(
+        tmp_path / "store", pack, publication_directory=tmp_path / "model"
+    )
+    assert workflow._plan == ("CP-0", "CP-1", "CP-5", "CP-MODEL")
+    assert workflow._phase == "analytical"
 
 
 @pytest.mark.parametrize("where", ["none", "exists", "same", "inside"])

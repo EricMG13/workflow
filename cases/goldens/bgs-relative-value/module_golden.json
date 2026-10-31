@@ -78,7 +78,7 @@
    "value": "235000",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -101,7 +101,7 @@
    "value": "447750",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -124,7 +124,7 @@
    "value": "529310",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -147,7 +147,7 @@
    "value": "799315",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -170,7 +170,7 @@
    "value": "-15933",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -193,7 +193,7 @@
    "value": "-4961",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -216,7 +216,7 @@
    "value": "1990481",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -239,7 +239,7 @@
    "value": "5625",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -262,7 +262,7 @@
    "value": "2011375",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -285,7 +285,7 @@
    "value": "2011375",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [],
    "derivation": {
     "op": "sum",
@@ -310,7 +310,7 @@
    "value": "1990481",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [],
    "derivation": {
     "op": "sum",
@@ -334,7 +334,7 @@
    "value": "235000",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -357,7 +357,7 @@
    "value": "443702",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -380,7 +380,7 @@
    "value": "529310",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -403,7 +403,7 @@
    "value": "798402",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -964,7 +964,7 @@
    "value": "235000",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1033,7 +1033,7 @@
    "value": "54084",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1079,7 +1079,7 @@
    "value": "3375",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1102,7 +1102,7 @@
    "value": "4500",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1125,7 +1125,7 @@
    "value": "533810",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1148,7 +1148,7 @@
    "value": "1037690",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1171,7 +1171,7 @@
    "value": "432000",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1194,7 +1194,7 @@
    "value": "0",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1224,6 +1224,52 @@
      "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph > as amended 2025-07-01",
      "quote": "is 7.50 to 1.00 for the quarter ending June 28, 2025 through the quarter ending October 3, 2026",
      "printed": "7.50 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarter_ending_2027-01-02.maximum_ratio.2027-01-02",
+   "module": "CP-2",
+   "topic": "covenants",
+   "subject": "Maximum consolidated leverage ratio (quarter ending 2027-01-02)",
+   "field": "maximum_ratio",
+   "period_end": "2027-01-02",
+   "status": "known",
+   "value": "7.25",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph > financial covenants",
+     "quote": "7.25 to 1.00 for the quarter ending January 2, 2027, and 7.00 to 1.00 for the quarters ending April 3, 2027 and thereafter",
+     "printed": "7.25 to 1.00"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarters_ending_2027-04-03_and_thereafter.maximum_ratio.2027-04-03",
+   "module": "CP-2",
+   "topic": "covenants",
+   "subject": "Maximum consolidated leverage ratio (quarters ending 2027-04-03 and thereafter)",
+   "field": "maximum_ratio",
+   "period_end": "2027-04-03",
+   "status": "known",
+   "value": "7.00",
+   "value_type": "decimal",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph > financial covenants",
+     "quote": "7.25 to 1.00 for the quarter ending January 2, 2027, and 7.00 to 1.00 for the quarters ending April 3, 2027 and thereafter",
+     "printed": "7.00 to 1.00"
     }
    ],
    "derivation": null,
@@ -1355,7 +1401,7 @@
    "value": "235000",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1378,7 +1424,7 @@
    "value": "245000",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1401,7 +1447,7 @@
    "value": "403769",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1424,7 +1470,7 @@
    "value": "445568",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1447,7 +1493,7 @@
    "value": "480349",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1470,7 +1516,7 @@
    "value": "522500",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1493,7 +1539,7 @@
    "value": "763472",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -1516,7 +1562,7 @@
    "value": "818240",
    "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "thousands",
    "evidence": [
     {
      "source_id": "bgs-10q-2025-06-28",
@@ -2101,6 +2147,29 @@
    "gap_reason": null
   },
   {
+   "fact_id": "CP-3C.call_terms.Senior_secured_credit_agreement.mandatory_prepayment_triggers.2025-06-28",
+   "module": "CP-3C",
+   "topic": "call_terms",
+   "subject": "Senior secured credit agreement (revolver and Tranche B)",
+   "field": "mandatory_prepayment_triggers",
+   "period_end": "2025-06-28",
+   "status": "known",
+   "value": "mandatory prepayment upon certain asset dispositions or casualty events and issuances of indebtedness, subject to certain exceptions",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > Senior Secured Credit Agreement paragraph",
+     "quote": "Subject to certain exceptions, the credit agreement provides for mandatory prepayment upon certain asset dispositions or casualty events and issuances of indebtedness.",
+     "printed": "mandatory prepayment upon certain asset dispositions or casualty events and issuances of indebtedness"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
    "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.guarantors.2025-06-28",
    "module": "CP-3D",
    "topic": "priority_structure",
@@ -2373,7 +2442,7 @@
    "field": "priority",
    "period_end": "2025-06-28",
    "status": "known",
-   "value": "pari passu with all existing and future senior debt incl. the credit agreement; effectively senior to senior unsecured debt (incl. 5.25% notes) to the extent of collateral value; structurally subordinated to non-guarantor subsidiary liabilities",
+   "value": "pari passu with all existing and future senior debt incl. the credit agreement; effectively senior to senior unsecured debt (incl. 5.25% notes) to the extent of collateral value; structurally subordinated to non-guarantor subsidiary liabilities; effectively junior to future secured debt secured by non-collateral assets, to the extent of that collateral's value; senior in right of payment to other existing and future subordinated debt",
    "value_type": "text",
    "unit": null,
    "scale": null,
@@ -2389,6 +2458,18 @@
      "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
      "quote": "(2) effectively senior in right of payment to our and such guarantors’ existing and future senior unsecured debt, including our 5.25% senior notes due 2027 to the extent of the value of the collateral",
      "printed": "effectively senior in right of payment"
+    },
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "(3) effectively junior to our and the guarantors’ future secured debt, secured by assets that do not constitute collateral, to the extent of the value of the collateral securing such debt",
+     "printed": "effectively junior to our and the guarantors’ future secured debt"
+    },
+    {
+     "source_id": "bgs-10q-2025-06-28",
+     "locator": "Note 6 Long-Term Debt > 8.00% Senior Secured Notes due 2028 paragraph",
+     "quote": "(4) senior in right of payment to our and such guarantors’ other existing and future subordinated debt",
+     "printed": "senior in right of payment"
     },
     {
      "source_id": "bgs-10q-2025-06-28",

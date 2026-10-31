@@ -10,7 +10,7 @@
  "deal_terms": [],
  "quotes": [],
  "ratings": [],
- "valuation": {"peer_source": "user_list", "basis": "auto",
+ "valuation": {"peer_source": "cp_dr_public", "basis": "auto",
                "issuer_market": {"market_cap_m": "", "net_debt_m": "", "ev_m": "", "ebitda_basis": "LTM", "as_of": "", "source": ""},
                "peers": [], "precedents": [],
                "user_multiple": {"value": "", "basis": "LTM", "rationale": ""}},

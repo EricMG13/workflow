@@ -1,6 +1,6 @@
 # BGS relative_value golden: prepare report
 
-Source: only the 10-Q for the quarter ended 2025-06-28, filed 2025-08-04 (the cutoff). Checker: `python3 -I cases/goldens/check.py cases/goldens/bgs-relative-value` exits 0.
+Source: only the 10-Q for the quarter ended 2025-06-28, filed 2025-08-04 (the cutoff). Checker: `python3 -I cases/goldens/check.py cases/goldens/bgs-relative-value` exits 0 (re-run after fix round 1, along with `derive.py`).
 
 ## Coverage
 - CP-0: legal name, ticker and exchange.
@@ -18,10 +18,13 @@ Fiscal quarters ending late December. context uses q2-2025 (2025-06-28) as curre
 - Revolver commitment 475.0 (balance sheet date) and 430.0 (effective 2025-07-01, Note 18) are separate facts.
 - Carrying amounts are taken from Note 7. Principal is the Note 6 face amount. Fair value is never a quote.
 - Hierarchy level: only the revolver is tagged Level 2. The term loan and notes say "quoted market prices" with no level, so level is `missing`, not assumed.
-- The checker scale enum has no "thousands". Facts printed in USD thousands carry scale null and the locator says so; millions facts carry scale millions. Ratios carry unit null.
+- Facts printed in USD thousands carry scale `thousands`, values as printed (derived facts too); facts printed in millions carry `millions`. Ratios carry unit null.
 - The open-market repurchase at 89.98% of principal is a transaction, kept under CP-3 `repurchase_transactions`, not a quote.
 - Floors are `missing`: not disclosed in the corpus filings.
-- context: peer_source `user_list` with no peers, basis `auto`; sector "Consumer and retail" and country are my labels; guarantors left empty.
+- context: peer_source is the form default `cp_dr_public` because no peers are supplied; basis stays `auto` because there is no market data to choose a basis from; sector "Consumer and retail" and country are my labels; guarantors left empty.
+
+- Codex disagreement (BGS-R1): Codex's financial_gold marks `BGS:FY2025Q2:principal` missing ("do not disclose a complete outstanding-principal balance by instrument"), but Note 6 prints each instrument's face amount and a total of 2,011,375 (USD thousands). This golden carries those facts; the Codex gap should be reported upstream.
+- Added in fix round 1: leverage covenant step-downs (7.25x from the quarter ending 2027-01-02; 7.00x from the quarters ending 2027-04-03), mandatory prepayment triggers under CP-3C, and ranking items (3) and (4) on the 8.00% notes priority fact.
 
 ## Open questions (needs_user_input)
 quotes; valuation.peers; valuation.issuer_market; assumptions.cp2d, cp3c, cp3d; identity.guarantors; ratings.

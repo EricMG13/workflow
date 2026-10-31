@@ -118,3 +118,8 @@ Prerequisites before any live run:
 - **BGS done (~12:30):** fix round 1 applied; check and derive exit 0. **TDG:** fix round 1 applied (check 0); scoped re-review of R1/R2 running.
 - **TDG done (~12:35):** scoped re-review APPROVE. **Three goldens done (TDG, SHC, BGS).** Left: IHRT, NATL, LTH (reviews then fix rounds).
 - **11:14 status:** all six reviews in (reports in goldens/reports/). NATL fix 1 committed a10e83c8, scoped re-review (R1 + G-8) running. IHRT fix 1 running (R1 High: ABL greater-of trigger; then mx-precise re-review). LTH fix 1 running (G-9 + R1 Medium; then scoped re-review). After those: check.py on all six, commit, then framework design (section 4).
+- **Scoring notes from the goldens (for the framework spec):**
+  - Entity names: LTH stores guarantor names in title case ("LTF Club Operations Company, Inc.", the all-caps signature text stays in `printed`); NATL stores them all-caps as printed. Scoring must compare names case-insensitively (controller ruling; no golden change).
+  - Codex-gap notes (BGS-R1, LTH-R6, NATL-R3): where Codex marks a metric missing and our golden holds it, scoring takes our module fact; not a conflict.
+  - check.py `product` reads a percent operand as its printed number (10, not 0.10); IHRT re-review is assessing whether that is a checker defect.
+- **11:17:** NATL DONE (3e8f103a). IHRT fix 1 committed c16d87fb, mx-precise re-review running. LTH fix 1 committed 1a5478a2, scoped re-review running.

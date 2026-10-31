@@ -32,7 +32,8 @@ Rules (docs/development/live-runner.md, "Statement extraction"):
   other (`Net revenues  2025  1998`), so `headers` never holds a returned data line.
 - `omitted` lists, in page order, each candidate line the rules did not return as data: a
   non-blank line of two or more whitespace-separated tokens (after the pipe rewrite) whose
-  last token is a numeric cell, that is neither a returned data line, a returned header line
+  last token is a numeric cell and which holds a letter or digit (a row of only nil dashes and
+  pipes is a separator), that is neither a returned data line, a returned header line
   nor a header-shaped line ending in a bare four-digit year (a second table's period row). A
   lone token (a page number) is never a candidate.
 
@@ -80,10 +81,11 @@ _FOOTNOTE = re.compile(r"\(\d{1,2}\)")
 _HEADER_WORDS = frozenset(
     (
         *(name.lower() for name in _MONTH_NAMES),
-        *"year years ended ending fiscal month months week weeks quarter quarters".split(),
-        *"period periods three six nine twelve for the as of at and".split(),
-        *"in millions thousands billions dollars usd except per share data par value".split(),
-        *("amounts", "unaudited"),
+        *("year", "years", "ended", "ending", "fiscal", "month", "months", "week", "weeks"),
+        *("quarter", "quarters", "period", "periods", "three", "six", "nine", "twelve"),
+        *("for", "the", "as", "of", "at", "and"),
+        *("in", "millions", "thousands", "billions", "dollars", "usd", "except", "per"),
+        *("share", "data", "par", "value", "amounts", "unaudited"),
     )
 )
 LineFlag = Literal["more_values_than_header_years", "label_ends_numeric", "footnote_marker"]
@@ -228,6 +230,8 @@ def _header_indexes(lines: Sequence[str], first: int) -> tuple[int, ...]:
 
 def _is_omitted_candidate(line: str) -> bool:
     tokens = (_PIPE.sub("  ", line) if "|" in line else line).split()
+    if not any(c.isalnum() for c in line):
+        return False  # a separator row of nil dashes and pipes
     if len(tokens) < 2 or not _NUMERIC_CELL.fullmatch(tokens[-1]):
         return False
     # A second table's period row (`June 30, 2026 | December 31, 2025`) is not a lost value.
@@ -301,12 +305,12 @@ def extract_statement_lines(
     flagged: list[ExtractedLine] = []
     for printed, first_dollar in zip(found, first_dollars, strict=True):
         footnote = _footnote_marker(printed, first_dollar, years)
-        line = (
+        data = (
             replace(printed, raw_values=printed.raw_values[1:], values=printed.values[1:])
             if footnote
             else printed
         )
-        flagged.append(replace(line, flags=_flags(line, years, footnote)))
+        flagged.append(replace(data, flags=_flags(data, years, footnote)))
     kept = {line.line_no - 1 for line in found}.union(header_at)
     omitted = tuple(
         OmittedLine(line_no=index + 1, text=text)

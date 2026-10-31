@@ -1259,7 +1259,9 @@ def test_quality_read_serves_narrowed_quality_scope_bound_to_full_inputs(
     workflow = clone_workflow(genuine_quality_case[0], tmp_path)
     read = workflow.read_inputs()
     store = Execution(tmp_path / "store")
-    attempt = next(a for a in store.read().attempts if a.module_id == "CP-1")
+    served = workflow._binding
+    attempt = next(a for a in store.read().attempts if a.ticket_id == served.ticket_id)
+    assert attempt.module_id == "CP-1" and served.step_id == "quality"
     registers = cp1_registers(store, attempt.ticket_id)
     inputs = cp1_quality_inputs(registers)
     expected = quality_scope(registers, inputs)

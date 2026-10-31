@@ -172,3 +172,15 @@ def test_filed_czr_pages_read_as_they_did_before(entry: dict[str, Any]) -> None:
         for line in table.lines
     ]
     assert got == entry["lines"]
+
+
+@pytest.mark.parametrize("separator", ["- | - | -", "| - | - |", "  —  |  —  "])
+def test_d1_separator_row_of_nil_dashes_and_pipes_is_not_a_candidate(separator: str) -> None:
+    page = f"ASSETS\nCash  1  2\n{separator}\nDebt  3  4"
+    assert extract_statement_lines(page, "page:1").omitted == ()
+
+
+def test_d1_labelled_single_nil_row_stays_a_candidate() -> None:
+    row = "Goodwill                           —"
+    table = extract_statement_lines(f"Cash  1  2\n{row}", "page:1")
+    assert table.omitted == (OmittedLine(line_no=2, text=row),)

@@ -28,11 +28,14 @@ from deploy_vii.financial_reconciliation import (
     CheckType,
     Reconciliation,
     ReconciliationTerm,
+    CASH_SCOPE,
     _account,
     _balance,
     _cash_movement,
     _ncf,
+    _statement_balance,
     _statement_check,
+    cash_scope,
 )
 from deploy_vii.model._cells import CONTEXT
 from deploy_vii.model.dates import fiscal_year_number
@@ -278,10 +281,18 @@ def _period_cash(
         if node.start_date and node.start_date.toordinal() > 1
         else None
     )
-    parts = [closing, _source(_balance(book, opening, "cash_and_equivalents", sign=-1))]
     sources = _source_periods(report, node)
-    assessments = {b.period_id for b in book.cash_movement_bridges}
+    assessments = {b.period_id: b for b in book.cash_movement_bridges}
     adjusted = any(pid in assessments for pid, _ in sources)
+    # The restricted cash items any assessed source declares, in `CASH_SCOPE` order.
+    declared = {
+        item for pid, _ in sources if pid in assessments for item in cash_scope(assessments[pid])
+    }
+    scope = tuple(item for item in CASH_SCOPE if item in declared or item == CASH_SCOPE[0])
+    parts = [closing, _source(_balance(book, opening, "cash_and_equivalents", sign=-1))]
+    for item in scope[1:]:
+        parts.append(_source(_statement_balance(book, node.end_date, item)))
+        parts.append(_source(_statement_balance(book, opening, item, sign=-1)))
     bridges: list[CashMovementBridge] = []
     contexts: list[Citation] = []
     blockers: list[str] = []
@@ -294,7 +305,10 @@ def _period_cash(
                 continue
             assert pid is not None
             source = _cash_movement(book, periods[pid])
-            parts.extend(_source(term, sign) for term in source.components[2:])
+            own = cash_scope(assessments[pid])
+            if own != scope:
+                blockers.append(f"Cash scope differs across source periods: {pid}")
+            parts.extend(_source(term, sign) for term in source.components[2 * len(own) :])
             bridges.extend(source.cash_movement_bridges)
             contexts.extend(source.context_citations)
             if source.status != "PASS":
@@ -305,7 +319,10 @@ def _period_cash(
         "net_cash_change",
         reported,
         tuple(parts),
-        "closing cash - opening cash - signed period combination of source adjustments"
+        f"closing cash scope - opening cash scope ({' + '.join(scope)}) - signed period "
+        "combination of source adjustments"
+        if adjusted and len(scope) > 1
+        else "closing cash - opening cash - signed period combination of source adjustments"
         if adjusted
         else "closing cash - opening cash; no inferred FX plug",
         blocker=node.limitation or "; ".join(blockers) or None,

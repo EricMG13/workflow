@@ -1437,8 +1437,16 @@ class OwnerWorkflow:
             _retain(self._store, "publications", record)
             self._publications.append(record)
             self._current_sha256 = after.content_hash()
+            outcome = {
+                "status": "ok" if status == "published" else "refused",
+                "error_code": None
+                if status == "published"
+                else self._refusal_code() or "publication_refused",
+                "snapshot_sha256": self._current_sha256,
+            }
             if (status == "published" or terminal) and self._phase != "failed":
-                # The publication settled: the walk resumes after the stop, or ends here.
+                # The publication settled: the walk resumes after the stop, or ends here. The
+                # result above is the publication's own, taken before the resume.
                 self._publisher_done = True
                 resume, self._resume_after = self._resume_after, None
                 self._phase = "analytical"
@@ -1447,11 +1455,8 @@ class OwnerWorkflow:
                 else:
                     self._advance(resume)
             return {
-                "status": "ok" if status == "published" else "refused",
-                "error_code": None
-                if status == "published"
-                else self._refusal_code() or "publication_refused",
-                "snapshot_sha256": self._current_sha256,
+                **outcome,
+                "next_step": self._binding.step_id if self._phase == "analytical" else None,
             }
 
     def write_receipt(self, destination: Path) -> OwnerRunReceipt:
@@ -1711,9 +1716,8 @@ def _verify_walk(
             continue
         if refused != {module_id}:
             raise WorkflowError("identity_mismatch")
-        if any(a.module_id == module_id for a in snapshot.attempts) or any(
-            m in heads for m in analytical[index + 1 :]
-        ):
+        # No later module may have been begun either: the walk ends at the refusal.
+        if any(a.module_id in analytical[index:] for a in snapshot.attempts):
             raise WorkflowError("identity_mismatch")
         break
     else:

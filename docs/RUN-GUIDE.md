@@ -95,6 +95,35 @@ receipt hashes, payloads or journal blobs to resume or manufacture acceptance.
 The original financial adapter has no public open/resume factory; use only its
 existing supported interruption/refusal behavior and retained evidence.
 
+## Start from the context form
+
+Fill in docs/templates/context-form.html and save the result as `context.json`
+(schema context/1) beside the filings it describes. Then prepare a pack from the
+context and the filings. Each `--source` is `ID=RELPATH:MEDIA`, where RELPATH is
+relative to `--root` and MEDIA is `text`, `pdf` or `xlsx`; the id `context` is
+reserved. `--run-id` must be a fresh identifier and `--destination` must not exist:
+
+```sh
+PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 .venv/bin/python \
+  -m deploy_workflow.context prepare \
+  --context "$PACK_ROOT/context.json" \
+  --root "$PACK_ROOT" \
+  --run-id "$RUN_ID" \
+  --source filing=filing.pdf:pdf \
+  --destination "$PREPARED_PACK"
+```
+
+The command validates the context first and refuses with one problem per line on
+stderr (exit 2) before writing anything. It builds the Run (issuer, as-of date,
+pathway and its modules) from the context and adds the context file itself to the
+pack as the source `context`. CP-0 then assesses that source like any other, with
+authority `unknown`. Start the existing workflow with the produced pack as
+described in the section above; that section's frozen slice still accepts only its
+own exact module selection.
+
+No module reads the context yet beyond `Run`: the other settings in the file are
+carried in the pack but are not consumed until Phases 2-8 of the context-file plan.
+
 ## Verify and deliver a sealed financial slice
 
 The public read-only verifier is

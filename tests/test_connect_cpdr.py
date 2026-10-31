@@ -8,6 +8,7 @@ under test. Store runs (a real `Execution` with CP-0 settled) are `tests/test_ow
 import copy
 import hashlib
 import json
+import re
 import shutil
 from dataclasses import fields
 from datetime import date
@@ -1330,4 +1331,16 @@ def test_a_question_with_a_bracketed_citation_renders_as_written() -> None:
         for m in base.modules
     )
     page = render(base.model_copy(update={"modules": mods}))
-    assert "[sic]?" in page
+    found = re.search(r'<script[^>]*id="report-data"[^>]*>(.*?)</script>', page, flags=re.DOTALL)
+    assert found
+    facts = [
+        f
+        for m in json.loads(found.group(1))["modules"]
+        if m["module_id"] == "CP-DR"
+        for f in m["facts"]
+        if f.get("text") and "[sic]?" in f["text"]
+    ]
+    assert len(facts) == 1
+    written = facts[0]["text"]
+    assert written.endswith("[sic]?")
+    assert facts[0]["display"] == facts[0]["table_display"] == written

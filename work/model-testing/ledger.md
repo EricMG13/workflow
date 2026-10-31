@@ -18,3 +18,4 @@
 - 11:11 natl review (mx-precise a746f3aa): REVISE; R1 Medium (guarantors printed), R2-R3 Low, R4 Info; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-8 + R1-R4
 - 11:12 ihrt review (mx-precise ad606b35): REVISE; R1 High (ABL trigger greater-of), R2-R4 Low, R5 Info; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-7 + R1-R5; R1 ruling: fixed + pct + text facts
 - 11:13 natl fix round 1 (mx-feature a3113fd2): G-8 (13 CP-0 facts, sector from filing wording), R1 guarantors known (7 names), R2-R4 fixed; controller rerun check.py 0, derive.py 0; probes 0/0/0; deletions inspected (all replacements); scoped re-review of R1 + G-8 dispatched
+- 11:14 lth review (mx-precise af4f89b7): REVISE; R1 Medium (13th amendment covenant definition changes), R2-R4 Low, R5-R6 Info; redline readings all confirmed post-amendment; reviewer wrote report. Fix round 1 dispatched (mx-feature) with G-9 + R1-R6

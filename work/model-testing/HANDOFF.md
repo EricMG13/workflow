@@ -117,3 +117,4 @@ Prerequisites before any live run:
 - **SHC done (~12:20):** fix round 1 applied; check and derive exit 0; no re-review needed (Low/Info only).
 - **BGS done (~12:30):** fix round 1 applied; check and derive exit 0. **TDG:** fix round 1 applied (check 0); scoped re-review of R1/R2 running.
 - **TDG done (~12:35):** scoped re-review APPROVE. **Three goldens done (TDG, SHC, BGS).** Left: IHRT, NATL, LTH (reviews then fix rounds).
+- **11:14 status:** all six reviews in (reports in goldens/reports/). NATL fix 1 committed a10e83c8, scoped re-review (R1 + G-8) running. IHRT fix 1 running (R1 High: ABL greater-of trigger; then mx-precise re-review). LTH fix 1 running (G-9 + R1 Medium; then scoped re-review). After those: check.py on all six, commit, then framework design (section 4).

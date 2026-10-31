@@ -24,7 +24,7 @@ from deploy_vii.period_reconciliation import PeriodCheck, PeriodTerm
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues
 from deploy_vii.statement_output import StatementReport, statement_report
-from deploy_vii.statement_validation import ACCOUNT_LINKS, account_outflow
+from deploy_vii.statement_validation import ACCOUNT_LINKS, account_outflow, statement_accounts
 
 
 class DefinitionAssessment(Contract):
@@ -415,17 +415,61 @@ def conflicting_observation_ids(book: FinancialBook) -> frozenset[str]:
     )
 
 
+# Child-difference blocker texts. A parent check that quotes a child's computed difference in its
+# explanation is not an absent input. Each phrase is the exact text its site builds.
+# financial_reconciliation.py:172 and period_reconciliation.py:138 (child BLOCK with a difference).
+CHILD_DIFFERENCE_BLOCKER = "Difference exceeds reporting-precision tolerance; unresolved"
+# financial_reconciliation.py:704 and period_reconciliation.py:476 (child WARN with a difference).
+CHILD_BASIS_DIFFERENCE_BLOCKER = "Audited FY / unaudited quarter basis difference: "
+
+
+def shadowed_account_ids(book: FinancialBook) -> frozenset[str]:
+    """Observation ids of explicit accounts without an amount that hide a known printed line.
+
+    Explicit accounts win over statement lines (`effective_accounts`), so such an account makes a
+    disagreement look like a missing input.
+    """
+    known = {
+        (row.period_id, row.metric_id)
+        for row in statement_accounts(book)
+        if row.value.status == "known" and row.value.amount is not None
+    }
+    return frozenset(
+        row.value.observation_id
+        for row in book.accounts
+        if row.value.amount is None and (row.period_id, row.metric_id) in known
+    )
+
+
+def fx_normalised_ids(book: FinancialBook) -> frozenset[str]:
+    """Observation ids that feed facility FX normalisation."""
+    return frozenset(
+        oid
+        for n in normalize_facilities(book)
+        for oid in (n.source_observation_id, *n.input_observation_ids)
+    )
+
+
 def absent_input_limitation(
-    check: Reconciliation | PeriodCheck, *, public: bool, conflicting: frozenset[str]
+    check: Reconciliation | PeriodCheck,
+    *,
+    public: bool,
+    conflicting: frozenset[str],
+    shadowed: frozenset[str] = frozenset(),
+    normalised: frozenset[str] = frozenset(),
 ) -> str | None:
     """The limitation text for a BLOCK check that only lacks an input, else None (stays BLOCK).
 
     Rulings item 82: on a public filed pack a check that cannot be computed because an input is
     absent is a stated limitation. A check that computed a difference, a term that is a
-    conflicting observation, an FX-normalised term, a non-public case and a WARN check all stay
-    as they are.
+    conflicting observation, an FX-normalised term, a term that cites a shadowing explicit
+    account, a quoted child difference, a non-public case and a WARN check all stay as they are.
     """
     if not public or check.status != "BLOCK" or check.difference is not None:
+        return None
+    if CHILD_DIFFERENCE_BLOCKER in check.explanation or (
+        CHILD_BASIS_DIFFERENCE_BLOCKER in check.explanation
+    ):
         return None
     terms: tuple[ReconciliationTerm | PeriodTerm, ...] = (check.reported, *check.components)
     for term in terms:
@@ -435,7 +479,7 @@ def absent_input_limitation(
             ids = {term.observation_id} if term.observation_id else set()
         else:
             ids = set(term.observation_ids)
-        if ids & conflicting:
+        if ids & (conflicting | shadowed) or (isinstance(term, PeriodTerm) and ids & normalised):
             return None
     absent = "; ".join(
         f"{t.label} ({t.reason})" if t.reason else t.label for t in terms if t.amount is None
@@ -538,9 +582,12 @@ def canonical_audit(
             )
     public = pack.run.case_kind == "public"
     conflicting = conflicting_observation_ids(book)
+    shadowed = shadowed_account_ids(book)
     for check in reconciliation.checks:
         if check.status != "PASS":
-            limitation = absent_input_limitation(check, public=public, conflicting=conflicting)
+            limitation = absent_input_limitation(
+                check, public=public, conflicting=conflicting, shadowed=shadowed
+            )
             gap(
                 "reconciliation",
                 check.check_id,

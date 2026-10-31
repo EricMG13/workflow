@@ -12,6 +12,8 @@ from deploy_vii.canonical_audit import (
     absent_input_limitation,
     canonical_audit,
     conflicting_observation_ids,
+    fx_normalised_ids,
+    shadowed_account_ids,
 )
 from deploy_vii.canonical_kpis import CanonicalKpiReport, canonical_kpis
 from deploy_vii.context_binding import FinancialContextBinding, validate_financial_context
@@ -70,6 +72,8 @@ def _calculation_gaps(
     *,
     public: bool,
     conflicting: frozenset[str],
+    shadowed: frozenset[str],
+    normalised: frozenset[str],
 ) -> tuple[GapDetail, ...]:
     """Keep calculation failures, caveats and original basis identities together."""
     historical = kpis.historical
@@ -248,7 +252,13 @@ def _calculation_gaps(
             )
     for check in reconciliation.checks:
         if check.status != "PASS":
-            limitation = absent_input_limitation(check, public=public, conflicting=conflicting)
+            limitation = absent_input_limitation(
+                check,
+                public=public,
+                conflicting=conflicting,
+                shadowed=shadowed,
+                normalised=normalised,
+            )
             append(
                 "period_reconciliation",
                 check_hash,
@@ -445,6 +455,8 @@ def canonical_gaps(
                 reconciliation,
                 public=pack.run.case_kind == "public",
                 conflicting=conflicting_observation_ids(book),
+                shadowed=shadowed_account_ids(book),
+                normalised=fx_normalised_ids(book),
             )
         )
     for origin, report, report_hash in (

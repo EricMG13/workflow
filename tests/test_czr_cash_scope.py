@@ -8,13 +8,19 @@ calculation gate for the other open checks, so the reconciliation is captured as
 
 import copy
 import json
+from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 import pytest
 from czr_runs import CASE, czr_closed
 
 from deploy_vii import canonical_audit
-from deploy_vii.financial_reconciliation import Reconciliation, ReconciliationReport
+from deploy_vii.financial_reconciliation import (
+    Reconciliation,
+    ReconciliationReport,
+    reconcile_financials,
+)
 
 NONCURRENT = "bs-restricted-and-escrow-cash-included-in-other-long-term-assets-net"
 BOTH = ["restricted_cash", "restricted_cash_noncurrent"]
@@ -91,15 +97,16 @@ def _declared(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def test_czr_cash_movement_agrees_with_the_declared_scope(tmp_path, monkeypatch):
+def test_czr_cash_movement_agrees_with_the_declared_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     data = _declared(copy.deepcopy(json.loads((CASE / "submissions-partial.json").read_text())))
     path = tmp_path / "submissions.json"
     path.write_text(json.dumps(data), encoding="utf-8")
     captured: list[ReconciliationReport] = []
-    original = canonical_audit.reconcile_financials
 
     def spy(*args: Any, **kwargs: Any) -> ReconciliationReport:
-        report = original(*args, **kwargs)
+        report = reconcile_financials(*args, **kwargs)
         captured.append(report)
         return report
 
@@ -110,10 +117,10 @@ def test_czr_cash_movement_agrees_with_the_declared_scope(tmp_path, monkeypatch)
     checks: dict[str, Reconciliation] = {
         c.period_id: c for c in captured[-1].checks if c.check_type == "NCF_CASH_MOVEMENT"
     }
-    for period, calculated in (("fy-2025", -32), ("h1-2026", 93)):
+    for period, calculated in (("fy-2025", Decimal(-32)), ("h1-2026", Decimal(93))):
         check = checks[period]
         assert (check.status, check.calculated_value, check.difference) == (
             "PASS",
             calculated,
-            0,
+            Decimal(0),
         )

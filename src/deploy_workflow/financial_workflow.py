@@ -22,6 +22,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
+from deploy_vii.canonical_tables import CanonicalTables
 from deploy_vii.contracts import Contract, Hash, Identifier, Input, Run
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_quality import cp1_quality_inputs
@@ -52,6 +53,7 @@ from deploy_vii.execution import (
     current_inputs,
 )
 from deploy_vii.live.context import narrative_evidence, readiness_inputs
+from deploy_vii.live.prompts import quality_scope
 from deploy_vii.live.schema import normalise
 from deploy_vii.live.submission import (
     PREFILLED,
@@ -299,12 +301,21 @@ def _historical(store: Execution, binding: FinancialBinding) -> _FrozenExecution
     return _FrozenExecution(store, snapshot)
 
 
+def _quality_read(registers: CanonicalTables) -> tuple[str, str]:
+    # Ruling item 87: serve prompts.quality_scope with each evidence record narrowed to
+    # kind and reference; the review stays bound to the full QualityInputs hash.
+    inputs = cp1_quality_inputs(registers)
+    scope = quality_scope(registers, inputs)
+    for entry in scope["evidence"]:
+        entry["record"] = {key: entry["record"][key] for key in ("kind", "reference")}
+    return inputs.content_hash(), json.dumps(scope, sort_keys=True, separators=(",", ":"))
+
+
 def _projection(store: Execution, binding: FinancialBinding) -> tuple[str, str]:
     historical = _historical(store, binding)
     attempt = next(a for a in historical.read().attempts if a.ticket_id == binding.ticket_id)
     if binding.step_id == "quality":
-        inputs = cp1_quality_inputs(cp1_registers(historical, attempt.ticket_id))
-        return inputs.content_hash(), inputs.model_dump_json()
+        return _quality_read(cp1_registers(historical, attempt.ticket_id))
     if binding.step_id not in ("narrative", "readiness"):
         raise WorkflowError("not_permitted")
     for index, step in enumerate(attempt.steps, 1):

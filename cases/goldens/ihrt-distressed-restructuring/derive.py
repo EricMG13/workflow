@@ -1,59 +1,59 @@
 """Recompute every derived fact in module_golden.json with exact Decimal and print the receipt.
 
 Usage: python3 -I derive.py [module_golden.json]   (exit 0 = every stored value matches)
-Scale rule: every derived fact uses operands printed at the same scale as its own value, so no
-rescaling happens (to_scale only guards that and would convert exactly if ever needed).
-Ratio results are rounded to 6 decimal places, ROUND_HALF_UP. Other ops are exact.
+Scale rule: operands are converted exactly to units (the same rule as cases/goldens/check.py), the
+operation runs at 200 digits, and a money result is converted back to the derived fact's scale.
+Ratios are unitless; a percent ratio is multiplied by 100. The result is rounded half-up to the
+stored value's decimal places (only ratios can need it).
 """
+import decimal
 import json
+import pathlib
 import sys
 from decimal import Decimal, ROUND_HALF_UP
 
-PER_MILLION = {"millions": Decimal(1), "thousands": Decimal("0.001"), "units": Decimal("0.000001")}
-
-
-def to_scale(value, from_scale, to_scale):
-    """Convert a decimal amount between money scales, exactly."""
-    if from_scale is None or to_scale is None:
-        if from_scale != to_scale:
-            raise ValueError("cannot convert between scaled and unscaled values")
-        return value
-    return value * PER_MILLION[from_scale] / PER_MILLION[to_scale]
+CTX = decimal.Context(prec=200)
+SCALE_EXP = {None: 0, "units": 0, "thousands": 3, "millions": 6, "billions": 9}
 
 
 def compute(op, operands):
-    """operands: list of Decimal already in the target scale."""
+    """operands: Decimals in units."""
     if op == "sum":
         return sum(operands, Decimal(0))
     if op == "difference":
-        return operands[0] - operands[1]
+        return operands[0] - sum(operands[1:], Decimal(0))
     if op == "negate":
         return -operands[0]
     if op == "product":
         out = Decimal(1)
         for x in operands:
-            out *= x
+            out = CTX.multiply(out, x)
         return out
     if op == "ratio":
-        return (operands[0] / operands[1]).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+        return CTX.divide(operands[0], operands[1])
     raise ValueError("unknown op " + op)
 
 
 def evaluate(fact, by_id):
-    """Return (Decimal result, receipt lines) for one derived fact."""
+    """Return (Decimal result in the fact's own scale and unit, receipt lines)."""
     d = fact["derivation"]
-    target = fact["scale"]
     vals, lines = [], []
     for oid in d["operands"]:
         o = by_id[oid]
         raw = Decimal(o["value"])
-        # ratio operands are compared at one common scale (the first operand's), result unscaled
-        tgt = target if d["op"] != "ratio" else by_id[d["operands"][0]]["scale"]
-        conv = to_scale(raw, o["scale"], tgt)
-        vals.append(conv)
-        note = "" if o["scale"] == tgt else f"  [{o['scale']} -> {tgt}]"
-        lines.append(f"    {oid} = {raw}{note} -> {conv}")
-    return compute(d["op"], vals), lines
+        units = raw.scaleb(SCALE_EXP[o["scale"]], CTX)
+        vals.append(units)
+        note = "" if o["scale"] is None else f"  [{o['scale']}]"
+        lines.append(f"    {oid} = {raw}{note} -> {units} units")
+    res = compute(d["op"], vals)
+    if d["op"] == "ratio":
+        if fact["value_type"] == "percent":
+            res = res.scaleb(2, CTX)
+    else:
+        res = res.scaleb(-SCALE_EXP[fact["scale"]], CTX)
+    places = max(0, -Decimal(fact["value"]).as_tuple().exponent)
+    res = res.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP, context=CTX)
+    return res, lines
 
 
 def main(path):
@@ -73,4 +73,4 @@ def main(path):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "module_golden.json"))
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else str(pathlib.Path(__file__).with_name("module_golden.json"))))

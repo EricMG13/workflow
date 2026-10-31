@@ -643,14 +643,14 @@
    "fact_id": "CP-2.debt_stack_pre_exchange.DebtMarketValue.market_value.2024-09-30",
    "module": "CP-2",
    "topic": "debt_stack_pre_exchange",
-   "subject": "Market value of debt (quoted, not principal or carrying)",
+   "subject": "Market value of debt (quoted, approximately; not principal or carrying)",
    "field": "market_value",
    "period_end": "2024-09-30",
    "status": "known",
-   "value": "approximately $3.9 billion",
-   "value_type": "text",
+   "value": "3.9",
+   "value_type": "decimal",
    "unit": "USD",
-   "scale": null,
+   "scale": "billions",
    "evidence": [
     {
      "source_id": "q3",
@@ -1219,7 +1219,7 @@
     {
      "source_id": "k",
      "locator": "Note 6 Long-Term Debt > 8.375% Senior Unsecured Notes due 2027",
-     "quote": "effectively subordinated to all of iHeartCommunications’ and the guarantors’ existing and future indebtedness that is secured",
+     "quote": "effectively subordinated to all of iHeartCommunications’ and the guarantors’ existing and future indebtedness that is secured (including the 6.375% Senior Secured Notes, the 5.25% Senior Secured Notes, the 4.75% Senior Secured Notes and borrowings under the ABL Facility and the Term Loan Facility)",
      "printed": "effectively subordinated"
     }
    ],
@@ -1434,11 +1434,11 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_floor",
+   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_fixed_component",
    "module": "CP-2",
    "topic": "liquidity",
-   "subject": "ABL Facility",
-   "field": "springing_trigger_availability_floor",
+   "subject": "ABL Facility (fixed leg of the greater-of trigger test)",
+   "field": "springing_trigger_availability_fixed_component",
    "period_end": null,
    "status": "known",
    "value": "40.0",
@@ -1451,6 +1451,52 @@
      "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
      "quote": "borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility",
      "printed": "$40.0 million"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_pct_of_commitments_component",
+   "module": "CP-2",
+   "topic": "liquidity",
+   "subject": "ABL Facility (percentage leg of the greater-of trigger test)",
+   "field": "springing_trigger_availability_pct_of_commitments_component",
+   "period_end": null,
+   "status": "known",
+   "value": "10",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k",
+     "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
+     "quote": "borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility",
+     "printed": "10%"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_rule",
+   "module": "CP-2",
+   "topic": "liquidity",
+   "subject": "ABL Facility (springing covenant trigger)",
+   "field": "springing_trigger_availability_rule",
+   "period_end": null,
+   "status": "known",
+   "value": "Trigger Event when borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility, for two consecutive business days",
+   "value_type": "text",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "k",
+     "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
+     "quote": "If borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility, in each case, for two consecutive business days",
+     "printed": "greater of (a) $40.0 million and (b) 10% of the aggregate commitments"
     }
    ],
    "derivation": null,
@@ -1532,6 +1578,29 @@
    "gap_reason": null
   },
   {
+   "fact_id": "CP-4.exchange_tendered.2026_Secured_Notes.participation_pct_recomputed.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_tendered",
+   "subject": "2026 Secured Notes (6.375% Senior Secured Notes due 2026)",
+   "field": "participation_pct_recomputed",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "94.43",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "ratio",
+    "operands": [
+     "CP-4.exchange_tendered.2026_Secured_Notes.principal_exchanged.2024-12-20",
+     "CP-2.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
    "fact_id": "CP-4.exchange_new_issued.2029_First_Lien_Notes.principal_issued.2024-12-20",
    "module": "CP-4",
    "topic": "exchange_new_issued",
@@ -1604,6 +1673,29 @@
     }
    ],
    "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.exchange_tendered.2027_Secured_Notes.participation_pct_recomputed.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_tendered",
+   "subject": "2027 Secured Notes (5.250% Senior Secured Notes due 2027)",
+   "field": "participation_pct_recomputed",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "99.07",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "ratio",
+    "operands": [
+     "CP-4.exchange_tendered.2027_Secured_Notes.principal_exchanged.2024-12-20",
+     "CP-2.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
    "gap_reason": null
   },
   {
@@ -1682,6 +1774,29 @@
    "gap_reason": null
   },
   {
+   "fact_id": "CP-4.exchange_tendered.2028_Secured_Notes.participation_pct_recomputed.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_tendered",
+   "subject": "2028 Secured Notes (4.750% Senior Secured Notes due 2028)",
+   "field": "participation_pct_recomputed",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "44.62",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "ratio",
+    "operands": [
+     "CP-4.exchange_tendered.2028_Secured_Notes.principal_exchanged.2024-12-20",
+     "CP-2.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
    "fact_id": "CP-4.exchange_new_issued.2031_First_Lien_Notes.principal_issued.2024-12-20",
    "module": "CP-4",
    "topic": "exchange_new_issued",
@@ -1757,6 +1872,29 @@
    "gap_reason": null
   },
   {
+   "fact_id": "CP-4.exchange_tendered.Unsecured_Notes.participation_pct_recomputed.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_tendered",
+   "subject": "Unsecured Notes (8.375% Senior Notes due 2027)",
+   "field": "participation_pct_recomputed",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "92.10",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "ratio",
+    "operands": [
+     "CP-4.exchange_tendered.Unsecured_Notes.principal_exchanged.2024-12-20",
+     "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
    "fact_id": "CP-4.exchange_new_issued.Second_Lien_Notes.principal_issued.2024-12-20",
    "module": "CP-4",
    "topic": "exchange_new_issued",
@@ -1829,6 +1967,29 @@
     }
    ],
    "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.exchange_tendered.Existing_Term_Loans.participation_pct_recomputed.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_tendered",
+   "subject": "Existing Term Loans (senior secured first lien term loans due 2026)",
+   "field": "participation_pct_recomputed",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "99.71",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "ratio",
+    "operands": [
+     "CP-4.exchange_tendered.Existing_Term_Loans.principal_exchanged.2024-12-20",
+     "CP-2.debt_stack_pre_exchange.ExistingTLTotal.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
    "gap_reason": null
   },
   {
@@ -1947,6 +2108,29 @@
    "gap_reason": null
   },
   {
+   "fact_id": "CP-4.exchange_total.Participation.participation_pct_recomputed.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_total",
+   "subject": "Exchange Offers (exchanged principal over pre-exchange principal of the five instruments)",
+   "field": "participation_pct_recomputed",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "92.21",
+   "value_type": "percent",
+   "unit": "percent",
+   "scale": null,
+   "evidence": [],
+   "derivation": {
+    "op": "ratio",
+    "operands": [
+     "CP-4.exchange_total.TotalTendered.principal_exchanged.2024-12-20",
+     "CP-2.debt_stack_pre_exchange.FiveInstrumentsPre.principal_outstanding.2024-09-30"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
    "fact_id": "CP-4.exchange_dates.Exchange_Offers.expiration_time",
    "module": "CP-4",
    "topic": "exchange_dates",
@@ -1993,11 +2177,11 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-4.exchange_dates.Exchange.announcement_and_8k_filing_date",
+   "fact_id": "CP-4.exchange_dates.Exchange.8k_filing_date",
    "module": "CP-4",
    "topic": "exchange_dates",
-   "subject": "Exchange",
-   "field": "announcement_and_8k_filing_date",
+   "subject": "Exchange (Form 8-K)",
+   "field": "8k_filing_date",
    "period_end": null,
    "status": "known",
    "value": "2024-12-23",
@@ -2006,10 +2190,39 @@
    "scale": null,
    "evidence": [
     {
-     "source_id": "rel",
-     "locator": "Dateline",
-     "quote": "NEW YORK – December 23, 2024",
+     "source_id": "8k",
+     "locator": "Signature block",
+     "quote": "Scott D. Hamilton Title: Senior Vice President, Chief Accounting Officer and Assistant Secretary Date: December 23, 2024",
      "printed": "December 23, 2024"
+    }
+   ],
+   "derivation": null,
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4.exchange_dates.Exchange.press_release_date",
+   "module": "CP-4",
+   "topic": "exchange_dates",
+   "subject": "Exchange (closing press release, Exhibit 99.1)",
+   "field": "press_release_date",
+   "period_end": null,
+   "status": "conflicting",
+   "value": null,
+   "value_type": "date",
+   "unit": null,
+   "scale": null,
+   "evidence": [
+    {
+     "source_id": "rel",
+     "locator": "Dateline and first sentence",
+     "quote": "NEW YORK – December 23, 2024 – iHeartMedia, Inc. (NASDAQ: IHRT) (“iHeartMedia” or the “Company”) today announced",
+     "printed": "December 23, 2024"
+    },
+    {
+     "source_id": "8k",
+     "locator": "Item 8.01",
+     "quote": "On the Settlement Date, iHeartMedia, Inc. issued a press release announcing the closing of the Comprehensive Transactions",
+     "printed": "On the Settlement Date"
     }
    ],
    "derivation": null,
@@ -3144,6 +3357,29 @@
    "gap_reason": null
   },
   {
+   "fact_id": "CP-4.exchange_total.ProForma.principal_total_rolled_forward.2024-12-20",
+   "module": "CP-4",
+   "topic": "exchange_total",
+   "subject": "Gross principal at 2024-09-30 less exchange reduction (excludes any other change after 2024-09-30)",
+   "field": "principal_total_rolled_forward",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "4790.876",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-2.debt_stack_pre_exchange.GrossPrincipal.principal_total.2024-09-30",
+     "CP-4.exchange_total.Reduction.principal_reduction_before_cash.2024-12-20"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
    "fact_id": "CP-4.exchange_cash.CashTotal.cash_consideration_total.2024-12-20",
    "module": "CP-4",
    "topic": "exchange_cash",
@@ -3502,7 +3738,7 @@
    "scale": null,
    "evidence": [],
    "derivation": null,
-   "gap_reason": "Filings show the 2028 notes (no supplemental indenture) are a party to the Multi-Lien Intercreditor Agreement and are treated as Junior Financing under New Credit Agreement Section 7.13(a)(iv), but no filing in the corpus states their post-exchange lien rank"
+   "gap_reason": "Filings show the 2028 notes (no supplemental indenture) are a party to the Multi-Lien Intercreditor Agreement and are treated as Junior Financing under New Credit Agreement Section 7.13(a)(iv), but no filing in the corpus states their post-exchange lien rank. New Credit Agreement Section 2.05(b) (asset-sale prepayment) reduces the prepayment where the Borrower must offer to repurchase \"First Lien Notes or other Indebtedness (other than the Existing Secured Notes (4.750%)) outstanding at such time that is secured by a Lien on the Collateral ranking pari passu with the Liens on the Collateral securing the Term Loans\"; this suggests, but does not state, that the 2028 notes kept first-lien status"
   },
   {
    "fact_id": "CP-4C.post_exchange_classes.TLremainDisclosed.principal_outstanding_disclosed.2024-12-20",
@@ -3519,6 +3755,55 @@
    "evidence": [],
    "derivation": null,
    "gap_reason": "No filing states the unexchanged Existing Term Loan principal; it is not derived here because the operands are printed at different scales (thousands vs millions) and the checker recomputes without rescaling"
+  },
+  {
+   "fact_id": "CP-4C.post_exchange_remaining_existing.TLN.principal_outstanding_derived.2024-12-20",
+   "module": "CP-4C",
+   "topic": "post_exchange_remaining_existing",
+   "subject": "Existing Term Loans remaining (pre-exchange principal less approximate exchanged principal)",
+   "field": "principal_outstanding_derived",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "6.552",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "difference",
+    "operands": [
+     "CP-2.debt_stack_pre_exchange.ExistingTLTotal.principal_outstanding.2024-09-30",
+     "CP-4.exchange_tendered.Existing_Term_Loans.principal_exchanged.2024-12-20"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
+  },
+  {
+   "fact_id": "CP-4C.post_exchange_remaining_existing.AllFive.principal_outstanding_derived.2024-12-20",
+   "module": "CP-4C",
+   "topic": "post_exchange_remaining_existing",
+   "subject": "Existing instruments remaining after the exchange (2028N + 2027N + 2026N + UnsN + Term Loans)",
+   "field": "principal_outstanding_derived",
+   "period_end": "2024-12-20",
+   "status": "known",
+   "value": "407.434767",
+   "value_type": "decimal",
+   "unit": "USD",
+   "scale": "millions",
+   "evidence": [],
+   "derivation": {
+    "op": "sum",
+    "operands": [
+     "CP-4C.post_exchange_remaining_existing.2028N.principal_outstanding_at_closing.2024-12-20",
+     "CP-4C.post_exchange_remaining_existing.2027N.principal_outstanding_at_closing.2024-12-20",
+     "CP-4C.post_exchange_remaining_existing.2026N.principal_outstanding_at_closing.2024-12-20",
+     "CP-4C.post_exchange_remaining_existing.UnsN.principal_outstanding_at_closing.2024-12-20",
+     "CP-4C.post_exchange_remaining_existing.TLN.principal_outstanding_derived.2024-12-20"
+    ],
+    "script": "derive.py"
+   },
+   "gap_reason": null
   },
   {
    "fact_id": "CP-4C.post_exchange_classes.Rem2028Junior.new_credit_agreement_definition.2024-12-20",
@@ -3701,16 +3986,19 @@
   }
  ],
  "limitations": [
-  "Figures printed in USD thousands carry scale 'thousands' and are not rescaled. The debt market value is printed as '$3.9 billion' (no billions scale exists), so it is stored as text.",
   "The 8-K and press release give exchange amounts as 'approximately'; derived figures inherit that approximation.",
-  "Existing Term Loan residual principal is not stated and not derived (mixed thousands and millions operands); other residuals come from definitions in the new credit agreement (USD units).",
   "Pre-exchange principal is as of 2024-09-30; no filing in the corpus gives balances on 2024-12-20 for non-exchanged items.",
   "Ranking descriptions for pre-exchange instruments come from the FY2023 10-K note (filed 2024-02-29); the Q3 2024 10-Q does not repeat them.",
   "Incremental Term Loan Facility due 2026 maturity: only the year is printed in the cited text; the 10-K gives May 1, 2026 for the Term Loan Facility itself.",
   "The 8-K exhibit index describes the Second Lien Notes form as 'due 2029'; the 8-K body and press release state May 1, 2030 and 'due 2030'. Body figure used.",
   "The 8-K states no cash consideration for the three notes pairs other than the 2026 notes and the Term Loans; none recorded.",
   "The new credit agreement filed publicly omits exhibits and schedules; per-lender allocations are absent.",
-  "Post-exchange ABL commitment size is the 2024-09-30 facility size; no filing states a change other than the +0.50% rate increase."
+  "Post-exchange ABL commitment size is the 2024-09-30 facility size; no filing states a change other than the +0.50% rate increase.",
+  "Figures keep the scale printed (thousands, millions, billions or units); mixed-scale derived facts are computed in derive.py with exact Decimal after converting operands to units.",
+  "The debt market value is printed as '$3.9 billion' and stored as 3.9 with scale billions; the print is approximate and covers debt with available quotes.",
+  "Existing Term Loan residual principal (6.552 millions) is derived from the 2024-09-30 pre-exchange balance less the 8-K's approximate exchanged principal; no filing states it, so the TLremainDisclosed fact stays missing.",
+  "ABL springing trigger is a greater-of test (fixed 40.0 millions or 10% of aggregate commitments); the effective floor (45.0 millions on a 450.0 commitment at 2024-09-30) is not stored as a derived fact because check.py treats a percent operand as 10, not 0.10.",
+  "Press release date conflicts between the release dateline (December 23, 2024, 'today announced') and 8-K Item 8.01 ('On the Settlement Date' = December 20, 2024); the 8-K filing date (signature date) is December 23, 2024."
  ],
  "preparer": "mx-feature (Sonnet 5.5) goldens subagent g-ihrt"
 }

@@ -421,6 +421,9 @@ def conflicting_observation_ids(book: FinancialBook) -> frozenset[str]:
 CHILD_DIFFERENCE_BLOCKER = "Difference exceeds reporting-precision tolerance; unresolved"
 # financial_reconciliation.py:704 and period_reconciliation.py:476 (child WARN with a difference).
 CHILD_BASIS_DIFFERENCE_BLOCKER = "Audited FY / unaudited quarter basis difference: "
+# period_reconciliation.py:310 on claude/s8-vii (arrives with the s8-vii merge): a cash-scope
+# mismatch across source periods is a scope defect, not an absent input.
+CASH_SCOPE_BLOCKER = "Cash scope differs across source periods: "
 
 
 def shadowed_account_ids(book: FinancialBook) -> frozenset[str]:
@@ -463,12 +466,14 @@ def absent_input_limitation(
     Rulings item 82: on a public filed pack a check that cannot be computed because an input is
     absent is a stated limitation. A check that computed a difference, a term that is a
     conflicting observation, an FX-normalised term, a term that cites a shadowing explicit
-    account, a quoted child difference, a non-public case and a WARN check all stay as they are.
+    account, a quoted child difference, a cash-scope mismatch, a non-public case and a WARN check all stay as they are.
     """
     if not public or check.status != "BLOCK" or check.difference is not None:
         return None
-    if CHILD_DIFFERENCE_BLOCKER in check.explanation or (
-        CHILD_BASIS_DIFFERENCE_BLOCKER in check.explanation
+    if (
+        CHILD_DIFFERENCE_BLOCKER in check.explanation
+        or CHILD_BASIS_DIFFERENCE_BLOCKER in check.explanation
+        or CASH_SCOPE_BLOCKER in check.explanation
     ):
         return None
     terms: tuple[ReconciliationTerm | PeriodTerm, ...] = (check.reported, *check.components)

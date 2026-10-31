@@ -31,3 +31,9 @@ Not verified:
 - The `cash_scope` design, the noncurrent item and the precheck acceptance are untested sketches.
 - The period-reconciliation behaviour after the change.
 - Whether entering the add-backs leaves the EBITDA bridges agreeing.
+
+## Correction (2026-10-31, from the vii-fixes session's cash-scope plan)
+- The cash reconciliation tables are on 10-K **page:61** and 10-Q **page:10**, not page:60 and page:9. The 10-Q table's second column is 2025-06-30 (982 / 85 / 19), not 2025-12-31.
+- No `financial_workflow.py` change is needed: `STATEMENT_HEADING` does not match those pages, so coverage skips them. The financials step must read those pages.
+- The deploy_vii side adds a BS item `restricted_cash_noncurrent` and a `CashMovementBridge.cash_scope` declaration (on branch claude/s8-vii).
+- After that merges, Modules updates the CZR case files and item 82's test 3, which pins the 2 cash BLOCK gaps.

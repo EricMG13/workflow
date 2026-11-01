@@ -7,6 +7,7 @@ import re
 from collections.abc import Mapping
 from decimal import Decimal, localcontext
 from pathlib import Path
+from typing import Any
 
 import pytest
 from hypothesis import HealthCheck, given, settings
@@ -489,3 +490,56 @@ def test_comparison_is_unaffected_by_trailing_zeros(d: Decimal, data: st.DataObj
     assert (
         pin_issues_from_context("CP-3D", ctx, {"recovery.percent_text": format(other, "f")}) != ()
     )
+
+
+# (7) -0 is 0 ----------------------------------------------------------------------------
+
+
+def _zero_case(module: str) -> tuple[RunContext, dict[str, Any]]:
+    """A context pinning 0 for the module and a submission carrying everything else as pinned."""
+    if module == "CP-2A":
+        zero = [{"ebitda_decline_pct": "0", "interest_increase_pct": "0"}]
+        return _context_with(cp2a__scenarios=zero), {}
+    if module == "CP-2D":
+        return _context_with(cp2d__minimum_cash_m="0"), {"horizon_months": "18"}
+    if module == "CP-2E":
+        return _context_with(cp2e__hedge_ratio_pct="0"), {
+            "rate_shocks_bp": ["100", "200"],
+            "fx_shocks_percent": ["10"],
+        }
+    if module == "CP-3C":
+        return _context_with(cp3c__repricing_bps="0"), {}
+    return _context_with(cp3d__recovery_pct="0"), {}
+
+
+_ZERO_KEY = {
+    "CP-2D": "minimum_cash.amount",
+    "CP-2E": "hedge_ratio.percent_text",
+    "CP-3C": "repricing.bps",
+    "CP-3D": "recovery.percent_text",
+}
+
+
+@pytest.mark.parametrize("module", ("CP-2A", "CP-2D", "CP-2E", "CP-3C", "CP-3D"))
+@pytest.mark.parametrize("spelling", ("0", "-0", "-0.0", "-0.00", "0.0"))
+def test_negative_zero_equals_a_pin_of_zero(module: str, spelling: str) -> None:
+    ctx, rest = _zero_case(module)
+    if module == "CP-2A":
+        row = {"ebitda_decline": spelling, "interest_increase": spelling}
+        assert pin_issues_from_context(module, ctx, {"scenarios": [row]}) == ()
+        return
+    submitted = {**rest, _ZERO_KEY[module]: spelling}
+    assert pin_issues_from_context(module, ctx, submitted) == ()
+
+
+@pytest.mark.parametrize("junk", ("-", "--0", "-0x", "+0", "- 0", "-0 ", "-٠"))
+def test_a_signed_zero_look_alike_is_still_refused(junk: str) -> None:
+    ctx, _ = _zero_case("CP-3C")
+    assert pin_issues_from_context("CP-3C", ctx, {"repricing.bps": junk}) == (
+        f"assumptions.cp3c.repricing_bps: pinned 0; submitted {junk}",
+    )
+
+
+def test_a_negative_figure_never_equals_a_positive_pin() -> None:
+    ctx = _context_with(cp3c__repricing_bps="5")
+    assert pin_issues_from_context("CP-3C", ctx, {"repricing.bps": "-5"}) != ()

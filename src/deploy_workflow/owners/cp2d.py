@@ -2236,18 +2236,36 @@ def _provenance_issues(upstream: Upstream) -> list[str]:
     return []
 
 
+# The most digits of a submitted amount's plain form that `_pin_lines` expands. `1E+999999999` is a
+# valid Decimal whose plain form is a gigabyte; a longer one is shown in its own scientific form,
+# which is not a plain number, so it never equals a pin and the refusal line stays short.
+_MAX_PLAIN_DIGITS = 100_000
+
+
+def _amount_text(amount: Decimal) -> str:
+    """The amount as plain digits (`str(Decimal("1E+1"))` is not a plain number), or as typed
+    (`str`) when its plain form would exceed `_MAX_PLAIN_DIGITS`."""
+    parts = amount.as_tuple()
+    exponent = parts.exponent if isinstance(parts.exponent, int) else 0
+    digits = len(parts.digits)
+    if max(digits, digits + exponent, -exponent) > _MAX_PLAIN_DIGITS:
+        return str(amount)
+    return format(amount, "f")
+
+
 def _pin_lines(pack: PreparedPack, submission: LiquidityBridgeSubmission) -> tuple[str, ...]:
     """The lines where the submitted horizon or minimum cash differ from the context pins, as
     typed: the integer horizon through `str` (`format(25, "f")` is `25.000000`), the Decimal amount
-    through `format(v, "f")` (`str(Decimal("1E+1"))` is not a plain number); a context the run
-    refuses is the single line `Context refused: ...` and no pin line. Empty when nothing is
-    pinned."""
+    through `_amount_text`; a context the run refuses is the single line `Context refused: ...` and
+    no pin line. Nothing is formatted, and the result is empty, when nothing is pinned."""
     cash = submission.minimum_cash
-    submitted = {
-        "horizon_months": str(submission.horizon_months),
-        "minimum_cash.amount": None if cash is None else format(cash.amount, "f"),
-    }
     try:
+        if pins_of(MODULE_ID, pack) is None:
+            return ()
+        submitted = {
+            "horizon_months": str(submission.horizon_months),
+            "minimum_cash.amount": None if cash is None else _amount_text(cash.amount),
+        }
         return pin_issues(MODULE_ID, pack, submitted)
     except ContextRefused as error:
         return (clipped(("Context refused: ", str(error))),)
@@ -2557,7 +2575,8 @@ def liquidity_bridge(
     if issues:
         raise ValueError("; ".join(issues))
     selection = select_cp1(upstream.cp1)
-    # `validate_liquidity_bridge` raised on a refused context, so `pins_of` cannot raise here.
+    # A refused context is a `Context refused: ...` issue, so `validate_liquidity_bridge` returned
+    # none and raised above; `pins_of` cannot raise `ContextRefused` here.
     pinned = pins_of(MODULE_ID, pack) is not None
     result = compute(replace(_inputs_from(upstream, submission), pinned=pinned))
     out = _Composer(selection, result)

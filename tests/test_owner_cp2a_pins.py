@@ -8,19 +8,39 @@ Fast: no store promotion run (`tests/test_owner_cp2a.py` is the slow one and is 
 
 from __future__ import annotations
 
+import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import pytest
 import test_connect_cp2a as connect
-from test_method_cp2a import bind_payload, fig_ids
+from test_method_cp2a import (
+    EXPECTED as BASE,
+)
+from test_method_cp2a import (
+    MISSING,
+    SUBMISSIONS,
+    _edit,
+    bind,
+    bind_payload,
+    cp1_facts,
+    fig_ids,
+    inputs_for,
+)
 
-from deploy_vii.contracts import Fact
-from deploy_vii.execution import Attempt, Execution
+from deploy_vii.contracts import Fact, Source, Span
+from deploy_vii.execution import MAX_ISSUE_CHARS, Attempt, Execution, clipped
 from deploy_vii.preparation import PreparedPack, prepare
-from deploy_workflow.context import CONTEXT_SOURCE_ID, load_context, preparation_request
-from deploy_workflow.owners import cp2a
+from deploy_workflow.context import (
+    CONTEXT_SOURCE_ID,
+    ContextRefused,
+    context_facts,
+    load_context,
+    preparation_request,
+)
+from deploy_workflow.owners import cp2a, pins
 from deploy_workflow.owners.pins import pinned_line
 
 ORACLE = Path(__file__).resolve().parents[1] / "cases" / "pins-context-owner"
@@ -150,17 +170,31 @@ def test_spelling_the_pins_with_trailing_zeros_composes_and_labels_the_shocks(
 def test_no_context_or_no_pin_equals_the_base_oracle(
     case: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """The report equals the frozen `cases/cp2a-owner/expected.json` positive case, not a rerun."""
     store, pack, facts, finished = _journal(tmp_path, monkeypatch, case)
     assert finished.status == "finished" and finished.issues == ()
     report = _report(store, pack, facts, case, finished)
+    want = BASE["cases"]["positive"]
+    ids = fig_ids(facts)
     assert PINNED not in report.limitations
-    plain = _report(store, base_pack(), facts, "no_context", finished)
-    assert (report.facts, report.tables, report.claims, report.limitations) == (
-        plain.facts,
-        plain.tables,
-        plain.claims,
-        plain.limitations,
-    )
+    assert list(report.limitations) == want["own_limitations"]
+    assert [(c.claim_id, c.text) for c in report.claims] == [
+        (c["claim_id"], bind(c["text"], ids)) for c in want["claims"]
+    ]
+    own = [f for f in report.facts if f.table_id != "cp1_references"]
+    assert [f.fact_id for f in own] == [f["fact_id"] for f in want["facts"]]
+    assert [(f.status, f.text) for f in own] == [
+        (f["status"], f.get("text")) for f in want["facts"]
+    ]
+    assert [t.table_id for t in report.tables] == [
+        *(t["table_id"] for t in want["tables"]),
+        "cp1_references",
+    ]
+    for table, exp in zip(report.tables, want["tables"], strict=False):
+        rows = [
+            {"row_id": r.row_id, "label": r.label, "fact_ids": list(r.fact_ids)} for r in table.rows
+        ]
+        assert rows == exp["rows"], exp["table_id"]
 
 
 def test_a_context_that_differs_from_the_run_is_one_refusal_line_after_the_content(
@@ -179,3 +213,70 @@ def test_a_context_that_differs_from_the_run_is_one_refusal_line_after_the_conte
     off_period = _submission("content_and_pin", facts)
     issues = cp2a.validate_downside(pack=pack, submission=off_period, upstream=upstream)
     assert issues == (EXPECTED["cases"]["content_and_pin"]["issues"][0], refused)
+
+
+# -- the label on the no-ranked path and the refusal form (T3 adversary L1/L2) --------------------
+
+
+def test_the_label_follows_the_no_first_break_limitation() -> None:
+    """M04/M05: with no ranked break the limitations end NO_FIRST_BREAK; pinned, the label comes
+    after it. Unpinned they end NO_FIRST_BREAK alone."""
+    facts = cp1_facts("gap")
+    q3_fcf = BASE["cases"]["gap"]["cp1_inputs"]["fcf"]["label"]
+    edited = _edit(facts, q3_fcf, **MISSING, limitation="Fixture: FCF withheld")
+    inputs = inputs_for("gap", SUBMISSIONS["gap"]["downside_pathway"], edited)
+    assert cp2a.compute(inputs).limitations[-1] == cp2a.NO_FIRST_BREAK
+    result = cp2a.compute(replace(inputs, pinned=True))
+    assert result.ranking == ()
+    assert result.limitations[-2:] == (cp2a.NO_FIRST_BREAK, PINNED)
+
+
+def _refusing_pack(base: PreparedPack) -> PreparedPack:
+    """The base pack with a context source that names three problems (two long, one run field)."""
+    doc = json.loads((ORACLE / "context-distressed_restructuring.json").read_text())
+    doc["identity"]["issuer_name"] = "X" * 400
+    doc["identity"]["issuer_id"] = "someone-else"
+    doc["run"]["pathway"] = "credit_snapshot"
+    text = json.dumps(doc)
+    source = Source(
+        source_id=CONTEXT_SOURCE_ID,
+        name="context.json",
+        status="ready",
+        sha256=hashlib.sha256(text.encode()).hexdigest(),
+        media_type="text/plain",
+        spans=(Span(locator="line:1", text=text),),
+    )
+    return PreparedPack(run=base.run, sources=(*base.sources, source))
+
+
+def test_a_multi_problem_refusal_is_one_clipped_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M17/M18: the whole `ContextRefused` message is one `Context refused:` line, clipped."""
+    store, _, facts = _seed(tmp_path, monkeypatch, None)
+    upstream = cp2a.cp2a_upstream(store, store.begin(cp2a.MODULE_ID))
+    pack = _refusing_pack(base_pack())
+    got = cp2a.validate_downside(
+        pack=pack, submission=_submission("no_context", facts), upstream=upstream
+    )
+    assert len(got) == 1, got
+    assert got[0].startswith("Context refused: identity.issuer_name: ")
+    assert "; identity.issuer_id: " in got[0]
+    assert len(got[0]) <= MAX_ISSUE_CHARS
+    with pytest.raises(ContextRefused) as caught:
+        context_facts(pack)
+    assert got[0] == clipped(("Context refused: ", str(caught.value)))
+    assert len("Context refused: " + str(caught.value)) > MAX_ISSUE_CHARS  # the clip mattered
+
+
+def test_only_context_refused_is_caught(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """M14: any other `ValueError` from the reader escapes the validator."""
+    store, pack, facts = _seed(tmp_path, monkeypatch, "context-distressed_restructuring.json")
+    upstream = cp2a.cp2a_upstream(store, store.begin(cp2a.MODULE_ID))
+
+    def boom(_: object) -> None:
+        raise ValueError("reader bug")
+
+    monkeypatch.setattr(pins, "context_facts", boom)
+    with pytest.raises(ValueError, match="^reader bug$"):
+        cp2a.validate_downside(pack=pack, submission=_submission("match", facts), upstream=upstream)

@@ -1619,7 +1619,8 @@ def downside_report(
     issues = validate_downside(pack=pack, submission=submission, upstream=upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
-    # `validate_downside` raised on a refused context, so `pins_of` cannot raise here.
+    # A refused context is a `Context refused: ...` issue, so `validate_downside` returned it and
+    # this function raised above; `pins_of` cannot raise `ContextRefused` here.
     pinned = pins_of(MODULE_ID, pack) is not None
     result = compute(replace(_inputs(pack, submission, upstream), pinned=pinned))
     return DownsideReport(

@@ -11,7 +11,8 @@ assumption user-supplied. This module is the one reader and comparator they shar
 * ``pinned_line``: the limitation sentence stating the figure is user-supplied.
 
 Python owns the arithmetic: only ``Decimal`` is used. A submitted string is converted only after a
-whole-string ASCII ``NUM`` match; anything else is reported as typed and never equals a pin.
+whole-string ASCII ``SNUM`` match (an optional ``-``, so ``-0`` equals a pin of 0); anything else
+is reported as typed and never equals a pin.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ from pydantic import JsonValue
 from deploy_vii.execution import clipped
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.context import (
-    NUM,
+    SNUM,
     Cp2aPins,
     Cp2aScenario,
     Cp2dPins,
@@ -283,9 +284,13 @@ def mismatch(path: str, pinned_as_typed: str, submitted: str | None, *, at: str 
 
 
 def _same(pin: Decimal, text: str | None) -> bool:
-    """True when ``text`` is a plain number equal to ``pin``; junk equals nothing."""
+    """True when ``text`` is a plain number equal in value to ``pin``; junk equals nothing.
+
+    A leading ``-`` is read, so ``-0`` and ``-0.0`` equal a pin of 0; a pin is never negative, so
+    any other signed figure still differs.
+    """
     return (
-        text is not None and re.fullmatch(NUM, text, re.ASCII) is not None and Decimal(text) == pin
+        text is not None and re.fullmatch(SNUM, text, re.ASCII) is not None and Decimal(text) == pin
     )
 
 

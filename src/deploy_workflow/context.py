@@ -447,12 +447,21 @@ class _Rules:
 
     def shocks(self, path: str, items: tuple[str, ...], key: str) -> None:
         limit = ASSUMPTION_LIMITS[key]
-        if not items:
+        if not items and limit.req:
             self.bad(path, "required.")
         if len(items) > 3:
             self.bad(path, "give at most 3 values.")
         messages = [
-            _num_message(item, False, limit.whole, limit.places, limit.low, None, limit.high, None)
+            _num_message(
+                item,
+                False,
+                limit.whole,
+                limit.places,
+                limit.low,
+                limit.low_excl,
+                limit.high,
+                limit.high_excl,
+            )
             for item in items
         ]
         for item, message in zip(items, messages, strict=True):

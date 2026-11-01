@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 import json
 import re
 from decimal import Decimal
@@ -763,3 +764,40 @@ def test_golden_contexts_exist() -> None:
 @pytest.mark.parametrize("case", sorted(p.parent.name for p in GOLDENS.glob("*/context.json")))
 def test_golden_contexts_load(case: str) -> None:
     load_context((GOLDENS / case / "context.json").read_bytes())
+
+
+def _rate_problems(rate: list[str]) -> list[str]:
+    try:
+        raw = with_changes(
+            {
+                "assumptions.cp2e": pin(
+                    rate_shocks_bps=rate, fx_shocks_pct=["10"], hedge_ratio_pct=""
+                )
+            }
+        )
+        load_context(json.dumps(raw).encode())
+    except ContextRefused as error:
+        return [p for p in error.problems if "rate_shocks_bps" in p]
+    return []
+
+
+@pytest.mark.parametrize(
+    ("change", "rate", "refused"),
+    [
+        ({"req": False}, [], False),
+        ({"req": True}, [], True),
+        ({"high": None, "high_excl": "1000"}, ["1000"], True),
+        ({"high": None, "high_excl": "1000"}, ["999"], False),
+        ({"low": None, "low_excl": "1"}, ["1"], True),
+        ({"low": None, "low_excl": "1"}, ["2"], False),
+    ],
+)
+def test_shock_lists_honour_every_field_of_their_limits_row(
+    monkeypatch: pytest.MonkeyPatch, change: dict[str, Any], rate: list[str], refused: bool
+) -> None:
+    """The reader's shock check reads `req`, `low_excl` and `high_excl` of the table row, as the
+    single-number fields do, not only `whole`, `places`, `low` and `high`."""
+    key = "cp2e.rate_shocks_bps"
+    row = dataclasses.replace(ASSUMPTION_LIMITS[key], **change)
+    monkeypatch.setitem(ASSUMPTION_LIMITS, key, row)
+    assert bool(_rate_problems(rate)) is refused

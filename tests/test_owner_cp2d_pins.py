@@ -9,6 +9,7 @@ the `prepare`d context source last. Fast: no store promotion run (`tests/test_ow
 from __future__ import annotations
 
 import json
+import tracemalloc
 from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
@@ -349,3 +350,192 @@ def test_a_json_float_minimum_cash_is_compared_through_the_amount(
         )
         == ()
     )
+
+
+# -- the amount is formatted only when pinned, and only within a bound (T4 L4) --------------------
+
+FIXTURES = ("fixture_rcf_undisclosed", "fixture_burn")
+
+
+def _with_amount(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, context: str | None, amount: str
+) -> str:
+    """The pin lines `_pin_lines` returns for the match payload with `amount` as minimum cash,
+    plus the peak memory it allocated."""
+    store, _ = _seed(tmp_path, monkeypatch, context, "positive")
+    payload = _payload("match")
+    payload["minimum_cash"]["amount"] = amount
+    tracemalloc.start()
+    try:
+        lines = cp2d._pin_lines(store.pack(), _submission(payload))
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 1_000_000, peak
+    return "\n".join(lines)
+
+
+def test_nothing_is_formatted_when_nothing_is_pinned(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`1E+10000000` is 10 MB as plain digits; with no pin it is never expanded."""
+    assert _with_amount(tmp_path, monkeypatch, None, "1E+10000000") == ""
+
+
+def test_a_pinned_run_does_not_expand_an_unbounded_exponent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    line = _with_amount(tmp_path, monkeypatch, CASES["match"]["context"], "1E+10000000")
+    assert line == "assumptions.cp2d.minimum_cash_m: pinned 10; submitted 1E+10000000"
+
+
+@pytest.mark.parametrize("amount", ("1E-10000000", "1E+999999999", "9" * 40 + "E+10000000"))
+def test_other_unbounded_spellings_are_one_short_refusal(
+    amount: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    line = _with_amount(tmp_path, monkeypatch, CASES["match"]["context"], amount)
+    assert line.startswith("assumptions.cp2d.minimum_cash_m: pinned 10; submitted ")
+    assert len(line) <= MAX_ISSUE_CHARS
+
+
+def test_an_amount_at_the_bound_is_still_shown_as_plain_digits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    amount = f"1E+{cp2d._MAX_PLAIN_DIGITS - 1}"
+    got = _with_amount(tmp_path, monkeypatch, CASES["match"]["context"], amount)
+    assert f"submitted 1{'0' * 30}" in got and "E+" not in got
+
+
+def test_an_amount_one_digit_over_the_bound_is_shown_as_typed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    amount = f"1E+{cp2d._MAX_PLAIN_DIGITS}"
+    got = _with_amount(tmp_path, monkeypatch, CASES["match"]["context"], amount)
+    assert got.endswith(f"submitted {amount}")
+
+
+# -- the exact amounts accepted and refused through the journal (T4 L2/L3, M25) -----------------
+
+CTX = "context-covenant_refinancing.json"
+H = "assumptions.cp2d.horizon_months: pinned 24; submitted "
+C = "assumptions.cp2d.minimum_cash_m: pinned 10; submitted "
+ACCEPT = ("accept",)
+SHAPE = ("shape",)
+LONG = "10." + "0" * 30 + "1"
+
+
+def _raw_payload(horizon: str, amount: str) -> str:
+    payload = _payload("match")
+    payload["horizon_months"] = "__H__"
+    payload["minimum_cash"]["amount"] = "__A__"
+    return json.dumps(payload).replace('"__H__"', horizon).replace('"__A__"', amount)
+
+
+# (raw horizon token, raw amount token, expected): ACCEPT, SHAPE or the trailing issue lines
+VARIANTS: list[tuple[str, str, Any]] = [
+    ("24", '"10"', ACCEPT),
+    ("24", '"10.0"', ACCEPT),
+    ("24", '"10.000000"', ACCEPT),
+    ("24", '"1E+1"', ACCEPT),
+    ("24", '"1e1"', ACCEPT),
+    ("24", '"0.1E+2"', ACCEPT),
+    ("24", '"100E-1"', ACCEPT),
+    ("24", '"10."', ACCEPT),
+    ("24", "10", ACCEPT),
+    ("24", "10.0", ACCEPT),
+    ("24", "1E+1", ACCEPT),
+    ("24", "100e-1", ACCEPT),
+    ("24", '"10.01"', (C + "10.01",)),
+    ("24", '"9.99"', (C + "9.99",)),
+    ("24", '"1E+2"', (C + "100",)),
+    ("24", '"0"', (C + "0",)),
+    ("24", '"0.00"', (C + "0.00",)),
+    ("24", '"-10"', (cp2d.NEGATIVE_MINIMUM_ISSUE, C + "-10")),
+    ("24", '"-0"', (C + "-0",)),
+    ("24", '"9.99999999999999999999"', (C + "9.99999999999999999999",)),
+    # more than 28 significant digits: a context-precision rounding would read these as 10 (M25)
+    ("24", f'"{LONG}"', (C + LONG,)),
+    ("24", '"10.' + "0" * 60 + '1"', (C + "10." + "0" * 60 + "1",)),
+    ("24", "-0", (C + "0",)),  # JSON -0 is the integer 0
+    ("24", '"NaN"', SHAPE),
+    ("24", '"Infinity"', SHAPE),
+    ("24", '""', SHAPE),
+    ("24", '"ten"', SHAPE),
+    ("24", '"10%"', SHAPE),
+    ("24", "1E+400", SHAPE),
+    ("24", "true", SHAPE),
+    ("24", "null", SHAPE),
+    ("2.4E1", '"10"', ACCEPT),
+    ("25", '"10"', (H + "25",)),
+    ("23", '"10"', (H + "23",)),
+    ("61", '"10"', (cp2d.HORIZON_ISSUE, H + "61")),
+    ("0", '"10"', (cp2d.HORIZON_ISSUE, H + "0")),
+    ("-24", '"10"', (cp2d.HORIZON_ISSUE, H + "-24")),
+    ("24.0", '"10"', SHAPE),
+    ('"24"', '"10"', SHAPE),
+    ("25", '"10.01"', (H + "25", C + "10.01")),
+    ("25", '"1E+1"', (H + "25",)),
+]
+
+
+@pytest.mark.parametrize(
+    ("horizon", "amount", "expected"),
+    VARIANTS,
+    ids=[f"h={h[:12]}|a={a[:24]}" for h, a, _ in VARIANTS],
+)
+def test_accepted_exactly_when_the_figure_is_the_pin(
+    horizon: str, amount: str, expected: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, attempt = _seed(tmp_path, monkeypatch, CTX, "positive")
+    text = _raw_payload(horizon, amount)
+    try:
+        cp2d.submit(store, attempt.ticket_id, cp2d.STEP_ID, text, None)
+    except ValueError:  # a refusal in the normaliser or Pydantic is the shape path
+        pass
+    finished = connect._finished(store, attempt.ticket_id)
+    issues = tuple(finished.issues)
+    assert finished.status == "finished"
+    heads = [h for h in store.read().heads if h.module_id == cp2d.MODULE_ID]
+    if expected == ACCEPT:
+        assert issues == ()
+        (head,) = heads
+        assert store.head_module(head).limitations.count(PINNED) == 1
+    elif expected == SHAPE:
+        assert issues and not any("assumptions.cp2d" in i for i in issues)
+        assert not any(PINNED in store.head_module(h).limitations for h in heads)
+    else:
+        assert issues[-len(expected) :] == expected, issues
+        assert all(len(i) <= MAX_ISSUE_CHARS for i in issues)
+        assert not any(PINNED in store.head_module(h).limitations for h in heads)
+
+
+# -- the pinned label is last on every frozen case, fixtures included (T4 L2/L3, M11/M13/M14) ---
+
+
+def _frozen_inputs(case: str) -> cp2d.Cp2dInputs:
+    if case in tm.PACK_CASES:
+        return tm._inputs(case)
+    return replace(tm._inputs("positive"), operands=tm._operands(case))
+
+
+@pytest.mark.parametrize("case", (*tm.PACK_CASES, *FIXTURES))
+def test_label_last_on_every_frozen_case(case: str) -> None:
+    inputs = _frozen_inputs(case)
+    want = tm.CASES[case]["own_limitations"]
+    assert list(cp2d.compute(inputs).own_limitations) == want
+    pinned = cp2d.compute(replace(inputs, pinned=True))
+    assert list(pinned.own_limitations) == [*want, PINNED]
+    assert pinned.gaps_ledger.rows[-1] == ("Pinned assumptions", "Limitation")
+    assert list(pinned.gaps_ledger.rows[:-1]) == list(cp2d.compute(inputs).gaps_ledger.rows)
+
+
+def test_label_last_with_a_cp1_cross_check_line() -> None:
+    """M13: a CP-1 T4.10 metric CP-1 reports no value for adds a cross-check limitation; the
+    pinned label stays last after it."""
+    inputs = tm._inputs("positive")
+    operands = replace(inputs.operands, cash_closing=tm._unknown("missing"))
+    plain = cp2d.compute(replace(inputs, operands=operands))
+    assert any(label.startswith("CP-1 ") for label, _ in plain.gaps_ledger.rows)
+    pinned = cp2d.compute(replace(inputs, operands=operands, pinned=True))
+    assert list(pinned.own_limitations) == [*plain.own_limitations, PINNED]
+    assert pinned.gaps_ledger.rows[-1] == ("Pinned assumptions", "Limitation")

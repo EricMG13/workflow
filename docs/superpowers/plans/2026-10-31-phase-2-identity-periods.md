@@ -235,6 +235,8 @@ With no context, or empty periods, behaviour is O1's. The pair then passes throu
 backstop (`incompatible_periods`). The context never supplies a figure; Python still derives the 12
 selections from the report. The CP-1B limitation gains "periods taken from the user-supplied run context".
 
+**B19 step, first in this task (amended 2026-11-01, ruling B19, `docs/rulings/2026-10-31-context-plan.md:122-136`).** Before this task widens the pairs `owners/cp1b.py` `supported()` (:122) accepts (O1 fails closed on the flat q3-2025 -> q4-2025 pair and the missing-prior fy-2024 -> fy-2025 pair only), generalise the CP-1B composer prose so the head, claims and limits are true for every accepted pair: `earnings_workflow.py` (the fixed texts at :1688 "Requested FY2024 comparison basis is absent; ...", :1936 "... own-quarter earnings comparison is flat; ..." and :1937 "COMPARATIVE_NOT_SUPPLIED: requested FY2024 comparison basis is absent; ..."), the split composer (`compose_delta`, :1789, and `_compose`, :1764) and `_own_limits(gap, *, owner=)` (:1678) are written from the report's own pair, periods and deltas. This step edits `earnings_workflow.py`, a narrow exception to the "NOT edited" sentence above, limited to the owner path's prose; the frozen three-run-id path's bytes stay unchanged.
+
 **RED tests** (`tests/test_owner_cp1b.py`, CP-1 promotion tests gated behind `RUN_PROMOTION` as O1 does):
 `test_context_pair_offered` (ctx-match: view offers `q3-2025`/`q4-2025` period ids only);
 `test_context_pair_composes_flat_sequential` (ctx-match: head equals the `E-QOQ-FLAT` expected values);
@@ -242,6 +244,7 @@ selections from the report. The CP-1B limitation gains "periods taken from the u
 `test_other_pair_refused` (`q2-2025 -> q3-2025` -> `context_period_mismatch`);
 `test_unresolvable_current_period` (ctx-q2031 -> `context_period_unresolved: q4-2031`);
 `test_no_context_unchanged` (O1's own period tests still pass).
+B19 REDs (amended 2026-11-01, ruling B19, `docs/rulings/2026-10-31-context-plan.md:122-136`): `test_nonzero_delta_pair_not_flat` (a pair whose deltas are non-zero must not render "is flat"); `test_present_fy2024_basis_not_absent` (a pair whose FY2024 basis is present must not render "Requested FY2024 comparison basis is absent"). Task 4 lands only with these REDs.
 Run: `pytest tests/test_owner_cp1b.py tests/test_cp1b_registration.py tests/test_earnings_workflow.py tests/test_earnings.py tests/test_owner_presets.py -q`.
 **Commit:** `feat(owner): CP-1B reads its periods from the run context (Phase 2)`.
 

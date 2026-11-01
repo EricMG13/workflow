@@ -63,10 +63,7 @@ evidence caps confidence (tests listed under "Done-when as tests").
    `"<facility_id>: spread talk 325-350 bps; OID talk 99.0-99.5"`; a lone bound is omitted and named in the
    Limitation cell; As-of the deal `as_of` or `Not stated`.
 3. **Citations are Python's.** Each figure is cited by its own JSON text inside one span (`readiness.py:145-160`):
-   `"price": "98.75"` when key and value share a line, else (split key/value, or text not unique within
-   its line) the text from the object's `{` through the figure when that is one line; if neither is a unique
-   single-line quote the row is dropped into a named gap (`context quote ... cannot be cited as one unique
-   span; not used`), never a guessed span. `_value_offsets(text)` (new) gives the offset of each
+   by key/value text, e.g. `"price": "98.75"`, when that member is alone on its line; otherwise by the text from the row object's `{` through the figure when that is one unique line; otherwise the row is dropped into a named gap. A row whose cited figure is not unique in its span is dropped, and every colliding row is dropped, not only the later one: a quote matching two objects is a guessed span. The gap names the 1-based row: `context quote row <n> for facility <id> cannot be cited as one unique span; not used` (deal terms: `context deal terms row <n> for facility <id> cannot be cited as one unique span; not used`). These drop gaps render in the module's limitations as `Gap (<severity>): <text>`, like the Design 5 gaps (B20b) (amended 2026-11-01, rulings B20, B20a, B20b, `docs/rulings/2026-10-31-context-plan.md:129-144`; texts checked against `cases/cp3-context-owner/expected.json:2610-2611, 2669-2670`), never a guessed span. `_value_offsets(text)` (new) gives the offset of each
    `quotes[i].<field>`/`deal_terms[i].<field>` value; locator `line:<n>` of the offset in the rebuilt text. The object-anchored citation helper is
    `src/deploy_workflow/context_cites.py` (Phase 3 builds it for CP-3D, Phase 4 reuses it); the vii engine may not
    import `deploy_workflow`, so `cp3_relative_value.py` carries its own `_value_offsets`, tied to the helper by a
@@ -271,7 +268,7 @@ rows stay (Q5 of the questions file). The form drift tests (parent Task 2) must 
 
 1. Ruled: deal talk feeds CP-3 only; CP-3D offers `quotes` only (Design 9; Task 2).
 2. Ruled: all observations of a CP-3D submission share one context `facility_id`; the instrument name is not matched to it; CP-1 is not added as a CP-3D input (Design 9; Task 2 `test_mixed_facilities_refused`).
-3. Ruled: object-anchored citations (Design 3); a residual key collision with different content drops the later row into a gap (Task 1).
+3. Ruled: object-anchored citations (Design 3); a residual key collision drops every colliding row into a row-numbered gap, not only the later row (Task 1) (amended 2026-11-01, rulings B20a, B20b; gap texts as Design 3).
 4. Ruled: a quote with every figure empty yields no row and the gap `context quote for facility <id> carries no figure; not used` (Design 5; Task 1 `test_unmatched_and_empty_quote_are_named_gaps`).
 5. Ruled: prompt text is O6's; Phase 3 adds Task 4 (O6 follow-through) and edits the `relative_value` contract in `live/prompts.py` (B17 item 3).
 6. Ruled (M2): no model copies a context figure; it refers to Python rows by id (Design 4, 9).

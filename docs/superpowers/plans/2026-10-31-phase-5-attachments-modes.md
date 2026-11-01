@@ -145,7 +145,7 @@ status `ready`; then an issue unless the review has a gap with `kind == "source"
 (a missing one needs a `source` gap whose description contains `legal_documents`); `none` imposes nothing. Issue texts as
 the Task 0 table. Bounded: at most 4 issues; no loop over the review longer than its `gaps`/`sources` tuples.
 
-- [ ] **RED** (fail today: CP-0 has no `_PRECHECKS` row, so every review passes): the ten Task 0 cases through
+- [ ] **RED** (fail today: CP-0 has no `_PRECHECKS` row, so every review passes): the 15 frozen Task 0 cases (amended 2026-11-01, frozen oracle `cases/context-attachments-owner/expected.json:25` and `cases/PINS.json:15`; the ledger counts 15): `abs-refused`, `abs-gap-ok`, `abs-present`, `abs-unready`, `none-declared`, `legal-exec-missing`, `legal-exec-missing-gap`, `draft-ok`, `legal-draft-missing`, `legal-draft-missing-gap`, `draft-wrong-context`, `draft-wrong-context-no-context`, `draft-cited-other`, `draft-uncited`, `mismatch`. `legal-draft-missing` expects the frozen draft-missing issue text `attachments.legal_documents: 'draft' documents are declared but no source is assessed draft; add a source gap naming legal_documents` (`expected.json:13`, case at :193) and `legal-draft-missing-gap` the same review with the gap. Each case asserts its frozen expectation; the cases go through
   `owner_workflow` `submit_review` for `abs-refused`, `abs-gap-ok`, `legal-exec-missing`, `mismatch` (the refusal writes no
   journal step and consumes no attempt, `owner_workflow.py:1248`); plus unit tests of `precheck` for `abs-present`,
   `abs-unready`, `none-declared`; and (d) the verifier replay recomputes the same issues: a receipt of an `abs-gap-ok`

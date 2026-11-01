@@ -741,6 +741,16 @@ class OwnerFault(Contract):
     cap: int | None = Field(default=None, ge=0)
     call_kind: Literal["invoke", "read_inputs", "submit_review"] | None = None
 
+    @model_serializer(mode="wrap")
+    def _omit_unset_g6_fields(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """The four G6 fields are omitted from the JSON while `None`, so a fault of an older kind
+        keeps its bytes and digest under the same `owner-fault/1`."""
+        data: dict[str, Any] = handler(self)
+        for name in ("binding", "size", "cap", "call_kind"):
+            if data.get(name) is None:
+                data.pop(name, None)
+        return data
+
 
 class TornAudit(WorkflowError):
     """The journal and the retained audit disagree in a way `open()` cannot repair. It carries the
@@ -918,8 +928,14 @@ def fill_at_binding(
 ) -> tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     """`_fill` at the binding's own historical snapshot, as the receipt verifier fills: what the
     journal retained for `payload` when it was submitted at `binding`, whatever the journal holds
-    now. Raises `ValueError` or `WorkflowError` when the binding or the payload cannot be filled."""
-    return _fill(_hist(store, binding), binding, payload)
+    now. Raises `ValueError` or `WorkflowError` when the binding or the payload cannot be filled;
+    a binding naming a snapshot the store does not hold is `identity_mismatch`, as the receipt
+    verifier maps it (an `OSError` is never raised from here)."""
+    try:
+        historical = _hist(store, binding)
+    except OSError:
+        raise WorkflowError("identity_mismatch") from None
+    return _fill(historical, binding, payload)
 
 
 def _journaled_issues(

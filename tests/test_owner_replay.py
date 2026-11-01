@@ -1291,3 +1291,24 @@ def test_the_raw_payload_check_fills_at_the_submissions_own_snapshot(
     seen.clear()
     retained._check_raw_payload(chosen, chosen.stored_payload_sha256, "CP-0")
     assert seen == [bound_at]
+
+
+def test_a_binding_naming_an_absent_snapshot_is_a_named_refusal(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    """A forged earlier submission whose binding names a snapshot the earlier store does not hold
+    is refused as `ReplayRefused` before anything is written (`fill_at_binding` maps the missing
+    file to `identity_mismatch`)."""
+    absent = "f" * 64
+    copy = copy_of(earlier_run, tmp_path)
+    (sub,) = submissions(copy)
+    forged_binding = sub.binding.binding.model_copy(update={"snapshot_sha256": absent})
+    forged = sub.model_copy(
+        update={"binding": sub.binding.model_copy(update={"binding": forged_binding})}
+    )
+    swap_record(copy, "submissions", sub, forged)
+    assert not (copy / "execution" / "snapshots" / f"{absent}.json").exists()
+    root = tmp_path / "rerun"
+    with pytest.raises(ReplayRefused):
+        rerun_public(root, copy)
+    assert not (root / "run").exists()

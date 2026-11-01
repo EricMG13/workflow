@@ -136,6 +136,48 @@ def test_a_body_of_the_cap_passes_and_one_more_byte_is_refused(
 
 
 @pytest.mark.usefixtures("owner_world")
+def test_at_the_read_cap_an_oversized_body_is_a_call_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The call cap is checked before the body is built: past `MAX_CALLS` reads, an oversized
+    body is a `CallLimit` refusal and `_inputs` is never run."""
+    workflow = _narrative_world(tmp_path)
+    _serve(monkeypatch, _body_of(10))
+    for _ in range(MAX_CALLS):
+        workflow.read_inputs()
+    computed: list[int] = []
+    body = _body_of(MAX_INPUT_BYTES + 1)
+    digest = hashlib.sha256(body.encode()).hexdigest()
+
+    def served(store: Any, binding: Any, spec: Any) -> tuple[str, str]:
+        computed.append(1)
+        return digest, body
+
+    monkeypatch.setattr(owner, "_inputs", served)
+    with pytest.raises(WorkflowError) as caught:
+        workflow.read_inputs()
+    assert caught.value.code == "not_permitted" and computed == []  # the body was never built
+    assert [f.code for f in _faults(workflow)] == ["CallLimit"]
+
+
+# The bytes a `torn_audit` fault had before the G6 fields: `None` fields are omitted, so every
+# older fault kind keeps its bytes and digest under the same `owner-fault/1`.
+OLDER_FAULT_JSON = (
+    '{"schema_version":"owner-fault/1","code":"torn_audit","kind":"calls","digest":"'
+    + "a" * 64
+    + '"}'
+)
+OLDER_FAULT_DIGEST = "62cb36f138cfd1e078da29eac6267982fdeb3e6dfe3296c132f9a1d86824379e"
+
+
+def test_an_older_fault_keeps_its_bytes_and_digest() -> None:
+    fault = OwnerFault(code="torn_audit", kind="calls", digest="a" * 64)
+    assert fault.model_dump_json() == OLDER_FAULT_JSON
+    assert fault.content_hash() == OLDER_FAULT_DIGEST
+    assert OwnerFault.model_validate_json(OLDER_FAULT_JSON) == fault  # an old record still reads
+
+
+@pytest.mark.usefixtures("owner_world")
 def test_the_cap_counts_bytes_not_characters(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

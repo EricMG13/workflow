@@ -132,5 +132,9 @@
   "cases/o2-synthetic/manifest.json": "027a3a8abfddc26e46e104b6ece54b847fec5dce0006ffeb4fec442cb9c64fc6",
   "cases/o2-synthetic/market.txt": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
   "cases/o2-synthetic/submissions.json": "9e41f088ff10aa048d36076727a88ab61b6ced997f9e2f2226263f0b79511092",
+  "cases/periods-currency-owner/builder/build.py": "848906882bcb15daca973b4c666e51edf190815cc5a474a5427085787123371c",
+  "cases/periods-currency-owner/expected.json": "bb3427be84c69ffa495fb08b276705c21e8fcff149225aa7f39b686606229817",
+  "cases/periods-currency-owner/manifest.json": "2fda7460450e7eb7ba04445aadbf8be4700458c80ca58b3dbe0b882afd6a1e51",
+  "cases/periods-currency-owner/submissions.json": "422b87717911236a1634157ce7e9c736eb03c4b6b140775277fb302309081ece",
   "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
 }

@@ -15,6 +15,7 @@ import re
 import sys
 from collections.abc import Callable, Sequence
 from decimal import Decimal
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
 
@@ -378,6 +379,7 @@ class _Rules:
         req: bool = False,
         signed: bool = False,
         whole: bool = False,
+        places: int | None = None,
         low: str | None = None,
         low_excl: str | None = None,
         high: str | None = None,
@@ -387,7 +389,7 @@ class _Rules:
             if req:
                 self.bad(path, "required.")
             return
-        message = _num_message(value, signed, whole, low, low_excl, high, high_excl)
+        message = _num_message(value, signed, whole, places, low, low_excl, high, high_excl)
         if message:
             self.bad(path, message)
 
@@ -416,10 +418,12 @@ class _Rules:
             self.bad(path, "required.")
         if len(items) > 3:
             self.bad(path, "give at most 3 values.")
-        for item in items:
-            message = _num_message(item, False, whole, "1", None, high, None)
+        messages = [_num_message(item, False, whole, None, "1", None, high, None) for item in items]
+        for item, message in zip(items, messages, strict=True):
             if message:
                 self.bad(path, f'"{item}": {message}')
+        if not any(messages) and any(Decimal(a) >= Decimal(b) for a, b in pairwise(items)):
+            self.bad(path, "values must increase.")
 
     def not_above(self, path: str, low: str, high: str, message: str) -> None:
         if _match(NUM, low) and _match(NUM, high) and Decimal(low) > Decimal(high):
@@ -591,12 +595,18 @@ class _Rules:
             for i, s in enumerate(a.cp2a.scenarios):
                 p = f"assumptions.cp2a.scenarios[{i}]"
                 self.number(
-                    f"{p}.ebitda_decline_pct", s.ebitda_decline_pct, req=True, low="0", high="100"
+                    f"{p}.ebitda_decline_pct",
+                    s.ebitda_decline_pct,
+                    req=True,
+                    places=2,
+                    low="0",
+                    high="100",
                 )
                 self.number(
                     f"{p}.interest_increase_pct",
                     s.interest_increase_pct,
                     req=True,
+                    places=2,
                     low="0",
                     high="100",
                 )
@@ -616,23 +626,42 @@ class _Rules:
         if a.cp2e is not None:
             p = "assumptions.cp2e"
             self.shocks(f"{p}.rate_shocks_bps", a.cp2e.rate_shocks_bps, "1000", True)
-            self.shocks(f"{p}.fx_shocks_pct", a.cp2e.fx_shocks_pct, "50", False)
-            self.number(f"{p}.hedge_ratio_pct", a.cp2e.hedge_ratio_pct, low="0", high="100")
+            self.shocks(f"{p}.fx_shocks_pct", a.cp2e.fx_shocks_pct, "50", True)
+            self.number(
+                f"{p}.hedge_ratio_pct", a.cp2e.hedge_ratio_pct, places=2, low="0", high="100"
+            )
             self.text(f"{p}.rationale", a.cp2e.rationale, req=True)
         if a.cp3c is not None:
             p = "assumptions.cp3c"
-            self.number(f"{p}.repricing_bps", a.cp3c.repricing_bps, req=True, low="0", high="1000")
+            self.number(
+                f"{p}.repricing_bps",
+                a.cp3c.repricing_bps,
+                req=True,
+                whole=True,
+                low="0",
+                high="1000",
+            )
             self.text(f"{p}.rationale", a.cp3c.rationale, req=True)
         if a.cp3d is not None:
             p = "assumptions.cp3d"
             self.number(
-                f"{p}.recovery_pct", a.cp3d.recovery_pct, req=True, low="0", high_excl="100"
+                f"{p}.recovery_pct",
+                a.cp3d.recovery_pct,
+                req=True,
+                places=2,
+                low="0",
+                high_excl="100",
             )
             self.text(f"{p}.rationale", a.cp3d.rationale, req=True)
         if a.cp4c is not None:
             p = "assumptions.cp4c"
             self.number(
-                f"{p}.ev_multiple", a.cp4c.ev_multiple, req=True, low_excl="0", high="99.99"
+                f"{p}.ev_multiple",
+                a.cp4c.ev_multiple,
+                req=True,
+                places=2,
+                low_excl="0",
+                high="99.99",
             )
             self.text(f"{p}.rationale", a.cp4c.rationale, req=True)
 
@@ -664,6 +693,7 @@ def _num_message(
     value: str,
     signed: bool,
     whole: bool,
+    places: int | None,
     low: str | None,
     low_excl: str | None,
     high: str | None,
@@ -676,6 +706,8 @@ def _num_message(
         return "enter a plain number such as 1250 or 99.5."
     if whole and not _match(_INT, value):
         return "enter a whole number."
+    if places is not None and len(value.partition(".")[2]) > places:
+        return f"use at most {places} decimal places."
     x = Decimal(value)
     checks: tuple[tuple[str | None, Callable[[Decimal, Decimal], bool], str], ...] = (
         (low, lambda a, b: a < b, "must be {} or more."),

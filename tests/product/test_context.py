@@ -399,6 +399,84 @@ INVALID_CASES: list[tuple[dict[str, Any], str, str]] = [
     ({"assumptions.cp3d": pin(recovery_pct="100")}, "assumptions.cp3d.recovery_pct", "below 100"),
     ({"assumptions.cp4c": pin(ev_multiple="0")}, "assumptions.cp4c.ev_multiple", "above 0"),
     (
+        {
+            "assumptions.cp2a": pin(
+                scenarios=[{"ebitda_decline_pct": "20.123", "interest_increase_pct": "5"}]
+            )
+        },
+        "assumptions.cp2a.scenarios[0].ebitda_decline_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {
+            "assumptions.cp2a": pin(
+                scenarios=[{"ebitda_decline_pct": "20", "interest_increase_pct": "5.001"}]
+            )
+        },
+        "assumptions.cp2a.scenarios[0].interest_increase_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp3c": pin(repricing_bps="50.5")},
+        "assumptions.cp3c.repricing_bps",
+        "enter a whole number.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100"], fx_shocks_pct=["10.5"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.fx_shocks_pct",
+        '"10.5": enter a whole number.',
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["200", "100"], fx_shocks_pct=["10"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.rate_shocks_bps",
+        "values must increase.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100", "100"], fx_shocks_pct=["10"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.rate_shocks_bps",
+        "values must increase.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100"], fx_shocks_pct=["20", "10"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.fx_shocks_pct",
+        "values must increase.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100"], fx_shocks_pct=["10"], hedge_ratio_pct="60.123"
+            )
+        },
+        "assumptions.cp2e.hedge_ratio_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp3d": pin(recovery_pct="65.123")},
+        "assumptions.cp3d.recovery_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp4c": pin(ev_multiple="8.555")},
+        "assumptions.cp4c.ev_multiple",
+        "use at most 2 decimal places.",
+    ),
+    (
         {"assumptions.cp4c": {"ev_multiple": "6", "rationale": ""}},
         "assumptions.cp4c.rationale",
         "required",
@@ -568,6 +646,46 @@ FORM = REPO / "docs/templates/context-form.html"
 def test_form_output_loads(name: str) -> None:
     raw = (CASES / name).read_bytes()
     assert {"schema": SCHEMA, **load_context(raw).model_dump(mode="json")} == json.loads(raw)
+
+
+_PIN_OK = [
+    (
+        "assumptions.cp2a",
+        pin(scenarios=[{"ebitda_decline_pct": "20.12", "interest_increase_pct": "5.5"}]),
+    ),
+    ("assumptions.cp3c", pin(repricing_bps="50")),
+    (
+        "assumptions.cp2e",
+        pin(rate_shocks_bps=["100", "200"], fx_shocks_pct=["10", "20"], hedge_ratio_pct="60.12"),
+    ),
+    ("assumptions.cp3d", pin(recovery_pct="65.12")),
+    ("assumptions.cp4c", pin(ev_multiple="8.55")),
+]
+
+
+@pytest.mark.parametrize(("path", "value"), _PIN_OK)
+def test_pins_at_submission_precision_load(path: str, value: dict[str, Any]) -> None:
+    load_context(json.dumps(with_changes({path: value})).encode())
+
+
+def test_pinned_contexts_of_the_owner_oracle_load() -> None:
+    files = sorted((REPO / "cases/pins-context-owner").glob("context-*.json"))
+    assert files
+    for f in files:
+        load_context(f.read_bytes())
+
+
+def test_form_decimal_limits_match_reader() -> None:
+    html = FORM.read_text()
+    assert "r.dp" in html
+    assert "item:{t:'num',int:true,min:1,max:50}" in html
+    assert "['repricing_bps',{t:'num',req:true,int:true,min:0,max:1000}]" in html
+    assert "['recovery_pct',{t:'num',req:true,dp:2,min:0,maxEx:100}]" in html
+    assert "['ev_multiple',{t:'num',req:true,dp:2,minEx:0,max:99.99}]" in html
+    assert "['hedge_ratio_pct',{t:'num',dp:2,min:0,max:100}]" in html
+    assert html.count("dp:2,min:0,max:100") == 3
+    assert "use at most ' + r.dp + ' decimal places." in html
+    assert "values must increase." in html
 
 
 def test_form_regexes_match_reader() -> None:

@@ -50,6 +50,7 @@ AUDIT = "owner-run-audit"  # owner_workflow.AUDIT
 INVOCATIONS = "invocations"
 METHOD_VERSION = "deploy-v-r14"
 _DIGEST = re.compile(r"[0-9a-f]{64}")
+_MAPPER_SHAPE_ERRORS = (TypeError, AttributeError, KeyError, IndexError, ValueError)
 _PROVIDERS: tuple[Any, ...] = ("openai", "anthropic", "openrouter")
 _PREIMAGE_KEYS = frozenset(
     {
@@ -315,7 +316,12 @@ class CallLog:
         # byte redaction; ask the provider mappers, as the live adapter did, whether one remains.
         redacted = self._redactor.bytes_(body)
         for provider in _PROVIDERS:
-            outcome = parse(provider, 200, redacted, {}, self._redactor)
+            try:
+                outcome = parse(provider, 200, redacted, {}, self._redactor)
+            except _MAPPER_SHAPE_ERRORS:
+                # fail closed: a mapper that crashes on this body cannot say whether a key is
+                # left in it, so the body is not archived. Root cause is in providers.py.
+                return "MapperError"
             if isinstance(outcome, ProviderError) and outcome.error_class == "KeyReflected":
                 return "KeyReflected"
         return None
@@ -372,12 +378,12 @@ def invocation_preimage(
     module_id: str,
     step_id: str,
     attempt: int,
-    upstream_hashes: list[str] | tuple[str, ...],
+    upstream_hashes: list[str] | tuple[str, ...] | str,
     prompt_sha256: str,
     method_version: str = METHOD_VERSION,
 ) -> dict[str, Any]:
-    if isinstance(upstream_hashes, str):  # never sorted into characters; validation refuses it
-        upstream_hashes = [upstream_hashes]
+    if type(upstream_hashes) is str:
+        raise ValueError("upstream_hashes is a list of hashes, not a string")
     return {
         "run_id": run_id,
         "module_id": module_id,
@@ -471,15 +477,22 @@ _TRANSPORT_CLASSES = frozenset(
 )
 
 
+_RECORDED_TOKENS = (
+    "input_tokens",
+    "cached_read_tokens",
+    "cache_write_tokens",  # the 5m/1h split is not recorded (B11)
+    "output_tokens",
+    "reasoning_tokens",
+)
+
+
 def _usage_of(rec: CallRecord) -> dict[str, int | None]:
-    values = {
-        "input_tokens": rec.input_tokens,
-        "cached_read_tokens": rec.cached_read_tokens,
-        "cache_write_tokens": rec.cache_write_tokens,
-        "output_tokens": rec.output_tokens,
-        "reasoning_tokens": rec.reasoning_tokens,
-    }
-    return {f.name: values.get(f.name) for f in fields(Usage)}
+    """The five recorded token fields; an error reply's usage object leaves the split None."""
+    return {name: getattr(rec, name) for name in _RECORDED_TOKENS}
+
+
+def _usage_object(rec: CallRecord) -> dict[str, int | None]:
+    return {f.name: getattr(rec, f.name, None) for f in fields(Usage)}
 
 
 def _error_response(rec: CallRecord, error_class: str) -> dict[str, Any]:
@@ -495,11 +508,13 @@ def _error_response(rec: CallRecord, error_class: str) -> dict[str, Any]:
         return {"kind": kind, "error_class": error_class, "http_status": None}
     has_tokens = any(v is not None for v in _usage_of(rec).values())
     out: dict[str, Any] = {"error_class": error_class, "http_status": rec.http_status}
-    if unknown:
-        out["kind"] = "sent_unknown"
-    elif has_tokens or rec.cost_status == "billed":
+    # Usage first: a ProviderError carries usage only for SentChargeUsage, and a usage-bearing
+    # reply whose charge prices as unknown is still a sent_usage reply.
+    if has_tokens or rec.cost_status == "billed":
         out["kind"] = "sent_usage"
-        out["usage"] = _usage_of(rec)
+        out["usage"] = _usage_object(rec)
+    elif unknown:
+        out["kind"] = "sent_unknown"
     else:
         out["kind"] = "sent_known"
         if not 400 <= rec.http_status <= 499:
@@ -546,8 +561,10 @@ def _ok_response(run: Path, rec: CallRecord, redactor: Redactor) -> dict[str, An
     outcome = parse(provider, rec.http_status, body, {}, redactor)
     if not isinstance(outcome, Turn):
         raise ExportMismatch(digest, index, "outcome")
-    if _usage_of(rec) != {k: getattr(outcome.usage, k) for k in _usage_of(rec)}:
+    if _usage_of(rec) != {k: getattr(outcome.usage, k) for k in _RECORDED_TOKENS}:
         raise ExportMismatch(digest, index, "usage")
+    if rec.cost_status == "billed" and outcome.billed_usd != rec.settled_usd:
+        raise ExportMismatch(digest, index, "billed_usd")
     if rec.request_id != outcome.request_id:
         raise ExportMismatch(digest, index, "request_id")
     if rec.reported_model != outcome.reported_model:

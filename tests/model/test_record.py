@@ -587,7 +587,9 @@ def test_key_reflected_record_exports_sent_unknown(tmp_path: Path) -> None:
     body = json.dumps(OPENAI_BODY).encode()
     (resp,) = exported(
         tmp_path,
-        record(cost_status="unknown", settled_usd=None, error_class="KeyReflected"),
+        record(
+            cost_status="unknown", settled_usd=None, error_class="KeyReflected", output_tokens=None
+        ),
         bodies={0: body},
     )
     assert (resp["kind"], resp["error_class"], resp["http_status"]) == (
@@ -600,7 +602,13 @@ def test_key_reflected_record_exports_sent_unknown(tmp_path: Path) -> None:
 def test_invalid_utf8_error_exports_the_records_kind(tmp_path: Path) -> None:
     (resp,) = exported(
         tmp_path,
-        record(http_status=400, cost_status="unknown", settled_usd=None, error_class="Http"),
+        record(
+            http_status=400,
+            cost_status="unknown",
+            settled_usd=None,
+            error_class="Http",
+            output_tokens=None,
+        ),
         bodies={0: b'{"error": {"message": "bad \xff"}}'},
     )
     assert resp["kind"] == "sent_unknown"
@@ -819,3 +827,121 @@ def test_error_record_whose_raw_was_swapped_for_a_turn_is_refused(tmp_path: Path
             bodies={0: json.dumps(OPENAI_BODY).encode()},
         )
     assert caught.value.field == "outcome"
+
+
+# ---------------------------------------------------------------- fix round 2
+
+
+def test_anthropic_turn_with_cache_creation_split_exports(tmp_path: Path) -> None:
+    usage = {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0},
+        "output_tokens": 1,
+    }
+    events: list[dict[str, Any]] = [
+        {
+            "type": "message_start",
+            "message": {"id": "msg_1", "model": "claude-opus-5-5", "usage": usage},
+        },
+        {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
+        {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "hi"}},
+        {"type": "content_block_stop", "index": 0},
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "end_turn"},
+            "usage": {"output_tokens": 4},
+        },
+        {"type": "message_stop"},
+    ]
+    body = "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
+    turn = parse("anthropic", 200, body, {}, Redactor())
+    assert not isinstance(turn, ProviderError)
+    assert turn.usage.cache_write_5m_tokens is not None  # the split the record does not keep
+    u = turn.usage
+    (resp,) = exported(
+        tmp_path,
+        record(
+            **ANTHROPIC,
+            request_id="msg_1",
+            reported_model="claude-opus-5-5",
+            input_tokens=u.input_tokens,
+            cached_read_tokens=u.cached_read_tokens,
+            cache_write_tokens=u.cache_write_tokens,
+            output_tokens=u.output_tokens,
+            reasoning_tokens=u.reasoning_tokens,
+        ),
+        bodies={0: body},
+    )
+    assert resp["text"] == "hi"
+
+
+@pytest.mark.parametrize("cost", ["unknown", "billed"])
+def test_error_record_with_tokens_exports_sent_usage_before_unknown(
+    tmp_path: Path, cost: str
+) -> None:
+    (resp,) = exported(
+        tmp_path,
+        record(
+            cost_status=cost,
+            settled_usd=None if cost == "unknown" else Decimal("0.2"),
+            error_class="ResponseError",
+            input_tokens=10,
+            output_tokens=5,
+        ),
+    )
+    assert resp["kind"] == "sent_usage" and resp["usage"]["input_tokens"] == 10
+    assert ("billed_usd" in resp) == (cost == "billed")
+
+
+def test_error_record_unknown_without_tokens_is_sent_unknown(tmp_path: Path) -> None:
+    (resp,) = exported(
+        tmp_path,
+        record(cost_status="unknown", settled_usd=None, error_class="X", output_tokens=None),
+    )
+    assert resp["kind"] == "sent_unknown" and "usage" not in resp
+
+
+def test_lone_upstream_hash_string_is_refused() -> None:
+    with pytest.raises(ValueError):
+        digest_of(upstream_hashes="b" * 64)
+    with pytest.raises(ValueError):
+        invocation_preimage(**{**PREIMAGE, "upstream_hashes": "b" * 64})
+
+
+def test_ok_turn_billed_cost_must_equal_the_records_settled_usd(tmp_path: Path) -> None:
+    def body(cost: float) -> bytes:
+        return json.dumps(
+            {
+                "id": "gen-1",
+                "model": "deepseek/deepseek-v4.1-flash-1017",
+                "choices": [{"message": {"content": "hi"}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5, "cost": cost},
+            }
+        ).encode()
+
+    def rec(settled: str) -> CallRecord:
+        return record(
+            provider="openrouter",
+            config_id="deepseek-max",
+            requested_effort="max",
+            requested_model="deepseek/deepseek-v4.1-flash-1017",
+            reported_model="deepseek/deepseek-v4.1-flash-1017",
+            request_id="gen-1",
+            input_tokens=10,
+            output_tokens=5,
+            cost_status="billed",
+            settled_usd=Decimal(settled),
+        )
+
+    assert exported(tmp_path / "ok", rec("0.0001"), bodies={0: body(0.0001)})
+    with pytest.raises(ExportMismatch) as caught:
+        exported(tmp_path / "bad", rec("0.0002"), bodies={0: body(0.0001)})
+    assert caught.value.field == "billed_usd"
+
+
+def test_a_mapper_crash_withholds_the_body_fail_closed(tmp_path: Path) -> None:
+    body = json.dumps({"output": [{"type": "message", "content": 5}]}).encode()
+    path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body, error_class="ProviderRejected")
+    assert archived(path) == f"[withheld: MapperError; {len(body)} bytes]"

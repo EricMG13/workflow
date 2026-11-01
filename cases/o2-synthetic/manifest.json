@@ -1,0 +1,138 @@
+{
+  "schema_version": "o2-synthetic-manifest/1",
+  "scope": "Synthetic end-to-end oracle for the portfolio_decision preset: S1 (CP-0, CP-1, CP-1A, CP-2), CP-3, CP-5 and CP-6 submissions re-cut to a prepared pack",
+  "status": "prepared; not reviewed, not frozen",
+  "roles": {
+    "preparer": "oracle preparer (this builder script)",
+    "reviewer": null,
+    "builder": null
+  },
+  "run": {
+    "run_id": "o2-synthetic-portfolio-decision",
+    "pathway": "portfolio_decision",
+    "case_kind": "synthetic",
+    "as_of": "2026-01-10",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-2",
+      "CP-3",
+      "CP-5",
+      "CP-6",
+      "CP-8"
+    ],
+    "pack_sha256": "684fc20d59524dd10321b59fc1582f7f0b095e28ea212047c37bfc5e4c4c611f"
+  },
+  "pack_sources": [
+    {
+      "source_id": "identity",
+      "path": "identity.txt",
+      "status": "ready",
+      "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "lines": 7
+    },
+    {
+      "source_id": "financial",
+      "path": "financial.txt",
+      "status": "ready",
+      "sha256": "7f981c9ed026e33cd7553c929ef8c9f40782c5d2b05ce842e4b0a84c1520d405",
+      "lines": 131
+    },
+    {
+      "source_id": "business",
+      "path": "business.txt",
+      "status": "ready",
+      "sha256": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
+      "lines": 29
+    },
+    {
+      "source_id": "market",
+      "path": "market.txt",
+      "status": "ready",
+      "sha256": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
+      "lines": 13
+    },
+    {
+      "source_id": "context",
+      "path": "context.json",
+      "status": "ready",
+      "sha256": "9e85d95ba4d701532552c51213bca992604e8217e3a4c20376623957565012dd",
+      "lines": 62
+    }
+  ],
+  "source_text_rule": "Existing synthetic page text, pages joined with one newline, no terminal newline; no text invented",
+  "source_oracles": {
+    "identity,financial": "cases/financial/manifest.json sources",
+    "business": "cases/snapshot/manifest.json business_source.positive",
+    "market": "cases/cp3-cp6-owner/manifest.json market_source",
+    "readiness_review": "cases/cp3-cp6-owner/submissions.json positive.readiness_review.R6",
+    "cp1_source_context": "cases/cp3-cp6-owner/submissions.json positive.cp1_source_context",
+    "business_context": "cases/snapshot/submissions.json positive.business_context + cp3-cp6 sources_append and consumers.R6",
+    "credit_synthesis": "cases/snapshot/submissions.json positive.credit_synthesis (unchanged)",
+    "relative_value": "cases/cp3-cp6-owner/submissions.json positive.relative_value",
+    "committee_challenge": "cases/cp3-cp6-owner/submissions.json positive.committee_challenge",
+    "integrity_review": "cases/cp5-owner/submissions.json positive"
+  },
+  "changes_from_source_oracles": [
+    "locator page:N -> line:N and source_sha256 page-joined -> file-bytes hash, on every citation",
+    "pack_sha256 placeholder bound to the pack hash above",
+    "readiness_review: added source row for `context` (own cited line)",
+    "cp1_source_context: added source row for `context` (own cited line), required by validate_source_context (every prepared source assessed once)",
+    "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack"
+  ],
+  "dropped_modules": {
+    "CP-8": "oracle frozen on other run fields (cases/cp8-owner/manifest.json, as_of 2026-04-30, a different pack); no CP-8 submission here. The preset still plans CP-8, so the run stops at CP-8 (BLOCKED row above)",
+    "CP-MODEL": "no submission exists (Python-built)"
+  },
+  "inherited_oracle_gaps": [
+    {
+      "where": "business_context.consumers",
+      "source": "cases/cp3-cp6-owner/submissions.json positive.business_context.consumers.R6",
+      "rule": "cp1a_consumers(pack) always adds CP-MODEL (src/deploy_vii/business_context.py:344-353)",
+      "judged": [
+        "CP-2",
+        "CP-3",
+        "CP-5",
+        "CP-6"
+      ],
+      "required": [
+        "CP-2",
+        "CP-3",
+        "CP-5",
+        "CP-6",
+        "CP-MODEL"
+      ],
+      "symmetric_difference": [
+        "CP-MODEL"
+      ],
+      "action": "copied unchanged; the R3 consumers list in the same oracle carries a CP-MODEL row but R6's does not"
+    }
+  ],
+  "run_time_bindings_changed_by_recut": [
+    "cases/cp5-owner/manifest.json run_time_bindings.RT-3 c1_source_locator names page:N; the first CP-1 citation locator is now line:N of the prepared pack"
+  ],
+  "not_covered": [
+    "gap case (cp3-cp6-gap, no market source) needs a second pack and is not included",
+    "refusal_mutations are not copied",
+    "expected.json is not re-cut: facts and heads in the source expected files cite page:N"
+  ],
+  "citations_recut": 98,
+  "ambiguous_line_matches": [],
+  "validators": {
+    "issues_by_module": {
+      "readiness_review": [],
+      "cp1_source_context": []
+    }
+  },
+  "files": {
+    "context.json": "9e85d95ba4d701532552c51213bca992604e8217e3a4c20376623957565012dd",
+    "identity.txt": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "financial.txt": "7f981c9ed026e33cd7553c929ef8c9f40782c5d2b05ce842e4b0a84c1520d405",
+    "business.txt": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
+    "market.txt": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
+    "submissions.json": "1732aed894ebf5981a9156bde9a5e02b32fb796b5f0911dc29bf60f656c93241"
+  }
+}

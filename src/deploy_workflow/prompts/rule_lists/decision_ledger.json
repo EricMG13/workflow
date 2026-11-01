@@ -145,15 +145,14 @@
   },
   {
    "id": "decision_ledger.11",
-   "statement": "Each `basis`, `lesson`, `synthesis.text`, absence `reason` and `follow_up` is nonblank text with no digit, no braces or square brackets, not a null spelling, and none of blame, fault, should have, in hindsight, with hindsight, recommend, overweight, underweight, buy, sell, adjust the prior or calibrat.",
+   "statement": "Each `basis`, `lesson`, `synthesis.text`, absence `reason` and `follow_up`, and every `extra_gaps` field (`gap`, `missing_item`, `why_it_matters`, `impact_on_output`, `follow_up`) is nonblank text with no digit, no braces or square brackets, not a null spelling, and none of blame, fault, should have, in hindsight, with hindsight, recommend, overweight, underweight, buy, sell, adjust the prior or calibrat.",
    "checks": [
     "oracle:cp8:r23",
     "oracle:cp8:r24",
     "oracle:cp8:r25",
     "oracle:cp8:r26",
     "oracle:cp8:r27",
-    "fn:deploy_workflow.owners.cp8:_Checker._text",
-    "fn:deploy_workflow.owners.cp8:_Composer._resolved"
+    "fn:deploy_workflow.owners.cp8:_Checker._text"
    ]
   },
   {

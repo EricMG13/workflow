@@ -51,8 +51,7 @@
    "checks": [
     "oracle:cp2e:debt_currency_and_absence",
     "oracle:cp2e:foreign_share_and_absence",
-    "fn:deploy_workflow.owners.cp2e:_check_fx",
-    "fn:deploy_workflow.owners.cp2e:_fx_claim"
+    "fn:deploy_workflow.owners.cp2e:_check_fx"
    ]
   },
   {
@@ -61,8 +60,7 @@
    "checks": [
     "oracle:cp2e:hedge_ratio_and_absence",
     "oracle:cp2e:hedge_ratio_out_of_range",
-    "fn:deploy_workflow.owners.cp2e:_check_hedge",
-    "fn:deploy_workflow.owners.cp2e:_hedge_claim"
+    "fn:deploy_workflow.owners.cp2e:_check_hedge"
    ]
   },
   {
@@ -73,13 +71,12 @@
     "oracle:cp2e:rate_shocks_not_increasing",
     "oracle:cp2e:too_many_rate_shocks",
     "oracle:cp2e:fx_shock_too_large",
-    "fn:deploy_workflow.owners.cp2e:_Check.shocks",
-    "fn:deploy_workflow.owners.cp2e:_rate_claims"
+    "fn:deploy_workflow.owners.cp2e:_Check.shocks"
    ]
   },
   {
    "id": "macro_fx.8",
-   "statement": "Give one assessment for each `section` (interest_rate, fx, hedging), none twice; `category` is Documentary Fact, Analyst Interpretation or Insufficient Information, `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote. Every analyst text (assessment `text` and `limitation`, `shock_rationale`, `summary.text`, the hedge `rationale`, `reference_rate`, and every absence `reason` and `follow_up`) is nonblank with no digit; `summary.text` has no reference; and an assessment `text` or `summary.text` uses none of the words recommend, buy, sell, overweight, underweight, downgrade, upgrade or covenant breach.",
+   "statement": "Give one assessment for each `section` (interest_rate, fx, hedging), none twice; `category` is Documentary Fact, Analyst Interpretation or Insufficient Information, `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote. Every analyst text (assessment `text`, `shock_rationale`, `summary.text`, the hedge `rationale`, and every absence `reason` and `follow_up`) is nonblank with no digit; an assessment `limitation` and `rate_basis.reference_rate` are nonblank; `summary.text` has no reference; and an assessment `text` or `summary.text` uses none of the words recommend, buy, sell, overweight, underweight, downgrade, upgrade or covenant breach.",
    "checks": [
     "oracle:cp2e:digit_in_text",
     "oracle:cp2e:prohibited_conclusion",

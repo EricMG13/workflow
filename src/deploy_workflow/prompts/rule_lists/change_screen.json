@@ -18,9 +18,7 @@
     "oracle:cpl10:r04",
     "oracle:cpl10:r05",
     "oracle:cpl10:r06",
-    "fn:deploy_workflow.owners.cpl10:_assessment_issues",
-    "fn:deploy_workflow.owners.cpl10:_claims",
-    "fn:deploy_workflow.owners.cpl10:_item_rows"
+    "fn:deploy_workflow.owners.cpl10:_assessment_issues"
    ]
   },
   {
@@ -34,7 +32,7 @@
   },
   {
    "id": "change_screen.4",
-   "statement": "An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label such as `Q3 2025`), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.",
+   "statement": "An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.",
    "checks": [
     "oracle:cpl10:r08",
     "oracle:cpl10:r09",

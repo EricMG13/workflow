@@ -8,13 +8,12 @@
   },
   {
    "id": "peer_benchmark.2",
-   "statement": "Write exactly one assessment for each peer listed in `peers.rows` of the module context, its `peer` the row's `label` written exactly, and none for another name or twice. When the peers source is absent, write no assessment; when its table cannot be read, every submission is refused as `Peer table not found`.",
+   "statement": "Write exactly one assessment for each peer listed in `peers.rows` of the module context, its `peer` the row's `label` written exactly, and none for another name or twice. When the peers source is absent, write no assessment.",
    "checks": [
     "oracle:cp1c:r01",
     "oracle:cp1c:r02",
     "oracle:cp1c:r03",
     "oracle:cp1c:r10",
-    "oracle:cp1c:r11",
     "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
     "fn:deploy_workflow.owners.cp1c:calculation_issues"
    ]

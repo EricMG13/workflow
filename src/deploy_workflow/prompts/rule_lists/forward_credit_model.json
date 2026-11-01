@@ -70,8 +70,7 @@
     "fn:deploy_workflow.owners.cp2g:_text_issues",
     "fn:deploy_workflow.owners.cp2g:_run_text_issues",
     "fn:deploy_workflow.owners.cp2g:_limitation_issues",
-    "fn:deploy_workflow.owners.cp2g:content_issues",
-    "fn:deploy_workflow.owners.cp2g:_claims"
+    "fn:deploy_workflow.owners.cp2g:content_issues"
    ]
   },
   {
@@ -79,15 +78,6 @@
    "statement": "`assessment.confidence` is never High, because the driver values are uncited analyst assumptions.",
    "checks": [
     "oracle:cp2g:v13"
-   ]
-  },
-  {
-   "id": "forward_credit_model.8",
-   "statement": "A `Stale input` issue means a bound CP-2A, CP-1D or CP-1 input changed after the context was read; no edit to the submission cures it.",
-   "checks": [
-    "oracle:cp2g:v18",
-    "oracle:cp2g:v19",
-    "oracle:cp2g:v20"
    ]
   }
  ]

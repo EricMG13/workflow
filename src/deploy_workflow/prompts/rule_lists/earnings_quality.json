@@ -2,12 +2,11 @@
  "rules": [
   {
    "id": "earnings_quality.1",
-   "statement": "Write exactly one assessment for each add-back of the bridge in the module context, its `addback` the bridge label written exactly, and none for another label. When the pack supplies no bridge, assess no add-back and cite the statements' add-back disclosure in `overall.evidence`; if the bridge source is not ready or its table cannot be read, the step is refused as `Bridge table not found`.",
+   "statement": "Write exactly one assessment for each add-back of the bridge in the module context, its `addback` the bridge label written exactly, and none for another label. When the pack supplies no bridge, assess no add-back and cite the statements' add-back disclosure in `overall.evidence`.",
    "checks": [
     "oracle:cp1d:r01",
     "oracle:cp1d:r02",
     "oracle:cp1d:r13",
-    "oracle:cp1d:r14",
     "oracle:cp1d:r15",
     "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
     "fn:deploy_workflow.owners.cp1d:validation_issues"

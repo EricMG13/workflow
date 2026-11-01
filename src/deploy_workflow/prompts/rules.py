@@ -205,10 +205,12 @@ OWNER_MODULE: Mapping[str, str] = {
 @dataclass(frozen=True)
 class OracleSpec:
     """One frozen oracle a step reads: ``case`` is the ``cases/<case>-owner`` directory, ``prefix``
-    keeps only the ids that begin with it (cp3-cp6 serves two steps)."""
+    keeps only the ids that begin with it (cp3-cp6 serves two steps), ``part`` reads the containers
+    of ``document[part]`` instead of the top level (cp3-context's ``cp3d``)."""
 
     case: str
     prefix: str = ""
+    part: str = ""  # a key of the document whose own refusal containers are read (cp3-context)
 
 
 ORACLES: Mapping[str, tuple[OracleSpec, ...]] = {
@@ -216,7 +218,7 @@ ORACLES: Mapping[str, tuple[OracleSpec, ...]] = {
     "committee_challenge": (OracleSpec("cp3-cp6", "cp6-"),),
     "integrity_review": (OracleSpec("cp5"),),
     "research": (OracleSpec("cpdr"),),
-    "market_implied": (OracleSpec("cp3d"),),
+    "market_implied": (OracleSpec("cp3d"), OracleSpec("cp3-context", part="cp3d")),
     "macro_fx": (OracleSpec("cp2e"),),
     "decision_ledger": (OracleSpec("cp8"),),
     "downside_pathway": (OracleSpec("cp2a"),),
@@ -238,9 +240,6 @@ ORACLE_EXCLUSIONS: Mapping[str, str] = {
     "context-attachments": "refusals of the attachment context loader, not of a step submission",
     "valuation-context": "refusal_ids of the valuation context loader, not of a step submission",
     "pins-context": "pinned lines are covered by compose.O6 (_pin_lines), not by oracle ids",
-    "cp3-context#cp3d": "its refusals (cp3d-unknown-context-row, cp3d-filled-context-row) nest under "
-    "the cp3d part, a container the oracle reader does not descend into; market_implied.3 carries "
-    "the function that enforces them (cp3d:_resolved)",
 }
 
 # Containers of an oracle's ``expected.json`` that list content refusals. ``tamper_refusals`` and
@@ -310,18 +309,19 @@ def groups_of(document: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
 
 
 @cache
-def _oracle_groups(case: str) -> dict[str, tuple[str, ...]]:
-    return groups_of(json.loads(oracle_path(case).read_text(encoding="utf-8")))
+def _oracle_groups(case: str, part: str = "") -> dict[str, tuple[str, ...]]:
+    document = json.loads(oracle_path(case).read_text(encoding="utf-8"))
+    return groups_of(document[part] if part else document)
 
 
 def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
     """``{container: (oracle:<case>:<id>, ...)}`` for the step's oracles, prefix-filtered."""
     out: dict[str, tuple[str, ...]] = {}
     for spec in ORACLES.get(step_id, ()):
-        for container, ids in _oracle_groups(spec.case).items():
+        for container, ids in _oracle_groups(spec.case, spec.part).items():
             kept = tuple(f"oracle:{spec.case}:{i}" for i in ids if i.startswith(spec.prefix))
             if kept:
-                out[f"{spec.case}/{container}"] = kept
+                out[f"{spec.case}{'#' + spec.part if spec.part else ''}/{container}"] = kept
     return out
 
 
@@ -331,6 +331,8 @@ def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
 # nothing is moved to NOT_ISSUE_SITES. Subtracted from what a rule must carry. {check: reason}.
 UPSTREAM = "upstream binding: stale or blocked bound input; the remedy is a rerun, not a rewrite"
 OWN_TEXT = "Python's own limitation text, not a refusal of anything the model wrote"
+UNREADABLE = "source unreadable; the remedy is a new pack"
+CLAIM_TEXT = "builds Python's claim text"
 NON_CONTENT: Mapping[str, str] = {
     "fn:deploy_vii.cp2_synthesis:_provenance_issues": UPSTREAM,
     "fn:deploy_vii.cp2_synthesis:_stale_issues": UPSTREAM,
@@ -350,6 +352,16 @@ NON_CONTENT: Mapping[str, str] = {
     "fn:deploy_workflow.owners.cp2h:stale_issues": UPSTREAM,
     "fn:deploy_workflow.owners.cp3c:_provenance_issues": UPSTREAM,
     "fn:deploy_workflow.owners.cp4c:stale_issues": UPSTREAM,
+    # oracle ids (O6-P18a): a stale input, and a source the validator cannot read
+    **{f"oracle:cp2a:{i}": UPSTREAM for i in ("v17",)},
+    **{f"oracle:cp2g:{i}": UPSTREAM for i in ("v18", "v19", "v20")},
+    **{f"oracle:cp2h:{i}": UPSTREAM for i in ("v17", "v18")},
+    **{f"oracle:cp4c:{i}": UPSTREAM for i in ("v24", "v25", "v26", "v27")},
+    "oracle:cp1d:r14": UNREADABLE,
+    "oracle:cp1c:r11": UNREADABLE,
+    "oracle:cp2h:s01": UNREADABLE,
+    "oracle:cp2h:s02": UNREADABLE,
+    "oracle:cp3-context:context-unreadable": UNREADABLE,
 }
 
 # Functions the site scan reaches that refuse nothing: Python's own limitation text, a truncation of
@@ -370,6 +382,31 @@ NOT_ISSUE_SITES: Mapping[str, str] = {
     "fn:deploy_workflow.owners.cp1c:_limitations": OWN_TEXT,
     "fn:deploy_workflow.owners.cp2h:_own_limitations": OWN_TEXT,
     "fn:deploy_workflow.owners.cp4c:_own_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp2e:own_limitations": "builds the step's own limitations text",
+    **{
+        f"fn:deploy_workflow.owners.{c}": CLAIM_TEXT
+        for c in (
+            "cp2d:_claims",
+            "cp2e:_fx_claim",
+            "cp2e:_hedge_claim",
+            "cp2e:_rate_claims",
+            "cp2g:_claims",
+            "cp2h:_claims",
+            "cp4c:_claims",
+            "cpl10:_claims",
+        )
+    },
+    "fn:deploy_workflow.owners.cpl10:_item_rows": "builds table rows",
+    "fn:deploy_workflow.owners.cp3d:_Composer.missing_inputs": "builds the missing-inputs table",
+    "fn:deploy_workflow.owners.cp2h:_with_upstream_citations": "builds derived-fact citations "
+    "(a fail-closed invariant, no validator issue)",
+    "fn:deploy_workflow.owners.cp8:_Composer._resolved": "spells resolved run text",
+    "fn:deploy_workflow.owners.cp2d:check_cp1_totals": "builds a settled limitation, not a "
+    "refusal (ruling 2D-d)",
+    "fn:deploy_vii.readiness:absent_page_ranges": "derives absent page ranges from coverage text; "
+    "refuses nothing (the citation check that uses them is the refusal)",
+    "fn:deploy_workflow.owners.cp4c:_Book.cells": "settles lineage citations (a fail-closed "
+    "invariant, no validator issue)",
 }
 
 # --- ast: issue sites reachable from the entry -----------------------------------------------
@@ -448,19 +485,59 @@ def _issue_like(function: _Function) -> bool:
     return _named_issues(function) or bool(_STR_SEQUENCE.match(note))
 
 
-def _added(node: ast.AST) -> bool:
+def _is_str(value: ast.AST | None) -> bool:
+    """A string literal, an f-string or a ``+`` of them (adjacent literals are one constant)."""
+    if isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+        return _is_str(value.left) and _is_str(value.right)
+    return isinstance(value, ast.JoinedStr) or (
+        isinstance(value, ast.Constant) and isinstance(value.value, str)
+    )
+
+
+def string_constants(tree: ast.Module) -> frozenset[str]:
+    """Names assigned a string once at module level (plain or annotated, ``Final`` included).
+    A compiled pattern, a tuple or a call result is not text."""
+    names: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and _is_str(node.value):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and _is_str(node.value)
+        ):
+            names.add(node.target.id)
+    return frozenset(names)
+
+
+def _texty(node: ast.AST, consts: frozenset[str]) -> bool:
+    """Text: a literal anywhere in it, a bare module string constant, or ``CONST.format(...)``."""
+    if _has_text(node):
+        return True
+    if isinstance(node, ast.Name):
+        return node.id in consts
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "format"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id in consts
+    )
+
+
+def _added(node: ast.AST, consts: frozenset[str] = frozenset()) -> bool:
     """An append, extend, add or ``+=`` of text to a collector."""
     if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
         return (
             node.func.attr in _ADDERS
             and ast.unparse(node.func.value) in _COLLECTORS
-            and any(_has_text(a) for a in node.args)
+            and any(_texty(a, consts) for a in node.args)
         )
     return (
         isinstance(node, ast.AugAssign)
         and isinstance(node.op, ast.Add)
         and ast.unparse(node.target) in _COLLECTORS
-        and _has_text(node.value)
+        and _texty(node.value, consts)
     )
 
 
@@ -492,12 +569,12 @@ def _validation(node: ast.AST) -> bool:
     )
 
 
-def _sites(function: _Function) -> int:
+def _sites(function: _Function, consts: frozenset[str] = frozenset()) -> int:
     """Issue sites in one function. Coverage is per function: a new check inside a function a rule
     already carries is not seen here, only by the sha256 pins of the golden file (L2)."""
     returns, named = _issue_like(function), _named_issues(function)
     return sum(
-        _added(n) or _validation(n) or (returns and _returned(n, prose=not named))
+        _added(n, consts) or _validation(n) or (returns and _returned(n, prose=not named))
         for n in ast.walk(function)
     )
 
@@ -553,7 +630,8 @@ def issue_functions(module: str, entry: str, source: str | None = None) -> dict[
             continue
         seen.add(name)
         todo.extend(_edges(name, defs[name], defs, classes))
-    counted = {name: _sites(defs[name]) for name in seen}
+    consts = string_constants(tree)
+    counted = {name: _sites(defs[name], consts) for name in seen}
     return {name: n for name, n in sorted(counted.items()) if n}
 
 
@@ -598,7 +676,7 @@ def needed_checks(step_id: str, sources: Mapping[str, str] | None = None) -> fro
     validator, every content refusal id of its oracles and, for CP-1B, its code-defined sites."""
     needed = set(site_checks(step_id, sources))
     for ids in oracle_ids(step_id).values():
-        needed.update(ids)
+        needed.update(i for i in ids if i not in NON_CONTENT)
     if step_id == CP1B_STEP:
         needed.update(cp1b_sites())
     return frozenset(needed)
@@ -616,11 +694,13 @@ def check_exists(check: str) -> bool:
         return qualname in _defs(tree)
     if kind == "oracle":
         case, _, ident = rest.partition(":")
+        parts = {s.part for specs in ORACLES.values() for s in specs if s.case == case} or {""}
         try:
-            groups = _oracle_groups(case)
+            return any(
+                ident in ids for part in parts for ids in _oracle_groups(case, part).values()
+            )
         except FileNotFoundError:
             return False
-        return any(ident in ids for ids in groups.values())
     if kind == "code":
         return check in cp1b_sites()
     return False
@@ -765,7 +845,8 @@ def extract_checks(step_id: str) -> dict[str, Any]:
     if prose is not None:
         add((), prose)
     for ids in oracle_ids(step_id).values():
-        add(ids)
+        if kept := tuple(i for i in ids if i not in NON_CONTENT):
+            add(kept)
     if step_id == CP1B_STEP:
         add(cp1b_sites())
     fns = site_checks(step_id)

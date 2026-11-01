@@ -21,7 +21,7 @@
   },
   {
    "id": "refinancing_risk.3",
-   "statement": "Every analyst text (`repricing.rationale`, the absence `reason` and `follow_up`, and each path's `text`, `credit_implication` and `limitation`) is nonblank, has no digit, states no instrument recommendation or recovery conclusion, no refinancing outcome (`will be refinanced`, `will refinance`, `refinancing is assured`, `refinancing is certain`, `will default`), no `fulcrum` or `headroom is sufficient`, and no compliance word (complies, compliant, compliance, breach, met, satisfied and their forms) within four words of `covenant`.",
+   "statement": "Every analyst text (`repricing.rationale`, the absence `reason` and `follow_up`, and each path's `text`, `credit_implication` and `limitation`) is nonblank, has no digit, states no peer ranking, instrument recommendation or recovery conclusion, no refinancing outcome (`will be refinanced`, `will refinance`, `refinancing is assured`, `refinancing is certain`, `will default`), no `fulcrum` or `headroom is sufficient`, and no compliance word (complies, compliant, compliance, breach, met, satisfied and their forms) within four words of `covenant`.",
    "checks": [
     "oracle:cp3c:digit_in_text",
     "oracle:cp3c:digit_in_rationale",

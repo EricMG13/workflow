@@ -480,6 +480,8 @@ def test_non_content_checks_are_subtracted_and_never_in_a_list() -> None:
 def test_a_non_content_function_takes_no_submission() -> None:
     allowed = {"upstream", "pack", "inputs", "bound", "current"}
     for check in rules.NON_CONTENT:
+        if not check.startswith("fn:"):
+            continue
         module, _, qualname = check.removeprefix("fn:").rpartition(":")
         function = rules.function_node(module, qualname)
         for arg in function.args.args + function.args.kwonlyargs:
@@ -488,6 +490,49 @@ def test_a_non_content_function_takes_no_submission() -> None:
             notes = ast.unparse(arg.annotation) if arg.annotation else ""
             assert arg.arg in allowed, f"{check}: parameter {arg.arg} may hold a submission"
             assert not re.search(r"Submission|Review|Report", notes), f"{check}: {notes}"
+
+
+def _oracle_item(case: str, ident: str) -> dict[str, Any]:
+    """The oracle entry with this id or, for a dict-keyed container, this name."""
+    found: list[dict[str, Any]] = []
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("id") == ident:
+                found.append(node)
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(json.loads(rules.oracle_path(case).read_text(encoding="utf-8")))
+    assert found, f"{case}:{ident} is in no oracle entry"
+    return found[0]
+
+
+def test_a_non_content_oracle_id_arises_with_no_step_submission() -> None:
+    """O6-P18a: a stale-input refusal is a bound-input mismatch; a source-unreadable one comes from
+    the pack (or the context file) alone."""
+    seen = 0
+    for check, why in rules.NON_CONTENT.items():
+        if not check.startswith("oracle:"):
+            continue
+        _, case, ident = check.split(":")
+        item = _oracle_item(case, ident)
+        seen += 1
+        if why == rules.UPSTREAM:
+            issues = item["expected_issues"]
+            assert issues and all(i.startswith("Stale input ") for i in issues), check
+        else:
+            assert why == rules.UNREADABLE, check
+            assert (
+                item.get("pack") == "unparseable"
+                or "source_fixture" in item
+                or "context" in item
+                and item["id"] == "context-unreadable"
+            ), check
+    assert seen == 15
 
 
 def test_owner_gaps_may_only_shrink() -> None:
@@ -573,6 +618,22 @@ LIMITS = {
     "fn:deploy_workflow.owners.cp1c:_limitations",
     "fn:deploy_workflow.owners.cp2h:_own_limitations",
     "fn:deploy_workflow.owners.cp4c:_own_limitations",
+    "fn:deploy_workflow.owners.cp2e:own_limitations",
+    "fn:deploy_workflow.owners.cp2d:_claims",
+    "fn:deploy_workflow.owners.cp2e:_fx_claim",
+    "fn:deploy_workflow.owners.cp2e:_hedge_claim",
+    "fn:deploy_workflow.owners.cp2e:_rate_claims",
+    "fn:deploy_workflow.owners.cp2g:_claims",
+    "fn:deploy_workflow.owners.cp2h:_claims",
+    "fn:deploy_workflow.owners.cp4c:_claims",
+    "fn:deploy_workflow.owners.cpl10:_claims",
+    "fn:deploy_workflow.owners.cpl10:_item_rows",
+    "fn:deploy_workflow.owners.cp3d:_Composer.missing_inputs",
+    "fn:deploy_workflow.owners.cp2h:_with_upstream_citations",
+    "fn:deploy_workflow.owners.cp8:_Composer._resolved",
+    "fn:deploy_workflow.owners.cp2d:check_cp1_totals",
+    "fn:deploy_workflow.owners.cp4c:_Book.cells",
+    "fn:deploy_vii.readiness:absent_page_ranges",
 }
 
 
@@ -651,3 +712,34 @@ def test_the_golden_is_not_refreshed_or_written_from_a_dirty_tree(
         rules.write_golden(tmp_path / "new.json")
     assert target.read_text(encoding="utf-8") == GOLDEN.read_text(encoding="utf-8")
     assert not (tmp_path / "new.json").exists()
+
+
+# --- fix round 1 (M4): a module-level string constant is text --------------------------------
+
+CONSTANT_SITE = """
+ERR = "bad thing"
+FMT = ("x {i} "
+       "y")
+PATTERN = re.compile("a b")
+NAMES = ("a b", "c d")
+
+def entry(local):
+    issues = []
+    issues.append(ERR)
+    issues.append(FMT.format(i=1))
+    issues.append(PATTERN)
+    issues.append(NAMES)
+    issues.append(local)
+    return issues
+"""
+
+
+def test_an_append_of_a_module_level_string_constant_is_a_site() -> None:
+    """``issues.append(CONST)`` and ``issues.append(CONST.format(...))`` refuse like a literal;
+    a compiled pattern, a tuple and a local name are not text."""
+    assert rules.issue_functions("m", "entry", CONSTANT_SITE) == {"entry": 2}
+
+
+def test_a_name_that_is_not_a_module_level_string_is_not_a_site() -> None:
+    source = CONSTANT_SITE.replace('ERR = "bad thing"', "ERR = make()")
+    assert rules.issue_functions("m", "entry", source) == {"entry": 1}

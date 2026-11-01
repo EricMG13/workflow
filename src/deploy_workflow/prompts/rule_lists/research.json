@@ -32,7 +32,7 @@
   },
   {
    "id": "research.4",
-   "statement": "Each question lists in `searched_sources` at least one ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
+   "statement": "Each question lists in `searched_sources` one or more sources, every one a ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
    "checks": [
     "oracle:cpdr:no_searched_source",
     "oracle:cpdr:searched_source_not_in_pack",

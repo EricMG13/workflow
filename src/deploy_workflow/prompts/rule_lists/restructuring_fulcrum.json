@@ -26,13 +26,12 @@
     "oracle:cp4c:v01",
     "oracle:cp4c:v02",
     "oracle:cp4c:v06",
-    "fn:deploy_workflow.owners.cp4c:_claim_issues",
-    "fn:deploy_workflow.owners.cp4c:_claims"
+    "fn:deploy_workflow.owners.cp4c:_claim_issues"
    ]
   },
   {
    "id": "restructuring_fulcrum.3",
-   "statement": "A `source_row` claim cites in `amount_quote` the row it reads, quoted verbatim from the `financial` source under its locator, and gives in `period_column` the column of that statement for the claims' balance date (see `statement_rows`); the row must have a number under it, and the claim is above zero. A class with another `amount_source` has a null `amount_quote` and `period_column`.",
+   "statement": "A `source_row` claim cites in `amount_quote` the row it reads, quoted verbatim from the `financial` source under its locator, and gives in `period_column` the `statement_rows` column dated at the end of the `cp1_facts` `period`; the row must have a number under it, and the claim is above zero. A class with another `amount_source` has a null `amount_quote` and `period_column`.",
    "checks": [
     "oracle:cp4c:v03",
     "oracle:cp4c:v04",
@@ -97,16 +96,6 @@
     "fn:deploy_workflow.owners.cp4c:_text_fields",
     "fn:deploy_workflow.owners.cp4c:_run_text_issues",
     "fn:deploy_workflow.owners.cp4c:guard_issues"
-   ]
-  },
-  {
-   "id": "restructuring_fulcrum.10",
-   "statement": "A `Stale input` issue means a bound CP-2A, CP-2G, CP-4 or CP-1 input changed after the context was read; no edit to the submission cures it.",
-   "checks": [
-    "oracle:cp4c:v24",
-    "oracle:cp4c:v25",
-    "oracle:cp4c:v26",
-    "oracle:cp4c:v27"
    ]
   }
  ]

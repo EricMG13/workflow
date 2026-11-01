@@ -17,13 +17,11 @@
   },
   {
    "id": "rating_triggers.2",
-   "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice. If the ratings source's register or trigger terms cannot be read, the step is refused as `Rating register not found` or `Trigger terms not found`.",
+   "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice.",
    "checks": [
     "oracle:cp2h:v01",
     "oracle:cp2h:v02",
     "oracle:cp2h:v03",
-    "oracle:cp2h:s01",
-    "oracle:cp2h:s02",
     "fn:deploy_workflow.owners.cp2h:_view_issues"
    ]
   },
@@ -54,9 +52,7 @@
     "fn:deploy_workflow.owners.cp2h:_gap_issues",
     "fn:deploy_workflow.owners.cp2h:_overall_issues",
     "fn:deploy_workflow.owners.cp2h:_limitation",
-    "fn:deploy_workflow.owners.cp2h:phrase_issues",
-    "fn:deploy_workflow.owners.cp2h:_claims",
-    "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
+    "fn:deploy_workflow.owners.cp2h:phrase_issues"
    ]
   },
   {
@@ -64,14 +60,6 @@
    "statement": "Cite each quote verbatim under the locator of its page in the ratings source; a quote not on that page is refused.",
    "checks": [
     "oracle:cp2h:v16"
-   ]
-  },
-  {
-   "id": "rating_triggers.6",
-   "statement": "A `Stale input` issue means a bound CP-2G or CP-1 input changed after the context was read; no edit to the submission cures it.",
-   "checks": [
-    "oracle:cp2h:v17",
-    "oracle:cp2h:v18"
    ]
   }
  ]

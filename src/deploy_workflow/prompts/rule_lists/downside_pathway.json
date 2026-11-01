@@ -26,7 +26,7 @@
   },
   {
    "id": "downside_pathway.3",
-   "statement": "Submit one to four `scenarios`, and a `threshold` only for a metric among total_leverage, net_leverage and interest_coverage. Every field of the schema is present (`limitation` is null when there is none), no other field appears, `assessment.confidence` is one of the four listed values, and the object is valid JSON.",
+   "statement": "Submit one to four `scenarios`, and each `thresholds` entry's `metric` is one of total_leverage, net_leverage and interest_coverage. Every field of the schema is present (`limitation` is null when there is none), no other field appears, `assessment.confidence` is one of the four listed values, and the object is valid JSON.",
    "checks": [
     "oracle:cp2a:r06",
     "oracle:cp2a:r07",
@@ -70,13 +70,6 @@
    "statement": "`assessment.confidence` is never High, because the shock sizes and watch levels are uncited analyst assumptions.",
    "checks": [
     "oracle:cp2a:v13"
-   ]
-  },
-  {
-   "id": "downside_pathway.7",
-   "statement": "A `Stale input` issue means a bound CP-1 input changed after the context was read; no edit to the submission cures it.",
-   "checks": [
-    "oracle:cp2a:v17"
    ]
   }
  ]

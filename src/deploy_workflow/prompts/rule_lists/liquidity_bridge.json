@@ -16,7 +16,8 @@
    "statement": "`assessments` holds exactly one row for each `section` (liquidity_runway, maturity_wall, funding_gap), no section missing and none twice. The maturity_wall row lists in `basis_refs` a ref of the T4.18 maturity_date fact from `cp1_facts`.",
    "checks": [
     "oracle:cp2d:section_missing",
-    "oracle:cp2d:section_repeated"
+    "oracle:cp2d:section_repeated",
+    "fn:deploy_workflow.owners.cp2d:submission_issues"
    ]
   },
   {
@@ -40,8 +41,7 @@
    "statement": "An assessment of category Insufficient Information states a nonblank `limitation`; an assessment of any other category has a null `limitation`.",
    "checks": [
     "oracle:cp2d:insufficient_without_limitation",
-    "oracle:cp2d:limitation_without_insufficient",
-    "fn:deploy_workflow.owners.cp2d:_claims"
+    "oracle:cp2d:limitation_without_insufficient"
    ]
   }
  ]

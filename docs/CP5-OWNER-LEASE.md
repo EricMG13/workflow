@@ -1,6 +1,6 @@
 # CP-5 (integrity review) owner run lease — FROZEN by LEAD 2026-10-28 (preparation revision 2)
 
-Amended by LEAD 2026-10-28 (CP-6 freeze re-pin, `work/lead/cp6-freeze/report.md`): `src/deploy_vii/methodology.json` registers `T6-FINAL` under CP-6 `table_ids` (ruling Q7), 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 → 0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8; this module's builder re-pins it and its manifest records the new hash. Only pin hashes move: no other leaf of this module's oracle changes. It also re-pins `cases/cp3-cp6-owner/manifest.json` and `expected.json` to the CP-6 half freeze (builder PINS). Own files, old → new sha256: `manifest.json` 605a5baed84ff9e1fb5731f56de798af5812b4e6796622735339af64441acd91 → 223133a0889450d896c5d3f1843fce8c21fa15062f1d79fbc97a470f17e14232; `submissions.json` unchanged; `expected.json` unchanged; `builder/build.py` 60805bcf42e26b09598a36571fbee2ff8015f067b22bca559bacc665a02394d2 → 74ea9872bddae75239ac88200d192be26d9f62cecd1fd2c6861fd30ee37ae648.
+Amended by LEAD 2026-10-28 (CP-6 freeze re-pin, `work/lead/cp6-freeze/report.md`): `src/deploy_vii/methodology.json` registers `T6-FINAL` under CP-6 `table_ids` (ruling Q7), 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 → 0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8; this module's builder re-pins it and its manifest records the new hash. Only pin hashes move: no other leaf of this module's oracle changes. It also re-pins `cases/cp3-cp6-owner/manifest.json` and `expected.json` to the CP-6 half freeze (builder PINS). Own files, old → new sha256: `manifest.json` 605a5baed84ff9e1fb5731f56de798af5812b4e6796622735339af64441acd91 → b87556f3abd8e8279477eef349dd5e055c3b08fdc9e70e7c3220195499742b68; `submissions.json` unchanged; `expected.json` unchanged; `builder/build.py` 60805bcf42e26b09598a36571fbee2ff8015f067b22bca559bacc665a02394d2 → 74ea9872bddae75239ac88200d192be26d9f62cecd1fd2c6861fd30ee37ae648.
 
 Pin consumers: none (no other builder pins or reads this module's files). Every builder except cp2d and cp4 also pins `src/deploy_vii/methodology.json`, which this batch does not change. (Stage 1 release batch, LEAD 2026-10-28; none of this module's files changed.)
 
@@ -34,12 +34,12 @@ Pre-code, not frozen. Registers CP-5 as a G1 owner spec on top of the CP-3/CP-6 
 
 | File | sha256 |
 |---|---|
-| `cases/cp5-owner/manifest.json` | `605a5baed84ff9e1fb5731f56de798af5812b4e6796622735339af64441acd91` |
+| `cases/cp5-owner/manifest.json` | `223133a0889450d896c5d3f1843fce8c21fa15062f1d79fbc97a470f17e14232` |
 | `cases/cp5-owner/submissions.json` | `9effec68a97a450ae87ee7d203b36e80ee9b315e052dce9db66b2d17c6a2b8a4` |
 | `cases/cp5-owner/expected.json` | `48fcd8991b858b9b08fc12e965abfcde42d467dfce2aba04a98e9edba07e92d2` |
-| `cases/cp3-cp6-owner/manifest.json` (amended R6; pinned by the builder) | `525c5f1b5ab0c8518b936b099621422d5fcf0424114c0a20b836964c66dd8e10` |
+| `cases/cp3-cp6-owner/manifest.json` (amended R6; pinned by the builder) | `7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe` |
 | `cases/cp3-cp6-owner/submissions.json` (amended R6) | `9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38` |
-| `cases/cp3-cp6-owner/expected.json` (amended R6) | `8ca60c96ac443282ac49a0ded495b751cf3b5457b9491f419a26ca59c0b3c310` |
+| `cases/cp3-cp6-owner/expected.json` (amended R6) | `8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f` |
 | `src/deploy_vii/methodology.json` | `1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6` |
 | S1 manifest, submissions, expected | as the builder `PINS` (`68d591f6…`, `bff9ed18…`, `d1aa1af9…`) |
 
@@ -240,3 +240,9 @@ Cost: no new promotion (ruling 4); the CP-6 run needs a genuine CP-1 promotion p
 1. CP-MODEL and the CP-5 fan-in: option (a) taken (ruling 1). 2. Owner view: accepted as `P` (ruling 2). 3. TOOL-CONTRACT row: amended, `python_findings` reduced (ruling 3). 4. Run sharing: R6 only (ruling 4). 5. Mechanical findings: run-time assertions RT-1, RT-2 (ruling 5). 6. CP-1 citations: RT-3 (ruling 6). 7. Semantic review: review-precise-1, 37 judgments (ruling 7). 8. MODULES.csv: moves after the R6 run only (ruling 8). 9. CP-3 lease Q2: noted; the CP-0 literals already list `CP-5`, the premise is met and `{{CP5_FINDINGS_SUFFIX}}` is `''` in both cases (ruling 9).
 
 Not verified: no end-to-end run (no CP-1 promotion, no owner harness, no G1-X code, no pytest); CP-1's seven narrative claims, their citations and every mechanical Python finding over the CP-1 head are asserted from reading code (RT-1 to RT-3 are run-time assertions, not observed); the view size was measured on the S1 positive CP-1, CP-1A and CP-2 heads only, CP-3's addition is an estimate, and `python_checks` cost over a promoted CP-1 beyond the 3.3 s probe is unmeasured; the owner view code (`owners.cp5.view`) does not exist, the probe applied the construction in a scratch script; the product-validator probe stubbed `citation_issues` (no pack), so citation and quote checks were not exercised; the rail rendering of an all-`none` table is read from the bindings, not rendered; the tamper and tool-use refusals are expectations from the S1a pattern, not executed; `supported` over a Python finding and the three analyst categories are unexercised; the semantic correctness of the 37 judgments awaits ruling 7's review.
+
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp5-owner/builder/build.py 74ea9872bddae75239ac88200d192be26d9f62cecd1fd2c6861fd30ee37ae648 → 5615ca4e6d6fd8f9164157718c20eb5c33c6140c7f5b7dc3a65a042292b36be6
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp5-owner/manifest.json b87556f3abd8e8279477eef349dd5e055c3b08fdc9e70e7c3220195499742b68 → 223133a0889450d896c5d3f1843fce8c21fa15062f1d79fbc97a470f17e14232
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/manifest.json 893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b → 7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/submissions.json eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b → 9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/expected.json 7428c9340cae7221157657bdc628e43717b3f61716c86d6b6775c5b46b162a3e → 8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f

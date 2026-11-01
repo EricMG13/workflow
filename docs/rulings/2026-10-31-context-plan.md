@@ -294,3 +294,15 @@ The user's reply, relayed verbatim by MANAGER: "1".
 Python labels the value an analyst assumption. The sentence is built in the O6 Task 4 fix round and reviewed by mx-adversary.
 
 The adversary's M2 is a separate matter: two steps ask the model to reproduce Python's arithmetic (restructuring_fulcrum `.6`/`.7`, forward_credit_model `.3`). It goes to the owner list.
+
+## B28. Phase-by-phase release (user via MANAGER, 2026-11-01; controller cut rule)
+
+- **User instruction (relayed by MANAGER, the user's words "Do it"):** release each phase as soon as its phase gate and phase review pass. Merge codex/checkpoint (cfe37c23) into this branch before the first cut. Send each release request to MANAGER for the user's merge approval.
+- **Done:** base merge 8869ef55, with no conflicts and no push. The Verifier gate (CLAUDE.md) applies to plans and leases written from 2026-11-01. This plan's lanes were planned on 2026-10-31 and finish under their own plans.
+- **Controller cut rule.** A release tip is valid when all of the following hold:
+  1. every commit up to it belongs to a task with an approving review and no open High or Medium finding;
+  2. every phase completed at the tip has passed its phase gate and phase review;
+  3. the union fast gate of all carried lanes, the golden and `cases/pins.py --check` exit 0 at the tip.
+
+  Interleaved lanes whose tasks are approved but whose phase is unfinished are named in the release note.
+- **Pending user decision (sent to MANAGER):** may the first cut carry task-approved, phase-pending lanes (O3/O4 Tasks 1-5, O6 Tasks 1-5, O7a)? Recommendation: yes.
